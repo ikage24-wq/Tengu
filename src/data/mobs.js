@@ -17,20 +17,20 @@ const mob = (def) => ({ fly: false, aggro: true, boss: false, ...def });
 
 export const MOBS = {
   puffle: mob({
-    id: 'puffle', name: 'Kitsune Kit', level: 1, hp: 12, atk: 6, def: 0, acc: 8, eva: 0, exp: 8, gold: [1, 2],
+    id: 'puffle', name: 'Blossom Kit', level: 1, hp: 12, atk: 6, def: 0, acc: 8, eva: 0, exp: 8, gold: [1, 2],
     speed: 46, gait: 'dart', w: 30, h: 32, art: 'puffle', aggro: false, drops: [{ id: 'fluff', chance: 0.6 }, { id: 'cotton', chance: 0.08 }, { id: 'kitty_ears', chance: 0.01 }],
   }),
   snailbun: mob({
-    id: 'snailbun', name: 'Moss Tortoise', level: 2, hp: 22, atk: 8, def: 0, acc: 10, eva: 0, exp: 12, gold: [1, 2],
+    id: 'snailbun', name: 'Bud Snail', level: 2, hp: 22, atk: 8, def: 0, acc: 10, eva: 0, exp: 12, gold: [1, 2],
     speed: 16, w: 32, h: 29, art: 'snailbun', aggro: false, drops: [{ id: 'shell', chance: 0.55 }, { id: 'copper_ore', chance: 0.08 }, { id: 'hoodie', chance: 0.01 }],
   }),
   // Petal Meadow's hive and clouds (render/mobs/bees.js).
   bumble: mob({
-    id: 'bumble', name: 'Bumble', level: 2, hp: 20, atk: 8, def: 0, acc: 10, eva: 1, exp: 13, gold: [1, 2],
+    id: 'bumble', name: 'Puffbee', level: 2, hp: 20, atk: 8, def: 0, acc: 10, eva: 1, exp: 13, gold: [1, 2],
     speed: 40, gait: 'dart', w: 24, h: 24, art: 'bumble', fly: true, drops: [{ id: 'bee_fuzz', chance: 0.55 }, { id: 'honeycomb', chance: 0.08 }, { id: 'cozy_sweater', chance: 0.01 }],
   }),
   petalsprite: mob({
-    id: 'petalsprite', name: 'Petal Sprite', level: 3, hp: 30, atk: 10, def: 1, acc: 12, eva: 2, exp: 17, gold: [1, 3],
+    id: 'petalsprite', name: 'Dandelion Puff', level: 3, hp: 30, atk: 10, def: 1, acc: 12, eva: 2, exp: 17, gold: [1, 3],
     speed: 30, w: 22, h: 32, art: 'petalsprite', fly: true, aggro: false, drops: [{ id: 'sprite_petal', chance: 0.55 }, { id: 'rose_quartz', chance: 0.08 }, { id: 'pleated_skirt', chance: 0.01 }],
   }),
   // Petal Meadow's area boss: she bursts out of the giant hive once enough of the meadow has been

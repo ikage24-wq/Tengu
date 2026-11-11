@@ -31,7 +31,8 @@ test('summons and monsters walk over a bounce blossom without being thrown', () 
 });
 
 test('Up in an updraft floats you to its top, and you hang there a while, then come down', () => {
-  const map = fresh();
+  // (Petal Meadow lost its updraft in its 2026-11-11 redraw: the first map that still has one.)
+  const map = { ...Object.values(MAPS).find((m) => m.updrafts?.length), clock: 0 };
   const u = map.updrafts[0];
   const body = createBody(u.x, u.bottom);
   run(body, map, NONE, 0.5);

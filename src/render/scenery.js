@@ -875,12 +875,114 @@ function birdArt(color, frame) {
   });
 }
 
+// A butterfly (remade 2026-11-11), seen from the front: big round upper wings and smaller lower
+// ones with pale spots, a plump little body, and a round head with shining eyes, a blush and curled
+// antennae. Frame 0 wings wide open, frame 1 closing (seen edge-on, narrower).
 function butterflyArt(color, frame) {
-  return art(`butterfly|${color}|${frame}`, 10, 8, () => {
-    const open = frame === 0 ? 1 : 0.4;
-    return [E(5 - 2.4 * open, 3, 2.4 * open + 0.3, 2.4, color), E(5 + 2.4 * open, 3, 2.4 * open + 0.3, 2.4, color), E(5 - 1.8 * open, 6, 1.6 * open + 0.3, 1.6, shade(color, 12)), E(5 + 1.8 * open, 6, 1.6 * open + 0.3, 1.6, shade(color, 12)), R(4.6, 2, 0.8, 5, INK)];
+  return art(`butterfly4|${color}|${frame}`, 20, 17, () => {
+    const lo = shade(color, -12);
+    const o = frame === 0 ? 1 : 0.45;
+    const out = [];
+    for (const s of [-1, 1]) {
+      out.push(E(10 + s * 4.6 * o, 6.6, 4.4 * o + 0.5, 4.4, color), E(10 + s * 3.4 * o, 11.6, 3 * o + 0.4, 2.8, lo));
+      out.push(F(E(10 + s * 5.4 * o, 5.6, 1.5 * o + 0.2, 1.6, '#ffffff')), F(E(10 + s * 3.6 * o, 11.8, 0.9 * o + 0.1, 0.9, shade(color, 30))));
+    }
+    out.push(E(10, 10.4, 1.5, 4, '#6a5478'), E(10, 5.4, 2.6, 2.4, '#6a5478'));
+    for (const s of [-1, 1]) out.push(F(E(10 + s * 1, 5.2, 0.5, 0.65, '#ffffff')), F(E(10 + s * 1.9, 6.4, 0.55, 0.32, BLUSH)));
+    for (const s of [-1, 1]) out.push(F(T([[10 + s * 0.6, 3.4], [10 + s * 2.6, 0.6], [10 + s * 3, 0.9], [10 + s * 1.2, 3.4]], INK)), F(E(10 + s * 2.9, 0.8, 0.75, 0.75, INK)));
+    return out;
   });
 }
+
+// Where a map's little bugs live: each one has a home spot over a surface (the ground or a ledge,
+// picked by its width, never a drifting cloud), in world space, so it stays put as you walk past.
+const bugHomes = new WeakMap();
+function bugHome(map, i) {
+  let list = bugHomes.get(map);
+  if (!list) {
+    list = surfacesOf(map).filter((sf) => !sf.drift && sf.x2 - sf.x1 >= 80);
+    bugHomes.set(map, list);
+  }
+  if (!list.length) return null;
+  const total = list.reduce((n, sf) => n + (sf.x2 - sf.x1), 0);
+  let pick = hash(i * 7.3 + 11) * total;
+  for (const sf of list) {
+    const w = sf.x2 - sf.x1;
+    if (pick <= w) {
+      const x = sf.x1 + 30 + (pick / w) * Math.max(0, w - 60);
+      return [x, sf.yAt(x)];
+    }
+    pick -= w;
+  }
+  return null;
+}
+
+// A bug's comings and goings: each one is out for a while, fades away, stays gone a little, then
+// fades back in at a new home (its cycle number picks it). Returns [alpha 0-1, cycle].
+function bugLife(time, i, period = 16) {
+  const p = period + hash(i * 2.9 + 1) * 6;
+  const u = (time + hash(i * 4.3) * p) / p;
+  const cycle = Math.floor(u);
+  const t = (u - cycle) * p;
+  const fade = 1.6;
+  const on = p * 0.72;
+  const env = t < fade ? t / fade : t < on - fade ? 1 : t < on ? (on - t) / fade : 0;
+  return [env * env * (3 - 2 * env), cycle];
+}
+
+// A firefly: a little bug with a big glowing tail (white-hot at its heart, brightening and dimming
+// with `a`), a small dark head with a shining eye, and wings buzzing, bobbing as it flies. At night
+// each one also lights a little hole in the dark (fireflyLights, render/scene.js).
+function firefly(ctx, x, y, dir, time, seed, a) {
+  ctx.save();
+  ctx.translate(x, y + Math.sin(time * 9 + seed) * 0.8);
+  ctx.scale(dir, 1);
+  const flap = Math.sin(time * 50 + seed) > 0;
+  ctx.fillStyle = 'rgba(255,255,255,0.75)';
+  ctx.beginPath();
+  ctx.ellipse(0.2, -2.4, 1.6, flap ? 2.3 : 1.2, -0.4, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#6a5a7a';
+  ctx.beginPath();
+  ctx.arc(1.6, -0.3, 1.25, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(1.9, -0.9, 0.6, 0.6);
+  ctx.fillStyle = mix('#ffe46a', '#fff7b0', a);
+  ctx.beginPath();
+  ctx.ellipse(-1.2, 0.3, 2.3, 1.9, 0.2, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#fffef0';
+  ctx.beginPath();
+  ctx.ellipse(-1.5, 0.3, 1.1, 0.9, 0.2, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+}
+
+// Where the fireflies are on screen (world homes: they stay where they live), for the drawing and
+// for the night's light pass.
+function fireflySpots(map, cam, width, height, time) {
+  const out = [];
+  for (let i = 0; i < Math.min(7, Math.ceil(map.width / 340)); i++) {
+    const [life, cycle] = bugLife(time, i);
+    if (life <= 0) continue;
+    const home = bugHome(map, i + cycle * 13);
+    if (!home) continue;
+    const ph = time * (0.35 + hash(i + 3) * 0.2) + i * 2.1;
+    const x = home[0] + Math.sin(ph) * 36 - cam.x;
+    const y = home[1] - 24 - hash(i + 5) * 50 + Math.sin(ph * 1.7 + i) * 12 - cam.y;
+    if (x < -20 || x > width + 20 || y < -20 || y > height + 20) continue;
+    out.push({ x, y, i, life, dir: Math.cos(ph) >= 0 ? 1 : -1, a: 0.65 + 0.35 * Math.max(0, Math.sin(time * 2 + i * 1.3)) });
+  }
+  return out;
+}
+// The fireflies' little lights at night: where a map's night brings them out (render/scene.js).
+export function fireflyLights(map, cam, width, height, time) {
+  const t = map.look ? { ...THEMES[map.theme], ...map.look } : THEMES[map.theme];
+  if (!t || t.underground || !((t.critters ?? []).includes('firefly') || map.night >= 0.5)) return [];
+  return fireflySpots(map, cam, width, height, time).map((f) => ({ x: f.x - 1.6 * f.dir, y: f.y, r: 8 * f.a * f.life, k: 0.7, c: '#fff6a0' }));
+}
+
 
 // ---------- Canvas helpers for soft, unoutlined things ----------
 
@@ -5375,7 +5477,8 @@ function drawProps(ctx, t, map, cam, width, time) {
     const step = s.ground ? 38 : 44;
     for (let wx = s.x + 14; wx < s.x + s.w - 12; wx += step) {
       const seed = hash(wx * 0.37 + si * 13 + map.width);
-      if (seed < (s.ground ? keep : 0.62)) continue;
+      // (`look.ledgeKeep`: the same for ledges.)
+      if (seed < (s.ground ? keep : map.look?.ledgeKeep ?? 0.62)) continue;
       // Keep doorways clear around portals and NPCs, and ropes clear on ledges.
       if (s.ground && map.portals.some((p) => Math.abs(p.x - wx) < 44)) continue;
       if (s.ground && map.npcs.some((n) => Math.abs(n.x - wx) < (map.isTown ? 58 : 30))) continue;
@@ -5432,6 +5535,7 @@ const hexA = (hex, a) => `rgba(${parseInt(hex.slice(1, 3), 16)},${parseInt(hex.s
 
 // ---------- Ambient life ----------
 
+
 function drawCritters(ctx, t, map, cam, width, height, time) {
   const kinds = t.critters ?? [];
   // The painted woods' own life: squirrels on the branches and songbirds between the trees.
@@ -5457,12 +5561,28 @@ function drawCritters(ctx, t, map, cam, width, height, time) {
   }
   // Butterflies flutter in loops above the ground.
   if (kinds.includes('butterfly')) {
-    for (let i = 0; i < Math.ceil(map.width / 520); i++) {
-      const bx = 100 + hash(i * 5.1 + 2) * (map.width - 200) + Math.sin(time * 0.6 + i) * 60;
-      const by = groundAt(map, bx) - 40 - hash(i + 9) * 90 + Math.sin(time * 1.7 + i * 2) * 14;
+    // (Few, small and soft: they sit back in the scene, part of the meadow, not on top of it.)
+    for (let i = 0; i < Math.ceil(map.width / 1000); i++) {
+      // Each flutters in loops round its home, bobbing up with every wingbeat and tilting into
+      // its turns.
+      const [life, cycle] = bugLife(time, i + 40, 22);
+      if (life <= 0) continue;
+      const home = bugHome(map, i + 40 + cycle * 13);
+      if (!home) continue;
+      const ph = time * 0.6 + i;
+      const bx = home[0] + Math.sin(ph) * 50;
+      const flap = time * 6 + i * 0.7;
+      const by = home[1] - 34 - hash(i + 9) * 34 + Math.sin(time * 1.7 + i * 2) * 10 - Math.abs(Math.sin(flap * Math.PI)) * 3;
       const x = bx - cam.x;
-      if (x < -20 || x > width + 20) continue;
-      place(ctx, butterflyArt(pick(['#ff9ec0', '#ffe36b', '#c9a6ff', '#8fd3ff'], hash(i + 1)), Math.floor(time * 8 + i) % 2), x, by - cam.y);
+      const y = by - cam.y;
+      if (x < -20 || x > width + 20 || y < -20 || y > height + 20) continue;
+      ctx.save();
+      ctx.translate(snap(x), snap(y));
+      ctx.rotate(Math.cos(ph) * 0.14);
+      ctx.scale(0.72, 0.72);
+      ctx.globalAlpha = 0.85 * life;
+      place(ctx, butterflyArt(pick(['#ffbcd6', '#ffeb9a', '#d8c4ff', '#b8e2ff'], hash(i + 1)), Math.floor(flap * 2) % 2), 0, 8);
+      ctx.restore();
     }
   }
   // Gulls glide across the sky.
@@ -5515,15 +5635,16 @@ function drawCritters(ctx, t, map, cam, width, height, time) {
   }
   // Fireflies drift and pulse.
   if (kinds.includes('firefly')) {
-    for (let i = 0; i < 9; i++) {
-      const fx = (hash(i) * width + Math.sin(time * 0.5 + i) * 30 - cam.x * 0.3) % width;
-      const fy = height * (0.25 + hash(i + 5) * 0.6) + Math.sin(time * 0.8 + i * 2) * 12;
-      const a = 0.4 + 0.6 * Math.max(0, Math.sin(time * 2 + i * 1.3));
-      const x = fx < 0 ? fx + width : fx;
-      glow(ctx, x, fy, 7, '#fff6a0', a * 0.6);
-      rect(ctx, x - 1, fy - 1, 2, 2, '#fffbe0');
+    for (const f of fireflySpots(map, cam, width, height, time)) {
+      glow(ctx, f.x - 1.6 * f.dir, f.y, 8, '#fff6a0', f.a * 0.5 * f.life);
+      ctx.save();
+      ctx.globalAlpha = f.life;
+      firefly(ctx, f.x, f.y, f.dir, time, f.i, f.a);
+      ctx.restore();
     }
   }
+
+
 }
 
 // Petals, leaves, motes, or sparkles drifting through the air, in three depth bands: a faint,

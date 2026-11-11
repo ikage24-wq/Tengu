@@ -555,7 +555,7 @@ function drawLogo(ctx, spots, T, time) {
 
 // ---------- The rest of the stagecraft ----------
 
-// The pull cart Pip wheels in, the Moss Tortoise riding on top like it owns it.
+// The pull cart Pip wheels in, the Bud Snail riding on top like it owns it.
 const rider = { def: MOBS.snailbun, hp: 10, maxHp: 10, state: 'idle', stagger: 0, dir: 1, x: 0, y: 0, uid: 77, flash: 0, air: 0, frozenUntil: 0, phase: 0 };
 function drawCart(ctx, T, time) {
   const { x, v } = along(CART, T);

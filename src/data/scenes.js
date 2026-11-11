@@ -187,7 +187,7 @@ export const SIDE_SCENES = {
     { together: [{ perform: 'malvina', move: 'vohoho', as: 'ohoho' }, { fx: 'sparkle', at: 'malvina', n: 12 }] },
   ],
   pip_snails_done: [
-    { who: 'pip', text: 'Twelve tortoises! Here are your tonics, and... your very first loyalty stamp!', mood: 'happy' },
+    { who: 'pip', text: 'Twelve snails! Achoo-free at last! Here are your tonics, and... your very first loyalty stamp!', mood: 'happy' },
     { together: [{ jump: 'pip', height: 10 }, { shake: 1, dur: 0.2 }, { fx: 'sparkle', at: 'pip', n: 8 }, { emote: 'player', kind: '?', dur: 1.2 }] },
     { who: null, text: 'Pip stamps a little card with a smiling potion. She gazes at it the way other people gaze at sunsets.' },
     { who: 'player', text: 'Do you ever leave the shop?' },

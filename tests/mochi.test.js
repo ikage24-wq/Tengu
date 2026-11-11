@@ -130,19 +130,20 @@ test('your Mochi is always on something: the ground, a ledge or swimming at the 
       assert.notEqual(p.m.mode, 'fly', 'a hop is a plain jump, never its flying style');
     }
   };
-  Object.assign(b, { x: 600, y: 990, vx: 0, vy: 0, onGround: false });
+  // (Petal Meadow, made smaller 2026-11-10: the ground at 640, a ledge over it at 560.)
+  Object.assign(b, { x: 600, y: 630, vx: 0, vy: 0, onGround: false });
   go(2);
   // You hop up onto a ledge: it hops up after you and stands beside you on it.
-  Object.assign(b, { x: 600, y: 900, vx: 0, vy: 0, onGround: false });
+  Object.assign(b, { x: 600, y: 540, vx: 0, vy: 0, onGround: false });
   go(3);
-  assert.ok(Math.abs(w.mochi.y - 920) < 0.5 && Math.abs(w.mochi.x - b.x) < 40, 'up on the ledge with you');
+  assert.ok(Math.abs(w.mochi.y - 560) < 0.5 && Math.abs(w.mochi.x - b.x) < 40, 'up on the ledge with you');
   assert.equal(hops, 1, 'it hopped up');
   // You walk off its end: it follows, dropping down after you.
   go(4, { held: new Set(['ArrowRight']), pressed: new Set(), locked: false });
   go(2);
   assert.ok(Math.abs(w.mochi.y - b.y) < 0.5, 'down on the ground with you');
   // Into the pond: you wade, it swims at the surface.
-  Object.assign(b, { x: 2240, y: 1000, vx: 0, vy: 0, onGround: false });
+  Object.assign(b, { x: 1556, y: 655, vx: 0, vy: 0, onGround: false });
   go(3);
   assert.equal(w.mochi.m.mode, 'swim');
   assert.equal(w.mochi.y, waterAt(map, w.mochi.x), 'at the surface');

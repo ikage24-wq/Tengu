@@ -21,6 +21,10 @@ const hash = (n) => {
 export const MATERIALS = {
   // (The map redraw: the meadow's soft warm earth instead of stamped cobble.)
   meadow: { lip: '#8ee08a', body: '#e4bb8c', deep: '#c99868', stone: '#f6dfbd', style: 'meadowsoil', blades: true, drip: 'vine' },
+  // Petal Meadow's own (the 2026-11-10 art pass): a fresher spring lip over soft peachy earth.
+  // Petal Meadow (its art pass, 2026-11-11): a thick puffy cap of grass in rounded lobes over soft
+  // layered soil with pastel pebbles, and earthy ledges with roots trailing under them.
+  petal: { lip: '#9ee49a', body: '#f3cba6', deep: '#d39c7e', stone: '#fdebd2', style: 'petalsoil', blades: true, drip: 'root', cap: 'puffy' },
   // (The map redraw: the woods' own mossy earth, strata, roots and stones, under a thick moss lip.)
   forest: { lip: '#7fd38f', body: '#b58a64', deep: '#8a6044', stone: '#d8c0a0', style: 'mossloam', blades: true, drip: 'root', moss: true },
   // (The map redraw: the village street is laid in garden flagstones with moss in the joints.)
@@ -698,6 +702,91 @@ function paintTile(g, m, theme) {
         g.fill();
       });
     }
+  } else if (m.style === 'petalsoil') {
+    // Petal soil: soft wavy layers of warm earth, each with a pale top edge, rounded pastel pebbles
+    // lit from the upper left, little curled rootlets, and fine specks. Nothing long or stringy.
+    const per = (n) => (Math.PI * 2 * n) / TW;
+    const layer = (y0, amp, n, c, a, lit) => {
+      for (const dy of [-TH, 0, TH]) {
+        const yAt = (x) => y0 + dy + Math.sin(x * per(n) + y0) * amp;
+        g.globalAlpha = a;
+        g.fillStyle = c;
+        g.beginPath();
+        g.moveTo(0, yAt(0));
+        for (let x = 0; x <= TW; x += 4) g.lineTo(x, yAt(x));
+        for (let x = TW; x >= 0; x -= 4) g.lineTo(x, yAt(x) + 22 + Math.sin(x * per(n + 1) + y0 * 2) * amp * 0.6);
+        g.closePath();
+        g.fill();
+        g.globalAlpha = a * 0.9;
+        g.strokeStyle = lit;
+        g.lineWidth = 1.4;
+        g.beginPath();
+        for (let x = 0; x <= TW; x += 4) (x ? g.lineTo(x, yAt(x) + 1) : g.moveTo(x, yAt(x) + 1));
+        g.stroke();
+      }
+      g.globalAlpha = 1;
+    };
+    layer(18, 5, 1, mix(m.body, m.deep, 0.45), 0.55, shade(m.body, 10));
+    layer(78, 6, 2, mix(m.body, m.deep, 0.7), 0.5, shade(m.body, 6));
+    // Pebbles, in pastel stone tints.
+    const tints = ['#f4d9c0', '#e8c9d6', '#d9d2e8', '#f6e3c6'];
+    for (let i = 0; i < 7; i++) {
+      const k = seed + i * 7.9 + 90;
+      const x = hash(k) * TW;
+      const y = hash(k + 1) * TH;
+      const rx = 2.6 + hash(k + 2) ** 2 * 5.5;
+      const ry = rx * (0.62 + hash(k + 3) * 0.18);
+      const tint = tints[Math.floor(hash(k + 4) * tints.length)];
+      wrap((dx, dy) => {
+        g.fillStyle = hexA(mix(m.deep, INK, 0.25), 0.55);
+        g.beginPath();
+        g.ellipse(x + dx + 0.8, y + dy + 1.4, rx, ry, 0, 0, Math.PI * 2);
+        g.fill();
+        g.fillStyle = tint;
+        g.beginPath();
+        g.ellipse(x + dx, y + dy, rx, ry, 0, 0, Math.PI * 2);
+        g.fill();
+        g.strokeStyle = hexA(edge(m.body), 0.7);
+        g.lineWidth = 0.6;
+        g.stroke();
+        g.fillStyle = 'rgba(255,255,255,0.6)';
+        g.beginPath();
+        g.ellipse(x + dx - rx * 0.32, y + dy - ry * 0.36, rx * 0.36, ry * 0.24, -0.4, 0, Math.PI * 2);
+        g.fill();
+      });
+    }
+    // Little curled rootlets: a short curl each, lighter on top.
+    for (let i = 0; i < 3; i++) {
+      const k = seed + i * 11.3 + 40;
+      const x = hash(k) * TW;
+      const y = 8 + hash(k + 1) * (TH - 16);
+      const dir = hash(k + 2) > 0.5 ? 1 : -1;
+      wrap((dx, dy) => {
+        g.lineCap = 'round';
+        for (const [c, w, oy] of [[hexA(mix(m.deep, INK, 0.2), 0.6), 2.2, 0.8], [mix(m.stone, m.body, 0.35), 1.3, 0]]) {
+          g.strokeStyle = c;
+          g.lineWidth = w;
+          g.beginPath();
+          g.moveTo(x + dx, y + dy + oy);
+          g.quadraticCurveTo(x + dx + 6 * dir, y + dy + oy - 3, x + dx + 8 * dir, y + dy + oy + 2);
+          g.arc(x + dx + 6 * dir, y + dy + oy + 2, 2, 0, dir > 0 ? Math.PI : -Math.PI, dir < 0);
+          g.stroke();
+        }
+        g.lineCap = 'butt';
+      });
+    }
+    // Fine specks.
+    for (let i = 0; i < 26; i++) {
+      const k = seed + i * 5.3 + 130;
+      const x = hash(k) * TW;
+      const y = hash(k + 1) * TH;
+      wrap((dx, dy) => {
+        g.fillStyle = hash(k + 3) > 0.45 ? hexA(m.stone, 0.9) : hexA(mix(m.deep, INK, 0.1), 0.7);
+        g.beginPath();
+        g.arc(x + dx, y + dy, 0.6 + hash(k + 2) * 0.8, 0, Math.PI * 2);
+        g.fill();
+      });
+    }
   } else if (m.style === 'mossloam' || m.style === 'meadowsoil') {
     // Mossy earth (the map redraw): soft bands of soil, winding roots with rootlets, a few big
     // rounded stones lit from the upper left, and small pebbles and specks between them.
@@ -993,7 +1082,7 @@ function landWith(ctx, theme, m, deco, map, cam, width, height, time) {
       }
     }
   }
-  if (m.style === 'mossloam' || m.style === 'meadowsoil') earthDecals(ctx, m, runs, cam, width, height);
+  if (m.style === 'mossloam' || m.style === 'meadowsoil' || m.style === 'petalsoil') earthDecals(ctx, m, runs, cam, width, height);
   ctx.restore();
 
   // Cliff faces: where the ground drops at a wall, the high side shows a shaded face.
@@ -1012,8 +1101,9 @@ function landWith(ctx, theme, m, deco, map, cam, width, height, time) {
   // the Mochi Garden's pond for now, 2026-11-10.)
   // (A line that isn't cut keeps its own pattern, as before.)
   const dry = runs.flatMap((pts, ri) => dryParts(pts, map.garden ? map.water : null, cam).map((p, j) => [p, j === 0 ? ri : ri * 7 + j]));
-  for (const [pts] of dry) strokeAlong(ctx, pts, m.moss ? 15 : 12, hexA(INK, 0.16), 6);
-  for (const [pts, seed] of dry) lip(ctx, m, pts, time, seed, width, m.moss ? 12 : 10, deco);
+  const capD = m.cap === 'puffy' ? 13 : m.moss ? 12 : 10;
+  for (const [pts] of dry) strokeAlong(ctx, pts, capD + (m.cap === 'puffy' ? 6 : 2), hexA(INK, m.cap === 'puffy' ? 0.12 : 0.16), m.cap === 'puffy' ? 9 : 6);
+  for (const [pts, seed] of dry) lip(ctx, m, pts, time, seed, width, capD, deco);
   if (map.look?.ceiling) drawCeiling(ctx, m, map, cam, width, time);
 }
 
@@ -1076,7 +1166,9 @@ function earthDecals(ctx, m, runs, cam, width, height) {
     const sx = wx - cam.x;
     const top = topAt(sx);
     if (top == null || top > height) continue;
-    const kind = hash(k + 1);
+    const petal = m.style === 'petalsoil';
+    // (Petal soil skips the looping roots: its kinds run from stones straight on to the bulbs.)
+    const kind = petal ? (hash(k + 1) < 0.3 ? hash(k + 1) : 0.62 + (hash(k + 1) - 0.3) * 0.4) : hash(k + 1);
     const y = top + 24 + hash(k + 2) * 90;
     if (kind < 0.42) {
       // A stone.
@@ -1131,7 +1223,7 @@ function earthDecals(ctx, m, runs, cam, width, height) {
       path();
       ctx.stroke();
       ctx.restore();
-    } else if (m.style === 'meadowsoil' && kind < 0.74) {
+    } else if ((m.style === 'meadowsoil' || m.style === 'petalsoil') && kind < 0.74) {
       // A flower bulb asleep in the earth, a shoot rising and roots trailing below.
       const by = top + 18 + hash(k + 3) * 20;
       ctx.strokeStyle = '#e8d6b8';
@@ -1164,7 +1256,7 @@ function earthDecals(ctx, m, runs, cam, width, height) {
       ctx.ellipse(sx - 1, by - 1.5, 0.9, 1.6, 0.3, 0, Math.PI * 2);
       ctx.fill();
       ctx.globalAlpha = 1;
-    } else if (m.style === 'meadowsoil' && kind < 0.78) {
+    } else if ((m.style === 'meadowsoil' || m.style === 'petalsoil') && kind < 0.78) {
       // A buried treasure: a little gem or an old coin catching a glint.
       const gem = hash(k + 3) > 0.5;
       ctx.fillStyle = gem ? pickC(['#ff9ec0', '#9fd8ff', '#c9a6ff'], hash(k + 4)) : '#ffd66b';
@@ -1184,7 +1276,7 @@ function earthDecals(ctx, m, runs, cam, width, height) {
       ctx.beginPath();
       ctx.arc(sx - 0.8, y - 1, 0.7, 0, Math.PI * 2);
       ctx.fill();
-    } else if (m.style === 'meadowsoil' && kind < 0.86) {
+    } else if ((m.style === 'meadowsoil' || m.style === 'petalsoil') && kind < 0.86) {
       // Seeds scattered in the soil.
       for (let i = 0; i < 4; i++) {
         ctx.fillStyle = i % 2 ? '#f0dcc0' : '#a87a58';
@@ -1220,8 +1312,8 @@ function lip(ctx, m, pts, time, seed, width, depth = 7, deco = null) {
     const scale = scaleOf(ctx);
     const PAD = 8;
     const TOP = 5;
-    const H = depth + 16;
-    const key = `${m.lip}|${m.moss ? 1 : 0}|${m.blades ? 1 : 0}|${L.toFixed(2)}|${seed}|${depth}|${scale}`;
+    const H = depth + (m.cap === 'puffy' ? 22 : 16);
+    const key = `${m.lip}|${m.cap ?? ''}|${m.moss ? 1 : 0}|${m.blades ? 1 : 0}|${L.toFixed(2)}|${seed}|${depth}|${scale}`;
     let c = lipCache.get(key);
     if (c) {
       lipCache.delete(key);
@@ -1245,6 +1337,7 @@ function lip(ctx, m, pts, time, seed, width, depth = 7, deco = null) {
 
 // The lip's still part: the band, its scalloped (or mossy, or bladed) lower edge, the lines.
 function lipStill(ctx, m, pts, seed, width, depth) {
+  if (m.cap === 'puffy') return puffyCap(ctx, m, pts, seed, width, depth);
   const line = edge(m.lip);
   const deep = shade(m.lip, -16);
   // The band.
@@ -1309,6 +1402,78 @@ function lipStill(ctx, m, pts, seed, width, depth) {
   strokeAlong(ctx, pts, depth - 2.5, deep, 1.4);
   strokeAlong(ctx, pts, 0.6, shade(m.lip, 18), 1.6);
   strokeAlong(ctx, pts, -1.5, line, 1);
+}
+
+// A puffy cap of grass (Petal Meadow): a lit top band, then a row of rounded lobes of every size
+// hanging over the soil in a deeper green, each lit along its top and outlined only on the outside,
+// with the odd clover and tiny daisy tucked in.
+function puffyCap(ctx, m, pts, seed, width, depth) {
+  const line = edge(m.lip);
+  const under = shade(m.lip, -13);
+  const lobes = [];
+  forAlong(pts, 10, (x, y, k) => {
+    if (x < -14 || x > width + 14) return;
+    const r = 5 + hash(k * 1.7 + seed * 13) * 3.2 + (hash(k * 3.1 + seed) > 0.85 ? 2 : 0);
+    lobes.push([x + (hash(k * 2.3 + seed) - 0.5) * 3, y + depth - r * 0.45, r, k]);
+  });
+  const fillLobes = (grow, c, dy = 0) => {
+    ctx.fillStyle = c;
+    ctx.beginPath();
+    for (const [x, y, r] of lobes) {
+      ctx.moveTo(x + r + grow, y + dy);
+      ctx.arc(x, y + dy, r + grow, 0, Math.PI * 2);
+    }
+    ctx.fill();
+  };
+  const band = (top, bottom, c) => {
+    ctx.fillStyle = c;
+    ctx.beginPath();
+    pts.forEach(([x, y], i) => (i ? ctx.lineTo(x, y + top) : ctx.moveTo(x, y + top)));
+    for (let i = pts.length - 1; i >= 0; i--) ctx.lineTo(pts[i][0], pts[i][1] + bottom);
+    ctx.closePath();
+    ctx.fill();
+  };
+  // The outline (lobes and band a pixel bigger, in the edge colour), then the lobes, then the band.
+  fillLobes(1, line);
+  band(-2.2, depth - 2, line);
+  fillLobes(0, under);
+  // Each lobe lit along its top.
+  ctx.fillStyle = shade(m.lip, -4);
+  ctx.beginPath();
+  for (const [x, y, r] of lobes) {
+    ctx.moveTo(x + r * 0.8, y - r * 0.15);
+    ctx.ellipse(x, y - r * 0.15, r * 0.8, r * 0.62, 0, 0, Math.PI * 2);
+  }
+  ctx.fill();
+  band(-1.2, depth - 3, m.lip);
+  // The lit top and a soft line where the top meets the lobes.
+  strokeAlong(ctx, pts, 1, shade(m.lip, 20), 2);
+  strokeAlong(ctx, pts, depth - 3, hexA(shade(m.lip, -10), 0.5), 1);
+  // Tucked in: tiny clovers on the lobes, and now and then a little white daisy.
+  for (const [x, y, r, k] of lobes) {
+    const h = hash(k * 5.7 + seed * 3);
+    if (h > 0.86) {
+      ctx.fillStyle = shade(m.lip, 8);
+      for (let j = 0; j < 3; j++) {
+        const a = (j / 3) * Math.PI * 2 - Math.PI / 2;
+        ctx.beginPath();
+        ctx.arc(x + Math.cos(a) * 1.5, y + 1 + Math.sin(a) * 1.5, 1.4, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    } else if (h < 0.06) {
+      ctx.fillStyle = '#ffffff';
+      for (let j = 0; j < 5; j++) {
+        const a = (j / 5) * Math.PI * 2;
+        ctx.beginPath();
+        ctx.arc(x + Math.cos(a) * 1.6, y + 0.5 + Math.sin(a) * 1.6, 1.2, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.fillStyle = '#ffd95a';
+      ctx.beginPath();
+      ctx.arc(x, y + 0.5, 1.1, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
 }
 
 // The lip's live part: grass blades standing up along the top, swaying in the wind (all in one
@@ -2010,10 +2175,14 @@ export function drawIsland(ctx, theme, p, cam, time, pi, look = null, map = null
   // Things hanging under the island, rooted in its underside (drawn first, so the island
   // covers where they're rooted).
   const under = islandShape(x, y, w, d, pi);
-  for (let dx = 14; dx < w - 12; dx += 22) {
+  // (Under a puffy cap: fewer, mostly dangling grass, now and then a short root, never in a row.)
+  const puffy = m.cap === 'puffy';
+  for (let dx = 14; dx < w - 12; dx += puffy ? 26 : 22) {
     const k = hash(pi * 13.1 + dx);
-    if (k < 0.45) continue;
-    drip(ctx, m, x + dx, undersideAt(under, x + dx) - 1, 18, time, pi * 5 + dx);
+    if (k < (puffy ? 0.55 : 0.45)) continue;
+    const at = puffy ? Math.min(w - 12, dx + (hash(k * 7 + pi) - 0.5) * 14) : dx;
+    const dm = puffy ? { ...m, drip: k > 0.86 ? 'root' : 'vine' } : m;
+    drip(ctx, dm, x + at, undersideAt(under, x + at) - 1, puffy ? 12 + k * 10 : 18, time, pi * 5 + dx);
   }
   ctx.save();
   island(ctx, x, y, w, d, pi);
@@ -2024,11 +2193,31 @@ export function drawIsland(ctx, theme, p, cam, time, pi, look = null, map = null
   g.addColorStop(1, hexA(m.deep, m.style === 'cloud' ? 0.4 : 0.85));
   ctx.fillStyle = g;
   ctx.fillRect(x - 2, y, w + 4, d + 4);
+  if (m.cap === 'puffy') puffyUnderside(ctx, m, x, y, w, d, pi);
   ctx.restore();
   island(ctx, x, y, w, d, pi);
   ctx.strokeStyle = edge(m.body);
   ctx.lineWidth = 1;
   ctx.stroke();
+  if (m.cap === 'puffy') {
+    // The cap overhangs both ends in a big round lobe.
+    for (const [ex, s] of [[x + 1, -1], [x + w - 1, 1]]) {
+      ctx.fillStyle = edge(m.lip);
+      ctx.beginPath();
+      ctx.arc(ex + s, y + 4, 7.6, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = shade(m.lip, -13);
+      ctx.beginPath();
+      ctx.arc(ex + s, y + 4, 6.6, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = m.lip;
+      ctx.beginPath();
+      ctx.arc(ex + s * 0.6, y + 2.6, 5.4, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    lip(ctx, m, [[x + 1, y], [x + w - 1, y]], time, pi + 50, Infinity, 10, look?.edges);
+    return;
+  }
   lip(ctx, m, [[x + 2, y], [x + w - 2, y]], time, pi + 50, Infinity, 6, look?.edges);
   // Rounded caps at both ends of the lip.
   ctx.fillStyle = m.lip;
@@ -2038,6 +2227,57 @@ export function drawIsland(ctx, theme, p, cam, time, pi, look = null, map = null
     ctx.ellipse(ex, y + 2.5, 4, 4.5, 0, 0, Math.PI * 2);
     ctx.fill();
     ctx.stroke();
+  }
+}
+
+// Inside a puffy-capped ledge's earth: a shadow under the cap, two soft layers that follow the
+// rounded bottom, a lit rim on the left, and a pebble or two.
+function puffyUnderside(ctx, m, x, y, w, d, seed) {
+  const sh = ctx.createLinearGradient(0, y + 6, 0, y + 18);
+  sh.addColorStop(0, hexA(INK, 0.18));
+  sh.addColorStop(1, hexA(INK, 0));
+  ctx.fillStyle = sh;
+  ctx.fillRect(x - 2, y + 6, w + 4, 12);
+  for (const [u, c, a] of [[0.42, mix(m.body, m.deep, 0.55), 0.5], [0.7, mix(m.deep, INK, 0.15), 0.45]]) {
+    ctx.globalAlpha = a;
+    ctx.fillStyle = c;
+    ctx.beginPath();
+    const yy = y + d * u;
+    ctx.moveTo(x - 4, yy);
+    for (let i = 0; i <= 12; i++) {
+      const px = x + (w * i) / 12;
+      ctx.lineTo(px, yy + Math.sin(i * 1.3 + seed) * 2.2 + Math.sin((i / 12) * Math.PI) * d * 0.12);
+    }
+    ctx.lineTo(x + w + 4, y + d + 6);
+    ctx.lineTo(x - 4, y + d + 6);
+    ctx.closePath();
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+  // The lit rim down the left curve.
+  ctx.strokeStyle = hexA(m.stone, 0.55);
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(x + 3, y + 10);
+  ctx.quadraticCurveTo(x + w * 0.04, y + d * 0.55, x + w * 0.24, y + d * 0.8);
+  ctx.stroke();
+  // A pebble or two.
+  for (let i = 0; i < Math.max(1, Math.round(w / 220)); i++) {
+    const px = x + w * (0.3 + hash(seed * 7.1 + i) * 0.4);
+    const py = y + d * (0.35 + hash(seed * 3.3 + i) * 0.2);
+    const r = 2.6 + hash(seed + i * 5) * 2.4;
+    ctx.fillStyle = hexA(mix(m.deep, INK, 0.25), 0.55);
+    ctx.beginPath();
+    ctx.ellipse(px + 0.8, py + 1.3, r, r * 0.7, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#f2dccb';
+    ctx.beginPath();
+    ctx.ellipse(px, py, r, r * 0.7, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = 'rgba(255,255,255,0.6)';
+    ctx.beginPath();
+    ctx.ellipse(px - r * 0.3, py - r * 0.25, r * 0.35, r * 0.22, -0.4, 0, Math.PI * 2);
+    ctx.fill();
   }
 }
 

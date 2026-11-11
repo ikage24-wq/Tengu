@@ -11,7 +11,7 @@ import { moveAt, MOVES, streamHover } from './moves.js';
 import { wheelShape, wheelWisps } from '../world/foxwheel.js';
 import { settings } from '../core/settings.js';
 import { NPCS } from '../data/npcs.js';
-import { drawSceneBack, drawSceneFront } from './scenery.js';
+import { drawSceneBack, drawSceneFront, fireflyLights } from './scenery.js';
 import { drawHero, setLight, rimLightOf } from './hero.js';
 import { gameHour, isNight } from '../world/daytime.js';
 import { drawMonster } from './monsters.js';
@@ -645,6 +645,7 @@ export function drawWorld(ctx, world, viewCam, time) {
   // Night: the map's lamps light up too.
   if (world.map.night > 0) {
     for (const l of world.map.lamps ?? []) lights.push({ x: l.x - cam.x, y: l.y - cam.y, r: 80, c: l.c });
+    lights.push(...fireflyLights(world.map, cam, VIEW_W, VIEW_H, time));
     drawNight(ctx, VIEW_W, VIEW_H, world.map.night, lights);
   }
   // The nearest drifting petals, in front of everyone (and of the light, being between it and the

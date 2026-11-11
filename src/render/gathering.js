@@ -683,6 +683,358 @@ const DRAW = {
 DRAW.gem = DRAW.ore;
 DRAW.mushroom = DRAW.herb;
 
+// ---------- Cute spots (Petal Meadow's art pass, 2026-11-11) ----------
+
+// A map with `look.spots: 'cute'` draws its spots as round, chubby little characters to match its
+// puffy ground: each has a face that blinks (dozing while it grows back), and a ready spot is
+// bouncy, on its own beat from its world x: the clover, the rock, the hive and the moonpetal hop,
+// the trees give a happy wiggle of their crowns. Never squashed or stretched: hops, tilts and
+// sways only. Each drawing is a picture per stage and blink (never per moment).
+const INK = '#3a2d4f';
+const BLUSH = '#ff9fb8';
+function arcBand(cx, cy, rx, ry, a0, a1, th, c) {
+  const outer = [];
+  const inner = [];
+  for (let i = 0; i <= 6; i++) {
+    const a = ((a0 + ((a1 - a0) * i) / 6) * Math.PI) / 180;
+    outer.push([cx + rx * Math.cos(a), cy + ry * Math.sin(a)]);
+    inner.push([cx + (rx - th) * Math.cos(a), cy + (ry - th) * Math.sin(a)]);
+  }
+  return F(T([...outer, ...inner.reverse()], c));
+}
+// A little face: open eyes with a shine, happy arcs, or shut (dozing / blinking); blush; a smile.
+function cuteFace(cx, cy, gap, mood, k = 1, mouth = 'smile') {
+  const out = [];
+  const th = 0.45 * k;
+  for (const sd of [-1, 1]) {
+    const ex = cx + sd * gap;
+    if (mood === 'open') out.push(F(E(ex, cy, 0.62 * k, 0.82 * k, INK)), F(E(ex - 0.2 * k, cy - 0.32 * k, 0.24 * k, 0.24 * k, '#ffffff')));
+    else if (mood === 'happy') out.push(arcBand(ex, cy + 0.45 * k, 0.8 * k, 0.75 * k, 200, 340, th, INK));
+    else out.push(arcBand(ex, cy - 0.3 * k, 0.8 * k, 0.62 * k, 20, 160, th, INK));
+    out.push(F(E(ex + sd * 0.9 * k, cy + 1.25 * k, 0.75 * k, 0.4 * k, BLUSH)));
+  }
+  if (mouth === 'smile') out.push(arcBand(cx, cy + 0.55 * k, 0.72 * k, 0.72 * k, 25, 155, th, INK));
+  else if (mouth === 'o') out.push(F(E(cx, cy + 1.3 * k, 0.42 * k, 0.48 * k, INK)));
+  else if (mouth === 'cat') {
+    out.push(arcBand(cx - 0.45 * k, cy + 0.7 * k, 0.48 * k, 0.5 * k, 20, 160, th * 0.9, INK));
+    out.push(arcBand(cx + 0.45 * k, cy + 0.7 * k, 0.48 * k, 0.5 * k, 20, 160, th * 0.9, INK));
+  }
+  return out;
+}
+const blinkAt = (time, wx) => (((time * 0.33 + hash(wx) * 7.3) % 1) + 1) % 1 < 0.045;
+const moodOf = (stage, blink) => (stage < 3 ? 'shut' : blink ? 'shut' : 'open');
+// A hop every `every` seconds: up and down in a soft arc, then a little settle. Returns [dy, tilt].
+function hopOf(time, wx, every = 3.4, h = 3) {
+  const u = (((time + hash(wx * 1.3) * every) / every) % 1 + 1) % 1;
+  const t = u * every;
+  if (t < 0.36) {
+    const k = t / 0.36;
+    return [-Math.sin(k * Math.PI) * h, Math.sin(k * Math.PI * 2) * 0.06];
+  }
+  if (t < 0.6) return [-Math.sin(((t - 0.36) / 0.24) * Math.PI) * h * 0.22, 0];
+  return [0, 0];
+}
+// A happy wiggle for trees: a quick decaying sway of the crown every so often.
+function wiggleOf(time, wx, every = 4.2) {
+  const t = ((((time + hash(wx * 2.1) * every) / every) % 1 + 1) % 1) * every;
+  return t < 0.9 ? Math.sin(t * 14) * 0.05 * (1 - t / 0.9) ** 2 : 0;
+}
+// A chubby heart leaf pointing along angle a from its tip at (x, y).
+function heartLeaf(x, y, r, a, c) {
+  const dx = Math.cos(a);
+  const dy = Math.sin(a);
+  const cx = x + dx * r * 1.05;
+  const cy = y + dy * r * 1.05;
+  return [
+    T([[x, y], [cx - dy * r * 0.9, cy + dx * r * 0.9], [cx + dy * r * 0.9, cy - dx * r * 0.9]], c),
+    E(cx - dy * r * 0.5 + dx * r * 0.2, cy + dx * r * 0.5 + dy * r * 0.2, r * 0.62, r * 0.62, c),
+    E(cx + dy * r * 0.5 + dx * r * 0.2, cy - dx * r * 0.5 + dy * r * 0.2, r * 0.62, r * 0.62, c),
+  ];
+}
+const mound = (cx, gy, w) => [E(cx, gy - 0.6, w, 2.6, '#d39c7e'), F(E(cx - w * 0.2, gy - 1.6, w * 0.55, 1, '#e8b894'))];
+
+// The clover: a chubby clump of heart leaves round a big round front leaf with a face, a lucky
+// four-leaf sprig on top. Growing back: stubs, a two-leaf sprout, a dozing small clump.
+function cuteCloverArt(stage, blink) {
+  return art(`spot|cute|clover|${stage}|${blink ? 1 : 0}`, 40, 36, () => {
+    const cx = 20;
+    const gy = 35;
+    const g = ramp('#86d97e');
+    const out = [...mound(cx, gy, 11)];
+    if (stage === 0) {
+      for (const dx of [-4, 0, 4]) out.push(R(cx + dx - 0.7, gy - 4, 1.4, 4, '#6fb86a'));
+      return out;
+    }
+    if (stage === 1) {
+      out.push(stem(cx, gy - 1, cx, gy - 9, 1.4, '#5fae66'));
+      out.push(...heartLeaf(cx, gy - 9, 4, -2.4, g.base), ...heartLeaf(cx, gy - 9, 4, -0.75, g.hi));
+      return out;
+    }
+    const k = stage === 2 ? 0.78 : 1;
+    const by = gy - 11 * k;
+    out.push(...heartLeaf(cx - 2, by - 2 * k, 8 * k, -2.55, g.sh), ...heartLeaf(cx + 2, by - 2 * k, 8 * k, -0.6, g.sh));
+    out.push(...heartLeaf(cx, by - 4 * k, 7.5 * k, -Math.PI / 2, g.base));
+    // The round front leaf, its face, a pale chevron on each side leaf.
+    out.push(E(cx, by + 1.5 * k, 10 * k, 8.6 * k, g.base), F(E(cx - 3 * k, by - 2 * k, 4.5 * k, 2.6 * k, g.hi)));
+    out.push(...cuteFace(cx, by + 1.6 * k, 3.2 * k, moodOf(stage, blink), 1.9 * k));
+    for (const sd of [-1, 1]) out.push(F(arcBand(cx + sd * 12 * k, by - 7 * k, 2.4 * k, 2 * k, 200, 340, 0.7 * k, g.hi)));
+    if (stage === 3) {
+      // The lucky sprig.
+      out.push(stem(cx + 1, by - 13, cx + 3, by - 18, 1, '#5fae66'));
+      for (let i = 0; i < 4; i++) out.push(E(cx + 3 + Math.cos((i * TAU) / 4 + 0.4) * 1.7, by - 19 + Math.sin((i * TAU) / 4 + 0.4) * 1.7, 1.5, 1.5, '#5fd06a'));
+    }
+    return out;
+  });
+}
+
+// The rock: a round lavender boulder with copper nuggets, a rose quartz crystal sprouting on top
+// like a bow, and a sleepy-happy face. Mined: a flat stub and rubble, then a pebble growing back.
+function cuteRockArt(stage, gem, blink) {
+  return art(`spot|cute|rock|${stage}|${gem ?? ''}|${blink ? 1 : 0}`, 40, 34, () => {
+    const cx = 20;
+    const gy = 33;
+    const st = ramp('#c3b4dc');
+    const cu = ramp('#ee9a5e');
+    const out = [];
+    if (stage === 0) {
+      out.push(E(cx, gy - 3, 11, 4, st.sh), F(E(cx - 2, gy - 4.6, 7, 1.8, st.base)));
+      for (const [dx, r] of [[-12, 1.8], [11, 2.2], [14, 1.3]]) out.push(E(cx + dx, gy - r * 0.8, r, r * 0.8, st.base));
+      return out;
+    }
+    const k = [0, 0.55, 0.78, 1][stage];
+    const cy = gy - 11 * k;
+    out.push(E(cx + 8 * k, cy - 4 * k, 7.5 * k, 6.5 * k, st.sh));
+    out.push(E(cx, cy, 14 * k, 11 * k, st.base), F(E(cx - 4.5 * k, cy - 5 * k, 6 * k, 3 * k, st.hi)));
+    for (const [dx, dy, r] of [[-9, 3, 2.2], [9, 1, 2.6], [5, 7, 1.6], [-4, -7, 1.5]]) {
+      out.push(E(cx + dx * k, cy + dy * k, r * k, r * 0.85 * k, cu.base), F(E(cx + (dx - r * 0.3) * k, cy + (dy - r * 0.35) * k, r * 0.4 * k, r * 0.3 * k, '#fff0dc')));
+    }
+    out.push(...cuteFace(cx - 1 * k, cy + 1 * k, 3.4 * k, stage < 3 || blink ? 'shut' : 'happy', 2 * k, 'cat'));
+    if (stage === 3 && gem) {
+      const r = ramp(gem);
+      out.push(...crystal(cx + 7, 4, cy - 12, cy - 19, cy - 8, r, 1.5), ...crystal(cx + 11, 3, cy - 10, cy - 15, cy - 7, r, 2.5));
+    }
+    return out;
+  });
+}
+
+// The honey hive: a round straw skep on a little stump, with a face over its doorway and honey
+// running down its side when it's full.
+function cuteHiveArt(stage, blink) {
+  return art(`spot|cute|hive|${stage}|${blink ? 1 : 0}`, 38, 44, () => {
+    const cx = 19;
+    const gy = 43;
+    const wd = ramp('#c8935f');
+    const st = ramp('#f6c86e');
+    const out = [...mound(cx, gy, 10)];
+    out.push(T([[cx - 7, gy], [cx - 6, gy - 8], [cx + 6, gy - 8], [cx + 7, gy]], wd.base), E(cx, gy - 8, 6, 1.8, '#f0cf9a'), F(E(cx, gy - 8, 3.2, 0.9, wd.sh)));
+    // The skep's rings, widest at the bottom, each lit on top.
+    const rings = [[11.5, 5.6], [11, 5.4], [9.4, 5], [6.8, 4.6], [3.6, 3.6]];
+    let y = gy - 10;
+    for (const [w, h] of rings) {
+      out.push(E(cx, y - h / 2, w, h * 0.66, st.base), F(E(cx - w * 0.25, y - h * 0.68, w * 0.6, h * 0.22, st.hi)), F(arcBand(cx, y - h / 2, w, h * 0.66, 20, 160, 0.7, st.sh)));
+      y -= h - 0.6;
+    }
+    out.push(F(E(cx, y + 1, 1, 1.6, '#a87a5a')));
+    // The doorway, and the face over it.
+    const dy = gy - 13.5;
+    out.push(F(T([[cx - 3, dy + 2], [cx - 2.6, dy - 1.2], [cx, dy - 2.4], [cx + 2.6, dy - 1.2], [cx + 3, dy + 2]], '#6a3e34')));
+    out.push(...cuteFace(cx, gy - 21, 3.4, moodOf(stage, blink), 1.8, stage === 3 ? 'smile' : null));
+    const hy = ramp('#ffb020');
+    if (stage === 3) {
+      out.push(F(T([[cx + 4, gy - 22], [cx + 8, gy - 21], [cx + 8.6, gy - 15], [cx + 7.4, gy - 10.5], [cx + 6, gy - 14], [cx + 4.6, gy - 18]], hy.base)));
+      out.push(F(E(cx + 7.4, gy - 10, 1.8, 2.1, hy.base)), F(E(cx + 6.9, gy - 10.6, 0.6, 0.6, '#fff6d8')), F(E(cx + 6, gy - 19, 0.8, 1.6, hy.hi)));
+    } else if (stage > 0) out.push(F(E(cx, dy + 0.8, 0.8 + 0.7 * stage, 0.5 + 0.3 * stage, '#ffc83a')));
+    return out;
+  });
+}
+
+// The chopping tree: a chubby trunk with a face, a crown of round puffs with blossoms. Felled: a
+// dozing stump; growing back, a sapling.
+function cuteTreeArt(part, stage, blink) {
+  return art(`spot|cute|tree|${part}|${stage}|${blink ? 1 : 0}`, 64, 78, () => {
+    const cx = 32;
+    const gy = 77;
+    const br = ramp('#c88f62');
+    const cr = ramp('#8ad884');
+    const k = [0.3, 0.45, 0.72, 1][stage];
+    if (part === 'trunk') {
+      const out = [...mound(cx, gy, 13)];
+      if (stage === 0) {
+        out.push(T([[cx - 8, gy], [cx - 7, gy - 10], [cx + 7, gy - 10], [cx + 8, gy]], br.base), E(cx, gy - 10, 7, 2.4, '#f2d3a2'), F(arcBand(cx, gy - 10, 4.2, 1.4, 0, 360, 0.5, '#d9a874')));
+        out.push(...cuteFace(cx, gy - 5.4, 2.8, 'shut', 1.5));
+        return out;
+      }
+      const top = gy - 34 * k;
+      const w = 9 * Math.max(0.45, k);
+      out.push(T([[cx - w - 2.5, gy], [cx - w, gy - 3], [cx - w * 0.75, top], [cx + w * 0.75, top], [cx + w, gy - 3], [cx + w + 2.5, gy]], br.base));
+      out.push(F(T([[cx + w * 0.2, gy - 2], [cx + w * 0.35, top], [cx + w * 0.75, top], [cx + w, gy - 3], [cx + w + 1.5, gy - 0.5]], br.sh)));
+      out.push(F(R(cx - w * 0.55, top + 3, 1, Math.max(2, 34 * k - 8), br.hi)));
+      if (stage >= 2) out.push(...cuteFace(cx, gy - 14 * k, 3.6 * k, moodOf(stage, blink), 2.4 * k));
+      return out;
+    }
+    if (stage === 0) return [];
+    const cy = gy - 34 * k - 14 * k;
+    const out = [];
+    for (const [dx, dy, rx, ry, c] of [[-14, 5, 11, 9, cr.sh], [14, 4, 12, 9, cr.sh], [0, 0, 21, 15, cr.base], [-8, -11, 11, 9, cr.base], [8, -12, 12, 10, cr.base]]) {
+      out.push(E(cx + dx * k, cy + dy * k, rx * k, ry * k, c));
+    }
+    out.push(F(E(cx - 7 * k, cy - 13 * k, 6 * k, 3.6 * k, cr.hi)), F(E(cx - 15 * k, cy + 2 * k, 4 * k, 2.6 * k, mix(cr.base, cr.hi, 0.5))));
+    if (stage === 3) {
+      for (let i = 0; i < 7; i++) {
+        const bx = cx - 18 + hash(i * 3.1 + 2) * 36;
+        const by = cy - 12 + hash(i * 7.7 + 1) * 20;
+        for (let j = 0; j < 5; j++) out.push(F(E(bx + Math.cos((j * TAU) / 5) * 1.3, by + Math.sin((j * TAU) / 5) * 1.3, 1, 1, '#ffc6dc')));
+        out.push(F(E(bx, by, 0.7, 0.7, '#ffe36b')));
+      }
+    }
+    return out;
+  });
+}
+
+// The cherry tree: the same chubby trunk (no face), a round crown, and its cherries in pairs with
+// little faces, each pair swinging on its stem.
+function cuteCherryTreeArt(part, stage) {
+  return art(`spot|cute|ctree|${part}|${stage}`, 64, 66, () => {
+    const cx = 32;
+    const gy = 65;
+    if (part === 'trunk') {
+      const br = ramp('#c08a66');
+      return [...mound(cx, gy, 11), T([[cx - 7, gy], [cx - 4.6, gy - 4], [cx - 3.4, gy - 34], [cx + 3.4, gy - 34], [cx + 4.6, gy - 4], [cx + 7, gy]], br.base), F(T([[cx + 0.6, gy - 2], [cx + 1, gy - 34], [cx + 3.4, gy - 34], [cx + 4.6, gy - 4], [cx + 6, gy - 0.5]], br.sh)), F(R(cx - 2.4, gy - 30, 0.9, 22, br.hi))];
+    }
+    const cr = ramp('#8ad884');
+    const out = [];
+    for (const [dx, dy, rx, ry, c] of [[-15, 7, 11, 8.5, cr.sh], [15, 6, 11, 8.5, cr.sh], [0, 0, 22, 14, cr.base], [-9, -9, 11, 8.5, cr.base], [9, -10, 12, 9, cr.base]]) out.push(E(cx + dx, gy - 50 + dy, rx, ry, c));
+    out.push(F(E(cx - 7, gy - 62, 6, 3.4, cr.hi)));
+    if (stage === 3) for (let i = 0; i < 6; i++) out.push(F(E(cx - 18 + hash(i * 3.1) * 36, gy - 60 + hash(i * 7.7) * 14, 1.4, 1.2, '#ffc6dc')));
+    return out;
+  });
+}
+function cuteCherryArt(stage, blink) {
+  return art(`spot|cute|cherry|${stage}|${blink ? 1 : 0}`, 16, 18, () => {
+    if (stage === 0) return [];
+    const k = [0, 0.55, 0.78, 1][stage];
+    const c = ramp(stage === 3 ? '#ff5a78' : stage === 2 ? '#ff9a8a' : '#a6dc7e');
+    const out = [stem(8, 0.5, 4.6, 17 - 3.6 * k * 2, 0.8, '#6aa060'), stem(8, 0.5, 11.4, 17 - 3.6 * k * 2, 0.8, '#6aa060'), leaf(8, 1, 4, 1.4, -0.3, '#7fd07a')];
+    for (const sd of [-1, 1]) {
+      const fx = 8 + sd * 3.4;
+      const fy = 17 - 3.6 * k;
+      out.push(E(fx, fy, 3.6 * k, 3.6 * k, c.base), F(E(fx - 1.2 * k, fy - 1.3 * k, 1.1 * k, 0.8 * k, '#ffffff')));
+      if (stage === 3) out.push(...cuteFace(fx + 0.2, fy + 0.4, 1.1, blink ? 'shut' : 'open', 0.95, null));
+    }
+    return out;
+  });
+}
+
+// The moonpetal: a round sleepy flower whose petals open at night, a soft glow round it.
+function cuteMoonArt(stage, blink) {
+  return art(`spot|cute|moon|${stage}|${blink ? 1 : 0}`, 28, 34, () => {
+    const cx = 14;
+    const gy = 33;
+    const out = [...mound(cx, gy, 7), stem(cx, gy - 1, cx, gy - 15, 1.4, '#5a9a80'), ...heartLeaf(cx, gy - 5, 3.4, -2.6, '#6aa88a'), ...heartLeaf(cx, gy - 7, 3.4, -0.5, '#6aa88a')];
+    const r = ramp('#e2deff', 0.7);
+    const hy = gy - 19;
+    if (stage < 3) return [...out, E(cx, hy + 2, 2 + stage, 3 + stage, r.sh), F(E(cx - 0.8, hy, 0.8, 1.6, r.hi))];
+    for (let i = 0; i < 6; i++) {
+      const a = (i / 6) * TAU - Math.PI / 2;
+      out.push(E(cx + Math.cos(a) * 5.4, hy + Math.sin(a) * 5.4, 3.6, 3.6, i % 2 ? r.base : r.hi));
+    }
+    out.push(E(cx, hy, 4.4, 4.2, '#fff2b8'), ...cuteFace(cx, hy - 0.2, 1.7, blink ? 'shut' : 'happy', 1.15));
+    return out;
+  });
+}
+
+// Draws a picture hopping: lifted by dy and tilted about its foot.
+function hopped(ctx, x, y, dy, tilt, draw) {
+  rotated(ctx, x, y + 1, tilt, () => {
+    ctx.translate(0, snap(dy));
+    draw();
+  });
+}
+const CUTE = {
+  herb(ctx, x, y, s) {
+    const [dy, tilt] = s.ready ? hopOf(s.time, s.wx, 3.2, 3.2) : [0, 0];
+    const a = 0.04 * lean(s.time, s.wx) + 0.03 * s.jolt + tilt;
+    hopped(ctx, x, y, dy, a, () => staged(ctx, s.g, (st, al) => placeA(ctx, cuteCloverArt(st, s.blink), x, y + 1, al)));
+    if (s.ready) twinkle(ctx, x + 4, y - 32 + dy, s.time, s.wx, '#fff6c8');
+  },
+  moonpetal(ctx, x, y, s) {
+    if (s.ready) {
+      // The glow, breathing.
+      const k = 0.75 + 0.25 * Math.sin(s.time * 1.6 + s.wx * 0.03);
+      const g = ctx.createRadialGradient(x, y - 19, 1, x, y - 19, 16);
+      g.addColorStop(0, `rgba(226,222,255,${0.5 * k})`);
+      g.addColorStop(1, 'rgba(226,222,255,0)');
+      ctx.fillStyle = g;
+      ctx.fillRect(x - 16, y - 35, 32, 32);
+    }
+    const a = 0.05 * lean(s.time, s.wx, 0.2) + 0.03 * s.jolt + (s.ready ? 0.05 * Math.sin(s.time * 1.3 + s.wx * 0.02) : 0);
+    staged(ctx, s.g, (st, al) => rotated(ctx, x, y, a, () => placeA(ctx, cuteMoonArt(st, s.blink), x, y + 1, al)));
+    if (s.ready) {
+      twinkle(ctx, x + 8, y - 28, s.time, s.wx, '#e6e2ff', 1.1, 1.8);
+      twinkle(ctx, x - 7, y - 14, s.time + 0.9, s.wx + 3, '#fff2b8', 0.8, 2.2);
+    }
+  },
+  ore(ctx, x, y, s) {
+    const [dy, tilt] = s.ready ? hopOf(s.time, s.wx, 4, 2.4) : [0, 0];
+    hopped(ctx, x + s.jolt * 1.2, y, dy, tilt, () => staged(ctx, s.g, (st, al) => placeA(ctx, cuteRockArt(st, st === 3 ? s.gem : null, s.blink), x + s.jolt * 1.2, y + 1, al)));
+    if (!s.ready) return;
+    twinkle(ctx, x - 9, y - 12 + dy, s.time, s.wx, '#ffe0c4', 0.9, 2.4);
+    twinkle(ctx, x + 9, y - 10 + dy, s.time + 0.8, s.wx + 2, '#ffe0c4', 0.7, 2.4);
+    if (s.gem) twinkle(ctx, x + 9, y - 30 + dy, s.time + 0.6, s.wx + 9, s.gem, 1.1, 1.9);
+  },
+  honey(ctx, x, y, s) {
+    const [dy, tilt] = s.ready ? hopOf(s.time, s.wx, 3.8, 2.2) : [0, 0];
+    hopped(ctx, x, y, dy, tilt, () => staged(ctx, s.g, (st, al) => placeA(ctx, cuteHiveArt(st, s.blink), x, y + 1, al)));
+    const n = s.ready ? 2 : 1;
+    for (let i = 0; i < n; i++) {
+      const t = s.time * (1.1 + 0.25 * i) + i * 2.6 + s.wx * 0.01;
+      const bx = x + Math.cos(t) * (15 + 3 * i);
+      const by = y - 30 + Math.sin(t * 1.3) * 6 + Math.cos(t * 3.1) * 1.5;
+      const b = beeArt(Math.floor(s.time * 24 + i) % 2);
+      ctx.save();
+      if (Math.sin(t) < 0) {
+        ctx.translate(bx * 2, 0);
+        ctx.scale(-1, 1);
+      }
+      blit(ctx, b, bx - 3.5, by - 3, {});
+      ctx.restore();
+    }
+  },
+  wood(ctx, x, y, s) {
+    const sh = 0.03 * s.jolt;
+    if (s.fell > 0) {
+      placeA(ctx, cuteTreeArt('trunk', 0, true), x, y + 1, 1);
+      const k = s.fell * s.fell;
+      ctx.save();
+      ctx.globalAlpha *= 1 - soft((s.fell - 0.6) / 0.4);
+      rotated(ctx, x + s.dir * 3, y - 8, s.dir * k * 1.35, () => {
+        placeA(ctx, cuteTreeArt('trunk', 3, true), x, y + 1, 1);
+        placeA(ctx, cuteTreeArt('crown', 3, false), x, y + 1, 1);
+      });
+      ctx.restore();
+      return;
+    }
+    const wig = s.ready ? wiggleOf(s.time, s.wx) : 0;
+    const a = 0.015 * lean(s.time, s.wx, 0.1) + sh + wig;
+    rotated(ctx, x, y, sh * 0.4 + wig * 0.3, () => staged(ctx, s.g, (st, al) => placeA(ctx, cuteTreeArt('trunk', st, s.blink), x, y + 1, al)));
+    rotated(ctx, x, y - 20, a + 0.012 * lean(s.time, s.wx, 0.5), () => staged(ctx, s.g, (st, al) => placeA(ctx, cuteTreeArt('crown', st, false), x, y + 1, al)));
+  },
+  fruit(ctx, x, y, s) {
+    const wig = s.ready ? wiggleOf(s.time, s.wx, 4.6) : 0;
+    const a = 0.025 * lean(s.time, s.wx, 0.3) + 0.02 * s.jolt + wig;
+    staged(ctx, Math.min(1, s.g + 0.67), (st, al) => placeA(ctx, cuteCherryTreeArt('trunk', st), x, y + 1, al));
+    rotated(ctx, x, y - 30, a, () => staged(ctx, Math.max(0.67, s.g), (st, al) => placeA(ctx, cuteCherryTreeArt('crown', st), x, y + 1, al)));
+    [[-16, -42], [14, -44], [-2, -37]].forEach(([dx, dy], i) => {
+      if (s.picked && i === 2) return;
+      const fx = x + dx + a * dy;
+      const fy = y + dy;
+      const sw = 0.14 * Math.sin(s.time * 1.7 + s.wx * 0.05 + i * 1.9) + 0.1 * lean(s.time, s.wx, 0.5 + i * 0.1) + wig * 3;
+      rotated(ctx, fx, fy, sw, () => staged(ctx, s.g, (st, al) => placeA(ctx, cuteCherryArt(st, s.blink), fx, fy + 18, al)));
+    });
+    if (s.ready) twinkle(ctx, x + 12, y - 30, s.time, s.wx);
+  },
+};
+
 // How high each kind's hint floats.
 const HINT_Y = { fruit: 76, wood: 82, honey: 56, flower: 42, ore: 42, fiber: 40, herb: 36 };
 
@@ -717,6 +1069,7 @@ export function drawNodes(ctx, world, cam, time, front = false) {
   const here = !world.dead && !world.gathering ? nodeHere(world) : null;
   const work = world.gathering;
   const lp = work ? lifePose(world) : null;
+  const cute = world.map.look?.spots === 'cute';
   nodesOf(world).forEach((n, i) => {
     if (inFront(world, n, i) !== front) return;
     const x = snap(n.x - cam.x);
@@ -740,11 +1093,13 @@ export function drawNodes(ctx, world, cam, time, front = false) {
       time, wx: n.x, tier: tierOf(n, world.map.id), g, ready: g >= 1 && !worked, jolt: jolted(n, world.now),
       color: findColor(n, null), gem: gemId ? GEMS[gemId] : null, picked: worked && wlp.pose === 'pluck' && wlp.progress > 0.62,
       fell: worked && wlp.pose === 'chop' ? clamp01((wlp.progress - 0.78) / 0.22) : 0, dir: facing < 0 ? -1 : 1,
+      blink: cute && blinkAt(time, n.x),
     };
     // Once the tree has fallen it's a stump until it grows back.
     if (n.kind === 'wood' && worked && s.fell >= 1) s.g = 0;
     ctx.save();
-    (DRAW[kind] ?? DRAW[n.kind] ?? DRAW.herb)(ctx, x, y, s);
+    const set = cute ? CUTE : DRAW;
+    (set[kind] ?? set[n.kind] ?? DRAW[kind] ?? DRAW[n.kind] ?? DRAW.herb)(ctx, x, y, s);
     ctx.restore();
     if (here?.i === i) {
       const ready = nodeReady(world, i);

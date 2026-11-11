@@ -75,7 +75,7 @@ test('a new character can play the tutorial island from the beach to Sprout Vill
   acceptQuest(c, 'tut_practice');
   run(w, idle, 0.1);
   assert.equal(step(w), 11, 'took the practice quest');
-  // Fight the Kitsune Kits and pick up their fluff.
+  // Fight the Blossom Kits and pick up their fluff.
   for (let n = 0; n < 40 && step(w) < 13; n++) {
     const m = w.mobs.find((o) => o.hp > 0);
     if (m) w.body.x = m.x - 20 * (w.body.facing || 1);

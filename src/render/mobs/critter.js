@@ -1,7 +1,7 @@
 // Shared drawing helpers for the creature-first dungeon monsters (the dungeon monster redesign,
 // 2026-11-03: chibi creatures with their own silhouettes, not costumed girls on one rig). Built on
 // the field monsters' kit (meadow.js ramps, crescents, chains) and the simple faces (faces.js), so
-// they sit in the same world as the Moss Tortoise and the Kitsune Kit.
+// they sit in the same world as the Bud Snail and the Blossom Kit.
 
 import { E, T, F, R, mix, sparkLine } from './kit.js';
 import { ramp, crescent, shine, smear, chain, wave, smooth, breath, sway } from './meadow.js';

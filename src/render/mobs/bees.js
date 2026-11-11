@@ -1,8 +1,8 @@
 // Monster art: Petal Meadow's new residents (the player's picks, 2026-11-01).
-//   bumble       Bumble: a chubby little bee from the giant hive, all fuzz and big shiny eyes,
-//                its wings a buzzing blur. It stings by curling its striped tail under and diving.
-//   petalsprite  Petal Sprite: a tiny blossom fairy drifting on the Petal Clouds, a cherry bloom
-//                for a hat, a petal skirt and petal wings; shy, sleepy-eyed, it flings petals.
+//   bumble       Puffbee: a round fuzzy pom-pom of a bee from the giant hive, its face on the front
+//                of the ball; it bobs on every wingbeat and bonks you in a tumbling dive.
+//   petalsprite  Dandelion Puff: a fluffy dandelion clock drifting on the breeze, a little face
+//                in its heart; it sneezes a spray of parachute seeds at you.
 //   queenbee     The Queen Bee (Petal Meadow's area boss): a big, haughty, very round queen in a
 //                honeycomb crown and a lace ruff, lacy wings, a long striped train of a tail and a
 //                honey dipper for a scepter, which she brings down in a splash of honey.
@@ -83,7 +83,7 @@ const FUZZ = ramp('#fff1cc', { step: 6, turn: 30 });
 const WING = '#dff2ff';
 const WINGV = '#a9c8ea';
 
-// The bee's face shared by Bumble and the Queen: simple eyes and mouth acting each mood, cheeks,
+// The bee's face shared by the Puffbee and the Queen: simple eyes and mouth acting each mood, cheeks,
 // and the little acting marks.
 function beeFace(out, hx, hy, k, mood, attacking, { queen = false } = {}) {
   const dead = mood === 'dead';
@@ -95,7 +95,7 @@ function beeFace(out, hx, hy, k, mood, attacking, { queen = false } = {}) {
   const far = [hx - 0.4 * k, ey];
   const near = [hx + 3.4 * k, ey - 0.2 * k];
   const em = angry ? 'angry' : hurt ? 'hurt' : happy ? 'happy' : mood === 'blink' ? 'blink' : 'idle';
-  // A Bumble's eyes are round and warm honey; the queen's narrower, violet, lashed with a wing.
+  // A Puffbee's eyes are round and warm honey; the queen's narrower, violet, lashed with a wing.
   const eo = queen ? { iris: '#a04ad0', ink, lash: 1.25, wing: 1 } : { iris: '#c98a2e', ink, lash: 1 };
   const [fw, fh, nw, nh] = queen ? [1.4, 1.8, 1.8, 2.1] : [1.5, 1.9, 1.9, 2.3];
   if (dead) out.push(...deadEye(far[0], far[1], 1.4 * k, { type: 'swirl', s: -1, c: ink }), ...deadEye(near[0], near[1], 1.7 * k, { type: 'swirl', c: ink }));
@@ -108,224 +108,208 @@ function beeFace(out, hx, hy, k, mood, attacking, { queen = false } = {}) {
   if (hurt) out.push(...sweat(hx - 4.4 * k, hy - 3 * k, 1 * k), ...tear(near[0] + 0.8 * k, ey + 2.2 * k, 0.8 * k, { type: 'stream', len: 2 * k }));
 }
 
-// ---------- Bumble ----------
+// ---------- Puffbee (bumble) ----------
+// (Petal Meadow's new cast, 2026-11-11: replaced the Bumble.) A round fuzzy pom-pom of a bee, all
+// one ball: its face on the front, cocoa stripes round its back, a soft ring of cream fluff
+// tufts for an edge, tiny buzzing wings and pom-tipped antennae. It bobs on every wingbeat; to
+// attack it rears back, tumbles into a dive and bonks you head first, its stinger sparking.
 
-// Attack: a sting. curl: the tail curled under (deg), bx/by: body shift, rot: body tilt (+ nose
-// down), arms: little arms flung, imp: the sting's spark.
-const BUM_ATK = [
-  // Wind-up (held): reared back, tail curled under and aimed, arms up.
-  { curl: 38, bx: -2.2, by: -1.4, rot: -14, arms: 1, imp: 0 },
-  // Dive: thrown forward and down, the stinger leading (a smear behind).
-  { curl: 52, bx: 2.6, by: 1.6, rot: 16, arms: -0.6, imp: 0 },
-  // Impact (held): the sting lands, a spark at its point.
-  { curl: 56, bx: 3, by: 2, rot: 20, arms: -0.8, imp: 1 },
-  // Recover: bobbing back up, tail uncurling past rest.
-  { curl: 8, bx: 0.4, by: -0.4, rot: -3, arms: 0.3, imp: 0 },
+// Attack: the bonk dive. rot: ball roll (deg, + nose down), bx/by: shift, ant: antennae swept
+// back (deg), imp: impact spark.
+const PUFF_ATK = [
+  // Wind-up (held): rolled back, rising, antennae swept back, wings a blur.
+  { rot: -26, bx: -2.4, by: -2.4, ant: 30, imp: 0 },
+  // Dive: tumbling forward and down (a smear behind).
+  { rot: 34, bx: 3, by: 2.6, ant: -10, imp: 0 },
+  // Impact (held): the bonk, a spark at its nose.
+  { rot: 22, bx: 3.6, by: 3, ant: -18, imp: 1 },
+  // Recover: bobbing back, rolling upright past rest.
+  { rot: -5, bx: 0.4, by: -0.6, ant: 8, imp: 0 },
 ];
+
+// An attack pose between keys (an art with `atkTween`): frame f = key + quarters; each key holds
+// for the first part of its beat, then eases into the next (or back to rest after the last).
+function atkPose(table, f, rest) {
+  const k = Math.floor(f);
+  const u = Math.max(0, Math.min(1, (f - k - 0.25) / 0.75));
+  const e = u * u * (3 - 2 * u);
+  const a = table[k];
+  const b = table[k + 1] ?? rest;
+  const out = {};
+  for (const key of Object.keys(a)) out[key] = a[key] + ((b[key] ?? a[key]) - a[key]) * e;
+  return out;
+}
 
 function bumble(pose, f, mood) {
   const walk = pose === 'walk';
   const idle = pose === 'idle';
-  const A = pose === 'attack' ? BUM_ATK[f] : null;
+  const A = pose === 'attack' ? atkPose(PUFF_ATK, f, { rot: 0, bx: 0, by: 0, ant: 0, imp: 0 }) : null;
+  const fk = Math.floor(f);
   const q = walk ? f / 8 : idle ? f / 6 : 0;
   const dead = mood === 'dead';
   const hurt = mood === 'hurt';
   const angry = mood === 'angry';
   const out = [];
-  // Flight: a quick bob twice a loop (each wingbeat pair lifts it), a wobble that lags behind;
-  // idle, a lazy hover with a breath. The wings blur: up on even frames, down on odd.
+  // Flight: a little lift on every wingbeat pair (two bobs a loop) with a lagging roll; idle, a
+  // lazy hover that breathes. Dead, it lies belly up.
   const br = idle ? breath(q) : 0;
-  const bob = dead ? 3 : A ? A.by : walk ? -1.6 * Math.sin(2 * TAU * q) : -br * 1.8 + sway(q) * 0.9;
-  const bx = 15 + (A ? A.bx : 0) + (hurt ? -1.6 : 0) + (walk ? 0.5 * Math.sin(TAU * q - 1) : 0);
-  const by = 17 + bob;
-  const rot = dead ? 160 : A ? A.rot : hurt ? -10 : walk ? 4 + 5 * Math.sin(2 * TAU * q - 1.2) : sway(q) * 5;
-  const up = Math.round(f) % 2 === 0;
-  const flap = dead ? -10 : hurt ? -70 : up ? -78 : -18;
+  const bob = dead ? 5 : A ? A.by : walk ? -1.8 * Math.abs(Math.sin(2 * TAU * q)) + 0.6 : -br * 1.8 + sway(q) * 0.8;
+  const bx = 16 + (A ? A.bx : 0) + (hurt ? -1.6 : 0) + (walk ? 0.6 * Math.sin(TAU * q - 1) : 0);
+  const by = 16 + bob;
+  const rot = dead ? 180 : A ? A.rot : hurt ? -14 : walk ? 6 * Math.sin(2 * TAU * q - 1.4) : sway(q) * 6;
+  const up = Math.floor(f * 2) % 2 === 0;
+  const flap = dead ? 20 : hurt ? -60 : up ? -70 : -10;
+  const R0 = 8.6;
 
-  // Far wings (behind everything), a lighter blur copy where the wing was.
-  const W = (dx, dg, k) => wing(bx + dx, by - 5, -90 + flap * 0.6 + dg - 40, 9 * k, 3.4 * k, WING, WINGV);
-  if (!dead) out.push(...wing(bx - 1, by - 5, -90 + (up ? -18 : -78) * 0.6 - 30, 8, 3, mix(WING, '#ffffff', 0.6), mix(WINGV, '#ffffff', 0.6)));
-  out.push(...W(-1.4, 6, 0.9));
+  // Far wing behind the ball.
+  if (!dead) out.push(...wing(bx - 3.6, by - R0 + 2.6, -90 + flap * 0.6 - 40, 6.4, 2.6, WING, WINGV));
 
-  // The tail: a striped round abdomen hung off the thorax, curling under to sting.
-  const curl = (A ? A.curl : angry ? 14 : 0) + (walk ? 4 * Math.sin(2 * TAU * q - 2) : 0);
-  const tail = [];
-  const tx = bx - 6.6;
-  const ty = by + 1.6;
-  tail.push(E(tx, ty, 7, 6.2, HONEY.base), stripe(tx, ty, 7, 6.2, tx - 3.4, tx - 1.4, COCOA.base), stripe(tx, ty, 7, 6.2, tx + 0.6, tx + 2.6, COCOA.base),
-    crescent(tx, ty, 7, 6.2, HONEY.sh, { k: 0.3, a0: 50, a1: 220 }), shine(tx, ty, 7, 6.2, HONEY.hi, 0, 1));
-  const tip = curl > 30 || dead ? 0 : 1;
-  tail.push(F(T([[tx - 6.6, ty - 1], [tx - 9.6 - tip, ty + 0.4], [tx - 6.4, ty + 1.6]], COCOA.deep)));
-  out.push(...spin(tail, bx - 1, by, curl + rot * 0.6));
-
-  // Legs: three little pairs dangling, swinging a beat behind the bob.
-  const swing = walk ? Math.sin(2 * TAU * q - 2.4) * 1.2 : sway(q) * 0.6;
-  for (const [x, k] of [[-1.6, 0.8], [0.8, 1], [3, 0.9]]) {
-    const top = [bx + x, by + 4];
-    const foot = [bx + x - 0.6 + swing * k, by + 8 + (A ? -1.4 : 0)];
-    out.push(...stroke([top, [lerp(top[0], foot[0], 0.5) + 0.6, lerp(top[1], foot[1], 0.5)], foot], 0.9, COCOA.base, false), F(E(foot[0], foot[1] + 0.3, 0.8, 0.6, COCOA.sh)));
-  }
-
-  // The thorax: a fuzzy cream collar ringed in tufts round the front of the body.
-  const thor = [E(bx, by, 5.6, 5.4, HONEY.base), crescent(bx, by, 5.6, 5.4, HONEY.sh, { k: 0.3, a0: 60, a1: 210, jag: 0.5 })];
-  for (let i = 0; i < 7; i++) {
-    const a = (-30 + i * 32) * D2R;
-    thor.push(E(bx + 1.6 + Math.cos(a) * 4, by - 2.6 + Math.sin(a) * 1.6, 2.2, 1.8, i % 2 ? FUZZ.base : FUZZ.hi));
-  }
-  thor.push(crescent(bx + 1.6, by - 2, 5, 2.2, FUZZ.sh, { k: 0.4, a0: 70, a1: 160 }));
-  out.push(...spin(thor, bx, by, rot * 0.5));
-
-  // Arms: tiny, rubbing together when idle, flung up winding up a sting.
-  const rub = idle ? Math.sin(TAU * q * 2) * 0.8 : 0;
-  const ar = A ? A.arms : hurt ? 1 : 0;
-  for (const [dx, k] of [[2.4, 1], [4.6, -1]]) {
-    const sh = [bx + dx, by + 1];
-    const hand = [sh[0] + 2 + rub * k * 0.6, sh[1] + 2.4 - ar * 4.4];
-    out.push(...stroke([sh, hand], 1, COCOA.base, false), E(hand[0], hand[1], 1, 1, COCOA.sh));
-  }
-
-  // The head: a big honey-cream ball with cocoa cheeks of fuzz, antennae on top with pink pom tips
-  // that bob a beat behind everything.
-  const hx = bx + 6.4;
-  const hy = by - 5.4 + (walk ? -0.4 * Math.sin(2 * TAU * q - 1.4) : 0);
-  const head = [];
+  // The ball: honey with a cocoa stripe band round the back, a stinger nub, and a ring of fluff.
+  const ball = [];
+  ball.push(E(bx, by, R0, R0 * 0.95, HONEY.base));
+  ball.push(stripe(bx, by, R0, R0 * 0.95, bx - 6.6, bx - 4.8, COCOA.base), stripe(bx, by, R0, R0 * 0.95, bx - 3.2, bx - 1.6, COCOA.base));
+  ball.push(F(T([[bx - R0 + 0.4, by - 1], [bx - R0 - 3.2, by + 0.6], [bx - R0 + 0.6, by + 1.8]], COCOA.deep)));
+  ball.push(crescent(bx, by, R0, R0 * 0.95, HONEY.sh, { k: 0.28, a0: 40, a1: 200, jag: 0.8 }));
+  // A clean cream face patch on the front, and a little tuft of fluff on top.
+  ball.push(E(bx + 2.6, by - 0.2, 5.4, 5, FUZZ.base), crescent(bx + 2.6, by - 0.2, 5.4, 5, FUZZ.sh, { k: 0.22, a0: 80, a1: 200 }));
+  for (const [dx, r] of [[-1.6, 1.6], [0.2, 2], [2, 1.5]]) ball.push(E(bx + dx, by - R0 + 0.4, r, r * 0.85, FUZZ.hi));
+  ball.push(shine(bx, by, R0, R0 * 0.95, '#ffffff', 0, 1.1));
+  // Little feet tucked under.
+  for (const x of [-1.6, 2.2]) ball.push(E(bx + x, by + R0 + 0.2, 1.3, 1, COCOA.base));
+  // Antennae: two chains from the top, pom tips, swept back with the roll and a beat behind.
   const aph = walk ? 2 * TAU * q - 2.6 : TAU * q - 1.4;
-  const droop = dead ? 70 : hurt ? 40 : angry ? -10 : 0;
-  for (const [x, a0, near] of [[-1.6, -112, false], [1.6, -70, true]]) {
-    const pts = chain(hx + x, hy - 5.6, a0 + droop * (near ? 1 : 0.7), [2.6, 2.6, 2.4], (i) => (i ? 14 : 0) + wave(aph + (near ? 0 : 0.8), idle ? 6 : 9)(i));
-    head.push(...stroke(pts.map(([x2, y2]) => [x2, y2]), 0.7, COCOA.base, false));
+  const sweep = (A ? A.ant : 0) + (dead ? 50 : hurt ? 34 : angry ? -12 : 0);
+  for (const [x, a0, near] of [[0.4, -108, false], [3.4, -74, true]]) {
+    const pts = chain(bx + x, by - R0 + 0.6, a0 - sweep * (near ? 0.7 : 1), [2.4, 2.4, 2.2], (i) => (i ? 12 : 0) + wave(aph + (near ? 0 : 0.8), idle ? 7 : 10)(i));
+    ball.push(...stroke(pts.map(([x2, y2]) => [x2, y2]), 0.7, COCOA.base, false));
     const t = pts.at(-1);
-    head.push(E(t[0], t[1], 1.4, 1.4, near ? '#ff9ec7' : '#f088b4'), F(E(t[0] + 0.4, t[1] - 0.5, 0.5, 0.4, '#ffe0ee')));
+    ball.push(E(t[0], t[1], 1.4, 1.4, near ? '#ff9ec7' : '#f088b4'), F(E(t[0] - 0.4, t[1] - 0.5, 0.5, 0.4, '#ffe0ee')));
   }
-  head.push(E(hx, hy, 7, 6.6, FUZZ.base), crescent(hx, hy, 7, 6.6, FUZZ.sh, { k: 0.3, a0: 100, a1: 230, jag: 0.5 }), shine(hx, hy, 7, 6.6, '#ffffff', 0, 1.1));
-  // A honey-gold forelock of fuzz.
-  head.push(F(T([[hx - 3.6, hy - 5.4], [hx - 1.4, hy - 7.4], [hx + 0.4, hy - 5.8], [hx + 2, hy - 7.2], [hx + 3.4, hy - 5.2], [hx + 0.2, hy - 4.2]], HONEY.base)));
-  beeFace(head, hx - 0.8, hy, 1, mood, Boolean(A) && f < 3);
-  out.push(...spin(head, bx, by, rot * 0.35));
+  // The face on the front of the ball.
+  beeFace(ball, bx + 1.4, by - 1.2, 1.05, mood, Boolean(A) && fk < 3);
+  out.push(...spin(ball, bx, by, rot));
 
-  // Near wings, blurred: the wing where it is and a pale ghost of where it was.
-  if (!dead) out.push(...wing(bx + 1.4, by - 5.4, -90 + (up ? -18 : -78) * 0.6 - 18, 9, 3.2, mix(WING, '#ffffff', 0.55), mix(WINGV, '#ffffff', 0.55)));
-  out.push(...wing(bx + 1.4, by - 5.4, -90 + flap * 0.6 - 26, 10, 3.6, WING, WINGV));
+  // Near wing, blurred: where it is and a pale ghost of where it was.
+  if (!dead) {
+    out.push(...wing(bx - 2, by - R0 + 2.2, -90 + (up ? -10 : -70) * 0.6 - 30, 6.8, 2.6, mix(WING, '#ffffff', 0.55), mix(WINGV, '#ffffff', 0.55)));
+    out.push(...wing(bx - 2, by - R0 + 2.2, -90 + flap * 0.6 - 36, 7.6, 3, WING, WINGV));
+  }
 
-  let shapes = out;
-  if (A && f === 1) shapes.push(smear([[bx - 14, by - 8], [bx - 6, by - 2], [bx + 2, by + 6]], 4, '#fff2c0'));
-  if (A?.imp) shapes.push(...star(bx - 2, by + 11, 3, '#ffd65a'), ...star(bx + 3, by + 9, 1.6, '#ffffff', '#ffd65a'));
-  return { w: 34, h: 32, res: 3, shapes: shift(shapes, 2, 4) };
+  if (A && fk === 1) out.push(smear([[bx - 13, by - 9], [bx - 6, by - 4], [bx + 1, by + 3]], 4, '#fff2c0'));
+  if (A && fk === 2) out.push(...star(bx + R0 + 1.6, by + 3, 3, '#ffd65a'), ...star(bx + R0 - 1, by + 7.4, 1.6, '#ffffff', '#ffd65a'));
+  if (hurt) out.push(E(bx - 9, by - 7, 1, 0.8, FUZZ.hi), E(bx - 11, by - 3, 0.8, 0.7, FUZZ.base));
+  return { w: 34, h: 32, res: 3, shapes: shift(out, 2, 4) };
 }
 
-// ---------- Petal Sprite ----------
+// ---------- Dandelion Puff (petalsprite) ----------
+// (Petal Meadow's new cast, 2026-11-11: replaced the Petal Sprite.) A fluffy white dandelion
+// clock drifting on the breeze: a ball of seed fluff, fine seed lines radiating from a little
+// yellow-green heart that wears its face, two leaf arms and a stem dangling below. It bobs and
+// drifts; to attack it breathes in (leaning back), then sneezes a spray of parachute seeds at you.
+// Hit, a few seeds are knocked loose; dead, it is blown nearly bald and droops.
 
-// Attack: a flung petal. arm: the throwing arm (deg from down, + forward), lean: body lean, pet:
-// the thrown petal [dx, dy, size] from the hand (null while held), burst: petals scattering.
-const SPRITE_ATK = [
-  // Wind-up (held): leaning back, the petal drawn back behind her head.
-  { arm: -150, lean: -10, pet: null, burst: 0 },
-  // Fling: whipped forward, the petal away (a smear behind it).
-  { arm: 40, lean: 12, pet: [9, 2, 2.4], burst: 0 },
-  // Impact (held): the petal bursts into a puff of petals.
-  { arm: 60, lean: 8, pet: [14, 4, 0], burst: 1 },
-  // Recover: settling back, hands to her cheeks, a little embarrassed.
-  { arm: -20, lean: -2, pet: null, burst: 0 },
+// Attack: the seed sneeze. lean: body lean (deg, + forward), by: rise, arms: leaf arms raised (0
+// down, 1 up), spray: seeds flown out (0 none, 1 far), mouth: 0 shut, 1 sneezing.
+const PUFF_SEED_ATK = [
+  // Wind-up (held): leaning back, rising, arms up, breathing in, eyes squeezed.
+  { lean: -16, by: -1.6, arms: 1, spray: 0, mouth: 0 },
+  // Sneeze: thrown forward, the seeds bursting out ahead.
+  { lean: 18, by: 1, arms: -0.4, spray: 0.45, mouth: 1 },
+  // Impact (held): the seeds at full spread, a star among them.
+  { lean: 12, by: 0.6, arms: -0.2, spray: 1, mouth: 1 },
+  // Recover: settling back, sniffling, the last seeds drifting off.
+  { lean: -3, by: 0, arms: 0.2, spray: 1.3, mouth: 0 },
 ];
 
-const PINK = ramp('#ffb7d3', { step: 9, turn: 18, sat: 4 });
-const SKIN = ramp('#fff0ea', { step: 6, turn: 40 });
+const FLUFF = ramp('#fbf8ff', { step: 7, turn: 40 });
+const CORE = ramp('#d8e88a', { step: 9, turn: 14 });
+const STEMC = ramp('#8fcf86', { step: 10, turn: 16 });
+
+// One parachute seed: a slim stalk with a little fan of fluff on top, along angle deg.
+function seed(x, y, deg, len, c, k = 1) {
+  const a = deg * D2R;
+  const tx = x + Math.cos(a) * len;
+  const ty = y + Math.sin(a) * len;
+  const o = [...stroke([[x, y], [tx, ty]], 0.4 * k, mix(c, '#b8b0c8', 0.5), false), E(x, y, 0.5 * k, 0.5 * k, '#c8a878')];
+  for (const d of [-40, -20, 0, 20, 40]) {
+    const b = a + d * D2R;
+    o.push(...stroke([[tx, ty], [tx + Math.cos(b) * 1.8 * k, ty + Math.sin(b) * 1.8 * k]], 0.35 * k, c, false));
+  }
+  o.push(F(E(tx + Math.cos(a) * 0.9 * k, ty + Math.sin(a) * 0.9 * k, 1.3 * k, 1.1 * k, mix(c, '#ffffff', 0.4))));
+  return o;
+}
 
 function petalsprite(pose, f, mood) {
   const walk = pose === 'walk';
   const idle = pose === 'idle';
-  const A = pose === 'attack' ? SPRITE_ATK[f] : null;
+  const A = pose === 'attack' ? atkPose(PUFF_SEED_ATK, f, { lean: 0, by: 0, arms: 0, spray: 1.6, mouth: 0 }) : null;
+  const fk = Math.floor(f);
   const q = walk ? f / 8 : idle ? f / 6 : 0;
   const dead = mood === 'dead';
   const hurt = mood === 'hurt';
+  const angry = mood === 'angry';
+  const happy = mood === 'happy';
   const out = [];
-  // A slow drifting float: she rises and sinks once a loop, swaying like a falling petal; her
-  // wings beat slowly (open, closing, closed, opening).
+  // Drifting: a soft rise and fall once a loop with a slower sway (it rides the breeze), idle a
+  // breathing hover; dead, it sinks low and droops.
   const br = idle ? breath(q) : 0;
-  const bob = dead ? 5 : walk ? -2.4 * Math.sin(TAU * q) : -br * 2.2;
-  const x0 = 16 + (walk ? 1.2 * Math.sin(TAU * q - 1.6) : 0) + (hurt ? -1.4 : 0);
-  const y0 = 24 + bob;
-  const lean = dead ? 70 : A ? A.lean : hurt ? -14 : walk ? 6 + 6 * Math.sin(TAU * q - 1.6) : sway(q) * 7;
-  const beat = walk ? Math.sin(TAU * q * 2) : Math.sin(TAU * q);
-  const open = dead ? 0.2 : hurt ? 1 : 0.55 + 0.45 * beat;
-  const WP = mix(PINK.hi, '#ffffff', 0.35);
+  const bob = dead ? 7 : (A ? A.by : 0) + (walk ? -1.6 * Math.sin(TAU * q) : -br * 1.6 + sway(q) * 0.8);
+  const cx = 18 + (walk ? 0.8 * Math.sin(TAU * q - 1.2) : 0) + (hurt ? -1.4 : 0);
+  const cy = 15 + bob;
+  const lean = (A ? A.lean : 0) + (dead ? 24 : hurt ? -12 : walk ? 5 * Math.sin(TAU * q - 1.8) : sway(q) * 4);
+  const R0 = dead ? 5.4 : 9;
 
-  // Petal wings from her back (behind her, to the left), an upper and a lower pair, beating slowly.
-  const back = [x0 - 2.4, y0 - 1.6];
-  const wings = (k, c) => [
-    ...wing(back[0], back[1], -150 + 34 * (1 - open), 9 * k, 3.2 * k, c, '#ffffff'),
-    ...wing(back[0], back[1] + 1.4, 165 - 26 * (1 - open), 6.4 * k, 2.4 * k, c, '#ffffff'),
-  ];
-  out.push(...spin(wings(0.85, mix(WP, PINK.base, 0.35)), x0, y0, lean));
+  // The stem dangling below, swaying a beat behind (a chain), with a tiny leaf on it.
+  const sph = walk ? TAU * q - 2.4 : TAU * q - 1.6;
+  const st = chain(cx + 0.6, cy + R0 - 1.4, 94 - lean * 0.6, [3.4, 3.2, 3], (i) => wave(sph, dead ? 0 : idle ? 9 : 12)(i) + (dead ? 10 : 0));
+  out.push(...stroke(st.map((p) => p.slice(0, 2)), 1.1, STEMC.base, false));
+  // Its leaf arms grow from the stem just under the ball: raised winding up, flung down sneezing.
+  const ar = A ? A.arms : hurt ? 0.6 : dead ? -1 : 0;
+  const wv = idle ? Math.sin(TAU * q * 2) * 8 : walk ? Math.sin(TAU * q * 2 - 1) * 10 : 0;
+  const lb = st[1];
+  out.push(petal(lb[0], lb[1], 200 - ar * 45 + wv, 5, 1.7, STEMC.sh, false), petal(lb[0], lb[1], -20 + ar * 45 - wv, 5.2, 1.8, STEMC.base, false));
 
-  const body = [];
-  // Legs: two tiny ones dangling under the skirt, kicking a little as she drifts.
-  const kick = walk ? Math.sin(TAU * q - 2) * 1.2 : 0.4 * sway(q);
-  body.push(...stroke([[x0 - 1, y0 + 4], [x0 - 1.6 + kick, y0 + 8.4]], 1.1, SKIN.sh, false), ...stroke([[x0 + 1.2, y0 + 4], [x0 + 1.6 - kick, y0 + 8.8]], 1.1, SKIN.base, false),
-    F(E(x0 - 1.6 + kick, y0 + 8.7, 1, 0.8, PINK.sh)), F(E(x0 + 1.6 - kick, y0 + 9.1, 1, 0.8, PINK.base)));
-  // The petal skirt: five petals hanging from the waist, back ones darker, hems swinging late.
-  const hem = walk ? Math.sin(TAU * q - 2.4) * 8 : sway(q - 0.2) * 5;
-  [[140, PINK.sh], [40, PINK.sh], [115, PINK.base], [65, PINK.base], [90, PINK.hi]].forEach(([a, c]) => body.push(petal(x0, y0 + 0.6, a + hem * 0.3, 6, 3, c)));
-  body.push(E(x0, y0 - 0.4, 2.8, 2.6, SKIN.base), crescent(x0, y0 - 0.4, 2.8, 2.6, SKIN.sh, { k: 0.3, a0: 100, a1: 220 }));
-  out.push(...spin(body, x0, y0, lean * 0.6));
+  const ball = [];
+  // The seed ball: a soft white sphere, a tufted rim of fluff, fine seed lines from the heart, and
+  // the shade on its underside.
+  // A soft airy ball (pale, its underside lilac), then the seeds: fine lines from the heart that
+  // poke out past it, each ending in a tiny tuft of fluff, so the edge is a fuzzy halo of seeds.
+  ball.push(E(cx, cy, R0 - 1, R0 * 0.96 - 1, mix(FLUFF.base, '#ffffff', 0.3)), crescent(cx, cy, R0 - 1, R0 * 0.96 - 1, mix(FLUFF.sh, '#e6dcf4', 0.5), { k: 0.3, a0: 20, a1: 160 }));
+  const n = dead ? 6 : 22;
+  for (let i = 0; i < n; i++) {
+    const a = (i / n) * TAU + 0.15 + (i % 2) * 0.06;
+    const r = R0 + (i % 3 === 0 ? 1.2 : i % 3 === 1 ? 0.2 : 0.7);
+    const ex = cx + Math.cos(a) * r;
+    const ey = cy + Math.sin(a) * r * 0.96;
+    ball.push(...stroke([[cx + Math.cos(a) * 1.4, cy + Math.sin(a) * 1.4], [ex, ey]], 0.3, mix(FLUFF.sh, '#c8c0d8', 0.5), false));
+    ball.push(E(ex, ey, 1.05, 1.05, Math.sin(a) < -0.3 ? '#ffffff' : FLUFF.base));
+  }
+  ball.push(shine(cx, cy, R0 - 1, R0 - 1, '#ffffff', 0, 1.1));
+  // The heart and its face.
+  const hx = cx + 1.2;
+  const hy = cy + 1;
+  ball.push(E(hx, hy, 4.4, 4, CORE.base), crescent(hx, hy, 4.4, 4, CORE.sh, { k: 0.28, a0: 60, a1: 200 }), shine(hx, hy, 4.4, 4, CORE.hi, 0, 1));
+  const ink = '#3a3040';
+  const em = A && !hurt ? (fk === 0 ? 'hurt' : 'angry') : { idle: 'idle', angry: 'angry', hurt: 'hurt', happy: 'happy', blink: 'blink' }[mood] ?? 'idle';
+  if (dead) ball.push(...deadEye(hx - 1.4, hy - 0.4, 1, { c: ink, th: 0.45 }), ...deadEye(hx + 1.8, hy - 0.4, 1.1, { c: ink, th: 0.45 }));
+  else ball.push(...simpleEye(hx - 1.4, hy - 0.5, { iris: '#7a8a3a', ink, s: -1, w: 1.2, h: 1.6, mood: em }), ...simpleEye(hx + 1.8, hy - 0.6, { iris: '#7a8a3a', ink, s: 1, w: 1.4, h: 1.8, mood: em }));
+  if (!dead) ball.push(...cheek(hx - 2.8, hy + 1.6, 0.8, { on: CORE.base }), ...cheek(hx + 3.1, hy + 1.6, 0.85, { on: CORE.base }));
+  const sneeze = A && A.mouth > 0.5;
+  ball.push(...simpleMouth(hx + 0.3, hy + 2, { k: 0.75, mood: dead ? 'dead' : sneeze ? 'shout' : angry ? 'angry' : happy ? 'happy' : hurt ? 'hurt' : 'idle', lip: '#6a5040' }));
+  if (hurt) ball.push(...tear(hx + 2.4, hy + 0.8, 0.7, { type: 'stream', len: 2 }), ...sweat(hx - 4, hy - 2.6, 0.8));
+  if (angry && !A) ball.push(...vein(hx - 3.2, hy - 3, 0.7));
+  out.push(...spin(ball, cx, cy + 3, lean));
 
-  // Arms: the far one tucked, the near one waving, or throwing.
-  const armA = A ? A.arm : hurt ? -140 : idle ? -30 + 20 * Math.sin(TAU * q) : -10 + 8 * Math.sin(TAU * q - 1);
-  const sh = [x0 + 1.6, y0 - 1.6];
-  const hand = [sh[0] + Math.sin(armA * D2R) * 4.6, sh[1] + Math.cos(armA * D2R) * 4.6];
-  const armShapes = [...stroke([sh, hand], 1.2, SKIN.base, false), E(hand[0], hand[1], 1, 1, SKIN.base)];
-  if (A && !A.pet) armShapes.push(petal(hand[0], hand[1], -60, 3.6, 1.8, PINK.base, false));
-  out.push(...spin([...stroke([[x0 - 1.4, y0 - 1.6], [x0 - 2.6, y0 + 1.8]], 1.2, SKIN.sh, false)], x0, y0, lean * 0.6));
-
-  // The head: big and round (she is a chibi), under a cherry-bloom hat with petal bangs.
-  const hx = x0 + 1;
-  const hy = y0 - 9.6 + (walk ? -0.5 * Math.sin(TAU * q - 2.2) : 0);
-  const head = [];
-  head.push(E(hx, hy, 7, 6.6, SKIN.base), crescent(hx, hy, 7, 6.6, SKIN.sh, { k: 0.28, a0: 115, a1: 215 }), shine(hx, hy, 7, 6.6, '#ffffff', 0, 0.9));
-  // Soft pink hair: a bob of petal locks round the back and sides of the head.
-  for (const [x, y, a, c] of [[-5.6, 0.6, 105, PINK.sh], [-4.6, -2.8, 150, PINK.base], [-6.4, 3.6, 95, PINK.sh]]) head.push(petal(hx + x, hy + y, a, 5, 2.6, c, false));
-  // The bloom hat: five big petals round a golden heart, tilted back, two leaves.
-  const tilt = walk ? Math.sin(TAU * q - 2.8) * 6 : sway(q - 0.3) * 4;
-  const hat = [];
-  const cx = hx - 1;
-  const cy = hy - 6;
-  hat.push(O(cx - 5.4, cy + 1.6, 2.8, 1.2, 160, '#7fd07a'), O(cx + 5.2, cy + 2, 2.6, 1.1, 20, '#6cc46c'));
-  for (let i = 0; i < 5; i++) hat.push(petal(cx, cy, -90 + (i - 2) * 44, 5.4, 2.8, i === 2 ? PINK.hi : i % 2 ? PINK.base : PINK.sh));
-  hat.push(E(cx, cy, 1.8, 1.5, '#ffe17a'), F(E(cx - 0.4, cy - 0.5, 0.6, 0.45, '#fff6c8')));
-  for (const [dx, dy] of [[-1, -1.6], [1.2, -1.2], [0, 1.4]]) hat.push(F(E(cx + dx * 1.5, cy + dy, 0.35, 0.35, '#e09a2a')));
-  head.push(...spin(hat, cx, cy + 2, tilt));
-  // Petal bangs across the brow.
-  for (const [x, a] of [[-2.4, 96], [0.6, 84], [3.4, 70]]) head.push(petal(hx + x, hy - 5.4, a, 3.6, 1.8, x > 0 ? PINK.base : PINK.sh, false));
-  // Face (the front half of the head): shy droopy eyes, rosy cheeks, a small smile; a determined
-  // look flinging a petal.
-  const ey = hy + 1.2;
-  const lashC = '#5a2a4a';
-  const iris = ['#4a1a3e', '#a8407e', '#ffb8dc'];
-  const act = A && f < 3 ? { lid: 0.2, slant: 0.6 } : mood === 'angry' ? { lid: 0.2, slant: 0.7, raise: 0.2 } : hurt ? { closed: 'squeeze' } : mood === 'happy' ? { closed: 'happy' } : mood === 'blink' ? { closed: 'blink' } : { lid: 0.3 };
-  const fe = [hx + 0.4, ey];
-  const ne = [hx + 4.4, ey - 0.1];
-  if (dead) head.push(...deadEye(fe[0], fe[1], 1.5, { type: 'swirl', s: -1, c: lashC }), ...deadEye(ne[0], ne[1], 1.7, { type: 'swirl', c: lashC }));
-  else head.push(...easyEye(fe[0], fe[1], { shape: 'animal', iris, lashC, lash: 0.6, flicks: 0, irisW: 1, irisH: 1, ...act, s: -1, w: 1.8, h: 2.3 }), ...easyEye(ne[0], ne[1], { shape: 'animal', iris, lashC, lash: 0.6, flicks: 0, irisW: 1, irisH: 1, ...act, s: 1, w: 2.1, h: 2.5 }));
-  if (!dead) head.push(...cheek(fe[0] - 1.4, ey + 2.6, 1.1, { lines: 2 }), ...cheek(ne[0] + 1.6, ey + 2.6, 1.2, { lines: 2 }));
-  const mx = hx + 2.8;
-  const my = hy + 4.2;
-  const mo = { s: 1, ink: '#a0386a' };
-  if (A && f === 1) head.push(...mouth(mx, my, { ...mo, type: 'shout', open: 0.7, w: 0.9, h: 1.2, fangs: 0 }));
-  else if (hurt) head.push(...mouth(mx, my, { ...mo, type: 'pained', open: 1, w: 1, h: 1 }));
-  else if (dead) head.push(...mouth(mx, my, { ...mo, type: 'wavy', w: 1, amp: 0.15 }));
-  else head.push(...mouth(mx, my, { ...mo, type: mood === 'angry' ? 'frown' : 'smile', w: 1, curve: mood === 'angry' ? -0.4 : 0.55 }));
-  if (hurt) head.push(...sweat(hx - 5, hy - 3, 0.9));
-  out.push(...spin(head, x0, y0, lean * 0.4), ...spin(armShapes, x0, y0, lean * 0.6));
-  // The near wings, over her shoulder, a lighter pink.
-  out.push(...spin(wings(1, WP).slice(0, 4), x0, y0, lean));
-
-  // A petal always drifting off her.
-  const drift = (q + 0.3) % 1;
-  if (!dead) out.push(F(petal(x0 - 5 - drift * 6, y0 + 4 + drift * 12, 40 + drift * 200, 2.2, 1.1, PINK.base, false)));
-  if (A?.pet) {
-    const [dx, dy, sz] = A.pet;
-    if (sz > 0) out.push(smear([[hand[0] - 4, hand[1] - 2], [hand[0] + dx * 0.5, hand[1] + dy * 0.5], [hand[0] + dx - 1.4, hand[1] + dy]], 2.6, '#ffe0ee'), petal(hand[0] + dx - 2, hand[1] + dy, 0, 3 * sz, 1.6 * sz, PINK.base, false));
-    if (A.burst) for (let i = 0; i < 6; i++) out.push(F(petal(x0 + 15, y0, i * 60 + 15, 4, 1.4, i % 2 ? PINK.base : PINK.hi, false)), ...star(x0 + 15, y0, 2.2, '#ffd2ea'));
+  // Seeds loosened: drifting off behind when hurt, or flown out ahead in the sneeze.
+  if (hurt) for (const [dx, dy, d] of [[-11, -6, -150], [-9, -11, -120]]) out.push(...seed(cx + dx, cy + dy, d, 3.4, FLUFF.base, 0.9));
+  if (A && A.spray > 0.05) {
+    const k = Math.min(1.3, A.spray);
+    for (const [dx, dy, d, l] of [[10, -4, -30, 3.6], [12, 1, -10, 3.4], [9, 5, 10, 3.2], [14, -8, -50, 3]]) {
+      const s = k * (0.8 + l * 0.08);
+      out.push(...seed(cx + 4 + dx * s, cy + dy * s, d, l, FLUFF.base, 0.95));
+    }
+    if (fk === 1) out.push(smear([[cx + 6, cy - 2], [cx + 12, cy - 2], [cx + 18, cy - 1]], 2.6, '#ffffff'));
+    if (fk === 2) out.push(...star(cx + 18, cy - 7, 2.2, '#fff6c8'));
   }
   return { w: 36, h: 40, res: 3, shapes: shift(out, 2, 4) };
 }
@@ -598,13 +582,13 @@ const queenBeeRig = makeRig({
 });
 
 export const ART = {
-  bumble: { walk: 8, idle: 6, attack: 4, stride: 30, atkMs: [60, 220, 160], draw: bumble },
-  petalsprite: { walk: 8, idle: 6, attack: 4, stride: 24, atkMs: [70, 240, 200], draw: petalsprite },
+  bumble: { sub: 8, atkTween: true, walk: 8, idle: 6, attack: 4, stride: 30, atkMs: [60, 220, 160], draw: bumble },
+  petalsprite: { pad: 7, sub: 8, atkTween: true, walk: 8, idle: 6, attack: 4, stride: 24, atkMs: [70, 240, 200], draw: petalsprite },
   queenbee: { walk: 8, idle: 6, attack: 5, stride: 30, atkMs: [120, 420, 200, 240], draw: queenbee, rig: queenBeeRig },
 };
 
 export const INFO = {
-  bumble: { name: 'Bumble', w: 24, h: 24 },
-  petalsprite: { name: 'Petal Sprite', w: 22, h: 32 },
+  bumble: { name: 'Puffbee', w: 24, h: 24 },
+  petalsprite: { name: 'Dandelion Puff', w: 22, h: 26 },
   queenbee: { name: 'The Queen Bee', w: 60, h: 64 },
 };

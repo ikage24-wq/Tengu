@@ -113,16 +113,14 @@ export const NODES = {
   // Petal Meadow: clover and cotton in the fields, ore in the hill, an oak and the hive on the
   // banks, cherries off the great tree.
   meadow1: [
-    { ...SPOT.herb(1, 'clover'), x: 520, y: 1000 },
-    { ...SPOT.herb(1, 'clover'), x: 1700, y: 920 },
-    { ...SPOT.ore(1), x: 910, y: 976 },
-    { ...SPOT.fiber(1), x: 1150, y: 840 },
-    { ...SPOT.wood(1), x: 1880, y: 680 },
-    { ...SPOT.honey(1), x: 1260, y: 680 },
-    { ...SPOT.fruit(1, 'cherry'), x: 1120, y: 440 },
-    { ...SPOT.fruit(1, 'cherry'), x: 1290, y: 440 },
-    // Up in the clouds, a moonpetal opens at night.
-    { ...SPOT.night(1), x: 550, y: 280 },
+    { ...SPOT.herb(1, 'clover'), x: 530, y: 640 },
+    { ...SPOT.herb(1, 'clover'), x: 1320, y: 640 },
+    { ...SPOT.wood(1), x: 440, y: 560 },
+    { ...SPOT.ore(1), x: 280, y: 640 },
+    { ...SPOT.honey(1), x: 990, y: 480 },
+    { ...SPOT.fruit(1, 'cherry'), x: 1050, y: 320 },
+    // High in the boughs, a moonpetal opens at night.
+    { ...SPOT.night(1), x: 160, y: 400 },
   ],
   // The tutorial isle: kelp on the beach ledges, an oak above, copper in the rocks by the shore;
   // cotton and clover at the practice field's edges, an oak by its far gate.

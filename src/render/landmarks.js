@@ -1392,6 +1392,174 @@ function beehiveArt(blink) {
   });
 }
 
+// ---------- Petal Meadow's own landmarks (2026-11-10, the meadow art pass) ----------
+
+// A towering sunflower, the meadow's centrepiece: taller than three heroes, a thick stem with two
+// broad leaves, a great head of golden petals round a seeded face (sleepy smile, blushing), a
+// ladybug on a leaf. `frame` is its wind pose (0 ... 4): the head swings most.
+// The stem in one of nine sway poses (`frame` 0 ... 8, 4 upright).
+const SUN_H = 176;
+const sunSway = (frame) => (frame - 4) * 0.8;
+const sunBend = (sway, y) => sway * Math.pow(Math.max(0, (SUN_H - y) / 130), 1.5);
+function meadowSunStemArt(frame) {
+  const sway = sunSway(frame);
+  return art(`meadowsunstem|${frame}`, 96, SUN_H, () => {
+    const out = [];
+    const sx = (y) => sunBend(sway, y);
+    const stem = [];
+    for (let i = 0; i <= 10; i++) {
+      const y = SUN_H - (i * 126) / 10;
+      stem.push([48 + sx(y) + Math.sin(i * 0.7) * 1.2, y]);
+    }
+    const g = ramp('#6cbc6c', 0.82);
+    out.push(band(stem, (u) => 4.2 - u * 1.4, g.base), F(band(stem.slice(0, 9).map(([x, y]) => [x - 1.6, y]), () => 0.8, g.hi)));
+    out.push(...leaf(48 + sx(120), 120, 10 + sx(104), 98, 9, '#78c878'), ...leaf(48 + sx(96), 96, 88 + sx(80), 76, 8, '#86d488'), ...leaf(48, 168, 26, 152, 5, '#78c878'));
+    // The ladybug on the right leaf.
+    const lx = 76 + sx(84);
+    out.push(E(lx, 82, 3.2, 2.5, '#ff5a5a'), E(lx + 3, 82, 1.5, 1.5, INK), F(R(lx - 0.3, 79.6, 0.6, 5, INK)), F(E(lx - 1.4, 81.4, 0.6, 0.6, INK)), F(E(lx + 1, 83, 0.6, 0.6, INK)));
+    out.push(tuft(36, SUN_H), tuft(60, SUN_H, '#7fcf86'), ...bloom(26, SUN_H - 2, 1.6, '#ff9ec0'), ...bloom(70, SUN_H - 1.6, 1.5, '#ffffff'));
+    return out;
+  });
+}
+// The head: golden petals round a seeded face, centred in its 84 x 84 picture.
+function meadowSunHeadArt(blink, mood) {
+  return art(`meadowsunhead|${blink}|${mood}`, 84, 84, () => {
+    const out = [];
+    const hx = 42;
+    const hy = 42;
+    const n = 18;
+    for (let k = 0; k < n; k++) out.push(petal(hx, hy, ((k + 0.5) / n) * Math.PI * 2, 12, 36, 5.6, '#f2a83a'));
+    const away = (a) => Math.cos(a - Math.PI / 4) > 0.35;
+    for (let k = 0; k < n; k++) {
+      const a = (k / n) * Math.PI * 2;
+      out.push(petal(hx, hy, a, 12, 38, 6, away(a) ? '#f7c23a' : '#ffd84d'));
+      out.push(F(band([[hx + Math.cos(a) * 18, hy + Math.sin(a) * 18], [hx + Math.cos(a) * 30, hy + Math.sin(a) * 30]], () => 0.5, '#f0b83a')));
+    }
+    out.push(E(hx, hy, 18, 18, '#b8805a'), F(E(hx - 3, hy - 4, 13, 12, '#c8925e')));
+    for (let r = 0; r < 3; r++) {
+      for (let k = 0; k < 10 + r * 4; k++) {
+        const a = (k / (10 + r * 4)) * Math.PI * 2 + r * 0.3;
+        out.push(F(E(hx + Math.cos(a) * (6 + r * 4.4), hy + Math.sin(a) * (6 + r * 4.4), 0.8, 0.8, '#8a5a3e')));
+      }
+    }
+    // (A beaming, open smile on its happy nod; a soft one the rest of the time.)
+    out.push(...face(hx, hy - 1, 6.4, blink ? 'closed' : 'happy', mood === 'joy' ? 'o' : 'smile', 2.6));
+    return out;
+  });
+}
+// The sunflower alive: the stem sways rooted to the spot; the head rides its top, bobbing to its
+// own slow breath and, every few seconds, giving a happy little nod (up and back, eased) with an
+// open smile.
+function drawMeadowSun(ctx, x, y, time, seed, wx) {
+  const frame = leanFrame(time, wx, 9, 0.12, seed);
+  place(ctx, meadowSunStemArt(frame), x, y);
+  const sway = sunSway(frame);
+  const breath = Math.sin(time * 1.7 + seed) * 1.2;
+  const u = (time + seed * 3.1) % 6.5;
+  const nod = u < 0.7 ? Math.sin((u / 0.7) * Math.PI) * 4 : 0;
+  const hx = x + sunBend(sway, 44);
+  const hy = y - SUN_H + 44 - breath - nod;
+  place(ctx, meadowSunHeadArt(blinking(time, seed) ? 1 : 0, nod > 1.5 ? 'joy' : 'calm'), hx, hy + 42);
+}
+
+// The Queen Bee's hive: a big golden skep on an old hollow stump, a little crown on its top (her
+// Majesty lives here), honeycomb oozing from a crack, a ladder up to the door, honey jars at the
+// foot. It wakes into the area boss (world/nest.js).
+function meadowHiveArt(blink, part) {
+  return art(`meadowhive|${part}|${blink}`, 90, 113, () => scaleShapes(meadowHiveShapes(blink, part), 0.75));
+}
+function meadowHiveShapes(blink, part) {
+  const stump = [];
+  const skep = [];
+  const crown = [];
+  const br = ramp(BARK, 0.85);
+  // The stump, roots spreading.
+  for (const [path, w] of [[[[38, 140], [26, 146], [14, 149]], 6], [[[82, 140], [94, 146], [106, 149]], 6], [[[60, 144], [60, 149]], 5]]) stump.push(...bark(path, (u) => w * (1 - u) + 1.4, br, w, 1));
+  stump.push(T([[30, 149], [34, 128], [36, 96], [84, 96], [86, 128], [90, 149]], BARK), F(T([[70, 149], [72, 96], [84, 96], [86, 128], [90, 149]], br.sh)));
+  stump.push(F(band([[44, 104], [42, 140]], () => 1.2, br.hi)), F(band([[56, 106], [57, 136]], () => 0.6, br.deep)), F(band([[76, 104], [78, 140]], () => 0.8, br.deep)));
+  stump.push(E(60, 96, 25, 6, BARK_LIGHT), F(arc(60, 96, 17, 4, 0, 360, 0.8, '#c9946e')), F(arc(60, 96, 9, 2.2, 0, 360, 0.6, '#c9946e')));
+  // The ladder up to the door, and honey jars at the foot.
+  for (const x of [52, 68]) stump.push(F(R(x, 92, 1.6, 48, '#c89a64')));
+  for (let k = 0; k < 6; k++) stump.push(F(R(52, 98 + k * 8, 17.6, 1.6, '#d8aa74')));
+  for (const [x, c] of [[96, '#ff9ec0'], [106, '#c9a6ff']]) stump.push(R(x, 136, 9, 12, '#ffcf5a'), R(x - 0.6, 134, 10.2, 3, c), F(R(x + 1.6, 139, 2.4, 6, '#ffe8a8')));
+  stump.push(tuft(14, 149), tuft(44, 149, '#7fcf86'), tuft(112, 149), ...bloom(22, 146, 1.4, '#ffffff'), ...bloom(118, 147, 1.3, '#c9a6ff'));
+  // The skep: stacked golden coils, the light on its upper left, its face and round door.
+  const yb = 94;
+  const ry = 70;
+  const rx = 34;
+  const xl = (y) => 60 - rx * Math.sqrt(Math.max(0, 1 - ((yb - y) / ry) ** 2));
+  const xr = (y) => 120 - xl(y);
+  skep.push(dome(60, yb, rx, ry, '#ffd66b', 20), E(60, yb - 0.6, rx, 4.4, '#ffd66b'));
+  for (let y = 32; y < yb; y += 9) skep.push(F(strip(xl, xr, y, y + 1.2, '#e2a440')));
+  const hr = ramp('#ffd66b', 0.8);
+  skep.push(F(strip((y) => xr(y) - (xr(y) - xl(y)) * 0.3, xr, 30, yb, hr.sh)), F(strip((y) => xr(y) - (xr(y) - xl(y)) * 0.12, xr, 40, yb, hr.deep)));
+  skep.push(F(T([[xl(40) + 4, 40], [xl(40) + 9, 40], [xl(86) + 9, 86], [xl(86) + 4, 86]], '#fff0a8')));
+  skep.push(...face(60, 58, 7, blink ? 'closed' : 'happy', 'smile', 2));
+  skep.push(E(60, 86, 7, 5.4, '#7a4e3e'), F(E(60, 87, 5.4, 3.8, '#5a3a32')));
+  skep.push(T([[86, 60], [94, 58], [96, 68], [88, 72]], '#ffb83a'), F(T([[88, 62], [92, 61], [93, 66], [89, 68]], '#ffd27a')));
+  skep.push(band([[92, 70], [93, 80], [92.4, 86]], (u) => 1.4 + u * 0.8, '#ffb347'), F(E(92.4, 72, 0.6, 1.6, '#ffe08a')));
+  // Her Majesty's little crown.
+  crown.push(T([[50, 26], [52, 14], [56, 21], [60, 11], [64, 21], [68, 14], [70, 26]], '#ffcf3a'), F(R(50, 24, 20, 3, '#f0a828')), F(E(60, 17, 1.6, 1.6, '#ff6b9a')), F(E(53, 19, 1, 1, '#8fd8ff')), F(E(67, 19, 1, 1, '#8fd8ff')));
+  return part === 'stump' ? stump : part === 'crown' ? crown : skep;
+}
+// The hive alive: the skep breathes on its stump (rising a hair and settling), every few seconds
+// it gives an excited jiggle, and the crown bounces a beat after it.
+function drawMeadowHive(ctx, x, y, time, seed) {
+  const blink = blinking(time, seed) ? 1 : 0;
+  const breath = (Math.sin(time * 1.5 + seed) + 1) * 0.5;
+  const u = (time + seed * 2.3) % 5.5;
+  const jig = u < 0.6 ? Math.sin((u / 0.6) * Math.PI * 6) * (1 - u / 0.6) * 1.2 : 0;
+  const v = u - 0.12;
+  const hop = v > 0 && v < 0.5 ? Math.sin((v / 0.5) * Math.PI) * 3 : 0;
+  place(ctx, meadowHiveArt(blink, 'stump'), x, y);
+  place(ctx, meadowHiveArt(blink, 'skep'), x + jig, y - breath);
+  place(ctx, meadowHiveArt(blink, 'crown'), x + jig * 0.6, y - breath - hop);
+}
+// Shapes drawn at one size, scaled by `k` about the top-left corner.
+function scaleShapes(shapes, k) {
+  return shapes.filter(Boolean).map((s) => {
+    const o = { ...s, x: (s.x ?? 0) * k, y: (s.y ?? 0) * k };
+    if (s.pts) o.pts = s.pts.map(([x, y]) => [x * k, y * k]);
+    if (s.w != null) o.w = s.w * k;
+    if (s.h != null) o.h = s.h * k;
+    if (s.rx != null) o.rx = s.rx * k;
+    if (s.ry != null) o.ry = s.ry * k;
+    return o;
+  });
+}
+
+// The great cherry tree up in the Blossom Boughs: a twisting trunk, wide boughs under a huge
+// rounded crown of pink, and a rope swing hanging from the lowest bough (it rocks in the wind).
+function meadowCherryArt(v, frame) {
+  const sw = (frame - 2) * 1.2;
+  return art(`meadowcherry|${v}|${frame}`, 210, 200, () => {
+    const b = ramp('#7a5a6a', 0.85);
+    const pink = ramp(['#ffc6de', '#ffb8d6'][v], 0.8);
+    const out = [];
+    out.push(T([[92, 200], [96, 150], [88, 112], [100, 88], [114, 88], [120, 116], [114, 152], [122, 200]], b.base), F(T([[108, 200], [112, 152], [118, 116], [112, 88], [120, 116], [114, 152], [122, 200]], b.sh)));
+    out.push(...bark([[96, 110], [64, 92], [34, 88]], (u) => 6 - u * 4, b, 3), ...bark([[112, 102], [146, 86], [178, 84]], (u) => 6 - u * 4, b, 5));
+    // The swing: two ropes from the right bough and a little plank seat.
+    const r0 = [150, 86];
+    const r1 = [168, 84];
+    const seat = 150;
+    out.push(F(band([r0, [r0[0] + sw, seat]], () => 0.5, '#e8d6b0')), F(band([r1, [r1[0] + sw, seat]], () => 0.5, '#e8d6b0')));
+    out.push(R(r0[0] - 3 + sw, seat, r1[0] - r0[0] + 6, 3.4, '#d8aa74'), F(R(r0[0] - 3 + sw, seat, r1[0] - r0[0] + 6, 1, '#f0cc98')));
+    // The crown: big soft masses, lit on the upper left, with blossoms dotted on.
+    // (Soft round puffs of blossom, never pointed leaf tips: each mass is a few overlapping lumps.)
+    for (const [cx, cy, rx, ry, k] of [[48, 70, 46, 34, 1], [166, 68, 46, 34, 2], [106, 52, 70, 50, 3], [70, 34, 40, 28, 4], [144, 32, 40, 28, 5], [106, 20, 34, 20, 6]]) {
+      out.push(E(cx + sw * 0.5 + 2, cy + 3, rx, ry, pink.sh));
+      for (let i = 0; i < 5; i++) {
+        const a = (i / 5) * Math.PI * 2 + k;
+        out.push(E(cx + sw * 0.5 + Math.cos(a) * rx * 0.45, cy + Math.sin(a) * ry * 0.4, rx * 0.55, ry * 0.6, pink.base));
+      }
+      out.push(F(E(cx + sw * 0.5 - rx * 0.25, cy - ry * 0.3, rx * 0.45, ry * 0.35, pink.hi)));
+    }
+    for (let k = 0; k < 22; k++) out.push(...bloom(20 + ((k * 41 + v * 13) % 172) + sw * 0.5, 12 + ((k * 29) % 80), 1.6, k % 3 ? '#ffffff' : '#ff9ec0'));
+    out.push(tuft(84, 200, '#9fd8a8'), tuft(132, 200, '#9fd8a8'), F(E(70, 198, 4, 1.2, '#ffc6de')), F(E(150, 197, 4, 1.2, '#ffc6de')));
+    return out;
+  });
+}
+
 function bee(ctx, x, y, dir, time, k) {
   ctx.save();
   ctx.translate(x, y);
@@ -3054,6 +3222,41 @@ const KINDS = {
   },
   fence: { w: 64, h: 24, draw: (ctx, x, y, time, seed) => place(ctx, fenceArt(variant(seed, 3)), x, y) },
   cart: { w: 64, h: 44, draw: (ctx, x, y) => place(ctx, cartArt(), x, y) },
+  // Petal Meadow's own (the meadow art pass, 2026-11-10).
+  meadowsun: { w: 96, h: 176, draw: drawMeadowSun },
+  meadowhive: {
+    w: 90, h: 113,
+    draw(ctx, x, y, time, seed) {
+      // A few bees buzzing round it, in front and behind as they circle.
+      const cy = y - 113 + 52;
+      const bees = [0, 1, 2, 3].map((k) => {
+        const a = time * (1.4 + k * 0.3) + k * 1.7 + seed;
+        return { k, d: Math.sin(a), bx: x + Math.cos(a) * (30 + k * 3), by: cy + Math.sin(a) * 9 + Math.sin(time * 6 + k * 2) * 1.6 - k * 6, dir: Math.sin(a) > 0 ? -1 : 1 };
+      });
+      for (const b of bees) if (b.d < 0) bee(ctx, b.bx, b.by, b.dir, time, b.k);
+      drawMeadowHive(ctx, x, y, time, seed);
+      for (const b of bees) if (b.d >= 0) bee(ctx, b.bx, b.by, b.dir, time, b.k);
+    },
+  },
+  meadowcherry: {
+    w: 210, h: 200,
+    draw(ctx, x, y, time, seed, wx) {
+      place(ctx, meadowCherryArt(variant(seed, 2), leanFrame(time, wx, 5, 0.1, seed)), x, y);
+      // Petals drifting down off the crown, each on its own slow loop, swaying as they fall and
+      // fading out near the ground.
+      for (let i = 0; i < 9; i++) {
+        const u = (time * 0.12 + i / 9 + seed) % 1;
+        const px = x - 80 + ((i * 47) % 160) + Math.sin(time * 1.3 + i * 2) * 8 + u * 14;
+        const py = y - 150 + u * 150;
+        ctx.globalAlpha = Math.min(1, u * 6) * (1 - Math.max(0, (u - 0.8) / 0.2));
+        ctx.fillStyle = i % 3 ? '#ffc6de' : '#ffffff';
+        ctx.beginPath();
+        ctx.ellipse(px, py, 1.8, 1.1, time * 2 + i, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+    },
+  },
   // Flower field.
   giantflower: {
     w: 40, h: 90,

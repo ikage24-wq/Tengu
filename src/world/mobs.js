@@ -82,7 +82,8 @@ export function createSpawner(map) {
   const slots = [];
   for (const s of map.spawns) {
     // Dungeon rooms hold exactly what they list, once.
-    const copies = MOBS[s.mob].boss || map.dungeon ? 1 : PER_SPAWN;
+    // (A map can ask for fewer: `perSpawn`, one monster a spot where two would crowd it.)
+    const copies = MOBS[s.mob].boss || map.dungeon ? 1 : map.perSpawn ?? PER_SPAWN;
     // Keep copies on the same ledge as the original spawn point.
     const surface = surfaceFor(map, s.x, s.y);
     for (let i = 0; i < copies; i++) {

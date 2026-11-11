@@ -8,74 +8,212 @@ const hash = (n) => {
   return s - Math.floor(s);
 };
 
-// A bounce blossom: a wide flower pad on a short stem. It sways a little at rest; stepped on, it
-// dips, flings itself up past its rest and settles back, petals and pollen bursting off it.
+// A bounce blossom: a big cushion flower in a rosette of leaves, its centre a round yellow face.
+// It sways a little at rest and blinks; stepped on, it dips (eyes squeezed shut, mouth an "o"),
+// flings itself up past its rest with a big happy grin and settles back, petals and sparkles
+// bursting off it. Lifted and tilted only, never squashed.
+function petalPath(ctx, len, w) {
+  // A rounded petal from its base (0, 0) out along +x: fat near the tip, a soft notch at the end.
+  ctx.beginPath();
+  ctx.moveTo(0, 0);
+  ctx.bezierCurveTo(len * 0.25, -w * 0.9, len * 0.75, -w * 1.15, len * 0.96, -w * 0.45);
+  ctx.quadraticCurveTo(len * 0.86, 0, len * 0.96, w * 0.45);
+  ctx.bezierCurveTo(len * 0.75, w * 1.15, len * 0.25, w * 0.9, 0, 0);
+  ctx.closePath();
+}
 function blossom(ctx, x, y, time, since, wx = x) {
   const k = since < 0.9 ? since : 9;
   // Dip, fling, settle (a damped spring).
   const fling = k < 0.08 ? -k / 0.08 : k < 9 ? Math.exp(-(k - 0.08) * 6) * Math.cos((k - 0.08) * 22) : 0;
-  const lift = 3 + fling * 5;
-  const sway = Math.sin(time * 1.8 + wx) * 0.06;
-  const petal = '#ff9ec7';
-  const light = '#ffd2e6';
-  const line = shade(petal, -38);
+  const lift = 15 + fling * 8;
+  const sway = Math.sin(time * 1.8 + wx) * 0.05;
+  const PINK = '#ff9ec7';
+  const DEEP = '#e8609a';
+  const INKY = '#b24a84';
   ctx.save();
   ctx.translate(x, y);
-  // Drawn big enough to spot from across the floor.
-  ctx.scale(1.6, 1.6);
-  // Stem and two leaves.
-  ctx.strokeStyle = '#5fae5f';
-  ctx.lineWidth = 2;
+  ctx.lineJoin = 'round';
+  // A soft shadow on the ground.
+  ctx.fillStyle = 'rgba(90,40,80,0.16)';
   ctx.beginPath();
-  ctx.moveTo(0, 0);
-  ctx.quadraticCurveTo(sway * 20, -lift / 2, sway * 10, -lift);
-  ctx.stroke();
-  for (const s of [-1, 1]) {
-    ctx.fillStyle = s < 0 ? '#7fd07a' : '#6cc46c';
-    ctx.beginPath();
-    ctx.ellipse(s * 6, -1, 6, 2.4, s * -0.3, 0, Math.PI * 2);
+  ctx.ellipse(0, 1, 26, 4, 0, 0, Math.PI * 2);
+  ctx.fill();
+  // The rosette of leaves round the foot.
+  for (const [a, len, c] of [[-2.95, 24, '#5fb868'], [-0.19, 24, '#5fb868'], [-2.55, 18, '#7fd07a'], [-0.59, 18, '#7fd07a']]) {
+    ctx.save();
+    ctx.translate(0, -1);
+    ctx.rotate(a + sway * 0.5);
+    ctx.scale(1, 0.62);
+    petalPath(ctx, len, 6);
+    ctx.fillStyle = c;
     ctx.fill();
+    ctx.strokeStyle = '#2f7a4a';
+    ctx.lineWidth = 1.3;
+    ctx.stroke();
+    ctx.strokeStyle = 'rgba(220,255,200,0.7)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(3, 0);
+    ctx.lineTo(len * 0.8, 0);
+    ctx.stroke();
+    ctx.restore();
   }
-  ctx.translate(sway * 10, -lift);
-  ctx.rotate(sway);
-  // The pad: a ring of wide petals seen from the side, back row darker.
-  const petals = (row, ry, col) => {
-    for (let i = 0; i < 6; i++) {
-      const a = (i / 6) * Math.PI + row * 0.26;
-      const px = Math.cos(a) * 11;
-      ctx.fillStyle = col;
-      ctx.strokeStyle = line;
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.ellipse(px, ry, 5.5, 3.2, Math.cos(a) * 0.4, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.stroke();
-    }
-  };
-  petals(0, -3, mix(petal, '#b06cc4', 0.25));
-  petals(1, -1, petal);
-  // The heart: a soft yellow cushion with a shine.
-  ctx.fillStyle = '#ffe17a';
-  ctx.strokeStyle = shade('#ffe17a', -50);
+  // The stem, tapered, lit on its left.
+  const tx = sway * 16;
+  ctx.fillStyle = '#5fae5f';
+  ctx.strokeStyle = '#2f7a4a';
+  ctx.lineWidth = 1.2;
   ctx.beginPath();
-  ctx.ellipse(0, -3, 6, 2.6, 0, 0, Math.PI * 2);
+  ctx.moveTo(-3.2, 0);
+  ctx.quadraticCurveTo(-2.6 + tx * 0.5, -lift * 0.5, -2 + tx, -lift);
+  ctx.lineTo(2 + tx, -lift);
+  ctx.quadraticCurveTo(2.6 + tx * 0.5, -lift * 0.5, 3.2, 0);
+  ctx.closePath();
   ctx.fill();
   ctx.stroke();
-  ctx.fillStyle = light;
-  ctx.fillRect(-3, -4.5, 3, 1);
-  ctx.restore();
-  // A burst of petals flying up off it.
-  if (since < 0.9) {
-    for (let i = 0; i < 8; i++) {
-      const a = -Math.PI / 2 + (hash(i + 3) - 0.5) * 1.8;
-      const v = 40 + hash(i + 9) * 50;
-      const px = x + Math.cos(a) * v * since;
-      const py = y - lift + Math.sin(a) * v * since + 60 * since * since;
-      ctx.globalAlpha = 1 - since / 0.9;
-      ctx.fillStyle = i % 3 ? petal : '#ffe17a';
-      ctx.beginPath();
-      ctx.ellipse(px, py, 2.2, 1.3, time * 6 + i, 0, Math.PI * 2);
+  ctx.strokeStyle = 'rgba(200,255,190,0.7)';
+  ctx.beginPath();
+  ctx.moveTo(-1.6, -1);
+  ctx.quadraticCurveTo(-1.2 + tx * 0.5, -lift * 0.5, -0.8 + tx, -lift + 1);
+  ctx.stroke();
+  ctx.translate(tx, -lift);
+  ctx.rotate(sway);
+  // The pad, seen from the side: a back ring of petals (deeper, behind) and a front ring.
+  const ring = (n, len, w, flat, off, base, tip) => {
+    for (let i = 0; i < n; i++) {
+      const a = (i / n) * Math.PI * 2 + off;
+      ctx.save();
+      ctx.scale(1, flat);
+      ctx.rotate(a);
+      petalPath(ctx, len, w);
+      const g = ctx.createLinearGradient(0, 0, len, 0);
+      g.addColorStop(0, base);
+      g.addColorStop(1, tip);
+      ctx.fillStyle = g;
       ctx.fill();
+      ctx.strokeStyle = INKY;
+      ctx.lineWidth = 1.2 / flat;
+      ctx.stroke();
+      ctx.strokeStyle = 'rgba(255,240,248,0.75)';
+      ctx.lineWidth = 0.9;
+      ctx.beginPath();
+      ctx.moveTo(len * 0.35, 0);
+      ctx.lineTo(len * 0.8, 0);
+      ctx.stroke();
+      ctx.restore();
+    }
+  };
+  // Back petals point up and away (drawn first), front ones toward you and down.
+  ctx.save();
+  ctx.translate(0, -2);
+  ring(7, 22, 7.5, 0.45, 0.2, '#d872aa', '#ffb8d8');
+  ctx.restore();
+  ctx.save();
+  ctx.translate(0, 1);
+  // Only the lower half of the front ring, so the face sits in front of the back row.
+  ctx.beginPath();
+  ctx.rect(-30, -1, 60, 20);
+  ctx.clip();
+  ring(8, 22, 8, 0.42, 0, DEEP, '#ffe0ee');
+  ctx.restore();
+  // The centre: a round yellow cushion, lit top left, with a ring of seeds and a face.
+  const cy = -4;
+  const g = ctx.createRadialGradient(-3, cy - 4, 1, 0, cy, 10);
+  g.addColorStop(0, '#fff6b8');
+  g.addColorStop(0.6, '#ffd95a');
+  g.addColorStop(1, '#f0a83a');
+  ctx.fillStyle = g;
+  ctx.strokeStyle = '#a8642a';
+  ctx.lineWidth = 1.3;
+  ctx.beginPath();
+  ctx.ellipse(0, cy, 8, 6.2, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = 'rgba(200,120,40,0.55)';
+  for (let i = 0; i < 10; i++) {
+    const a = (i / 10) * Math.PI * 2;
+    ctx.beginPath();
+    ctx.arc(Math.cos(a) * 6.3, cy + Math.sin(a) * 4.6, 0.6, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.fillStyle = 'rgba(255,255,255,0.75)';
+  ctx.beginPath();
+  ctx.ellipse(-3.4, cy - 3, 2.2, 1.1, -0.4, 0, Math.PI * 2);
+  ctx.fill();
+  // The face: dips squeeze it, flings make it grin, otherwise it smiles and blinks.
+  const dip = k < 0.1;
+  const glee = !dip && k < 0.9;
+  const blink = ((time * 0.3 + hash(wx) * 5) % 1) < 0.04;
+  ctx.strokeStyle = OUTLINE;
+  ctx.fillStyle = OUTLINE;
+  ctx.lineWidth = 1.2;
+  ctx.lineCap = 'round';
+  for (const s of [-1, 1]) {
+    const ex = s * 2.9;
+    const ey = cy - 0.6;
+    ctx.beginPath();
+    if (dip) {
+      ctx.moveTo(ex - s * 1.2, ey - 1.1);
+      ctx.lineTo(ex + s * 0.6, ey);
+      ctx.lineTo(ex - s * 1.2, ey + 1.1);
+      ctx.stroke();
+    } else if (glee || blink) {
+      ctx.arc(ex, ey + (glee ? 0.8 : -0.2), 1.3, glee ? Math.PI * 1.1 : Math.PI * 0.15, glee ? Math.PI * 1.9 : Math.PI * 0.85);
+      ctx.stroke();
+    } else {
+      ctx.ellipse(ex, ey, 1.05, 1.35, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.arc(ex - 0.35, ey - 0.5, 0.42, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = OUTLINE;
+    }
+    ctx.fillStyle = 'rgba(255,130,160,0.7)';
+    ctx.beginPath();
+    ctx.ellipse(s * 5, cy + 1.5, 1.4, 0.8, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = OUTLINE;
+  }
+  ctx.beginPath();
+  if (dip) ctx.ellipse(0, cy + 2.2, 0.9, 1.1, 0, 0, Math.PI * 2), ctx.fill();
+  else if (glee) {
+    ctx.moveTo(-2, cy + 1.4);
+    ctx.quadraticCurveTo(0, cy + 4.6, 2, cy + 1.4);
+    ctx.closePath();
+    ctx.fill();
+  } else {
+    ctx.arc(0, cy + 1.2, 1.2, Math.PI * 0.15, Math.PI * 0.85);
+    ctx.stroke();
+  }
+  ctx.lineCap = 'butt';
+  ctx.restore();
+  // A burst of petals and sparkles flying up off it.
+  if (since < 0.9) {
+    for (let i = 0; i < 10; i++) {
+      const a = -Math.PI / 2 + (hash(i + 3) - 0.5) * 2;
+      const v = 50 + hash(i + 9) * 60;
+      const px = x + Math.cos(a) * v * since;
+      const py = y - lift + Math.sin(a) * v * since + 70 * since * since;
+      ctx.globalAlpha = 1 - since / 0.9;
+      ctx.save();
+      ctx.translate(px, py);
+      ctx.rotate(time * 5 + i);
+      if (i % 4 === 3) {
+        ctx.fillStyle = '#fff6c8';
+        ctx.beginPath();
+        for (let j = 0; j < 8; j++) {
+          const r = j % 2 ? 0.9 : 3.2;
+          ctx.lineTo(Math.cos((j * Math.PI) / 4) * r, Math.sin((j * Math.PI) / 4) * r);
+        }
+        ctx.closePath();
+        ctx.fill();
+      } else {
+        petalPath(ctx, 6, 2.2);
+        ctx.fillStyle = i % 3 ? PINK : '#ffd2e6';
+        ctx.fill();
+      }
+      ctx.restore();
     }
     ctx.globalAlpha = 1;
   }

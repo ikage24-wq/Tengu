@@ -44,7 +44,7 @@ export const STORY_QUESTS = {
   }),
   story_1_2: s('story_1_2', 1, {
     name: 'The Wind Has Stopped', giver: 'mira', minLevel: 3, prereq: 'story_1_1',
-    text: "The Moss Tortoises in Petal Meadow used to be the sleepiest things on the island. Now they snap at people. A TORTOISE. Snapping! Could you calm 10 of them? Tip: stand next to one and attack. Sorry. Habit.",
+    text: "The Bud Snails in Petal Meadow used to be the sleepiest things on the island. Now they sneeze pollen at people. A SNAIL. Sneezing! Could you calm 10 of them? Tip: stand next to one and attack. Sorry. Habit.",
     objectives: [{ type: 'kill', mob: 'snailbun', count: 10 }],
     rewards: { exp: 300, gold: 38, items: [{ id: 'orange_potion', qty: 10 }] },
     scenes: { done: 'ch1_wind' },
@@ -372,10 +372,10 @@ export const SCENES = {
     { emote: 'player', kind: '?' },
     { who: 'player', text: 'Mira... why did the wind stop?' },
     { emote: 'mira', kind: 'sweat', dur: 1.6 },
-    { who: 'mira', text: "That's a story for tea. Long story. Lots of tea. For now, let's see how you do in the meadow. Everybody starts with tortoises." },
+    { who: 'mira', text: "That's a story for tea. Long story. Lots of tea. For now, let's see how you do in the meadow. Everybody starts with snails." },
   ],
   ch1_wind: [
-    { who: 'mira', text: "So you saw it. The sleepiest tortoises on the island, snapping like crabs. One bit my shoelace and wouldn't let go for an hour.", mood: 'sad' },
+    { who: 'mira', text: "So you saw it. The sleepiest snails on the island, sneezing like pepper pots. One sneezed on my hat and I had hay fever for a week.", mood: 'sad' },
     { who: 'mira', text: 'This island has a guardian: Hayate, the great Tengu. Her wind carries songs, seeds, kites, and good moods. Mostly good moods.' },
     { who: 'mira', text: "A few weeks ago, her wind just... stopped. And the spirits have been getting lonely and sour ever since.", mood: 'sad' },
     { who: 'player', text: 'So... am I the chosen one?' },
@@ -401,7 +401,7 @@ export const SCENES = {
     { together: [{ emote: 'mira', kind: '?', dur: 1.6 }, { wait: 0.8 }] },
     { who: 'mira', text: "Well... the stars didn't fall. Not one. We waited up till midnight and they just... hung there. Everyone went home grumpy.", mood: 'sad' },
     { together: [{ emote: 'mira', kind: '!', dur: 1.4 }, { jump: 'mira', height: 10 }] },
-    { who: 'mira', text: "Oh. Oh my. That was the night the wind stopped. The tortoises, the goblins, the windmill... it all went sour that very night!", mood: 'surprised' },
+    { who: 'mira', text: "Oh. Oh my. That was the night the wind stopped. The snails, the goblins, the windmill... it all went sour that very night!", mood: 'surprised' },
     { who: 'mira', text: "I'll write it down. In the margin of a mug. Captain Rook in Pastel Harbor has been asking for help, dear. Go on, and write me! The map's on... no. You know. Go!", mood: 'happy' },
   ],
   // (Staged: Mira steps close to give you her earring; it catches a wind that isn't there.)

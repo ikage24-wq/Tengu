@@ -21,7 +21,7 @@ export const LESSONS = [
   { hint: 'Head east to the Practice Field: stand in the glowing portal and press [↑].', phone: 'Head east to the Practice Field: stand in the glowing portal and push up.', done: (w) => w.map.id !== 'dawnbeach' },
   { hint: 'Tell Kuro what you saw from the lookout: talk to him with [↑].', phone: 'Tell Kuro what you saw from the lookout: tap him.', done: (w) => questState(w.char, 'tut_lookout') === 'done' },
   { hint: 'Talk to Kuro with [↑] and take his practice quest.', phone: 'Tap Kuro and take his practice quest.', done: (w) => Boolean(w.char.quests.tut_practice) },
-  { hint: 'Attack the Kitsune Kits with [Z]. Defeat 3 of them.', phone: 'Attack the Kitsune Kits with the big [★] button. Defeat 3 of them.', done: (w) => (w.char.quests.tut_practice?.kills?.puffle ?? 0) >= 3 || questState(w.char, 'tut_practice') !== 'active' },
+  { hint: 'Attack the Blossom Kits with [Z]. Defeat 3 of them.', phone: 'Attack the Blossom Kits with the big [★] button. Defeat 3 of them.', done: (w) => (w.char.quests.tut_practice?.kills?.puffle ?? 0) >= 3 || questState(w.char, 'tut_practice') !== 'active' },
   { hint: 'Walk over what they dropped and press [X] to pick it up. Get 3 Fox Fluff.', phone: 'Walk over what they dropped and tap [Loot]. Get 3 Fox Fluff.', done: (w) => countItem(w.char.inventory, 'fluff') >= 3 || questState(w.char, 'tut_practice') === 'done' },
   // (Potions picked up meanwhile raise the count it watches, so only drinking one counts.)
   { hint: 'Hurt? Press [1] to drink a red potion (it sits on that hotkey).', phone: 'Hurt? Tap the red potion on your hotkey bar to drink it.', start: (w, t) => { t.n = countItem(w.char.inventory, 'red_potion'); }, done: (w, t) => {

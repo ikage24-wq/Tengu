@@ -108,7 +108,7 @@ test('monsters respawn near their spawn point after a few seconds', () => {
   const w = newWorld();
   loadMap(w, 'meadow1', 'west');
   const count = w.mobs.length;
-  assert.equal(count, MAPS.meadow1.spawns.length * 2, 'two monsters per spawn point');
+  assert.equal(count, MAPS.meadow1.spawns.length * (MAPS.meadow1.perSpawn ?? 2), 'its monsters per spawn point');
   const fallen = w.mobs[0];
   fallen.hp = 0;
   for (let i = 0; i < 60 * 5; i++) updateWorld(w, DT, idle);

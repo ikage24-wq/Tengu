@@ -20,7 +20,7 @@ export { ARTS };
 // (see attackTiming).
 export function framesOf(art) {
   const a = ARTS[art] ?? {};
-  return { walk: a.walk ?? 4, idle: a.idle ?? 2, attack: a.attack ?? 0, stride: a.stride ?? null, cycle: a.cycle ?? null };
+  return { walk: a.walk ?? 4, idle: a.idle ?? 2, attack: a.attack ?? 0, stride: a.stride ?? null, cycle: a.cycle ?? null, sub: a.sub ?? SUB, tween: Boolean(a.atkTween) };
 }
 
 const IDLE_CYCLE = 1.8;
@@ -40,17 +40,21 @@ export function attackTiming(art) {
 
 // Which attack frame shows: `wind` is the wind-up time left (s), `since` the time since the blow
 // landed (s), and `led` whether the strike already played at the end of the wind-up. -1: none.
-export function attackFrame(ms, wind, since, led) {
+// With `tween` (an art that eases between its attack poses, `atkTween`), the frame comes back with
+// how far through it the attack is, in quarters (2.5: halfway through the impact), and the art
+// holds each pose for its beat, then eases into the next.
+export function attackFrame(ms, wind, since, led, tween = false) {
   if (!ms.length) return -1;
-  if (wind > 0) return wind * 1000 < ms[0] ? 1 : 0;
+  const at = (k, u) => (tween ? k + Math.min(0.75, Math.floor(u * 4) / 4) : k);
+  if (wind > 0) return wind * 1000 < ms[0] ? at(1, 1 - (wind * 1000) / ms[0]) : 0;
   if (!(since >= 0)) return -1;
   let t = since * 1000;
   if (!led) {
-    if (t < ms[0]) return 1;
+    if (t < ms[0]) return at(1, t / ms[0]);
     t -= ms[0];
   }
   for (let i = 1; i < ms.length; i++) {
-    if (t < ms[i]) return i + 1;
+    if (t < ms[i]) return at(i + 1, t / ms[i]);
     t -= ms[i];
   }
   return -1;
@@ -59,9 +63,10 @@ export function attackFrame(ms, wind, since, led) {
 // Walk and idle play through in-between poses: each art frame is drawn SUB times, a step of the
 // way toward the next (the arts are posed from the frame's phase), so motion flows instead of
 // stepping. Attack frames stay whole: their timing is the point.
+// (An art may ask for more, `sub`: the smoothest designs take 8.)
 const SUB = 4;
-const fine = (x, n) => {
-  const v = Math.floor(x * SUB) / SUB;
+const fine = (x, n, sub = SUB) => {
+  const v = Math.floor(x * sub) / sub;
   return ((v % n) + n) % n;
 };
 
@@ -69,24 +74,24 @@ const fine = (x, n) => {
 // move faster than a slow one's. Flyers beat their wings at the rate that stride and speed set.
 function walkFrame(m, fr, t, fast) {
   const stride = fr.stride ?? m.def.w * 1.2;
-  if (fr.cycle || !m.def.speed) return fine((t / (fr.cycle ?? 0.8)) * fr.walk, fr.walk);
-  if (m.def.fly) return fine(((t * fast * m.def.speed) / stride) * fr.walk, fr.walk);
-  return fine(((m.odo ?? 0) / stride) * fr.walk, fr.walk);
+  if (fr.cycle || !m.def.speed) return fine((t / (fr.cycle ?? 0.8)) * fr.walk, fr.walk, fr.sub);
+  if (m.def.fly) return fine(((t * fast * m.def.speed) / stride) * fr.walk, fr.walk, fr.sub);
+  return fine(((m.odo ?? 0) / stride) * fr.walk, fr.walk, fr.sub);
 }
 
 function poseOf(m, fr, moving, t, now, mo) {
   if (fr.attack && m.hp > 0) {
     const ms = attackTiming(m.def.art);
     const wind = Math.max(m.special?.warn > 0 ? m.special.warn : 0, m.windup > 0 ? m.windup : 0);
-    const f = attackFrame(ms, wind, now - (m.attackAt ?? -9), (m.attackAt ?? -9) - mo.ledAt < 0.15);
-    if (wind > 0 && f === 1) mo.ledAt = now;
+    const f = attackFrame(ms, wind, now - (m.attackAt ?? -9), (m.attackAt ?? -9) - mo.ledAt < 0.15, fr.tween);
+    if (wind > 0 && Math.floor(f) === 1) mo.ledAt = now;
     if (f >= 0) return ['attack', f];
   }
   if (moving) return ['walk', walkFrame(m, fr, t, mo.fast)];
   // Idles ease: they linger near their two extremes and pass quickly between them (like
   // MapleStory's stand frames), so the breath reads as poses rather than a steady drift.
   const u = (t / IDLE_CYCLE) % 1;
-  return ['idle', fine((u + 0.07 * Math.sin(4 * Math.PI * u)) * fr.idle, fr.idle)];
+  return ['idle', fine((u + 0.07 * Math.sin(4 * Math.PI * u)) * fr.idle, fr.idle, fr.sub)];
 }
 
 const mobKey = (art, frame, mood, pose) => `mob|${art}|${pose}${frame}|${mood}`;
@@ -359,12 +364,12 @@ function drawMonsterNow(ctx, m, x, y, time, now = time) {
   let sqGoal = 0;
   let tremble = 0;
   if (pose === 'attack' && m.hp > 0) {
-    if (frame === 0) {
+    if (whole === 0) {
       // The wind-up gathers low and wide (bosses tremble with it): the monster's tell is big.
       sqGoal = boss ? 0.1 : 0.12;
       tremble = boss ? 1.5 : 0.5;
-    } else if (frame === 1) sqGoal = -0.08;
-    else if (frame === 2 && mo.impactAt !== m.attackAt) {
+    } else if (whole === 1) sqGoal = -0.08;
+    else if (whole === 2 && mo.impactAt !== m.attackAt) {
       mo.impactAt = m.attackAt;
       mo.sq = boss ? 0.09 : 0.12;
       mo.sqV = 0;

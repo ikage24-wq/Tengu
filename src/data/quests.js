@@ -26,7 +26,7 @@ export const QUESTS = {
   },
   tut_practice: {
     id: 'tut_practice', name: 'Practice Makes Perfect', giver: 'kuro', minLevel: 1, prereq: 'tut_lookout',
-    text: 'Those Kitsune Kits are harmless, they just love a game of chase. Defeat 3 with Z and pick up 3 Fox Fluff with X.',
+    text: 'Those Blossom Kits are harmless, they just love a game of chase. Defeat 3 with Z and pick up 3 Fox Fluff with X.',
     objectives: [{ type: 'kill', mob: 'puffle', count: 3 }, { type: 'collect', item: 'fluff', count: 3 }],
     rewards: { exp: 130, gold: 24, items: [{ id: 'blue_potion', qty: 5 }] },
   },
@@ -44,7 +44,7 @@ export const QUESTS = {
   },
   fluffy: {
     id: 'fluffy', name: 'Fluffy Business', giver: 'mira', minLevel: 1, prereq: 'first_steps',
-    text: 'The Kitsune Kits in Petal Meadow shed the softest fluff. Could you bring me 8 Fox Fluff?',
+    text: 'The Blossom Kits in Petal Meadow shed the softest fluff. Could you bring me 8 Fox Fluff?',
     objectives: [{ type: 'collect', item: 'fluff', count: 8 }],
     rewards: { exp: 220, gold: 42, items: [{ id: 'hat_0', qty: 1 }] },
   },
@@ -90,8 +90,8 @@ export const QUESTS = {
   // "can't". She orders a compass for herself, collects the world as souvenirs, and when Mira
   // says nobody ever told her she couldn't, she closes for lunch and goes as far as the gate.
   snail_trouble: {
-    id: 'snail_trouble', name: 'Tortoise Trouble', giver: 'pip', minLevel: 3,
-    text: "Moss Tortoises keep nibbling my crates! Defeat 12 of them and I'll pay you in tonics. PLUS a loyalty stamp! Ten stamps gets you... something. I haven't decided. It's very exciting.",
+    id: 'snail_trouble', name: 'Snail Trouble', giver: 'pip', minLevel: 3,
+    text: "Bud Snails keep sneezing pollen on my crates! Everything's yellow! Defeat 12 of them and I'll pay you in tonics. PLUS a loyalty stamp! Ten stamps gets you... something. I haven't decided. It's very exciting.",
     objectives: [{ type: 'kill', mob: 'snailbun', count: 12 }],
     rewards: { exp: 290, gold: 36, items: [{ id: 'red_potion', qty: 15 }, { id: 'blue_potion', qty: 5 }] },
   },
@@ -210,7 +210,7 @@ export const QUESTS = {
   },
   pip_souvenirs: {
     id: 'pip_souvenirs', name: 'Souvenirs of the World', giver: 'pip', minLevel: 5, prereq: 'pip_parcel',
-    text: "Will you bring me souvenirs from out there? I want to know what the world feels like. 6 Sprite Petals from the Petal Sprites in Petal Meadow, and 6 Straw Tufts from the Scarecrow Imps in Clover Hills. For display. Not for sale. Probably not for sale.",
+    text: "Will you bring me souvenirs from out there? I want to know what the world feels like. 6 Dandelion Seeds from the Dandelion Puffs in Petal Meadow, and 6 Straw Tufts from the Scarecrow Imps in Clover Hills. For display. Not for sale. Probably not for sale.",
     objectives: [{ type: 'collect', item: 'sprite_petal', count: 6 }, { type: 'collect', item: 'straw_tuft', count: 6 }],
     rewards: { exp: 1100, gold: 110, items: [{ id: 'red_potion', qty: 15 }] },
   },
@@ -227,7 +227,7 @@ export const QUESTS = {
   // Malvina Grimsworth's story: the villainess whose every evil scheme comes out helpful.
   malv_minion: {
     id: 'malv_minion', name: 'A Minion Is Required', giver: 'malvina', minLevel: 4,
-    text: "You there! Yes, you, with the face. Congratulations: you are now my MINION. Fetch me 8 Sprite Petals and 6 Bumble Fuzz from the meadow. I shall brew a Wilting Powder so vile that every flower in Sprout Village droops in SHAME. Ohohoho! ...Off you go. Wear a hat, it's sunny.",
+    text: "You there! Yes, you, with the face. Congratulations: you are now my MINION. Fetch me 8 Dandelion Seeds and 6 Puffbee Fluff from the meadow. I shall brew a Wilting Powder so vile that every flower in Sprout Village droops in SHAME. Ohohoho! ...Off you go. Wear a hat, it's sunny.",
     objectives: [{ type: 'collect', item: 'sprite_petal', count: 8 }, { type: 'collect', item: 'bee_fuzz', count: 6 }],
     rewards: { exp: 800, gold: 130, items: [{ id: 'vial_of_despair', qty: 3 }] },
   },
@@ -269,7 +269,7 @@ export const QUESTS = {
   },
   lulu_runway: {
     id: 'lulu_runway', name: 'Runway Ready', giver: 'lulu', minLevel: 8, prereq: 'lulu_gossip',
-    text: "Inspiration struck! A spring line with fluffy trim and antler buttons. I need 9 Fox Fluff from the Kitsune Kits and 7 Jackalope Antlers from Clover Hills. The first piece is yours!",
+    text: "Inspiration struck! A spring line with fluffy trim and antler buttons. I need 9 Fox Fluff from the Blossom Kits and 7 Jackalope Antlers from Clover Hills. The first piece is yours!",
     objectives: [{ type: 'collect', item: 'fluff', count: 9 }, { type: 'collect', item: 'ribbon', count: 7 }],
     rewards: { exp: 2000, gold: 170, items: [{ id: 'cash_casual_cardigan', qty: 1 }] },
   },

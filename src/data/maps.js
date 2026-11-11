@@ -87,105 +87,84 @@ export const MAPS = {
   },
 
 
-  // Petal Meadow climbs one hillside of blossom in four zones (the map style the player picked:
-  // tall, zoned, exits on different floors). Petal Fields at the bottom, where the Moss Tortoises
-  // graze by the giant flower (the fishing pond is in the quiet east corner); Beehive Banks, where the Bumbles buzz round the giant hive; the
-  // Blossom Boughs of the great cherry tree, the Kitsune Kits' playground; and the Petal Clouds on
-  // top, where Petal Sprites drift, with a quiet lookout with the road to Windy Canyon as the reward for the climb. Each zone hunts in a loop:
-  // ropes at both ends, a long floor between, gaps to drop through. No monsters near the portals.
+  // Petal Meadow (made smaller and simpler 2026-11-10, the player's call: the old ten-floor
+  // hillside was too big and twisty for the first field). A cosy meadow you read at a glance, in
+  // three zones by height: the Petal Fields on the ground and the first ledges, where the Moss
+  // Snails graze round the giant flower (the lily pond in the quiet east corner); the Beehive
+  // Banks, one wide ledge round the giant hive, where the Puffbees buzz; and the Blossom Boughs up in
+  // the great cherry tree, the Blossom Kits' playground, with the Dandelion Puffs drifting round its
+  // crown and the lookout on top, where the road to Windy Canyon starts. Exits: Sprout to the west,
+  // Clover Hills to the east, the canyon from the lookout.
   meadow1: {
     id: 'meadow1', name: 'Petal Meadow', theme: 'meadow', town: 'sprout', world: { x: 118, y: 160 },
-    width: 2400, height: 1080, groundY: 1000,
-    look: { sky: ['#ffc6dd', '#ffe3d8', '#fff6e6'], far: '#f3d3e8', mid: '#bfe8b8', midTrim: '#8fd39a', light: 'morning', edges: 'flowers', props: ['flower', 'tulip', 'flower', 'bush', 'tulip', 'tuft'] },
+    width: 1700, height: 720, groundY: 640,
+    // One monster a spot, not two (2026-11-10: the player found the meadow crowded).
+    perSpawn: 1,
+    look: { meadowStyle: 'petal', material: 'petal', spots: 'cute', propKeep: 0.8, ledgeKeep: 0.86, critters: ['butterfly'], rabbits: 2, rabbitsAt: [690, 1190], bees: 0, sky: ['#ffc6dd', '#ffe3d8', '#fff6e6'], far: '#f3d3e8', mid: '#bfe8b8', midTrim: '#8fd39a', light: 'morning', edges: null, props: ['flower', 'tulip', 'tuft'] },
     zones: [
       { name: 'Petal Fields', from: Infinity, color: '#e889b4' },
-      { name: 'Beehive Banks', from: 800, color: '#e0a040', look: { sky: ['#ffd9a6', '#ffecc8', '#fff8e4'], far: '#f6dcb8', mid: '#d6e6a0', midTrim: '#b2d07e', edges: 'clover', props: ['tulip', 'flower', 'tuft', 'bush'] } },
-      { name: 'Blossom Boughs', from: 560, color: '#e06fa6', look: { sky: ['#ffb0d0', '#ffd2e6', '#fff0f6'], far: '#f6c2da', mid: '#f0b6d2', midTrim: '#e08cba', islands: 'planks', props: ['flower', 'tuft'] } },
-      { name: 'Petal Clouds', from: 320, color: '#8fa8f0', look: { sky: ['#b8dcff', '#e0f0ff', '#fff6fc'], far: '#e8e6ff', mid: '#f4eaff', midTrim: '#d8ccf6', material: 'sky', edges: null, props: ['flower'] } },
+      { name: 'Beehive Banks', from: 520, color: '#e0a040', look: { sky: ['#ffd9a6', '#ffecc8', '#fff8e4'], far: '#f6dcb8', mid: '#d6e6a0', midTrim: '#b2d07e', edges: null, props: ['tulip', 'flower', 'tuft'] } },
+      { name: 'Blossom Boughs', from: 360, color: '#e06fa6', look: { sky: ['#ffb0d0', '#ffd2e6', '#fff0f6'], far: '#f6c2da', mid: '#f0b6d2', midTrim: '#e08cba', islands: 'planks', props: ['flower', 'tuft'] } },
     ],
     // (In the east corner the lily pond is sunk into the meadow between two low stone lips.)
-    terrain: [[0, 1000], [560, 1000], [640, 976], [1180, 976], [1260, 1000], [2140, 1000], [2140, 992], [2172, 992], [2200, 1024], [2280, 1024], [2308, 992], [2340, 992], [2340, 1000], [2400, 1000]],
-    water: [{ x1: 2172, x2: 2308, y: 1010, kind: 'pond' }],
+    terrain: [[0, 640], [1420, 640], [1420, 632], [1452, 632], [1480, 664], [1560, 664], [1588, 632], [1620, 632], [1620, 640], [1700, 640]],
+    water: [{ x1: 1452, x2: 1588, y: 650, kind: 'pond' }],
     platforms: [
-      // Petal Fields.
-      { x: 180, y: 920, w: 880 }, { x: 1300, y: 920, w: 880 },
-      { x: 560, y: 840, w: 1280 },
-      // Beehive Banks: an open middle to drop back down through.
-      { x: 100, y: 760, w: 700 }, { x: 1600, y: 760, w: 700 },
-      { x: 420, y: 680, w: 1560 },
-      { x: 200, y: 600, w: 640 }, { x: 1560, y: 600, w: 640 },
-      // Blossom Boughs.
-      { x: 300, y: 520, w: 800 }, { x: 1300, y: 520, w: 800 },
-      { x: 700, y: 440, w: 1000 },
-      { x: 250, y: 360, w: 500 }, { x: 1650, y: 360, w: 500 },
-      // Petal Clouds: two banks of cloud with a drifting one between, and the lookout on top.
-      { x: 500, y: 280, w: 500 }, { x: 1400, y: 280, w: 500 },
-      { x: 1000, y: 280, w: 150, drift: { dx: 250, period: 9 } },
-      // The footbridge over the lily pond in the quiet east corner: the tortoises never cross the
-      // pond's stone lips, so you can fish from it in peace.
-      { x: 2172, y: 992, w: 136, style: 'planks', walkOn: true },
-      { x: 900, y: 200, w: 400, thick: 44 },
+      // Petal Fields: two ledges either side of the giant flower.
+      { x: 150, y: 560, w: 520 }, { x: 1030, y: 560, w: 400 },
+      // Beehive Banks: two ledges with the giant sunflower rising between them, the hive on the right.
+      { x: 420, y: 480, w: 340 }, { x: 940, y: 480, w: 340 },
+      // Blossom Boughs: two boughs, the crown, and the lookout on top.
+      { x: 120, y: 400, w: 460 }, { x: 1120, y: 400, w: 460 },
+      { x: 460, y: 320, w: 780 },
+      { x: 720, y: 240, w: 260, thick: 44 },
+      // A cloud drifting by the crown.
+      { x: 1120, y: 240, w: 130, drift: { dx: 200, period: 9 } },
+      // A little jetty out over the lily pond: the snails never cross the pond's stone lips, so
+      // you can fish off its end in peace.
+      { x: 1452, y: 632, w: 64, style: 'planks', walkOn: true },
     ],
-    // A moving part per zone: bounce blossoms in the fields (one up the hill, one at the end of the
-    // top floor, two floors high), the hive's warm pollen updraft on the banks, the petal whirl
-    // round the cherry tree in the boughs, and the drifting cloud on top.
-    // How its monsters live (world/habits.js): the tortoises doze (most of the night) and amble
-    // over to the giant flower on the hill; the Bumbles buzz home to their hive and chase each other; the fox kits play
-    // chase in the boughs and curl up at night; the Petal Sprites doze on the clouds at night.
-    habitats: { snailbun: { naps: true, home: { x: 900, y: 976 } }, bumble: { home: { x: 1200, y: 680 }, play: true }, puffle: { naps: true, play: true }, petalsprite: { naps: true } },
+    // How its monsters live (world/habits.js): the snails doze and creep over to the giant
+    // flower; the Puffbees bob about their hive; the fox kits play chase in the boughs; the Petal
+    // Sprites doze round the crown at night.
+    habitats: { snailbun: { naps: true, home: { x: 850, y: 640 } }, bumble: { play: true }, puffle: { naps: true, play: true }, petalsprite: { naps: true } },
     // The area boss (world/nest.js): after enough hunting, the Queen Bee bursts out of the hive.
-    nest: { mob: 'queenbee', x: 1200, y: 680, kills: 150, name: 'The giant hive', wake: 'Her Majesty is NOT amused. Everyone to Beehive Banks!', stirs: ['The giant hive is buzzing...', 'The giant hive is shaking! Something big is waking up.'] },
-    // The meadow's spirit floats by the cherry tree's crown when the map is calm (world/calm.js).
-    spirit: { x: 1010, y: 380 },
-    // At night (world/daytime.js) warm light glows at the arch, the picnic, the hive and the lookout.
-    lamps: [{ x: 260, y: 950 }, { x: 2245, y: 930 }, { x: 1200, y: 640, c: '#ffd970' }, { x: 1100, y: 170 }],
-    springs: [{ x: 1150, y: 976, up: 170, kind: 'blossom' }, { x: 1720, y: 840, up: 190, kind: 'blossom' }],
-    updrafts: [
-      { x: 1200, w: 50, top: 500, bottom: 680, kind: 'pollen' },
-      { x: 1200, w: 60, top: 250, bottom: 440, kind: 'petals' },
-    ],
+    nest: { mob: 'queenbee', x: 1110, y: 480, kills: 150, name: 'The giant hive', wake: 'Her Majesty is NOT amused. Everyone to Beehive Banks!', stirs: ['The giant hive is buzzing...', 'The giant hive is shaking! Something big is waking up.'] },
+    spirit: { x: 850, y: 280 },
+    lamps: [{ x: 200, y: 610 }, { x: 1520, y: 600 }, { x: 1110, y: 440, c: '#ffd970' }, { x: 850, y: 210 }],
+    // Moving parts: two bounce blossoms in the fields and the drifting cloud by the crown (the
+    // pollen updraft was cut 2026-11-11: the map is small enough without it).
+    springs: [{ x: 960, y: 640, up: 170, kind: 'blossom' }, { x: 1300, y: 560, up: 170, kind: 'blossom' }],
     ropes: [
-      { x: 200, top: 920, bottom: 1000, ladder: true }, { x: 2110, top: 920, bottom: 1000, ladder: true },
-      { x: 600, top: 840, bottom: 920 }, { x: 1800, top: 840, bottom: 920 },
-      { x: 760, top: 760, bottom: 840 }, { x: 1640, top: 760, bottom: 840 },
-      { x: 460, top: 680, bottom: 760 }, { x: 1960, top: 680, bottom: 760 },
-      { x: 800, top: 600, bottom: 680 }, { x: 1600, top: 600, bottom: 680 },
-      { x: 560, top: 520, bottom: 600 }, { x: 1900, top: 520, bottom: 600 },
-      { x: 760, top: 440, bottom: 520 }, { x: 1640, top: 440, bottom: 520 },
-      { x: 720, top: 360, bottom: 440 }, { x: 1680, top: 360, bottom: 440 },
-      { x: 700, top: 280, bottom: 360 }, { x: 1700, top: 280, bottom: 360 },
-      { x: 960, top: 200, bottom: 280, ladder: true },
+      { x: 180, top: 560, bottom: 640, ladder: true }, { x: 1380, top: 560, bottom: 640, ladder: true },
+      { x: 620, top: 480, bottom: 560 }, { x: 1070, top: 480, bottom: 560 },
+      { x: 460, top: 400, bottom: 480 }, { x: 1240, top: 400, bottom: 480 },
+      { x: 520, top: 320, bottom: 400 }, { x: 1180, top: 320, bottom: 400 },
+      { x: 760, top: 240, bottom: 320, ladder: true },
     ],
     portals: [
-      { id: 'west', x: 40, y: 1000, to: 'sprout', toPortal: 'east' },
-      { id: 'east', x: 2340, y: 1000, to: 'meadow2', toPortal: 'west' },
-      { id: 'north', x: 1220, y: 200, to: 'canyon', toPortal: 'south' },
+      { id: 'west', x: 40, y: 640, to: 'sprout', toPortal: 'east' },
+      { id: 'east', x: 1660, y: 640, to: 'meadow2', toPortal: 'west' },
+      { id: 'north', x: 900, y: 240, to: 'canyon', toPortal: 'south' },
     ],
     npcs: [],
-    // A landmark per zone: the giant flower and the fishing pond in the fields, the hive on the banks, the
-    // cherry tree's crown in the boughs, the cloud pillar by the lookout.
-    deco: [
-      ['flowerarch', 260], ['giantflower', 820, 0], ['picnic', 1650], ['signpost', 2060],
-      ['beehive', 1200, 0, 680], ['giantflower', 300, 1, 760],
-      ['sakura', 1200, 0, 440],
-      ['cloudpillar', 880, 0, 280],
-    ],
+    // A landmark per zone: the giant flower and the pond in the fields, the hive on the banks, the
+    // cherry tree's crown in the boughs.
+    deco: [['meadowsun', 850, 0], ['meadowhive', 1110, 0, 480], ['meadowcherry', 600, 0, 320]],
     spawns: [
-      // Petal Fields: Moss Tortoises.
-      ...[380, 1300, 1950].map((x) => ({ mob: 'snailbun', x, y: 1000 })),
-      ...[760, 1060].map((x) => ({ mob: 'snailbun', x, y: 976 })),
-      ...[400, 800, 1500, 1950].map((x) => ({ mob: 'snailbun', x, y: 920 })),
-      ...[900, 1500].map((x) => ({ mob: 'snailbun', x, y: 840 })),
-      // Beehive Banks: Bumbles round their hive.
-      ...[350, 2000].map((x) => ({ mob: 'bumble', x, y: 760 })),
-      ...[650, 950, 1450, 1750].map((x) => ({ mob: 'bumble', x, y: 680 })),
-      ...[500, 1880].map((x) => ({ mob: 'bumble', x, y: 600 })),
-      // Blossom Boughs: the Kitsune Kits' playground under the great tree.
-      ...[620, 950, 1750].map((x) => ({ mob: 'puffle', x, y: 520 })),
-      ...[900, 1500].map((x) => ({ mob: 'puffle', x, y: 440 })),
-      ...[450, 1900].map((x) => ({ mob: 'puffle', x, y: 360 })),
-      // Petal Clouds: Petal Sprites drifting, the lookout left quiet.
-      ...[700, 850, 1500, 1700].map((x) => ({ mob: 'petalsprite', x, y: 280 })),
+      // Petal Fields: Bud Snails.
+      ...[440, 700, 1150].map((x) => ({ mob: 'snailbun', x, y: 640 })),
+      ...[300].map((x) => ({ mob: 'snailbun', x, y: 560 })),
+      ...[1150, 1300].map((x) => ({ mob: 'snailbun', x, y: 560 })),
+      // Beehive Banks: Puffbees round their hive.
+      ...[520, 680, 1240].map((x) => ({ mob: 'bumble', x, y: 480 })),
+      // Blossom Boughs: the Blossom Kits' playground.
+      ...[300, 480].map((x) => ({ mob: 'puffle', x, y: 400 })),
+      ...[1210, 1380].map((x) => ({ mob: 'puffle', x, y: 400 })),
+      ...[500].map((x) => ({ mob: 'puffle', x, y: 320 })),
+      // Dandelion Puffs drifting round the boughs (clear of the lookout's way out).
+      ...[300, 500, 1300, 1480].map((x) => ({ mob: 'petalsprite', x, y: 400 })),
+      ...[460].map((x) => ({ mob: 'petalsprite', x, y: 480 })),
     ],
   },
 
@@ -887,7 +866,7 @@ export const TOWNS = ['sprout', 'harbor', 'crag', 'grove'];
 
 // ---------- Dawnlight Isle: the tutorial island (world/tutorial.js walks you through it) ----------
 // Three small maps, west to east: the beach you wake up on (ledges to jump to and a rope to
-// climb), the practice field (a few harmless Kitsune Kits), and the dock with the boat to Sprout
+// climb), the practice field (a few harmless Blossom Kits), and the dock with the boat to Sprout
 // Village. Kuro, a young tengu, waits on each to show you the next thing. None of it is on the
 // world map: the island is off the coast.
 Object.assign(MAPS, {
@@ -2870,7 +2849,7 @@ MAPS.starfall.spawns.push({ mob: 'selene', x: 1300, y: 1040, respawn: 600 });
 // from the way you came in from town. Step up to it and it carries you straight back to town (one
 // way), so a long map never means a long walk back.
 const HOMESTONES = {
-  meadow1: [1900, 360], meadow2: [200, 700], woods: [1950, 920], ruins: [2220, 900], cave: [2380, 520],
+  meadow1: [1555, 400], meadow2: [200, 700], woods: [1950, 920], ruins: [2220, 900], cave: [2380, 520],
   sky: [2460, 400], canyon: [410, 520], glade: [2140, 560], shrine: [2164, 560], ridge: [2200, 400],
   springs: [1992, 640], peak: [2040, 880], starfall: [2290, 440],
 };
@@ -2880,9 +2859,8 @@ for (const [id, [x, y]] of Object.entries(HOMESTONES)) {
 }
 
 // Safe arrival (the map rules): no monster starts near a way in, a homestone or where you appear.
-// (Quests ask for 8 Petals and Straw Tufts: a few more Petal Sprites and Scarecrow Imps, so a group
+// (Quests ask for 8 Dandelion Seeds and Straw Tufts: a few more Dandelion Puffs and Scarecrow Imps, so a group
 // sharing the field isn't queueing for three of each. The drop chances stay as they were.)
-MAPS.meadow1.spawns.push({ mob: 'petalsprite', x: 750, y: 440 }, ...[330, 650].map((x) => ({ mob: 'petalsprite', x, y: 360 })));
 MAPS.meadow2.spawns.push(...[520, 880, 1350].map((x) => ({ mob: 'strawimp', x, y: 700 })));
 for (const m of Object.values(MAPS)) if (!m.dungeon && m.spawns?.length) clearArrivals(m, MOBS, NODES[m.id]);
 

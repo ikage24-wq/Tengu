@@ -284,7 +284,8 @@ export function clearArrivals(map, mobs, spots = []) {
     ...map.platforms.filter((p) => !p.drift).map((p) => [p.x, p.x + p.w, p.y]),
     ...(map.terrain ?? [[0, map.groundY], [map.width, map.groundY]]).slice(1).map((q, i) => [map.terrain ? map.terrain[i][0] : 0, q[0], q[1], map.terrain ? map.terrain[i][1] : q[1]]).filter((f) => f[2] === f[3] && f[1] > f[0]),
   ];
-  const ways = map.portals.map((p) => ({ x: p.x, y: p.y ?? map.groundY }));
+  // (A homestone only sends you away: nobody arrives at it, so it keeps nothing clear.)
+  const ways = map.portals.filter((p) => !p.homestone).map((p) => ({ x: p.x, y: p.y ?? map.groundY }));
   map.spawns = map.spawns.filter((sp) => {
     const def = mobs[sp.mob];
     if (!def || def.boss) return true;

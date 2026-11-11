@@ -649,7 +649,94 @@ function roundTree(ctx, x, y, r, c, time, seed) {
   clump(ctx, x, y - r * 1.25, r, c, seed, Math.sin(time * 0.7 + seed) * r * 0.05);
 }
 
+// A cherry tree on a hill: a slim leaning trunk, two boughs, and a crown of soft pink clumps.
+function blossomTree(ctx, x, y, r, c, pink, time, seed) {
+  ctx.fillStyle = c.bark;
+  const lean = (hash(seed + 9) - 0.5) * r * 0.3;
+  ctx.beginPath();
+  ctx.moveTo(x - r * 0.1, y);
+  ctx.quadraticCurveTo(x - r * 0.05 + lean * 0.5, y - r * 0.6, x + lean, y - r * 1.05);
+  ctx.lineTo(x + lean + r * 0.1, y - r * 1.05);
+  ctx.quadraticCurveTo(x + r * 0.08 + lean * 0.5, y - r * 0.6, x + r * 0.12, y);
+  ctx.closePath();
+  ctx.fill();
+  const sw = Math.sin(time * 0.6 + seed) * r * 0.05;
+  clump(ctx, x + lean - r * 0.45, y - r * 1.15, r * 0.7, pink, seed + 0.3, sw);
+  clump(ctx, x + lean + r * 0.5, y - r * 1.2, r * 0.66, pink, seed + 0.6, sw);
+  clump(ctx, x + lean, y - r * 1.45, r * 0.85, pink, seed, sw);
+}
+
+// Petal Meadow's own backdrop (2026-11-10, the art pass the player asked for): calm and clear, so
+// the play floors read in front of it. Lavender mountains far off; a rolling green hillside with
+// cherry trees in bloom and, now and then, Sprout Village's windmill and cottages together (one
+// place, never sprinkled everywhere); near, soft green hills with a few clusters of flowers rather
+// than a scatter of dots.
+function drawPaintedPetal(ctx, t, cam, width, height, time, layerY, air) {
+  const sun = t.sun ?? '#fff6dc';
+  const green = mix(t.mid, '#6cbc74', 0.5);
+  // 1. Lavender mountains in the haze.
+  const farY = layerY(96, 0.03);
+  const m1 = mix('#c8b4e6', air, 0.55);
+  hills(ctx, cam, 0.04, width, farY - 34, 50, 1.3, m1, mix(m1, sun, 0.3));
+  const m2 = mix('#b8c8e8', air, 0.4);
+  hills(ctx, cam, 0.07, width, farY, 34, 4.1, m2, mix(m2, sun, 0.3));
+  haze(ctx, air, width, farY + 16, 0.42, 70);
+
+  // 2. The hillside: one long soft slope, cherry trees in bloom along it, and the village.
+  const midY = layerY(58, 0.06);
+  const hc = mix(green, air, 0.22);
+  const crest = hills(ctx, cam, 0.16, width, midY - 16, 22, 2.7, hc, mix(hc, sun, 0.32));
+  const cm = planeColors(t, shade(hc, -6), air, 0.04);
+  const pinkMid = planeColors(t, '#ffb6d0', air, 0.2);
+  const house = { wall: mix('#fff4e8', air, 0.2), wallLit: '#ffffff', roof: mix('#e8848a', air, 0.22), door: mix('#a8765a', air, 0.25), window: '#ffe9a0', sail: '#fffaf0', sailFrame: mix('#a8765a', air, 0.2) };
+  repeat(cam.x, 0.16, 900, width, (i, x) => {
+    // The village: a windmill with two cottages beside it.
+    const vx = x + 300 + hash(i + 40) * 200;
+    windmill(ctx, vx, crest(vx) + 2, 1, house, time, i);
+    cottage(ctx, vx - 34, crest(vx - 34) + 2, 0.95, house);
+    cottage(ctx, vx + 30, crest(vx + 30) + 2, 0.9, house);
+  });
+  repeat(cam.x, 0.16, 190, width, (i, x) => {
+    if (hash(i + 3) < 0.4) return;
+    const xx = x + hash(i + 2) * 90;
+    // (Never on top of the village.)
+    const local = ((xx + cam.x * 0.16) % 900 + 900) % 900;
+    if (local > 230 && local < 560) return;
+    blossomTree(ctx, xx, crest(xx) + 3, 13 + hash(i + 4) * 4, cm, pinkMid, time, i);
+  });
+  haze(ctx, air, width, midY + 8, 0.22, 60);
+
+  // 3. Near: soft green rises with a few clusters of flowers and a cherry tree now and then.
+  const nearY = layerY(16, 0.1);
+  const nc = mix(shade(green, 6), air, 0.06);
+  const near = hills(ctx, cam, 0.32, width, nearY - 6, 14, 5.9, nc, mix(nc, sun, 0.26));
+  const blooms = ['#ffb3cf', '#fff3a6', '#ffffff'];
+  repeat(cam.x, 0.32, 260, width, (i, x) => {
+    if (hash(i + 90) < 0.35) return;
+    const cx = x + hash(i + 91) * 120;
+    const col = mix(blooms[((i % blooms.length) + blooms.length) % blooms.length], air, 0.1);
+    for (let k = 0; k < 5; k++) {
+      const fx = cx + (hash(i * 5 + k) - 0.5) * 26;
+      const fy = near(fx) + 5 + hash(i * 7 + k) * 7;
+      const sw = Math.sin(time * 1.6 + fx * 0.05) * 0.7;
+      ctx.fillStyle = col;
+      ctx.beginPath();
+      ctx.arc(fx + sw, fy, 1.7 + hash(i * 3 + k) * 0.6, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  });
+  const cn = planeColors(t, shade(green, -4), air, 0.03);
+  const pinkNear = planeColors(t, '#ffaacb', air, 0.08);
+  repeat(cam.x, 0.32, 420, width, (i, x) => {
+    if (hash(i + 70) < 0.5) return;
+    const xx = x + hash(i + 71) * 200;
+    blossomTree(ctx, xx, near(xx) + 6, 20 + hash(i + 72) * 6, cn, pinkNear, time, i + 70);
+  });
+  haze(ctx, air, width, nearY + 4, 0.16, 40);
+}
+
 export function drawPaintedMeadow(ctx, t, cam, width, height, time, layerY, air) {
+  if (t.meadowStyle === 'petal') return drawPaintedPetal(ctx, t, cam, width, height, time, layerY, air);
   const sun = t.sun ?? '#fff6dc';
   // The map's own green, deepened toward a meadow green so hills and trees read clearly even
   // under a pastel sky.
@@ -721,84 +808,136 @@ export function drawPaintedMeadow(ctx, t, cam, width, height, time, layerY, air)
 // Rabbits on the meadow floor and bees among the flowers. A rabbit hops a few times, sits with
 // its ears twitching and nose wiggling, then hops on, turning now and then. Bees buzz in loops,
 // wings a blur.
-function rabbit(ctx, x, y, dir, hop, sit, twitch) {
-  const fur = '#fff6f0';
-  const shadeC = '#e8d6e2';
+// A meadow bunny (redrawn 2026-11-11 to match the outlined art): a chubby round body, a big round
+// head, long ears with pink insides, a cotton tail, a shining eye and a blush. It hops in soft arcs,
+// nose up as it leaves the ground and nose down as it lands, ears streaming back; sitting, its nose
+// twitches, an ear flicks and it blinks. Lifted and tilted only, never squashed or stretched.
+function rabbit(ctx, x, y, dir, hop, sit, twitch, blink = false) {
+  const fur = '#fffaf6';
+  const shadeC = '#f0dde8';
+  const line = '#b896b4';
+  const up = hop > 0 ? Math.sin(hop * Math.PI) : 0;
+  // A shadow that shrinks as it rises.
+  ctx.fillStyle = 'rgba(90,50,90,0.16)';
+  ctx.beginPath();
+  ctx.ellipse(x, y, 7 - up * 2.5, 1.6, 0, 0, Math.PI * 2);
+  ctx.fill();
   ctx.save();
-  ctx.translate(x, y - Math.sin(hop * Math.PI) * 7);
-  ctx.scale(dir * 1.2, 1.2);
-  const stretch = hop > 0 ? Math.sin(hop * Math.PI) : 0;
-  // Back body and the tail puff.
+  ctx.translate(x, y - up * 10);
+  ctx.scale(dir, 1);
+  ctx.rotate(hop > 0 ? (hop - 0.5) * 0.4 : 0);
+  ctx.lineWidth = 1.1;
+  ctx.strokeStyle = line;
+  const blob = (cx, cy, rx, ry, c, a = 0) => {
+    ctx.fillStyle = c;
+    ctx.beginPath();
+    ctx.ellipse(cx, cy, rx, ry, a, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+  };
+  // Back foot (kicked out behind mid-hop), the tail puff, the body.
+  blob(-4 - up * 2.4, -1.3 + up * 0.4, 3.2, 1.5, shadeC, up * 0.3);
+  blob(-7.6, -6.4, 2.6, 2.6, fur);
+  blob(-1, -6, 7, 5.8, fur);
   ctx.fillStyle = shadeC;
   ctx.beginPath();
-  ctx.ellipse(-2, -4, 5.4 + stretch, 4, -stretch * 0.3, 0, Math.PI * 2);
+  ctx.ellipse(-1.6, -3.4, 5, 2.2, 0, 0, Math.PI);
   ctx.fill();
-  ctx.fillStyle = fur;
-  ctx.beginPath();
-  ctx.ellipse(-1.6, -4.4, 5 + stretch, 3.7, -stretch * 0.3, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.beginPath();
-  ctx.arc(-6.6, -5, 1.8, 0, Math.PI * 2);
-  ctx.fill();
-  // Head and ears, the ears flicking.
-  const hx = 3.4 + stretch * 1.5;
-  const hy = -7 - sit * 1.2;
-  ctx.beginPath();
-  ctx.ellipse(hx, hy, 3.2, 2.8, 0, 0, Math.PI * 2);
-  ctx.fill();
-  for (const [ex, a] of [[-0.6, -0.25 - twitch * 0.3], [0.8, 0.1 + twitch * 0.15]]) {
+  // The front paw, tucked up in the air.
+  blob(4 - up * 0.5, -1 - up * 1.4, 2, 1.3, fur);
+  // Head and ears (behind the head first), the ears trailing back in a hop and flicking at rest.
+  const hx = 5.2;
+  const hy = -12.4 + sit * 0.4;
+  for (const [ex, a0, back] of [[-1.4, -0.5, true], [1, -0.12, false]]) {
     ctx.save();
-    ctx.translate(hx + ex, hy - 2);
-    ctx.rotate(a - stretch * 0.6);
-    ctx.fillStyle = fur;
+    ctx.translate(hx + ex, hy - 3.6);
+    ctx.rotate(a0 - up * 0.5 - (back ? twitch * 0.35 : 0));
+    blob(0, -4.8, 1.9, 5, back ? shadeC : fur);
+    ctx.fillStyle = '#ffc2d6';
     ctx.beginPath();
-    ctx.ellipse(0, -3.6, 1.2, 3.8, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = '#ffc6d6';
-    ctx.beginPath();
-    ctx.ellipse(0, -3.4, 0.55, 2.8, 0, 0, Math.PI * 2);
+    ctx.ellipse(0, -4.4, 0.85, 3.4, 0, 0, Math.PI * 2);
     ctx.fill();
     ctx.restore();
   }
+  blob(hx, hy, 5.4, 5, fur);
+  ctx.fillStyle = 'rgba(255,255,255,0.8)';
+  ctx.beginPath();
+  ctx.ellipse(hx - 1.8, hy - 2.2, 1.8, 1, -0.4, 0, Math.PI * 2);
+  ctx.fill();
+  // The face: an eye with a shine (shut in a blink), a blush, a twitching pink nose.
   ctx.fillStyle = '#3a2d4f';
+  ctx.strokeStyle = '#3a2d4f';
+  if (blink) {
+    ctx.lineWidth = 0.9;
+    ctx.beginPath();
+    ctx.arc(hx + 2, hy - 0.4, 1.1, Math.PI * 0.15, Math.PI * 0.85);
+    ctx.stroke();
+  } else {
+    ctx.beginPath();
+    ctx.ellipse(hx + 2, hy - 0.6, 1.1, 1.4, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.arc(hx + 1.6, hy - 1.2, 0.45, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.fillStyle = 'rgba(255,140,170,0.65)';
   ctx.beginPath();
-  ctx.arc(hx + 1.3, hy - 0.4, 0.75, 0, Math.PI * 2);
+  ctx.ellipse(hx + 2.6, hy + 1.9, 1.4, 0.8, 0, 0, Math.PI * 2);
   ctx.fill();
-  ctx.fillStyle = '#ff9fb8';
+  ctx.fillStyle = '#ff8fb0';
   ctx.beginPath();
-  ctx.arc(hx + 3, hy + 0.4 + Math.sin(twitch * 20) * 0.2, 0.55, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.fillStyle = shadeC;
-  ctx.beginPath();
-  ctx.ellipse(2.4, -0.6, 1.6, 0.8, 0, 0, Math.PI * 2);
+  ctx.ellipse(hx + 5, hy + 0.6 + Math.sin(twitch * 20) * 0.25, 0.8, 0.6, 0, 0, Math.PI * 2);
   ctx.fill();
   ctx.restore();
 }
+// A bumblebee (remade 2026-11-11): a round fuzzy body with soft brown stripes, a round head with a
+// shining eye and a blush, buzzing wings, bobbing as it flies.
 function bee(ctx, x, y, dir, time, seed) {
   ctx.save();
-  ctx.translate(x, y);
+  ctx.translate(x, y + Math.sin(time * 10 + seed) * 0.7);
   ctx.scale(dir, 1);
   const flap = Math.sin(time * 60 + seed) > 0;
-  ctx.fillStyle = 'rgba(255,255,255,0.75)';
+  ctx.lineWidth = 0.8;
+  ctx.strokeStyle = '#8a6a50';
+  ctx.fillStyle = 'rgba(255,255,255,0.8)';
   ctx.beginPath();
-  ctx.ellipse(-0.5, -2.6, 1.8, flap ? 2.4 : 1.4, -0.4, 0, Math.PI * 2);
+  ctx.ellipse(-0.8, -3.2, 2.2, flap ? 3 : 1.6, -0.4, 0, Math.PI * 2);
   ctx.fill();
+  ctx.stroke();
   ctx.fillStyle = '#ffd34a';
   ctx.beginPath();
-  ctx.ellipse(0, 0, 2.6, 1.9, 0, 0, Math.PI * 2);
+  ctx.ellipse(-0.6, 0, 3.4, 2.7, 0, 0, Math.PI * 2);
   ctx.fill();
-  ctx.fillStyle = '#4a3a50';
-  ctx.fillRect(-1.2, -1.8, 0.9, 3.6);
-  ctx.fillRect(0.6, -1.8, 0.8, 3.6);
+  ctx.save();
+  ctx.clip();
+  ctx.fillStyle = '#7a5a48';
+  ctx.fillRect(-2.4, -3, 1.1, 6);
+  ctx.fillRect(-0.2, -3, 1.1, 6);
+  ctx.restore();
+  ctx.stroke();
+  ctx.fillStyle = '#ffe58a';
   ctx.beginPath();
-  ctx.arc(2.6, -0.2, 1.1, 0, Math.PI * 2);
+  ctx.arc(2.8, -0.4, 2, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = '#3a2d4f';
+  ctx.beginPath();
+  ctx.arc(3.5, -0.8, 0.55, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = 'rgba(255,140,170,0.7)';
+  ctx.beginPath();
+  ctx.ellipse(3.6, 0.6, 0.7, 0.4, 0, 0, Math.PI * 2);
   ctx.fill();
   ctx.restore();
 }
 export function drawMeadowLife(ctx, map, cam, width, height, time, groundAt) {
-  const n = Math.ceil(map.width / 420);
+  // (A map can ask for fewer: `look.rabbits`, `look.bees`.)
+  // (Or name where they live, `look.rabbitsAt`, so they keep clear of the gathering spots.)
+  const at = map.look?.rabbitsAt;
+  const n = at?.length ?? map.look?.rabbits ?? Math.ceil(map.width / 420);
   for (let i = 0; i < n; i++) {
-    const home = 140 + hash(i * 4.7 + 9) * (map.width - 280);
+    const home = at ? at[i] : 140 + hash(i * 4.7 + 9) * (map.width - 280);
     if (map.portals.some((p) => Math.abs(p.x - home) < 70) || map.npcs.some((q) => Math.abs(q.x - home) < 50)) continue;
     // A cycle: four hops one way, a sit, four hops back, a sit.
     const T = 7 + hash(i + 1) * 3;
@@ -814,9 +953,10 @@ export function drawMeadowLife(ctx, map, cam, width, height, time, groundAt) {
     if (sx < -30 || sx > width + 30) continue;
     const gy = groundAt(map, wx) - cam.y;
     if (gy < -20 || gy > height + 30) continue;
-    rabbit(ctx, sx, gy, dir, hopping ? hp % 1 : 0, hopping ? 0 : 1, hopping ? 0 : Math.max(0, Math.sin(time * 6 + i * 3)) ** 8);
+    const blink = !hopping && ((time * 0.4 + hash(i + 5) * 3) % 1) < 0.05;
+    rabbit(ctx, sx, gy, dir, hopping ? hp % 1 : 0, hopping ? 0 : 1, hopping ? 0 : Math.max(0, Math.sin(time * 6 + i * 3)) ** 8, blink);
   }
-  for (let i = 0; i < Math.ceil(map.width / 300); i++) {
+  for (let i = 0; i < (map.look?.bees ?? Math.ceil(map.width / 300)); i++) {
     const cx = 100 + hash(i * 6.1 + 3) * (map.width - 200);
     const sx = cx - cam.x;
     if (sx < -60 || sx > width + 60) continue;

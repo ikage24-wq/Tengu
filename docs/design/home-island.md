@@ -24,7 +24,7 @@ She builds the next stage when you bring what she needs. Every stage adds someth
 | Stage | Adds | Shelly needs |
 |---|---|---|
 | 1 Shell Beach | The dock and skiff, the beach, Shelly's conch workshop, your hut on stilts, a garden plot (Lucky Clover), a bouncy clam up to the hut's roof deck, sea fishing off the far end | (free with the deed) |
-| 2 Tide Pond | A pond behind the hut with its own fish, a fishing jetty, reeds | 3,000 gold, 10 Oak Logs, 6 Cotton, 6 Mossy Scutes |
+| 2 Tide Pond | A pond behind the hut with its own fish, a fishing jetty, reeds | 3,000 gold, 10 Oak Logs, 6 Cotton, 6 Snail Buds |
 | 3 The Rocky Rise | Mossy boulders, an ore rock, a herb patch | 8,000 gold, 12 Copper Ore, 8 Maple Logs, 10 Lucky Clover |
 | 4 Coral Islet | A rope bridge over the shallows to a second islet, a cherry tree and a cotton patch on its beach, a cliff (up a ladder) with a little shack and a hammock | 20,000 gold, 20 Maple Logs, 10 Iron Ore, 8 Silkmoss, 6 Hollow Acorns |
 | 5 Sunset Terrace | A boardwalk and railing along the cliff top, bunting and a lantern: the place for your trophies | 50,000 gold, 15 Cedar Logs, 10 Silver Ore, 8 Lotus Fibre |

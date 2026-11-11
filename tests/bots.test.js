@@ -890,7 +890,7 @@ test('a player never takes the spot you are using, and gives one up the moment y
   const target = nodesOf(world0).findIndex((n) => !n.night && n.kind === 'herb');
   const spot = nodesOf(world0)[target];
   let tried = 0;
-  lifeField('meadow1', 13, 300, {
+  lifeField('meadow1', 14, 300, {
     each: (w, bs) => {
       Object.assign(w.body, { x: spot.x, y: spot.y, vx: 0, vy: 0 });
       for (const b of bs.list) if (b.life?.kind === 'node') {

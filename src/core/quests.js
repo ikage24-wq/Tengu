@@ -267,7 +267,7 @@ export function itemSources(itemId) {
   return Object.values(MOBS).filter((m) => m.drops?.some((d) => d.id === itemId)).map((m) => m.id);
 }
 
-// One line saying where to work on an objective: "Petal Meadow", or for an item "Kitsune Kit,
+// One line saying where to work on an objective: "Petal Meadow", or for an item "Blossom Kit,
 // Petal Meadow".
 export function objectiveHint(o) {
   if (o.type === 'kill') return mobPlaces(o.mob).slice(0, 2).join(', ');

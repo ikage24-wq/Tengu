@@ -456,9 +456,9 @@ add({ id: 'return_scroll', name: 'Homeward Scroll', type: 'use', price: 40, effe
 
 const ETC = [
   ['fluff', 'Fox Fluff', 1, '#fff0fa'],
-  ['shell', 'Mossy Scute', 2, '#ff9ec0'],
-  ['bee_fuzz', 'Bumble Fuzz', 1, '#ffd65a'],
-  ['sprite_petal', 'Sprite Petal', 2, '#ffb7d3'],
+  ['shell', 'Snail Bud', 2, '#ff9ec0'],
+  ['bee_fuzz', 'Puffbee Fluff', 1, '#ffd65a'],
+  ['sprite_petal', 'Dandelion Seed', 2, '#f4f0ff'],
   ['straw_tuft', 'Straw Tuft', 3, '#f2d27a'],
   ['brownie_crumb', 'Brownie Crumbs', 4, '#9a6a4a'],
   ['wind_whisker', 'Wind Whisker', 5, '#bfe6ff'],

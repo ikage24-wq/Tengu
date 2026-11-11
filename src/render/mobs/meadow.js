@@ -1,6 +1,6 @@
 // Monster art: Petal Meadow and Clover Hills (levels 1-8), the first monsters a player meets.
-//   puffle      Kitsune Kit: a tiny fox spirit with three tails tipped in spirit flames
-//   snailbun    Moss Tortoise: a little tortoise carrying a garden on its shell
+//   puffle      Blossom Kit: a pale pink fox kit with a blossom-tipped tail; it pounces
+//   snailbun    Bud Snail: a plump peach snail whose shell is a pink flower bud that blooms
 //   sproutling  Mandrake: a root creature with a leafy crown that screams when angry
 //   mushkin     Toadstool Goblin: a goblin in a spotted mushroom-cap helmet with a club
 //   piglet      Jackalope: a fluffy antlered hare that bounds along
@@ -333,42 +333,52 @@ function flame(x, y, h, lean, outer, inner) {
   ];
 }
 
-// ---------- Kitsune Kit (puffle) ----------
+// ---------- Blossom Kit (puffle) ----------
+// (Petal Meadow's new cast, 2026-11-11: the Blossom Kit made over.) A pale pink fox kit of the
+// cherry tree, one big fluffy tail tipped with a cherry blossom and a blossom tucked by its ear.
+// It trots and bounds about the boughs; it attacks with a pounce,
+// landing paws first in a burst of petals.
 
-// Attack: fox-fire. bx/by: body shift, pitch: body tilt (deg, + nose down), head: neck turn,
-// tl: tails swept (deg), fl: tail flames flare, g: how wide the mouth opens, orb: the fox-fire
-// [dx, dy, r] from the head, ff/fh: front/hind feet shift, lift: front paws raised.
+// Attack: the pounce. bx/by: body shift (by - is up), pitch: body tilt (deg, + nose down), head:
+// neck turn, tl: tail swept (deg), ff/fh: front/hind feet shift, lift: front paws raised, burst:
+// petals bursting at the landing.
 const KIT_ATK = [
-  // Wind-up (held): sunk back on the haunches, chin tucked, tails fanned high, fire kindling.
-  { bx: -2.2, by: 1.8, pitch: -6, head: 10, tl: -10, fl: 1.4, g: 0, orb: [8.4, 4, 1.2], ff: 1.6, fh: -0.6, lift: 0 },
-  // Spit: the whole body thrown forward, mouth wide, the fire leaving the muzzle (a smear behind).
-  { bx: 1.2, by: -0.6, pitch: 5, head: -8, tl: 18, fl: -0.6, g: 1, orb: [11.4, 1.6, 2.2], ff: 1.4, fh: 1.2, lift: 1.2 },
-  // Impact (held): stretched out after it, the fire bursting at full size, tails streaming.
-  { bx: 0.8, by: -0.2, pitch: 3, head: -4, tl: 26, fl: -0.4, g: 0.6, orb: [12.4, -2.4, 2.8], ff: 0.6, fh: 0.8, lift: 0.4 },
-  // Recover: settling back past rest, the last sparks drifting off.
-  { bx: -0.4, by: 0.5, pitch: -1.5, head: 2, tl: -6, fl: -0.8, g: 0.1, orb: [11, -8.4, 1.4], ff: 0, fh: 0, lift: 0 },
+  // Wind-up (held): crouched low on its haunches, rump up, tail swishing, eyes on you.
+  { bx: -2.4, by: 2.4, pitch: -4, head: 6, tl: -16, ff: 1.6, fh: -1, lift: 0, burst: 0 },
+  // Leap: sprung up and forward, front paws reaching out, tail streaming behind.
+  { bx: 2.6, by: -5.4, pitch: -12, head: -6, tl: 26, ff: 4, fh: -2.4, lift: 3.4, burst: 0 },
+  // Landing (held): paws down hard in front, nose down, petals bursting up round it.
+  { bx: 4, by: 0.8, pitch: 7, head: 6, tl: 14, ff: 3, fh: 1, lift: 0, burst: 1 },
+  // Recover: settling back past rest, the last petals drifting.
+  { bx: 0.6, by: 0.3, pitch: -1.5, head: 0, tl: -6, ff: 0.4, fh: 0, lift: 0, burst: 0.4 },
 ];
 
-function foxfire(x, y, r, outer, inner) {
-  return [F(E(x, y, r * 1.45, r * 1.35, mix(inner, '#ffffff', 0.4))), ...flame(x, y + r * 0.55, r * 2.3, -r * 0.3, outer, inner),
-    ...star(x + r * 1.5, y - r * 0.9, 0.9, '#fff6c8'), F(E(x - r * 1.2, y + r * 0.9, 0.45, 0.45, inner))];
+// A cherry blossom: five round petals (each with a notch) round a golden heart.
+function blossom(x, y, r, c, c2) {
+  const o = [];
+  for (let i = 0; i < 5; i++) {
+    const a = (i / 5) * TAU - Math.PI / 2;
+    o.push(E(x + Math.cos(a) * r * 0.62, y + Math.sin(a) * r * 0.62, r * 0.5, r * 0.5, i % 2 ? c : c2));
+  }
+  o.push(F(E(x, y, r * 0.32, r * 0.32, '#ffe27a')), F(E(x - r * 0.1, y - r * 0.12, r * 0.12, r * 0.12, '#fff8d8')));
+  return o;
 }
 
-function kitsune(pose, f, mood) {
+function blossomKit(pose, f, mood) {
   const walk = pose === 'walk';
   const idle = pose === 'idle';
-  const A = pose === 'attack' ? KIT_ATK[f] : null;
+  const A = pose === 'attack' ? atkPose(KIT_ATK, f, { bx: 0, by: 0, pitch: 0, head: 0, tl: 0, ff: 0, fh: 0, lift: 0, burst: 0 }) : null;
+  const fk = Math.floor(f);
   const q = walk ? f / 8 : idle ? f / 6 : 0;
   const angry = mood === 'angry';
   const hurt = mood === 'hurt';
   const dead = mood === 'dead';
   const happy = mood === 'happy';
-  // Fur turns toward rose in shadow; the cream bib toward lilac.
-  const fur = ramp('#ffb487', { step: 9, turn: 9, sat: -6 });
+  // Pale cherry-pink fur turning toward plum in shadow; the cream bib toward lilac.
+  const fur = ramp('#ffd9e2', { step: 8, turn: 10, sat: -10 });
   const cream = ramp('#fff3e6', { step: 6, turn: 40, sat: 4 });
-  const sock = '#b77f86';
-  const mark = '#ff6f92';
-  const [fo, fi] = angry || A ? ['#ff8ab8', '#ffe1ee'] : ['#8fbcff', '#eef6ff'];
+  const sock = '#c98aa4';
+  const mark = '#f0608e';
   const out = [];
 
   // Root motion. A light trot: diagonal pairs, the body lowest as each pair lands (twice a
@@ -388,14 +398,14 @@ function kitsune(pose, f, mood) {
 
   // Tails: three plumes, each a chain of five links from the rump. The trot's bounce reaches the
   // root first and rolls out to the tip; idle, a lazy wave; angry, raised and bristling.
-  const root = bodyAt(bx - 6.2, by - 0.6);
-  const tailBase = [[-140, 1.8], [-104, 2], [-172, 1.6]];
+  const root = bodyAt(bx - 5, by - 0.4);
+  const tailBase = [[-134, 2.3]];
   tailBase.forEach(([a0, len], k) => {
     const ph = walk ? 2 * TAU * q - 0.8 - k * 0.9 : TAU * q - k * 1.3;
     const amp = dead ? 0 : walk ? 9 : idle ? 7 : 3;
     let base = a0 + (A ? A.tl * (1 - k * 0.15) : 0) + (angry ? 8 : 0) + (happy ? 6 : 0) + (hurt ? 14 : 0) - pitch;
     if (dead) base = [-150, -132, -165][k];
-    const curl = dead ? 9 : [7, 5, 10][k] + (angry ? -3 : 0);
+    const curl = dead ? 9 : 13 + (angry ? -4 : 0);
     const pts = chain(root.x, root.y, base, [len * 1.6, len * 1.8, len * 1.9, len * 1.8, len * 1.4], (i) => (i ? curl : 0) + wave(ph, amp)(i));
     const tone = k === 2 ? ramp(fur.sh, { step: 8, turn: 10, sat: -12 }) : fur;
     const tc = k === 2 ? ramp(cream.sh, { step: 7, turn: 20 }) : cream;
@@ -403,8 +413,8 @@ function kitsune(pose, f, mood) {
     // is the whole plume nudged down and back, the lit fur a slimmer copy nudged up and front, so
     // the shadow reads as one clean crescent along the underside instead of a ball per link. The
     // cream tip is the last quarter.
-    const sm = smooth(pts.slice(1).map(([x, y]) => [x, y]));
-    const wAt = (t) => 2 * (1.7 + 1.8 * Math.sin(Math.PI * (0.16 + 0.68 * t)));
+    const sm = smooth(pts.map(([x, y]) => [x, y]));
+    const wAt = (t) => 3.2 + 5 * Math.pow(Math.sin(Math.PI * (0.06 + 0.8 * t)), 1.2);
     const cut = Math.round((sm.length - 1) * 0.72);
     const tipC = sm.at(-1);
     const plume = (dx, dy, dw, m0, m1) => {
@@ -438,9 +448,8 @@ function kitsune(pose, f, mood) {
     }
     const tip = pts.at(-1);
     out.push(F(E(tip[0] + 0.5, tip[1] - 0.9, 0.9, 0.55, cream.hi)));
-    const fl = Math.sin((walk ? 2 * TAU * q : TAU * q * 2) + k * 2.1);
-    const h = dead ? 0 : (angry ? 7 : hurt ? 3 : 4.6) + fl * 0.7 + (A ? A.fl : 0);
-    out.push(...flame(tip[0], tip[1] - 1.3, h, -wave(walk ? 2 * TAU * q - 4 : TAU * q - 4, 1)(0) * 0.6 + fl * 0.5 + (walk ? -1 : 0), fo, fi));
+    // The cherry blossom on the tail's tip.
+    out.push(...blossom(tip[0] + 0.4, tip[1] - 1.2, dead ? 2.6 : 3.2, '#ff9fc0', '#ffd0e0'));
   });
 
   // Legs: two bones each (the hind knee forward, the foreleg's elbow back), hips riding the body,
@@ -521,8 +530,6 @@ function kitsune(pose, f, mood) {
     E(hx + 1.6, hy + 3.4, 5.6, 3.2, cream.base), E(hx + 6.4, hy + 2.8, 3.2, 2.3, cream.base),
     crescent(hx + 2.4, hy + 3.4, 5.8, 3.1, cream.sh, { k: 0.5, a0: 60, a1: 170 }),
     shine(hx + 1.6, hy - 2.4, 6.4, 4.4, fur.hi, 0, 1.15));
-  // Kitsune mask: a flame mark on the brow.
-  head.push(F(T([[hx + 0.9, hy - 3.6], [hx + 0.2, hy - 5.1], [hx + 0.8, hy - 6.6], [hx + 1.6, hy - 5.1]], mark)));
   // Face: sly almond fox eyes (spirit-blue irises that answer the tail flames and stand out from
   // the orange fur; slit pupils, red liner wings) under red maro brows. Smug and half-lidded at
   // rest, a narrow pink glare when angry, a tight wince when hurt, swirled when dead.
@@ -534,7 +541,7 @@ function kitsune(pose, f, mood) {
   const act = { idle: { lid: 0.26, slant: -0.1 }, angry: { lid: 0.12, slant: 0.9, raise: 0.25, pupilK: 0.5 }, hurt: { closed: 'squeeze' }, happy: { closed: 'happy' }, blink: { closed: 'blink' } }[mood] ?? {};
   // Simple eyes (the player's pick): sly and half-lidded at rest, a liner flick at the corner.
   const em = A && !hurt ? 'angry' : { idle: 'idle', angry: 'angry', hurt: 'hurt', happy: 'happy', blink: 'blink' }[mood] ?? 'idle';
-  const so = { iris: angry || A ? '#ff4f8a' : '#4f86e0', ink: lashC, wing: 1, lid: 0.3, mood: em };
+  const so = { iris: angry || A ? '#ff4f8a' : '#b05878', ink: lashC, wing: 1, lid: 0.1, mood: em };
   if (dead) head.push(...deadEye(eyeF[0], eyeF[1], 1.9, { type: 'swirl', s: -1, c: lashC }), ...deadEye(eyeN[0], eyeN[1], 2.3, { type: 'swirl', c: lashC }));
   else head.push(...simpleEye(eyeF[0], eyeF[1], { ...so, s: -1, w: 1.6, h: 2.1 }), ...simpleEye(eyeN[0], eyeN[1], { ...so, s: 1, w: 2, h: 2.4 }));
   // Maro brows: lopsided (one cocked: smug), slammed into slants, lifted in a pained tilt.
@@ -555,208 +562,156 @@ function kitsune(pose, f, mood) {
   if (hurt) head.push(...sweat(hx - 6.2, hy - 3.6, 1.1), ...tear(eyeN[0] + 1, ey + 2.4, 0.9, { type: 'stream', len: 2.6 }));
   out.push(...spin(head, neck.x, neck.y, headTurn));
 
-  // The fox-fire it spits, leaving a smear along its path on the spit frame.
+  // A blossom tucked at the near ear's root, riding the head.
+  out.push(...spin(blossom(hx + 4.6, hy - 4.2, 2.8, '#ff8fb4', '#ffc4d8'), neck.x, neck.y, headTurn));
+  // The pounce: a smear under the leap, then petals bursting up round the landing.
   if (A && !dead) {
-    const [ox, oy] = [hx + A.orb[0], hy + A.orb[1]];
-    if (f === 1) out.push(smear([[hx + 4, hy + 4], [ox - 4, oy + 1.4], [ox - 1, oy]], 3.6, mix(fi, fo, 0.35)));
-    out.push(...foxfire(ox, oy, A.orb[2], fo, fi));
+    if (fk === 1) out.push(smear([[bx - 10, by + 6], [bx - 2, by + 2], [bx + 6, by - 1]], 3.4, '#ffe4ee'));
+    if (A.burst > 0.05) {
+      const k2 = A.burst;
+      for (const [dx, dy, r] of [[-3, -3, 1.4], [3, -5, 1.6], [8, -3, 1.3], [12, -1, 1.1], [0, -7, 1.1]]) {
+        const lift2 = (1 - k2) * 4;
+        out.push(E(hx + 4 + dx, 29 + dy * (0.6 + 0.6 * (1 - k2)) - lift2, r * (0.5 + k2 * 0.5), r * 0.7 * (0.5 + k2 * 0.5), dx % 2 ? '#ffd0e0' : '#ffffff'));
+      }
+      if (fk === 2) out.push(...dust(hx + 6, 29.6, 0.7), ...star(hx + 11, 26, 2.2, '#fff2a8'));
+    }
   }
   return { w: 42, h: 32, res: 3, shapes: out.map((q2) => ({ ...q2, x: q2.x + 6, y: q2.y + 2 })) };
 }
 
-// ---------- Moss Tortoise (snailbun) ----------
+// ---------- Bud Snail (snailbun) ----------
+// (Petal Meadow's new cast, 2026-11-11: replaced the Moss Tortoise.) A plump peach snail whose
+// shell is a big pink flower bud. It creeps on a soft body that ripples from tail to head, its
+// antennae bobbing a beat behind; the bud sways on its back. Cross, it flicks the bud open into a
+// bloom and sneezes a puff of pollen; hurt, the bud pops open in fright; dead, the bloom wilts.
 
-// Attack: a lunging snap. sx: shell shift, rim: shell height, roll: shell tilt (deg, + nose down),
-// reach: neck stretch, hy: head drop, gape: jaws (1 open, -1 snapped shut), lift: front feet
-// raised, imp: impact.
-const TORT_ATK = [
-  // Wind-up (held): head drawn into the shell, the front reared up off the ground.
-  { sx: -1.6, rim: -1.4, roll: -5, reach: -4.4, hy: 0.6, gape: 0, lift: 2.6, imp: 0 },
-  // Strike: the front slams down and the head shoots out, jaws wide (a smear behind it).
-  { sx: 0.6, rim: 0.4, roll: 3, reach: 1, hy: 1.6, gape: 1, lift: 0, imp: 0.6 },
-  // Impact (held): jaws snapped shut at full stretch, dust thrown up.
-  { sx: 0.4, rim: 0.6, roll: 2, reach: 0.9, hy: 2, gape: -1, lift: 0, imp: 1 },
-  // Recover: the head eases back past rest.
-  { sx: -0.2, rim: 0.1, roll: -0.8, reach: -1.2, hy: 0.6, gape: 0, lift: 0, imp: 0 },
+// Attack: the pollen sneeze. pull: head drawn back (-) or thrust (+), open: how far the bud
+// blooms (0 shut, 1 wide), tilt: bud lean (deg, + forward), puff: pollen cloud size, lift: body
+// rear (the front rising).
+const BUD_ATK = [
+  // Wind-up (held): head tucked back, the bud rocked back and squeezed shut, the front rising.
+  { pull: -2.6, open: 0, tilt: -14, puff: 0, lift: 1.6 },
+  // Strike: the bud flicks forward and bursts open, pollen blasting out ahead.
+  { pull: 1.8, open: 1, tilt: 16, puff: 3.4, lift: 0 },
+  // Impact (held): wide open, the cloud at full size with a star in it.
+  { pull: 1.4, open: 0.92, tilt: 11, puff: 6, lift: 0 },
+  // Recover: the bloom folding back up, the last of the cloud drifting.
+  { pull: -0.4, open: 0.3, tilt: -3, puff: 7.4, lift: 0 },
 ];
 
-function tortoise(pose, f, mood) {
+// An attack pose between keys (an art with `atkTween`): frame f = key + quarters; each key holds
+// for the first part of its beat, then eases into the next (or back to rest after the last).
+function atkPose(table, f, rest) {
+  const k = Math.floor(f);
+  const u = Math.max(0, Math.min(1, (f - k - 0.25) / 0.75));
+  const e = u * u * (3 - 2 * u);
+  const a = table[k];
+  const b = table[k + 1] ?? rest;
+  const out = {};
+  for (const key of Object.keys(a)) out[key] = a[key] + ((b[key] ?? a[key]) - a[key]) * e;
+  return out;
+}
+
+function budSnail(pose, f, mood) {
   const walk = pose === 'walk';
   const idle = pose === 'idle';
-  const A = pose === 'attack' ? TORT_ATK[f] : null;
+  const A = pose === 'attack' ? atkPose(BUD_ATK, f, { pull: 0, open: 0, tilt: 0, puff: 8, lift: 0 }) : null;
+  const fk = Math.floor(f);
   const q = walk ? f / 8 : idle ? f / 6 : 0;
   const angry = mood === 'angry';
   const hurt = mood === 'hurt';
   const dead = mood === 'dead';
   const happy = mood === 'happy';
-  // Mint skin cooling to teal in shadow; a honey shell browning toward plum; spring moss.
-  const skin = ramp('#a6dcc2', { step: 10, turn: 14, sat: -4 });
-  const shell = ramp('#e9c69a', { step: 9, turn: 10, sat: -16 });
-  const moss = ramp('#97cf86', { step: 10, turn: 16, sat: -12 });
+  // Peach body warming to rose in shadow; a pink bud deepening to raspberry; leafy green sepals.
+  const skin = ramp('#ffdcc4', { step: 9, turn: 14, sat: -6 });
+  const bud = ramp('#ff9cc4', { step: 10, turn: 12, sat: -8 });
+  const leafC = ramp('#8fd08a', { step: 10, turn: 16, sat: -10 });
   const out = [];
-  // A slow, heavy plod: one foot at a time, the shell sinking hard onto each planted foot and
-  // rolling toward it; idle, it breathes (shell rising, neck reaching out) and sways.
-  const DUTY = 0.75;
   const br = idle ? breath(q) : 0;
-  const thud = walk ? -0.8 * Math.abs(Math.sin(2 * TAU * q + 0.5)) + 0.4 : 0;
-  const bob = dead ? 1.6 : walk ? thud : A ? A.rim : hurt ? 0.6 : -br * 0.5;
-  const sx = 17 + (A ? A.sx : walk ? 0.35 * Math.sin(TAU * q) : idle ? sway(q) * 0.4 : 0) + (hurt ? -1 : 0);
-  const rim = 21 + bob;
-  const roll = dead ? 4 : A ? A.roll : hurt ? -4 : walk ? 1.6 * Math.sin(TAU * q * 2 - 0.4) : 0;
-  const piv = [sx, rim];
-  const at = (x, y) => spin([E(x, y, 0, 0, '#000')], piv[0], piv[1], roll)[0];
 
-  // Stubby elephant legs on two short bones, planted one after another (far hind, far front,
-  // near hind, near front), the far pair in shadow.
-  const leg = (x, ph, near, front) => {
-    let [dx, up] = walk ? gait(q + ph, 9, 1.6, DUTY) : [0, 0];
-    if (A && front) up += A.lift;
-    if (hurt && front) up += 0.8;
-    const fx = x + dx + (dead ? (front ? 2 : -2) : 0) + (sx - 17) * 0.3;
-    const fy = 27.2 - up;
-    const top = at(x + (sx - 17), rim + 0.6);
-    const kn = reach([top.x, top.y], [fx, fy - 1], 3.4, 3.6, front ? 1 : -1);
-    const c = near ? skin.base : skin.sh;
-    const o = [...limb([top.x, top.y], kn, 3.9, 3.6, c), ...limb(kn, [fx, fy - 1], 3.6, 3.4, c), E(fx + 0.3, fy - 0.2, 2.3, 1.2, c)];
-    o.push(crescent(fx + 0.3, fy - 2.2, 2.1, 2.4, near ? skin.sh : skin.deep, { k: 0.45, a0: 90, a1: 220 }));
-    if (near) o.push(F(E(fx + 1.4, fy + 0.1, 0.45, 0.35, '#fff6e8')), F(E(fx + 0.2, fy + 0.35, 0.45, 0.35, '#fff6e8')));
-    return o;
-  };
-  out.push(...leg(8.6, 0, false, false), ...leg(23.2, 0.25, false, true));
-  // Little tail: a tapering three-link chain poking out under the shell's back rim, wagging a
-  // beat behind the steps; limp on the floor when dead.
-  const tb = at(sx - 11.4, rim - 0.4);
-  const tail = chain(tb.x, tb.y, dead ? 176 : 160, [2.6, 2.4, 2], dead ? () => 4 : wave(walk ? 2 * TAU * q - 1.5 : TAU * q, walk ? 12 : 7)).map((p) => p.slice(0, 2));
-  out.push(band(tail, (t) => 1.5 * (1 - 0.75 * t), skin.base), band(tail.map(([x, y]) => [x + 0.2, y + 0.6]), (t) => 0.7 * (1 - 0.8 * t), skin.sh));
+  // The body: round segments along the foot, a ripple running from the tail to the head as it
+  // creeps (each segment lifts in turn), resting flat when dead.
+  const segs = [[4.6, 2.6], [8.4, 3.1], [12.4, 3.5], [16.6, 3.8], [20.8, 3.9], [24.8, 3.8]];
+  const lift = (i) => (walk ? 1.3 * Math.max(0, Math.sin(TAU * q - i * 0.85)) : idle ? br * 0.25 * (i / 5) : 0) + (A && i >= 4 ? A.lift * (i - 3) * 0.5 : 0);
+  const sy = (i) => 27.2 - segs[i][1] - lift(i) + (dead ? 0.8 : 0);
+  segs.forEach(([x, r], i) => out.push(E(x, sy(i), r + 0.6, r, skin.base)));
+  // Its underside in shadow and a soft lit line along the back.
+  out.push(F(E(14.6, 26.4, 11.6, 1.1, skin.sh)));
+  segs.slice(1, 5).forEach(([x, r], i) => out.push(F(E(x - 0.4, sy(i + 1) - r * 0.55, r * 0.5, r * 0.18, skin.hi))));
 
-  // Neck: a two-link chain from the shoulder out of the shell; the head rides its end. It pushes
-  // forward with each step, slowly looks up when idle, pulls in when hurt, rests flat when dead.
-  const stretch = A ? A.reach : (hurt ? -3.2 : angry ? 1 : 0) + (walk ? 0.7 * Math.sin(2 * TAU * q - 0.9) : idle ? br * 0.8 - 0.3 : 0);
-  const look = idle ? bump(q, 0.5, 0.34) : 0;
-  const nb = at(sx + 10.2, rim - 1.6);
-  const neckA = dead ? 12 : -24 - look * 12 + (A ? A.hy * 3 : 0) + (hurt ? 14 : 0) + (walk ? 3 * Math.cos(2 * TAU * q + 0.4) : 0);
-  const nk = chain(nb.x, nb.y, neckA, [3 + stretch * 0.5, 3 + stretch * 0.5], (i) => (i ? 18 + look * 8 : 0));
-  const hx = nk[2][0] - 0.2;
-  const hy = nk[2][1] - 0.6;
-  out.push(...limb([nb.x, nb.y], nk[1], 5.8, 5.2, skin.base), ...limb(nk[1], [hx - 2.2, hy + 1.6], 5.2, 4.8, skin.base));
-  for (const t of [0.35, 0.7]) {
-    const x = nb.x + (hx - 2.2 - nb.x) * t;
-    const y = nb.y + (hy + 1.6 - nb.y) * t;
-    out.push(...stroke([[x - 0.4, y + 0.6], [x + 0.5, y + 2.2]], 0.67, skin.sh));
-  }
+  // The neck and head: the neck rises from the front of the foot, the head pushes forward with
+  // each creep, draws back to wind up, flops when dead.
+  const push = A ? A.pull : walk ? 0.9 * Math.sin(TAU * q - 4.2) : idle ? sway(q) * 0.4 : hurt ? -1.4 : 0;
+  const hx = 30.4 + push + (dead ? 2 : 0);
+  const hy = (dead ? 22.4 : 15.6 - br * 0.6 + (A ? -A.lift : 0)) + (walk ? -0.5 * Math.max(0, Math.sin(TAU * q - 4.6)) : 0);
+  out.push(...limb([25.6, sy(5) - 0.6], [hx - 1.6, hy + 2.4], 4.4, 4.8, skin.base));
 
-  // The shell: a domed carapace, its back and underside in shadow; raised scutes each lit on the
-  // top front and shaded below; a rim of marginal plates; then a garden of moss on top.
+  // The bud shell, sitting on the body's back and swaying a beat behind it. It blooms open
+  // (petals splaying out round a golden heart) when it attacks, is hurt, or is happy; dead, the
+  // bloom wilts and droops.
+  const open = dead ? 0.2 : A ? A.open : hurt ? 0.85 : happy ? 0.55 : 0;
+  const tilt = (A ? A.tilt : walk ? 5 * Math.sin(TAU * q - 1.6) : idle ? sway(q) * 4 : 0) + (dead ? 26 : 0) + (hurt ? -6 : 0);
+  const bx = 15.6;
+  const by = sy(3) - 2.2 + (idle ? -br * 0.5 : 0);
   const sh = [];
-  const dome = [];
-  for (let i = 0; i <= 16; i++) {
-    const a = Math.PI + (i / 16) * Math.PI;
-    dome.push([sx + Math.cos(a) * 13.4, rim + Math.sin(a) * 12]);
+  // Sepals: two leafy cups hugging the bud's foot.
+  sh.push(leaf(bx - 1, by + 0.6, 196, 6.2, 2.2, leafC.sh), leaf(bx + 1, by + 0.6, -16, 6.2, 2.2, leafC.base));
+  const droop = dead ? 36 : 0;
+  if (open > 0.25) {
+    // The outer petals, behind, opening out flat.
+    const o = (open - 0.25) / 0.75;
+    for (const s of [-1, 1]) sh.push(leaf(bx, by - 1, -90 + s * (34 + 26 * o) + (dead ? s * droop : 0), 11.5 + o, 4.8, bud.sh));
   }
-  sh.push(T(dome, shell.base), crescent(sx, rim, 13.4, 12, shell.sh, { k: 0.24, a0: 135, a1: 240, n: 14 }));
-  for (const [x, y, w, h] of [[sx, rim - 6.6, 3.4, 3], [sx - 6.8, rim - 4.6, 2.9, 2.8], [sx + 6.8, rim - 4.6, 2.9, 2.8], [sx - 10.8, rim - 1.8, 1.6, 1.8], [sx + 10.8, rim - 1.8, 1.6, 1.8]]) {
-    const hex = [[x - w, y], [x - w * 0.5, y - h], [x + w * 0.5, y - h], [x + w, y], [x + w * 0.5, y + h], [x - w * 0.5, y + h]];
-    sh.push(F(T(hex.map(([px, py]) => [x + (px - x) * 1.22, y + (py - y) * 1.22]), shell.sh)), F(T(hex, x < sx - 4 ? shell.base : shell.hi)));
-    sh.push(F(T([[x - w, y], [x - w * 0.5, y + h], [x + w * 0.5, y + h], [x + w * 0.2, y + h * 0.45], [x - w * 0.55, y + h * 0.3]], x < sx - 4 ? shell.sh : shell.base)));
+  // The heart, shown as it opens.
+  if (open > 0.1 && !dead) sh.push(E(bx, by - 10 - 1.5 * open, 2.4 + open * 1.2, 1.8 + open * 0.8, dead ? '#e8c87a' : '#ffe27a'), F(E(bx - 0.7, by - 10.8 - 1.5 * open, 1, 0.6, '#fff6c8')));
+  // The three main petals: the side ones turned in to a closed bud, opening out with `open`.
+  for (const s of [-1, 1]) sh.push(leaf(bx + s * 0.6, by, -90 + s * (16 + 20 * open) + (dead ? s * droop : 0), 15 - 1.5 * open, 5.6, s < 0 ? bud.base : bud.hi));
+  if (open < 0.6) {
+    const c = 1 - open / 0.6;
+    sh.push(leaf(bx, by + 0.4, -90, 15.6 * (0.55 + 0.45 * c), 5.2, bud.base));
+    // A soft swirl down the front petal, where the bud's petals wrap.
+    sh.push(...stroke([[bx + 1.6, by - 12.4 * c], [bx + 0.4, by - 8.4 * c], [bx + 1.4, by - 4]], 0.6, bud.hi), F(E(bx - 1.8, by - 9 * c, 0.9, 2.6 * c, mix(bud.hi, '#ffffff', 0.4))));
   }
-  // Marginal plates along the rim, and the plastron's edge under them.
-  // (drawn after the near legs, so the legs tuck in under the shell's rim)
-  const rimBand = [E(sx, rim + 0.4, 14.2, 2.3, shell.sh), F(E(sx + 2, rim - 0.2, 11, 0.9, mix(shell.sh, shell.base, 0.5)))];
-  for (let i = 0; i < 8; i++) rimBand.push(F(R(sx - 10.8 + i * 3.1, rim - 0.4, 0.67, 1.8, shell.deep)));
+  out.push(...spin(sh, bx, by + 1, tilt));
 
-  // Moss blanket draped over the dome: scale-shaped clumps, darker drips at the lower edge, a few
-  // lit clumps on top.
-  const mb = rim - 9.6;
-  sh.push(E(sx, mb, 10.4, 3.4, moss.base), E(sx - 6.4, mb + 1.4, 5, 3, moss.base), E(sx + 6.6, mb + 1.4, 5, 3, moss.base));
-  for (const [x, y, l] of [[sx - 9.6, mb + 2.6, 2.6], [sx - 5, mb + 3.2, 1.8], [sx + 1.2, mb + 3.2, 2.4], [sx + 7, mb + 3, 1.6], [sx + 10, mb + 2.4, 2.4]]) {
-    sh.push(E(x, y + l * 0.5, 1.15, l * 0.62, moss.base), F(E(x - 0.3, y + l * 0.7, 0.75, l * 0.4, moss.sh)));
-  }
-  sh.push(crescent(sx, mb + 0.6, 11.4, 3.6, moss.sh, { k: 0.5, a0: 20, a1: 200, jag: 0.6, n: 18 }));
-  for (const [x, y, r] of [[sx + 1.6, mb - 2, 2.4], [sx + 6.6, mb - 0.6, 1.8], [sx - 3.6, mb - 1.6, 1.6]]) sh.push(F(T([[x - r, y + 0.5], [x - r * 0.5, y - 0.6], [x + r * 0.4, y - 0.8], [x + r, y], [x + r * 0.3, y + 0.5]], moss.hi)));
-  out.push(...spin(sh, piv[0], piv[1], roll));
-  out.push(...leg(11.4, 0.5, true, false), ...leg(26, 0.75, true, true), ...spin(rimBand, piv[0], piv[1], roll));
-
-  // The garden sways a beat behind the shell's jolts: grass tufts, a mushroom wobbling on its
-  // stalk, and a flower on a three-link stem.
-  const gph = walk ? 2 * TAU * q - 2.2 : idle ? TAU * q - 1.6 : 0;
-  const gamp = A ? 0 : walk ? 9 : idle ? 6 : 0;
-  const kick = A ? [10, -14, -8, 4][f] : hurt ? -10 : 0;
-  const top = [];
-  for (const [x, h] of [[sx - 9, 2.4], [sx + 9.4, 2], [sx + 3.6, 1.8]]) {
-    const w = Math.sin(gph) * gamp * 0.05 + kick * 0.04;
-    top.push(F(T([[x - 1, mb + 1], [x - 0.8 + w, mb - h], [x - 0.2, mb + 0.4], [x + 0.4 + w, mb - h - 0.6], [x + 0.6, mb + 0.4], [x + 1.4 + w, mb - h * 0.6], [x + 1.2, mb + 1]], moss.deep)));
-  }
-  const mx = sx - 5.6 + Math.sin(gph - 0.4) * gamp * 0.03 + kick * 0.03;
-  const my = mb - 1.4;
-  top.push(R(mx - 0.8, my - 1, 1.6, 2.6, '#fff1dc'), T([[mx - 2.8, my - 0.8], [mx - 2.2, my - 2.6], [mx, my - 3.6], [mx + 2.2, my - 2.6], [mx + 2.8, my - 0.8]], '#f5868c'),
-    F(T([[mx - 2.8, my - 0.8], [mx - 2.2, my - 2.6], [mx - 0.8, my - 3.3], [mx - 1, my - 0.8]], '#d8657a')),
-    F(E(mx + 0.9, my - 2.6, 0.6, 0.45, '#fff4ec')), F(E(mx - 1.2, my - 1.6, 0.4, 0.34, '#f4dde0')));
-  if (angry) {
-    const pf = A ? f * 0.8 : idle ? q * 2 : 0;
-    top.push(E(mx - 0.6, my - 4.6 - pf, 1.6, 1.2, '#ffe0e6'), E(mx + 0.8, my - 5.8 - pf, 1.3, 1.1, '#ffe0e6'), E(mx - 0.4, my - 6.8 - pf, 1.1, 0.9, '#fff0f2'), F(E(mx - 0.9, my - 4.9 - pf, 0.5, 0.35, '#ffffff')));
-  }
-  const fx0 = sx + 3.4;
-  const stem = chain(fx0, mb, dead ? -40 : -84, [2.6, 2.6, 2.4], (i) => (dead ? 34 : 0) + kick * (0.3 + i * 0.3) + wave(gph, gamp * 0.7, 0.8, 0.4)(i));
-  const fb = stem.at(-1);
-  top.push(...stroke(stem.map((p) => p.slice(0, 2)), 0.8, '#5fae5c'), leaf(stem[1][0], stem[1][1], stem[1][2] + 70, 3.4, 1.1, moss.base), leaf(stem[1][0], stem[1][1], stem[1][2] - 100, 2.8, 0.9, moss.sh));
-  const petal = dead ? '#d8b4c6' : '#ff9ec4';
-  const petalD = dead ? '#bf98b4' : '#ef7fb0';
-  for (let i = 0; i < 5; i++) {
-    const a = (i / 5) * TAU - Math.PI / 2 + (fb[2] + 90) * D2R * 0.5;
-    const pr = dead ? 1.4 : happy ? 2.1 : 1.8;
-    const px = fb[0] + Math.cos(a) * pr;
-    const py = fb[1] + Math.sin(a) * pr * (dead ? 1.4 : 1) + (dead ? 1 : 0);
-    top.push(E(px, py, 1.35, 1.25, Math.cos(a) < -0.2 || Math.sin(a) > 0.5 ? petalD : petal));
-  }
-  top.push(F(E(fb[0], fb[1], 1, 1, '#ffe27a')), F(E(fb[0] + 0.3, fb[1] - 0.3, 0.4, 0.4, '#fff6c8')));
-  out.push(...spin(top, piv[0], piv[1], roll * 1.4));
-
-  // Head: round, with a sprout on top and a little beak-like mouth; lit on the brow, shadowed at
-  // the back of the skull and under the jaw.
+  // Antennae: two little stalks from the top of the head, each a chain swaying a beat behind the
+  // head, with a round pink bulb on the end; they droop when it's sad or dead and stand up cross.
   const head = [];
-  head.push(E(hx, hy, 5.4, 4.8, skin.base), E(hx + 2.2, hy + 1.8, 3.2, 2.4, skin.base),
-    crescent(hx + 0.6, hy + 0.4, 6, 5.2, skin.sh, { k: 0.3, a0: 70, a1: 220 }), shine(hx, hy, 5.4, 4.8, skin.hi, 0, 1.2));
-  for (const [x, y] of [[hx - 2.6, hy - 1.6], [hx - 3.4, hy + 0.6], [hx - 1.8, hy + 2.6]]) head.push(F(E(x, y, 0.7, 0.55, skin.sh)));
-  const sproutPts = chain(hx - 0.4, hy - 4.4, -82, [1, 1], wave(walk ? 2 * TAU * q - 2.6 : TAU * q - 1.2, walk ? 14 : 9));
-  const spr = sproutPts[2];
-  head.push(...stroke(sproutPts.map((p) => p.slice(0, 2)), 0.6, '#5fae5c'),
-    leaf(spr[0], spr[1], spr[2] + 58 + (dead ? 110 : 0), 2.8, 1, moss.base), leaf(spr[0], spr[1], spr[2] - 72 - (dead ? 30 : 0), 2.2, 0.8, moss.hi));
-  // Face: big, sleepy, heavy-lidded eyes (warm brown, round pupils, a lid fold) under soft mossy
-  // brows. It dozes at rest and slowly looks up and about; a flat-lidded glare when angry; when
-  // hurt it scrunches up and cries big slow tears.
-  const ey = hy - 0.3;
-  const eyeF = [hx - 2, ey + 0.1];
-  const eyeN = [hx + 2.2, ey];
-  const lashC = '#2f2a2a';
-  const te = { shape: 'heavy', sclera: '#fffaf0', iris: angry || A ? ['#5a1a0e', '#c8502a', '#ffb070'] : ['#3a2a1e', '#7c5636', '#d9ae6c'], pupil: 'round', lashC, lash: 0.85, lower: 0.25, flicks: 1, crease: skin.sh, look: [0.25, -look * 0.9] };
-  const act = { idle: { lid: 0.5 - look * 0.25, slant: -0.3 }, angry: { lid: 0.42, slant: 0.7, raise: 0.25, pupilK: 0.55 }, hurt: { closed: 'squeeze' }, happy: { closed: 'happy' }, blink: { closed: 'sleep' } }[mood] ?? {};
-  if (dead) head.push(...deadEye(eyeF[0], eyeF[1], 1.3, { c: lashC, th: 0.55 }), ...deadEye(eyeN[0], eyeN[1], 1.6, { c: lashC, th: 0.6 }));
-  // Simple eyes (the player's pick): sleepy and heavy-lidded at rest, waking as it looks about.
-  else {
-    const so = { iris: angry || A ? '#c8502a' : '#7c5636', ink: lashC, lid: Math.max(0, 0.45 - look * 0.25), mood: A && !hurt ? 'angry' : { idle: 'idle', angry: 'angry', hurt: 'hurt', happy: 'happy', blink: 'blink' }[mood] ?? 'idle' };
-    head.push(...simpleEye(eyeF[0], eyeF[1], { ...so, s: -1, w: 1.3, h: 1.7 }), ...simpleEye(eyeN[0], eyeN[1], { ...so, s: 1, w: 1.6, h: 2 }));
+  head.push(E(hx, hy, 5.4, 5, skin.base), crescent(hx + 0.4, hy + 0.3, 5.9, 5.4, skin.sh, { k: 0.3, a0: 60, a1: 210 }), shine(hx, hy, 5.4, 5, skin.hi, 0, 1.1));
+  const aph = walk ? TAU * q - 2.4 : idle ? TAU * q - 1.2 : 0;
+  for (const [x0, a0, s] of [[hx - 2, -112, -1], [hx + 1.4, -78, 1]]) {
+    const base = dead ? a0 + s * 60 + 40 : hurt ? a0 + s * 30 : angry ? a0 - s * 6 : a0;
+    const ch = chain(x0, hy - 4.2, base, [2.4, 2.4], wave(aph + s * 0.5, walk ? 12 : idle ? 9 : 0));
+    const tip = ch.at(-1);
+    head.push(...stroke(ch.map((p) => p.slice(0, 2)), 0.75, skin.sh), E(tip[0], tip[1], 1.3, 1.3, bud.base), F(E(tip[0] - 0.4, tip[1] - 0.4, 0.45, 0.45, '#ffffff')));
   }
-  // Brows: droopy and sleepy, knitted down hard in anger, tipped up in misery.
-  const [ba, bu] = browsFor({ idle: [-14, 0.1], angry: [30, -0.9], hurt: [-28, 0.5], happy: [-10, 0.6], blink: [-16, -0.1], dead: [-20, 0] }, mood);
-  head.push(...brow(eyeF[0] - 0.1, ey - 3 - bu, { s: -1, len: 1.2, angle: ba, th: 0.7, arch: 0.3, c: '#4f8a52', shape: 'bushy' }),
-    ...brow(eyeN[0] + 0.1, ey - 3.3 - bu, { s: 1, len: 1.6, angle: ba, th: 0.75, arch: 0.35, c: '#4f8a52', shape: 'bushy' }));
-  if (!dead) head.push(...cheek(hx - 2.4, ey + 2.6, 0.9, { on: skin.base, lines: happy ? 2 : 0 }), ...cheek(hx + 1.6, ey + 2.9, 1, { on: skin.base, lines: happy ? 3 : 0 }));
-  // Nostril on the snout tip, and the beak-like mouth.
-  head.push(...nose(hx + 4.9, hy + 0.6, { type: 'dot', r: 0.6, c: skin.deep }));
-  const mX = hx + 3.4;
-  const mY = hy + 2.7;
-  const mo = { s: 1, ink: '#3f6450' };
-  const gape = A && !dead && !hurt ? A.gape : 0;
-  if (gape < 0) head.push(...mouth(mX, mY, { ...mo, type: 'flat', w: 1.9, th: 0.5, tilt: 0.2 }), ...star(mX + 2.6, mY + 0.8, 1.4, '#fff2a8'));
-  else head.push(...simpleMouth(mX, mY, { k: 1.1, mood: dead ? 'dead' : gape > 0 ? 'shout' : angry ? 'angry' : happy ? 'happy' : hurt ? 'hurt' : 'idle', lip: '#3f6450' }));
-  if (angry) head.push(...vein(hx - 2.8, hy - 3.2, 0.75));
-  if (hurt) head.push(...tear(eyeN[0] + 0.4, ey + 1.4, 0.9, { type: 'stream', len: 3.4 }), ...tear(eyeF[0] - 0.6, ey + 1.4, 0.75, { type: 'stream', len: 2.6, s: -1 }));
-  const nodA = (A ? A.hy * 2 : 0) + (dead ? 10 : 0) + (hurt ? -8 : 0) - look * 6;
-  out.push(...spin(head, nk[2][0], nk[2][1], nodA));
-  // The snap: a smear from the shell to the jaws on the strike frame, dust on the impact.
-  if (A && f === 1 && !dead) out.push(smear([[nb.x - 1, nb.y + 1], [hx - 2, hy + 2], [hx + 4, hy + 2.4]], 3, mix(skin.hi, '#ffffff', 0.4)));
-  if (A && A.imp) out.push(...dust(sx + 9.6, 27.6, 0.6 + A.imp * 0.4));
-  if (hurt) out.push(...stroke([[sx + 14, rim - 9], [sx + 15.6, rim - 10.4]], 0.67, '#9ad0ff'), ...stroke([[sx + 15.4, rim - 7], [sx + 17.4, rim - 7.6]], 0.67, '#9ad0ff'));
+  // Face: big bright eyes, rosy cheeks, a tiny smile; a pout when cross, tears when hurt.
+  const ey = hy - 0.2;
+  const eyeF = [hx - 1.4, ey];
+  const eyeN = [hx + 2.4, ey - 0.1];
+  const ink = '#4a2f3a';
+  if (dead) head.push(...deadEye(eyeF[0], eyeF[1], 1.2, { c: ink, th: 0.5 }), ...deadEye(eyeN[0], eyeN[1], 1.4, { c: ink, th: 0.55 }));
+  else {
+    const so = { iris: angry || A ? '#d0507a' : '#7a4a5a', ink, lid: 0, mood: A && !hurt ? 'angry' : { idle: 'idle', angry: 'angry', hurt: 'hurt', happy: 'happy', blink: 'blink' }[mood] ?? 'idle' };
+    head.push(...simpleEye(eyeF[0], eyeF[1], { ...so, s: -1, w: 1.6, h: 2.2 }), ...simpleEye(eyeN[0], eyeN[1], { ...so, s: 1, w: 1.9, h: 2.5 }));
+  }
+  if (angry || A) head.push(...brow(eyeF[0], ey - 2.9, { s: -1, len: 1.1, angle: 26, th: 0.6, c: ink }), ...brow(eyeN[0], ey - 3.1, { s: 1, len: 1.4, angle: 26, th: 0.65, c: ink }));
+  if (!dead) head.push(...cheek(hx - 2.2, ey + 2.6, 1, { on: skin.base }), ...cheek(hx + 2.6, ey + 2.8, 1.1, { on: skin.base }));
+  const sneeze = A && fk >= 1 && fk <= 2;
+  head.push(...simpleMouth(hx + 1.6, ey + 2.6, { k: 0.9, mood: dead ? 'dead' : sneeze ? 'shout' : angry ? 'angry' : happy ? 'happy' : hurt ? 'hurt' : 'idle', lip: ink }));
+  if (hurt) head.push(...tear(eyeN[0] + 0.4, ey + 1.4, 0.8, { type: 'stream', len: 3 }), ...sweat(hx - 4.4, hy - 3, 0.9));
+  if (angry) head.push(...vein(hx - 2.4, hy - 3.4, 0.7));
+  out.push(...spin(head, hx - 1.6, hy + 3, dead ? 18 : A ? -A.pull * 2 : walk ? 3 * Math.sin(TAU * q - 4.2) : idle ? -br * 3 : 0));
+
+  // The pollen sneeze: a smear on the strike, then a golden cloud billowing ahead of the bloom.
+  if (A && A.puff) {
+    const cx = Math.min(37, 34 + A.puff * 0.4);
+    const cy = hy - 6 - A.puff * 0.3;
+    const k = A.puff / 6;
+    for (const [dx, dy, r] of [[0, 0, 2.4], [2.4, -1.6, 1.8], [2.2, 1.6, 1.6], [-1.8, -1.2, 1.3]]) out.push(E(cx + dx * k, cy + dy * k, r * Math.min(1.2, 0.5 + k * 0.6), r * Math.min(1.2, 0.5 + k * 0.6), fk === 3 ? '#fff4c8' : '#ffe27a'));
+    if (A.puff >= 6 && fk === 2) out.push(...star(cx + 1, cy - 2, 2.6, '#fff2a8'));
+  }
+  if (A && fk === 2) out.push(...dust(30, 27.6, 0.7));
   return { w: 40, h: 28, res: 3, shapes: out };
 }
 
@@ -1390,8 +1345,8 @@ function jackalope(pose, f, mood) {
 }
 
 export const ART = {
-  puffle: { pad: 7, walk: 8, idle: 6, attack: 4, stride: 22, atkMs: [45, 190, 140], draw: kitsune },
-  snailbun: { walk: 8, idle: 6, attack: 4, stride: 12, atkMs: [70, 270, 210], draw: tortoise },
+  puffle: { pad: 7, sub: 8, atkTween: true, walk: 8, idle: 6, attack: 4, stride: 22, atkMs: [45, 190, 140], draw: blossomKit },
+  snailbun: { pad: 7, sub: 8, atkTween: true, walk: 8, idle: 6, attack: 4, stride: 12, atkMs: [70, 270, 210], draw: budSnail },
   sproutling: { walk: 8, idle: 6, attack: 4, stride: 13, atkMs: [55, 240, 170], draw: mandrake },
   mushkin: { walk: 8, idle: 6, attack: 4, stride: 18, atkMs: [60, 250, 180], draw: goblin },
   piglet: { walk: 8, idle: 6, attack: 4, stride: 50, atkMs: [40, 200, 130], draw: jackalope },
@@ -1399,8 +1354,8 @@ export const ART = {
 
 // New display names, and the hitbox each design wants: { key: { name, w, h } }.
 export const INFO = {
-  puffle: { name: 'Kitsune Kit', w: 22, h: 20 },
-  snailbun: { name: 'Moss Tortoise', w: 32, h: 22 },
+  puffle: { name: 'Blossom Kit', w: 22, h: 20 },
+  snailbun: { name: 'Bud Snail', w: 30, h: 24 },
   sproutling: { name: 'Mandrake', w: 18, h: 28 },
   mushkin: { name: 'Toadstool Goblin', w: 24, h: 34 },
   piglet: { name: 'Jackalope', w: 26, h: 24 },

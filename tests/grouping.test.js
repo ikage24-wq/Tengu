@@ -279,7 +279,7 @@ test('shared quest progress: party kills count for your quests and show whose th
   updateWorld(world, 1 / 60, { held: new Set(), pressed: new Set() });
   assert.equal(world.char.quests.snail_trouble.kills.snailbun, 1);
   assert.equal(world.partyCredit['snail_trouble|snailbun'].name, 'Mochi', 'the tracker knows it was Mochi\'s');
-  assert.ok(world.messages.some((m) => /Tortoise Trouble: 1\/12 .*\(Mochi\)/.test(m.text)));
+  assert.ok(world.messages.some((m) => /Snail Trouble: 1\/12 .*\(Mochi\)/.test(m.text)));
 
   // A gather by a party member here passes you what your quest still needs (no more).
   world.char.quests.fluffy = { state: 'active', kills: {} };

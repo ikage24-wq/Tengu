@@ -125,12 +125,18 @@ function bee_fuzz() {
   return out;
 }
 
+// (Kept its id; 2026-11-11 it became the Dandelion Puff's seed.) A parachute seed: a brown seed at
+// the bottom, a slim stalk, and a fan of white fluff on top, a tuft at each filament's end.
 function sprite_petal() {
-  const c = '#ffb7d3';
-  const p = [...bez3([8, 15], [1, 11], [1.4, 3], [6.6, 2], 12), [8, 3.6], ...bez3([9.4, 2], [14.6, 3], [15, 11], [8, 15], 12)];
-  const out = [...ball(p, c)];
-  out.push(line(bez([8, 14], [7.4, 9], [8, 4.4], 8), 0.4, sh(c)), line([[8, 9], [5, 6.6]], 0.3, sh(c)), line([[8, 10.6], [11, 7.6]], 0.3, sh(c)));
-  out.push(twinkle(13.4, 2.6, 1.6, '#fff6ff'), twinkle(2.4, 13.2, 1.1, '#fff6ff'), ...glint(4.6, 6, 0.6));
+  const c = '#f4f0ff';
+  const out = [...ball(oval(8, 14, 1.3, 2, 0, 12), '#c8a070', { glow: 0.4 }), line([[8, 12.4], [8, 6]], 0.45, '#b8a8b8')];
+  for (let i = 0; i < 9; i++) {
+    const a = (-160 + i * 17.5) * D2R;
+    const tx = 8 + Math.cos(a) * 6;
+    const ty = 6 + Math.sin(a) * 5;
+    out.push(line([[8, 6], [tx, ty]], 0.3, sh(c)), ...ball(oval(tx, ty, 0.9, 0.9, 0, 10), c, { glow: 0.5 }));
+  }
+  out.push(twinkle(13.6, 10, 1.3, '#fff6ff'), ...glint(5, 3, 0.5));
   return out;
 }
 
