@@ -168,7 +168,7 @@ export const MOCHI_SWEETS = [
   sweet('warabi mochi', 'Warabi Mochi', { swim: 30, stamina: 12 }, { crystal_gel: 1, kinako: 1 }),
   sweet('sakura mochi', 'Sakura Mochi', { fly: 40 }, { mochi_rice: 2, cherry: 1, sprite_petal: 1 }),
   sweet('kashiwa mochi', 'Kashiwa Mochi', { power: 30, stamina: 12 }, { mochi_rice: 2, azuki: 1, leaf_fragment: 1 }),
-  sweet('monaka', 'Monaka', { fly: 30, run: 12 }, { azuki: 1, wind_whisker: 1 }),
+  sweet('monaka', 'Monaka', { fly: 30, run: 12 }, { azuki: 1, woven_nest: 1 }),
   sweet('yokan', 'Yokan', { stamina: 45 }, { azuki: 2, honeycomb: 1 }),
   sweet('kakigori', 'Kakigori', { swim: 28, fly: 16 }, { snow_gem: 1, cherry: 1 }),
   sweet('manju', 'Manju', { stamina: 28, power: 16 }, { mochi_rice: 1, azuki: 1, brownie_crumb: 1 }),

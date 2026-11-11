@@ -244,7 +244,7 @@ test('a daily quest comes back the next day', () => {
   const c = createCharacter('Hana', {});
   gainExp(c, 4e6);
   acceptQuest(c, 'daily_meadow');
-  for (let i = 0; i < 15; i++) recordKill(c, 'mushkin');
+  for (let i = 0; i < 15; i++) recordKill(c, 'pumpgob');
   assert.ok(completeQuest(c, 'daily_meadow'));
   assert.equal(questState(c, 'daily_meadow'), 'done', 'done for today');
   c.quests.daily_meadow.day = '2020-1-1';

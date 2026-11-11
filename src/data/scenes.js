@@ -696,13 +696,13 @@ export const SIDE_SCENES = {
   ],
   // ----- Clover and the Golden Bun -----
   clover_count_done: [
-    { who: 'clover', text: 'Twelve Jackalopes, hopping home with their horns between their legs! Okay. Counting. One, two, three...', mood: 'happy' },
+    { who: 'clover', text: 'Twelve Lambkins, trotting home with their tails between their legs! Okay. Counting. One, two, three...', mood: 'happy' },
     { together: [{ emote: 'clover', kind: 'note', dur: 1.2 }, { wait: 1 }, { emote: 'clover', kind: '?', dur: 1.2 }, { jump: 'clover', height: 10 }] },
     { who: 'clover', text: "...forty-seven. Yesterday I had twelve. They multiply. That's the bun business model.", mood: 'surprised' },
     { who: 'player', text: 'Are some of those pillows?' },
     { together: [{ emote: 'clover', kind: 'sweat', dur: 1.4 }, { wait: 0.6 }] },
     { who: 'clover', text: '...Thirty-one.', mood: 'sad' },
-    { who: 'clover', text: "Thank you, {name}! Come back when you're bigger. The Mandrakes are getting loud, and loud makes buns run.", mood: 'happy' },
+    { who: 'clover', text: "Thank you, {name}! Come back when you're bigger. The Turnip Tots are getting bouncy, and bouncy makes buns run.", mood: 'happy' },
   ],
   clover_bun_done: [
     { who: 'clover', text: 'They came home! And look who will not stop following you. Fluffy picked you!', mood: 'happy' },
@@ -875,7 +875,7 @@ export const SIDE_SCENES = {
   ],
   // ----- Kestrel's arrow -----
   kestrel_targets_done: [
-    { who: 'kestrel', text: "Fifteen Jackalopes! Quick eyes. You might make an archer yet. Or at least a very good jackalope photographer.", mood: 'happy' },
+    { who: 'kestrel', text: "Fifteen Lambkins! Quick eyes. You might make an archer yet. Or at least a very good lamb photographer.", mood: 'happy' },
     { together: [{ emote: 'clover', kind: 'note', dur: 1.4 }, { emote: 'kestrel', kind: 'anger', dur: 1.4 }] },
     { who: 'clover', text: "Careful, {name}. Ask her about the Spring Fair arrow sometime. There's a song. I wrote it. Hee hee.", mood: 'happy' },
     { who: 'kestrel', text: "Clover! That was ten years ago!", mood: 'angry' },

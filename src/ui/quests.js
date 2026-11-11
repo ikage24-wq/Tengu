@@ -25,7 +25,7 @@ import { settings, saveSettings } from '../core/settings.js';
 const GREEN = '#2f8f52';
 const READY_FILL = '#effcf3';
 
-// A hunt or a fetch names what it wants ("Mandrake"); an errand says the whole thing ("Talk to Pip").
+// A hunt or a fetch names what it wants ("Turnip Tot"); an errand says the whole thing ("Talk to Pip").
 const errand = (o) => o.type !== 'kill' && o.type !== 'collect';
 const objName = (o) => {
   const { verb, name } = objectiveText(o);

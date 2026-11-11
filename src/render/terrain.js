@@ -61,6 +61,9 @@ export const MATERIALS = {
   // Map-specific materials (a map's `look.material`).
   // Starfall Heights: cloud tinted lavender by the night sky.
   starcloud: { lip: '#f2ecff', body: '#d8d0f6', deep: '#b0a4e0', stone: '#ffffff', style: 'cloud', blades: false, drip: null },
+  // Clover Hills' fields (its art pass, 2026-11-11): Petal Meadow's puffy grass cap and soft soil
+  // in warm farm browns.
+  clover: { lip: '#86dc7e', body: '#d8a77a', deep: '#a8734e', stone: '#f2d2a8', style: 'petalsoil', blades: true, drip: 'root', cap: 'puffy' },
   farm: { lip: '#72d672', body: '#b5845a', deep: '#875c3a', stone: '#d6a878', style: 'farm', blades: true, drip: 'vine' },
   // Dawnlight Beach (the tutorial island): pale sand over warm sandstone.
   beach: { lip: '#fff0cc', body: '#f2d29c', deep: '#d9ad72', stone: '#fbe6bf', style: 'slab', blades: false, drip: 'weed' },

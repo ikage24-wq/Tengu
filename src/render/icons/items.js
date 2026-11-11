@@ -348,36 +348,6 @@ function mushcap() {
   return out;
 }
 
-function ribbon() {
-  const horn = '#f3e0bd';
-  const out = [];
-  const antler = (pts, w0, w1) => {
-    out.push(S(tube(pts, w0, w1), sh(horn)));
-    out.push(S(tube(pts.map(([x, y]) => [x - 0.26, y - 0.24]), w0 * 0.6, w1 * 0.5), horn));
-    out.push(S(tube(pts.slice(2, -2).map(([x, y]) => [x - 0.5, y - 0.45]), w0 * 0.18, w1 * 0.3), lt(horn)));
-  };
-  // Short tines along the top of one sweeping beam, then the beam over their roots.
-  antler(bez([7.4, 5.6], [9.4, 4.6], [10.4, 1.4], 8), 1.8, 0.6);
-  antler(bez([9.6, 8.6], [12, 7.8], [13.6, 5], 8), 1.9, 0.6);
-  antler(bez([10.6, 11.6], [8.6, 10.6], [7.4, 8.4], 6), 1.6, 0.6);
-  antler(bez3([10.8, 14.2], [12.6, 8.6], [5.4, 7.6], [3, 1.8], 18), 3, 0.8);
-  out.push(S([[2.4, 0.6], [3.8, 1.6], [2.8, 2.6]], horn), S([[10, 0.2], [11.2, 0.8], [10.6, 1.8]], horn), S([[13.4, 4.2], [14.6, 4.6], [13.8, 5.6]], horn));
-  for (const [p, q] of [[[10.8, 12.4], [12.4, 12.6]], [[11.4, 10.6], [12.8, 10.8]], [[5.4, 4.8], [6.4, 4.2]]]) out.push(line([p, q], 0.3, sh(horn)));
-  // The knobbly burr at the base.
-  const burr = oval(10.8, 14.3, 2.8, 1.3, -6, 20);
-  out.push(...ball(burr, '#c99a6a', { glow: 0.8 }));
-  for (const x of [8.8, 10.4, 12]) out.push(S(oval(x, 13.9, 0.45, 0.32, 0, 10), '#e6bf8e'));
-  // A pink bow tied round the beam.
-  const pink = '#ff7aa6';
-  const k = [10.8, 11.6];
-  out.push(S([[k[0] - 0.2, k[1] + 0.3], [7, 14], [8.2, 14.6]], sh(pink)));
-  const loopL = [[k[0], k[1]], ...bez([8, 9.4], [6.4, 11], [7.6, 12.8], 6), [k[0], k[1] + 0.6]];
-  const loopR = [[k[0] + 0.4, k[1]], ...bez([13.4, 9.2], [15.4, 11], [13.6, 12.8], 6), [k[0] + 0.4, k[1] + 0.6]];
-  out.push(...ball(loopL, pink, { glow: 0.7 }), ...ball(loopR, pink, { glow: 0.7 }));
-  out.push(S(oval(k[0] + 0.2, k[1] + 0.3, 1, 0.95, 0, 14), shade(pink, -10)), S(oval(k[0], k[1] + 0.1, 0.45, 0.4, 0, 10), lt(pink)));
-  out.push(...glint(5.4, 4.6, 0.5));
-  return out;
-}
 
 function pebble(c = '#22a6a8', gloss = '#e8fff6', streak = '#b8fff0') {
   // A basilisk scute: a glossy jade-teal hexagonal plate with a raised keel and growth ridges,
@@ -1102,7 +1072,7 @@ function nekomata_bell() {
 }
 
 const ART = {
-  fluff, shell, sprout_leaf, mushcap, ribbon, pebble, stinger, leaf_fragment, tusk, moss_stone, wisp_flame,
+  fluff, shell, sprout_leaf, mushcap, pebble, stinger, leaf_fragment, tusk, moss_stone, wisp_flame,
   bat_wing, bone_shard, crystal_gel, rock_core, shade_cloth, wool, feather, stardust, king_crystal, hollow_acorn, letter, parcel, gacha_ticket, party_token,
   sylph_feather, moon_plume, lamia_scale, snow_gem, nekomata_bell, moon_fang, bramble_claw,
   red_potion, orange_potion, white_potion, blue_potion, mana_elixir, elixir, return_scroll,

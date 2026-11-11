@@ -1515,6 +1515,244 @@ function drawMeadowHive(ctx, x, y, time, seed) {
   place(ctx, meadowHiveArt(blink, 'skep'), x + jig, y - breath);
   place(ctx, meadowHiveArt(blink, 'crown'), x + jig * 0.6, y - breath - hop);
 }
+// ---------- Clover Hills' own (its art pass, 2026-11-11, matching Petal Meadow's) ----------
+
+// The big barn, cute: red plank walls lit on the left, a white-trimmed gambrel roof, two round
+// loft windows for eyes (shutters closing in a blink), rosy cheeks, the big double door with its
+// white X braces, hay poking out under the eaves and tufts at its foot.
+// (Its eyes are always drawn open: the lids that blink, droop and close are drawn live over them,
+// drawBarnLids.)
+function cloverBarnArt() {
+  return art('cloverbarn', 128, 112, () => {
+    const out = [];
+    const wall = '#ff8484';
+    out.push(T([[14, 112], [14, 54], [114, 54], [114, 112]], wall));
+    out.push(F(R(14, 54, 14, 58, '#ffa49e')), F(R(100, 54, 14, 58, '#ec6a72')));
+    for (let x = 24; x < 112; x += 10) out.push(F(R(x, 56, 0.9, 56, '#e86a72')));
+    // The roof, its trim, and hay poking out under the eaves.
+    out.push(T([[6, 56], [20, 26], [64, 8], [108, 26], [122, 56]], '#c8505a'), F(T([[64, 8], [108, 26], [122, 56], [96, 56], [92, 30]], '#b0444e')));
+    out.push(F(band([[6, 56], [20, 26], [64, 8], [108, 26], [122, 56]], () => 1.6, '#ffffff')));
+    for (const [x, d] of [[12, -1], [116, 1]]) for (let k = 0; k < 3; k++) out.push(F(T([[x + d * k * 2, 57], [x + d * (k * 2 + 4), 63 + k], [x + d * (k * 2 + 1.6), 57]], '#f6d27a')));
+    // The loft-window eyes, with their frames, and cheeks.
+    for (const ex of [48, 80]) {
+      out.push(E(ex, 38, 9, 9, '#ffffff'));
+      out.push(E(ex, 38, 7, 7, '#5a3a4a'), F(E(ex - 2.2, 35.4, 2.4, 2.4, '#ffffff')), F(E(ex + 2.4, 40.6, 1.1, 1.1, '#ffffff')));
+    }
+    out.push(F(E(36, 52, 5, 2.4, '#ffb0c0')), F(E(92, 52, 5, 2.4, '#ffb0c0')));
+    // The big door: a white frame, two red leaves each with a white X, a little smile of an arch.
+    out.push(R(42, 72, 44, 40, '#ffffff'), R(45, 75, 18.5, 37, '#e8626c'), R(65, 75, 18.5, 37, '#e8626c'));
+    for (const x0 of [45, 65]) out.push(F(band([[x0 + 1, 76], [x0 + 17.5, 111]], () => 1, '#ffffff')), F(band([[x0 + 17.5, 76], [x0 + 1, 111]], () => 1, '#ffffff')));
+    out.push(F(arc(64, 70, 8, 4, 20, 160, 1.4, '#ffffff')));
+    out.push(tuft(10, 112), tuft(30, 112, '#7fcf86'), tuft(96, 112), tuft(118, 112, '#7fcf86'), ...bloom(22, 110, 1.5, '#ffffff'), ...bloom(106, 110, 1.4, '#ffe36b'));
+    return out;
+  });
+}
+// The barn alive: it breathes (rising a hair), blinks, and every few seconds gives a happy hop
+// while its weathervane turns in the wind. Its eyelids are drawn live over its eyes (an upper lid
+// and a little lower one, clipped to each round loft window), so every change of mood eases:
+//   dusk     its lids sink half down, drowsy, and it stops hopping;
+//   night    it nods off: the lids droop, it fights it (blinking back open once), then they close
+//            slowly into a sleepy curve; its breath slows and deepens and the Z's fade in;
+//   dawn     it wakes: the lids lift halfway, a blink, then eyes wide and a happy hop.
+// A blink is a quick sweep of the lids, not a swap of pictures.
+const barnMoods = new Map();
+const DOZE = [[1.3, 0.6], [0.45, 0.22], [0.9, 0.75], [1.4, 1]];
+const WAKE = [[1.1, 0.5], [0.4, 0.5], [0.14, 0.95], [0.5, 0]];
+const keyed = (keys, from, t) => {
+  let v = from;
+  for (const [d, to] of keys) {
+    if (t < d) return v + (to - v) * smooth01(t / d);
+    t -= d;
+    v = to;
+  }
+  return v;
+};
+const keysLen = (keys) => keys.reduce((n, [d]) => n + d, 0);
+const smooth01 = (u) => u * u * (3 - 2 * u);
+function barnLid(time, seed, wx) {
+  const mode = nightNow >= 0.5 ? 'asleep' : nightNow >= 0.3 ? 'drowsy' : 'awake';
+  const key = `${wx}|${seed}`;
+  let st = barnMoods.get(key);
+  // (Arriving to find it already asleep or awake: no transition, it's just so.)
+  if (!st || time < st.at || time - st.seen > 2) st = { mode, at: time - 99, from: mode === 'asleep' ? 1 : mode === 'drowsy' ? 0.45 : 0 };
+  if (st.mode !== mode) st = { mode, at: time, from: st.lid ?? 0, prev: st.mode };
+  st.seen = time;
+  barnMoods.set(key, st);
+  const t = time - st.at;
+  const b = (time * 0.35 + seed * 7.3) % 1;
+  const blink = b < 0.045 ? Math.sin((b / 0.045) * Math.PI) : 0;
+  let lid;
+  let z = 0;
+  let hop = 0;
+  if (mode === 'asleep') {
+    lid = keyed(DOZE, st.from, t);
+    z = smooth01(Math.min(1, Math.max(0, (t - keysLen(DOZE) * 0.7) / 1.6)));
+  } else if (mode === 'drowsy') {
+    lid = st.from + (0.45 - st.from) * smooth01(Math.min(1, t / 1.6));
+    lid = Math.max(lid, blink);
+    if (st.prev === 'asleep') z = 1 - smooth01(Math.min(1, t / 0.5));
+  } else {
+    const w = st.prev ? keysLen(WAKE) : 0;
+    lid = st.prev && t < w ? keyed(WAKE, st.from, t) : blink;
+    if (st.prev === 'asleep') z = 1 - smooth01(Math.min(1, t / 0.5));
+    // (A happy hop once it's properly awake.)
+    if (st.prev && t >= w && t < w + 0.5) hop = Math.sin(((t - w) / 0.5) * Math.PI) * 2.4;
+  }
+  st.lid = lid;
+  return { lid, z, hop, mode };
+}
+function drawBarnLids(ctx, ox, oy, lid) {
+  if (lid <= 0.01) return;
+  for (const ex of [48, 80]) {
+    const cx = ox + ex;
+    const cy = oy + 38;
+    const r = 7;
+    const edge = cy - r - 1 + lid * (r + 2.6);
+    const low = cy + r + 1 - lid * (r - 0.6);
+    const bow = 0.6 + lid * 1.6;
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(cx, cy, r + 0.3, 0, Math.PI * 2);
+    ctx.clip();
+    ctx.fillStyle = '#e2a878';
+    ctx.beginPath();
+    ctx.moveTo(cx - r - 1, cy + r + 2);
+    ctx.lineTo(cx + r + 1, cy + r + 2);
+    ctx.lineTo(cx + r + 1, low);
+    ctx.quadraticCurveTo(cx, low + bow * 0.6, cx - r - 1, low);
+    ctx.fill();
+    ctx.fillStyle = '#d89a6a';
+    ctx.beginPath();
+    ctx.moveTo(cx - r - 1, cy - r - 2);
+    ctx.lineTo(cx + r + 1, cy - r - 2);
+    ctx.lineTo(cx + r + 1, edge);
+    ctx.quadraticCurveTo(cx, edge + bow * 2, cx - r - 1, edge);
+    ctx.fill();
+    ctx.strokeStyle = lid > 0.7 ? '#7a4a3a' : '#a8724e';
+    ctx.lineWidth = 1.3;
+    ctx.beginPath();
+    ctx.moveTo(cx + r + 1, edge);
+    ctx.quadraticCurveTo(cx, edge + bow * 2, cx - r - 1, edge);
+    ctx.stroke();
+    ctx.restore();
+  }
+}
+function drawCloverBarn(ctx, x, y, time, seed, wx) {
+  const { lid, z, hop: wakeHop, mode } = barnLid(time, seed, wx);
+  // (How asleep it is, 0..1, for its breath: slower and deeper the sleepier.)
+  const sl = Math.min(1, lid);
+  const calm = (Math.sin(time * 1.3 + seed) + 1) * 0.5 * 0.8;
+  const deep = (Math.sin(time * 0.9 + seed) + 1) * 0.5 * 1.4;
+  const breath = mode === 'awake' ? calm : calm + (deep - calm) * sl;
+  const u = (time + seed * 2.7) % 7;
+  const hop = mode === 'awake' && lid < 0.05 && u < 0.5 ? Math.sin((u / 0.5) * Math.PI) * 2.4 : wakeHop;
+  const lift = breath + hop;
+  const a = cloverBarnArt();
+  place(ctx, a, x, y - lift);
+  drawBarnLids(ctx, snap(x - a.w / 2), snap(y - lift - a.h), lid);
+  place(ctx, vaneArt(Math.floor(windTravel(time - wx / 320) * 2.2 + seed * 3) % 8), x, y - 112 + 13 - lift);
+  if (z > 0.01) {
+    // A Z every 1.4 s from the roof's right slope, rising and drifting right with a gentle sway,
+    // growing a touch, fading in and then out.
+    for (let k = 0; k < 3; k++) {
+      const v = ((time + seed + k * 1.4) % 4.2) / 4.2;
+      const fade = Math.min(1, v / 0.15) * Math.min(1, (1 - v) / 0.35) * z;
+      if (fade <= 0.01) continue;
+      ctx.save();
+      ctx.globalAlpha *= fade;
+      place(ctx, barnZArt(v < 0.35 ? 0 : v < 0.7 ? 1 : 2), x + 30 + v * 18 + Math.sin(v * 7 + k) * 3, y - 92 - v * 34 - lift);
+      ctx.restore();
+    }
+  }
+}
+// A sleepy Z: white with a soft lilac edge, in three sizes.
+function barnZArt(size) {
+  const k = [0.8, 1, 1.25][size];
+  return art(`barnZ|${size}`, 12, 12, () => [T([[2, 2], [10, 2], [10, 4], [5, 8.4], [10, 8.4], [10, 10.4], [2, 10.4], [2, 8.4], [7, 4], [2, 4]].map(([px, py]) => [6 + (px - 6) * k, 12 - (12 - py) * k]), '#ffffff')]);
+}
+
+// The scarecrow, cute: a straw hat with a red band and a flower, a burlap face with button eyes
+// (stitched shut in a blink) and a stitched smile, a plaid shirt on the crossbar with straw hands,
+// denim overalls with straw at the cuffs, on its pole. `part`: 'body', or 'crow' (the little crow
+// on its arm, `hop` 0/1).
+function cloverScarecrowArt(blink, part, hop = 0) {
+  return art(`cloverscarecrow|${part}|${blink}|${hop}`, 52, 86, () => {
+    const out = [];
+    if (part === 'crow') {
+      const cy = 34 - hop * 3;
+      out.push(E(42, cy, 4.4, 3.6, '#5a4a6e'), E(45, cy - 3, 2.8, 2.6, '#5a4a6e'), F(E(41, cy + 0.6, 2.6, 1.6, '#7a6a8e')));
+      out.push(T([[47.4, cy - 3.4], [50.4, cy - 2.6], [47.4, cy - 1.8]], '#ffb347'), F(E(45.8, cy - 3.6, 0.7, 0.8, '#ffffff')), F(E(46, cy - 3.5, 0.35, 0.45, '#2a1a2e')));
+      out.push(F(T([[38, cy - 1], [35, cy + 1.4], [38.4, cy + 1.6]], '#4a3a5e')), F(R(41.4, cy + 3.2, 0.6, 2, '#ffb347')), F(R(43, cy + 3.2, 0.6, 2, '#ffb347')));
+      return out;
+    }
+    out.push(R(24, 30, 4, 56, '#b88a5c'), F(R(24, 30, 1.4, 56, '#d8aa74')), F(R(6, 38, 40, 3, '#b88a5c')));
+    // The shirt on the crossbar: two sleeves out to straw hands.
+    out.push(T([[18, 36], [6, 37], [5, 44], [18, 44]], '#7ab8e8'), T([[34, 36], [46, 37], [47, 44], [34, 44]], '#7ab8e8'));
+    for (const x of [8, 12, 38, 42]) out.push(F(R(x, 37, 1, 7, '#5a98d0')));
+    for (const [hx, d] of [[5, -1], [47, 1]]) for (let k = 0; k < 3; k++) out.push(F(T([[hx, 39 + k * 2], [hx + d * 4.6, 38 + k * 2.6], [hx, 41 + k * 2]], '#f6d27a')));
+    out.push(E(26, 48, 10, 11, '#7ab8e8'), F(R(18, 42, 16, 1, '#5a98d0')), F(R(18, 48, 16, 1, '#5a98d0')));
+    // Overalls: the bib and straps, two buttons, straw poking out at the cuffs.
+    out.push(T([[18, 50], [34, 50], [35, 64], [17, 64]], '#6a8ad0'), F(R(21, 44, 2, 7, '#6a8ad0')), F(R(29, 44, 2, 7, '#6a8ad0')), F(E(22, 51, 1, 1, '#ffe36b')), F(E(30, 51, 1, 1, '#ffe36b')));
+    out.push(F(R(24, 56, 4, 4, '#ff9ec0')));
+    for (let k = 0; k < 5; k++) out.push(F(T([[18 + k * 4, 63], [19.6 + k * 4, 69 + (k % 2) * 2], [21.4 + k * 4, 63]], '#f6d27a')));
+    // The burlap head, its face, and the hat.
+    out.push(E(26, 26, 10, 9.6, '#f2d6a0'), F(E(23, 23, 6, 4, '#fbe6bc')));
+    for (const ex of [22, 30]) {
+      if (blink) out.push(F(R(ex - 1.8, 26, 3.6, 0.8, '#5a3a32')));
+      else out.push(F(E(ex, 26, 1.7, 1.7, '#5a3a32')), F(E(ex - 0.5, 25.4, 0.5, 0.5, '#ffffff')));
+    }
+    out.push(F(arc(26, 29, 4.4, 3, 20, 160, 0.8, '#a8543e')));
+    for (const sx of [22.6, 26, 29.4]) out.push(F(R(sx - 0.2, 31.2, 0.5, 1.6, '#a8543e')));
+    out.push(F(E(19.6, 29.4, 2, 1.1, '#ffb0c0')), F(E(32.4, 29.4, 2, 1.1, '#ffb0c0')));
+    out.push(E(26, 18, 16, 3.6, '#f0c860'), dome(26, 18, 9, 9, '#f6d27a'), F(R(17, 15, 18, 2.6, '#e8606a')), ...bloom(34, 15, 1.8, '#ffffff'));
+    out.push(tuft(16, 86), tuft(36, 86, '#7fcf86'));
+    return out;
+  });
+}
+// The scarecrow alive: it sways on its pole, blinks, and the crow hops up off its arm every few
+// seconds and settles back.
+function drawCloverScarecrow(ctx, x, y, time, seed) {
+  const sway = Math.sin(time * 1.1 + seed) * 0.035;
+  const u = (time + seed * 1.9) % 4.2;
+  const hop = u < 0.4 ? 1 : 0;
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(sway);
+  place(ctx, cloverScarecrowArt(blinking(time, seed) ? 1 : 0, 'body'), 0, 0);
+  place(ctx, cloverScarecrowArt(blinking(time, seed + 3) ? 1 : 0, 'crow', hop), 0, 0);
+  ctx.restore();
+}
+
+// The old oak on the ridge, cute: a chubby trunk with flared roots and a sleepy face, and a big
+// round crown of puffs with red apples (drawn as its own part, so it can sway).
+function cloverOakArt(blink, part) {
+  return art(`cloveroak|${part}|${blink}`, 150, 170, () => {
+    const out = [];
+    if (part === 'crown') {
+      const g = '#82d07e';
+      for (const [cx, cy, rx, ry, c] of [[36, 76, 28, 21, '#64b46c'], [114, 76, 28, 21, '#64b46c'], [75, 66, 54, 40, g], [50, 42, 28, 22, g], [100, 40, 30, 23, g], [75, 26, 28, 21, g]]) out.push(E(cx, cy, rx, ry, c));
+      out.push(F(E(60, 30, 18, 9, '#a8e8a0')), F(E(42, 50, 10, 6, '#a8e8a0')), F(arc(75, 70, 52, 34, 20, 160, 3, '#6cbc72')));
+      for (const [ax, ay] of [[44, 62], [70, 48], [96, 58], [112, 82], [36, 86], [84, 84]]) {
+        out.push(E(ax, ay, 3.6, 3.4, '#ff5a6a'), F(E(ax - 1.1, ay - 1.2, 1.1, 0.8, '#ffd0d6')), F(R(ax - 0.3, ay - 5, 0.8, 2, '#8a5a3e')), F(E(ax + 1.6, ay - 4.6, 1.6, 0.8, '#6cc46c')));
+      }
+      return out;
+    }
+    const bark = '#c08a5c';
+    out.push(T([[50, 170], [60, 160], [64, 96], [86, 96], [90, 160], [100, 170]], bark), F(T([[78, 98], [86, 96], [90, 160], [100, 170], [84, 170]], '#a8744e')));
+    out.push(F(band([[68, 104], [66, 156]], () => 1.4, '#dcaa7a')), F(band([[80, 110], [82, 150]], () => 0.7, '#9a6a46')));
+    out.push(...face(75, 132, 6.4, blink ? 'closed' : 'happy', 'smile', 2.4));
+    out.push(tuft(44, 170), tuft(106, 170, '#7fcf86'), ...bloom(56, 168, 1.6, '#ffffff'), ...bloom(96, 168, 1.5, '#ff9ec0'));
+    return out;
+  });
+}
+// The oak alive: the crown sways a little and its apples with it; the trunk's face blinks.
+function drawCloverOak(ctx, x, y, time, seed) {
+  place(ctx, cloverOakArt(blinking(time, seed) ? 1 : 0, 'trunk'), x, y);
+  const sway = Math.sin(time * 0.8 + seed) * 1.6;
+  const breath = (Math.sin(time * 1.2 + seed + 1) + 1) * 0.6;
+  place(ctx, cloverOakArt(0, 'crown'), x + sway, y - breath);
+}
+
 // Shapes drawn at one size, scaled by `k` about the top-left corner.
 function scaleShapes(shapes, k) {
   return shapes.filter(Boolean).map((s) => {
@@ -1797,6 +2035,8 @@ const WATERS = {
 };
 // The map's water, set by `drawLandmark` from the map's theme.
 let waterKey = 'meadow';
+// How dark it is where the landmark stands (0 day .. 1 night): set for each one drawn.
+let nightNow = 0;
 const water = () => WATERS[waterKey] ?? WATERS.meadow;
 
 function waterPoolArt() {
@@ -3222,6 +3462,10 @@ const KINDS = {
   },
   fence: { w: 64, h: 24, draw: (ctx, x, y, time, seed) => place(ctx, fenceArt(variant(seed, 3)), x, y) },
   cart: { w: 64, h: 44, draw: (ctx, x, y) => place(ctx, cartArt(), x, y) },
+  // Clover Hills' own (its art pass, 2026-11-11).
+  cloverbarn: { w: 128, h: 112, draw: drawCloverBarn },
+  cloverscarecrow: { w: 52, h: 86, draw: drawCloverScarecrow },
+  cloveroak: { w: 150, h: 170, draw: drawCloverOak },
   // Petal Meadow's own (the meadow art pass, 2026-11-10).
   meadowsun: { w: 96, h: 176, draw: drawMeadowSun },
   meadowhive: {
@@ -3527,9 +3771,10 @@ export const LANDMARKS = Object.fromEntries(Object.entries(KINDS).map(([k, { w, 
 
 // Draws landmark `kind` with its base centered at screen (x, y), y being the ground line.
 // `wx` is its place in the world, so a gust rolls across the map and reaches it in turn.
-export function drawLandmark(ctx, kind, x, y, time, seed = 0, wx = x, theme = 'meadow') {
+export function drawLandmark(ctx, kind, x, y, time, seed = 0, wx = x, theme = 'meadow', night = 0) {
   const k = KINDS[kind];
   if (!k) return;
   waterKey = theme;
+  nightNow = night;
   k.draw(ctx, x, y + SINK, time, seed, wx);
 }

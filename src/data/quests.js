@@ -61,13 +61,13 @@ export const QUESTS = {
   // just Muffin after falling in the honey; when the crowds go home, she throws him a parade.
   clover_count: {
     id: 'clover_count', name: 'Count the Buns', giver: 'clover', minLevel: 8,
-    text: "Can you help me count my buns? I've got either twelve or a hundred. Every time I start, the Jackalopes in Clover Hills hop in and pretend to be buns, and I lose count. Calm 12 of them. They have HORNS. Buns don't have horns. I keep forgetting.",
-    objectives: [{ type: 'kill', mob: 'piglet', count: 12 }],
+    text: "Can you help me count my buns? I've got either twelve or a hundred. Every time I start, the Lambkins in Clover Hills wander in and pretend to be buns, and I lose count. Calm 12 of them. They go BAA. Buns don't go baa. I keep forgetting.",
+    objectives: [{ type: 'kill', mob: 'lambkin', count: 12 }],
     rewards: { exp: 1350, gold: 100, items: [{ id: 'red_potion', qty: 10 }] },
   },
   bun_buddy: {
     id: 'bun_buddy', name: 'Bun Round-Up', giver: 'clover', minLevel: 8, prereq: 'clover_count',
-    text: "The Mandrakes in Clover Hills screamed so loud my Puff Buns bolted! Quiet 15 of them, and pick 8 Lucky Clover in the hills to coax the buns home. The bravest one has taken a shine to you, I can tell. Its name is Fluffy. They're all called Fluffy. It's easier.",
+    text: "The Turnip Tots in Clover Hills headbutted my Puff Buns clean out of their hutch! Calm 15 of them, and pick 8 Lucky Clover in the hills to coax the buns home. The bravest one has taken a shine to you, I can tell. Its name is Fluffy. They're all called Fluffy. It's easier.",
     objectives: [{ type: 'kill', mob: 'sproutling', count: 15 }, { type: 'collect', item: 'clover', count: 8 }],
     rewards: { exp: 900, gold: 120, items: [], mount: 'bun' },
   },  clover_golden: {
@@ -98,7 +98,7 @@ export const QUESTS = {
 
   sprout_sweep: {
     id: 'sprout_sweep', name: 'Sprout Sweep', giver: 'mira', minLevel: 5, prereq: 'fluffy',
-    text: 'Mandrakes are screaming all over Clover Hills, past the meadow. Defeat 10 of them!',
+    text: 'Turnip Tots are hopping all over Clover Hills, past the meadow, headbutting anything that stands still. Defeat 10 of them!',
     objectives: [{ type: 'kill', mob: 'sproutling', count: 10 }],
     rewards: { exp: 440, gold: 40, items: [{ id: 'shoes_0', qty: 1 }, { id: 'top_0', qty: 1 }] },
   },
@@ -135,8 +135,8 @@ export const QUESTS = {
 
   mush_menace: {
     id: 'mush_menace', name: 'Toadstool Trouble', giver: 'rook', minLevel: 8,
-    text: 'Toadstool Goblins have been sneaking onto the docks. Clear out 20 of them in Clover Hills.',
-    objectives: [{ type: 'kill', mob: 'mushkin', count: 20 }],
+    text: 'Pumpkin Goblins have been sneaking onto the docks. Clear out 20 of them in Clover Hills.',
+    objectives: [{ type: 'kill', mob: 'pumpgob', count: 20 }],
     rewards: { exp: 1600, gold: 140, items: [{ id: 'orange_potion', qty: 20 }] },
   },
   leaf_samples: {
@@ -210,16 +210,16 @@ export const QUESTS = {
   },
   pip_souvenirs: {
     id: 'pip_souvenirs', name: 'Souvenirs of the World', giver: 'pip', minLevel: 5, prereq: 'pip_parcel',
-    text: "Will you bring me souvenirs from out there? I want to know what the world feels like. 6 Dandelion Seeds from the Dandelion Puffs in Petal Meadow, and 6 Straw Tufts from the Scarecrow Imps in Clover Hills. For display. Not for sale. Probably not for sale.",
-    objectives: [{ type: 'collect', item: 'sprite_petal', count: 6 }, { type: 'collect', item: 'straw_tuft', count: 6 }],
+    text: "Will you bring me souvenirs from out there? I want to know what the world feels like. 6 Dandelion Seeds from the Dandelion Puffs in Petal Meadow, and 6 Hay Quills from the Strawhogs in Clover Hills. They shed them when they're cross, which is always. For display. Not for sale. Probably not for sale.",
+    objectives: [{ type: 'collect', item: 'sprite_petal', count: 6 }, { type: 'collect', item: 'hay_quill', count: 6 }],
     rewards: { exp: 1100, gold: 110, items: [{ id: 'red_potion', qty: 15 }] },
   },
   pip_lunch: {
     id: 'pip_lunch', name: 'Closed for Lunch', giver: 'pip', minLevel: 8, prereq: 'pip_souvenirs',
-    text: "I'm going to do it. I'm going to leave the shop. For one whole lunch. First, ask Mira if shopkeepers are even allowed. Then clear 15 Jackalopes out of Clover Hills, in case I go really far. I won't. But in case.",
+    text: "I'm going to do it. I'm going to leave the shop. For one whole lunch. First, ask Mira if shopkeepers are even allowed. Then clear 15 Lambkins out of Clover Hills, in case I go really far. I won't. But in case.",
     objectives: [
       { type: 'talk', npc: 'mira', say: "Allowed? Oh, sweetheart. Nobody ever said Pip couldn't leave. She just never asked. Tell her the gate's been open her whole life." },
-      { type: 'kill', mob: 'piglet', count: 15 },
+      { type: 'kill', mob: 'lambkin', count: 15 },
     ],
     rewards: { exp: 1900, gold: 170, items: [{ id: 'return_scroll', qty: 5 }, { id: 'red_potion', qty: 20 }] },
   },
@@ -234,26 +234,26 @@ export const QUESTS = {
   malv_well: {
     id: 'malv_well', name: 'The Well Shall Run Black', giver: 'malvina', minLevel: 6, prereq: 'malv_minion',
     gives: [{ id: 'hex_brew' }],
-    text: "The flowers... BLOOMED. Enormous. People are taking PICTURES. Fine. Phase Two. Pour this Hex Brew into Mira's well and the water will turn black and bitter! Then thin out 10 Toadstool Goblins in the woods, so nobody can bring fresh mushrooms to cheer the village up. I am so evil it frightens even me.",
+    text: "The flowers... BLOOMED. Enormous. People are taking PICTURES. Fine. Phase Two. Pour this Hex Brew into Mira's well and the water will turn black and bitter! Then thin out 10 Pumpkin Goblins in Clover Hills, so nobody can bake a pumpkin pie to cheer the village up. I am so evil it frightens even me.",
     objectives: [
       { type: 'deliver', npc: 'mira', item: 'hex_brew', say: "Malvina sent this? Oh, how sweet. *pours* ...Goodness, the water's gone pink and fizzy, and my sore feet stopped aching the moment I paddled in it! Tell her thank you. No, tell her LOUDLY." },
-      { type: 'kill', mob: 'mushkin', count: 10 },
+      { type: 'kill', mob: 'pumpgob', count: 10 },
     ],
     rewards: { exp: 850, gold: 90, items: [{ id: 'vial_of_despair', qty: 3 }, { id: 'poisoned_apple', qty: 5 }] },
   },
   malv_mob: {
     id: 'malv_mob', name: 'The Torches Are Coming', giver: 'malvina', minLevel: 7, prereq: 'malv_well',
-    text: "Minion. MINION. Lights. Gathering at night. Whispering. Posy's been seen buying ROPE. It's a mob, I know a mob when I see one, I've read every book about them. Go and find out what Posy is planning, and bring me 10 Straw Tufts from the Scarecrow Imps: I am building scarecrow guards. Very frightening ones. With little hats.",
+    text: "Minion. MINION. Lights. Gathering at night. Whispering. Posy's been seen buying ROPE. It's a mob, I know a mob when I see one, I've read every book about them. Go and find out what Posy is planning, and bring me 10 Hay Quills from the Strawhogs: I am building scarecrow guards. Spiky ones. Don't ask. Very frightening ones. With little hats.",
     objectives: [
       { type: 'talk', npc: 'posy', say: "Shhh! The rope is for BUNTING! We're throwing Malvina a surprise party, 'Thank You, Malvina Day'! The flowers, the well, she's helped everyone! Don't you dare tell her. Just get her to stay home tonight." },
-      { type: 'collect', item: 'straw_tuft', count: 10 },
+      { type: 'collect', item: 'hay_quill', count: 10 },
     ],
     rewards: { exp: 1200, gold: 100, items: [{ id: 'vial_of_despair', qty: 4 }] },
   },
   malv_diary: {
     id: 'malv_diary', name: 'The Villain Diary', giver: 'malvina', minLevel: 9, prereq: 'malv_mob',
-    text: "A... party. For me. They CHEERED. Do you know how hard it is to look menacing with a party hat on? I must restore my terrible reputation at once. Bring me 10 Jackalope Antlers from Clover Hills: I shall wear a crown of antlers so dreadful that children weep. ...Not too much. Just a little sniffle.",
-    objectives: [{ type: 'collect', item: 'ribbon', count: 10 }],
+    text: "A... party. For me. They CHEERED. Do you know how hard it is to look menacing with a party hat on? I must restore my terrible reputation at once. Bring me 10 Curly Wool from the Lambkins in Clover Hills: I shall knit a cloak so dreadful that children weep. ...Not too much. Just a little sniffle.",
+    objectives: [{ type: 'collect', item: 'curly_wool', count: 10 }],
     rewards: { exp: 2500, gold: 180, title: 'Minion of Malvina', items: [{ id: 'vial_of_despair', qty: 5 }, { id: 'bottled_scream', qty: 5 }] },
   },
 
@@ -269,8 +269,8 @@ export const QUESTS = {
   },
   lulu_runway: {
     id: 'lulu_runway', name: 'Runway Ready', giver: 'lulu', minLevel: 8, prereq: 'lulu_gossip',
-    text: "Inspiration struck! A spring line with fluffy trim and antler buttons. I need 9 Fox Fluff from the Blossom Kits and 7 Jackalope Antlers from Clover Hills. The first piece is yours!",
-    objectives: [{ type: 'collect', item: 'fluff', count: 9 }, { type: 'collect', item: 'ribbon', count: 7 }],
+    text: "Inspiration struck! A spring line with fluffy trim and woolly buttons. I need 9 Fox Fluff from the Blossom Kits and 7 Curly Wool from the Lambkins in Clover Hills. The first piece is yours!",
+    objectives: [{ type: 'collect', item: 'fluff', count: 9 }, { type: 'collect', item: 'curly_wool', count: 7 }],
     rewards: { exp: 2000, gold: 170, items: [{ id: 'cash_casual_cardigan', qty: 1 }] },
   },
   // Kestrel's story (her archers'): the arrow she shot off Windy Canyon at the Spring Fair when she
@@ -278,8 +278,8 @@ export const QUESTS = {
   // carried it to the Whispering Glade, where the Sylphs have kept it as treasure ever since.
   kestrel_targets: {
     id: 'kestrel_targets', name: 'Moving Targets', giver: 'kestrel', minLevel: 7,
-    text: "Standing targets teach you nothing. They just stand there. Smug. The Jackalopes in Clover Hills never stop hopping: catch 15 of them, whatever you fight with, and you'll have quick eyes for life.",
-    objectives: [{ type: 'kill', mob: 'piglet', count: 15 }],
+    text: "Standing targets teach you nothing. They just stand there. Smug. The Lambkins in Clover Hills never stop frolicking: catch 15 of them, whatever you fight with, and you'll have quick eyes for life.",
+    objectives: [{ type: 'kill', mob: 'lambkin', count: 15 }],
     rewards: { exp: 1700, gold: 120, items: [{ id: 'orange_potion', qty: 15 }] },
   },
   mira_letter: {
@@ -291,8 +291,8 @@ export const QUESTS = {
   },
   daily_meadow: {
     id: 'daily_meadow', name: 'Daily: Hill Patrol', giver: 'mira', minLevel: 6, daily: true,
-    text: "The Toadstool Goblins sneak back into Clover Hills every night. Help me keep them in check: 15 will do for today.",
-    objectives: [{ type: 'kill', mob: 'mushkin', count: 15 }],
+    text: "The Pumpkin Goblins sneak back into Clover Hills every night. Help me keep them in check: 15 will do for today.",
+    objectives: [{ type: 'kill', mob: 'pumpgob', count: 15 }],
     rewards: { exp: 1200, gold: 110, items: [{ id: 'orange_potion', qty: 5 }, { id: 'gacha_ticket', qty: 1 }] },
   },
 

@@ -167,7 +167,7 @@ test('players answer questions from the game itself: maps, monsters, NPCs, fish,
   const ctx = { here: 'sprout', playerLevel: 12 };
   assert.match(answer('where is clover hills?', ctx), /Petal Meadow/);
   assert.match(answer('what lvl is mossy woods', ctx), /lv 11-18/);
-  assert.match(answer('where do jackalopes spawn?', ctx), /Clover Hills/);
+  assert.match(answer('where do lambkins spawn?', ctx), /Clover Hills/);
   assert.match(answer('where is pip', ctx), /Sprout Village/);
   assert.match(answer('how do i fish?', ctx), /rod/);
   assert.match(answer('where is tamamo', ctx), /Fox Shrine Path/);

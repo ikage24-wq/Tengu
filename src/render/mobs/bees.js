@@ -108,6 +108,26 @@ function beeFace(out, hx, hy, k, mood, attacking, { queen = false } = {}) {
   if (hurt) out.push(...sweat(hx - 4.4 * k, hy - 3 * k, 1 * k), ...tear(near[0] + 0.8 * k, ey + 2.2 * k, 0.8 * k, { type: 'stream', len: 2 * k }));
 }
 
+// The Puffbee's body motion, live (render/monsters.js applies it every frame): a lift on every
+// wingbeat pair and a lagging roll in flight, a breathing hover at rest; it rolls about its
+// middle, 12 px above its feet.
+function puffMotion(pose, f) {
+  const walk = pose === 'walk';
+  const q = walk ? f / 8 : f / 6;
+  if (walk) return { dx: 0.6 * Math.sin(TAU * q - 1), lift: 1.8 * Math.abs(Math.sin(2 * TAU * q)) - 0.6, rot: 6 * Math.sin(2 * TAU * q - 1.4), py: 12 };
+  if (pose === 'idle') return { lift: breath(q) * 1.8 - sway(q) * 0.8, rot: sway(q) * 6, py: 12 };
+  return {};
+}
+// The Dandelion Puff's, likewise: a soft rise and fall on the breeze with a slower lean, a
+// breathing hover at rest, leaning about its seed ball's foot, 18 px above its stem's tip.
+function seedMotion(pose, f) {
+  const walk = pose === 'walk';
+  const q = walk ? f / 8 : f / 6;
+  if (walk) return { dx: 0.8 * Math.sin(TAU * q - 1.2), lift: 1.6 * Math.sin(TAU * q), rot: 5 * Math.sin(TAU * q - 1.8), py: 18 };
+  if (pose === 'idle') return { lift: breath(q) * 1.6 - sway(q) * 0.8, rot: sway(q) * 4, py: 18 };
+  return {};
+}
+
 // ---------- Puffbee (bumble) ----------
 // (Petal Meadow's new cast, 2026-11-11: replaced the Bumble.) A round fuzzy pom-pom of a bee, all
 // one ball: its face on the front, cocoa stripes round its back, a soft ring of cream fluff
@@ -153,10 +173,11 @@ function bumble(pose, f, mood) {
   // Flight: a little lift on every wingbeat pair (two bobs a loop) with a lagging roll; idle, a
   // lazy hover that breathes. Dead, it lies belly up.
   const br = idle ? breath(q) : 0;
-  const bob = dead ? 5 : A ? A.by : walk ? -1.8 * Math.abs(Math.sin(2 * TAU * q)) + 0.6 : -br * 1.8 + sway(q) * 0.8;
-  const bx = 16 + (A ? A.bx : 0) + (hurt ? -1.6 : 0) + (walk ? 0.6 * Math.sin(TAU * q - 1) : 0);
+  // (Its flight bob, drift and roll are applied live every frame, puffMotion below.)
+  const bob = dead ? 5 : A ? A.by : 0;
+  const bx = 16 + (A ? A.bx : 0) + (hurt ? -1.6 : 0);
   const by = 16 + bob;
-  const rot = dead ? 180 : A ? A.rot : hurt ? -14 : walk ? 6 * Math.sin(2 * TAU * q - 1.4) : sway(q) * 6;
+  const rot = dead ? 180 : A ? A.rot : hurt ? -14 : 0;
   const up = Math.floor(f * 2) % 2 === 0;
   const flap = dead ? 20 : hurt ? -60 : up ? -70 : -10;
   const R0 = 8.6;
@@ -253,10 +274,11 @@ function petalsprite(pose, f, mood) {
   // Drifting: a soft rise and fall once a loop with a slower sway (it rides the breeze), idle a
   // breathing hover; dead, it sinks low and droops.
   const br = idle ? breath(q) : 0;
-  const bob = dead ? 7 : (A ? A.by : 0) + (walk ? -1.6 * Math.sin(TAU * q) : -br * 1.6 + sway(q) * 0.8);
-  const cx = 18 + (walk ? 0.8 * Math.sin(TAU * q - 1.2) : 0) + (hurt ? -1.4 : 0);
+  // (Its drift, bob and lean are applied live every frame, seedMotion below.)
+  const bob = dead ? 7 : A ? A.by : 0;
+  const cx = 18 + (hurt ? -1.4 : 0);
   const cy = 15 + bob;
-  const lean = (A ? A.lean : 0) + (dead ? 24 : hurt ? -12 : walk ? 5 * Math.sin(TAU * q - 1.8) : sway(q) * 4);
+  const lean = (A ? A.lean : 0) + (dead ? 24 : hurt ? -12 : 0);
   const R0 = dead ? 5.4 : 9;
 
   // The stem dangling below, swaying a beat behind (a chain), with a tiny leaf on it.
@@ -582,8 +604,8 @@ const queenBeeRig = makeRig({
 });
 
 export const ART = {
-  bumble: { sub: 8, atkTween: true, walk: 8, idle: 6, attack: 4, stride: 30, atkMs: [60, 220, 160], draw: bumble },
-  petalsprite: { pad: 7, sub: 8, atkTween: true, walk: 8, idle: 6, attack: 4, stride: 24, atkMs: [70, 240, 200], draw: petalsprite },
+  bumble: { sub: 8, atkTween: true, motion: puffMotion, walk: 8, idle: 6, attack: 4, stride: 30, atkMs: [60, 220, 160], draw: bumble },
+  petalsprite: { pad: 7, sub: 8, atkTween: true, motion: seedMotion, walk: 8, idle: 6, attack: 4, stride: 24, atkMs: [70, 240, 200], draw: petalsprite },
   queenbee: { walk: 8, idle: 6, attack: 5, stride: 30, atkMs: [120, 420, 200, 240], draw: queenbee, rig: queenBeeRig },
 };
 

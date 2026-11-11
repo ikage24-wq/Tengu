@@ -129,6 +129,12 @@ for (const type of Object.keys(WEAPON_LINES)) for (const t of [1, 2, 3, 4]) RENA
 // Claws became star-throwing gauntlets: every old claw is now the gauntlet in its place.
 for (const id of Object.keys(ITEMS)) if (id.startsWith('gauntlet_')) RENAMED_ITEMS[id.replace('gauntlet_', 'claw_')] = id;
 for (const t of [1, 2, 3, 4]) RENAMED_ITEMS[`claw_${t}`] = `gauntlet_${t * 10}`;
+// (The Scarecrow Imp's Straw Tufts, 2026-11-11: it's gone, and the Strawhog drops Hay Quills.)
+RENAMED_ITEMS.straw_tuft = 'hay_quill';
+// (The Jackalope's antlers, 2026-11-11: it's gone, and the Lambkin drops Curly Wool.)
+RENAMED_ITEMS.ribbon = 'curly_wool';
+// (The Wind Ferret's whiskers, 2026-11-11: it's gone, and the Harvest Mouse drops Woven Nests.)
+RENAMED_ITEMS.wind_whisker = 'woven_nest';
 
 // ---------- Armor ----------
 
@@ -459,12 +465,13 @@ const ETC = [
   ['shell', 'Snail Bud', 2, '#ff9ec0'],
   ['bee_fuzz', 'Puffbee Fluff', 1, '#ffd65a'],
   ['sprite_petal', 'Dandelion Seed', 2, '#f4f0ff'],
-  ['straw_tuft', 'Straw Tuft', 3, '#f2d27a'],
-  ['brownie_crumb', 'Brownie Crumbs', 4, '#9a6a4a'],
-  ['wind_whisker', 'Wind Whisker', 5, '#bfe6ff'],
-  ['sprout_leaf', 'Mandrake Leaf', 2, '#9be08f'],
+  ['hay_quill', 'Hay Quill', 3, '#f2c766'],
+  ['brownie_crumb', 'Golden Grain', 4, '#f2c860'],
+  ['woven_nest', 'Woven Nest', 5, '#e2c878'],
+  ['sprout_leaf', 'Turnip Greens', 2, '#9be08f'],
   ['mushcap', 'Toadstool Cap', 3, '#ff7a7a'],
-  ['ribbon', 'Jackalope Antler', 4, '#ff6b9a'],
+  ['pumpkin_seed', 'Pumpkin Seed', 4, '#f6e2b0'],
+  ['curly_wool', 'Curly Wool', 4, '#fff6ec'],
   ['pebble', 'Basilisk Scale', 5, '#cfc4b2'],
   ['stinger', 'Manticore Stinger', 6, '#ff6b9a'],
   ['leaf_fragment', 'Dryad Leaf', 5, '#7fd17a'],

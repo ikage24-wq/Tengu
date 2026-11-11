@@ -5,7 +5,7 @@ export const MATERIAL = {
   pebblet: 'matStone', mossgolem: 'matStone', rockgolem: 'matStone', tuskar: 'matStone',
   crystalslime: 'matCrystal', crystalking: 'matCrystal', starspirit: 'matCrystal',
   boneknight: 'matArmor', scorpip: 'matArmor', thornback: 'matArmor',
-  sproutling: 'matWood', leafling: 'matWood', rootling: 'matWood', sapling: 'matWood', gnarlroot: 'matWood',
-  puffle: 'matSlime', mushkin: 'matSlime', sporecap: 'matSlime', sporeling: 'matSlime', mothercapper: 'matSlime', snailbun: 'matSlime',
+  sproutling: 'matWood', leafling: 'matWood', rootling: 'matWood', sapling: 'matWood', gnarlroot: 'matWood', pumpgob: 'matWood',
+  puffle: 'matSlime', sporecap: 'matSlime', sporeling: 'matSlime', mothercapper: 'matSlime', snailbun: 'matSlime',
   wisp: 'matSpirit', shade: 'matSpirit', cloudsheep: 'matSpirit',
 };

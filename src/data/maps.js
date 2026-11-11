@@ -169,60 +169,77 @@ export const MAPS = {
   },
 
 
-  // Clover Hills is a surface-and-underground farm (data/climb.js lay(), zones by height): the
-  // Farm Fields along the top, where the Scarecrow Imps stand and the Toadstool Goblins keep the
-  // big barn (Old MacGoblin's nest), broken by holes into the Root Cellar below, where the
-  // Mandrakes grow in the dark, the Kitchen Brownies keep house, and a quiet underground spring is
-  // good for fishing; and the Hayloft Ridge above, where the Jackalopes play and the Wind Ferrets
-  // dart. A hay bale bounces you up from the fields, chaff rises from the cellar through a hole,
-  // and a ledge drifts along the ridge.
+  // Clover Hills (made smaller and tidier 2026-11-11, the player's call, like Petal Meadow): a
+  // cosy farm you read at a glance, zoned by height. The Farm Fields along the top, where the
+  // Strawhogs scurry about and the Pumpkin Goblins keep the big barn (Old MacGoblin's nest), with
+  // two holes down into the Root Cellar, where the Turnip Tots hop about, the Chicklings
+  // peck about and a quiet spring is good for fishing; and the Hayloft Ridge above, where
+  // the Lambkins frolic and the Harvest Mice scurry round the old tree. A hay bale bounces you up
+  // from the fields and chaff rises from the cellar through the west hole.
   meadow2: {
-    id: 'meadow2', name: 'Clover Hills', theme: 'meadow', town: 'harbor', world: { x: 162, y: 196 },
-    look: { sky: ['#5ec8ff', '#aee8ff', '#e8fff2'], far: '#9fdf9f', mid: '#6fcf7a', midTrim: '#4fae5f', rainbow: 0, material: 'farm', edges: 'clover', light: 'noon', drift: null, props: ['tuft', 'bush', 'rock', 'tuft', 'flower'] },
+    id: 'meadow2', name: 'Clover Hills', theme: 'meadow', town: 'harbor', world: { x: 162, y: 196 }, perSpawn: 1,
+    look: { sky: ['#5ec8ff', '#aee8ff', '#e8fff2'], far: '#9fdf9f', mid: '#6fcf7a', midTrim: '#4fae5f', rainbow: 0, meadowStyle: 'clover', material: 'clover', edges: 'clover', light: 'noon', drift: null, props: ['tuft', 'flower', 'tuft'], propKeep: 0.8, ledgeKeep: 0.86, critters: ['butterfly'], spots: 'cute', rabbits: 2, rabbitsAt: [690, 1560], bees: 0 },
     ...lay({
-      width: 2400, ground: 1000, by: 'y', quiet: [[40, 700, 160], [2340, 700, 160], [90, 1000, 320], [90, 1036, 320], [90, 920, 280], [90, 840, 280]],
+      width: 1700, ground: 1000, by: 'y', quiet: [[40, 700, 160], [1660, 700, 160], [90, 1000, 320], [90, 920, 280], [610, 1000, 90]],
       // The cellar's spring, sunk into its floor against the west wall behind a stone lip.
-      terrain: [[0, 1036], [160, 1036], [196, 992], [230, 992], [230, 1000], [2400, 1000]],
+      terrain: [[0, 1036], [160, 1036], [196, 992], [230, 992], [230, 1000], [1700, 1000]],
       zones: [
         { name: 'Root Cellar', color: '#8a6a52', mobs: ['sproutling', 'brownie'], nodes: [SPOT.ore(1), SPOT.ore(1)],
-          look: underground({ material: 'cellar', edges: null, sky: ['#4a3a34', '#6a5248', '#8a6e5e'], far: '#5a463c', mid: '#6e5648', midTrim: '#8a6e58' }) },
-        { name: 'Farm Fields', color: '#5fae5f', from: 780, mobs: ['strawimp', 'mushkin'], nodes: [SPOT.fruit(1, 'wild_strawberry'), SPOT.fiber(1), SPOT.herb(1, 'clover'), SPOT.fruit(1, 'wild_strawberry')] },
-        { name: 'Hayloft Ridge', color: '#4f95e0', from: 660, mobs: ['piglet', 'kamaitachi'], nodes: [SPOT.honey(1), SPOT.wood(1), SPOT.night(1)],
-          look: { sky: ['#4fb0ff', '#9fdcff', '#e8f8ff'], far: '#c8ecd0', mid: '#a8e0b0', midTrim: '#7fc88f', material: 'meadow', edges: 'flowers', props: ['flower', 'tuft', 'tulip'] } },
+          // (One sky over the whole map, the player's call 2026-11-11: each zone changes only its floors.)
+          look: { material: 'clover', edges: 'clover', props: ['tuft', 'rock'] } },
+        { name: 'Farm Fields', color: '#5fae5f', from: 780, mobs: ['strawhog', 'pumpgob'], nodes: [SPOT.fruit(1, 'wild_strawberry'), SPOT.fiber(1), SPOT.herb(1, 'clover')] },
+        { name: 'Hayloft Ridge', color: '#4f95e0', from: 660, mobs: ['lambkin', 'harvmouse'], nodes: [SPOT.honey(1), SPOT.wood(1), SPOT.night(1)],
+          look: { material: 'clover', edges: 'flowers', props: ['flower', 'tuft', 'tulip'] } },
       ],
       ledges: [
-        // The Farm Fields, with two holes into the cellar.
-        { x: 0, y: 700, w: 700 }, { x: 800, y: 700, w: 900 }, { x: 1800, y: 700, w: 600 },
-        // Shelves in the Root Cellar, and the dock at its underground spring.
-        { x: 300, y: 920, w: 300 }, { x: 950, y: 920, w: 400 }, { x: 1900, y: 920, w: 300 },
-        { x: 600, y: 840, w: 240 }, { x: 1400, y: 840, w: 260 },
+        // The Farm Fields, with two holes down into the cellar.
+        { x: 0, y: 700, w: 560 }, { x: 660, y: 700, w: 520 }, { x: 1280, y: 700, w: 420 },
+        // Shelves in the Root Cellar, and the stone lip by its spring.
+        { x: 320, y: 920, w: 300 }, { x: 1100, y: 920, w: 320 }, { x: 760, y: 840, w: 240 },
         { x: 104, y: 992, w: 92, style: 'stone', walkOn: true },
-        // The Hayloft Ridge, and the old tree's hilltop.
-        { x: 250, y: 620, w: 300 }, { x: 1800, y: 620, w: 300 },
-        { x: 550, y: 540, w: 300 }, { x: 1500, y: 540, w: 300 },
-        { x: 900, y: 460, w: 600 }, { x: 1100, y: 380, w: 300, thick: 44 },
-        // The ledge drifting along the ridge.
-        { x: 860, y: 540, w: 120, drift: { dx: 500, period: 11 } },
+        // The Hayloft Ridge: two shoulders, two banks, and the old tree's hilltop.
+        { x: 220, y: 620, w: 300 }, { x: 1200, y: 620, w: 300 },
+        { x: 470, y: 540, w: 260 }, { x: 990, y: 540, w: 260 },
+        { x: 650, y: 460, w: 420 },
       ],
     }),
-    // A moving part per zone: chaff rising from the cellar through a hole (Up to ride it), a hay
-    // bale bouncing you up from the fields, and the ledge drifting along the ridge.
-    updrafts: [{ x: 750, w: 50, top: 670, bottom: 1000, kind: 'chaff' }],
-    springs: [{ x: 1500, y: 700, up: 170, kind: 'hay' }],
+    // Its monsters, placed by hand (one each: perSpawn), five a zone at most, clear of the ladders,
+    // the gathering spots and the spring.
+    spawns: [
+      // Root Cellar: Turnip Tots and Chicklings.
+      ...[[500, 1000], [1300, 1000], [520, 920]].map(([x, y]) => ({ mob: 'sproutling', x, y })),
+      ...[[850, 1000], [1260, 920]].map(([x, y]) => ({ mob: 'brownie', x, y })),
+      // Farm Fields: Strawhogs out in the fields, a Pumpkin Goblin by the barn. (Its east
+      // field is the way in from the harbour road, so it's kept clear.)
+      ...[480, 1010].map((x) => ({ mob: 'strawhog', x, y: 700 })),
+      { mob: 'pumpgob', x: 690, y: 700 },
+      // Hayloft Ridge: Lambkins and Harvest Mice round the old tree.
+      ...[[330, 620], [520, 540], [900, 460]].map(([x, y]) => ({ mob: 'lambkin', x, y })),
+      ...[[1340, 620], [1120, 540]].map(([x, y]) => ({ mob: 'harvmouse', x, y })),
+    ],
+    // Its gathering spots, placed by hand round the barn (left of the fields' ladder) and the tree.
+    nodes: [
+      { ...SPOT.ore(1), x: 1060, y: 1000 }, { ...SPOT.ore(1), x: 370, y: 920 },
+      { ...SPOT.fruit(1, 'wild_strawberry'), x: 360, y: 700 }, { ...SPOT.herb(1, 'clover'), x: 1130, y: 700 }, { ...SPOT.fiber(1), x: 1480, y: 700 },
+      { ...SPOT.honey(1), x: 1460, y: 620 }, { ...SPOT.wood(1), x: 640, y: 540 }, { ...SPOT.night(1), x: 760, y: 460 },
+    ],
+    // A moving part: a hay bale bouncing you up from the fields. (The chaff updraft was cut
+    // 2026-11-11, like Petal Meadow's: the ladders are enough on a map this size.)
+    springs: [{ x: 1380, y: 700, up: 170, kind: 'hay' }],
     water: [{ x1: 0, x2: 196, y: 1010, kind: 'spring', open: [0] }],
     portals: [
       { id: 'west', x: 40, y: 700, to: 'meadow1', toPortal: 'east' },
-      { id: 'east', x: 2340, y: 700, to: 'harbor', toPortal: 'west' },
+      { id: 'east', x: 1660, y: 700, to: 'harbor', toPortal: 'west' },
     ],
     npcs: [],
     // A landmark per zone: the spring pool in the cellar, the scarecrow and the barn in the fields,
     // the old tree on the ridge.
-    deco: [['scarecrow', 400, 0, 700], ['barn', 1200, 0, 700], ['haystack', 900, 0, 700], ['fence', 1600, 1, 700], ['cart', 2000, 0, 700], ['signpost', 2200, 0, 700], ['beehive', 1900, 0, 620], ['bigtree', 1200, 1, 460]],
-    lamps: [{ x: 110, y: 930 }, { x: 1200, y: 650 }, { x: 1250, y: 340 }],
-    spirit: { x: 1700, y: 420 },
+    deco: [['cloverscarecrow', 1570, 0, 700], ['cloverbarn', 920, 0, 700], ['cloveroak', 860, 0, 460]],
+    lamps: [{ x: 110, y: 930 }, { x: 920, y: 650 }, { x: 860, y: 420 }],
+    spirit: { x: 1100, y: 440 },
     // The area boss (world/nest.js): after enough hunting, Old MacGoblin storms out of the barn.
-    nest: { mob: 'macgoblin', x: 1200, y: 700, kills: 150, name: 'The big barn', wake: 'GET OFF MY LAND! Everyone to the barn!', stirs: ['Something is stomping around in the big barn...', 'The barn doors rattle! Someone is VERY grumpy.'] },
-    habitats: { sproutling: { naps: true, home: { x: 1100, y: 1000 } }, brownie: { home: { x: 1100, y: 1000 } }, strawimp: { naps: true }, mushkin: { naps: true, home: { x: 1200, y: 700 } }, piglet: { play: true, naps: true }, kamaitachi: { play: true } },
+    nest: { mob: 'macgoblin', x: 920, y: 700, kills: 150, name: 'The big barn', wake: 'GET OFF MY LAND! Everyone to the barn!', stirs: ['Something is stomping around in the big barn...', 'The barn doors rattle! Someone is VERY grumpy.'] },
+    habitats: { sproutling: { naps: true, home: { x: 900, y: 1000 } }, brownie: { home: { x: 900, y: 1000 } }, strawhog: { naps: true }, pumpgob: { naps: true, home: { x: 920, y: 700 } }, lambkin: { play: true, naps: true }, harvmouse: { play: true } },
   },
 
 
@@ -2859,9 +2876,6 @@ for (const [id, [x, y]] of Object.entries(HOMESTONES)) {
 }
 
 // Safe arrival (the map rules): no monster starts near a way in, a homestone or where you appear.
-// (Quests ask for 8 Dandelion Seeds and Straw Tufts: a few more Dandelion Puffs and Scarecrow Imps, so a group
-// sharing the field isn't queueing for three of each. The drop chances stay as they were.)
-MAPS.meadow2.spawns.push(...[520, 880, 1350].map((x) => ({ mob: 'strawimp', x, y: 700 })));
 for (const m of Object.values(MAPS)) if (!m.dungeon && m.spawns?.length) clearArrivals(m, MOBS, NODES[m.id]);
 
 // Every map's gathering spots, settled clear of what was added after its layout (data/climb.js).

@@ -5066,7 +5066,7 @@ function drawDeco(ctx, map, cam, width, time, pass, air = '#ffffff') {
     const y = snap((wy ?? groundAt(map, wx)) - cam.y);
     const draw = (g) => {
       if (b) place(g, b.art(seed, time), snap(x), y + 2);
-      else drawLandmark(g, kind, snap(x), y, time, seed, wx, map.theme);
+      else drawLandmark(g, kind, snap(x), y, time, seed, wx, map.theme, map.night ?? 0);
     };
     if (pass !== 'behind') draw(ctx);
     else {

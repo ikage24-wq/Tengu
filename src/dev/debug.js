@@ -44,10 +44,11 @@ const HELP = {
   watch: 'watch(fn, secs, blink): call fn every frame; every change in what it returns, and any that flick back within blink s (pops)',
   watchHero: 'watchHero(secs): your footing and pose every frame: landing flicker, stuck, sliding',
   watchMochi: 'watchMochi(i, secs): a garden Mochi every frame: crawling, walking, actions, pops',
-  film: "film('kinako', secs, every): record that spot (an NPC id, 'hero', 'mochi:0', or {x,y,w,h} on screen) every `every` frames for secs, shown as a contact sheet over the game; film() again or closeFilm() to hide it",
+  film: "film('kinako', secs, every): record that spot (an NPC id, 'hero', 'mochi:0', 'mob:strawhog' (nearest living one), or {x,y,w,h} on screen) every `every` frames for secs, shown as a contact sheet over the game; film() again or closeFilm() to hide it",
   closeFilm: 'hide the contact sheet',
   mochi: "the garden's Mochi now",
   npc: "npc('kinako'): one NPC, and whether it's in its night outfit",
+  godFile: "godFile(1): every game started from save file 1 (the second file, 0-based) plays in god mode, remembered in this browser; godFile(1, false) to stop; godFile() lists them",
 };
 
 export function install(t) {
@@ -56,6 +57,25 @@ export function install(t) {
     if (!w()) throw new Error('Start a game first (choose a file and press Start).');
     return w();
   };
+
+  // ---- God mode for a test file: a save file named here (remembered in this browser, localhost
+  // only) plays in god mode every time a game from it starts, so a test hero never dies while it's
+  // being used to look at things. Never the player's own file unless they ask.
+  const GOD_KEY = 'tengu-god-files';
+  const godFiles = () => {
+    try {
+      return JSON.parse(localStorage.getItem(GOD_KEY) ?? '[]');
+    } catch {
+      return [];
+    }
+  };
+  let godSeen = null;
+  setInterval(() => {
+    const world = w();
+    if (!world || world === godSeen) return;
+    godSeen = world;
+    if (godFiles().includes(world.char?.file ?? 0)) world.god = true;
+  }, 400);
 
   // ---- Catching everything that goes wrong, from the start.
   const errors = [];
@@ -246,6 +266,19 @@ export function install(t) {
       return n;
     },
 
+    godFile(file, on = true) {
+      if (file == null) return godFiles();
+      const list = godFiles().filter((f) => f !== file);
+      if (on) list.push(file);
+      try {
+        localStorage.setItem(GOD_KEY, JSON.stringify(list));
+      } catch {
+        return 'Could not remember it (storage blocked).';
+      }
+      const world = w();
+      if (world && (world.char?.file ?? 0) === file) world.god = on;
+      return `God mode for save file ${file}: ${on ? 'on' : 'off'}.`;
+    },
     gm(line) {
       const [cmd, ...args] = line.trim().replace(/^\//, '').split(/\s+/);
       return gmCommand(need(), cmd, args) ?? `No such command: ${cmd}`;
@@ -307,7 +340,13 @@ export function install(t) {
         let wx;
         let wy;
         if (target === 'hero') [wx, wy] = [world.body.x, world.body.y];
-        else if (target.startsWith('mochi:')) {
+        else if (target.startsWith('mob:')) {
+          // (A monster by its id, the nearest living one to the hero, followed as it moves.)
+          const id = target.slice(4);
+          const ms = world.mobs.filter((m) => m.def.id === id && m.hp > 0).sort((a, b) => Math.abs(a.x - world.body.x) - Math.abs(b.x - world.body.x));
+          [wx, wy] = [ms[0]?.x ?? 0, ms[0]?.y ?? 0];
+          return { x: wx - cam.x - 24, y: wy - cam.y - 34, w: 48, h: 40 };
+        } else if (target.startsWith('mochi:')) {
           const e = world.gardenLife?.mochi?.[Number(target.slice(6))];
           [wx, wy] = [e?.x ?? 0, e?.y ?? groundAt(world.map, e?.x ?? 0)];
         } else {

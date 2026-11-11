@@ -183,7 +183,7 @@ function drawAccept(ctx, world, m, age) {
   ctx.restore();
 }
 
-// What a quest asks, a line each ("Defeat 15 Mandrake").
+// What a quest asks, a line each ("Defeat 15 Turnip Tot").
 function goalLines(world, id) {
   const objs = objectiveProgress(world.char, id);
   if (!objs.length) return ['Talk to them again to finish'];

@@ -312,6 +312,38 @@ function unburyFlyer(m) {
 
 // Moves one monster. `player` is { x, y } so aggro'd monsters can chase.
 // Returns 'slam' on the frame a boss slam lands.
+// Turning round takes a moment (2026-11-11, the player's ask: monsters snapped round instantly).
+// `m.dir` is the way it wants to go; `m.heading` the way it faces and moves. When they differ it
+// stops, turns (TURN seconds, flipping round as it finishes), then sets off; and every
+// start from a standstill eases in over GO seconds rather than leaping to full speed.
+const TURN = 0.2;
+const GO = 0.3;
+function turnAndEase(m, x0, dt) {
+  m.heading ??= m.dir;
+  const dx = m.x - x0;
+  const want = Math.sign(dx) || m.dir;
+  if (want !== m.heading) {
+    // Turning: it doesn't move yet.
+    m.x = x0;
+    m.turnT = (m.turnT ?? 0) + dt;
+    m.go = 0;
+    if (m.turnT >= TURN) {
+      m.heading = want;
+      m.turnT = 0;
+    }
+    return;
+  }
+  m.turnT = 0;
+  if (Math.abs(dx) < 1e-6) {
+    m.go = Math.max(0, (m.go ?? 0) - dt / 0.15);
+    return;
+  }
+  m.go = Math.min(1, (m.go ?? 0) + dt / GO);
+  // (Eased in: slow at first, up to full speed.)
+  const k = m.go * m.go * (3 - 2 * m.go);
+  m.x = x0 + dx * k;
+}
+
 export function updateMob(m, player, dt, now) {
   if (m.hp <= 0) {
     m.dying += dt;
@@ -384,6 +416,8 @@ export function updateMob(m, player, dt, now) {
     if (m.state === 'walk') m.x += m.dir * speedOf(m, false) * pace(m, false, dt) * dt;
   }
 
+  if (m.stagger <= 0 || m.stagger == null) turnAndEase(m, x0, dt);
+  else m.heading ??= m.dir;
   if (m.x <= m.x1) { m.x = m.x1; m.dir = 1; }
   if (m.x >= m.x2) { m.x = m.x2; m.dir = -1; }
   if (m.def.fly) {

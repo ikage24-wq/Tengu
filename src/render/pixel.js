@@ -122,7 +122,7 @@ function outlineFor(c, crisp, side = 0) {
 const EMPTY = -1;
 const NONE = -2;
 
-function rasterize(w, h, shapes, res = 1, soft = false, palette = {}, crisp = false, selout = false, pad = PAD, light = false, edge = null) {
+function rasterize(w, h, shapes, res = 1, soft = false, palette = {}, crisp = false, selout = false, pad = PAD, light = false, edge = null, bare = false) {
   const gw = (w + pad * 2) * res;
   const gh = (h + pad + PAD) * res;
   const colors = [];
@@ -320,7 +320,8 @@ function rasterize(w, h, shapes, res = 1, soft = false, palette = {}, crisp = fa
 
   // Outline: every empty cell within `reach` cells of the silhouette (a disc, so it's round),
   // grown outward from the filled cells and colored after the nearest one.
-  const reach = res === 1 ? 1 : crisp ? res : Math.max(1, Math.round(res * 0.67));
+  // (`bare`: no outline at all, for a part laid over an outlined one, a face on a body.)
+  const reach = bare ? 0 : res === 1 ? 1 : crisp ? res : Math.max(1, Math.round(res * 0.67));
   const ring = [];
   for (let dy = -reach; dy <= reach; dy++) {
     for (let dx = -reach; dx <= reach; dx++) {
@@ -460,9 +461,9 @@ const bytesOf = (s) => s.canvas.width * s.canvas.height * 4;
 // of, right of and above the w x h box that parts may reach into (wings, tails, smears): the
 // sprite keeps its feet and centre where w x h puts them.
 export function rasterOf(b, scale = gfx.scale) {
-  let { w, h, shapes, palette = {}, res = 1, soft = false, crisp = false, selout = false, pad = PAD, light = false, edge = null } = b;
+  let { w, h, shapes, palette = {}, res = 1, soft = false, crisp = false, selout = false, pad = PAD, light = false, edge = null, bare = false } = b;
   if (res > 1) res = Math.max(res, Math.round(scale));
-  return { w, h, res, crisp, pad, raster: rasterize(w, h, shapes, res, soft, palette, crisp, selout, pad, light, edge) };
+  return { w, h, res, crisp, pad, raster: rasterize(w, h, shapes, res, soft, palette, crisp, selout, pad, light, edge, bare) };
 }
 
 // A raster's colours, pixel by pixel (RGBA), so it can be handed from a worker to the page.
@@ -702,12 +703,14 @@ export function spriteLater(key, job) {
 // Draws a sprite with its local (0, 0) at screen (x, y). Optionally mirrored or flashed white.
 // Smooth sprites (res > 1, not crisp) are drawn filtered at sub-pixel positions; crisp ones stay
 // sharp and snap to their own cell grid.
-export function blit(ctx, s, x, y, { flip = false, flash = 0, alpha = 1, scale = 1 } = {}) {
+// (`soft`: filtered smoothly even if the picture is crisp, for one that's being turned live: a
+// crisp picture turned by a few degrees stair-steps its outline and the steps crawl as it turns.)
+export function blit(ctx, s, x, y, { flip = false, flash = 0, alpha = 1, scale = 1, soft = false } = {}) {
   const img = s.canvas;
   const res = s.res ?? 1;
   const w = (img.width / res) * scale;
   const h = (img.height / res) * scale;
-  const smooth = res > 1 && !s.crisp;
+  const smooth = (res > 1 && !s.crisp) || soft;
   const cell = scale / res;
   const grid = (v) => (smooth ? snap(v) : s.crisp ? Math.round(v / cell) * cell : Math.round(v));
   const pad = s.pad ?? PAD;

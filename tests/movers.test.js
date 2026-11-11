@@ -31,8 +31,10 @@ test('summons and monsters walk over a bounce blossom without being thrown', () 
 });
 
 test('Up in an updraft floats you to its top, and you hang there a while, then come down', () => {
-  // (Petal Meadow lost its updraft in its 2026-11-11 redraw: the first map that still has one.)
-  const map = { ...Object.values(MAPS).find((m) => m.updrafts?.length), clock: 0 };
+  // (Petal Meadow and Clover Hills lost their updrafts in their 2026-11-11 redraws: a field map's
+  // column of about the height the timings below were set for, up to 330 px.)
+  const tall = (m) => m.updrafts[0].bottom - m.updrafts[0].top;
+  const map = { ...Object.values(MAPS).filter((m) => m.updrafts?.length && !m.dungeon && !m.id.startsWith('aquarium') && tall(m) <= 330).sort((a, b) => tall(b) - tall(a))[0], clock: 0 };
   const u = map.updrafts[0];
   const body = createBody(u.x, u.bottom);
   run(body, map, NONE, 0.5);

@@ -140,37 +140,73 @@ function sprite_petal() {
   return out;
 }
 
-function straw_tuft() {
-  const c = '#f2d27a';
-  const out = [];
-  for (let i = -4; i <= 4; i++) {
-    const top = [8 + i * 1.3, 1.2 + Math.abs(i) * 0.5];
-    const bot = [8 + i * 0.8, 15];
-    out.push(S(tube(bez(bot, [8 + i * 0.4, 9], top, 8), 1.1, 0.5), i % 2 ? c : i % 3 ? lt(c) : sh(c)));
-  }
-  out.push(...ball(rrect(4.2, 8.4, 7.6, 2, 0.8), '#c98a50', { glow: 0.5 }), S(tube([[4.6, 9.4], [11.4, 9.4]], 0.3), dk('#c98a50')));
-  out.push(...glint(6, 4.6, 0.5));
+// (2026-11-11) The Strawhog's Hay Quill: one soft golden spine, pale at the tip, a curl of hay
+// at its root.
+function hay_quill() {
+  const c = '#f2c766';
+  const out = [S(tube(bez3([4.4, 14], [6.6, 9.6], [9.4, 5.4], [12, 1.8], 10), 1.5, 0.35), c)];
+  out.push(S(tube(bez3([5, 13.2], [7, 9.4], [9.6, 5.8], [11.6, 2.6], 10), 0.45, 0.15), lt(c)));
+  out.push(S(tube(bez3([3.4, 14.8], [5.2, 13.4], [6.6, 14.4], [8, 13.2], 8), 0.6, 0.3), sh(c)));
+  out.push(...glint(9, 5, 0.5));
   return out;
 }
 
-function brownie_crumb() {
-  const c = '#9a6a4a';
-  const chunk = (x, y, s, d) => {
-    const top = turn([[x - s, y - s * 0.4], [x + s * 0.2, y - s], [x + s, y - s * 0.4], [x - s * 0.1, y + s * 0.1]], d, x, y);
-    const body = turn([[x - s, y - s * 0.4], [x - s * 0.1, y + s * 0.1], [x + s, y - s * 0.4], [x + s, y + s * 0.5], [x - s * 0.1, y + s], [x - s, y + s * 0.4]], d, x, y);
-    return [S(body, sh(c)), S(clip(body, [[0, 0], [x - s * 0.1, 0], [x - s * 0.1, 16], [0, 16]]), c), S(top, '#5a3a28'), S(clip(top, oval(x - s * 0.3, y - s * 0.6, s * 0.5, s * 0.25)), lt('#5a3a28'))];
+// (2026-11-11) The Pumpkin Goblin's Pumpkin Seed: a plump cream seed with its pale rim and a
+// little shine, a second one peeking behind it.
+function pumpkin_seed() {
+  const c = '#f6e2b0';
+  const seed = (cx, cy, rot, col) => {
+    const pts = [];
+    for (let i = 0; i <= 16; i++) {
+      const a = (i / 16) * Math.PI * 2;
+      const r = 1 - 0.32 * Math.max(0, Math.cos(a));
+      const x = Math.sin(a) * 3.4 * r;
+      const y = -Math.cos(a) * 5.4;
+      pts.push([cx + x * Math.cos(rot) - y * Math.sin(rot), cy + x * Math.sin(rot) + y * Math.cos(rot)]);
+    }
+    return pts;
   };
-  const out = [...chunk(5.6, 10.2, 3.6, -8), ...chunk(11.6, 7, 2.8, 12), ...chunk(11.8, 13, 1.8, 0)];
-  out.push(...dots([[3.6, 8.4], [6.6, 8], [11, 5.4]], '#fff6ec', 0.4), ...glint(4.4, 8.6, 0.45));
+  const out = [S(seed(10.4, 7.6, 0.5, c), sh(c)), S(seed(7, 8.6, -0.25, c), c)];
+  out.push(S(seed(7, 8.9, -0.25, c).map(([x, y]) => [7 + (x - 7) * 0.62, 8.9 + (y - 8.9) * 0.7]), lt(c)));
+  out.push(...glint(5.8, 6, 0.55));
   return out;
 }
 
-function wind_whisker() {
-  const c = '#bfe6ff';
+// (2026-11-11) The Lambkin's Curly Wool: a soft cream tuft of curls, a few swirls in it, a pink
+// bit of festival bunting tangled in.
+function curly_wool() {
+  const c = '#fff6ec';
   const out = [];
-  for (const [d, w] of [[0, 0.8], [1.8, 0.65], [3.6, 0.55]]) out.push(S(tube(bez3([1.4, 13 - d * 0.4], [6, 12 - d], [8, 3 + d * 0.4], [14.6, 2.4 + d], 14), (t) => w * (1 - t * 0.7)), d ? c : lt(c)));
-  out.push(line(arcPts(5, 6, 3, 2.6, 160, 330, 10), 0.5, '#e6f6ff'), line(arcPts(11, 12.4, 2.4, 2, -20, 160, 10), 0.5, '#e6f6ff'));
-  out.push(...disc(1.8, 13, 1.2, '#f4fbff', { glow: 0.5 }));
+  for (const [x, y, r] of [[5, 9, 3.4], [8.4, 6.4, 3.8], [11.6, 8.6, 3.2], [8, 10.6, 3.6], [4.6, 6, 2.6]]) out.push(S(oval(x, y, r, r * 0.92), sh(c)));
+  for (const [x, y, r] of [[5, 8.6, 2.8], [8.4, 6, 3.2], [11.4, 8.2, 2.6], [8, 10.2, 3], [4.8, 5.8, 2.1]]) out.push(S(oval(x, y, r, r * 0.92), c));
+  for (const [x, y] of [[7.6, 5.4], [10.6, 8], [6.6, 9.8], [4.6, 6.2]]) out.push(S(tube(arcPts(x, y, 1.2, 1.1, 200, 470, 8), 0.35), sh(c)));
+  out.push(S([[11.6, 11], [14.6, 12.4], [13, 14.4]], '#ff8fb0'), S([[12.6, 11.6], [14, 12.4], [13.2, 13.4]], '#ffc0d4'));
+  out.push(...glint(7, 4.6, 0.5));
+  return out;
+}
+
+// (Kept its id; 2026-11-11 it became the Chickling's Golden Grain: a little ear of wheat.)
+function brownie_crumb() {
+  const c = '#f2c860';
+  const out = [S(tube(bez([8, 15.4], [8.6, 10], [7.4, 4], 8), 0.6), '#c8a050')];
+  for (let i = 0; i < 5; i++) {
+    const y = 4.4 + i * 1.9;
+    for (const s2 of [-1, 1]) out.push(...ball(oval(8 + s2 * 1.5, y, 1.5, 1, s2 * 30, 10), i % 2 ? c : lt(c), { glow: 0.5 }));
+  }
+  out.push(...ball(oval(7.6, 2.8, 1.1, 1.4, 0, 10), lt(c), { glow: 0.5 }), line([[7.4, 1.6], [6.2, -0.6]], 0.3, sh(c)), line([[8, 1.6], [9.4, -0.6]], 0.3, sh(c)));
+  out.push(...glint(5.6, 5, 0.45));
+  return out;
+}
+// (2026-11-11) The Harvest Mouse's Woven Nest: a little round ball of woven grass, strands
+// wrapped round it, a round doorway, a wheat ear sticking out of the top.
+function woven_nest() {
+  const c = '#e2c878';
+  const out = [S(oval(8, 9.4, 6, 5.4), sh(c)), S(oval(8, 9, 5.6, 5), c)];
+  for (const [a0, a1, r] of [[200, 340, 4.4], [20, 160, 4], [150, 300, 3], [-30, 120, 2.6]]) out.push(S(tube(arcPts(8, 9, r, r * 0.86, a0, a1, 10), 0.35), sh(c)));
+  out.push(S(oval(9.4, 10, 1.7, 1.6), '#7a5a30'), S(oval(9.2, 9.8, 1.2, 1.1), '#4a3420'));
+  out.push(S(tube(bez([6, 4.6], [5.4, 2.6], [6.4, 0.8], 6), 0.45), '#c8a050'));
+  for (const k of [0, 1, 2]) out.push(S(oval(6.2 + (k % 2 ? 0.6 : -0.4), 1.6 + k * 0.9, 0.7, 0.5), '#f0d070'));
+  out.push(...glint(5.4, 6.6, 0.5));
   return out;
 }
 
@@ -900,7 +936,7 @@ function dewsparkle() {
 const ART = {
   look_gacha_dewsparkle_face: dewsparkle,
   royal_jelly, home_shell, mount_kettle, mount_nimbus, lantern_bait,
-  bee_fuzz, sprite_petal, straw_tuft, brownie_crumb, wind_whisker, moonlit_ribbon, porcelain_shard, candle_wax, tide_pearl, sea_glass,
+  bee_fuzz, sprite_petal, hay_quill, pumpkin_seed, curly_wool, woven_nest, brownie_crumb, moonlit_ribbon, porcelain_shard, candle_wax, tide_pearl, sea_glass,
   jelly_ribbon, golden_ticket, astral_shard, sugar_gem, taffy_twist, cocoa_bean, encore_rose, sequin, script_page, sky_scale, sky_silk,
   barnacle_shell, moth_scale, meteorite, tin_spring, music_cylinder, derby_medal, promise_bouquet, seashell_ring,
   clover, honeycomb, cherry, wild_strawberry, prickle_pear, sea_kelp, moonpetal, chanterelle, whisperberry, temple_mint, duskcap, shrine_plum,

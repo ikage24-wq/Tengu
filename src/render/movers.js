@@ -260,38 +260,138 @@ function kettleLid(ctx, x, y, time, since) {
   ctx.restore();
 }
 
-function hay(ctx, x, y, since) {
+function hay(ctx, x, y, since, time = 0, wx = x) {
+  // (Remade 2026-11-11, Clover Hills' art pass: a cute round bale with a face that dips and
+  // springs back, lifted and tilted only, never squashed.)
   const k = since < 0.9 ? since : 9;
-  const dip = k < 0.08 ? k / 0.08 : k < 9 ? -Math.exp(-(k - 0.08) * 6) * Math.cos((k - 0.08) * 22) : 0;
-  const h = 14 - dip * 3;
+  const fling = k < 0.08 ? -k / 0.08 : k < 9 ? Math.exp(-(k - 0.08) * 6) * Math.cos((k - 0.08) * 22) : 0;
+  const lift = Math.max(-2.5, fling * 4);
+  const tilt = Math.sin(time * 1.3 + wx) * 0.02 + (k < 9 ? fling * 0.05 : 0);
   ctx.save();
-  ctx.fillStyle = '#e8c070';
-  ctx.strokeStyle = shade('#e8c070', -45);
-  ctx.lineWidth = 1;
+  ctx.fillStyle = 'rgba(90,60,40,0.16)';
   ctx.beginPath();
-  ctx.ellipse(x, y - h / 2, 13, h / 2, 0, 0, Math.PI * 2);
+  ctx.ellipse(x, y + 0.5, 17, 3, 0, 0, Math.PI * 2);
   ctx.fill();
-  ctx.stroke();
-  ctx.fillStyle = '#f6dc98';
-  ctx.beginPath();
-  ctx.ellipse(x + 2, y - h * 0.65, 8, h * 0.22, 0, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.strokeStyle = '#a3714c';
-  for (const dx of [-6, 6]) {
+  ctx.translate(x, y - lift);
+  ctx.rotate(tilt);
+  const body = () => {
     ctx.beginPath();
-    ctx.moveTo(x + dx, y - h);
-    ctx.lineTo(x + dx, y);
+    ctx.roundRect(-16, -21, 32, 21, 8);
+  };
+  ctx.lineJoin = 'round';
+  const g = ctx.createLinearGradient(0, -21, 0, 0);
+  g.addColorStop(0, '#ffe08a');
+  g.addColorStop(1, '#e8b860');
+  ctx.fillStyle = g;
+  body();
+  ctx.fill();
+  ctx.strokeStyle = '#a8784a';
+  ctx.lineWidth = 1.3;
+  ctx.stroke();
+  // Straw texture: short strokes, lighter on top.
+  ctx.save();
+  body();
+  ctx.clip();
+  ctx.strokeStyle = 'rgba(200,140,60,0.55)';
+  ctx.lineWidth = 0.8;
+  for (let i = 0; i < 14; i++) {
+    const sx = -14 + ((i * 7.3) % 28);
+    const sy = -18 + ((i * 5.1) % 16);
+    ctx.beginPath();
+    ctx.moveTo(sx, sy);
+    ctx.lineTo(sx + 3, sy + 1);
     ctx.stroke();
   }
+  ctx.fillStyle = 'rgba(255,255,255,0.45)';
+  ctx.fillRect(-12, -19, 18, 2.4);
+  ctx.restore();
+  // The twine bands.
+  ctx.strokeStyle = '#b07a4c';
+  ctx.lineWidth = 1.6;
+  for (const dx of [-10, 10]) {
+    ctx.beginPath();
+    ctx.moveTo(dx, -20.5);
+    ctx.lineTo(dx, -0.5);
+    ctx.stroke();
+  }
+  // Tufts of straw on top.
+  ctx.fillStyle = '#ffe08a';
+  ctx.strokeStyle = '#a8784a';
+  ctx.lineWidth = 0.8;
+  for (const [dx, h] of [[-4, 4], [2, 5], [6, 3]]) {
+    ctx.beginPath();
+    ctx.moveTo(dx - 1.6, -20);
+    ctx.lineTo(dx + 0.4, -20 - h);
+    ctx.lineTo(dx + 1.6, -20);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+  }
+  // The face: dips squeeze it, flings make it grin, otherwise it smiles and blinks.
+  const dip = k < 0.1;
+  const glee = !dip && k < 0.9;
+  const blink = ((time * 0.3 + Math.abs(Math.sin(wx * 12.9)) * 5) % 1) < 0.04;
+  const cy = -10;
+  ctx.strokeStyle = '#3a2d4f';
+  ctx.fillStyle = '#3a2d4f';
+  ctx.lineWidth = 1.2;
+  ctx.lineCap = 'round';
+  for (const sd of [-1, 1]) {
+    const ex = sd * 3.6;
+    ctx.beginPath();
+    if (dip) {
+      ctx.moveTo(ex - sd * 1.2, cy - 1.1);
+      ctx.lineTo(ex + sd * 0.6, cy);
+      ctx.lineTo(ex - sd * 1.2, cy + 1.1);
+      ctx.stroke();
+    } else if (glee || blink) {
+      ctx.arc(ex, cy + (glee ? 0.8 : -0.2), 1.3, glee ? Math.PI * 1.1 : Math.PI * 0.15, glee ? Math.PI * 1.9 : Math.PI * 0.85);
+      ctx.stroke();
+    } else {
+      ctx.ellipse(ex, cy, 1.05, 1.35, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.arc(ex - 0.35, cy - 0.5, 0.42, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#3a2d4f';
+    }
+    ctx.fillStyle = 'rgba(255,130,150,0.65)';
+    ctx.beginPath();
+    ctx.ellipse(sd * 6.2, cy + 2.2, 1.6, 0.9, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#3a2d4f';
+  }
+  ctx.beginPath();
+  if (dip) {
+    ctx.ellipse(0, cy + 3, 0.9, 1.1, 0, 0, Math.PI * 2);
+    ctx.fill();
+  } else if (glee) {
+    ctx.moveTo(-2, cy + 2.2);
+    ctx.quadraticCurveTo(0, cy + 5.4, 2, cy + 2.2);
+    ctx.closePath();
+    ctx.fill();
+  } else {
+    ctx.arc(0, cy + 2, 1.2, Math.PI * 0.15, Math.PI * 0.85);
+    ctx.stroke();
+  }
+  ctx.lineCap = 'butt';
+  ctx.restore();
+  // Straw flying up off it.
   if (since < 0.9) {
+    ctx.save();
     ctx.fillStyle = '#f6dc98';
-    for (let i = 0; i < 8; i++) {
+    for (let i = 0; i < 9; i++) {
       const a = -Math.PI / 2 + (((i * 0.37) % 1) - 0.5) * 2;
       ctx.globalAlpha = 1 - since / 0.9;
-      ctx.fillRect(x + Math.cos(a) * 60 * since, y - h + Math.sin(a) * 60 * since + 50 * since * since, 3, 1);
+      ctx.save();
+      ctx.translate(x + Math.cos(a) * 60 * since, y - 20 + Math.sin(a) * 60 * since + 50 * since * since);
+      ctx.rotate(i + since * 6);
+      ctx.fillRect(-2, -0.5, 4, 1);
+      ctx.restore();
     }
+    ctx.restore();
   }
-  ctx.restore();
 }
 
 // An air vent on the mesa: a crack in the rock breathing little swirls of wind; stepped on, it
@@ -493,7 +593,7 @@ export function drawMovers(ctx, map, cam, width, height, time) {
     // past: worked out backwards it turned the pads inside out, a mushroom's cap to a negative size.)
     const ago = s.firedAt == null ? 9 : (map.clock ?? 0) - s.firedAt;
     const since = ago < 0 ? 9 : ago;
-    if (s.kind === 'hay') hay(ctx, snap(x), snap(s.y - cam.y), since);
+    if (s.kind === 'hay') hay(ctx, snap(x), snap(s.y - cam.y), since, time, s.x);
     else if (s.kind === 'gust') vent(ctx, snap(x), snap(s.y - cam.y), time, since);
     else if (s.kind === 'spring') springboard(ctx, snap(x), snap(s.y - cam.y), since);
     else if (s.kind === 'shroom') shroom(ctx, snap(x), snap(s.y - cam.y), time, since, s.x);

@@ -13,12 +13,12 @@
 //   Sea      sea folk and jellies: a gurgle, a squish, bubbles
 //   People   witches, ladies, captains: anime fight voices
 const FAMILIES = {
-  Critter: ['puffle', 'snailbun', 'kamaitachi', 'piglet', 'pebblet', 'scorpip', 'cloudsheep', 'nekomata', 'pearldiver', 'starcarto', 'cottoncandy', 'stagehand'],
+  Critter: ['puffle', 'strawhog', 'snailbun', 'harvmouse', 'lambkin', 'pebblet', 'scorpip', 'cloudsheep', 'nekomata', 'pearldiver', 'starcarto', 'cottoncandy', 'stagehand'],
   Beast: ['boarlet', 'thornback', 'lupina', 'teddystrong', 'tuskar', 'leonie', 'gummybear', 'paperdragon', 'tanukipicker', 'kettletanuki', 'lantertanuki', 'grandkettle'],
   Bird: ['windbird', 'gloombat', 'chorusgirl', 'prompter'],
   Buzz: ['bumble', 'queenbee', 'sporeling', 'mothlibrarian'],
   Sprite: ['petalsprite', 'wisp', 'starspirit', 'sylph', 'lanternghost', 'stardancer', 'cometcourier', 'musicballerina'],
-  Goblin: ['strawimp', 'brownie', 'macgoblin', 'mushkin', 'rootling', 'sporecap', 'jellyninja', 'jackbox', 'teahatter'],
+  Goblin: ['brownie', 'macgoblin', 'pumpgob', 'rootling', 'sporecap', 'jellyninja', 'jackbox', 'teahatter'],
   Plant: ['sproutling', 'leafling', 'mossgolem', 'sapling', 'mothercapper', 'gnarlroot', 'topiarydryad', 'sylvana'],
   Stone: ['boneknight', 'crystalslime', 'rockgolem', 'armourknight', 'waltzrondo', 'waltzminuet', 'tindrummer', 'gearheart', 'meteorgolem', 'chocoknight', 'crystalking', 'gretel'],
   Ghost: ['shade', 'porcelaindoll', 'ghostmaid', 'candlebride', 'marionette', 'geminighosts', 'understudy', 'yukionna', 'marionetta', 'persona', 'playwright', 'folio'],

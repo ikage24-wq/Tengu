@@ -112,6 +112,9 @@ export function makeRig(spec) {
       a.ph = attackPhase(m, a.now, spec.recover);
       a.face = m.hp <= 0 ? 'dead' : a.ph.atk ? 'angry' : a.mood;
       a.atk = a.ph.atk ? 1 : 0;
+      // (Turning round: the moment it flips, a little lean and dip, so the loose bits swing on.)
+      if (st._flip !== undefined && st._flip !== a.flip && m.hp > 0) for (const [k, v] of Object.entries(spec.turnKick ?? { tilt: 160, lift: -40 })) kick(st, k, v);
+      st._flip = a.flip;
       if (a.mo.hitT !== st._hit) {
         st._hit = a.mo.hitT;
         if (m.hp > 0) for (const [k, v] of Object.entries(spec.kick ?? { tilt: -2 })) kick(st, k, v);
@@ -141,7 +144,8 @@ export function makeRig(spec) {
         return (mats[p.name] = [A * c + C * s, B * c + D * s, -A * s + C * c, -B * s + D * c, tx, ty]);
       };
       spec.byName ??= Object.fromEntries(spec.parts.map((p) => [p.name, p]));
-      const look = { flash: a.flash, alpha: a.alpha };
+      // (`soft` in the spec: its parts filtered smoothly, so turning them never stair-steps.)
+      const look = { flash: a.flash, alpha: a.alpha, soft: Boolean(spec.soft) };
       ctx.save();
       if (a.flip) ctx.scale(-1, 1);
       if (spec.under) {

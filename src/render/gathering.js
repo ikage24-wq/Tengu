@@ -943,6 +943,67 @@ function cuteMoonArt(stage, blink) {
   });
 }
 
+// The strawberry patch: a low round bush of three-lobed leaves, a little white flower, and
+// strawberries peeping out at the front with tiny faces (seeds and a leafy cap each). Picked:
+// leaves only; growing back: green berries, then blushing ones.
+function cuteStrawArt(stage, blink) {
+  return art(`spot|cute|straw|${stage}|${blink ? 1 : 0}`, 40, 30, () => {
+    const cx = 20;
+    const gy = 29;
+    const g = ramp('#7fd07a');
+    const out = [...mound(cx, gy, 13)];
+    const k = stage === 0 ? 0.7 : 1;
+    for (const [dx, dy, r, c] of [[-8, -6, 6, g.sh], [8, -6, 6, g.sh], [0, -9, 7, g.base], [-6, -4, 5.4, g.base], [6, -4, 5.4, g.base]]) out.push(E(cx + dx * k, gy + dy * k, r * k, r * 0.86 * k, c));
+    out.push(F(E(cx - 2, gy - 12 * k, 3.4 * k, 1.8 * k, g.hi)));
+    for (const s2 of [-1, 1]) out.push(F(arcBand(cx + s2 * 6 * k, gy - 8 * k, 2 * k, 1.6 * k, 200, 340, 0.6, g.hi)));
+    if (stage >= 2) {
+      // The little white flower.
+      for (let i = 0; i < 5; i++) out.push(E(cx + 8 + Math.cos((i * TAU) / 5) * 1.4, gy - 13 + Math.sin((i * TAU) / 5) * 1.4, 1.1, 1.1, '#ffffff'));
+      out.push(F(E(cx + 8, gy - 13, 0.8, 0.8, '#ffe36b')));
+    }
+    if (stage === 0) return out;
+    const c = stage === 3 ? '#ff5a6e' : stage === 2 ? '#ffa08a' : '#b8e08a';
+    const r = ramp(c);
+    for (const [dx, dy, sz, face] of [[-7, -1.5, 1, false], [1, -0.5, 1.15, true], [8.5, -2, 0.95, false]]) {
+      const x = cx + dx;
+      const y = gy + dy;
+      const w = 3.2 * sz * (stage === 1 ? 0.7 : 1);
+      out.push(T([[x - w, y - w * 0.9], [x + w, y - w * 0.9], [x + w * 0.7, y + w * 0.2], [x, y + w * 1.1], [x - w * 0.7, y + w * 0.2]], r.base), E(x, y - w * 0.85, w, w * 0.5, r.base));
+      out.push(F(E(x - w * 0.35, y - w * 0.6, w * 0.35, w * 0.25, r.hi)));
+      for (const [sx, sy] of [[-0.45, -0.2], [0.4, -0.3], [0, 0.35], [-0.2, -0.65], [0.5, 0.2]]) out.push(F(E(x + sx * w, y + sy * w, 0.28, 0.36, stage === 3 ? '#ffe08a' : '#f0f8d0')));
+      out.push(leaf(x, y - w * 0.8, w * 0.9, w * 0.35, -2.6, '#5fae5c'), leaf(x, y - w * 0.8, w * 0.9, w * 0.35, -0.55, '#5fae5c'), leaf(x, y - w * 0.8, w * 0.7, w * 0.3, -Math.PI / 2, '#6cc46c'));
+      if (face && stage === 3) out.push(...cuteFace(x, y - 0.2, 1.1, blink ? 'shut' : 'open', 0.9));
+    }
+    return out;
+  });
+}
+
+// The cotton plant: a few slim stems with leaves, three fluffy bolls on top, the biggest with a
+// sleepy smile. Picked: bare stems; growing back: green buds, then opening bolls.
+function cuteCottonArt(stage, blink) {
+  return art(`spot|cute|cotton|${stage}|${blink ? 1 : 0}`, 34, 38, () => {
+    const cx = 17;
+    const gy = 37;
+    const out = [...mound(cx, gy, 9)];
+    const tops = [[-6, -20], [6, -22], [0, -28]];
+    for (const [dx, dy] of tops) out.push(stem(cx + dx * 0.3, gy - 1, cx + dx, gy + dy * (stage === 0 ? 0.5 : 1) + 3, 1.2, '#7ab86a'));
+    out.push(leaf(cx - 1, gy - 9, 6, 2, -2.6, '#7fd07a'), leaf(cx + 1, gy - 12, 6, 2, -0.55, '#6cc46c'));
+    if (stage === 0) return out;
+    tops.forEach(([dx, dy], i) => {
+      const x = cx + dx;
+      const y = gy + dy;
+      if (stage === 1) return out.push(E(x, y + 1, 2.2, 2.6, '#8fcf86'));
+      const k = stage === 2 ? 0.7 : 1;
+      const R = (i === 2 ? 5.2 : 4.2) * k;
+      out.push(leaf(x, y + R * 0.6, R * 0.9, R * 0.35, 2.6, '#6a9a5a'), leaf(x, y + R * 0.6, R * 0.9, R * 0.35, 0.55, '#6a9a5a'));
+      for (const [ox, oy] of [[-0.5, 0.1], [0.5, 0.1], [0, -0.45], [0, 0.35]]) out.push(E(x + ox * R, y + oy * R, R * 0.62, R * 0.58, '#fffaf4'));
+      out.push(F(E(x - R * 0.3, y - R * 0.4, R * 0.35, R * 0.22, '#ffffff')));
+      if (i === 2 && stage === 3) out.push(...cuteFace(x, y + 0.2, 1.5, blink ? 'shut' : 'happy', 1.1));
+    });
+    return out;
+  });
+}
+
 // Draws a picture hopping: lifted by dy and tilted about its foot.
 function hopped(ctx, x, y, dy, tilt, draw) {
   rotated(ctx, x, y + 1, tilt, () => {
@@ -1000,6 +1061,12 @@ const CUTE = {
       ctx.restore();
     }
   },
+  fiber(ctx, x, y, s) {
+    const [dy, tilt] = s.ready ? hopOf(s.time, s.wx, 3.9, 2) : [0, 0];
+    const a = 0.05 * lean(s.time, s.wx, 0.15) + 0.04 * s.jolt + tilt;
+    hopped(ctx, x, y, dy, a, () => staged(ctx, s.g, (st, al) => placeA(ctx, cuteCottonArt(st, s.blink), x, y + 1, al)));
+    if (s.ready) twinkle(ctx, x + 8, y - 34 + dy, s.time, s.wx, '#fff6c8');
+  },
   wood(ctx, x, y, s) {
     const sh = 0.03 * s.jolt;
     if (s.fell > 0) {
@@ -1020,6 +1087,13 @@ const CUTE = {
     rotated(ctx, x, y - 20, a + 0.012 * lean(s.time, s.wx, 0.5), () => staged(ctx, s.g, (st, al) => placeA(ctx, cuteTreeArt('crown', st, false), x, y + 1, al)));
   },
   fruit(ctx, x, y, s) {
+    if (s.find === 'wild_strawberry') {
+      const [dy, tilt] = s.ready ? hopOf(s.time, s.wx, 3.6, 2.2) : [0, 0];
+      const a = 0.03 * lean(s.time, s.wx) + 0.03 * s.jolt + tilt;
+      hopped(ctx, x, y, dy, a, () => staged(ctx, s.g, (st, al) => placeA(ctx, cuteStrawArt(st, s.blink), x, y + 1, al)));
+      if (s.ready) twinkle(ctx, x + 9, y - 22 + dy, s.time, s.wx);
+      return;
+    }
     const wig = s.ready ? wiggleOf(s.time, s.wx, 4.6) : 0;
     const a = 0.025 * lean(s.time, s.wx, 0.3) + 0.02 * s.jolt + wig;
     staged(ctx, Math.min(1, s.g + 0.67), (st, al) => placeA(ctx, cuteCherryTreeArt('trunk', st), x, y + 1, al));
@@ -1091,7 +1165,7 @@ export function drawNodes(ctx, world, cam, time, front = false) {
     const gemId = n.rare && GEMS[n.rare[0]] ? n.rare[0] : pool.find((id) => GEMS[id]);
     const s = {
       time, wx: n.x, tier: tierOf(n, world.map.id), g, ready: g >= 1 && !worked, jolt: jolted(n, world.now),
-      color: findColor(n, null), gem: gemId ? GEMS[gemId] : null, picked: worked && wlp.pose === 'pluck' && wlp.progress > 0.62,
+      find: Object.entries(n.pool ?? {}).sort((a, b) => b[1] - a[1])[0]?.[0], color: findColor(n, null), gem: gemId ? GEMS[gemId] : null, picked: worked && wlp.pose === 'pluck' && wlp.progress > 0.62,
       fell: worked && wlp.pose === 'chop' ? clamp01((wlp.progress - 0.78) / 0.22) : 0, dir: facing < 0 ? -1 : 1,
       blink: cute && blinkAt(time, n.x),
     };

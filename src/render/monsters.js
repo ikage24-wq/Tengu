@@ -20,7 +20,7 @@ export { ARTS };
 // (see attackTiming).
 export function framesOf(art) {
   const a = ARTS[art] ?? {};
-  return { walk: a.walk ?? 4, idle: a.idle ?? 2, attack: a.attack ?? 0, stride: a.stride ?? null, cycle: a.cycle ?? null, sub: a.sub ?? SUB, tween: Boolean(a.atkTween) };
+  return { walk: a.walk ?? 4, idle: a.idle ?? 2, attack: a.attack ?? 0, stride: a.stride ?? null, cycle: a.cycle ?? null, sub: a.sub ?? SUB, tween: Boolean(a.atkTween), idleCycle: a.idleCycle ?? IDLE_CYCLE };
 }
 
 const IDLE_CYCLE = 1.8;
@@ -72,11 +72,13 @@ const fine = (x, n, sub = SUB) => {
 
 // Walkers step with the ground they cover, so their feet never slide and a fast monster's legs
 // move faster than a slow one's. Flyers beat their wings at the rate that stride and speed set.
-function walkFrame(m, fr, t, fast) {
+// (`raw`: the exact phase, unstepped, for an art's live body motion.)
+function walkFrame(m, fr, t, fast, raw = false) {
   const stride = fr.stride ?? m.def.w * 1.2;
-  if (fr.cycle || !m.def.speed) return fine((t / (fr.cycle ?? 0.8)) * fr.walk, fr.walk, fr.sub);
-  if (m.def.fly) return fine(((t * fast * m.def.speed) / stride) * fr.walk, fr.walk, fr.sub);
-  return fine(((m.odo ?? 0) / stride) * fr.walk, fr.walk, fr.sub);
+  const step = raw ? (x, n) => ((x % n) + n) % n : (x, n) => fine(x, n, fr.sub);
+  if (fr.cycle || !m.def.speed) return step((t / (fr.cycle ?? 0.8)) * fr.walk, fr.walk);
+  if (m.def.fly) return step(((t * fast * m.def.speed) / stride) * fr.walk, fr.walk);
+  return step(((m.odo ?? 0) / stride) * fr.walk, fr.walk);
 }
 
 function poseOf(m, fr, moving, t, now, mo) {
@@ -85,13 +87,14 @@ function poseOf(m, fr, moving, t, now, mo) {
     const wind = Math.max(m.special?.warn > 0 ? m.special.warn : 0, m.windup > 0 ? m.windup : 0);
     const f = attackFrame(ms, wind, now - (m.attackAt ?? -9), (m.attackAt ?? -9) - mo.ledAt < 0.15, fr.tween);
     if (wind > 0 && Math.floor(f) === 1) mo.ledAt = now;
-    if (f >= 0) return ['attack', f];
+    if (f >= 0) return ['attack', f, f];
   }
-  if (moving) return ['walk', walkFrame(m, fr, t, mo.fast)];
+  if (moving) return ['walk', walkFrame(m, fr, t, mo.fast), walkFrame(m, fr, t, mo.fast, true)];
   // Idles ease: they linger near their two extremes and pass quickly between them (like
   // MapleStory's stand frames), so the breath reads as poses rather than a steady drift.
-  const u = (t / IDLE_CYCLE) % 1;
-  return ['idle', fine((u + 0.07 * Math.sin(4 * Math.PI * u)) * fr.idle, fr.idle, fr.sub)];
+  const u = (t / fr.idleCycle) % 1;
+  const ui = (u + 0.07 * Math.sin(4 * Math.PI * u)) * fr.idle;
+  return ['idle', fine(ui, fr.idle, fr.sub), ((ui % fr.idle) + fr.idle) % fr.idle];
 }
 
 const mobKey = (art, frame, mood, pose) => `mob|${art}|${pose}${frame}|${mood}`;
@@ -131,7 +134,7 @@ function drawEmote(ctx, m, mood, x, top, t, now) {
   ctx.save();
   ctx.font = '800 9px Nunito, "Trebuchet MS", "Segoe UI", system-ui, sans-serif';
   ctx.textAlign = 'center';
-  const hx = x + (m.dir < 0 ? -1 : 1) * m.def.w * 0.32;
+  const hx = x + ((m.heading ?? m.dir) < 0 ? -1 : 1) * m.def.w * 0.32;
   // A bubble that pops in with an overshoot and holds.
   const bubble = (mark, color, e) => {
     const k = pop(e);
@@ -236,7 +239,7 @@ const DIE_LAND = 0.3;
 const DIE_POOF = 0.38;
 function deathPose(m, mo, D) {
   const out = { dx: 0, dy: 0, rot: 0, sx: 1, sy: 1, alpha: 1, white: 0, puff: -1 };
-  const push = mo.push || -(m.dir < 0 ? -1 : 1);
+  const push = mo.push || -((m.heading ?? m.dir) < 0 ? -1 : 1);
   if (m.def.boss) {
     const k = smooth(clamp(D / 0.3, 0, 1));
     out.rot = push * 0.12 * k;
@@ -327,7 +330,7 @@ function drawMonsterNow(ctx, m, x, y, time, now = time) {
   // A new hit: the flash timer jumps back up.
   if (m.flash > mo.flash + 0.02) {
     mo.hitT = time;
-    mo.push = Math.sign(m.knockVx ?? 0) || -(m.dir < 0 ? -1 : 1);
+    mo.push = Math.sign(m.knockVx ?? 0) || -((m.heading ?? m.dir) < 0 ? -1 : 1);
     mo.hurtUntil = time + (boss ? 0.22 : 0.4);
     if (m.hp > 0 && !frozen) {
       // Saint11's take-hit: the most squashed, most thrown-back pose on the very first frame.
@@ -348,7 +351,7 @@ function drawMonsterNow(ctx, m, x, y, time, now = time) {
   const step = Math.abs(dx);
   m.seenX = m.x;
   if (step < 40) m.odo = (m.odo ?? 0) + step;
-  const [pose, frame] = poseOf(m, fr, moving, t, now, mo);
+  const [pose, frame, rawFrame] = poseOf(m, fr, moving, t, now, mo);
   // A rigged boss (render/mobs/rig.js) is posed live from its parts; its box stands in for a sprite.
   // Everyone else: in-between poses are drawn in the background; until one is ready, its whole frame
   // stands in. A calm whole frame not drawn yet (a blink, a happy face) is drawn in the background
@@ -385,11 +388,14 @@ function drawMonsterNow(ctx, m, x, y, time, now = time) {
   }
 
   let alpha = 1;
-  // (A rig moves by its bones alone: no squash, no breathing stretch, its own tremble.)
-  let sx = rig ? 1 : 1 + mo.sq;
-  let sy = rig ? 1 : 1 / (1 + mo.sq);
-  if (boss && !rig) sy *= 1 + Math.sin(t * 2) * 0.015;
-  else if (!boss && !moving && pose !== 'attack') sy *= 1 + Math.sin(t * 3) * 0.012; // the idle frames breathe
+  // (A rig moves by its bones alone: no squash, no breathing stretch, its own tremble. Nor does an
+  // art that moves its body live, `motion`: never squashed or stretched, the player's rule.)
+  const live = ARTS[m.def.art]?.motion;
+  const firm = rig || live;
+  let sx = firm ? 1 : 1 + mo.sq;
+  let sy = firm ? 1 : 1 / (1 + mo.sq);
+  if (boss && !firm) sy *= 1 + Math.sin(t * 2) * 0.015;
+  else if (!boss && !firm && !moving && pose !== 'attack') sy *= 1 + Math.sin(t * 3) * 0.012; // the idle frames breathe
   if (tremble && !rig) x += Math.sin(time * 60) * tremble;
   if (m.age < 0.3 && m.hp > 0) {
     // Spawn pop with a little overshoot.
@@ -439,11 +445,24 @@ function drawMonsterNow(ctx, m, x, y, time, now = time) {
   ctx.save();
   ctx.translate(snap(x), snap(y - air));
   if (m.hp <= 0) ctx.rotate(rot);
-  else if (m.air > 0) ctx.rotate(-(m.dir < 0 ? -1 : 1) * Math.min(0.5, (m.airV ?? 0) / 900) * 0.6 + mo.lean * 0.5);
+  else if (m.air > 0) ctx.rotate(-((m.heading ?? m.dir) < 0 ? -1 : 1) * Math.min(0.5, (m.airV ?? 0) / 900) * 0.6 + mo.lean * 0.5);
   else if (mo.lean) ctx.rotate(mo.lean);
   // Rocking about its feet in a cutscene (tossing in its sleep, rearing up).
   if (m.cine?.sway && m.hp > 0) ctx.rotate(m.cine.sway);
-  if (mo.shear && m.hp > 0 && !rig) ctx.transform(1, 0, mo.shear, 1, 0, 0);
+  if (mo.shear && m.hp > 0 && !firm) ctx.transform(1, 0, mo.shear, 1, 0, 0);
+  // The art's own body motion, worked out from the exact phase every frame (never stepped through
+  // drawn poses): a rock, a hop, a lean, about its feet. Mirrored with it when it faces left.
+  if (live && m.hp > 0 && pose !== 'attack') {
+    const mv = live(pose, rawFrame, mood);
+    const d = (m.heading ?? m.dir) < 0 ? -1 : 1;
+    ctx.translate((mv.dx ?? 0) * d, -(mv.lift ?? 0));
+    // (Turned about its feet, or about a point `py` above them: a flyer rolls about its middle.)
+    if (mv.rot) {
+      ctx.translate(0, -(mv.py ?? 0));
+      ctx.rotate(((mv.rot * Math.PI) / 180) * d);
+      ctx.translate(0, mv.py ?? 0);
+    }
+  }
   ctx.scale(sx, sy);
   // The hit flash: one white frame, then a quick fade, so the hurt face reads through it.
   const since = time - mo.hitT;
@@ -453,8 +472,8 @@ function drawMonsterNow(ctx, m, x, y, time, now = time) {
   const huge = Math.min(1, Math.max(0, (s.h * Math.abs(sy) - 60) / 60));
   const peak = 0.8 - 0.5 * huge;
   const flash = white || (m.flash > 0 || since < 0.1 ? (since < 0.03 ? peak : Math.max(0, (0.45 - 0.25 * huge) * (1 - (since - 0.03) / (0.07 - 0.03 * huge)))) : 0);
-  if (rig) rig.draw(ctx, m, { t, now, dt: mo.dt, mood, moving, mo, flip: m.dir < 0, flash: flash / 8, alpha });
-  else blit(ctx, s, -s.w / 2, -s.h, { flip: m.dir < 0, flash: flash / 8, alpha });
+  if (rig) rig.draw(ctx, m, { t, now, dt: mo.dt, mood, moving, mo, flip: (m.heading ?? m.dir) < 0, flash: flash / 8, alpha });
+  else blit(ctx, s, -s.w / 2, -s.h, { flip: (m.heading ?? m.dir) < 0, flash: flash / 8, alpha, soft: Boolean(live) });
   ctx.restore();
   if (puff >= 0) poofCloud(ctx, x, y, s.w, puff);
   if (m.poison && m.hp > 0) (m.poison.kind === 'bleed' ? bleedDrops : poisonBubbles)(ctx, x, y, s, time + m.uid);

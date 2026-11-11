@@ -735,8 +735,139 @@ function drawPaintedPetal(ctx, t, cam, width, height, time, layerY, air) {
   haze(ctx, air, width, nearY + 4, 0.16, 40);
 }
 
+// A farmstead far off: a red gambrel-roofed barn, a round silo with a domed cap, and a farmhouse.
+function farmstead(ctx, x, y, s, c) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.scale(s, s);
+  // The silo, behind the barn.
+  ctx.fillStyle = c.silo;
+  ctx.fillRect(14, -34, 10, 34);
+  ctx.fillStyle = c.siloLit;
+  ctx.fillRect(14, -34, 3, 34);
+  ctx.fillStyle = c.cap;
+  ctx.beginPath();
+  ctx.ellipse(19, -34, 5, 4, 0, Math.PI, 0);
+  ctx.fill();
+  // The barn: red walls, a white-trimmed gambrel roof, a big door with a white X.
+  ctx.fillStyle = c.barn;
+  ctx.fillRect(-14, -18, 28, 18);
+  ctx.fillStyle = c.barnLit;
+  ctx.fillRect(-14, -18, 7, 18);
+  ctx.fillStyle = c.roof;
+  ctx.beginPath();
+  ctx.moveTo(-16, -17);
+  ctx.lineTo(-12, -26);
+  ctx.lineTo(0, -31);
+  ctx.lineTo(12, -26);
+  ctx.lineTo(16, -17);
+  ctx.closePath();
+  ctx.fill();
+  ctx.fillStyle = c.trim;
+  ctx.fillRect(-5, -11, 10, 11);
+  ctx.fillStyle = c.barn;
+  ctx.fillRect(-4, -10, 8, 10);
+  ctx.strokeStyle = c.trim;
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(-4, -10);
+  ctx.lineTo(4, 0);
+  ctx.moveTo(4, -10);
+  ctx.lineTo(-4, 0);
+  ctx.stroke();
+  ctx.fillStyle = c.trim;
+  ctx.fillRect(-2, -23, 4, 3);
+  ctx.restore();
+  cottage(ctx, x - 30 * s, y, 0.85 * s, c.house);
+}
+
+// Clover Hills' own backdrop (2026-11-11, its art pass, matching Petal Meadow's): calm and clear.
+// Soft blue-green hills far off; a rolling hillside dotted with round trees, with one farmstead
+// (barn, silo and farmhouse) now and then;
+// near, clover hills with little white clover flowers and a run of fence here and there.
+function drawPaintedClover(ctx, t, cam, width, height, time, layerY, air) {
+  const sun = t.sun ?? '#fff6dc';
+  const green = mix(t.mid, '#6cbc74', 0.4);
+  // 1. Far hills in the haze.
+  const farY = layerY(96, 0.03);
+  const m1 = mix('#a8d4d8', air, 0.55);
+  hills(ctx, cam, 0.04, width, farY - 30, 46, 1.7, m1, mix(m1, sun, 0.3));
+  const m2 = mix('#9cd0a8', air, 0.42);
+  hills(ctx, cam, 0.07, width, farY, 32, 4.6, m2, mix(m2, sun, 0.3));
+  haze(ctx, air, width, farY + 16, 0.42, 70);
+
+  // 2. The hillside.
+  const midY = layerY(58, 0.06);
+  const hc = mix(green, air, 0.22);
+  const crest = hills(ctx, cam, 0.16, width, midY - 16, 22, 3.3, hc, mix(hc, sun, 0.32));
+  // (No patchwork of field strips: the band read as a road across the hills and shimmered as you
+  // walked, the player's call 2026-11-11. The hillside stays clean, as Petal Meadow's does.)
+  const cm = planeColors(t, shade(hc, -10), air, 0.04);
+  const farm = {
+    barn: mix('#e8646a', air, 0.25), barnLit: mix('#f48a8a', air, 0.25), roof: mix('#a8544e', air, 0.25), trim: mix('#ffffff', air, 0.1),
+    silo: mix('#d8dcea', air, 0.25), siloLit: '#ffffff', cap: mix('#a8b0c8', air, 0.25),
+    house: { wall: mix('#fff4e8', air, 0.2), wallLit: '#ffffff', roof: mix('#7ab0e0', air, 0.22), door: mix('#a8765a', air, 0.25), window: '#ffe9a0' },
+  };
+  repeat(cam.x, 0.16, 1000, width, (i, x) => {
+    const fx = x + 380 + hash(i + 50) * 200;
+    farmstead(ctx, fx, crest(fx) + 3, 1, farm);
+  });
+  repeat(cam.x, 0.16, 170, width, (i, x) => {
+    if (hash(i + 3) < 0.45) return;
+    const xx = x + hash(i + 2) * 80;
+    const local = ((xx + cam.x * 0.16) % 1000 + 1000) % 1000;
+    if (local > 300 && local < 640) return;
+    roundTree(ctx, xx, crest(xx) + 3, 9 + hash(i + 4) * 4, cm, time, i);
+  });
+  haze(ctx, air, width, midY + 8, 0.22, 60);
+
+  // 3. Near: clover hills, white clover flowers in little patches, a run of fence now and then.
+  const nearY = layerY(16, 0.1);
+  const nc = mix(shade(green, 6), air, 0.06);
+  const near = hills(ctx, cam, 0.32, width, nearY - 6, 14, 6.7, nc, mix(nc, sun, 0.26));
+  repeat(cam.x, 0.32, 240, width, (i, x) => {
+    if (hash(i + 90) < 0.35) return;
+    const cx = x + hash(i + 91) * 120;
+    for (let k = 0; k < 5; k++) {
+      const fx = cx + (hash(i * 5 + k) - 0.5) * 26;
+      const fy = near(fx) + 5 + hash(i * 7 + k) * 7;
+      const sw = Math.sin(time * 1.6 + fx * 0.05) * 0.7;
+      ctx.fillStyle = mix(k % 2 ? '#ffffff' : '#ffd8ea', air, 0.08);
+      ctx.beginPath();
+      ctx.arc(fx + sw, fy, 1.8 + hash(i * 3 + k) * 0.5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  });
+  const post = mix('#c89a6a', air, 0.15);
+  repeat(cam.x, 0.32, 520, width, (i, x) => {
+    if (hash(i + 60) < 0.5) return;
+    const x0 = x + hash(i + 61) * 200;
+    ctx.strokeStyle = post;
+    ctx.lineWidth = 1.4;
+    ctx.beginPath();
+    for (let k = 0; k < 5; k++) {
+      const px = x0 + k * 16;
+      ctx.moveTo(px, near(px) + 6);
+      ctx.lineTo(px, near(px) - 4);
+    }
+    for (const dy of [-2.5, 1]) {
+      ctx.moveTo(x0, near(x0) + dy);
+      for (let k = 1; k < 5; k++) ctx.lineTo(x0 + k * 16, near(x0 + k * 16) + dy);
+    }
+    ctx.stroke();
+  });
+  const cn = planeColors(t, shade(green, -6), air, 0.03);
+  repeat(cam.x, 0.32, 460, width, (i, x) => {
+    if (hash(i + 70) < 0.55) return;
+    const xx = x + hash(i + 71) * 200;
+    roundTree(ctx, xx, near(xx) + 6, 16 + hash(i + 72) * 5, cn, time, i + 70);
+  });
+  haze(ctx, air, width, nearY + 4, 0.16, 40);
+}
+
 export function drawPaintedMeadow(ctx, t, cam, width, height, time, layerY, air) {
   if (t.meadowStyle === 'petal') return drawPaintedPetal(ctx, t, cam, width, height, time, layerY, air);
+  if (t.meadowStyle === 'clover') return drawPaintedClover(ctx, t, cam, width, height, time, layerY, air);
   const sun = t.sun ?? '#fff6dc';
   // The map's own green, deepened toward a meadow green so hills and trees read clearly even
   // under a pastel sky.
