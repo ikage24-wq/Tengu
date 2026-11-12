@@ -20,7 +20,7 @@
 import { E, T, F, stroke } from './kit.js';
 import { simpleEye, deadEye, tear, vein } from './faces.js';
 import { ramp, crescent, shine } from './meadow.js';
-import { part, makeRig, stateBlend, smooth, clamp, TAU } from './rig.js';
+import { part, partBare, outerOutline, makeRig, stateBlend, smooth, clamp, TAU } from './rig.js';
 import { sprite } from '../pixel.js';
 
 const SHELL = ramp('#a8704a', { step: 10, turn: 10 });
@@ -131,6 +131,17 @@ const cloverPart = () => part('mt|clover', 8, 8, cloverShapes, 3);
 const flowerPart = () => part('mt|flower', 7, 10, flowerShapes, 3);
 const shroomPart = () => part('mt|shroom', 6, 6, shroomShapes, 3);
 const leafPart = () => part('mt|leaf', 5, 4, leafShapes, 3);
+// Their bare twins, for the outer-outline pass (rig.js outerOutline).
+const shellBare = () => partBare('mt|shell', 36, 22, shellShapes, 4);
+const legBare = (far) => partBare(`mt|leg|${far ? 1 : 0}`, 7, 7, () => legShapes(far), 3);
+const tailBare = () => partBare('mt|tail', 6, 4, tailShapes, 3);
+const neckBare = (i) => partBare(`mt|neck|${i}`, 7, 7, () => neckShapes(i), 3);
+const headBare = () => partBare('mt|head', 13, 10, headShapes, 4);
+const sproutBare = () => partBare('mt|sprout', 9, 9, sproutShapes, 3);
+const cloverBare = () => partBare('mt|clover', 8, 8, cloverShapes, 3);
+const flowerBare = () => partBare('mt|flower', 7, 10, flowerShapes, 3);
+const shroomBare = () => partBare('mt|shroom', 6, 6, shroomShapes, 3);
+const leafBare = () => partBare('mt|leaf', 5, 4, leafShapes, 3);
 
 const faceOf = (a) => {
   if (a.face === 'dead') return 'dead';
@@ -184,7 +195,7 @@ const legDef = ([n, hx, ph, far]) => {
     // much, the top hidden under the rim.)
     return [hx + S.x, -HIPY - S.lift * 0.3 + LEG * (1 - Math.cos(th)) - lift * w + (far ? -0.6 : 0), th];
   };
-  return { name: `leg${n}`, parent: null, s: () => legPart(far), pivot: [3.5, 0.5], at: (S, a) => pose(S, a), rot: (S, a) => pose(S, a)[2] };
+  return { name: `leg${n}`, parent: null, s: () => legPart(far), b: () => legBare(far), pivot: [3.5, 0.5], at: (S, a) => pose(S, a), rot: (S, a) => pose(S, a)[2] };
 };
 // The neck: from its root under the front of the shell, out along `nAng` by `ext`.
 const NECK = [13.4, -4.2];
@@ -257,28 +268,29 @@ export const mosstortRig = makeRig({
       shroom: -S.tilt * 1.5,
     };
   },
-  parts: [
+  // (Only its outer edge outlined: rig.js outerOutline.)
+  parts: outerOutline([
     // Far legs and the tail behind the shell; the neck and head behind it too, so the head pulls
     // in behind the rim.
     legDef(LEGS[0]),
     legDef(LEGS[1]),
     { name: 'body', parent: null, at: (S) => [S.x, -HIPY + 1.4 - S.lift], rot: (S) => S.tilt * D2R },
-    { name: 'tail', parent: 'body', s: tailPart, pivot: [5, 2], at: () => [-16.4, -1.2], rot: (S, a) => (Math.sin(a.t * 1.3) * 6 - S.tilt) * D2R },
+    { name: 'tail', parent: 'body', s: tailPart, b: tailBare, pivot: [5, 2], at: () => [-16.4, -1.2], rot: (S, a) => (Math.sin(a.t * 1.3) * 6 - S.tilt) * D2R },
     // (Four rings, so even stretched right out for a snap the neck stays whole.)
-    ...[0.2, 0.42, 0.64, 0.84].map((k, i) => ({ name: `neck${i}`, parent: 'body', s: () => neckPart(i % 2), pivot: [3.5, 3.5], at: (S) => neckPt(S, k) })),
+    ...[0.2, 0.42, 0.64, 0.84].map((k, i) => ({ name: `neck${i}`, parent: 'body', s: () => neckPart(i % 2), b: () => neckBare(i % 2), pivot: [3.5, 3.5], at: (S) => neckPt(S, k) })),
     { name: 'neckEnd', parent: 'body', at: (S) => neckPt(S, 1), rot: (S) => (S.nAng * 0.6 + S.hRot) * D2R },
-    { name: 'head', parent: 'neckEnd', s: headPart, pivot: [2.6, 6], at: () => [0, 0] },
-    { name: 'face', parent: 'neckEnd', s: (a) => facePart(faceOf(a)), pivot: [6.5, 5], at: () => [3.9, -1] },
-    { name: 'leaf', parent: 'neckEnd', s: leafPart, pivot: [0.6, 2], at: () => [9.6, 1.6], rot: () => 20 * D2R, alpha: (a, S) => clamp((S.munch - 0.75) * 5, 0, 1) },
+    { name: 'head', parent: 'neckEnd', s: headPart, b: headBare, pivot: [2.6, 6], at: () => [0, 0] },
+    { name: 'face', parent: 'neckEnd', top: true, s: (a) => facePart(faceOf(a)), pivot: [6.5, 5], at: () => [3.9, -1] },
+    { name: 'leaf', parent: 'neckEnd', s: leafPart, b: leafBare, pivot: [0.6, 2], at: () => [9.6, 1.6], rot: () => 20 * D2R, alpha: (a, S) => clamp((S.munch - 0.75) * 5, 0, 1) },
     // The shell, then the near legs in front of its rim.
-    { name: 'shell', parent: 'body', s: shellPart, pivot: [18, 21] },
-    { name: 'fern2', parent: 'body', s: cloverPart, pivot: [4, 7.6], at: () => [-8.4, -19], rot: (S) => (-16 + S.fern2) * D2R },
-    { name: 'fern', parent: 'body', s: sproutPart, pivot: [4.5, 8.6], at: () => [-2.6, -20.6], rot: (S) => (-4 + S.fern) * D2R },
-    { name: 'shroom', parent: 'body', s: shroomPart, pivot: [3, 5.8], at: () => [7.8, -17.4], rot: (S) => (10 + S.shroom) * D2R },
-    { name: 'flower', parent: 'body', s: flowerPart, pivot: [3.5, 9.6], at: () => [3.2, -19.8], rot: (S) => (8 + S.flower) * D2R },
+    { name: 'shell', parent: 'body', s: shellPart, b: shellBare, pivot: [18, 21] },
+    { name: 'fern2', parent: 'body', s: cloverPart, b: cloverBare, pivot: [4, 7.6], at: () => [-8.4, -19], rot: (S) => (-16 + S.fern2) * D2R },
+    { name: 'fern', parent: 'body', s: sproutPart, b: sproutBare, pivot: [4.5, 8.6], at: () => [-2.6, -20.6], rot: (S) => (-4 + S.fern) * D2R },
+    { name: 'shroom', parent: 'body', s: shroomPart, b: shroomBare, pivot: [3, 5.8], at: () => [7.8, -17.4], rot: (S) => (10 + S.shroom) * D2R },
+    { name: 'flower', parent: 'body', s: flowerPart, b: flowerBare, pivot: [3.5, 9.6], at: () => [3.2, -19.8], rot: (S) => (8 + S.flower) * D2R },
     legDef(LEGS[2]),
     legDef(LEGS[3]),
-  ],
+  ]),
 });
 
 // ---------- Stills ----------

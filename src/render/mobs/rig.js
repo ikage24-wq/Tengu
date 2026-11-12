@@ -31,6 +31,22 @@ export function part(key, w, h, shapes, pad = 6, res = 2) {
   return sprite(`rig|${key}`, () => ({ w: Math.ceil(w), h: Math.ceil(h), shapes: shapes(), res, soft: 'cel', crisp: true, selout: true, pad }));
 }
 
+// The same part with no outline at all, for the second pass of `outerOutline`.
+export function partBare(key, w, h, shapes, pad = 6, res = 2) {
+  return sprite(`rig|${key}|bare`, () => ({ w: Math.ceil(w), h: Math.ceil(h), shapes: shapes(), res, soft: 'cel', crisp: true, bare: true, pad }));
+}
+
+// Outer outline only (2026-11-12, the look the player chose on the Red Panda): every part with a
+// bare twin (`b`) is drawn twice, first outlined, then all of them again bare, in the same order,
+// over the top. Outlines grow outward from each shape, so the bare pass covers every outline that
+// falls inside the creature and only its outer edge keeps a line: one soft shape, not a stack of
+// pieces. A part marked `top` (a face) is drawn only in the second pass, in its place.
+export function outerOutline(parts) {
+  const first = parts.filter((p) => !p.top);
+  const second = parts.filter((p) => p.s && (p.top || p.b)).map((p) => (p.top ? p : { ...p, name: `${p.name}~bare`, s: p.b }));
+  return [...first, ...second];
+}
+
 // Draws a part with its pivot (in its box) at (x, y), turned by `ang` radians.
 export function put(ctx, s, pivot, x, y, ang, look) {
   ctx.save();

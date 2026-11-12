@@ -17,7 +17,7 @@
 import { E, T, F, stroke } from './kit.js';
 import { simpleEye, deadEye, tear } from './faces.js';
 import { ramp, crescent, shine } from './meadow.js';
-import { part, makeRig, stateBlend, spring, smooth, clamp, TAU } from './rig.js';
+import { part, partBare, outerOutline, makeRig, stateBlend, spring, smooth, clamp, TAU } from './rig.js';
 import { sprite } from '../pixel.js';
 
 const FEATH = ramp('#6fae6a', { step: 9, turn: 12, sat: -6 });
@@ -110,6 +110,13 @@ const tuftPart = (side) => part(`ow|tuft|${side}`, 7, 7, () => tuftShapes(side),
 const wingPart = (side) => part(`ow|wing|${side}`, 13, 19, () => wingShapes(side), 3);
 const footPart = () => part('ow|foot', 6, 3, footShapes, 3);
 const tailPart = () => part('ow|tail', 10, 6, tailShapes, 3);
+// Their bare twins, for the outer-outline pass (rig.js outerOutline).
+const bodyBare = () => partBare('ow|body', 20, 18, bodyShapes, 4);
+const headBare = () => partBare('ow|head', 22, 17, headShapes, 4);
+const tuftBare = (side) => partBare(`ow|tuft|${side}`, 7, 7, () => tuftShapes(side), 3);
+const wingBare = (side) => partBare(`ow|wing|${side}`, 13, 19, () => wingShapes(side), 3);
+const footBare = () => partBare('ow|foot', 6, 3, footShapes, 3);
+const tailBare = () => partBare('ow|tail', 10, 6, tailShapes, 3);
 
 const faceOf = (a) => {
   if (a.face === 'dead') return 'dead';
@@ -218,22 +225,23 @@ export const mossowletRig = makeRig({
     ctx.fill();
     ctx.globalAlpha = 1;
   },
-  parts: [
+  // (Only its outer edge outlined: rig.js outerOutline.)
+  parts: outerOutline([
     { name: 'body0', parent: null, at: (S) => [S.x, -FEET - S.lift], rot: (S) => S.tilt * D2R },
     // The wings behind the body: folded, just their edges peek out at its sides; spread in a
     // wide V to glide.
-    { name: 'wingL', parent: 'body0', s: () => wingPart(-1), pivot: [6.5, 1.6], at: () => [-4.6, -12.4], rot: (S) => S.wingL * D2R },
-    { name: 'wingR', parent: 'body0', s: () => wingPart(1), pivot: [6.5, 1.6], at: () => [4.6, -12.4], rot: (S) => -S.wingR * D2R },
-    { name: 'tail', parent: 'body0', s: tailPart, pivot: [5, 0.6], at: () => [0, -2.2], rot: (S) => S.tail * D2R },
+    { name: 'wingL', parent: 'body0', s: () => wingPart(-1), b: () => wingBare(-1), pivot: [6.5, 1.6], at: () => [-4.6, -12.4], rot: (S) => S.wingL * D2R },
+    { name: 'wingR', parent: 'body0', s: () => wingPart(1), b: () => wingBare(1), pivot: [6.5, 1.6], at: () => [4.6, -12.4], rot: (S) => -S.wingR * D2R },
+    { name: 'tail', parent: 'body0', s: tailPart, b: tailBare, pivot: [5, 0.6], at: () => [0, -2.2], rot: (S) => S.tail * D2R },
     // The feet: on the branch standing, tucked up into the belly fluff gliding.
-    ...[-3.2, 3.2].map((x, i) => ({ name: `foot${i}`, parent: 'body0', s: footPart, pivot: [3, 0.4], at: (S) => [x - S.x * 0 + (i ? 0.4 : 0), -0.6 - S.tuck * 2.4 + 0.6], rot: (S) => (S.tuck * 30 * (i ? 1 : -1)) * D2R, alpha: (a, S) => 1 - clamp(S.tuck * 2.2, 0, 1) })),
-    { name: 'body', parent: 'body0', s: bodyPart, pivot: [10, 17] },
+    ...[-3.2, 3.2].map((x, i) => ({ name: `foot${i}`, parent: 'body0', s: footPart, b: footBare, pivot: [3, 0.4], at: (S) => [x - S.x * 0 + (i ? 0.4 : 0), -0.6 - S.tuck * 2.4 + 0.6], rot: (S) => (S.tuck * 30 * (i ? 1 : -1)) * D2R, alpha: (a, S) => 1 - clamp(S.tuck * 2.2, 0, 1) })),
+    { name: 'body', parent: 'body0', s: bodyPart, b: bodyBare, pivot: [10, 17] },
     { name: 'neck', parent: 'body0', at: () => [0, -13.4], rot: (S) => S.head * D2R },
-    { name: 'tuftL', parent: 'neck', s: () => tuftPart(-1), pivot: [3, 6.6], at: () => [-7.2, -11.2], rot: (S) => (-24 + S.tuftL) * D2R },
-    { name: 'tuftR', parent: 'neck', s: () => tuftPart(1), pivot: [3, 6.6], at: () => [7.2, -11.2], rot: (S) => (24 + S.tuftR) * D2R },
-    { name: 'head', parent: 'neck', s: headPart, pivot: [11, 14] },
-    { name: 'face', parent: 'neck', s: (a) => facePart(faceOf(a)), pivot: [9, 5.5], at: () => [1, -4.8] },
-  ],
+    { name: 'tuftL', parent: 'neck', s: () => tuftPart(-1), b: () => tuftBare(-1), pivot: [3, 6.6], at: () => [-7.2, -11.2], rot: (S) => (-24 + S.tuftL) * D2R },
+    { name: 'tuftR', parent: 'neck', s: () => tuftPart(1), b: () => tuftBare(1), pivot: [3, 6.6], at: () => [7.2, -11.2], rot: (S) => (24 + S.tuftR) * D2R },
+    { name: 'head', parent: 'neck', s: headPart, b: headBare, pivot: [11, 14] },
+    { name: 'face', parent: 'neck', top: true, s: (a) => facePart(faceOf(a)), pivot: [9, 5.5], at: () => [1, -4.8] },
+  ]),
 });
 
 // ---------- Stills ----------
