@@ -13,9 +13,9 @@
 //   Sea      sea folk and jellies: a gurgle, a squish, bubbles
 //   People   witches, ladies, captains: anime fight voices
 const FAMILIES = {
-  Critter: ['puffle', 'strawhog', 'snailbun', 'harvmouse', 'lambkin', 'pebblet', 'scorpip', 'cloudsheep', 'nekomata', 'pearldiver', 'starcarto', 'cottoncandy', 'stagehand'],
+  Critter: ['puffle', 'mosstort', 'redpanda', 'strawhog', 'snailbun', 'harvmouse', 'lambkin', 'pebblet', 'scorpip', 'cloudsheep', 'nekomata', 'pearldiver', 'starcarto', 'cottoncandy', 'stagehand'],
   Beast: ['boarlet', 'thornback', 'lupina', 'teddystrong', 'tuskar', 'leonie', 'gummybear', 'paperdragon', 'tanukipicker', 'kettletanuki', 'lantertanuki', 'grandkettle'],
-  Bird: ['windbird', 'gloombat', 'chorusgirl', 'prompter'],
+  Bird: ['mossowlet', 'windbird', 'gloombat', 'chorusgirl', 'prompter'],
   Buzz: ['bumble', 'queenbee', 'sporeling', 'mothlibrarian'],
   Sprite: ['petalsprite', 'wisp', 'starspirit', 'sylph', 'lanternghost', 'stardancer', 'cometcourier', 'musicballerina'],
   Goblin: ['brownie', 'macgoblin', 'pumpgob', 'rootling', 'sporecap', 'jellyninja', 'jackbox', 'teahatter'],

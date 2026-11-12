@@ -31,6 +31,10 @@ function surfaceFor(map, x, y) {
   return fits[0] ?? groundPieceAt(map, x);
 }
 
+// (2026-11-12) A monster rests this long between its own touch attacks, so a crowd doesn't chain
+// blows and an attack never fires every frame (god mode skips the hit's safe window).
+export const MOB_ATTACK_GAP = 1.6;
+
 export function spawnMob(map, spawn) {
   const def = MOBS[spawn.mob];
   const surface = surfaceFor(map, spawn.x, spawn.y);

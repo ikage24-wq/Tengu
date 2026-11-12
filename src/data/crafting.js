@@ -47,7 +47,7 @@ export const CRAFT_MATERIALS = [
 export const TIER_MATS = [
   null,
   { ore: 'copper_ore', gem: 'rose_quartz', wood: 'oak_log', fibre: 'cotton', drops: ['fluff', 'shell', 'mushcap'] },
-  { ore: 'iron_ore', gem: 'amethyst', wood: 'maple_log', fibre: 'silkmoss', drops: ['tusk', 'leaf_fragment', 'stinger'] },
+  { ore: 'iron_ore', gem: 'amethyst', wood: 'maple_log', fibre: 'silkmoss', drops: ['moss_scute', 'leaf_fragment', 'stinger'] },
   { ore: 'silver_ore', gem: 'sapphire', wood: 'cedar_log', fibre: 'lotus_fiber', drops: ['bone_shard', 'crystal_gel', 'bat_wing'] },
   { ore: 'mithril_ore', gem: 'starstone', wood: 'skywood_log', fibre: 'cloud_cotton', drops: ['feather', 'wool', 'shade_cloth'] },
 ];

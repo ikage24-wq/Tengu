@@ -32,6 +32,9 @@ import { strawhogRig, strawhogStill } from './strawhogrig.js';
 import { pumpgobRig, pumpgobStill } from './pumpgobrig.js';
 import { lambkinRig, lambkinStill } from './lambkinrig.js';
 import { harvmouseRig, harvmouseStill } from './harvmouserig.js';
+import { mosstortRig, mosstortStill } from './mosstortrig.js';
+import { mossowletRig, mossowletStill } from './mossowletrig.js';
+import { redpandaRig, redpandaStill } from './redpandarig.js';
 
 // (The Turnip Tot is a live rig, rebuilt 2026-11-11: its still frames stay for portraits.)
 MEADOW.sproutling.rig = turnipRig;
@@ -45,6 +48,12 @@ FARM.pumpgob = { walk: 8, idle: 6, attack: 4, stride: 16, atkMs: [80, 300, 220],
 FARM.lambkin = { walk: 8, idle: 6, attack: 4, stride: 14, atkMs: [80, 300, 220], draw: lambkinStill, rig: lambkinRig, pad: 4 };
 // (The Harvest Mouse, new for Clover Hills 2026-11-11: its own live rig, its stills from the same shapes.)
 FARM.harvmouse = { walk: 8, idle: 6, attack: 4, stride: 12, atkMs: [80, 300, 220], draw: harvmouseStill, rig: harvmouseRig, pad: 4 };
+// (The Moss Tortoise, new for Mossy Woods 2026-11-12: its own live rig, its stills from the same shapes.)
+FARM.mosstort = { walk: 8, idle: 6, attack: 4, stride: 22, atkMs: [80, 300, 220], draw: mosstortStill, rig: mosstortRig, pad: 4 };
+// (The Moss Owlet, new for Mossy Woods 2026-11-12: its own live rig, its stills from the same shapes.)
+FARM.mossowlet = { walk: 8, idle: 6, attack: 4, stride: 46, atkMs: [80, 300, 220], draw: mossowletStill, rig: mossowletRig, pad: 4 };
+// (The Red Panda, new for Mossy Woods 2026-11-12: its own live rig, its stills from the same shapes.)
+FARM.redpanda = { walk: 8, idle: 6, attack: 4, stride: 22, atkMs: [80, 300, 220], draw: redpandaStill, rig: redpandaRig, pad: 4 };
 
 export const ARTS = { ...MEADOW, ...WILDS, ...RUINS, ...SKY, ...HOLLOW, ...BOSSES, ...MAIDENS, ...QUEENS, ...BEES, ...FARM, ...MANOR, ...MANORBOSS, ...SEA, ...SEABOSS, ...TOY, ...TOYBOSS, ...ASTRAL, ...ASTRALBOSS, ...CANDY, ...CANDYBOSS, ...STAGE, ...STAGEBOSS, ...SKYFOLK, ...SKYBOSS, ...TEA };
 

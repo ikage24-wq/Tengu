@@ -185,6 +185,41 @@ function curly_wool() {
   return out;
 }
 
+// (2026-11-12) The Moss Tortoise's Mossy Scute: a six-sided shell plate, its growth rings showing,
+// a cushion of moss and a tiny sprout on top.
+function moss_scute() {
+  const c = '#c49a64';
+  const hex = (r) => starPts(8, 9, r, r, 3, -90);
+  const out = [S(hex(6.8), sh(c)), S(hex(6.2), c), S(hex(4.2), lt(c))];
+  out.push(S(tube(hex(5.2).concat([hex(5.2)[0]]), 0.35), sh(c)));
+  out.push(S(oval(6.6, 6.6, 3.6, 2.2), '#6aa452'), S(oval(6.2, 6.1, 2.6, 1.4), '#8cc46a'));
+  out.push(S(tube([[7.6, 5.2], [8.2, 3]], 0.45), '#6aa452'), S(oval(8.9, 3, 1.1, 0.6), '#9ad884'));
+  out.push(...glint(10.6, 8.2, 0.5));
+  return out;
+}
+
+// (2026-11-12) The Moss Owlet's Mossy Down: a soft fluffy feather, cream at the quill and mossy
+// green at its tip, a wisp of fluff at its base.
+function owl_down() {
+  const out = [S(oval(8.6, 7.4, 3.2, 6.2, 40), sh('#a8d48e')), S(oval(8.4, 7.2, 2.8, 5.8, 40), '#cfe8b4'), S(oval(10, 5.2, 2.2, 3.4, 40), '#a8d48e')];
+  for (const [x, y] of [[6.4, 9.2], [7.6, 7.4], [9, 5.8]]) out.push(S(tube([[x - 1.4, y + 0.2], [x + 0.6, y - 0.8]], 0.35), '#f4fbe8'));
+  out.push(S(tube([[3.6, 13.4], [11.6, 3.2]], 0.55), '#e8dcc0'));
+  out.push(S(oval(4.4, 12.2, 1.6, 1.2), '#f4fbe8'), S(oval(3.4, 12.8, 1.1, 0.9), '#f4fbe8'));
+  out.push(...glint(10.6, 4.6, 0.5));
+  return out;
+}
+
+// (2026-11-12) The Red Panda's Ringed Tail Fluff: a fat fluffy tuft of tail fur in rust and pale
+// orange rings.
+function panda_fluff() {
+  const out = [S(oval(8, 8.4, 4.6, 6.4, 35), sh('#d9663a'))];
+  const rings = ['#d9663a', '#f2a878', '#d9663a', '#f2a878', '#c4542e'];
+  rings.forEach((c, i) => out.push(S(oval(5 + i * 1.6, 11.6 - i * 1.8, 3.6 - i * 0.3, 3.2 - i * 0.25), c)));
+  for (const [x, y, d] of [[3.2, 13.2, -40], [12.6, 3.6, 40], [11.4, 6.2, 60]]) out.push(S(oval(x, y, 0.8, 1.6, d), '#f2a878'));
+  out.push(...glint(6.4, 9, 0.5));
+  return out;
+}
+
 // (Kept its id; 2026-11-11 it became the Chickling's Golden Grain: a little ear of wheat.)
 function brownie_crumb() {
   const c = '#f2c860';
@@ -936,7 +971,7 @@ function dewsparkle() {
 const ART = {
   look_gacha_dewsparkle_face: dewsparkle,
   royal_jelly, home_shell, mount_kettle, mount_nimbus, lantern_bait,
-  bee_fuzz, sprite_petal, hay_quill, pumpkin_seed, curly_wool, woven_nest, brownie_crumb, moonlit_ribbon, porcelain_shard, candle_wax, tide_pearl, sea_glass,
+  bee_fuzz, sprite_petal, hay_quill, pumpkin_seed, curly_wool, woven_nest, moss_scute, owl_down, panda_fluff, brownie_crumb, moonlit_ribbon, porcelain_shard, candle_wax, tide_pearl, sea_glass,
   jelly_ribbon, golden_ticket, astral_shard, sugar_gem, taffy_twist, cocoa_bean, encore_rose, sequin, script_page, sky_scale, sky_silk,
   barnacle_shell, moth_scale, meteorite, tin_spring, music_cylinder, derby_medal, promise_bouquet, seashell_ring,
   clover, honeycomb, cherry, wild_strawberry, prickle_pear, sea_kelp, moonpetal, chanterelle, whisperberry, temple_mint, duskcap, shrine_plum,

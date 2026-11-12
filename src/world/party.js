@@ -10,7 +10,7 @@ import { createBody, stepBody, groundAt, knockBack } from './physics.js';
 import { computeStats } from '../core/stats.js';
 import { gainExp, autoAssignAp } from '../core/character.js';
 import { physicalRange, magicRange, accuracy, hitChance, rollHit, mobHitChance, avoid, damageTaken } from '../core/formulas.js';
-import { mobBox } from './mobs.js';
+import { mobBox, MOB_ATTACK_GAP } from './mobs.js';
 import { JOBS, jobChain } from '../data/jobs.js';
 import { ITEMS } from '../data/items.js';
 import { WEAPON_TYPES } from '../core/formulas.js';
@@ -832,7 +832,7 @@ function takeHits(bot, world, dt, rng) {
   if (bot.hp > 0 && !bot.brain?.target) bot.hp = Math.min(max, bot.hp + max * 0.03 * dt);
   if (bot.invuln <= 0) {
     const box = { x: body.x - body.w / 2, y: body.y - body.h, w: body.w, h: body.h };
-    const m = world.mobs.find((o) => o.hp > 0 && !(o.frozenUntil > world.now) && touches(box, mobBox(o)));
+    const m = world.mobs.find((o) => o.hp > 0 && !(o.frozenUntil > world.now) && world.now - (o.attackAt ?? -9) >= MOB_ATTACK_GAP && touches(box, mobBox(o)));
     if (m) {
       m.attackAt = world.now;
       bot.invuln = BOT_INVULN;

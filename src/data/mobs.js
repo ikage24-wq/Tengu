@@ -89,6 +89,24 @@ export const MOBS = {
     id: 'leafling', name: 'Dryad', level: 11, hp: 210, atk: 33, def: 8, acc: 28, eva: 4, exp: 168, gold: [3, 8],
     speed: 44, w: 20, h: 34, art: 'leafling', drops: [{ id: 'leaf_fragment', chance: 0.5 }, { id: 'maple_log', chance: 0.08 }, { id: 'sundress', chance: 0.01 }],
   }),
+  // Mossy Woods' canopy (new 2026-11-12, built from scratch): a fluffy red panda with a big ringed
+  // tail that pads along the treetops (render/mobs/redpandarig.js).
+  redpanda: mob({
+    id: 'redpanda', name: 'Red Panda', level: 18, hp: 620, atk: 58, def: 18, acc: 42, eva: 6, exp: 420, gold: [6, 15],
+    speed: 32, w: 32, h: 28, art: 'redpanda', drops: [{ id: 'panda_fluff', chance: 0.45 }, { id: 'maple_log', chance: 0.08 }, { gear: 'bottom', chance: 0.01 }],
+  }),
+  // Mossy Woods' branches (new 2026-11-12, built from scratch): a round little owlet with mossy ear
+  // tufts that glides along the branches on spread wings (render/mobs/mossowletrig.js).
+  mossowlet: mob({
+    id: 'mossowlet', name: 'Moss Owlet', level: 11, hp: 220, atk: 33, def: 8, acc: 29, eva: 7, exp: 168, gold: [3, 8],
+    speed: 38, w: 24, h: 28, art: 'mossowlet', drops: [{ id: 'owl_down', chance: 0.5 }, { id: 'silkmoss', chance: 0.08 }, { gear: 'hat', chance: 0.01 }],
+  }),
+  // Mossy Woods' forest floor (new 2026-11-12, built from scratch): a slow old tortoise with a little
+  // moss garden growing on its shell (render/mobs/mosstortrig.js). Tough and slow.
+  mosstort: mob({
+    id: 'mosstort', name: 'Moss Tortoise', level: 14, hp: 380, atk: 40, def: 17, acc: 33, eva: 3, exp: 240, gold: [4, 10],
+    speed: 22, w: 34, h: 30, art: 'mosstort', drops: [{ id: 'moss_scute', chance: 0.45 }, { id: 'silkmoss', chance: 0.08 }, { gear: 'gloves', chance: 0.01 }],
+  }),
   boarlet: mob({
     id: 'boarlet', name: 'Warg', level: 14, hp: 330, atk: 43, def: 12, acc: 34, eva: 5, exp: 240, gold: [4, 10],
     speed: 82, gait: 'stalk', w: 38, h: 37, art: 'boarlet', drops: [{ id: 'tusk', chance: 0.45 }, { id: 'silkmoss', chance: 0.08 }, { id: 'puffer_jacket', chance: 0.01 }],

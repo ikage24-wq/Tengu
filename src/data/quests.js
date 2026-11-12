@@ -72,8 +72,8 @@ export const QUESTS = {
     rewards: { exp: 900, gold: 120, items: [], mount: 'bun' },
   },  clover_golden: {
     id: 'clover_golden', name: 'The Golden Bun', giver: 'clover', minLevel: 16, prereq: 'bun_buddy',
-    text: "The whole island's gone bun-crazy! Someone saw the legendary Golden Bun in Mossy Woods. One in ten thousand! Adventurers have been camping there for days, shouting 'GOLDEN BUN SPAWN?' in every chat. The Wargs keep chasing it. Calm 20 of them so I can get a look. I'm writing a song. It's mostly the word 'golden'.",
-    objectives: [{ type: 'kill', mob: 'boarlet', count: 20 }],
+    text: "The whole island's gone bun-crazy! Someone saw the legendary Golden Bun in Mossy Woods. One in ten thousand! Adventurers have been camping there for days, shouting 'GOLDEN BUN SPAWN?' in every chat. The Moss Tortoises keep plodding right in front of it. Calm 20 of them so I can get a look. I'm writing a song. It's mostly the word 'golden'.",
+    objectives: [{ type: 'kill', mob: 'mosstort', count: 20 }],
     rewards: { exp: 9600, gold: 280, items: [{ id: 'orange_potion', qty: 10 }] },
   },
   clover_parade: {
@@ -128,8 +128,8 @@ export const QUESTS = {
   },
   bramble_charge: {
     id: 'bramble_charge', name: 'One Last Charge', giver: 'bramble', minLevel: 14, prereq: 'bramble_wipe',
-    text: "Fine. It was me. I've been thinking. Ten years of rules and I can't remember the last time a fight was fun. Go to Mossy Woods and charge into the Warg packs, 20 of them. Loud. Then come back, and bring a healer. Out of habit.",
-    objectives: [{ type: 'kill', mob: 'boarlet', count: 20 }],
+    text: "Fine. It was me. I've been thinking. Ten years of rules and I can't remember the last time a fight was fun. Go to Mossy Woods and charge into the Moss Tortoises, 20 of them. Loud. Then come back, and bring a healer. Out of habit.",
+    objectives: [{ type: 'kill', mob: 'mosstort', count: 20 }],
     rewards: { exp: 9600, gold: 280, items: [{ id: 'warrior_hat_15', qty: 1, forJob: true, variant: 'roll' }, { id: 'hollow_acorn', qty: 5 }] },
   },
 
@@ -140,15 +140,15 @@ export const QUESTS = {
     rewards: { exp: 1600, gold: 140, items: [{ id: 'orange_potion', qty: 20 }] },
   },
   leaf_samples: {
-    id: 'leaf_samples', name: 'Leaf Samples', giver: 'rook', minLevel: 12, prereq: 'mush_menace',
-    text: 'Our herbalist needs 15 Dryad Leaves from the Dryads in Mossy Woods.',
-    objectives: [{ type: 'collect', item: 'leaf_fragment', count: 15 }],
+    id: 'leaf_samples', name: 'Feather Samples', giver: 'rook', minLevel: 12, prereq: 'mush_menace',
+    text: 'Our fletcher needs 15 Mossy Down feathers from the Moss Owlets in Mossy Woods.',
+    objectives: [{ type: 'collect', item: 'owl_down', count: 15 }],
     rewards: { exp: 10000, gold: 330, items: [{ id: 'warrior_gloves_15', qty: 1, forJob: true }] },
   },
   tusk_trader: {
-    id: 'tusk_trader', name: 'Fang Trader', giver: 'marlo', minLevel: 15, prereq: 'marlo_scales',
-    text: "Warg fangs sell like hotcakes. Hotcakes, meanwhile, sell like Warg fangs. The market is confusing. Bring me 15 and I'll share the profits. The jar's getting heavy, partner. Not that you've seen any jar.",
-    objectives: [{ type: 'collect', item: 'tusk', count: 15 }],
+    id: 'tusk_trader', name: 'Scute Trader', giver: 'marlo', minLevel: 15, prereq: 'marlo_scales',
+    text: "Mossy scutes sell like hotcakes. Hotcakes, meanwhile, sell like mossy scutes. The market is confusing. Bring me 15 from the Moss Tortoises in Mossy Woods and I'll share the profits. The jar's getting heavy, partner. Not that you've seen any jar.",
+    objectives: [{ type: 'collect', item: 'moss_scute', count: 15 }],
     rewards: { exp: 16000, gold: 480, items: [] },
   },
   restless_ruins: {
@@ -384,9 +384,9 @@ export const QUESTS = {
     rewards: { exp: 120000, gold: 1800, items: [{ id: 'warrior_hat_40', qty: 1, forJob: true, variant: 'roll' }] },
   },
   daily_harbor: {
-    id: 'daily_harbor', name: 'Daily: Warg Watch', giver: 'rook', minLevel: 14, daily: true,
-    text: "Wargs keep circling the woods road where our carts go. Thin the pack: 20 Wargs today.",
-    objectives: [{ type: 'kill', mob: 'boarlet', count: 20 }],
+    id: 'daily_harbor', name: 'Daily: Tortoise Traffic', giver: 'rook', minLevel: 14, daily: true,
+    text: "Moss Tortoises keep parking in the middle of the woods road where our carts go. Shift them: 20 Tortoises today.",
+    objectives: [{ type: 'kill', mob: 'mosstort', count: 20 }],
     rewards: { exp: 9600, gold: 280, items: [{ id: 'orange_potion', qty: 10 }, { id: 'gacha_ticket', qty: 1 }] },
   },
 
@@ -397,7 +397,7 @@ export const QUESTS = {
   // take, so they light her for good, and the trail leads on to the cold springs (chapter 5).
   tora_handles: {
     id: 'tora_handles', name: 'Heartwood Handles', giver: 'tora', minLevel: 17,
-    text: "The best hilts are Heartwood, straight off a Treant in Mossy Woods. Bring me 12. Why 12? Because 10 felt lazy and 15 felt mean. I'll put an edge on your gear, and maybe keep a couple back. Don't ask what for.",
+    text: "The best hilts are Heartwood, straight off a Treant in the Whispering Glade. Bring me 12. Why 12? Because 10 felt lazy and 15 felt mean. I'll put an edge on your gear, and maybe keep a couple back. Don't ask what for.",
     objectives: [{ type: 'collect', item: 'moss_stone', count: 12 }],
     rewards: { exp: 22000, gold: 570, items: [] },
   },
@@ -650,8 +650,8 @@ export const QUESTS = {
   // held it for (Tora, his blacksmith now), and the night it comes back to him.
   brann_stand: {
     id: 'brann_stand', name: 'Stand Your Ground', giver: 'brann', minLevel: 15, family: 'warrior',
-    text: "A warrior holds the line. That's it. That's the whole class. The Wargs in Mossy Woods hunt in packs: face 25 of them and don't take a step back. Sideways is fine. I checked the rules.",
-    objectives: [{ type: 'kill', mob: 'boarlet', count: 25 }],
+    text: "A warrior holds the line. That's it. That's the whole class. The Moss Tortoises in Mossy Woods hit like falling logs: face 25 of them and don't take a step back. Sideways is fine. I checked the rules.",
+    objectives: [{ type: 'kill', mob: 'mosstort', count: 25 }],
     rewards: { exp: 12000, gold: 350, items: [{ id: 'warrior_cape_15', qty: 1, forJob: true, variant: 'roll' }] },
   },
   kestrel_canyon: {
@@ -676,9 +676,9 @@ export const QUESTS = {
   // half (Mira the pot, Elowen the lid; data/scenes.js letter_open). The real quarrel was never
   // about the teapot, and at the end Mira comes to the Grove to put it back together.
   elowen_dance: {
-    id: 'elowen_dance', name: 'Dance of the Dryads', giver: 'elowen', minLevel: 15, family: 'mage',
-    text: "The Dryads of Mossy Woods dance with the wind, but they've forgotten the steps. Now they just sway, like uncles at a wedding. Calm 15 of them, and bring me 7 of their leaves to press into charms. Festival charms. Not that I'm going.",
-    objectives: [{ type: 'kill', mob: 'leafling', count: 15 }, { type: 'collect', item: 'leaf_fragment', count: 7 }],
+    id: 'elowen_dance', name: 'Dance of the Owlets', giver: 'elowen', minLevel: 15, family: 'mage',
+    text: "The Moss Owlets of Mossy Woods glide along the branches like they're dancing, but they've forgotten the steps. Now they just wobble, like uncles at a wedding. Calm 15 of them, and bring me 7 of their soft down to stitch into charms. Festival charms. Not that I'm going.",
+    objectives: [{ type: 'kill', mob: 'mossowlet', count: 15 }, { type: 'collect', item: 'owl_down', count: 7 }],
     rewards: { exp: 9700, gold: 320, items: [{ id: 'warrior_cape_15', qty: 1, forJob: true, variant: 'roll' }] },
   },
   // Vex's story (her Wind Dancers'): Tora's good hammer, which Vex "borrowed" to build a secret
@@ -726,7 +726,7 @@ export const QUESTS = {
   },
   vex_stage: {
     id: 'vex_stage', name: 'Quick Feet, Quiet Hands', giver: 'vex', minLevel: 18, prereq: 'vex_shadows', family: 'thief',
-    text: "The hammer's for a good cause, and that's all I'm saying. A good cause also needs boards. Heartwood, from the Treants in Mossy Woods: bring me 8. Don't tell anyone what it's for. You don't know what it's for. Nobody knows anything. Act natural.",
+    text: "The hammer's for a good cause, and that's all I'm saying. A good cause also needs boards. Heartwood, from the Treants in the Whispering Glade: bring me 8. Don't tell anyone what it's for. You don't know what it's for. Nobody knows anything. Act natural.",
     objectives: [{ type: 'collect', item: 'moss_stone', count: 8 }],
     rewards: { exp: 14600, gold: 380, items: [{ id: 'warrior_gloves_20', qty: 1, forJob: true, variant: 'roll' }] },
   },

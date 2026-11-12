@@ -804,7 +804,7 @@ export const SIDE_SCENES = {
     { who: 'bramble', text: "...I've also not had fun in about ten years. Come back when you're a bit bigger. I need to think.", mood: 'sad' },
   ],
   bramble_charge_done: [
-    { who: 'bramble', text: "Twenty Wargs, charged loud. And you're still in one piece. Huh. Maybe it's not the charging. Maybe it's charging with friends.", mood: 'surprised' },
+    { who: 'bramble', text: "Twenty Moss Tortoises, charged loud. And you're still in one piece. Huh. Maybe it's not the charging. Maybe it's charging with friends.", mood: 'surprised' },
     { who: 'bramble', text: 'Right. Stand back. For old times\' sake.', mood: 'happy' },
     { together: [{ walk: 'player', to: 760, speed: 90 }, { face: 'bramble', to: 1 }, { cam: { x: 960, y: 300 }, dur: 1 }] },
     { together: [{ emote: 'bramble', kind: 'anger', dur: 1 }, { fx: 'shout', at: 'bramble' }, { shake: 2.4, dur: 0.6 }] },
@@ -838,7 +838,7 @@ export const SIDE_SCENES = {
   ],
   // ----- Brann's shield -----
   brann_stand_done: [
-    { who: 'brann', text: "Twenty-five Wargs and your boots never moved. Good. That's the whole job. Stand there, get hit, feel proud. Warrior.", mood: 'happy' },
+    { who: 'brann', text: "Twenty-five Moss Tortoises and your boots never moved. Good. That's the whole job. Stand there, get hit, feel proud. Warrior.", mood: 'happy' },
     { together: [{ face: 'brann', to: 'player' }, { emote: 'player', kind: '?', dur: 1.2 }] },
     { who: 'player', text: 'Why is there an empty hook over your door?' },
     { together: [{ emote: 'brann', kind: 'sweat', dur: 1.4 }, { wait: 0.6 }] },
@@ -915,7 +915,7 @@ export const SIDE_SCENES = {
   ],
   // ----- Elowen's teapot -----
   elowen_dance_done: [
-    { who: 'elowen', text: "Seven leaves, pressed and charmed. The Dryads dance again. One of them is doing the worm. I did not teach her that.", mood: 'happy' },
+    { who: 'elowen', text: "Seven tufts of down, stitched and charmed. The Owlets dance again. One of them is doing the worm. On a branch. I did not teach it that.", mood: 'happy' },
     { together: [{ fx: 'leaves', at: 'elowen', n: 10 }, { emote: 'player', kind: '?', dur: 1.2 }] },
     { who: 'player', text: "Festival charms? You said you weren't going." },
     { together: [{ emote: 'elowen', kind: 'sweat', dur: 1.4 }, { wait: 0.5 }] },

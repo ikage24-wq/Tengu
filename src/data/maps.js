@@ -307,7 +307,7 @@ export const MAPS = {
   // Mossy Woods is a surface-and-underground map (data/climb.js lay(), zones by height): the Forest
   // Floor is a long walk through the trees, broken by holes where the roots have fallen in; below it
   // run the Root Tunnels, the Wargs' warrens, lit by glowing spores that rise up through the holes;
-  // and above it the Treetops, where the old Treants doze, with a log drifting between the boughs
+  // and above it the Treetops, where the Red Pandas doze, with a log drifting between the boughs
   // and, on the highest one, the way on to the Whispering Glade. A bouncy mushroom on the floor
   // springs you up into the trees.
   // Mossy Woods (remade 2026-11-12, the player's call: a wood built from giant trees, not floating
@@ -322,9 +322,9 @@ export const MAPS = {
     ...lay({
       width: 1800, ground: 1000, by: 'y', quiet: [[40, 1000, 160], [1760, 1000, 160]],
       zones: [
-        { name: 'Forest Floor', color: '#4f9e55', mobs: ['boarlet', 'leafling'], look: { material: 'mossy', edges: 'mossy', props: ['tuft'] } },
-        { name: 'Branchways', color: '#8a6656', from: 900, mobs: ['leafling', 'boarlet'] },
-        { name: 'Canopy', color: '#3f9a7a', from: 540, mobs: ['mossgolem', 'leafling'], look: { edges: 'flowers' } },
+        { name: 'Forest Floor', color: '#4f9e55', mobs: ['mosstort', 'mossowlet'], look: { material: 'mossy', edges: 'mossy', props: ['tuft'] } },
+        { name: 'Branchways', color: '#8a6656', from: 900, mobs: ['mossowlet', 'mosstort'] },
+        { name: 'Canopy', color: '#3f9a7a', from: 540, mobs: ['redpanda', 'mossowlet'], look: { edges: 'flowers' } },
       ],
       // Each giant tree's branches step up round its trunk, 120px apart, each crossing the trunk
       // (so the ladder up the trunk stops at every one); its crown platform on top.
@@ -352,11 +352,11 @@ export const MAPS = {
     // Its monsters, placed by hand (one each), spread out, none near the ways in or out.
     spawns: [
       // The Forest Floor, between the trees.
-      { mob: 'boarlet', x: 620, y: 1000 }, { mob: 'leafling', x: 1180, y: 1000 },
+      { mob: 'mosstort', x: 620, y: 1000 }, { mob: 'mosstort', x: 1180, y: 1000 },
       // The Branchways.
-      { mob: 'leafling', x: 520, y: 880 }, { mob: 'boarlet', x: 200, y: 760 }, { mob: 'leafling', x: 1060, y: 720 }, { mob: 'leafling', x: 1280, y: 760 },
-      // The Canopy (and the Moss Golem that likes the east tree's top branch).
-      { mob: 'mossgolem', x: 800, y: 520 }, { mob: 'mossgolem', x: 1540, y: 640 },
+      { mob: 'mossowlet', x: 520, y: 880 }, { mob: 'mosstort', x: 200, y: 760 }, { mob: 'mossowlet', x: 1060, y: 720 }, { mob: 'mossowlet', x: 1280, y: 760 },
+      // The Canopy (and the Red Panda that likes the east tree's top branch).
+      { mob: 'redpanda', x: 800, y: 520 }, { mob: 'redpanda', x: 1540, y: 640 },
     ],
     // Its gathering spots, placed by hand, clear of the trunks, the doors and the ladders.
     nodes: [
@@ -378,7 +378,7 @@ export const MAPS = {
     lamps: [{ x: 360, y: 470 }, { x: 900, y: 470 }, { x: 1440, y: 470 }],
     spirit: { x: 620, y: 440 },
     finds: [{ x: 1615, y: 508, mount: 'gecko', say: 'It scurried up your arm and settled on your shoulder.' }],
-    habitats: { leafling: { naps: true }, boarlet: { play: true, naps: true, home: { x: 1060, y: 1000 } }, mossgolem: { naps: true } },
+    habitats: { mossowlet: { naps: true }, mosstort: { play: true, naps: true, home: { x: 1060, y: 1000 } }, redpanda: { naps: true } },
   },
 
 

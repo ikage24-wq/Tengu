@@ -101,10 +101,10 @@ export const STORY_QUESTS = {
   // ---------- Chapter 4: The Party That Never Ends (15-20) ----------
   story_invite: s('story_invite', 4, {
     name: 'An Invitation', giver: 'elowen', minLevel: 15, prereq: 'story_root',
-    text: "An invitation came for me. To Lady Marigold's party on Manor Hill. Written a hundred years ago, dated last month, addressed to 'the Most Dramatic Witch in the Grove'. Accurate. But I do not do parties, I do entrances. Take my reply to Mr. Pumpkins at the manor gate, and mind the Wargs in Mossy Woods: clear 15 of them, they keep crashing it.",
+    text: "An invitation came for me. To Lady Marigold's party on Manor Hill. Written a hundred years ago, dated last month, addressed to 'the Most Dramatic Witch in the Grove'. Accurate. But I do not do parties, I do entrances. Take my reply to Mr. Pumpkins at the manor gate, and mind the Moss Tortoises in Mossy Woods: clear 15 of them, they keep napping across the path.",
     gives: [{ id: 'letter' }],
     objectives: [
-      { type: 'kill', mob: 'boarlet', count: 15 },
+      { type: 'kill', mob: 'mosstort', count: 15 },
       { type: 'deliver', npc: 'pumpkins', item: 'letter', say: "An RSVP? Nobody's RSVP'd in a hundred years. The guests just arrive, and never go home. Tell the witch the party's every night, and the dress code is 'forever'." },
     ],
     rewards: { exp: 7200, gold: 210, items: [{ id: 'orange_potion', qty: 15 }] },

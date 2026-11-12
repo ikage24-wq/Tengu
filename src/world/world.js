@@ -24,7 +24,7 @@ import { recordKill } from '../core/quests.js';
 import { avoid, mobHitChance, damageTaken } from '../core/formulas.js';
 import { createBody, stepBody, knockBack, groundAt, blockWalls } from './physics.js';
 import { startAgility, tickAgility } from './agility.js';
-import { createSpawner, tickSpawner, updateMob, hitMob, mobBox } from './mobs.js';
+import { createSpawner, tickSpawner, updateMob, hitMob, mobBox, MOB_ATTACK_GAP } from './mobs.js';
 import { rollLoot, spawnDrops, updateDrops, dropInReach, dropFromHero } from './drops.js';
 import { cast, castBlocker, weaponElement, hurtProcs, blockOnHit, drinkBlood, tickLater } from './combat.js';
 import { ventGuard } from './engineer.js';
@@ -1067,6 +1067,7 @@ export function updateWorld(world, dt, input) {
     // you doesn't hurt. One you've stirred up, or one that hunts, still does. A new hero once fainted
     // reading Kuro's practice quest among the Blossom Kits.)
     if (input?.locked && !m.def.aggro && !(world.now < m.aggroUntil)) continue;
+    if (world.now - (m.attackAt ?? -9) < MOB_ATTACK_GAP) continue;
     if (!overlaps(pbox, mobBox(m))) continue;
     m.attackAt = world.now;
     if (Math.random() < mobHitChance(m.def.acc, avoid(world.stats))) {
