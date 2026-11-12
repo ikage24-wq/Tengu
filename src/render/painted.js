@@ -171,6 +171,7 @@ function planeColors(t, base, air, k) {
 
 export function drawPaintedForest(ctx, t, cam, width, height, time, layerY, air) {
   if (t.forestStyle === 'mossy') return drawPaintedMossy(ctx, t, cam, width, height, time, layerY, air);
+  if (t.forestStyle === 'glade') return drawPaintedGlade(ctx, t, cam, width, height, time, layerY, air);
   // 1. The far tree line: a wall of soft round crowns deep in the mist.
   const farY = layerY(70, 0.04);
   const cf = planeColors(t, t.far, air, 0.58);
@@ -305,6 +306,142 @@ function fogBand(ctx, width, y, h, c, k) {
   ctx.fillStyle = g;
   ctx.fillRect(0, y - h, width, h * 1.4 + 400);
 }
+// ---------- The Whispering Glade (its remake, 2026-11-12) ----------
+
+// The valley's backdrop: a warm glow, pale misty cliffs far off with thin waterfalls of their own,
+// then a band of round blossoming trees on soft meadow hills with mist at their feet, and a few
+// soft sunbeams. No blurred leaves across the front: one calm, open view.
+function gladeMassif(ctx, x, base, w, h, body, lit, seed) {
+  // A far cliff: a rounded rock tower with a lumpy top, lit down its left side.
+  ctx.fillStyle = body;
+  ctx.beginPath();
+  ctx.moveTo(x - w / 2, base + 400);
+  ctx.lineTo(x - w / 2, base - h * 0.55);
+  const bumps = 4;
+  for (let k = 0; k <= bumps; k++) {
+    const bx = x - w / 2 + (w * k) / bumps;
+    const by = base - h - (k % 2 ? 6 : 0) - hash(seed + k) * 14;
+    if (k === 0) ctx.quadraticCurveTo(x - w / 2, by, bx + w * 0.06, by);
+    else ctx.quadraticCurveTo(bx - w / (bumps * 2), by - 12, bx, by);
+  }
+  ctx.quadraticCurveTo(x + w / 2, base - h, x + w / 2, base - h * 0.55);
+  ctx.lineTo(x + w / 2, base + 400);
+  ctx.closePath();
+  ctx.fill();
+  ctx.fillStyle = lit;
+  ctx.fillRect(x - w / 2, base - h * 0.55, w * 0.16, h * 0.55 + 400);
+}
+function drawPaintedGlade(ctx, t, cam, width, height, time, layerY, air) {
+  const sun = t.sun ?? '#fff6dc';
+  // 1. The warm glow of the morning over the valley.
+  {
+    const gx = width * 0.62 - ((cam.x * 0.02) % width) * 0.2;
+    const gy = layerY(120, 0.03) - 140;
+    const g = ctx.createRadialGradient(gx, gy, 10, gx, gy, Math.max(width, height) * 0.75);
+    g.addColorStop(0, hexA(sun, 0.6));
+    g.addColorStop(0.4, hexA(sun, 0.16));
+    g.addColorStop(1, hexA(sun, 0));
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, width, height);
+  }
+  // 2. Far cliffs in the mist, a thin waterfall down some of them.
+  const farY = layerY(110, 0.03);
+  const rock = mix('#9ec4c4', air, 0.55);
+  const rockLit = mix(rock, sun, 0.3);
+  repeat(cam.x, 0.04, 260, width, (i, x) => {
+    if (hash(i + 3) < 0.25) return;
+    const xx = x + hash(i + 4) * 90;
+    const w = 90 + hash(i + 5) * 70;
+    const h = 120 + hash(i + 6) * 90;
+    gladeMassif(ctx, xx, farY, w, h, rock, rockLit, i);
+    if (hash(i + 7) > 0.55) {
+      // Its waterfall: a pale ribbon with soft streaks running down it.
+      const fx = xx + (hash(i + 8) - 0.5) * w * 0.3;
+      const top = farY - h + 16;
+      const water = mix('#e8fbff', air, 0.35);
+      ctx.fillStyle = hexA(water, 0.75);
+      ctx.fillRect(fx - 3, top, 6, h + 40);
+      ctx.fillStyle = hexA('#ffffff', 0.45);
+      for (let k = 0; k < 4; k++) {
+        const yy = top + (((time * 40 + k * (h / 4)) % (h + 40)) + h + 40) % (h + 40);
+        ctx.fillRect(fx - 1.5, yy, 2, 14);
+      }
+    }
+  });
+  fogBand(ctx, width, farY, 70, air, 0.55);
+  // 3. Round blossoming trees on soft hills, two rows, the far row mistier.
+  const rows = [
+    { f: 0.08, y: layerY(64, 0.06), gap: 70, r: [16, 24], c: '#7cc8a0', a: 0.45 },
+    { f: 0.14, y: layerY(30, 0.1), gap: 96, r: [22, 32], c: '#62b88a', a: 0.26 },
+  ];
+  rows.forEach((row, ri) => {
+    const crown = mix(row.c, air, row.a);
+    const lit = mix(crown, sun, 0.3);
+    const trunk = mix('#8a7060', air, row.a + 0.15);
+    const blossom = mix('#ffc8dc', air, row.a * 0.8);
+    // The hill they stand on.
+    ctx.fillStyle = mix(mix(row.c, '#8fd090', 0.5), air, row.a);
+    ctx.beginPath();
+    ctx.moveTo(-4, row.y + 400);
+    for (let sx = -4; sx <= width + 8; sx += 8) {
+      const k = sx + cam.x * row.f;
+      ctx.lineTo(sx, row.y - 6 - 8 * Math.sin(k * 0.006 + ri * 2) - 3 * Math.sin(k * 0.019 + ri));
+    }
+    ctx.lineTo(width + 8, row.y + 400);
+    ctx.closePath();
+    ctx.fill();
+    repeat(cam.x, row.f, row.gap, width, (i, x) => {
+      if (hash(i * 2.3 + ri * 19) < 0.18) return;
+      const xx = x + hash(i + ri * 41) * row.gap * 0.4;
+      const r = row.r[0] + hash(i * 5 + ri) * (row.r[1] - row.r[0]);
+      const k = xx + cam.x * row.f;
+      const gy = row.y - 6 - 8 * Math.sin(k * 0.006 + ri * 2) - 3 * Math.sin(k * 0.019 + ri);
+      ctx.fillStyle = trunk;
+      ctx.fillRect(xx - r * 0.1, gy - r * 1.2, r * 0.2, r * 1.2 + 4);
+      const cy = gy - r * 1.5;
+      ctx.fillStyle = crown;
+      ctx.beginPath();
+      ctx.ellipse(xx, cy, r, r * 0.86, 0, 0, Math.PI * 2);
+      ctx.ellipse(xx - r * 0.6, cy + r * 0.25, r * 0.6, r * 0.52, 0, 0, Math.PI * 2);
+      ctx.ellipse(xx + r * 0.62, cy + r * 0.22, r * 0.6, r * 0.52, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = lit;
+      ctx.beginPath();
+      ctx.ellipse(xx - r * 0.28, cy - r * 0.34, r * 0.5, r * 0.3, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = blossom;
+      for (let b = 0; b < 4; b++) {
+        ctx.beginPath();
+        ctx.arc(xx + (hash(i * 9 + b + ri) - 0.5) * r * 1.4, cy + (hash(i * 11 + b + ri) - 0.5) * r, 1.8 + ri * 0.4, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    });
+    fogBand(ctx, width, row.y, 40 - ri * 8, air, 0.42 - ri * 0.1);
+  });
+  // 4. A few soft sunbeams slanting down into the valley.
+  ctx.save();
+  ctx.globalCompositeOperation = 'lighter';
+  repeat(cam.x, 0.2, 380, width, (i, x) => {
+    if (hash(i + 61) < 0.5) return;
+    const w = 34 + hash(i + 62) * 24;
+    const a = (0.045 + 0.02 * Math.sin(time * 0.3 + i * 1.9)) * (0.7 + 0.5 * hash(i + 63));
+    const x0 = x + hash(i + 64) * 160;
+    const g = ctx.createLinearGradient(0, 0, 0, height);
+    g.addColorStop(0, hexA(sun, a * 1.3));
+    g.addColorStop(0.8, hexA(sun, a * 0.3));
+    g.addColorStop(1, hexA(sun, 0));
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.moveTo(x0, -10);
+    ctx.lineTo(x0 + w, -10);
+    ctx.lineTo(x0 + w * 1.4 - 140, height);
+    ctx.lineTo(x0 - 140, height);
+    ctx.closePath();
+    ctx.fill();
+  });
+  ctx.restore();
+}
+
 function drawPaintedMossy(ctx, t, cam, width, height, time, layerY, air) {
   const sun = t.sun ?? '#fff6dc';
   const rowY = [layerY(84, 0.03), layerY(52, 0.06), layerY(22, 0.1)];
@@ -496,7 +633,7 @@ function softClump(ctx, x, y, r, c, seed, sway, blur, alpha, width, height) {
 export function drawPaintedForestFront(ctx, t, cam, width, height, time) {
   // (Mossy Woods keeps its view clear: no blurred leaves across the front, the player's taste for
   // one calm backdrop, 2026-11-11.)
-  if (t.forestStyle === 'mossy') return;
+  if (t.forestStyle === 'mossy' || t.forestStyle === 'glade') return;
   const base = mix(shade(t.mid, -22), '#2a3a4a', 0.35);
   const c = { base, lit: mix(base, t.sun ?? '#fff6dc', 0.12), glint: mix(base, '#ffffff', 0.12), shadow: shade(base, -8) };
   ctx.save();

@@ -663,7 +663,7 @@ export const QUESTS = {
   kestrel_glade: {
     id: 'kestrel_glade', name: 'Sylph Treasure', giver: 'kestrel', minLevel: 21, prereq: 'kestrel_canyon', family: 'archer',
     text: "The wind up there blows east, all the way to the Whispering Glade. And Sylphs steal anything shiny or clever, which explains my arrow AND my lunchbox. Go to the top of the Glade where they keep their hoard, and calm 15 of them so you can look. Please.",
-    objectives: [{ type: 'visit', map: 'glade', above: 330, place: 'the Sylphs\' hoard at the top of the Glade' }, { type: 'kill', mob: 'sylph', count: 15 }],
+    objectives: [{ type: 'visit', map: 'glade', above: 500, place: 'the Sylphs\' hoard at the top of the Glade' }, { type: 'kill', mob: 'sylph', count: 15 }],
     rewards: { exp: 13500, gold: 360, items: [{ id: 'mana_elixir', qty: 5 }] },
   },
   kestrel_wings: {

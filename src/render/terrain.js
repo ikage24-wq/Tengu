@@ -65,6 +65,8 @@ export const MATERIALS = {
   // in warm farm browns.
   clover: { lip: '#86dc7e', body: '#d8a77a', deep: '#a8734e', stone: '#f2d2a8', style: 'petalsoil', blades: true, drip: 'root', cap: 'puffy' },
   // Mossy Woods' own (its art pass, 2026-11-11): a deep soft moss on warm brown soil.
+  // The Whispering Glade's cool mossy waterfall stone (2026-11-12).
+  glade: { lip: '#86d8a0', body: '#a9b4b8', deep: '#84909c', stone: '#d6dee2', style: 'mossloam', blades: true, drip: 'vine', moss: true },
   mossy: { lip: '#74cf7e', body: '#c4946c', deep: '#94644a', stone: '#e6cba8', style: 'petalsoil', blades: true, drip: 'root', moss: true },
   farm: { lip: '#72d672', body: '#b5845a', deep: '#875c3a', stone: '#d6a878', style: 'farm', blades: true, drip: 'vine' },
   // Dawnlight Beach (the tutorial island): pale sand over warm sandstone.

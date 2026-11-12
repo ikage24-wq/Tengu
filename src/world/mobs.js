@@ -23,6 +23,7 @@ const HOVER = 46;
 const FLY_CLEAR = 22;
 const RISE = 140;
 const HOME_DRIFT = 24;
+const CHASE_DROP = 240;
 
 let nextUid = 1;
 
@@ -398,6 +399,10 @@ export function updateMob(m, player, dt, now) {
       chasing = true;
       const want = player.y - 30 - m.baseY;
       m.baseY += Math.sign(want) * Math.min(Math.abs(want), 30 * dt);
+      // (It guards its own heights: it swoops no more than CHASE_DROP below its hover line, so in a
+      // tall map a flyer from the treetops doesn't dive all the way to the floor and take ages to
+      // float back.)
+      if (m.homeY != null) m.baseY = Math.min(m.baseY, m.homeY + CHASE_DROP);
     }
   } else if (habitGoal(m, now)) {
     // Living there: napping, heading home, playing chase or running off (world/habits.js).

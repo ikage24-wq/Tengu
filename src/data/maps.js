@@ -2461,56 +2461,70 @@ MAPS.ruins.portals.push({ id: 'shrine', x: 2380, y: 700, to: 'shrine', toPortal:
 MAPS.cave.portals.push({ id: 'springs', x: 2540, y: 600, to: 'springs', toPortal: 'west', label: 'Serpent Springs' });
 
 Object.assign(MAPS, {
-  // The Whispering Glade is a walk across, side by side (data/climb.js lay()): the Flower Meadow in
-  // the west, low and rolling among giant flowers, where blossoms bounce you up; the Waterfall Pool
-  // in the middle, where the falls pour down a cliff into a sunken pool you can wade, behind a mossy
-  // bank no Treant climbs (the fishing dock juts from the bank over the water, a quiet nook of its
-  // own) and the mist floats you up the cliff; and the Sylph Grove on the high plateau to the east,
-  // where Sylvana roams, treetop ledges with a leaf drifting between them, and her Bower at the far
-  // end of the glade.
+  // The Whispering Glade (remade 2026-11-12, the player's pick: small, two tiers): a little valley
+  // in the woods. Below, the Flower Meadow round a pool, with the fishing dock out over it and the
+  // way back to Mossy Woods in the west. A low mossy cliff stands either side, a step part-way up
+  // each, and on top the Sylph Grove: the two cliff tops and the rock lip between them that the
+  // waterfall pours off into the pool. The falls' mist lifts you (Up to ride it) to the leaf above,
+  // where the Sylphs keep their hoard and the way on to Sylvana's Bower is.
   glade: {
-    id: 'glade', name: 'Whispering Glade', theme: 'forest', town: 'harbor', world: { x: 278, y: 160 },
-    look: { sky: ['#8fe0d0', '#d2f4e2', '#fffbe0'], far: '#8fd6b4', mid: '#6cc498', midTrim: '#4fae7f', light: 'morning', edges: 'flowers', props: ['flower', 'chime', 'tuft', 'bush', 'tulip', 'flower'], drift: 'leaf', rainbow: 0.3, islands: 'branch' },
+    id: 'glade', name: 'Whispering Glade', theme: 'forest', town: 'harbor', world: { x: 278, y: 160 }, perSpawn: 1,
+    look: { sky: ['#8fe0d8', '#d2f4ea', '#fffbe8'], far: '#8fd6bc', mid: '#6cc4a0', midTrim: '#4fae86', light: 'morning', forestStyle: 'glade', material: 'glade', edges: 'flowers', props: ['flower', 'tuft', 'tulip'], propKeep: 0.45, ledgeKeep: 0.35, drift: null, critters: [], noAmbient: true, rainbow: 0.35 },
     ...lay({
-      width: 2400, ground: 880, by: 'x',
-      // The meadow, the mossy bank (a step up), the pool's bed sunk below it, and the cliff.
-      terrain: [[0, 880], [720, 880], [720, 840], [800, 840], [800, 920], [1000, 920], [1000, 640], [2400, 640]],
-      ropes: [{ x: 990, top: 640, bottom: 920 }],
-      quiet: [[40, 880, 160], [900, 920, 300], [760, 840, 100], [900, 800, 260], [900, 720, 260], [2340, 640, 160]],
+      width: 1000, ground: 900, by: 'y',
+      // The meadow, and the pool sunk in the middle under the falls.
+      terrain: [[0, 900], [380, 900], [380, 940], [620, 940], [620, 900], [1000, 900]],
+      // (No monsters in the pool, on the dock, the lip or the leaf.)
+      quiet: [[500, 940, 140], [380, 900, 60], [500, 480, 120]],
       zones: [
-        { name: 'Flower Meadow', color: '#e889b4', from: 0, mobs: ['mossgolem', 'sylph'], nodes: [SPOT.fruit(2, 'whisperberry'), SPOT.fiber(2)] },
-        { name: 'Waterfall Pool', color: '#4fb0d8', from: 800, mobs: ['sylph'], nodes: [SPOT.ore(2)],
-          look: { sky: ['#9fe4f0', '#d8f4f6', '#fffbe8'], far: '#9fd8c8', mid: '#7fc8b0' } },
-        { name: 'Sylph Grove', color: '#6fae5f', from: 1300, mobs: ['sylph', 'mossgolem'], nodes: [SPOT.honey(2), SPOT.wood(2), SPOT.fruit(2, 'whisperberry'), SPOT.night(2)],
+        { name: 'Flower Meadow', color: '#e889b4', mobs: ['mossgolem', 'sylph'], nodes: [SPOT.fruit(2, 'whisperberry'), SPOT.fiber(2), SPOT.ore(2)] },
+        { name: 'Sylph Grove', color: '#6fae5f', from: 700, mobs: ['sylph'], nodes: [SPOT.honey(2), SPOT.fruit(2, 'whisperberry'), SPOT.night(2)],
           look: { sky: ['#b8ecd8', '#e2f8e8', '#fffbe6'], far: '#b0e4c4', mid: '#90d4a8' } },
       ],
       ledges: [
-        // The Flower Meadow: low flower ledges.
-        { x: 150, y: 800, w: 260 }, { x: 300, y: 720, w: 240 }, { x: 600, y: 640, w: 200 },
-        // The Waterfall Pool: steps up beside the falls, and the fishing dock off the bank.
-        { x: 450, y: 800, w: 240 }, { x: 650, y: 720, w: 240 },
-        { x: 796, y: 840, w: 104, posts: true, walkOn: true },
-        // The Sylph Grove: treetop ledges over the plateau.
-        { x: 1200, y: 560, w: 300 }, { x: 1600, y: 480, w: 320 }, { x: 2000, y: 560, w: 280 },
-        { x: 1400, y: 400, w: 280 }, { x: 1850, y: 320, w: 300 },
-        // The leaf drifting between the treetops.
-        { x: 1510, y: 560, w: 120, drift: { dx: 360, period: 9 } },
+        // A step part-way up each cliff, then its top.
+        { x: 170, y: 780, w: 170, noRope: true }, { x: 660, y: 780, w: 170, noRope: true },
+        { x: 0, y: 660, w: 400, noRope: true }, { x: 600, y: 660, w: 400, noRope: true },
+        // A little footbridge between the cliff tops, the falls pouring down behind it (one walk
+        // across the top).
+        { x: 400, y: 660, w: 200, style: 'bridge', noProps: true, noRope: true },
+        // The leaf above the falls, with the Sylphs' hoard.
+        { x: 400, y: 480, w: 200, style: 'leaf', noProps: true, noRope: true },
+        // The fishing dock off the bank, out over the pool.
+        { x: 380, y: 900, w: 80, posts: true, walkOn: true },
       ],
     }),
-    // A moving part per zone: blossoms bouncing you up in the meadow, the waterfall's mist floating
-    // you up the cliff (Up to ride it), and the drifting leaf in the grove.
-    springs: [{ x: 420, y: 880, up: 170, kind: 'blossom' }],
-    updrafts: [{ x: 955, w: 50, top: 610, bottom: 920, kind: 'mist' }],
+    // Its monsters, placed by hand (one each: perSpawn): Treants on the meadow, Sylphs up the cliffs.
+    // (Kept clear of the arrivals: the way in from the woods in the west, and the way back down
+    // from Sylvana's Bower on the leaf.)
+    spawns: [
+      { mob: 'mossgolem', x: 800, y: 900 }, { mob: 'mossgolem', x: 940, y: 900 },
+      { mob: 'sylph', x: 90, y: 660 }, { mob: 'sylph', x: 740, y: 780 }, { mob: 'sylph', x: 910, y: 660 }, { mob: 'sylph', x: 500, y: 660 },
+    ],
+    // Its gathering spots, placed by hand.
+    nodes: [
+      { ...SPOT.fruit(2, 'whisperberry'), x: 250, y: 900 }, { ...SPOT.ore(2), x: 670, y: 900 }, { ...SPOT.fiber(2), x: 230, y: 780 },
+      { ...SPOT.fruit(2, 'whisperberry'), x: 310, y: 660 }, { ...SPOT.honey(2), x: 700, y: 660 }, { ...SPOT.night(2), x: 455, y: 480 },
+    ],
+    // Mossy vines to climb: off the meadow onto each cliff's step, on up to its top, and from the lip
+    // up to the leaf.
+    ropes: [{ x: 320, top: 780, bottom: 900 }, { x: 680, top: 780, bottom: 900 }, { x: 190, top: 660, bottom: 780 }, { x: 810, top: 660, bottom: 780 }, { x: 410, top: 480, bottom: 660 }],
+    // A blossom on the meadow to bounce you up, and the falls' mist to float you up to the leaf.
+    springs: [{ x: 90, y: 900, up: 170, kind: 'blossom' }],
+    updrafts: [{ x: 600, w: 40, top: 440, bottom: 900, kind: 'mist' }],
     // The pool under the falls, waist-deep on its bed.
-    water: [{ x1: 800, x2: 1000, y: 894, kind: 'spring' }],
-    portals: [{ id: 'west', x: 40, y: 880, to: 'woods', toPortal: 'glade' }],
+    water: [{ x1: 380, x2: 620, y: 914, kind: 'spring' }],
+    portals: [{ id: 'west', x: 40, y: 900, to: 'woods', toPortal: 'glade' }],
     npcs: [],
-    // A landmark per zone: the giant flowers in the meadow, the waterfall and its pool, the great
-    // tree in the grove.
-    deco: [['giantflower', 260, 0], ['giantflower', 640, 2], ['waterfall', 958, 240, 894], ['bigtree', 1680, 1, 640], ['giantflower', 2150, 1, 640]],
-    lamps: [{ x: 900, y: 810 }, { x: 1700, y: 600 }, { x: 2300, y: 610 }],
-    spirit: { x: 2200, y: 400 },
-    habitats: { sylph: { play: true, naps: true }, mossgolem: { naps: true, home: { x: 260, y: 880 } } },
+    // The two low cliffs (gladecliff: 0 west, 1 east), the mossy rock pillar rising out of the pool
+    // that the falls spring from (2), and the waterfall down from the cleft near its top: one
+    // stretch to the footbridge, one on from under its planks into the pool (so the bridge reads
+    // as crossing in front of the water).
+    deco: [['gladecliff', 150, 0], ['gladecliff', 850, 1], ['gladecliff', 500, 2], ['waterfall', 500, 116, 656, { under: true }], ['waterfall', 500, 258, 914, { under: true }]],
+    lamps: [{ x: 260, y: 850 }, { x: 760, y: 850 }, { x: 500, y: 440 }],
+    spirit: { x: 500, y: 420 },
+    // (The Sylphs nap but don't play: playing pulls them off their own ledges.)
+    habitats: { sylph: { naps: true }, mossgolem: { naps: true, home: { x: 820, y: 900 } } },
   },
 
 
@@ -2849,7 +2863,7 @@ Object.assign(MAPS, {
 
 // Lilith's grotto behind the waterfall keeps its own rose-lit dusk, day or night.
 MAPS.grotto.ownLight = true;
-MAPS.glade.portals.push({ id: 'bower', x: 2340, y: 640, to: 'bower', toPortal: 'west', label: "Sylvana's Bower" });
+MAPS.glade.portals.push({ id: 'bower', x: 580, y: 480, to: 'bower', toPortal: 'west', label: "Sylvana's Bower" });
 // The shrine path's petal cloud.
 MAPS.shrine.platforms.push({ x: 975, y: 400, w: 150, drift: { dx: 500, period: 11 } });
 // The way to the Clockwork Carnival (its rooms are with the dungeons above).
@@ -2881,7 +2895,7 @@ MAPS.starfall.portals.push({ id: 'terrace', x: 2500, y: 440, to: 'terrace', toPo
 
 // The queens roam their regions as field bosses (from the start: the story is optional), back
 // every ten minutes or so after they fall.
-MAPS.glade.spawns.push({ mob: 'sylvana', x: 1800, y: 640, respawn: 600 });
+MAPS.glade.spawns.push({ mob: 'sylvana', x: 760, y: 900, respawn: 600 });
 MAPS.shrine.spawns.push({ mob: 'tamamo', x: 1300, y: 720, respawn: 600 });
 MAPS.springs.spawns.push({ mob: 'lilith', x: 500, y: 400, respawn: 600 });
 MAPS.starfall.spawns.push({ mob: 'selene', x: 1300, y: 1040, respawn: 600 });
@@ -2891,7 +2905,7 @@ MAPS.starfall.spawns.push({ mob: 'selene', x: 1300, y: 1040, respawn: 600 });
 // way), so a long map never means a long walk back.
 const HOMESTONES = {
   meadow1: [1555, 400], meadow2: [200, 700], woods: [1650, 880], ruins: [2220, 900], cave: [2380, 520],
-  sky: [2460, 400], canyon: [410, 520], glade: [2140, 560], shrine: [2164, 560], ridge: [2200, 400],
+  sky: [2460, 400], canyon: [410, 520], glade: [880, 900], shrine: [2164, 560], ridge: [2200, 400],
   springs: [1992, 640], peak: [2040, 880], starfall: [2290, 440],
 };
 for (const [id, [x, y]] of Object.entries(HOMESTONES)) {

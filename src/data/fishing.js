@@ -162,7 +162,7 @@ export const SPOTS = {
   sprout: [{ x: 2200, y: 480, face: 1, bx: 2258, by: 491, tier: 1, pool: { fish_minnow: 6, fish_carp: 3, fish_perch: 1, fish_goldfish: 5, fish_shiner: 2, fish_firefly: 2 } }],
   harbor: [{ x: 2190, y: 426, face: 1, bx: 2242, by: 451, tier: 1, pool: { fish_sardine: 5, fish_mackerel: 4, fish_puffer: 2, fish_starfish: 0.3, fish_bream: 4, fish_moonjelly: 2, fish_darter: 1.5 } }],
   // Tier 2: the glade's waterfall pool.
-  glade: [{ x: 872, y: 840, face: 1, bx: 950, by: 894, tier: 2, pool: { fish_mossbass: 5, fish_trout: 4, fish_catfish: 3, fish_koi: 1.2, fish_eel: 0.8, fish_sylphfin: 0.6, fish_dace: 4, fish_guppy: 4, fish_betta: 2, fish_wisptetra: 2.5, fish_mistgar: 1.5, fish_raincarp: 2.5, fish_sturgeon: 0.6, fish_arowana: 0.12 } }],
+  glade: [{ x: 430, y: 900, face: 1, bx: 500, by: 914, tier: 2, pool: { fish_mossbass: 5, fish_trout: 4, fish_catfish: 3, fish_koi: 1.2, fish_eel: 0.8, fish_sylphfin: 0.6, fish_dace: 4, fish_guppy: 4, fish_betta: 2, fish_wisptetra: 2.5, fish_mistgar: 1.5, fish_raincarp: 2.5, fish_sturgeon: 0.6, fish_arowana: 0.12 } }],
   // Tier 3: the glowing pool by the Crystal Throne's gate, and the serpent's hot spring.
   cave: [{ x: 1330, y: 872, face: 1, bx: 1420, by: 901, tier: 3, pool: { fish_cavefish: 6, fish_eel: 2, fish_char: 1, fish_blindfish: 5, fish_crystaltetra: 3, fish_geode: 2, fish_spiritfish: 1.5 } }],
   tea: [{ x: 1640, y: 1000, face: 1, bx: 1700, by: 1052, tier: 3, pool: { fish_koi: 3, fish_char: 3, fish_eel: 2, fish_loach: 4, fish_carp: 4 } }],

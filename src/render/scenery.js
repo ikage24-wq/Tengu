@@ -4989,7 +4989,7 @@ const BUILDINGS = {
 // washed toward the sky like the backdrop, so the ledge reads as passing in front of it.
 // Waterfalls pour off a ledge, and cloud pillars, the watchtower and Mossy Woods' giant trees
 // (whose branches are its ledges) hold one up, on purpose.
-const MEETS_LEDGE = new Set(['woodtree', 'waterfall', 'cloudpillar', 'watchtower']);
+const MEETS_LEDGE = new Set(['woodtree', 'gladecliff', 'waterfall', 'cloudpillar', 'watchtower']);
 const decoSize = (kind, seed) => {
   const b = BUILDINGS[kind];
   if (b) {
@@ -5057,12 +5057,14 @@ function hazedKept(ctx, entry, time, left, top, w, h, color, k, draw) {
 }
 
 // `pass`: 'behind' (set-back pieces, before the ground), 'ground' (the rest standing on the
-// ground), or 'ledges' (the rest standing on ledges, after the ledges).
+// ground, and pieces marked `under`), or 'ledges' (the rest standing on ledges, after the ledges).
 function drawDeco(ctx, map, cam, width, time, pass, air = '#ffffff') {
   const back = setBack(map);
   for (const entry of map.deco ?? []) {
-    const [kind, wx, seed = 0, wy] = entry;
-    if (back.has(entry) ? pass !== 'behind' : pass !== (wy != null ? 'ledges' : 'ground')) continue;
+    const [kind, wx, seed = 0, wy, opt] = entry;
+    // (`opt.under`: a piece placed at its own height that still belongs behind the ledges, like the
+    // Glade's waterfall crag and the falls the footbridge crosses in front of.)
+    if (back.has(entry) ? pass !== 'behind' : pass !== (wy != null && !opt?.under ? 'ledges' : 'ground')) continue;
     const b = BUILDINGS[kind];
     const half = (b?.w ?? LANDMARKS[kind]?.w ?? 120) / 2 + 160;
     const x = wx - cam.x;

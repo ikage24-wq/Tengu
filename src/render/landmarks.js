@@ -3218,6 +3218,102 @@ function drawWoodTree(ctx, x, y, time, seed) {
   blit(ctx, c, -170, -20 - 34 - 132 - breath, { soft: true });
   ctx.restore();
 }
+// ---------- The Whispering Glade's valley walls (its remake, 2026-11-12) ----------
+
+// The cliffs the glade's valley is cut into: a wall of big rounded mossy boulders stacked up from
+// the valley floor, cool grey-green stone lit from the top left, moss cushions on every boulder's
+// shoulders with vines trailing down, little ferns and flowers in the cracks. `side` 0 is the west
+// wall (its face on the right), 1 the east wall (face on the left), 2 the rock spine in the middle
+// that the waterfall pours down in front of (wet and darker, narrower, both faces). The map's ledges
+// jut out of them in front. Bottom middle at the valley floor.
+const GD2R = Math.PI / 180;
+const GC = { base: '#b4c2ae', lit: '#d4dfc8', sh: '#93a492', deep: '#75887a', wet: '#9aaea4', wetLit: '#bcd0c4', moss: '#74c268', mossLit: '#a4dc8a', mossSh: '#4f9e5a', vine: '#4f9e5a', leaf: '#6cc468' };
+// (Drawn inside a margin, GM, on every side but the bottom, so no boulder, bush or vine is ever cut
+// off at the picture's edge.)
+const GM = 70;
+function gladeCliffArt(side) {
+  const spine = side === 2;
+  const w = spine ? 200 : 300;
+  const h = spine ? 470 : 290;
+  return art(`gladecliff|${side}`, w + GM * 2, h + GM, () => {
+    const out = [];
+    const r = (k) => hash01(side * 97 + k * 13.7);
+    const base = spine ? GC.wet : GC.base;
+    const lit = spine ? GC.wetLit : GC.lit;
+    // Where the wall's face is at height y: it leans and bulges a little, boulder by boulder.
+    const rows = Math.floor((h - 30) / 46);
+    const boulders = [];
+    for (let i = 0; i <= rows; i++) {
+      const y = h - 26 - i * 46 + (r(i) - 0.5) * 8;
+      const xs = spine ? [66, 134] : side === 0 ? [40, 130, 205] : [w - 40, w - 130, w - 205];
+      xs.forEach((x0, j) => {
+        const rx = (spine ? 54 : 66) + r(i * 5 + j) * (spine ? 14 : 22);
+        const ry = 26 + r(i * 7 + j + 3) * 6;
+        const face = !spine && j === 2;
+        // (The spine's slabs shift left and right and change size row by row, so it reads as a
+        // rugged pillar, not a neat stack.)
+        const jx = spine ? (r(i * 3 + j + 9) - 0.5) * 24 + Math.sin(i * 1.7) * 6 : (r(i * 3 + j + 9) - 0.5) * 22;
+        const sz = spine ? 0.78 + r(i * 11 + j) * 0.4 : 1;
+        boulders.push([x0 + jx + (face ? (side === 0 ? -4 : 4) * (i % 2) : 0), y, rx * (face ? 0.8 : 1) * sz, ry * (spine ? 0.9 + r(i + j * 5) * 0.3 : 1)]);
+      });
+    }
+    // Back to front: the upper boulders first, so each lower one sits in front of the one above;
+    // each boulder's moss and vines drawn with it, so the boulders in front cover them properly.
+    boulders.sort((a, b) => a[1] - b[1]);
+    boulders.forEach(([x, y, rx, ry], k) => {
+      out.push(E(x + rx * 0.06, y + ry * 0.12, rx, ry, spine ? GC.deep : GC.sh));
+      out.push(E(x, y, rx * 0.96, ry * 0.92, base));
+      out.push(F(E(x - rx * 0.26, y - ry * 0.32, rx * 0.5, ry * 0.36, lit)));
+      out.push(F(arc(x, y, rx * 0.96, ry * 0.92, 20, 150, ry * 0.2, spine ? GC.deep : GC.sh)));
+      if (r(k + 200) < 0.25) return;
+      // Moss draped along the slab's top edge, thickest in the middle, a lighter rim where the sun
+      // catches it.
+      const a0 = 205 + r(k + 300) * 25;
+      const a1 = 335 - r(k + 400) * 25;
+      out.push(F(arc(x, y + 1, rx * 0.97, ry * 0.94, a0, a1, 6.5, GC.mossSh)), F(arc(x, y - 0.6, rx * 0.96, ry * 0.92, a0 + 4, a1 - 4, 5.6, GC.moss)), F(arc(x, y - 2.4, rx * 0.9, ry * 0.86, a0 + 14, a1 - 30, 1.8, GC.mossLit)));
+      const mx = x + Math.cos(((a0 + a1) / 2) * GD2R) * rx * 0.96;
+      const mw = rx * 0.5;
+      if (r(k + 500) < 0.4) {
+        const len = 26 + r(k + 600) * 50;
+        const vx = mx + (r(k + 700) - 0.5) * mw;
+        const vy = y - ry * 0.92 * Math.sqrt(Math.max(0, 1 - ((vx - x) / (rx * 0.96)) ** 2)) + 4;
+        const pts = [];
+        for (let q = 0; q <= 8; q++) pts.push([vx + Math.sin(q * 0.9 + k) * 2.2, vy + (len * q) / 8]);
+        out.push(F(band(pts, () => 1, GC.vine)));
+        for (let q = 2; q <= 8; q += 2) out.push(F(E(pts[q][0] + (q % 4 ? 2.4 : -2.4), pts[q][1], 2.4, 1.5, GC.leaf)));
+      }
+    });
+    // Little ferns and flowers tucked in the cracks.
+    for (let k = 0; k < (spine ? 6 : 12); k++) {
+      const fx = 20 + r(k + 800) * (w - 40);
+      const fy = 60 + r(k + 900) * (h - 120);
+      if (k % 3 === 0) {
+        out.push(F(E(fx - 3, fy, 4.4, 1.8, GC.leaf)), F(E(fx + 3, fy - 1, 4, 1.7, GC.moss)), F(E(fx, fy - 3, 3.4, 1.6, GC.mossLit)));
+      } else {
+        const c = k % 2 ? '#ffc4d6' : '#ffffff';
+        for (const [dx, dy] of [[-2, 0], [2, 0], [0, -2], [0, 2]]) out.push(F(E(fx + dx * 0.9, fy + dy * 0.9, 1.6, 1.6, c)));
+        out.push(F(E(fx, fy, 1, 1, '#ffe68a')));
+      }
+    }
+    // A crown of moss and a couple of round bushes along the top.
+    const topY = 30;
+    out.push(E(w / 2, topY + 6, w * 0.48, 16, GC.mossSh), E(w / 2, topY, w * 0.47, 14, GC.moss), F(E(w * 0.4, topY - 6, w * 0.26, 5, GC.mossLit)));
+    for (const [bx, br] of spine ? [[w * 0.26, 16], [w * 0.76, 14]] : [[w * 0.3, 22], [w * 0.68, 18]]) {
+      out.push(E(bx, topY - br * 0.6, br, br * 0.8, '#5fb862'), F(E(bx - br * 0.3, topY - br * 0.9, br * 0.5, br * 0.3, '#93d884')));
+    }
+    // The crag the waterfall springs from: a dark cleft near its top, wet stone round it, ferns.
+    if (spine) {
+      out.push(E(w / 2, 70, 20, 26, GC.deep), E(w / 2, 74, 14, 20, '#4f5e6a'), F(E(w / 2 - 6, 62, 5, 8, '#6a7a86')));
+      out.push(F(E(w / 2 - 26, 56, 7, 3, GC.leaf)), F(E(w / 2 + 26, 60, 7, 3, GC.moss)), F(E(w / 2 + 22, 54, 5, 2.4, GC.mossLit)));
+    }
+    // (Into the margin: every shape moved in by GM.)
+    return out.filter(Boolean).map((sh) => (sh.pts ? { ...sh, pts: sh.pts.map(([px, py]) => [px + GM, py + GM]) } : { ...sh, x: (sh.x ?? 0) + GM, y: (sh.y ?? 0) + GM }));
+  });
+}
+function drawGladeCliff(ctx, x, y, seed) {
+  place(ctx, gladeCliffArt(seed), x, y + 4);
+}
+
 const hash01 = (n) => {
   const x = Math.sin(n * 127.1 + 311.7) * 43758.5453;
   return x - Math.floor(x);
@@ -3227,6 +3323,8 @@ const KINDS = {
   // (Mossy Woods' giant trees: all three crowns at one height, 480 up, so the bridges run level;
   // the seed varies each tree's face and blossoms.)
   woodtree: { w: 300, h: 640, draw: (ctx, x, y, time, seed) => drawWoodTree(ctx, x, y, time, seed) },
+  // (The Whispering Glade's valley walls and the rock spine behind its falls: seed 0 west, 1 east, 2 spine.)
+  gladecliff: { w: 440, h: 360, draw: (ctx, x, y, time, seed) => drawGladeCliff(ctx, x, y, seed) },
   torii: { w: 132, h: 118, draw: (ctx, x, y) => place(ctx, toriiArt(), x, y) },
   foxstatue: { w: 50, h: 74, draw: (ctx, x, y, time, seed) => place(ctx, foxstatueArt(variant(seed, 2)), x, y, { flip: variant(seed, 2) === 1 }) },
   hokora: {

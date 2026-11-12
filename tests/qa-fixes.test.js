@@ -120,11 +120,13 @@ test('a hunter gives up on a flyer hovering out of reach and goes after somethin
     for (let i = 0; i < 30; i++) step(world);
     const flyer = world.mobs.find((m) => m.def.fly);
     assert.ok(flyer);
-    // Hovering high over the bot's own floor, frozen in place, the only monster there.
+    // Hovering high over the bot's own floor (above the map's highest ledge, so truly out of
+    // reach whatever the layout), frozen in place, the only monster there.
     world.mobs = [flyer];
     world.spawner.slots = [];
     const x = bot.body.x;
-    Object.assign(flyer, { x, baseY: bot.body.y - 260, y: bot.body.y - 260, frozenUntil: Infinity, homeY: bot.body.y - 260 });
+    const high = Math.min(bot.body.y - 260, ...world.map.platforms.map((p) => p.y - 300));
+    Object.assign(flyer, { x, baseY: high, y: high, frozenUntil: Infinity, homeY: high });
     bot.brain.target = flyer;
     let gaveUp = null;
     for (let i = 0; i < 60 * 12 && gaveUp == null; i++) {

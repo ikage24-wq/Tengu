@@ -337,7 +337,7 @@ export const STORY_LOCKS = {
 // her trial, a queen comes back now and then on her region's map for a friendly rematch (a field
 // boss anyone there can fight together).
 export const TRIALS = {
-  bower: { boss: 'sylvana', quest: 'story_3_2', field: 'glade', x: 1000 },
+  bower: { boss: 'sylvana', quest: 'story_3_2', field: 'glade', x: 760 },
   sanctum: { boss: 'tamamo', quest: 'story_4_3', field: 'shrine', x: 1000 },
   grotto: { boss: 'lilith', quest: 'story_5_3', field: 'springs', x: 1000 },
   terrace: { boss: 'selene', quest: 'story_6_3', field: 'starfall', x: 1000 },
