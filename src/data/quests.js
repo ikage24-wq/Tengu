@@ -275,7 +275,7 @@ export const QUESTS = {
   },
   // Kestrel's story (her archers'): the arrow she shot off Windy Canyon at the Spring Fair when she
   // was a girl. It never came down, everyone laughed, and she's never lived it down. The wind
-  // carried it to the Whispering Glade, where the Sylphs have kept it as treasure ever since.
+  // carried it to the Whispering Glade, where the Blossom Fairies have kept it as treasure ever since.
   kestrel_targets: {
     id: 'kestrel_targets', name: 'Moving Targets', giver: 'kestrel', minLevel: 7,
     text: "Standing targets teach you nothing. They just stand there. Smug. The Lambkins in Clover Hills never stop frolicking: catch 15 of them, whatever you fight with, and you'll have quick eyes for life.",
@@ -397,7 +397,7 @@ export const QUESTS = {
   // take, so they light her for good, and the trail leads on to the cold springs (chapter 5).
   tora_handles: {
     id: 'tora_handles', name: 'Heartwood Handles', giver: 'tora', minLevel: 17,
-    text: "The best hilts are Heartwood, straight off a Treant in the Whispering Glade. Bring me 12. Why 12? Because 10 felt lazy and 15 felt mean. I'll put an edge on your gear, and maybe keep a couple back. Don't ask what for.",
+    text: "The best hilts are Heartwood. The Puddle Kids in the Whispering Glade keep fishing it out of their puddles, don't ask me how. Bring me 12. Why 12? Because 10 felt lazy and 15 felt mean. I'll put an edge on your gear, and maybe keep a couple back. Don't ask what for.",
     objectives: [{ type: 'collect', item: 'moss_stone', count: 12 }],
     rewards: { exp: 22000, gold: 570, items: [] },
   },
@@ -661,9 +661,9 @@ export const QUESTS = {
     rewards: { exp: 5600, gold: 180, items: [{ id: 'warrior_gloves_10', qty: 1, forJob: true, variant: 'roll' }] },
   },
   kestrel_glade: {
-    id: 'kestrel_glade', name: 'Sylph Treasure', giver: 'kestrel', minLevel: 21, prereq: 'kestrel_canyon', family: 'archer',
-    text: "The wind up there blows east, all the way to the Whispering Glade. And Sylphs steal anything shiny or clever, which explains my arrow AND my lunchbox. Go to the top of the Glade where they keep their hoard, and calm 15 of them so you can look. Please.",
-    objectives: [{ type: 'visit', map: 'glade', above: 500, place: 'the Sylphs\' hoard at the top of the Glade' }, { type: 'kill', mob: 'sylph', count: 15 }],
+    id: 'kestrel_glade', name: 'Fairy Treasure', giver: 'kestrel', minLevel: 21, prereq: 'kestrel_canyon', family: 'archer',
+    text: "The wind up there blows east, all the way to the Whispering Glade. And the Blossom Fairies there steal anything shiny or clever, which explains my arrow AND my lunchbox. Go to the top of the Glade where they keep their hoard, and calm 15 of them so you can look. Please.",
+    objectives: [{ type: 'visit', map: 'glade', above: 500, place: 'the fairies\' hoard at the top of the Glade' }, { type: 'kill', mob: 'blossomfairy', count: 15 }],
     rewards: { exp: 13500, gold: 360, items: [{ id: 'mana_elixir', qty: 5 }] },
   },
   kestrel_wings: {
@@ -700,8 +700,8 @@ export const QUESTS = {
   // Temple Roof. They come home, and Nim and her candles make the wish together, as a team.
   nim_chimes: {
     id: 'nim_chimes', name: 'Stolen Chimes', giver: 'nim', minLevel: 19,
-    text: "Th-the Sylphs in the Whispering Glade keep stealing my wind chimes. They wear them as earrings. They look really good in them, which makes it worse. Shoo 15 of them away and bring back 6 of the feathers they shed? As a, um, trade? Is that how trading works?",
-    objectives: [{ type: 'kill', mob: 'sylph', count: 15 }, { type: 'collect', item: 'sylph_feather', count: 6 }],
+    text: "Th-the Blossom Fairies in the Whispering Glade keep stealing my wind chimes. They wear them as earrings. They look really good in them, which makes it worse. Shoo 15 of them away and bring back 6 of the feathers they leave lying about? (Where do fairies even get feathers?) As a, um, trade? Is that how trading works?",
+    objectives: [{ type: 'kill', mob: 'blossomfairy', count: 15 }, { type: 'collect', item: 'sylph_feather', count: 6 }],
     rewards: { exp: 26000, gold: 700, items: [{ id: 'mana_elixir', qty: 5 }] },
   },
 
@@ -726,7 +726,7 @@ export const QUESTS = {
   },
   vex_stage: {
     id: 'vex_stage', name: 'Quick Feet, Quiet Hands', giver: 'vex', minLevel: 18, prereq: 'vex_shadows', family: 'thief',
-    text: "The hammer's for a good cause, and that's all I'm saying. A good cause also needs boards. Heartwood, from the Treants in the Whispering Glade: bring me 8. Don't tell anyone what it's for. You don't know what it's for. Nobody knows anything. Act natural.",
+    text: "The hammer's for a good cause, and that's all I'm saying. A good cause also needs boards. Heartwood, from the Puddle Kids' puddles in the Whispering Glade: bring me 8. Don't tell anyone what it's for. You don't know what it's for. Nobody knows anything. Act natural.",
     objectives: [{ type: 'collect', item: 'moss_stone', count: 8 }],
     rewards: { exp: 14600, gold: 380, items: [{ id: 'warrior_gloves_20', qty: 1, forJob: true, variant: 'roll' }] },
   },

@@ -35,6 +35,7 @@ import { harvmouseRig, harvmouseStill } from './harvmouserig.js';
 import { mosstortRig, mosstortStill } from './mosstortrig.js';
 import { mossowletRig, mossowletStill } from './mossowletrig.js';
 import { redpandaRig, redpandaStill } from './redpandarig.js';
+import { puddleKidRig, puddleKidStill, blossomFairyRig, blossomFairyStill } from './gladekidsrig.js';
 
 // (The Turnip Tot is a live rig, rebuilt 2026-11-11: its still frames stay for portraits.)
 MEADOW.sproutling.rig = turnipRig;
@@ -54,6 +55,9 @@ FARM.mosstort = { walk: 8, idle: 6, attack: 4, stride: 22, atkMs: [80, 300, 220]
 FARM.mossowlet = { walk: 8, idle: 6, attack: 4, stride: 46, atkMs: [80, 300, 220], draw: mossowletStill, rig: mossowletRig, pad: 4 };
 // (The Red Panda, new for Mossy Woods 2026-11-12: its own live rig, its stills from the same shapes.)
 FARM.redpanda = { walk: 8, idle: 6, attack: 4, stride: 22, atkMs: [80, 300, 220], draw: redpandaStill, rig: redpandaRig, pad: 4 };
+// (Whispering Glade's tanukis in disguise, 2026-11-13: live rigs, their stills from the same drawings.)
+FARM.puddlekid = { walk: 8, idle: 6, attack: 4, stride: 18, atkMs: [80, 300, 220], draw: puddleKidStill, rig: puddleKidRig, pad: 4 };
+FARM.blossomfairy = { walk: 8, idle: 6, attack: 4, stride: 40, atkMs: [80, 300, 220], draw: blossomFairyStill, rig: blossomFairyRig, pad: 4 };
 
 export const ARTS = { ...MEADOW, ...WILDS, ...RUINS, ...SKY, ...HOLLOW, ...BOSSES, ...MAIDENS, ...QUEENS, ...BEES, ...FARM, ...MANOR, ...MANORBOSS, ...SEA, ...SEABOSS, ...TOY, ...TOYBOSS, ...ASTRAL, ...ASTRALBOSS, ...CANDY, ...CANDYBOSS, ...STAGE, ...STAGEBOSS, ...SKYFOLK, ...SKYBOSS, ...TEA };
 

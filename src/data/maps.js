@@ -2464,9 +2464,10 @@ Object.assign(MAPS, {
   // The Whispering Glade (remade 2026-11-12, the player's pick: small, two tiers): a little valley
   // in the woods. Below, the Flower Meadow round a pool, with the fishing dock out over it and the
   // way back to Mossy Woods in the west. A low mossy cliff stands either side, a step part-way up
-  // each, and on top the Sylph Grove: the two cliff tops and the rock lip between them that the
+  // each, and on top the Fairy Grove: the two cliff tops and the rock lip between them that the
   // waterfall pours off into the pool. The falls' mist lifts you (Up to ride it) to the leaf above,
-  // where the Sylphs keep their hoard and the way on to Sylvana's Bower is.
+  // where the Blossom Fairies keep their hoard and the way on to Sylvana's Bower is. (Its little folk
+  // are tanukis in disguise: the Puddle Kids below, the Blossom Fairies up top.)
   glade: {
     id: 'glade', name: 'Whispering Glade', theme: 'forest', town: 'harbor', world: { x: 278, y: 160 }, perSpawn: 1,
     look: { sky: ['#8fe0d8', '#d2f4ea', '#fffbe8'], far: '#8fd6bc', mid: '#6cc4a0', midTrim: '#4fae86', light: 'morning', forestStyle: 'glade', material: 'glade', edges: 'flowers', props: ['flower', 'tuft', 'tulip'], propKeep: 0.45, ledgeKeep: 0.35, drift: null, critters: [], noAmbient: true, rainbow: 0.35 },
@@ -2477,8 +2478,8 @@ Object.assign(MAPS, {
       // (No monsters in the pool, on the dock, the lip or the leaf.)
       quiet: [[500, 940, 140], [380, 900, 60], [500, 480, 120]],
       zones: [
-        { name: 'Flower Meadow', color: '#e889b4', mobs: ['mossgolem', 'sylph'], nodes: [SPOT.fruit(2, 'whisperberry'), SPOT.fiber(2), SPOT.ore(2)] },
-        { name: 'Sylph Grove', color: '#6fae5f', from: 700, mobs: ['sylph'], nodes: [SPOT.honey(2), SPOT.fruit(2, 'whisperberry'), SPOT.night(2)],
+        { name: 'Flower Meadow', color: '#e889b4', mobs: ['puddlekid', 'blossomfairy'], nodes: [SPOT.fruit(2, 'whisperberry'), SPOT.fiber(2), SPOT.ore(2)] },
+        { name: 'Fairy Grove', color: '#6fae5f', from: 700, mobs: ['blossomfairy'], nodes: [SPOT.honey(2), SPOT.fruit(2, 'whisperberry'), SPOT.night(2)],
           look: { sky: ['#b8ecd8', '#e2f8e8', '#fffbe6'], far: '#b0e4c4', mid: '#90d4a8' } },
       ],
       ledges: [
@@ -2488,18 +2489,18 @@ Object.assign(MAPS, {
         // A little footbridge between the cliff tops, the falls pouring down behind it (one walk
         // across the top).
         { x: 400, y: 660, w: 200, style: 'bridge', noProps: true, noRope: true },
-        // The leaf above the falls, with the Sylphs' hoard.
+        // The leaf above the falls, with the fairies' hoard.
         { x: 400, y: 480, w: 200, style: 'leaf', noProps: true, noRope: true },
         // The fishing dock off the bank, out over the pool.
         { x: 380, y: 900, w: 80, posts: true, walkOn: true },
       ],
     }),
-    // Its monsters, placed by hand (one each: perSpawn): Treants on the meadow, Sylphs up the cliffs.
+    // Its monsters, placed by hand (one each: perSpawn): Puddle Kids on the meadow, Blossom Fairies up the cliffs.
     // (Kept clear of the arrivals: the way in from the woods in the west, and the way back down
     // from Sylvana's Bower on the leaf.)
     spawns: [
-      { mob: 'mossgolem', x: 800, y: 900 }, { mob: 'mossgolem', x: 940, y: 900 },
-      { mob: 'sylph', x: 90, y: 660 }, { mob: 'sylph', x: 740, y: 780 }, { mob: 'sylph', x: 910, y: 660 }, { mob: 'sylph', x: 500, y: 660 },
+      { mob: 'puddlekid', x: 800, y: 900 }, { mob: 'puddlekid', x: 940, y: 900 },
+      { mob: 'blossomfairy', x: 90, y: 660 }, { mob: 'blossomfairy', x: 740, y: 780 }, { mob: 'blossomfairy', x: 910, y: 660 }, { mob: 'blossomfairy', x: 500, y: 660 },
     ],
     // Its gathering spots, placed by hand.
     nodes: [
@@ -2523,8 +2524,8 @@ Object.assign(MAPS, {
     deco: [['gladecliff', 150, 0], ['gladecliff', 850, 1], ['gladecliff', 500, 2], ['waterfall', 500, 116, 656, { under: true }], ['waterfall', 500, 258, 914, { under: true }]],
     lamps: [{ x: 260, y: 850 }, { x: 760, y: 850 }, { x: 500, y: 440 }],
     spirit: { x: 500, y: 420 },
-    // (The Sylphs nap but don't play: playing pulls them off their own ledges.)
-    habitats: { sylph: { naps: true }, mossgolem: { naps: true, home: { x: 820, y: 900 } } },
+    // (The fairies nap but don't play: playing pulls them off their own ledges.)
+    habitats: { blossomfairy: { naps: true }, puddlekid: { naps: true, home: { x: 820, y: 900 } } },
   },
 
 

@@ -88,7 +88,7 @@ const QUEENS = {
       { id: 'roots', name: 'Root Wave', sub: 'Jump, or get up on a ledge!', every: 11, make: () => [{ kind: 'floor', warn: 1.8, k: 1, fx: 'celfissure' }] },
       { id: 'vines', name: 'Vine Lash', sub: 'Get out of the lane', every: 8, make: (q, p) => [lane(q, p, 420, 1.3, 0.9, 'celwindspin')] },
     ],
-    adds: { at: [0.5], mob: 'sylph', n: 2, line: 'Sylphs, to me!' },
+    adds: { at: [0.5], mob: 'blossomfairy', n: 2, line: 'Fairies, to me!' },
   },
   tamamo: {
     color: '#ffa65a', light: '#ffe2bf',

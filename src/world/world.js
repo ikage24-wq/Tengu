@@ -689,7 +689,7 @@ export function killMob(world, m, byParty = false) {
   const story = m.def.id === 'crystalking' && char.quests.story_7_2?.state === 'active';
   const piece = setDropFor(char, m.def.id, m.trialOf || story ? 1 : 0.35);
   if (piece) world.drops.push(...spawnDrops([{ kind: 'item', inst: makeEquip(piece, { rarity: 1, variant: 'roll' }) }], m.x, m.y));
-  world.juice.push({ type: 'kill', x: m.x, y: m.y, w: m.def.w, h: m.def.h, boss: Boolean(m.def.boss), mob: m.def.id });
+  world.juice.push({ type: 'kill', x: m.x, y: m.y, w: m.def.w, h: m.def.h, boss: Boolean(m.def.boss), mob: m.def.id, leaf: Boolean(m.def.leafPoof) });
   // A boss falls with a short stop; its weight comes from the slow motion and flash after (see
   // render/particles.js).
   world.hitstop = Math.max(world.hitstop, m.def.boss ? 0.12 : 0.045);
@@ -987,7 +987,7 @@ export function updateWorld(world, dt, input) {
       // Their own kill: it falls, and nothing comes to you.
       if (h.stranger) {
         m.credited = true;
-        world.juice.push({ type: 'kill', x: m.x, y: m.y, w: m.def.w, h: m.def.h, boss: false, party: true, mob: m.def.id });
+        world.juice.push({ type: 'kill', x: m.x, y: m.y, w: m.def.w, h: m.def.h, boss: false, party: true, mob: m.def.id, leaf: Boolean(m.def.leafPoof) });
         world.onStrangerKill?.(h.party, m);
       } else {
         if (h.party) m.killedBy = h.party;

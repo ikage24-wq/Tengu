@@ -167,6 +167,28 @@ export function poof(fx, x, y, w, h, boss) {
   }
 }
 
+// A tanuki's disguise dropping (2026-11-13): a thick round puff of white smoke where it stood, and
+// a single leaf (the leaf it wore to change) tossed up out of it, that rocks and drifts down to the
+// ground, lies there a moment and fades.
+export function leafPoof(fx, x, y, w, h) {
+  const cy = y - h / 2;
+  const r = Math.max(9, Math.max(w, h) * 0.32);
+  for (let i = 0; i < 9; i++) {
+    const a = (i / 9) * Math.PI * 2 + Math.random() * 0.4;
+    const sp = r * (2.2 + Math.random() * 1.6);
+    add(fx, {
+      x: x + Math.cos(a) * r * 0.3, y: cy + Math.sin(a) * r * 0.3, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp * 0.6 - 12, drag: 4, curl: 14,
+      phase: Math.random() * 6, life: 0.55 + Math.random() * 0.25, size: r * (0.55 + Math.random() * 0.25), shape: 'puff', holes: true, seed: Math.random(),
+      color: '#ffffff', shade: i % 2 ? '#e6e2ee' : '#efe6dc',
+    });
+  }
+  add(fx, { x, y: cy, vx: 0, vy: 0, life: 0.5, size: r * 0.9, shape: 'puff', seed: Math.random(), color: '#ffffff', shade: '#e6e2ee' });
+  add(fx, {
+    x, y: cy - 2, vx: (Math.random() - 0.5) * 14, vy: -85, g: 70, drag: 2.6, sway: 14, phase: Math.random() * 6, delay: 0.06,
+    life: 3, size: 4.4, shape: 'leaf', floor: y - 1, color: '#7ccc6a', shade: '#4f9e52',
+  });
+}
+
 // Footsteps of an endgame weapon's wielder: feathers, stardust, sparks, flames, splashes, embers,
 // soul wisps, light streaks, chainsaw sparks and smoke, or neon pixels.
 export function elementStep(fx, x, y, element, dir) {
@@ -259,7 +281,8 @@ export function absorbJuice(fx, world) {
   for (const j of world.juice) {
     if (j.type === 'hit') sparks(fx, j.x, j.y, j.crit, j.dir, realOf(j, world.char) ?? elementOf(world)?.sparks, Boolean(realOf(j, world.char)));
     else if (j.type === 'kill') {
-      poof(fx, j.x, j.y, j.w, j.h, j.boss);
+      if (j.leaf) leafPoof(fx, j.x, j.y, j.w, j.h);
+      else poof(fx, j.x, j.y, j.w, j.h, j.boss);
       if (j.boss) {
         // The boss stop: a white flash over everything, a quake, and the world easing into slow
         // motion for a moment while the blasts go off.
@@ -424,8 +447,16 @@ export function updateParticles(fx, dt, world, cam, viewW, viewH) {
     const k = Math.exp(-p.drag * dt);
     p.vx *= k;
     p.vy *= k;
-    p.x += p.vx * dt + (p.sway ? Math.sin(p.age * 1.6 + p.phase) * p.sway * dt : 0);
+    p.x += p.vx * dt + (p.sway && !p.landed ? Math.sin(p.age * 1.6 + p.phase) * p.sway * dt : 0);
     p.y += p.vy * dt;
+    // (Something that settles on the ground: it stops where it lands.)
+    if (p.floor !== undefined && p.y >= p.floor && p.vy >= 0) {
+      p.y = p.floor;
+      p.vy = 0;
+      p.vx = 0;
+      p.g = 0;
+      p.landed ??= p.age;
+    }
     p.size += p.grow * dt;
   }
   fx.list = fx.list.filter((p) => p.age < p.life);
@@ -533,6 +564,26 @@ export function drawParticles(ctx, fx, cam, time) {
         ctx.rotate(p.age * p.spin);
         ctx.fillRect(-r, -0.5, r * 2, 1.5);
         ctx.fillRect(-0.5, -r, 1.5, r * 2);
+        ctx.restore();
+        break;
+      }
+      case 'leaf': {
+        // Rocks side to side as it falls, settles flat when it lands, and fades out at the end.
+        ctx.globalAlpha = Math.max(0, Math.min(1, (p.life - p.age) / 0.6)) * p.alpha;
+        const rock = p.landed !== undefined ? 0.25 * Math.exp(-(p.age - p.landed) * 5) * Math.cos((p.age - p.landed) * 14) : Math.sin(p.age * 3.4 + p.phase) * 0.8;
+        const L = p.size * 1.3;
+        const W = p.size * 0.62;
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.rotate(rock + (p.landed !== undefined ? 0.12 : 0));
+        ctx.beginPath();
+        ctx.moveTo(-L, 0);
+        ctx.quadraticCurveTo(0, -W * 1.6, L, 0);
+        ctx.quadraticCurveTo(0, W * 1.6, -L, 0);
+        ctx.fill();
+        ctx.fillStyle = p.shade;
+        ctx.fillRect(-L * 0.8, -0.3, L * 1.6, 0.6);
+        ctx.fillRect(-L - 1.2, -0.3, 1.4, 0.6);
         ctx.restore();
         break;
       }

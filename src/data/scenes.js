@@ -886,14 +886,14 @@ export const SIDE_SCENES = {
     { who: 'player', text: "At the top the wind never stops. It blows east, hard, all the way to the trees. It took my hat and gave it to a bird." },
     { together: [{ emote: 'kestrel', kind: 'idea', dur: 1.4 }, { fx: 'wind', at: 'kestrel' }] },
     { who: 'kestrel', text: "East... to the Whispering Glade. It never fell. It FLEW. I'm not a bad shot. I'm a GREAT shot. Write that down.", mood: 'surprised' },
-    { who: 'kestrel', text: "And the Sylphs there keep anything that catches the light. Oh, they'd love my arrow. They've probably framed it.", mood: 'happy' },
+    { who: 'kestrel', text: "And the fairies there keep anything that catches the light. Oh, they'd love my arrow. They've probably framed it.", mood: 'happy' },
   ],
   kestrel_glade_done: [
     { who: null, text: "Among the stolen wind chimes, three spoons and a lunchbox at the top of the Glade lay one green-fletched arrow, straight as the day it was made." },
     { together: [{ emote: 'kestrel', kind: '!', dur: 1.2 }, { jump: 'kestrel', height: 16 }, { fx: 'feathers', at: 'kestrel', n: 10 }] },
     { who: 'kestrel', text: "That's it! That's MINE! Look, my initials on the shaft! ...And that's my lunchbox.", mood: 'surprised' },
     { together: [{ emote: 'kestrel', kind: 'heart', dur: 1.4 }, { wait: 0.6 }] },
-    { who: 'kestrel', text: "Ten years in a Sylph nest. It went further than any arrow on this island. Nobody ever believed me.", mood: 'happy' },
+    { who: 'kestrel', text: "Ten years in a fairy's hoard. It went further than any arrow on this island. Nobody ever believed me.", mood: 'happy' },
   ],
   kestrel_wings_done: [
     { who: 'kestrel', text: "Imp-wing fletching. Lighter than air. Everybody out here! I want witnesses this time! Clover, put the lute down.", mood: 'happy' },

@@ -121,8 +121,8 @@ export const STORY_QUESTS = {
   // ---------- Chapter 5: Whispers in the Glade (18-23) ----------
   story_3_1: s('story_3_1', 5, {
     name: 'A Song Out of Tune', giver: 'elowen', minLevel: 18, prereq: 'story_waltz',
-    text: "Listen. Can you hear it? Someone is weeping in the Whispering Glade, past Mossy Woods, very loudly and very dramatically. Trust me, I know dramatic. The Sylphs have gone wild with it. Go gently: calm 15 of them, and find out who.",
-    objectives: [{ type: 'visit', map: 'glade' }, { type: 'kill', mob: 'sylph', count: 15 }],
+    text: "Listen. Can you hear it? Someone is weeping in the Whispering Glade, past Mossy Woods, very loudly and very dramatically. Trust me, I know dramatic. The little fairies there have gone wild with it. Go gently: calm 15 of them, and find out who.",
+    objectives: [{ type: 'visit', map: 'glade' }, { type: 'kill', mob: 'blossomfairy', count: 15 }],
     rewards: { exp: 17000, gold: 450, items: [{ id: 'mana_elixir', qty: 5 }] },
     scenes: { accept: 'ch3_open', done: 'ch3_crying' },
   }),
@@ -514,8 +514,9 @@ export const SCENES = {
     { who: 'elowen', text: 'The wind wall around the Whispering Glade has thinned. Go quickly, and go gently. Perhaps bring a hanky.' },
   ],
   ch3_crying: [
-    { who: 'elowen', text: 'The Sylphs said a name: Sylvana. The Dryad Queen.', mood: 'sad' },
-    { who: 'elowen', text: "Her trees can't talk to each other without the wind. She's been alone in her bower for weeks, writing long, sad poems. The Sylphs have had to listen to all of them.", mood: 'sad' },
+    { who: 'elowen', text: 'The fairies said a name: Sylvana. The Dryad Queen.', mood: 'sad' },
+    { who: 'elowen', text: "Her trees can't talk to each other without the wind. She's been alone in her bower for weeks, writing long, sad poems. The fairies have had to listen to all of them.", mood: 'sad' },
+    { who: 'elowen', text: 'Odd little fairies, mind. When one of them vanished, all it left behind was a leaf.', mood: 'surprised' },
   ],
   ch3_trial: [
     { who: null, text: 'The vines part, just a little. Beyond them, a bower of white flowers and green light.' },

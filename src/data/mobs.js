@@ -117,6 +117,17 @@ export const MOBS = {
     id: 'mossgolem', name: 'Treant', level: 18, hp: 620, atk: 58, def: 20, acc: 40, eva: 4, exp: 420, gold: [6, 15],
     speed: 22, w: 34, h: 58, art: 'mossgolem', drops: [{ id: 'moss_stone', chance: 0.45 }, { id: 'maple_log', chance: 0.08 }, { gear: 'bottom', chance: 0.01 }],
   }),
+  // Whispering Glade's tanukis in disguise (2026-11-13): little folk who are really tanukis, and go up
+  // in a puff of smoke leaving a leaf when beaten (`leafPoof`). A rain-sprite in a yellow raincoat
+  // with a lily-pad umbrella on the floor, and a flower fairy in the air (render/mobs/gladekidsrig.js).
+  puddlekid: mob({
+    id: 'puddlekid', name: 'Puddle Kid', level: 18, hp: 620, atk: 58, def: 20, acc: 40, eva: 4, exp: 420, gold: [6, 15],
+    speed: 30, w: 26, h: 38, art: 'puddlekid', leafPoof: true, drops: [{ id: 'moss_stone', chance: 0.45 }, { id: 'maple_log', chance: 0.08 }, { gear: 'bottom', chance: 0.01 }],
+  }),
+  blossomfairy: mob({
+    id: 'blossomfairy', name: 'Blossom Fairy', level: 21, hp: 700, atk: 64, def: 14, acc: 48, eva: 12, exp: 500, gold: [7, 17],
+    speed: 60, w: 26, h: 40, art: 'blossomfairy', fly: true, leafPoof: true, drops: [{ id: 'sylph_feather', chance: 0.45 }, { id: 'silkmoss', chance: 0.08 }, { id: 'fairy_wings', chance: 0.01 }],
+  }),
   wisp: mob({
     id: 'wisp', name: "Will-o'-Wisp", level: 20, hp: 660, atk: 62, def: 18, acc: 46, eva: 7, exp: 480, gold: [7, 16],
     speed: 40, w: 22, h: 39, art: 'wisp', fly: true, drops: [{ id: 'wisp_flame', chance: 0.45 }, { id: 'amethyst', chance: 0.08 }, { gear: 'shoes', chance: 0.01 }],

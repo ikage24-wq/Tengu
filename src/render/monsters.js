@@ -317,6 +317,9 @@ export function drawMonster(ctx, m, x, y, time, now = time) {
     ctx.restore();
     return;
   }
+  // A tanuki in disguise (`leafPoof`) is gone the instant it's beaten: it went up in smoke and left
+  // a leaf (render/particles.js leafPoof).
+  if (m.def.leafPoof && m.hp <= 0 && (m.dying ?? 0) > 0.03) return;
   drawMonsterNow(ctx, m, x, y, time, now);
 }
 
