@@ -14,10 +14,11 @@ import { online } from '../net/online.js';
 import { drawMochiAnim } from '../render/mochi-anim.js';
 import { STAT_ORDER, statIcon, gradeBadge, portraitCard, portraitOf as kitPortrait, tag } from './mochi-kit.js';
 import { VW, VH } from '../input.js';
-import { COLORS, windowFrame, text, box, button, hover, clicked, tooltip, fit, bar, tabs, icon, roundRect, tape } from './kit.js';
+import { COLORS, windowFrame, text, box, button, hover, clicked, tooltip, fit, wrap, bar, tabs, icon, roundRect, tape } from './kit.js';
+import { stageCard } from './race-cards.js';
 
 const W = 300;
-const H = 274;
+const H = 292;
 const STAT_WORD = { run: 'Run', fly: 'Fly', power: 'Power', stamina: 'Stamina', swim: 'Swim' };
 const cap = (s) => (s ? s[0].toUpperCase() + s.slice(1) : '');
 const NTH = ['1st', '2nd', '3rd', '4th', '5th', '6th'];
@@ -71,16 +72,20 @@ export function raceBoardWindow(ui, state, world) {
   // (A rank not open here: back to Beginner.)
   if (!rankOpen(char, win.stage, win.rank)) win.rank = 'beginner';
   const rank = RACE_RANKS[win.rank];
-  box(ctx, x, y, W - 20, 40, { fill: '#fff4f8', edge: '#ffc2d4', r: 8, width: 1 });
-  text(ctx, stage.name, x + 8, y + 12, { size: 8.5, bold: true });
+  box(ctx, x, y, W - 20, 58, { fill: '#fff4f8', edge: '#ffc2d4', r: 8, width: 1 });
+  // A window on to the course itself (ui/race-cards.js), so the stage is known by its look and not
+  // only by its name.
+  stageCard(ctx, win.stage, x + 5, y + 5, 86, 48, world.now);
+  const tx = x + 97;
+  text(ctx, stage.name, tx, y + 14, { size: 8.5, bold: true });
   // What it tests (its stat's icon), and the prizes.
-  if (stage.stat) statIcon(ctx, stage.stat, x + W - 30, y + 9.5, 5);
-  else STAT_ORDER.forEach((st, k) => statIcon(ctx, st, x + W - 30 - (4 - k) * 9, y + 9.5, 4));
-  text(ctx, `${rank.name} · ${stage.stat ? `tests ${STAT_WORD[stage.stat]}` : 'tests everything'}`, x + W - (stage.stat ? 38 : 70), y + 12, { size: 6.5, align: 'right', color: '#d0507a' });
-  text(ctx, fit(ctx, stage.about, W - 40, 6.5, false), x + 8, y + 23, { size: 6.5, color: COLORS.muted });
-  icon(ctx, 'coin', x + 12, y + 31, 7, '#e0a82a');
-  text(ctx, [1, 2, 3].map((p) => `${NTH[p - 1]} ${prizeOf(win.stage, win.rank, p).toLocaleString()}`).join('   ·   '), x + 20, y + 33.5, { size: 6.5, bold: true, color: '#b08a2a' });
-  y += 46;
+  if (stage.stat) statIcon(ctx, stage.stat, x + W - 30, y + 11.5, 5);
+  else STAT_ORDER.forEach((st, k) => statIcon(ctx, st, x + W - 30 - (4 - k) * 9, y + 11.5, 4));
+  text(ctx, `${rank.name} · ${stage.stat ? `tests ${STAT_WORD[stage.stat]}` : 'tests everything'}`, tx, y + 24, { size: 6.5, color: '#d0507a' });
+  wrap(ctx, stage.about, tx, y + 34, W - 20 - 92 - 12, { size: 6.5, lineHeight: 8.4, color: COLORS.muted });
+  icon(ctx, 'coin', tx + 4, y + 50, 7, '#e0a82a');
+  text(ctx, [1, 2, 3].map((p) => `${NTH[p - 1]} ${prizeOf(win.stage, win.rank, p).toLocaleString()}`).join('  ·  '), tx + 12, y + 52.5, { size: 6.5, bold: true, color: '#b08a2a' });
+  y += 64;
   // The ranks: a button each (a lock on one not open yet), with the picked Mochi's medal there.
   const rw = (W - 20 - (RANK_ORDER.length - 1) * 4) / RANK_ORDER.length;
   RANK_ORDER.forEach((rk, i) => {

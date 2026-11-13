@@ -1,0 +1,48 @@
+<!doctype html>
+<html><head><meta charset="utf-8"></head><body style="margin:0;background:#2a2230">
+<canvas id="c"></canvas>
+<script type="module">
+// Dev tool: the race board's stage pictures (ui/race-cards.js), each one at the size it is really
+// drawn and again blown up, so the shapes can be judged.
+//   ?scale=4     how big the blown-up copy is
+//   &t=0         seconds of clock (what moves: petals, water, a swinging lantern)
+//   &only=swim   just the one stage, very big
+//   &out=x.png   post the sheet to the catcher on 8001 under this name
+import { stageCard } from '../src/ui/race-cards.js';
+import { RACE_STAGES } from '../src/data/mochi-race.js';
+
+const q = new URLSearchParams(location.search);
+const scale = Number(q.get('scale') ?? 4);
+const t = Number(q.get('t') ?? 0);
+const only = q.get('only');
+const W = 86, H = 48;
+const ids = only ? [only] : Object.keys(RACE_STAGES);
+const big = only ? 9 : scale;
+const CW = 18 + W + 14 + W * big + 18;
+const CH = Math.max(H * big + 16, 70);
+const cv = document.getElementById('c');
+cv.width = CW;
+cv.height = CH * ids.length;
+const c = cv.getContext('2d');
+ids.forEach((id, i) => {
+  const y0 = i * CH;
+  c.fillStyle = i % 2 ? '#fff4f8' : '#fffaf2';
+  c.fillRect(0, y0, CW, CH);
+  stageCard(c, id, 18, y0 + (CH - H) / 2, W, H, t);
+  // The big copy is the same card magnified, not a bigger card: the props are drawn in real
+  // pixels, so a card asked for at twice the size would not be the card the board shows.
+  c.save();
+  c.translate(18 + W + 14, y0 + 8);
+  c.scale(big, big);
+  c.imageSmoothingEnabled = false;
+  stageCard(c, id, 0, 0, W, H, t);
+  c.restore();
+  c.fillStyle = '#9a6a86';
+  c.font = '11px sans-serif';
+  c.fillText(RACE_STAGES[id]?.name ?? id, 18, y0 + 14);
+});
+const out = q.get('out');
+if (out) cv.toBlob((b) => fetch('http://127.0.0.1:8001/' + out, { method: 'POST', body: b }).then(() => { document.title = 'ready'; }));
+else document.title = 'ready';
+</script>
+</body></html>

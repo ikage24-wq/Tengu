@@ -28,6 +28,7 @@
 
 import { MAPS } from '../data/maps.js';
 import { rollMochi, seededRandom, STATS } from '../data/mochi-genes.js';
+import { wearFor, tierForPoints } from '../data/mochi-wardrobe.js';
 import { newRecord, evolve, styleOf, STYLE_POINTS, CANT_POINTS as CANT } from '../data/mochi-raise.js';
 import { RACE_STAGES, RACE_RANKS, RANK_ORDER, RIVAL_NAMES, paceOf, CHEER, RACE_TAIL, RACE_MAX, prizeOf, MEDALS, medalKey, rankOpen } from '../data/mochi-race.js';
 import { groundAt, waterAt } from './physics.js';
@@ -153,6 +154,10 @@ export function rivalsFor(stageId, rank, hour) {
       Object.assign(rec, { age: 99999, mood: 80 });
       evolve(rec, rng);
     }
+    // Dressed for its standing (data/mochi-wardrobe.js): a Hatchling field is in plain cloth and a
+    // Master field in gold, so you can see what you are up against from the start line.
+    const level = STATS.reduce((sum, st) => sum + rec.stats[st].points, 0) / STATS.length;
+    rec.wear = wearFor(Math.floor(rng() * 1e9), tierForPoints(level));
     out.push({ rec, name: names.splice(Math.floor(rng() * names.length), 1)[0] });
   }
   return out;

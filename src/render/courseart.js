@@ -16,7 +16,7 @@
 
 import { art, place, BACKDROPS, BEHIND_GROUND } from './scenery.js';
 import { R, E, T, F, snap, mix, shade } from './pixel.js';
-import { hash, lean, pivoted, swing } from './propkit.js';
+import { hash, lean, leanFrame, pivoted, swing } from './propkit.js';
 import { windAt, windTravel, GROUND_ART, EDGE_KINDS } from './terrain.js';
 import { groundAt } from '../world/physics.js';
 import { drawSpectator, drawMochiPose } from './mochi-anim.js';
@@ -6197,7 +6197,297 @@ function noteKingdom(map, R, mo, time) {
   if (you.m.mode === 'fly') mo.launch ??= time;
 }
 // The things that stand beside the track (drawn behind the ground, the runners passing in front).
-const TRACKSIDE = new Set(['mr_squad', 'mr_starter', 'mr_parasol', 'mr_pound', 'mr_kagami', 'mr_onsen', 'mr_toro', 'mr_snowman', 'mr_cocoa', 'mr_bigsnow', 'mr_fans', 'mr_bigdango', 'mr_yatai', 'mr_taiko', 'mr_bigchochin', 'mr_kgate', 'mr_kbanner', 'mr_ksubjects', 'mr_kpole', 'mr_kcrown', 'mr_hayate']);
+// ---------- The Mochi Race Stadium ('course:stadium'; its redraw, 2026-11-13) ----------
+// The plaza you stand in before a race, and the only Mochi place that was never redrawn with the
+// courses. It is an open-air bowl on a sunny afternoon: far off, the far side of the stands curving
+// away with pennants along its top and the town's roofs beyond; nearer, the terrace that runs the
+// length of the plaza under a striped awning, with the day's standings on a board and blossom in
+// planters along it; and in front of that the swept clay of the track, chalked with a lane line.
+// The winners' podium stands where the races finish, and pennant poles mark the way out to the
+// courses.
+
+// The far side of the bowl: a long bank of seats curving away, its rows of Mochi just specks at
+// this distance, under a pale awning. It stands high enough to be seen over the near stands.
+function farStand(ctx, cam, width, y0, air) {
+  const par = 0.08;
+  const base = y0 - 34;
+  const off = cam.x * par;
+  const top = (sx) => base - 46 - Math.cos(((sx + off - 480) / 1600) * Math.PI) * 12;
+  const W = (c, k) => mix(c, air, k);
+  // The bank itself.
+  ctx.fillStyle = W('#aab8d4', 0.26);
+  ctx.beginPath();
+  ctx.moveTo(-8, base + 60);
+  for (let sx = -8; sx <= width + 8; sx += 6) ctx.lineTo(sx, top(sx));
+  ctx.lineTo(width + 8, base + 60);
+  ctx.fill();
+  // Its rows, each one a shade paler as it climbs.
+  for (let r = 0; r < 6; r++) {
+    ctx.fillStyle = W(r % 2 ? '#d2dcf0' : '#bcc8e2', 0.22);
+    ctx.beginPath();
+    ctx.moveTo(-8, top(-8) + 7 + r * 7);
+    for (let sx = -8; sx <= width + 8; sx += 6) ctx.lineTo(sx, top(sx) + 7 + r * 7);
+    for (let sx = width + 8; sx >= -8; sx -= 6) ctx.lineTo(sx, top(sx) + 11.4 + r * 7);
+    ctx.fill();
+  }
+  // The crowd in them, too far to be more than specks.
+  const specks = ['#ff9ec0', '#8fc8ee', '#ffcf86', '#9fd8a8', '#c8a8f0'];
+  repeat(cam.x, par, 6, width, (i, sx) => {
+    if (hash(i * 5.3) < 0.14) return;
+    const r = Math.floor(hash(i * 2.7) * 6);
+    ctx.fillStyle = W(specks[Math.floor(hash(i * 1.7) * specks.length)], 0.18);
+    ctx.fillRect(snap(sx), snap(top(sx) + 7.4 + r * 7), 3.4, 3.6);
+  });
+  // The roof over the back of it, its front edge scalloped, and the rail along the front.
+  ctx.fillStyle = W('#f0a8c0', 0.2);
+  ctx.beginPath();
+  ctx.moveTo(-8, top(-8) - 2);
+  for (let sx = -8; sx <= width + 8; sx += 6) ctx.lineTo(sx, top(sx) - 2);
+  for (let sx = width + 8; sx >= -8; sx -= 6) ctx.lineTo(sx, top(sx) - 11);
+  ctx.fill();
+  ctx.fillStyle = W('#fff4ea', 0.2);
+  repeat(cam.x, par, 13, width, (i, sx) => {
+    ctx.beginPath();
+    ctx.arc(sx + 6.5, top(sx) - 2, 6.5, 0, Math.PI);
+    ctx.fill();
+  });
+  ctx.fillStyle = W('#8fa0c4', 0.24);
+  ctx.beginPath();
+  for (let sx = -8; sx <= width + 8; sx += 6) ctx.lineTo(sx, top(sx) + 49);
+  for (let sx = width + 8; sx >= -8; sx -= 6) ctx.lineTo(sx, top(sx) + 52);
+  ctx.fill();
+  return top;
+}
+// A pennant on a thin pole, in a few cached shapes so it flies without asking for a new drawing.
+const pennantArt = (c, f) => art(`st-pennant|${c}|${f}`, 20, 32, () => {
+  const k = (f - 2) / 2;
+  return [F(R(1, 0, 1.6, 32, '#cbb79c')), F(E(1.8, 0.8, 1.6, 1.6, '#e8c470')),
+    F(T([[2.6, 1.8], [18 + k * 1.8, 4.4 + k * 2.2], [17 + k * 2, 9 + k * 2.6], [2.6, 11]], c)),
+    F(T([[2.6, 1.8], [10 + k, 3 + k], [9.6 + k, 6.6 + k], [2.6, 6.6]], mix(c, '#ffffff', 0.35)))];
+}, false);
+// The pennants along the top of the far stand.
+function farPennants(ctx, cam, width, top, air) {
+  const cols = ['#ff9ec0', '#ffd79a', '#9fd8e8', '#c8b0f0'];
+  repeat(cam.x, 0.08, 68, width, (i, sx) => {
+    const c = mix(cols[Math.abs(i) % cols.length], air, 0.22);
+    place(ctx, pennantArt(c, 2), snap(sx), snap(top(sx) - 8));
+  });
+}
+
+COURSES.stadium = {
+  far(ctx, t, cam, width, y0, time) {
+    const air = t.sky[1];
+    goldenSky(ctx, width, y0, 0);
+    clouds(ctx, cam, width, time, t.face === 'moon');
+    // The town the stadium was built beside, off over the hills.
+    const sky2 = mix(air, '#ffffff', 0.3);
+    hills(ctx, cam, width, y0 - 96, 22, 0.03, 4.1, mix('#cfe4ef', sky2, 0.55), mix('#e8f4fa', sky2, 0.5));
+    const ridge = hills(ctx, cam, width, y0 - 76, 26, 0.04, 2.3, mix('#b8ddbe', air, 0.4), mix('#dcf0dc', air, 0.36));
+    repeat(cam.x, 0.04, 96, width, (i, sx) => {
+      if (hash(i * 3.3) < 0.4) return;
+      const h = 10 + hash(i * 7.1) * 10;
+      const gy = ridge(sx) + 6;
+      ctx.fillStyle = mix('#e4d8ea', air, 0.46);
+      ctx.fillRect(snap(sx), snap(gy - h), 14, h);
+      ctx.fillStyle = mix('#c08a9c', air, 0.46);
+      ctx.beginPath();
+      ctx.moveTo(sx - 2, gy - h);
+      ctx.lineTo(sx + 7, gy - 7 - h);
+      ctx.lineTo(sx + 16, gy - h);
+      ctx.fill();
+    });
+    const top = farStand(ctx, cam, width, y0, air);
+    farPennants(ctx, cam, width, top, air);
+    return true;
+  },
+  mid(ctx, t, cam, width, y0, time) {
+    const air = t.sky[1];
+    // The infield: a wide band of close-cropped grass between the far stand and the track, which is
+    // also what hides the foot of the far stand.
+    // (This map's middle plane sits a little under the ground line, so the terrace is built up
+    // from well above it.)
+    const turf = hills(ctx, cam, width, y0 - 66, 9, 0.42, 5.1, mix('#9ad69e', air, 0.1), mix('#c8ecbc', air, 0.08));
+    // The terrace along the back of the plaza: a low wall, posts, and a striped awning over them.
+    const par = 0.42;
+    const off = cam.x * par;
+    const wallY = (sx) => turf(sx) + 34;
+    const H = 52;
+    ctx.fillStyle = '#e8d2ae';
+    ctx.beginPath();
+    ctx.moveTo(-8, wallY(-8));
+    for (let sx = -8; sx <= width + 8; sx += 8) ctx.lineTo(sx, wallY(sx));
+    for (let sx = width + 8; sx >= -8; sx -= 8) ctx.lineTo(sx, wallY(sx) - H);
+    ctx.fill();
+    ctx.fillStyle = '#c9ae85';
+    ctx.beginPath();
+    for (let sx = -8; sx <= width + 8; sx += 8) ctx.lineTo(sx, wallY(sx) - 3.4);
+    for (let sx = width + 8; sx >= -8; sx -= 8) ctx.lineTo(sx, wallY(sx) - 5);
+    ctx.fill();
+    // The awning: stripes along it, scalloped at its edge, with the posts it stands on.
+    repeat(cam.x, par, 26, width, (i, sx) => {
+      const y = wallY(sx) - H;
+      ctx.fillStyle = Math.abs(i) % 2 ? '#f47ca8' : '#fff4ea';
+      ctx.fillRect(snap(sx), snap(y - 9), 27, 9);
+      ctx.fillStyle = Math.abs(i) % 2 ? '#dc5c8a' : '#efe0d0';
+      ctx.beginPath();
+      ctx.arc(sx + 13, y, 13, 0, Math.PI);
+      ctx.fill();
+      ctx.fillStyle = '#b89b78';
+      ctx.fillRect(snap(sx + 12), snap(y + 2), 2.6, H - 2);
+    });
+    ctx.fillStyle = '#e8a878';
+    ctx.beginPath();
+    for (let sx = -8; sx <= width + 8; sx += 8) ctx.lineTo(sx, wallY(sx) - H - 10.4);
+    for (let sx = width + 8; sx >= -8; sx -= 8) ctx.lineTo(sx, wallY(sx) - H - 13);
+    ctx.fill();
+    // Bunting swagged between the posts, and a lantern hung under every other one.
+    repeat(cam.x, par, 26, width, (i, sx) => {
+      const y = wallY(sx) - H + 5;
+      const c = ['#ff9ec0', '#ffd79a', '#9fd8e8', '#c8b0f0'][Math.abs(i) % 4];
+      for (let k = 0; k < 4; k++) {
+        const fx = sx + 4 + k * 6;
+        const dip = Math.sin(((k + 0.5) / 4) * Math.PI) * 4;
+        ctx.fillStyle = k % 2 ? c : mix(c, '#ffffff', 0.4);
+        ctx.beginPath();
+        ctx.moveTo(fx, y + dip);
+        ctx.lineTo(fx + 4.4, y + dip);
+        ctx.lineTo(fx + 2.2, y + dip + 5);
+        ctx.fill();
+      }
+      if (Math.abs(i) % 2 === 0) {
+        const a = swing(time, Math.round(sx + off), 1, i);
+        pivoted(ctx, sx + 13, y + 7, a, () => {
+          ctx.fillStyle = '#fff0d8';
+          ctx.beginPath();
+          ctx.ellipse(sx + 13, y + 12, 4, 5, 0, 0, TAU);
+          ctx.fill();
+          ctx.fillStyle = '#e8b06a';
+          ctx.fillRect(snap(sx + 10), snap(y + 11.4), 6, 1.2);
+        });
+      }
+    });
+    // Along the terrace: blossom in big planters, the standings board, and tall masts with the
+    // stadium's banners hanging from them.
+    repeat(cam.x, par, 104, width, (i, sx) => {
+      const k = Math.abs(i) % 3;
+      if (k === 1) place(ctx, boardArt(), snap(sx + 30), snap(wallY(sx) + 3));
+      else place(ctx, planterArt(Math.abs(i) % 4), snap(sx + 46), snap(wallY(sx) + 3));
+      place(ctx, mastArt(Math.abs(i) % 4), snap(sx + 86), snap(wallY(sx) + 3));
+    });
+    return true;
+  },
+};
+// The standings board: the day's three places chalked up on it, under a little tiled roof.
+const boardArt = () => art('st-board', 64, 62, () => [
+  F(R(12, 52, 6, 10, '#9a7a56')), F(R(46, 52, 6, 10, '#9a7a56')),
+  R(4, 12, 56, 42, '#f2e2c4'), F(R(7, 15, 50, 36, '#fff6e6')),
+  F(T([[0, 13], [64, 13], [58, 3], [6, 3]], '#d8607e')),
+  F(T([[0, 13], [64, 13], [64, 16], [0, 16]], '#b4475f')),
+  ...[0, 1, 2].flatMap((k) => [
+    F(E(14, 24 + k * 10, 3.6, 3.6, ['#f2c94c', '#cfd8e6', '#e0996a'][k])),
+    F(E(13.2, 23 + k * 10, 1.4, 1, '#ffffff')),
+    F(R(21, 21.4 + k * 10, 30, 3, '#c9b89c')), F(R(21, 25.4 + k * 10, 20, 2.4, '#dbcdb4'))]),
+], true);
+// A tall mast behind the terrace, with the stadium's banner hanging from its yard: a Mochi's
+// sprout on a coloured ground, so the place says what it is from a long way off.
+const mastArt = (i) => art(`st-mast|${i}`, 26, 118, () => {
+  const c = ['#ff9ec0', '#ffd79a', '#9fd8e8', '#c8b0f0'][i % 4];
+  return [F(R(11, 10, 3.4, 108, '#cbb79c')), F(R(11, 10, 1.2, 108, '#e8d8bc')),
+    F(E(12.7, 8, 2.6, 2.6, '#e8c470')), F(E(12.2, 7.4, 1.1, 0.8, '#fff2d0')),
+    F(R(4, 12, 18, 2.4, '#b09a7c')),
+    T([[5, 14], [21, 14], [21, 56], [13, 62], [5, 56]], c),
+    F(T([[5, 14], [9, 14], [9, 58], [5, 56]], mix(c, '#ffffff', 0.4))),
+    F(R(5, 14, 16, 2, mix(c, '#ffffff', 0.55))),
+    F(E(13, 32, 5.2, 5.2, '#fff6ee')), F(R(12.4, 24, 1.4, 8, '#7fb86e')),
+    F(E(10.6, 23, 2.6, 2, '#8fcf74')), F(E(15.4, 22.4, 2.6, 2, '#8fcf74'))];
+}, true);
+// A blossom tree in a planter, standing against the terrace.
+const planterArt = (i) => art(`st-planter|${i}`, 60, 86, () => {
+  const b = BLOSSOM[i % BLOSSOM.length];
+  const puff = (x, y, r, c) => F(E(x, y, r, r * 0.92, c));
+  return [F(R(28, 40, 5, 30, '#9a7a56')), F(R(28, 40, 1.8, 30, '#b8956c')),
+    puff(19, 27, 15, b.deep), puff(41, 29, 13.5, b.deep), puff(30, 18, 16, b.body),
+    puff(16, 22, 12, b.body), puff(43, 24, 11.5, b.body), puff(25, 12, 10.5, b.top), puff(38, 16, 9, b.top),
+    ...[[13, 32], [47, 34], [30, 7], [21, 38]].map(([x, y]) => F(E(x, y, 2, 1.7, '#fff4f8'))),
+    R(14, 68, 32, 18, '#d8a06a'), F(R(14, 68, 32, 3.4, '#f0bd86')), F(R(14, 81, 32, 5, '#b07c4e')),
+    ...[0, 1, 2, 3, 4].map((k) => F(R(17 + k * 6, 72, 2.6, 8, '#c08c5e')))];
+}, true);
+
+// The winners' podium, where the three places stand after a race: three blocks on a carpet, with a
+// ribbon above them.
+function stadPodium(ctx, x, gy, time) {
+  const blocks = [[0, 26, '#f2c94c', '#fff0b4'], [-26, 18, '#cfd8e6', '#f2f6fc'], [26, 13, '#e0996a', '#f6c89c']];
+  // The carpet it stands on.
+  ctx.fillStyle = '#b8456a';
+  ctx.fillRect(snap(x - 44), snap(gy - 3), 88, 6);
+  ctx.fillStyle = '#e4738e';
+  ctx.fillRect(snap(x - 44), snap(gy - 3), 88, 1.8);
+  for (const [dx, h, c, lit] of blocks) {
+    ctx.fillStyle = shade(c, -26);
+    ctx.fillRect(snap(x + dx - 12), snap(gy - 3 - h), 24, h);
+    ctx.fillStyle = c;
+    ctx.fillRect(snap(x + dx - 12), snap(gy - 3 - h), 24, h - 3);
+    ctx.fillStyle = lit;
+    ctx.fillRect(snap(x + dx - 12), snap(gy - 3 - h), 24, 2.2);
+    // The place's number on the front of it.
+    ctx.fillStyle = shade(c, -34);
+    ctx.font = '900 9px Nunito, "Trebuchet MS", system-ui, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(dx === 0 ? '1' : dx < 0 ? '2' : '3', x + dx, gy - 6);
+    ctx.textAlign = 'left';
+  }
+  // The ribbon strung over it, on two posts.
+  for (const px of [x - 48, x + 46]) {
+    ctx.fillStyle = '#9a8468';
+    ctx.fillRect(snap(px), snap(gy - 56), 3, 54);
+    ctx.fillStyle = '#c4ae8c';
+    ctx.fillRect(snap(px), snap(gy - 56), 1.1, 54);
+    ctx.fillStyle = '#e8c470';
+    ctx.beginPath();
+    ctx.arc(px + 1.5, gy - 57, 2.4, 0, TAU);
+    ctx.fill();
+  }
+  for (let k = 0; k < 12; k++) {
+    const fx = x - 46 + k * 8;
+    const dip = Math.sin(((k + 0.5) / 12) * Math.PI) * 6 + Math.sin(time * 1.4 + k) * 0.5;
+    ctx.fillStyle = k % 2 ? '#ff7fac' : '#fff4ea';
+    ctx.beginPath();
+    ctx.moveTo(fx, gy - 54 + dip);
+    ctx.lineTo(fx + 7, gy - 54 + dip);
+    ctx.lineTo(fx + 3.5, gy - 45 + dip);
+    ctx.fill();
+  }
+}
+// A pennant pole beside the plaza, its flag flying in cached frames.
+function stadFlag(ctx, x, gy, wx, time, i) {
+  const cols = ['#ff9ec0', '#ffd79a', '#9fd8e8', '#c8b0f0'];
+  const f = leanFrame(time, wx, 5, 0, i);
+  ctx.fillStyle = '#9a8468';
+  ctx.fillRect(snap(x - 1.4), snap(gy - 62), 2.8, 62);
+  ctx.fillStyle = '#c4ae8c';
+  ctx.fillRect(snap(x - 1.4), snap(gy - 62), 1, 62);
+  place(ctx, pennantArt(cols[i % cols.length], f), snap(x + 8), snap(gy - 34));
+  ctx.fillStyle = '#d8c3a6';
+  ctx.beginPath();
+  ctx.ellipse(x, gy, 7, 2.6, 0, 0, TAU);
+  ctx.fill();
+}
+
+// The stadium's ground: swept clay, chalked with a lane line, with the plaza's gravel under it.
+GROUND_SPECS.stadium = {
+  layers: [
+    { top: 9, bot: 24, c: '#dfae82', a: 0.5, amp: 2, f: 0.045, rim: '#ffe6c8' },
+    { top: 30, bot: 34, c: '#fffaf0', a: 0.8, amp: 2.4, f: 0.03, rim: null },
+    { top: 56, bot: 74, c: '#cf9a70', a: 0.42, amp: 3.4, f: 0.022, rim: '#f2cfa8' },
+    { top: 86, bot: 89, c: '#fff2e0', a: 0.5, amp: 3, f: 0.036, rim: null },
+  ],
+  pebbles: ['#e6d6f4', '#d2eedc', '#fde4c8', '#ffd6e2', '#d4e4f8', '#fff1c4'],
+  flecks: ['#ffffff', '#ffd8b0', '#f0b98a'],
+  treats: [0, 1, 2, 3, 4],
+  near: null,
+};
+
+const TRACKSIDE = new Set(['mr_squad', 'mr_starter', 'mr_parasol', 'mr_pound', 'mr_kagami', 'mr_onsen', 'mr_toro', 'mr_snowman', 'mr_cocoa', 'mr_bigsnow', 'mr_fans', 'mr_bigdango', 'mr_yatai', 'mr_taiko', 'mr_bigchochin', 'mr_kgate', 'mr_kbanner', 'mr_ksubjects', 'mr_kpole', 'mr_kcrown', 'mr_hayate', 'mr_podium', 'mr_flag']);
 // A quarter sign beside the track. (As yours goes past it: the sign hops, its balloons jump, and
 // confetti pops off its top.)
 function quarterSign(ctx, map, x, gy, wx, n, time) {
@@ -6246,6 +6536,8 @@ function behindGround(ctx, map, cam, width, time) {
     else if (kind === 'mr_kpole') roadPole(ctx, x, gy, wx, time, extra ?? 0);
     else if (kind === 'mr_kcrown') kingCrown(ctx, map, x, gy, wx, time);
     else if (kind === 'mr_hayate') kingHayate(ctx, map, x, gy, wx, time);
+    else if (kind === 'mr_podium') stadPodium(ctx, x, gy, time);
+    else if (kind === 'mr_flag') stadFlag(ctx, x, gy, wx, time, extra ?? 0);
     else pivoted(ctx, x, gy, (lean(time, wx, 0.2) + 0.2) * 0.02, () => place(ctx, parasolArt(extra ?? 0), snap(x), gy + 2));
   }
   for (const [kind, wx, extra] of map.townPieces ?? []) {
@@ -6324,6 +6616,8 @@ export function drawCoursePiece(ctx, map, kind, wx, extra, cam, width, time) {
     case 'mr_kpole':
     case 'mr_kcrown':
     case 'mr_hayate':
+    case 'mr_podium':
+    case 'mr_flag':
     case 'mr_kstring':
     case 'mr_chochin':
     case 'mr_yatai':

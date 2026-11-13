@@ -51,6 +51,17 @@ for (let k = 0; k < 120; k++) {
   drawUi(ui, state, w);
   endUi(ui);
 }
+// (For poking at a window from the console: set something up, then redraw.)
+window.UI = { w, state, cam, input, ctx, SCALE, draw() {
+  nextFrame();
+  ctx.setTransform(SCALE, 0, 0, SCALE, 0, 0);
+  ctx.imageSmoothingEnabled = false;
+  setHd(true, SCALE);
+  drawWorld(ctx, w, cam, t);
+  const ui = beginUi(ctx, input);
+  drawUi(ui, state, w);
+  endUi(ui);
+} };
 document.title = 'ready';
 </script>
 </body></html>

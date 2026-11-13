@@ -193,3 +193,27 @@ export function wearOf(key) {
   return out;
 }
 export const isWearKey = (key) => typeof key === 'string' && key.startsWith('wear|');
+
+// ---------- Dressing a Mochi for its level ----------
+// What a racer of this standing wears: a beginner is in plain cloth, and the better it gets the
+// finer it is dressed, so you can see what you are up against from the start line. `points` is a
+// Mochi's stat points (data/mochi-genes.js), which is what its level is counted from.
+export const tierForPoints = (points) => (points < 350 ? 'beginner' : points < 800 ? 'mid' : points < 1500 ? 'end' : 'elite');
+// How often a Mochi of each tier wears something over its clothes.
+const ACC_CHANCE = { beginner: 0.2, mid: 0.35, end: 0.55, elite: 0.75 };
+// A set from `tier`, picked by a seed so the same Mochi is always dressed the same way: a dress
+// now and then, a top and a bottom the rest of the time, and sometimes an accessory over it.
+export function wearFor(seed, tier) {
+  // (A small deterministic shuffle of the seed, so the three picks do not move together.)
+  const at = (i) => {
+    const x = Math.sin((seed + 1) * 127.1 + i * 311.7) * 43758.5453;
+    return x - Math.floor(x);
+  };
+  const of = (set, i) => {
+    const ids = Object.keys(set).filter((id) => set[id].tier === tier);
+    return ids.length ? ids[Math.floor(at(i) * ids.length)] : null;
+  };
+  const wear = at(0) < 0.3 ? { dress: of(DRESSES, 1) } : { top: of(TOPS, 1), bottom: of(BOTTOMS, 2) };
+  if (at(3) < (ACC_CHANCE[tier] ?? 0.3)) wear.acc = of(ACCESSORIES, 4);
+  return wear;
+}

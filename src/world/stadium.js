@@ -19,7 +19,7 @@ function stadiumMap() {
   return {
     id: 'mochi_stadium', name: 'Mochi Race Stadium', theme: 'town', isTown: true, private: true, mochiRace: true, town: 'sprout',
     width, height: 520, groundY: FLOOR,
-    look: { sky: ['#cfe6ff', '#e8f3ff', '#fff8f0'], far: '#d4ecc8', mid: '#e2f2d4', midTrim: '#bfe0ac', skyline: 'mochigarden', edges: 'flowers', islands: 'planks', material: 'meadow', propKeep: 1, portal: 'mochi' },
+    look: { sky: ['#cfe6ff', '#e8f3ff', '#fff8f0'], far: '#d4ecc8', mid: '#e2f2d4', midTrim: '#bfe0ac', skyline: 'course:stadium', groundArt: 'stadium', painted: null, edges: 'flowers', islands: 'planks', material: 'meadow', propKeep: 1, portal: 'mochi' },
     cottages: [],
     terrain: [[0, FLOOR], [width, FLOOR]],
     platforms: [],
@@ -29,7 +29,8 @@ function stadiumMap() {
     zonesBy: 'x',
     zones: [{ name: 'Mochi Race Stadium', from: 0, color: '#ff9ec0' }],
     townPieces: [
-      ['mg_lantern', 130, 1], ['mr_board', 220], ['mr_stands', 310, { w: 400 }], ['mr_arch', 800, { kind: 'gate' }], ['mg_lantern', 900, 4],
+      ['mg_lantern', 130, 1], ['mr_flag', 172, 0], ['mr_board', 220], ['mr_flag', 278, 1], ['mr_stands', 300, { w: 380 }],
+      ['mr_podium', 736], ['mr_arch', 830, { kind: 'gate' }], ['mg_lantern', 920, 4],
     ],
     // Up at the board: the race board (ui/mochi-race.js).
     raceBoard: 220,
