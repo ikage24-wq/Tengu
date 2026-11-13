@@ -10,208 +10,9 @@
 // `gladeKidShapes(kind, mood)` gives the whole figure in a 160 x 150 box, feet (or the hover
 // point) at the bottom middle, facing right.
 
+
 import { E, T, F } from './kit.js';
-import { hairParts } from '../hair.js';
-import { hairRamp } from '../hero.js';
-
-const W = 160;
-const H = 150;
-const CX = 80;
-const G = 146;
-
-const INK = '#3a2430';
-const SKIN = '#ffe8da';
-const SKIN_SH = '#f6c8b4';
-const BLUSH = '#ff8fa6';
-const MOUTH = '#9a3a4e';
-const TONGUE = '#ff8a9e';
-
-// ---------- Helpers ----------
-
-function band(pts, w0, w1, c, flat = false) {
-  const out = [];
-  const n = pts.length - 1;
-  for (let i = 0; i < n; i++) {
-    const [ax, ay] = pts[i];
-    const [bx, by] = pts[i + 1];
-    const wa = w0 + ((w1 - w0) * i) / n;
-    const wb = w0 + ((w1 - w0) * (i + 1)) / n;
-    const len = Math.hypot(bx - ax, by - ay) || 1;
-    const nx = -(by - ay) / len;
-    const ny = (bx - ax) / len;
-    const q = T([[ax + (nx * wa) / 2, ay + (ny * wa) / 2], [bx + (nx * wb) / 2, by + (ny * wb) / 2], [bx - (nx * wb) / 2, by - (ny * wb) / 2], [ax - (nx * wa) / 2, ay - (ny * wa) / 2]], c);
-    out.push(flat ? F(q) : q);
-    if (i > 0) out.push(flat ? F(E(ax, ay, wa / 2, wa / 2, c)) : E(ax, ay, wa / 2, wa / 2, c));
-  }
-  return out;
-}
-function curve(pts, k = 4) {
-  const out = [];
-  for (let i = 0; i < pts.length - 1; i++) {
-    const p0 = pts[Math.max(0, i - 1)];
-    const p1 = pts[i];
-    const p2 = pts[i + 1];
-    const p3 = pts[Math.min(pts.length - 1, i + 2)];
-    for (let j = 0; j < k; j++) {
-      const t = j / k;
-      const t2 = t * t;
-      const t3 = t2 * t;
-      out.push([0, 1].map((d) => 0.5 * (2 * p1[d] + (-p0[d] + p2[d]) * t + (2 * p0[d] - 5 * p1[d] + 4 * p2[d] - p3[d]) * t2 + (-p0[d] + 3 * p1[d] - 3 * p2[d] + p3[d]) * t3)));
-    }
-  }
-  out.push(pts[pts.length - 1]);
-  return out;
-}
-// A tilted oval as a polygon (always convex).
-function ovalPts(x, y, rx, ry, a = 0, from = 0, to = Math.PI * 2, n = 20) {
-  const ca = Math.cos(a);
-  const sa = Math.sin(a);
-  const pts = [];
-  for (let i = 0; i <= n; i++) {
-    const t = from + ((to - from) * i) / n;
-    const u = Math.cos(t) * rx;
-    const v = Math.sin(t) * ry;
-    pts.push([x + ca * u - sa * v, y + sa * u + ca * v]);
-  }
-  return pts;
-}
-const oval = (x, y, rx, ry, a, c) => T(ovalPts(x, y, rx, ry, a), c);
-// A rounded petal from (x, y) along angle a: long `len`, wide `w`, round at the tip.
-function petal(x, y, a, len, w, c, flat = false) {
-  const ca = Math.cos(a);
-  const sa = Math.sin(a);
-  const p = (u, v) => [x + ca * u - sa * v, y + sa * u + ca * v];
-  const pts = [p(0, 0), p(len * 0.25, -w * 0.42)];
-  for (let i = 0; i <= 8; i++) {
-    const t = -Math.PI / 2 + (i / 8) * Math.PI;
-    pts.push(p(len * 0.62 + Math.cos(t) * len * 0.38, Math.sin(t) * w * 0.5));
-  }
-  pts.push(p(len * 0.25, w * 0.42));
-  const s = T(pts, c);
-  return flat ? F(s) : s;
-}
-// A mitten hand: a round palm and a little thumb, turned along `a`.
-function mitten(x, y, a, c, r = 5.4) {
-  const tx = x + Math.cos(a - 1.4) * r * 0.8;
-  const ty = y + Math.sin(a - 1.4) * r * 0.8;
-  return [E(x, y, r, r * 0.92, c), E(tx, ty, r * 0.42, r * 0.42, c)];
-}
-
-// ---------- The face (head centre hx, hy; turned three-quarters to the right) ----------
-
-// One eye: a big tall oval, dark under the lid, bright below, two highlights and a twinkle, a heavy
-// lash line flicking out at the outer corner (`o` = 1: outer corner right; -1: left).
-function eye(x, y, w, h, mood, o, col) {
-  const out = [];
-  if (mood === 'happy' || mood === 'blink') {
-    out.push(...band(curve([[x - w, y + 1.4], [x, y - h * 0.45], [x + w, y + 1.4]], 3), 2.2, 2.2, INK, true));
-    return out;
-  }
-  if (mood === 'hurt') {
-    out.push(...band([[x + w * o, y - h * 0.5], [x - w * 0.7 * o, y], [x + w * o, y + h * 0.5]], 2.2, 2, INK, true));
-    return out;
-  }
-  out.push(F(E(x, y, w, h, INK)));
-  out.push(F(E(x, y + 0.8, w - 1.3, h - 1.6, col.iris)));
-  out.push(F(E(x, y - h * 0.32, w - 1.3, h * 0.5, col.irisDk)));
-  out.push(F(E(x, y + h * 0.52, w * 0.62, h * 0.3, col.irisLt)));
-  out.push(F(E(x + 0.4 * o, y + h * 0.08, w * 0.34, h * 0.36, INK)));
-  out.push(F(E(x - w * 0.32, y - h * 0.36, w * 0.4, h * 0.3, '#ffffff')), F(E(x + w * 0.38, y + h * 0.4, w * 0.2, h * 0.14, '#ffffff')));
-  out.push(F(E(x + w * 0.42, y - h * 0.1, w * 0.12, h * 0.1, '#ffffff')));
-  const lid = mood === 'angry' ? h * 0.42 : 0;
-  if (mood === 'angry') out.push(F(T([[x - w * 1.3, y - h * 1.3], [x + w * 1.3, y - h * 1.3], [x + w * 1.3 * o, y - h * 0.9 + lid * 0.2], [x - w * 1.3 * o, y - h * 0.4]].map(([a, b]) => [a, b]), SKIN)));
-  out.push(...band(curve([[x - w * 1.08, y - h * 0.2], [x - w * 0.4, y - h * 1.0 + lid * 0.5], [x + w * 0.5, y - h * 1.0 + lid], [x + w * 1.08, y - h * 0.3 + lid * 0.5]], 3), 2.4, 2.4, INK, true));
-  out.push(...band([[x + w * 0.95 * o, y - h * 0.4 + lid * 0.5], [x + w * 1.5 * o, y - h * 0.8 + lid * 0.5]], 2, 0.6, INK, true));
-  out.push(...band(curve([[x - w * 0.5 * o, y + h * 0.98], [x + w * 0.3 * o, y + h * 0.96], [x + w * 0.85 * o, y + h * 0.7]], 2), 0.6, 1, INK, true));
-  return out;
-}
-function face(hx, hy, mood, col) {
-  const out = [];
-  // Facing the screen like the hero: eyes set low and wide, blush under each, a small mouth.
-  for (const sx of [-1, 1]) {
-    const cx = hx + 19 * sx;
-    out.push(F(E(cx, hy + 21, 6, 2.8, BLUSH)));
-    for (let k = 0; k < 3; k++) out.push(...band([[cx - 3 + k * 2.7, hy + 22], [cx - 1.8 + k * 2.7, hy + 20]], 0.7, 0.7, '#f06a8a', true));
-    out.push(F(E(cx + 3, hy + 19.6, 0.9, 0.7, '#ffffff')));
-  }
-  out.push(...eye(hx - 13.5, hy + 10, 6.4, 8.6, mood, -1, col), ...eye(hx + 13.5, hy + 10, 6.4, 8.6, mood, 1, col));
-  const mx = hx;
-  const my = hy + 23;
-  if (mood === 'happy') {
-    out.push(F(T([[mx - 4, my - 1], [mx + 4, my - 1], [mx + 3, my + 2.6], [mx, my + 4], [mx - 3, my + 2.6]], MOUTH)), F(E(mx, my + 2.6, 2, 1.1, TONGUE)));
-  } else if (mood === 'angry') {
-    out.push(...band(curve([[mx - 2.6, my + 1.2], [mx, my - 0.4], [mx + 2.6, my + 1.2]], 2), 1.3, 1.3, INK, true));
-  } else if (mood === 'hurt') {
-    out.push(F(E(mx, my + 1, 2.2, 2, MOUTH)), F(E(mx, my + 2, 1.3, 0.8, TONGUE)));
-  } else {
-    out.push(...band(curve([[mx - 3, my - 0.6], [mx - 1.5, my + 1], [mx, my - 0.2]], 2), 1.2, 1.2, INK, true), ...band(curve([[mx, my - 0.2], [mx + 1.5, my + 1], [mx + 3, my - 0.6]], 2), 1.2, 1.2, INK, true));
-  }
-  return out;
-}
-// The head, facing the screen like the hero's: round with full soft cheeks, an ear each side.
-function skull(hx, hy) {
-  return [
-    E(hx - 31, hy + 8, 4.4, 6, SKIN_SH), E(hx + 31, hy + 8, 4.4, 6, SKIN),
-    E(hx, hy, 32, 30.8, SKIN), E(hx, hy + 12.6, 29.5, 18.2, SKIN),
-    F(T([[hx - 29, hy + 8], [hx - 22, hy + 24], [hx - 12, hy + 30], [hx - 20, hy + 18], [hx - 25, hy + 4]], SKIN_SH)),
-  ];
-}
-
-// ---------- The head on the hero's hair ----------
-
-// The kids wear real hero hairstyles (hair.js), drawn exactly as the hero's are: one dome cut into
-// clumps over the face, tapered locks, a shine ring. Hero head space (skull centre 15.5, 15, about
-// 10 across) is blown up to the kids' head space (HK), and the whole head is then drawn at HS of
-// that about the neck, so the head is a bit over a third of her height.
-const HK = 32 / 10.2;
-const HS = 0.66;
-function mapShape(sh, f, k) {
-  if (sh.t === 'p') {
-    const ox = sh.x ?? 0;
-    const oy = sh.y ?? 0;
-    return { ...sh, x: 0, y: 0, pts: sh.pts.map(([x, y, s]) => {
-      const q = f([x + ox, y + oy]);
-      return s ? [q[0], q[1], s] : q;
-    }) };
-  }
-  const [x, y] = f([sh.x, sh.y]);
-  if (sh.t === 'e') return { ...sh, x, y, rx: sh.rx * k, ry: sh.ry * k };
-  if (sh.t === 'r') return { ...sh, x, y, w: sh.w * k, h: sh.h * k };
-  return { ...sh, x, y };
-}
-// { back, front }: `back` (hair hanging behind, the back of the head) goes under the body; `front`
-// (the head, face and bangs) over it. (hx, neck): where the chin sits.
-function kidHead(hx, neck, mood, col, style, color, bangs = 'auto') {
-  const r = hairRamp(color);
-  const p = hairParts(style, r, null, null, mood === 'angry' ? 'angry' : 'smile', bangs);
-  const fromHero = ([x, y]) => [(x - 15.5) * HK, (y - 15) * HK];
-  const kid = (list) => list.map((sh) => mapShape(sh, fromHero, HK));
-  const y0 = neck - 31 * HS;
-  const place = (list) => list.map((sh) => mapShape(sh, ([x, y]) => [hx + x * HS, y0 + y * HS], HS));
-  const shade = kid([...(p.hairline ? [F(E(15.5, 8.2, 10.4, 3.2, SKIN_SH))] : []), ...p.shade]).map((sh) => ({ ...sh, c: SKIN_SH }));
-  return {
-    back: place([...kid(p.hang), ...kid(p.head)]),
-    hang: place(kid(p.hang)),
-    backHead: place(kid(p.head)),
-    front: place([...skull(0, 0), ...shade, ...face(0, 0, mood, col), ...kid(p.front), ...kid(p.top)]),
-  };
-}
-
-// A four-pointed twinkle, as two crossed slim diamonds (each convex).
-function twinkle(x, y, r, col) {
-  return [F(T([[x, y - r], [x + r * 0.24, y], [x, y + r], [x - r * 0.24, y]], col)), F(T([[x - r * 0.8, y], [x, y - r * 0.2], [x + r * 0.8, y], [x, y + r * 0.2]], col))];
-}
-
-// Each kid is drawn in named groups (the rig moves each as its own part); `shapes` is all of them
-// in drawing order.
-function groups() {
-  const G = {};
-  let cur = null;
-  const use = (n) => {
-    cur = G[n] ??= [];
-  };
-  return { G, use, out: { push: (...a) => cur.push(...a) } };
-}
+import { W, H, CX, G, SKIN, SKIN_SH, band, curve, ovalPts, oval, petal, mitten, kidHead, twinkle, groups, HK, HS, mapShape } from './kidbase.js';
 
 // ---------- The Puddle Kid ----------
 
@@ -233,11 +34,7 @@ function puddleKid(mood) {
 
   // Her puddle: a soft uneven pool, rings spreading round her boots, the boots' blue in the water.
   for (const [x, y, rx, ry, col] of [[CX - 6, G - 2, 40, 5.4, c.waterDk], [CX + 12, G - 1.6, 34, 5, c.waterDk], [CX - 6, G - 2.6, 38, 4.4, c.water], [CX + 12, G - 2.2, 32, 4, c.water]]) out.push(F(E(x, y, rx, ry, col)));
-  out.push(F(E(CX - 14, G - 3.4, 20, 1.8, c.waterLt)), F(E(CX + 22, G - 2.6, 12, 1.4, c.waterLt)));
-  for (const x of [CX - 9, CX + 8]) {
-    out.push(F(E(x + 3, G - 1.4, 9, 1.4, c.bootSh)));
-    out.push(...band(curve(ovalPts(x + 3, G - 2, 15, 3.2, 0, 0.25, Math.PI - 0.25, 6), 2), 0.9, 0.9, '#ffffff', true));
-  }
+  // (The ripples, the shimmer and the boots' reflections are live, drawn by the rig on the water.)
 
   // The lily-pad umbrella over her far shoulder: tipped back, its notch to the front, a thick
   // dark underside, a light rim on the top edge, veins from the middle, two rain beads sitting on
@@ -261,9 +58,7 @@ function puddleKid(mood) {
   out.push(...band(curve(ovalPts(uc[0], uc[1], 48.6, 13.8, ua, Math.PI + 0.25, notch - 0.12, 8), 2), 1.6, 1.6, c.padLt, true));
   out.push(F(E(uc[0] - 12, uc[1] - 4, 12, 2.6, c.padLt)));
   for (const [x, y, r] of [[uc[0] - 22, uc[1] + 3, 2.8], [uc[0] + 12, uc[1] - 1, 2.1]]) out.push(E(x, y, r, r * 0.84, c.waterLt), F(E(x + r * 0.4, y + r * 0.4, r * 0.5, r * 0.3, c.water)), F(E(x - r * 0.3, y - r * 0.3, r * 0.34, r * 0.26, '#ffffff')));
-  for (const [x, y, r] of [[CX - 74, 56, 2.6], [CX - 66, 70, 2], [CX + 18, 32, 2.2]]) {
-    out.push(E(x, y, r, r * 1.2, c.water), T([[x - r * 0.9, y - r * 0.4], [x, y - r * 2.6], [x + r * 0.9, y - r * 0.4]], c.water), F(E(x - r * 0.3, y - r * 0.2, r * 0.3, r * 0.4, '#ffffff')));
-  }
+  // (The drips off its rim are live: the rig swells them at the tips and lets them fall.)
 
   use('hood');
   // The hood, bunched behind her neck, its rim showing.
@@ -290,37 +85,68 @@ function puddleKid(mood) {
     out.push(...band([[x - 7.6, G - 21], [x + 7.6, G - 21]], 3.4, 3.4, lt), ...band([[x - 7.4, G - 19], [x + 7.4, G - 19]], 0.9, 0.9, far ? c.bootDk : c.bootSh, true));
     out.push(F(T([[x - 4.4, G - 17.6], [x - 2, G - 17.6], [x - 2.8, G - 10], [x - 4.8, G - 10]], lt)));
   };
+  // Little legs from inside each boot up under the coat: the rig swings each one from its boot to
+  // its hip, so boots and coat stay joined however she bobs and steps.
+  for (const [k, x, far] of [['legF', CX - 9, true], ['legN', CX + 8, false]]) {
+    use(k);
+    out.push(...band([[x, G - 16], [x, G - 44]], 8, 7.4, far ? SKIN_SH : SKIN));
+  }
   use('bootF');
   boot(CX - 9, true);
   use('bootN');
   boot(CX + 8, false);
-  use('puddle');
-  for (const [x, y, r] of [[CX + 30, G - 10, 1.8], [CX + 35, G - 15, 1.3], [CX - 30, G - 9, 1.6], [CX - 34, G - 14, 1.1]]) out.push(F(E(x, y, r, r, c.waterLt)));
-
+  // The raincoat, in layers that each move: the yoke (shoulders to the waist), its darker lining
+  // showing when the front opens, the two front panels swinging from the waist on either side of
+  // the placket, a flap on each pocket, and the two round collar points. The shadow side, two soft
+  // folds, a lit edge, the placket with three big buttons, a stitched hem.
   use('body');
-  // The raincoat: roomy, swinging out to a rounded hem above the boots; the shadow side, two soft
-  // folds, a lit edge, the placket with three big buttons, two flapped pockets, a stitched hem.
-  const coat = [[CX - 12, 84], [CX + 13, 84], [CX + 17, 102], [CX + 21, 122], [CX + 20, 127], [CX + 11, 129], [CX, 129.6], [CX - 11, 129], [CX - 20, 127], [CX - 21, 122], [CX - 17, 102]];
-  out.push(T(coat, c.coat));
-  out.push(F(T([[CX - 12, 86], [CX - 6, 86], [CX - 10, 129], [CX - 11, 129], [CX - 20, 127], [CX - 21, 122], [CX - 16, 103]], c.coatSh)));
+  out.push(T([[CX - 12, 84], [CX + 13, 84], [CX + 17, 102], [CX + 15, 110], [CX - 15, 110], [CX - 17, 102]], c.coat));
+  out.push(F(T([[CX - 12, 86], [CX - 6, 86], [CX - 7.6, 106], [CX - 16, 106], [CX - 16.6, 101]], c.coatSh)));
+  out.push(...band(curve([[CX + 12, 87], [CX + 14.6, 98], [CX + 14.6, 108]], 3), 1.8, 1.8, c.coatLt, true));
+  out.push(...band([[CX + 3, 88], [CX + 3.4, 108]], 1.2, 1.2, c.coatDk, true));
+  out.push(F(E(CX + 8, 94, 3, 3, c.coatDk)), F(E(CX + 8, 93.6, 2.6, 2.6, '#ffffff')), F(E(CX + 7.2, 92.8, 0.9, 0.9, c.bootLt)));
+
+  use('lining');
+  out.push(T([[CX - 14.6, 103], [CX + 15, 103], [CX + 18.6, 122], [CX + 17.6, 126], [CX + 10, 127.6], [CX, 128], [CX - 10, 127.6], [CX - 18, 126], [CX - 19, 122]], c.coatDk));
+
+  use('coatL');
+  out.push(T([[CX - 16.4, 102], [CX + 3.8, 102], [CX + 3.8, 129.4], [CX, 129.6], [CX - 11, 129], [CX - 20, 127], [CX - 21, 122]], c.coat));
+  out.push(F(T([[CX - 7.4, 102], [CX - 10, 129], [CX - 11, 129], [CX - 20, 127], [CX - 21, 122], [CX - 16.4, 102]], c.coatSh)));
   out.push(...band(curve([[CX - 4, 104], [CX - 7, 116], [CX - 8, 128]], 3), 1, 2.4, c.coatSh, true));
+  out.push(...band(curve([[CX - 20, 124], [CX - 10, 126.4], [CX, 127], [CX + 3.8, 127]], 2), 2.6, 2.6, c.coatSh, true));
+  for (let k = 0; k < 5; k++) out.push(F(E(CX - 17 + k * 4.25, 122.4 + Math.abs(k - 4) * -0.26 + (k === 0 ? -0.6 : 0), 1, 0.5, c.coatLt)));
+  out.push(F(T([[CX - 16, 109], [CX - 8, 109], [CX - 8, 120], [CX - 15, 120.6]], c.coatDk)));
+
+  use('flapL');
+  out.push(F(T([[CX - 16.6, 107.6], [CX - 7.4, 107.6], [CX - 8, 112], [CX - 16, 112]], c.coatSh)), F(T([[CX - 16, 111.4], [CX - 8, 111.4], [CX - 8, 112.4], [CX - 16, 112.4]], c.coatDk)));
+  out.push(F(E(CX - 12, 111, 1.2, 1.2, '#ffffff')));
+
+  use('coatR');
+  out.push(T([[CX + 3, 102], [CX + 16.4, 102], [CX + 21, 122], [CX + 20, 127], [CX + 11, 129], [CX + 3, 129.5]], c.coat));
   out.push(...band(curve([[CX + 13, 106], [CX + 15, 116], [CX + 16, 127]], 3), 0.8, 2, c.coatSh, true));
-  out.push(...band(curve([[CX + 12, 87], [CX + 16, 103], [CX + 19, 123]], 3), 1.8, 1.8, c.coatLt, true));
-  out.push(...band(curve([[CX - 20, 124], [CX - 10, 126.4], [CX, 127], [CX + 10, 126.4], [CX + 20, 124]], 2), 2.6, 2.6, c.coatSh, true));
-  for (let k = 0; k < 9; k++) out.push(F(E(CX - 17 + k * 4.25, 122.4 + Math.abs(k - 4) * -0.26 + (k === 0 || k === 8 ? -0.6 : 0), 1, 0.5, c.coatLt)));
-  out.push(...band([[CX + 3, 88], [CX + 4, 127]], 1.2, 1.2, c.coatDk, true));
-  for (let k = 0; k < 3; k++) out.push(F(E(CX + 8, 94 + k * 11, 3, 3, c.coatDk)), F(E(CX + 8, 93.6 + k * 11, 2.6, 2.6, '#ffffff')), F(E(CX + 7.2, 92.8 + k * 11, 0.9, 0.9, c.bootLt)));
-  for (const x of [-16, 8]) {
-    out.push(F(T([[CX + x, 109], [CX + x + 8, 109], [CX + x + 8, 120], [CX + x + 1, 120.6]], x < 0 ? c.coatDk : c.coatSh)));
-    out.push(F(T([[CX + x - 0.6, 107.6], [CX + x + 8.6, 107.6], [CX + x + 8, 112], [CX + x, 112]], x < 0 ? c.coatSh : c.coat)), F(T([[CX + x, 111.4], [CX + x + 8, 111.4], [CX + x + 8, 112.4], [CX + x, 112.4]], c.coatDk)));
-    out.push(F(E(CX + x + 4, 111, 1.2, 1.2, '#ffffff')));
-  }
-  // The collar: two round flaps under her chin, the chin's soft shadow on them.
-  out.push(oval(CX - 6, 86, 8, 4.4, 0.25, c.coatLt), oval(CX + 8, 86, 8, 4.4, -0.25, c.coatLt));
+  out.push(...band(curve([[CX + 15, 103], [CX + 17, 113], [CX + 19, 123]], 3), 1.8, 1.8, c.coatLt, true));
+  out.push(...band(curve([[CX + 3, 127], [CX + 10, 126.4], [CX + 20, 124]], 2), 2.6, 2.6, c.coatSh, true));
+  for (let k = 5; k < 9; k++) out.push(F(E(CX - 17 + k * 4.25, 122.4 + Math.abs(k - 4) * -0.26 + (k === 8 ? -0.6 : 0), 1, 0.5, c.coatLt)));
+  out.push(...band([[CX + 3.4, 102], [CX + 4, 127]], 1.2, 1.2, c.coatDk, true));
+  for (let k = 1; k < 3; k++) out.push(F(E(CX + 8, 94 + k * 11, 3, 3, c.coatDk)), F(E(CX + 8, 93.6 + k * 11, 2.6, 2.6, '#ffffff')), F(E(CX + 7.2, 92.8 + k * 11, 0.9, 0.9, c.bootLt)));
+  out.push(F(T([[CX + 8, 109], [CX + 16, 109], [CX + 16, 120], [CX + 9, 120.6]], c.coatSh)));
+
+  use('flapR');
+  out.push(F(T([[CX + 7.4, 107.6], [CX + 16.6, 107.6], [CX + 16, 112], [CX + 8, 112]], c.coat)), F(T([[CX + 8, 111.4], [CX + 16, 111.4], [CX + 16, 112.4], [CX + 8, 112.4]], c.coatDk)));
+  out.push(F(E(CX + 12, 111, 1.2, 1.2, '#ffffff')));
+
+  // The collar: two round points under her chin, and the chin's soft shadow over them.
+  use('collarL');
+  out.push(oval(CX - 6, 86, 8, 4.4, 0.25, c.coatLt));
+  use('collarR');
+  out.push(oval(CX + 8, 86, 8, 4.4, -0.25, c.coatLt));
+  use('chin');
   out.push(F(E(CX + 3, 85.6, 13, 2.6, c.coatSh)));
 
   use('head');
-  out.push(...hd.front);
+  out.push(...hd.face);
+  use('fringe');
+  out.push(...hd.fringe);
 
   use('nearArm');
   // Near arm: held out, palm up, catching the rain; the sleeve's underside in shadow, a cuff.
@@ -328,7 +154,7 @@ function puddleKid(mood) {
   out.push(...band(curve([[CX + 14, 96.6], [CX + 22, 101.4], [CX + 28, 98.4]], 3), 2, 1.6, c.coatSh, true));
   out.push(...band([[CX + 27.6, 91.6], [CX + 31, 97.6]], 3, 3, c.coatLt), ...band([[CX + 29.2, 91.2], [CX + 32.4, 97]], 0.8, 0.8, c.coatDk, true));
   out.push(...mitten(CX + 35, 92, -0.4, SKIN), F(E(CX + 34, 93.6, 2.4, 1.4, SKIN_SH)));
-  out.push(E(CX + 37, 82, 1.8, 2.2, c.water), T([[CX + 35.4, 81.2], [CX + 37, 76.6], [CX + 38.6, 81.2]], c.water), F(E(CX + 36.4, 81.6, 0.6, 0.8, '#ffffff')));
+  // (The rain she catches in her palm is live, falling into it.)
 
   return { w: W, h: H, res: 3, shapes: Object.values(parts).flat(), groups: parts };
 }
@@ -379,8 +205,11 @@ function blossomFairy(mood) {
 
   // The back of her hair.
   const hd = kidHead(CX + 2, 83, mood, c, 'odango', c.hair);
-  use('tails');
-  out.push(...hd.hang);
+  // Each pigtail its own group, so the rig can swing it from its root under its bun.
+  use('tailL');
+  out.push(hd.hang[0]);
+  use('tailR');
+  out.push(hd.hang[1]);
   use('hairBack');
   out.push(...hd.backHead);
 
@@ -400,16 +229,21 @@ function blossomFairy(mood) {
     out.push(F(E(foot[0] + 1, foot[1] + 0.2, 3, 1.3, far ? c.leaf : c.leafLt)));
   };
   use('legF');
-  leg([CX - 5, 112], [CX - 8, 132], true);
+  // (The legs start well up inside the bell, so a swinging leg never shows its top.)
+  leg([CX - 5, 99], [CX - 8, 132], true);
   use('legN');
-  leg([CX + 5, 112], [CX + 1, 137], false);
+  leg([CX + 5, 99], [CX + 1, 137], false);
 
-  use('body');
-  // The bellflower skirt: the bell, then five round-pointed petals at the hem flaring out, the
-  // outer ones curling most; a dark vein up each petal, the tips catching the light.
+  use('skirt');
+  // The bellflower skirt, swinging from her waist: the bell, then five round-pointed petals at the
+  // hem flaring out, the outer ones curling most; a dark vein up each petal, the tips catching the
+  // light.
   out.push(T([[CX - 9, 96], [CX + 9, 96], [CX + 18, 112], [CX - 18, 112]], c.bell));
   out.push(F(T([[CX - 9, 96], [CX - 4, 96], [CX - 11, 112], [CX - 18, 112]], c.bellSh)));
+  out.push(F(T([[CX + 4, 98], [CX + 7, 98], [CX + 13, 110], [CX + 9, 111]], c.bellLt)));
+  // Each petal its own layer, fluttering from where it grows out of the bell.
   for (let k = 0; k < 5; k++) {
+    use(`petal${k}`);
     const x = CX - 16 + k * 8;
     const a = Math.PI / 2 + (k - 2) * -0.3;
     const col = k === 0 ? c.bellSh : k === 3 ? c.bellLt : c.bell;
@@ -418,18 +252,24 @@ function blossomFairy(mood) {
     out.push(...band([[x + Math.cos(a) * 4, 104 + Math.sin(a) * 4], tip], 1, 0.5, c.bellDk, true));
     out.push(F(E(tip[0] - 1, tip[1] - 1, 3, 1.6, k === 0 ? c.bell : c.bellLt)));
   }
-  out.push(F(T([[CX + 4, 98], [CX + 7, 98], [CX + 13, 110], [CX + 9, 111]], c.bellLt)));
-  // The bodice: a little rounded top of the same petal, a sweetheart neckline, a ring of sepal
-  // leaves at the waist with a tiny rosebud at the front.
+  use('body');
+  // The bodice: a little rounded top of the same petal, a sweetheart neckline; over it a ring of
+  // sepal leaves at the waist (each its own layer, rustling) with a tiny rosebud at the front.
   out.push(T([[CX - 8, 83], [CX + 8, 83], [CX + 9.5, 98], [CX - 9.5, 98]], c.bell), E(CX - 3.4, 83, 5, 3, c.bell), E(CX + 4, 83, 5, 3, c.bell));
   out.push(F(T([[CX - 8, 84], [CX - 4, 84], [CX - 6, 97], [CX - 9.5, 97]], c.bellSh)), F(T([[CX + 3, 84], [CX + 6.5, 84], [CX + 7.5, 96], [CX + 4.5, 96]], c.bellLt)));
   out.push(...band([[CX + 0.6, 82.6], [CX + 0.6, 86]], 0.9, 0.5, c.bellDk, true));
-  for (let k = 0; k < 5; k++) out.push(petal(CX - 11 + k * 5.5, 96, Math.PI / 2 + (k - 2) * 0.32, 8, 5, k % 2 ? c.leaf : c.leafSh));
-  out.push(E(CX + 6, 96, 2.6, 2.3, c.rose), F(E(CX + 5.4, 95.4, 1.2, 0.9, c.roseLt)), ...band(curve([[CX + 4.6, 96.4], [CX + 6, 97.2], [CX + 7.4, 96]], 2), 0.7, 0.7, c.roseSh, true));
   out.push(F(E(CX + 2, 84.4, 7, 1.6, c.bellSh)));
+  for (let k = 0; k < 5; k++) {
+    use(`leaf${k}`);
+    out.push(petal(CX - 11 + k * 5.5, 96, Math.PI / 2 + (k - 2) * 0.32, 8, 5, k % 2 ? c.leaf : c.leafSh));
+  }
+  use('rose');
+  out.push(E(CX + 6, 96, 2.6, 2.3, c.rose), F(E(CX + 5.4, 95.4, 1.2, 0.9, c.roseLt)), ...band(curve([[CX + 4.6, 96.4], [CX + 6, 97.2], [CX + 7.4, 96]], 2), 0.7, 0.7, c.roseSh, true));
 
   use('head');
-  out.push(...hd.front);
+  out.push(...hd.face);
+  use('fringe');
+  out.push(...hd.fringe);
 
   use('nearArm');
   // Near arm: raised, holding her dandelion-puff wand out in front.
@@ -437,6 +277,8 @@ function blossomFairy(mood) {
   out.push(...band(curve([[CX + 8, 88], [CX + 20, 96], hand], 3), 7.4, 6.4, SKIN), ...band(curve([[CX + 11, 91.6], [CX + 20, 99]], 2), 1.4, 1, SKIN_SH, true));
   out.push(...band(curve([[hand[0] + 1, hand[1] + 3], [CX + 38, 76], [CX + 44, 62]], 3), 2, 1.6, c.leafSh), ...band([[hand[0] + 2, hand[1]], [CX + 41, 70]], 0.6, 0.6, c.leafLt, true));
   out.push(...mitten(hand[0], hand[1], -0.9, SKIN, 5));
+  // The puff on the end of its stem, nodding there on its own. (The seeds it sheds are live.)
+  use('puff');
   const pf = [CX + 46, 56];
   out.push(F(E(pf[0], pf[1], 12, 12, '#fffdf2')));
   for (let k = 0; k < 16; k++) {
@@ -444,7 +286,6 @@ function blossomFairy(mood) {
     out.push(...band([pf, [pf[0] + Math.cos(a) * 11, pf[1] + Math.sin(a) * 11]], 0.7, 0.5, c.puffSh, true), F(E(pf[0] + Math.cos(a) * 11.6, pf[1] + Math.sin(a) * 11.6, 1.6, 1.6, c.puff)));
   }
   out.push(E(pf[0], pf[1], 4, 4, c.puff), F(E(pf[0] + 1, pf[1] + 1, 2.4, 2.4, c.puffSh)));
-  for (const [x, y] of [[CX + 61, 43], [CX + 66, 61], [CX + 58, 30]]) out.push(F(E(x, y, 1.4, 1.4, c.puff)), ...band([[x, y], [x - 3, y + 3]], 0.5, 0.5, c.puffSh, true));
 
   use('twinkles');
   // Twinkles round her: fairy dust.
@@ -461,7 +302,19 @@ export function gladeKidShapes(kind = 'puddle', mood = 'idle') {
 // the fairy the point under her hover, at (CX, G)).
 export const KID_BOX = { W, H, CX, G };
 export const KID_JOINTS = {
-  puddle: { hip: [CX, 104], neck: [CX + 2, 86], shF: [CX - 12, 92], shN: [CX + 12, 92], grip: [CX - 23, 103], ankF: [CX - 9, G - 12], ankN: [CX + 8, G - 12], palm: [CX + 36, 88] },
-  fairy: { hip: [CX, 100], neck: [CX + 2, 83], shF: [CX - 8, 90], shN: [CX + 8, 88], wing: [CX - 6, 88], hipF: [CX - 5, 112], hipN: [CX + 5, 112], puff: [CX + 46, 56] },
+  puddle: { hip: [CX, 104], crown: [CX + 2, 34], tipL: [CX - 74, 58], tipR: [CX - 50, 65], neck: [CX + 2, 86], shF: [CX - 12, 92], shN: [CX + 12, 92], grip: [CX - 23, 103], ankF: [CX - 9, G - 12], ankN: [CX + 8, G - 12], sockF: [CX - 7, 110], sockN: [CX + 6, 110], palm: [CX + 36, 88],
+    // The coat's layers: each front panel hangs from the top of the placket, each pocket flap from
+    // its top edge, both collar points from under the chin.
+    hemL: [CX + 2, 103], hemR: [CX + 4, 103], flapL: [CX - 12, 107.6], flapR: [CX + 12, 107.6], colL: [CX, 87], colR: [CX + 2, 87] },
+  fairy: { hip: [CX, 100], neck: [CX + 2, 83], shF: [CX - 8, 90], shN: [CX + 8, 88], wing: [CX - 6, 88], hipF: [CX - 5, 104], hipN: [CX + 5, 104], puff: [CX + 46, 56], stem: [CX + 44, 64], waist: [CX, 97], tailL: fairyTailRoot(6.2), tailR: fairyTailRoot(31 - 6.2),
+    crown: [CX + 2, 31],
+    // Each skirt petal from where it grows out of the bell, each waist leaf from the waist.
+    ...Object.fromEntries([0, 1, 2, 3, 4].flatMap((k) => [[`petal${k}`, [CX - 16 + k * 8, 104]], [`leaf${k}`, [CX - 11 + k * 5.5, 96]]])) },
 };
+// Where a pigtail leaves her head, under its bun (the odango tail's first point, x in hero head
+// space; placed as kidHead places her head).
+function fairyTailRoot(x) {
+  const k = HK * HS;
+  return [CX + 2 + (x - 15.5) * k, 83 - 31 * HS + (6 - 15) * k];
+}
 export { mapShape };

@@ -98,6 +98,91 @@ export function attackPhase(m, now, recover = 0.55) {
   return { antic: 0, strike: 0, since: -1, atk: false };
 }
 
+// ---------- Soft layers ----------
+// A part marked `soft` is a loose layer (a coat panel, a pocket flap, a collar, a petal, a lock of
+// hair, a dangling leg) that swings on its own, physically, on top of whatever `rot` poses it to:
+// its attach point is followed through the world every frame, and the push of that point's
+// acceleration (the body bobbing, stepping, landing, being hit, walking off and stopping) and of
+// its parent's turning swings it about its pivot on a damped spring, so every layer of an outfit
+// trails, overshoots and settles by itself, with nothing written per move. `soft` holds:
+//   dir      [x, y] from the pivot to the layer's middle, in its box (default straight down);
+//            a layer hanging straight down only feels sideways pushes, one sticking out also
+//            feels the bobbing (a flap pointing out bounces as she lands)
+//   k, c     its spring (stiffness 140, damping 9): low k is floppy, low c wobbles longer
+//   gain     how hard the body's moves push it (1)
+//   turn     how much it lags its parent's turning (0..1, 0.8)
+//   hang     how much it keeps hanging straight down as its parent tilts (0..1, 0)
+//   max      the most it swings, degrees (32)
+//   flutter  a slow drift of its own in the air, degrees (0), at `hz` (0.7)
+// (Integrated once per frame per layer, in small steps; the outlined and bare twins of a layer
+// share one swing.)
+const softKey = (p) => p.soft.key ?? p.name.replace(/~.*$/, '');
+const wrapAngle = (v) => Math.atan2(Math.sin(v), Math.cos(v));
+function softSwing(p, base, x, y, pose, m, a, st, swung) {
+  const key = softKey(p);
+  if (key in swung) return swung[key];
+  const o = p.soft;
+  const s = ((st._soft ??= {})[key] ??= { th: 0, w: 0 });
+  const dt = Math.min(0.05, Math.max(0, a.dt ?? 0));
+  // Where the layer hangs from, in the world (the rig's space plus the monster's own travel).
+  const sx = a.flip ? -1 : 1;
+  const px = base[0] * x + base[2] * y + base[4] + sx * (m.x ?? 0);
+  const py = base[1] * x + base[3] * y + base[5] + (m.y ?? 0);
+  const pa = Math.atan2(base[1], base[0]);
+  let ax = 0;
+  let ay = 0;
+  let aa = 0;
+  const steady = s.px !== undefined && dt > 0 && s.flip === a.flip && Math.hypot(px - s.px, py - s.py) < 24;
+  if (steady) {
+    const vx = (px - s.px) / dt;
+    const vy = (py - s.py) / dt;
+    const pw = wrapAngle(pa - s.pa) / dt;
+    if (s.vx !== undefined) {
+      // (Smoothed over a few frames: a sharp bounce or a landing is a firm push, never a one-frame
+      // spike that slams a small flap against its stop.)
+      const f = Math.min(1, dt * 22);
+      s.ax = lerp(s.ax ?? 0, clamp((vx - s.vx) / dt, -1600, 1600), f);
+      s.ay = lerp(s.ay ?? 0, clamp((vy - s.vy) / dt, -1600, 1600), f);
+      s.aa = lerp(s.aa ?? 0, clamp((pw - s.pw) / dt, -250, 250), f);
+      ax = s.ax;
+      ay = s.ay;
+      aa = s.aa;
+    }
+    Object.assign(s, { vx, vy, pw });
+  } else Object.assign(s, { vx: undefined, vy: undefined, pw: 0, ax: 0, ay: 0, aa: 0 });
+  Object.assign(s, { px, py, pa, flip: a.flip });
+  const [dx, dy] = o.dir ?? [0, 1];
+  const len = Math.max(1, Math.hypot(dx, dy));
+  const k = o.k ?? 140;
+  const c = o.c ?? 9;
+  const gain = o.gain ?? 1;
+  const turn = o.turn ?? 0.8;
+  const max = ((o.max ?? 32) * Math.PI) / 180;
+  const flutter = (((o.flutter ?? 0) * Math.PI) / 180) * Math.sin((a.t ?? 0) * TAU * (o.hz ?? 0.7) + (key.length * 1.7) % TAU);
+  const goal = -(o.hang ?? 0) * wrapAngle(pa + pose) + flutter;
+  // Small steps, so a slow frame never throws a layer about.
+  const n = Math.max(1, Math.ceil(dt / (1 / 240)));
+  const h = dt / n;
+  for (let i = 0; i < n; i++) {
+    const ang = pa + pose + s.th;
+    const ux = (Math.cos(ang) * dx - Math.sin(ang) * dy) / len;
+    const uy = (Math.sin(ang) * dx + Math.cos(ang) * dy) / len;
+    // The body's push on the layer (it is left behind as its attach point speeds up), and its
+    // parent turning under it.
+    const push = (gain * (uy * ax - ux * ay)) / len;
+    const acc = -k * (s.th - goal) - c * s.w + push - turn * aa;
+    s.w += acc * h;
+    s.th += s.w * h;
+    // (A soft stop at the limit, never a hard clamp.)
+    if (Math.abs(s.th) > max) {
+      s.th = Math.sign(s.th) * max;
+      s.w *= -0.3;
+    }
+  }
+  if (!Number.isFinite(s.th)) Object.assign(s, { th: 0, w: 0 });
+  return (swung[key] = s.th);
+}
+
 // ---------- A rig from a spec ----------
 // Most bosses are built from this: `makeRig(spec)` returns the `{ w, h, draw }` a design hangs on
 // its art. The spec gives:
@@ -113,6 +198,8 @@ export function attackPhase(m, now, recover = 0.55) {
 //             sprung with `springs` too (default loose: [90, 7])
 //   kick      { channel: speed } given when a blow lands on it
 //   stride    px walked per step cycle
+//   (a part may also be `soft`: a loose layer swinging on its own physics; see Soft layers above,
+//   and `paint: (ctx, a, S)` for live extras drawn on it in its own space)
 //   fx        (ctx, m, a, S, mat) live extras over the parts (glows, rings, trails)
 //   under     (ctx, m, a, S, mat) live extras under the parts
 export function makeRig(spec) {
@@ -144,14 +231,17 @@ export function makeRig(spec) {
       };
       for (const [name, goal] of Object.entries(spec.pose(m, a))) sp(name, goal, [220, 20]);
       if (spec.follow) for (const [name, goal] of Object.entries(spec.follow(S, a))) sp(name, goal, [90, 7]);
-      // Each part's place: its parent's, then moved to `at` and turned by `rot`.
+      // Each part's place: its parent's, then moved to `at` and turned by `rot` (and, for a soft
+      // layer, by its own swing).
       const mats = {};
+      const swung = {};
       const matOf = (p) => {
         if (typeof p === 'string') p = spec.byName[p];
         if (mats[p.name]) return mats[p.name];
         const base = p.parent ? matOf(spec.byName[p.parent]) : [1, 0, 0, 1, 0, 0];
         const [x, y] = p.at ? p.at(S, a) : [0, 0];
-        const r = p.rot ? p.rot(S, a) : 0;
+        let r = p.rot ? p.rot(S, a) : 0;
+        if (p.soft) r += softSwing(p, base, x, y, r, m, a, st, swung);
         const c = Math.cos(r);
         const s = Math.sin(r);
         const [A, B, C, D, E, F] = base;
@@ -188,6 +278,11 @@ export function makeRig(spec) {
           ctx.clip();
         }
         blit(ctx, s, -pv[0], -pv[1], lk);
+        // (`paint`: live extras drawn on the part about its joint, under every part after it.)
+        if (p.paint) {
+          ctx.globalAlpha = lk.alpha ?? 1;
+          p.paint(ctx, a, S);
+        }
         ctx.restore();
       }
       if (spec.fx) {
