@@ -13,6 +13,8 @@ import { torsoPts, band, MID, button, limb } from '../figure.js';
 import { frill, heart, flower, hoop, dome } from './casual.js';
 import { fur } from './kit.js';
 import { PET_OUTFITS } from './pets.js';
+import { wardrobeOutfit } from './wardrobe.js';
+import { isWearKey } from '../../data/mochi-wardrobe.js';
 
 const WHITE = '#ffffff';
 const CREAM = '#fff6ec';
@@ -629,7 +631,11 @@ OUTFITS.villainessbare = { ...OUTFITS.villainess, hat: undefined };
 // witch, 2026-11-13; they still draw for the townsfolk and old saves.)
 export const OWN_OUTFITS = ['villainess', 'villainessbare', 'sporty', 'kimono'];
 export const STARTER_OUTFITS = Object.keys(OUTFITS).filter((k) => !OWN_OUTFITS.includes(k));
-const of = (t) => (t === 'basics' ? BASICS : OUTFITS[t] ?? PET_OUTFITS[t] ?? OUTFITS.casual);
+// A Mochi's worn set (data/mochi-wardrobe.js) is a key of its own: its pieces are put together
+// over the plain smock it was born in.
+const of = (t) => (t === 'basics' ? BASICS
+  : isWearKey(t) ? wardrobeOutfit(t, PET_OUTFITS.mochismock ?? OUTFITS.casual)
+    : OUTFITS[t] ?? PET_OUTFITS[t] ?? OUTFITS.casual);
 
 export default {
   hat: (t, p, m) => of(t).hat?.(p, m) ?? [],

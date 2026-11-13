@@ -1617,6 +1617,9 @@ export function drawMochiPose(ctx, g, x, y, P0, { facing = 1, over = null, under
     backArm: [q(P.back[0]), q(P.back[1])], frontArm: [q(P.front[0]), q(P.front[1])], armSide: 0.6, hipIn: 0,
     frontLeg: [q(P.legF[0]), q(P.legF[1]), q3(P.legF[2])], backLeg: [q(P.legB[0]), q(P.legB[1]), q3(P.legB[2])],
     air: P.lift > 1.5, hair: Math.round(P.hair * 2) / 2, hairTip: Math.round(P.hair * 2.4) / 2,
+    // Cloth streams with the hair: a skirt's hem, a scarf's end, a bag on a back all swing on the
+    // same stepped value, so they move without ever asking for a drawing that isn't already cut.
+    cape: Math.round(P.hair * 2) / 2,
     eyes: P.eyes ?? 'open', view: 'side', climb: 0, armOver: P.over ? true : null,
     face: { brows: P.brows ?? REST.brows, extra: P.extra ?? [], blush: P.blush ?? REST.blush, glance: P.glance ?? 0, ...(P.closed ? { closed: P.closed } : {}) },
   };
@@ -1764,6 +1767,8 @@ export function drawMochiAnim(ctx, m, x, y, time) {
     backArm: [q(P.back[0]), q(P.back[1])], frontArm: [q(P.front[0]), q(P.front[1])], armSide: moving ? 0.35 : 0.6, hipIn: moving ? 0.6 : 0,
     frontLeg: [q(P.legF[0]), q(P.legF[1]), q3(P.legF[2])], backLeg: [q(P.legB[0]), q(P.legB[1]), q3(P.legB[2])],
     air: target.lift > 1.5, hair: Math.round(P.hair * 2) / 2, hairTip: Math.round(P.hair * 2.4) / 2,
+    // Cloth streams with the hair (see drawMochiPose): a skirt, a scarf's end, a satchel.
+    cape: Math.round(P.hair * 2) / 2,
     eyes: target.eyes ?? blink ?? 'open',
     view: target.view ?? 'side', climb: Math.round((P.climb ?? 0) * 4) / 4, armOver: target.armOver ?? null,
     face: { brows: target.brows ?? REST.brows, extra: [], blush: target.blush ?? REST.blush, glance: target.glance ?? (moving || posed ? 0 : glanceAt(g, tl)), look: target.look },

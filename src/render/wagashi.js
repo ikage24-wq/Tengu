@@ -12,6 +12,7 @@ import { art, place } from './scenery.js';
 import { HAIR_COLORS, CANDY } from '../data/mochi-genes.js';
 import { featureOf } from './mochi-features.js';
 import { DRESS } from '../data/mochi-dress.js';
+import { wearKey } from '../data/mochi-wardrobe.js';
 
 // The sprout's mood for each personality when it's just standing about.
 export const RESTING_MOOD = {
@@ -118,6 +119,9 @@ export function lookOf(g, mood = null, phase = 0) {
   }
   // Dressed up (data/mochi-dress.js): its costume, hood and all, in place of the plain smock.
   if (DRESS[g.dress]) look.outfit = DRESS[g.dress].outfit;
+  // Else what it has on from its wardrobe (data/mochi-wardrobe.js): a top and a bottom, or a dress,
+  // and an accessory over them.
+  else if (g.wear) look.outfit = wearKey(g.wear) ?? look.outfit;
   return look;
 }
 

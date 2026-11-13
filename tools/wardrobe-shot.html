@@ -1,0 +1,87 @@
+<!doctype html>
+<html><head><meta charset="utf-8"></head><body style="margin:0;background:#222">
+<canvas id="c"></canvas>
+<script type="module">
+// Dev tool: a sheet of the Mochi wardrobe (data/mochi-wardrobe.js), every piece on a Mochi, for
+// checking that each one reads on its own and that mix-and-match hangs together.
+//   ?tier=beginner      which tier to lay out (all of them with &tier=all)
+//   &scale=6            how big each Mochi is drawn (race size is about 0.5)
+//   &crop=1             cut the head off, so the clothes fill the cell
+//   &seed=7             which Mochi wears them
+//   &pose=gentle        its way of standing (mochi-anim.js STANCE), or &pose=run for mid-stride
+//   &t=0                seconds of clock (what moves: skirts, scarves, a satchel)
+//   &cols=6             cells across
+// When it's done the title says "ready", and window.SHOT holds the sheet as a PNG data URL.
+import { drawMochiPose, STANCE } from '../src/render/mochi-anim.js';
+import { rollMochi } from '../src/data/mochi-genes.js';
+import { TOPS, BOTTOMS, DRESSES, ACCESSORIES } from '../src/data/mochi-wardrobe.js';
+import { setHd, nextFrame } from '../src/render/pixel.js';
+
+const q = new URLSearchParams(location.search);
+const tier = q.get('tier') ?? 'beginner';
+const scale = Number(q.get('scale') ?? 6);
+const crop = q.get('crop') === '1';
+const cols = Number(q.get('cols') ?? 6);
+const t = Number(q.get('t') ?? 0);
+const base = rollMochi(Number(q.get('seed') ?? 7));
+const want = (set) => Object.entries(set).filter(([, p]) => tier === 'all' || p.tier === tier);
+// Each row: a label, and the sets to wear. A top is shown over plain shorts and a bottom under a
+// plain tee, so only the piece being looked at changes.
+// &mix=1 instead: whole outfits put together out of the tier, to see the pieces against each other.
+const pick = (list, i) => list[Math.floor((Math.sin(i * 12.9898) * 43758.5453 % 1 + 1) % 1 * list.length)];
+const mixRow = (n, withAcc) => Array.from({ length: n }, (_, i) => {
+  const d = want(DRESSES);
+  const useDress = i % 3 === 2 && d.length;
+  const wear = useDress ? { dress: pick(d, i)[0] } : { top: pick(want(TOPS), i)[0], bottom: pick(want(BOTTOMS), i + 7)[0] };
+  if (withAcc && want(ACCESSORIES).length) wear.acc = pick(want(ACCESSORIES), i + 3)[0];
+  return [Object.values(wear).join(' + '), wear];
+});
+const rows = (q.get('mix') === '1' ? [
+  ['Put together', mixRow(cols * 2, false)],
+  ['With an accessory', mixRow(cols * 2, true)],
+] : [
+  ['Tops', want(TOPS).map(([id, p]) => [p.name, { top: id, bottom: 'shorts' }])],
+  ['Bottoms', want(BOTTOMS).map(([id, p]) => [p.name, { top: 'tee', bottom: id }])],
+  ['Dresses', want(DRESSES).map(([id, p]) => [p.name, { dress: id }])],
+  ['Accessories', want(ACCESSORIES).map(([id, p]) => [p.name, { top: 'tee', bottom: 'shorts', acc: id }])],
+]).filter(([, cells]) => cells.length);
+// A row that runs over `cols` wraps onto the next line.
+const lines = rows.flatMap(([title, cells]) => Array.from({ length: Math.ceil(cells.length / cols) }, (_, i) => [i ? '' : title, cells.slice(i * cols, i * cols + cols)]));
+
+const CW = Math.round(scale * 38), CH = Math.round(scale * (crop ? 38 : 46)) + 26;
+const cv = document.getElementById('c');
+cv.width = CW * cols;
+cv.height = CH * lines.length;
+const c = cv.getContext('2d');
+setHd(false);
+nextFrame(t);
+c.imageSmoothingEnabled = false;
+lines.forEach(([title, cells], ri) => {
+  const y0 = ri * CH;
+  c.fillStyle = ri % 2 ? '#e8e4db' : '#f6f3ec';
+  c.fillRect(0, y0, cv.width, CH);
+  c.fillStyle = '#8a8276';
+  c.font = '13px sans-serif';
+  c.textAlign = 'left';
+  c.fillText(title, 6, y0 + 15);
+  cells.forEach(([label, wear], ci) => {
+    const x = ci * CW + CW / 2;
+    const y = y0 + CH - 22;
+    c.save();
+    c.beginPath();
+    c.rect(ci * CW, y0 + 18, CW, CH - 40);
+    c.clip();
+    // Mid-stride, with its hair (and so its cloth) streaming back.
+    const P = q.get('pose') === 'run' ? { tilt: -10, hx: 0.6, hy: 0.4, front: [3.4, -6], back: [-3.4, -2], legF: [4.6, -2.4, 16], legB: [-4.2, 0, -14], bob: 0.6, hair: -3 } : { ...(STANCE[q.get('pose') ?? 'gentle'] ?? STANCE.gentle) };
+    drawMochiPose(c, { ...base, wear }, x, y, P, { facing: 1, scale });
+    c.restore();
+    c.fillStyle = '#4b453c';
+    c.font = '12px sans-serif';
+    c.textAlign = 'center';
+    c.fillText(label, x, y + 16);
+  });
+});
+window.SHOT = cv.toDataURL('image/png');
+document.title = 'ready';
+</script>
+</body></html>
