@@ -1610,7 +1610,7 @@ export function drawSpectator(ctx, g, x, y, beat, facing = 1, slot = null, ahead
 // 'front'` makes `hand` the near paw). Baby-sized like the crowd's, its pose rounded to quarter
 // pixels: the caller steps it in time (a few frames a second, on a loop), so a routine paints a
 // small set of drawings once, by the sprite worker (`slot`).
-export function drawMochiPose(ctx, g, x, y, P0, { facing = 1, over = null, under = null, hold = 'back', slot = null } = {}) {
+export function drawMochiPose(ctx, g, x, y, P0, { facing = 1, over = null, under = null, hold = 'back', slot = null, scale = MOCHI_SIZE.baby } = {}) {
   const P = pose(P0);
   const rig = {
     tx: 0, by: q(P.bob), hx: q(P.hx), hy: q(P.hy), tilt: Math.round(P.tilt / 2) * 2, lift: q(P.lift), squat: Math.round(P.squat),
@@ -1622,7 +1622,7 @@ export function drawMochiPose(ctx, g, x, y, P0, { facing = 1, over = null, under
   };
   let look = lookOf(g, P.sprout ?? null, 0);
   if (P.mouth) look = { ...look, mouth: P.mouth };
-  drawPosed(ctx, look, Math.round(x * 2) / 2, Math.round(y * 2) / 2, rig, { scale: MOCHI_SIZE.baby, facing, slot, over, under, hold });
+  drawPosed(ctx, look, Math.round(x * 2) / 2, Math.round(y * 2) / 2, rig, { scale, facing, slot, over, under, hold });
 }
 
 // Draws Mochi `m` with its feet at (x, y) at `time` seconds. `m`: { genes, dir (1 right, -1 left),

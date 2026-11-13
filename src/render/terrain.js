@@ -120,6 +120,11 @@ export const MATERIALS = {
   // The Grand Mochi Course (its redraw, 2026-11-13: a summer festival at dusk): dusky summer grass
   // over warm soil with festival confetti pressed in.
   festground: { lip: '#8ccaa0', body: '#dcae98', deep: '#b07e80', stone: '#f2d4c4', style: 'confetti', blades: true, drip: 'root', cap: 'puffy' },
+  // The Mochi Grand Tour (its redraw, 2026-11-13: a royal progress through the kingdom): the town's
+  // cobbled road, the castle's cut stone, and the evening meadow on the road home.
+  kingroad: { lip: '#8ccaa0', body: '#d8b494', deep: '#ae8468', stone: '#f2dcc4', style: 'cobbles', blades: true, drip: 'root', cap: 'puffy' },
+  kingstone: { lip: '#d4ccdc', body: '#b6acc0', deep: '#8a8296', stone: '#e4dce8', style: 'strata', blades: false, drip: null, capLine: '#9a90a8', capUnder: '#c2b8c6', capLit: '#e8e0ee' },
+  kingdusk: { lip: '#6f9f78', body: '#b08c78', deep: '#8a6458', stone: '#dcc0ac', style: 'petalsoil', blades: true, drip: 'root', cap: 'puffy' },
   sweetcake: { lip: '#ffffff', body: '#f6d4a8', deep: '#dca878', stone: '#fff0d4', style: 'sponge', blades: false, drip: null, cap: 'puffy', capLine: '#d8a4b6', capUnder: '#f8e0e8', capLit: '#fff4f7' },
   // Cloud Glide: soft cloud underfoot, up among the clouds.
   cloudfloor: { lip: '#ffffff', body: '#eef2ff', deep: '#c8d2f4', stone: '#ffffff', style: 'cloud', blades: false, drip: null },
@@ -792,6 +797,30 @@ function paintTile(g, m, theme) {
           g.arc(x + dx, y + dy, 0.6 + hash(k + 2) * 0.7, 0, Math.PI * 2);
           g.fill();
         }
+      });
+    }
+  } else if (m.style === 'cobbles') {
+    // The town's cobbled road (the Grand Tour's): rounded stones packed close, each lit along its
+    // top, the earth showing between them.
+    for (let i = 0; i < 34; i++) {
+      const k = seed + i * 5.3 + 130;
+      const x = hash(k) * TW;
+      const y = hash(k + 1) * TH;
+      const r = 2.2 + hash(k + 2) * 1.8;
+      wrap((dx, dy) => {
+        const v = hash(k + 3);
+        g.fillStyle = hexA(mix(m.deep, INK, 0.1), 0.5);
+        g.beginPath();
+        g.ellipse(x + dx + 0.5, y + dy + 0.6, r * 1.2, r * 0.85, 0, 0, Math.PI * 2);
+        g.fill();
+        g.fillStyle = hexA(v > 0.6 ? m.stone : mix(m.stone, m.body, 0.45), 0.9);
+        g.beginPath();
+        g.ellipse(x + dx, y + dy, r * 1.2, r * 0.85, 0, 0, Math.PI * 2);
+        g.fill();
+        g.fillStyle = hexA('#ffffff', 0.4);
+        g.beginPath();
+        g.ellipse(x + dx - r * 0.35, y + dy - r * 0.3, r * 0.45, r * 0.26, -0.4, 0, Math.PI * 2);
+        g.fill();
       });
     }
   } else if (m.style === 'sponge') {

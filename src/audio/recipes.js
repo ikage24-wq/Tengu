@@ -91,6 +91,15 @@ const R = {
   fwLaunch: { db: -12, max: 1, layers: [{ wave: 'noise', env: { a: 4, s: 80, d: 900 }, lpf: [900, 200] }] },
   fwFar: { db: -22, max: 1, gap: 2000, layers: [{ wave: 'noise', env: { a: 4, s: 60, d: 700 }, lpf: [500, 150] }] },
   sparkShower: { db: -15, max: 1, layers: [sparkle('G6:200 C7:300 E7:500')] },
+  // The Mochi Grand Tour's kingdom (2026-11-13; recorded): spears on the count, a horn at Go, the
+  // gate, a flag run up, the drawbridge chain, a far horn, the fanfare.
+  kingTap: { db: -11, vary: 2, max: 2, gap: 120, layers: [{ wave: 'sine', f0: 150, slide: 0.5, env: { a: 2, s: 40, d: 200 } }] },
+  kingGo: { db: -9, max: 1, layers: [{ wave: 'saw', f0: 330, env: { a: 20, s: 500, d: 700 }, lpf: [1600] }] },
+  kingGate: { db: -15, max: 1, layers: [{ wave: 'noise', env: { a: 60, s: 500, d: 500 }, lpf: [900, 300] }] },
+  kingFlag: { db: -17, vary: 3, max: 2, gap: 100, layers: [whoosh(600, 500, 2200)] },
+  kingChain: { db: -17, max: 1, gap: 400, layers: [{ wave: 'noise', env: { a: 4, s: 200, d: 400 }, lpf: [3000, 1200], db: -6 }] },
+  kingHorn: { db: -21, max: 1, gap: 2000, layers: [{ wave: 'saw', f0: 220, env: { a: 150, s: 700, d: 900 }, lpf: [1200] }] },
+  kingFanfare: { db: -9, max: 1, layers: [{ wave: 'saw', f0: 392, env: { a: 20, s: 900, d: 900 }, lpf: [1800] }] },
   lakeLap: { db: -21, vary: 2, max: 2, gap: 900, layers: [{ wave: 'noise', env: { a: 600, s: 800, d: 900 }, lpf: [1200], db: -12 }] },
   // Paper Crane: a crisp flap of paper, and a soft rush as it settles into a glide.
   craneFlap: { db: -22, vary: 8, max: 1, layers: [{ rec: 'bookFlip', rate: 1.35, len: 130 }] },

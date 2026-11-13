@@ -92,6 +92,14 @@ S = {
     # boom and its crackle) and far off over the hills.
     'fwnear': 'Ivo Vicic - Fireworks FX/13 Fireworks_powerful explosions_multiples in a row_near.wav',
     'fwdist': 'Sonic Bat - Fireworks Ambience/SBfa_Distant Fireworks 005.wav',
+    # The Mochi Grand Tour's kingdom (2026-11-13): a big brass horn for the fanfares, a second
+    # horn, a heavy wooden gate creaking open, a gate's chain rattling, and a spear butt grounded
+    # on stone.
+    'hornbig': 'Jake Fielding - Cinematic Horn Braams/DSGNBram____Cinematic Horn Braam, Epic, Cinematic, Dark, Instrument, Huge-67.wav',
+    'horn2': 'Mechanical Wave - Cinematic Feel/DSGNBram_Cinematic Horn_MWSFX_CF 05.wav',
+    'gatecreak': 'Jake Fielding - Squeaky Gates/DOORGate_Wooden Metal Hinge Creaks_Jake Fielding_Squeaky Gates.wav',
+    'chainrat': 'Jake Fielding - Squeaky Gates/DOORGate_Metal Gate Spring Latch Mechanism, Screech_Jake Fielding_Squeaky Gates_01.wav',
+    'spear': '344 Audio - Historical Weapons Vol. 2/WEAPBlnt_Spear And Stick Impact, Wooden MKH 2_344 Audio_Medieval Weapons Vol 2.wav',
 }
 
 # name: [(source, start s, length s, pitch x, gain dB, delay ms), ...]
@@ -342,6 +350,17 @@ B = {
     'fwFar2': [('fwdist', 7.8, 2.4, 1.0, 0, 0, 0.05)],
     'fwFar3': [('fwdist', 6.3, 2.2, 1.0, 0, 0, 0.05)],
     'sparkShower': [('twinkle', 0.0, 1.8, 0.9, -3, 0), ('fwdist', 11.4, 2.6, 1.0, -8, 250)],
+    # The Mochi Grand Tour's kingdom (2026-11-13). A guard's spear grounded on each count; at Go a
+    # horn fanfare over two spears; the town gate creaking open; a flag running up a wall's pole;
+    # the drawbridge chain overhead at the moat; a far horn call now and then (faded in); and the
+    # full fanfare with a cheer under it as yours comes home and on the podium.
+    'kingTap': [('spear', 0.0, 0.34, 0.92, 0, 0), ('taiko', 0.0, 0.4, 1.4, -14, 0)],
+    'kingGo': [('hornbig', 0.0, 1.9, 1.5, 0, 0), ('spear', 0.0, 0.34, 0.92, -4, 0), ('spear', 0.75, 0.34, 0.86, -5, 170)],
+    'kingGate': [('gatecreak', 12.2, 1.3, 1.0, 0, 0)],
+    'kingFlag': [('cloth29', 0.0, 0.8, 1.1, 0, 0), ('airy', 0.3, 0.7, 1.5, -7, 0)],
+    'kingChain': [('chainrat', 2.0, 1.3, 0.9, 0, 0)],
+    'kingHorn': [('horn2', 0.2, 1.8, 1.25, 0, 0, 0.3)],
+    'kingFanfare': [('hornbig', 0.0, 2.4, 1.42, 0, 0), ('horn2', 0.2, 1.8, 1.9, -7, 260), ('cheer', 1.0, 2.6, 1.0, -5, 420, 0.3)],
 }
 
 

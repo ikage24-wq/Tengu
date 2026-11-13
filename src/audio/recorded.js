@@ -389,6 +389,14 @@ Object.assign(RECORDED, {
   fwLaunch: { trim: 0 },
   fwFar: { takes: 3, trim: 0 },
   sparkShower: { trim: 0 },
+  // The Mochi Grand Tour's kingdom (tools/build-fight.py, 2026-11-13).
+  kingTap: { trim: 0 },
+  kingGo: { trim: 0 },
+  kingGate: { trim: 0 },
+  kingFlag: { trim: 0 },
+  kingChain: { trim: 0 },
+  kingHorn: { trim: 0 },
+  kingFanfare: { trim: 0 },
 });
 
 // The files for a sound: assets/audio/rec/<name>.mp3, or <name>1.mp3, <name>2.mp3... for takes.

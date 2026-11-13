@@ -320,12 +320,13 @@ export function raceHud(ui, state, world) {
   // (A festival course, Sakura Sprint's: the track is a blossom branch that blooms as the race goes.)
   // (Lily Lake's: a little stream with lily pads along it, their lotus opening as the leader passes.)
   const track = world.map.look?.bar;
-  const festive = track === 'branch' || track === 'lily' || track === 'maple' || track === 'snow' || track === 'dango' || track === 'lantern';
+  const festive = track === 'branch' || track === 'lily' || track === 'maple' || track === 'snow' || track === 'dango' || track === 'lantern' || track === 'scroll';
   if (track === 'branch') blossomBranch(ctx, x0, x1, 20.5, lead, world.now);
   else if (track === 'maple') mapleBranch(ctx, x0, x1, 20.5, lead, world.now);
   else if (track === 'snow') snowString(ctx, x0, x1, 20.5, lead, world.now);
   else if (track === 'dango') dangoSkewer(ctx, x0, x1, 20.5, lead, world.now);
   else if (track === 'lantern') lanternString(ctx, x0, x1, 20.5, lead, world.now);
+  else if (track === 'scroll') royalScroll(ctx, x0, x1, 20.5, lead, world.now);
   else if (track === 'lily') lilyStream(ctx, x0, x1, 20.5, lead, world.now);
   else {
     ctx.fillStyle = '#f4e2ea';
@@ -696,6 +697,72 @@ function blossomBranch(ctx, x0, x1, y, lead, time) {
     const x = x0 + (x1 - x0) * q;
     flower(x, bend(x) - 3.4, 3.6, 1, '#ffffff');
   }
+}
+
+// The Mochi Grand Tour's track: the royal proclamation, a parchment scroll on a gold roller. It
+// unrolls as the leader goes, the written line running out behind it; at the quarters, a red wax
+// seal stamped with a crown.
+function royalScroll(ctx, x0, x1, y, lead, time) {
+  const W = x1 - x0;
+  const open = Math.max(0.02, Math.min(1, lead));
+  // The parchment that has been unrolled, with its curled top and bottom edge.
+  ctx.fillStyle = '#e8d8b4';
+  roundRect(ctx, x0 - 4, y - 5.4, W * open + 6, 10.8, 1.6);
+  ctx.fill();
+  ctx.fillStyle = '#f6ecd4';
+  roundRect(ctx, x0 - 4, y - 4.6, W * open + 6, 9.2, 1.4);
+  ctx.fill();
+  ctx.fillStyle = 'rgba(190,164,118,0.5)';
+  ctx.fillRect(x0 - 4, y - 5.4, W * open + 6, 1);
+  ctx.fillRect(x0 - 4, y + 4.4, W * open + 6, 1);
+  // The writing on it: short strokes of ink, and a crown at its head.
+  crownMark2(ctx, x0 + 2, y, 3, '#b8203a');
+  ctx.fillStyle = 'rgba(90,70,60,0.55)';
+  for (let k = 0; k < 40; k++) {
+    const lx = x0 + 8 + k * 7.4;
+    if (lx > x0 + W * open - 10) break;
+    ctx.fillRect(lx, y - 2.2, 4.4 + (k % 3), 0.9);
+    ctx.fillRect(lx, y + 1, 3.2 + ((k + 1) % 3), 0.9);
+  }
+  // The roller the rest is still wound on, moving along as it opens.
+  const rx = x0 + W * open + 4;
+  ctx.fillStyle = '#c89a30';
+  roundRect(ctx, rx - 3, y - 8, 6, 16, 3);
+  ctx.fill();
+  ctx.fillStyle = '#ffd75e';
+  roundRect(ctx, rx - 2.2, y - 7.4, 4.4, 14.8, 2.2);
+  ctx.fill();
+  ctx.fillStyle = 'rgba(255,255,255,0.75)';
+  ctx.fillRect(rx - 1.6, y - 6, 1.2, 12);
+  // The quarters: a red wax seal with a crown pressed into it.
+  for (const q of [0.25, 0.5, 0.75]) {
+    const x = x0 + W * q;
+    if (x > rx - 4) continue;
+    ctx.fillStyle = '#a81f36';
+    ctx.beginPath();
+    ctx.arc(x, y, 4.6, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#d8304a';
+    ctx.beginPath();
+    ctx.arc(x - 0.3, y - 0.3, 4, 0, Math.PI * 2);
+    ctx.fill();
+    crownMark2(ctx, x, y, 2.4, '#8a1628');
+  }
+  void time;
+}
+// A little crown for the bar: three points over a band.
+function crownMark2(ctx, x, y, r, c) {
+  ctx.fillStyle = c;
+  ctx.beginPath();
+  ctx.moveTo(x - r, y + r * 0.5);
+  ctx.lineTo(x - r, y - r * 0.6);
+  ctx.lineTo(x - r * 0.5, y - r * 0.1);
+  ctx.lineTo(x, y - r * 0.8);
+  ctx.lineTo(x + r * 0.5, y - r * 0.1);
+  ctx.lineTo(x + r, y - r * 0.6);
+  ctx.lineTo(x + r, y + r * 0.5);
+  ctx.closePath();
+  ctx.fill();
 }
 
 // The Grand Mochi Course's track: a string of paper lanterns, dark until the leader reaches them,

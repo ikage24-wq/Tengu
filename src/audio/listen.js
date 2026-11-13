@@ -109,22 +109,26 @@ function hearFestival(world, m) {
   const sweets = world.map.look.groundArt === 'sweets';
   // (The Grand Mochi Course's festival at dusk: a deeper taiko, fireworks far off now and then.)
   const matsuri = world.map.look.groundArt === 'matsuri';
+  // (The Grand Tour's kingdom: spears for the count, horns and a gate at Go, a far horn now and then.)
+  const kingdom = world.map.look.groundArt === 'kingdom';
   if (R.phase === 'ready') {
     const il = introLen(R);
     const n = R.t >= il ? Math.ceil(il + COUNTDOWN - R.t) : null;
     if (n != null && n !== f.beat && n >= 1 && n <= 3) {
       f.beat = n;
-      sfx(lake ? 'lakeToot' : maple ? 'mochiPound' : snow ? 'snowBell' : sweets ? 'sweetPop' : matsuri ? 'matsuriDon' : 'taikoDon', { rate: n === 1 ? (sweets ? 1.12 : 1.06) : 1 });
+      sfx(lake ? 'lakeToot' : maple ? 'mochiPound' : snow ? 'snowBell' : sweets ? 'sweetPop' : matsuri ? 'matsuriDon' : kingdom ? 'kingTap' : 'taikoDon', { rate: n === 1 ? (sweets ? 1.12 : 1.06) : 1 });
     }
   } else if (!f.go) {
     f.go = true;
-    sfx(lake ? 'lakeWhistle' : maple ? 'mochiPoundGo' : snow ? 'snowGo' : sweets ? 'sweetGo' : matsuri ? 'matsuriGo' : 'taikoGo');
+    sfx(lake ? 'lakeWhistle' : maple ? 'mochiPoundGo' : snow ? 'snowGo' : sweets ? 'sweetGo' : matsuri ? 'matsuriGo' : kingdom ? 'kingGo' : 'taikoGo');
+    if (kingdom) sfx('kingGate', { db: -4 });
   }
   if (lake) hearLake(world, R, f);
   if (maple) hearMaple(R, f, t);
   if (snow) hearSnow(R, f);
   if (sweets) hearSweets(world, R, f, t);
   if (matsuri) hearMatsuri(R, f, t);
+  if (kingdom) hearKingdom(world, R, f, t);
   if (R.finalAt != null && !f.final) {
     f.final = true;
     sfx('crowdSwell');
@@ -159,6 +163,42 @@ function hearFestival(world, m) {
   while (f.queue.length && f.queue[0].at <= t) {
     const c = f.queue.shift();
     sfx(c.name ?? 'chimeBell', { rate: c.rate, pan: c.pan, db: c.db });
+  }
+}
+
+// The Mochi Grand Tour: racers into the moat and out again, the drawbridge chain overhead as yours
+// swims under it, a flag running up at each wall top (and a cheer), a horn as it takes off from the
+// keep, far horn calls across the kingdom, and the fanfare as it comes home and on the podium.
+function hearKingdom(world, R, f, t) {
+  const you = R.racers[R.me];
+  for (const r of R.racers) {
+    const was = f.modes.get(r);
+    const mode = r.m.mode;
+    f.modes.set(r, mode);
+    if (R.phase !== 'run' || !was || was === mode) continue;
+    const pan = Math.max(-0.6, Math.min(0.6, (r.x - you.x) / 260));
+    if (mode === 'swim') sfx('lakeDive', { pan, db: r.you ? 0 : -7 });
+    else if (was === 'swim') sfx('lakeSwish', { pan, db: r.you ? 0 : -8 });
+    if (!r.you) continue;
+    if (was === 'climb') {
+      sfx('kingFlag');
+      sfx('landCheer', { db: -5 });
+    }
+    if (mode === 'fly') sfx('kingHorn', { db: -8 });
+    if (was === 'fly') sfx('snowLand');
+  }
+  if (R.phase === 'run' && !f.chained && you.x > 2180) {
+    f.chained = true;
+    sfx('kingChain', { db: -6 });
+  }
+  f.hornAt ??= t + 8;
+  if (R.phase === 'run' && t >= f.hornAt) {
+    f.hornAt = t + 14 + Math.random() * 10;
+    sfx('kingHorn', { pan: Math.random() * 0.6 - 0.3, db: -10 });
+  }
+  if (you.done != null && !f.hailed) {
+    f.hailed = true;
+    sfx('kingFanfare');
   }
 }
 

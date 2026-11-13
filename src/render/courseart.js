@@ -20,6 +20,7 @@ import { hash, lean, pivoted, swing } from './propkit.js';
 import { windAt, windTravel, GROUND_ART, EDGE_KINDS } from './terrain.js';
 import { groundAt } from '../world/physics.js';
 import { drawSpectator, drawMochiPose } from './mochi-anim.js';
+import { drawHayate } from './hayate.js';
 import { newRecord } from '../data/mochi-raise.js';
 import { rollMochi } from '../data/mochi-genes.js';
 import { introLen, PODIUM, CREST_AHEAD } from '../world/mochi-race.js';
@@ -626,6 +627,36 @@ function treat(ctx, kind, x, y, time, seed) {
       const a = (i / 6) * TAU;
       ctx.fillRect(Math.cos(a) * 2 - 0.4, -2.4 + Math.sin(a) * 1.8 - 0.4, 0.8, 0.8);
     }
+  } else if (kind === 14) {
+    // A little crown, its band worn bright.
+    ctx.fillStyle = '#e8c04a';
+    ctx.beginPath();
+    ctx.moveTo(-4, 2);
+    ctx.lineTo(-4, -2.4);
+    ctx.lineTo(-2, 0);
+    ctx.lineTo(0, -3.4);
+    ctx.lineTo(2, 0);
+    ctx.lineTo(4, -2.4);
+    ctx.lineTo(4, 2);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = '#fff0b0';
+    ctx.fillRect(-4, 0.6, 8, 1);
+    shine(-2, -1, 0.9);
+  } else if (kind === 15) {
+    // An old iron key.
+    ctx.strokeStyle = '#8a8296';
+    ctx.lineWidth = 1.4;
+    ctx.beginPath();
+    ctx.arc(-2.6, 0, 2, 0, TAU);
+    ctx.stroke();
+    ctx.fillStyle = '#9a92a6';
+    ctx.fillRect(-0.6, -0.7, 6, 1.4);
+    ctx.fillRect(4, -0.7, 1.2, 3);
+    ctx.fillRect(2.2, -0.7, 1.2, 2.2);
+    ctx.lineWidth = 0.8;
+    ctx.strokeStyle = ink;
   } else if (kind === 13) {
     // A candy apple on its stick, glossy red.
     ctx.fillStyle = '#c8945a';
@@ -828,6 +859,10 @@ export function noteRace(map, R, cam, time) {
     noteLake(map, R, mo, dt, time);
     noteMatsuri(map, R, mo, time);
   }
+  if (map.look.groundArt === 'kingdom') {
+    noteLake(map, R, mo, dt, time);
+    noteKingdom(map, R, mo, time);
+  }
   stepDrops(map, dt, time);
   // Petals kicked up: a couple every so many steps from each runner's heels.
   for (const r of R.racers) {
@@ -887,6 +922,7 @@ export function drawRaceBehind(ctx, map, R, cam, time) {
     duskLanterns(ctx, map, cam, time);
     launchFirework(ctx, map, R, cam, time);
   }
+  if (map.look?.groundArt === 'kingdom') kingMoat(ctx, map, cam, time);
   if (!map.look?.festival) return;
   const PET = map.look.petals ?? PETALS;
   const mo = momentsOf(R);
@@ -914,6 +950,9 @@ export function drawRaceBehind(ctx, map, R, cam, time) {
     } else if (map.look.sparks) {
       ctx.fillStyle = PET[i % PET.length];
       ctx.fillRect(-0.7, -0.7, 1.4, 1.4);
+    } else if (map.look.confetti) {
+      ctx.fillStyle = PET[i % PET.length];
+      ctx.fillRect(-1.7, -1.1, 3.4, 2.2);
     } else if (map.look.flakes) {
       ctx.fillStyle = '#ffffff';
       ctx.beginPath();
@@ -1348,6 +1387,14 @@ const CASTS = {
     pom: { shade: 'rgba(200,60,80,0.35)', outer: ['#ffffff', '#ff6a7a', '#ffd75e'], inner: ['#fff0c0', '#ff9aa8'], heart: '#fff4e0' },
     banner: { text: 'WASSHOI!', ink: '#d8384e', edge: '#ff9aa8', tri: ['#ff6a7a', '#ffd75e'] },
   },
+  // The Grand Tour's royal progress: the starter a herald in the Study Buddy with the kingdom's
+  // red flag; the squad by the finish in Berry Overalls, red and gold pom-poms, a "HURRAH!" banner.
+  kingdom: {
+    id: 'kingdom', starter: 'study', seed: 11011, squad: 'berry', crew: [11111, 11123, 11137],
+    flag: { cloth: '#d8304a', hem: '#ffd0d8', mark: 'crown' },
+    pom: { shade: 'rgba(200,40,70,0.35)', outer: ['#ffffff', '#e8405a', '#ffd75e'], inner: ['#fff0c0', '#ff9aa8'], heart: '#fff4e0' },
+    banner: { text: 'HURRAH!', ink: '#c82a44', edge: '#ff9aa8', tri: ['#d8304a', '#ffd75e'] },
+  },
 };
 const castOf = (map) => CASTS[map?.look?.cast ?? map?.look?.groundArt] ?? CASTS.sakura;
 const STARTERS = {};
@@ -1443,6 +1490,8 @@ function flag(ctx, hand, ang, face, time, brisk, look = CASTS.sakura.flag) {
       ctx.arc(mx, my, 2.4, (q / 4) * TAU + time * 0.3, ((q + 1) / 4) * TAU + time * 0.3);
       ctx.stroke();
     }
+  } else if (look.mark === 'crown') {
+    crownMark(ctx, mx, my, 4, '#ffd75e');
   } else if (look.mark === 'firework') {
     // A little firework: gold sparks bursting out, turning slowly.
     ctx.fillStyle = '#ffd75e';
@@ -1808,7 +1857,11 @@ function drawFront2(ctx, map, R, cam, time) {
       ctx.rotate(u * 9 + h * 5);
       if (map.look.leaves) place(ctx, leafArt(PET[i % PET.length]), 0, 6.5);
       else if (map.look.flakes) place(ctx, flakeArt(), 0, 4);
-      else if (map.look.sparks) {
+      else if (map.look.confetti) {
+        // (The Grand Tour's: red and gold paper confetti, each scrap turning as it falls.)
+        ctx.fillStyle = PET[i % PET.length];
+        ctx.fillRect(-2.2, -1.4 * Math.abs(Math.cos(R.t * 3 + i)), 4.4, 2.8 * Math.abs(Math.cos(R.t * 3 + i)) + 0.5);
+      } else if (map.look.sparks) {
         // (The festival's: sparkler sparks, little four-point twinkles drifting down.)
         const tw = 0.6 + 0.4 * Math.sin(R.t * 14 + i * 2.3);
         ctx.fillStyle = PET[i % PET.length];
@@ -2543,7 +2596,7 @@ WATER_BED.push(lakeBed);
 // On the water, over its skin: the pads and lotus (bobbing on the swell, drifting aside from any
 // swimmer going by and dipping as its wake lifts them), and ripples ringing out round each swimmer.
 function lakeSurface(ctx, map, w, cam, time, x0, x1, at) {
-  if (w.kind !== 'lotus' && w.kind !== 'dusk') return;
+  if (w.kind !== 'lotus' && w.kind !== 'dusk' && w.kind !== 'moat') return;
   if (!live(time) || RUN.map !== map) return;
   ctx.strokeStyle = '#ffffff';
   ctx.lineWidth = 1;
@@ -5053,8 +5106,1098 @@ function noteMatsuri(map, R, mo, time) {
     mo.fw = [you.x + 230, you.y + 85];
   }
 }
+// ---------- The Mochi Grand Tour ('course:kingdom'; its redraw, 2026-11-13) ----------
+// A royal progress through the Mochi kingdom, in five parts, from the castle town at dawn to the
+// throne at dusk. The castle itself is the thread: a speck over the town roofs at the start, it
+// grows all the way in until you are climbing its own walls and gliding off its keep, then stands
+// behind you, its windows lit, as you run the royal road home.
+// Castle Town: the town gate swings open at Go, guards grounding their spears; banner poles and
+// townsfolk along the road. The Moat: boats out on the water, the drawbridge overhead. Castle
+// Walls: two courses of cut stone, a flag running up the pole at each top as yours comes over.
+// Over the Keep: off the ramp into the sunset over the castle's towers. The Royal Road: lantern
+// poles and subjects lining the way home, and the crown waiting by the finish.
+const ROYAL = { cloth: '#d8304a', deep: '#a81f36', gold: '#ffd75e', goldDk: '#d8a32e', cream: '#fff4e4' };
+const PENNANTS = ['#d8304a', '#ffd75e', '#3a6ad8', '#ffffff'];
+// ---- The castle ----
+// A castle keep in tiers: a battered stone base, then white-walled storeys each under a dark tiled
+// roof whose eaves flare up at the corners, little barred windows (lit at dusk), a gold fish
+// ornament at each end of the top ridge. Drawn straight to the canvas at whatever size it is now,
+// so coming nearer only changes the numbers, never repaints a picture.
+function castle(ctx, cx, baseY, s, air, haze, lit, t = 0) {
+  const C = (c) => mix(c, air, haze);
+  const w = 70 * s;
+  const H = 96 * s;
+  // The stone base: wider at the foot, its courses.
+  ctx.fillStyle = C('#8a8296');
+  ctx.beginPath();
+  ctx.moveTo(cx - w * 0.52, baseY);
+  ctx.lineTo(cx - w * 0.36, baseY - H * 0.26);
+  ctx.lineTo(cx + w * 0.36, baseY - H * 0.26);
+  ctx.lineTo(cx + w * 0.52, baseY);
+  ctx.closePath();
+  ctx.fill();
+  ctx.fillStyle = C('#9e96ac');
+  for (let i = 1; i < 3; i++) {
+    const u = i / 3;
+    const hw = w * (0.52 - 0.16 * u);
+    ctx.fillRect(cx - hw, baseY - H * 0.26 * u, hw * 2, Math.max(0.6, s * 0.8));
+  }
+  // Three storeys, each smaller, white walls under a dark roof.
+  const tiers = [[0.26, 0.72, 0.2], [0.46, 0.54, 0.17], [0.64, 0.38, 0.15]];
+  for (const [at, tw, th] of tiers) {
+    const y = baseY - H * at;
+    const hw = (w * tw) / 2;
+    const wallH = H * th * 0.62;
+    ctx.fillStyle = C('#f4eee8');
+    ctx.fillRect(cx - hw, y - wallH, hw * 2, wallH);
+    ctx.fillStyle = C('#d8cec8');
+    ctx.fillRect(cx - hw, y - wallH, hw * 2, Math.max(0.6, s * 0.7));
+    // Its windows: little dark slots, warm when the lanterns are lit.
+    const n = Math.max(2, Math.round(tw * 4));
+    for (let k = 0; k < n; k++) {
+      const wx = cx - hw + ((k + 0.5) / n) * hw * 2;
+      const ww = Math.max(0.8, s * 2.4);
+      const wh = Math.max(1.2, wallH * 0.42);
+      // (Lit, each window has its own candle, and candles flicker.)
+      const fl = lit > 0.05 ? lit * (0.72 + 0.28 * Math.sin(t * (1.6 + (k % 3) * 0.7) + k * 2.1 + at * 9)) : 0;
+      ctx.fillStyle = fl > 0.05 ? mix(C('#4a4060'), '#ffcf8a', fl) : C('#4a4060');
+      ctx.fillRect(wx - ww / 2, y - wallH * 0.76, ww, wh);
+    }
+    // The roof: a dark tiled sweep, its eaves turning up at the ends.
+    const ry = y - wallH;
+    const rw = hw * 1.34;
+    const rh = H * th * 0.5;
+    ctx.fillStyle = C('#3e3a50');
+    ctx.beginPath();
+    ctx.moveTo(cx - rw, ry + rh * 0.12);
+    ctx.quadraticCurveTo(cx - rw * 0.52, ry - rh * 0.5, cx, ry - rh);
+    ctx.quadraticCurveTo(cx + rw * 0.52, ry - rh * 0.5, cx + rw, ry + rh * 0.12);
+    ctx.quadraticCurveTo(cx + rw * 0.6, ry - rh * 0.16, cx, ry - rh * 0.3);
+    ctx.quadraticCurveTo(cx - rw * 0.6, ry - rh * 0.16, cx - rw, ry + rh * 0.12);
+    ctx.fill();
+    ctx.fillStyle = C('#625c76');
+    ctx.beginPath();
+    ctx.moveTo(cx - rw, ry + rh * 0.12);
+    ctx.quadraticCurveTo(cx - rw * 0.52, ry - rh * 0.5, cx, ry - rh);
+    ctx.quadraticCurveTo(cx - rw * 0.5, ry - rh * 0.42, cx - rw * 0.9, ry + rh * 0.08);
+    ctx.fill();
+  }
+  // Pennants on the tiers' corners, snapping in her wind.
+  for (const [at, side] of [[0.46, -1], [0.46, 1], [0.64, 1]]) {
+    const px = cx + side * w * (at > 0.5 ? 0.2 : 0.37);
+    const py = baseY - H * at - H * 0.1;
+    const fly = 1 + 0.35 * Math.sin(t * 2.6 + side * 1.3 + at * 7);
+    ctx.fillStyle = C('#7a6a84');
+    ctx.fillRect(px - s * 0.4, py - H * 0.1, Math.max(0.6, s * 0.8), H * 0.1);
+    ctx.fillStyle = C('#d8304a');
+    ctx.beginPath();
+    ctx.moveTo(px, py - H * 0.1);
+    ctx.lineTo(px + side * w * 0.11 * fly, py - H * 0.075 + s * 0.8 * Math.sin(t * 3 + at * 5));
+    ctx.lineTo(px, py - H * 0.045);
+    ctx.fill();
+  }
+  // Smoke drifting up from its kitchens.
+  if (s > 0.55) {
+    ctx.fillStyle = C('#e8e4f0');
+    for (let i = 0; i < 4; i++) {
+      const u = (t * 0.11 + i / 4) % 1;
+      ctx.globalAlpha = Math.sin(u * Math.PI) * 0.4;
+      ctx.beginPath();
+      ctx.arc(cx - w * 0.44 + Math.sin(u * 5 + i) * w * 0.05 - u * w * 0.1, baseY - H * 0.3 - u * H * 0.42, s * (1.4 + u * 3), 0, TAU);
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+  }
+  // The gold fish at each end of the top ridge, and a flag on the very top.
+  const topY = baseY - H * 0.64 - H * 0.15 * 0.62 - H * 0.15 * 0.5;
+  if (s > 0.6) {
+    ctx.fillStyle = C(ROYAL.gold);
+    for (const sx of [-1, 1]) {
+      ctx.beginPath();
+      ctx.ellipse(cx + sx * w * 0.13, topY + s * 1.6, s * 1.9, s * 1.3, 0, 0, TAU);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(cx + sx * w * 0.13, topY + s * 1.6);
+      ctx.lineTo(cx + sx * w * 0.13 - sx * s * 1.2, topY - s * 1.4);
+      ctx.lineTo(cx + sx * w * 0.13 + sx * s * 1.6, topY + s * 0.4);
+      ctx.fill();
+    }
+  }
+}
+// The town's roofs: dark tiled houses stepping up the hillside, their windows warm at dusk.
+function townRoofs(ctx, cam, width, ridge, air, haze, par, lit, step, t = 0) {
+  repeat(cam.x, par, step, width, (i, x) => {
+    const h = hash(i * 1.9 + 7);
+    if (h < 0.2) return;
+    const bx = x + hash(i * 2.7) * (step * 0.4);
+    const by = ridge(bx) + 3;
+    const w = step * (0.5 + h * 0.4);
+    const hh = step * (0.26 + hash(i * 3.3) * 0.26);
+    ctx.fillStyle = mix('#efe6dc', air, haze);
+    ctx.fillRect(bx - w / 2, by - hh, w, hh + 2);
+    if (lit > 0.05) {
+      const fl = 0.74 + 0.26 * Math.sin(t * (1.4 + (i % 3) * 0.6) + i * 1.7);
+      ctx.fillStyle = `rgba(255,206,140,${(0.5 + 0.3 * lit) * fl})`;
+      ctx.fillRect(bx - w * 0.18, by - hh * 0.72, w * 0.22, hh * 0.3);
+    }
+    // A chimney on some of them, with its smoke drifting away down the ridge.
+    if (h > 0.62) {
+      const chx = bx + w * 0.3;
+      const chy = by - hh - w * 0.18;
+      ctx.fillStyle = mix('#6a6478', air, haze);
+      ctx.fillRect(chx - w * 0.06, chy, w * 0.12, hh * 0.5);
+      ctx.fillStyle = mix('#efeaf6', air, haze * 0.6);
+      for (let k = 0; k < 3; k++) {
+        const u = (t * 0.09 + k / 3 + h) % 1;
+        ctx.globalAlpha = Math.sin(u * Math.PI) * 0.45;
+        ctx.beginPath();
+        ctx.arc(chx + Math.sin(u * 4 + k) * step * 0.06 - u * step * 0.1, chy - u * step * 0.5, step * (0.03 + u * 0.07), 0, TAU);
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+    }
+    ctx.fillStyle = mix('#5a5468', air, haze);
+    ctx.beginPath();
+    ctx.moveTo(bx - w * 0.72, by - hh);
+    ctx.quadraticCurveTo(bx, by - hh - w * 0.36, bx + w * 0.72, by - hh);
+    ctx.quadraticCurveTo(bx + w * 0.3, by - hh - w * 0.1, bx, by - hh - w * 0.14);
+    ctx.quadraticCurveTo(bx - w * 0.3, by - hh - w * 0.1, bx - w * 0.72, by - hh);
+    ctx.fill();
+  });
+}
+// Where the race is along the Tour, for the backdrop: 0 at the town, 1 at the castle walls, back
+// toward 0 on the road home.
+const KING_AT = 4100;
+COURSES.kingdom = {
+  far(ctx, t, cam, width, y0, time) {
+    const air = t.sky[1];
+    const lit = Math.max(0, Math.min(1, (cam.x - 4700) / 1400));
+    goldenSky(ctx, width, y0, goldenOf(RUN.map?.night ?? 0));
+    if (!t.stars) clouds(ctx, cam, width, time, false);
+    hills(ctx, cam, width, y0 - 16, 54, 0.03, 5.1, mix('#8a7eb8', air, 0.34), mix('#a89cd0', air, 0.3));
+    const ridge = hills(ctx, cam, width, y0 + 4, 30, 0.07, 3.3, mix('#6e7aa0', air, 0.24), mix('#94a0c4', air, 0.2));
+    // The kingdom's hill town along the ridge, its windows warm once the sun is down.
+    townRoofs(ctx, cam, width, ridge, air, 0.22, 0.07, lit, 34, time);
+    return true;
+  },
+  // The middle plane, where this course has its room: the castle standing over the kingdom, growing
+  // all the way in to its own walls and left behind you after; in front of it a band of countryside,
+  // its hedges, trees and farmhouses, or, along the castle's foot, its outer wall.
+  mid(ctx, t, cam, width, y0, time) {
+    const air = t.sky[1];
+    const lit = Math.max(0, Math.min(1, (cam.x - 4700) / 1400));
+    const land = hills(ctx, cam, width, y0 + 10, 12, 0.45, 6.7, mix('#7aa06c', air, 0.14), mix('#a6c48e', air, 0.1));
+    // The countryside: a hedge line, trees along it, the odd farmhouse.
+    repeat(cam.x, 0.45, 74, width, (i, x) => {
+      const h = hash(i * 2.3 + 2);
+      const gy = land(x) + 3;
+      ctx.strokeStyle = mix('#4e7a4a', air, 0.1);
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(x, gy - 5);
+      ctx.lineTo(x + 40, gy - 5 + (land(x + 40) - land(x)));
+      ctx.stroke();
+      // A round tree on the hedge line, leaning with the breeze.
+      if (h > 0.4) {
+        const tx = x + 16 + hash(i * 5.1) * 14;
+        const ty = land(tx) + 2;
+        const wx = tx + cam.x * 0.45;
+        const sway = (Math.sin(time * 1.5 + wx * 0.02) * 0.5 + windAt(time, wx)) * 2.2;
+        ctx.fillStyle = mix('#3f6a40', air, 0.1);
+        ctx.beginPath();
+        ctx.moveTo(tx - 1.2, ty);
+        ctx.lineTo(tx - 1.2 + sway * 0.4, ty - 9);
+        ctx.lineTo(tx + 1.2 + sway * 0.4, ty - 9);
+        ctx.lineTo(tx + 1.2, ty);
+        ctx.fill();
+        ctx.fillStyle = mix('#58905a', air, 0.1);
+        ctx.beginPath();
+        ctx.arc(tx + sway, ty - 13, 6.5 + h * 2.5, 0, TAU);
+        ctx.fill();
+        ctx.fillStyle = mix('#74ac72', air, 0.1);
+        ctx.beginPath();
+        ctx.arc(tx - 2 + sway * 1.2, ty - 15, 4 + h, 0, TAU);
+        ctx.fill();
+      }
+      // A windmill out in the fields now and then, its sails turning on her wind.
+      if (h > 0.26 && h < 0.34) {
+        const mx = x + 26;
+        const my = land(mx) + 2;
+        ctx.fillStyle = mix('#efe6dc', air, 0.08);
+        ctx.beginPath();
+        ctx.moveTo(mx - 7, my);
+        ctx.lineTo(mx - 4.4, my - 26);
+        ctx.lineTo(mx + 4.4, my - 26);
+        ctx.lineTo(mx + 7, my);
+        ctx.fill();
+        ctx.fillStyle = mix('#c8bcc8', air, 0.08);
+        ctx.fillRect(mx - 5.6, my - 14, 11.2, 1.4);
+        ctx.fillStyle = mix('#5a5468', air, 0.08);
+        ctx.beginPath();
+        ctx.moveTo(mx - 6, my - 26);
+        ctx.quadraticCurveTo(mx, my - 34, mx + 6, my - 26);
+        ctx.fill();
+        // Its four sails, round and round.
+        const spin = time * 0.5 + i;
+        for (let s = 0; s < 4; s++) {
+          const a = spin + (s / 4) * TAU;
+          const ex = mx + Math.cos(a) * 15;
+          const ey = my - 28 + Math.sin(a) * 15;
+          ctx.strokeStyle = mix('#6a5a50', air, 0.08);
+          ctx.lineWidth = 1.6;
+          ctx.beginPath();
+          ctx.moveTo(mx, my - 28);
+          ctx.lineTo(ex, ey);
+          ctx.stroke();
+          ctx.fillStyle = mix('#fff4e4', air, 0.08);
+          ctx.save();
+          ctx.translate((mx + ex) / 2, (my - 28 + ey) / 2);
+          ctx.rotate(a);
+          ctx.fillRect(-6, -2.6, 12, 2.4);
+          ctx.restore();
+        }
+        ctx.fillStyle = mix('#8a8296', air, 0.08);
+        ctx.beginPath();
+        ctx.arc(mx, my - 28, 1.8, 0, TAU);
+        ctx.fill();
+      }
+      if (h < 0.55) return;
+      const bx = x + 50;
+      const by = land(bx) + 3;
+      ctx.fillStyle = mix('#f6efe6', air, 0.08);
+      ctx.fillRect(bx - 10, by - 15, 20, 15);
+      ctx.fillStyle = `rgba(255,206,140,${0.25 + 0.6 * lit})`;
+      ctx.fillRect(bx - 5, by - 11, 4, 4);
+      ctx.fillStyle = mix('#b8503e', air, 0.08);
+      ctx.beginPath();
+      ctx.moveTo(bx - 14, by - 15);
+      ctx.lineTo(bx, by - 25);
+      ctx.lineTo(bx + 14, by - 15);
+      ctx.fill();
+      ctx.fillStyle = mix('#8a8296', air, 0.08);
+      ctx.fillRect(bx + 5, by - 28, 4, 13);
+      // Its chimney smoke, carried away on the wind.
+      ctx.fillStyle = mix('#efeaf6', air, 0.1);
+      for (let k = 0; k < 3; k++) {
+        const u = (time * 0.1 + k / 3 + h) % 1;
+        ctx.globalAlpha = Math.sin(u * Math.PI) * 0.5;
+        ctx.beginPath();
+        ctx.arc(bx + 7 + Math.sin(u * 4 + k) * 2 - u * 7, by - 30 - u * 22, 1.6 + u * 3.4, 0, TAU);
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+    });
+    // The castle itself, standing over the fields, in front of all of it: near enough to read, far
+    // enough to grow all the way in to its own walls and shrink behind you after. (This course's
+    // camera sits low, so the sky is a thin strip: the castle stands in the land, not above it.)
+    const d = Math.abs(cam.x - KING_AT);
+    const s = Math.max(0.62, Math.min(1.6, 1.6 - d / 3400));
+    const cx = width / 2 + KING_AT * 0.12 - cam.x * 0.12;
+    if (cx > -140 && cx < width + 140) castle(ctx, cx, y0 + 104, s, air, 0.12, lit, time);
+    // The near fields, right behind the road: this course's camera lies low and leaves a long empty
+    // band between the horizon and the track, so the kingdom's own country fills it, big and close
+    // and in front of the castle. Hedges with gates, orchard trees bending in her wind, haystacks,
+    // and a great windmill turning beside a farm with its smoke.
+    const near = hills(ctx, cam, width, y0 + 118, 16, 0.72, 2.9, mix('#5f8f5a', air, 0.04), mix('#86b874', air, 0.02));
+    repeat(cam.x, 0.72, 128, width, (i, x) => {
+      const h = hash(i * 3.1 + 5);
+      const gy = near(x) + 3;
+      // The hedge along the field's edge, with a gate in it.
+      ctx.strokeStyle = mix('#3c6b3c', air, 0.04);
+      ctx.lineWidth = 5;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(x, gy - 7);
+      ctx.lineTo(x + 54, gy - 7 + (near(x + 54) - near(x)));
+      ctx.stroke();
+      ctx.lineCap = 'butt';
+      ctx.strokeStyle = mix('#8a6a50', air, 0.04);
+      ctx.lineWidth = 1.6;
+      for (const d2 of [0, 4, 8]) {
+        ctx.beginPath();
+        ctx.moveTo(x + 58, gy - 2 - d2);
+        ctx.lineTo(x + 74, gy - 2 - d2 + (near(x + 74) - near(x + 58)));
+        ctx.stroke();
+      }
+      // Orchard trees, bending together in her wind.
+      for (let k = 0; k < 2; k++) {
+        if (hash(i * 7.7 + k) < 0.3) continue;
+        const tx = x + 16 + k * 30 + hash(i * 2.9 + k) * 10;
+        const ty = near(tx) + 3;
+        const sway = (Math.sin(time * 1.4 + (tx + cam.x * 0.72) * 0.016) * 0.6 + windAt(time, tx + cam.x * 0.72)) * 3.4;
+        ctx.fillStyle = mix('#5a4030', air, 0.04);
+        ctx.beginPath();
+        ctx.moveTo(tx - 2, ty);
+        ctx.lineTo(tx - 1.6 + sway * 0.35, ty - 15);
+        ctx.lineTo(tx + 1.6 + sway * 0.35, ty - 15);
+        ctx.lineTo(tx + 2, ty);
+        ctx.fill();
+        ctx.fillStyle = mix('#3f7a46', air, 0.04);
+        ctx.beginPath();
+        ctx.arc(tx + sway, ty - 22, 10 + h * 3, 0, TAU);
+        ctx.fill();
+        ctx.fillStyle = mix('#5ea15c', air, 0.04);
+        ctx.beginPath();
+        ctx.arc(tx - 3 + sway * 1.2, ty - 25, 6.4 + h * 2, 0, TAU);
+        ctx.fill();
+        ctx.fillStyle = mix('#7cc077', air, 0.04);
+        ctx.beginPath();
+        ctx.arc(tx - 5 + sway * 1.3, ty - 27, 3, 0, TAU);
+        ctx.fill();
+      }
+      // A haystack or two in the stubble.
+      if (h > 0.4 && h < 0.8) {
+        for (let k = 0; k < 2; k++) {
+          const sx = x + 86 + k * 16;
+          const sy = near(sx) + 3;
+          ctx.fillStyle = mix('#d8a850', air, 0.04);
+          ctx.beginPath();
+          ctx.moveTo(sx - 7, sy);
+          ctx.quadraticCurveTo(sx - 5, sy - 13, sx, sy - 15);
+          ctx.quadraticCurveTo(sx + 5, sy - 13, sx + 7, sy);
+          ctx.fill();
+          ctx.fillStyle = mix('#eec472', air, 0.04);
+          ctx.beginPath();
+          ctx.moveTo(sx - 6, sy - 3);
+          ctx.quadraticCurveTo(sx - 3, sy - 12, sx - 0.5, sy - 14);
+          ctx.lineTo(sx - 1.5, sy - 3);
+          ctx.fill();
+        }
+      }
+      // A great windmill, its sails turning, and a farm beside it with its smoke. (Rare: one every
+      // few fields, so it reads as a landmark.)
+      if (h > 0.8) {
+        const mx = x + 58;
+        const my = near(mx) + 3;
+        ctx.fillStyle = mix('#f2e8dc', air, 0.03);
+        ctx.beginPath();
+        ctx.moveTo(mx - 11, my);
+        ctx.lineTo(mx - 7, my - 40);
+        ctx.lineTo(mx + 7, my - 40);
+        ctx.lineTo(mx + 11, my);
+        ctx.fill();
+        ctx.fillStyle = mix('#d6c8c0', air, 0.03);
+        ctx.fillRect(mx - 9.4, my - 22, 18.8, 2.2);
+        ctx.fillStyle = mix('#4a4458', air, 0.03);
+        ctx.beginPath();
+        ctx.moveTo(mx - 10, my - 40);
+        ctx.quadraticCurveTo(mx, my - 52, mx + 10, my - 40);
+        ctx.fill();
+        ctx.fillStyle = mix('#3a3448', air, 0.03);
+        ctx.fillRect(mx - 3, my - 16, 6, 16);
+        const spin = time * 0.42 + i;
+        for (let sail = 0; sail < 4; sail++) {
+          const a = spin + (sail / 4) * TAU;
+          const ex = mx + Math.cos(a) * 24;
+          const ey = my - 44 + Math.sin(a) * 24;
+          ctx.strokeStyle = mix('#6a5a50', air, 0.03);
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(mx, my - 44);
+          ctx.lineTo(ex, ey);
+          ctx.stroke();
+          ctx.save();
+          ctx.translate((mx + ex) / 2, (my - 44 + ey) / 2);
+          ctx.rotate(a);
+          ctx.fillStyle = mix('#fff6ea', air, 0.03);
+          ctx.fillRect(-9, -4.4, 18, 3.6);
+          ctx.fillStyle = mix('#e0d2c4', air, 0.03);
+          for (let b = -8; b < 9; b += 4) ctx.fillRect(b, -4.4, 1, 3.6);
+          ctx.restore();
+        }
+        ctx.fillStyle = mix('#8a8296', air, 0.03);
+        ctx.beginPath();
+        ctx.arc(mx, my - 44, 2.6, 0, TAU);
+        ctx.fill();
+        // The farmhouse under it, its windows warm.
+        const bx = mx + 34;
+        const by = near(bx) + 3;
+        ctx.fillStyle = mix('#f6efe6', air, 0.03);
+        ctx.fillRect(bx - 13, by - 19, 26, 19);
+        ctx.fillStyle = `rgba(255,206,140,${(0.3 + 0.6 * lit) * (0.75 + 0.25 * Math.sin(time * 1.6 + i))})`;
+        ctx.fillRect(bx - 7, by - 14, 5, 5);
+        ctx.fillRect(bx + 3, by - 14, 5, 5);
+        ctx.fillStyle = mix('#a8483c', air, 0.03);
+        ctx.beginPath();
+        ctx.moveTo(bx - 17, by - 19);
+        ctx.lineTo(bx, by - 31);
+        ctx.lineTo(bx + 17, by - 19);
+        ctx.fill();
+        ctx.fillStyle = mix('#8a8296', air, 0.03);
+        ctx.fillRect(bx + 7, by - 36, 5, 17);
+        ctx.fillStyle = mix('#efeaf6', air, 0.04);
+        for (let k = 0; k < 4; k++) {
+          const u = (time * 0.1 + k / 4 + h) % 1;
+          ctx.globalAlpha = Math.sin(u * Math.PI) * 0.5;
+          ctx.beginPath();
+          ctx.arc(bx + 9.5 + Math.sin(u * 4 + k) * 3 - u * 10, by - 38 - u * 30, 2.4 + u * 5, 0, TAU);
+          ctx.fill();
+        }
+        ctx.globalAlpha = 1;
+      }
+    });
+    // Along the castle's foot, its outer wall runs in front of the fields.
+    if (cam.x > 2500 && cam.x < 5400) {
+      repeat(cam.x, 0.72, 34, width, (i, x) => {
+        const gy = near(x) + 6;
+        ctx.fillStyle = mix('#b8aec4', air, 0.06);
+        ctx.fillRect(x, gy - 34, 34.5, 36);
+        ctx.fillStyle = mix('#d8d0e0', air, 0.05);
+        ctx.fillRect(x, gy - 34, 34.5, 2.8);
+        ctx.fillStyle = mix('#9a90a8', air, 0.06);
+        ctx.fillRect(x + (i % 2 ? 9 : 22), gy - 34, 8, 3.4);
+        ctx.fillRect(x, gy - 18, 34.5, 1.2);
+      });
+    }
+    return true;
+  },
+};
+// The Tour's ground: the kingdom's warm earth with old cobbles in it, and lost things from a
+// hundred royal processions: a marble, a star coin, a little crown, an old iron key.
+GROUND_SPECS.kingdom = {
+  layers: [
+    { top: 10, bot: 24, c: '#c0a088', a: 0.5, amp: 2.4, f: 0.043, rim: '#ecd4bc' },
+    { top: 31, bot: 35, c: '#fff2e4', a: 0.6, amp: 3, f: 0.031, rim: null },
+    { top: 56, bot: 74, c: '#a88878', a: 0.42, amp: 3.6, f: 0.021, rim: '#d4b4a0' },
+    { top: 88, bot: 91, c: '#fbe2cc', a: 0.5, amp: 3, f: 0.036, rim: null },
+  ],
+  pebbles: ['#cfc6d2', '#d8d0c0', '#e8dcc8', '#c8bcc8', '#dcd2bc', '#f0e6d4'],
+  flecks: ['#ffd75e', '#d8304a', '#ffffff'],
+  treats: [2, 4, 14, 15, 14, 15],
+  near: null,
+};
+// Along the top: tufts of grass, little flags pegged in the verge for the procession, and roses.
+EDGE_KINDS.kingdom = (ctx, along, time, seed, width, camX) => {
+  const tufts = [];
+  const flags = [];
+  const roses = [];
+  along(9, (x, y, k) => {
+    if (x < -10 || x > width + 10) return;
+    const h = hash(k * 2.7 + seed * 3);
+    if (h < 0.3) tufts.push([x, y, h, k]);
+    else if (h < 0.38) flags.push([x, y, h, k]);
+    else if (h < 0.42) roses.push([x, y, h, k]);
+  });
+  ctx.strokeStyle = '#6aa862';
+  ctx.lineWidth = 1;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  for (const [x, y, h] of tufts) {
+    const w = windAt(time, x + camX);
+    const sway = Math.sin(time * 2 + (x + camX) * 0.05) * 0.5 * (0.5 + w) + w * 1.2;
+    for (const dx of [-1.6, 0, 1.6]) {
+      ctx.moveTo(x + dx, y);
+      ctx.lineTo(x + dx + sway, y - 3.5 - h * 4);
+    }
+  }
+  ctx.stroke();
+  ctx.lineCap = 'butt';
+  // Little pennants on sticks pegged into the verge, fluttering.
+  for (const [x, y, h, k] of flags) {
+    const f = Math.sin(time * 5 + (x + camX) * 0.09) * 0.8;
+    ctx.fillStyle = '#8a6a50';
+    ctx.fillRect(x - 0.4, y - 9, 0.9, 9);
+    ctx.fillStyle = PENNANTS[k % PENNANTS.length];
+    ctx.beginPath();
+    ctx.moveTo(x + 0.5, y - 9);
+    ctx.quadraticCurveTo(x + 3.5, y - 8.4 + f, x + 6.5, y - 7.6 - f);
+    ctx.lineTo(x + 6.5, y - 5.6 - f);
+    ctx.quadraticCurveTo(x + 3.5, y - 5.4 + f, x + 0.5, y - 5);
+    ctx.fill();
+  }
+  // A rose or two in the verge.
+  for (const [x, y, h, k] of roses) {
+    ctx.fillStyle = k % 2 ? '#e8506a' : '#f8e0e8';
+    ctx.beginPath();
+    ctx.arc(x, y - 4.4, 2, 0, TAU);
+    ctx.fill();
+    ctx.fillStyle = k % 2 ? '#c03a54' : '#e4c4d4';
+    ctx.beginPath();
+    ctx.arc(x + 0.6, y - 4, 1.1, 0, TAU);
+    ctx.fill();
+    ctx.fillStyle = '#5aae6c';
+    ctx.beginPath();
+    ctx.ellipse(x - 2, y - 2, 1.7, 1, -0.5, 0, TAU);
+    ctx.fill();
+  }
+};
+// ---- The town gate ----
+// A great wooden gate in the town wall: stone either side, heavy doors with iron studs, a tiled
+// roof over, and the kingdom's banner hanging down. At Go the doors swing open and stay open.
+const gateArt = () => art('mc-kgate', 108, 128, () => {
+  const out = [];
+  // The stone either side and the arch.
+  for (const x of [0, 82]) {
+    out.push(R(x, 18, 26, 110, '#b6acc0'), F(R(x, 18, 26, 2.4, '#e0d6e4')));
+    for (let y = 28; y < 126; y += 14) out.push(F(R(x + (y % 28 ? 0 : 13), y, 13, 1, '#9a90a8')));
+  }
+  out.push(R(22, 18, 64, 12, '#b6acc0'), F(R(22, 18, 64, 2.4, '#e0d6e4')));
+  // The roof over it: dark tiles, eaves turning up.
+  out.push(T([[2, 18], [20, 4], [88, 4], [106, 18], [98, 18], [86, 9], [22, 9], [10, 18]], '#4a4458'));
+  out.push(F(R(18, 2, 72, 3.4, '#625c76')), F(E(54, 2, 10, 2, '#8a8296')));
+  // The doorway: dark inside, so the open doors read.
+  out.push(R(26, 30, 56, 98, '#3a3042'));
+  return out;
+});
+const gateDoorArt = () => art('mc-kgdoor', 28, 96, () => {
+  const out = [R(0, 0, 28, 96, '#7a4a34'), F(R(0, 0, 28, 2, '#a8704e')), F(R(0, 0, 3, 96, '#a8704e'))];
+  for (let y = 10; y < 92; y += 18) out.push(F(R(2, y, 24, 2.4, '#5e3826')));
+  for (let y = 16; y < 90; y += 18) for (const x of [7, 19]) out.push(F(E(x, y, 1.8, 1.8, '#d8cfc4')), F(E(x - 0.5, y - 0.5, 0.7, 0.7, '#ffffff')));
+  return out;
+});
+// The guards either side: in the Kagami Wrestler, a spear held upright in the near paw. They stand
+// easy, and as the countdown ends they ground their spears and straighten up; as yours goes
+// through they turn and watch it away.
+const GUARD_REST = [
+  [0, { front: [3.4, -7], back: [-2, -2], pole: 0, tilt: -2, mouth: null }],
+  [2.4, { front: [3.4, -7.4], back: [-2, -2], pole: 0, tilt: -2, hy: 1.4, mouth: null }],
+  [4.8, { front: [3.4, -7], back: [-2, -2], pole: 0, tilt: -2, mouth: null }],
+];
+const GUARD_HAIL = [
+  [0, { front: [3.4, -7], back: [-2, -2], pole: 0, tilt: -2, mouth: 'mochiw' }],
+  [0.2, { front: [3.4, -10], back: [-2, -3], pole: -0.12, tilt: -5, lift: 1.6, mouth: 'o', sprout: 'excited' }],
+  [0.38, { front: [3.4, -6], back: [-2, -1.6], pole: 0, tilt: 2, squat: 1, mouth: 'D', closed: [true, true], sprout: 'happy' }],
+  [0.7, { front: [3.4, -7], back: [-2, -2], pole: 0, tilt: -2, mouth: 'D', sprout: 'happy' }],
+  [1.2, { front: [3.4, -7], back: [-2, -2], pole: 0, tilt: -2, mouth: 'mochiw', sprout: 'happy' }],
+];
+const GUARDS = {};
+const guardsOf = (wx) => (GUARDS[wx] ??= [
+  { ...newRecord(rollMochi(11201 + wx, { coat: null })), dress: 'kagami' },
+  { ...newRecord(rollMochi(11303 + wx, { coat: null })), dress: 'kagami' },
+]);
+// A guard's spear: a long shaft through the paw, a leaf blade on top, a tassel under it.
+function spear(ctx, hand, ang, face) {
+  const vx = Math.sin(ang) * face;
+  const vy = -Math.cos(ang);
+  const [hx, hy] = hand;
+  ctx.strokeStyle = '#7a5038';
+  ctx.lineWidth = 1.8;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(hx - vx * 10, hy - vy * 10);
+  ctx.lineTo(hx + vx * 22, hy + vy * 22);
+  ctx.stroke();
+  ctx.lineCap = 'butt';
+  const tx = hx + vx * 22;
+  const ty = hy + vy * 22;
+  ctx.fillStyle = '#d8d0dc';
+  ctx.beginPath();
+  ctx.moveTo(tx + vx * 7, ty + vy * 7);
+  ctx.lineTo(tx - vy * 2, ty + vx * 2);
+  ctx.lineTo(tx + vy * 2, ty - vx * 2);
+  ctx.fill();
+  ctx.fillStyle = ROYAL.gold;
+  ctx.fillRect(tx - 1.4, ty - 1.4, 2.8, 2.8);
+  ctx.fillStyle = ROYAL.cloth;
+  ctx.fillRect(tx - vx * 3 - 1, ty - vy * 3, 2, 3.4);
+}
+function kingGate(ctx, map, x, gy, wx, time) {
+  const R = live(time) && RUN.map === map ? RUN.R : null;
+  const mo = R ? momentsOf(R) : {};
+  const goK = mo.go != null ? time - mo.go : -1;
+  // The doors: shut until Go, then swinging open and staying open.
+  const open = goK < 0 ? 0 : Math.min(1, goK / 1.1) ** 0.7;
+  place(ctx, gateArt(), snap(x), gy + 2);
+  for (const side of [-1, 1]) {
+    const hinge = x + side * 28;
+    ctx.save();
+    ctx.translate(hinge, gy - 94);
+    ctx.transform(1 - open * 0.86, 0, 0, 1, 0, 0);
+    ctx.translate(-hinge, -(gy - 94));
+    place(ctx, gateDoorArt(), snap(hinge - side * 14), gy + 2, { flip: side < 0 });
+    ctx.restore();
+  }
+  // The kingdom's banner over the arch: red, a gold crown on it, swaying.
+  const bx = x;
+  const by = gy - 112;
+  pivoted(ctx, bx, by, Math.sin(time * 1.1 + wx) * 0.02, () => {
+    ctx.fillStyle = ROYAL.deep;
+    ctx.fillRect(bx - 11, by, 22, 30);
+    ctx.fillStyle = ROYAL.cloth;
+    ctx.fillRect(bx - 10, by, 20, 29);
+    ctx.beginPath();
+    ctx.moveTo(bx - 10, by + 29);
+    ctx.lineTo(bx, by + 34);
+    ctx.lineTo(bx + 10, by + 29);
+    ctx.fill();
+    crownMark(ctx, bx, by + 14, 6, ROYAL.gold);
+  });
+  // The two guards, on the ground either side of the doorway.
+  const [a, b] = guardsOf(wx);
+  const hail = goK >= 0 && goK < 1.2;
+  const t = hail ? goK : (time + hash(wx) * 4) % 4.8;
+  const keys = hail ? GUARD_HAIL : GUARD_REST;
+  const P = routine(keys, t);
+  const youX = R ? x + (RUN.you.x - wx) : null;
+  for (const [i, g] of [a, b].entries()) {
+    const gx = x + (i ? 62 : -62);
+    const face = youX != null && youX > gx + 10 ? -1 : 1;
+    posed(ctx, g, gx, gy, keys, t, { facing: face, hold: 'front', slot: `guard|${wx}|${i}`, under: (c, hand) => spear(c, hand, P.pole ?? 0, face) });
+  }
+}
+// A little crown, drawn straight: three points, a band, a jewel.
+function crownMark(ctx, x, y, r, c) {
+  ctx.fillStyle = c;
+  ctx.beginPath();
+  ctx.moveTo(x - r, y + r * 0.5);
+  ctx.lineTo(x - r, y - r * 0.6);
+  ctx.lineTo(x - r * 0.5, y - r * 0.1);
+  ctx.lineTo(x, y - r * 0.8);
+  ctx.lineTo(x + r * 0.5, y - r * 0.1);
+  ctx.lineTo(x + r, y - r * 0.6);
+  ctx.lineTo(x + r, y + r * 0.5);
+  ctx.closePath();
+  ctx.fill();
+  ctx.fillStyle = mix(c, '#ffffff', 0.45);
+  ctx.fillRect(x - r, y + r * 0.1, r * 2, r * 0.26);
+}
+// ---- Banner poles along the town road ----
+// A tall pole with a long vertical banner, the crown on it, rippling along its length.
+function bannerPole(ctx, x, gy, wx, time, v) {
+  ctx.fillStyle = '#6a4a38';
+  ctx.fillRect(snap(x - 1.5), snap(gy - 76), 3, 78);
+  ctx.fillStyle = ROYAL.gold;
+  ctx.beginPath();
+  ctx.arc(x, gy - 77, 2.4, 0, TAU);
+  ctx.fill();
+  const c = v % 2 ? ROYAL.cloth : '#3a6ad8';
+  const w = windAt(time, wx);
+  ctx.beginPath();
+  for (let i = 0; i <= 8; i++) {
+    const u = i / 8;
+    const rip = Math.sin(time * 3 + u * 5 + wx * 0.02) * (1.2 + w * 2) * u;
+    ctx.lineTo(x + 2 + rip, gy - 72 + u * 44);
+  }
+  for (let i = 8; i >= 0; i--) {
+    const u = i / 8;
+    const rip = Math.sin(time * 3 + u * 5 + wx * 0.02) * (1.2 + w * 2) * u;
+    ctx.lineTo(x + 15 + rip, gy - 72 + u * 44);
+  }
+  ctx.closePath();
+  ctx.fillStyle = c;
+  ctx.fill();
+  ctx.fillStyle = mix(c, '#000000', 0.18);
+  ctx.fillRect(x + 2, gy - 72, 13, 1.6);
+  crownMark(ctx, x + 8.5 + Math.sin(time * 3 + 2.5 + wx * 0.02) * (1.2 + w * 2) * 0.5, gy - 56, 4, ROYAL.gold);
+}
+// ---- The moat ----
+// A rowing boat out on the water, a Mochi at the oars and another waving; it rocks on the swell,
+// and the wave of its hull sits on the water's skin.
+const boatArt = (v) => art(`mc-kboat|${v}`, 54, 18, () => [
+  T([[2, 6], [52, 6], [46, 16], [8, 16]], '#8a5a40'), F(T([[4, 7.4], [50, 7.4], [45, 10], [9, 10]], '#b07a58')),
+  F(R(6, 6, 42, 1.6, ['#d8304a', '#3a6ad8', '#ffd75e'][v % 3])), F(R(16, 10, 22, 1.4, '#6a4430')),
+  F(E(27, 16.4, 22, 1.6, '#5e3826')),
+]);
+function kingBoat(ctx, map, w, cam, time, wx, v) {
+  const x = wx - cam.x;
+  const base = w.y - cam.y + swell(wx, time) - 1;
+  const rock = Math.sin(time * 1.3 + v * 2) * 0.05;
+  const y = base + Math.sin(time * 1.1 + v) * 0.8;
+  const youX = live(time) && RUN.map === map ? x + (RUN.you.x - wx) : null;
+  const near = youX != null && Math.abs(youX - x) < 110;
+  // The oars, dipping and pulling.
+  const stroke = (time * 1.1 + v) % 1;
+  const a = Math.sin(stroke * TAU) * 0.5;
+  pivoted(ctx, x, y, rock, () => {
+    ctx.strokeStyle = '#8a5a40';
+    ctx.lineWidth = 1.6;
+    for (const side of [-1, 1]) {
+      ctx.beginPath();
+      ctx.moveTo(x - 4, y - 6);
+      ctx.lineTo(x - 4 - Math.cos(a) * 14, y - 6 + Math.sin(a) * 7 * side + 5);
+      ctx.stroke();
+    }
+    // The rower and a passenger waving at the race.
+    const pool = picnickers();
+    const h = hash(v * 3.7);
+    ctx.save();
+    ctx.translate(x - 4, y - 7);
+    ctx.scale(0.6, 0.6);
+    drawSpectator(ctx, pool[Math.floor(h * pool.length)], 0, 0, 0, youX != null && youX < x ? -1 : 1, `boat|${v}|0`);
+    ctx.restore();
+    const into = (time + v) % (near ? 0.95 : 4);
+    const beat = into < 0.95 ? CHEER_SEQ[Math.min(CHEER_SEQ.length - 1, Math.floor((into / 0.95) * CHEER_SEQ.length))] : 0;
+    ctx.save();
+    ctx.translate(x + 12, y - 7 - (into < 0.95 ? Math.sin((Math.PI * into) / 0.95) * 1.2 : 0));
+    ctx.scale(0.6, 0.6);
+    drawSpectator(ctx, pool[Math.floor(hash(v * 5.1) * pool.length)], 0, 0, beat, youX != null && youX < x ? -1 : 1, `boat|${v}|1`);
+    ctx.restore();
+    place(ctx, boatArt(v), snap(x), y + 6);
+  });
+}
+// The drawbridge over the moat: two heavy chains from the gatehouse down to a raised span, hanging
+// overhead as the swimmers pass under; the chains sway as yours goes by.
+function drawbridge(ctx, map, x, top, wx, time) {
+  const R = live(time) && RUN.map === map ? RUN.R : null;
+  const k = R && Math.abs(RUN.you.x - wx) < 150 ? 1 - Math.abs(RUN.you.x - wx) / 150 : 0;
+  const sway = Math.sin(time * 2.2) * 1.4 * k;
+  // The gatehouse it hangs from, and the span, angled up.
+  ctx.fillStyle = '#b6acc0';
+  ctx.fillRect(snap(x - 16), snap(top - 54), 32, 54);
+  ctx.fillStyle = '#e0d6e4';
+  ctx.fillRect(snap(x - 16), snap(top - 54), 32, 2.4);
+  ctx.fillStyle = '#9a90a8';
+  for (const dx of [-12, -2, 8]) ctx.fillRect(snap(x + dx), snap(top - 50), 6, 2.4);
+  ctx.save();
+  ctx.translate(x - 16, top - 6);
+  ctx.rotate(-0.95);
+  ctx.fillStyle = '#7a4a34';
+  ctx.fillRect(0, -7, 54, 8);
+  ctx.fillStyle = '#a8704e';
+  ctx.fillRect(0, -7, 54, 2);
+  ctx.fillStyle = '#5e3826';
+  for (let i = 8; i < 52; i += 11) ctx.fillRect(i, -7, 2, 8);
+  ctx.restore();
+  // Its chains.
+  ctx.strokeStyle = '#8a8296';
+  ctx.lineWidth = 1.2;
+  for (const dx of [-13, 9]) {
+    ctx.beginPath();
+    ctx.moveTo(x + dx, top - 50);
+    ctx.quadraticCurveTo(x + dx - 12 + sway, top - 32, x - 36 + sway * 2, top - 32);
+    ctx.stroke();
+  }
+}
+// ---- The castle walls ----
+// A wall of cut stone: big blocks in offset courses, lit along each top edge, moss in the joints,
+// iron rungs set in for the climb, and a little arrow slit here and there.
+const kingWallArt = (h, seed) => art(`mc-kwall|${h}|${seed}`, 66, h + 6, () => {
+  const out = [];
+  const H = h + 6;
+  const TONES = ['#cfc6d2', '#c2b8c6', '#d8d0dc', '#bcb2c2', '#c8c0cc'];
+  const block = (x0, y0, x1, y1, c, k) => {
+    out.push(R(x0, y0, x1 - x0, y1 - y0, c));
+    out.push(F(R(x0, y0 + 0.4, x1 - x0, 1.2, '#eae2ee')));
+    out.push(F(R(x0, y1 - 1.2, x1 - x0, 1, shade(c, -16))));
+    if (hash(k * 2.3) > 0.72) out.push(F(E(x0 + 3 + hash(k * 5) * (x1 - x0 - 6), y0 + 2.4, 1.6, 0.8, '#8ab070')));
+  };
+  for (let r = 0, y1 = H; y1 > 6; r++) {
+    const bh = 13 + hash(seed * 1.7 + r) * 4;
+    const y0 = Math.max(5, y1 - bh);
+    const off = r % 2 ? 11 : 0;
+    for (let x = 3 - off; x < 60; x += 22) {
+      const x0 = Math.max(3, x);
+      const x1 = Math.min(60, x + 22 - 1.2);
+      if (x1 - x0 > 3) block(x0, y0 + 0.6, x1, y1 - 0.6, TONES[Math.floor(hash(seed + r * 2.3 + x * 0.7) * TONES.length)], seed + r * 13 + x);
+    }
+    y1 = y0;
+    if (y1 <= 6) break;
+  }
+  // The iron rungs set into it for the climb, and an arrow slit or two.
+  for (let r = 0, y = H - 15; y > 15; r++, y -= 15) {
+    const hx = 24 + (r % 2 ? 12 : 2) + hash(seed + r * 3.3) * 6;
+    out.push(R(hx - 5, y - 1.4, 10, 2.8, '#6a6076'), F(R(hx - 5, y - 1.4, 10, 1, '#9a90a8')));
+  }
+  for (let y = 24; y < H - 20; y += 46) out.push(F(R(14 + ((y / 46) | 0) * 24, y, 3, 9, '#4a4058')), F(R(14 + ((y / 46) | 0) * 24, y + 3, 3, 3, '#3a3048')));
+  // The top: a crenellated parapet.
+  out.push(R(2, 3, 58, 6, '#c8c0cc'), F(R(2, 3, 58, 1.4, '#eae2ee')));
+  for (let x = 3; x < 58; x += 13) out.push(R(x, 0, 8, 4, '#c8c0cc'), F(R(x, 0, 8, 1.2, '#eae2ee')));
+  return out;
+});
+// At each wall top, a flag pole: the flag lies furled until yours comes over, then runs up the pole
+// and flies out, and a shout of gold sparks goes up with it.
+function wallFlag(ctx, x, top, wx, time, k) {
+  const poleTop = top - 46;
+  ctx.fillStyle = '#6a4a38';
+  ctx.fillRect(snap(x + 5), snap(poleTop), 3, 48);
+  ctx.fillStyle = ROYAL.gold;
+  ctx.beginPath();
+  ctx.arc(x + 6.5, poleTop, 2.4, 0, TAU);
+  ctx.fill();
+  // How far up the flag is: furled at the foot, running up over a second once yours is over.
+  const up = k < 0 ? 0 : Math.min(1, k / 1.1) ** 0.8;
+  const fy = poleTop + 6 + (1 - up) * 30;
+  const w = windAt(time, wx);
+  const fly = 0.25 + up * 0.75;
+  ctx.beginPath();
+  for (let i = 0; i <= 7; i++) {
+    const u = i / 7;
+    const rip = Math.sin(time * 4 + u * 6 + wx * 0.02) * (1 + w * 2.4) * u * fly;
+    ctx.lineTo(x + 7 + u * 26 * fly, fy + rip);
+  }
+  for (let i = 7; i >= 0; i--) {
+    const u = i / 7;
+    const rip = Math.sin(time * 4 + u * 6 + wx * 0.02) * (1 + w * 2.4) * u * fly;
+    ctx.lineTo(x + 7 + u * 26 * fly, fy + 15 * (0.4 + 0.6 * fly) + rip);
+  }
+  ctx.closePath();
+  ctx.fillStyle = ROYAL.cloth;
+  ctx.fill();
+  if (fly > 0.5) crownMark(ctx, x + 7 + 13 * fly, fy + 8, 4.4 * fly, ROYAL.gold);
+  if (k >= 0 && k < 1.4) {
+    ctx.fillStyle = ROYAL.gold;
+    for (let i = 0; i < 10; i++) {
+      const ang = (i / 10) * TAU + k * 2;
+      const d = 8 + k * 24;
+      ctx.globalAlpha = Math.max(0, 1 - k / 1.4);
+      ctx.fillRect(x + 7 + Math.cos(ang) * d - 0.9, poleTop + 10 + Math.sin(ang) * d * 0.7 - 0.9, 1.8, 1.8);
+    }
+    ctx.globalAlpha = 1;
+  }
+}
+// ---- The keep's launch ----
+// The ramp off the keep: pale stone with a red carpet down it, a gold rail, and a pennant pole
+// either side that whips as yours takes off.
+const keepRampArt = () => art('mc-kramp', 64, 24, () => [
+  T([[2, 22], [58, 7], [62, 7], [62, 22]], '#c2b8c6'), F(T([[2, 22], [58, 7], [62, 7], [62, 9.4], [6, 22]], '#e0d6e4')),
+  F(T([[8, 20.6], [58, 7.4], [60, 7.4], [60, 10], [12, 22]], ROYAL.cloth)), F(T([[8, 20.6], [58, 7.4], [59, 7.4], [59, 8.6], [10, 21.4]], '#f06a80')),
+  R(56, 7, 6, 16, '#a8a0b4'), F(R(56, 7, 6, 1.6, ROYAL.gold)),
+]);
+// ---- The royal road ----
+// A lantern pole along the road home: a tall post with a crown on top, a warm lamp hanging from its
+// arm, and a long pennant below it.
+function roadPole(ctx, x, gy, wx, time, v) {
+  ctx.fillStyle = '#5a4a40';
+  ctx.fillRect(snap(x - 1.8), snap(gy - 86), 3.6, 88);
+  ctx.fillStyle = '#6a5a4e';
+  ctx.fillRect(snap(x - 1), snap(gy - 86), 1.2, 88);
+  crownMark(ctx, x, gy - 90, 4.6, ROYAL.gold);
+  ctx.fillStyle = '#5a4a40';
+  ctx.fillRect(snap(x), snap(gy - 80), 13, 2.4);
+  const lx = x + 12;
+  const ly = gy - 78;
+  // Its light pooling on the road under it.
+  ctx.save();
+  ctx.globalAlpha = 0.5;
+  const pool = ctx.createRadialGradient(lx, gy, 0, lx, gy, 54);
+  pool.addColorStop(0, 'rgba(255,206,140,0.5)');
+  pool.addColorStop(1, 'rgba(255,206,140,0)');
+  ctx.fillStyle = pool;
+  ctx.beginPath();
+  ctx.ellipse(lx, gy, 54, 13, 0, 0, TAU);
+  ctx.fill();
+  ctx.restore();
+  glow(ctx, lx, ly + 7, 22, '255,206,140', 0.95);
+  pivoted(ctx, lx, ly, Math.sin(time * 1.3 + v * 2) * 0.05, () => {
+    ctx.fillStyle = '#3a2a30';
+    ctx.fillRect(snap(lx - 3.5), snap(ly + 2), 7, 2);
+    ctx.fillStyle = '#ffdca0';
+    ctx.beginPath();
+    ctx.ellipse(lx, ly + 7.5, 4, 5, 0, 0, TAU);
+    ctx.fill();
+    ctx.fillStyle = '#fff4d8';
+    ctx.beginPath();
+    ctx.ellipse(lx - 1, ly + 6, 1.6, 2.2, 0, 0, TAU);
+    ctx.fill();
+    ctx.fillStyle = '#3a2a30';
+    ctx.fillRect(snap(lx - 3.5), snap(ly + 11.5), 7, 2);
+  });
+  // The pennant below the lamp arm.
+  const w = windAt(time, wx);
+  const c = v % 2 ? ROYAL.cloth : '#3a6ad8';
+  ctx.beginPath();
+  for (let i = 0; i <= 6; i++) {
+    const u = i / 6;
+    const rip = Math.sin(time * 3.4 + u * 5 + wx * 0.02) * (1 + w * 2) * u;
+    ctx.lineTo(x + 2 + rip, gy - 68 + u * 26);
+  }
+  for (let i = 6; i >= 0; i--) {
+    const u = i / 6;
+    const rip = Math.sin(time * 3.4 + u * 5 + wx * 0.02) * (1 + w * 2) * u;
+    ctx.lineTo(x + 11 + rip, gy - 68 + u * 26);
+  }
+  ctx.closePath();
+  ctx.fillStyle = c;
+  ctx.fill();
+}
+// Between the road's poles: a cord slung from one to the next, little pennants along it in the
+// kingdom's colours and a warm light between each pair, the whole line swaying together.
+function roadString(ctx, map, from, to, cam, time) {
+  const ax = from - cam.x;
+  const bx = to - cam.x;
+  const ay = groundAt(map, from) - cam.y - 80;
+  const by = groundAt(map, to) - cam.y - 80;
+  const sag = 16;
+  const cy = (ay + by) / 2 + sag * 2;
+  const at = (u) => [(1 - u) * (1 - u) * ax + 2 * u * (1 - u) * ((ax + bx) / 2) + u * u * bx,
+    (1 - u) * (1 - u) * ay + 2 * u * (1 - u) * cy + u * u * by];
+  ctx.strokeStyle = '#6a5a4e';
+  ctx.lineWidth = 0.8;
+  ctx.beginPath();
+  ctx.moveTo(ax, ay);
+  ctx.quadraticCurveTo((ax + bx) / 2, cy, bx, by);
+  ctx.stroke();
+  const n = 9;
+  for (let k = 1; k < n; k++) {
+    const u = k / n;
+    const [px, py] = at(u);
+    const sway = Math.sin(time * 1.6 + from * 0.01 + k) * 0.5;
+    if (k % 2) {
+      // A pennant hanging from the cord.
+      ctx.fillStyle = PENNANTS[(k + from) % PENNANTS.length];
+      ctx.beginPath();
+      ctx.moveTo(px - 3.4 + sway, py);
+      ctx.lineTo(px + 3.4 + sway, py);
+      ctx.lineTo(px + sway * 1.6, py + 8);
+      ctx.fill();
+    } else {
+      // A little warm light.
+      glow(ctx, px + sway, py + 2.4, 9, '255,206,140', 0.85);
+      ctx.fillStyle = '#ffe2a8';
+      ctx.beginPath();
+      ctx.arc(px + sway, py + 2.4, 1.8, 0, TAU);
+      ctx.fill();
+    }
+  }
+}
+// The subjects lining the road: three or four Mochi standing along the verge, each waving a little
+// flag on a stick, cheering hard as yours comes by.
+const SUBJECTS = {};
+const subjectsOf = (wx) => (SUBJECTS[wx] ??= Array.from({ length: 4 }, (_, i) => newRecord(rollMochi(11500 + wx + i * 37, { coat: null }))));
+function subjects(ctx, map, x, gy, wx, time) {
+  const pool = subjectsOf(wx);
+  const youX = live(time) && RUN.map === map ? x + (RUN.you.x - wx) : null;
+  for (let k = 0; k < pool.length; k++) {
+    const h = hash(wx * 1.3 + k * 2.9);
+    const mx = x - 24 + k * 16;
+    const near = youX != null && Math.abs(youX - mx) < 90;
+    const period = near ? 0.8 + h * 0.2 : 2.6 + h * 2;
+    const len = near ? period : 1;
+    const into = (time + h * 11) % period;
+    const beat = into < len ? CHEER_SEQ[Math.min(CHEER_SEQ.length - 1, Math.floor((into / len) * CHEER_SEQ.length))] : 0;
+    const hop = into < len ? Math.sin((Math.PI * into) / len) * (near ? 2.4 : 1.4) : 0;
+    const facing = youX != null ? (youX < mx ? -1 : 1) : h < 0.5 ? -1 : 1;
+    ctx.save();
+    ctx.translate(mx + Math.sin(time * (1.3 + h) + h * 18) * 0.4, gy - hop);
+    ctx.scale(0.64, 0.64);
+    drawSpectator(ctx, pool[k], 0, 0, beat, facing, `subject|${wx}|${k}`);
+    ctx.restore();
+    // Its little flag, held up and waving.
+    const fx = mx + facing * 5;
+    const fy = gy - 15 - hop - beat * 1.6;
+    const wave = Math.sin(time * (6 + beat) + k * 2) * 0.3;
+    ctx.save();
+    ctx.translate(fx, fy);
+    ctx.rotate(facing * (0.5 + wave));
+    ctx.fillStyle = '#8a6a50';
+    ctx.fillRect(-0.4, -1, 0.9, 11);
+    ctx.fillStyle = PENNANTS[(k + wx) % PENNANTS.length];
+    ctx.beginPath();
+    ctx.moveTo(0.5, -1);
+    ctx.lineTo(6.5, 0.6);
+    ctx.lineTo(0.5, 3.4);
+    ctx.fill();
+    ctx.restore();
+  }
+}
+// ---- The crown by the finish ----
+// The kingdom's crown on a velvet cushion, up on a little dais behind the podium: a gold band with
+// five points, a jewel in each, a red cap inside, pearls round the rim. It turns slowly, and when
+// yours is home it lifts, gleams and sheds a few gold sparks.
+const crownArt = () => art('mc-kcrown', 86, 96, () => {
+  const out = [];
+  // The dais and its cushion.
+  out.push(R(3, 74, 80, 10, '#8a5a40'), F(R(3, 74, 80, 2.4, '#b07a58')), F(R(3, 82, 80, 2, '#6a4430')));
+  out.push(R(10, 84, 66, 8, '#7a4a34'), F(R(10, 90, 66, 2, '#5e3826')));
+  out.push(E(43, 68, 32, 10, ROYAL.deep), F(E(43, 65, 29, 7, ROYAL.cloth)), F(E(30, 63, 10, 3, '#f06a80')));
+  for (const x of [13, 73]) out.push(F(E(x, 72, 3.4, 3.4, ROYAL.gold)));
+  // The crown: its band, its points, the cap, the jewels.
+  out.push(T([[18, 60], [68, 60], [64, 30], [58, 42], [50, 24], [43, 38], [36, 24], [28, 42], [22, 30]], ROYAL.gold));
+  out.push(F(T([[18, 60], [68, 60], [67, 50], [19, 50]], ROYAL.goldDk)));
+  out.push(F(T([[20, 52], [66, 52], [66, 56], [20, 56]], '#ffeeae')));
+  out.push(F(T([[24, 46], [62, 46], [60, 40], [26, 40]], ROYAL.cloth)));
+  for (const [x, y, c] of [[43, 54, '#e8304a'], [30, 54, '#3a9ae8'], [56, 54, '#5ad88a'], [43, 30, '#e8304a']]) out.push(F(E(x, y, 3, 3, c)), F(E(x - 1, y - 1, 1, 1, '#ffffff')));
+  for (const x of [22, 28, 36, 43, 50, 58, 64]) out.push(F(E(x, 26 + (x === 43 ? -4 : x === 36 || x === 50 ? -2 : 4), 2.2, 2.2, '#fff8e8')));
+  out.push(F(E(34, 57, 7, 1.6, '#ffeeae')));
+  return out;
+});
+// Hayate herself at the end of the royal road, which is who the whole progress has been coming to
+// see: she stands on a low dais behind the podium, asleep as ever, under her own light. As yours
+// comes home she wakes, and a shower of gold goes up off her.
+function kingHayate(ctx, map, x, gy, wx, time) {
+  const R = live(time) && RUN.map === map ? RUN.R : null;
+  const mo = R ? momentsOf(R) : {};
+  const k = mo.home != null ? time - mo.home : -1;
+  const awake = k >= 0;
+  // Her dais: two low steps, with the road's carpet running up onto it.
+  for (let i = 0; i < 2; i++) {
+    const w = 150 - i * 34;
+    ctx.fillStyle = '#b8aec4';
+    ctx.fillRect(snap(x - w / 2), snap(gy - (i + 1) * 7 + 2), w, 7);
+    ctx.fillStyle = '#d8d0e0';
+    ctx.fillRect(snap(x - w / 2), snap(gy - (i + 1) * 7 + 2), w, 1.6);
+  }
+  ctx.fillStyle = ROYAL.cloth;
+  ctx.fillRect(snap(x - 100), snap(gy - 2), 100, 4);
+  ctx.fillRect(snap(x - 58), snap(gy - 9), 58, 7);
+  // The light she sits in, and the Queen.
+  glow(ctx, x, gy - 60, 86, '255,236,200', awake ? 0.5 : 0.32);
+  drawHayate(ctx, x, gy - 16, time, { s: 2, awake });
+  if (k > 0 && k < 2.6) {
+    for (let i = 0; i < 14; i++) {
+      const ang = (i / 14) * TAU + k * 1.2;
+      const d = 26 + k * 40;
+      ctx.globalAlpha = Math.max(0, 1 - k / 2.6);
+      ctx.fillStyle = i % 3 ? ROYAL.gold : '#fff4c0';
+      ctx.fillRect(x + Math.cos(ang) * d - 1.2, gy - 60 + Math.sin(ang) * d * 0.7 - 1.2, 2.4, 2.4);
+    }
+    ctx.globalAlpha = 1;
+  }
+}
+function kingCrown(ctx, map, x, gy, wx, time) {
+  const R = live(time) && RUN.map === map ? RUN.R : null;
+  const mo = R ? momentsOf(R) : {};
+  const k = mo.home != null ? time - mo.home : -1;
+  const lift = k > 0 && k < 3 ? Math.sin(Math.min(1, k / 0.5) * Math.PI * 0.5) * 9 * Math.exp(-k * 0.5) : 0;
+  const bright = k > 0 && k < 3 ? Math.exp(-k * 0.9) : 0;
+  glow(ctx, x, gy - 58 - lift, 44, '255,215,140', 0.4 + 0.5 * bright);
+  pivoted(ctx, x, gy, Math.sin(time * 0.8 + wx) * 0.01, () => place(ctx, crownArt(), snap(x), gy + 2 - lift));
+  // Its gleam: a slow star crossing the band, and sparks when yours is home.
+  const g = (time * 0.4 + hash(wx)) % 1;
+  if (g < 0.5) {
+    const gx = x - 20 + g * 80;
+    ctx.globalAlpha = Math.sin(g * 2 * Math.PI) * 0.9;
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(gx - 0.8, gy - 44 - lift - 5, 1.6, 10);
+    ctx.fillRect(gx - 5, gy - 44 - lift - 0.8, 10, 1.6);
+    ctx.globalAlpha = 1;
+  }
+  if (k > 0 && k < 2.4) {
+    for (let i = 0; i < 12; i++) {
+      const ang = (i / 12) * TAU + k * 1.5;
+      const d = 18 + k * 30;
+      ctx.globalAlpha = Math.max(0, 1 - k / 2.4);
+      ctx.fillStyle = i % 3 ? ROYAL.gold : '#fff4c0';
+      ctx.fillRect(x + Math.cos(ang) * d - 1, gy - 52 - lift + Math.sin(ang) * d * 0.7 - 1, 2, 2);
+    }
+    ctx.globalAlpha = 1;
+  }
+}
+// On the moat, behind the swimmers: the drawbridge hanging overhead at the gatehouse end, and the
+// boats out on the water further off.
+const KBOATS = [2430, 2760, 3090];
+function kingMoat(ctx, map, cam, time) {
+  const w = (map.water ?? []).find((x) => x.kind === 'moat');
+  if (!w) return;
+  for (const [i, wx] of KBOATS.entries()) {
+    const x = wx - cam.x;
+    if (x < -70 || x > 710) continue;
+    // (Further out on the water: a little higher up the skin and a touch smaller.)
+    ctx.save();
+    ctx.translate(0, -7);
+    ctx.scale(1, 0.92);
+    kingBoat(ctx, map, w, cam, time, wx, i);
+    ctx.restore();
+  }
+  const bx = 2150 - cam.x;
+  if (bx > -90 && bx < 730) drawbridge(ctx, map, bx, groundAt(map, 2090) - cam.y, 2150, time);
+}
+// Each frame of a kingdom race: yours coming over a wall's top (its flag runs up), and taking off
+// from the keep.
+function noteKingdom(map, R, mo, time) {
+  const you = R.racers[R.me];
+  const was = you.kingMode;
+  you.kingMode = you.m.mode;
+  if (R.phase !== 'run' || !was || was === you.m.mode) return;
+  if (was === 'climb') {
+    let best = null;
+    for (const [kind, wx] of map.townPieces ?? []) if (kind === 'mr_wall' && wx <= you.x + 20 && (best == null || wx > best)) best = wx;
+    if (best != null) (mo.tops ??= {})[best] ??= time;
+  }
+  if (you.m.mode === 'fly') mo.launch ??= time;
+}
 // The things that stand beside the track (drawn behind the ground, the runners passing in front).
-const TRACKSIDE = new Set(['mr_squad', 'mr_starter', 'mr_parasol', 'mr_pound', 'mr_kagami', 'mr_onsen', 'mr_toro', 'mr_snowman', 'mr_cocoa', 'mr_bigsnow', 'mr_fans', 'mr_bigdango', 'mr_yatai', 'mr_taiko', 'mr_bigchochin']);
+const TRACKSIDE = new Set(['mr_squad', 'mr_starter', 'mr_parasol', 'mr_pound', 'mr_kagami', 'mr_onsen', 'mr_toro', 'mr_snowman', 'mr_cocoa', 'mr_bigsnow', 'mr_fans', 'mr_bigdango', 'mr_yatai', 'mr_taiko', 'mr_bigchochin', 'mr_kgate', 'mr_kbanner', 'mr_ksubjects', 'mr_kpole', 'mr_kcrown', 'mr_hayate']);
 // A quarter sign beside the track. (As yours goes past it: the sign hops, its balloons jump, and
 // confetti pops off its top.)
 function quarterSign(ctx, map, x, gy, wx, n, time) {
@@ -5097,6 +6240,12 @@ function behindGround(ctx, map, cam, width, time) {
     else if (kind === 'mr_yatai') stall(ctx, YATAI[extra ?? 0], x, gy + 2, time, live(time) && RUN.map === map ? x + (RUN.you.x - wx) : null);
     else if (kind === 'mr_taiko') drummer(ctx, map, x, gy, wx, time);
     else if (kind === 'mr_bigchochin') bigChochin(ctx, map, x, gy, wx, time);
+    else if (kind === 'mr_kgate') kingGate(ctx, map, x, gy, wx, time);
+    else if (kind === 'mr_kbanner') bannerPole(ctx, x, gy, wx, time, extra ?? 0);
+    else if (kind === 'mr_ksubjects') subjects(ctx, map, x, gy, wx, time);
+    else if (kind === 'mr_kpole') roadPole(ctx, x, gy, wx, time, extra ?? 0);
+    else if (kind === 'mr_kcrown') kingCrown(ctx, map, x, gy, wx, time);
+    else if (kind === 'mr_hayate') kingHayate(ctx, map, x, gy, wx, time);
     else pivoted(ctx, x, gy, (lean(time, wx, 0.2) + 0.2) * 0.02, () => place(ctx, parasolArt(extra ?? 0), snap(x), gy + 2));
   }
   for (const [kind, wx, extra] of map.townPieces ?? []) {
@@ -5118,6 +6267,9 @@ function behindGround(ctx, map, cam, width, time) {
     } else if (kind === 'mr_chochin') {
       if (extra.to - cam.x < -CHOCHIN_POST || wx - cam.x > width + CHOCHIN_POST) continue;
       chochinLine(ctx, map, wx, extra.to, cam, width, time);
+    } else if (kind === 'mr_kstring') {
+      if (extra.to - cam.x < -40 || wx - cam.x > width + 40) continue;
+      roadString(ctx, map, wx, extra.to, cam, time);
     } else if (kind === 'mr_dango') {
       const x = wx - cam.x;
       if (x < -80 || x > width + 80) continue;
@@ -5166,6 +6318,13 @@ export function drawCoursePiece(ctx, map, kind, wx, extra, cam, width, time) {
     case 'mr_dango':
     case 'mr_fans':
     case 'mr_bigdango':
+    case 'mr_kgate':
+    case 'mr_kbanner':
+    case 'mr_ksubjects':
+    case 'mr_kpole':
+    case 'mr_kcrown':
+    case 'mr_hayate':
+    case 'mr_kstring':
     case 'mr_chochin':
     case 'mr_yatai':
     case 'mr_taiko':
@@ -5174,6 +6333,12 @@ export function drawCoursePiece(ctx, map, kind, wx, extra, cam, width, time) {
     case 'mr_yaguraR':
       yagura(ctx, x, extra.top - cam.y, extra.bottom - cam.y, time, true);
       return true;
+    case 'mr_kcliff': {
+      // (The Grand Tour's: the castle's outer wall, dropping away under the keep's ramp.)
+      const s = kingWallArt(extra.bottom - extra.top, 3);
+      place(ctx, s, snap(x + 16 - s.w / 2), extra.bottom - cam.y, { flip: true });
+      return true;
+    }
     case 'mr_clouds':
       if (map.look?.launchArt === 'matsuri') {
         place(ctx, duskFluffArt(extra.w), snap(x + extra.w / 2), groundAt(map, wx + 4) - cam.y + 8);
@@ -5188,12 +6353,12 @@ export function drawCoursePiece(ctx, map, kind, wx, extra, cam, width, time) {
     case 'mr_launch': {
       // (Cloud Glide's own: a snowy ramp, streamers either side; the festival's, red and white. Others
       // keep the plain one.)
-      if (map.look?.launchArt !== 'snow' && map.look?.launchArt !== 'matsuri') return false;
+      if (map.look?.launchArt !== 'snow' && map.look?.launchArt !== 'matsuri' && map.look?.launchArt !== 'kingdom') return false;
       const gy = groundAt(map, wx - 4) - cam.y;
       const mo = live(time) && RUN.map === map ? momentsOf(RUN.R) : {};
       const k = mo.launch != null ? time - mo.launch : -1;
       streamers(ctx, x - 54, gy - 34, time, k, 0);
-      place(ctx, map.look.launchArt === 'matsuri' ? festRampArt() : rampArt(), snap(x - 30), gy + 2);
+      place(ctx, map.look.launchArt === 'kingdom' ? keepRampArt() : map.look.launchArt === 'matsuri' ? festRampArt() : rampArt(), snap(x - 30), gy + 2);
       streamers(ctx, x - 4, gy - 40, time, k, 2);
       return true;
     }
@@ -5204,6 +6369,14 @@ export function drawCoursePiece(ctx, map, kind, wx, extra, cam, width, time) {
       return true;
     }
     case 'mr_wall': {
+      // (The Grand Tour's: a castle wall of cut stone, a flag running up at its top.)
+      if (map.look?.wallArt === 'kingdom') {
+        const s = kingWallArt(extra.bottom - extra.top, Math.round(wx * 0.31) % 7);
+        place(ctx, s, snap(x - 50 + s.w / 2), extra.bottom - cam.y);
+        const mo = live(time) && RUN.map === map ? momentsOf(RUN.R) : {};
+        wallFlag(ctx, x, extra.top - cam.y, wx, time, mo.tops?.[wx] != null ? time - mo.tops[wx] : -1);
+        return true;
+      }
       // (The festival's: the yagura, its drum tower.)
       if (map.look?.wallArt === 'matsuri') {
         yagura(ctx, x, extra.top - cam.y, extra.bottom - cam.y, time);

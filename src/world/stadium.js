@@ -67,6 +67,9 @@ const GROUNDS = {
   maplecliff: { material: 'maplecliff', edges: 'clover' },
   snowpeak: { material: 'snowpeak', edges: 'clover' },
   sweetcake: { material: 'sweetcake', edges: 'clover' },
+  kingroad: { material: 'kingroad', edges: 'clover' },
+  kingstone: { material: 'kingstone', edges: 'clover' },
+  kingdusk: { material: 'kingdusk', edges: 'clover' },
   cloudfloor: { material: 'cloudfloor', edges: null },
   harvest: { material: 'harvest', edges: 'flowers' },
   duskmeadow: { material: 'duskmeadow', edges: 'clover' },
@@ -260,11 +263,11 @@ function grandMap() {
 // floats; off the edge into Sunset Clouds, a long glide over the fluff; and Lantern Hills at dusk,
 // rolling home under strings of lights to the finish. Everything, and Stamina most of all.
 const TOUR_PARTS = [
-  { from: 0, name: 'Blossom Meadow', icon: 'leaf', color: '#ff8fb8' },
-  { from: 2000, name: 'Lily River', icon: 'drop', color: '#5aa8e8' },
-  { from: 3480, name: 'Cotton Cliffs', icon: 'hammer', color: '#e0904a' },
-  { from: 4400, name: 'Sunset Clouds', icon: 'feather', color: '#f07a6a' },
-  { from: 5880, name: 'Lantern Hills', icon: 'moon', color: '#8a6ad0' },
+  { from: 0, name: 'Castle Town', icon: 'door', color: '#d8304a' },
+  { from: 2000, name: 'The Moat', icon: 'drop', color: '#3a9a8e' },
+  { from: 3480, name: 'Castle Walls', icon: 'shield', color: '#9a90a8' },
+  { from: 4400, name: 'Over the Keep', icon: 'feather', color: '#f07a6a' },
+  { from: 5880, name: 'The Royal Road', icon: 'crown', color: '#e0b040' },
 ];
 const TOUR_SKIES = [
   { sky: ['#ffd0e2', '#ffe6e0', '#fff8f0'], far: '#d4ecc8', mid: '#e2f2d4', midTrim: '#bfe0ac' },
@@ -276,12 +279,14 @@ const TOUR_SKIES = [
 function tourMap() {
   const G = 760;
   const V = 840;
-  const lanterns = [5960, 6250, 6560, 6880, 7190, 7520, 7840, 8150];
+  const poles = [5960, 6250, 6560, 6880, 7190, 7520, 7840, 8150];
   return courseMap('mrace_tour', 'Mochi Grand Tour', {
-    width: 8900, height: 960, sky: 'meadow', ground: 'sakura',
-    // (Its ground changes with it: rosy meadow, the river's sandy bed and banks, cliff stone up top,
-    // the evening meadow from the cloud valley home; each change hidden under water, at a wall or a cliff.)
-    grounds: [{ from: 0, ...GROUNDS.sakura }, { from: 2190, ...GROUNDS.lakeshore }, { from: 3700, ...GROUNDS.cliffstone }, { from: 4560, ...GROUNDS.duskmeadow }],
+    width: 8900, height: 960, sky: 'meadow', ground: 'kingroad', skyline: 'course:kingdom',
+    look: { aerial: 0.55, clouds: false, groundArt: 'kingdom', edges: 'kingdom', festival: true, wallArt: 'kingdom', launchArt: 'kingdom', bar: 'scroll', calm: true, confetti: true, kicks: ['#d8304a', '#ffd75e', '#ffffff', '#3a6ad8'], petals: ['#d8304a', '#ffd75e', '#ff8a9a', '#ffffff', '#ffe8a8'] },
+    // (Its ground changes with it: the town's cobbled road, the moat's sandy bank and bed, the
+    // castle's cut stone up top, the evening meadow home; each change hidden under water, at a wall
+    // or at a cliff.)
+    grounds: [{ from: 0, ...GROUNDS.kingroad }, { from: 2190, ...GROUNDS.lakeshore }, { from: 3700, ...GROUNDS.kingstone }, { from: 4560, ...GROUNDS.kingdusk }],
     zones: TOUR_PARTS.map((p, i) => ({ name: p.name, from: p.from, color: p.color, look: TOUR_SKIES[i] })),
     terrain: [
       // Blossom Meadow: little rises, a flat green for the big tree.
@@ -295,18 +300,19 @@ function tourMap() {
       // Lantern Hills: rolling home.
       [6100, 806], [6300, 798], [6500, 828], [6700, 820], [6900, 788], [7100, 782], [7300, 812], [7500, 820], [7700, 804], [7900, 812], [8100, 820], [8900, 820],
     ],
-    water: [{ x1: 2100, x2: 3300, y: G, kind: 'pond', lilies: false, reeds: false }],
+    water: [{ x1: 2100, x2: 3300, y: G, kind: 'moat', lilies: false, reeds: false }],
     // (The fork at Lily River: swim across, or take the boardwalk on its stilts beside it.)
     platforms: [{ x: 2100, y: G - 4, w: 1200, style: 'planks', dock: true, walkOn: true }],
     pieces: [
-      ['mg_fruittree', 110, 0], ['mg_fruittree', 500, 2], ['mg_bigtree', 1300], ['mg_fruittree', 1740, 1],
-      ['mr_checkpoint', 2000, { part: 2 }], ['mg_reeds', 2092, 0], ['mg_lilies', 2240, 1], ['mg_lilies', 2400, 0], ['mg_reeds', 2560, 1], ['mg_lilies', 2690, 1], ['mg_lilies', 2860, 0], ['mr_balloon', 2780, { y: 650, color: 1 }], ['mg_lilies', 3020, 1], ['mg_lilies', 3170, 0], ['mg_reeds', 3308, 1],
-      ['mr_checkpoint', 3480, { part: 3 }], ['mg_fruittree', 3600, 3], ['mr_wall', 3700, { top: 610, bottom: G }], ['mg_fruittree', 3850, 0], ['mr_wall', 4000, { top: 460, bottom: 610 }],
-      ['mr_balloon', 4180, { y: 365 }], ['mr_checkpoint', 4400, { part: 4 }],
-      ['mg_rockface', 4560, { top: 460, bottom: V, seed: 7, flip: true, vines: 3 }], ['mr_clouds', 4560, { w: 700 }], ['mr_launch', 4558], ['mr_balloon', 5150, { y: 730, color: 1 }],
-      ['mr_checkpoint', 5880, { part: 5 }],
-      ...lanterns.map((x, i) => ['mg_lantern', x, i % 5]),
-      ...lanterns.slice(0, -1).map((x, i) => ['mr_lights', x, { to: lanterns[i + 1] }]),
+      ['mr_starter', 322, 0], ['mr_kbanner', 430, 0], ['mr_kgate', 580, 0], ['mr_kbanner', 760, 1], ['mr_ksubjects', 980, 0], ['mr_kbanner', 1140, 0], ['mr_kbanner', 1500, 1], ['mr_ksubjects', 1700, 1], ['mr_kbanner', 1860, 0],
+      ['mr_checkpoint', 2000, { part: 2 }], ['mr_balloon', 2780, { y: 650, color: 1 }],
+      ['mr_checkpoint', 3480, { part: 3 }], ['mr_kbanner', 3600, 1], ['mr_wall', 3700, { top: 610, bottom: G }], ['mr_ksubjects', 3880, 2], ['mr_wall', 4000, { top: 460, bottom: 610 }], ['mr_kbanner', 4120, 0],
+      ['mr_checkpoint', 4400, { part: 4 }],
+      ['mr_kcliff', 4560, { top: 460, bottom: V }], ['mr_clouds', 4560, { w: 700 }], ['mr_launch', 4558], ['mr_balloon', 5150, { y: 730, color: 1 }],
+      ['mr_checkpoint', 5880, { part: 5 }], ['mr_ksubjects', 6120, 3], ['mr_ksubjects', 6420, 7], ['mr_ksubjects', 6760, 4], ['mr_ksubjects', 7040, 8], ['mr_ksubjects', 7380, 9], ['mr_ksubjects', 7640, 5], ['mr_ksubjects', 7900, 10], ['mr_squad', 8060, 0], ['mr_ksubjects', 8180, 6],
+      ['mr_hayate', 8450, 0],
+      ...poles.map((x, i) => ['mr_kpole', x, i % 4]),
+      ...poles.slice(0, -1).map((x, i) => ['mr_kstring', x, { to: poles[i + 1] }]),
     ],
     race: {
       ...course(240, 8300, [{ kind: 'run', to: 2100 }, { kind: 'swim', to: 3300, y: G, alt: { kind: 'run', to: 3300, y: G - 4, slow: 0.82, name: 'the boardwalk' }, name: 'the river' }, { kind: 'run', to: 3700 }, { kind: 'climb', x: 3700, from: G, to: 610 },

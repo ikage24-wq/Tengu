@@ -33,6 +33,9 @@ export const WATERS = {
   // The Grand Mochi Course's pond at dusk (its redraw, 2026-11-13): the evening sky in it, violet
   // going deep; its floating lanterns are the course's own (render/courseart.js).
   dusk: { top: '#b0b4ea', mid: '#7074c4', deep: '#3e3c8c', foam: '#ffffff', glint: '#ffe4b0' },
+  // The Mochi Grand Tour's castle moat (its redraw, 2026-11-13): deep still green water under the
+  // walls; its boats and drawbridge are the course's own (render/courseart.js).
+  moat: { top: '#86c8b4', mid: '#3f9a90', deep: '#255e64', foam: '#f0fffa', glint: '#d8fff0' },
 };
 // A map's own life in its water, registered by the code that draws it (the Mochi race courses:
 // render/courseart.js): WATER_BED (ctx, map, w, cam, time, x0, x1) under the surface, in the
