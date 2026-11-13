@@ -46,6 +46,16 @@ const skirtPts = (len, fl) => [[10, 34.2], [21.2, 34.2], [21.2 + fl, len], [10 -
 const pleats = (len, fl, c, xs = [12.2, 14.6, 17, 19.4]) => xs.map((x) => F(limb(x, 35.6, x + (x - MID) * (fl / 6), len - 0.4, 0.5, 0.75, c)));
 // A tier of ruffle from (x0..x1 at y0) out to a scalloped hem (x2..x3 at y1).
 const tier = (x0, x1, y0, x2, x3, y1, n, c) => frill(x0, x1, y0, x2, x3, y1, n, 0.9, c);
+// A little five-point star (prints, buttons, a hat's badge).
+const star = (x, y, r, c) => {
+  const pts = [];
+  for (let i = 0; i < 10; i++) {
+    const a = -Math.PI / 2 + (i * Math.PI) / 5;
+    const rr = i % 2 ? r * 0.45 : r;
+    pts.push([x + Math.cos(a) * rr, y + Math.sin(a) * rr]);
+  }
+  return F(T(pts, c));
+};
 // A bow with two loops and two tails, centred at (x, y).
 const bow = (x, y, w, c, d) => [T([[x, y], [x - w, y - w * 0.6], [x - w * 1.1, y + w * 0.5]], c), T([[x, y], [x + w, y - w * 0.6], [x + w * 1.1, y + w * 0.5]], c),
   T([[x - 0.4, y + 0.3], [x - w * 0.7, y + w * 1.4], [x - w * 0.2, y + w * 1.3]], c), T([[x + 0.4, y + 0.3], [x + w * 0.7, y + w * 1.4], [x + w * 0.2, y + w * 1.3]], c), F(E(x, y, w * 0.32, w * 0.32, d))];
@@ -101,6 +111,29 @@ const OUTFITS = {
     skirt: (p) => [F(R(9.3, 35.8, 0.9, 4.2, pale(p) === WHITE ? p.pop : WHITE)), F(R(21.1, 35.8, 0.9, 4.2, pale(p) === WHITE ? p.pop : WHITE))],
     shoe: (p, k, c) => [k.shaft(2.6, c(WHITE), 3.1), k.shaft(0.6, c(p.pop), 3.15), k.sole(c(p.main)), k.poly([[-3, 1.8], [3, 1.8], [2.7, 3], [-2.7, 3]], c(WHITE)),
       k.poly([[-1.6, 0], [1.4, -0.6], [2, 0.6], [-1, 1]], c(p.pop))],
+  },
+
+  // Pajamas (2026-11-13, in the creator's list for sporty): a soft PJ shirt with a round collar in
+  // the second cloth, a piped placket with little gold star buttons, printed all over with stars
+  // and moons; cuffed PJ pants; fluffy slippers with a pompom.
+  pajamas: {
+    top: (p) => {
+      const pts = loose(36.6, 0.6);
+      const moon = (x, y) => [F(E(x, y, 0.8, 0.8, GOLD)), F(E(x + 0.35, y - 0.25, 0.65, 0.65, p.main))];
+      return [T(pts, p.main),
+        ...crease(12.6, 28.8, 13.8, 34.2, 0.55, p.dark, p.light), ...crease(18.8, 29.6, 17.8, 34.2, 0.5, p.dark, p.light),
+        star(11.4, 30.8, 0.9, pale(p)), star(19.8, 33.4, 0.8, pale(p)), ...moon(12.2, 34.4), ...moon(20.2, 29), F(E(17.4, 31.4, 0.35, 0.35, pale(p))), F(E(10.6, 28, 0.3, 0.3, pale(p))),
+        F(limb(MID, 27.2, MID, 36.4, 0.5, 0.5, p.dark)), ...[29.4, 31.8, 34.2].map((y) => star(MID + 0.9, y, 0.7, GOLD)),
+        F(E(MID - 2.3, 26.5, 2.6, 1.5, p.second)), F(E(MID + 2.3, 26.5, 2.6, 1.5, p.second)), F(E(MID, 25.7, 1.6, 0.8, p.dark)),
+        F(limb(MID - 4.6, 26.8, MID - 0.6, 27.8, 0.3, 0.3, p.secondDark)), F(limb(MID + 4.6, 26.8, MID + 0.6, 27.8, 0.3, 0.3, p.secondDark)),
+        band(pts, 35.8, 36.6, p.second)];
+    },
+    sleeve: (p) => p.main,
+    long: true,
+    legs: (p) => ({ top: p.main, low: p.main, pad: null, cuff: p.second }),
+    skirt: (p) => [F(R(10, 34.4, 11.2, 0.8, p.second)), star(12, 38.8, 0.7, pale(p)), star(19.4, 39.6, 0.6, pale(p)), F(E(15.6, 40.4, 0.3, 0.3, pale(p)))],
+    shoe: (p, k, c) => [k.poly([[-3.2, 0.2], [3.2, 0.2], [3.4, 2.4], [2.8, 3], [-2.8, 3], [-3.4, 2.4]], c(p.second)), k.poly([[-3.4, -0.7], [3.4, -0.7], [3.4, 0.8], [-3.4, 0.8]], c(WHITE)),
+      k.dot(-2.2, -0.6, 0.8, c(WHITE)), k.dot(0, -0.9, 0.9, c(WHITE)), k.dot(2.2, -0.6, 0.8, c(WHITE)), k.dot(1.6, 1.4, 0.65, c(p.pop))],
   },
 
   // A big, slouchy hoodie: the hood bunched around the neck, drawstrings, a kangaroo pocket and a
@@ -272,6 +305,28 @@ const OUTFITS = {
       ...flower(12, 39, 1.1, pale(p), GOLD), ...flower(19.4, 37.8, 1, pale(p), GOLD), ...flower(18, 45, 1.1, pale(p), p.pop), ...flower(10.8, 46.4, 1, pale(p), GOLD)],
     shoe: (p, k, c) => [k.poly([[-3, 1.8], [3, 1.8], [3, 3], [-3, 3]], c('#c9a77a')), k.poly([[-2.6, -0.4], [2.6, -0.4], [2.8, 1.8], [-2.8, 1.8]], c(WHITE)),
       k.poly([[-0.4, 0.2], [0.4, 0.2], [2.4, 1.6], [-2.4, 1.6]], c(p.pop))],
+  },
+
+  // A little witch (2026-11-13, in the creator's list for kimono; no hat, the player's choice): a
+  // dress with a big round white collar trimmed in the accent and a bow at the throat; a short cape behind with a pointed hem; a ruffle-edged skirt
+  // sprinkled with stars; coloured stockings and little buckled boots with curled toes.
+  witch: {
+    top: (p) => [T(TORSO, p.main),
+      T([[8.8, 25.2], [MID - 0.2, 26], [MID - 1, 30.4], [9.4, 29.4]], WHITE), T([[22.2, 25.2], [MID + 0.2, 26], [MID + 1, 30.4], [21.6, 29.4]], WHITE),
+      F(limb(9.4, 29.2, MID - 1, 30.2, 0.4, 0.4, p.pop)), F(limb(21.6, 29.2, MID + 1, 30.2, 0.4, 0.4, p.pop)),
+      ...bow(MID, 27, 1.8, p.pop, shade(p.pop, -22)), button(MID, 31.8, GOLD), button(MID, 33.8, GOLD),
+      ...crease(12.8, 31, 13.6, 34.6, 0.45, p.dark, p.light), ...crease(18.6, 31, 17.8, 34.6, 0.45, p.dark, p.light), band(TORSO, 34.8, 35.8, p.dark)],
+    sleeve: (p) => p.main,
+    long: true,
+    back: (p) => [T([[9.4, 25], [21.6, 25], [25.4, 41.4], [22.4, 40.2], [19, 42], [15.5, 40.6], [12, 42], [8.6, 40.2], [5.6, 41.4]], p.deep),
+      F(limb(9.6, 27, 7, 40, 0.5, 0.3, shade(p.deep, -12))), F(limb(21.4, 27, 24, 40, 0.5, 0.3, shade(p.deep, -12)))],
+    legs: (p, skin) => ({ top: skin, low: p.second, pad: null }),
+    skirt: (p) => {
+      const pts = skirtPts(42.6, 3);
+      return [tier(10, 21.2, 34.2, 6.2, 24.8, 44, 8, WHITE), T(pts, p.main), ...pleats(42.6, 3, p.dark, [11.8, 15.5, 19.2]),
+        star(12.4, 38.4, 0.9, GOLD), star(18.8, 40.2, 0.8, GOLD), star(15.6, 36.6, 0.7, pale(p)), band(pts, 41.8, 42.6, p.dark)];
+    },
+    shoe: (p, k, c) => [k.shaft(2.8, c(p.deep), 3.1), k.sole(c(p.deep)), k.poly([[1.8, -0.4], [3.6, 0.2], [4.4, -0.6], [4, 0.8], [2.6, 1.6]], c(p.deep)), k.dot(-0.4, -0.6, 0.6, c(GOLD)), k.dot(-0.4, -0.6, 0.28, c(p.deep))],
   },
 
   // An oversized kimono, worn barefoot: a loose robe sliding wide at the collar, dropped shoulders,
@@ -570,7 +625,9 @@ const BASICS = {
 // (Outfits only one character wears aren't offered in the creator or the salon.)
 // (Malvina's without the hat, so her bat-wing hair shows: `villainessbare`.)
 OUTFITS.villainessbare = { ...OUTFITS.villainess, hat: undefined };
-export const OWN_OUTFITS = ['villainess', 'villainessbare'];
+// (sporty and kimono looked like casual and bigkimono: swapped in the creator for pajamas and
+// witch, 2026-11-13; they still draw for the townsfolk and old saves.)
+export const OWN_OUTFITS = ['villainess', 'villainessbare', 'sporty', 'kimono'];
 export const STARTER_OUTFITS = Object.keys(OUTFITS).filter((k) => !OWN_OUTFITS.includes(k));
 const of = (t) => (t === 'basics' ? BASICS : OUTFITS[t] ?? PET_OUTFITS[t] ?? OUTFITS.casual);
 

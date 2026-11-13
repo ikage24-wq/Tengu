@@ -38,9 +38,14 @@ export { HAIR_STYLES, BANG_STYLES, hairStyleOf };
 // Eye styles offered in the creator and salon. The closed-eye ones (happy, sleepy, wink) are now
 // covered by the animated faces, so they are hidden there but still draw for older characters.
 // The redrawn jewel eyes come first: new characters start with them.
-export const PICKABLE_EYE_STYLES = ['jewel', 'sparkle', 'round', 'cat', 'droopy', 'star', 'big'];
-export const FACE_STYLES = ['smile', 'smug', 'sassy', 'grin', 'pout', 'shy', 'cool', 'cat', 'angry', 'excited', 'love', 'sleepy', 'sad', 'shock', 'playful', 'proud', 'dizzy', 'nervous', 'giggle', 'determined',
-  'bleh', 'excuseme', 'dimple', 'mmhm', 'hmph', 'judging', 'ohoho', 'sneer', 'heh', 'smugcat', 'toldyou', 'lookdown'];
+// (round and big looked like sparkle and jewel: swapped for doll and bean, 2026-11-13; they still
+// draw for the townsfolk and old saves.)
+export const PICKABLE_EYE_STYLES = ['jewel', 'sparkle', 'doll', 'cat', 'droopy', 'star', 'bean', 'slant', 'halflid', 'cheeky', 'sly'];
+// (The player's list. smug, grin, hmph, ohoho, sneer and lookdown copied other faces and were
+// swapped for clap, dance, whistle, ta-da, tehe and wave, 2026-11-13; the old ones still draw for
+// the townsfolk, Malvina and any save already wearing one.)
+export const FACE_STYLES = ['smile', 'clap', 'sassy', 'dance', 'pout', 'shy', 'cool', 'cat', 'angry', 'excited', 'love', 'sleepy', 'sad', 'shock', 'playful', 'proud', 'dizzy', 'nervous', 'giggle', 'determined',
+  'bleh', 'excuseme', 'dimple', 'mmhm', 'whistle', 'judging', 'tada', 'tehe', 'heh', 'smugcat', 'toldyou', 'wave'];
 
 // Parts are designed on a 30x56 figure with feet at y 56, then everything below the neck is
 // squashed into a small, slim chibi body under the same big head: heights shrink to KY and (for
@@ -314,6 +319,16 @@ const EYE_LOOK = {
   // The redrawn hero's jewel eyes: big, the iris painted like a cut gem (heroine.js drawEye `jewel`).
   jewel: { rx: 2.4, ry: 2.95, tilt: 0.12, wing: 1.1, flicks: 2, iris: 1.36, jewel: true, sparkle: true },
   doll: { rx: 2.35, ry: 2.75, tilt: 0, wing: 0.15, flicks: 0, iris: 1.55, pupil: 'ring', sparkle: true },
+  // Attitude eyes (2026-11-13): sharply slanted, the outer corners swept up with a long wing;
+  // half-closed, the heavy lid lowered over the top of the iris, dreamy or unbothered; cheeky,
+  // the lower lid pushed up into a smiling squint, a little lid, up to something; and sly, slanted
+  // and half-closed at once, a fox's look. (`raise` lifts the lower lid, in px.)
+  // Bean: tiny shiny bean eyes, all iris, a big shine and barely a lash.
+  bean: { rx: 1.5, ry: 2, tilt: 0, wing: 0, flicks: 0, iris: 1.6, lashW: 0.35, sparkle: true },
+  slant: { rx: 2.25, ry: 2.45, tilt: 0.48, wing: 1.4, flicks: 2, iris: 1.26, sparkle: true },
+  halflid: { rx: 2.3, ry: 2.6, tilt: 0.12, wing: 1.2, flicks: 2, iris: 1.34, open: 0.6, lashW: 1, sparkle: true },
+  cheeky: { rx: 2.35, ry: 2.7, tilt: 0.3, wing: 1.3, flicks: 2, iris: 1.34, raise: 1.25, sparkle: true },
+  sly: { rx: 2.3, ry: 2.45, tilt: 0.44, wing: 1.6, flicks: 2, iris: 1.22, open: 0.64, raise: 0.35, lashW: 1 },
   // A would-be villainess's glare (Malvina Grimsworth): sharply upswept, a heavy winged lash with
   // three flicks, a slightly smaller iris for that scheming look. Still big and bright: she can't
   // quite manage menacing.
@@ -381,7 +396,7 @@ function eye(ex, out, style, color, mode, look, f = {}, cross = 0) {
   const gy = f.look === 'down' ? 0.13 : f.look === 'up' ? -0.1 : 0;
   const wide = f.wide && lids === 'open';
   const x = {
-    lids, open: mode === 'half' ? Math.min(0.36, (st.open ?? 1) * (1 - lid * 0.85)) : wide ? 1 : (st.open ?? 1) * (1 - lid * 0.85), inner: cross, raise: cross * 0.4, gaze: [-(g + 0.3) / (2 * st.rx), gy],
+    lids, open: mode === 'half' ? Math.min(0.36, (st.open ?? 1) * (1 - lid * 0.85)) : wide ? 1 : (st.open ?? 1) * (1 - lid * 0.85), inner: cross, raise: (wide ? 0 : st.raise ?? 0) + cross * 0.4, gaze: [-(g + 0.3) / (2 * st.rx), gy],
     iris: st.iris * (cross ? 0.9 : 1) * (wide ? 0.62 : 1), pupil: wide ? 0.4 : cross ? 0.75 : f.heart ? 1.7 : 1,
   };
   const kit = {
@@ -426,7 +441,9 @@ function stroke(pts, th, c) {
 // tucks under the side locks and whose tip pokes out past the hair: `elf` short and swept up,
 // `long` long and swept out to the side, `pointed` broad and swept up and out (the MapleStory
 // elf), and `droopy` long and slender, reaching out to the side and drooping down a little.
-export const EAR_STYLES = ['round', 'elf', 'long', 'pointed', 'droopy'];
+// (pointed looked like elf: swapped for fin, a mermaid's fin ear, 2026-11-13; it still draws for
+// old saves.)
+export const EAR_STYLES = ['round', 'elf', 'long', 'fin', 'droopy'];
 
 // The front (right-hand) ear in a style: the ear in `c` and its inner hollow in `inner`. The back
 // ear is its mirror, a shade darker.
@@ -443,6 +460,18 @@ function earShapes(style, c, inner) {
       F(T([[25.4, 16.4], [27.4, 15.6], [29.6, 14.0], [31.6, 11.8], [30.2, 14.6], [28.4, 17.0], [26.6, 18.9], [25.6, 19.6]], inner)),
     ];
   }
+  if (style === 'fin') {
+    // A mermaid's fin ear: a fan swept up and back from the cheek, its edge scalloped between the
+    // ribs, the ribs and the webbing between them in the hollow's shade.
+    const tips = [[31.4, 10.2], [33, 12.8], [33.2, 15.4], [32, 17.8]];
+    const notch = [[30.6, 12.4], [31.6, 14.6], [31.2, 16.8]];
+    const edge = [tips[0], notch[0], tips[1], notch[1], tips[2], notch[2], tips[3]];
+    return [
+      F(T([[24.2, 15.6], [26.6, 13.6], [28.8, 11.4], ...edge, [29.4, 19.2], [26.8, 20.4], [25, 20.8]], c)),
+      F(T([[25.4, 16.6], [27.4, 15], [29.4, 13.2], [30.2, 14.6], [30.4, 16.4], [29.4, 18.2], [27.2, 19.4], [25.7, 19.8]], inner)),
+      ...tips.map(([x, y]) => F(T([[25.6, 17.6], [x - 0.5, y + 0.2], [x - 0.9, y + 0.7]], c))),
+    ];
+  }
   if (style === 'droopy') {
     return [
       F(T([[24.2, 16.0], [26.8, 16.2], [29.6, 16.9], [32.4, 18.2], [35.2, 20.6], [32.2, 20.4], [29.2, 20.5], [26.6, 20.9], [25, 21.0]], c)),
@@ -455,7 +484,9 @@ function earShapes(style, c, inner) {
 // Eyebrow styles, each its own silhouette (art bible: brows taper at both ends, in the hair's
 // darkest shade, never ink). `round` is hikimayu: small soft ovals set high; `dots` a doll's
 // painted brows, two tiny dots side by side set very high. `none` hides them.
-export const BROW_STYLES = ['soft', 'thick', 'round', 'thin', 'arched', 'sharp', 'stubby', 'dots', 'none'];
+// (thin and stubby looked like soft and round: swapped for wavy and fluffy, 2026-11-13; they still
+// draw for the townsfolk and old saves.)
+export const BROW_STYLES = ['soft', 'thick', 'round', 'wavy', 'arched', 'sharp', 'fluffy', 'dots', 'none'];
 
 // A tapered ribbon along `pts`, `ws` thick at each point.
 function ribbon(pts, ws, c) {
@@ -536,6 +567,16 @@ function brow(ex, side, raise, tilt, c, style = 'soft', grow = 0) {
     }
     case 'thin':
       return ribbon([at(0), at(0.45, 0.35), at(1, 0.1)], g([0.35, 0.5, 0.3]), c);
+    case 'wavy':
+      // A playful little wave: up, dip, up again.
+      return ribbon([at(-0.02), at(0.33, 0.45), at(0.64, 0.05), at(1, 0.42)], g([0.55, 0.72, 0.7, 0.42]), c);
+    case 'fluffy':
+      // Feathered: three soft little strokes fanned along the brow, like brushed brow hairs.
+      return [
+        ribbon([at(0.02, -0.1), at(0.16, 0.5)], g([0.75, 0.45]), c),
+        ribbon([at(0.32, 0.02), at(0.5, 0.62)], g([0.8, 0.48]), c),
+        ribbon([at(0.62, 0.12), at(0.9, 0.46)], g([0.7, 0.36]), c),
+      ];
     case 'arched':
       // A high curve that peaks past the middle.
       return ribbon([at(0), at(0.35, 0.6), at(0.65, 0.95), at(1, 0.2)], g([0.5, 0.75, 0.7, 0.35]), c);
@@ -1157,6 +1198,69 @@ export function faceFrame(kind, time) {
       if (win(p, 0.6, 0.78)) return { closed: [true, true], mouth: Math.floor(t * 8) % 2 ? 'ohoho' : 'slysmile', brows: [[1.1, -0.4], [1.1, -0.4]], blush: 0.9, extra: ['spark0'] };
       return { lid: 0.62, look: 'down', glance: 0.4, mouth: 'smirkwide', brows: [[0.9, -0.3], [1.2, -0.4]] };
     }
+    // The cute six (2026-11-13), made to replace the player's copies of other faces (smug,
+    // grin, hmph, ohoho, sneer, lookdown: still here for the townsfolk and Malvina, no longer
+    // offered to the player). Each is a loop of four or five beats like the attitude faces, and
+    // the body acts on the same beats (idleActing).
+    case 'tada': {
+      // "Ta-da!": she squeezes her eyes shut, crouched small; pops up wide-eyed; a beaming laugh
+      // with sparkles, arms flung out; a proud little ":3"; then a happy rest.
+      const p = at(3.6);
+      const tick = Math.floor(t * 8) % 2;
+      if (win(p, 0, 0.22)) return { closed: ['blink', 'blink'], mouth: 'tiny', brows: [[0.9, -0.5], [0.9, -0.5]], blush: 0.8 };
+      if (win(p, 0.22, 0.3)) return { wide: true, shine: true, mouth: 'open', brows: [[1.3, -0.3], [1.3, -0.3]], extra: ['spark1'] };
+      if (win(p, 0.3, 0.6)) return { closed: [true, true], mouth: tick ? 'open' : 'grin', brows: [[1, -0.3], [1, -0.3]], blush: 1.4, extra: [tick ? 'spark1' : 'spark0'] };
+      if (win(p, 0.6, 0.75)) return { shine: true, mouth: 'cat', brows: [[0.7, -0.2], [0.7, -0.2]], blush: 1.2, extra: ['spark0'] };
+      return { lid: 0.1, mouth: 'cat', brows: [[0.5, -0.2], [0.5, -0.2]], blush: 1 };
+    }
+    case 'wave': {
+      // "Hi hi!": a big wave, eyes squeezed happy and laughing; she looks right at you with a ":3";
+      // a blink; then a soft smile.
+      const p = at(3.2);
+      const tick = Math.floor(t * 8) % 2;
+      if (win(p, 0, 0.6)) return { closed: [true, true], mouth: tick ? 'open' : 'grin', brows: [[0.8, -0.3], [0.8, -0.3]], blush: 1.3, extra: [tick ? 'spark0' : 'spark1'] };
+      if (win(p, 0.6, 0.8)) return { shine: true, mouth: 'cat', brows: [[0.6, -0.2], [0.6, -0.2]], blush: 1.2 };
+      if (win(p, 0.8, 0.86)) return { closed: ['blink', 'blink'], mouth: 'cat', blush: 1 };
+      return { mouth: 'smile', brows: [[0.5, -0.2], [0.5, -0.2]], blush: 1 };
+    }
+    case 'clap': {
+      // "Yay!": happy claps with the eyes shut and the mouth going with each one; a bright look
+      // with a sparkle in the eyes; more claps; then a pleased squint.
+      const p = at(2.8);
+      const tick = Math.floor(t * 8) % 2;
+      if (win(p, 0, 0.42) || win(p, 0.55, 0.78)) return { closed: [true, true], mouth: tick ? 'open' : 'cat', brows: [[0.9, -0.3], [0.9, -0.3]], blush: 1.4, extra: [tick ? 'spark1' : 'spark0'] };
+      if (win(p, 0.42, 0.55)) return { shine: true, mouth: 'grin', brows: [[1, -0.3], [1, -0.3]], blush: 1.2, extra: ['spark1'] };
+      return { lid: 0.3, mouth: 'cat', brows: [[0.6, -0.2], [0.6, -0.2]], blush: 1.3 };
+    }
+    case 'whistle': {
+      // Innocent whistling: lips pursed, eyes wandering one way and the other, a note floating up
+      // on each beat; caught looking, the sweetest closed-eye smile; then back to whistling.
+      const p = at(4.4);
+      const note = Math.floor(t * 2) % 2 ? ['note'] : [];
+      if (win(p, 0, 0.3)) return { lid: 0.2, glance: 1, look: 'up', mouth: 'kiss', brows: [[0.8, -0.3], [0.8, -0.3]], extra: note };
+      if (win(p, 0.3, 0.55)) return { lid: 0.2, glance: -1, look: 'up', mouth: 'kiss', brows: [[0.8, -0.3], [0.8, -0.3]], extra: note };
+      if (win(p, 0.55, 0.62)) return { glance: 0, wide: true, mouth: 'o', brows: [[1.1, -0.3], [1.1, -0.3]], blush: 1 };
+      if (win(p, 0.62, 0.82)) return { closed: [true, true], mouth: 'cat', brows: [[0.7, -0.3], [0.7, -0.3]], blush: 1.5, extra: ['spark0'] };
+      return { lid: 0.2, glance: 0.6, mouth: 'kiss', brows: [[0.8, -0.3], [0.8, -0.3]], extra: note };
+    }
+    case 'dance': {
+      // A little dance: eyes shut, humming, notes bobbing on the beat; a wink on the turn; then
+      // the happy squint again.
+      const p = at(3.2);
+      const beat = Math.floor(t * 4) % 2;
+      if (win(p, 0.45, 0.6)) return { closed: [false, true], mouth: 'grin', brows: [[0.6, -0.2], [1, -0.4]], blush: 1.3, extra: ['spark1'] };
+      return { closed: [true, true], mouth: beat ? 'cat' : 'meow', brows: [[0.7, -0.3], [0.7, -0.3]], blush: 1.3, extra: beat ? ['note'] : [] };
+    }
+    case 'tehe': {
+      // "Tehe~": a wink with the tongue out; the bonk on her own head, eyes squeezed, a sweat drop;
+      // a giggle; then the cheeky wink with the other eye.
+      const p = at(3.4);
+      const tick = Math.floor(t * 8) % 2;
+      if (win(p, 0, 0.3)) return { closed: [false, true], mouth: 'bleh', brows: [[0.6, -0.3], [1, -0.4]], blush: 1.2 };
+      if (win(p, 0.3, 0.48)) return { closed: ['blink', 'blink'], mouth: 'tongue', brows: [[0.9, -0.5], [0.9, -0.5]], blush: 1.3, extra: ['drop', 'spark1'] };
+      if (win(p, 0.48, 0.74)) return { closed: [true, true], mouth: tick ? 'meow' : 'cat', brows: [[0.7, -0.3], [0.7, -0.3]], blush: 1.5, extra: ['spark0'] };
+      return { closed: [true, false], mouth: 'tongue', brows: [[1, -0.4], [0.6, -0.3]], blush: 1.2, extra: ['spark0'] };
+    }
     default: {
       const p = at(5);
       return win(p, 0.6, 0.78) ? { mouth: 'grin', closed: [true, true] } : { mouth: 'smile' };
@@ -1732,11 +1836,15 @@ const WALK_STYLE = {
   sad: 'droop', sleepy: 'droop', tired: 'droop', shy: 'timid', nervous: 'timid', dizzy: 'weave', shock: 'panic',
   bleh: 'sassy', excuseme: 'sassy', dimple: 'sassy', mmhm: 'cool', judging: 'cool',
   hmph: 'strut', ohoho: 'strut', sneer: 'strut', heh: 'strut', smugcat: 'strut', toldyou: 'strut', lookdown: 'strut',
+  tada: 'skip', wave: 'bouncy', clap: 'skip', whistle: 'bouncy', dance: 'skip', tehe: 'bouncy',
 };
 // Lean added to the walk (radians): stomps and droops bend forward, struts stand tall.
 export const WALK_LEAN = { stomp: 0.03, droop: 0.02, strut: -0.02, cool: -0.015, sassy: -0.01, panic: 0.02 };
 export const walkStyleOf = (mood) => WALK_STYLE[mood] ?? 'bouncy';
 
+// (Resting poses keep the arms hanging nearly straight, the hands just below their rest spot,
+// never bent out at the elbows: the player's choice, 2026-11-13. Bent elbows are for gestures:
+// hands on the hips, arms crossed, hands clasped, a hand to the chin.)
 function idleActing(r, mood, t, armed) {
   // Acting runs on 30 steps a second, so its sways and gestures flow.
   const T = Math.floor(t * 30) / 30;
@@ -1771,7 +1879,7 @@ function idleActing(r, mood, t, armed) {
     case 'grin': {
       const p = at(3);
       hop(win(p, 0, 0.45) ? Math.round(Math.abs(Math.sin(T * Math.PI * 3)) * 2) / 2 : 0);
-      hands(-1.5, -2.5);
+      hands(-0.5, 0.4);
       break;
     }
     case 'smug': {
@@ -1811,7 +1919,7 @@ function idleActing(r, mood, t, armed) {
     }
     case 'cool': {
       // Hands in the pockets, weight back on one leg, barely moving.
-      hands(2, -1.5);
+      hands(0.5, 0.4);
       r.tx = q(-1);
       r.tilt = -2;
       break;
@@ -1825,13 +1933,13 @@ function idleActing(r, mood, t, armed) {
     }
     case 'angry': {
       // Fists clenched at the sides; on the huff, a stomp and a shake.
-      hands(-1, -1.5);
+      hands(-0.5, 0.4);
       const p = at(5);
       if (win(p, 0.6, 0.85)) {
         r.tx = Math.floor(T * 8) % 2 ? 0.5 : -0.5;
         if (win(p, 0.6, 0.68)) r.frontLeg = [1, -3, 0];
         else { r.squat = 1; r.by = q(r.by + 1); }
-        hands(-1.5, -3);
+        hands(-0.8, -0.4);
       }
       break;
     }
@@ -1865,7 +1973,7 @@ function idleActing(r, mood, t, armed) {
       const p = at(4.4);
       slump(1);
       r.hy = q(r.hy + 0.5);
-      hands(1.5, 0);
+      hands(0.5, 0.4);
       r.tilt = -2;
       if (win(p, 0.68, 0.92)) { hands(CHIN[0], CHIN[1]); r.tx = Math.floor(T * 8) % 2 ? 0.5 : 0; }
       break;
@@ -1959,7 +2067,7 @@ function idleActing(r, mood, t, armed) {
       // Hands behind her back, swaying; she leans in on the wink, bounces on her toes with the
       // hearts, and twists shyly at the end.
       const p = at(3.4);
-      hands(-2.5, -1.5);
+      hands(-0.5, 0.4);
       const wink = hold(p, 0.3, 0.45);
       const happy = hold(p, 0.45, 0.68);
       const shy = hold(p, 0.68, 1);
@@ -2076,6 +2184,86 @@ function idleActing(r, mood, t, armed) {
       r.tilt = q(-5 + Math.sin(2 * Math.PI * p) * 1.2 - laugh);
       break;
     }
+    // The cute six (see faceFrame): resting arms hang straight; gestures bend them.
+    case 'tada': {
+      // Crouched small with her hands tucked in; a pop up onto her toes with both arms flung up
+      // and out; held there beaming; then a happy settle.
+      const p = at(3.6);
+      const crouch = hold(p, 0, 0.2, 0.04);
+      const ta = hold(p, 0.24, 0.62, 0.05);
+      r.squat = Math.round(crouch * 2);
+      if (crouch > 0.5) { hands(1.5, -2.5); r.hy = q(r.hy + 0.6); }
+      else if (ta > 0.05) hands(q(-0.5 - 4 * ta), q(0.4 - 10.4 * ta), q(0.5 + 4 * ta), q(0.4 - 10.4 * ta));
+      else hands(-0.5, 0.4);
+      hop(win(p, 0.22, 0.34) ? Math.round(bump(p, 0.22, 0.34) * 2 * 2) / 2 : 0);
+      r.tilt = Math.round(-3 * ta);
+      break;
+    }
+    case 'wave': {
+      // A big wave beside her head, bouncing on her toes, the head tipped toward the waving hand;
+      // then the hand comes down and she sways.
+      const p = at(3.2);
+      const w = hold(p, 0, 0.6, 0.08);
+      const flap = Math.sin(T * Math.PI * 7);
+      if (w > 0.05) hands(-0.5, 0.4, q(0.5 + (5.5 + flap * 1.4) * w), q(0.4 - 12.6 * w));
+      else hands(-0.5, 0.4);
+      r.lift = q(0.6 * w * Math.abs(Math.sin(T * Math.PI * 3.5)));
+      r.tilt = Math.round(3 * w + (1 - w) * 2 * Math.sin(T * 2)) ;
+      r.tx = q((1 - w) * 0.6 * Math.sin(T * 2));
+      break;
+    }
+    case 'clap': {
+      // Hands clapping in front of her chest, a little bounce on each clap; a bright look; more
+      // claps; then the hands drop and she bobs, pleased.
+      const p = at(2.8);
+      const c = win(p, 0, 0.42) || win(p, 0.55, 0.78) ? 1 : 0;
+      if (c) {
+        const k = Math.abs(Math.sin(T * Math.PI * 4));
+        hands(q(CLASP[0] - 2.4 * k), CLASP[1]);
+        r.by = q(r.by + (1 - k) * 0.5);
+      } else if (win(p, 0.42, 0.55)) hands(CLASP[0], CLASP[1]);
+      else hands(-0.5, 0.4);
+      r.tilt = c ? (Math.floor(T * 4) % 2 ? 2 : -2) : 0;
+      break;
+    }
+    case 'whistle': {
+      // Hands behind her back, rocking heel to toe, the head turning with the eyes; caught, she
+      // stops still with the sweetest smile; then rocks on.
+      const p = at(4.4);
+      hands(-0.5, 0.4);
+      const caught = hold(p, 0.55, 0.82, 0.05);
+      const rock = Math.sin(T * 2.6) * (1 - caught);
+      r.frontLeg = [r.frontLeg[0], q(-0.4 * Math.max(0, rock)), Math.round(rock * 10)];
+      r.backLeg = [r.backLeg[0], q(-0.4 * Math.max(0, rock)), Math.round(rock * 10)];
+      r.lift = q(0.5 * Math.max(0, rock));
+      r.tilt = Math.round((win(p, 0, 0.3) ? 3 : win(p, 0.3, 0.55) ? -3 : 1) * (1 - caught) + caught * -2);
+      break;
+    }
+    case 'dance': {
+      // A little side-step dance: the weight swings side to side, each foot lifting in turn, the
+      // straight arms swinging out with it, the head tipping the other way; a spin of the head on
+      // the wink.
+      const s = Math.sin(T * Math.PI * 2);
+      r.tx = q(1.2 * s);
+      hop(q(0.8 * Math.abs(s)));
+      if (s > 0.2) r.frontLeg = [r.frontLeg[0] + 0.6, q(-1.4 * s), 8];
+      else if (s < -0.2) r.backLeg = [r.backLeg[0] - 0.6, q(1.4 * s), -8];
+      hands(q(-0.5 - 1.6 * Math.max(0, -s)), q(0.4 - 0.5 * Math.max(0, -s)), q(0.5 + 1.6 * Math.max(0, s)), q(0.4 - 0.5 * Math.max(0, s)));
+      r.tilt = Math.round(-3 * s);
+      break;
+    }
+    case 'tehe': {
+      // A little fist up beside her head; on the bonk it knocks against her head, which tips
+      // with it, and she hunches; a giggle with the shoulders bobbing; the fist stays up for the
+      // cheeky wink.
+      const p = at(3.4);
+      const bonk = bump(p, 0.3, 0.42);
+      hands(-0.5, 0.4, q(4.6 - 1.2 * bonk), q(-11.2 + 0.8 * bonk));
+      r.tilt = Math.round(2 + 4 * bonk);
+      r.hy = q(r.hy + 0.6 * bonk);
+      if (win(p, 0.48, 0.74)) r.by = q(r.by - 0.4 * Math.abs(Math.sin(T * Math.PI * 6)));
+      break;
+    }
     case 'tired': {
       // Worn out: bent over, hands toward the knees, panting.
       const pant = Math.floor(T * 3) % 2;
@@ -2126,8 +2314,8 @@ function walkActing(r, mood, p, gait, armed) {
       break;
     case 'cool':
       // Hands in the pockets, an easy lope.
-      r.backArm = [2, -1.5];
-      if (!armed) r.frontArm = [-2, -1.5];
+      r.backArm = [0.5, 0.4];
+      if (!armed) r.frontArm = [-0.5, 0.4];
       r.tilt = -2;
       break;
     case 'stomp':

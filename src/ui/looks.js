@@ -71,6 +71,12 @@ export function randomLook(rng = Math.random) {
 // Display names for the styles whose ids aren't plain words.
 const NAMES = { elf: 'Elf', long: 'Long elf', pointed: 'Pointed', droopy: 'Droopy elf', none: 'Hidden', soft: 'Soft', round: 'Round', thick: 'Thick', thin: 'Thin', arched: 'Arched', sharp: 'Sharp', bald: 'Bald', auto: 'Own', blunt: 'Blunt', hime: 'Hime', baby: 'Baby', heavy: 'Heavy', mshape: 'M-shape', wispy: 'Wispy', swept: 'Swept', peek: 'Peekaboo', part: 'Parted', curtain: 'Curtain', short: 'Short', spiky: 'Spiky', curly: 'Curly', slicked: 'Swept back', candy: 'Candy curls', drills: 'Drill curls', sidetail: 'Side tail', catbun: 'Cat-ear buns', princess: 'Princess', bowhair: 'Hair bow', hime: 'Hime cut', crownbraid: 'Crown braid', odango: 'Odango buns', wolf: 'Wolf cut', swoop: 'Swoop', ponytail: 'Ponytail', halfup: 'Half up', spiky: 'Spiky', pixie: 'Pixie', fluffybob: 'Fluffy bob', wavylong: 'Long waves', cloud: 'Cloud curls', lowtails: 'Low twintails', braids: 'Braids',
   bleh: 'Bleh!', excuseme: 'Excuse me?', dimple: 'Dimple', mmhm: 'Mm-hm, sure', hmph: 'Hmph', judging: 'Judging', ohoho: 'Ohohoho', sneer: 'Sneer', heh: 'Heh~', smugcat: 'Smug :3', toldyou: 'Told you so', lookdown: 'Looking down',
+  pajamas: 'Pajamas', witch: 'Little witch',
+  doll: 'Doll', bean: 'Bean', wavy: 'Wavy', fluffy: 'Feathered', fin: 'Fin',
+  clipped: 'Clipped', braided: 'Braided', tendril: 'Tendrils', flippy: 'Flippy',
+  sidesweep: 'Side sweep', sidebun: 'Low side bun', bubbletail: 'Bubble tail', braidloops: 'Braid loops', pinbun: 'Pin bun', framebraids: 'Frame braids', flipbob: 'Flip bob', wavecrop: 'Wave crop',
+  slant: 'Slanted', halflid: 'Half-closed', cheeky: 'Cheeky', sly: 'Sly',
+  tada: 'Ta-da!', wave: 'Hi hi!', clap: 'Yay!', whistle: 'Whistling~', dance: 'Little dance', tehe: 'Tehe~',
   bowlcut: 'Bowl cut', sidecrop: 'Side crop', curlycrop: 'Curly crop', tomboy: 'Tomboy', stubtail: 'Stub tail', shavedside: 'Shaved side', vampire: 'Vampire', demonbuns: 'Demon buns', hexlong: 'Hex', magical: 'Magical girl', idol: 'Idol', samurai: 'Samurai',
   crewcut: 'Crew cut', curtains90: '90s curtains', slickback: 'Slick back', buzzcut: 'Buzz cut', comma: 'Comma', longtied: 'Long tied', mullet: 'Mullet', surfer: 'Surfer', hightop: 'High-top' };
 export const styleName = (id) => NAMES[id] ?? String(id).charAt(0).toUpperCase() + String(id).slice(1);

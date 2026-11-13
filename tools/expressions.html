@@ -1,0 +1,81 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Expressions</title>
+<style>
+  html, body { margin: 0; background: #1d1a24; }
+  canvas { display: block; width: 100vw; height: 56.25vw; max-height: 100vh; max-width: 177.8vh; margin: auto; }
+</style>
+</head>
+<body>
+<canvas id="c" width="1280" height="720"></canvas>
+<script type="module">
+// Every expression at once: your hero standing in each, faces and body acting playing, for
+// comparing them side by side. `window.run(true)` records it.
+await import('/src/data/cash.js');
+const { drawHero, FACE_STYLES } = await import('/src/render/hero.js');
+const { createAnim, stepAnim } = await import('/src/render/animator.js');
+const { wornGear } = await import('/src/core/character.js');
+
+const key = Object.keys(localStorage).find((k) => /^twzt-w\d+-c\d+$/.test(k));
+const char = JSON.parse(localStorage.getItem(key));
+const gear = wornGear(char);
+const cv = document.getElementById('c');
+const ctx = cv.getContext('2d');
+const S = 2.5;
+const COLS = 8;
+const CW = 160;
+const CH = 180;
+const END = 14;
+let anims = FACE_STYLES.map(() => createAnim());
+
+function frame(v, dt) {
+  ctx.fillStyle = '#d8eee0';
+  ctx.fillRect(0, 0, 1280, 720);
+  ctx.textAlign = 'center';
+  ctx.font = '15px system-ui, sans-serif';
+  FACE_STYLES.forEach((mood, i) => {
+    const x = (i % COLS) * CW + CW / 2;
+    const gy = Math.floor(i / COLS) * CH + CH - 26;
+    ctx.fillStyle = '#b6d9c1';
+    ctx.fillRect(x - CW / 2 + 6, gy, CW - 12, 3);
+    ctx.fillStyle = '#3d6b52';
+    ctx.fillText(`${i + 1}. ${mood}`, x, gy + 20);
+    stepAnim(anims[i], { vx: 0, vy: 0, onGround: true, rope: false, facing: 1, y: 0 }, dt);
+    drawHero(ctx, { ...char.appearance, face: mood }, gear, x, gy, { pose: 'idle', time: v, facing: 1, scale: S, urgent: true }, anims[i]);
+  });
+}
+
+window.run = (record = false) => new Promise((done) => {
+  anims = FACE_STYLES.map(() => createAnim());
+  let rec = null;
+  const chunks = [];
+  if (record) {
+    rec = new MediaRecorder(cv.captureStream(60), { mimeType: 'video/mp4;codecs=avc1', videoBitsPerSecond: 8e6 });
+    rec.ondataavailable = (e) => chunks.push(e.data);
+  }
+  let start = null;
+  let last = null;
+  const f = (ts) => {
+    if (start == null) {
+      start = ts;
+      last = ts;
+      rec?.start();
+    }
+    const v = (ts - start) / 1000;
+    frame(v, Math.min(0.05, (ts - last) / 1000));
+    last = ts;
+    if (v < END) requestAnimationFrame(f);
+    else if (rec) {
+      rec.onstop = () => done(new Blob(chunks, { type: 'video/mp4' }));
+      rec.stop();
+    } else done(null);
+  };
+  requestAnimationFrame(f);
+});
+window.ready = true;
+if (!new URLSearchParams(location.search).has('still')) run();
+</script>
+</body>
+</html>

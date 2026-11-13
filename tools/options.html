@@ -1,0 +1,57 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Creator options</title>
+<style>
+  html, body { margin: 0; background: #d8eee0; font: 13px system-ui, sans-serif; }
+  canvas { display: block; margin: auto; image-rendering: pixelated; }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<script type="module">
+// Every option of one character-creator row side by side on your hero, numbered, for spotting
+// look-alikes: ?row=hairStyle (or hairBangs, eyeStyle, browStyle, earStyle, outfit). Heads are
+// shown close for the face and hair rows, the whole figure for outfits.
+await import('/src/data/cash.js');
+const { drawHero } = await import('/src/render/hero.js');
+const { LOOK_OPTIONS } = await import('/src/ui/looks.js');
+const { wornGear } = await import('/src/core/character.js');
+
+const key = new URLSearchParams(location.search).get('row') ?? 'hairStyle';
+const saveKey = Object.keys(localStorage).find((k) => /^twzt-w\d+-c\d+$/.test(k));
+const char = JSON.parse(localStorage.getItem(saveKey));
+const opts = LOOK_OPTIONS.find((o) => o.key === key).options;
+const body = key === 'outfit' || key === 'hairStyle';
+const S = body ? 3.4 : 4.4;
+const CW = body ? 150 : 150;
+const CH = body ? 230 : 170;
+const COLS = Math.min(opts.length, 13);
+const cv = document.getElementById('c');
+cv.width = COLS * CW;
+cv.height = Math.ceil(opts.length / COLS) * CH;
+const ctx = cv.getContext('2d');
+ctx.fillStyle = '#d8eee0';
+ctx.fillRect(0, 0, cv.width, cv.height);
+ctx.textAlign = 'center';
+// (Bald for the bangs row would hide them; every row keeps her own hair unless it's the hair row.)
+const gear = key === 'outfit' ? null : wornGear(char);
+opts.forEach((v, i) => {
+  const x = (i % COLS) * CW + CW / 2;
+  const top = Math.floor(i / COLS) * CH;
+  const look = { ...char.appearance, face: 'smile', [key]: v };
+  if (key === 'outfit') look.outfit = v;
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(x - CW / 2 + 2, top + 2, CW - 4, CH - 22);
+  ctx.clip();
+  drawHero(ctx, look, gear, x, body ? top + CH - 26 : top + 210, { pose: 'idle', time: 0.4, facing: 1, scale: S, urgent: true }, null);
+  ctx.restore();
+  ctx.fillStyle = '#3d6b52';
+  ctx.fillText(`${i + 1}. ${v}`, x, top + CH - 6);
+});
+window.ready = true;
+</script>
+</body>
+</html>

@@ -22,16 +22,18 @@ const CY = 13.2;
 // Fifty-two styles: anime, princess and fantasy, cool, punk and cute, a doll's, then short,
 // tomboy, evil and cosplay cuts, men's cuts, and the redraw's ten new ones.
 export const HAIR_STYLES = ['candy', 'drills', 'sidetail', 'catbun', 'princess', 'bowhair', 'hime', 'crownbraid', 'odango', 'wolf', 'swoop', 'ponytail', 'halfup', 'pixie', 'fluffybob', 'wavylong', 'cloud', 'lowtails', 'braids', 'wolfsleek', 'kokeshi',
-  'bowlcut', 'sidecrop', 'curlycrop', 'tomboy', 'stubtail', 'shavedside', 'vampire', 'demonbuns', 'hexlong', 'magical', 'idol', 'samurai',
-  'crewcut', 'curtains90', 'slickback', 'buzzcut', 'comma', 'longtied', 'mullet', 'surfer', 'hightop',
-  'ribbonbuns', 'hearttails', 'shoulderbraid', 'sharpbob', 'undercuthime', 'cascade', 'starbuns', 'feathertips', 'messycrop', 'pompadour'];
+  'bowlcut', 'wavecrop', 'curlycrop', 'tomboy', 'stubtail', 'shavedside', 'sidesweep', 'demonbuns', 'sidebun', 'magical', 'bubbletail', 'samurai',
+  'crewcut', 'curtains90', 'slickback', 'braidloops', 'comma', 'longtied', 'mullet', 'surfer', 'hightop',
+  'pinbun', 'framebraids', 'shoulderbraid', 'flipbob', 'undercuthime', 'cascade', 'starbuns', 'feathertips', 'messycrop', 'pompadour'];
 // Older styles draw as the closest current one; anything else unknown draws as the first.
 const RETIRED = {
   twintails: 'candy', bob: 'fluffybob', curtain: 'halfup', short: 'pixie', sweep: 'swoop', eyecover: 'swoop', undercut: 'swoop', quiff: 'wolfsleek', hero: 'wolfsleek',
   mohawk: 'wolfsleek', spiky: 'wolfsleek', bun: 'odango', topknot: 'odango', long: 'wavylong', wavy: 'wavylong', fluffy: 'wavylong', curly: 'cloud', ahoge: 'pixie', braid: 'braids',
 };
 // Styles only one character wears (not offered in the creator or the salon).
-const OWN_HAIR = ['villainess'];
+// (Styles only others wear: Malvina's, and the eight look-alikes taken out of the player's list on
+// 2026-11-13, still drawn for the townsfolk and any save already wearing one.)
+const OWN_HAIR = ['villainess', 'vampire', 'hexlong', 'idol', 'buzzcut', 'ribbonbuns', 'hearttails', 'sharpbob', 'sidecrop'];
 export const hairStyleOf = (look) => {
   const s = RETIRED[look.hairStyle] ?? look.hairStyle;
   return HAIR_STYLES.includes(s) || OWN_HAIR.includes(s) ? s : HAIR_STYLES[0];
@@ -388,6 +390,25 @@ const FRINGES = {
   // combed lines running down into it.
   doll: { pts: [[25, 17.2], [23.4, 15.8], [20.2, 15.1], [HX, 14.9], [10.8, 15.1], [7.6, 15.8], [6, 17.2]], lean: 0, plain: true,
     strands: [[19.6, 5.2, 20.6, 14.4, 0.6, -0.4], [HX + 0.6, 3.8, HX + 0.8, 14.2, 0.6, 0], [11.4, 5.2, 10.4, 14.4, 0.6, 0.4]] },
+  // ----- The four new fringes (2026-11-13), in the player's list for hime, short, part and spiky
+  // (those still draw for the styles that use them and for old saves) -----
+  // Clipped: pinned back off the near side with a little pink clip, the forehead showing there; the
+  // far side falls in soft clumps.
+  clipped: { pts: [[24.4, 9.8], [21.6, 7.8], [18.6, 7.6], [16.6, 8.8], [15, 13.6], [13.4, 10.6], [11.2, 14.8], [9.6, 11], [7.4, 13.8]], lean: 0, plain: true,
+    strands: [[20.4, 7.6, 18.2, 3.2, 0.6, 0.3], [23, 9, 21, 4.2, 0.6, 0.3], [14.2, 6, 14.8, 12.8, 0.7, 0], [11.6, 6.4, 11, 13.6, 0.7, 0]],
+    deco: () => [poly([[19.2, 8.4], [23.2, 6.8], [23.6, 7.8], [19.6, 9.4]], '#ff8fb8'), poly([[19.6, 8.6], [23, 7.2], [23.2, 7.6], [19.8, 9]], '#ffc4dc'), F(E(23.6, 7.2, 1, 1, '#fff2a0')), F(E(23.3, 6.9, 0.4, 0.4, '#ffffff'))] },
+  // Braided: the hair swept up off the brow, and a little braid laid across the hairline from
+  // temple to temple.
+  braided: { pts: [[24.4, 11.2], [21, 8.8], [HX, 7.8], [10, 8.8], [6.6, 11.2]], lean: 0, plain: true,
+    deco: (r, m) => ropeBraid([[25.6, 12.4], [22.8, 8.8], [18.6, 7], [HX, 6.6], [12.4, 7], [8.2, 8.8], [5.4, 12.4]], 2.6, r, null) },
+  // Tendrils: a short soft fringe, and two thin strands falling between the eyes.
+  tendril: { pts: [[23.6, 12.4], [21.8, 10.2], [20, 12.8], [18.4, 10.4], [HX, 11.6], [12.6, 10.4], [11, 12.8], [9.2, 10.2], [7.4, 12.4]], lean: 0, softTips: true, gentle: true,
+    // (They end just under the brows: lower down they take the tips' colour and read as a shadow.)
+    deco: (r, m) => [lock([[14.6, 7], [14, 10.8], [13, 13.6], [13.2, 15.6]], 1.8, r.base, m, 1.2), lock([[16.4, 7], [17, 10.8], [18, 13.6], [17.8, 15.6]], 1.8, r.base, m, 1.2)] },
+  // Flippy: a soft fringe whose outer ends flick out and up at the temples.
+  flippy: { pts: [[24.4, 13.6], [22.6, 10.8], [20.6, 15], [18.2, 10.8], [HX, 15.6], [12.8, 10.8], [10.4, 15], [8.4, 10.8], [6.6, 13.6]], lean: 0, softTips: true, gentle: true,
+    // (The flicks reach out past the side hair, so they show against what's behind.)
+    deco: (r, m) => [lock([[24.6, 13.4], [27.6, 15.4], [29.8, 13.4]], 2.8, r.base, m, 0.6), lock([[6.4, 13.4], [3.4, 15.4], [1.2, 13.4]], 2.8, r.base, m, 0.6)] },
   // Rounded scallops (for curly hair).
   curly: { pts: [[23.6, 13.8], [21.8, 14.8], [19.8, 13.8], [17.8, 15.2], [15.6, 14], [13.4, 15.2], [11.2, 13.8], [9.2, 14.8], [7.6, 13.8]], lean: 0, round: true },
 };
@@ -448,6 +469,8 @@ function bangs(kind, r, m, extra = [], { shine = true } = {}) {
   if (f.part) shapes.push(streak(...f.part[0], ...f.part[1], 0.9, 0, r.sh2));
   for (const [x0, y0, x1, y1, w, bow] of f.strands ?? []) shapes.push(streak(x0, y0, x1, y1, w, bow, r.sh1));
   for (const spine of f.locks ?? []) shapes.push(lock(spine, 4.6, r.base, m, 1.2), streak(spine[0][0] + 0.6, spine[0][1] + 2, spine[2][0], spine[2][1], 0.6, 0.3, r.sh1, m, 1.2));
+  // Anything a fringe wears or adds of its own (a clip, a braid along the hairline, thin strands).
+  if (f.deco) shapes.push(...[f.deco(r, m)].flat(3));
   // The band of forehead the bangs shade: a thin strip under each run of the edge over the face.
   const shade = [];
   let run = [];
@@ -472,7 +495,9 @@ const sideLocks = (r, m, near, far = near ? fx(near) : null, w = 3.6, k = 1.2) =
 ];
 
 // Bangs can be chosen apart from the hairstyle ('auto' keeps the style's own).
-export const BANG_STYLES = ['auto', 'soft', 'blunt', 'hime', 'baby', 'heavy', 'mshape', 'wispy', 'swept', 'peek', 'part', 'curtain', 'short', 'spiky', 'curly', 'slicked'];
+// (hime, short, part and spiky looked like blunt, baby and curtain, or were spiky: swapped for
+// clipped, braided, tendril and flippy, 2026-11-13.)
+export const BANG_STYLES = ['auto', 'soft', 'blunt', 'clipped', 'baby', 'heavy', 'mshape', 'wispy', 'swept', 'peek', 'tendril', 'curtain', 'braided', 'flippy', 'curly', 'slicked'];
 let BANGS = null;
 
 // ---------- The styles ----------
@@ -2316,6 +2341,202 @@ const GOLD_FLAKES = [[10, 4.2, 0.2], [19.4, 3, -0.4], [23.6, 8.4, 0.5], [7, 10, 
 // `r` is the hair's colour ramp, `tint` the blend and tip ramps for two-tone (or null), `m` the
 // motion ({ root, tip, lift, wave }), and `mood` the face (for the ahoge).
 // `extra` (the Mochi's coats): `split`, a second colour's ramp for the far half; `gold`, gold leaf.
+// ----- The eight new styles (2026-11-13) -----
+// Each replaces a look-alike in the player's list (vampire, hexlong, idol, buzzcut, ribbonbuns,
+// hearttails, sharpbob, sidecrop: still drawn for the townsfolk and old saves, see OWN_HAIR).
+const TIE = '#ff8fb8';
+const TIE_LT = '#ffc4dc';
+const RIBBON = { base: '#ff8fb8', sh1: '#e0628c', sh2: '#c04a72', hi: '#ffd0e2' };
+// A soft band of hair-ripple: a thin wavy line across the head from x0 to x1 at height y.
+function rippleLine(x0, x1, y, amp, ph, w, c) {
+  const top = [];
+  const bot = [];
+  for (let i = 0; i <= 14; i++) {
+    const x = x0 + ((x1 - x0) * i) / 14;
+    const yy = y + amp * Math.sin(x * 0.62 + ph);
+    const k = Math.sin((Math.PI * i) / 14);
+    top.push([x, yy - (w / 2) * k]);
+    bot.push([x, yy + (w / 2) * k]);
+  }
+  return poly([...top, ...bot.reverse()], c);
+}
+// A braid drawn as one smooth even band along a spine with the plait's crossings marked inside
+// it (chevrons of shadow and light): at hero size a knot-by-knot plait outline reads as frizz.
+function ropeBraid(spine, w, r, m, k = 1, c = r.base) {
+  const sp = smoothOpen(spine.map(mover(m, k)), 3);
+  const out = [lock(spine, w, c, m, k, 1)];
+  let acc = 0;
+  let next = 1.4;
+  let side = 1;
+  for (let i = 1; i < sp.length; i++) {
+    const [ax, ay] = sp[i - 1];
+    const [bx, by] = sp[i];
+    const seg = Math.hypot(bx - ax, by - ay) || 1;
+    while (acc + seg >= next) {
+      const t = (next - acc) / seg;
+      const [x, y] = [ax + (bx - ax) * t, ay + (by - ay) * t];
+      const [tx, ty] = [(bx - ax) / seg, (by - ay) / seg];
+      const [nx, ny] = [-ty, tx];
+      const h = w * 0.42;
+      out.push(streak(x - nx * h * side - tx * 0.7, y - ny * h * side - ty * 0.7, x + nx * h * side + tx * 0.7, y + ny * h * side + ty * 0.7, 0.55, 0, r.sh2));
+      out.push(streak(x - nx * h * side - tx * 0.1, y - ny * h * side - ty * 0.1, x + tx * 0.6, y + ty * 0.6, 0.35, 0, r.hi));
+      side = -side;
+      next += 1.5;
+    }
+    acc += seg;
+  }
+  return out;
+}
+Object.assign(STYLES, {
+  // Side sweep: long soft waves all swept over the near shoulder, the far side tucked behind the
+  // ear, a short sheet left behind.
+  sidesweep(r, m) {
+    const sweep = [[17, 3.4], [23.6, 7.4], [27.4, 12.6], [28.4, 18.4], [26.8, 23.6], [28.6, 29], [27.4, 34.6], [29.2, 39.4]];
+    const inner = [[21, 6.4], [25.6, 11.4], [26.2, 17.6], [24.8, 23], [26.4, 28.6], [25.6, 33.4]];
+    return {
+      head: [crown(r, 0.3)],
+      hang: [napeShadow(r), ...sheet({ len: 28, flare: 12.4, wave: 1.2, ends: 'points', n: 3 }, r, m, 0.7)],
+      front: bangs('swept', r, m, [
+        lock(sweep, 8.4, r.sh1, m, 1.1, 0.25), lock(inner, 5, r.base, m, 1.15, 0.2),
+        streak(25.4, 12, 26.6, 30, 0.8, -0.6, r.hi, m, 1.1), streak(27.4, 16, 27.8, 34, 0.55, -0.8, r.sh2, m, 1.1),
+        lock([[6.2, 11], [5.4, 15.4], [6, 19]], 2.6, r.sh1, m, 1),
+      ]),
+      tips: [28, 37],
+    };
+  },
+  // Low side bun: everything gathered into a round bun low behind the near ear, tied with a little
+  // bow of hair; long wavy tendrils left out to frame the face.
+  sidebun(r, m) {
+    const knot = [...bun(29.4, 19.4, 4.4, 4, r, -1), ...hairBow(29.8, 15.2, 0.5, r)];
+    const tendril = [[24.8, 11], [26.2, 15], [25.2, 19], [26.4, 23], [25.6, 26.4]];
+    return {
+      head: [crown(r), ...knot],
+      hang: [napeShadow(r, 19)],
+      front: bangs('curtain', r, m, [lock(tendril, 2.8, r.base, m, 1.25, 0.1), lock(fx(tendril), 2.8, r.sh1, m, 1.25, 0.1)]),
+      tips: [21, 27],
+    };
+  },
+  // Bubble tail: a high side ponytail on the near side tied off into round bubbles with pink
+  // bands between them, swinging and bouncing.
+  bubbletail(r, m) {
+    const mv = mover(m, 1.1);
+    const beads = [[29.4, 7.6, 3.4], [31.2, 13, 3.3], [31.4, 18.8, 3], [30.8, 24, 2.5]];
+    const tail = [];
+    beads.forEach(([x, y, s], i) => {
+      const [cx, cy] = mv([x, y]);
+      tail.push(F(E(cx, cy, s, s * 0.92, r.sh1)), poly(smooth([[cx - s * 0.7, cy + s * 0.1], [cx - s * 0.1, cy + s * 0.8], [cx + s * 0.75, cy + s * 0.2], [cx + s * 0.2, cy + s * 0.45]]), r.sh2), streak(cx - s * 0.55, cy - s * 0.45, cx + s * 0.15, cy - s * 0.8, 0.9, 0.3, r.base));
+      if (i < beads.length - 1) {
+        const [nx, ny] = mv([(x + beads[i + 1][0]) / 2, (y + beads[i + 1][1]) / 2]);
+        tail.push(F(E(nx, ny, 1.4, 0.85, TIE)), F(E(nx - 0.4, ny - 0.25, 0.5, 0.3, TIE_LT)));
+      }
+    });
+    const [ex, ey] = mv([30.6, 26.2]);
+    tail.push(lock([[ex, ey], [ex + 0.8, ey + 2.4], [ex - 0.2, ey + 4.4]], 3.4, r.sh1, null));
+    const tie = [F(E(26, 5.2, 1.6, 1.4, TIE)), F(E(25.6, 4.8, 0.6, 0.45, TIE_LT))];
+    return {
+      head: [crown(r)],
+      hang: [...sheet({ len: 24, flare: 12.4, ends: 'curls', n: 3 }, r, m), lock([[25.4, 4.6], [28, 5.2], [29.6, 7.6]], 4.2, r.sh1, m, 1)],
+      front: bangs('soft', r, m, [...sideLocks(r, m, null, [[5.8, 11], [5, 16], [5.6, 20.4]], 3), ...tail, ...tie]),
+      tips: [22, 28],
+    };
+  },
+  // Braid loops: a braid down each side, looped back up and tied behind the ear with a pink bow;
+  // short hair behind, an M-shaped fringe.
+  braidloops(r, m) {
+    // (A wide U, so the hole in the loop shows and it reads as a loop, not a bunch of curls.)
+    const loop = [[4.6, 9.4], [1.2, 13], [-0.4, 18.6], [0.4, 23.8], [3, 26.6], [5.8, 25], [6.8, 20], [6.2, 14.4]];
+    const ties = [...hairBow(5.2, 10.2, 0.5, RIBBON), ...hairBow(25.8, 10.2, 0.5, RIBBON)];
+    return {
+      head: [crown(r)],
+      hang: [napeShadow(r), ...sheet({ len: 21, flare: 12.2, ends: 'level', n: 3 }, r, m, 0.5)],
+      front: bangs('mshape', r, m, [...ropeBraid(loop, 3, r, m, 1.05), ...ropeBraid(fx(loop), 3, r, m, 1.05, r.sh1), ...ties]),
+      tips: [18, 25],
+    };
+  },
+  // Pin bun: one big round bun on top with two hair sticks crossed through it, a bead on each end;
+  // the rest soft at the nape, wispy locks by the ears.
+  pinbun(r, m) {
+    const knot = bun(HX, 0.6, 5.4, 4.6, r, 1);
+    const stick = (x0, y0, x1, y1) => {
+      const len = Math.hypot(x1 - x0, y1 - y0);
+      const nx = (-(y1 - y0) / len) * 0.45;
+      const ny = ((x1 - x0) / len) * 0.45;
+      return [
+        poly([[x0 + nx, y0 + ny], [x1 + nx, y1 + ny], [x1 - nx, y1 - ny], [x0 - nx, y0 - ny]], '#a8703f'),
+        poly([[x0 + nx * 0.2, y0 + ny * 0.2], [x1 + nx * 0.2, y1 + ny * 0.2], [x1 - nx * 0.5, y1 - ny * 0.5], [x0 - nx * 0.5, y0 - ny * 0.5]], '#d8a070'),
+        F(E(x1, y1, 1.1, 1.1, '#ff7a9a')), F(E(x1 - 0.35, y1 - 0.35, 0.45, 0.45, '#ffd0de')),
+      ];
+    };
+    const sticks = [...stick(10.2, 3.2, 23.4, -3.4), ...stick(20.8, 3.4, 7.8, -3)];
+    return {
+      head: [crown(r), ...knot],
+      hang: [napeShadow(r)],
+      // (The sticks go with the fringe, drawn over everything: the hero draws no separate top layer.)
+      front: bangs('soft', r, m, [...sideLocks(r, m, [[25.2, 11], [26, 15.4], [25.4, 19.6]], undefined, 2.8), ...sticks]),
+      tips: [16, 20],
+    };
+  },
+  // Frame braids: long straight hair to the waist, and a thin braid on each side framing the face,
+  // each tied off with a little pink bead.
+  framebraids(r, m) {
+    const near = [[25.4, 10.4], [26.6, 16], [26.4, 22.6], [26.8, 29.4]];
+    const out = [...ropeBraid(near, 3, r, m, 1.15), ...ropeBraid(fx(near), 3, r, m, 1.15)];
+    const mv = mover(m, 1.15);
+    for (const p of [near[3], fx([near[3]])[0]]) {
+      const [x, y] = mv([p[0], p[1] + 1.6]);
+      out.push(F(E(x, y, 1.05, 1.05, TIE)), F(E(x - 0.3, y - 0.3, 0.42, 0.42, TIE_LT)));
+    }
+    return {
+      head: [crown(r, 0.2)],
+      hang: [napeShadow(r), ...sheet({ len: 46, flare: 12.8, ends: 'level', n: 4 }, r, m, 0.8)],
+      front: bangs('wispy', r, m, out),
+      tips: [33, 42],
+    };
+  },
+  // Flip bob: a chin-length bob with the ends flipped out in round curls, and a soft pink headband
+  // across the top.
+  flipbob(r, m) {
+    const side = [[24, 9.2], [27.8, 10.6], [28.6, 16.4], [28.4, 20], [30.6, 20.4], P(32.6, 19.4), [32.2, 22.2], [29.6, 23.8], [26.4, 23.4], [24.4, 20.6], [23.6, 14]];
+    const mv = mover(m, 0.5);
+    const curl = (dir) => {
+      const p = [[29.2, 21.4], [31, 20.9], [31.6, 22], [30.2, 22.7]];
+      return poly(smooth(dir > 0 ? p : fx(p)).map(mv), r.sh2);
+    };
+    const arc = (rx, ry, w0, w1) => {
+      const outer = [];
+      const inner = [];
+      for (let i = 0; i <= 14; i++) {
+        const a = Math.PI * (1.07 + (0.86 * i) / 14);
+        outer.push([HX + rx * Math.cos(a), 11 + ry * Math.sin(a)]);
+        inner.push([HX + (rx - w0) * Math.cos(a), 11 + (ry - w1) * Math.sin(a)]);
+      }
+      return [...outer, ...inner.reverse()];
+    };
+    return {
+      head: [crown(r, 0.4)],
+      hang: sheet({ len: 21, flare: 13, ends: 'level', n: 3 }, r, m, 0.4),
+      front: bangs('soft', r, m, [mass(side, r.base, m, 0.5), mass(fx(side), r.base, m, 0.5), curl(1), curl(-1), streak(24.8, 12, 27.4, 21, 0.6, -0.3, r.hi, m, 0.5), streak(6.2, 12, 3.6, 21, 0.5, 0.3, r.sh2, m, 0.5),
+        poly(arc(12.7, 9.6, 1.5, 1.4), TIE), poly(arc(12.5, 9.4, 0.5, 0.5), TIE_LT)]),
+      tips: [16, 22],
+    };
+  },
+  // Wave crop: a short crop set in soft finger waves rippling back over the head, a little curl
+  // pressed flat at the near temple.
+  wavecrop(r, m) {
+    const waves = [
+      rippleLine(10, 21.2, 3.4, 0.7, 0, 0.8, r.sh2), rippleLine(10.4, 21.6, 2.8, 0.7, 0, 0.5, r.hi),
+      rippleLine(6.4, 24.8, 6.4, 0.9, 1.6, 0.85, r.sh2), rippleLine(6.8, 25.2, 5.8, 0.9, 1.6, 0.5, r.hi),
+    ];
+    const curlPts = [[22.6, 12.2], [24.6, 10.8], [26, 12.6], [24.8, 14.6], [23.1, 13.9], [23.9, 12.8]];
+    return {
+      head: [shortBack(r, m, 20)],
+      hang: [],
+      front: bangs('swept', r, m, [...waves, poly(smooth(curlPts), r.base), streak(23.2, 12.6, 25.2, 13.3, 0.6, 0.6, r.sh2)], { shine: false }),
+      tips: [15, 18],
+    };
+  },
+});
+
 export function hairParts(style, r, tint, m, mood = 'smile', bangsKind = 'auto', sprout = null, extra = {}) {
   const s = STYLES[style];
   if (!s) return { head: [], hang: [], front: [], shade: [], top: [] };
