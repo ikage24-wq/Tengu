@@ -2031,8 +2031,10 @@ function idleActing(r, mood, t, armed) {
     }
     case 'heh': {
       // Hands clasped behind; she leans toward you to peek, and her shoulders bob with the giggle.
+      // (The hands sit just below their rest spot, so the arms hang nearly straight down her sides:
+      // pulled up and out they bent at the elbows, which the player didn't like, 2026-11-13.)
       const p = at(3.4);
-      hands(-1.5, -2.5);
+      hands(-0.5, 0.4);
       const peek = hold(p, 0.28, 0.58);
       const giggle = hold(p, 0.58, 0.78);
       r.tilt = q(-2 + 4 * peek);
