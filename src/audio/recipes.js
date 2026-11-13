@@ -47,6 +47,51 @@ const R = {
   mountOff: { db: -17, max: 1, layers: [{ rec: 'soft', rate: 1.05, len: 220 }, whoosh(240, 1800, 500, { focus: 0.3, db: -12 }), sparkle('G6:45 E6:45 C6:200', { db: -13 })] },
   // Puff Bun: a marshmallow boing.
   bunHop: { db: -21, vary: 7, max: 1, layers: [{ rec: 'slime', rate: 1.5, len: 170 }, { wave: 'sine', f0: 300, slide: 1.4, env: { a: 3, s: 30, d: 90 }, db: -10 }] },
+  // Sakura Sprint's festival (2026-11-13; recorded, assets/audio/rec): the taiko on the countdown
+  // and at Go, the crowd swelling at the final stretch, wind chimes in the breeze (one bell, pitched
+  // into notes by audio/listen.js). (The synth layers are only for when the recordings aren't loaded.)
+  taikoDon: { db: -9, vary: 2, max: 2, gap: 120, layers: [{ wave: 'sine', f0: 92, slide: 0.6, env: { a: 2, s: 60, d: 420 } }] },
+  taikoGo: { db: -7, max: 1, layers: [{ wave: 'sine', f0: 86, slide: 0.6, env: { a: 2, s: 80, d: 520 } }] },
+  crowdSwell: { db: -13, max: 1, layers: [{ wave: 'sine', f0: 440, env: { a: 600, s: 600, d: 900 }, db: -30 }] },
+  chimeBell: { db: -19, max: 6, gap: 20, layers: [sparkle('C7:300')] },
+  // Lily Lake's gala (2026-11-13; recorded): the lifeguard's whistle on the count and at Go, racers
+  // diving in and climbing out, the buoys' fountains, bubbles over the podium, the lake lapping.
+  lakeToot: { db: -14, max: 2, gap: 120, layers: [{ wave: 'sine', f0: 2200, env: { a: 6, s: 140, d: 60 } }] },
+  lakeWhistle: { db: -12, max: 1, layers: [{ wave: 'sine', f0: 2200, env: { a: 8, s: 600, d: 120 } }] },
+  lakeDive: { db: -12, vary: 3, max: 3, gap: 60, layers: [{ wave: 'noise', env: { a: 2, s: 60, d: 320 }, lpf: [2400, 500], db: -4 }] },
+  lakeSwish: { db: -16, vary: 3, max: 2, gap: 80, layers: [whoosh(500, 600, 2400)] },
+  lakeJet: { db: -14, max: 2, gap: 100, layers: [whoosh(800, 500, 3000, { focus: 0.3 })] },
+  lakeBubbles: { db: -16, max: 2, gap: 300, layers: [sparkle('C6:60 E6:120 G6:200', { db: -6 })] },
+  // Mortar Cliff's festival (2026-11-13; recorded): the mallet in the dough on the count and at Go,
+  // the breeze through the maples, a wall-top bell.
+  mochiPound: { db: -10, vary: 2, max: 3, gap: 90, layers: [{ wave: 'sine', f0: 120, slide: 0.5, env: { a: 2, s: 40, d: 220 } }] },
+  mochiPoundGo: { db: -8, max: 1, layers: [{ wave: 'sine', f0: 110, slide: 0.5, env: { a: 2, s: 60, d: 420 } }] },
+  leafGust: { db: -19, max: 2, gap: 800, layers: [whoosh(1400, 400, 2400, { focus: 0.45 })] },
+  wallBell: { db: -14, max: 2, gap: 200, layers: [sparkle('G5:500', { db: -2 })] },
+  // Cloud Glide's winter (2026-11-13; recorded): bells on the count and at Go, the gust as yours
+  // takes off, landings in the snow, a cheer as yours lands, the wind over the peak.
+  snowBell: { db: -15, max: 2, gap: 200, layers: [sparkle('E6:300 B6:500')] },
+  snowGo: { db: -12, max: 1, layers: [sparkle('E6:200 G6:300 B6:600'), whoosh(900, 500, 2400, { db: -6 })] },
+  glideGust: { db: -14, max: 1, layers: [whoosh(1100, 400, 2600)] },
+  snowLand: { db: -15, vary: 3, max: 3, gap: 60, layers: [{ wave: 'noise', env: { a: 2, s: 40, d: 200 }, lpf: [1600, 400], db: -6 }] },
+  snowWind: { db: -22, max: 1, gap: 2000, layers: [whoosh(1800, 300, 1400, { focus: 0.5 })] },
+  landCheer: { db: -16, max: 1, gap: 3000, layers: [{ wave: 'sine', f0: 440, env: { a: 300, s: 600, d: 900 }, db: -30 }] },
+  // Long Hill Run's sweets (2026-11-13; recorded): pops on the count, a pop and a run up at Go,
+  // music box notes, the gust down from a hilltop, pops and a twinkle over the podium.
+  sweetPop: { db: -14, max: 2, gap: 120, layers: [sparkle('C7:80')] },
+  sweetGo: { db: -12, max: 1, layers: [sparkle('C6:120 E6:160 G6:200 C7:400')] },
+  sweetChime: { db: -19, max: 6, gap: 20, layers: [sparkle('C7:400')] },
+  hillWhoosh: { db: -16, max: 1, layers: [whoosh(900, 400, 2200)] },
+  sweetShower: { db: -15, max: 1, layers: [sparkle('G6:200 C7:300 E7:500')] },
+  // The Grand Mochi Course's festival (2026-11-13; recorded): taiko on the count and at Go, the
+  // yagura drummer, fireworks near and far, sparkles over the podium.
+  matsuriDon: { db: -10, max: 2, gap: 200, layers: [{ wave: 'sine', f0: 90, slide: 0.6, env: { a: 2, s: 60, d: 500 } }] },
+  matsuriGo: { db: -9, max: 1, layers: [{ wave: 'sine', f0: 90, slide: 0.6, env: { a: 2, s: 80, d: 700 } }] },
+  yaguraDon: { db: -10, max: 1, layers: [{ wave: 'sine', f0: 100, slide: 0.6, env: { a: 2, s: 60, d: 500 } }] },
+  fwLaunch: { db: -12, max: 1, layers: [{ wave: 'noise', env: { a: 4, s: 80, d: 900 }, lpf: [900, 200] }] },
+  fwFar: { db: -22, max: 1, gap: 2000, layers: [{ wave: 'noise', env: { a: 4, s: 60, d: 700 }, lpf: [500, 150] }] },
+  sparkShower: { db: -15, max: 1, layers: [sparkle('G6:200 C7:300 E7:500')] },
+  lakeLap: { db: -21, vary: 2, max: 2, gap: 900, layers: [{ wave: 'noise', env: { a: 600, s: 800, d: 900 }, lpf: [1200], db: -12 }] },
   // Paper Crane: a crisp flap of paper, and a soft rush as it settles into a glide.
   craneFlap: { db: -22, vary: 8, max: 1, layers: [{ rec: 'bookFlip', rate: 1.35, len: 130 }] },
   craneGlide: { db: -21, max: 1, layers: [whoosh(700, 600, 1600, { focus: 0.25, db: -2 }), { rec: 'bookFlip', rate: 1.1, len: 140, db: -6 }] },

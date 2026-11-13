@@ -101,11 +101,26 @@ export const MATERIALS = {
   throne: { lip: '#d9ccff', body: '#5d4ba6', deep: '#382c78', stone: '#9b88e0', style: 'brick', blades: false, drip: 'crystal', glow: '#c9b6ff' },
   // The Mochi race courses, each its own ground (world/stadium.js; the Grand Tour changes ground part
   // by part, `map.grounds`). Sakura Sprint: fresh spring grass over rosy loam strewn with petals.
-  sakura: { lip: '#9ce08e', body: '#efc4b0', deep: '#cc8f84', stone: '#fbe2d6', style: 'meadowsoil', blades: true, drip: 'vine' },
+  // (Its redraw, 2026-11-13: a puffy grass cap over blossom loam; the layers, pebbles, roots and
+  // buried treats are the course's own, render/courseart.js through GROUND_ART.)
+  sakura: { lip: '#9ce08e', body: '#f4c8ba', deep: '#d8968e', stone: '#fde4dc', style: 'blossomloam', blades: true, drip: 'root', cap: 'puffy' },
   // Lily Lake: a pale sandy shore in wind-rippled layers, shells and pebbles along it.
   lakeshore: { lip: '#fff0cc', body: '#f2d8a8', deep: '#d6ae7c', stone: '#fff4dc', style: 'sand', blades: false, drip: 'weed' },
   // Mortar Cliff: layered lilac-grey cliff stone under a mossy grass top.
   cliffstone: { lip: '#a8dc94', body: '#d8c8de', deep: '#a494b8', stone: '#efe6f4', style: 'strata', blades: true, drip: 'root' },
+  // (Its redraw, 2026-11-13: an autumn maple mountain: golden grass puffed over warm leaf loam; the
+  // layers, pebbles and buried chestnuts are the course's own, render/courseart.js.)
+  // Cloud Glide (its redraw, 2026-11-13: a snowy peak over a sea of clouds): snow puffed over a
+  // frosty bed glittering faintly.
+  snowpeak: { lip: '#ffffff', body: '#e2e6f8', deep: '#b8c0e0', stone: '#f6f8ff', style: 'snowpack', blades: false, drip: null, cap: 'puffy' },
+  maplecliff: { lip: '#c8d46a', body: '#f2c8a0', deep: '#d29270', stone: '#fde2c8', style: 'leafloam', blades: true, drip: 'root', cap: 'puffy' },
+  // Long Hill Run (its redraw, 2026-11-13: hills of Japanese sweets): white frosting puffed over
+  // golden sponge cake; the cream and jam layers and buried sweets are the course's own,
+  // render/courseart.js.
+  // The Grand Mochi Course (its redraw, 2026-11-13: a summer festival at dusk): dusky summer grass
+  // over warm soil with festival confetti pressed in.
+  festground: { lip: '#8ccaa0', body: '#dcae98', deep: '#b07e80', stone: '#f2d4c4', style: 'confetti', blades: true, drip: 'root', cap: 'puffy' },
+  sweetcake: { lip: '#ffffff', body: '#f6d4a8', deep: '#dca878', stone: '#fff0d4', style: 'sponge', blades: false, drip: null, cap: 'puffy', capLine: '#d8a4b6', capUnder: '#f8e0e8', capLit: '#fff4f7' },
   // Cloud Glide: soft cloud underfoot, up among the clouds.
   cloudfloor: { lip: '#ffffff', body: '#eef2ff', deep: '#c8d2f4', stone: '#ffffff', style: 'cloud', blades: false, drip: null },
   // Long Hill Run: late-summer hills, sun-gold grass over warm tilled clay.
@@ -709,6 +724,108 @@ function paintTile(g, m, theme) {
         g.fill();
       });
     }
+  } else if (m.style === 'blossomloam') {
+    // Blossom loam (Sakura Sprint's): a soft rosy earth with a fine scatter of light and dark specks
+    // and the odd pressed petal; its layers follow the ground's own top (render/courseart.js).
+    for (let i = 0; i < 40; i++) {
+      const k = seed + i * 5.3 + 130;
+      const x = hash(k) * TW;
+      const y = hash(k + 1) * TH;
+      wrap((dx, dy) => {
+        const v = hash(k + 3);
+        g.fillStyle = v > 0.82 ? hexA('#ffd8e4', 0.9) : v > 0.4 ? hexA(m.stone, 0.75) : hexA(mix(m.deep, INK, 0.08), 0.55);
+        g.beginPath();
+        if (v > 0.82) g.ellipse(x + dx, y + dy, 1.6, 0.9, hash(k + 4) * 3, 0, Math.PI * 2);
+        else g.arc(x + dx, y + dy, 0.6 + hash(k + 2) * 0.7, 0, Math.PI * 2);
+        g.fill();
+      });
+    }
+  } else if (m.style === 'snowpack') {
+    // Snowpack (Cloud Glide's): soft frosty specks, the odd glint of ice.
+    for (let i = 0; i < 36; i++) {
+      const k = seed + i * 5.3 + 130;
+      const x = hash(k) * TW;
+      const y = hash(k + 1) * TH;
+      wrap((dx, dy) => {
+        const v = hash(k + 3);
+        g.fillStyle = v > 0.85 ? hexA('#ffffff', 0.95) : v > 0.4 ? hexA(m.stone, 0.8) : hexA(mix(m.deep, INK, 0.06), 0.45);
+        g.beginPath();
+        g.arc(x + dx, y + dy, v > 0.85 ? 0.9 : 0.6 + hash(k + 2) * 0.6, 0, Math.PI * 2);
+        g.fill();
+      });
+    }
+  } else if (m.style === 'leafloam') {
+    // Leaf loam (Mortar Cliff's): warm autumn earth, a fine scatter of light and dark specks and
+    // the odd pressed leaf, orange or red.
+    for (let i = 0; i < 40; i++) {
+      const k = seed + i * 5.3 + 130;
+      const x = hash(k) * TW;
+      const y = hash(k + 1) * TH;
+      wrap((dx, dy) => {
+        const v = hash(k + 3);
+        g.fillStyle = v > 0.82 ? hexA(v > 0.91 ? '#ff8a5a' : '#ffb870', 0.85) : v > 0.4 ? hexA(m.stone, 0.75) : hexA(mix(m.deep, INK, 0.08), 0.55);
+        g.beginPath();
+        if (v > 0.82) g.ellipse(x + dx, y + dy, 1.7, 1, hash(k + 4) * 3, 0, Math.PI * 2);
+        else g.arc(x + dx, y + dy, 0.6 + hash(k + 2) * 0.7, 0, Math.PI * 2);
+        g.fill();
+      });
+    }
+  } else if (m.style === 'confetti') {
+    // Festival soil (the Grand Mochi Course's): warm earth, fine light and dark specks, and here and
+    // there a scrap of paper confetti.
+    for (let i = 0; i < 40; i++) {
+      const k = seed + i * 5.3 + 130;
+      const x = hash(k) * TW;
+      const y = hash(k + 1) * TH;
+      wrap((dx, dy) => {
+        const v = hash(k + 3);
+        if (v > 0.88) {
+          g.fillStyle = hexA(['#ffd75e', '#ff8fb0', '#8fd3ff', '#9fe0a0', '#c8a8f0'][Math.floor(hash(k + 5) * 5)], 0.85);
+          g.save();
+          g.translate(x + dx, y + dy);
+          g.rotate(hash(k + 4) * 3);
+          g.fillRect(-1.3, -0.6, 2.6, 1.2);
+          g.restore();
+        } else {
+          g.fillStyle = v > 0.4 ? hexA(m.stone, 0.75) : hexA(mix(m.deep, INK, 0.08), 0.55);
+          g.beginPath();
+          g.arc(x + dx, y + dy, 0.6 + hash(k + 2) * 0.7, 0, Math.PI * 2);
+          g.fill();
+        }
+      });
+    }
+  } else if (m.style === 'sponge') {
+    // Sponge cake (Long Hill Run's): soft golden crumb, little air pockets lit along their lower
+    // lip, the odd sprinkle.
+    for (let i = 0; i < 44; i++) {
+      const k = seed + i * 5.3 + 130;
+      const x = hash(k) * TW;
+      const y = hash(k + 1) * TH;
+      wrap((dx, dy) => {
+        const v = hash(k + 3);
+        if (v > 0.9) {
+          g.fillStyle = hexA(['#ff8fb0', '#8fd3ff', '#ffd75e', '#9fe0a0'][Math.floor(hash(k + 5) * 4)], 0.85);
+          g.beginPath();
+          g.ellipse(x + dx, y + dy, 1.6, 0.6, hash(k + 4) * 3, 0, Math.PI * 2);
+          g.fill();
+        } else if (v > 0.45) {
+          const r = 0.7 + hash(k + 2) * 1.1;
+          g.fillStyle = hexA(mix(m.deep, INK, 0.05), 0.5);
+          g.beginPath();
+          g.ellipse(x + dx, y + dy, r * 1.3, r, 0, 0, Math.PI * 2);
+          g.fill();
+          g.fillStyle = hexA(m.stone, 0.8);
+          g.beginPath();
+          g.ellipse(x + dx, y + dy + r * 0.7, r * 1.1, r * 0.35, 0, 0, Math.PI * 2);
+          g.fill();
+        } else {
+          g.fillStyle = hexA(m.stone, 0.7);
+          g.beginPath();
+          g.arc(x + dx, y + dy, 0.6 + hash(k + 2) * 0.6, 0, Math.PI * 2);
+          g.fill();
+        }
+      });
+    }
   } else if (m.style === 'petalsoil') {
     // Petal soil: soft wavy layers of warm earth, each with a pale top edge, rounded pastel pebbles
     // lit from the upper left, little curled rootlets, and fine specks. Nothing long or stringy.
@@ -1090,6 +1207,7 @@ function landWith(ctx, theme, m, deco, map, cam, width, height, time) {
     }
   }
   if (m.style === 'mossloam' || m.style === 'meadowsoil' || m.style === 'petalsoil') earthDecals(ctx, m, runs, cam, width, height);
+  for (const art of GROUND_ART) art(ctx, m, runs, cam, width, height, time, map);
   ctx.restore();
 
   // Cliff faces: where the ground drops at a wall, the high side shows a shaded face.
@@ -1415,8 +1533,9 @@ function lipStill(ctx, m, pts, seed, width, depth) {
 // hanging over the soil in a deeper green, each lit along its top and outlined only on the outside,
 // with the odd clover and tiny daisy tucked in.
 function puffyCap(ctx, m, pts, seed, width, depth) {
-  const line = edge(m.lip);
-  const under = shade(m.lip, -13);
+  // (A material may set its cap's outline, shadow and lit tones: frosting's go rosy, not grey.)
+  const line = m.capLine ?? edge(m.lip);
+  const under = m.capUnder ?? shade(m.lip, -13);
   const lobes = [];
   forAlong(pts, 10, (x, y, k) => {
     if (x < -14 || x > width + 14) return;
@@ -1445,7 +1564,7 @@ function puffyCap(ctx, m, pts, seed, width, depth) {
   band(-2.2, depth - 2, line);
   fillLobes(0, under);
   // Each lobe lit along its top.
-  ctx.fillStyle = shade(m.lip, -4);
+  ctx.fillStyle = m.capLit ?? shade(m.lip, -4);
   ctx.beginPath();
   for (const [x, y, r] of lobes) {
     ctx.moveTo(x + r * 0.8, y - r * 0.15);
@@ -1504,8 +1623,15 @@ function lipLive(ctx, m, pts, time, seed, width, deco) {
     ctx.stroke();
     ctx.lineCap = 'butt';
   }
-  if (deco) edgeDeco(ctx, deco, pts, time, seed, width);
+  if (deco && EDGE_KINDS[deco]) EDGE_KINDS[deco](ctx, (step, fn) => forAlong(pts, step, fn), time, seed, width, camX);
+  else if (deco) edgeDeco(ctx, deco, pts, time, seed, width);
 }
+// A map's own ground art and edging, registered by the code that draws them (the Mochi race
+// courses: render/courseart.js). GROUND_ART: (ctx, m, runs, cam, width, height, time, map), drawn
+// over the land's fill inside its outline; EDGE_KINDS[look.edges]: (ctx, along(step, fn), time,
+// seed, width, camX), in place of edgeDeco's own kinds.
+export const GROUND_ART = [];
+export const EDGE_KINDS = {};
 
 // Little things dotted along the top of the land: flowers, clovers, or glowing mushrooms.
 const BLOOMS = ['#ff9ec0', '#ffe36b', '#ffffff', '#c9a6ff', '#ffb38a'];

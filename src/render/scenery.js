@@ -963,6 +963,8 @@ function firefly(ctx, x, y, dir, time, seed, a) {
 // for the night's light pass.
 function fireflySpots(map, cam, width, height, time) {
   const out = [];
+  // (Not where a map has none: the Mochi race courses, no animals at all.)
+  if (map.look?.fireflies === false) return out;
   for (let i = 0; i < Math.min(7, Math.ceil(map.width / 340)); i++) {
     const [life, cycle] = bugLife(time, i);
     if (life <= 0) continue;
@@ -1357,6 +1359,7 @@ function backRidge(ctx, t, cam, width, y, amp, bumps = false) {
 function drawFar(ctx, t, cam, width, y0, time) {
   ctx.fillStyle = t.far;
   if (drawFarRoom(ctx, t, cam, width, y0, time, t.skyline)) return;
+  for (const b of BACKDROPS) if (b.far?.(ctx, t, cam, width, y0, time)) return;
   switch (t.skyline) {
     case 'houses':
       repeat(cam.x, 0.2, 58, width, (i, x) => {
@@ -4658,6 +4661,12 @@ function drawMid(ctx, t, theme, cam, width, y0, time) {
     ctx.restore();
     return;
   }
+  for (const b of BACKDROPS) {
+    if (b.mid?.(ctx, t, cam, width, y0, time)) {
+      ctx.restore();
+      return;
+    }
+  }
   switch (t.skyline) {
     case 'houses':
       // A painted town already has its far hillside town; its middle row is only a few trees, so
@@ -5852,6 +5861,10 @@ function nightLook(t, k) {
 // Things a map's own pieces draw just behind the ground's front edge, so the grass lip overlaps their
 // foot (render/garden.js: the fruit trees, growing up out of the ground rather than stood on it).
 export const BEHIND_GROUND = [];
+// Backdrops of their own (the Mochi race courses: render/courseart.js), registered by the code
+// that draws them so this file needn't load it: { far(ctx, t, cam, width, y0, time), mid(...) },
+// each returning true if it drew that plane for this look.
+export const BACKDROPS = [];
 export function drawSceneBack(ctx, map, cam, width, height, time, nearPortalId, street = null, routePortalId = null) {
   const theme = THEMES[map.theme] ? map.theme : 'meadow';
   // A map can restyle its theme (its own sky, skyline, drift...) so no two maps look alike, and a
@@ -5876,7 +5889,7 @@ export function drawSceneBack(ctx, map, cam, width, height, time, nearPortalId, 
   const backdrop = (g) => {
     drawSky(g, t, theme, width, height, time);
     // (Under a painted forest's canopy, under the sea and indoors there are no clouds to see.)
-    if (t.painted !== 'forest' && !t.underground && !t.ceiling && !['reef', 'manorhall', 'bigtop', 'workshop', 'funhouse', 'kitchen', 'starhall', 'archive', 'orrery', 'candycave', 'forge', 'crater', 'stagehall', 'pirate', 'fairy', 'ballroom', 'backstage', 'greatstage', 'lungs', 'manorball', 'library', 'hallway'].includes(t.skyline)) drawClouds(g, theme, cam, width, time, air, Boolean(t.stars) && t.face === 'moon' && theme !== 'harbor' && theme !== 'grove');
+    if (t.clouds !== false && t.painted !== 'forest' && !t.underground && !t.ceiling && !['reef', 'manorhall', 'bigtop', 'workshop', 'funhouse', 'kitchen', 'starhall', 'archive', 'orrery', 'candycave', 'forge', 'crater', 'stagehall', 'pirate', 'fairy', 'ballroom', 'backstage', 'greatstage', 'lungs', 'manorball', 'library', 'hallway'].includes(t.skyline)) drawClouds(g, theme, cam, width, time, air, Boolean(t.stars) && t.face === 'moon' && theme !== 'harbor' && theme !== 'grove');
     // A painted backdrop (painted.js) in place of the flat silhouettes, where the theme has one.
     if (t.painted === 'forest') drawPaintedForest(g, t, cam, width, height, time, layerY, air);
     else if (t.painted === 'meadow') drawPaintedMeadow(g, t, cam, width, height, time, layerY, air);

@@ -188,7 +188,9 @@ Each step is pushed on its own. Status as of 2026-11-09.
    baby who can't walk scoots), tiring from Stamina exactly as the drawing shows it (handed over as
    `m.tired` / `m.rest`), pace through the race by personality (data/mochi-race.js paceOf); Cheer
    (Up or the button) is a 1.2 s burst at x1.4 every 2.5 s that costs stamina and gets a resting one
-   up sooner; the race ends 15 s after the first one home (the rest placed by how far they got);
+   up sooner; the race ends 15 s after the first one home (the rest placed by how far they got).
+   **Polished 2026-11-13** (see "Racing polish" below for what replaced the rests, Encourage, the
+   15 s end and the flat cheer);
    Beginner prizes 500 / 250 / 100 gold, 20 for finishing; racing cheers your Mochi up and brings it
    a little closer. Up leaves the results after 3 s (so cheering as it ends doesn't skip them). The
    racers' running drawings are painted ahead by the sprite worker during the countdown, and a Mochi
@@ -199,7 +201,8 @@ Each step is pushed on its own. Status as of 2026-11-09.
    (Power: three climbing walls with short ledge runs), Cloud Glide (Fly: a run-up on a high cliff, a
    launch, a glide down over cloud fluff that everyone wades at the same slow pace, so a longer glide
    wins), Long Hill Run (Stamina: big hills slow and tire it going up; on this course the worn-out
-   stop to rest, `tire` 1.5, `restAt` 0.6, `rest` 2.2 s), and the Grand Mochi Course (all of them).
+   stop to rest, `tire` 1.5, `restAt` 0.6, `rest` 2.2 s; since 2026-11-13 nobody stops: `drag` 3.2
+   pulls the tired down toward a plod instead), and the Grand Mochi Course (all of them).
    Tuned with a simulation so each stage is won by the Mochi strong in its stat (a 1,600-point
    specialist beats a 1,600-point runner on its stage); an ordinary Beginner race takes 35-85 s.
    The board has a tab per stage. New pieces: mr_wall, mr_launch, mr_clouds. Racers paint ahead for
@@ -382,3 +385,19 @@ Still to decide or build, by step:
 **Extras, only if wanted later:** a class building where Mochi learn little skills (singing, drawing,
 an instrument) that show in the Garden; a friendly sparring contest beside racing; Garden themes that
 change with your Mochi's paths.
+
+### Racing polish (2026-11-13)
+- A close race camera: each shot has a zoom (render/scene.js scales the world); running, it pulls
+  back just enough to keep the nearest rival in frame; it looks up on walls and down in glides.
+- The pack stays together: rivals far behind the field's own Mochi get a second wind, rivals far
+  ahead ease off, both fading over the last stretch; rivals' trainers cheer them on too.
+- Nobody stops to rest ("not fun"): tiredness (running, plus stamina spent on cheers) pulls a Mochi
+  toward a shared plod pace, so a worn-out sprinter is no quicker than a worn-out slowpoke; Stamina
+  sets how tired it gets and how much is left for cheering. Encourage went with the rests.
+- Cheer on the beat: the button refills over 2.5 s and glows gold the moment it's full (again on
+  each beat while it waits): Perfect (x1.26 for 1.3 s at 60% of the cost), any other time Good
+  (x1.18 for 1.2 s); pressing while it refills spoils the next one. Headless sims: no cheering
+  100% of the time, cheering any time ~94%, on the beat ~89%.
+- A race on your own runs till yours is home (party races still end 15 s after the first);
+  anyone still out gets the time they were on course for ("~"). Hatchling rivals can always walk;
+  Hatchling speed-up 1.6.

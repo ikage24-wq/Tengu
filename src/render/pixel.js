@@ -763,4 +763,6 @@ export function footShadow(ctx, x, y, rx, slope = 0, k = 1) {
 export const slopeAt = (s, x) => (s?.yAt ? (s.yAt(x + 6) - s.yAt(x - 6)) / 12 : 0);
 
 // How full the sprite cache is (the speed check reads it): sprites kept, and their memory.
+// (For dev audits, e.g. finding drawings whose edges are cut off: every cached sprite by key.)
+export const cachedSprites = () => cache;
 export const cacheInfo = () => ({ sprites: cache.size, mb: Math.round(cacheBytes / 1e6), maxSprites: CACHE_MAX, maxMb: CACHE_BYTES / 1e6 });

@@ -313,64 +313,90 @@ export const FLIES = [
   { name: 'soar', stride: 200, speed: 128 },
   { name: 'aerobatics', stride: 400, speed: 160 },
 ];
+// A wing beat over one stroke (`u` 0..1): rising slow and soft to the top (1), then a quick
+// downstroke to the bottom (0).
+const wingBeat = (u) => (u < 0.62 ? sm(u / 0.62) : 1 - sm((u - 0.62) / 0.38));
+// How hard the downstroke is pushing (0..1), for the body's lift on it.
+const downPush = (u) => (u >= 0.62 ? Math.sin(((u - 0.62) / 0.38) * Math.PI) : 0);
 function flyPose(style, p) {
+  // (Redone 2026-11-13: every style reads as flying now: both paws beat or spread like
+  // little wings, the near one drawn over the head when it's raised so it shows; a lean into the
+  // air that never lies so flat the face is lost; a face for each, effort or joy; legs kicking or
+  // trailing behind.)
   const a = TAU * p;
   if (style === 0) {
-    // Flap-hop: little hops, arms beating as fast as they'll go, legs kicking, determined.
+    // Flap-hop: little hops, both paws beating as hard as they'll go, legs pedalling, gritted teeth.
     const u = (p * 2) % 1;
     const hop = Math.sin(Math.PI * u);
-    const flap = Math.sin(TAU * p * 6);
+    const beat = wingBeat((p * 4) % 1);
+    const ped = Math.sin(TAU * p * 4);
     return pose({
-      lift: 5 * hop, legF: [0.6, -1.6 * hop, 14 * hop], legB: [-0.8, -1.2 * hop, -14 * hop], bob: 1 * (1 - hop),
-      front: [3.4, -6 + 3 * flap], back: [-3.2, -6 - 3 * flap], tilt: -4, hy: 1.2, hair: 1.2 * flap, mouth: 'grit', blush: 1.6,
+      lift: 6 * hop + 1.2 * downPush((p * 4) % 1), bob: 1 * (1 - hop), lean: 0.12, legF: [1.4 * ped, -2.4 * Math.max(0, ped) - 0.4, 22 * ped], legB: [-1.4 * ped, -2.4 * Math.max(0, -ped) - 0.4, -22 * ped],
+      front: [4.4, -2.5 - 12 * beat], back: [-3.6, -2.5 - 11 * beat], armOver: beat > 0.55 ? true : null, tilt: -6, hy: 1.2, hair: 1.4 * (beat - 0.5) * 2, mouth: 'grit', blush: 1.6,
     });
   }
   if (style === 1) {
-    // Leap-glide: a crouch, a big leap up, then gliding down with arms out, toes pointed.
+    // Leap-glide: a crouch, a leap with both paws flung up, then gliding down with paws spread wide,
+    // a grin at the top of it, toes pointed back.
     const up = p < 0.22 ? Math.sin((p / 0.22) * Math.PI * 0.5) ** 0.7 : 0.5 + 0.5 * Math.cos(Math.PI * ((p - 0.22) / 0.78));
     const crouch = p > 0.9 ? (p - 0.9) / 0.1 : 0;
+    const k = sm(Math.max(0, Math.min(1, (p - 0.2) / 0.16)));
+    const front = [4.4 + 3 * k, -15 + 6.5 * k];
+    const back = [-3.4 - 2.8 * k, -14 + 6.5 * k];
+    const rising = p < 0.22;
     return pose({
-      lift: 14 * up, squat: Math.round(2 * crouch), legF: [1.4, -2 * up, 30 * up], legB: [-1.2, -1.6 * up, -20 * up],
-      lean: 0.2 * up, tip: up > 0.4 ? 6 : 0, front: [4.6, -5 + 2 * up], back: [-4.2, -5 + 2 * up], tilt: -6, hy: 1, hair: -1.4 * up,
+      lift: 15 * up, squat: Math.round(2 * crouch), lean: 0.38 * up,
+      legF: [-1.6 * up, -2.6 * up, -28 * up], legB: [-2.2 * up, -2 * up, -34 * up],
+      front, back, armOver: front[1] < -11 ? true : null,
+      tilt: rising ? -11 : -4 - 2 * up, hy: 1, hair: -1.8 * up, mouth: up > 0.6 ? 'D' : 'mochiw', eyes: up > 0.85 ? 'happy' : null,
     });
   }
   if (style === 2) {
-    // Float: hovering, legs dangling and kicking lazily, arms out to the sides waving slowly.
-    const sw = Math.sin(a);
+    // Float: hovering on slow beats of its paws, rising a little on each downstroke, legs swinging.
+    const beat = wingBeat(p);
+    const sw = Math.sin(a + 1.2);
     return pose({
-      lift: 16 + 2 * sw, legF: [0.6, -1 - 0.6 * sw, 20], legB: [-0.4, -0.6 + 0.6 * sw, 10], lean: 0.1, tip: 6,
-      front: [4.2, -5.6 + 1.4 * sw], back: [-4, -5.6 - 1.4 * sw], tilt: 2 * sw, hy: 1, hair: -0.6 + 0.8 * sw,
+      lift: 16 + 1.6 * beat + 1.8 * downPush(p), lean: 0.16, legF: [0.8 * sw, -1 - 0.8 * sw, 18 + 8 * sw], legB: [-0.6 * sw, -0.6 + 0.8 * sw, 8 - 8 * sw],
+      front: [5.6, -3.5 - 10.5 * beat], back: [-4.8, -3.5 - 9.5 * beat], armOver: beat > 0.6 ? true : null,
+      tilt: 2 * sw - 2, hy: 1, hair: -0.8 + 1 * (beat - 0.5), mouth: 'mochiw', eyes: beat > 0.92 ? 'happy' : null,
     });
   }
   if (style === 3) {
-    // Glide: lying on the air, arms spread back like wings, legs together, a gentle swell.
+    // Glide: leaning well into the air, paws spread out straight like wings and tipping with the
+    // breeze, legs together trailing, a calm smile, a gentle swell.
     const sw = Math.sin(a);
     return pose({
-      lift: 18 + 2.4 * sw, legF: [-1.6, -1, -40], legB: [-2, -0.8, -40], lean: 0.95 + 0.05 * sw, tip: 6,
-      front: [-1, -7], back: [-1.6, -7.2], tilt: -6, hy: 1.4, hair: -2.6 + 0.6 * sw,
+      lift: 18 + 2.4 * sw, lean: 0.62 + 0.04 * sw, tip: 6,
+      legF: [-2.4, -1.6 + 0.6 * Math.sin(a * 3), -42 + 6 * Math.sin(a * 3)], legB: [-2.8, -1.2 - 0.6 * Math.sin(a * 3), -42 - 6 * Math.sin(a * 3)],
+      front: [7.6, -9 + 1.6 * sw], back: [-6.4, -8.4 - 1.6 * sw], tilt: -6 + 2 * sw, hy: 1.4, hair: -2.6 + 0.6 * sw, mouth: 'mochiw',
+      eyes: p > 0.46 && p < 0.52 ? 'blink' : null,
     });
   }
   if (style === 4) {
-    // Soar: streamlined, arms swept close along the sides, banking this way and that.
+    // Soar: like a little hero, the near paw punched forward and up, the far one swept back, legs
+    // straight out behind, hair streaming, a big grin; banking this way and that.
     const bank = Math.sin(a);
     return pose({
-      lift: 20 + 3 * bank, legF: [-2, -0.8, -46], legB: [-2.4, -0.6, -46], lean: 1.2 + 0.12 * bank, tip: 6,
-      front: [-5.4, 1.6], back: [-5.8, 1.2], tilt: -10 + 4 * bank, hy: 1.6, hx: 0.6, hair: -4 + 0.6 * bank, mouth: 'mochiopen',
+      lift: 20 + 3 * bank, lean: 0.82 + 0.08 * bank, tip: 6,
+      legF: [-2.6, -1.2 + 0.5 * Math.sin(a * 4), -48 + 5 * Math.sin(a * 4)], legB: [-3, -0.8 - 0.5 * Math.sin(a * 4), -48 - 5 * Math.sin(a * 4)],
+      front: [7.8, -13.5], back: [-6.4, -3.2], armOver: true, tilt: -9 + 3 * bank, hy: 1.6, hx: 0.6, hair: -4 + 0.6 * bank, mouth: 'D',
+      eyes: p > 0.7 && p < 0.78 ? 'happy' : null,
     });
   }
-  // Aerobatics: swooping along, and once a cycle a full loop: up and over and round, arms out.
+  // Aerobatics: soaring along like a hero, and once a cycle a full loop: up and over and round, both
+  // paws thrown wide, eyes shut with glee.
   const loop = p > 0.55 && p < 0.95 ? (p - 0.55) / 0.4 : null;
   const sw = Math.sin(a * 2);
   if (loop != null) {
     const e = 0.5 - 0.5 * Math.cos(Math.PI * loop);
     return pose({
-      lift: 22 + 10 * Math.sin(Math.PI * loop), lean: 1.1 - TAU * e, tip: 6, legF: [-1.4, -1, -30], legB: [-1.8, -0.8, -30],
-      front: [4.6, -6.4], back: [-4.4, -6.6], tilt: -6, hy: 1.4, hair: -3, mouth: 'D', eyes: 'happy',
+      lift: 22 + 10 * Math.sin(Math.PI * loop), lean: 0.85 - TAU * e, tip: 6, legF: [-1.8, -1.4, -32], legB: [-2.2, -1, -32],
+      front: [6.4, -12], back: [-5.4, -11], armOver: true, tilt: -6, hy: 1.4, hair: -3, mouth: 'D', eyes: 'happy',
     });
   }
   return pose({
-    lift: 22 + 3 * sw, lean: 1.1 + 0.08 * sw, tip: 6, legF: [-2, -0.8, -44], legB: [-2.4, -0.6, -44],
-    front: [-5.2, 1.4], back: [-5.6, 1], tilt: -8 + 3 * sw, hy: 1.6, hx: 0.6, hair: -3.6 + 0.6 * sw,
+    lift: 22 + 3 * sw, lean: 0.85 + 0.06 * sw, tip: 6, legF: [-2.6, -1.2, -46], legB: [-3, -0.8, -46],
+    front: [7.8, -13.5], back: [-6.4, -3.2], armOver: true, tilt: -8 + 3 * sw, hy: 1.6, hx: 0.6, hair: -3.6 + 0.6 * sw, mouth: 'D',
   });
 }
 
@@ -515,16 +541,19 @@ function drawWater(ctx, x, y, s, style, phase, time, dir = 1, inWater = false) {
 }
 
 // ---------- Climbing (Power) ----------
-// Six styles by Power points, climbing a wall, seen from behind as the hero climbs (hand over hand,
-// each knee drawing up as the hand on its side pulls, `climb` -2.5..2.5); `lift` is the extra
-// rise and fall of each pull (smooth, never redrawn).
-//   0 scrabble      hands grabbing and feet kicking fast, swaying, slipping back down after each
-//                   bit of ground it gains
-//   1 slow climb    hand over hand, a rest after every pull
+// Six styles by Power points, climbing a rock wall side on, face to the rock (redone 2026-11-13:
+// before, it was the hero's rope climb seen from behind, all hair and no face). Each pull: one paw
+// reaches up to the next hold at the brow (as high as a Mochi's arms go) while the other hauls down
+// to the chest, the knee on the reaching side drawing up onto a foothold and the other leg pushing
+// straight; then over to the other side. Leaning into the rock, looking up at it; an "o" of effort
+// as it reaches, gritted teeth as it hauls. `lift` is the rise and fall of each pull (smooth, never
+// redrawn).
+//   0 scrabble      quick little flurries of paws, slipping back after each bit it gains
+//   1 slow climb    a pull, then a rest hanging there catching its breath
 //   2 steady climb  a smooth, even rhythm
-//   3 fast climb    quick and light
-//   4 power climb   big pulls that surge it up with each one
-//   5 leap climb    crouching into the wall and springing up a body length at a time, catching
+//   3 fast climb    quick and light, a grin
+//   4 power climb   big hauls that surge it up with each one
+//   5 leap climb    crouching into the rock and springing up a body length at a time, catching
 export const CLIMBS = [
   { name: 'scrabble', stride: 10, speed: 8 },
   { name: 'slow climb', stride: 22, speed: 16 },
@@ -533,34 +562,51 @@ export const CLIMBS = [
   { name: 'power climb', stride: 36, speed: 56 },
   { name: 'leap climb', stride: 48, speed: 74 },
 ];
+const sm = (u) => u * u * (3 - 2 * u);
+// One pull (`u` 0..1): the reaching paw rising to its hold, then the haul. `near`: which side
+// reaches (the near paw and knee, or the far ones).
+function climbStroke(u, near) {
+  const up = u < 0.45 ? sm(u / 0.45) : 1 - sm((u - 0.45) / 0.55) * 0.5;
+  const reach = [5.6, -9 - 9 * up];
+  const haul = [7, -13 + 6.5 * sm(u)];
+  const knee = u < 0.5 ? sm(u / 0.5) : 1 - sm((u - 0.5) / 0.5);
+  const step = [3.4 * knee + 0.4, -8.4 * knee - 0.4, 24 * knee];
+  const push = [-1.6, 1.6 * (1 - knee), -12];
+  // (The near paw raised up by the head is drawn over it, so it shows gripping the hold.)
+  return near
+    ? { front: reach, back: haul, legF: step, legB: push, armOver: up > 0.4 ? true : null }
+    : { front: haul, back: reach, legF: push, legB: step, armOver: up < 0.7 && u > 0.6 ? true : null };
+}
 function climbPose(style, p) {
-  const a = TAU * p;
-  const s1 = Math.sin(a);
+  const half = (p * 2) % 1;
+  const near = p < 0.5;
   if (style === 0) {
-    const k = Math.sin(TAU * p * 3);
+    const f = (p * 4) % 1;
     const slip = p > 0.6 ? Math.sin(((p - 0.6) / 0.4) * Math.PI * 0.5) : 0;
-    return pose({ view: 'back', climb: 2.2 * k, tx: 0.8 * Math.sin(TAU * p * 1.5), lift: 2 * Math.sin(Math.PI * Math.min(1, p / 0.6)) - 2.6 * slip, hair: 1 * k });
+    return pose({ ...climbStroke(f, Math.floor(p * 4) % 2 === 0), lean: 0.34, tilt: -8 + 5 * slip, lift: 2 * Math.sin(Math.PI * Math.min(1, p / 0.6)) - 2.6 * slip, mouth: slip > 0.3 ? 'mochiopen' : 'grit', hair: Math.sin(TAU * p * 4) });
   }
   if (style === 1) {
-    // A pull, then a rest hanging there, then the other hand.
-    const half = (p * 2) % 1;
-    const pull = half < 0.55 ? 0.5 - 0.5 * Math.cos(Math.PI * (half / 0.55)) : 1;
-    const side = p < 0.5 ? 1 : -1;
-    return pose({ view: 'back', climb: 2.5 * side * (pull * 2 - 1), tx: 0.3 * side, lift: 1.6 * pull, hair: 0.6 * side });
+    const u = Math.min(1, half / 0.7);
+    return pose({ ...climbStroke(u, near), lean: 0.32, tilt: -8, lift: 1.8 * sm(u), mouth: half > 0.7 ? 'mochiflat' : 'mochio', hair: near ? 0.6 : -0.6 });
   }
   if (style === 2 || style === 3) {
-    return pose({ view: 'back', climb: 2.5 * s1, tx: (style === 3 ? 0.2 : 0.4) * Math.sin(a + 0.8), lift: 1.2 * Math.abs(Math.sin(a)), hair: 0.8 * s1 });
+    return pose({ ...climbStroke(half, near), lean: style === 3 ? 0.38 : 0.34, tilt: -10, lift: 1.4 * Math.sin(Math.PI * half), mouth: half < 0.45 ? 'mochio' : style === 3 ? 'D' : 'grit', hair: 0.8 * Math.sin(TAU * p) });
   }
   if (style === 4) {
-    // Each pull hauls it up in a surge, a hang, then the next.
-    const half = (p * 2) % 1;
     const surge = half < 0.4 ? Math.sin((half / 0.4) * Math.PI * 0.5) : 1 - 0.6 * ((half - 0.4) / 0.6);
-    return pose({ view: 'back', climb: 2.5 * Math.sin(a), tx: 0.3 * Math.sin(a + 1), lift: 3.4 * surge, hair: -1 + 1.4 * Math.sin(a) });
+    return pose({ ...climbStroke(half, near), lean: 0.4, tilt: -11, lift: 3.4 * surge, mouth: half < 0.4 ? 'grit' : 'D', hair: -1 + 1.4 * Math.sin(TAU * p) });
   }
-  // Leap climb: crouch tight against the wall, spring up, hang at the top of the leap, catch.
+  // Leap climb: crouch tight against the rock, spring up with both paws high, hang at the top of
+  // the leap, catch.
   const crouch = p < 0.2 ? Math.sin((p / 0.2) * Math.PI) : 0;
   const leap = p >= 0.2 && p < 0.7 ? Math.sin(((p - 0.2) / 0.5) * Math.PI * 0.5) ** 0.7 : p >= 0.7 ? 1 - ((p - 0.7) / 0.3) * 0.15 : 0;
-  return pose({ view: 'back', climb: p < 0.2 ? 2.5 : -2.5 * (1 - leap * 0.6), tx: 0, lift: 9 * leap - 1.4 * crouch, hair: -2.4 * leap + 1 });
+  const up = p >= 0.2 && p < 0.75;
+  return pose({
+    front: up ? [5.6, -18] : [7, -9.5], back: up ? [4.6, -16.5] : [6.6, -8.5], armOver: up ? true : null,
+    legF: up ? [-1, 2, -12] : [2.6, -5 * crouch - 1, 18], legB: up ? [-2, 2.4, -14] : [2, -4 * crouch - 1, 14],
+    lean: up ? 0.18 : 0.36, tilt: up ? -11 : -4, squat: crouch > 0.3 ? 1 : 0,
+    lift: 9 * leap - 1.4 * crouch, mouth: up ? 'D' : 'grit', eyes: up && p > 0.35 ? 'happy' : null, hair: -2.4 * leap + 1,
+  });
 }
 
 // ---------- Can't yet ----------
@@ -1556,6 +1602,29 @@ export function drawSpectator(ctx, g, x, y, beat, facing = 1, slot = null, ahead
   drawPosed(ctx, look, Math.round(x * 2) / 2, Math.round(y * 2) / 2, rig, { scale: MOCHI_SIZE.baby, facing, slot, ahead });
 }
 
+// A Mochi in a pose of the caller's, holding things in its paws (a race's starter with its flag, the
+// cheer squad's pom-poms: render/courseart.js). `P0`: a pose like the idles' keys (REST's fields:
+// front and back hands, hx/hy/tilt, bob, lift, squat, legF/legB, eyes/closed/mouth/sprout/blush/
+// brows/extra, `over` to draw the near arm on top of the head); `under(ctx, hand, flip, other)` is
+// drawn behind it and `over` in front, with its paws' places (render/hero.js drawPosed; `hold:
+// 'front'` makes `hand` the near paw). Baby-sized like the crowd's, its pose rounded to quarter
+// pixels: the caller steps it in time (a few frames a second, on a loop), so a routine paints a
+// small set of drawings once, by the sprite worker (`slot`).
+export function drawMochiPose(ctx, g, x, y, P0, { facing = 1, over = null, under = null, hold = 'back', slot = null } = {}) {
+  const P = pose(P0);
+  const rig = {
+    tx: 0, by: q(P.bob), hx: q(P.hx), hy: q(P.hy), tilt: Math.round(P.tilt / 2) * 2, lift: q(P.lift), squat: Math.round(P.squat),
+    backArm: [q(P.back[0]), q(P.back[1])], frontArm: [q(P.front[0]), q(P.front[1])], armSide: 0.6, hipIn: 0,
+    frontLeg: [q(P.legF[0]), q(P.legF[1]), q3(P.legF[2])], backLeg: [q(P.legB[0]), q(P.legB[1]), q3(P.legB[2])],
+    air: P.lift > 1.5, hair: Math.round(P.hair * 2) / 2, hairTip: Math.round(P.hair * 2.4) / 2,
+    eyes: P.eyes ?? 'open', view: 'side', climb: 0, armOver: P.over ? true : null,
+    face: { brows: P.brows ?? REST.brows, extra: P.extra ?? [], blush: P.blush ?? REST.blush, glance: P.glance ?? 0, ...(P.closed ? { closed: P.closed } : {}) },
+  };
+  let look = lookOf(g, P.sprout ?? null, 0);
+  if (P.mouth) look = { ...look, mouth: P.mouth };
+  drawPosed(ctx, look, Math.round(x * 2) / 2, Math.round(y * 2) / 2, rig, { scale: MOCHI_SIZE.baby, facing, slot, over, under, hold });
+}
+
 // Draws Mochi `m` with its feet at (x, y) at `time` seconds. `m`: { genes, dir (1 right, -1 left),
 // speed (px/s along the ground; 0 standing), dist (px it has travelled: the steps follow it, so feet
 // never slide), mood (the sprout, optional), size ('grown' or 'baby') }.
@@ -1682,7 +1751,9 @@ export function drawMochiAnim(ctx, m, x, y, time) {
   };
   const blendK = st.P && time - st.blendAt < 0.33 ? Math.min(1, (time - st.blendAt) / 0.33) : 1;
   const liftNow = bouncy('lift', lerp(P.lift, live.lift, blendK));
-  const leanNow = bouncy('lean', lerp(P.lean, live.lean, blendK));
+  // (`m.glideLean`: a race's glider tips forward into its glide, eased like any lean; `m.hillLean`,
+  // a racer running up a hill leans into it, down one sits back a touch.)
+  const leanNow = bouncy('lean', lerp(P.lean, live.lean, blendK) + (kind === 'fly' ? Math.max(0, (m.glideLean ?? 0) - P.lean) : 0) + (kind === 'run' ? m.hillLean ?? 0 : 0));
   const sinkNow = bouncy('sink', lerp(P.sink, live.sink, blendK));
   const tipNow = lerp(P.tip, live.tip, blendK);
   const dir = m.dir || 1;
@@ -1759,7 +1830,7 @@ export function drawMochiAnim(ctx, m, x, y, time) {
     ctx.beginPath();
     // (Crawling, its weight sits back on its knees: the shadow goes with it.)
     const sx = x - (cant === 'crawl' ? dir * 6 * (s / 0.6) : 0);
-    ctx.ellipse(sx, y, Math.max(2, 7 - liftNow * 0.22) * (s / 0.6), Math.max(0.8, 1.8 - liftNow * 0.04) * (s / 0.6), 0, 0, TAU);
+    ctx.ellipse(sx, y, Math.max(2, 7 - liftNow * 0.22) * (s / 0.6), Math.max(0.8, 1.8 - liftNow * 0.04) * (s / 0.6), m.groundTilt ?? 0, 0, TAU);
     ctx.fill();
   }
   if (kind === 'run' && moving && tier >= 3) drawDust(ctx, x, y, dir, phase, GAITS[tier].stride * (s / 0.6), tier);
@@ -1773,7 +1844,9 @@ export function drawMochiAnim(ctx, m, x, y, time) {
     else if (target.hold === 'ball') drawBall(c, hand[0] + (flip ? -1 : 1) * live.ball[0] * s, hand[1] + live.ball[1] * s, s, live.spin);
   } : null;
   const leanW = ((((lean + Math.PI) % TAU) + TAU) % TAU) - Math.PI;
-  const opts = { scale: s, facing: target.flip || target.turned ? -dir : dir, lean: Math.abs(leanW) > 0.005 || Math.abs(tip) > 0.005 ? { tilt: leanW, lift: tip } : null, ...(over ? { over, hold: 'front' } : {}) };
+  // (`m.alpha`: drawn faded, a ghost or a photo on a card fading out; the figure's own pictures
+  // otherwise draw fully opaque whatever the canvas's alpha.)
+  const opts = { scale: s, facing: target.flip || target.turned ? -dir : dir, lean: Math.abs(leanW) > 0.005 || Math.abs(tip) > 0.005 ? { tilt: leanW, lift: tip, air: kind === 'fly' || kind === 'climb' ? 1 : undefined } : null, ...(over ? { over, hold: 'front' } : {}), ...(m.alpha != null && m.alpha < 1 ? { alpha: m.alpha } : {}) };
   // (A ninja dash leaves two fading after-images behind: the same drawing stamped again, nothing
   // painted afresh.)
   // (Swimming, it sits down in the water: its feet below the waterline at `y`.)
@@ -1783,7 +1856,9 @@ export function drawMochiAnim(ctx, m, x, y, time) {
   if (alt) rig.lift = 0;
   // (Lying down for a nap, it's laid on the ground the same way.)
   // (Crawling, it's tipped right over, which the rig only does off the ground, so it's set back down.)
-  const dy = kind === 'swim' ? (sinkNow + tip) * s : -alt * s + (posed || cant === 'crawl' ? sinkNow * s : 0);
+  // (A race's swimmers ride a little higher, `m.floatUp` px, so the waterline stays under their
+  // eyes as they stroke instead of cutting across them.)
+  const dy = kind === 'swim' ? Math.max(0, (sinkNow + tip) * s - (m.floatUp ?? 0)) : -alt * s + (posed || cant === 'crawl' ? sinkNow * s : 0);
   // (Painting ahead, `m.ahead`: only its body's drawing is asked for, for the sprite worker.)
   if (m.ahead) {
     drawPosed(ctx, look, 0, 0, rig, { ...opts, ahead: true });

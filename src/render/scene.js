@@ -92,19 +92,27 @@ export function updateCamera(cam, world, dt) {
     }
     cine.view = { x: cam.x + VIEW_W / 2, y: cam.y + VIEW_H * 0.55 };
   }
-  // A Mochi race (world/mochi-race.js): the camera runs alongside your Mochi.
+  // A Mochi race (world/mochi-race.js): the camera runs alongside your Mochi, closer in than usual
+  // (`rc.zoom`: drawWorld scales the whole scene), easing in and out with the shot.
   const rc = world.race?.cam;
   if (rc) {
-    const rx = Math.max(0, Math.min(map.width - VIEW_W, rc.x - VIEW_W * 0.4));
-    const ry = Math.max(0, Math.min(map.height - VIEW_H, rc.y - VIEW_H * 0.66));
+    const cut = fresh || rc.cut !== cam.raceCut;
+    const zGoal = rc.zoom ?? 1;
+    cam.zoom = cut || !cam.zoom ? zGoal : cam.zoom + (zGoal - cam.zoom) * (1 - Math.exp(-dt * 2.4));
+    const vw = VIEW_W / cam.zoom;
+    const vh = VIEW_H / cam.zoom;
+    const rx = Math.max(0, Math.min(map.width - vw, rc.x - vw * 0.4));
+    const ry = Math.max(0, Math.min(map.height - vh, rc.y - vh * 0.66));
     // (A cut, `rc.cut` changing: straight to the new shot.)
-    if (fresh || rc.cut !== cam.raceCut) Object.assign(cam, { x: rx, y: ry, ready: true, mapId: map.id, raceCut: rc.cut });
+    if (cut) Object.assign(cam, { x: rx, y: ry, ready: true, mapId: map.id, raceCut: rc.cut });
     else {
       cam.x += (rx - cam.x) * (1 - Math.exp(-dt * 6));
       cam.y += (ry - cam.y) * (1 - Math.exp(-dt * 4));
     }
     return;
   }
+  // (Out of a race the view is never zoomed.)
+  cam.zoom = 1;
   // The lookahead turns around once you've faced the other way for a moment.
   if (b.facing !== cam.face) {
     cam.turned = (cam.turned ?? 0) + dt;
@@ -456,11 +464,30 @@ export function drawWorld(ctx, world, viewCam, time) {
   // spikes along a lip, outlines) was drawn half in two pixels and flickered as it slid across them
   // while you walked. On the pixel grid the whole scene steps together, crisp, every frame.
   const cam = { x: snap(viewCam.x + ox), y: snap(viewCam.y + oy) };
+  // A race's closer camera (updateCamera): the whole scene drawn larger. (Anything a race draws in
+  // screen space finds the unzoomed screen in `world.race.screenT`.)
+  const zoom = world.race && (viewCam.zoom ?? 1) !== 1 ? viewCam.zoom : 1;
+  if (world.race) world.race.screenT = ctx.getTransform();
+  ctx.save();
+  if (zoom !== 1) ctx.scale(zoom, zoom);
+  try {
+    drawWorldLayers(ctx, world, cam, time, b, zoom);
+  } finally {
+    ctx.restore();
+  }
+}
+
+// Everything in the world, back to front, at the camera `cam` (drawWorld).
+function drawWorldLayers(ctx, world, cam, time, b, zoom = 1) {
+  // (Zoomed in, the scenery is laid out for the smaller piece of the world in view, so its planes
+  // sit where they would on a screen that size.)
+  const viewW = VIEW_W / zoom;
+  const viewH = VIEW_H / zoom;
   const nearPortal = world.map.portals.find((p) => !p.hidden && Math.abs(p.x - b.x) < 22 && Math.abs(p.y - b.y) < 6);
   // The portal on your guided route, if you're following one.
   const routePortal = world.route ? nextStep(world.map.id, world.route.to)?.portal : null;
   lapStart();
-  drawSceneBack(ctx, world.map, cam, VIEW_W, VIEW_H, time, nearPortal?.id, () => drawStreet(ctx, world.map, cam, VIEW_W, time, { wind: world.char.windBack && !world.windHold, name: world.char.name }), routePortal?.id);
+  drawSceneBack(ctx, world.map, cam, viewW, viewH, time, nearPortal?.id, () => drawStreet(ctx, world.map, cam, viewW, time, { wind: world.char.windBack && !world.windHold, name: world.char.name }), routePortal?.id);
   lap('back');
   // Water to wade into, behind everyone (render/water.js).
   drawWaterBack(ctx, world.map, cam, VIEW_W, time);
@@ -651,7 +678,7 @@ export function drawWorld(ctx, world, viewCam, time) {
   // The nearest drifting petals, in front of everyone (and of the light, being between it and the
   // camera), but under the effects.
   lap('light');
-  drawSceneFront(ctx, world.map, cam, VIEW_W, VIEW_H, time);
+  drawSceneFront(ctx, world.map, cam, viewW, viewH, time);
   lap('front');
   if (world.dungeon) {
     drawHollowFront(ctx, world, cam, time);

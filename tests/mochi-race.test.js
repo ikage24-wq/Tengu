@@ -8,7 +8,8 @@ import { createWorld, updateWorld, loadMap } from '../src/world/world.js';
 import { MAPS } from '../src/data/maps.js';
 import { rollMochi, STATS } from '../src/data/mochi-genes.js';
 import { newRecord } from '../src/data/mochi-raise.js';
-import { startRace, rivalsFor, raceHour, PODIUM, podiumSpot, legOf } from '../src/world/mochi-race.js';
+import { startRace, rivalsFor, raceHour, PODIUM, podiumSpot, legOf, rampLift } from '../src/world/mochi-race.js';
+import { CHEER } from '../src/data/mochi-race.js';
 import { groundAt, waterAt } from '../src/world/physics.js';
 
 const keys = (pressed = []) => ({ held: new Set(), pressed: new Set(pressed) });
@@ -119,19 +120,67 @@ test('each cheer spends stamina, even for a tireless Mochi; with too little left
   startRace(w, rec, 'sprint');
   const R = w.race;
   while (R.phase !== 'run') updateWorld(w, 1 / 60, keys());
-  for (let k = 0; k < 30; k++) updateWorld(w, 1 / 60, keys());
   const me = R.racers[0];
+  while (R.clock < me.cheerReady + CHEER.window + 0.1) updateWorld(w, 1 / 60, keys());
   const before = me.m.tired;
   updateWorld(w, 1 / 60, keys(['ArrowUp']));
   updateWorld(w, 1 / 60, keys());
   assert.equal(me.cheers, 1);
-  assert.ok(me.m.tired - before > 0.08, `spent ${(me.m.tired - before).toFixed(2)}`);
+  assert.equal(me.cheerKind, 'good');
+  assert.ok(me.m.tired - before > 0.06, `spent ${(me.m.tired - before).toFixed(2)}`);
   // Spent right down, Up does nothing.
   me.spent = 0.97;
   updateWorld(w, 1 / 60, keys());
   me.cheerReady = 0;
   updateWorld(w, 1 / 60, keys(['ArrowUp']));
   assert.equal(me.cheers, 1);
+});
+
+test('cheering on the beat: Perfect the moment it fills, Good after; pressed too soon, the next can only be Good', () => {
+  const rec = mochi(7, 900);
+  rec.stats.stamina.points = 2400;
+  const w = racer(rec);
+  startRace(w, rec, 'sprint');
+  const R = w.race;
+  while (R.phase !== 'run') updateWorld(w, 1 / 60, keys());
+  const me = R.racers[0];
+  const tap = () => {
+    updateWorld(w, 1 / 60, keys(['ArrowUp']));
+    updateWorld(w, 1 / 60, keys());
+  };
+  const until = (t) => {
+    while (R.clock < t) updateWorld(w, 1 / 60, keys());
+  };
+  // Pressed the moment it's full: Perfect, a bigger, longer burst for less stamina.
+  until(me.cheerReady + 0.05);
+  const before = me.m.tired;
+  tap();
+  assert.equal(me.cheerKind, 'perfect');
+  assert.equal(me.perfects, 1);
+  assert.ok(me.m.tired - before < 0.06, `a Perfect spent ${(me.m.tired - before).toFixed(2)}`);
+  assert.ok(me.cheerUntil - me.cheerAt > CHEER.secs);
+  // Pressed while it's refilling (not a double tap): nothing, and the next one, on the beat or not, is Good.
+  until(me.cheerAt + 1);
+  tap();
+  assert.equal(me.cheers, 1);
+  assert.ok(me.fumbled);
+  until(me.cheerReady + 0.05);
+  tap();
+  assert.equal(me.cheers, 2);
+  assert.equal(me.cheerKind, 'good');
+  // Back on the beat, Perfect again.
+  until(me.cheerReady + 0.05);
+  tap();
+  assert.equal(me.perfects, 2);
+});
+
+test("the rivals' own trainers cheer them on too", () => {
+  const rec = mochi(8, 900);
+  const w = racer(rec);
+  startRace(w, rec, 'sprint');
+  const R = w.race;
+  for (let k = 0; k < 60 * 20 && R.phase !== 'done'; k++) updateWorld(w, 1 / 60, keys());
+  assert.ok(R.racers.slice(1).some((r) => r.cheerAt != null), 'no rival was cheered on');
 });
 
 test('the rivals are the same for everyone in the same hour, and new the next', () => {
@@ -287,11 +336,14 @@ test('every racer, every frame, on every course: on the ground, in the water, on
           if (r.lastAt) assert.ok(Math.abs(r.x - r.lastAt[0]) < 8 && Math.abs(r.y - r.lastAt[1]) < 8, `${where}: jumped from ${r.lastAt.map((v) => v.toFixed(1))}`);
           r.lastAt = [r.x, r.y];
           const leg = legOf(course, r);
-          const ground = leg.y != null && leg.kind === 'run' ? leg.y : groundAt(w.map, r.x);
+          // (Up a launch ramp, its surface is the ground.)
+          const ground = (leg.y != null && leg.kind === 'run' ? leg.y : groundAt(w.map, r.x)) - (leg.kind === 'run' ? rampLift(w.map, course, r) : 0);
           if (r.m.mode === 'swim') assert.ok(waterAt(w.map, r.x) === r.y, `${where}: swimming at the surface`);
           else if (r.m.mode === 'climb') assert.ok(leg.kind === 'climb' && r.x > leg.x - 48 && r.x < leg.x && r.y <= leg.from && r.y >= leg.to, `${where}: on its wall`);
           else if (r.m.mode === 'fly') assert.ok(r.y <= ground + 0.01, `${where}: above the ground`);
           else if (leg.kind === 'climb') assert.ok(r.x > leg.x - 48 && (r.y === leg.to || Math.abs(r.y - ground) < 0.01), `${where}: at the foot of its wall or over the top`);
+          // (The frame it reaches a launch's edge: still running, up on the ramp's top, just off.)
+          else if (leg.kind === 'glide') assert.ok(r.y <= ground + 0.01, `${where}: taking off`);
           else assert.ok(Math.abs(r.y - ground) < 0.01, `${where}: on the ground`);
         }
       }

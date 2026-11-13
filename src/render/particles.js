@@ -427,11 +427,17 @@ export function updateParticles(fx, dt, world, cam, viewW, viewH) {
   // (None falls in an underground zone: render/scenery.js zones.)
   if (world.weather && !zoneLook(world.map, cam.y + viewH * 0.6, cam.x + viewW / 2)?.underground) {
     const rain = world.weather === 'rain';
-    fx.weatherTimer = (fx.weatherTimer ?? 0) - dt * (rain ? 110 : 26);
+    // (Where the map would rather: blossom petals instead of rain, Sakura Sprint's.)
+    const petals = rain && world.map.look?.petalRain;
+    fx.weatherTimer = (fx.weatherTimer ?? 0) - dt * (petals ? 34 : rain ? 110 : 26);
     while (fx.weatherTimer <= 0) {
       fx.weatherTimer += 1;
       const x = cam.x - 40 + Math.random() * (viewW + 80);
       const y = cam.y - 10 + Math.random() * 30;
+      if (petals) {
+        add(fx, { x, y, vx: -16 + Math.random() * 10, vy: 30 + Math.random() * 16, life: viewH / 34, size: 1 + Math.random() * 0.7, color: ['#ffc4d6', '#ffe2ec', '#ff9fbc'][Math.floor(Math.random() * 3)], alpha: 0.95, ambient: true, phase: Math.random() * 6, sway: 20 });
+        continue;
+      }
       add(fx, rain
         ? { x, y, vx: -30, vy: 380 + Math.random() * 80, life: (viewH + 20) / 420, size: 0.9, shape: 'needle', color: '#d6ebff', alpha: 0.85, ambient: true, phase: 0 }
         : { x, y, vx: -8 + Math.random() * 16, vy: 22 + Math.random() * 14, life: viewH / 28, size: 0.8 + Math.random() * 0.7, color: '#ffffff', alpha: 0.9, ambient: true, phase: Math.random() * 6 });

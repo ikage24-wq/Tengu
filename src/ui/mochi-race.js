@@ -7,7 +7,7 @@
 import { STAGES as MOCHI_STAGES, HAIR_COLORS } from '../data/mochi-genes.js';
 import { CANT_POINTS } from '../data/mochi-raise.js';
 import { RACE_STAGES, RACE_RANKS, RANK_ORDER, CHEER, prizeOf, rankOpen, rankNeeds, medalKey, MEDAL_COLOR } from '../data/mochi-race.js';
-import { startRace, leaveRace, standings, progressOf, COUNTDOWN, INTRO, introLen, PODIUM, SLOW_MO, cheerCost, canAffordCheer, forkAhead, FORK_NEAR } from '../world/mochi-race.js';
+import { startRace, leaveRace, standings, progressOf, COUNTDOWN, INTRO, introLen, PODIUM, SLOW_MO, cheerCost, canAffordCheer, cheerTiming, beatOf, forkAhead, FORK_NEAR } from '../world/mochi-race.js';
 import { inviteParty, cancelLobby, startPartyRace, answerInvite, leaveWait, tickRaceInvites, askGhost } from '../net/mochi-race.js';
 import { partyFriends } from '../net/together.js';
 import { online } from '../net/online.js';
@@ -316,15 +316,29 @@ export function raceHud(ui, state, world) {
   ctx.save();
   if (R.phase === 'done') ctx.globalAlpha = 0;
   box(ctx, x0 - 14, 8, x1 - x0 + 34, 24, { fill: 'rgba(255,250,246,0.94)', edge: '#f0c8d8', r: 12, width: 1.2, plain: true });
-  ctx.fillStyle = '#f4e2ea';
-  roundRect(ctx, x0, 18, x1 - x0, 5, 2.5);
-  ctx.fill();
   const lead = Math.max(...R.racers.map((r) => Math.max(0, Math.min(1, progressOf(course, r) / course.total))));
-  ctx.fillStyle = '#ffd0e0';
-  roundRect(ctx, x0, 18, (x1 - x0) * lead, 5, 2.5);
-  ctx.fill();
+  // (A festival course, Sakura Sprint's: the track is a blossom branch that blooms as the race goes.)
+  // (Lily Lake's: a little stream with lily pads along it, their lotus opening as the leader passes.)
+  const track = world.map.look?.bar;
+  const festive = track === 'branch' || track === 'lily' || track === 'maple' || track === 'snow' || track === 'dango' || track === 'lantern';
+  if (track === 'branch') blossomBranch(ctx, x0, x1, 20.5, lead, world.now);
+  else if (track === 'maple') mapleBranch(ctx, x0, x1, 20.5, lead, world.now);
+  else if (track === 'snow') snowString(ctx, x0, x1, 20.5, lead, world.now);
+  else if (track === 'dango') dangoSkewer(ctx, x0, x1, 20.5, lead, world.now);
+  else if (track === 'lantern') lanternString(ctx, x0, x1, 20.5, lead, world.now);
+  else if (track === 'lily') lilyStream(ctx, x0, x1, 20.5, lead, world.now);
+  else {
+    ctx.fillStyle = '#f4e2ea';
+    roundRect(ctx, x0, 18, x1 - x0, 5, 2.5);
+    ctx.fill();
+    ctx.fillStyle = '#ffd0e0';
+    roundRect(ctx, x0, 18, (x1 - x0) * lead, 5, 2.5);
+    ctx.fill();
+  }
   // (A long course in parts: a little plate with each part's icon where it begins; otherwise quarter marks.)
-  if (course.parts) {
+  if (festive) {
+    // (Its quarter marks are the branch's three open blossoms.)
+  } else if (course.parts) {
     for (const p of course.parts.slice(1)) {
       const px = x0 + (x1 - x0) * partFrac(course, p.from);
       ctx.fillStyle = '#ffffff';
@@ -447,19 +461,18 @@ export function raceHud(ui, state, world) {
   if (R.phase === 'run' && you.done != null && R.clock - you.done < 2) big(you.place === 1 ? 'Winner!' : 'Finish!', you.place === 1 ? '#ffb020' : '#ff6f9a');
   if (R.phase !== 'done') {
     // Your Mochi's stamina, and the Cheer button, on one card: its little photo, a leaf and the
-    // stamina pill (striped while it catches its breath), and Cheer with a heart that refills.
+    // stamina pill, and Cheer with a heart that refills.
     const cw = 236;
     const cx = VW / 2 - cw / 2;
     const cy = VH - 62;
     const tired = you.m.tired ?? 0;
-    const resting = you.m.rest;
     ctx.fillStyle = 'rgba(70,40,90,0.18)';
     roundRect(ctx, cx + 1.5, cy + 3, cw, 46, 14);
     ctx.fill();
     box(ctx, cx, cy, cw, 46, { fill: 'rgba(255,250,246,0.96)', edge: '#ffb3cf', r: 14, width: 1.6, plain: true });
     // (Its face feels the race: set at the start, smug in front, worried behind, worn out, or
     // sparkling when you cheer it on.)
-    const face = R.phase !== 'run' ? 'race_ready' : R.clock < you.cheerUntil ? 'race_cheered' : you.m.rest || (you.m.tired ?? 0) > 0.7 ? 'race_tired'
+    const face = R.phase !== 'run' ? 'race_ready' : R.clock < you.cheerUntil ? 'race_cheered' : (you.m.tired ?? 0) > 0.7 ? 'race_tired'
       : place === 1 && R.clock > 2 ? 'race_smug' : place > Math.ceil(R.racers.length / 2) && R.clock > 2 ? 'race_worried' : 'race_ready';
     const pm = kitPortrait(you.rec);
     pm.feel = null;
@@ -474,7 +487,7 @@ export function raceHud(ui, state, world) {
     ctx.arc(sx + 5, cy + 14, 5.5, 0, Math.PI * 2);
     ctx.fill();
     icon(ctx, 'leaf', sx + 5, cy + 14, 7, '#ffffff');
-    text(ctx, resting ? 'Catching its breath...' : low ? 'Tiring!' : 'Stamina', sx + 14, cy + 16.5, { size: 7, bold: true, color: low || resting ? '#e0604a' : '#4a9a5a' });
+    text(ctx, low ? 'Tiring!' : 'Stamina', sx + 14, cy + 16.5, { size: 7, bold: true, color: low ? '#e0604a' : '#4a9a5a' });
     ctx.fillStyle = '#f0e4ea';
     roundRect(ctx, sx, cy + 23, sw, 9, 4.5);
     ctx.fill();
@@ -486,7 +499,7 @@ export function raceHud(ui, state, world) {
     // (What the next cheer would spend: the end of the bar, pale and pulsing, while it can cheer.)
     const cost = cheerCost(you.rec);
     const afford = canAffordCheer(you);
-    if (R.phase === 'run' && you.done == null && afford && !resting) {
+    if (R.phase === 'run' && you.done == null && afford) {
       const full = sw * (1 - tired);
       const cw2 = Math.min(full, sw * cost);
       ctx.globalAlpha = 0.55 + 0.25 * Math.sin(R.clock * 6);
@@ -497,35 +510,37 @@ export function raceHud(ui, state, world) {
       ctx.fillStyle = '#ff9ec0';
       ctx.fillRect(sx + full - cw2, cy + 23, 1, 9);
     }
-    if (resting) {
-      ctx.save();
-      roundRect(ctx, sx, cy + 23, sw, 9, 4.5);
-      ctx.clip();
-      ctx.fillStyle = 'rgba(255,255,255,0.35)';
-      const off = (R.clock * 14) % 8;
-      for (let k = -8; k < sw + 8; k += 8) {
-        ctx.beginPath();
-        ctx.moveTo(sx + k + off, cy + 32);
-        ctx.lineTo(sx + k + off + 4, cy + 23);
-        ctx.lineTo(sx + k + off + 7, cy + 23);
-        ctx.lineTo(sx + k + off + 3, cy + 32);
-        ctx.fill();
-      }
-      ctx.restore();
-    }
-    // (Catching its breath: Encourage! gets it going sooner, free, once a second.)
-    const resting2 = R.phase === 'run' && you.done == null && resting;
-    const canEnc = resting2 && (R.remote || R.clock >= (you.encourageReady ?? 0));
-    const ready = R.phase === 'run' && you.done == null && !resting && R.clock >= you.cheerReady && afford;
-    const broke = R.phase === 'run' && you.done == null && !afford && !resting;
+    const ready = R.phase === 'run' && you.done == null && R.clock >= you.cheerReady && afford;
+    const broke = R.phase === 'run' && you.done == null && !afford;
+    // (On the beat: the moment it's full, it glows gold, "Now!", for a Perfect cheer. Pressed while
+    // it's refilling, "Too soon!", a shake, and the gold mark at the end of its bar goes grey: the
+    // next can only be Good.)
+    const now = ready && cheerTiming(R, you) === 'perfect';
+    const soonK = you.soonAt != null && R.phase === 'run' ? (R.clock - you.soonAt) / 0.6 : 1;
+    const soon = soonK < 1 && !ready;
     const bx = cx + cw - 96;
-    const label = resting2 ? (canEnc ? 'Encourage! (Up)' : 'Encouraging...') : ready ? 'Cheer!  (Up)' : broke ? 'Too tired' : 'Cheering...';
-    if (button(ui, bx, cy + 8, 88, 30, label, { primary: ready || canEnc, enabled: ready || canEnc, size: resting2 ? 7.5 : 8.5, iconName: resting2 ? 'star' : 'heart' })) R.cheerAsk = true;
-    // (Just encouraged: a little heart pops off the photo.)
-    if (you.encouraged != null && R.clock - you.encouraged < 0.6) {
-      const k = (R.clock - you.encouraged) / 0.6;
-      ctx.globalAlpha = 1 - k;
-      icon(ctx, 'heart', cx + 24, cy + 8 - k * 14, 9, '#ff6f9a');
+    const label = now ? 'Now!  (Up)' : ready ? 'Cheer!  (Up)' : broke ? 'Too tired' : soon ? 'Too soon!' : R.clock < you.cheerUntil ? 'Cheering...' : 'Get set...';
+    const shake = soon ? Math.sin(soonK * Math.PI * 6) * 2.2 * (1 - soonK) : 0;
+    if (now) {
+      // (A soft gold halo breathing round it.)
+      const k = Math.min(1, beatOf(R, you) / CHEER.window);
+      ctx.globalAlpha = 0.5 * (1 - k * 0.6) * (0.75 + 0.25 * Math.sin(R.clock * 18));
+      ctx.fillStyle = '#ffd75e';
+      roundRect(ctx, bx - 3 - k * 2, cy + 5 - k * 2, 94 + k * 4, 36 + k * 4, 18 + k * 2);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+    }
+    if (button(ui, bx + shake, cy + 8, 88, 30, label, { primary: ready, theme: now ? 'gold' : null, enabled: ready, size: 8.5, iconName: 'heart' })) R.cheerAsk = true;
+    // (How the last cheer landed, rising off the button: Perfect! in gold, Good! in pink.)
+    const landK = you.cheerAt != null && R.phase === 'run' ? (R.clock - you.cheerAt) / 0.9 : 1;
+    if (landK < 1 && you.cheerKind) {
+      const perfect = you.cheerKind === 'perfect';
+      const e = 1 - (1 - landK) ** 3;
+      ctx.globalAlpha = landK < 0.7 ? 1 : 1 - (landK - 0.7) / 0.3;
+      const size = (perfect ? 11 : 9) * (landK < 0.15 ? 0.7 + (landK / 0.15) * 0.3 : 1);
+      const ty = cy + 2 - e * 16;
+      text(ctx, perfect ? 'Perfect!' : 'Good!', bx + 45, ty + 1, { size, bold: true, align: 'center', color: 'rgba(80,40,70,0.3)' });
+      text(ctx, perfect ? 'Perfect!' : 'Good!', bx + 44, ty, { size, bold: true, align: 'center', color: perfect ? '#f0a020' : '#ff6f9a' });
       ctx.globalAlpha = 1;
     }
     if (R.phase === 'run' && you.done == null) {
@@ -533,11 +548,24 @@ export function raceHud(ui, state, world) {
       ctx.fillStyle = '#f6dce8';
       roundRect(ctx, bx + 8, cy + 40, 72, 3, 1.5);
       ctx.fill();
-      ctx.fillStyle = ready ? '#ff6f9a' : '#ffb3cf';
+      ctx.fillStyle = now ? '#ffc94f' : ready ? '#ff6f9a' : '#ffb3cf';
       roundRect(ctx, bx + 8, cy + 40, 72 * k, 3, 1.5);
       ctx.fill();
+      // (Full and waiting: the next beat sweeping in, a gold glow growing along the bar toward it.)
+      if (ready && !now && !you.fumbled) {
+        const b = beatOf(R, you) / CHEER.every;
+        ctx.globalAlpha = 0.6 * b * b;
+        ctx.fillStyle = '#ffd75e';
+        roundRect(ctx, bx + 8 + 72 * (1 - b), cy + 40, 72 * b, 3, 1.5);
+        ctx.fill();
+        ctx.globalAlpha = 1;
+      }
+      // (Where the beat lands: a little gold mark at the end, grey once a press came too soon.)
+      ctx.fillStyle = you.fumbled ? '#cdbfca' : '#f0a020';
+      roundRect(ctx, bx + 78, cy + 38.5, 3, 6, 1.5);
+      ctx.fill();
     }
-    if (hover(ui, bx, cy + 8, 88, 30)) tooltip(ui, [{ text: 'Cheer it on  (Up)', bold: true }, { text: `A burst of speed, paid for with ${Math.round(cost * 100)}% of its stamina (less the better its Stamina). Run it right down and it has to stop for breath.`, color: COLORS.muted }]);
+    if (hover(ui, bx, cy + 8, 88, 30)) tooltip(ui, [{ text: 'Cheer it on  (Up)', bold: true }, { text: `A burst of speed, paid for with ${Math.round(cost * 100)}% of its stamina (less the better its Stamina). The more it's spent, the slower it runs, till it gets its breath back.`, color: COLORS.muted }, { text: 'Press the moment the bar fills, when it glows gold, for a Perfect cheer: faster, longer and cheaper. Pressing too soon spoils the next one.', color: COLORS.muted }]);
     return;
   }
   // The results: your Mochi's photo with its place on a big rosette, the standings with gold, silver
@@ -588,8 +616,16 @@ export function raceHud(ui, state, world) {
     trackFace(ctx, lx + 22, ry + 6.5, 5.5, R, r, R.results);
     text(ctx, fit(ctx, nameOf(r), lw - 90, 7.5, r.you), lx + 31, ry + 9.5, { size: 7.5, bold: r.you });
     if (r.you && R.medal) medalDot(ctx, lx + lw - 50, ry + 6.5, R.medal.medal, 4);
-    text(ctx, r.done != null ? `${r.done.toFixed(1)}s` : 'not home', lx + lw, ry + 9.5, { size: 7, align: 'right', color: r.done != null ? COLORS.muted : COLORS.bad });
+    // (Home: its time. Still out at the end: the time it was on course for, with a little ~.)
+    const time = r.done ?? r.est;
+    text(ctx, time != null ? `${r.done != null ? '' : '~'}${time.toFixed(1)}s` : '', lx + lw, ry + 9.5, { size: 7, align: 'right', color: COLORS.muted });
   });
+  // (How you cheered: how many, and how many on the beat.)
+  if (mine.cheers) {
+    const py2 = py + 30 + R.results.length * 19 + 6;
+    icon(ctx, 'heart', lx + 5, py2, 7, '#ff8fb0');
+    text(ctx, `${mine.cheers} cheer${mine.cheers === 1 ? '' : 's'}${mine.perfects ? `, ${mine.perfects} Perfect!` : ''}`, lx + 13, py2 + 2.5, { size: 7, bold: Boolean(mine.perfects), color: mine.perfects ? '#e09a20' : COLORS.muted });
+  }
   // The prize and the medal.
   const by = py + 166;
   icon(ctx, 'coin', px + 20, by, 9, R.prize ? '#e0a82a' : '#c8b8c8');
@@ -602,11 +638,360 @@ export function raceHud(ui, state, world) {
   if (button(ui, VW / 2 - 66, py + ph - 26, 132, 19, R.back?.map === 'garden' ? 'Back to the Garden' : 'Back to the Stadium', { primary: true, size: 8, iconName: 'door' }) && R.t > PODIUM.secs + 0.6) leaveRace(world);
 }
 
+// The track as a blossom branch (a festival course's): a gently bending bough with little twigs,
+// open blossoms at the quarters, and buds opening into flowers along it as far as the leader has
+// got, each swaying a touch; behind the leader the branch is still bare.
+function blossomBranch(ctx, x0, x1, y, lead, time) {
+  const bend = (x) => y + Math.sin((x - x0) * 0.045) * 1.2;
+  ctx.lineCap = 'round';
+  for (const [c, w, dy] of [['#8a5a60', 3.4, 0.5], ['#b08088', 1.4, -0.6]]) {
+    ctx.strokeStyle = c;
+    ctx.lineWidth = w;
+    ctx.beginPath();
+    for (let x = x0 - 6; x <= x1 + 1; x += 3) (x === x0 - 6 ? ctx.moveTo(x, bend(x) + dy) : ctx.lineTo(x, bend(x) + dy));
+    ctx.stroke();
+  }
+  // Twigs.
+  ctx.strokeStyle = '#8a5a60';
+  ctx.lineWidth = 1.2;
+  for (let k = 0; k < 9; k++) {
+    const x = x0 + ((k + 0.5) / 9) * (x1 - x0);
+    const up = k % 2 ? -1 : 1;
+    ctx.beginPath();
+    ctx.moveTo(x, bend(x));
+    ctx.lineTo(x + 4, bend(x) - up * 4);
+    ctx.stroke();
+  }
+  ctx.lineCap = 'butt';
+  const flower = (fx, fy, r, open, c) => {
+    if (open <= 0.05) {
+      ctx.fillStyle = '#e8a0b4';
+      ctx.beginPath();
+      ctx.arc(fx, fy, r * 0.42, 0, Math.PI * 2);
+      ctx.fill();
+      return;
+    }
+    ctx.fillStyle = c;
+    for (let p = 0; p < 5; p++) {
+      const a = (p / 5) * Math.PI * 2 - Math.PI / 2;
+      ctx.beginPath();
+      ctx.arc(fx + Math.cos(a) * r * 0.62 * open, fy + Math.sin(a) * r * 0.62 * open, r * (0.35 + 0.2 * open), 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.fillStyle = '#ffd75e';
+    ctx.beginPath();
+    ctx.arc(fx, fy, r * 0.28, 0, Math.PI * 2);
+    ctx.fill();
+  };
+  // Buds along it, opening behind the leader (each eases open as the leader goes past it).
+  for (let k = 0; k < 22; k++) {
+    const u = (k + 0.5) / 22;
+    const x = x0 + u * (x1 - x0);
+    const sway = Math.sin(time * 2 + k) * 0.5;
+    const open = Math.max(0, Math.min(1, (lead - u) / 0.06));
+    flower(x + sway, bend(x) + (k % 2 ? -2.6 : 2.6), 2.4, open, k % 3 ? '#ffb8cc' : '#ffd2de');
+  }
+  // The quarters: bigger blossoms, open from the start.
+  for (const q of [0.25, 0.5, 0.75]) {
+    const x = x0 + (x1 - x0) * q;
+    flower(x, bend(x) - 3.4, 3.6, 1, '#ffffff');
+  }
+}
+
+// The Grand Mochi Course's track: a string of paper lanterns, dark until the leader reaches them,
+// then each lighting up warm (red and white by turns) and swaying a little; at the quarters, bigger
+// gold-rimmed lanterns, already lit.
+function lanternString(ctx, x0, x1, y, lead, time) {
+  const sagAt = (x) => y - 3 + Math.sin(((x - x0) / (x1 - x0)) * Math.PI * 6) * 0.8;
+  ctx.strokeStyle = '#5a4050';
+  ctx.lineWidth = 0.8;
+  ctx.beginPath();
+  for (let x = x0 - 6; x <= x1 + 1; x += 3) (x === x0 - 6 ? ctx.moveTo(x, sagAt(x)) : ctx.lineTo(x, sagAt(x)));
+  ctx.stroke();
+  const lamp = (lx, r, lit, white, gold, sway) => {
+    const top = sagAt(lx);
+    const cx = lx + sway;
+    const cy = top + r + 1.4;
+    if (lit > 0) {
+      ctx.globalAlpha = lit * 0.45;
+      ctx.fillStyle = white ? '#ffe6b0' : '#ffb090';
+      ctx.beginPath();
+      ctx.arc(cx, cy, r + 3, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+    }
+    ctx.fillStyle = '#3a2a30';
+    ctx.fillRect(cx - r * 0.5, top, r, 1.4);
+    ctx.fillRect(cx - r * 0.5, cy + r - 0.4, r, 1.4);
+    ctx.fillStyle = '#d8ccd0';
+    ctx.beginPath();
+    ctx.ellipse(cx, cy, r * 0.8, r, 0, 0, Math.PI * 2);
+    ctx.fill();
+    if (lit > 0) {
+      ctx.globalAlpha = lit;
+      ctx.fillStyle = gold ? '#ffd75e' : white ? '#fff4e0' : '#f05a6a';
+      ctx.beginPath();
+      ctx.ellipse(cx, cy, r * 0.8, r, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = 'rgba(255,255,255,0.7)';
+      ctx.fillRect(cx - r * 0.45, cy - r * 0.5, 0.9, r * 0.8);
+      ctx.globalAlpha = 1;
+    }
+    if (gold) {
+      ctx.fillStyle = '#c89a30';
+      ctx.fillRect(cx - r * 0.5, top, r, 1.4);
+      ctx.fillRect(cx - r * 0.5, cy + r - 0.4, r, 1.4);
+    }
+  };
+  for (let k = 0; k < 18; k++) {
+    const u = (k + 0.5) / 18;
+    if ([0.25, 0.5, 0.75].some((q) => Math.abs(q - u) < 0.03)) continue;
+    const lit = Math.max(0, Math.min(1, (lead - u) / 0.05));
+    lamp(x0 + u * (x1 - x0), 2.6, lit, k % 2 === 1, false, Math.sin(time * 1.8 + k) * 0.5);
+  }
+  for (const q of [0.25, 0.5, 0.75]) lamp(x0 + (x1 - x0) * q, 3.8, 1, false, true, Math.sin(time * 1.4 + q * 9) * 0.4);
+}
+
+// Long Hill Run's track: a long bamboo skewer threaded with dango, plain rice-white until the leader
+// reaches them, then each warming into its colour (pink, white, green in turn) with a shine and a
+// little bob; at the quarters, bigger dango glazed in sweet soy sauce.
+function dangoSkewer(ctx, x0, x1, y, lead, time) {
+  const dot = (cx, cy, r) => {
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.fill();
+  };
+  ctx.lineCap = 'round';
+  for (const [c, w, dy] of [['#c8945a', 2, 0], ['#ecc490', 0.7, -0.5]]) {
+    ctx.strokeStyle = c;
+    ctx.lineWidth = w;
+    ctx.beginPath();
+    ctx.moveTo(x0 - 6, y + dy);
+    ctx.lineTo(x1 + 1, y + dy);
+    ctx.stroke();
+  }
+  ctx.lineCap = 'butt';
+  const COL = ['#ffb7cf', '#fffaf4', '#c4e8a8'];
+  const RIM = ['#e890aa', '#e2d2c6', '#8cc070'];
+  for (let k = 0; k < 18; k++) {
+    const u = (k + 0.5) / 18;
+    if ([0.25, 0.5, 0.75].some((q) => Math.abs(q - u) < 0.03)) continue;
+    const x = x0 + u * (x1 - x0);
+    const lit = Math.max(0, Math.min(1, (lead - u) / 0.05));
+    const by = y + Math.sin(time * 3 + k) * 0.35 * lit;
+    const r = 2.6 + 0.4 * lit;
+    ctx.fillStyle = '#e4d8d0';
+    dot(x, by, r + 0.8);
+    ctx.fillStyle = '#f6f0ea';
+    dot(x - 0.3, by - 0.3, r);
+    if (lit > 0) {
+      ctx.globalAlpha = lit;
+      ctx.fillStyle = RIM[k % 3];
+      dot(x, by, r + 0.8);
+      ctx.fillStyle = COL[k % 3];
+      dot(x - 0.3, by - 0.3, r);
+      ctx.fillStyle = 'rgba(255,255,255,0.9)';
+      dot(x - 1.1, by - 1.2, 0.8);
+      ctx.globalAlpha = 1;
+    }
+  }
+  for (const q of [0.25, 0.5, 0.75]) {
+    const x = x0 + (x1 - x0) * q;
+    ctx.fillStyle = '#d8b090';
+    dot(x, y, 4.6);
+    ctx.fillStyle = '#fff4e4';
+    dot(x - 0.3, y - 0.3, 3.9);
+    ctx.fillStyle = '#c8784a';
+    ctx.beginPath();
+    ctx.ellipse(x - 0.3, y - 0.6, 3.9, 3, 0, Math.PI, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.ellipse(x - 0.3, y - 0.6, 3.9, 1.4, 0, 0, Math.PI);
+    ctx.fill();
+    ctx.fillStyle = 'rgba(255,236,210,0.9)';
+    dot(x - 1.6, y - 2.2, 0.9);
+  }
+}
+
+// Cloud Glide's track: an icy ribbon strung with snowflakes, each lighting up white and twinkling
+// as the leader passes it; at the quarters, bigger flakes with a gold heart.
+function snowString(ctx, x0, x1, y, lead, time) {
+  ctx.fillStyle = '#dceaff';
+  roundRect(ctx, x0 - 4, y - 2.4, x1 - x0 + 6, 4.8, 2.4);
+  ctx.fill();
+  ctx.fillStyle = '#b4d4f6';
+  roundRect(ctx, x0 - 4, y - 2.4, Math.max(4.8, (x1 - x0) * lead + 4), 4.8, 2.4);
+  ctx.fill();
+  const flake = (fx, fy, r, lit, rot) => {
+    if (lit) {
+      ctx.fillStyle = 'rgba(191,224,255,0.6)';
+      ctx.beginPath();
+      ctx.arc(fx, fy, r + 1.4, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.strokeStyle = lit ? '#ffffff' : '#b8c8e0';
+    ctx.lineWidth = lit ? 1.3 : 1;
+    ctx.lineCap = 'round';
+    for (let q = 0; q < 3; q++) {
+      const a = (q / 3) * Math.PI + rot;
+      ctx.beginPath();
+      ctx.moveTo(fx - Math.cos(a) * r, fy - Math.sin(a) * r);
+      ctx.lineTo(fx + Math.cos(a) * r, fy + Math.sin(a) * r);
+      ctx.stroke();
+    }
+    ctx.lineCap = 'butt';
+  };
+  for (let k = 0; k < 18; k++) {
+    const u = (k + 0.5) / 18;
+    if ([0.25, 0.5, 0.75].some((q) => Math.abs(q - u) < 0.03)) continue;
+    const x = x0 + u * (x1 - x0);
+    const lit = lead > u;
+    flake(x, y + (k % 2 ? -0.5 : 0.5), lit ? 2.6 + Math.sin(time * 3 + k) * 0.3 : 2.2, lit, lit ? time * 0.6 + k : k);
+  }
+  for (const q of [0.25, 0.5, 0.75]) {
+    const x = x0 + (x1 - x0) * q;
+    flake(x, y, 3.8, true, time * 0.4 + q * 5);
+    ctx.fillStyle = '#ffd75e';
+    ctx.beginPath();
+    ctx.arc(x, y, 1, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+// Mortar Cliff's track: a maple branch, its leaves green until the leader goes past and then
+// turning, gold to orange to red; at the quarters, bigger leaves already red.
+function mapleBranch(ctx, x0, x1, y, lead, time) {
+  const bend = (x) => y + Math.sin((x - x0) * 0.045) * 1.2;
+  ctx.lineCap = 'round';
+  for (const [c, w, dy] of [['#7a5440', 3.4, 0.5], ['#a8806a', 1.4, -0.6]]) {
+    ctx.strokeStyle = c;
+    ctx.lineWidth = w;
+    ctx.beginPath();
+    for (let x = x0 - 6; x <= x1 + 1; x += 3) (x === x0 - 6 ? ctx.moveTo(x, bend(x) + dy) : ctx.lineTo(x, bend(x) + dy));
+    ctx.stroke();
+  }
+  ctx.lineCap = 'butt';
+  const leaf = (fx, fy, r, c, rot) => {
+    ctx.fillStyle = c;
+    ctx.beginPath();
+    const D = (Math.PI * 2) / 5;
+    for (let l = 0; l < 5; l++) {
+      const a = rot - Math.PI / 2 + l * D;
+      for (const [da, k] of [[-0.5, 0.36], [-0.27, 0.72], [0, 1], [0.27, 0.72]]) {
+        const px = fx + Math.cos(a + da * D) * r * k;
+        const py = fy + Math.sin(a + da * D) * r * k;
+        if (l === 0 && da === -0.5) ctx.moveTo(px, py);
+        else ctx.lineTo(px, py);
+      }
+    }
+    ctx.closePath();
+    ctx.fill();
+  };
+  const TURNED = ['#ffc85a', '#ff9a4a', '#f25a4a', '#ffb04a', '#e8603a'];
+  for (let k = 0; k < 22; k++) {
+    const u = (k + 0.5) / 22;
+    const x = x0 + u * (x1 - x0);
+    const fy = bend(x) + (k % 2 ? -2.8 : 2.8);
+    const rot = Math.sin(time * 2 + k) * 0.15 + (k % 2 ? -0.3 : 0.3);
+    const turned = Math.max(0, Math.min(1, (lead - u) / 0.06));
+    leaf(x, fy, 2.8, '#a8cc70', rot);
+    if (turned > 0) {
+      ctx.globalAlpha = turned;
+      leaf(x, fy, 2.8, TURNED[k % TURNED.length], rot);
+      ctx.globalAlpha = 1;
+    }
+  }
+  for (const q of [0.25, 0.5, 0.75]) {
+    const x = x0 + (x1 - x0) * q;
+    leaf(x, bend(x) - 3, 4.2, '#e8503a', Math.sin(time * 1.4 + q * 9) * 0.12);
+    ctx.fillStyle = '#ffd75e';
+    ctx.beginPath();
+    ctx.arc(x, bend(x) - 3, 0.9, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+// Lily Lake's track: a ribbon of water (deeper blue where the leader has already been), ripples
+// drifting along it, lily pads floating on it, each sprouting a pink lotus that eases open as the
+// leader goes past it; at the quarters, bigger pads already in bloom.
+function lilyStream(ctx, x0, x1, y, lead, time) {
+  ctx.fillStyle = '#c4ecf6';
+  roundRect(ctx, x0 - 4, y - 3.4, x1 - x0 + 6, 6.8, 3.4);
+  ctx.fill();
+  ctx.fillStyle = '#8fd4ec';
+  roundRect(ctx, x0 - 4, y - 3.4, Math.max(6.8, (x1 - x0) * lead + 4), 6.8, 3.4);
+  ctx.fill();
+  ctx.fillStyle = 'rgba(255,255,255,0.75)';
+  ctx.fillRect(x0, y - 2.6, x1 - x0, 0.8);
+  // Ripples drifting downstream.
+  for (let k = 0; k < 16; k++) {
+    const u = ((k / 16 + time * 0.02) % 1);
+    const x = x0 + u * (x1 - x0);
+    ctx.globalAlpha = Math.sin(u * Math.PI) * 0.8;
+    ctx.fillRect(x, y + (k % 2 ? 0.6 : -0.8), 3.4, 0.7);
+  }
+  ctx.globalAlpha = 1;
+  const pad = (px, py, r, flip) => {
+    ctx.fillStyle = '#4fa86a';
+    ctx.beginPath();
+    ctx.ellipse(px, py + 0.5, r, r * 0.45, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#6cc47e';
+    ctx.beginPath();
+    const n = flip ? Math.PI - 0.5 : 0.5;
+    ctx.moveTo(px, py);
+    ctx.ellipse(px, py, r, r * 0.42, 0, n + 0.32, n + Math.PI * 2 - 0.32);
+    ctx.closePath();
+    ctx.fill();
+  };
+  const lotus = (px, py, s, open) => {
+    if (open <= 0.05) {
+      ctx.fillStyle = '#ff9fbc';
+      ctx.beginPath();
+      ctx.moveTo(px, py - 4 * s);
+      ctx.quadraticCurveTo(px + 2 * s, py - 1.4 * s, px, py);
+      ctx.quadraticCurveTo(px - 2 * s, py - 1.4 * s, px, py - 4 * s);
+      ctx.fill();
+      return;
+    }
+    for (const [a, c] of [[-1, '#ffd6e4'], [1, '#ffd6e4'], [-0.45, '#ffb8cc'], [0.45, '#ffb8cc'], [0, '#ffe6ef']]) {
+      const ang = a * (0.25 + 0.75 * open);
+      ctx.save();
+      ctx.translate(px, py);
+      ctx.rotate(ang);
+      ctx.fillStyle = c;
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.quadraticCurveTo(1.6 * s, -2.4 * s, 0, -4.4 * s);
+      ctx.quadraticCurveTo(-1.6 * s, -2.4 * s, 0, 0);
+      ctx.fill();
+      ctx.restore();
+    }
+    ctx.fillStyle = '#ffd75e';
+    ctx.beginPath();
+    ctx.arc(px, py - 1.6 * s, 0.9 * s, 0, Math.PI * 2);
+    ctx.fill();
+  };
+  for (let k = 0; k < 14; k++) {
+    const u = (k + 0.5) / 14;
+    if ([0.25, 0.5, 0.75].some((q) => Math.abs(q - u) < 0.03)) continue;
+    const x = x0 + u * (x1 - x0) + Math.sin(time * 0.9 + k * 2) * 0.6;
+    const py = y + (k % 2 ? 1.6 : -0.6);
+    pad(x, py, 3.2, k % 2);
+    lotus(x, py, 0.62, Math.max(0, Math.min(1, (lead - u) / 0.06)));
+  }
+  for (const q of [0.25, 0.5, 0.75]) {
+    const x = x0 + (x1 - x0) * q;
+    pad(x, y + 0.6, 4.6, 0);
+    lotus(x, y + 0.4, 0.95, 1);
+  }
+}
+
 // A racer's little face on the track: two eyes and a mouth on its hair colour, by how it's doing:
 // ^^ and a grin in front, - - and an open pant worn out, a worried wobble at the back.
 function trackFace(ctx, x, y, r0, R, r, order) {
   const front = order[0] === r && R.clock > 2;
-  const tired = r.m.rest || (r.m.tired ?? 0) > 0.7;
+  const tired = (r.m.tired ?? 0) > 0.7;
   const back = order.indexOf(r) >= order.length - 2 && R.clock > 2;
   const e = r0 * 0.36;
   ctx.strokeStyle = '#3a2838';

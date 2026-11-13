@@ -762,6 +762,8 @@ export function updateWorld(world, dt, input) {
   world.map.clock = world.now;
   // A Mochi race holds everything else still while it runs (world/mochi-race.js).
   if (world.race) {
+    // (A course set at dusk is lit that way whatever the clock: the Grand Mochi Course's festival.)
+    if (world.map.dusk) world.map.night = Math.max(world.map.night ?? 0, world.map.dusk);
     tickRace(world, dt, input);
     return;
   }

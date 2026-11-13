@@ -1,0 +1,69 @@
+<!doctype html>
+<html><head><meta charset="utf-8"></head><body style="margin:0;background:#222">
+<canvas id="c"></canvas>
+<script type="module">
+// Dev tool: films a whole Mochi race (Beginner) frame by frame, off the clock, for when a live
+// recording can't run (the page hidden pauses the game): the world as the race camera sees it, no
+// HUD and no sound. ?course=climb&s=1&fps=30. Title "ready" when set up; then call
+// `window.film(n)` again and again: each call draws the next n frames and returns them as JPEG data
+// URLs (window.FILM_DONE once the race is over and the podium has had its time).
+import { createCharacter } from '../src/core/character.js';
+import { createWorld, updateWorld, loadMap } from '../src/world/world.js';
+import { createCamera, updateCamera, drawWorld } from '../src/render/scene.js';
+import { setHd, nextFrame } from '../src/render/pixel.js';
+import { preloadFxSprites } from '../src/render/fx-sprites.js';
+import { rollMochi, STATS } from '../src/data/mochi-genes.js';
+import { newRecord } from '../src/data/mochi-raise.js';
+import { startRace } from '../src/world/mochi-race.js';
+import { VW, VH } from '../src/input.js';
+
+const q = new URLSearchParams(location.search);
+const SCALE = Number(q.get('s') ?? 1);
+const FPS = Number(q.get('fps') ?? 30);
+preloadFxSprites();
+const rec = newRecord(rollMochi(Number(q.get('seed') ?? 7)));
+for (const st of STATS) Object.assign(rec.stats[st], { points: 300, level: 20 });
+const char = createCharacter('Mina', { hairStyle: 'bob' });
+char.garden = { back: null, mochi: [rec], eggs: [], unlocked: {} };
+const w = createWorld(char);
+w.log = () => {};
+window.W = w;
+loadMap(w, 'mochi_stadium', 'board');
+startRace(w, rec, q.get('course') ?? 'sprint', 'beginner');
+const idle = { held: new Set(), pressed: new Set(), locked: false };
+const view = document.getElementById('c');
+view.width = VW * SCALE;
+view.height = VH * SCALE;
+const vctx = view.getContext('2d');
+const cam = createCamera();
+let now = 100;
+let after = null;
+// (Warm the drawings up: a few frames drawn and thrown away.)
+for (let k = 0; k < 3; k++) draw();
+function draw() {
+  nextFrame();
+  vctx.setTransform(SCALE, 0, 0, SCALE, 0, 0);
+  vctx.imageSmoothingEnabled = false;
+  setHd(true, SCALE);
+  drawWorld(vctx, w, cam, now);
+}
+window.film = (n) => {
+  const out = [];
+  for (let i = 0; i < n && !window.FILM_DONE; i++) {
+    const steps = Math.round(60 / FPS);
+    for (let k = 0; k < steps; k++) {
+      now += 1 / 60;
+      updateWorld(w, 1 / 60, idle);
+      updateCamera(cam, w, 1 / 60);
+    }
+    draw();
+    out.push(view.toDataURL('image/jpeg', 0.86));
+    const R = w.race;
+    if (!R || R.phase === 'done') after ??= now;
+    if (after != null && now - after > 9) window.FILM_DONE = true;
+  }
+  return out;
+};
+document.title = 'ready';
+</script>
+</body></html>

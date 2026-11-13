@@ -1,0 +1,55 @@
+<!doctype html>
+<html><head><meta charset="utf-8"></head><body style="margin:0;background:#f6efe8">
+<canvas id="c"></canvas>
+<script type="module">
+// Dev tool: a Mochi's climbing styles (or ?mode=fly, its flying ones) on a pose sheet, each across one cycle (render/mochi-anim.js
+// climbPose, drawn by render/hero.js backShapes on a wall). ?n=8&s=3&seed=7. Title "ready" when
+// drawn; window.SHOT the PNG.
+import '../src/world/world.js';
+import { drawMochiAnim, CLIMBS, FLIES } from '../src/render/mochi-anim.js';
+import { MOCHI_SIZE } from '../src/render/wagashi.js';
+import { setHd, nextFrame } from '../src/render/pixel.js';
+import { newRecord } from '../src/data/mochi-raise.js';
+import { rollMochi } from '../src/data/mochi-genes.js';
+
+const q = new URLSearchParams(location.search);
+const n = Number(q.get('n') ?? 8);
+const S = Number(q.get('s') ?? 3);
+const rec = newRecord(rollMochi(Number(q.get('seed') ?? 7)));
+const MODE = q.get('mode') ?? 'climb';
+const TABLE = MODE === 'fly' ? FLIES : CLIMBS;
+const CW = MODE === 'fly' ? 48 : 40;
+const CH = MODE === 'fly' ? 76 : 56;
+const canvas = document.getElementById('c');
+canvas.width = (CW * n + 70) * S;
+canvas.height = CH * TABLE.length * S;
+const ctx = canvas.getContext('2d');
+setHd(true, S);
+const size = q.get('size') ?? 'baby';
+const sc = MOCHI_SIZE[size];
+for (let pass = 0; pass < 5; pass++) {
+  nextFrame();
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.fillStyle = '#f6efe8';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.setTransform(S, 0, 0, S, 0, 0);
+  TABLE.forEach((st, tier) => {
+    ctx.fillStyle = '#a8467a';
+    ctx.font = '700 7px sans-serif';
+    ctx.fillText(st.name, 4, tier * CH + 12);
+    for (let i = 0; i < n; i++) {
+      const x = 70 + i * CW + CW / 2;
+      const y = tier * CH + CH - 8;
+      ctx.fillStyle = MODE === 'fly' ? '#dce8fb' : '#e8c49a';
+      ctx.fillRect(x - CW / 2 + 4, y - CH + 12, CW - 8, CH - 12);
+      const m = { genes: rec, mode: MODE, tier, speed: 20, dist: (i / n) * (st.stride * sc / 0.6) + 0.001, size, dir: 1 };
+      m.st = null;
+      drawMochiAnim(ctx, m, x, MODE === 'fly' ? y - 20 * sc : y, 10 + i * 0.01);
+    }
+  });
+  await new Promise((r) => setTimeout(r, 400));
+}
+window.SHOT = canvas.toDataURL('image/png');
+document.title = 'ready';
+</script>
+</body></html>

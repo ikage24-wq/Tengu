@@ -10,7 +10,7 @@
 // who can't yet flails), Power its climbing, Fly how fast and how far it glides (one who can't yet
 // drops); its Stamina how fast running tires it (the same tiring as in the Garden: render/mochi-
 // anim.js STAMINAS, handed to the drawing as `m.tired`, so what you see is what is slowing it down),
-// uphill tiring it more; the least stamina-ed stop to catch their breath. Hills slow it going up and
+// uphill tiring it more; tired, it runs slower, but it never stops. Hills slow it going up and
 // speed it coming down; cloud fluff (`race.slow`) slows anyone wading through it. Its personality
 // sets its pace through the race (data/mochi-race.js paceOf). The rivals are rolled from the stage,
 // the rank and the hour, so everyone racing that stage that hour meets the same field.
@@ -44,22 +44,29 @@ const SWIM_SPEED = [26, 44, 64, 88, 112, 140];
 const CLIMB_SPEED = [8, 16, 26, 40, 56, 74];
 const FLY_SPEED = [30, 52, 60, 92, 128, 160];
 const SCOOT = 10;
-const FLAIL = 14;
+const FLAIL = 18;
 const FLOP = 40;
 // How steeply it glides down, by its Fly style (one who can't fly yet just drops).
 const GLIDE_SLOPE = [1.5, 1.2, 0.95, 0.75, 0.6, 0.5];
 const DROP = 3;
 // Its Stamina style: how fast running tires it, and how tired it can get (render/mochi-anim.js
-// STAMINAS); the most it can get is 1 only for the least stamina-ed, who then stop for a rest.
-const STAMINA = [[1 / 5, 1], [1 / 8, 0.85], [1 / 12, 0.65], [1 / 18, 0.45], [1 / 30, 0.25], [0, 0]];
-const REST = 2.6;
+// STAMINAS). Tired, it runs slower; it never stops for a rest (2026-11-13: stopping mid-race to
+// catch its breath wasn't fun). What's left of its stamina bar above the most running can tire it
+// is what it has for cheering, so even the least stamina-ed has a little.
+const STAMINA = [[1 / 5, 0.8], [1 / 8, 0.68], [1 / 12, 0.54], [1 / 18, 0.4], [1 / 30, 0.25], [0, 0]];
 // How far before a fork you can still choose your way.
 export const FORK_NEAR = 700;
-// How much slower it runs, all tired out; how much a hill slows it going up (and speeds it coming
+// How much slower it runs, all tired out (more on a course that's hard going, `course.drag`); how
+// much a hill slows it going up (and speeds it coming
 // down), and how much more going up tires it. Wading through cloud fluff, everyone goes at much the
 // same slow pace (a quick runner only a little quicker): the further a glide carries it, the less of
 // it there is.
+// Tired, it's pulled down toward a plod (`PLOD`, the same for everyone, so a worn-out sprinter is
+// no quicker than a worn-out slowpoke): `TIRED_SLOW` of the way at its most tired, never more than
+// `TIRED_MAX` however hard the going.
 const TIRED_SLOW = 0.4;
+const TIRED_MAX = 0.9;
+const PLOD = 26;
 const HILL_SPEED = 1.4;
 const HILL_TIRE = 3;
 const WADE = 22;
@@ -72,6 +79,18 @@ const LIP = 8;
 const GETAWAY = [0.35, 1.3];
 // Off the launch: a little hop up before the glide takes it down (px high, over how far along).
 const HOP = [10, 70];
+// Up a launch ramp: on a course with one drawn (render/courseart.js, Cloud Glide's), the run that
+// ends at a glide climbs the ramp's last stretch, so the racers run up it and leap off its top.
+// [where it starts before the edge, where its top starts, how high it rises] (px).
+const RAMP = [60, 4, 13];
+export function rampLift(map, course, r) {
+  if (!map.look?.launchArt) return 0;
+  const leg = legOf(course, r);
+  const next = course.legs[r.leg + 1];
+  if (leg?.kind !== 'run' || next?.kind !== 'glide') return 0;
+  const u = (r.x - (leg.to - RAMP[0])) / (RAMP[0] - RAMP[1]);
+  return u <= 0 ? 0 : RAMP[2] * Math.min(1, u);
+}
 // The countdown before Go; and how long the results show before Up can take you back.
 export const COUNTDOWN = 3;
 const LEAVE_AFTER = 1;
@@ -86,11 +105,14 @@ export const SLOW_MO = { secs: 1.4, rate: 0.3 };
 // apart) and cheer, confetti flying, for `secs` seconds (Up skips it once it's begun); then the
 // results. It stands in front of the stands, `x` past the finish; each place's block, how far
 // across from its middle and how tall.
+// (Long Hill Run's hilltop picnics sit back on the flat top; the top's edge, where yours tips over
+// and runs down, is this far on.)
+export const CREST_AHEAD = 50;
 export const PODIUM = { secs: 5, x: 150, skipAfter: 1.2, hop: 0.6, blocks: [[0, 26], [-36, 18], [36, 12]] };
 export const podiumSpot = (course, place) => ({ x: course.finish + PODIUM.x + PODIUM.blocks[place - 1][0], h: PODIUM.blocks[place - 1][1] });
 // On the line before Go each lane stands a little apart (so each can be seen), closing up over the
 // first moments of the race (only how they're drawn: everyone runs the same course).
-const LINEUP = { gap: 13, close: 1.2 };
+const LINEUP = { gap: 19, close: 1.2 };
 export function lineupOffset(R, r) {
   const at = (r.lane - (R.racers.length - 1) / 2) * LINEUP.gap;
   return R.phase === 'ready' ? at : R.phase === 'run' ? at * Math.max(0, 1 - R.clock / LINEUP.close) : 0;
@@ -122,7 +144,9 @@ export function rivalsFor(stageId, rank, hour) {
   for (let k = 0; k < 5; k++) {
     const rec = newRecord(rollMochi(Math.floor(rng() * 1e9)));
     for (const st of STATS) {
-      const p = Math.round(lo + (hi - lo) * rng() ** 1.4);
+      // (A rival can always walk: a Hatchling field rolled under that only crawled, 2026-11-13.)
+      const floor = st === 'run' ? Math.max(lo, CANT.run) : lo;
+      const p = Math.round(floor + (hi - floor) * rng() ** 1.4);
       Object.assign(rec.stats[st], { points: p, level: Math.max(1, Math.min(99, Math.round(p / 16))) });
     }
     if (rng() < RACE_RANKS[rank].grown) {
@@ -162,7 +186,7 @@ export function startRace(world, rec, stageId, rank = 'beginner', opts = {}) {
     me, party: opts.party ?? null, remote: opts.remote ?? null, back: opts.back ?? null, heard: Date.now() / 1000, sendIn: 0,
     racers: field.map((f, lane) => ({
       ...f, you: lane === me, lane, leg: 0, x: course.start, y: y0, climbed: 0, glide: null, seed: wobble() * 100, pace: paceOf(f.rec.personality),
-      runFor: 0, restUntil: 0, resting: false, cheerUntil: -1, cheerReady: 0, cheers: 0, done: null, place: 0, reacted: false,
+      runFor: 0, cheerUntil: -1, cheerReady: CHEER.first, cheers: 0, perfects: 0, done: null, place: 0, reacted: false,
       // (At each fork, the way it would rather go: you can change yours on the way, ArrowDown.)
       alt: Object.fromEntries(course.legs.map((l, i) => [i, Boolean(l.alt && preferAlt(f.rec, l))]).filter(([, v]) => v)),
       m: { genes: f.rec, dir: 1, speed: 0, dist: course.start, size: f.rec.stage === 'mochiko' ? 'baby' : 'grown', mode: 'run', tired: 0, rest: false },
@@ -181,32 +205,40 @@ export function startRace(world, rec, stageId, rank = 'beginner', opts = {}) {
   return true;
 }
 
-// Cheers racer `r` on: a burst of speed, paid for in stamina; a cheer gets one catching its breath
-// back on its feet sooner. Returns whether it took.
 // What one cheer costs this Mochi, out of its stamina bar (0 to 1), and how fast it gets it back.
 export const cheerCost = (rec) => CHEER.cost[0] - styleOf(rec.stats.stamina.points) * CHEER.cost[1];
 const cheerBack = (rec) => CHEER.back[0] + styleOf(rec.stats.stamina.points) * CHEER.back[1];
-// Whether it has the stamina for a cheer now (not while it's catching its breath).
-export const canAffordCheer = (r) => !r.m.rest && (r.m.tired ?? 0) + cheerCost(r.rec) <= 1.001;
-// Catching its breath, a cheer is an "Encourage!" instead: it costs nothing and gets it going a
-// little sooner (once a second at most).
-export const ENCOURAGE = { cut: 0.8, every: 1 };
-export const canEncourage = (R, r) => R.clock < r.restUntil && R.clock >= (r.encourageReady ?? 0);
-export function cheer(R, r) {
+// Whether it has the stamina left for a cheer now.
+export const canAffordCheer = (r) => (r.m.tired ?? 0) + cheerCost(r.rec) <= 1.001;
+// How a cheer now would land (data/mochi-race.js CHEER): 'perfect' the moment the button's full,
+// and again on each beat after while it waits (every `CHEER.every`, like a metronome, so one too
+// tired to cheer on the first beat can catch the next); 'good' between beats; 'soon' while it's
+// still refilling. (A press just after a cheer, a double tap, isn't held against it.)
+export const DOUBLE_TAP = 0.25;
+export const beatOf = (R, r) => ((R.clock - r.cheerReady) % CHEER.every + CHEER.every) % CHEER.every;
+export function cheerTiming(R, r, slack = 0) {
+  if (R.clock + slack < r.cheerReady) return 'soon';
+  const b = beatOf(R, r);
+  return !r.fumbled && (b < CHEER.window + slack || b > CHEER.every - slack) ? 'perfect' : 'good';
+}
+// Cheers `r` on, as `kind` ('perfect' or 'good'; worked out here unless a friend's game sends it).
+// Returns how it went ('perfect' or 'good') or false. (`slack`: a friend's cheer, sent
+// from their game, may arrive a moment before the host's clock has it ready.)
+export function cheer(R, r, kind = null, slack = 0) {
   if (R.phase !== 'run' || r.done != null) return false;
-  if (R.clock < r.restUntil) {
-    if (!canEncourage(R, r)) return false;
-    r.restUntil = Math.max(R.clock, r.restUntil - ENCOURAGE.cut);
-    r.encourageReady = R.clock + ENCOURAGE.every;
-    r.encouraged = R.clock;
-    return 'encourage';
+  const when = cheerTiming(R, r, slack);
+  if (when === 'soon') {
+    if (R.clock - (r.cheerAt ?? -9) > DOUBLE_TAP) Object.assign(r, { fumbled: true, soonAt: R.clock });
+    return false;
   }
-  if (R.clock < r.cheerReady || !canAffordCheer(r)) return false;
-  r.cheerUntil = R.clock + CHEER.secs;
-  r.cheerReady = R.clock + CHEER.every;
-  r.spent = Math.min(1, (r.spent ?? 0) + cheerCost(r.rec));
+  if (!canAffordCheer(r)) return false;
+  const how = kind ?? when;
+  const p = how === 'perfect' ? CHEER.perfect : CHEER;
+  Object.assign(r, { cheerUntil: R.clock + p.secs, cheerBoost: p.boost, cheerKind: how, cheerAt: R.clock, cheerReady: R.clock + CHEER.every, fumbled: false });
+  r.spent = Math.min(1, (r.spent ?? 0) + cheerCost(r.rec) * (how === 'perfect' ? CHEER.perfect.cost : 1));
   r.cheers += 1;
-  return true;
+  if (how === 'perfect') r.perfects += 1;
+  return how;
 }
 
 // A fork: a leg with another way round (`alt`, say a boardwalk over a river beside the swim), and
@@ -289,6 +321,43 @@ function stepLuck(R, r, course, leg) {
   } else r.windUntil = R.clock + LUCK.wind;
 }
 
+// Keeping the race together (2026-11-13): a rival far behind the nearest of the field's own Mochi
+// (yours, or a friend's) finds a second wind, and one far ahead eases off, so the pack stays in
+// sight and there are passes to watch. Both fade over the last stretch, where it's up to the
+// racers, and ease in and out over a second or so, never a jolt. (Distances are along the course.)
+const BAND = { behind: 70, catchUp: 0.3, catchOver: 400, ahead: 150, easeOff: 0.2, easeOver: 450, last: [0.8, 0.95], lastKeep: 0.35, ease: 1.2 };
+function bandOf(R, r, course) {
+  if (r.you || r.owner || r.ghost || r.done != null || R.phase !== 'run') return 1;
+  const p = progressOf(course, r);
+  let g = null;
+  for (const o of R.racers) {
+    if (!(o.you || o.owner) || o.done != null) continue;
+    const d = p - progressOf(course, o);
+    if (g == null || Math.abs(d) < Math.abs(g)) g = d;
+  }
+  if (g == null) return 1;
+  const k = Math.max(0, Math.min(1, (p / course.total - BAND.last[0]) / (BAND.last[1] - BAND.last[0])));
+  const keep = 1 - (1 - BAND.lastKeep) * k * k * (3 - 2 * k);
+  if (g < -BAND.behind) return 1 + keep * BAND.catchUp * Math.min(1, (-g - BAND.behind) / BAND.catchOver);
+  if (g > BAND.ahead) return 1 - keep * BAND.easeOff * Math.min(1, (g - BAND.ahead) / BAND.easeOver);
+  return 1;
+}
+// The rivals' own trainers cheer them on too, about as often as a player does (the same Good burst
+// and the same cost as yours; drawn from its own seed, so a party race sees the same). So cheering keeps yours level with the field, and cheering on the
+// beat, Perfect, is what gets it ahead.
+const RIVAL_CHEER = { first: [1.4, 3], every: [2.8, 5], under: 0.85 };
+function rivalCheer(R, r, leg) {
+  if (r.you || r.owner || r.ghost || r.done != null || R.phase !== 'run' || leg.kind === 'glide') return;
+  r.cheerRng ??= seededRandom(Math.floor(r.seed * 1000) + 91);
+  const span = (a) => a[0] + (a[1] - a[0]) * r.cheerRng();
+  r.nextCheer ??= span(RIVAL_CHEER.first);
+  if (R.clock < r.nextCheer) return;
+  r.nextCheer = R.clock + span(RIVAL_CHEER.every);
+  if ((r.m.tired ?? 0) + cheerCost(r.rec) > RIVAL_CHEER.under) return;
+  Object.assign(r, { cheerUntil: R.clock + CHEER.secs, cheerBoost: CHEER.boost, cheerKind: 'good', cheerAt: R.clock });
+  r.spent = Math.min(1, (r.spent ?? 0) + cheerCost(r.rec));
+}
+
 function stepRacer(R, r, dt, course, map) {
   const m = r.m;
   const s = r.rec.stats;
@@ -302,13 +371,15 @@ function stepRacer(R, r, dt, course, map) {
     return;
   }
   if (!r.ghost) stepLuck(R, r, course, leg);
+  rivalCheer(R, r, leg);
+  r.band = (r.band ?? 1) + (bandOf(R, r, course) - (r.band ?? 1)) * (1 - Math.exp(-dt / BAND.ease));
   // (Tripped: a moment stopped where it is, picking itself up.)
   if (!over && C < (r.stunUntil ?? 0)) {
     m.speed = 0;
     return;
   }
   // (A Hatchling race: little legs, so everyone goes at `speedUp` times their pace, or nobody would get home.)
-  const boost = (!over && C < r.cheerUntil ? CHEER.boost : 1) * (!over && C < (r.windUntil ?? 0) ? LUCK.windBoost : 1) * (RACE_RANKS[R.rank]?.speedUp ?? 1);
+  const boost = (!over && C < r.cheerUntil ? r.cheerBoost ?? CHEER.boost : 1) * (!over && C < (r.windUntil ?? 0) ? LUCK.windBoost : 1) * (RACE_RANKS[R.rank]?.speedUp ?? 1) * (over ? 1 : r.band);
   const k = progressOf(course, r) / course.total;
   const pace = k < 1 / 3 ? r.pace.early : k > 2 / 3 ? r.pace.late : 1;
   const wob = 1 + r.pace.wobble * (0.6 * Math.sin(C * 0.9 + r.seed) + 0.4 * Math.sin(C * 2.3 + r.seed * 1.7));
@@ -327,15 +398,7 @@ function stepRacer(R, r, dt, course, map) {
         if (r.place <= 3 || last) m.action = { name: last ? 'sulk' : 'cheer', t0: null, hold: 2 };
       }
     } else m.speed = 0;
-  } else if (C < r.restUntil) {
-    Object.assign(m, { speed: 0, rest: true, tired: 1 });
-    r.resting = true;
   } else {
-    if (r.resting) {
-      r.resting = false;
-      r.runFor *= 0.35;
-      r.spent = (r.spent ?? 0) * 0.35;
-    }
     // (What cheering spent comes back slowly, whatever it's doing.)
     r.spent = Math.max(0, (r.spent ?? 0) - dt * cheerBack(r.rec));
     if (leg.kind === 'run') {
@@ -343,20 +406,19 @@ function stepRacer(R, r, dt, course, map) {
       // (A boardwalk, `leg.y`, is flat and a little slower going, `leg.slow`.)
       const sl = leg.y != null ? 0 : (groundAt(map, r.x + 6) - groundAt(map, r.x - 6)) / 12;
       r.runFor += dt * (1 + Math.max(0, -sl) * HILL_TIRE);
-      // (A long hard course tires it faster, and wears it out sooner: `course.tire`, `course.restAt`,
-      // for `course.rest` seconds.)
+      // (A long hard course tires it faster: `course.tire`.)
       const f = Math.min(most, r.runFor * tire * r.pace.tire * (course.tire ?? 1));
-      // (Its stamina bar: tired from running, plus what cheering has spent. Run down to nothing, by
-      // either, it has to stop and catch its breath.)
+      // (Its stamina bar: tired from running, plus what cheering has spent; the emptier, the slower,
+      // and slower still on a hard-going course, `course.drag`. Never to a stop.)
       const bar = Math.min(1, f + (r.spent ?? 0));
-      if ((f >= (course.restAt ?? 0.98) && most >= (course.restAt ?? 1)) || bar >= 0.98) r.restUntil = C + (course.rest ?? REST);
       const hill = Math.max(0.55, Math.min(1.3, 1 + sl * HILL_SPEED));
       const wading = (course.slow ?? []).some(([a, b]) => r.x >= a && r.x < b);
       const run = (wading ? WADE + runSpeed(s.run.points) * 0.05 : runSpeed(s.run.points) * hill) * (leg.slow ?? 1);
-      const v = run * pace * wob * (1 - TIRED_SLOW * f) * boost * Math.min(1, GETAWAY[0] + C * GETAWAY[1]);
+      const worn = Math.min(TIRED_MAX, TIRED_SLOW * (course.drag ?? 1) * bar);
+      const v = (run * (1 - worn) + Math.min(run, PLOD) * worn) * pace * wob * boost * Math.min(1, GETAWAY[0] + C * GETAWAY[1]);
       const end = runEnd(course, r);
       r.x = Math.min(end, r.x + v * dt);
-      r.y = leg.y ?? groundAt(map, r.x);
+      r.y = (leg.y ?? groundAt(map, r.x)) - rampLift(map, course, r);
       Object.assign(m, { mode: 'run', inWater: false, speed: v, tired: bar });
       if (r.x >= end && r.leg < course.legs.length - 1) {
         nextLeg(course, r);
@@ -467,11 +529,13 @@ export function tickRace(world, dt, input) {
       R.first ??= R.clock;
     }
     // (Once yours is home, no long wait for the stragglers: a few seconds to see who else gets in,
-    // or straight on with Up; the rest are ranked by how far they got. Not when friends are still
-    // running theirs.)
+    // or straight on with Up; the rest get the time they're on course for. Not when friends are
+    // still running theirs. A race on your own runs till yours is home, however long that takes,
+    // up to the course's limit; with friends, it ends `tail` after the first one home.)
     const friendsOut = R.racers.some((r, i) => i !== R.me && r.owner && r.done == null);
     const yoursHome = you.done != null && !friendsOut && (R.clock >= you.done + AFTER_YOU || (up && R.clock > you.done + 0.5));
-    if (yoursHome || R.finished === R.racers.length || (R.first != null && R.clock >= R.first + (RACE_RANKS[R.rank].tail ?? RACE_TAIL)) || R.clock >= (course.maxTime ?? RACE_MAX)) endOfRace(world, R);
+    const tail = R.party?.length && R.first != null && R.clock >= R.first + (RACE_RANKS[R.rank].tail ?? RACE_TAIL);
+    if (yoursHome || R.finished === R.racers.length || tail || R.clock >= (course.maxTime ?? RACE_MAX)) endOfRace(world, R);
   } else {
     for (const r of R.racers) stepRacer(R, r, dt, course, world.map);
     podiumStep(world, R);
@@ -556,6 +620,15 @@ function stepGhost(R, r, course) {
 // little ahead of it the faster it goes; between it and a rival when they're neck and neck; at the
 // line as the first comes in (and as yours does); and at the podium.
 const CUT_SHOTS = new Set(['sweep', 'finish', 'podium']);
+// How close each shot comes in (render/scene.js draws the race this much larger): the opening sweep
+// at the usual size so the whole course shows, the line-up and the running close enough to see
+// faces and styles, and while running it pulls back just enough to keep the nearest rival in
+// frame (`PACK`), so a race is never one Mochi alone on an empty field.
+const ZOOM = { sweep: 1, line: 1.6, follow: 1.7, duel: 1.65, finish: 1.3, podium: 1.5 };
+const PACK = { near: 320, room: 120, min: 1.05 };
+const CLIMB_LOOK = 50;
+const GLIDE_LOOK = 35;
+const VW = 640; // (the screen's width, render/scene.js VIEW_W)
 function shotOf(world, R) {
   const map = world.map;
   const course = map.race;
@@ -573,7 +646,7 @@ function shotOf(world, R) {
     const i = Math.floor((R.t - INTRO.sweep) / INTRO.card);
     const r = R.racers[Math.min(R.racers.length - 1, i)];
     if (i < R.racers.length) return { shot: 'line', x: course.start + lineupOffset(R, r) + 40, y: r.y };
-    return { shot: 'line', x: course.start + 70, y: g(course.start) };
+    return { shot: 'line', x: course.start + 50, y: g(course.start) };
   }
   if (R.phase === 'done') {
     const x = course.finish + PODIUM.x;
@@ -582,19 +655,33 @@ function shotOf(world, R) {
   const last = course.legs.length - 1;
   const coming = (r) => r.done == null && r.leg === last && course.finish - r.x < 200;
   if (R.slowLeft > 0 || (coming(you) && R.clock > 2)) return { shot: 'finish', x: course.finish + 30, y: g(course.finish) };
-  const ahead = Math.min(80, (you.m.speed ?? 0) * 0.45);
+  const ahead = Math.min(60, (you.m.speed ?? 0) * 0.35);
+  // (Up a wall, it looks up the way it's going; off in a glide, down toward where it'll land.)
+  const lift = you.m.mode === 'climb' ? CLIMB_LOOK : you.m.mode === 'fly' ? -GLIDE_LOOK : 0;
   if (you.done == null) {
     const p = progressOf(course, you);
     const rival = R.racers.find((r) => r !== you && r.done == null && Math.abs(progressOf(course, r) - p) < 22);
-    if (rival) return { shot: 'duel', x: (you.x + rival.x) / 2 + ahead * 0.5, y: (you.y + rival.y) / 2 };
+    if (rival) return { shot: 'duel', x: (you.x + rival.x) / 2 + ahead * 0.5, y: (you.y + rival.y) / 2 - lift };
+    // The nearest rival, ahead or behind, if it's close enough to share the screen: framed together.
+    let near = null;
+    for (const r of R.racers) {
+      if (r === you || r.done != null) continue;
+      const d = Math.abs(progressOf(course, r) - p);
+      if (d < PACK.near && (!near || d < near.d)) near = { r, d };
+    }
+    if (near) {
+      const dx = Math.abs(near.r.x - you.x);
+      const zoom = Math.max(PACK.min, Math.min(ZOOM.follow, (VW * 0.8) / (dx + PACK.room)));
+      return { shot: 'follow', x: you.x * 0.6 + near.r.x * 0.4 + ahead * 0.5, y: you.y * 0.6 + near.r.y * 0.4 - lift, zoom };
+    }
   }
-  return { shot: 'follow', x: you.x + ahead, y: you.y };
+  return { shot: 'follow', x: you.x + ahead, y: you.y - lift };
 }
 function aimCamera(world, R) {
   const s = shotOf(world, R);
   if (s.shot !== R.shot && (CUT_SHOTS.has(s.shot) || CUT_SHOTS.has(R.shot))) R.cut = (R.cut ?? 0) + 1;
   R.shot = s.shot;
-  R.cam = { x: s.x, y: s.y, cut: R.cut ?? 0 };
+  R.cam = { x: s.x, y: s.y, cut: R.cut ?? 0, zoom: s.zoom ?? ZOOM[s.shot] ?? 1 };
 }
 
 // ---------- A friend's party race ----------
@@ -657,9 +744,17 @@ function tickRemote(world, R, dt, up, you, input = null) {
     R.forkFlip = R.clock;
     raceNet.fork?.(world, R, fk.leg, you.alt[fk.leg]);
   }
-  if (up && R.phase === 'run' && you.done == null && (you.m.rest || (R.clock >= (you.cheerReady ?? 0) && canAffordCheer(you)))) {
-    you.cheerReady = R.clock + CHEER.every;
-    raceNet.cheer?.(world, R);
+  // (Cheering: how it lands is judged here, on your own screen, and sent; the host's game runs it.)
+  if (up && R.phase === 'run' && you.done == null) {
+    const when = cheerTiming(R, you);
+    if (when === 'soon') {
+      if (R.clock - (you.cheerAt ?? -9) > DOUBLE_TAP) Object.assign(you, { fumbled: true, soonAt: R.clock });
+    } else if (canAffordCheer(you)) {
+      Object.assign(you, { cheerReady: R.clock + CHEER.every, cheerKind: when, cheerAt: R.clock, fumbled: false });
+      you.cheers += 1;
+      if (when === 'perfect') you.perfects += 1;
+      raceNet.cheer?.(world, R, when);
+    }
   }
   const k = 1 - Math.exp(-dt * 12);
   const map = world.map;
@@ -676,7 +771,7 @@ function tickRemote(world, R, dt, up, you, input = null) {
     // (On the ground, or in the water, exactly where it is now, never a step behind it in the air;
     // up a wall or in a glide, eased along with it.)
     const mode = r.m.mode;
-    if (mode === 'run' && map.race && legOf(map.race, r)?.kind === 'run') r.y = legOf(map.race, r).y ?? groundAt(map, r.x);
+    if (mode === 'run' && map.race && legOf(map.race, r)?.kind === 'run') r.y = (legOf(map.race, r).y ?? groundAt(map, r.x)) - rampLift(map, map.race, r);
     else if (mode === 'swim') r.y = waterAt(map, r.x) ?? r.ty;
     else r.y = Math.min(groundAt(map, r.x), r.y + (r.ty - r.y) * k);
     r.m.dist += Math.hypot(r.x - px, r.y - py);
@@ -711,7 +806,23 @@ export function applyRaceEnd(world, msg) {
   });
   Object.assign(R, { phase: 'done', t: 0, finished: R.racers.length });
   R.results = standings(R, world.map.race);
+  outTimes(R, world.map.race);
   award(world, R);
+}
+// The ones still out when it ends get the time they were on course for (`est`), from their pace so
+// far: so the results read as a race, everyone with a time, never one ahead of a racer it finished
+// behind. (2026-11-13: it said "not home" for most of the field.)
+function outTimes(R, course) {
+  let last = 0;
+  for (const r of R.results) {
+    if (r.done != null) {
+      last = Math.max(last, r.done);
+      continue;
+    }
+    const p = Math.max(1, progressOf(course, r));
+    r.est = Math.max(R.clock, last + 0.1, (R.clock * course.total) / p);
+    last = r.est;
+  }
 }
 // The host's game: a friend cheered their Mochi on.
 // The host's game: a friend switched their Mochi's way at a fork.
@@ -722,10 +833,11 @@ export function applyFork(world, ownerId, leg, alt) {
   r.alt = { ...(r.alt ?? {}), [leg]: Boolean(alt) };
   return true;
 }
-export function applyCheer(world, ownerId) {
+const FRIEND_SLACK = 0.4;
+export function applyCheer(world, ownerId, kind = null) {
   const R = world.race;
   const r = R && !R.remote ? R.racers.find((x) => x.owner === ownerId) : null;
-  return r ? cheer(R, r) : false;
+  return r ? cheer(R, r, kind === 'perfect' || kind === 'good' ? kind : null, FRIEND_SLACK) : false;
 }
 
 // Where everyone is now: the ones home in the order they finished, then the rest by how far along.
@@ -742,6 +854,7 @@ function endOfRace(world, R) {
   Object.assign(R, { phase: 'done', t: 0 });
   for (const r of standings(R, world.map.race)) if (!r.place) r.place = ++R.finished;
   R.results = standings(R, world.map.race);
+  outTimes(R, world.map.race);
   award(world, R);
   if (R.party?.length) raceNet.end?.(world, R);
 }

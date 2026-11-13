@@ -37,6 +37,19 @@ S = {
     'astonish': 'Alexander Kopeikin - Emotion and Magic/magic, energy flow, astonishment-001.wav',
     'light': 'Epic Stock Media - Fantasy Game 2 - Sound Kit for Enchanted Realms/MAGAngl_Magic Light Spell Enchantment Potion Effect Tonal Bright 03_ESM_FG2.wav',
     'bells': '344 Audio - Christmas Vol. 1/MAGMisc_Magic Christmas Bells 2_344 Audio_Christmas.wav',
+    # Sakura Sprint's festival (2026-11-13): a deep round drum hit for the taiko, a small crowd
+    # cheering and clapping, and a handbell pitched up into wind chimes.
+    'taiko': 'BluezoneCorp - Modern Cinematic Impact/Bluezone_BC0294_modern_cinematic_impact_percussion_009.wav',
+    'cheer': 'Sonik Sound Library - Spanish Crowds/CRWDCheer_Small Club, 50 People, Crowd, Spanish, Cheering and Applause-Surround_KSL_KS015.wav',
+    'handbell': 'Mechanical Wave - Sound Effects Collection/BELLHand_Metallic Bell_ 22_MWSFX_SEC.wav',
+    # Lily Lake's gala (2026-11-13): a clear held whistle for the lifeguard starter, and a lake
+    # lapping gently at a dock.
+    # Mortar Cliff's festival (2026-11-13): a wooden thump with a soft squelch for the mallet in the
+    # mochi dough, and corn leaves rustling for the autumn breeze.
+    'woodsq': 'Epic Stock Media - Tower Defense Game/WOODImpt_Hit Blood Spill Splat Wood Impact Light Hit Squelch Small Thump 03_ESM_TDG.wav',
+    'cornleaf': 'InMotionAudio - Sound of the Corn/VEGELeaf_CornLeafMovements02_InMotionAudio_SoundoftheCorn.wav',
+    'whistleh': 'SoundBits - Vox Hominis - Human Effort Voices/WHSTHmn_Whistle Male 06 09_SNDBTS_VH.wav',
+    'lakelap': 'Epic Stock Media - Public Spaces - Storms Lakes Parks and Rural Nature Exteriors/WATRLap_Summer Tennessee Lake Dock Water Ripples Wake Wave Gentle 05 Distant_ESM_CPS.wav',
     'cloth24': 'InMotionAudio - Foley T-Shirt/FOLYClth_ClothMovement24_InMotionAudio_FoleyT-Shirt.wav',
     'cloth29': 'InMotionAudio - Foley T-Shirt/FOLYClth_ClothMovement29_InMotionAudio_FoleyT-Shirt.wav',
     'pats': 'InMotionAudio - Foley T-Shirt/FOLYClth_SinglePats04_InMotionAudio_FoleyT-Shirt.wav',
@@ -68,6 +81,17 @@ S = {
     'elecimpact': 'Epic Stock Media - Elemental Mutation Whooshes and Impacts/ELECMisc_Impact Electric Tonal Deep Movement Motion Hiss Glitch 01_ESM_EMWI.wav',
     'thunder': 'Epic Stock Media - Public Spaces - Storms Lakes Parks and Rural Nature Exteriors/STORM_Texas Rain Thunder Initial Crash Boom Storm 01 Clap Lightning_ESM_CPS.wav',
     'rumble': 'Jake Fielding - Interior Wind Rain and Storms/THUN_Interior Thunder Rumble_JF_INT Storm_01.wav',
+    # Long Hill Run's sweets (2026-11-13): a kawaii pop, a bright interface pop, a kalimba running
+    # up, a single music box note, and a patter of cartoon pops.
+    'kpop': 'Rogue Waves - Kawaii UI/TOONPop_Syringe Pop 4_RogueWaves_KawaiiUI.wav',
+    'ipop': 'Cinematic Sound Design - Interface & Infographics/Interface Pop High Short.wav',
+    'kalimba': 'CB_Sounddesign - Applicable Sounds - Organic UI and Building Games SFX/UIMisc_Kalimba 3 Up_CB Sounddesign_APPlicable Sounds.wav',
+    'mbox': 'Sonic Bat - Music Boxes/SBmb_Music Box A 013.wav',
+    'cpops': 'Cinematic Sound Design - Cartoon Impacts/Cartoon Pops Random Sequence Reverb.wav',
+    # The Grand Mochi Course's festival (2026-11-13): fireworks near (a launch thump, then the big
+    # boom and its crackle) and far off over the hills.
+    'fwnear': 'Ivo Vicic - Fireworks FX/13 Fireworks_powerful explosions_multiples in a row_near.wav',
+    'fwdist': 'Sonic Bat - Fireworks Ambience/SBfa_Distant Fireworks 005.wav',
 }
 
 # name: [(source, start s, length s, pitch x, gain dB, delay ms), ...]
@@ -258,17 +282,80 @@ B = {
     # little bells; the party's is longer and fuller, the bells ringing on.
     'buff': [('light', 0.0, 1.3, 1.0, 0, 0), ('bells', 2.21, 1.2, 1.0, -8, 0)],
     'partyBuff': [('light', 0.0, 1.9, 0.94, 0, 0), ('bells', 2.21, 2.0, 1.0, -6, 0), ('bells', 0.41, 0.6, 1.0, -9, 450)],
+    # Sakura Sprint's festival (2026-11-13). The taiko: one round "don" (a touch higher, lighter),
+    # and at Go a double beat, the second higher; the crowd swelling up to a cheer (faded in, its
+    # 7th value); one chime note (the game pitches it up into a little tune).
+    'taikoDon': [('taiko', 0.0, 1.0, 1.12, 0, 0)],
+    'taikoGo': [('taiko', 0.0, 1.3, 1.0, 0, 0), ('taiko', 0.0, 1.1, 1.2, -2, 150)],
+    'crowdSwell': [('cheer', 0.0, 4.6, 1.0, 0, 0, 0.9)],
+    'chimeBell': [('handbell', 0.28, 1.6, 1.0, 0, 0)],
+    # Lily Lake's gala (2026-11-13). The lifeguard's whistle: a short toot on each count (the steady
+    # middle of the held whistle, a touch higher) and a long blast at Go; a racer diving in (a
+    # plunge, its spray, a few bubbles after); one climbing out and shaking off (a soft swish of
+    # water); a buoy's fountain leaping (a gush and a swish); bubbles over the podium; and the lake
+    # lapping at the shore, three takes (faded in).
+    'lakeToot': [('whistleh', 0.82, 0.24, 1.2, 0, 0)],
+    'lakeWhistle': [('whistleh', 0.80, 0.86, 1.2, 0, 0)],
+    'lakeDive': [('subimpact', 0.1, 0.5, 1.1, 0, 0), ('wimpact', 0.95, 0.55, 1.15, -7, 25), ('bubbles', 0.0, 0.3, 1.0, -12, 140)],
+    'lakeSwish': [('wade', 0.7, 0.9, 1.2, 0, 0)],
+    'lakeJet': [('wflow', 9.6, 1.0, 1.3, -1, 0), ('wade', 0.75, 0.6, 1.35, -6, 60)],
+    'lakeBubbles': [('bubbles', 0.0, 0.6, 1.05, 0, 0)],
+    'lakeLap1': [('lakelap', 19.8, 2.8, 1.0, 0, 0, 0.6)],
+    'lakeLap2': [('lakelap', 24.2, 3.0, 1.0, 0, 0, 0.6)],
+    'lakeLap3': [('lakelap', 28.4, 3.0, 1.0, 0, 0, 0.6)],
+    # Mortar Cliff's festival (2026-11-13). A mallet into the dough ("pettan": the wooden thump
+    # pitched down with a little drum under it) on each count; two at Go, the drum swelling; the
+    # breeze through the maples (a soft gust and rustling leaves, faded in); the bell at a wall's top
+    # (the handbell, pitched down into a deeper bell).
+    'mochiPound': [('woodsq', 0.0, 0.3, 0.82, 0, 0), ('taiko', 0.0, 0.35, 1.5, -12, 0)],
+    'mochiPoundGo': [('woodsq', 0.0, 0.3, 0.82, 0, 0), ('woodsq', 0.0, 0.3, 0.92, 0, 170), ('taiko', 0.0, 0.8, 1.15, -6, 170)],
+    'leafGust': [('airy', 0.0, 1.6, 1.0, -4, 0, 0.5), ('cornleaf', 0.3, 1.6, 1.0, 0, 150, 0.3)],
+    'wallBell': [('handbell', 0.28, 1.8, 0.75, 0, 0)],
+    # Cloud Glide's winter (2026-11-13). Soft bells on each count, bells and a rush of wind at Go;
+    # yours taking off (a gust); landing in the snow (a soft pat, a little puff of air); a cheer as
+    # yours lands; the wind over the peak now and then (faded in).
+    'snowBell': [('bells', 0.0, 1.0, 1.0, 0, 0)],
+    'snowGo': [('bells', 0.0, 1.4, 1.0, 0, 0), ('airy', 0.0, 1.2, 1.1, -4, 80)],
+    'glideGust': [('airy', 0.0, 1.4, 0.95, 0, 0, 0.2)],
+    'snowLand': [('pats', 0.0, 0.3, 0.9, 0, 0), ('airy', 0.2, 0.4, 1.4, -10, 0)],
+    'snowWind': [('airy', 0.0, 2.0, 0.8, 0, 0, 0.6)],
+    'landCheer': [('cheer', 1.0, 2.0, 1.0, 0, 0, 0.3)],
+    # Long Hill Run's sweets (2026-11-13). A kawaii pop on each count; at Go a bright pop, a kalimba
+    # running up and a music box note on top; a soft gust as yours tips over a hilltop and runs
+    # down; single music box notes now and then (the game pitches them into a little tune); a
+    # patter of cartoon pops and a twinkle over the podium as the sprinkles fall.
+    'sweetPop': [('kpop', 0.0, 0.2, 1.0, 0, 0)],
+    'sweetGo': [('ipop', 0.0, 0.2, 1.0, 0, 0), ('kalimba', 0.0, 0.5, 1.0, -2, 60), ('mbox', 0.04, 1.3, 2.0, -6, 300)],
+    'sweetChime': [('mbox', 0.04, 1.3, 1.0, 0, 0)],
+    'hillWhoosh': [('airy', 0.0, 1.2, 1.15, -3, 0, 0.25)],
+    'sweetShower': [('cpops', 0.0, 0.97, 1.1, -4, 0), ('twinkle', 0.0, 1.8, 1.0, -5, 120)],
+    # The Grand Mochi Course's festival at dusk (2026-11-13). The taiko a little deeper on each
+    # count; at Go two strokes and a firework popping off; the drummer on the yagura drumming yours
+    # over its top (three strokes); a firework launched and bursting as yours takes off; fireworks
+    # booming far off now and then (three takes, faded in); sparkler twinkles and a far boom over
+    # the podium.
+    'matsuriDon': [('taiko', 0.0, 1.0, 0.92, 0, 0)],
+    'matsuriGo': [('taiko', 0.0, 1.3, 0.92, 0, 0), ('taiko', 0.0, 1.1, 1.06, -2, 150), ('fwnear', 2.5, 1.6, 1.0, -9, 320)],
+    'yaguraDon': [('taiko', 0.0, 0.5, 1.02, -1, 0), ('taiko', 0.0, 0.5, 1.08, -2, 170), ('taiko', 0.0, 1.0, 0.96, 0, 340)],
+    'fwLaunch': [('fwnear', 1.3, 3.0, 1.0, 0, 0)],
+    'fwFar1': [('fwdist', 11.4, 2.6, 1.0, 0, 0, 0.05)],
+    'fwFar2': [('fwdist', 7.8, 2.4, 1.0, 0, 0, 0.05)],
+    'fwFar3': [('fwdist', 6.3, 2.2, 1.0, 0, 0, 0.05)],
+    'sparkShower': [('twinkle', 0.0, 1.8, 0.9, -3, 0), ('fwdist', 11.4, 2.6, 1.0, -8, 250)],
 }
 
 
 def build(name, layers, fade=0.3):
     args = [FF, '-nostdin', '-v', 'error', '-y']
     fc = []
-    for n, (k, st, ln, p, db, dl) in enumerate(layers):
+    for n, layer in enumerate(layers):
+        # (A 7th value: a longer fade in, for something that swells up.)
+        k, st, ln, p, db, dl = layer[:6]
+        fin = layer[6] if len(layer) > 6 else 0.003
         args += ['-ss', f'{st:.3f}', '-t', f'{ln:.3f}', '-i', SRC + S[k]]
         out_len = ln / p
         f = (f'[{n}:a]aformat=sample_rates=44100:channel_layouts=stereo,asetrate={44100 * p:.0f},aresample=44100,'
-             f'afade=t=in:d=0.003,afade=t=out:st={out_len * (1 - fade):.3f}:d={out_len * fade:.3f},volume={db}dB')
+             f'afade=t=in:d={fin},afade=t=out:st={out_len * (1 - fade):.3f}:d={out_len * fade:.3f},volume={db}dB')
         if dl:
             f += f',adelay={dl}|{dl}'
         fc.append(f + f'[l{n}]')

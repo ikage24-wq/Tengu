@@ -93,3 +93,27 @@ Her pearls, shells, crescents, ribbons, pillars of moonlight, drops, springs, he
 ## Maelstrom sounds (tools/build-fight.py, 2026-11-09)
 
 Her spears, vortex bolts, vortices, beams, slams, glowing charges, slash, shell, pool, black wave and the Maelstrom whirlpool, from the same bundles as the Tide Mage's, pitched down and layered with Federico Soler Effective Trailer Booms Vol. 2 and Cinematic Sound Design Ultra Transitions & Impacts.
+
+## Sakura Sprint festival sounds (tools/build-fight.py, 2026-11-13)
+
+The taiko on the countdown and the double beat at Go (BluezoneCorp - Modern Cinematic Impact, a deep percussion hit, pitched up a little), the crowd swelling at the final stretch (Sonik Sound Library - Spanish Crowds, a small club cheering and clapping, faded in), and the wind chimes (Mechanical Wave - Sound Effects Collection, a metallic handbell, pitched up into notes by the game). Sonniss GDC bundles, royalty free inside the game.
+
+## Lily Lake gala sounds (tools/build-fight.py, 2026-11-13)
+
+The lifeguard starter's whistle, a short toot on each count and a long blast at Go (SoundBits - Vox Hominis - Human Effort Voices, a held whistle, its steady middle pitched up a little); racers diving in (InMotionAudio - Submerge water impact with BluezoneCorp - Designed Water spray and a few Cinematic Sound Design cartoon bubbles); climbing out and the buoy fountains (Justsoundeffects - Water in Motion soft movement, InMotionAudio - Submerge water flow); bubbles over the podium (Cinematic Sound Design - Cartoon & Animation Vol 2); and the lake lapping at the shore, three takes (Epic Stock Media - Public Spaces, a summer lake dock). Sonniss GDC bundles, royalty free inside the game.
+
+## Mortar Cliff festival sounds (tools/build-fight.py, 2026-11-13)
+
+The mallet pounding mochi on the count and at Go (Epic Stock Media - Tower Defense Game, a light wooden hit with a squelch, pitched down, a little of the BluezoneCorp taiko under it), the breeze through the maples (Rescopic Sound - Distinct Whooshes, an airy wind gust, with InMotionAudio - Sound of the Corn leaf movements), and the bell at each wall's top (the Mechanical Wave handbell, pitched down). Sonniss GDC bundles, royalty free inside the game.
+
+## Cloud Glide winter sounds (tools/build-fight.py, 2026-11-13)
+
+Soft bells on the count and at Go (344 Audio - Christmas Vol. 1, magic Christmas bells), the gust as yours takes off and the wind over the peak (Rescopic Sound - Distinct Whooshes, an airy wind gust), landing in the snow (InMotionAudio - Foley T-Shirt, a soft pat), and a cheer as yours lands (Sonik Sound Library - Spanish Crowds). Sonniss GDC bundles, royalty free inside the game.
+
+## Long Hill Run sweets sounds (tools/build-fight.py, 2026-11-13)
+
+A kawaii pop on each count (Rogue Waves - Kawaii UI, a syringe pop); at Go a bright pop (Cinematic Sound Design - Interface & Infographics), a kalimba running up (CB_Sounddesign - Applicable Sounds) and a music box note an octave up (Sonic Bat - Music Boxes); single music box notes now and then, which the game pitches into a little tune; a soft gust as yours runs down from a hilltop (Rescopic Sound - Distinct Whooshes, an airy wind gust) after the cheer there (Sonik Sound Library - Spanish Crowds); and a patter of cartoon pops (Cinematic Sound Design - Cartoon Impacts) with a twinkle (Cinematic Sound Design - User Interface) over the podium as the sprinkles fall. Sonniss GDC bundles, royalty free inside the game.
+
+## Grand Mochi Course festival sounds (tools/build-fight.py, 2026-11-13)
+
+The taiko a little deeper on each count and two strokes at Go (BluezoneCorp - Modern Cinematic Impact, as at Sakura Sprint) with a firework popping off; the drummer on the yagura drumming yours over its top (the same taiko, three strokes) and the crowd's cheer (Sonik Sound Library - Spanish Crowds); a firework launched and bursting as yours takes off (Ivo Vicic - Fireworks FX, powerful explosions near: the launch thump, the boom and its crackle); fireworks booming far off now and then, three takes (Sonic Bat - Fireworks Ambience, distant fireworks); and over the podium a twinkle (Cinematic Sound Design - User Interface) and a far boom. The pond's dives and swishes are Lily Lake's. Sonniss GDC bundles, royalty free inside the game.

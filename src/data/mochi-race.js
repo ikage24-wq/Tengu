@@ -10,7 +10,7 @@
 export const RACE_STAGES = {
   sprint: { name: 'Sakura Sprint', tab: 'Sprint', stat: 'run', map: 'mrace_sprint', about: 'A dash down a blossom meadow, over little hills. All about Run, and a little Stamina.' },
   swim: { name: 'Lily Lake Swim', tab: 'Swim', stat: 'swim', map: 'mrace_swim', about: 'A dash to the shore, then right across a lily lake. All about Swim.' },
-  climb: { name: 'Mortar Cliff Climb', tab: 'Climb', stat: 'power', map: 'mrace_climb', about: 'Up two climbing walls, a ledge between and a sprint along the top. All about Power.' },
+  climb: { name: 'Mortar Cliff Climb', tab: 'Climb', stat: 'power', map: 'mrace_climb', about: 'Up three climbing walls, a ledge run between each and a sprint along the top. All about Power.' },
   glide: { name: 'Cloud Glide', tab: 'Glide', stat: 'fly', map: 'mrace_glide', about: 'Off a high cliff and down over the cloud fluff: the further it glides, the less fluff to wade. All about Fly.' },
   hills: { name: 'Long Hill Run', tab: 'Hills', stat: 'stamina', map: 'mrace_hills', about: 'A long way over big hills: uphill slows and tires it. All about Stamina.' },
   grand: { name: 'Grand Mochi Course', tab: 'Grand', stat: null, map: 'mrace_grand', about: 'The meadow, the lake, a wall, a glide over the clouds and home over the hills. Everything.', prizeMul: 1.5, needs: 3 },
@@ -24,7 +24,7 @@ export const RACE_STAGES = {
 // `needs` Beginner races); winning a rank opens the next rank of that stage.
 export const RACE_RANKS = {
   // (For a Mochi just hatched: rivals that can only just walk, a small purse for everyone who runs.)
-  hatchling: { name: 'Hatchling', rivals: [30, 100], grown: 0, prize: [300, 150, 80], rest: 40, tail: 45, speedUp: 2.2 },
+  hatchling: { name: 'Hatchling', rivals: [30, 100], grown: 0, prize: [300, 150, 80], rest: 40, tail: 45, speedUp: 1.6 },
   beginner: { name: 'Beginner', rivals: [120, 620], grown: 0.45, prize: [500, 250, 100], rest: 20 },
   challenge: { name: 'Challenge', rivals: [650, 1400], grown: 0.8, prize: [2000, 1000, 400], rest: 80 },
   master: { name: 'Master', rivals: [1300, 2100], grown: 1, prize: [8000, 4000, 1500], rest: 300 },
@@ -85,13 +85,18 @@ const PACE = {
 };
 export const paceOf = (personality) => ({ early: 1, late: 1, tire: 1, wobble: 0.05, ...PACE[personality] });
 
-// Cheering: a burst this much faster, for this long; it costs this many seconds of running's
-// tiredness, and it can't be done again too soon.
 // Cheering: a burst of speed (`boost` for `secs`, at most every `every` seconds) paid for out of its
 // stamina: each cheer spends `cost[0]` of the stamina bar, less by `cost[1]` for each Stamina style
 // (so a tireless Mochi cheers cheaper, never free); what's spent comes back `back[0]` a second,
-// plus `back[1]` for each style. Spent all the way down, it has to stop and catch its breath.
-export const CHEER = { boost: 1.4, secs: 1.2, every: 2.5, cost: [0.25, 0.025], back: [0.01, 0.003] };
+// plus `back[1]` for each style. What's spent slows it, like being tired, till it comes back.
+// On the beat (2026-11-13): the Cheer button refills over `every`; pressed within `window` of it
+// filling, it's a Perfect cheer (`perfect`: a bigger, longer burst for `perfect.cost` of the
+// stamina); any time after, a Good one. Pressed while it's refilling, too soon: nothing, and the
+// next can only be Good, so mashing never lands a Perfect. (The first fills `first` after Go.)
+// (Tuned on a few hundred races run headless, with nobody ever stopping for breath: not cheering
+// at all falls behind the rivals, whose trainers cheer; cheering any time, even mashing, about 6%
+// quicker; on the beat, 11%. "Too tired" shows a sixth of the time at most.)
+export const CHEER = { boost: 1.18, secs: 1.2, every: 2.5, window: 0.45, first: 1.2, perfect: { boost: 1.26, secs: 1.3, cost: 0.6 }, cost: [0.16, 0.016], back: [0.06, 0.008] };
 // The race ends this long after the first one home (the rest are placed by how far they got), or
 // at this time at the latest.
 export const RACE_TAIL = 15;

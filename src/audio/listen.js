@@ -16,6 +16,7 @@ import { getMap } from '../data/maps.js';
 import { hasRage, hasFaith, hasBond } from '../world/melee.js';
 import { SKILLS } from '../data/skills.js';
 import { isQueen } from '../world/story.js';
+import { introLen, COUNTDOWN, CREST_AHEAD } from '../world/mochi-race.js';
 
 const memo = new WeakMap();
 
@@ -84,8 +85,210 @@ const NAMED = new Set(['aeboom', 'aesteam', 'aeballista', 'skytornado', 'skyupdr
 // Which monsters were already angry last frame (for their call as they turn on you).
 const spotted = new WeakMap();
 
+// A festival course's own sounds (Sakura Sprint, 2026-11-13: `look.festival`): a taiko drum on
+// each beat of the countdown and a double beat at Go, the crowd swelling as the final stretch
+// begins, and wind chimes tinkling now and then in the breeze (a few notes of one bell, pitched
+// into a pentatonic little tune, here and there across the stereo).
+const CHIME_NOTES = [1, 9 / 8, 5 / 4, 3 / 2, 5 / 3, 2];
+function hearFestival(world, m) {
+  const R = world.race;
+  if (!R || !world.map?.look?.festival) {
+    m.fest = null;
+    return;
+  }
+  if (m.fest?.R !== R) m.fest = { R, beat: null, go: false, final: false, chimeAt: 0, queue: [], modes: new Map(), buoys: new Set(), bubbled: false };
+  const f = m.fest;
+  const t = (globalThis.performance?.now?.() ?? Date.now()) / 1000;
+  // (Lily Lake's gala has a lifeguard's whistle for a taiko, and the lake for wind chimes.)
+  const lake = world.map.look.waterArt === 'lake';
+  // (Mortar Cliff's has a mallet pounding mochi for its drum, and the breeze in the maples.)
+  const maple = world.map.look.wallArt === 'maple';
+  // (Cloud Glide's has soft bells for its count, and the wind over the peak.)
+  const snow = world.map.look.launchArt === 'snow';
+  // (Long Hill Run's sweets hills have kawaii pops for their count and a music box for chimes.)
+  const sweets = world.map.look.groundArt === 'sweets';
+  // (The Grand Mochi Course's festival at dusk: a deeper taiko, fireworks far off now and then.)
+  const matsuri = world.map.look.groundArt === 'matsuri';
+  if (R.phase === 'ready') {
+    const il = introLen(R);
+    const n = R.t >= il ? Math.ceil(il + COUNTDOWN - R.t) : null;
+    if (n != null && n !== f.beat && n >= 1 && n <= 3) {
+      f.beat = n;
+      sfx(lake ? 'lakeToot' : maple ? 'mochiPound' : snow ? 'snowBell' : sweets ? 'sweetPop' : matsuri ? 'matsuriDon' : 'taikoDon', { rate: n === 1 ? (sweets ? 1.12 : 1.06) : 1 });
+    }
+  } else if (!f.go) {
+    f.go = true;
+    sfx(lake ? 'lakeWhistle' : maple ? 'mochiPoundGo' : snow ? 'snowGo' : sweets ? 'sweetGo' : matsuri ? 'matsuriGo' : 'taikoGo');
+  }
+  if (lake) hearLake(world, R, f);
+  if (maple) hearMaple(R, f, t);
+  if (snow) hearSnow(R, f);
+  if (sweets) hearSweets(world, R, f, t);
+  if (matsuri) hearMatsuri(R, f, t);
+  if (R.finalAt != null && !f.final) {
+    f.final = true;
+    sfx('crowdSwell');
+  }
+  if (snow && t >= f.chimeAt) {
+    f.chimeAt = t + 7 + Math.random() * 5;
+    sfx('snowWind', { pan: Math.random() * 0.8 - 0.4 });
+  } else if (maple && t >= f.chimeAt) {
+    f.chimeAt = t + 6 + Math.random() * 5;
+    sfx('leafGust', { pan: Math.random() * 0.8 - 0.4 });
+  } else if (sweets && t >= f.chimeAt) {
+    // (A few notes of a music box, slower than the wind chimes, now and then.)
+    f.chimeAt = t + 6 + Math.random() * 5;
+    const base = Math.random() < 0.5 ? 1 : 3 / 4;
+    let at = t;
+    for (let i = 0, n = 3 + Math.floor(Math.random() * 3); i < n; i++) {
+      at += 0.22 + Math.random() * 0.16;
+      f.queue.push({ at, name: 'sweetChime', rate: base * CHIME_NOTES[Math.floor(Math.random() * CHIME_NOTES.length)], pan: Math.random() * 0.6 - 0.3, db: -6 - Math.random() * 4 });
+    }
+  } else if (lake && t >= f.chimeAt) {
+    f.chimeAt = t + 3.5 + Math.random() * 4;
+    sfx('lakeLap', { pan: Math.random() * 0.8 - 0.4 });
+  } else if (t >= f.chimeAt) {
+    f.chimeAt = t + 4 + Math.random() * 5;
+    const base = 2 * (Math.random() < 0.5 ? 1 : 9 / 8);
+    let at = t;
+    for (let i = 0, n = 2 + Math.floor(Math.random() * 3); i < n; i++) {
+      at += 0.1 + Math.random() * 0.22;
+      f.queue.push({ at, rate: base * CHIME_NOTES[Math.floor(Math.random() * CHIME_NOTES.length)], pan: Math.random() - 0.5, db: -3 - Math.random() * 5 });
+    }
+  }
+  while (f.queue.length && f.queue[0].at <= t) {
+    const c = f.queue.shift();
+    sfx(c.name ?? 'chimeBell', { rate: c.rate, pan: c.pan, db: c.db });
+  }
+}
+
+// The Grand Mochi Course: racers diving into the pond and climbing out (as at the lake), the
+// drummer on the yagura drumming yours over its top (and the crowd's cheer), a firework as yours
+// takes off, a soft landing, fireworks far off now and then, and sparkles over the podium.
+function hearMatsuri(R, f, t) {
+  const you = R.racers[R.me];
+  for (const r of R.racers) {
+    const was = f.modes.get(r);
+    const mode = r.m.mode;
+    f.modes.set(r, mode);
+    if (R.phase !== 'run' || !was || was === mode) continue;
+    const pan = Math.max(-0.6, Math.min(0.6, (r.x - you.x) / 260));
+    if (mode === 'swim') sfx('lakeDive', { pan, db: r.you ? 0 : -7 });
+    else if (was === 'swim') sfx('lakeSwish', { pan, db: r.you ? 0 : -8 });
+    if (!r.you) continue;
+    if (was === 'climb') {
+      sfx('yaguraDon');
+      sfx('landCheer', { db: -4 });
+    }
+    if (mode === 'fly') sfx('fwLaunch');
+    if (was === 'fly') sfx('snowLand');
+  }
+  f.boomAt ??= t + 3;
+  if (t >= f.boomAt) {
+    f.boomAt = t + 6 + Math.random() * 6;
+    sfx('fwFar', { pan: Math.random() * 0.8 - 0.4, db: -6 - Math.random() * 4 });
+  }
+  if (R.phase === 'done' && !f.sparked && R.t > 1.4) {
+    f.sparked = true;
+    sfx('sparkShower');
+  }
+}
+
+// Long Hill Run: yours coming over a hilltop (the picnickers there cheer it over, then a soft gust
+// as it runs on down), the podium's sprinkles.
+function hearSweets(world, R, f, t) {
+  const you = R.racers[R.me];
+  f.crests ??= new Set();
+  f.gusts ??= [];
+  if (R.phase === 'run') {
+    for (const [kind, wx] of world.map.townPieces ?? []) {
+      if (kind !== 'mr_fans' || you.x < wx + CREST_AHEAD || f.crests.has(wx)) continue;
+      f.crests.add(wx);
+      sfx('landCheer', { db: -2 });
+      f.gusts.push(t + 0.35);
+    }
+  }
+  while (f.gusts.length && f.gusts[0] <= t) {
+    f.gusts.shift();
+    sfx('hillWhoosh');
+  }
+  if (R.phase === 'done' && !f.showered && R.t > 1.4) {
+    f.showered = true;
+    sfx('sweetShower');
+  }
+}
+
+// Cloud Glide: yours taking off in a gust, every racer landing in the snow (yours loudest, and a
+// cheer from the squad), the podium's bells.
+function hearSnow(R, f) {
+  const you = R.racers[R.me];
+  f.snowModes ??= new Map();
+  for (const r of R.racers) {
+    const was = f.snowModes.get(r);
+    f.snowModes.set(r, r.m.mode);
+    if (R.phase !== 'run' || !was || was === r.m.mode) continue;
+    if (r.you && r.m.mode === 'fly') sfx('glideGust');
+    if (was === 'fly' && r.m.mode === 'run') {
+      sfx('snowLand', { pan: Math.max(-0.6, Math.min(0.6, (r.x - you.x) / 260)), db: r.you ? 0 : -7 });
+      if (r.you) sfx('landCheer');
+    }
+  }
+  if (R.phase === 'done' && !f.belled && R.t > 1.4) {
+    f.belled = true;
+    sfx('snowBell');
+  }
+}
+
+// Mortar Cliff: yours coming over a wall's top rings its bell and sets its pounders going, three
+// quick strokes in time with their burst (render/courseart.js pounders); the podium's breeze.
+function hearMaple(R, f, t) {
+  const you = R.racers[R.me];
+  const was = f.youMode;
+  f.youMode = you.m.mode;
+  f.pounds ??= [];
+  if (R.phase === 'run' && was === 'climb' && you.m.mode !== 'climb') {
+    sfx('wallBell');
+    for (const d of [0.27, 0.87, 1.47]) f.pounds.push(t + d);
+  }
+  while (f.pounds.length && f.pounds[0] <= t) {
+    f.pounds.shift();
+    sfx('mochiPound', { db: -3 });
+  }
+  if (R.phase === 'done' && !f.gusted && R.t > 1.4) {
+    f.gusted = true;
+    sfx('leafGust');
+  }
+}
+
+// Lily Lake: each racer diving in (yours loudest, the rest softer and panned to where they are from
+// yours), climbing out and shaking off, yours sending up a buoy's fountain, the podium's bubbles.
+function hearLake(world, R, f) {
+  const you = R.racers[R.me];
+  for (const r of R.racers) {
+    const was = f.modes.get(r);
+    const mode = r.m.mode;
+    f.modes.set(r, mode);
+    if (R.phase !== 'run' || !was || was === mode) continue;
+    const pan = Math.max(-0.6, Math.min(0.6, (r.x - you.x) / 260));
+    if (mode === 'swim') sfx('lakeDive', { pan, db: r.you ? 0 : -7 });
+    else if (was === 'swim') sfx('lakeSwish', { pan, db: r.you ? 0 : -8 });
+  }
+  if (R.phase === 'run') {
+    for (const [kind, wx] of world.map.townPieces ?? []) {
+      if (kind !== 'mr_buoy' || f.buoys.has(wx) || you.x < wx) continue;
+      f.buoys.add(wx);
+      sfx('lakeJet');
+    }
+  }
+  if (R.phase === 'done' && !f.bubbled && R.t > 1.4) {
+    f.bubbled = true;
+    sfx('lakeBubbles');
+  }
+}
+
 export function hearWorld(world, cam) {
   const m = memo.get(world) ?? memo.set(world, {}).get(world);
+  hearFestival(world, m);
   const char = world.char;
   const b = world.body;
   const pan = (x) => Math.max(-0.7, Math.min(0.7, (x - (cam?.x ?? b.x - 320) - 320) / 400));

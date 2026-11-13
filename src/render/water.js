@@ -27,14 +27,26 @@ export const WATERS = {
   cave: { top: '#8fe4ff', mid: '#4f9ed8', deep: '#33438e', foam: '#d8f6ff', glint: '#bff4ff' },
   star: { top: '#8a7ad8', mid: '#4a3f9c', deep: '#1d1b52', foam: '#e6dcff', glint: '#fff6c8' },
   cloud: { top: '#d6ecff', mid: '#a6ccff', deep: '#7c9ee8', foam: '#ffffff', glint: '#ffffff' },
+  // Lily Lake (the Mochi race's, its redraw 2026-11-13): a clear summer lake, turquoise over sand;
+  // its lilies, lotus and waterweed are the course's own (render/courseart.js, WATER_BED/WATER_LIFE).
+  lotus: { top: '#a8f0e6', mid: '#4fc4cc', deep: '#2d8cb4', foam: '#ffffff', glint: '#f0fffc' },
+  // The Grand Mochi Course's pond at dusk (its redraw, 2026-11-13): the evening sky in it, violet
+  // going deep; its floating lanterns are the course's own (render/courseart.js).
+  dusk: { top: '#b0b4ea', mid: '#7074c4', deep: '#3e3c8c', foam: '#ffffff', glint: '#ffe4b0' },
 };
+// A map's own life in its water, registered by the code that draws it (the Mochi race courses:
+// render/courseart.js): WATER_BED (ctx, map, w, cam, time, x0, x1) under the surface, in the
+// water's body; WATER_LIFE (ctx, map, w, cam, time, x0, x1, at) on top of it, over the skin, with
+// `at(x)` the surface's height there on screen.
+export const WATER_BED = [];
+export const WATER_LIFE = [];
 const pal = (w) => WATERS[w.kind] ?? WATERS.sea;
 const hash = (n) => {
   const s = Math.sin(n * 127.1 + 311.7) * 43758.5453;
   return s - Math.floor(s);
 };
 const calm = (w) => (w.kind === 'cloud' ? 0.6 : w.kind === 'hot' || w.kind === 'cave' ? 0.7 : 1);
-const swell = (x, time, k = 1) => (Math.sin(x * 0.045 + time * 1.6) * 1.4 + Math.sin(x * 0.11 - time * 2.3) * 0.6) * k;
+export const swell = (x, time, k = 1) => (Math.sin(x * 0.045 + time * 1.6) * 1.4 + Math.sin(x * 0.11 - time * 2.3) * 0.6) * k;
 
 // The water's outline: its rolling surface, then back along the bed (a little below it, so the
 // bed's grassy lip is under the water too), so it fills the pool's shape between its banks.
@@ -84,6 +96,7 @@ export function drawWaterBack(ctx, map, cam, width, time) {
       ctx.fillRect(Math.min(sx, sx + dir * 14), w.y - cam.y - 4, 14, depth + 8);
     }
     bedLife(ctx, map, w, C, cam, time, x0, x1);
+    for (const hook of WATER_BED) hook(ctx, map, w, cam, time, x0, x1);
     ctx.restore();
     bankLife(ctx, map, w, C, cam, time);
   }
@@ -321,6 +334,8 @@ export function drawWaterFront(ctx, map, cam, width, time, waders = []) {
       }
     }
     surfaceLife(ctx, map, w, C, cam, time, x0, x1, k);
+    ctx.globalAlpha = 1;
+    for (const hook of WATER_LIFE) hook(ctx, map, w, cam, time, x0, x1, (x) => w.y - cam.y + swell(x, time, k));
     ctx.restore();
   }
 }

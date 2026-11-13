@@ -77,7 +77,10 @@ export function portraitCard(ctx, rec, x, y, w, h, time, { scale = 2, edge = '#f
   }
   ctx.translate(ix + iw / 2, gy + 3 + drop);
   ctx.scale(scale, scale);
-  drawMochiAnim(ctx, portraitOf(rec), 0, 0, time);
+  // (The photo fades with its card: the race's line-up cards fade out as the countdown starts.)
+  const pm = portraitOf(rec);
+  pm.alpha = ctx.globalAlpha < 0.999 ? ctx.globalAlpha : null;
+  drawMochiAnim(ctx, pm, 0, 0, time);
   ctx.restore();
   ctx.strokeStyle = edge;
   ctx.lineWidth = 1.2;

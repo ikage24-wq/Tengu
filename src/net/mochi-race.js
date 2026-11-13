@@ -139,7 +139,7 @@ export function onMochiRace(world, msg, g) {
       applyRaceEnd(world, msg);
       return;
     case 'cheer':
-      if (world.race?.party?.includes(msg.id)) applyCheer(world, msg.id);
+      if (world.race?.party?.includes(msg.id)) applyCheer(world, msg.id, msg.kind);
       return;
     // Ghosts: a friend asks for your best run on a course; you send it; they keep it to race.
     case 'ghostask': {
@@ -171,8 +171,8 @@ setRaceNet({
     const places = R.racers.map((r) => [r.place, r.done]);
     for (const id of R.party) send({ t: 'mrace', op: 'end', to: id, places });
   },
-  cheer(world, R) {
-    send({ t: 'mrace', op: 'cheer', to: R.remote });
+  cheer(world, R, kind) {
+    send({ t: 'mrace', op: 'cheer', to: R.remote, kind });
   },
   fork(world, R, leg, alt) {
     send({ t: 'mrace', op: 'fork', to: R.remote, leg, alt });

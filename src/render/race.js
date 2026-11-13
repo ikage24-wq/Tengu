@@ -26,6 +26,8 @@ import { runSpeed, lineupOffset, PODIUM, podiumSpot, INTRO, introLen, standings,
 import { VW, VH } from '../input.js';
 import { CANT_POINTS, newRecord } from '../data/mochi-raise.js';
 import { rollMochi } from '../data/mochi-genes.js';
+import { CHEER } from '../data/mochi-race.js';
+import { drawCoursePiece, noteRace, drawRaceBehind, drawRaceFront, archDango } from './courseart.js';
 
 const TAU = Math.PI * 2;
 const WOOD = '#c8945a';
@@ -48,9 +50,11 @@ const standsBackArt = (w) => art(`mr-standsback|${w}`, w, STAND_H, () => {
   for (let x = 22, k = 0; x < w - 12; x += 26, k++) out.push(F(R(x, 32, 1, STAND_H - 34, '#efd8c4')));
   // The poles, and the awning: striped, a scalloped edge, a shine along the front.
   out.push(R(1, 4, 5, STAND_H - 4, WOOD_DK), F(R(1, 4, 1.6, STAND_H - 4, ramp(WOOD_DK).hi)), R(w - 6, 4, 5, STAND_H - 4, WOOD_DK), F(R(w - 6, 4, 1.6, STAND_H - 4, ramp(WOOD_DK).hi)));
-  for (let x = 0, k = 0; x < w; x += 16, k++) {
-    out.push(R(x, 6, Math.min(16, w - x), 16, k % 2 ? '#ffffff' : SAKURA));
-    out.push(E(x + 8, 22, 8, 4.4, k % 2 ? '#ffffff' : SAKURA));
+  const n = Math.max(1, Math.round(w / 16));
+  const sw = w / n;
+  for (let k = 0; k < n; k++) {
+    out.push(R(k * sw, 6, sw, 16, k % 2 ? '#ffffff' : SAKURA));
+    out.push(E(k * sw + sw / 2, 22, sw / 2, 4.4, k % 2 ? '#ffffff' : SAKURA));
   }
   out.push(F(R(0, 6, w, 2, ramp(SAKURA).hi)), F(R(-1, 2, w + 2, 5, WOOD_DK)), F(R(-1, 2, w + 2, 1.4, ramp(WOOD_DK).hi)));
   return out;
@@ -129,7 +133,7 @@ const boardArt = () => art('mr-board', 100, 104, () => {
   out.push(R(17, 68, 66, 13, PAPER), F(E(19.5, 69.5, 1.2, 1.2, '#ffd75e')), F(E(80.5, 69.5, 1.2, 1.2, '#ffd75e')));
   for (let k = 0; k < 2; k++) out.push(F(R(21, 72 + k * 4, 30 - k * 6, 1.2, '#d8c0a8')), F(R(58, 72 + k * 4, 18, 1.2, k ? '#9fe0a0' : '#ff9ec0')));
   // The mochi on the peak, its sprout up.
-  out.push(E(50, 6, 6, 5, '#fff8f2'), F(E(47.6, 6.4, 0.7, 1, '#4a3040')), F(E(52.4, 6.4, 0.7, 1, '#4a3040')), F(E(45.8, 7.8, 1.3, 0.7, '#ffbccb')), F(E(54.2, 7.8, 1.3, 0.7, '#ffbccb')), F(R(49.6, -1, 0.8, 2.4, '#6fae52')), F(E(48.2, -0.6, 1.8, 0.9, '#8fd16f')), F(E(51.8, -1, 1.8, 0.9, '#8fd16f')));
+  out.push(E(50, 8, 6, 5, '#fff8f2'), F(E(47.6, 8.4, 0.7, 1, '#4a3040')), F(E(52.4, 8.4, 0.7, 1, '#4a3040')), F(E(45.8, 9.8, 1.3, 0.7, '#ffbccb')), F(E(54.2, 9.8, 1.3, 0.7, '#ffbccb')), F(R(49.6, 1, 0.8, 2.4, '#6fae52')), F(E(48.2, 1.4, 1.8, 0.9, '#8fd16f')), F(E(51.8, 1, 1.8, 0.9, '#8fd16f')));
   return out;
 });
 
@@ -251,7 +255,9 @@ function stringLights(ctx, map, x1, x2, cam, time) {
   }
 }
 const archTop = (x) => 13 + 12 * ((x - 75) / 67) ** 2;
-const archArt = (kind, color = null) => art(`mr-arch|${kind}|${color}`, 150, 132, () => {
+// (`bare`: without the dango on its posts, for a course that draws them live to bounce:
+// render/courseart.js archDango.)
+const archArt = (kind, color = null, bare = false) => art(`mr-arch|${kind}|${color}|${bare}`, 150, 132, () => {
   const post = ramp('#ecdcc4');
   const stone = '#e2d8d2';
   const banner = color ?? (kind === 'finish' ? '#3a3040' : kind === 'gate' ? '#8fc8f0' : SAKURA);
@@ -289,8 +295,8 @@ const archArt = (kind, color = null) => art(`mr-arch|${kind}|${color}`, 150, 132
     }
   }
   // The dango on the posts.
-  for (const px of [16, 134]) ARCH_DANGO.forEach((c, k) => out.push(E(px, 25 - k * 7.4, 5.4, 5, c), F(E(px - 1.8, 23 - k * 7.4, 1.6, 1, '#ffffff'))));
-  for (const px of [16, 134]) out.push(F(R(px - 0.6, 6, 1.2, 4, '#c8945a')));
+  if (!bare) for (const px of [16, 134]) ARCH_DANGO.forEach((c, k) => out.push(E(px, 25 - k * 7.4, 5.4, 5, c), F(E(px - 1.8, 23 - k * 7.4, 1.6, 1, '#ffffff'))));
+  if (!bare) for (const px of [16, 134]) out.push(F(R(px - 0.6, 6, 1.2, 4, '#c8945a')));
   // The garland, draped between the posts.
   const sag = (x) => 46 + 12 * Math.sin((Math.PI * (x - 22)) / 106);
   for (let x = 22, k = 0; x <= 128; x += 7, k++) {
@@ -388,10 +394,15 @@ export function drawRacePiece(ctx, map, kind, wx, extra, cam, width, time) {
     case 'mr_board':
       place(ctx, boardArt(), snap(x), gy + 2);
       return true;
-    case 'mr_arch':
-      place(ctx, archArt(extra?.kind ?? 'start'), snap(x), gy + 2);
-      if (extra?.kind === 'finish') finishLine(ctx, x, gy);
+    case 'mr_arch': {
+      // (On a festival course, its dango bob and bounce at the big moments: render/courseart.js.)
+      const kind = extra?.kind ?? 'start';
+      const live = map.look?.festival && kind !== 'gate';
+      place(ctx, archArt(kind, null, live), snap(x), gy + 2);
+      if (live) archDango(ctx, map, x, gy, kind, time);
+      if (kind === 'finish') finishLine(ctx, x, gy);
       return true;
+    }
     case 'mr_checkpoint': {
       // A part of a long course (the Grand Tour): an arch in the part's colour, and hanging from its
       // garland a wooden sign with the part's number and name, swinging a little.
@@ -409,10 +420,14 @@ export function drawRacePiece(ctx, map, kind, wx, extra, cam, width, time) {
       stringLights(ctx, map, wx, extra.to, cam, time);
       return true;
     case 'mr_marker':
+      // (A course with its own marker draws it: render/courseart.js.)
+      if (map.look?.launchArt && drawCoursePiece(ctx, map, kind, wx, extra, cam, width, time)) return true;
       place(ctx, markerArt(extra ?? 1), snap(x), gy + 2);
       pennant(ctx, x - 6, gy - 40, time, wx, '#ff9ec0');
       return true;
     case 'mr_wall': {
+      // (A course with its own cliffs draws them: render/courseart.js.)
+      if (map.look?.wallArt && drawCoursePiece(ctx, map, kind, wx, extra, cam, width, time)) return true;
       // The climbing crag: built out from the cliff face at x, a pennant on top where they come over.
       const h = extra.bottom - extra.top;
       const s = cragArt(h, Math.round(wx * 0.37), HOLDS);
@@ -423,15 +438,19 @@ export function drawRacePiece(ctx, map, kind, wx, extra, cam, width, time) {
       return true;
     }
     case 'mr_launch':
+      if (map.look?.launchArt && drawCoursePiece(ctx, map, kind, wx, extra, cam, width, time)) return true;
       place(ctx, launchArt(), snap(x - 24), gy + 2);
       pennant(ctx, x - 46, gy - 30, time, wx, '#8fd3ff');
       ctx.fillStyle = WOOD_DK;
       ctx.fillRect(snap(x - 47), snap(gy - 30), 2, 30);
       return true;
     case 'mr_clouds':
+      if (map.look?.launchArt && drawCoursePiece(ctx, map, kind, wx, extra, cam, width, time)) return true;
       place(ctx, cloudsArt(w), snap(x + w / 2), gy + 8);
       return true;
     default:
+      // (The courses' own pieces, from their redraw: render/courseart.js.)
+      drawCoursePiece(ctx, map, kind, wx, extra, cam, width, time);
       return true;
   }
 }
@@ -526,9 +545,12 @@ export function drawRace(ctx, world, cam, time) {
   const map = world.map;
   const course = map.race;
   if (R.phase === 'ready') paintAhead(ctx, R, course, time);
+  // (What the course's scenery reacts to: render/courseart.js.)
+  noteRace(map, R, cam, time);
+  drawRaceBehind(ctx, map, R, cam, time);
   // Behind everyone: the rush of speed when yours is flying along, and the podium.
   const you = R.racers[R.me];
-  if (R.phase === 'run') speedStreaks(ctx, you.m.speed ?? 0, time);
+  if (R.phase === 'run') onScreen(ctx, R, () => speedStreaks(ctx, you.m.speed ?? 0, time));
   if (R.phase === 'done') drawPodium(ctx, map, cam, R.t);
   const lead = R.phase === 'run' ? standings(R, course)[0] : null;
   noteEffects(R, course, time);
@@ -539,23 +561,44 @@ export function drawRace(ctx, world, cam, time) {
     // so a lane drawn higher would float. The back lanes are drawn first, behind.)
     // (GO!: each springs off the line, a little hop as it launches, staggered by lane.)
     const go = R.phase === 'run' ? (R.clock - (r.lane ?? 0) * 0.03) / 0.32 : -1;
-    const y = r.y - cam.y - (go > 0 && go < 1 ? Math.sin(go * Math.PI) * 7 : 0);
-    // (Yours, easy to find in the bunch: a soft pink ring at its feet.)
-    if (r.you && R.phase !== 'done') {
+    // (Over a wall's top: it pulls itself up and over with a little hop onto the ledge.)
+    if (r.drawMode === 'climb' && r.m.mode !== 'climb') r.topAt = R.clock;
+    r.drawMode = r.m.mode;
+    const over = r.topAt != null ? (R.clock - r.topAt) / 0.36 : -1;
+    const y = r.y - cam.y - (go > 0 && go < 1 ? Math.sin(go * Math.PI) * 7 : 0) - (over > 0 && over < 1 ? Math.sin(over * Math.PI) * 6 : 0);
+    // (Yours, easy to find in the bunch: a soft pink ring at its feet. Up a wall or off in a glide
+    // there's nothing under its feet for a ring to lie on, so it fades away and back.)
+    const footed = (r.m.mode === 'run' || r.m.mode === 'swim') && !r.m.noShadow;
+    // (The ground's slope under it: the ring at its feet lies along a hill, and running up one it
+    // leans into the climb, sitting back a touch going down, eased in and out.)
+    const sl = r.m.mode === 'run' && course.legs[r.leg ?? 0]?.y == null ? (groundAt(map, r.x + 6) - groundAt(map, r.x - 6)) / 12 : 0;
+    const since = Math.min(0.1, Math.max(0, time - (r.ringAt ?? time)));
+    r.ringAt = time;
+    r.ringK = (r.ringK ?? 1) + ((footed ? 1 : 0) - (r.ringK ?? 1)) * (1 - Math.exp(-since * 9));
+    if (r.you && R.phase !== 'done' && r.ringK > 0.02) {
       ctx.save();
       ctx.strokeStyle = '#ff6f9a';
       ctx.lineWidth = 1.6;
-      ctx.globalAlpha = 0.75 + 0.25 * Math.sin(time * 4);
+      ctx.globalAlpha = (0.75 + 0.25 * Math.sin(time * 4)) * r.ringK;
       ctx.beginPath();
-      ctx.ellipse(x, y + 1, 12, 3.4, 0, 0, Math.PI * 2);
+      ctx.ellipse(x, y + 1, 12, 3.4, Math.atan(sl), 0, Math.PI * 2);
       ctx.stroke();
       ctx.restore();
     }
     // (A friend's ghost: see-through.)
-    if (r.ghost) ctx.globalAlpha = 0.55;
+    r.m.alpha = r.ghost ? 0.55 : null;
+    r.m.floatUp = 5;
+    r.m.glideLean = 0.4;
+    const hill = R.phase === 'run' ? (sl < 0 ? Math.min(0.2, -sl * 0.5) : -Math.min(0.08, sl * 0.2)) : 0;
+    r.hillLean = (r.hillLean ?? 0) + (hill - (r.hillLean ?? 0)) * (1 - Math.exp(-since * 5));
+    r.m.hillLean = r.hillLean;
+    r.m.groundTilt = Math.atan(sl);
     drawMochiAnim(ctx, r.m, x, y, time);
-    ctx.globalAlpha = 1;
-    const top = y - (r.m.size === 'baby' ? 36 : 44);
+    // (Swimming, it sits down in the water, so what floats over its head (its tag, heart, crown)
+    // comes down with it, easing.)
+    const sinkTo = r.m.mode === 'swim' ? 10 : 0;
+    r.tagSink = (r.tagSink ?? sinkTo) + (sinkTo - (r.tagSink ?? sinkTo)) * (1 - Math.exp(-since * 8));
+    const top = y - (r.m.size === 'baby' ? 36 : 44) + r.tagSink;
     // Up on the podium: its medal.
     if (R.phase === 'done' && r.place <= 3 && r.podCheer) podiumMedal(ctx, x, y - (r.m.size === 'baby' ? 4.5 : 6.5), r.place, time, r.m.size === 'baby' ? 0.6 : 0.72, r.m.size === 'baby' ? 2.5 : 3.5);
     // The leader's little crown (over yours, above its heart).
@@ -564,25 +607,32 @@ export function drawRace(ctx, world, cam, time) {
     if (R.phase === 'ready' && R.t >= INTRO.sweep && R.t < introLen(R) && Math.floor((R.t - INTRO.sweep) / INTRO.card) === R.racers.indexOf(r)) {
       arrow(ctx, x, top - 10 + Math.abs(Math.sin(time * 6)) * -3);
     }
+    // Cheered on: hearts fanning off it and fading. Yours three, five for a Perfect cheer, gold
+    // among the pink; a rival's (its own trainer's cheer), two little pale ones.
+    const left = R.phase === 'run' ? r.cheerUntil - R.clock : 0;
+    if (left > 0) {
+      const perfect = r.cheerKind === 'perfect';
+      const k = Math.max(0, 1 - left / (perfect ? CHEER.perfect.secs : CHEER.secs));
+      const n = r.you ? (perfect ? 5 : 3) : 2;
+      const reach = r.you ? 8 + k * 16 : 6 + k * 10;
+      ctx.globalAlpha = 1 - k;
+      for (let i = 0; i < n; i++) {
+        const a = -Math.PI / 2 + (i - (n - 1) / 2) * (n === 5 ? 0.5 : 0.7);
+        const col = perfect ? (i % 2 ? '#ffd75e' : '#ff8fb0') : !r.you ? '#ffd9e4' : i === (n - 1) / 2 ? '#ff8fb0' : '#ffd0dc';
+        heart(ctx, x + Math.cos(a) * reach, top + 6 + Math.sin(a) * reach, r.you ? (perfect ? 2.7 : 2.4) : 1.8, col);
+      }
+      ctx.globalAlpha = 1;
+    }
     if (!r.you) continue;
     heart(ctx, x, top + Math.sin(time * 4) * 1.2, 3.2, '#ff6f9a');
     // ...and a little "You" tag over the heart while it runs.
     if (R.phase !== 'done') youTag(ctx, x, top - 9 - (r === lead && r.done == null ? 9 : 0) + Math.sin(time * 4) * 1.2);
-    const left = R.phase === 'run' ? r.cheerUntil - R.clock : 0;
-    if (left > 0) {
-      const k = 1 - left / 1.2;
-      for (let i = 0; i < 3; i++) {
-        const a = -Math.PI / 2 + (i - 1) * 0.7;
-        ctx.globalAlpha = Math.max(0, 1 - k);
-        heart(ctx, x + Math.cos(a) * (8 + k * 16), top + 6 + Math.sin(a) * (8 + k * 16), 2.4, i === 1 ? '#ff8fb0' : '#ffd0dc');
-      }
-      ctx.globalAlpha = 1;
-    }
   }
+  drawRaceFront(ctx, map, R, cam, time);
   // The cloud fluff's low wisps, over the feet of anyone wading through it.
   for (const [from, to] of course.slow ?? []) fluff(ctx, map, cam, from, to, time);
   drawEffects(ctx, R, cam, time);
-  if (R.phase === 'done') confetti(ctx, R.t, time);
+  if (R.phase === 'done') onScreen(ctx, R, () => confetti(ctx, R.t, time));
 }
 
 // ---------- The race's moments ----------
@@ -645,9 +695,10 @@ function noteEffects(R, course, time) {
     }
   }
   for (const r of R.racers) {
-    // (Worn out, stopping for breath: a puff of tiredness. Into the water: a startled splash "!".)
-    if (r.m.rest && !r.fxRest) emote(fx, r, 'puff', time);
-    r.fxRest = Boolean(r.m.rest);
+    // (Running on empty: a puff of tiredness. Into the water: a startled splash "!".)
+    const worn = (r.m.tired ?? 0) > 0.9;
+    if (worn && !r.fxRest) emote(fx, r, 'puff', time);
+    r.fxRest = worn;
     if (r.m.mode === 'swim' && r.fxMode && r.fxMode !== 'swim') emote(fx, r, 'bang', time);
     const mode = r.m.mode;
     if (r.fxMode && r.fxMode !== mode) {
@@ -832,6 +883,17 @@ function drawEffects(ctx, R, cam, time) {
         ctx.fillRect(x + Math.cos(a) * d - 1.2, y + Math.sin(a) * d + k * k * 30, 2.4, 3.4);
       }
     }
+    ctx.restore();
+  }
+}
+// Draws in screen space, whatever the race camera's zoom (render/scene.js keeps the screen's own
+// transform in `R.screenT`).
+function onScreen(ctx, R, draw) {
+  ctx.save();
+  if (R.screenT) ctx.setTransform(R.screenT);
+  try {
+    draw();
+  } finally {
     ctx.restore();
   }
 }

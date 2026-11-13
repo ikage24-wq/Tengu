@@ -2952,7 +2952,7 @@ export function drawPosed(ctx, look, x, y, pose, { scale = 1, facing = 1, under 
     return;
   }
   const dir = flip ? -1 : 1;
-  const mv = { tilt: lean.tilt ?? 0, lift: lean.lift ?? 0, lunge: lean.lunge ?? 0 };
+  const mv = { tilt: lean.tilt ?? 0, lift: lean.lift ?? 0, lunge: lean.lunge ?? 0, air: lean.air };
   const { pivot: pk, tilt } = leanOf(mv);
   const pivot = y - H * scale * pk;
   const whole = (c, t) => {
@@ -3054,7 +3054,7 @@ function placed(x, y, rig, { scale = 1, facing = 1, lean = null } = {}, px, py) 
   let mx = flip ? left + (W - (px + OX)) * scale : left + (px + OX) * scale;
   let my = top + (py + OY) * scale;
   if (lean && (lean.tilt || lean.lunge || lean.lift)) {
-    const mv = { tilt: lean.tilt ?? 0, lift: lean.lift ?? 0, lunge: lean.lunge ?? 0 };
+    const mv = { tilt: lean.tilt ?? 0, lift: lean.lift ?? 0, lunge: lean.lunge ?? 0, air: lean.air };
     const { pivot: pk, tilt } = leanOf(mv);
     const pivot = y - H * scale * pk;
     const t = tilt * dir;
@@ -3353,7 +3353,9 @@ function legBand(ctx, x, cut, y, scale, outside) {
   ctx.clip(outside ? 'evenodd' : 'nonzero');
 }
 function leanOf(mv) {
-  const air = Math.min(1, Math.abs(mv.lift) / 6);
+  // (`mv.air`: 1 for a figure with nothing under its feet, a glider or a climber on a wall, so it
+  // turns whole about its middle instead of bending above planted legs.)
+  const air = mv.air ?? Math.min(1, Math.abs(mv.lift) / 6);
   const tilt = Math.max(-0.5, Math.min(0.5, mv.tilt)) * (1 - air) + mv.tilt * air;
   return { pivot: GROUND_PIVOT + (0.42 - GROUND_PIVOT) * air, tilt };
 }

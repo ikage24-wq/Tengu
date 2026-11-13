@@ -351,6 +351,44 @@ Object.assign(RECORDED, {
   nimbusPuff: { trim: -2 },
   turtleSplash: { trim: 1.2 },
   bunHop: { trim: -8 },
+  // Sakura Sprint's festival (tools/build-fight.py, 2026-11-13).
+  taikoDon: { trim: 0 },
+  taikoGo: { trim: 0 },
+  crowdSwell: { trim: 0 },
+  chimeBell: { trim: 0 },
+  // Lily Lake's gala (tools/build-fight.py, 2026-11-13).
+  lakeToot: { trim: 0 },
+  lakeWhistle: { trim: 0 },
+  lakeDive: { trim: 0 },
+  lakeSwish: { trim: 0 },
+  lakeJet: { trim: 0 },
+  lakeBubbles: { trim: 0 },
+  lakeLap: { takes: 3, trim: 0 },
+  // Mortar Cliff's festival (tools/build-fight.py, 2026-11-13).
+  mochiPound: { trim: 0 },
+  mochiPoundGo: { trim: 0 },
+  leafGust: { trim: 0 },
+  wallBell: { trim: 0 },
+  // Cloud Glide's winter (tools/build-fight.py, 2026-11-13).
+  snowBell: { trim: 0 },
+  snowGo: { trim: 0 },
+  glideGust: { trim: 0 },
+  snowLand: { trim: 0 },
+  snowWind: { trim: 0 },
+  landCheer: { trim: 0 },
+  // Long Hill Run's sweets (tools/build-fight.py, 2026-11-13).
+  sweetPop: { trim: 0 },
+  sweetGo: { trim: 0 },
+  sweetChime: { trim: 0 },
+  hillWhoosh: { trim: 0 },
+  sweetShower: { trim: 0 },
+  // The Grand Mochi Course's festival (tools/build-fight.py, 2026-11-13).
+  matsuriDon: { trim: 0 },
+  matsuriGo: { trim: 0 },
+  yaguraDon: { trim: 0 },
+  fwLaunch: { trim: 0 },
+  fwFar: { takes: 3, trim: 0 },
+  sparkShower: { trim: 0 },
 });
 
 // The files for a sound: assets/audio/rec/<name>.mp3, or <name>1.mp3, <name>2.mp3... for takes.

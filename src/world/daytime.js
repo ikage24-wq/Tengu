@@ -38,7 +38,9 @@ export function tickDaytime(world, dt) {
     // through a few shades rather than a new one every second.)
     world.night = world.forceNight ?? Math.round(nightOf((world.dayClock ?? (() => new Date()))()) * 16) / 16;
   }
-  world.map.night = indoors(world.map) ? 0 : world.night ?? 0;
+  // (A map set at dusk whatever the clock, `map.dusk`, is never lighter than that: the Grand Mochi
+  // Course's summer festival.)
+  world.map.night = indoors(world.map) ? 0 : Math.max(world.night ?? 0, world.map.dusk ?? 0);
   // (What it's like outside, for a room's window: render/garden.js nurseryWindow.)
   world.map.outsideNight = world.night ?? 0;
 }
