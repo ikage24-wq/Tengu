@@ -123,6 +123,6 @@ export function wearStallWindow(ui, state, world) {
       text(ctx, fit(ctx, piece.name, tw - 10, 7), px + tw / 2, py + 17, { size: 7, bold: true, align: 'center', color: poor ? '#b09aa4' : '#5a4a62' });
     }
     // (Which slot it goes in is the one thing a name does not always say: a Lace Veil is a hat.)
-    if (hover(ui, px, py, tw, 28)) tooltip(ui, poor && !mine ? [SLOT_NAMES[piece.kind], 'Not enough gold yet.'] : [SLOT_NAMES[piece.kind]]);
+    if (hover(ui, px, py, tw, 28)) tooltip(ui, [{ text: SLOT_NAMES[piece.kind], bold: true }, ...(poor && !mine ? [{ text: 'Not enough gold yet.', color: COLORS.bad }] : [])]);
   });
 }

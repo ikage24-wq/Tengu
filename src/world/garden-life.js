@@ -427,7 +427,9 @@ export function tickGarden(world, dt) {
     if (inMoment) target = momentTarget(mo, e, now);
     // (Being cared for, it stays put, looking up at you.)
     const busy = now < (e.busyUntil ?? 0);
-    if (busy && e.x != null) target = e.x;
+    // (A sweet of yours on the grass beats staying put: you put one down from its care panel, which
+    // holds it at your side, and it would stand there looking at you until you walked away.)
+    if (busy && !drop && e.x != null) target = e.x;
     // (One who can't swim yet stops at the water's edge.)
     if (pts(rec, 'swim') < CANT.swim && target > LAND[1]) target = LAND[1];
     if (e.x == null) e.x = sched.x;
