@@ -77,7 +77,7 @@ export function gardenMap(g = {}) {
     // by side), the
     // orchard (fruit trees to shake, the big tree with its swing, the crop bed), the pond, the cliff.
     townPieces: [
-      ['mg_lantern', 30, 0], ['mg_shop', 280], ['mg_eggstall', 450], ['mg_wearstall', 624], ['mg_kitchen', 808], ['mg_nursery', 990], ['mg_stadium', 1190], ['mg_lantern', 1290, 1],
+      ['mg_shop', 280], ['mg_eggstall', 450], ['mg_wearstall', 624], ['mg_kitchen', 808], ['mg_nursery', 990], ['mg_stadium', 1190], ['mg_lantern', 1290, 1],
       ['mg_fruittree', 1520, 0], ['mg_crates', 1482], ['mg_toybox', 1562], ['mg_bigtree', 1660],
       ['mg_lantern', 1736, 1], ['mg_washline', 1796], ['mg_beanframe', 1884], ['mg_cropbed', 1980], ['mg_fruittree', 2038, 2],
       ['mg_reeds', 2168, 0], ['mg_lilies', 2330, 0], ['mg_lilies', 2480, 1], ['mg_reeds', 2576, 1],
@@ -93,7 +93,7 @@ export function gardenMap(g = {}) {
       { id: 'stadium', x: 1190, y: PLATEAU, to: 'mochi_stadium', toPortal: 'gate', label: 'Race Stadium', door: true },
     ],
     lamps: [
-      { x: 30, y: PLATEAU - 44, c: '#ffd6a0' }, { x: 1290, y: PLATEAU - 44, c: '#ffd6a0' }, { x: 1736, y: ORCHARD - 44, c: '#ffd6a0' }, { x: 3110, y: TOP - 44, c: '#ffd6a0' },
+      { x: 1290, y: PLATEAU - 44, c: '#ffd6a0' }, { x: 1736, y: ORCHARD - 44, c: '#ffd6a0' }, { x: 3110, y: TOP - 44, c: '#ffd6a0' },
       { x: 990, y: PLATEAU - 34, c: '#ffd27a' }, { x: 808, y: PLATEAU - 40, c: '#ffd27a' }, { x: 280, y: PLATEAU - 40, c: '#ffd27a' },
       // Under the clothes stall's awning, so the four on the counter are lit after dark.
       { x: 624, y: PLATEAU - 58, c: '#ffe0c0' },

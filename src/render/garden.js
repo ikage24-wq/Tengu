@@ -29,8 +29,8 @@
 //   mg_nurseryroom the nursery inside: plaster walls under a timber dome, the hearth, the eggs'
 //                  mortars, basket beds, a round window, a rug, a toy shelf
 
-import { R, E, T, F, snap } from './pixel.js';
-import { ramp, planks, foliage, bark, gable, hash, swing, pivoted, flicker, lean } from './propkit.js';
+import { R, E, T, F, snap, mix } from './pixel.js';
+import { ramp, planks, foliage, bark, band, gable, hash, swing, pivoted, flicker, lean } from './propkit.js';
 // (Eased 0 to 1: slow out, slow in.)
 const smooth = (u) => u * u * (3 - 2 * u);
 import { limb } from './figure.js';
@@ -117,6 +117,7 @@ const lanternPostArt = (v) => art(`mg-lpost|${v}`, 26, 64, () => {
 });
 
 // ---------- The egg stall ----------
+
 const eggStallArt = () => art('mg-eggstall', 132, 98, () => {
   const w = ramp('#d8a46a');
   const out = [
@@ -351,13 +352,16 @@ const kitchenArt = () => art('mg-kitchen', 152, 124, () => {
     // A sack of rice leaning on the wall, a stack of firewood beside the door, and a water barrel
     // under a split-bamboo gutter that runs off the eaves - the same water as the channel outside.
     E(142, 114, 6.4, 6.4, '#efe6d2'), F(E(140, 111, 2.6, 1.6, '#fbf6ea')), F(R(139, 106.5, 6, 2, '#c8b89a')),
-    R(16, 104, 22, 16, '#8a6a48'),
-    ...[0, 1, 2, 3].flatMap((i) => [F(E(20 + (i % 2) * 11, 107 + Math.floor(i / 2) * 7, 4.6, 3.2, '#b08a60')),
-      F(E(20 + (i % 2) * 11, 107 + Math.floor(i / 2) * 7, 2.4, 1.6, '#d8b288'))]),
-    F(limb(135, 50, 135, 96, 1.8, 1.8, '#9ab06a')),
-    R(126, 96, 18, 20, '#6f5a42'), F(R(126, 96, 18, 2.4, '#8a7254')),
-    F(R(126, 102, 18, 1.6, '#9aa2a8')), F(R(126, 111, 18, 1.6, '#9aa2a8')),
-    F(E(135, 98, 7, 2.4, '#7fb8cc')), F(E(133, 97.6, 3, 1, '#cfeef6')),
+    // (Both of these stood clear of the ground: their boxes ended at 120 and 116 while the art's
+    // own floor is 124, so they hung in the air. They sit on it now, and the gutter was lengthened
+    // to meet the barrel where it actually is.)
+    R(16, 108, 22, 16, '#8a6a48'),
+    ...[0, 1, 2, 3].flatMap((i) => [F(E(20 + (i % 2) * 11, 111 + Math.floor(i / 2) * 7, 4.6, 3.2, '#b08a60')),
+      F(E(20 + (i % 2) * 11, 111 + Math.floor(i / 2) * 7, 2.4, 1.6, '#d8b288'))]),
+    F(limb(135, 50, 135, 104, 1.8, 1.8, '#9ab06a')),
+    R(126, 104, 18, 20, '#6f5a42'), F(R(126, 104, 18, 2.4, '#8a7254')),
+    F(R(126, 110, 18, 1.6, '#9aa2a8')), F(R(126, 119, 18, 1.6, '#9aa2a8')),
+    F(E(135, 106, 7, 2.4, '#7fb8cc')), F(E(133, 105.6, 3, 1, '#cfeef6')),
   ];
   return out;
 });
@@ -485,20 +489,60 @@ const fruitTreeArt = (v) => art(`mg-ftree3|${v}`, 120, 150, () => {
 });
 
 // ---------- The big old tree ----------
+// The landmark of the orchard, with the swing hung off its long bough. (Redrawn 2026-11-14: the
+// player called it out of place, and it was - it was the one dark, saturated thing on a screen of
+// pastels, and at this size its canopy came out as a single green cloud and its trunk as a flat
+// brown slab beside the little fruit trees, which are the same helpers done small.) So: the same
+// greens and browns as the fruit trees, only a shade deeper for its age; a canopy of many small
+// clumps in a dome, lit along its top and open in two places so you see sky through it; a trunk
+// that swells into three roots with gaps between them; and bark ridges up the trunk so its face
+// has something to read at this size.
+const BIG_LEAF = '#8ac96e';
+const BIG_WOOD = '#a87850';
 const bigTreeArt = () => art('mg-bigtree', 260, 236, () => {
-  const r = ramp('#9a6e48');
-  const out = [
-    // Roots spreading over the rise, and the great trunk.
-    ...bark([[90, 236], [108, 226], [118, 214]], (u) => 8 - u * 4, r, 1, 1), ...bark([[168, 236], [150, 226], [140, 214]], (u) => 8 - u * 4, r, 2, 1),
-    ...bark([[128, 236], [126, 196], [130, 150], [126, 110]], (u) => 26 - u * 10, r, 3, 3),
-    // The long bough out to the right that the swing hangs from, and one up to the left.
-    ...bark([[132, 128], [170, 112], [214, 108], [236, 110]], (u) => 9 - u * 5, r, 4, 2),
-    ...bark([[124, 122], [92, 96], [70, 84]], (u) => 8 - u * 4, r, 5, 1),
+  const r = ramp(BIG_WOOD);
+  const out = [];
+  // Three roots arching out of the ground, with earth showing between them, and the trunk swelling
+  // into them: a tree this old is held down, not stood on a post.
+  for (const [path, w0, seed] of [
+    [[[128, 196], [104, 218], [84, 234]], 11, 1],
+    [[[128, 196], [150, 216], [172, 234]], 11, 2],
+    [[[128, 200], [120, 220], [112, 236]], 8, 7],
+    [[[128, 200], [140, 222], [148, 236]], 7, 8],
+  ]) out.push(...bark(path, (u) => w0 - u * (w0 - 3.5), r, seed, 1));
+  // The trunk: wide at its foot, narrowing fast, then holding, with a slow lean out of true.
+  out.push(...bark([[128, 232], [127, 200], [129, 168], [132, 136], [129, 112]], (u) => 30 - u * 15, r, 3, 4));
+  // A broad band of sun down the left of the trunk, and the shade it turns into on the right: a
+  // trunk this wide needs its round read across the whole face, not just at its two edges.
+  out.push(F(band([[108, 230], [107, 190], [109, 150], [112, 118]], (u) => 7 - u * 3, mix(r.base, r.hi, 0.45))));
+  out.push(F(band([[100, 228], [99, 192], [101, 158]], (u) => 3.4 - u * 1.4, mix(r.base, r.hi, 0.72))));
+  out.push(F(band([[146, 228], [148, 190], [150, 150], [148, 120]], (u) => 6 - u * 2.6, mix(r.base, r.sh, 0.55))));
+  // Bark ridges running up its face, each starting and stopping on its own, so the wood reads.
+  for (const [i, [x0, y0, y1, w]] of [[116, 226, 132, 2.4], [124, 206, 120, 1.8], [136, 230, 150, 2.2], [142, 200, 128, 1.6], [130, 188, 140, 1.3], [152, 214, 170, 1.5]].entries()) {
+    out.push(F(band([[x0, y0], [x0 + 1.5 + i * 0.4, (y0 + y1) / 2], [x0 + 1, y1]], (u) => w * Math.sin(Math.PI * (0.1 + u * 0.8)), mix(r.base, r.deep, 0.45 + (i % 3) * 0.14))));
+  }
+  // Two old growth seams low down, where the trunk has thickened over the years.
+  for (const [cx, cy, rx] of [[126, 218, 15], [130, 204, 11]]) out.push(F(band([[cx - rx, cy], [cx, cy + 2.2], [cx + rx, cy - 0.6]], (u) => 1.1 * Math.sin(Math.PI * (0.1 + u * 0.8)), mix(r.base, r.deep, 0.4))));
+  // The long bough out to the right that the swing hangs from, one up to the left, and a short one
+  // between them, so the canopy has something holding it up.
+  out.push(...bark([[132, 128], [170, 112], [214, 108], [236, 110]], (u) => 9 - u * 5, r, 4, 2));
+  out.push(...bark([[124, 122], [92, 96], [70, 84]], (u) => 8 - u * 4, r, 5, 1));
+  out.push(...bark([[130, 124], [146, 98], [152, 80]], (u) => 6 - u * 3, r, 6, 1));
+  // The canopy: a dome of small clumps, the same size of leaf as the fruit trees so it belongs to
+  // the same orchard, lit along the top and left where the light comes from.
+  const leaf = ramp(BIG_LEAF);
+  const lit = ramp(mix(BIG_LEAF, '#ffffff', 0.22));
+  const CLUMPS = [
+    [60, 88, 30, 21, 0], [96, 100, 28, 19, 0], [168, 96, 30, 20, 0], [206, 92, 28, 19, 0],
+    [78, 62, 34, 23, 1], [128, 86, 34, 22, 0], [182, 64, 33, 22, 1],
+    [108, 46, 36, 24, 1], [152, 44, 34, 23, 1], [130, 24, 30, 20, 1],
   ];
-  const leaf = ramp('#7cbf64');
-  for (const [i, [cx, cy, rx, ry]] of [[128, 64, 74, 48], [70, 82, 42, 30], [190, 80, 46, 32], [130, 28, 46, 26], [222, 100, 26, 16]].entries()) out.push(...foliage(cx, cy, rx, ry, leaf, 11 + i * 3.1, { tips: 5 }));
-  // A hollow in the trunk, and moss.
-  out.push(E(122, 176, 6, 9, '#5a3a2a'), F(E(121, 174, 3, 5, '#3a2a20')), F(E(132, 206, 10, 3, '#8fcf72')));
+  for (const [i, [cx, cy, rx, ry, top]] of CLUMPS.entries()) out.push(...foliage(cx, cy, rx, ry, top ? lit : leaf, 11 + i * 3.1, { tips: 4 }));
+  // A hollow in the trunk with a worn lip round it, and moss where the roots meet the ground.
+  out.push(E(120, 176, 7, 10, mix(r.deep, '#ffffff', 0.18)));
+  out.push(F(E(120, 177, 4.6, 7, '#4a3024')));
+  out.push(F(E(118.6, 174.6, 2, 2.6, '#2e1c14')));
+  for (const [mx, my, mr] of [[100, 226, 7], [156, 228, 6], [132, 232, 5]]) out.push(F(E(mx, my, mr, 2.4, '#7fc06a')), F(E(mx - mr * 0.3, my - 0.9, mr * 0.5, 1, '#a2d98a')));
   return out;
 });
 
@@ -912,59 +956,390 @@ const earthWallArt = (e) => art(`mg-earthwall|${e.left}|${e.top}|${e.seed}`, e.r
 });
 
 // ---------- The nursery inside ----------
+// (Two colours blended, for the room's shading.)
+function mixWall(a, b, k) {
+  const v = (c, i) => parseInt(c.slice(1 + i * 2, 3 + i * 2), 16);
+  const t = Math.max(0, Math.min(1, k));
+  return `#${[0, 1, 2].map((i) => Math.round(v(a, i) + (v(b, i) - v(a, i)) * t).toString(16).padStart(2, '0')).join('')}`;
+}
+
+// ---------- Inside the nursery ----------
+// Drawn from scratch, 2026-11-14, to the art standard (CLAUDE.md): one light from the upper left,
+// one big shape (the domed room itself), a few medium ones (hearth, window, the row of cots, the
+// shelves) and small detail only where the eye should go. Everything rests on something and casts
+// its own contact shadow; nothing is a flat cut-out and nothing is a stamped copy of its neighbour.
+// The parts that move - the fire and its light, the kettle's steam, the bunting, the mobile over
+// the cots, the dust in the window's beam - are NOT in this sprite: they are drawn live underneath,
+// in nurseryLife, so the room breathes.
+//
+// The art is 1:1 with the map (760 x 400, floor at y 360), placed by its bottom centre.
+const NUR = {
+  plaster: '#fdf2e6',
+  plasterSh: '#f3e0cc',
+  plasterDeep: '#e8cdb4',
+  beam: '#c69a6e',
+  beamDk: '#a07249',
+  beamLit: '#dfb98c',
+  brick: '#cf9478',
+  brickDk: '#b87a60',
+  brickLit: '#e2ab8c',
+  mortar: '#edd2bc',
+  hearthDark: '#3c261f',
+  floor: '#e9cba6',
+  floorDk: '#d6b084',
+  floorLit: '#f6e0bf',
+  skirt: '#dcbb95',
+  rug: '#f6bdcb',
+  rugLit: '#ffd9e2',
+  rugDeep: '#e5a2b6',
+  cream: '#fdf6ea',
+  iron: '#7d8a90',
+  ironLit: '#aab8bd',
+};
+// Everything in the nursery that moves, drawn over the room (ox, oy is the art's top left on
+// screen). The art standard asks that the world breathes: so the fire licks and throws its light
+// about the brick, the kettle steams, the bunting sways each flag on its own beat, a mobile turns
+// slowly over the cots, and the sun through the round window lays a soft beam across the floor with
+// dust turning in it. Everything eases and is phased off its own position, so nothing moves in
+// lockstep and nothing snaps.
+function nurseryLife(ctx, ox, oy, time, night) {
+  const N = NUR;
+  const day = 1 - Math.min(1, night);
+  // --- The bunting, strung from the ribs either side of the window. Each flag swings on its own
+  // phase, the ones in the middle of a sag swinging widest.
+  for (const [x0, x1, seed] of [[36, 300, 1], [520, 724, 2]]) {
+    const n = Math.round((x1 - x0) / 30);
+    ctx.strokeStyle = '#c8a888';
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    for (let i = 0; i <= 24; i++) {
+      const u = i / 24;
+      const px = ox + x0 + (x1 - x0) * u;
+      const py = oy + 84 + Math.sin(u * Math.PI) * 22 + Math.sin(time * 0.7 + seed) * 1.6 * Math.sin(u * Math.PI);
+      if (i === 0) ctx.moveTo(px, py);
+      else ctx.lineTo(px, py);
+    }
+    ctx.stroke();
+    for (let i = 0; i < n; i++) {
+      const u = (i + 0.5) / n;
+      const px = ox + x0 + (x1 - x0) * u;
+      const py = oy + 84 + Math.sin(u * Math.PI) * 22 + Math.sin(time * 0.7 + seed) * 1.6 * Math.sin(u * Math.PI);
+      const sway = Math.sin(time * 1.1 + i * 0.9 + seed) * 0.13 * Math.sin(u * Math.PI);
+      ctx.save();
+      ctx.translate(px, py);
+      ctx.rotate(sway);
+      ctx.fillStyle = [SAKURA, '#a8dcc0', KINAKO, '#c8b4f0', '#9fd0f0'][(i + seed) % 5];
+      ctx.beginPath();
+      ctx.moveTo(-8, 0);
+      ctx.lineTo(8, 0);
+      ctx.lineTo(0, 13);
+      ctx.closePath();
+      ctx.fill();
+      ctx.fillStyle = 'rgba(255,255,255,0.4)';
+      ctx.fillRect(-8, 0, 16, 1.6);
+      ctx.restore();
+    }
+  }
+
+  // --- The sun through the round window: a soft beam down onto the floor, with dust turning in it.
+  if (day > 0.05) {
+    ctx.save();
+    ctx.globalAlpha = day * (0.2 + 0.03 * Math.sin(time * 0.6));
+    const g = ctx.createLinearGradient(0, oy + 150, 0, oy + 372);
+    g.addColorStop(0, 'rgba(255,240,205,0.95)');
+    g.addColorStop(1, 'rgba(255,238,200,0)');
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.moveTo(ox + 344, oy + 158);
+    ctx.lineTo(ox + 416, oy + 158);
+    ctx.lineTo(ox + 470, oy + 372);
+    ctx.lineTo(ox + 300, oy + 372);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+    for (let i = 0; i < 14; i++) {
+      const u = ((time * 0.055 + hash(i * 3.7)) % 1);
+      const drift = Math.sin(time * 0.5 + i * 1.7) * 9;
+      const mx = ox + 356 + hash(i * 5.3) * 52 + drift + u * 22;
+      const my = oy + 164 + u * 200;
+      ctx.globalAlpha = day * Math.sin(u * Math.PI) * 0.5;
+      ctx.fillStyle = '#fff6d8';
+      ctx.fillRect(mx, my, 1.4, 1.4);
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  // --- The fire: its light on the brick and the floor first, then the flames themselves.
+  const fx = ox + 210;
+  const fy = oy + 352;
+  const lick = flicker(time, 3);
+  glow(ctx, fx, fy - 26, 86 + lick * 10, '#ffb070', 0.3 + 0.12 * lick);
+  ctx.save();
+  ctx.globalAlpha = 0.16 + 0.07 * lick;
+  ctx.fillStyle = '#ffbe84';
+  ctx.beginPath();
+  ctx.ellipse(fx, oy + 368, 104, 13, 0, 0, TAU);
+  ctx.fill();
+  ctx.restore();
+  hearthFire(ctx, fx, fy, time);
+
+  // --- The kettle stands on the hearthstone (it is painted into the room), so what moves here is
+  // its steam, curling up the face of the brick and thinning as it goes.
+  for (let i = 0; i < 4; i++) {
+    const u = (time * 0.3 + i / 4) % 1;
+    const sx = ox + 278 + Math.sin(u * 5 + i * 1.6) * (2 + u * 8);
+    const sy = oy + 328 - u * 56;
+    ctx.globalAlpha = Math.min(1, u * 5) * (1 - u) ** 1.3 * 0.5;
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.arc(sx, sy, 2.2 + u * 5, 0, TAU);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+
+  // --- A mobile over the second cot, turning slowly: three little shapes on their own threads,
+  // each swinging a beat after the one before it. Its cord runs right up to the dome overhead, so
+  // you can see what holds it. (It used to start in mid air beside the shelves.)
+  const mx0 = ox + 473;
+  const my0 = oy + 80;
+  const turn = Math.sin(time * 0.33);
+  ctx.strokeStyle = '#c8a888';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(mx0, oy + 59);
+  ctx.lineTo(mx0, my0 + 16);
+  ctx.stroke();
+  ctx.save();
+  ctx.translate(mx0, my0 + 16);
+  ctx.rotate(turn * 0.12);
+  ctx.strokeStyle = '#c8a888';
+  ctx.beginPath();
+  ctx.moveTo(-26, 0);
+  ctx.lineTo(26, 0);
+  ctx.stroke();
+  [[-26, SAKURA], [0, '#a8dcc0'], [26, KINAKO]].forEach(([dx, c], i) => {
+    const hang = 12 + i * 4;
+    const tilt = Math.sin(time * 0.33 + i * 0.8) * 0.2;
+    ctx.save();
+    ctx.translate(dx, 0);
+    ctx.rotate(tilt);
+    ctx.strokeStyle = '#c8a888';
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.lineTo(0, hang);
+    ctx.stroke();
+    ctx.fillStyle = c;
+    ctx.beginPath();
+    ctx.ellipse(0, hang + 6, 7, 6, 0, 0, TAU);
+    ctx.fill();
+    ctx.fillStyle = 'rgba(255,255,255,0.55)';
+    ctx.beginPath();
+    ctx.ellipse(-2.2, hang + 4.4, 2.4, 1.7, 0, 0, TAU);
+    ctx.fill();
+    ctx.restore();
+  });
+  ctx.restore();
+}
+
+const BED_BLANKETS = ['#bfe2f6', '#ffd9e6', '#d8f0c8', '#ffeeb8'];
+// A contact shadow on the nursery's painted floor. It has to be a hex colour: the art pipeline
+// shades and mixes everything it is given, and an rgba string comes out of that as bright magenta -
+// which is what the first version of this room laid along its whole floor.
+const SHADE_FLOOR = '#e3c7a6';
+
 const nurseryRoomArt = () => art('mg-nurseryroom', 760, 400, () => {
-  const wall = '#fbefe4';
-  const wr = ramp(wall);
-  const out = [
-    R(0, 0, 760, 400, wall), F(R(0, 0, 760, 30, wr.sh)),
-    // Timber ribs of the dome, curving up the walls, and the wainscot.
-    ...[90, 250, 510, 670].map((x) => F(T([[x - 4, 360], [x + 4, 360], [x + 4 + (x < 380 ? 40 : -40), 0], [x - 4 + (x < 380 ? 40 : -40), 0]], '#d8b088'))),
-    F(R(0, 300, 760, 60, '#e8c8a8')), F(R(0, 300, 760, 3, '#f8dcc0')),
-    // Paper bunting, a string each side of the window, sagging between the ribs.
-    ...[[24, 300], [460, 736]].flatMap(([x0, x1]) => {
-      const n = Math.round((x1 - x0) / 26);
-      return [F(limb(x0, 96, (x0 + x1) / 2, 112, 0.5, 0.5, '#c8a888')), F(limb((x0 + x1) / 2, 112, x1, 96, 0.5, 0.5, '#c8a888')),
-        ...Array.from({ length: n }, (_, i) => {
-          const u = (i + 0.5) / n;
-          const x = x0 + (x1 - x0) * u;
-          const y = 96 + Math.sin(u * Math.PI) * 16;
-          return F(T([[x - 8, y], [x + 8, y], [x, y + 12]], [SAKURA, '#a8dcc0', KINAKO, '#c8b4f0', '#9fd0f0'][i % 5]));
-        })];
-    }),
-    // The round window onto the garden: its frame (the sky in it is drawn live, day or night), and a
-    // sill with a potted plant.
-    E(380, 150, 62, 62, WOOD),
-    R(318, 208, 124, 7, WOOD), F(R(318, 208, 124, 2, ramp(WOOD).hi)),
-    R(422, 194, 16, 14, '#e0905a'), F(R(420, 192, 20, 3, '#ec9c66')), E(424, 188, 6, 5, '#8fc46a'), E(434, 186, 6, 6, '#9fcf7a'), E(429, 181, 5, 5, '#8fc46a'), F(E(429, 180, 2.4, 2.4, '#ffd0dc')),
-    // The hearth: stone, its dark mouth (the flames are drawn live), a kettle on the side.
-    R(150, 214, 120, 146, '#cfc6b8'), F(R(150, 214, 120, 8, '#e0d8ca')), R(176, 280, 68, 80, '#5a4038'), F(R(176, 280, 68, 6, '#4a3430')),
-    ...[[188, 352], [204, 354], [222, 352]].map(([lx, ly]) => F(R(lx - 9, ly - 3, 18, 6, '#7a4a30'))),
-    R(140, 206, 140, 10, WOOD), F(R(140, 206, 140, 2, ramp(WOOD).hi)),
-    // A crayon drawing over the mantel: three Mochi in a row under a sun.
-    R(172, 128, 76, 62, '#a8784a'), R(176, 132, 68, 54, '#fffaf2'),
-    ...[[192, 170, SAKURA], [210, 168, MOCHI], [228, 170, MATCHA]].flatMap(([dx, dy, c]) => [E(dx, dy, 8, 7, c), F(E(dx - 2.4, dy - 1, 0.9, 1.2, '#5a4038')), F(E(dx + 2.4, dy - 1, 0.9, 1.2, '#5a4038')), F(R(dx - 0.5, dy - 12, 1, 5, '#6aa84a'))]),
-    E(234, 144, 6, 6, '#ffd75e'), F(R(178, 178, 64, 2, '#9fcf7a')),
-    // The way out: an arched wooden door.
-    R(56, 296, 48, 64, '#b07a4a'), E(80, 296, 24, 20, '#b07a4a'), F(R(62, 300, 36, 58, '#c8945a')), F(E(80, 300, 18, 14, '#c8945a')),
-    F(R(79, 286, 2, 72, '#a06a3a')), F(E(92, 330, 2.4, 2.4, '#ffd75e')), R(52, 356, 56, 4, '#9a6a40'),
-    // A second drawing on the far wall: a heart and a little house.
-    R(694, 116, 46, 50, '#a8784a'), R(697, 119, 40, 44, '#fffaf2'), F(T([[717, 152], [705, 138], [711, 132], [717, 137], [723, 132], [729, 138]], '#ff8fb0')), F(R(703, 154, 28, 2, '#9fd0f0')),
-    // The rug.
-    E(380, 362, 150, 14, '#f6c0cc'), F(E(380, 362, 132, 10, '#ffd8e0')), F(E(380, 362, 112, 7, '#f6c0cc')),
-    // The basket beds (world/garden-life.js NURSERY_BEDS), each with its own blanket: the back of the
-    // basket and the blanket inside (the front of the rim is drawn over whoever's asleep in it).
-    ...NURSERY_BEDS.flatMap((x, i) => [E(x, 352, 34, 4, '#d8a86a'), F(E(x, 351, 33, 1.2, '#ecc890')), E(x, 353, 31, 2.4, '#a8784a'), E(x, 354, 29, 2.6, BED_BLANKETS[i % BED_BLANKETS.length]), F(E(x - 14, 353, 7, 1.2, '#ffffff'))]),
-    // The trophy shelf above it (the cups are drawn live: drawGardenPiece mg_nurseryroom), on two
-    // brackets, a little wooden plaque under it.
-    R(512, 196, 166, 7, WOOD), F(R(512, 196, 166, 2, ramp(WOOD).hi)), R(522, 203, 4, 10, WOOD_DK), R(664, 203, 4, 10, WOOD_DK),
-    R(568, 205, 54, 11, '#e8c890'), F(R(568, 205, 54, 1.4, '#f6dcae')), F(R(570, 214, 50, 1, '#c8a060')),
-    // The toy shelf (its ledge is a platform): a ball, a little drum, blocks.
-    R(520, 262, 150, 8, WOOD), F(R(520, 262, 150, 2, ramp(WOOD).hi)),
-    E(546, 252, 8, 8, '#ff9ab0'), F(E(543, 249, 3, 2, '#ffffff')), R(572, 246, 14, 14, '#9fc8f0'), F(E(579, 246, 7, 2, '#cfe6ff')), R(600, 250, 10, 10, KINAKO), R(612, 252, 8, 8, MATCHA), R(606, 242, 8, 8, SAKURA),
-  ];
+  const N = NUR;
+  const out = [];
+  // ---- The shell: a round room. The wall curves in overhead, so the ceiling is an arc and the
+  // corners fall away into shade. This is the one big shape everything else sits inside.
+  // (F: flat. The light pass shades a shape in cel steps, and on a shape this size that is one
+  // hard edge straight down the wall - the seam that used to cut the room in two. The wall's
+  // shading is all painted by hand below: the dome's band, and the corners falling away.)
+  out.push(F(R(0, 0, 760, 400, N.plaster)));
+  const dome = [];
+  for (let i = 0; i <= 28; i++) {
+    const u = i / 28;
+    const x = u * 760;
+    dome.push([x, 118 - Math.sin(u * Math.PI) * 64]);
+  }
+  out.push(F(T([[0, 0], [760, 0], ...dome.slice().reverse()], N.plasterDeep)));
+  out.push(F(T([[0, 0], [230, 0], [120, 86], [0, 116]], mixWall(N.plasterDeep, '#c49a7c', 0.52))));
+  out.push(F(T([[530, 0], [760, 0], [760, 116], [640, 86]], mixWall(N.plasterDeep, '#c49a7c', 0.52))));
+  // The ceiling's ribs, radiating from the crown to the wall: timber, lit on their left.
+  for (const u of [0.12, 0.3, 0.5, 0.7, 0.88]) {
+    const x0 = 380 + (u - 0.5) * 120;
+    const x1 = u * 760;
+    const y1 = 96 - Math.sin(u * Math.PI) * 78;
+    out.push(F(limb(x0, 6, x1, y1 + 4, 5, 3.4, N.beam)));
+    out.push(F(limb(x0 - 1.2, 6, x1 - 1.2, y1 + 4, 1.6, 1, N.beamLit)));
+  }
+  out.push(F(E(380, 8, 26, 9, N.beamDk)), F(E(380, 6, 22, 7, N.beam)), F(E(374, 4, 9, 3, N.beamLit)));
+
+  // (The map paints its own floor from the ground line down, so nothing is drawn below y 360 here:
+  // the first try put boards and a rug down there and none of it could be seen.)
+  // The skirting the wall sits on.
+  out.push(F(R(0, 344, 760, 14, N.skirt)), F(R(0, 344, 760, 2.4, mixWall(N.skirt, '#ffffff', 0.5))));
+  out.push(F(R(0, 356, 760, 2, mixWall(N.skirt, '#000000', 0.12))));
+
+  // ---- The hearth, left of centre: the room's warm heart and its second big shape. Everything
+  // around it rests on the hearthstone or on the floor - nothing is left hanging off the brick.
+  const HX = 210;
+  out.push(F(E(HX, 361, 104, 8, SHADE_FLOOR)));
+  // The breast, in brick courses; the mortar shows between them, and the left face catches the light.
+  out.push(F(R(HX - 62, 198, 124, 160, N.mortar)));
+  for (let r = 0; r < 11; r++) {
+    const y = 202 + r * 14;
+    for (let c = 0; c < 7; c++) {
+      const bw = 18;
+      const bx = HX - 60 + ((r % 2) * bw) / 2 + c * bw;
+      if (bx + 2 > HX + 60) continue;
+      const w = Math.min(bw - 3, HX + 60 - bx);
+      if (w < 4) continue;
+      out.push(F(R(bx, y, w, 11, (r + c) % 3 === 0 ? N.brickDk : N.brick)));
+      out.push(F(R(bx, y, w, 2.4, (r + c) % 3 === 0 ? N.brick : N.brickLit)));
+    }
+  }
+  // Its mouth: an arch, dark inside, with a stone lintel over it and a hearthstone in front.
+  out.push(R(HX - 34, 272, 68, 86, N.hearthDark), E(HX, 272, 34, 26, N.hearthDark));
+  out.push(F(E(HX, 274, 29, 21, mixWall(N.hearthDark, '#000000', 0.35))), F(R(HX - 29, 286, 58, 72, mixWall(N.hearthDark, '#000000', 0.35))));
+  out.push(F(R(HX - 44, 238, 88, 9, '#d8c6b2')), F(R(HX - 44, 238, 88, 2.4, '#efe2d2')));
+  out.push(F(R(HX - 70, 350, 140, 10, '#cfc2b0')), F(R(HX - 70, 350, 140, 2.6, '#e8ddcd')));
+  // The mantel shelf, with a candle, a jar of sweets and a framed photo on it.
+  out.push(R(HX - 74, 186, 148, 11, N.beam), F(R(HX - 74, 186, 148, 2.6, N.beamLit)), F(R(HX - 74, 195, 148, 2, N.beamDk)));
+  // (A cream candle on a cream wall was invisible: only its flame showed, as a yellow bead in the
+  // air. It stands in a brass candlestick now, and the candle itself is outlined.)
+  out.push(F(E(HX - 50, 186, 7.5, 2.6, '#d8ae62')), F(E(HX - 50, 184.6, 7.5, 1.4, '#efcb8c')));
+  out.push(F(R(HX - 52, 179, 4, 7, '#e8c07a')), F(E(HX - 50, 179, 5, 1.8, '#efcb8c')));
+  out.push(R(HX - 52.6, 167, 5.2, 13, '#fdf6ea'), F(R(HX - 52.6, 167, 1.8, 13, '#ffffff')));
+  out.push(F(E(HX - 50, 163.4, 2.2, 3.6, '#ffc46a')), F(E(HX - 50, 164, 1.1, 1.9, '#fff3c8')));
+  out.push(F(R(HX + 20, 164, 20, 22, '#cfe6f2')), F(R(HX + 20, 164, 20, 3, '#eaf6fb')), F(R(HX + 18, 160, 24, 5, N.beamDk)));
+  for (const [dx, dy, c] of [[26, 174, SAKURA], [33, 178, MATCHA], [30, 170, KINAKO]]) out.push(F(E(HX + dx, dy, 4, 3.4, c)));
+  out.push(F(R(HX - 20, 162, 26, 24, '#a98059')), F(R(HX - 17, 165, 20, 18, N.cream)));
+  out.push(F(E(HX - 7, 174, 7, 6, SAKURA)), F(E(HX - 9.4, 172.6, 2, 1.5, '#ffffff')));
+  // The fire iron leans on the left cheek of the brick and stands on the hearthstone.
+  out.push(F(limb(HX - 48, 302, HX - 40, 349, 2.2, 1.6, N.iron)));
+  out.push(F(E(HX - 48, 298, 4.4, 4.4, N.iron)), F(E(HX - 48, 298, 2.2, 2.2, N.brick)), F(E(HX - 49.4, 296.6, 1.4, 1.2, N.ironLit)));
+  // The kettle, sitting on the hearthstone to the right of the fire. (It used to hang from a hook
+  // bolted to thin air just past the brick, which is what made it read as floating.) Its steam is
+  // drawn live, rising up the face of the brick.
+  out.push(F(E(HX + 50, 340, 13, 10.5, '#bcdcee')), F(E(HX + 50, 345.5, 11, 5, '#9bc4da')));
+  out.push(F(E(HX + 46, 335, 4.6, 3, '#e6f4fc')));
+  out.push(F(limb(HX + 60, 334, HX + 71, 327, 4.6, 2.2, '#9bc4da')), F(E(HX + 71, 326.4, 2.6, 2, '#cfe6f2')));
+  out.push(F(R(HX + 43, 325.6, 14, 4.6, '#bcdcee')), F(R(HX + 43, 325.6, 14, 1.6, '#e6f4fc')));
+  out.push(F(E(HX + 50, 323.6, 3, 2.2, N.cream)));
+  out.push(F(limb(HX + 40, 327, HX + 44, 317, 1.8, 1.6, N.iron)), F(limb(HX + 44, 317, HX + 56, 317, 1.6, 1.6, N.iron)), F(limb(HX + 56, 317, HX + 60, 327, 1.6, 1.8, N.iron)));
+  // A basket of split logs beyond the hearthstone, standing on the floor. The logs lean up out of
+  // it, so they read as firewood: stacked end-on they came out looking like a basket of buns.
+  const BX = HX + 100;
+  out.push(E(BX, 350, 22, 11, '#b2854f'));
+  for (const [x0, x1, y1, lw, c] of [[BX - 9, BX - 17, 327, 5.4, '#c2945f'], [BX - 2, BX - 5, 319, 5.8, '#ab7f4e'], [BX + 5, BX + 11, 323, 5.2, '#d3a469'], [BX + 11, BX + 19, 331, 4.6, '#b98a58']]) {
+    out.push(F(limb(x0, 345, x1, y1, lw, lw * 0.94, c)));
+    out.push(F(E(x1, y1 + 0.6, lw * 0.5, lw * 0.44, '#e6c69a')));
+  }
+  out.push(F(E(BX, 347, 21, 9, '#d3a469')));
+  for (let i = 0; i < 7; i++) out.push(F(R(BX - 18 + i * 6, 343, 2, 10, '#bb8c53')));
+  out.push(F(E(BX, 342, 20, 3, '#e0b67c')));
+
+  // ---- The round window, dead centre: the room's one cool note and the eye's rest.
+  const WX = 380;
+  out.push(E(WX, 150, 70, 70, N.beamDk), F(E(WX, 150, 64, 64, N.beam)), F(E(WX, 150, 58, 58, '#2a3a44')));
+  // (The glass itself is painted live: nurseryWindow.)
+  out.push(F(R(WX - 4, 92, 8, 116, N.beam)), F(R(WX - 60, 146, 120, 8, N.beam)));
+  out.push(F(R(WX - 4, 92, 2.4, 116, N.beamLit)), F(R(WX - 60, 146, 120, 2.4, N.beamLit)));
+  // Its sill, with a potted sprout and a folded cloth on it.
+  out.push(R(WX - 70, 212, 140, 10, N.beam), F(R(WX - 70, 212, 140, 2.6, N.beamLit)), F(R(WX - 64, 222, 128, 4, N.beamDk)));
+  out.push(F(R(WX + 30, 196, 18, 16, '#dd8f5c')), F(R(WX + 28, 193, 22, 4, '#eb9d68')), F(R(WX + 30, 196, 18, 2, '# efb184'.replace(' ', ''))));
+  out.push(F(E(WX + 34, 188, 7, 5.6, '#8fc46a')), F(E(WX + 44, 186, 7, 6, '#a3d47d')), F(E(WX + 39, 181, 5.6, 5, '#8fc46a')), F(R(WX + 38.6, 184, 1.6, 10, '#6aa84a')));
+  out.push(F(R(WX - 50, 204, 26, 8, '#cfe6f2')), F(R(WX - 50, 204, 26, 2.4, '#eaf6fb')), F(R(WX - 50, 208, 26, 1.4, '#b7d6e6')));
+
+  // ---- The right of the room: two shelves on the wall, and the toy chest in the far corner where
+  // the floor is clear of the cots. (The chest used to stand on top of the last two cots.)
+  const SX = 596;
+  out.push(R(SX - 100, 196, 200, 9, N.beam), F(R(SX - 100, 196, 200, 2.4, N.beamLit)), F(R(SX - 100, 203, 200, 2, N.beamDk)));
+  out.push(F(T([[SX - 92, 205], [SX - 84, 205], [SX - 88, 219]], N.beamDk)), F(T([[SX + 84, 205], [SX + 92, 205], [SX + 88, 219]], N.beamDk)));
+  out.push(R(SX - 100, 262, 200, 9, N.beam), F(R(SX - 100, 262, 200, 2.4, N.beamLit)), F(R(SX - 100, 269, 200, 2, N.beamDk)));
+  out.push(F(T([[SX - 92, 271], [SX - 84, 271], [SX - 88, 285]], N.beamDk)), F(T([[SX + 84, 271], [SX + 92, 271], [SX + 88, 285]], N.beamDk)));
+  // On the top shelf: a row of trophies is drawn live, so only a plaque is painted in.
+  out.push(F(R(SX - 28, 205, 56, 12, '#e8c890')), F(R(SX - 28, 205, 56, 1.6, '#f6dcae')), F(R(SX - 25, 214, 50, 1.2, '#c8a060')));
+  // On the lower shelf: a ball, a stacking tower, a little drum and a picture book, each different.
+  out.push(F(E(SX - 72, 252, 10, 10, '#ff9ab0')), F(E(SX - 75, 249, 3.6, 2.6, '#ffd3de')), F(E(SX - 72, 261, 9, 2, SHADE_FLOOR)));
+  for (const [i, c] of [KINAKO, MATCHA, SAKURA].entries()) out.push(F(R(SX - 40 + i * 2, 253 - i * 9, 22 - i * 4, 9, c)), F(R(SX - 40 + i * 2, 253 - i * 9, 22 - i * 4, 2, '#ffffff')));
+  out.push(F(R(SX + 6, 244, 24, 18, '#e8b06a')), F(R(SX + 6, 244, 24, 3, '#f6c88a')), F(R(SX + 6, 250, 24, 2, '#c08848')), F(E(SX + 18, 243, 12, 3, N.cream)));
+  out.push(F(R(SX + 44, 240, 7, 22, '#9fc8f0')), F(R(SX + 51, 242, 7, 20, '#ffc2d4')), F(R(SX + 58, 244, 7, 18, '#cfe8b8')));
+  // The toy chest in the corner, lid shut, standing on the floor on its own two feet.
+  const CX = 722;
+  out.push(F(E(CX, 361, 36, 7, SHADE_FLOOR)));
+  // The box, its front panelled, with a foot under each end.
+  out.push(R(CX - 30, 312, 60, 46, '#b07c4c'), F(R(CX - 30, 312, 60, 45, '#c08b57')));
+  out.push(F(R(CX - 24, 318, 48, 33, '#cb9a66')), F(R(CX - 24, 318, 48, 2, '#dcae7d')), F(R(CX - 24, 349, 48, 2, '#a7753f')));
+  out.push(F(R(CX - 28, 356, 9, 4, '#8c5f33')), F(R(CX + 19, 356, 9, 4, '#8c5f33')));
+  // The lid, overhanging the box and rounded along its back.
+  out.push(F(R(CX - 33, 303, 66, 11, '#c08b57')), F(E(CX, 303, 33, 5.4, '#cb9a66')));
+  out.push(F(R(CX - 33, 300.6, 66, 2.4, '#dcae7d')), F(R(CX - 33, 311, 66, 3, '#a7753f')));
+  // An iron strap round each corner, and the latch between them.
+  for (const dx of [-26, 26]) out.push(F(R(CX + dx - 2.4, 299, 4.8, 21, N.iron)), F(R(CX + dx - 2.4, 299, 1.4, 21, N.ironLit)));
+  out.push(F(R(CX - 3.6, 309, 7.2, 9, '#e8c890')), F(R(CX - 3.6, 309, 7.2, 1.6, '#f6dcae')), F(E(CX, 317, 3, 2.4, '#c8a060')));
+  // Three mochi painted across the front panel.
+  for (const [i] of [0, 1, 2].entries()) out.push(F(E(CX - 14 + i * 14, 338, 5.6, 4.8, [SAKURA, MATCHA, KINAKO][i])), F(E(CX - 15.8 + i * 14, 336.6, 1.8, 1.3, '#fffaf2')), F(R(CX - 14.6 + i * 14, 332, 1.3, 3.6, '#9fcf7a')));
+
+  // ---- The cots, along the floor where the Mochi sleep. Woven baskets, each with a mattress, a
+  // turned-down blanket and a pillow; the front of the rim is drawn over whoever is asleep inside.
+  for (const [i, x] of NURSERY_BEDS.entries()) {
+    const blanket = BED_BLANKETS[i % BED_BLANKETS.length];
+    out.push(F(E(x, 361, 42, 6, SHADE_FLOOR)));
+    // The basket: a woven back wall with a rolled rim along the top of it.
+    out.push(E(x, 357, 38, 11, '#a97a49'));
+    out.push(F(E(x, 354, 37, 9, '#cf9f63')));
+    for (let k = 0; k < 11; k++) out.push(F(R(x - 33 + k * 6.6, 346, 2.4, 14, '#b9884f')));
+    out.push(F(E(x, 346.6, 36, 3.4, '#dcae73')), F(E(x, 345.4, 36, 1.5, '#edc893')));
+    // The mattress, the blanket turned down over it, and the pillow at the near end.
+    out.push(F(E(x + 2, 348.4, 30, 3.6, N.cream)));
+    out.push(F(E(x + 5, 349.4, 26, 3.4, blanket)));
+    out.push(F(E(x + 5, 347.8, 26, 1.6, mixWall(blanket, '#ffffff', 0.55))));
+    out.push(F(E(x - 19, 347.8, 10, 3.2, N.cream)), F(E(x - 19, 346.6, 10, 1.4, '#ffffff')));
+  }
+
+  // ---- The way out, on the left: an arched door in a timber frame, with a mat in front of it.
+  out.push(R(48, 288, 64, 72, N.beamDk), E(80, 288, 32, 26, N.beamDk));
+  out.push(F(R(54, 293, 52, 67, '#b47f4e')), F(E(80, 293, 26, 21, '#b47f4e')));
+  out.push(F(R(58, 296, 44, 62, '#c7925c')), F(E(80, 296, 22, 18, '#c7925c')));
+  out.push(F(R(79, 282, 2.4, 78, '#9a6b3c')));
+  out.push(F(E(95, 326, 3.4, 3.4, '#f0c768')), F(E(94.2, 325, 1.2, 1.2, '#fff1c8')));
+  out.push(F(E(80, 362, 34, 6, '#cfa9c2')), F(E(80, 361, 30, 4.6, '#e8c6dc')));
+
+  // (A big oval rag rug used to lie across this floor. It ran over the hearthstone, the door mat
+  // and the first two cots at once, so the floor read as a heap of overlapping shapes: it is gone,
+  // and every piece on the floor now has clear ground of its own.)
+
+  // ---- A peg rail over the door with the babies' things on it, a knitted cap and a bib. (It used
+  // to hang between the window and the shelves, where it ran straight into the shelf and its
+  // bracket; the wall over the door was the one big bare stretch in the room.)
+  out.push(R(34, 230, 86, 7, N.beam), F(R(34, 230, 86, 2, N.beamLit)), F(R(34, 235, 86, 1.6, N.beamDk)));
+  for (const px of [56, 98]) out.push(F(R(px - 1.6, 237, 3.2, 7, N.beamDk)), F(E(px, 245, 3, 2.6, N.beam)));
+  // A little knitted jumper, sleeves out, with a ribbed collar and hem.
+  out.push(F(T([[48, 246], [64, 246], [65.4, 263], [46.6, 263]], '#ffc2d4')));
+  out.push(F(R(39, 247, 10, 5.4, '#ffc2d4')), F(R(63, 247, 10, 5.4, '#ffc2d4')));
+  out.push(F(R(39, 250.4, 10, 2, '#ffd9e4')), F(R(63, 250.4, 10, 2, '#ffd9e4')));
+  out.push(F(R(51.4, 243.6, 9.2, 3.4, '#ffd9e4')), F(E(56, 245.4, 4, 1.6, '#ff9fbb')));
+  out.push(F(R(46.6, 258.6, 18.8, 4.4, '#ffd9e4')));
+  for (let i = 0; i < 6; i++) out.push(F(R(47.6 + i * 3.2, 259.4, 1.1, 3, '#ffc2d4')));
+  // The bib, with its tie over the peg.
+  out.push(F(T([[90, 246], [106, 246], [108, 264], [88, 264]], '#cfe6f2')), F(E(98, 246, 9, 3, '#eaf6fb')), F(E(98, 252, 4, 3.4, '#ffffff')));
+
+  // ---- A framed drawing on the wall over the toy chest: somebody small has drawn their house,
+  // with a heart over the roof and a stripe of sky above it.
+  out.push(R(698, 236, 52, 58, '#a98059'), F(R(701, 239, 46, 52, N.cream)));
+  out.push(F(T([[724, 256], [714, 245], [718.6, 241], [724, 245.6], [729.4, 241], [734, 245]], '#ff8fb0')));
+  out.push(F(T([[710, 271], [738, 271], [724, 259]], '#ff9a8c')), F(T([[710, 271], [738, 271], [724, 268]], '#ffb6a6')));
+  out.push(F(R(713, 271, 22, 14, '#ffe2b8')), F(R(713, 271, 22, 2, '#fff2d8')));
+  out.push(F(R(721, 277, 6, 8, '#c88a5a')), F(E(725.4, 281, 0.9, 0.9, '#8c5f33')));
+  out.push(F(R(707, 286, 34, 1.8, '#9fd0f0')));
+
+  // (The wall over the cots is left plain on purpose. It has carried a row of painted mochi and
+  // then a painted border, and both read as a rail with things perched on it rather than as paint:
+  // at this size anything on that line looks like an object standing on nothing.)
   return out;
 });
-const BED_BLANKETS = ['#c8e6f8', '#ffe4ec', '#e2f4d8', '#fff0c4'];
 // The round window's glass, drawn under the room's picture (which cuts the window's round hole
 // with its frame): blue sky and a cloud by day, deep blue with stars and the moon by night, eased
 // between at dusk and dawn. (cx, cy): its centre on screen.
@@ -1781,14 +2156,21 @@ export function drawGardenPiece(ctx, map, kind, wx, extra, cam, width, time) {
       place(ctx, earthWallArt(extra), snap(x), extra.bottom - cam.y);
       return true;
     case 'mg_nurseryroom': {
+      // The room's art is exactly as wide as the map, but the view is wider than that, so past its
+      // edges the town's outdoor backdrop showed through down a hard vertical seam. The wall is
+      // carried right across the view first, in the colours the art's own edges end on.
+      const top = gy - 360;
+      ctx.fillStyle = '#d5b297';
+      ctx.fillRect(0, top - 160, width, 278);
+      ctx.fillStyle = NUR.plaster;
+      ctx.fillRect(0, top + 118, width, 226);
+      ctx.fillStyle = NUR.skirt;
+      ctx.fillRect(0, top + 344, width, 16);
       place(ctx, nurseryRoomArt(), snap(x), gy + 40);
       // The sky in the round window: the garden's day or night (map.outsideNight: world/daytime.js).
       nurseryWindow(ctx, x, gy + 40 - 400 + 150, map.outsideNight ?? 0, time);
-      // The fire in the hearth: flames licking up, and its glow; the two eggs warming by it.
-      hearthFire(ctx, x - 380 + 210, gy + 40 - 400 + 350, time);
-      glow(ctx, x - 170, gy - 30, 46, '#ffb070', 0.45 * flicker(time, 3));
-      place(ctx, emptyMortarArt(), snap(x - 260), gy + 2);
-      place(ctx, emptyMortarArt(), snap(x - 90), gy + 2);
+      // Everything in the room that moves.
+      nurseryLife(ctx, x - 380, gy + 40 - 400, time, map.outsideNight ?? 0);
       trophyShelf(ctx, map.trophies ?? [], x - 380, gy - 360, time);
       return true;
     }

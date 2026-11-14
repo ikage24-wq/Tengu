@@ -306,8 +306,6 @@ function star(cx, cy, r, c) {
 // its catchlights sit on the lit (facing) side and its outer corner points away from the nose.
 const EYE_Y = 18.2;
 const EYE_DX = 4.3;
-// Where the shine sits in a painted-on eye (a shop mannequin's).
-const EY_PAINT = 17.5;
 // Per eye style: size (rx, ry), outer-corner lift, wing and clumps, iris size, pupil, openness.
 const EYE_LOOK = {
   sparkle: { rx: 2, ry: 2.5, tilt: 0.12, wing: 0.9, flicks: 1, iris: 1.3 },
@@ -1411,8 +1409,8 @@ function headShapes(look, g, rig) {
   // A shop's mannequin has no face of its own (render/shopmodel.js): two eyes painted on the
   // wood, nothing else, so a pair of specs or a mask still has something to sit on.
   if (look.faceless) {
-    out.push(...[-1, 1].map((side) => F(E(FACE_X + EYE_DX * side, EYE_Y + 0.2, 1.05, 1.3, mix(skin, '#3f2a18', 0.78)))));
-    out.push(...[-1, 1].map((side) => F(E(FACE_X + EYE_DX * side - 0.3, EY_PAINT, 0.34, 0.3, mix(skin, '#ffffff', 0.5)))));
+    // Nothing at all: a shop's mannequin has no face (the player's call, 2026-11-14). It was given
+    // two painted dot eyes so a pair of specs had something to sit on; blank reads better.
   } else [-1, 1].forEach((side, i) => {
     // A closed eye is a happy arc (true) or a named lid ('blink', 'hurt'); a blink only takes an
     // open eye.

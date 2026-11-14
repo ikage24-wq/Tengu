@@ -55,7 +55,10 @@ import { groundAt, footingAt } from './physics.js';
 // (A row of them on the ground just inside the gate, where the square's lantern lights them:
 // clear of the shop's counter and of every stall, so rocking an egg never eats a press meant for
 // the keeper or a stall.)
-export const EGG_SLOTS = [128, 154, 180, 141, 167];
+// Spread along the grass inside the gate rather than huddled together (the player, 2026-11-14:
+// "too many eggs in 1 place"): three along the front and two set back between them, far enough
+// apart that you can walk up to any one of them and rock it without catching its neighbour.
+export const EGG_SLOTS = [100, 152, 204, 126, 178];
 // How far back from the front row an egg sits, so they lie as a clutch rather than a straight line
 // (render/garden.js lifts and shrinks the back ones).
 export const EGG_BACK = [0, 0, 0, 1, 1];

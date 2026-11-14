@@ -36,32 +36,32 @@ const MID_AT = (wx) => wx * MID_F;
 // Early summer in a worked valley: hazy blue-green distance, young rice over wet mud, cedar
 // windbreaks nearly black-green, straw and cut wood warm against all of it.
 const C = {
-  ridgeBack: '#a8c4cc',
-  ridge: '#8fb0a4',
-  crest: '#7da284',
-  crestLit: '#9ec29a',
-  cedarFar: '#5f8a70',
-  paddy: '#75a44c',
-  paddyLit: '#9cc46a',
-  paddyWet: '#6fa8ae',
-  paddyWetLit: '#a2d2d6',
-  bank: '#56844c',
-  bankLit: '#76a464',
-  stone: '#a29783',
-  stoneLit: '#c4b9a2',
-  stoneDark: '#847a68',
-  wood: '#7a6448',
-  straw: '#d9bc78',
-  strawLit: '#f0d79a',
-  cedar: '#3f6a54',
-  cedarLit: '#5c8a68',
-  leaf: '#5f8f5e',
-  leafLit: '#7fae72',
-  mist: '#dceaf0',
-  mistLit: '#f0f8fa',
-  wall: '#ece3cc',
-  roof: '#6b6456',
+  // Pale and warm, in the key the game's other backdrops are painted in (Sprout Village, Mossy
+  // Woods, Lantern Lagoon): the far ones barely separated from the cream at the horizon, each one
+  // a touch greener and warmer as it comes forward. Nothing here is saturated; the bright art is
+  // all in front.
+  hillFar: '#d3e2de',
+  hillMid: '#c2dcc8',
+  hillNear: '#aed3ad',
+  hillLine: '#c6e3bf',
+  farTree: '#b6cfc2',
+  nearTree: '#95bd99',
+  midField: '#9ecb9c',
+  midFieldLit: '#bbdfb0',
+  midWater: '#cfeadf',
+  midTree: '#7fb086',
+  midTreePale: '#9cc49e',
+  midShed: '#c2b79e',
+  midRoof: '#9d8f7c',
+  mist: '#e2eff0',
+  mistLit: '#f2f8f8',
+  paddyWet: '#cfeadf',
+  paddyWetLit: '#e4f4ec',
+  bank: '#9ecb9c',
+  bankLit: '#bbdfb0',
+  reed: '#9ab878',
 };
+
 
 const fillPath = (ctx, color, pts) => {
   ctx.fillStyle = color;
@@ -72,79 +72,8 @@ const fillPath = (ctx, color, pts) => {
   ctx.fill();
 };
 
-// A cedar: a narrow dark cone with its light side a shade up.
-function cedar(ctx, x, base, h, w, c = C.cedar, lit = C.cedarLit) {
-  fillPath(ctx, c, [[x - w, base], [x, base - h], [x + w, base]]);
-  fillPath(ctx, lit, [[x - w, base], [x, base - h], [x - w * 0.22, base]]);
-}
-
-// A round tree, for orchard rows and the pond's far bank.
-function roundTree(ctx, x, base, r, c, lit) {
-  ctx.fillStyle = c;
-  ctx.beginPath();
-  ctx.ellipse(x, base - r * 0.85, r, r * 0.92, 0, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.fillStyle = lit;
-  ctx.beginPath();
-  ctx.ellipse(x - r * 0.32, base - r * 1.12, r * 0.52, r * 0.42, 0, 0, Math.PI * 2);
-  ctx.fill();
-}
-
-// ---------- The far side of the valley ----------
-// Horizon only: three ridges, the nearest one terraced along its crest, cedars standing on it.
-function far(ctx, t, cam, width, y0, time) {
-  const off = cam.x * FAR_F;
-  const X = (planeX) => planeX - off;
-  const bottom = y0 + 60;
-
-  const wave = (x, a, f, p) => Math.sin(x * f + p) * a + Math.sin(x * f * 2.4 + p * 1.7) * a * 0.3;
-  const band = (color, dy, a, f, p) => {
-    const pts = [];
-    for (let px = -80; px <= 1320; px += 12) pts.push([X(px), y0 + dy + wave(px, a, f, p)]);
-    pts.push([X(1320), bottom], [X(-80), bottom]);
-    fillPath(ctx, color, pts);
-    return (px) => y0 + dy + wave(px, a, f, p);
-  };
-  band(C.ridgeBack, -30, 12, 0.0105, 1.9);
-  band(C.ridge, -14, 9, 0.0082, 0.5);
-  // The valley's own far side: high opposite the square, dipping over the water, rising past it.
-  const crest = (px) => y0 + 2 - 22 * Math.exp(-((px - 130) ** 2) / 30000) + 16 * Math.exp(-((px - 500) ** 2) / 16000)
-    - 14 * Math.exp(-((px - 860) ** 2) / 60000) + Math.sin(px * 0.019) * 2;
-  const pts = [];
-  for (let px = -80; px <= 1320; px += 10) pts.push([X(px), crest(px)]);
-  pts.push([X(1320), bottom], [X(-80), bottom]);
-  fillPath(ctx, C.crest, pts);
-  const lit = [];
-  for (let px = -80; px <= 1320; px += 10) lit.push([X(px), crest(px)]);
-  for (let px = 1320; px >= -80; px -= 10) lit.push([X(px), crest(px) + 4.5]);
-  fillPath(ctx, C.crestLit, lit);
-  // A hint of terracing on it: four pale steps opposite the square and the orchard, no deeper than
-  // the haze will let anything show.
-  for (let i = 0; i < 4; i++) {
-    const x0 = FAR_AT(-200) + i * 10;
-    const x1 = FAR_AT(1700) - i * 30;
-    const y = i * 4.6 + 5;
-    const step = [];
-    for (let px = x0; px <= x1; px += 14) step.push([X(px), crest(px) + y]);
-    for (let px = x1; px >= x0; px -= 14) step.push([X(px), crest(px) + y + 3.2]);
-    fillPath(ctx, i % 2 ? C.paddyWetLit : C.paddyLit, step);
-  }
-  // Cedars along the crest, thinning where the hillside goes down to the water.
-  for (let i = 0; i < 52; i++) {
-    const px = -70 + i * 27 + hash(i * 3.1) * 14;
-    if (Math.abs(px - 505) < 64 && hash(i * 7.7) < 0.7) continue;
-    const h = 8 + hash(i * 5.3) * 8;
-    cedar(ctx, X(px), crest(px) + 1.5, h, h * 0.26, C.cedarFar, C.crestLit);
-  }
-  return true;
-}
-
-// ---------- The middle distance ----------
-// Anchored to the valley, so each stretch has its own: the near lip of the terraces behind the
-// square, a windbreak and fruit rows behind the orchard, the pond's far bank behind the water,
-// and valley mist over the cliff.
-// Runs `draw` with the screen clipped to the stretch of valley between wx0 and wx1, handing it
-// that window's left and right edge on screen. Nothing it draws can stray into the next zone.
+// A zone's slice of the middle distance, clipped to the stretch of world it belongs to, so one
+// zone's fields never bleed into the next one's.
 function band(ctx, cam, width, wx0, wx1, draw) {
   const a = wx0 - cam.x;
   const b = wx1 - cam.x;
@@ -157,116 +86,183 @@ function band(ctx, cam, width, wx0, wx1, draw) {
   ctx.restore();
 }
 
+// ---------- The far side of the valley ----------
+// The far side of the valley. Redrawn from scratch 2026-11-14, third time lucky: the first two
+// were a cool sage-and-teal hillside worked up in detail, and beside this game's own backdrops they
+// looked like they came from another game. Sprout Village, Mossy Woods and Lantern Lagoon all do
+// the same thing - a pale warm wash, two or three enormous simple shapes, a few tiny silhouettes
+// on the skyline, and almost no contrast at all, so the backdrop never argues with the bright
+// outlined art in front of it. So that is what this is now, in a farm's vocabulary instead of a
+// town's: pale green fields rising out of the cream at the horizon, a whisper of terracing on the
+// nearest one, and little sheds and windbreaks along the skyline, small enough to read as far away.
+function far(ctx, t, cam, width, y0, time) {
+  const off = cam.x * FAR_F;
+  const X = (planeX) => planeX - off;
+  const bottom = y0 + 70;
+  const wave = (x, a, f, p) => Math.sin(x * f + p) * a + Math.sin(x * f * 2.3 + p * 1.7) * a * 0.32;
+  // Three fields of hill, each one a shade warmer and greener than the one behind it. The furthest
+  // is barely separated from the sky, which is what distance looks like.
+  const layer = (color, dy, a, f, p) => {
+    const pts = [];
+    for (let px = -100; px <= 1340; px += 14) pts.push([X(px), y0 + dy + wave(px, a, f, p)]);
+    pts.push([X(1340), bottom], [X(-100), bottom]);
+    fillPath(ctx, color, pts);
+    return (px) => y0 + dy + wave(px, a, f, p);
+  };
+  layer(C.hillFar, -34, 13, 0.0036, 1.9);
+  const midLine = layer(C.hillMid, -17, 10, 0.0051, 0.4);
+  const nearLine = layer(C.hillNear, -2, 8, 0.0068, 2.6);
+  // The whisper of terracing: three pale lines following the nearest field, no stronger than the
+  // haze would let anything be at this distance.
+  for (let i = 0; i < 3; i++) {
+    const pts = [];
+    const dy = 9 + i * 9;
+    for (let px = -100; px <= 1340; px += 16) pts.push([X(px), nearLine(px) + dy]);
+    for (let px = 1340; px >= -100; px -= 16) pts.push([X(px), nearLine(px) + dy + 2.2]);
+    fillPath(ctx, C.hillLine, pts);
+  }
+  // The skyline: little windbreaks and a farm shed here and there, all tiny.
+  for (let i = 0; i < 46; i++) {
+    const px = -90 + i * 32 + hash(i * 3.1) * 16;
+    const sx = X(px);
+    if (sx < -30 || sx > width + 30) continue;
+    const base = (i % 3 === 0 ? midLine(px) : nearLine(px)) + 1;
+    const c = i % 3 === 0 ? C.farTree : C.nearTree;
+    if (hash(i * 7.7) < 0.17) {
+      // A shed with its dark roof, standing on the skyline.
+      fillPath(ctx, c, [[sx - 5, base], [sx + 5, base], [sx + 5, base - 5], [sx - 5, base - 5]]);
+      fillPath(ctx, c, [[sx - 7, base - 5], [sx + 7, base - 5], [sx + 4, base - 9], [sx - 4, base - 9]]);
+    } else {
+      const h = 7 + hash(i * 5.3) * 7;
+      fillPath(ctx, c, [[sx - 3.4, base], [sx, base - h], [sx + 3.4, base]]);
+    }
+  }
+  return true;
+}
+
+// The middle distance. ONE panorama across the whole map, not four (the player, 2026-11-14: "they
+// need to flow seamlessly, there is a few of this in this map"). It used to be drawn as a band per
+// zone, each clipped to its own stretch of world, and wherever two met you could see the join: a
+// hard vertical edge with a different green either side, and over the cliff a slab of mist with a
+// ruled top. So there are no bands any more. One skyline runs the length of the valley, and what
+// stands on it - terrace lips, windbreaks, sheds, reeds, the mist - fades in and out along the way
+// by world position, so the square becomes the orchard becomes the pond with nothing to see at the
+// seams, because there are none.
+const lerpN = (a2, b2, k) => a2 + (b2 - a2) * Math.max(0, Math.min(1, k));
+// A hump of height 1 centred on `at`, `w` wide, easing to nothing at its edges.
+const hump = (x, at, w) => {
+  const u = Math.abs(x - at) / w;
+  return u >= 1 ? 0 : Math.cos(u * Math.PI) * 0.5 + 0.5;
+};
+// 0 before `a2`, 1 after `b2`, eased between.
+const ramp01 = (x, a2, b2) => {
+  const u = Math.max(0, Math.min(1, (x - a2) / (b2 - a2)));
+  return u * u * (3 - 2 * u);
+};
+
 function mid(ctx, t, cam, width, y0, time) {
   const off = cam.x * MID_F;
-  const X = (planeX) => planeX - off;
-  const seen = (wx0, wx1) => X(MID_AT(wx1)) > -90 && X(MID_AT(wx0)) < width + 90;
-  void seen;
+  void time;
+  // World x from a screen x, so everything below is placed in the world and nothing is pinned to
+  // the view.
+  const W = (sx) => (sx + off) / MID_F;
+  const S = (wx) => wx * MID_F - off;
+  const wLeft = W(-40);
+  const wRight = W(width + 40);
 
-  // Behind the square: two flooded terrace steps and the dry stone wall holding them up, with
-  // straw drying racks standing along the top one.
-  band(ctx, cam, width, -600, 1430, (bx0, bx1) => {
-    const x0 = bx0 - 40;
-    const x1 = bx1 + 40;
-    const tilt = (x) => ((x - x0) / Math.max(1, x1 - x0)) * -7;
-    for (let s = 0; s < 2; s++) {
-      const y = y0 - 24 + s * 13;
-      fillPath(ctx, s ? C.paddy : C.paddyLit, [[x0, y + tilt(x0)], [x1, y + tilt(x1)], [x1, y + 9 + tilt(x1)], [x0, y + 9 + tilt(x0)]]);
-      fillPath(ctx, s ? C.paddyWet : C.paddyWetLit, [[x0, y + 6 + tilt(x0)], [x1, y + 6 + tilt(x1)], [x1, y + 9 + tilt(x1)], [x0, y + 9 + tilt(x0)]]);
-      fillPath(ctx, C.bank, [[x0, y + 9 + tilt(x0)], [x1, y + 9 + tilt(x1)], [x1, y + 13 + tilt(x1)], [x0, y + 13 + tilt(x0)]]);
-      fillPath(ctx, C.bankLit, [[x0, y + 9 + tilt(x0)], [x1, y + 9 + tilt(x1)], [x1, y + 10.6 + tilt(x1)], [x0, y + 10.6 + tilt(x0)]]);
-      // Rice standing in the water: short ticks along the step.
-      ctx.fillStyle = s ? '#79a654' : '#9cc46e';
-      for (let i = 0; i < 90; i++) {
-        const px = MID_AT(-500) + i * 11;
-        const sx = X(px);
-        if (sx < -10 || sx > width + 10) continue;
-        ctx.fillRect(sx, y + 2.5 + tilt(sx) + (i % 2), 1.1, 4.5);
-      }
-    }
-    // The wall under it all, down to the ground line.
-    const wy = y0 + 2;
-    fillPath(ctx, C.stone, [[x0, wy + tilt(x0)], [x1, wy + tilt(x1)], [x1, y0 + 120], [x0, y0 + 120]]);
-    for (let i = 0; i < 70; i++) {
-      const px = MID_AT(-500) + i * 15 + hash(i * 2.3) * 5;
-      const sx = X(px);
-      if (sx < -16 || sx > width + 16) continue;
-      ctx.fillStyle = i % 3 ? C.stoneLit : C.stoneDark;
-      ctx.beginPath();
-      ctx.ellipse(sx, wy + 4 + tilt(sx) + (i % 3) * 4.6, 6.2, 2.8, 0, 0, Math.PI * 2);
-      ctx.fill();
-    }
-    // Straw drying racks: two posts, three laden rails, leaning with the terrace.
-    for (let r = 0; r < 7; r++) {
-      const px = MID_AT(-240) + r * MID_AT(300);
-      const sx = X(px);
-      if (sx < -40 || sx > width + 40) continue;
-      const by = y0 - 26 + tilt(sx);
-      ctx.fillStyle = C.wood;
-      ctx.fillRect(sx - 14, by - 16, 2, 16);
-      ctx.fillRect(sx + 12, by - 16, 2, 16);
-      for (let k = 0; k < 3; k++) {
-        ctx.fillStyle = k === 1 ? C.straw : C.strawLit;
-        ctx.fillRect(sx - 15, by - 14.5 + k * 4.6, 30, 3.6);
-      }
-    }
-  });
+  // The one skyline: the worked side of the valley opposite the square, carrying on wooded over the
+  // orchard, dropping to the water, and rising again past the cliff.
+  const topAt = (wx) => y0 - 14
+    - 30 * hump(wx, 300, 900)
+    - 24 * hump(wx, 1150, 700)
+    - 30 * hump(wx, 1760, 820)
+    - 6 * hump(wx, 2350, 700)
+    - 20 * hump(wx, 3000, 900)
+    + 10 * ramp01(wx, 1900, 2250)
+    - 10 * ramp01(wx, 2650, 2950)
+    + Math.sin(wx * 0.0012) * 4;
 
-  // Behind the orchard: a cedar windbreak with fruit rows in front of it.
-  band(ctx, cam, width, 1330, 2130, (bx0, bx1) => {
-    for (let i = 0; i < 30; i++) {
-      const sx = bx0 - 30 + i * 30;
-      if (sx > bx1 + 30) break;
-      cedar(ctx, sx, y0 + 6 - (i % 2) * 2, 26 + hash(i * 4.1) * 9, 7);
-    }
-    for (let i = 0; i < 26; i++) {
-      const sx = bx0 - 10 + i * 36;
-      if (sx > bx1 + 30) break;
-      roundTree(ctx, sx, y0 + 10 + (i % 2) * 3, 8.5, C.leaf, C.leafLit);
-    }
-  });
+  // How much of each thing belongs at this point along the valley.
+  const wTerrace = (wx) => 1 - ramp01(wx, 1150, 1560);
+  const wWood = (wx) => ramp01(wx, 1180, 1620) * (1 - ramp01(wx, 2150, 2520));
+  const wBank = (wx) => ramp01(wx, 2050, 2320) * (1 - ramp01(wx, 2560, 2800));
+  const wMist = (wx) => ramp01(wx, 2500, 2900);
 
-  // Behind the pond: the far bank, low and wooded, reeds along its waterline.
-  band(ctx, cam, width, 2080, 2640, (bx0, bx1) => {
-    const x0 = bx0 - 20;
-    const x1 = bx1 + 20;
-    fillPath(ctx, '#5f8f64', [[x0, y0 - 2], [x1, y0 + 6], [x1, y0 + 120], [x0, y0 + 120]]);
-    fillPath(ctx, '#7faa76', [[x0, y0 - 2], [x1, y0 + 6], [x1, y0 + 11], [x0, y0 + 3]]);
-    for (let i = 0; i < 50; i++) {
-      const sx = x0 + i * 14;
-      if (sx > x1) break;
-      roundTree(ctx, sx, y0 - 2 + (i % 3) * 3, 6.5 + hash(i * 6.1) * 3, '#4a7a58', '#689a66');
-    }
-    ctx.fillStyle = '#9ab878';
-    for (let i = 0; i < 110; i++) {
-      const sx = x0 + i * 6;
-      if (sx > x1) break;
-      ctx.fillRect(sx, y0 + 6 + (i % 3), 1.1, 6 + (i % 4) * 2);
-    }
-  });
+  // The hillside itself, one fill the whole way.
+  const line = [];
+  for (let sx = -40; sx <= width + 40; sx += 10) line.push([sx, topAt(W(sx))]);
+  fillPath(ctx, C.midField, [...line, [width + 40, y0 + 160], [-40, y0 + 160]]);
+  fillPath(ctx, C.midFieldLit, [...line, ...line.map(([sx, sy]) => [sx, sy + 2.6]).reverse()]);
 
-  // Over the cliff: you are above the valley, so the middle distance is mist with ridge tops
-  // standing out of it - drawn upward from the baseline, never below it.
-  band(ctx, cam, width, 2600, 3300, (bx0, bx1) => {
-    for (let i = 0; i < 24; i++) {
-      const sx = bx0 - 40 + i * 42;
-      if (sx > bx1 + 40) break;
-      fillPath(ctx, i % 2 ? '#93b1ac' : '#7fa29e', [[sx - 40, y0 - 4], [sx - 11, y0 - 24 - hash(i * 3.7) * 12], [sx + 15, y0 - 6]]);
+  // Terrace lips down the worked side, fading out as the hill turns wooded.
+  for (let i = 1; i <= 2; i++) {
+    const pts = [];
+    const back = [];
+    for (let sx = -40; sx <= width + 40; sx += 10) {
+      const wx = W(sx);
+      const k = wTerrace(wx);
+      if (k <= 0.02) { continue; }
+      const y = topAt(wx) + 13 + i * 15 + Math.sin(wx * 0.0024 + i) * 2.4;
+      pts.push([sx, y]);
+      back.push([sx, y + 3.4 * k]);
     }
-    const cloud = (color, step, lift, rx, ry, speed, phase) => {
-      ctx.fillStyle = color;
-      for (let i = 0; i < 40; i++) {
-        const sx = bx0 - 60 + i * step + Math.sin(time * speed + i * phase) * 6;
-        if (sx > bx1 + 60) break;
-        ctx.beginPath();
-        ctx.ellipse(sx, y0 + lift + (i % 3) * 4, rx, ry, 0, 0, Math.PI * 2);
-        ctx.fill();
-      }
-    };
-    cloud(C.mist, 36, -7, 32, 7, 0.06, 1);
-    cloud(C.mistLit, 50, 1, 38, 6, 0.045, 1.7);
-  });
-  void X;
+    if (pts.length > 2) {
+      fillPath(ctx, C.midWater, [...pts, ...back.reverse()]);
+    }
+  }
+
+  // Everything standing on the skyline, placed by world position: a windbreak that thickens over
+  // the orchard, a shed now and then on the worked side, reeds where the bank meets the water.
+  const STEP = 34;
+  for (let wx = Math.floor(wLeft / STEP) * STEP; wx < wRight + STEP; wx += STEP) {
+    const sx = S(wx);
+    if (sx < -40 || sx > width + 40) continue;
+    const h = hash(wx * 0.07);
+    const wood = wWood(wx);
+    const bank = wBank(wx);
+    const mist = wMist(wx);
+    const base = topAt(wx) + 3;
+    // Trees: a thin line along the farmed side, thickening into a wood over the orchard, thinning
+    // again along the pond's bank, gone into the mist past the cliff.
+    const chance = lerpN(0.42, 0.95, wood) * (1 - mist * 0.85) * (1 - bank * 0.3);
+    if (h < chance) {
+      const up = hash(wx * 0.031) * 18 * wood;
+      const th = (10 + hash(wx * 0.013) * 9 + wood * 4) * (1 - mist * 0.4);
+      const c = up > 9 || mist > 0.3 ? C.midTreePale : C.midTree;
+      fillPath(ctx, c, [[sx - 4.2, base + up], [sx, base + up - th], [sx + 4.2, base + up]]);
+    }
+    // A shed on the worked side now and then.
+    if (wTerrace(wx) > 0.5 && hash(wx * 0.0171) > 0.955) {
+      const by = topAt(wx) + 20;
+      fillPath(ctx, C.midShed, [[sx - 11, by], [sx + 11, by], [sx + 11, by - 10], [sx - 11, by - 10]]);
+      fillPath(ctx, C.midRoof, [[sx - 14, by - 10], [sx + 14, by - 10], [sx + 9, by - 17], [sx - 9, by - 17]]);
+    }
+    // Reeds along the far bank of the pond.
+    if (bank > 0.25 && hash(wx * 0.053) < bank) {
+      ctx.fillStyle = C.reed;
+      for (let k = 0; k < 3; k++) ctx.fillRect(sx + k * 3 - 3, topAt(wx) + 2, 1.1, 5 + hash(wx * 0.09 + k) * 5);
+    }
+  }
+
+  // The mist lying in the valley past the cliff: one wedge whose top edge rises out of nothing as
+  // you climb, under a gradient that fades upward, so it has no edge anywhere - not along the top,
+  // not at the end. (It was a slab with a ruled top first, then a column per step of x, which came
+  // out as vertical stripes. Both were the same mistake: an edge where there should be a fade.)
+  const mistTop = [];
+  let anyMist = false;
+  for (let sx = -40; sx <= width + 40; sx += 10) {
+    const k = wMist(W(sx));
+    if (k > 0.01) anyMist = true;
+    mistTop.push([sx, y0 + 42 - 88 * k]);
+  }
+  if (anyMist) {
+    const g = ctx.createLinearGradient(0, y0 - 46, 0, y0 + 42);
+    g.addColorStop(0, 'rgba(226,239,240,0)');
+    g.addColorStop(0.5, 'rgba(228,241,242,0.55)');
+    g.addColorStop(1, 'rgba(234,245,245,0.88)');
+    fillPath(ctx, g, [...mistTop, [width + 40, y0 + 160], [-40, y0 + 160]]);
+  }
+
   return true;
 }
 
@@ -679,19 +675,31 @@ function pondBed(ctx, map, w, cam, time, x0, x1) {
   for (let wx = hi; wx >= lo; wx -= 6) ctx.lineTo(wx - cam.x, bed(wx) + 2);
   ctx.closePath();
   ctx.fill();
-  // Shafts of light coming down through the surface, leaning and drifting.
-  ctx.fillStyle = 'rgba(190,245,235,0.13)';
-  for (let i = 0; i < 7; i++) {
-    const wx = x0 + 40 + ((i * 97 + time * 7) % Math.max(1, x1 - x0 - 80));
+  // Shafts of light coming down through the surface, leaning and drifting the length of the pond.
+  // (They were laid out across the piece of pond on screen, so as you walked both where they
+  // started and how far apart they stood changed with the camera and they raced about. They are
+  // placed along the pond itself now, and drift at their own slow pace whatever the camera does.
+  // Each one also fades out as it sinks, so it reads as light in water rather than a pale wedge.)
+  const POND = Math.max(1, w.x2 - w.x1);
+  const SHAFTS = Math.max(4, Math.round(POND / 56));
+  for (let i = 0; i < SHAFTS; i++) {
+    const wx = w.x1 + (((i * POND) / SHAFTS + time * 5) % POND);
     if (wx < lo - 40 || wx > hi + 40) continue;
     const sx = wx - cam.x;
     const top = sy(wx);
     const depth = bed(wx) - top;
+    if (depth < 6) continue;
+    const wide = 5 + hash(i * 3.7) * 4;
+    const g2 = ctx.createLinearGradient(0, top, 0, top + depth);
+    g2.addColorStop(0, 'rgba(206,250,242,0.17)');
+    g2.addColorStop(0.55, 'rgba(196,246,238,0.07)');
+    g2.addColorStop(1, 'rgba(190,245,235,0)');
+    ctx.fillStyle = g2;
     ctx.beginPath();
-    ctx.moveTo(sx - 7, top);
-    ctx.lineTo(sx + 7, top);
-    ctx.lineTo(sx + 20, top + depth);
-    ctx.lineTo(sx + 6, top + depth);
+    ctx.moveTo(sx - wide, top);
+    ctx.lineTo(sx + wide, top);
+    ctx.lineTo(sx + wide + depth * 0.2, top + depth);
+    ctx.lineTo(sx + depth * 0.2 - wide * 0.4, top + depth);
     ctx.closePath();
     ctx.fill();
   }

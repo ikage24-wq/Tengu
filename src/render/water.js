@@ -492,10 +492,14 @@ export function drawQuaySea(ctx, x0, x1, top, bottom, time, wx0, kind = 'sea', n
     }
     ctx.stroke();
   }
+  // (Every glint sits on its own piece of water: the row used to start at the screen's edge, so
+  // the whole comb of them slid along with the camera and re-seeded as it went.)
   ctx.fillStyle = C.glint;
-  for (let k = 0; k < (x1 - x0) / 24; k++) {
-    const seed = Math.floor((wx0 + x0) / 24) + k;
-    const gx = x0 + k * 24 + ((time * 7 + hash(seed) * 24) % 24);
+  const first = Math.floor((wx0 + x0) / 24);
+  for (let k = 0; k <= (x1 - x0) / 24 + 1; k++) {
+    const seed = first + k;
+    const gx = seed * 24 - wx0 + ((time * 7 + hash(seed) * 24) % 24);
+    if (gx < x0 - 10 || gx > x1 + 2) continue;
     const gy = top + 3 + hash(seed * 3.1) * Math.max(3, bottom - top - 5);
     ctx.globalAlpha = Math.max(0, 0.3 + 0.4 * Math.sin(time * 2 + seed));
     ctx.fillRect(gx, gy, 4 + hash(seed) * 5, 1);

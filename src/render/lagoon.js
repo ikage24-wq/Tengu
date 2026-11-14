@@ -66,10 +66,14 @@ function water(ctx, x0, x1, top, bottom, time, wx0, { rim = true } = {}) {
       ctx.fillRect(snap(x), snap(y), 4, 1.5);
     }
   }
+  // (Each glint keeps to its own piece of water: the row used to start at the screen's edge, so the
+  // whole comb of them slid along with the camera and re-seeded itself as it went.)
   ctx.fillStyle = WATER.glint;
-  for (let k = 0; k < (x1 - x0) / 26; k++) {
-    const seed = Math.floor((wx0 + x0) / 26) + k;
-    const gx = x0 + k * 26 + ((time * 8 + hash(seed) * 26) % 26);
+  const first = Math.floor((wx0 + x0) / 26);
+  for (let k = 0; k <= (x1 - x0) / 26 + 1; k++) {
+    const seed = first + k;
+    const gx = seed * 26 - wx0 + ((time * 8 + hash(seed) * 26) % 26);
+    if (gx < x0 - 12 || gx > x1 + 2) continue;
     const gy = top + 6 + hash(seed * 3.1) * Math.max(4, bottom - top - 12);
     ctx.globalAlpha = 0.35 + 0.35 * Math.sin(time * 2 + seed);
     ctx.fillRect(snap(gx), snap(gy), 6 + hash(seed) * 6, 1);
