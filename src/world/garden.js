@@ -31,7 +31,7 @@ export function gardenMap(g = {}) {
   const width = 3200;
   const terrain = [
     // The square by the gate, then down into the orchard (the big tree on its rise).
-    [0, PLATEAU], [1320, PLATEAU], [1440, ORCHARD], [1540, ORCHARD], [1600, 684], [1700, 684], [1760, ORCHARD], [2100, ORCHARD],
+    [0, PLATEAU], [1320, PLATEAU], [1440, ORCHARD], [1596, ORCHARD], [1620, 684], [1700, 684], [1724, ORCHARD], [2100, ORCHARD],
     // (The pond: a bowl, its banks shelving gently down to the bed.)
     [2176, POND], [2190, 784], [2212, 808], [2246, 828], [2300, BED], [2460, BED], [2512, 830], [2546, 810], [2570, 786], [2586, POND],
     [2660, POND], [2660, LEDGE], [2762, LEDGE], [2762, TOP], [width, TOP],
@@ -56,8 +56,9 @@ export function gardenMap(g = {}) {
     // it, or the far hills and trees would hang in the sky.)
     width, height: 900, groundY: 730,
     // The sweet kitchen cooks Mochi sweets (ui/cooking.js); the garden's own data (the crop bed).
-    stove: 760, gardenData: g,
-    look: { sky: ['#ffd6e4', '#ffeadc', '#fff8f0'], far: '#d4ecc8', mid: '#e2f2d4', midTrim: '#bfe0ac', skyline: 'mochigarden', edges: 'flowers', islands: 'planks', material: 'meadow', propKeep: 1, portal: 'mochi', critters: [] },
+    // (The stove is the pot in the kitchen's open front, left of its door: she cooks facing it.)
+    stove: 776, wearStall: 624, gardenData: g,
+    look: { sky: ['#bfe4f2', '#e2f2ea', '#fdf6e2'], far: '#a8c8a0', mid: '#8fb88a', midTrim: '#7aa676', skyline: 'course:moonmortar', painted: null, groundArt: 'moonmortar', edges: 'flowers', islands: 'planks', material: 'mochifield', propKeep: 1, portal: 'mochi', critters: [] },
     // (No birds or butterflies: the Garden's life is your Mochi.)
     cottages: [],
     terrain, platforms, ropes,
@@ -67,16 +68,18 @@ export function gardenMap(g = {}) {
     zonesBy: 'x',
     zones: [
       { name: 'Mortar Square', from: 0, color: '#ff9ec0' },
-      { name: 'The Orchard', from: 1320, color: '#9fd87a', look: { sky: ['#ffe2cc', '#fff0dc', '#fffaf0'] } },
-      { name: 'Lily Pond', from: 2100, color: '#6fc8e0', look: { sky: ['#cfe8ff', '#e6f4ff', '#f6fbff'] } },
-      { name: 'Moonmortar Cliff', from: 2620, color: '#b8a8f0', look: { sky: ['#d8d0ff', '#ebe6ff', '#f8f6ff'] } },
+      { name: 'The Orchard', from: 1320, color: '#9fd87a', look: { sky: ['#b6e0ee', '#ddefe4', '#fbf2dc'] } },
+      { name: 'Lily Pond', from: 2100, color: '#6fc8e0', look: { sky: ['#a6d6ee', '#d2ebeb', '#f4f4e8'] } },
+      { name: 'Moonmortar Cliff', from: 2620, color: '#b8a8f0', look: { sky: ['#8ec6e8', '#bee0e8', '#eef6ec'] } },
     ],
     // The garden's pieces (render/garden.js), left to right: the square (the keeper's shop, the egg
-    // stall, the sweet kitchen, the nursery and the gate to the Race Stadium, side by side), the
+    // stall, the clothes stall, the sweet kitchen, the nursery and the gate to the Race Stadium, side
+    // by side), the
     // orchard (fruit trees to shake, the big tree with its swing, the crop bed), the pond, the cliff.
     townPieces: [
-      ['mg_lantern', 150, 0], ['mg_shop', 300], ['mg_eggstall', 520], ['mg_kitchen', 760], ['mg_nursery', 990], ['mg_stadium', 1190], ['mg_lantern', 1290, 1],
-      ['mg_fruittree', 1480, 0], ['mg_toybox', 1528], ['mg_bigtree', 1650], ['mg_fruittree', 1830, 2], ['mg_cropbed', 1920], ['mg_fruittree', 2016, 3], ['mg_lantern', 2072, 3],
+      ['mg_lantern', 30, 0], ['mg_shop', 280], ['mg_eggstall', 450], ['mg_wearstall', 624], ['mg_kitchen', 808], ['mg_nursery', 990], ['mg_stadium', 1190], ['mg_lantern', 1290, 1],
+      ['mg_fruittree', 1520, 0], ['mg_crates', 1482], ['mg_toybox', 1562], ['mg_bigtree', 1660],
+      ['mg_lantern', 1736, 1], ['mg_washline', 1796], ['mg_beanframe', 1884], ['mg_cropbed', 1980], ['mg_fruittree', 2038, 2],
       ['mg_reeds', 2168, 0], ['mg_lilies', 2330, 0], ['mg_lilies', 2480, 1], ['mg_reeds', 2576, 1],
       ['mg_earthwall', 2711, { left: 2662, right: 2760, top: 562, bottom: 900, seed: 4 }], ['mg_earthwall', 2982, { left: 2764, right: 3200, top: 382, bottom: 900, seed: 9, burrow: [70, 250] }], ['mg_rockface', 2660, { top: LEDGE, bottom: POND, seed: 3, vines: 4, vineLen: 60 }], ['mg_rockface', 2762, { top: TOP, bottom: LEDGE, seed: 7, vines: 6, vineLen: 90 }], ['mg_falls', 2762],
       ['mg_boulders', 2688], ['mg_glide', 2794], ['mg_moonmortar', 2960], ['mg_lantern', 3110, 5],
@@ -90,13 +93,15 @@ export function gardenMap(g = {}) {
       { id: 'stadium', x: 1190, y: PLATEAU, to: 'mochi_stadium', toPortal: 'gate', label: 'Race Stadium', door: true },
     ],
     lamps: [
-      { x: 150, y: PLATEAU - 44, c: '#ffd6a0' }, { x: 1290, y: PLATEAU - 44, c: '#ffd6a0' }, { x: 2072, y: ORCHARD - 44, c: '#ffd6a0' }, { x: 3110, y: TOP - 44, c: '#ffd6a0' },
-      { x: 990, y: PLATEAU - 34, c: '#ffd27a' }, { x: 760, y: PLATEAU - 40, c: '#ffd27a' }, { x: 300, y: PLATEAU - 40, c: '#ffd27a' },
+      { x: 30, y: PLATEAU - 44, c: '#ffd6a0' }, { x: 1290, y: PLATEAU - 44, c: '#ffd6a0' }, { x: 1736, y: ORCHARD - 44, c: '#ffd6a0' }, { x: 3110, y: TOP - 44, c: '#ffd6a0' },
+      { x: 990, y: PLATEAU - 34, c: '#ffd27a' }, { x: 808, y: PLATEAU - 40, c: '#ffd27a' }, { x: 280, y: PLATEAU - 40, c: '#ffd27a' },
+      // Under the clothes stall's awning, so the four on the counter are lit after dark.
+      { x: 624, y: PLATEAU - 58, c: '#ffe0c0' },
     ],
     // The garden keeper, at her shop's counter (data/npcs.js kinako).
-    npcs: [{ id: 'kinako', x: 268 }],
+    npcs: [{ id: 'kinako', x: 248 }],
     // The race board is at Kinako's counter (her menu opens it: ui/npc.js).
-    raceBoard: 268,
+    raceBoard: 248,
     spawns: [],
     deco: [],
   };

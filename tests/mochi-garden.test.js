@@ -78,17 +78,33 @@ test('Up beside a Mochi opens its care panel; care and sweets change it', () => 
   }
 });
 
-test('the crop bed gives crops when ripe, then grows again', () => {
+test('the crop bed is picked by hand when ripe, then grows again', () => {
   const g = garden();
   try {
     Object.assign(g.w.body, { x: CROP_X, y: 700 });
     g.up();
+    // (She kneels and tugs: nothing's in the bag until the picking's done.)
+    assert.ok(g.w.gathering, 'picking');
+    g.run(0.5);
+    assert.equal(countItem(g.char.inventory, 'mochi_rice'), 0, 'still picking');
+    g.run(1.5);
+    assert.equal(g.w.gathering, null);
     assert.equal(countItem(g.char.inventory, 'mochi_rice'), 3);
+    assert.ok(g.w.lastGathered?.items.includes('azuki'), 'the crops hopped out of the bed');
     g.up();
+    assert.equal(g.w.gathering, null, 'not ripe yet');
     assert.equal(countItem(g.char.inventory, 'mochi_rice'), 3, 'not ripe yet');
     g.run(CROP_GROW + 1, 1);
+    // Walking off part-way leaves the crops in the ground.
     Object.assign(g.w.body, { x: CROP_X, y: 700 });
     g.up();
+    g.run(0.3);
+    updateWorld(g.w, 1 / 60, { held: new Set(['ArrowLeft']), pressed: new Set() });
+    g.run(2);
+    assert.equal(countItem(g.char.inventory, 'mochi_rice'), 3, 'walked off: nothing picked');
+    Object.assign(g.w.body, { x: CROP_X, y: 700 });
+    g.up();
+    g.run(2);
     assert.equal(countItem(g.char.inventory, 'mochi_rice'), 6);
   } finally {
     g.done();

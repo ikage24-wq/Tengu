@@ -46,7 +46,7 @@ import { rideStep, rideAfter, dismount, toggleMount, giveMount, ownsMount } from
 import { WADE, MOUNTS } from '../data/mounts.js';
 import { refreshHome } from './home.js';
 import { refreshGarden, grantGarden } from './garden.js';
-import { enterGarden, tickGarden, rockEgg, finishHatch, harvestCrops, tossBall, mochiNear, eggStallUp, gardenGateUp, shakeTree, wakeUp } from './garden-life.js';
+import { enterGarden, tickGarden, rockEgg, finishHatch, harvestCrops, tossBall, mochiNear, eggStallUp, wearStallUp, stallClothes, gardenGateUp, shakeTree, wakeUp } from './garden-life.js';
 import './stadium.js';
 import { tickRace } from './mochi-race.js';
 import { tickDate, DATES } from './dates.js';
@@ -502,7 +502,7 @@ function interact(world) {
     world.events.push({ type: 'mochi' });
     return true;
   }
-  if (world.map.garden && (rockEgg(world) || harvestCrops(world) || tossBall(world) || eggStallUp(world) || shakeTree(world))) return true;
+  if (world.map.garden && (rockEgg(world) || harvestCrops(world) || tossBall(world) || eggStallUp(world) || wearStallUp(world) || shakeTree(world))) return true;
   // Your skiff at your island's dock: Up to sail back to Pastel Harbor (world/voyage.js).
   if (world.map.home && !world.map.indoor && b.x < 150 && b.y <= 530) {
     setSail(world);
@@ -775,6 +775,8 @@ export function updateWorld(world, dt, input) {
     tickAuction(world);
     tickStall(world);
   }
+  // The clothes stall's four for today, wherever it stands (world/garden-life.js).
+  if (world.map.wearStall != null && !world.gardenVisit && world.char.garden) stallClothes(world.char);
   tickGoingHome(world, dt);
   // Your Mochi going about their day in the garden (world/garden-life.js).
   if (world.gardenLife) {
@@ -793,11 +795,17 @@ export function updateWorld(world, dt, input) {
   world.lootTimer = Math.max(0, world.lootTimer - dt);
   // The window runs from your last hit, but never drops the count mid-move (long finishers).
   if (world.hits && !world.pose && world.now - world.hitsAt > HITS_WINDOW) world.hits = 0;
+  // (Someone at the stove: the pot boils up while she cooks, render/town.js.)
+  if (world.map.stove != null) world.map.stoveBusy = world.pose?.kind === 'cook';
   if (world.pose) {
     world.pose.t -= dt;
     if (world.pose.t <= 0) {
-      world.lastPose = { ...world.pose, endedAt: world.now };
+      const then = world.pose.then;
+      world.lastPose = { ...world.pose, then: null, endedAt: world.now };
       world.pose = null;
+      // (Work that pays off as the move ends, like a dish coming out of the pot: world/lifepose.js.
+      // A move cut short never gets here, so nothing is used up or made.)
+      then?.();
     }
   }
 

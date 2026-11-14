@@ -36,6 +36,7 @@
 //   world.gardenLife = { owner, mochi: [{ rec, m, x, y }], hatching: { egg, m, x } | null, greeted,
 //     caring (the entry whose care panel is open) }
 
+import { stallWear } from '../data/mochi-wardrobe.js';
 import { noteAlbum, ALBUM_PAGES } from '../data/mochi-album.js';
 import { spawnDrops } from './drops.js';
 import { rollMochi, STAGES, seededRandom } from '../data/mochi-genes.js';
@@ -51,10 +52,17 @@ import { nightOf } from './daytime.js';
 import { groundAt, footingAt } from './physics.js';
 
 // Where things are in the garden (world/garden.js).
-export const EGG_SLOTS = [594, 620, 646, 444, 418];
+// (A row of them on the ground just inside the gate, where the square's lantern lights them:
+// clear of the shop's counter and of every stall, so rocking an egg never eats a press meant for
+// the keeper or a stall.)
+export const EGG_SLOTS = [128, 154, 180, 141, 167];
+// How far back from the front row an egg sits, so they lie as a clutch rather than a straight line
+// (render/garden.js lifts and shrinks the back ones).
+export const EGG_BACK = [0, 0, 0, 1, 1];
 // The egg stall: where it stands, what an egg costs.
-export const STALL_X = 520;
+export const STALL_X = 450;
 export const EGG_PRICE = 3000;
+// The clothes stall, between the egg stall and the kitchen.
 const LAND = [236, 2080];
 const POND = [2230, 2530];
 const NURSERY_DOOR = 990;
@@ -80,16 +88,42 @@ export const VISITOR_CARE = ['pet', 'play', 'cheer'];
 const GAIT_SPEED = [34, 60, 80, 104, 136, 168];
 const SWIM_SPEED = [26, 44, 64, 88, 112, 140];
 // The crop bed (world/garden.js mg_cropbed): ripe again this long after you pick it, and what it gives.
-export const CROP_X = 1920;
+export const CROP_X = 1980;
 // The toy box in the orchard (world/garden.js mg_toybox): now and then a Mochi wanders over to it and
 // plays with the ball a while. Its turn comes at the same time for a visitor (by the hour and its seed).
-export const TOY_X = 1528;
+export const TOY_X = 1562;
 const TOY = { chance: 0.22, at: [4, 24], stay: 32 };
 function toyTime(rec, now) {
   const b = Math.floor(now / HOUR);
   if (hash(rec.seed * 0.53 + b * 2.17) > TOY.chance) return false;
   const start = b * HOUR + TOY.at[0] + hash(rec.seed * 0.29 + b) * (TOY.at[1] - TOY.at[0]);
   return now >= start && now < start + TOY.stay;
+}
+// The places round the garden a Mochi goes to use, now and then (the player's call, 2026-11-14:
+// "Mochi use the place"): a nap in the big tree's shade, hopping up after the fruit on a fruit
+// tree, lying on the pond's bank kicking its feet (a swimmer), and after dark a night owl sitting
+// under the orchard lantern gazing up at the moon. Like the toy box, its turn comes by the hour and
+// its seed, so a visitor sees it at the same place at the same time. [where, how far either side,
+// what it does there (render/mochi-anim.js ACTIONS), for how long, who goes, day or night]
+const PLACES = [
+  { x: 1660, spread: 16, act: 'nap', hold: 7, who: () => true, when: 'day' },
+  { x: 1520, spread: 10, act: 'reach', who: () => true, when: 'day' },
+  { x: 2038, spread: 10, act: 'reach', who: () => true, when: 'day' },
+  { x: 2090, spread: 6, act: 'paddle', who: (rec) => pts(rec, 'swim') >= CANT.swim, when: 'day' },
+  { x: 1736, spread: 12, act: 'meditate', who: () => true, when: 'night' },
+];
+// (Long enough to walk over from wherever the hour had it, and to use the place a while.)
+const PLACE = { chance: 0.3, at: [6, 26], stay: 30, reach: 340 };
+// The place Mochi `rec` is at (or on its way to) now, or null. (Never the hour it's at the toy box.)
+export function placeTime(rec, now, night) {
+  const b = Math.floor(now / HOUR);
+  // (Not in an hour it has a turn at the toy box: toyTime.)
+  if (hash(rec.seed * 0.71 + b * 1.37) > PLACE.chance || hash(rec.seed * 0.53 + b * 2.17) <= TOY.chance) return null;
+  const open = PLACES.filter((pl) => pl.when === (night ? 'night' : 'day') && pl.who(rec));
+  if (!open.length) return null;
+  const pl = open[Math.floor(hash(rec.seed * 0.17 + b * 3.1) * open.length)];
+  const start = b * HOUR + PLACE.at[0] + hash(rec.seed * 0.43 + b) * (PLACE.at[1] - PLACE.at[0]);
+  return now >= start && now < start + PLACE.stay ? pl : null;
 }
 export const CROP_GROW = 15 * 60;
 const CROP_YIELD = { mochi_rice: 3, azuki: 2, kinako: 2, fire_pepper: 1 };
@@ -170,6 +204,10 @@ export function enterGarden(world, owner) {
     hatching: null,
     greeted: false,
     caring: null,
+    // Eggs on their way from the stall to the nest ({ from, t0 } by egg), and things being paid
+    // for and handed over (handOver).
+    arrivals: new Map(),
+    handoffs: [],
   };
   // Visiting a friend with your Mochi out with you: it comes along, and follows you round theirs.
   const pet = owner !== world.char ? companionOf(world.char) : null;
@@ -205,6 +243,16 @@ const newAnim = (rec) => ({ genes: rec, dir: 1, speed: 0, dist: 0, easy: true, s
 export function tickGarden(world, dt) {
   const life = world.gardenLife;
   if (!life) return;
+  // (A happy little cheer for what you just bought, once it's in your arms: handOver.)
+  if (life.cheerAt != null && world.now >= life.cheerAt) {
+    life.cheerAt = null;
+    const b = world.body;
+    if (b.onGround && !world.pose && !(world.attackTimer > 0) && !world.dead) {
+      world.pose = { kind: 'emcheer', t: 1.2, dur: 1.2, since: world.now };
+      world.emote = { face: 'excited', t: 2 };
+    }
+  }
+  if (!world.gardenVisit && world.char.garden) stallClothes(world.char);
   // (Your own Mochi fill in the album, data/mochi-album.js, a few times a second.)
   life.albumIn = (life.albumIn ?? 0) - dt;
   if (!world.gardenVisit && life.albumIn <= 0) {
@@ -336,6 +384,34 @@ export function tickGarden(world, dt) {
         m.action = { name: 'play', t0: null };
       }
     }
+    // (Its turn at one of the garden's places: over to it, and once there, what that place is for.)
+    // (Only one that can walk, from near enough to get there and have a while at it: decided once
+    // when its turn comes, from where the clock had it, so a visitor sees the same.)
+    let place = !toy && !other && (!night || owl) && pts(rec, 'run') >= CANT.run && placeTime(rec, now, night);
+    if (place) {
+      const hr = Math.floor(now / HOUR);
+      if (e.placeOk?.hr !== hr) e.placeOk = { hr, ok: e.x != null && Math.abs(e.x - place.x) < PLACE.reach };
+      if (!e.placeOk.ok) place = null;
+    }
+    if (place) {
+      target = place.x + (hash(rec.seed * 0.9) - 0.5) * 2 * place.spread;
+      if (e.x != null && Math.abs(e.x - target) < 3 && e.placeTurn !== Math.floor(now / HOUR) && !m.action) {
+        e.placeTurn = Math.floor(now / HOUR);
+        m.action = { name: place.act, t0: null, ...(place.hold ? { hold: place.hold } : {}) };
+      }
+    }
+    // (A sweet being picked up is in its paws from the grab on.)
+    if (life.drops?.length) life.drops = life.drops.filter((d) => d.until == null || world.now < d.until);
+    // (A sweet of yours lying on the grass: over to it, picked up and eaten where it stands. It
+    // stops a short step short, on the side it came from, so it bends down over the sweet.)
+    const drop = !other && !night && !e.guest && dropFor(life, e, rec);
+    if (drop) {
+      drop.taken = e;
+      target = drop.x + (e.x != null && e.x < drop.x ? -5 : 5);
+      // (It starts as soon as it is close: easing to a stop it would otherwise creep the last few
+      // pixels for seconds, staring at the sweet.)
+      if (e.x != null && Math.abs(e.x - drop.x) < 11) takeDrop(world, e, drop);
+    }
     // (You tossed the ball from the toy box: off after it, and a game once there.)
     if (e.ballChase && life.ball && now < life.ball.until) {
       target = life.ball.x + (i % 2 ? 16 : -16) + (i % 3) * 5;
@@ -374,6 +450,7 @@ export function tickGarden(world, dt) {
     e.x += step;
     if (Math.abs(e.vx) > 2) m.dir = Math.sign(e.vx);
     else if (inMoment) m.dir = momentFacing(mo, e);
+    else if (e.eatAt && world.now < e.eatAt.until) m.dir = Math.sign(e.eatAt.x - e.x) || m.dir;
     else if (e.greet || busy) m.dir = Math.sign(world.body.x - e.x) || 1;
     m.dist += Math.abs(step);
     m.speed = Math.abs(e.vx) > 2 ? Math.abs(e.vx) : 0;
@@ -389,6 +466,8 @@ export function tickGarden(world, dt) {
       m.action = { name: 'cheer', t0: null, hold: 1.5 };
     }
   });
+  // (How many are asleep in the nursery, for the sleepy z's drifting out of its window: render/garden.js.)
+  world.map.sleepers = night && !inside ? life.mochi.filter((e) => e.hidden && !e.guest).length : 0;
   if (owner && !inside) tickPairing(world, life, now, night);
   // (Each new thing a Mochi does with feeling, it says: world/mochi-voice.js.)
   for (const e of life.mochi) if (!e.hidden && e.x != null) voiceAction(world, e.rec, e.m, e.x);
@@ -502,7 +581,78 @@ export function careFor(world, e, what) {
   if (out) noteDaily(world, 'care');
   return out;
 }
-// Feeds it sweet `id` from your bag (it won't when it's too full).
+// ---------- Sweets put down on the grass ----------
+// A sweet is not handed over a counter: you put it down and one of them comes and gets it. The
+// drop lies on the grass where you left it until a Mochi that can reach it walks over, picks it up
+// (ACTIONS.pickup) and eats it where it stands. Drops live on the garden's life, not on the save:
+// leave the garden and whatever is still lying there is gone.
+const DROP_REACH = 420;
+// When its paws close on the sweet, in the pick-up (render/mochi-anim.js ACTIONS.pickup): until then
+// the sweet stays lying on the grass in front of it.
+const PICKUP_GRAB = 2.2;
+const PICKUP_DUR = 4.6;
+const EAT_DUR = 5.8;
+const YUM_DUR = 2;
+export const groundDrops = (world) => world.gardenLife?.drops ?? [];
+// Puts sweet `id` from your bag down in front of you. `forSeed` is the Mochi whose page you had
+// open, which gets first refusal; anyone nearer takes it if that one can't come.
+export function dropSweet(world, id, forSeed = null) {
+  const sw = SWEET_BY_ID[id];
+  const life = world.gardenLife;
+  if (!sw || !life || countItem(world.char.inventory, id) < 1) return null;
+  if ((life.drops ?? []).length >= 4) return 'There are enough sweets down already.';
+  removeItem(world.char.inventory, id, 1);
+  (life.drops ??= []).push({ id, x: world.body.x + (world.body.facing ?? 1) * 18, t0: Date.now() / 1000, want: forSeed, taken: null });
+  world.log(`You put ${sw.name} down on the grass.`, '#ffe8b0');
+  return null;
+}
+// The drop this Mochi should be walking toward, if any: the one meant for it, else the nearest
+// going spare. One drop, one Mochi.
+function dropFor(life, e, rec) {
+  let best = null;
+  for (const d of life.drops ?? []) {
+    if (d.until != null) continue;
+    if (d.taken && d.taken !== e) continue;
+    if (d.want != null && d.want !== rec.seed && (life.mochi ?? []).some((o) => o.rec.seed === d.want && !o.hidden && !o.leaving)) continue;
+    if (e.x != null && Math.abs(d.x - e.x) > DROP_REACH) continue;
+    if (!best || (e.x != null && Math.abs(d.x - e.x) < Math.abs(best.x - e.x))) best = d;
+  }
+  return best;
+}
+// It has reached the sweet: it picks it up, and whatever it makes of it follows straight on.
+function takeDrop(world, e, d) {
+  const sw = SWEET_BY_ID[d.id];
+  const out = feedRec(e.rec, d.id);
+  const life = world.gardenLife;
+  // (It stays where it lies until the paws close on it, then it's in them: drawn by the pick-up.)
+  d.taken = e;
+  d.until = world.now + PICKUP_GRAB;
+  // (It faces the sweet while it picks it up, and turns to you once it's in its paws to eat it.)
+  e.eatAt = { x: d.x, until: world.now + PICKUP_DUR };
+  if (!out) {
+    life.drops = (life.drops ?? []).filter((o) => o !== d);
+    return;
+  }
+  if (!out.refused) noteDaily(world, 'feed');
+  const seq = [{ name: out.action, sweet: sw.kind }];
+  // (A sweet it loved: a hop of joy, and that's where it ends. A trick it learned or a level it went
+  // up is told in the log, not shown off on top: after all of that, a backflip was one thing too many.)
+  if (out.action === 'eat') seq.push({ name: 'yum' });
+  if (out.levels > 0 && !out.learned) world.log(`${calledOf(e.rec, 'Your Mochi')} grew a little stronger!`, '#ffc2d4');
+  e.m.action = { name: 'pickup', t0: null, sweet: sw.kind };
+  e.m.queue = seq;
+  e.busyUntil = Date.now() / 1000 + PICKUP_DUR + EAT_DUR + YUM_DUR + seq.length * 1.5;
+  e.greet = null;
+  if (out.refused) world.log('It sniffs the sweet, pats its round tummy and leaves it: too full!', '#ffd6a0');
+  else if (out.learned) world.log(`It loved ${sw.name}... and learned a new trick!`, '#ffc2d4');
+  if (sw.heart && !out.refused) {
+    const name = calledOf(e.rec, 'Your');
+    world.log(out.bloomed ? `Flowers bloom round ${name}! Another blooming Mochi will come and find it.` : e.rec.stage === 'mochiko' ? `${name}'s too young to bloom, but it loved the treat.` : `${name} had an egg not long ago: it isn't ready to bloom again yet.`, '#ffc2d4');
+  }
+}
+
+// Feeds it sweet `id` from your bag (it won't when it's too full). (Used by a friend's gift from
+// another garden; here you put the sweet down instead and it comes for it: dropSweet.)
 export function feedMochi(world, e, id) {
   const sw = SWEET_BY_ID[id];
   if (!sw || e.scene || e.leaving || countItem(world.char.inventory, id) < 1) return null;
@@ -860,10 +1010,31 @@ export function buyStallEgg(world, i) {
   if (char.gold < EGG_PRICE) return `It costs ${EGG_PRICE} gold.`;
   char.gold -= EGG_PRICE;
   char.eggStall = { day, sold: [...sold, i] };
-  (g.eggs ??= []).push({ seed: stallEggs(char, day)[i] });
-  world.log('You buy the egg and set it down by the gate. Rock it to hatch it!', '#ffc2d4');
+  const egg = { seed: stallEggs(char, day)[i] };
+  (g.eggs ??= []).push(egg);
+  // Paid over the counter, and the egg hops off the stall and all the way along the grass to its
+  // place in the nest by the gate (render/garden.js draws it on its way).
+  handOver(world, STALL_X, null);
+  world.gardenLife?.arrivals?.set(egg, { from: STALL_X - 6, t0: world.now + 0.45 });
+  world.log('You buy the egg, and off it hops to the nest by the gate. Rock it to hatch it!', '#ffc2d4');
   return null;
 }
+// Paying at a garden stall at `x`: a few coins hop from you onto its counter, then what you bought
+// (`parcel`: its colour, or null for nothing to carry) hops back into your arms, and you give a
+// happy little cheer. (Drawn by render/garden.js from `life.handoffs`.)
+export function handOver(world, x, parcel) {
+  const life = world.gardenLife;
+  if (!life) return;
+  const now = world.now;
+  life.handoffs = (life.handoffs ?? []).filter((h) => now - h.t0 < 3);
+  life.handoffs.push({ from: world.body.x, y: world.body.y, to: x, t0: now, parcel });
+  world.body.facing = x >= world.body.x ? 1 : -1;
+  // (The cheer comes as it lands in her arms: tickGarden.)
+  life.cheerAt = now + (parcel ? 1.05 : 0.5);
+}
+// Egg hops from the stall to the nest: how long one takes over `dist`, in little hops of HOP.
+export const EGG_HOP = 26;
+export const eggHopSecs = (dist) => Math.max(3, Math.round(Math.abs(dist) / EGG_HOP)) * 0.3;
 // The way into the Mochi Garden with friends online who have one of their own: which garden, yours
 // or one of theirs (ui/garden-pick.js)? Returns true if it asks.
 export function gardenGateUp(world, portal) {
@@ -916,12 +1087,43 @@ export function harvestCrops(world) {
     world.log(`The crops are still growing. Ripe in about ${mins} minute${mins === 1 ? '' : 's'}.`, '#cfe8ff');
     return true;
   }
-  for (const [id, n] of Object.entries(CROP_YIELD)) addItem(world.char.inventory, id, n);
-  g.cropAt = now;
-  world.log('You pick the crop bed: 3 Mochi Rice, 2 Red Beans, 2 Kinako and a Fire Pepper!', '#d6f5b0');
-  noteDaily(world, 'harvest');
+  if (world.gathering) return true;
+  // Picked by hand, the way any spot is gathered (world/gathering.js): she kneels at the bed and
+  // tugs (render/life-moves.js `gather`), the crops wiggle and come free part-way through, the four
+  // of them hop out of the bed, and what she holds up is the rice. Walking off stops it, the crops
+  // still in the ground. (render/garden.js draws the bed's side of it from `map.harvest`.)
+  const b = world.body;
+  b.facing = CROP_X >= b.x ? 1 : -1;
+  b.vx = 0;
+  const work = {
+    node: { x: CROP_X, y: b.y, kind: 'herb', pool: { mochi_rice: 1 } },
+    i: -1,
+    kind: { verb: 'Pick', move: 'gather', secs: HARVEST_SECS, rest: 0, count: [1, 1] },
+    skill: 'gathering',
+    secs: HARVEST_SECS,
+    t: 0,
+    // (The crops come free at FREE of the way through: they hop out then.)
+    free: () => {
+      world.lastGathered = { x: CROP_X, y: b.y, items: Object.keys(CROP_YIELD), at: world.now };
+    },
+    done: () => {
+      for (const [id, n] of Object.entries(CROP_YIELD)) addItem(world.char.inventory, id, n);
+      g.cropAt = Date.now() / 1000;
+      world.log('You pick the crop bed: 3 Mochi Rice, 2 Red Beans, 2 Kinako and a Fire Pepper!', '#d6f5b0');
+      noteDaily(world, 'harvest');
+      // (Any Mochi close by cheers the harvest in.)
+      for (const e of world.gardenLife?.mochi ?? []) if (e.m && !e.m.action && !e.hidden && Math.abs((e.x ?? 1e9) - CROP_X) < 170) e.m.action = { name: 'cheer', t0: null };
+    },
+  };
+  world.gathering = work;
+  world.pose = { kind: 'gather', t: HARVEST_SECS, dur: HARVEST_SECS, since: world.now };
+  world.map.harvest = work;
   return true;
 }
+// How long the picking takes, and how far into it the crops come up out of the bed (the tug in
+// render/life-moves.js `gather` is at about 0.55 of the way).
+const HARVEST_SECS = 1.7;
+export const HARVEST_FREE = 0.56;
 
 // Up beside an egg rocks it, and it hatches (the egg's genes are rolled from its seed). Returns
 // true if there was an egg to rock.
@@ -969,4 +1171,48 @@ export function finishHatch(world) {
   // (Its name: ui/mochi-name.js.)
   world.naming = rec;
   world.events.push({ type: 'mochiname' });
+}
+
+// ---------- The clothes stall ----------
+// Four models on the counter each day (data/mochi-wardrobe.js stallWear), one at each tier and
+// every one of them dressed from its hat down to its shoes, so you can see a whole look standing
+// there. Every piece on a model is for sale on its own: buy the look or buy just the boots. What
+// you buy is yours for good, and any Mochi of yours can wear it.
+// Today's four. Kept on the garden, which is where everything of your Mochi's lives, and handed
+// to whoever is drawing the stall - render/garden.js has no character of its own to ask.
+// (Nothing is ever taken off a model: a model is a display, not the stock. What you already own
+// is marked on its card instead.)
+let onShow = null;
+export const stallOnShow = () => onShow;
+export function stallClothes(char, day = dayOf()) {
+  const g = char.garden;
+  if (!g) return stallWear(char.name ?? 'you', day);
+  if (g.wearStall?.day !== day) g.wearStall = { day, stock: stallWear(char.name ?? 'you', day) };
+  onShow = g.wearStall;
+  return g.wearStall.stock;
+}
+// (Kept on the garden with the Mochi themselves: every hero in the save file shares them.)
+export const ownsWear = (char, id) => (char.garden?.wardrobe ?? []).includes(id);
+// Buys the piece worn in `slot` by model `m`. Returns why not, or null.
+export function buyStallWear(world, m, slot) {
+  const char = world.char;
+  if (world.gardenVisit || !char.garden) return 'Only at your own garden.';
+  const piece = stallClothes(char)[m]?.pieces.find((p) => p.kind === slot);
+  if (!piece) return 'Not for sale.';
+  if (ownsWear(char, piece.id)) return 'You have that one already.';
+  if (char.gold < piece.price) return `It costs ${piece.price.toLocaleString()} gold.`;
+  char.gold -= piece.price;
+  (char.garden.wardrobe ??= []).push(piece.id);
+  // (Wrapped up in its tier's colour and handed over the counter.)
+  handOver(world, world.map.wearStall ?? world.body.x, { beginner: '#a8d8b0', mid: '#8fcfe8', end: '#c8a8f0', elite: '#ffcf5c' }[piece.tier] ?? '#ff9ec0');
+  world.log(`${piece.name} is yours. Dress a Mochi in it from its page!`, '#ffc2d4');
+  return null;
+}
+// Up at the clothes stall (whichever map has one: `wearStall` is where it stands): its window
+// (ui/wear-stall.js).
+export function wearStallUp(world) {
+  const at = world.map.wearStall;
+  if (at == null || world.gardenVisit || !world.char.garden || Math.abs(world.body.x - at) > 40) return false;
+  world.events.push({ type: 'wearstall' });
+  return true;
 }

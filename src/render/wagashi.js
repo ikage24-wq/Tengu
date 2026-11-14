@@ -412,7 +412,8 @@ export function drawHatchEgg(ctx, x, y, g, puff = 0, wob = 0, empty = false, alp
 export const EGG_SCALE = 0.72;
 // Draws the egg of Mochi `g` (or a plain one) with its foot at (x, y), on a small contact shadow,
 // at `time` seconds.
-export function drawMochiEgg(ctx, x, y, g = null, time = 0, scale = EGG_SCALE) {
+// (`shadow: false` for an egg off the ground: whoever lifts it draws its shadow on the grass.)
+export function drawMochiEgg(ctx, x, y, g = null, time = 0, scale = EGG_SCALE, { shadow = true } = {}) {
   const tier = g?.rarity ?? 'common';
   const hair = g ? (MUTANT[coatOf(g)]?.dough ?? lookOf(g, null, step(time * 0.1, KOHAKU.length)).hairColor) : DOUGH;
   const ball = g ? mix(DOUGH, hair, EGG_TINT[tier]) : DOUGH;
@@ -423,10 +424,12 @@ export function drawMochiEgg(ctx, x, y, g = null, time = 0, scale = EGG_SCALE) {
     for (const [rr, a] of [[16, 0.14], [11, 0.2]]) dot(ctx, x, y - 12 * k, rr * k, tier === 'mythic' ? ball : '#fff1c0', a);
     ctx.globalAlpha = 1;
   }
-  ctx.fillStyle = 'rgba(70,40,30,0.18)';
-  ctx.beginPath();
-  ctx.ellipse(x, y, 11 * k, 2.2 * k, 0, 0, Math.PI * 2);
-  ctx.fill();
+  if (shadow) {
+    ctx.fillStyle = 'rgba(70,40,30,0.18)';
+    ctx.beginPath();
+    ctx.ellipse(x, y, 11 * k, 2.2 * k, 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
   ctx.translate(x, y);
   ctx.scale(k, k);
   place(ctx, art(`mochi-egg|${ball}|${band ? 1 : 0}`, 26, 24, () => eggShapes(ball, band)), 0, 0);

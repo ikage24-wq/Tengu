@@ -14,7 +14,7 @@ import { COLORS, windowFrame, text, box, button, hover, tooltip, fit, tabs, spar
 import { itemTooltip } from './tooltips.js';
 import { groundAt } from '../world/physics.js';
 import { lifeLevel, lifePerks, lifeAction, needFor, withExtra } from '../core/life.js';
-import { playLifePose } from '../world/lifepose.js';
+import { playLifePose, lifeWork } from '../world/lifepose.js';
 import { cookFeast, feastReady, feastSkilled, partyBotsHere } from '../world/coop-life.js';
 import { MOCHI_SWEETS, GARDEN_CROPS } from '../data/mochi-raise.js';
 import { STAT_ORDER, STAT_INFO, statIcon, tag } from './mochi-kit.js';
@@ -43,6 +43,35 @@ export function cook(char, d, world = null, rng = Math.random) {
   // (What you just made, for a cooking date: world/dates.js.)
   if (world) world.lastCooked = { id: d.id, at: world.now };
   return n;
+}
+
+// A Cook button, or while something's on the stove: the row it's for shows how far along it is,
+// and the rest wait. (The dish only comes out of the pot when she's done: world/lifepose.js.)
+function cookButton(ui, world, x, y, w, h, id, ok, opts = {}) {
+  const busy = lifeWork(world, 'cook');
+  if (busy == null) return button(ui, x, y, w, h, 'Cook', { primary: ok, enabled: ok, size: 7.5, ...opts });
+  const { ctx } = ui;
+  if (world.pose.find !== id) {
+    button(ui, x, y, w, h, 'Cook', { enabled: false, size: 7.5, ...opts });
+    return false;
+  }
+  ctx.fillStyle = '#fff4e6';
+  roundRect(ctx, x, y, w, h, h / 2);
+  ctx.fill();
+  ctx.save();
+  roundRect(ctx, x, y, w, h, h / 2);
+  ctx.clip();
+  ctx.fillStyle = '#ffc98a';
+  ctx.fillRect(x, y, w * busy, h);
+  ctx.restore();
+  ctx.strokeStyle = '#e8a060';
+  ctx.lineWidth = 1;
+  roundRect(ctx, x, y, w, h, h / 2);
+  ctx.stroke();
+  // (Three dots that fill in turn, so it's plainly cooking.)
+  const dots = Math.floor(world.now * 3) % 4;
+  text(ctx, `Cooking${'.'.repeat(dots)}`, x + 6, y + h / 2 + 2.6, { size: 6.5, bold: true, color: '#a8582a' });
+  return false;
 }
 
 export function cookingWindow(ui, state, world) {
@@ -85,11 +114,13 @@ export function cookingWindow(ui, state, world) {
       ix += 22;
     }
     if (!skilled(char, d)) locked(ctx, x + W - 62, y + 7, 42, 16, needFor(d));
-    else if (button(ui, x + W - 62, y + 7, 42, 16, 'Cook', { primary: ok, enabled: ok, size: 7.5 })) {
-      const n = cook(char, d, world);
-      // She stirs, tosses and tastes it at the stove (render/life-moves.js).
-      if (n) playLifePose(world, 'cook', { at: st, find: d.id });
-      world.log(n ? `You cooked ${n} ${d.name}${n > 1 ? 's' : ''}${n > SERVINGS ? ' (one extra!)' : ''}.` : 'Missing an ingredient!', n ? '#ffd6a0' : '#ffb3c6');
+    else if (cookButton(ui, world, x + W - 62, y + 7, 42, 16, d.id, ok)) {
+      // She stirs, tosses and tastes it at the stove (render/life-moves.js), and it's done when
+      // she is: out of the pot it comes.
+      playLifePose(world, 'cook', { at: st, find: d.id, then: () => {
+        const n = cook(char, d, world);
+        world.log(n ? `You cooked ${n} ${d.name}${n > 1 ? 's' : ''}${n > SERVINGS ? ' (one extra!)' : ''}.` : 'Missing an ingredient!', n ? '#ffd6a0' : '#ffb3c6');
+      } });
     }
     if (!skilled(char, d) && hover(ui, x + W - 62, y + 7, 42, 16)) tooltip(ui, [{ text: `Needs Cooking Lv ${needFor(d)}`, bold: true, color: COLORS.bad }]);
     y += ROW;
@@ -181,17 +212,20 @@ function sweetsList(ui, win, world, x, st) {
     }
     // (Enough for two batches or more: All cooks every batch you have the makings of.)
     const batches = Math.min(...Object.entries(sw.needs).map(([id, n]) => Math.floor(countItem(char.inventory, id) / n)));
-    const cookN = (k) => {
-      for (const [id, n] of Object.entries(sw.needs)) removeItem(char.inventory, id, n * k);
-      addItem(char.inventory, sw.id, SWEET_BATCH * k);
-      for (let j = 0; j < k; j++) lifeAction(world, 'cooking', { tier: 1, kind: 'cook' });
-      noteDaily(world, 'cook', k);
-      playLifePose(world, 'cook', { at: st, find: sw.id });
-      world.log(`You made ${SWEET_BATCH * k} ${sw.name}! Up beside a Mochi to feed it.`, '#ffc2d4');
-    };
-    if (batches >= 2 && button(ui, x + W - 84, y + 7, 20, 16, 'All', { size: 6.5 })) cookN(batches);
-    if (batches >= 2 && hover(ui, x + W - 84, y + 7, 20, 16)) tooltip(ui, [{ text: `Cook all: ${batches} batches, ${batches * SWEET_BATCH} ${sw.name}`, bold: true }]);
-    if (button(ui, x + W - 62, y + 7, 42, 16, 'Cook', { primary: ok, enabled: ok, size: 7.5, iconName: 'flame' })) cookN(1);
+    // (Made when she's done at the stove, not when you click: walk off and nothing's used.)
+    const cookN = (k) => playLifePose(world, 'cook', { at: st, find: sw.id, then: () => {
+      const can = Math.min(k, ...Object.entries(sw.needs).map(([id, n]) => Math.floor(countItem(char.inventory, id) / n)));
+      if (can <= 0) return world.log('Missing an ingredient!', '#ffb3c6');
+      for (const [id, n] of Object.entries(sw.needs)) removeItem(char.inventory, id, n * can);
+      addItem(char.inventory, sw.id, SWEET_BATCH * can);
+      for (let j = 0; j < can; j++) lifeAction(world, 'cooking', { tier: 1, kind: 'cook' });
+      noteDaily(world, 'cook', can);
+      world.log(`You made ${SWEET_BATCH * can} ${sw.name}! Up beside a Mochi to feed it.`, '#ffc2d4');
+    } });
+    const idle = lifeWork(world, 'cook') == null;
+    if (batches >= 2 && idle && button(ui, x + W - 84, y + 7, 20, 16, 'All', { size: 6.5 })) cookN(batches);
+    if (batches >= 2 && idle && hover(ui, x + W - 84, y + 7, 20, 16)) tooltip(ui, [{ text: `Cook all: ${batches} batches, ${batches * SWEET_BATCH} ${sw.name}`, bold: true }]);
+    if (cookButton(ui, world, x + W - 62, y + 7, 42, 16, sw.id, ok, { iconName: 'flame' })) cookN(1);
     y += ROW;
   }
   const crops = Object.values(GARDEN_CROPS).map((c) => c.name).join(', ');
@@ -233,10 +267,11 @@ function feastTab(ui, win, world, x, y, st) {
     }
     const skilled = feastSkilled(char, f);
     if (!skilled) locked(ctx, x + W - 58, y + 11, 40, 16, needFor(f));
-    else if (button(ui, x + W - 58, y + 11, 40, 16, 'Cook', { primary: ok, enabled: ok, size: 7.5 })) {
-      const n = cookFeast(world, f);
-      if (n) playLifePose(world, 'cook', { at: st, find: f.id });
-      world.log(n ? `You cooked a ${f.name}! Eat it to serve the whole party.` : 'Missing an ingredient!', n ? '#ffd6a0' : '#ffb3c6');
+    else if (cookButton(ui, world, x + W - 58, y + 11, 40, 16, f.id, ok)) {
+      playLifePose(world, 'cook', { at: st, find: f.id, then: () => {
+        const n = cookFeast(world, f);
+        world.log(n ? `You cooked a ${f.name}! Eat it to serve the whole party.` : 'Missing an ingredient!', n ? '#ffd6a0' : '#ffb3c6');
+      } });
     }
     if (!skilled && hover(ui, x + W - 58, y + 11, 40, 16)) tooltip(ui, [{ text: `Needs Cooking Lv ${needFor(f)}`, bold: true, color: COLORS.bad }]);
     y += ROW + 12;

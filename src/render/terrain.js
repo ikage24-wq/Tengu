@@ -21,6 +21,11 @@ const hash = (n) => {
 export const MATERIALS = {
   // (The map redraw: the meadow's soft warm earth instead of stamped cobble.)
   meadow: { lip: '#8ee08a', body: '#e4bb8c', deep: '#c99868', stone: '#f6dfbd', style: 'meadowsoil', blades: true, drip: 'vine' },
+  // The Mochi Garden's own turf (the garden redraw, 2026-11-14): a worked valley's meadow, a
+  // little deeper and less sweet than the village's, in a thick puffy cap rather than the stock
+  // zigzag fringe, which read as a plastic valance hanging over the water. Its soil hardly shows:
+  // the garden paints its own beds over it (render/gardenart.js).
+  mochifield: { lip: '#86cc74', body: '#b89470', deep: '#8f7254', stone: '#d8c8a8', style: 'meadowsoil', blades: true, drip: 'vine', cap: 'puffy', capLine: '#3f7d4a', capUnder: '#59a05c', capLit: '#a8dd92' },
   // Petal Meadow's own (the 2026-11-10 art pass): a fresher spring lip over soft peachy earth.
   // Petal Meadow (its art pass, 2026-11-11): a thick puffy cap of grass in rounded lobes over soft
   // layered soil with pastel pebbles, and earthy ledges with roots trailing under them.

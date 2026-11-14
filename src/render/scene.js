@@ -482,6 +482,8 @@ function drawWorldLayers(ctx, world, cam, time, b, zoom = 1) {
   // (Zoomed in, the scenery is laid out for the smaller piece of the world in view, so its planes
   // sit where they would on a screen that size.)
   const viewW = VIEW_W / zoom;
+  // (How wide the view is in the world, for a map's own art: the pond's moon sits under the sky's.)
+  world.map.viewW = viewW;
   const viewH = VIEW_H / zoom;
   const nearPortal = world.map.portals.find((p) => !p.hidden && Math.abs(p.x - b.x) < 22 && Math.abs(p.y - b.y) < 6);
   // The portal on your guided route, if you're following one.

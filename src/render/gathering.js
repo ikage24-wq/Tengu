@@ -547,10 +547,8 @@ function staged(ctx, g, draw) {
 }
 function placeA(ctx, s, x, y, alpha) {
   if (alpha >= 0.999) return place(ctx, s, x, y);
-  ctx.save();
-  ctx.globalAlpha *= alpha;
-  place(ctx, s, x, y);
-  ctx.restore();
+  // (place() sets the canvas's fade itself from its `alpha`, so the fade goes in there.)
+  place(ctx, s, x, y, { alpha: ctx.globalAlpha * alpha });
 }
 function rotated(ctx, px, py, a, draw) {
   ctx.save();

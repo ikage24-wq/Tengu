@@ -31,6 +31,8 @@
 
 import { R, E, T, F, snap } from './pixel.js';
 import { ramp, planks, foliage, bark, gable, hash, swing, pivoted, flicker, lean } from './propkit.js';
+// (Eased 0 to 1: slow out, slow in.)
+const smooth = (u) => u * u * (3 - 2 * u);
 import { limb } from './figure.js';
 import { art, place, BEHIND_GROUND, zoneAt } from './scenery.js';
 import { groundAt } from '../world/physics.js';
@@ -38,7 +40,14 @@ import { drawMochiAnim } from './mochi-anim.js';
 import { drawHatch, drawEvolve, drawRebirth } from './mochi-life.js';
 import { drawMochiEgg } from './wagashi.js';
 import { rollMochi } from '../data/mochi-genes.js';
-import { EGG_SLOTS, NURSERY_BEDS, cropGrowth } from '../world/garden-life.js';
+import { EGG_SLOTS, EGG_BACK, NURSERY_BEDS, cropGrowth, stallOnShow, HARVEST_FREE, EGG_HOP, eggHopSecs } from '../world/garden-life.js';
+import { drawSweet } from './mochi-sweets.js';
+import { SWEET_BY_ID } from '../data/mochi-raise.js';
+import { drawShopModel } from './shopmodel.js';
+import { stallWear } from '../data/mochi-wardrobe.js';
+// The valley behind it all (its backdrop registers itself).
+import './gardenart.js';
+import { signText, signBoard } from './signfont.js';
 
 const TAU = Math.PI * 2;
 const WOOD = '#c8945a';
@@ -61,11 +70,11 @@ function glow(ctx, x, y, r, color, alpha) {
   ctx.fillRect(x - r, y - r, r * 2, r * 2);
   ctx.restore();
 }
-function steam(ctx, x, y, time, seed, n = 3, rise = 24) {
+function steam(ctx, x, y, time, seed, n = 3, rise = 24, k = 1) {
   ctx.save();
   for (let i = 0; i < n; i++) {
     const u = (time * 0.32 + i / n + seed) % 1;
-    ctx.globalAlpha = 0.5 * Math.sin(Math.PI * u);
+    ctx.globalAlpha = 0.5 * k * Math.sin(Math.PI * u);
     ctx.fillStyle = '#ffffff';
     ctx.beginPath();
     ctx.arc(x + Math.sin(time * 0.9 + i * 2) * 2.5 - u * 5, y - u * rise, 2 + u * 4, 0, TAU);
@@ -111,21 +120,142 @@ const lanternPostArt = (v) => art(`mg-lpost|${v}`, 26, 64, () => {
 const eggStallArt = () => art('mg-eggstall', 132, 98, () => {
   const w = ramp('#d8a46a');
   const out = [
-    R(16, 22, 5, 70, WOOD_DK), R(111, 22, 5, 70, WOOD_DK),
+    R(16, 22, 5, 76, WOOD_DK), R(111, 22, 5, 76, WOOD_DK),
+    F(R(14, 94, 9, 4, '#6b4f3a')), F(R(109, 94, 9, 4, '#6b4f3a')),
+    // Cross-braces at the top of each post, so the awning has something holding it up.
+    F(limb(21, 30, 34, 24, 1.6, 1.2, WOOD_DK)), F(limb(111, 30, 98, 24, 1.6, 1.2, WOOD_DK)),
     ...planks(12, 60, 108, 30, w, 6, 3),
     F(R(12, 60, 108, 3, w.hi)), F(R(12, 87, 108, 3, w.deep)),
+    // A sakura cloth hung along the front of the counter.
+    F(R(12, 63, 108, 7, SAKURA)), F(R(12, 63, 108, 1.6, '#ffd9e4')),
+    ...Array.from({ length: 9 }, (_, i) => F(T([[12 + i * 12, 70], [24 + i * 12, 70], [18 + i * 12, 74]], SAKURA))),
     // The eggs on the counter, each in its little mortar.
     ...[[36, '#ffe4ec'], [62, MOCHI], [88, '#dff4e2']].flatMap(([x, c]) => [R(x - 8, 52, 16, 9, WOOD), F(R(x - 8, 52, 16, 1.6, ramp(WOOD).hi)), E(x, 48, 7, 6.4, c), F(E(x - 2.4, 45.4, 2, 1.2, '#ffffff')), F(limb(x, 42, x + 0.4, 39, 0.5, 0.4, '#5aa04a')), F(E(x + 1.8, 39, 1.6, 0.9, MATCHA))]),
-    // The sign on the counter's front.
-    R(44, 66, 44, 16, '#fff6ea'), F(E(54, 74, 3.4, 4.2, '#ffe4ec')),
+    // Two baskets of straw at the ends of the counter, where the eggs are packed.
+    ...[22, 102].flatMap((x) => [
+      ...[0, 1, 2, 3, 4].map((i) => F(limb(x - 8 + i * 1.2, 44 - i * 0.6, x + 2 + i * 1.2, 40 - i * 0.9, 0.7, 0.6, i % 2 ? '#e8cf96' : '#d8bc78'))),
+      T([[x - 9, 50], [x + 9, 50], [x + 7, 59], [x - 7, 59]], '#c89a62'),
+      F(T([[x - 9, 50], [x + 9, 50], [x + 8.6, 52], [x - 8.6, 52]], '#e0b682')),
+      ...[0, 1, 2].map((i) => F(R(x - 8 + i * 5.6, 53 + i * 0.3, 4.4, 1.4, '#a8783f')))]),
   ];
   // The awning: stripes of sakura and cream with a scalloped hem.
   for (let i = 0; i < 9; i++) {
     const x0 = 8 + i * 13;
     out.push(T([[x0, 12], [x0 + 13, 12], [x0 + 13, 28], [x0 + 6.5, 32], [x0, 28]], i % 2 ? '#fff4ea' : SAKURA));
   }
-  out.push(R(6, 8, 120, 5, ramp(SAKURA).sh));
+  out.push(R(6, 8, 120, 5, ramp(SAKURA).sh), F(R(6, 8, 120, 1.6, '#ffd9e4')));
+  // The shade the awning throws back onto the counter's top.
+  out.push(F(R(14, 60, 104, 2.4, ramp('#d8a46a').sh)));
   return out;
+});
+
+// ---------- The clothes stall ----------
+// Four things out each day on dress forms (render/dressform.js), under a mint-striped awning, with
+// a rail of empty hangers behind them and a folded pile at each end. The forms themselves are
+// drawn live, because what they are wearing changes with the day (drawGardenPiece mg_wearstall).
+const WEAR_STALL_W = 176;
+// Where the four stand on the counter, out from the middle, and how high that counter is.
+// A string of little flags between two points, sagging in the middle, each flag turning on its own
+// thread so the line ripples instead of swinging as one board.
+function bunting(ctx, x0, x1, y, time, wx, colors) {
+  const n = Math.max(3, Math.round((x1 - x0) / 13));
+  const sag = 7;
+  ctx.strokeStyle = '#c9a97e';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  for (let i = 0; i <= n; i++) {
+    const u = i / n;
+    const px = x0 + (x1 - x0) * u;
+    const py = y + Math.sin(u * Math.PI) * sag;
+    if (i) ctx.lineTo(snap(px), snap(py));
+    else ctx.moveTo(snap(px), snap(py));
+  }
+  ctx.stroke();
+  for (let i = 0; i < n; i++) {
+    const u = (i + 0.5) / n;
+    const px = x0 + (x1 - x0) * u;
+    const py = y + Math.sin(u * Math.PI) * sag;
+    const t = Math.sin(time * 1.9 + i * 0.9 + wx * 0.02) * 0.2;
+    ctx.save();
+    ctx.translate(snap(px), snap(py));
+    ctx.rotate(t);
+    ctx.fillStyle = colors[i % colors.length];
+    ctx.beginPath();
+    ctx.moveTo(-3.6, 0);
+    ctx.lineTo(3.6, 0);
+    ctx.lineTo(0, 7.5);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+  }
+}
+export const WEAR_HOOKS = [-57, -19, 19, 57];
+export const WEAR_COUNTER = 34;
+const wearStallArt = () => art('mg-wearstall', WEAR_STALL_W, 104, () => {
+  const w = ramp('#d8a46a');
+  const mint = '#8fd8c0';
+  const out = [
+    R(18, 24, 5, 80, WOOD_DK), R(153, 24, 5, 80, WOOD_DK),
+    F(R(16, 100, 9, 4, '#6b4f3a')), F(R(151, 100, 9, 4, '#6b4f3a')),
+    // The back board, with a row of empty hangers on it.
+    R(26, 36, 124, 34, '#f6e4cc'), F(R(26, 36, 124, 2.4, '#fff4e4')), F(R(26, 68, 124, 2, w.deep)),
+    ...[42, 66, 110, 134].flatMap((x) => [
+      F(limb(x, 42, x, 46, 0.5, 0.5, '#b08a5c')),
+      F(limb(x - 5, 50, x + 5, 50, 0.6, 0.6, '#c9a97e')),
+      F(limb(x - 5, 50, x, 46, 0.5, 0.5, '#c9a97e')),
+      F(limb(x + 5, 50, x, 46, 0.5, 0.5, '#c9a97e')),
+    ]),
+    // The counter, planked, a mint cloth along its top.
+    ...planks(14, 70, 148, 26, w, 6, 3),
+    F(R(14, 70, 148, 3, mint)), F(R(14, 73, 148, 1.2, '#6fc0a8')), F(R(14, 94, 148, 3, w.deep)),
+    // A folded pile at each end of the counter, and the price card on its front.
+    ...[[26, '#ffd0e0', '#ff9ec0'], [150, '#cfe4ff', '#9fc8ee']].flatMap(([x, c, d]) => [
+      R(x - 9, 64, 18, 4, d), F(R(x - 9, 64, 18, 1.4, c)),
+      R(x - 8, 60, 16, 4, c), F(R(x - 8, 60, 16, 1.4, '#ffffff')),
+    ]),
+  ];
+  // The awning: stripes of mint and cream with a scalloped hem.
+  for (let i = 0; i < 12; i++) {
+    const x0 = 10 + i * 13;
+    out.push(T([[x0, 8], [x0 + 13, 8], [x0 + 13, 26], [x0 + 6.5, 30], [x0, 26]], i % 2 ? '#fff4ea' : mint));
+  }
+  out.push(R(8, 4, 160, 5, ramp(mint).sh));
+  return out;
+});
+
+// ---------- The orchard's working end ----------
+// A valley that grows its own food has the gear for it standing about: a bean frame with the vines
+// up it, a wash line between two posts, and crates of picked fruit waiting to go up to the square.
+const beanFrameArt = () => art('mg-beanframe', 72, 96, () => {
+  const out = [R(10, 10, 3.4, 86, '#b9a070'), R(58, 10, 3.4, 86, '#b9a070'), R(34, 4, 3.4, 92, '#c8ae7c')];
+  // The three canes crossed at the top and the rails between them.
+  out.push(F(limb(11, 12, 36, 4, 1.4, 1.2, '#cdb485')), F(limb(60, 12, 36, 4, 1.4, 1.2, '#b9a070')));
+  for (let r = 0; r < 4; r++) out.push(F(R(10, 26 + r * 18, 52, 2.2, '#c8ae7c')));
+  // The vines winding up them, their leaves and a few flowers.
+  for (let i = 0; i < 26; i++) {
+    const u = i / 25;
+    const x = 36 + Math.sin(u * 9.2) * 24;
+    const y = 92 - u * 84;
+    out.push(F(E(x, y, 2.4, 1.8, i % 3 ? '#5f9a56' : '#76b267')));
+    if (i % 4 === 1) out.push(F(E(x + 5, y - 2, 3.4, 2.4, '#8ac477')), F(E(x + 5, y - 2.8, 1.6, 1, '#a8d892')));
+    if (i % 7 === 3) out.push(F(E(x - 5, y + 1, 1.6, 1.6, '#ffe8a0')));
+    if (i % 9 === 5) out.push(F(limb(x, y, x - 2, y + 7, 0.8, 0.5, '#4f8a4c')));
+  }
+  out.push(F(E(36, 95, 22, 3, '#6f9a52')));
+  return out;
+});
+const crateStackArt = () => art('mg-crates', 76, 62, () => {
+  const crate = (x, y, w, h, c, d) => [R(x, y, w, h, c), F(R(x, y, w, 2.2, ramp(c).hi)), F(R(x, y + h - 2.6, w, 2.6, d)),
+    F(R(x + 3, y + 3, 2.4, h - 7, d)), F(R(x + w - 6, y + 3, 2.4, h - 7, d))];
+  return [
+    ...crate(4, 34, 34, 26, '#c8945a', '#9a6a40'),
+    ...crate(40, 30, 32, 30, '#d8a46a', '#a8763f'),
+    ...crate(10, 10, 30, 25, '#c8945a', '#9a6a40'),
+    // The fruit in the top one, heaped over the rim.
+    ...[[16, 10, '#ff9ea8'], [24, 8, '#ffd083'], [32, 10, '#ff9ea8'], [20, 6, '#ffb8c0'], [28, 6, '#ffe0a0']]
+      .flatMap(([x, y, c]) => [F(E(x, y, 5, 4.4, c)), F(E(x - 1.6, y - 1.6, 1.8, 1.2, '#ffffff')), F(limb(x, y - 4, x + 1, y - 7, 0.7, 0.5, '#6f9a52'))]),
+    F(E(38, 60, 32, 3, '#6f9a52')),
+  ];
 });
 
 // ---------- Kinako's shop ----------
@@ -137,19 +267,34 @@ const SHOP_W = 168;
 const shopArt = () => art('mg-shop', SHOP_W, 124, () => {
   const wall = '#fbe6cc';
   const out = [
-    R(14, 46, 124, 76, wall), F(R(14, 46, 124, 3, ramp(wall).hi)),
-    R(12, 44, 5, 78, WOOD_DK), R(135, 44, 5, 78, WOOD_DK), F(R(14, 110, 124, 3, WOOD_DK)),
+    R(14, 46, 124, 78, wall), F(R(14, 46, 124, 3, ramp(wall).hi)),
+    // The eaves throw a band of shade down the wall; the light falls down its left side and the
+    // far corner sits back in shadow, so the front has some depth to it.
+    F(R(14, 49, 124, 7, ramp(wall).sh)),
+    F(R(14, 49, 8, 75, ramp(wall).hi)),
+    F(R(128, 49, 10, 75, ramp(wall).sh)),
+    R(12, 44, 5, 80, WOOD_DK), R(135, 44, 5, 80, WOOD_DK), F(R(14, 110, 124, 3, WOOD_DK)),
     ...gable(0, 152, 48, 8, '#e88aa8', 11),
+    // A ridge tile along the top of the roof and a lit under-edge at the eaves.
+    F(R(70, 20, 12, 4, '#f0a8c0')), F(R(0, 45, 152, 2, '#ffc2d8')),
     // The window: shelves of jars, each with sweets of its own colour.
     R(24, 58, 74, 34, '#7a5444'), F(R(24, 58, 74, 4, '#9a6e58')),
     F(R(26, 72, 70, 2, WOOD)), F(R(26, 86, 70, 2, WOOD)),
     ...[[32, 66, '#ffb3c8'], [44, 66, '#c8e8a8'], [56, 66, '#ffe08a'], [68, 66, '#c8b4f0'], [80, 66, '#ffc8a0'], [90, 66, '#a8dcf0'],
       [36, 80, '#ffd0dc'], [50, 80, '#e8c88a'], [64, 80, '#b8e0c8'], [78, 80, '#ffb0b8'], [90, 80, '#fff2c0']].flatMap(([x, y, c]) => [
-      R(x - 4, y - 4, 8, 8, '#e8f4f8'), F(R(x - 4, y - 4, 8, 1.4, '#ffffff')), F(R(x - 3, y - 1, 6, 4, c)), F(R(x - 4.6, y - 5.6, 9.2, 2, WOOD))]),
+      // A round sweet jar: glass, the sweets settled in the bottom of it, a shine, a wooden lid.
+      F(E(x, y, 4.3, 4.5, '#e8f4f8')), F(E(x, y + 1.3, 3.5, 3.1, c)),
+      F(E(x - 1.5, y - 1.7, 1.2, 1.9, '#ffffff')),
+      F(R(x - 3.6, y - 5.4, 7.2, 2.4, WOOD)), F(R(x - 3.6, y - 5.4, 7.2, 0.9, ramp(WOOD).hi))]),
     // The counter, planked, a sakura cloth along its top.
     ...planks(18, 92, 84, 22, ramp('#d8a46a'), 6, 3), F(R(18, 92, 84, 3, '#ffc4d6')), F(R(18, 95, 84, 1.2, '#f0a0b8')),
     // The door (the noren hangs over it).
     R(108, 64, 24, 56, '#8a5a44'), F(R(110, 66, 2, 52, '#a8705a')), F(E(127, 94, 1.2, 1.2, '#f2c94c')),
+    // A swept stone step at the door with a woven mat on it, and a crate of her boxed sweets
+    // waiting to go out, with one lid left open.
+    R(102, 116, 36, 6, STONE), F(R(102, 116, 36, 1.6, ramp(STONE).hi)),
+    R(106, 112, 24, 5, '#c8a06a'), F(R(106, 112, 24, 1.4, '#e0bc8a')),
+    ...[0, 1, 2].map((i) => F(R(108 + i * 7, 113.4, 4, 2.4, '#b08a58'))),
   ];
   // The noren over the window: four pink panels, each with a white mochi crest.
   for (let i = 0; i < 4; i++) {
@@ -188,10 +333,14 @@ const toyBoxArt = () => art('mg-toybox', 64, 46, () => {
 const kitchenArt = () => art('mg-kitchen', 152, 124, () => {
   const wall = '#f3dcb4';
   const out = [
-    R(14, 50, 124, 70, wall), F(R(14, 50, 124, 3, ramp(wall).hi)),
+    R(14, 50, 124, 74, wall), F(R(14, 50, 124, 3, ramp(wall).hi)),
+    F(R(14, 53, 124, 7, ramp(wall).sh)),
+    F(R(14, 53, 8, 71, ramp(wall).hi)),
+    F(R(128, 53, 10, 71, ramp(wall).sh)),
     // Timber frame.
-    R(12, 48, 5, 72, WOOD_DK), R(135, 48, 5, 72, WOOD_DK), F(R(14, 104, 124, 3, WOOD_DK)),
+    R(12, 48, 5, 76, WOOD_DK), R(135, 48, 5, 76, WOOD_DK), F(R(14, 104, 124, 3, WOOD_DK)),
     ...gable(2, 150, 52, 8, '#d0705a', 11),
+    F(R(70, 24, 12, 4, '#e08a74')), F(R(2, 49, 148, 2, '#e8927c')),
     // The serving window: the warm dark of the kitchen, a counter, the pot.
     R(24, 64, 56, 32, '#6a4a3a'), F(R(24, 64, 56, 6, '#8a6048')), R(20, 94, 64, 5, WOOD), F(R(20, 94, 64, 1.2, ramp(WOOD).hi)),
     E(44, 92, 11, 6, '#5a5a6a'), F(E(41, 90, 4, 1.6, '#8a8aa0')), R(40, 84, 8, 3, '#4a4a58'), E(64, 92, 6, 4, MOCHI), E(70, 93, 4, 3, '#ffe4ec'),
@@ -199,8 +348,16 @@ const kitchenArt = () => art('mg-kitchen', 152, 124, () => {
     R(96, 62, 32, 58, '#7a5040'), F(R(98, 64, 2, 54, '#9a6a54')),
     // The chimney.
     R(114, 10, 11, 26, '#b08a78'), F(R(114, 10, 11, 3, '#c8a290')),
-    // A sack of rice and a crate of beans by the wall.
-    E(146, 114, 7, 7, '#efe6d2'), F(R(143, 106, 6, 2, '#c8b89a')),
+    // A sack of rice leaning on the wall, a stack of firewood beside the door, and a water barrel
+    // under a split-bamboo gutter that runs off the eaves - the same water as the channel outside.
+    E(142, 114, 6.4, 6.4, '#efe6d2'), F(E(140, 111, 2.6, 1.6, '#fbf6ea')), F(R(139, 106.5, 6, 2, '#c8b89a')),
+    R(16, 104, 22, 16, '#8a6a48'),
+    ...[0, 1, 2, 3].flatMap((i) => [F(E(20 + (i % 2) * 11, 107 + Math.floor(i / 2) * 7, 4.6, 3.2, '#b08a60')),
+      F(E(20 + (i % 2) * 11, 107 + Math.floor(i / 2) * 7, 2.4, 1.6, '#d8b288'))]),
+    F(limb(135, 50, 135, 96, 1.8, 1.8, '#9ab06a')),
+    R(126, 96, 18, 20, '#6f5a42'), F(R(126, 96, 18, 2.4, '#8a7254')),
+    F(R(126, 102, 18, 1.6, '#9aa2a8')), F(R(126, 111, 18, 1.6, '#9aa2a8')),
+    F(E(135, 98, 7, 2.4, '#7fb8cc')), F(E(133, 97.6, 3, 1, '#cfeef6')),
   ];
   return out;
 });
@@ -216,21 +373,34 @@ const nurseryArt = () => art('mg-nursery', 184, 144, () => {
   const out = [
     F(E(92, 142.5, 86, 2, '#c9b8a8')),
     T(dome, MOCHI),
+    // The dome is a mochi, so it takes the light like one: a crescent of shade hugging its far
+    // edge and a lit sweep along the near shoulder, never a flat white lump.
+    F(T([...dome.slice(12, 21), ...dome.slice(12, 21).map(([dx, dy]) => [92 + (dx - 92) * 0.9, 142 + (dy - 142) * 0.9]).reverse()], ramp(MOCHI).sh)),
+    F(T([...dome.slice(3, 11), ...dome.slice(3, 11).map(([dx, dy]) => [92 + (dx - 92) * 0.88, 142 + (dy - 142) * 0.88]).reverse()], ramp(MOCHI).hi)),
     // Blush on its cheeks, like a mochi.
     F(E(38, 116, 10, 4, '#ffd0da')), F(E(146, 116, 10, 4, '#ffd0da')),
     // The thatch cap and the sprout on top.
     E(92, 52, 30, 12, KINAKO), F(E(84, 48, 14, 4, ramp(KINAKO).hi)), F(R(64, 56, 56, 2, ramp(KINAKO).sh)),
-    F(limb(92, 42, 94, 18, 3, 2.4, '#5aa04a')), T([[94, 22], [108, 10], [118, 14], [106, 26]], MATCHA), T([[93, 24], [80, 12], [70, 17], [82, 28]], '#86c96e'),
+    F(limb(92, 42, 94, 20, 3, 2.4, '#5aa04a')),
     // The round door and its frame, a little window in it.
     T([[74, 142], [74, 116], [78, 104], [92, 98], [106, 104], [110, 116], [110, 142]], '#c8845a'), F(R(91, 100, 2, 42, '#a86a44')),
     F(E(92, 114, 4, 4, '#ffe6a8')), F(E(104, 124, 1.6, 1.6, '#ffe6a8')),
     // Round windows with warm light, and flower boxes under them.
-    E(42, 96, 11, 11, WOOD), E(42, 96, 8, 8, '#ffe6a8'), F(R(41, 88, 2, 16, WOOD)), F(R(34, 95, 16, 2, WOOD)),
-    E(142, 96, 11, 11, WOOD), E(142, 96, 8, 8, '#ffe6a8'), F(R(141, 88, 2, 16, WOOD)), F(R(134, 95, 16, 2, WOOD)),
+    E(42, 96, 11, 11, WOOD), E(42, 96, 8, 8, '#ffe6a8'),
+    // A little curtain drawn across the top of each, the way a nursery's would be.
+    F(T([[34, 92], [50, 92], [49, 96], [42, 93.6], [35, 96]], '#ffd0da')), F(T([[34, 92], [50, 92], [50, 93.4], [34, 93.4]], '#ffe8ee')),
+    F(R(41, 88, 2, 16, WOOD)), F(R(34, 95, 16, 2, WOOD)),
+    E(142, 96, 11, 11, WOOD), E(142, 96, 8, 8, '#ffe6a8'),
+    F(T([[134, 92], [150, 92], [149, 96], [142, 93.6], [135, 96]], '#ffd0da')), F(T([[134, 92], [150, 92], [150, 93.4], [134, 93.4]], '#ffe8ee')),
+    F(R(141, 88, 2, 16, WOOD)), F(R(134, 95, 16, 2, WOOD)),
     R(30, 107, 24, 5, WOOD_DK), R(130, 107, 24, 5, WOOD_DK),
     ...[[33, SAKURA], [38, '#fff0a0'], [44, SAKURA], [50, '#ffffff'], [133, '#c8b4f0'], [139, SAKURA], [145, '#fff0a0'], [151, '#c8b4f0']].map(([x, c]) => F(E(x, 106, 2, 2, c))),
-    // The doorstep.
-    R(70, 140, 44, 4, STONE),
+    // The doorstep, with flat stones trodden into the grass in front of it, and a little bell on a
+    // bracket by the door for when a Mochi wants letting in.
+    R(70, 140, 44, 4, STONE), F(R(70, 140, 44, 1.4, ramp(STONE).hi)),
+    ...[[58, 141], [44, 142.4], [128, 141], [142, 142.4]].map(([sx, sy]) => F(E(sx, sy, 7, 2.4, STONE))),
+    F(limb(112, 104, 119, 104, 1.4, 1.2, WOOD_DK)),
+    F(E(119, 108, 3.4, 3.6, '#e8c470')), F(E(118, 106.6, 1.2, 1.2, '#fff0c0')), F(E(119, 111.4, 1, 1.6, '#b08a3a')),
   ];
   return out;
 });
@@ -408,6 +578,16 @@ function falls(ctx, map, x, cam, time) {
     ctx.fillStyle = 'rgba(255,255,255,0.9)';
     ctx.fillRect(snap(sx), snap(top + u * (ledge - top - 22)), 1.4, 14);
   }
+  // The mist it throws up off the rock, drifting out from the face and thinning as it rises.
+  for (let i = 0; i < 7; i++) {
+    const u = ((time * 0.26 + i / 7) % 1);
+    ctx.globalAlpha = 0.3 * (1 - u) * (0.5 + 0.5 * Math.sin(time + i));
+    ctx.fillStyle = '#eaf8ff';
+    ctx.beginPath();
+    ctx.ellipse(x - 8 + Math.sin(time * 0.5 + i * 2) * 10 - u * 14, ledge - 10 - u * 46, 10 + u * 16, 5 + u * 7, 0, 0, TAU);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
   // Foam where it spills over the lip.
   ctx.fillStyle = '#ffffff';
   for (let i = 0; i < 4; i++) {
@@ -931,6 +1111,146 @@ const genesOf = (seed) => {
   if (!eggGenes.has(seed)) eggGenes.set(seed, rollMochi(seed));
   return eggGenes.get(seed);
 };
+// Sleepy z's from (x, y): `n` of them at a time (up to three), each rising a little to the right,
+// growing, swaying and fading, a beat apart.
+function sleepyZs(ctx, x, y, time, k, n) {
+  ctx.save();
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  for (let i = 0; i < n; i++) {
+    const u = (time * 0.24 + i / n) % 1;
+    const s = 3.2 + u * 3.8;
+    const zx = x + u * 20 + Math.sin(u * 6 + i * 2) * 2.5;
+    const zy = y - u * 46;
+    ctx.globalAlpha = k * Math.min(1, u * 5) * (1 - u) ** 1.2;
+    // (A dusky edge under a pale stroke, so it reads on the white dome and on the night sky.)
+    for (const [c, lw] of [['#5a4c9c', 2.4 + u * 0.4], ['#f4f0ff', 1.1 + u * 0.3]]) {
+      ctx.strokeStyle = c;
+      ctx.lineWidth = lw;
+      ctx.beginPath();
+      ctx.moveTo(zx - s / 2, zy - s / 2);
+      ctx.lineTo(zx + s / 2, zy - s / 2);
+      ctx.lineTo(zx - s / 2, zy + s / 2);
+      ctx.lineTo(zx + s / 2, zy + s / 2);
+      ctx.stroke();
+    }
+  }
+  ctx.restore();
+}
+// A bought egg on its way from the stall to its place in the nest (world/garden-life.js
+// buyStallEgg): it waits on the counter while you pay, hops down off it, and hops on along the
+// grass in little eased hops, leaning into each one and back as it lands, its shadow shrinking
+// under it as it rises; the last hop is a small one, settling into the nest. Returns false once
+// it's home.
+const COUNTER = 24;
+function hopHome(ctx, map, cam, time, arr, ex, back, genes) {
+  const dist = ex - arr.from;
+  const n = Math.max(3, Math.round(Math.abs(dist) / EGG_HOP));
+  const u = (time - arr.t0) / eggHopSecs(dist);
+  if (u >= 1) return false;
+  let x = arr.from;
+  let up = COUNTER;
+  let tilt = 0;
+  let sink = 0;
+  if (u >= 0) {
+    const f = u * n;
+    const hop = Math.min(n - 1, Math.floor(f));
+    const v = f - hop;
+    x = arr.from + (dist * (hop + smooth(v))) / n;
+    up = Math.sin(Math.PI * v) * (hop === n - 1 ? 3.5 : 7) + (hop === 0 ? COUNTER * (1 - smooth(v)) : 0);
+    tilt = Math.sign(dist) * 0.24 * Math.sin(Math.PI * 2 * v);
+    sink = back * 7 * smooth(Math.min(1, u * 1.15));
+  }
+  const gy = groundAt(map, x) - cam.y;
+  const k = GARDEN_EGG * (1 - back * 0.16 * Math.max(0, u));
+  // (Its shadow stays on the grass, shrinking as it rises; the counter's own, while it waits up there.)
+  const floor = up > COUNTER - 1 ? COUNTER : 0;
+  ctx.fillStyle = 'rgba(70,50,40,0.18)';
+  ctx.beginPath();
+  ctx.ellipse(x - cam.x, gy - sink - floor, Math.max(3, 11 * k - (up - floor) * 0.45), Math.max(0.8, 2.2 * k - (up - floor) * 0.1), 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.save();
+  ctx.translate(x - cam.x, gy - sink - up);
+  ctx.rotate(tilt);
+  drawMochiEgg(ctx, 0, 0, genes, time, k, { shadow: false });
+  ctx.restore();
+  return true;
+}
+// Paying at a garden stall (world/garden-life.js handOver): three coins hop from you onto the
+// counter one after another, each giving a glint as it lands; then what you bought, wrapped in its
+// tier's colour and tied with a ribbon, hops back over into your arms with a little sparkle.
+function arc(a, b, h, u) {
+  return [a[0] + (b[0] - a[0]) * u, a[1] + (b[1] - a[1]) * u - Math.sin(Math.PI * u) * h];
+}
+function glint(ctx, x, y, r, a) {
+  ctx.save();
+  ctx.globalAlpha = a;
+  ctx.fillStyle = '#fff8d0';
+  ctx.beginPath();
+  ctx.moveTo(x, y - r);
+  ctx.lineTo(x + r * 0.28, y - r * 0.28);
+  ctx.lineTo(x + r, y);
+  ctx.lineTo(x + r * 0.28, y + r * 0.28);
+  ctx.lineTo(x, y + r);
+  ctx.lineTo(x - r * 0.28, y + r * 0.28);
+  ctx.lineTo(x - r, y);
+  ctx.lineTo(x - r * 0.28, y - r * 0.28);
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+}
+function handOff(ctx, map, cam, time, h, body) {
+  const s = time - h.t0;
+  if (s < 0 || s > 2) return;
+  const counter = [h.to - cam.x, groundAt(map, h.to) - cam.y - 30];
+  const you = [h.from - cam.x, h.y - cam.y - 20];
+  for (let k = 0; k < 3; k++) {
+    const u = (s - k * 0.09) / 0.42;
+    const land = [counter[0] + (k - 1) * 4, counter[1]];
+    if (u >= 0 && u < 1) {
+      const [x, y] = arc(you, land, 16, smooth(u));
+      ctx.fillStyle = '#c98a1a';
+      ctx.beginPath();
+      ctx.arc(x, y, 2.6, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#ffd24a';
+      ctx.beginPath();
+      ctx.arc(x - 0.3, y - 0.3, 1.9, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#fff4c0';
+      ctx.fillRect(x - 1.2, y - 1.4, 1, 1);
+    } else if (u >= 1 && u < 1.5) glint(ctx, land[0], land[1] - 1, 3.2 * (1.5 - u) * 2, 1 - (u - 1) * 2);
+  }
+  if (!h.parcel) return;
+  const u = (s - 0.5) / 0.55;
+  const to = [body.x - cam.x, body.y - cam.y - 16];
+  if (u >= 0 && u < 1) {
+    const [x, y] = arc(counter, to, 22, smooth(u));
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(Math.sin(u * Math.PI * 2) * 0.35);
+    ctx.fillStyle = 'rgba(70,40,60,0.25)';
+    ctx.fillRect(-4, -2.5, 9, 7);
+    ctx.fillStyle = h.parcel;
+    ctx.fillRect(-4.5, -3.5, 9, 7);
+    ctx.fillStyle = 'rgba(255,255,255,0.35)';
+    ctx.fillRect(-4.5, -3.5, 9, 1.5);
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(-0.6, -3.5, 1.2, 7);
+    ctx.fillRect(-4.5, -0.6, 9, 1.2);
+    ctx.fillStyle = '#ff6f9a';
+    ctx.beginPath();
+    ctx.ellipse(-1.8, -4.4, 1.8, 1.1, -0.5, 0, Math.PI * 2);
+    ctx.ellipse(1.8, -4.4, 1.8, 1.1, 0.5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  } else if (u >= 1 && u < 1.6) {
+    const a = 1 - (u - 1) / 0.6;
+    glint(ctx, to[0] - 6, to[1] - 4, 3.6 * a, a);
+    glint(ctx, to[0] + 6, to[1] - 7, 2.6 * a, a);
+  }
+}
+
 export function drawGardenLife(ctx, world, cam, time, layer = 'back') {
   const life = world.gardenLife;
   const map = world.map;
@@ -944,8 +1264,29 @@ export function drawGardenLife(ctx, world, cam, time, layer = 'back') {
       if (life.hatching?.egg === egg) return;
       const ex = EGG_SLOTS[i];
       if (ex == null) return;
-      drawMochiEgg(ctx, ex - cam.x, groundAt(map, ex) - cam.y, egg.genes ?? genesOf(egg.seed), time, GARDEN_EGG);
+      // The back row of the clutch sits a little further up the grass and a little smaller, so the
+      // five of them read as a nest by the gate rather than a line of bollards.
+      const back = EGG_BACK[i] ?? 0;
+      const genes = egg.genes ?? genesOf(egg.seed);
+      const arr = life.arrivals?.get(egg);
+      if (arr && hopHome(ctx, map, cam, time, arr, ex, back, genes)) return;
+      if (arr) life.arrivals.delete(egg);
+      drawMochiEgg(ctx, ex - cam.x, groundAt(map, ex) - cam.y - back * 7, genes, time, GARDEN_EGG * (1 - back * 0.16));
     });
+  }
+  for (const h of life.handoffs ?? []) handOff(ctx, map, cam, time, h, world.body);
+  // Sweets you have put down, waiting to be found: each one sits in the grass with its own shadow,
+  // breathing where it lies, and bouncing on the spot once one of them is on its way over to it.
+  for (const d of life.drops ?? []) {
+    const dy = groundAt(map, d.x) - cam.y;
+    const dx = d.x - cam.x;
+    if (dx < -40 || dx > 1200) continue;
+    const hop = d.until != null ? 0 : d.taken ? Math.abs(Math.sin(time * 5.5)) * 3.4 : Math.sin(time * 1.8 + d.x * 0.1) * 0.9;
+    ctx.fillStyle = 'rgba(70,50,40,0.2)';
+    ctx.beginPath();
+    ctx.ellipse(dx, dy - 1.5, 7 - hop * 0.5, 2.4 - hop * 0.2, 0, 0, Math.PI * 2);
+    ctx.fill();
+    drawSweet(ctx, SWEET_BY_ID[d.id]?.kind ?? 'dango', dx, dy + 1 - hop, 0.72, 0);
   }
   for (const e of life.mochi) {
     if (e.hidden || e.x == null) continue;
@@ -1152,31 +1493,127 @@ export function drawGardenPiece(ctx, map, kind, wx, extra, cam, width, time) {
       ctx.fillRect(snap(x - 44), snap(gy - 98), 72, 14);
       ctx.fillStyle = '#fff6ea';
       ctx.fillRect(snap(x - 42), snap(gy - 96), 68, 10);
-      ctx.fillStyle = AZUKI;
-      ctx.font = '800 7px Nunito, "Trebuchet MS", "Segoe UI", system-ui, sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText("Kinako's", snap(x - 8), snap(gy - 88.6));
-      ctx.textAlign = 'left';
+      signText(ctx, "Kinako's", x - 8, gy - 95, { align: 'center', color: AZUKI, shadow: '#f0d8c4' });
       // (Hung under the left eave, clear of the costume stand.)
       ctx.fillStyle = WOOD_DK;
       ctx.fillRect(snap(x - 89), snap(gy - 78), 1, 6);
       paperLantern(ctx, x - 89, gy - 72, time, wx - 89, night > 0.3 ? '#b89af0' : '#e8d8f6', night);
       if (night > 0.3) glow(ctx, x - 89, gy - 64, 26, '#c8a8ff', 0.45 * night * flicker(time, wx));
+      // A string of little flags hung across the front under the eaves, every one of them
+      // turning on its own thread in the breeze.
+      bunting(ctx, x - 76, x + 44, gy - 76, time, wx, ['#ffb3cf', '#fff4ea', '#ffd9e4', '#c8e8a8']);
+      return true;
+    }
+    case 'mg_wearstall': {
+      place(ctx, wearStallArt(), snap(x), gy + 2);
+      // (Measured off the sprite: the counter is centred on the stall's own x, so the board is too.)
+      signBoard(ctx, 'CLOTHES', x, gy - 24, { color: AZUKI, rim: '#c08a52' });
+      // Today's four models, each dressed head to paws and standing on the counter, plainest on
+      // the left and the elite one on the right.
+      // (Before today's four have been worked out even once - a dev sheet, a first frame - the
+      // stall still has models on it rather than standing bare.)
+      const stall = stallOnShow() ?? { stock: stallWear('you', Math.floor(Date.now() / 864e5)) };
+      (stall.stock ?? []).forEach((model, i) => {
+        drawShopModel(ctx, snap(x + WEAR_HOOKS[i]), snap(gy + 2 - WEAR_COUNTER), model.wear ?? {}, 0.85);
+      });
+      return true;
+    }
+    case 'mg_beanframe':
+      place(ctx, beanFrameArt(), snap(x), gy + 2);
+      return true;
+    case 'mg_crates':
+      place(ctx, crateStackArt(), snap(x), gy + 2);
+      return true;
+    case 'mg_washline': {
+      // Two posts and a line between them, with the day's washing pegged out: each cloth bellies
+      // and lifts on its own, a beat behind the one before it.
+      const span = 90;
+      ctx.fillStyle = WOOD_DK;
+      ctx.fillRect(snap(x - span / 2), snap(gy - 72), 3, 74);
+      ctx.fillRect(snap(x + span / 2), snap(gy - 72), 3, 74);
+      ctx.fillStyle = '#6f9a52';
+      ctx.beginPath();
+      ctx.ellipse(snap(x - span / 2 + 1.5), gy + 1, 7, 2.4, 0, 0, Math.PI * 2);
+      ctx.ellipse(snap(x + span / 2 + 1.5), gy + 1, 7, 2.4, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#c9a97e';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      for (let i = 0; i <= 12; i++) {
+        const u = i / 12;
+        const px = x - span / 2 + span * u;
+        const py = gy - 70 + Math.sin(u * Math.PI) * 6;
+        if (i) ctx.lineTo(snap(px), snap(py));
+        else ctx.moveTo(snap(px), snap(py));
+      }
+      ctx.stroke();
+      const cloths = ['#fff0f4', '#bfe0ee', '#ffe0a8', '#d8c8f0'];
+      for (let i = 0; i < 4; i++) {
+        const u = (i + 0.6) / 4.4;
+        const px = x - span / 2 + span * u;
+        const py = gy - 70 + Math.sin(u * Math.PI) * 6;
+        const lift = Math.sin(time * 1.4 + i * 1.1 + wx * 0.02);
+        const belly = 4 + lift * 3.5;
+        ctx.fillStyle = cloths[i];
+        ctx.beginPath();
+        ctx.moveTo(snap(px - 7), snap(py));
+        ctx.lineTo(snap(px + 7), snap(py));
+        ctx.quadraticCurveTo(px + 8 + belly, py + 14, px + 5 + belly, py + 26);
+        ctx.quadraticCurveTo(px + belly * 0.6, py + 22, px - 5 + belly * 0.4, py + 26);
+        ctx.quadraticCurveTo(px - 8 + belly * 0.2, py + 14, px - 7, py);
+        ctx.closePath();
+        ctx.fill();
+        ctx.fillStyle = 'rgba(120,96,130,0.14)';
+        ctx.beginPath();
+        ctx.moveTo(snap(px + 2), snap(py));
+        ctx.lineTo(snap(px + 7), snap(py));
+        ctx.quadraticCurveTo(px + 8 + belly, py + 14, px + 5 + belly, py + 26);
+        ctx.quadraticCurveTo(px + 2 + belly * 0.7, py + 16, px + 2, py);
+        ctx.closePath();
+        ctx.fill();
+        ctx.fillStyle = '#8a6a48';
+        ctx.fillRect(snap(px - 5), snap(py - 2), 1.6, 4);
+        ctx.fillRect(snap(px + 4), snap(py - 2), 1.6, 4);
+      }
       return true;
     }
     case 'mg_eggstall': {
       place(ctx, eggStallArt(), snap(x), gy + 2);
-      ctx.fillStyle = AZUKI;
-      ctx.font = '800 7px Nunito, "Trebuchet MS", "Segoe UI", system-ui, sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText('EGGS', snap(x + 6), snap(gy - 21));
-      ctx.textAlign = 'left';
+      signBoard(ctx, 'EGGS', x, gy - 20, { color: AZUKI, rim: '#c08a52' });
+      // A price tag hung off the end of the awning, swinging.
+      const sw = Math.sin(time * 1.5 + wx * 0.03) * 0.16;
+      const tx = x + 34;
+      const ty = gy - 64;
+      ctx.strokeStyle = WOOD_DK;
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(snap(tx), snap(ty));
+      ctx.lineTo(snap(tx + Math.sin(sw) * 9), snap(ty + Math.cos(sw) * 9));
+      ctx.stroke();
+      ctx.save();
+      ctx.translate(tx, ty);
+      ctx.rotate(sw);
+      ctx.fillStyle = '#fff6ea';
+      ctx.fillRect(-7, 9, 14, 11);
+      ctx.fillStyle = SAKURA;
+      ctx.fillRect(-7, 9, 14, 2.4);
+      signText(ctx, '3K', 0, 13, { align: 'center', color: AZUKI });
+      ctx.restore();
       return true;
     }
     case 'mg_kitchen': {
       place(ctx, kitchenArt(), snap(x), gy + 2);
+      if (night > 0.2) glow(ctx, x - 24, gy - 44, 30, '#ffc87a', 0.5 * night);
       steam(ctx, x - 32, gy - 36, time, wx * 0.01, 3, 20);
       steam(ctx, x + 43, gy - 116, time * 0.8, wx * 0.02 + 0.5, 3, 30);
+      // While someone cooks at the pot (map.stoveBusy: world/world.js) it comes up to a rolling
+      // boil: more steam, rising higher, easing in and back out. (Its own steady pace, so the puffs
+      // never jump.)
+      map.stoveHeat = (map.stoveHeat ?? 0) + ((map.stoveBusy ? 1 : 0) - (map.stoveHeat ?? 0)) * 0.05;
+      if (map.stoveHeat > 0.02) {
+        steam(ctx, x - 31, gy - 38, time * 1.35, wx * 0.01 + 0.37, 4, 34, map.stoveHeat);
+        steam(ctx, x - 35, gy - 37, time * 1.1, wx * 0.01 + 0.71, 3, 26, map.stoveHeat * 0.8);
+      }
       // The noren over the door: three panels of indigo, each with a white mochi crest, stirring.
       const nx = x + 36;
       const ny = gy - 58;
@@ -1197,10 +1634,30 @@ export function drawGardenPiece(ctx, map, kind, wx, extra, cam, width, time) {
     }
     case 'mg_nursery': {
       place(ctx, nurseryArt(), snap(x), gy + 2);
+      // The sprout on its roof, nodding: the two leaves turn on the stem, a beat apart.
+      const nod = Math.sin(time * 0.9 + wx * 0.01) * 0.11;
+      const leaf = (dir, lean, c) => {
+        ctx.save();
+        ctx.translate(snap(x + 2), snap(gy - 122));
+        ctx.rotate(lean);
+        ctx.fillStyle = c;
+        ctx.beginPath();
+        ctx.moveTo(0, 2);
+        ctx.quadraticCurveTo(dir * 9, -7, dir * 25, -4);
+        ctx.quadraticCurveTo(dir * 11, 6, 0, 4);
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
+      };
+      leaf(-1, -nod * 1.2, '#86c96e');
+      leaf(1, nod, MATCHA);
       if (night > 0.2) {
         glow(ctx, x - 50, gy - 56, 18, '#ffe08a', 0.55 * night);
         glow(ctx, x + 50, gy - 56, 18, '#ffe08a', 0.55 * night);
       }
+      // Mochi asleep inside (map.sleepers: world/garden-life.js): sleepy z's drift up out of the
+      // round window one after another, growing and swaying as they rise, and fade away.
+      if (night > 0.3 && map.sleepers > 0) sleepyZs(ctx, x + 50, gy - 62, time, Math.min(1, (night - 0.3) / 0.4), Math.min(3, map.sleepers + 1));
       return true;
     }
     case 'mg_track': {
@@ -1263,6 +1720,20 @@ export function drawGardenPiece(ctx, map, kind, wx, extra, cam, width, time) {
       const stage = grow >= 1 ? 3 : grow >= 0.66 ? 2 : grow >= 0.33 ? 1 : 0;
       place(ctx, cropBedArt(), snap(x), gy + 2);
       const a = (lean(time, wx) + 0.4) * 0.03;
+      // Being picked (world/garden-life.js harvestCrops): the crops shiver harder and harder as
+      // she tugs, then come up out of the bed and fade as the seedlings fade in behind them.
+      const h = map.harvest;
+      if (h && (h.quit || h.t >= h.secs)) map.harvest = null;
+      else if (h && stage === 3) {
+        const p = Math.min(1, h.t / h.secs);
+        const tug = smooth(Math.min(1, Math.max(0, (p - 0.24) / (HARVEST_FREE - 0.24))));
+        const out = smooth(Math.min(1, Math.max(0, (p - HARVEST_FREE) / 0.22)));
+        const shiver = Math.sin(h.t * 34) * tug * (1 - out);
+        // (place() takes its fade as `alpha`: it sets the canvas's own.)
+        if (out > 0) place(ctx, cropsArt(0), snap(x), gy - 9, { alpha: out });
+        if (out < 1) pivoted(ctx, x, gy - 10, a + shiver * 0.05, () => place(ctx, cropsArt(3), snap(x), Math.round(gy - 9 - tug * 1.2 * Math.abs(shiver) - out * 8), { alpha: 1 - out }));
+        return true;
+      }
       pivoted(ctx, x, gy - 10, a, () => place(ctx, cropsArt(stage), snap(x), gy - 9));
       return true;
     }
@@ -1304,11 +1775,7 @@ export function drawGardenPiece(ctx, map, kind, wx, extra, cam, width, time) {
     }
     case 'mg_stadium':
       place(ctx, stadiumArt(), snap(x), gy + 2);
-      ctx.font = '900 8px Nunito, "Trebuchet MS", "Segoe UI", system-ui, sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillStyle = '#e0659f';
-      ctx.fillText('RACES', snap(x - 92 + 100), snap(gy + 2 - 160 + 34));
-      ctx.textAlign = 'left';
+      signText(ctx, 'RACES', x + 8, gy - 134, { align: 'center', color: '#e0659f', shadow: '#ffe0ee' });
       return true;
     case 'mg_earthwall':
       place(ctx, earthWallArt(extra), snap(x), extra.bottom - cam.y);

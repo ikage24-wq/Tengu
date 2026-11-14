@@ -546,12 +546,14 @@ export function drawStreet(ctx, map, cam, width, time, hero = {}) {
       const f = (time * 7 + ph) % 3;
       const i = Math.floor(f);
       place(ctx, stoveFlameArt(i), x, gy + 0.6);
-      ctx.save();
-      ctx.globalAlpha = f - i;
-      place(ctx, stoveFlameArt((i + 1) % 3), x, gy + 0.6);
-      ctx.restore();
-      // The lid: still most of the time, then a burst of rattling as the pot boils up.
-      const boil = Math.max(0, Math.sin(time * 0.9 + ph)) ** 6;
+      // (place() sets the fade itself from its `alpha`.)
+      place(ctx, stoveFlameArt((i + 1) % 3), x, gy + 0.6, { alpha: f - i });
+      // The lid: still most of the time, then a burst of rattling as the pot boils up; and while
+      // someone cooks at it (map.stoveBusy: world/world.js) it comes up to a rolling boil and stays
+      // there, easing up and back down.
+      const want = map.stoveBusy ? 1 : 0;
+      map.stoveHeat = (map.stoveHeat ?? 0) + (want - (map.stoveHeat ?? 0)) * 0.05;
+      const boil = Math.max(Math.max(0, Math.sin(time * 0.9 + ph)) ** 6, map.stoveHeat * (0.75 + 0.25 * Math.sin(time * 5.3 + ph)));
       const rattle = boil * Math.sin(time * 38) * 1.1;
       const lift = boil * Math.abs(Math.sin(time * 19)) * 1.4;
       ctx.save();
@@ -560,12 +562,14 @@ export function drawStreet(ctx, map, cam, width, time, hero = {}) {
       place(ctx, stoveLidArt(), 0, 2 - lift);
       ctx.restore();
       for (let k = 0; k < 4; k++) {
-        const u = (((time * (0.5 + 0.25 * boil) + k / 4 + ph) % 1) + 1) % 1;
+        // (Steam rises at one steady pace, so the puffs never jump; a harder boil makes them
+        // fuller and climb higher instead.)
+        const u = (((time * 0.6 + k / 4 + ph) % 1) + 1) % 1;
         const sx = x - 5 + k * 3.5 + Math.sin(u * 5 + k * 1.7 + time * 0.8) * (2 + u * 4);
-        const sy = gy - 50 - u * 30;
+        const sy = gy - 50 - u * (30 + 10 * boil);
         ctx.save();
         ctx.globalAlpha = Math.min(1, u * 5) * (1 - u) ** 1.4 * 0.9;
-        puff(ctx, sx, sy, 2.2 + u * 4.5, '#ffffff', '#ece6fa', u > 0.55 ? (u - 0.55) / 0.45 : 0, k * 0.37);
+        puff(ctx, sx, sy, 2.2 + u * (4.5 + 2.5 * boil), '#ffffff', '#ece6fa', u > 0.55 ? (u - 0.55) / 0.45 : 0, k * 0.37);
         ctx.restore();
       }
     }

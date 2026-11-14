@@ -5,6 +5,8 @@
 // on her happy lines she is awake and smiling.
 
 import { drawHero } from './hero.js';
+import { moveAt } from './moves.js';
+import { HEAD_POSE } from './gacha.js';
 import { ITEMS } from '../data/items.js';
 import '../data/cash.js';
 
@@ -27,7 +29,13 @@ export function hayateGear() {
 // 2026-11-13: the island's Tengu are gone, the Mochi take their place, and Hayate is their queen -
 // drawn on the player-character base she has always had, with the gold sprout to say what she is.)
 const SHINE = new Map();
-function goldSprout(ctx, x, y, s, t) {
+function goldSprout(ctx, x, y, s, t, lean = 0) {
+  ctx.save();
+  if (lean) {
+    ctx.translate(x, y);
+    ctx.rotate(lean);
+    ctx.translate(-x, -y);
+  }
   // The shine behind it, made once for each size it is drawn at.
   const r = Math.max(6, Math.round(s * 9));
   let halo = SHINE.get(r);
@@ -131,16 +139,68 @@ function goldSprout(ctx, x, y, s, t) {
     ctx.fillRect(tip[0] - s * 2.4, tip[1] - w, s * 4.8, w * 2);
     ctx.globalAlpha = 1;
   }
+  ctx.restore();
 }
+// How long her waking takes, and her face through it: asleep, then her eyes fly open, then wonder,
+// then the smile she keeps. (render/emote-moves.js `queenwake` is her body through the same beats.)
+export const WAKE_SECS = 3.2;
+// And how long she takes to settle out of it back into standing: her waking ends taller and
+// straighter than she stands, so it is eased away rather than cut, the way the game blends any
+// move into the next.
+const SETTLE = 0.7;
+// Where her sprout is rooted. The hero drawing publishes where her head ended up
+// (render/gacha.js HEAD_POSE), rotation and all, so the sprout is pinned to a point in her head's
+// own space rather than to a height above her feet: measured on her, (9.6, -2.5) there is the top
+// of her skull, a couple of units inside the cloud of her hair, and six units further up that same
+// axis gives the way her head is leaning. Pinned this way it stays rooted while she lolls asleep,
+// sinks, rises and straightens up. HEAD_TOP is only the fall-back, for a frame where the drawing
+// was handed off and no head came back.
+const SPROUT_ROOT = [9.6, -2.5];
+const SPROUT_UP = [9.6, -8.5];
+const HEAD_TOP = 38.5;
+const WAKE_FACE = [[0.07, 'sleepy'], [0.2, 'shock'], [0.52, 'excited'], [1, 'smile']];
+
 // Hayate at (x, y) (her feet), `s` the hero's scale (2 in the cutscene window), `t` seconds,
-// `awake` once she has woken, `talking` while her words type out.
-export function drawHayate(ctx, x, y, t, { s = 2, awake = false, talking = false } = {}) {
+// `awake` once she has woken, `talking` while her words type out. `wake` is how long ago she woke,
+// in seconds: given, she plays her waking out (her head comes up, she draws herself to her full
+// height and raises a hand over the road) instead of simply being awake.
+export function drawHayate(ctx, x, y, t, { s = 2, awake = false, talking = false, wake = null } = {}) {
+  // Waking: her own move, eased away afterwards so she settles into standing without a jump.
+  const waking = wake != null && wake < WAKE_SECS ? Math.max(0, wake) / WAKE_SECS : null;
+  const settling = wake != null && wake >= WAKE_SECS && wake < WAKE_SECS + SETTLE ? (wake - WAKE_SECS) / SETTLE : null;
   // She breathes slowly; asleep, she nods off now and then and catches herself.
   const breath = 0.5 + 0.5 * Math.sin(t * 1.3);
-  const nod = awake ? 0 : Math.max(0, Math.sin(t * 0.7)) ** 6 * 1.2 * s;
+  const nod = awake || waking != null ? 0 : Math.max(0, Math.sin(t * 0.7)) ** 6 * 1.2 * s;
+  const held = waking ?? (settling != null ? 1 : null);
   const dy = y - breath * 0.6 * s + nod * 0.3;
-  drawHero(ctx, { ...HAYATE_LOOK, face: awake ? 'smile' : 'sleepy' }, hayateGear(), x, dy, { pose: 'idle', time: t, seed: 7, scale: s, talking, facing: 1 });
-  // Her gold sprout, up out of the cloud of her hair. (She stands about 46 units tall, crown and
-  // all, so its stem starts just at the top of her.)
-  goldSprout(ctx, x - s * 1.2, dy - s * 44, s, t);
+  const face = waking != null ? WAKE_FACE.find(([u]) => waking < u)[1] : awake ? 'smile' : 'sleepy';
+  const move = waking != null
+    ? { pose: 'queenwake', progress: waking, dur: WAKE_SECS }
+    : settling != null
+      ? { pose: 'idle', from: { kind: 'queenwake', progress: 1, dur: WAKE_SECS }, blend: settling }
+      : { pose: 'idle' };
+  drawHero(ctx, { ...HAYATE_LOOK, face }, hayateGear(), x, dy, { ...move, time: t, seed: 7, scale: s, talking, facing: 1 });
+  // Her gold sprout, growing up out of the cloud of her hair. (Measured on her: the top of her hair
+  // is 83 of these units above her feet at the stem's column, so the stem is rooted a little inside
+  // it and comes up past the crown. Rooted any higher and it floats clear of her head.) It rides
+  // her head: waking, she sinks and rises a long way, and the sprout goes with her.
+  const head = HEAD_POSE.at;
+  if (head) {
+    const root = head(SPROUT_ROOT[0], SPROUT_ROOT[1]);
+    const up = head(SPROUT_UP[0], SPROUT_UP[1]);
+    goldSprout(ctx, root[0], root[1], s, t, Math.atan2(up[0] - root[0], root[1] - up[1]));
+    return;
+  }
+  // No head came back this frame: her height, with the waking's sink and rise taken off it.
+  let hx = 0;
+  let hy = 0;
+  if (held != null) {
+    const mv = moveAt('queenwake', held, WAKE_SECS);
+    const r = { hx: 0, hy: 0 };
+    mv.rig?.(r);
+    const k = settling != null ? 1 - settling : 1;
+    hx = (r.hx ?? 0) * s * k;
+    hy = ((r.hy ?? 0) - (mv.lift ?? 0)) * s * k;
+  }
+  goldSprout(ctx, x - s * 1.2 + hx, dy - s * HEAD_TOP + hy, s, t);
 }

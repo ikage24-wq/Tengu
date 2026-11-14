@@ -1038,13 +1038,88 @@ const CHEW = { front: [-2, 3], over: true }; // ...down by its tummy, chewing
 const SIT = { squat: 3, bob: 3, legF: [3.4, -1.6, 40], legB: [2.2, -1.2, 30], front: [1, 1.5], back: [1.6, 1.5] };
 // Lying asleep on its side (turned over as one about its middle, `tip` 6; `sink` lays it down).
 const LIE = { lean: 1.45, tip: 6, sink: 15, squat: 0, bob: 0, legF: [2, -1.4, 40], legB: [1.4, -1, 30], front: [-2, -4], back: [4, -3], closed: [true, true] };
+// (Each bite has a bounce in it: a dip into the bite, a little hop of a chew, and a rock of the
+// head one way then the other from bite to bite.)
 const chomp = (t, n) => [
-  KEY(t, { ...BITE, mouth: 'mochiopen', closed: [true, true] }),
-  KEY(t + 0.25, { ...CHEW, bites: n, mouth: 'mochiw', closed: [true, true], blush: 1.7, extra: n === 2 ? ['hearts'] : [] }),
-  KEY(t + 0.5, { ...CHEW, mouth: 'cat', closed: [true, true], blush: 1.7, hy: 1.4 }),
-  KEY(t + 0.75, { ...CHEW, mouth: 'mochiw', closed: [true, true], blush: 1.7, hy: 1 }),
+  KEY(t, { ...BITE, mouth: 'mochiopen', closed: [true, true], squat: 1.2 }),
+  KEY(t + 0.25, { ...CHEW, bites: n, mouth: 'mochiw', closed: [true, true], blush: 1.7, lift: 0.9, squat: 0, extra: n === 2 ? ['hearts'] : [], ease: 'out' }),
+  KEY(t + 0.5, { ...CHEW, mouth: 'cat', closed: [true, true], blush: 1.7, hy: 1.4, lift: 0, squat: 1, ease: 'in' }),
+  KEY(t + 0.75, { ...CHEW, mouth: 'mochiw', closed: [true, true], blush: 1.7, hy: 1, squat: 0, tilt: n % 2 ? 5 : -5 }),
 ];
 export const ACTIONS = {
+  // Finding a sweet lying on the grass, all bounce. It dips and boings up with a "!", wiggles on
+  // its toes with a little hop to each side, paws at its cheeks; plops down to sit and bounces once
+  // on its bottom; reaches out, gathers it up and gives a happy bounce on the spot; holds it up
+  // high, bopping side to side to its own tune; rocks it in a squeezy hug; and hops back up onto
+  // its feet, ready to eat. Every hop has its dip before and its landing after, and the lift and
+  // the sit both ride a lively spring (drawMochiAnim `bouncy`), so they overshoot and settle.
+  // Whatever it thinks of the sweet (`eat` or `hated`) follows straight on.
+  // (The grab is at 2.2 s: the sweet stays on the grass until then, world/garden-life.js PICKUP_GRAB.)
+  pickup: { dur: 4.6, keys: [
+    KEY(0, {}),
+    // Spotted it: down for a spring...
+    KEY(0.1, { squat: 2.4, hy: 0.6, wide: true, mouth: 'o', glance: 1, front: [2, 1], back: [-2, 1] }),
+    // ...and boing, up it pops.
+    KEY(0.3, { lift: 2.8, squat: 0, hy: -1.4, wide: true, mouth: 'o', sprout: 'excited', glance: 1, front: [4, -5], back: [-4, -5], extra: ['bang0'], ease: 'out' }),
+    KEY(0.5, { lift: 0, squat: 2.6, hy: 0.8, tilt: 6, wide: true, mouth: 'mochio', glance: 1, front: [3, 0], back: [-2, 0], extra: ['bang0'], ease: 'in' }),
+    KEY(0.62, { squat: 0, hy: 0, tilt: 8, mouth: 'mochio', glance: 1, front: [3, -1], back: [-2, -1] }),
+    // A bouncy wiggle of delight, paws at its cheeks, a little hop to each side.
+    KEY(0.78, { lift: 1.4, tilt: -11, hx: -0.8, front: [-3, -8], back: [3, -8], over: true, closed: [true, true], mouth: 'D', blush: 1.9, sprout: 'excited', extra: ['spark0'], ease: 'out' }),
+    KEY(0.9, { lift: 0, squat: 1.6, tilt: -4, hx: -0.3, front: [-3, -8], back: [3, -8], over: true, closed: [true, true], mouth: 'D', blush: 1.9, ease: 'in' }),
+    KEY(1.02, { lift: 1.4, squat: 0, tilt: 11, hx: 0.8, front: [-3, -8], back: [3, -8], over: true, closed: [true, true], mouth: 'D', blush: 1.9, sprout: 'excited', extra: ['spark1'], ease: 'out' }),
+    KEY(1.14, { lift: 0, squat: 1.6, tilt: 4, hx: 0.3, front: [-3, -8], back: [3, -8], over: true, closed: [true, true], mouth: 'D', blush: 1.9, ease: 'in' }),
+    KEY(1.3, { squat: 0, tilt: 2, front: [4, 0], back: [-2, 0], mouth: 'mochiw', glance: 1 }),
+    // Plop! Down it sits, bouncing once on its bottom.
+    KEY(1.55, { ...SIT, sink: 7, tilt: 12, hy: 1.2, front: [6, 3], back: [4, 2], mouth: 'mochio', glance: 1, ease: 'in' }),
+    KEY(1.68, { ...SIT, sink: 3.5, tilt: 9, hy: 0.4, front: [6, 2], back: [4, 1.5], mouth: 'mochiw', glance: 1, ease: 'out' }),
+    KEY(1.8, { ...SIT, sink: 5, tilt: 11, hy: 1, front: [6, 3], back: [4, 2], mouth: 'mochiw', glance: 1 }),
+    // Both paws out to it...
+    KEY(2.0, { ...SIT, sink: 5, tilt: 15, hy: 1.6, front: [8, 4.5], back: [7, 4], mouth: 'mochio', glance: 1 }),
+    // ...got it! A happy bounce on the spot.
+    KEY(2.2, { ...SIT, sink: 5, tilt: 12, hy: 1.4, front: [7, 4], back: [6, 3.5], hold: 'sweet', bites: 0, mouth: 'mochio', glance: 1 }),
+    KEY(2.36, { ...SIT, sink: 2.5, tilt: 4, hy: -0.4, front: [6, -1], back: [5, -1], mouth: 'D', closed: [true, true], blush: 1.9, extra: ['spark0'], ease: 'out' }),
+    KEY(2.5, { ...SIT, sink: 5, tilt: 2, hy: 0.4, front: [7, -4], back: [-4, -4], mouth: 'D', closed: [true, true], blush: 1.9, ease: 'in' }),
+    // Ta-da: held up high, bopping side to side to its own little tune.
+    KEY(2.68, { ...SIT, sink: 3, front: [8, -13], back: [-8, -12], over: true, tilt: -7, hy: -0.8, closed: [true, true], mouth: 'D', shine: true, blush: 1.9, sprout: 'happy', extra: ['spark0'], ease: 'out' }),
+    KEY(2.9, { ...SIT, sink: 5, front: [7, -12], back: [-9, -11], over: true, tilt: -11, hx: -0.6, hy: 0.6, closed: [true, true], mouth: 'D', blush: 1.9, sprout: 'happy', extra: ['note'], ease: 'in' }),
+    KEY(3.1, { ...SIT, sink: 3, front: [10, -13], back: [-7, -13], over: true, tilt: 7, hx: 0.6, hy: -0.8, closed: [true, true], mouth: 'D', blush: 1.9, sprout: 'happy', extra: ['spark1', 'note'], ease: 'out' }),
+    KEY(3.3, { ...SIT, sink: 5, front: [9, -11], back: [-8, -12], over: true, tilt: 11, hx: 0.6, hy: 0.6, closed: [true, true], mouth: 'D', blush: 1.9, sprout: 'happy', extra: ['note'], ease: 'in' }),
+    KEY(3.5, { ...SIT, sink: 3, front: [8, -13], back: [-8, -12], over: true, tilt: -5, hy: -0.8, closed: [true, true], mouth: 'D', blush: 1.9, sprout: 'happy', extra: ['spark0'], ease: 'out' }),
+    // A squeezy hug, rocking it.
+    KEY(3.75, { ...SIT, sink: 4.5, ...CHEST, over: true, tilt: 6, closed: [true, true], mouth: 'mochiw', blush: 2, sprout: 'happy', extra: ['hearts'] }),
+    KEY(3.95, { ...SIT, sink: 4.5, ...CHEST, over: true, tilt: -6, closed: [true, true], mouth: 'mochiw', blush: 2, sprout: 'happy', extra: ['hearts'] }),
+    KEY(4.15, { ...SIT, sink: 4.5, ...CHEST, over: true, tilt: 4, closed: [true, true], mouth: 'mochiw', blush: 2, extra: ['hearts'] }),
+    // And a hop back up onto its feet, ready to tuck in.
+    KEY(4.35, { lift: 2, front: [4, -7], back: [-2, -2], mouth: 'D', shine: true, ease: 'out' }),
+    KEY(4.6, { lift: 0, front: [4, -7], mouth: 'mochio', shine: true, ease: 'in' })] },
+  // Under a fruit tree (world/garden-life.js PLACES): it gazes up at the fruit with a little "o",
+  // stretches both paws up as high as they go, up on its toes, and hops for it, twice, the second a
+  // big one, every hop with its dip before and landing after; not quite. A little pout and a drop
+  // of sweat, then a smile up at the tree all the same.
+  reach: { dur: 3.4, keys: [
+    KEY(0, {}),
+    KEY(0.3, { hy: -1.2, tilt: -4, mouth: 'o', wide: true, front: [3, -6], back: [-2, -5] }),
+    KEY(0.62, { hy: -1.4, tilt: -3, lift: 0.8, front: [9, -21], back: [-9, -21], over: true, mouth: 'mochio' }),
+    KEY(0.84, { squat: 2, hy: -0.6, lift: 0, front: [9, -19], back: [-9, -19], over: true, mouth: 'mochiflat', ease: 'in' }),
+    KEY(1.04, { lift: 3.4, squat: 0, hy: -1.4, front: [9, -24], back: [-9, -24], over: true, mouth: 'mochio', extra: ['spark0'], ease: 'out' }),
+    KEY(1.26, { lift: 0, squat: 1.8, front: [9, -20], back: [-9, -20], over: true, mouth: 'mochiflat', ease: 'in' }),
+    KEY(1.46, { squat: 2.6, hy: -0.4, front: [9, -19], back: [-9, -19], over: true, mouth: 'grit', ease: 'in' }),
+    KEY(1.74, { lift: 5.2, squat: 0, hy: -1.6, front: [10, -25], back: [-9, -25], over: true, mouth: 'mochio', wide: true, extra: ['spark1'], ease: 'out' }),
+    KEY(2.02, { lift: 0, squat: 2.2, front: [9, -18], back: [-9, -18], over: true, ease: 'in' }),
+    KEY(2.3, { squat: 0, hy: -0.6, tilt: -2, front: [2, -2], back: [-2, -2], mouth: 'pout', extra: ['sweat0'] }),
+    KEY(2.85, { hy: -1, tilt: 4, closed: [true, true], mouth: 'mochiw', blush: 1.6, front: [-2, 3], back: [3, 3] }),
+    KEY(3.4, {})] },
+  // After a sweet it loved: a double hop of joy, arms up, hearts, then a happy rock on its feet.
+  yum: { dur: 2, keys: [
+    KEY(0, {}),
+    KEY(0.15, { squat: 2.6, front: [-2, 3], back: [3, 3], closed: [true, true], mouth: 'mochiw', blush: 1.8, sprout: 'happy' }),
+    KEY(0.38, { lift: 3.6, squat: 0, ...OUT(-11), closed: [true, true], mouth: 'D', blush: 1.9, sprout: 'excited', extra: ['hearts'], ease: 'out' }),
+    KEY(0.6, { lift: 0, squat: 2.6, front: [3, -3], back: [-3, -3], closed: [true, true], mouth: 'D', blush: 1.9, extra: ['hearts'], ease: 'in' }),
+    KEY(0.8, { lift: 2.2, squat: 0, ...OUT(-9), tilt: 6, closed: [true, true], mouth: 'D', blush: 1.9, sprout: 'excited', extra: ['hearts'], ease: 'out' }),
+    KEY(1, { lift: 0, squat: 2, front: [2, -2], back: [-2, -2], tilt: 2, closed: [true, true], mouth: 'D', blush: 1.8, ease: 'in' }),
+    KEY(1.25, { squat: 0, tilt: -6, front: [-2, 3], back: [3, 3], closed: [true, true], mouth: 'mochiw', blush: 1.7, sprout: 'happy' }),
+    KEY(1.5, { tilt: 5, front: [-2, 3], back: [3, 3], closed: [true, true], mouth: 'mochiw', blush: 1.6 }),
+    KEY(2, {})] },
   // A favourite: eyes light up, it holds it up to admire it, three happy bites (chewing, little
   // hearts), the last one gone, then pats its tummy.
   eat: { dur: 5.8, keys: [
@@ -1610,7 +1685,7 @@ export function drawSpectator(ctx, g, x, y, beat, facing = 1, slot = null, ahead
 // 'front'` makes `hand` the near paw). Baby-sized like the crowd's, its pose rounded to quarter
 // pixels: the caller steps it in time (a few frames a second, on a loop), so a routine paints a
 // small set of drawings once, by the sprite worker (`slot`).
-export function drawMochiPose(ctx, g, x, y, P0, { facing = 1, over = null, under = null, hold = 'back', slot = null, scale = MOCHI_SIZE.baby } = {}) {
+export function drawMochiPose(ctx, g, x, y, P0, { facing = 1, over = null, under = null, hold = 'back', slot = null, blank = false, scale = MOCHI_SIZE.baby } = {}) {
   const P = pose(P0);
   const rig = {
     tx: 0, by: q(P.bob), hx: q(P.hx), hy: q(P.hy), tilt: Math.round(P.tilt / 2) * 2, lift: q(P.lift), squat: Math.round(P.squat),
@@ -1621,10 +1696,13 @@ export function drawMochiPose(ctx, g, x, y, P0, { facing = 1, over = null, under
     // same stepped value, so they move without ever asking for a drawing that isn't already cut.
     cape: Math.round(P.hair * 2) / 2,
     eyes: P.eyes ?? 'open', view: 'side', climb: 0, armOver: P.over ? true : null,
-    face: { brows: P.brows ?? REST.brows, extra: P.extra ?? [], blush: P.blush ?? REST.blush, glance: P.glance ?? 0, ...(P.closed ? { closed: P.closed } : {}) },
+    face: { brows: P.brows ?? REST.brows, extra: P.extra ?? [], blush: blank ? 0 : P.blush ?? REST.blush, glance: P.glance ?? 0, ...(P.closed ? { closed: P.closed } : {}) },
   };
   let look = lookOf(g, P.sprout ?? null, 0);
   if (P.mouth) look = { ...look, mouth: P.mouth };
+  // A shop's mannequin (render/shopmodel.js): the same Mochi, carved. No hair and no face, so the
+  // clothes are the only thing there is to look at.
+  if (blank) look = { ...look, hairStyle: 'mannequin', hairTip: null, hairSplit: null, browStyle: 'none', faceless: true, cheek: null, skinTone: '#e0c096' };
   drawPosed(ctx, look, Math.round(x * 2) / 2, Math.round(y * 2) / 2, rig, { scale, facing, slot, over, under, hold });
 }
 
@@ -1684,6 +1762,9 @@ export function drawMochiAnim(ctx, m, x, y, time) {
   // `m.tired` and `m.rest`, so the drawing shows exactly what's slowing it down.)
   let fatigue = m.tired ?? (kind === 'run' ? Math.min(stam.most, st.runFor * stam.tire) : 0);
   if (m.tired == null && kind === 'run' && moving && fatigue >= 0.98 && !st.restUntil) st.restUntil = time + 2.6;
+  // (Out of a race, something to do - a sweet to pick up, being petted - snaps it out of catching its
+  // breath: otherwise it stood there panting for seconds before it would react at all.)
+  if (m.action && m.rest == null && st.restUntil) st.restUntil = null;
   const resting = m.rest ?? Boolean(st.restUntil);
   if (resting) fatigue = 1;
   m.fatigue = fatigue;

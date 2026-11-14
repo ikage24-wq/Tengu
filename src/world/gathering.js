@@ -80,11 +80,23 @@ export function tickGathering(world, dt, held, pressed, rng = Math.random) {
   if (quit) {
     world.gathering = null;
     world.pose = null;
+    g.quit = true;
     return false;
   }
   g.t += dt;
   keepWorking(world);
   const secs = g.secs ?? g.kind.secs;
+  // (Work of the world's own, like picking your garden's crop bed (world/garden-life.js): its find
+  // comes free part-way through (`free`), and it hands out its own finds when it's done (`done`).)
+  if (g.free && g.t >= secs * 0.56) {
+    g.free();
+    g.free = null;
+  }
+  if (g.done && g.t >= secs) {
+    world.gathering = null;
+    g.done();
+    return false;
+  }
   if (g.t < secs) return true;
   world.gathering = null;
   const skill = g.skill ?? skillOfKind(g.node.kind, g.kind);

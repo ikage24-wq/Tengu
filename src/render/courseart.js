@@ -20,7 +20,7 @@ import { hash, lean, leanFrame, pivoted, swing } from './propkit.js';
 import { windAt, windTravel, GROUND_ART, EDGE_KINDS } from './terrain.js';
 import { groundAt } from '../world/physics.js';
 import { drawSpectator, drawMochiPose } from './mochi-anim.js';
-import { drawHayate } from './hayate.js';
+import { drawHayate, WAKE_SECS } from './hayate.js';
 import { newRecord } from '../data/mochi-raise.js';
 import { rollMochi } from '../data/mochi-genes.js';
 import { introLen, PODIUM, CREST_AHEAD } from '../world/mochi-race.js';
@@ -6109,7 +6109,7 @@ function kingHayate(ctx, map, x, gy, wx, time) {
   const mo = R ? momentsOf(R) : {};
   const k = mo.home != null ? time - mo.home : -1;
   const awake = k >= 0;
-  // Her dais: two low steps, with the road's carpet running up onto it.
+  // Her dais: two low steps she stands on top of, with the road's carpet running up onto it.
   for (let i = 0; i < 2; i++) {
     const w = 150 - i * 34;
     ctx.fillStyle = '#b8aec4';
@@ -6120,20 +6120,40 @@ function kingHayate(ctx, map, x, gy, wx, time) {
   ctx.fillStyle = ROYAL.cloth;
   ctx.fillRect(snap(x - 100), snap(gy - 2), 100, 4);
   ctx.fillRect(snap(x - 58), snap(gy - 9), 58, 7);
-  // The light she sits in, and the Queen.
-  glow(ctx, x, gy - 60, 86, '255,236,200', awake ? 0.5 : 0.32);
-  drawHayate(ctx, x, gy - 16, time, { s: 2, awake });
-  if (k > 0 && k < 2.6) {
-    for (let i = 0; i < 14; i++) {
-      const ang = (i / 14) * TAU + k * 1.2;
-      const d = 26 + k * 40;
-      ctx.globalAlpha = Math.max(0, 1 - k / 2.6);
-      ctx.fillStyle = i % 3 ? ROYAL.gold : '#fff4c0';
-      ctx.fillRect(x + Math.cos(ang) * d - 1.2, gy - 60 + Math.sin(ang) * d * 0.7 - 1.2, 2.4, 2.4);
+  // The light she sits in (it swells as she comes to, rather than switching on), and the Queen
+  // herself, standing on the dais's top step.
+  const lit = awake ? Math.min(1, k / 1.2) : 0;
+  glow(ctx, x, gy - 60, 86 + 26 * lit, '255,236,200', 0.32 + 0.26 * lit);
+  drawHayate(ctx, x, gy - DAIS_TOP, time, { s: 2, awake, wake: awake ? k : null });
+  // And the gold that goes up off her: not at the line, where the finish's own confetti would
+  // swallow it, but as she rises and opens her hand (WAKE_SECS * 0.46 in). Each mote starts low
+  // about her, climbs on its own slow curve, sways as it goes and twinkles out near the top, so it
+  // reads as her light lifting off her rather than a ring thrown outward.
+  const up = k - WAKE_SECS * 0.46;
+  if (up > 0 && up < 5.6) {
+    for (let i = 0; i < 34; i++) {
+      const u = (up / 4.6) * 1.35 - hash(i * 3.7) * 0.42;
+      if (u <= 0 || u >= 1) continue;
+      const e = 1 - (1 - u) ** 2;
+      const side = (hash(i * 1.9) - 0.5) * 2;
+      const mx = x + side * (14 + 34 * e) + Math.sin(u * 5.4 + i) * (3 + 5 * e);
+      const my = gy - 22 - e * (86 + hash(i * 5.1) * 58);
+      const tw = 0.55 + 0.45 * Math.sin(up * 7 + i * 2.1);
+      ctx.globalAlpha = Math.min(1, u * 6) * (1 - u) ** 1.3 * tw;
+      ctx.fillStyle = i % 4 === 0 ? '#fffbe4' : i % 3 ? ROYAL.gold : '#fff4c0';
+      const r = 1.1 + hash(i * 7.3) * 1.8;
+      ctx.fillRect(mx - r, my - r, r * 2, r * 2);
+      // (The biggest ones catch the light as a little four-point star.)
+      if (r > 2.1 && tw > 0.76) {
+        ctx.fillRect(mx - r * 2.6, my - 0.5, r * 5.2, 1);
+        ctx.fillRect(mx - 0.5, my - r * 2.6, 1, r * 5.2);
+      }
     }
     ctx.globalAlpha = 1;
   }
 }
+// The top of her dais, above the road: where her feet stand.
+const DAIS_TOP = 12;
 function kingCrown(ctx, map, x, gy, wx, time) {
   const R = live(time) && RUN.map === map ? RUN.R : null;
   const mo = R ? momentsOf(R) : {};

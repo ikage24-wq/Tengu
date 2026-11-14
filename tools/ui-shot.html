@@ -21,9 +21,24 @@ canvas.width = VW * SCALE;
 canvas.height = VH * SCALE;
 preloadFxSprites();
 const c = balanceChar(q.get('job') ?? 'archer', Number(q.get('level') ?? 30));
+// ?mochi=7: a garden with that Mochi in it, its page (open=mochiinfo) and dressing room
+// (open=closet) about it; &owns=all for every wardrobe piece, or &owns=12 for every 12th.
+let mochiRec = null;
+if (q.get('mochi')) {
+  const { rollMochi } = await import('../src/data/mochi-genes.js');
+  const { newRecord } = await import('../src/data/mochi-raise.js');
+  const { SETS } = await import('../src/data/mochi-wardrobe.js');
+  mochiRec = newRecord(rollMochi(Number(q.get('mochi'))));
+  if (q.get('stage')) mochiRec.stage = q.get('stage');
+  c.garden = { back: null, mochi: [mochiRec], eggs: [], unlocked: {} };
+  const all = Object.values(SETS).flatMap((set) => Object.keys(set));
+  const every = q.get('owns') === 'all' ? 1 : Number(q.get('owns') ?? 0);
+  c.garden.wardrobe = every ? all.filter((_, i) => i % every === 0) : [];
+}
 const w = createWorld(c);
 w.log = () => {};
 loadMap(w, q.get('map') ?? 'sprout', 'west');
+if (mochiRec) Object.assign(w, { closetFor: mochiRec, mochiInfo: mochiRec });
 w.god = true;
 Object.assign(w.body, { x: Number(q.get('x') ?? 900), vx: 0, vy: 0, facing: 1 });
 const idle = { held: new Set(), pressed: new Set(), locked: false };
@@ -51,13 +66,14 @@ for (let k = 0; k < 120; k++) {
   drawUi(ui, state, w);
   endUi(ui);
 }
-// (For poking at a window from the console: set something up, then redraw.)
-window.UI = { w, state, cam, input, ctx, SCALE, draw() {
+// (For poking at a window from the console: set something up, then redraw. Pass a time to
+// draw(at) to run an animation on: the clock only moves when you move it.)
+window.UI = { w, state, cam, input, ctx, SCALE, t, draw(at = t) {
   nextFrame();
   ctx.setTransform(SCALE, 0, 0, SCALE, 0, 0);
   ctx.imageSmoothingEnabled = false;
   setHd(true, SCALE);
-  drawWorld(ctx, w, cam, t);
+  drawWorld(ctx, w, cam, at);
   const ui = beginUi(ctx, input);
   drawUi(ui, state, w);
   endUi(ui);

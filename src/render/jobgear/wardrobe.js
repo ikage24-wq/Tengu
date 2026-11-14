@@ -1,5 +1,6 @@
-// The Mochi wardrobe's drawings (data/mochi-wardrobe.js): tops, bottoms, dresses and accessories,
-// each drawn as the slots it fills, so a top from here and a bottom from there make one outfit.
+// The Mochi wardrobe's drawings (data/mochi-wardrobe.js): tops, bottoms, dresses, shoes, and the
+// hats, specs, masks, capes and mittens that go over them, each drawn as the slots it fills, so a
+// top from here and a bottom from there make one outfit.
 //
 // Body coordinates, as everywhere else (figure.js, gear.js): the torso runs x 9 to 22 and y 26 to
 // 35.8, the hips to 39.6, the shoulders sit at (10.4, 28.2) and (20.8, 28.2). One light, from the
@@ -11,7 +12,7 @@
 // fine and elite come after, plain to ornate.)
 import { R, E, T, F, shade } from '../pixel.js';
 import { torsoPts, dressPts, band, MID, limb } from '../figure.js';
-import { TOPS, BOTTOMS, DRESSES, ACCESSORIES, wearOf } from '../../data/mochi-wardrobe.js';
+import { SLOTS, SETS, wearOf } from '../../data/mochi-wardrobe.js';
 
 const GOLDEN = '#e8c470';
 const TORSO = torsoPts();
@@ -2223,6 +2224,350 @@ export const WARDROBE_ACC = {
 // sleeves, a bottom its legs, skirt and shoes, a dress all of it, and an accessory lies over the
 // top. Anything none of them fills falls back to the plain smock the Mochi was born in.
 const BUILT = new Map();
+// ---------- Shoes ----------
+// A pair of its own, worn instead of whatever the clothes came with. The foot has a frame of its
+// own (gear.js): (0, 0) is the ankle, the ground is at y 3, and the foot runs x -3 to 3, so a shoe
+// is drawn flat on and `shaft` takes a boot up the leg. One light, from the upper front left, as
+// everywhere: the shoe's top edge catches it and the welt at the ground sits in shadow.
+const welt = (k, tint, c, y = 2.3) => k.poly([[-2.9, y], [3, y], [2.7, 3], [-2.7, 3]], tint(shade(c, -22)));
+const toecap = (k, tint, c) => k.poly([[-2.7, 0.9], [2.85, 0.9], [2.9, 1.5], [-2.75, 1.5]], tint(shade(c, 16)));
+export const WARDROBE_SHOES = {
+  // Straw sandals: a plaited sole, two thongs over the foot and a post between the toes.
+  sandals: {
+    shoe: (p, k, tint) => [k.poly([[-2.8, 1.5], [2.9, 1.5], [2.7, 3], [-2.6, 3]], tint('#edd59c')),
+      k.poly([[-2.8, 1.5], [2.9, 1.5], [2.88, 2], [-2.78, 2]], tint('#fff0cc')),
+      ...[2.05, 2.5].map((y) => k.poly([[-2.72, y], [2.82, y], [2.8, y + 0.3], [-2.7, y + 0.3]], tint('#c0a066'))),
+      k.poly([[-2.3, 0.2], [2.5, 0.2], [2.6, 1.05], [-2.4, 1.05]], tint('#6b4a30')),
+      k.poly([[-2.3, 0.2], [2.5, 0.2], [2.54, 0.52], [-2.34, 0.52]], tint('#8f6a46')),
+      k.poly([[-0.6, 0.4], [0.6, 0.4], [0.48, 1.6], [-0.48, 1.6]], tint('#6b4a30')),
+      k.dot(0, 0.45, 0.45, tint('#a8865c'))],
+  },
+  // Canvas plimsolls: a soft white shoe with a rubber toe and a little lace bow.
+  plimsolls: {
+    shoe: (p, k, tint) => [k.sole(tint('#ded6c6')), k.poly([[-2.7, -1], [2.8, -1], [3, 1.4], [-2.8, 1.4]], tint('#f4f0e6')),
+      k.poly([[-2.7, -1], [2.8, -1], [2.85, -0.42], [-2.75, -0.42]], tint('#fffdf6')),
+      k.poly([[-2.6, 1.2], [2.75, 1.2], [2.9, 2.1], [-2.75, 2.1]], tint('#e6e0d2')),
+      welt(k, tint, '#ded6c6'),
+      k.poly([[-1, -0.6], [1, -0.6], [0.7, 0.7], [-0.7, 0.7]], tint('#e8e2d4')),
+      ...[[-0.6, -0.1], [0.6, -0.1], [-0.5, 0.5], [0.5, 0.5]].map(([x, y]) => k.dot(x, y, 0.22, tint('#b8b0a0'))),
+      k.poly([[-0.9, -0.9], [0, -0.3], [0.9, -0.9], [0.6, -1.3], [-0.6, -1.3]], tint('#ffffff'))],
+  },
+  // Wooden clogs: a chunky carved shoe with a leather band across the foot.
+  clogs: {
+    shoe: (p, k, tint) => [k.poly([[-2.6, -0.6], [2.8, -0.6], [3, 1.6], [-2.8, 1.6]], tint('#c99a63')),
+      k.poly([[-2.6, -0.6], [2.8, -0.6], [2.84, 0], [-2.68, 0]], tint('#e0b580')),
+      k.poly([[-2.8, 1.5], [3, 1.5], [2.7, 3], [-2.7, 3]], tint('#9a7246')),
+      k.poly([[-2.8, 1.5], [3, 1.5], [2.98, 1.9], [-2.78, 1.9]], tint('#b0875a')),
+      k.poly([[-2.4, 0.2], [2.6, 0.2], [2.65, 0.9], [-2.45, 0.9]], tint('#8a5f3e')),
+      k.dot(1.4, 0.55, 0.42, tint('#e8c470')),
+      ...[-1.6, 0.4].map((x) => k.poly([[x, -0.4], [x + 0.3, -0.4], [x + 0.26, 1.4], [x - 0.04, 1.4]], tint('#b0875a')))],
+  },
+  // Festival geta: a lacquered sole up on two teeth, with a red velvet thong.
+  geta: {
+    shoe: (p, k, tint) => [...[-2, 1.1].flatMap((x) => [k.poly([[x, 1.9], [x + 1.5, 1.9], [x + 1.45, 3], [x + 0.05, 3]], tint('#c09a66')),
+      k.poly([[x, 1.9], [x + 0.4, 1.9], [x + 0.42, 3], [x + 0.05, 3]], tint('#e0bc88')),
+      k.poly([[x + 1.1, 1.9], [x + 1.5, 1.9], [x + 1.45, 3], [x + 1.08, 3]], tint('#8a6a44'))]),
+      k.poly([[-2.9, 1.1], [3, 1.1], [3.05, 2.1], [-2.95, 2.1]], tint('#d8b483')),
+      k.poly([[-2.9, 1.1], [3, 1.1], [2.98, 1.5], [-2.92, 1.5]], tint('#f0d2a4')),
+      k.poly([[-2.95, 1.95], [3.05, 1.95], [3.05, 2.1], [-2.95, 2.1]], tint('#a8835a')),
+      k.poly([[-2.1, 0.1], [2.3, 0.1], [2.45, 0.8], [-2.25, 0.8]], tint('#d9584f')),
+      k.poly([[-2.1, 0.1], [2.3, 0.1], [2.36, 0.38], [-2.16, 0.38]], tint('#f0968c')),
+      k.poly([[-0.5, 0.3], [0.5, 0.3], [0.4, 1.3], [-0.4, 1.3]], tint('#d9584f')),
+      k.dot(0, 0.4, 0.38, tint('#ffd8c0'))],
+  },
+  // Track runners: a light shoe with a swoosh stripe and a thick cushioned sole.
+  runners: {
+    shoe: (p, k, tint) => [k.poly([[-2.8, 1.2], [3, 1.2], [2.8, 2.5], [-2.75, 2.5]], tint('#f6f2ea')),
+      k.poly([[-2.8, 1.2], [3, 1.2], [2.95, 1.7], [-2.78, 1.7]], tint('#ffffff')),
+      welt(k, tint, '#c8c2b6', 2.4),
+      k.poly([[-2.6, -1.1], [2.7, -1.1], [2.95, 1.3], [-2.78, 1.3]], tint('#3f5f8c')),
+      k.poly([[-2.6, -1.1], [2.7, -1.1], [2.76, -0.5], [-2.66, -0.5]], tint('#5d7fad')),
+      k.poly([[-2.7, 1.15], [1.9, -1.05], [2.8, -1.05], [-1.3, 1.25]], tint('#ffc44a')),
+      k.poly([[-2.7, 1.15], [1.9, -1.05], [2.3, -1.05], [-2.1, 1.2]], tint('#ffe8a0')),
+      ...[[-0.9, -0.7], [0.1, -0.7]].map(([x, y]) => k.dot(x, y, 0.2, tint('#e8e2d4')))],
+  },
+  // Buckle shoes: a polished town shoe with a strap and a square gold buckle.
+  buckles: {
+    shoe: (p, k, tint) => [k.sole(tint('#3a2a1e')), k.poly([[-2.6, -0.9], [2.75, -0.9], [2.95, 1.6], [-2.8, 1.6]], tint('#5a4030')),
+      k.poly([[-2.6, -0.9], [2.75, -0.9], [2.8, -0.3], [-2.68, -0.3]], tint('#7a5a42')),
+      toecap(k, tint, '#5a4030'),
+      welt(k, tint, '#3a2a1e'),
+      k.poly([[-2.7, -0.4], [2.85, -0.4], [2.88, 0.3], [-2.74, 0.3]], tint('#4a3426')),
+      k.poly([[0.4, -0.65], [1.9, -0.65], [1.95, 0.5], [0.45, 0.5]], tint('#e8c470')),
+      k.poly([[0.75, -0.3], [1.6, -0.3], [1.62, 0.15], [0.77, 0.15]], tint('#5a4030')),
+      k.poly([[0.4, -0.65], [1.9, -0.65], [1.9, -0.42], [0.42, -0.42]], tint('#fff0c0'))],
+  },
+  // Riding boots: a tall shaft with the cuff turned down and a strap round the ankle.
+  ridingboots: {
+    shoe: (p, k, tint) => [k.shaft(6.4, tint('#6b4a30'), 2.9),
+      k.shaft(6.4, tint('#8a6448'), 1.1),
+      k.poly([[-1.7, -6.9], [1.7, -6.9], [1.85, -5.3], [-1.85, -5.3]], tint('#8a6448')),
+      k.poly([[-1.7, -6.9], [1.7, -6.9], [1.74, -6.4], [-1.74, -6.4]], tint('#a88264')),
+      k.sole(tint('#3a2a1e')), k.poly([[-2.6, -1.2], [2.75, -1.2], [2.95, 1.7], [-2.8, 1.7]], tint('#6b4a30')),
+      k.poly([[-2.6, -1.2], [2.75, -1.2], [2.8, -0.6], [-2.68, -0.6]], tint('#8a6448')),
+      welt(k, tint, '#3a2a1e'),
+      k.poly([[-2.7, -0.5], [2.85, -0.5], [2.88, 0.25], [-2.74, 0.25]], tint('#4a3426')),
+      k.dot(1.5, -0.1, 0.45, tint('#e8c470'))],
+  },
+  // Lace mary janes: a round-toed shoe with a strap across and a lace frill at the ankle.
+  maryjanes: {
+    shoe: (p, k, tint) => [k.sole(tint('#4a2740')), k.poly([[-2.5, -0.8], [2.7, -0.8], [2.95, 1.6], [-2.78, 1.6]], tint('#6b3a5c')),
+      k.poly([[-2.5, -0.8], [2.7, -0.8], [2.76, -0.22], [-2.6, -0.22]], tint('#8c5278')),
+      welt(k, tint, '#4a2740'),
+      k.poly([[-2.7, -0.45], [2.85, -0.45], [2.88, 0.25], [-2.74, 0.25]], tint('#582f4c')),
+      ...[-1.8, -0.6, 0.6, 1.8].map((x) => k.dot(x, -1.1, 0.72, tint('#fff2f8'))),
+      ...[-1.8, -0.6, 0.6, 1.8].map((x) => k.dot(x, -1.25, 0.42, tint('#ffffff'))),
+      k.poly([[0.6, -0.6], [1.9, -0.6], [1.9, 0.4], [0.6, 0.4]], tint('#8c5278')),
+      k.dot(1.25, -0.1, 0.4, tint('#ffd0e4'))],
+  },
+  // Plated boots: a steel-toed boot in overlapping plates, riveted.
+  plateboots: {
+    shoe: (p, k, tint) => [k.shaft(4.2, tint('#8a92a4'), 3),
+      k.shaft(4.2, tint('#b4bcca'), 1.2),
+      k.poly([[-1.8, -4.6], [1.8, -4.6], [1.95, -3.4], [-1.95, -3.4]], tint('#c8d0dc')),
+      k.sole(tint('#4a5060')), k.poly([[-2.6, -1.1], [2.75, -1.1], [2.95, 1.5], [-2.8, 1.5]], tint('#b4bcca')),
+      k.poly([[-2.6, -1.1], [2.75, -1.1], [2.8, -0.5], [-2.68, -0.5]], tint('#d8dee8')),
+      k.poly([[-2.75, 0.3], [2.88, 0.3], [2.95, 1.5], [-2.8, 1.5]], tint('#9aa2b4')),
+      k.poly([[-2.75, 0.3], [2.88, 0.3], [2.9, 0.62], [-2.77, 0.62]], tint('#cdd4e0')),
+      welt(k, tint, '#4a5060'),
+      ...[[-1.9, -0.1], [1.9, -0.1], [-1.9, 1.05], [1.9, 1.05]].map(([x, y]) => k.dot(x, y, 0.3, tint('#e8eef6')))],
+  },
+  // Gilded sandals: gold straps winding up the ankle, a gem at the instep.
+  goldsandals: {
+    shoe: (p, k, tint) => [k.poly([[-2.8, 1.6], [2.95, 1.6], [2.7, 3], [-2.65, 3]], tint('#d8ab52')),
+      k.poly([[-2.8, 1.6], [2.95, 1.6], [2.92, 2.05], [-2.78, 2.05]], tint('#f6d98c')),
+      k.poly([[-2.75, 2.5], [2.8, 2.5], [2.7, 3], [-2.65, 3]], tint('#a87f32')),
+      ...[-0.2, -1.6, -3].flatMap((y, i) => [k.poly([[-2.4 + i * 0.25, y], [2.5 - i * 0.25, y], [2.56 - i * 0.25, y + 0.62], [-2.46 + i * 0.25, y + 0.62]], tint('#e8c470')),
+        k.poly([[-2.4 + i * 0.25, y], [2.5 - i * 0.25, y], [2.52 - i * 0.25, y + 0.24], [-2.42 + i * 0.25, y + 0.24]], tint('#fff0c0'))]),
+      k.poly([[-0.45, 0.4], [0.45, 0.4], [0.38, 1.7], [-0.38, 1.7]], tint('#e8c470')),
+      k.dot(0, -0.5, 0.62, tint('#7fd8e8')), k.dot(-0.18, -0.68, 0.3, tint('#ffffff'))],
+  },
+  // Aurora boots: tall boots that shade from green through blue, with a glowing trim.
+  auroraboots: {
+    shoe: (p, k, tint) => [k.shaft(7, tint('#3f7a8c'), 2.9),
+      k.shaft(7, tint('#5fd8b4'), 1.1),
+      k.poly([[-1.75, -7.4], [1.75, -7.4], [1.9, -5.6], [-1.9, -5.6]], tint('#6fa8e8')),
+      k.poly([[-1.75, -7.4], [1.75, -7.4], [1.8, -6.9], [-1.8, -6.9]], tint('#bdf0e4')),
+      k.poly([[-1.9, -4.4], [1.9, -4.4], [1.95, -3.9], [-1.95, -3.9]], tint('#bdf0e4')),
+      k.sole(tint('#2a4a58')), k.poly([[-2.6, -1.3], [2.75, -1.3], [2.95, 1.6], [-2.8, 1.6]], tint('#4a8fb4')),
+      k.poly([[-2.6, -1.3], [2.75, -1.3], [2.8, -0.6], [-2.68, -0.6]], tint('#6fc4d8')),
+      k.poly([[-2.75, 0.5], [2.88, 0.5], [2.95, 1.6], [-2.8, 1.6]], tint('#5fd8b4')),
+      welt(k, tint, '#2a4a58'),
+      k.dot(0, -0.4, 0.5, tint('#eafff8'))],
+  },
+  // Crystal heels: a clear faceted shoe on a cut heel, with a spark of light.
+  crystalheels: {
+    shoe: (p, k, tint) => [k.poly([[0.5, 1.4], [1.7, 1.4], [1.5, 3], [0.7, 3]], tint('#9fd8ea')),
+      k.poly([[0.5, 1.4], [1.7, 1.4], [1.62, 1.9], [0.58, 1.9]], tint('#dff4fc')),
+      k.poly([[-2.8, 1.3], [3, 1.3], [2.9, 2.2], [-2.7, 2.2]], tint('#bde4f2')),
+      k.poly([[-2.6, -1], [2.75, -1], [2.95, 1.4], [-2.8, 1.4]], tint('#cfeaf6')),
+      k.poly([[-2.6, -1], [2.75, -1], [2.78, -0.4], [-2.66, -0.4]], tint('#ffffff')),
+      k.poly([[-1.95, -0.95], [-0.5, -0.95], [-1.5, 1.35], [-2.5, 1.35]], tint('#f4fdff')),
+      k.poly([[0.4, -0.95], [1.5, -0.95], [1.1, 1.35], [0.2, 1.35]], tint('#8fc4de')),
+      k.poly([[-0.5, -0.95], [0.4, -0.95], [0.2, 1.35], [-0.5, 1.35]], tint('#dff2fa')),
+      k.poly([[1.5, -0.95], [2.75, -0.95], [2.9, 1.35], [1.1, 1.35]], tint('#b4dcee')),
+      k.poly([[-2.7, 2.1], [2.9, 2.1], [2.8, 2.5], [-2.65, 2.5]], tint('#6fa8c8')),
+      k.dot(-1.2, -0.35, 0.4, tint('#ffffff')), k.dot(1.9, 0.7, 0.26, tint('#ffffff'))],
+  },
+};
+
+// ---------- Over the eyes, and on the face ----------
+// Both sit on the face itself, drawn over it and under the hat. The face in body coordinates: the
+// eyes are at (11.2, 18.2) and (19.8, 18.2), each about 2 across and 2.5 tall, the cheeks at x 9.4
+// and 21.6, the mouth at (15.5, 21.7) and the chin at about y 25. The light comes from the upper
+// front, which here is the right - the near cheek - so a lens catches it in its upper left and a
+// mask is lit down its right side.
+const EL = 11.2;
+const ER = 19.8;
+const EY = 18.2;
+// A rim with nothing inside it, so the eyes look out through the lens: round the outside one way
+// and back round the inside the other, which leaves the middle unfilled.
+const ring = (cx, cy, rx, ry, w, c) => F(T([...arc(cx, cy, rx, ry, 0, 360, 20), ...arc(cx, cy, rx - w, ry - w, 360, 0, 20)], c));
+// The light caught across a lens: one bright streak from its upper left.
+const glint = (cx, cy, rx, ry) => F(T([[cx - rx * 0.66, cy + ry * 0.16], [cx - rx * 0.16, cy - ry * 0.68], [cx + rx * 0.12, cy - ry * 0.68], [cx - rx * 0.38, cy + ry * 0.16]], '#ffffff'));
+export const WARDROBE_EYES = {
+  // Round specs in thin brass wire, the arms running back over the ears.
+  specs: {
+    face: () => [F(R(6.6, 17.6, 1.9, 0.4, '#b0813f')), F(R(22.5, 17.6, 1.9, 0.4, '#b0813f')),
+      F(R(13.9, 17.7, 3.2, 0.44, '#c89a52')), F(R(13.9, 17.7, 3.2, 0.18, '#f0d08a')),
+      ...[EL, ER].flatMap((x) => [ring(x, EY, 3, 3, 0.42, '#c89a52'), ring(x, EY, 3, 3, 0.16, '#f0d08a'), glint(x, EY, 2.6, 2.6)])],
+  },
+  // Work goggles: brass rims over smoked blue glass, on a worn leather strap.
+  goggles: {
+    face: () => [F(R(4.6, 17.2, 22, 2.2, '#6b4a34')), F(R(4.6, 17.2, 22, 0.5, '#8a6448')),
+      F(R(13.6, 16.9, 3.8, 1.5, '#5a3e2c')),
+      ...[EL, ER].flatMap((x) => [F(E(x, EY, 3.5, 3.3, '#8a6448')), F(E(x, EY, 3.1, 2.9, '#4a3324')),
+        F(E(x, EY, 2.7, 2.5, '#4f86a8')), F(E(x, EY - 0.5, 2.2, 1.6, '#6fa8c8')), glint(x, EY, 2.4, 2.4)]),
+      F(R(24.4, 17.1, 1.6, 2.4, '#8a6448')), F(E(25.2, 18.3, 0.5, 0.5, '#e8c470'))],
+  },
+  // Sun shades: rounded square lenses in a slim dark frame, one corner catching the sun.
+  shades: {
+    face: () => [F(R(6.8, 17.3, 1.8, 0.5, '#2f3340')), F(R(22.4, 17.3, 1.8, 0.5, '#2f3340')),
+      F(R(14, 17.4, 3, 0.6, '#3a4052')),
+      ...[EL, ER].flatMap((x) => [F(T([[x - 3.2, 16], [x + 3.2, 16], [x + 3, 20.2], [x - 3, 20.2]], '#3a4052')),
+        F(T([[x - 2.8, 16.35], [x + 2.8, 16.35], [x + 2.6, 19.8], [x - 2.6, 19.8]], '#2a3a52')),
+        F(T([[x - 2.8, 16.35], [x + 2.8, 16.35], [x + 2.7, 17.4], [x - 2.75, 17.4]], '#4a6184')),
+        F(T([[x - 2.5, 19.6], [x + 0.4, 16.5], [x + 1.5, 16.5], [x - 1.4, 19.6]], '#8fb4d8'))])],
+  },
+  // A monocle on the near eye, on a fine chain that swings a beat behind her.
+  monocle: {
+    face: (p, m) => {
+      const s = (m?.sway ?? 0) * 0.5;
+      return [ring(ER, EY, 3.1, 3.1, 0.5, '#c89a52'), ring(ER, EY, 3.1, 3.1, 0.2, '#f0d08a'),
+        glint(ER, EY, 2.6, 2.6),
+        F(limb(22.6, 19.6, 23.4 + s, 23.4, 0.26, 0.22, '#c89a52')),
+        F(limb(23.4 + s, 23.4, 22.6 + s * 1.6, 27.4, 0.22, 0.2, '#b0813f')),
+        F(E(22.5 + s * 1.7, 27.7, 0.5, 0.5, '#e8c470'))];
+    },
+  },
+  // A rune visor: one sleek band across the eyes with a lit slit burning through it.
+  visor: {
+    face: () => [F(T([[6.2, 15.8], [24.8, 15.8], [24.2, 20.2], [6.8, 20.2]], '#3f3a62')),
+      F(T([[6.2, 15.8], [24.8, 15.8], [24.66, 16.6], [6.34, 16.6]], '#6f6aa2')),
+      F(T([[6.9, 17.3], [24.1, 17.3], [23.9, 18.9], [7.1, 18.9]], '#15121f')),
+      F(T([[7.1, 17.75], [23.9, 17.75], [23.76, 18.45], [7.24, 18.45]], '#3fd8c4')),
+      F(T([[7.3, 17.95], [16, 17.95], [15.88, 18.3], [7.42, 18.3]], '#eafffa')),
+      ...[9.6, 15.5, 21.4].map((x) => F(R(x - 0.3, 16.5, 0.6, 0.45, '#7fe8d8'))),
+      F(T([[6.2, 15.8], [6.8, 20.2], [5.8, 19.2], [5.6, 16.3]], '#2f2b4a')),
+      F(T([[24.8, 15.8], [24.2, 20.2], [25.2, 19.2], [25.4, 16.3]], '#4a4575')),
+      F(T([[24.8, 15.8], [25.4, 16.3], [25.32, 16.9], [24.74, 16.45]], '#7f7ab8'))],
+  },
+  // An eyepatch over the far eye, a gold star on it, the cord running back round her head.
+  eyepatch: {
+    face: () => [F(R(5, 16.8, 17.4, 0.6, '#2a2438')),
+      F(T([[7.8, 15.4], [14.6, 15.8], [14.4, 20.8], [8, 21]], '#36304a')),
+      F(T([[7.8, 15.4], [14.6, 15.8], [14.55, 16.9], [7.9, 16.5]], '#4e4668')),
+      F(T([[13.6, 15.75], [14.6, 15.8], [14.4, 20.8], [13.5, 20.85]], '#262036')),
+      star(11.2, 18.3, 1.9, '#e8c470'), star(11.2, 18.3, 1, '#fff0c0')],
+  },
+  // Starlight shades: wide gold-rimmed lenses with a night sky caught inside them.
+  starshades: {
+    face: () => [F(R(6.2, 17.1, 2.2, 0.55, '#c89a52')), F(R(22.6, 17.1, 2.2, 0.55, '#c89a52')),
+      F(T([[13.8, 17.2], [17.2, 17.2], [17.2, 17.9], [13.8, 17.9]], '#e8c470')),
+      ...[EL, ER].flatMap((x) => [F(E(x, EY, 3.7, 3.3, '#e8c470')), F(E(x, EY, 3.3, 2.9, '#fff0c0')),
+        F(E(x, EY, 3, 2.6, '#2f2b5e')), F(E(x, EY + 0.9, 2.6, 1.5, '#5a4f9e')),
+        star(x - 1.2, EY - 0.9, 0.85, '#ffffff'), star(x + 1.3, EY + 0.5, 0.6, '#bdd8ff'),
+        F(E(x - 0.2, EY + 1.5, 0.3, 0.3, '#ffffff')), F(E(x + 1.9, EY - 1.4, 0.26, 0.26, '#ffffff')),
+        glint(x, EY, 2.6, 2.4)])],
+  },
+  // The oracle eye: a cut stone held over the near eye by a fine gold arc, burning quietly.
+  oracle: {
+    face: (p, m) => {
+      const s = (m?.sway ?? 0) * 0.3;
+      return [F(limb(24.6, 12.8, 21.4, 15.2, 0.44, 0.36, '#c89a52')),
+        F(limb(24.6, 12.8, 25.8, 16.4, 0.44, 0.36, '#c89a52')),
+        F(limb(24.6, 12.6, 21.6, 15, 0.18, 0.14, '#f0d08a')),
+        F(E(25.9, 17.4, 0.75, 0.75, '#e8c470')), F(E(25.75, 17.2, 0.34, 0.3, '#fff0c0')),
+        ring(ER + s * 0.4, EY - 0.3, 3.4, 3.4, 0.5, '#8f6fe0'),
+        ring(ER + s * 0.4, EY - 0.3, 3.4, 3.4, 0.18, '#e0d0ff'),
+        ...gem(ER + s * 0.4, EY - 0.3, 2.7, '#c8a8f0'),
+        F(T([[ER + s * 0.4 - 2.1, EY - 0.3], [ER + s * 0.4, EY - 2.9], [ER + s * 0.4, EY - 0.3]], '#e6d8ff')),
+        F(E(ER + s * 0.4 - 0.65, EY - 1.4, 0.75, 0.5, '#ffffff')),
+        star(ER + 3.9, EY - 3.9, 1.1, '#e8d8ff'), star(ER - 3.2, EY + 3, 0.8, '#e8d8ff'),
+        F(E(ER + 4.4, EY + 1.6, 0.36, 0.36, '#f0e4ff'))];
+    },
+  },
+};
+export const WARDROBE_FACE = {
+  // A plaster across the nose, stuck on a little crooked.
+  plaster: {
+    face: () => [F(T([[12.6, 20.5], [18.4, 19.7], [18.6, 21.3], [12.8, 22.1]], '#c9a173')),
+      F(T([[12.9, 20.65], [18.1, 19.93], [18.26, 21.1], [13.06, 21.82]], '#f2d4a8')),
+      F(T([[12.9, 20.65], [18.1, 19.93], [18.16, 20.36], [12.96, 21.08]], '#fff0d8')),
+      F(T([[14.4, 20.44], [16.6, 20.14], [16.74, 21.44], [14.54, 21.74]], '#e0bb8c')),
+      ...[14.75, 16.25].flatMap((x) => [0.25, 0.95].map((d) => F(E(x, 20.5 + d * 0.66, 0.2, 0.2, '#b08a5c'))))],
+  },
+  // Painted whiskers: three strokes on each cheek and a dab on the nose.
+  whiskers: {
+    face: () => [F(E(15.5, 20.2, 1.15, 0.9, '#42303e')), F(E(15.15, 19.9, 0.42, 0.3, '#8f7a88')),
+      F(limb(15.5, 21.1, 15.5, 21.9, 0.26, 0.2, '#42303e')),
+      ...[[21.6, 1], [9.4, -1]].flatMap(([cx, dir]) => [-1.3, 0, 1.3].flatMap((dy, i) => [
+        F(limb(cx - dir * 1.9, 21.5 + dy * 0.85, cx + dir * (3.4 - i * 0.15), 20.9 + dy * 1.5, 0.42, 0.3, '#42303e')),
+        F(limb(cx - dir * 1.9, 21.35 + dy * 0.85, cx + dir * (3.1 - i * 0.15), 20.8 + dy * 1.5, 0.16, 0.12, '#7a6472'))]))],
+  },
+  // A kerchief pulled up over the mouth and chin, knotted behind.
+  kerchief: {
+    face: (p, m) => {
+      const s = (m?.sway ?? 0) * 0.4;
+      return [F(T([[8.4, 20.6], [22.6, 20.6], [21.6, 24.6], [15.5, 26.2], [9.4, 24.6]], '#c94f62')),
+        F(T([[8.4, 20.6], [22.6, 20.6], [22.4, 21.5], [8.6, 21.5]], '#e8798a')),
+        F(T([[8.4, 20.6], [10.6, 20.6], [11.4, 24.9], [9.4, 24.6]], '#e06a7c')),
+        ...[21.6, 23.2, 24.8].map((y) => F(T([[9.6, y], [21.4, y], [21.2, y + 0.3], [9.8, y + 0.3]], '#b03f52'))),
+        F(E(22.8, 21.8, 1.3, 1.1, '#c94f62')), F(E(22.6, 21.5, 0.6, 0.45, '#e8798a')),
+        F(T([[23.4, 21.4], [25.6 + s, 22.2], [25.2 + s, 23.4], [23.2, 22.4]], '#c94f62'))];
+    },
+  },
+  // Race day paint: a bold stripe under each eye and a flash across the nose.
+  warpaint: {
+    face: () => [...[EL, ER].flatMap((x) => [F(T([[x - 2.4, 20.5], [x + 2.4, 20.5], [x + 2, 21.8], [x - 2, 21.8]], '#e8603f')),
+      F(T([[x - 2.4, 20.5], [x + 2.4, 20.5], [x + 2.2, 20.9], [x - 2.2, 20.9]], '#ffa070')),
+      F(T([[x - 1.4, 19.2], [x + 1.4, 19.2], [x + 1.2, 20], [x - 1.2, 20]], '#ffd083'))]),
+      F(T([[13.4, 19.9], [17.6, 19.3], [17.8, 20.3], [13.6, 20.9]], '#e8603f')),
+      F(T([[13.4, 19.9], [17.6, 19.3], [17.7, 19.65], [13.5, 20.25]], '#ffa070'))],
+  },
+  // A kitsune mask over the upper face: white lacquer, red markings, gold at the brow.
+  kitsune: {
+    face: () => [F(T([[5.6, 13.6], [25.4, 13.6], [24.6, 20.4], [20.6, 23.4], [15.5, 24.4], [10.4, 23.4], [6.4, 20.4]], '#f6f0e4')),
+      F(T([[5.6, 13.6], [25.4, 13.6], [25.1, 15], [5.9, 15]], '#ffffff')),
+      F(T([[22.6, 13.8], [25.4, 13.6], [24.6, 20.4], [21.6, 22.8]], '#e4dac8')),
+      F(T([[4.4, 10.4], [9.8, 13.6], [5.6, 14.6]], '#f6f0e4')), F(T([[26.6, 10.4], [21.2, 13.6], [25.4, 14.6]], '#f6f0e4')),
+      F(T([[5.6, 11.6], [9, 13.7], [6.4, 14.2]], '#d9584f')), F(T([[25.4, 11.6], [22, 13.7], [24.6, 14.2]], '#d9584f')),
+      ...[EL, ER].flatMap((x) => [F(T([[x - 2.8, 17], [x + 2.8, 17.4], [x + 2.4, 19.2], [x - 2.6, 18.8]], '#2a2028')),
+        F(T([[x - 2.8, 17], [x + 2.8, 17.4], [x + 2.6, 17.9], [x - 2.7, 17.5]], '#4a3c48')),
+        F(T([[x - 3, 15.6], [x + 3, 16.2], [x + 2.8, 16.8], [x - 3.1, 16.2]], '#d9584f'))]),
+      F(T([[13.4, 20.2], [17.6, 20.2], [15.5, 23.6]], '#d9584f')),
+      F(T([[14.6, 11.4], [16.4, 11.4], [16.4, 13.6], [14.6, 13.6]], '#e8c470')),
+      ...[9.4, 21.6].map((x) => F(E(x, 21.4, 1.1, 0.8, '#f0a0a8')))],
+  },
+  // A lace masquerade mask: black lace round the eyes, scalloped and cut through, with ribbons.
+  lacemask: {
+    face: (p, m) => {
+      const s = (m?.sway ?? 0) * 0.45;
+      // A scalloped edge above and below each eye, then the lace itself as a ring: she looks
+      // straight out through it, which is the whole point of a masquerade.
+      const round = (x, r, n, f) => Array.from({ length: n }, (_, i) => f(((i + 0.5) / n) * Math.PI * 2, x));
+      return [...[EL, ER].flatMap((x) => [
+        ...round(x, 0, 13, (a) => F(E(x + Math.cos(a) * 3.8, EY - Math.sin(a) * 3.4, 0.92, 0.88, '#2a2234'))),
+        ring(x, EY, 3.8, 3.4, 1.35, '#2a2234'),
+        ring(x, EY, 3.6, 3.2, 0.34, '#6f6080'),
+        ring(x, EY, 2.7, 2.4, 0.26, '#4a3f58'),
+        ...round(x, 0, 7, (a) => F(E(x + Math.cos(a) * 3.1, EY - Math.sin(a) * 2.8, 0.3, 0.27, '#7f7090')))]),
+        F(T([[13.6, 17.4], [17.4, 17.4], [17.4, 18.6], [13.6, 18.6]], '#2a2234')),
+        F(T([[13.6, 17.4], [17.4, 17.4], [17.4, 17.8], [13.6, 17.8]], '#5f5270')),
+        F(E(15.5, 18, 0.7, 0.6, '#c8a8f0')),
+        F(T([[23.6, 17.2], [26.6 + s, 18.2], [26.2 + s, 20], [23.4, 18.8]], '#5a2f52')),
+        F(T([[23.6, 17.2], [26.6 + s, 18.2], [26.4 + s, 18.75], [23.5, 17.75]], '#8a5280'))];
+    },
+  },
+  // An oni mask: red lacquer, gold fangs and two short horns, scowling.
+  oni: {
+    face: () => [...[8.2, 22.8].flatMap((x, i) => [F(T([[x, 14], [x + (i ? 1.8 : -1.8), 9.4], [x + (i ? 2.8 : -2.8), 10.6], [x + (i ? 2.2 : -2.2), 14.6]], '#f0e2c8')),
+      F(T([[x, 14], [x + (i ? 1.8 : -1.8), 9.4], [x + (i ? 2.2 : -2.2), 10], [x + (i ? 1.2 : -1.2), 14.2]], '#fff6e4'))]),
+      F(T([[5.8, 13.2], [25.2, 13.2], [24.4, 20.8], [20.4, 24], [15.5, 25.2], [10.6, 24], [6.6, 20.8]], '#b8323f')),
+      F(T([[5.8, 13.2], [25.2, 13.2], [24.9, 14.6], [6.1, 14.6]], '#d8505c')),
+      F(T([[22.4, 13.3], [25.2, 13.2], [24.4, 20.8], [21.4, 23.4]], '#8f2230')),
+      ...[EL, ER].flatMap((x) => [F(T([[x - 3, 16.6], [x + 3, 17.2], [x + 2.4, 19.4], [x - 2.8, 18.6]], '#2a1018')),
+        F(T([[x - 3, 16.6], [x + 3, 17.2], [x + 2.8, 17.7], [x - 2.9, 17.1]], '#e8c470')),
+        F(E(x + 0.4, 18, 0.8, 0.7, '#ffd083'))]),
+      F(T([[6.4, 14.8], [13.4, 16.4], [13.2, 17.2], [6.5, 15.8]], '#2a1018')),
+      F(T([[24.6, 14.8], [17.6, 16.4], [17.8, 17.2], [24.5, 15.8]], '#2a1018')),
+      F(T([[10.6, 20.6], [20.4, 20.6], [19.4, 23.4], [15.5, 24.6], [11.6, 23.4]], '#2a1018')),
+      ...[12.4, 15.5, 18.6].map((x, i) => F(T([[x - 0.9, 20.8], [x + 0.9, 20.8], [x, 22.4 + (i === 1 ? 0.5 : 0)]], '#f0e2c8'))),
+      F(T([[13.6, 11.4], [17.4, 11.4], [17.4, 13.2], [13.6, 13.2]], '#e8c470')),
+      F(E(15.5, 12.3, 0.6, 0.6, '#b8323f'))],
+  },
+  // Starlight markings: a constellation drawn across the brow and both cheeks, still glowing.
+  starmark: {
+    face: () => [...[[9.4, 21.8], [21.6, 21.6]].flatMap(([x, y]) => [star(x, y, 2.4, '#5f8fe8'), star(x, y, 1.9, '#bde0ff'), star(x, y, 1, '#ffffff'),
+      F(E(x - 2.4, y + 1.5, 0.5, 0.5, '#8fc0ff')), F(E(x - 2.4, y + 1.5, 0.26, 0.26, '#ffffff')),
+      F(E(x + 2.5, y - 1.4, 0.4, 0.4, '#8fc0ff'))]),
+      ...[[11.4, 13.8], [15.5, 12.4], [19.6, 13.8]].flatMap(([x, y], i) => [star(x, y, i === 1 ? 2.2 : 1.6, '#8f6fe0'), star(x, y, i === 1 ? 1.6 : 1.1, '#d8c0ff'), star(x, y, i === 1 ? 0.8 : 0.55, '#ffffff')]),
+      F(limb(11.4, 13.8, 15.5, 12.4, 0.34, 0.3, '#a8c8ff')), F(limb(15.5, 12.4, 19.6, 13.8, 0.34, 0.3, '#a8c8ff')),
+      F(limb(9.4, 21.8, 11.4, 14.4, 0.26, 0.22, '#8fb8e8')), F(limb(21.6, 21.6, 19.6, 14.4, 0.26, 0.22, '#8fb8e8')),
+      F(E(15.5, 19.4, 0.55, 0.55, '#ffffff')), F(E(12.7, 16.8, 0.38, 0.38, '#d8e8ff')), F(E(18.4, 17, 0.38, 0.38, '#d8e8ff'))],
+  },
+};
+
 export function wardrobeOutfit(key, fallback) {
   if (BUILT.has(key)) return BUILT.get(key);
   const wear = wearOf(key);
@@ -2230,10 +2575,13 @@ export function wardrobeOutfit(key, fallback) {
   const out = { ...fallback };
   const take = (piece) => {
     if (!piece) return;
-    for (const slot of ['top', 'sleeve', 'shoulder', 'legs', 'skirt', 'shoe', 'hat', 'hatBack', 'back', 'front', 'hand', 'long', 'tucks', 'hidesBangs']) {
+    for (const slot of ['top', 'sleeve', 'shoulder', 'legs', 'skirt', 'shoe', 'hat', 'hatBack', 'back', 'front', 'face', 'hand', 'long', 'tucks', 'hidesBangs']) {
       if (piece[slot] !== undefined) out[slot] = piece[slot];
     }
   };
+  // Both drawings at once, for a slot two pieces want (a bib and an apron's strap, specs and a
+  // plaster on the nose).
+  const both = (a, b) => (...args) => [...(a(...args) ?? []), ...(b(...args) ?? [])];
   if (wear.dress) take(WARDROBE_DRESSES[wear.dress]);
   else {
     take(WARDROBE_TOPS[wear.top]);
@@ -2241,26 +2589,23 @@ export function wardrobeOutfit(key, fallback) {
   }
   // (A top and a bottom each bring their own `front` piece - a bib, a strap - so both are drawn.)
   if (!wear.dress && WARDROBE_TOPS[wear.top]?.front && WARDROBE_BOTTOMS[wear.bottom]?.front) {
-    const a = WARDROBE_TOPS[wear.top].front;
-    const b = WARDROBE_BOTTOMS[wear.bottom].front;
-    out.front = (...args) => [...(a(...args) ?? []), ...(b(...args) ?? [])];
+    out.front = both(WARDROBE_TOPS[wear.top].front, WARDROBE_BOTTOMS[wear.bottom].front);
   }
-  // (An accessory never takes a slot the clothes already fill, except its own: a scarf lies in
-  // front, a satchel behind, a bow on the head, bands on the paws.)
-  const acc = WARDROBE_ACC[wear.acc];
-  if (acc) {
-    const under = { front: out.front, back: out.back };
-    for (const slot of ['hat', 'hatBack', 'back', 'front', 'hand']) if (acc[slot]) out[slot] = acc[slot];
-    // (A hood tucks the hair away under it, as the Mochi hoods do.)
-    for (const slot of ['tucks', 'hidesBangs']) if (acc[slot] !== undefined) out[slot] = acc[slot];
-    // Both the clothes' own piece and the accessory's, where they would clash.
-    for (const slot of ['front', 'back']) {
-      if (acc[slot] && under[slot]) {
-        const a = under[slot];
-        const b = acc[slot];
-        out[slot] = (...args) => [...(a(...args) ?? []), ...(b(...args) ?? [])];
-      }
+  // Shoes of its own are worn instead of whatever the clothes came with.
+  if (WARDROBE_SHOES[wear.shoes]?.shoe) out.shoe = WARDROBE_SHOES[wear.shoes].shoe;
+  // (Everything else goes over the clothes, and never takes a slot the clothes already fill
+  // except its own: a scarf lies in front, a satchel behind, a bow on the head, specs on the
+  // face, bands on the paws.)
+  const EXTRA = { hat: WARDROBE_ACC, over: WARDROBE_ACC, hands: WARDROBE_ACC, eyes: WARDROBE_EYES, face: WARDROBE_FACE };
+  for (const slot of ['hat', 'over', 'hands', 'eyes', 'face']) {
+    const acc = EXTRA[slot][wear[slot]];
+    if (!acc) continue;
+    for (const s of ['hat', 'hatBack', 'back', 'front', 'face', 'hand']) {
+      // Both the one already there and this one, where they would clash.
+      if (acc[s]) out[s] = out[s] ? both(out[s], acc[s]) : acc[s];
     }
+    // (A hood tucks the hair away under it, as the Mochi hoods do.)
+    for (const s of ['tucks', 'hidesBangs']) if (acc[s] !== undefined) out[s] = acc[s];
   }
   // (The renderer only asks an outfit for its front piece when it has a back one as well - that is
   // how capes are hung - so anything with straps or a scarf and nothing behind it gets an empty back.)
@@ -2268,4 +2613,4 @@ export function wardrobeOutfit(key, fallback) {
   BUILT.set(key, out);
   return out;
 }
-export const WARDROBE_IDS = { tops: Object.keys(TOPS), bottoms: Object.keys(BOTTOMS), dresses: Object.keys(DRESSES), acc: Object.keys(ACCESSORIES) };
+export const WARDROBE_IDS = Object.fromEntries(SLOTS.map((slot) => [slot, Object.keys(SETS[slot])]));

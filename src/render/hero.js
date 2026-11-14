@@ -16,7 +16,7 @@ import { outfitFx, drawOutfitFx, HEAD_POSE } from './gacha.js';
 import { settings } from '../core/settings.js';
 import { ITEMS, RARITIES, VARIANTS, variantsFor } from '../data/items.js';
 import { pieceOf, JOB_GEAR, gearPalette } from './jobgear/index.js';
-import { STARTER_OUTFITS, OWN_OUTFITS, starterHasBack, starterHasHat, starterHasHands } from './jobgear/starter.js';
+import { STARTER_OUTFITS, OWN_OUTFITS, starterHasBack, starterHasHat, starterHasHands, starterHasFace } from './jobgear/starter.js';
 import { PET_OUTFIT_KEYS } from './jobgear/pets.js';
 import { isWearKey } from '../data/mochi-wardrobe.js';
 import { hsl } from './jobgear/kit.js';
@@ -24,7 +24,7 @@ import { pack } from './weapon-kit.js';
 import { drawGearFx } from './jobgear/live.js';
 import { R, E, T, F, sprite, spriteBudgeted, spriteAsync, spriteSoon, blit, shade, mix, tinted, snap, sparkLine } from './pixel.js';
 import {
-  topShapes, sleeveColor, longSleeves, legLook, hipShapes, skirtShapes, legShapes, hatShapes, hatBackShapes, hatTucks, hatHidesBangs, shoulderShapes, topOverShapes, capeShapes, capeFrontShapes, handShapes, earringShapes, limb, reach, THIGH, SHIN, HIP_Y, ANKLE_Y, legJoints, drape,
+  topShapes, sleeveColor, longSleeves, legLook, hipShapes, skirtShapes, legShapes, hatShapes, hatBackShapes, faceShapes, hatTucks, hatHidesBangs, shoulderShapes, topOverShapes, capeShapes, capeFrontShapes, handShapes, earringShapes, limb, reach, THIGH, SHIN, HIP_Y, ANKLE_Y, legJoints, drape,
 } from './gear.js';
 import { weaponShapes, weaponFrames } from './weapons.js';
 import { toolShapes } from './tools.js';
@@ -235,8 +235,9 @@ function resolveGear(look, gear) {
     // Outfits whose sleeves cover the hands draw them as their own gloves.
     gloves: piece('gloves', starterHasHands(style) && dressed ? starter : null),
     earring: piece('earring', null),
-    // Glasses, masks and stickers: an outfit-only slot, drawn over the face and under the hat.
-    face: piece('face', null),
+    // Glasses, masks and stickers: drawn over the face and under the hat. A worn set brings its
+    // own (data/mochi-wardrobe.js: the eyes and face slots).
+    face: piece('face', starterHasFace(style) && dressed ? starter : null),
     weapon,
   };
 }
@@ -305,6 +306,8 @@ function star(cx, cy, r, c) {
 // its catchlights sit on the lit (facing) side and its outer corner points away from the nose.
 const EYE_Y = 18.2;
 const EYE_DX = 4.3;
+// Where the shine sits in a painted-on eye (a shop mannequin's).
+const EY_PAINT = 17.5;
 // Per eye style: size (rx, ry), outer-corner lift, wing and clumps, iris size, pupil, openness.
 const EYE_LOOK = {
   sparkle: { rx: 2, ry: 2.5, tilt: 0.12, wing: 0.9, flicks: 1, iris: 1.3 },
@@ -1332,7 +1335,7 @@ function headShapes(look, g, rig) {
   const out = [];
   const hairNow = hairOf(look, rig);
   if (!tucked) out.push(...hairNow.head);
-  if (g.face) out.push(...hatBackShapes(g.face.design, g.face.color, g.face, m));
+  if (g.face && !g.face.family) out.push(...hatBackShapes(g.face.design, g.face.color, g.face, m));
   if (hat) out.push(...hatBackShapes(hat.design, hat.color, hat, m));
   // Facing the screen: a round head with soft full cheeks, an ear peeking out on each side, big
   // eyes set low and wide apart, blush under each eye and a small mouth in the middle. The skin
@@ -1405,7 +1408,12 @@ function headShapes(look, g, rig) {
   // Eyes: hurt and blinks win over the expression; otherwise the expression may close one or
   // both eyes, lower the lids, or glance aside. Angry faces pull the inner lids down.
   const cross = f.cross ?? 0;
-  [-1, 1].forEach((side, i) => {
+  // A shop's mannequin has no face of its own (render/shopmodel.js): two eyes painted on the
+  // wood, nothing else, so a pair of specs or a mask still has something to sit on.
+  if (look.faceless) {
+    out.push(...[-1, 1].map((side) => F(E(FACE_X + EYE_DX * side, EYE_Y + 0.2, 1.05, 1.3, mix(skin, '#3f2a18', 0.78)))));
+    out.push(...[-1, 1].map((side) => F(E(FACE_X + EYE_DX * side - 0.3, EY_PAINT, 0.34, 0.3, mix(skin, '#ffffff', 0.5)))));
+  } else [-1, 1].forEach((side, i) => {
     // A closed eye is a happy arc (true) or a named lid ('blink', 'hurt'); a blink only takes an
     // open eye.
     const shut = f.closed?.[i];
@@ -1414,7 +1422,8 @@ function headShapes(look, g, rig) {
   });
   // (A Mochi Mutation's dark dough: a light pink lip line, so the little mouth still reads.)
   const skM = look.lightMouth ? { ...sk, lipDk: '#f2b4c4', lip: '#ffd0dc' } : sk;
-  if (rig.eyes === 'hurt') out.push(...mouthShapes('grit', skM));
+  if (look.faceless) { /* nothing */ }
+  else if (rig.eyes === 'hurt') out.push(...mouthShapes('grit', skM));
   else if (rig.eyes === 'dead') out.push(...mouthShapes('open', skM));
   else out.push(...mouthShapes(look.mouth ?? rig.mouth ?? f.mouth ?? 'smile', skM));
   if (front) out.push(...front);
@@ -1437,7 +1446,7 @@ function headShapes(look, g, rig) {
     const ring = offset(earringShapes(g.earring.design, g.earring.color, g.earring), -1.6, 0);
     out.push(...ring, ...mirror(ring));
   }
-  if (g.face) out.push(...hatShapes(g.face.design, g.face.color, g.face, m));
+  if (g.face) out.push(...(g.face.family ? faceShapes(g.face, m) : hatShapes(g.face.design, g.face.color, g.face, m)));
   if (hat) out.push(...hatShapes(hat.design, hat.color, hat, m));
   return out;
 }

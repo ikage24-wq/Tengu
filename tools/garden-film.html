@@ -1,0 +1,120 @@
+<!doctype html>
+<html><head><meta charset="utf-8"></head><body style="margin:0;background:#222">
+<canvas id="c"></canvas>
+<script type="module">
+// Dev tool: films a Mochi finding a sweet you put down on the grass - noticing it, walking over,
+// sitting down, picking it up and eating it - frame by frame off the clock, for when a live
+// recording can't run. No HUD, no sound.
+//   ?seed=7&s=2&fps=15&at=8    the Mochi, the zoom, the frame rate, when the sweet goes down
+//   &w=400&h=250               the window cut out of the view, kept centred on the Mochi
+// Title "ready" when it's set up; then call `window.film(n)` for the next n frames as JPEG data
+// URLs (window.FILM_DONE once the Mochi has finished eating).
+//
+// (The Mochi's animation runs on the world's own clock, which only moves inside updateWorld: a
+// tool that pokes garden-life directly and redraws will show it standing still for ever. That is
+// why this films through updateWorld like the game does.)
+import { createCharacter } from '../src/core/character.js';
+import { createWorld, updateWorld, loadMap } from '../src/world/world.js';
+import { createCamera, updateCamera, drawWorld } from '../src/render/scene.js';
+import { setHd, nextFrame, gfx } from '../src/render/pixel.js';
+import { preloadFxSprites } from '../src/render/fx-sprites.js';
+import { rollMochi, STATS } from '../src/data/mochi-genes.js';
+import { newRecord } from '../src/data/mochi-raise.js';
+import { addItem } from '../src/core/inventory.js';
+import { dropSweet } from '../src/world/garden-life.js';
+import { VW, VH } from '../src/input.js';
+
+const q = new URLSearchParams(location.search);
+const SCALE = Number(q.get('s') ?? 2);
+const FPS = Number(q.get('fps') ?? 15);
+const CW = Number(q.get('w') ?? 400);
+const CH = Number(q.get('h') ?? 250);
+const DROP_AT = Number(q.get('at') ?? 8);
+preloadFxSprites();
+// (A Mochi's new pose is normally handed to the sprite worker while its last drawing stands in for a
+// frame or two. This page films in one unbroken loop, so the worker never gets a turn and every
+// Mochi would stay frozen on its old pose: paint every pose on the spot instead, as the speed
+// check does.)
+gfx.noBudget = true;
+const rec = newRecord(rollMochi(Number(q.get('seed') ?? 7)));
+rec.stage = 'mochi';
+for (const st of STATS) Object.assign(rec.stats[st], { points: 220, level: 14 });
+const char = createCharacter('Mina', { hairStyle: 'bob' });
+char.garden = { back: null, mochi: [rec], eggs: [], unlocked: {} };
+addItem(char.inventory, q.get('sweet') ?? 'msweet_dango', 5);
+const w = createWorld(char);
+w.log = () => {};
+window.W = w;
+// (Always broad daylight, whatever the clock says, and the Mochi kept near so the walk is short.)
+w.forceNight = Number(q.get('night') ?? 0);
+loadMap(w, 'garden', 'start');
+w.body.x = 760;
+const idle = { held: new Set(), pressed: new Set(), locked: false };
+const view = document.createElement('canvas');
+view.width = VW * SCALE;
+view.height = VH * SCALE;
+const vctx = view.getContext('2d');
+const out = document.getElementById('c');
+out.width = CW;
+out.height = CH;
+const octx = out.getContext('2d');
+octx.imageSmoothingEnabled = false;
+const cam = createCamera();
+let now = 100;
+let dropped = false;
+let ateAt = null;
+function draw() {
+  // (The drawing runs on the frame clock, not the world one, so drive it: a film that lets it
+  // tick in real time shows every animation frozen on its first pose.)
+  nextFrame(now);
+  vctx.setTransform(SCALE, 0, 0, SCALE, 0, 0);
+  vctx.imageSmoothingEnabled = false;
+  setHd(true, SCALE);
+  drawWorld(vctx, w, cam, now);
+  // The window we keep on the Mochi (or on you until it has one to come to).
+  const e = w.gardenLife?.mochi?.[0];
+  const fx = ((e?.x ?? w.body.x) - cam.x) * SCALE;
+  const fy = ((e?.y ?? w.body.y) - cam.y) * SCALE;
+  const sx = Math.max(0, Math.min(view.width - CW, Math.round(fx - CW / 2)));
+  const sy = Math.max(0, Math.min(view.height - CH, Math.round(fy - CH * 0.62)));
+  octx.drawImage(view, sx, sy, CW, CH, 0, 0, CW, CH);
+}
+for (let k = 0; k < 3; k++) draw();
+window.film = (n) => {
+  const frames = [];
+  for (let i = 0; i < n && !window.FILM_DONE; i++) {
+    const steps = Math.max(1, Math.round(60 / FPS));
+    for (let k = 0; k < steps; k++) {
+      now += 1 / 60;
+      updateWorld(w, 1 / 60, idle);
+      updateCamera(cam, w, 1 / 60);
+      if (!dropped && now > 100 + DROP_AT) {
+        const e = w.gardenLife?.mochi?.[0];
+        if (e?.x != null) {
+          w.body.x = e.x + 120;
+          w.body.facing = -1;
+          dropSweet(w, q.get('sweet') ?? 'msweet_dango', null);
+          w.body.x = e.x - 90;
+          dropped = true;
+        }
+      }
+    }
+    draw();
+    frames.push(out.toDataURL('image/jpeg', 0.88));
+    // Done once the sweet has been taken AND whatever it made of it has played out.
+    const e = w.gardenLife?.mochi?.[0];
+    const act = e?.m?.action?.name ?? null;
+    const left = (w.gardenLife?.drops ?? []).length;
+    if (dropped && !left && act === null && ateAt == null) ateAt = now;
+    if (ateAt != null && now - ateAt > 1.2) window.FILM_DONE = true;
+    if (now > 100 + DROP_AT + 40) window.FILM_DONE = true;
+  }
+  return frames;
+};
+window.STATE = () => {
+  const e = w.gardenLife?.mochi?.[0];
+  return { now: Math.round(now), x: Math.round(e?.x ?? -1), act: e?.m?.action?.name ?? null, drops: (w.gardenLife?.drops ?? []).length, done: Boolean(window.FILM_DONE) };
+};
+document.title = 'ready';
+</script>
+</body></html>

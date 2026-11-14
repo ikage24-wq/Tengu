@@ -403,6 +403,12 @@ function shoeShapes(ax, ay, kx, ky, tilt, shoe, tint) {
 
 // ---------- Hats ----------
 
+// What an outfit wears on its face: specs, a visor, a mask, paint. Drawn over the face itself
+// and under the hat, so a hood still comes down over a pair of specs.
+export function faceShapes(piece, m = MOTION) {
+  return piece?.family ? done(gearOf(piece).face?.(piece.tier, piece.pal, m) ?? [], piece) : [];
+}
+
 export function hatShapes(design, c, piece = null, m = MOTION) {
   if (piece?.family) return done(gearOf(piece).hat(piece.tier, piece.pal, m), piece);
   return done(plainHat(design, c), null);

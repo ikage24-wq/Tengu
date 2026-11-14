@@ -4,14 +4,15 @@
 // tummy) and which way it leans (devil to angel); who it is (personality, the sweet it loves and the
 // one it hates, its voice); what it's growing into, while a Mochiko; all 21 tricks, lit as it learns
 // them; its race medals, course by course; its parents, if it was bred; and (yours) the costume it
-// wears (data/mochi-dress.js: ◀ ▶ through the ones you've won). Opened from its care panel (or, for
+// wears, and a button into its dressing room (ui/mochi-closet.js). Opened from its care panel (or, for
 // the one picked, the race board): ◀ ▶ go through the rest of your Mochi. Built from the Mochi kit
 // (ui/mochi-kit.js).
 
 import { STAGES } from '../data/mochi-genes.js';
 import { MOCHI_SWEETS, TRICKS, trendOf, leanOf } from '../data/mochi-raise.js';
 import { RACE_STAGES, RANK_ORDER, MEDAL_COLOR, medalKey } from '../data/mochi-race.js';
-import { DRESS, dressOpen } from '../data/mochi-dress.js';
+import { DRESS } from '../data/mochi-dress.js';
+import { SLOTS, SETS } from '../data/mochi-wardrobe.js';
 import { drawItemIcon } from '../render/icons.js';
 import { VW, VH } from '../input.js';
 import { COLORS, windowFrame, text, button, hover, tooltip, fit, roundRect, icon } from './kit.js';
@@ -193,16 +194,17 @@ export function mochiInfoWindow(ui, state, world) {
   }
   // (The album: everything your Mochi have been.)
   if (at >= 0 && button(ui, x + 90, wy, 50, 16, 'Album', { size: 7, iconName: 'book' })) Object.assign(state.windows.album, { open: true, openedAt: performance.now() / 1000 });
-  if (at >= 0) {
-    const won = Object.keys(DRESS).filter((id) => dressOpen(world.char, id));
-    const options = [null, ...won];
-    const now = options.indexOf(rec.dress ?? null);
+  // What it wears in a word or two, and the way into its dressing room.
+  if (at >= 0 && !world.gardenVisit) {
+    const worn = SLOTS.filter((s) => rec.wear?.[s] && SETS[s][rec.wear[s]]);
+    const what = DRESS[rec.dress]?.name ?? (worn.length === 1 ? SETS[worn[0]][rec.wear[worn[0]]].name : worn.length ? `${worn.length} pieces` : 'Its smock');
     const dx = x + W - 20 - 178;
     icon(ctx, 'hanger', dx + 5, wy + 8, 9, '#a8467a');
-    text(ctx, 'Wears', dx + 13, wy + 11, { size: 7, bold: true, color: '#a8467a' });
-    if (button(ui, dx + 44, wy, 18, 16, '◀', { size: 7.5 })) rec.dress = options[(Math.max(0, now) + options.length - 1) % options.length];
-    text(ctx, fit(ctx, DRESS[rec.dress]?.name ?? 'Nothing', 82, 7, true), dx + 107, wy + 11, { size: 7, bold: true, align: 'center', color: rec.dress ? '#d0507a' : COLORS.muted });
-    if (button(ui, dx + 152, wy, 18, 16, '▶', { size: 7.5 })) rec.dress = options[(Math.max(0, now) + 1) % options.length];
-    if (hover(ui, dx, wy, 44, 16)) tooltip(ui, [{ text: `Costumes: ${won.length} of ${Object.keys(DRESS).length}`, bold: true }, ...Object.keys(DRESS).filter((id) => !dressOpen(world.char, id)).map((id) => ({ text: DRESS[id].stage ? `${DRESS[id].name}: win ${RACE_STAGES[DRESS[id].stage].name} (Beginner)` : `${DRESS[id].name}: from Kinako's shop${DRESS[id].secret ? ', after dark' : ''}`, color: COLORS.muted }))]);
+    text(ctx, fit(ctx, what, 92, 7, true), dx + 13, wy + 11, { size: 7, bold: true, color: rec.dress || worn.length ? '#d0507a' : COLORS.muted });
+    if (button(ui, dx + 110, wy, 68, 16, 'Dress up', { size: 7.5, primary: true, iconName: 'hanger' })) {
+      world.closetFor = rec;
+      world.events.push({ type: 'closet' });
+    }
+    if (hover(ui, dx, wy, 106, 16) && worn.length > 1 && !DRESS[rec.dress]) tooltip(ui, worn.map((s) => ({ text: SETS[s][rec.wear[s]].name, color: COLORS.muted })));
   }
 }

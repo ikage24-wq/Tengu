@@ -11,7 +11,7 @@ import { drawItemIcon } from '../render/icons.js';
 import { COLORS, windowFrame, text, button, hover, clicked, tooltip, fit, roundRect, icon } from './kit.js';
 import { itemTooltip } from './tooltips.js';
 import { VW, VH } from '../input.js';
-import { careFor, feedMochi, sayGoodbye, VISITOR_CARE, dailyLine } from '../world/garden-life.js';
+import { careFor, dropSweet, sayGoodbye, VISITOR_CARE, dailyLine } from '../world/garden-life.js';
 import { STAT_ORDER, STAT_INFO, portraitCard, statRow, feelMeter, heading, cap } from './mochi-kit.js';
 
 const W = 300;
@@ -137,8 +137,12 @@ export function mochiCareWindow(ui, state, world) {
     }
     if (on) {
       const trains = Object.entries(sw.trains).map(([st, n]) => `${STAT_INFO[st]?.name ?? st} +${n}`).join(', ');
-      tooltip(ui, [...itemTooltip(world.char, sw.id), { text: trains || 'Makes a grown Mochi bloom', color: COLORS.muted }, { text: loved ? 'Its favourite!' : hated ? 'It hates this one...' : 'Click to feed', color: loved ? COLORS.good : hated ? COLORS.bad : COLORS.muted }]);
+      tooltip(ui, [...itemTooltip(world.char, sw.id), { text: trains || 'Makes a grown Mochi bloom', color: COLORS.muted }, { text: loved ? 'Its favourite! Put one down' : hated ? 'It hates this one...' : 'Put one down on the grass', color: loved ? COLORS.good : hated ? COLORS.bad : COLORS.muted }]);
     }
-    if (clicked(ui, ix, iy, 21, 21)) feedMochi(world, e, sw.id);
+    if (clicked(ui, ix, iy, 21, 21)) {
+      // Not handed over: put down on the grass, and it comes and gets it.
+      const why = dropSweet(world, sw.id, e.rec.seed);
+      if (why) world.log(why, '#ffd2a0');
+    }
   });
 }

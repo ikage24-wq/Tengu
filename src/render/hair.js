@@ -2563,3 +2563,10 @@ export function hairNape(style, r) {
   const big = style === 'cloud' || style === 'wavylong' ? 1 : 0;
   return [F(E(HX, 13.6 - big * 0.4, 12 + big, 11.2 + big, r.base)), F(E(HX, 20.4, 9.8, 4, r.sh1)), ...ring(r.hi, HX, 10, 9, 5.6, 210, 330)];
 }
+
+// ---------- The shop's mannequin ----------
+// A Mochi with no hair at all: the stall's dummies (render/shopmodel.js) are carved from the same
+// shape a Mochi is, so a piece hangs on one exactly as it will on yours, with nothing on the head
+// to hide the shoulders of it. Not a gene - nothing is ever born with this.
+STYLES.mannequin = () => ({ head: [], hang: [], front: { shapes: [], shade: null, hairline: false }, top: [], tips: [99, 99] });
+OWN_HAIR.push('mannequin');

@@ -654,6 +654,7 @@ export default {
   shoe: (t, p, k) => of(t).shoe(p, k, k.tint),
   hand: (t, p, hx, hy, ex, ey) => of(t).hand?.(p, hx, hy, ex, ey) ?? [E(hx, hy, 2, 2, p.skin)],
   cape: (t, p, m) => of(t).back?.(p, m) ?? [],
+  face: (t, p, m) => of(t).face?.(p, m) ?? [],
   capeFront: (t, p, m) => of(t).front?.(p, m) ?? [],
 };
 
@@ -662,3 +663,5 @@ export const starterHasBack = (t) => Boolean(of(t).back);
 // Whether an outfit comes with a hat or face accessory.
 export const starterHasHat = (t) => Boolean(of(t).hat);
 export const starterHasHands = (t) => Boolean(of(t).hand);
+// Whether an outfit comes with something worn on the face: specs, a mask, paint.
+export const starterHasFace = (t) => Boolean(of(t).face);

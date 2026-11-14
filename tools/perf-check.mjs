@@ -70,6 +70,10 @@ function report(name, frames) {
 // Where the offscreen counts stood when a check's warm-up ended.
 const mark = { canvases: 0, reads: 0, tints: 0 };
 const markNow = () => Object.assign(mark, screenStats);
+// (The crowd and the light run off a fixed clock too: the bots' comings and goings follow the hour,
+// so on the real clock a map's crowd, and its count, changed with the time it was run.)
+const CROWD_HOUR = () => new Date(2026, 9, 28, 20, 0);
+const MIDDAY = () => new Date(2026, 9, 28, 12, 0);
 const seeded = (seed) => { let r = seed; return () => ((r = (r * 16807) % 2147483647) / 2147483647); };
 // (Everything random in the world, the crowd's choices and the fights, runs off one seed for each
 // check, so a check gives the same answer every time.)
@@ -93,6 +97,7 @@ export function checkMaps(ids = Object.keys(MAPS), warm = 300, frames = 300) {
     w.god = true;
     // (Midday whatever the real clock says: the light and the night creatures follow the hour.)
     w.forceNight = 0;
+    w.dayClock = MIDDAY;
     try {
       // A dungeon room is only entered through a run started at its gate (loading it bare sends
       // you back out to the gate), so it's entered the real way, and the check makes sure it's on
@@ -100,7 +105,7 @@ export function checkMaps(ids = Object.keys(MAPS), warm = 300, frames = 300) {
       const map = MAPS[id];
       if (map.dungeon) {
         loadMap(w, DUNGEONS[map.dungeon].gate, 'start');
-        w.bots = createBots(w, seeded(7), { daily: true, alts: [] });
+        w.bots = createBots(w, seeded(7), { daily: true, alts: [], clock: CROWD_HOUR });
         const why = startRun(w, map.dungeon);
         if (why) throw new Error(`couldn't start the run: ${why}`);
         if (w.map.id !== id) loadMap(w, id, 'start');
@@ -116,7 +121,7 @@ export function checkMaps(ids = Object.keys(MAPS), warm = 300, frames = 300) {
         if (!startRace(w, rec, Object.keys(RACE_STAGES).find((k) => RACE_STAGES[k].map === id))) throw new Error("couldn't start the race");
       } else {
         loadMap(w, id, 'west');
-        w.bots = createBots(w, seeded(7), { daily: true, alts: [] });
+        w.bots = createBots(w, seeded(7), { daily: true, alts: [], clock: CROWD_HOUR });
       }
       if (w.map.id !== id) throw new Error(`asked for ${id}, got ${w.map.id}`);
       const cam = createCamera();
@@ -152,6 +157,7 @@ export function checkSkills(jobs = Object.keys(JOBS), warm = 600, frames = 600) 
     w.god = true;
     // (Midday whatever the real clock says: the light and the night creatures follow the hour.)
     w.forceNight = 0;
+    w.dayClock = MIDDAY;
     try {
       loadMap(w, 'woods', 'west');
       const skills = Object.keys(c.skills ?? {});
@@ -187,6 +193,7 @@ export function checkWindows(warm = 120, frames = 240) {
     w.god = true;
     // (Midday whatever the real clock says: the light and the night creatures follow the hour.)
     w.forceNight = 0;
+    w.dayClock = MIDDAY;
     try {
       loadMap(w, 'coinbridge', 'west');
       const ui = createUiState();
@@ -218,6 +225,7 @@ export function checkBudgets(places = [['town', 'sprout', 'start'], ['market', '
     const w = createWorld(balanceChar('warrior', 40));
     w.log = () => {};
     w.forceNight = 0;
+    w.dayClock = MIDDAY;
     w.bots = createBots(w, Math.random, { clock: () => new Date(2026, 9, 28, 20, 0) });
     loadMap(w, id, portal);
     const press = { held: new Set(['ArrowRight']), pressed: new Set(), locked: false };
@@ -245,6 +253,7 @@ export function checkSession(minutes = 30) {
     const w = createWorld(balanceChar('warrior', 40));
     w.log = () => {};
     w.forceNight = 0;
+    w.dayClock = MIDDAY;
     w.bots = createBots(w, Math.random, { clock: () => new Date(2026, 9, 28, 20, 0) });
     const ids = Object.values(MAPS).filter((m) => !m.dungeon && !m.private && !m.indoor).map((m) => m.id);
     const cam = createCamera();

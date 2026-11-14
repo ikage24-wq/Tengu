@@ -33,7 +33,9 @@ import { mochiAlbumWindow } from './mochi-album.js';
 import { gardenPickWindow } from './garden-pick.js';
 import { mochiNameWindow } from './mochi-name.js';
 import { mochiInfoWindow } from './mochi-info.js';
+import { mochiClosetWindow } from './mochi-closet.js';
 import { eggStallWindow } from './egg-stall.js';
+import { wearStallWindow } from './wear-stall.js';
 import { lifeWindow } from './life.js';
 import { craftingWindow } from './crafting.js';
 import { gachaWindow } from './gacha.js';
@@ -83,10 +85,12 @@ export function createUiState() {
       mochi: { x: 396, y: 34, open: false, theme: 'pink', icon: 'heart' },
       race: { x: 170, y: 50, open: false, theme: 'pink', icon: 'star' },
       eggs: { x: 190, y: 60, open: false, theme: 'peach', icon: 'gift' },
+      wears: { x: 172, y: 56, open: false, theme: 'peach', icon: 'hanger' },
       raceinvite: { x: 180, y: 60, open: false, theme: 'pink', icon: 'star' },
       gardenpick: { x: 220, y: 80, open: false, theme: 'pink', icon: 'heart' },
       mochiname: { x: 210, y: 90, open: false, theme: 'pink', icon: 'heart' },
       mochiinfo: { x: 60, y: 40, open: false, theme: 'pink', icon: 'heart' },
+      closet: { x: 84, y: 30, open: false, tab: 'top', theme: 'pink', icon: 'hanger' },
       life: { x: 150, y: 48, open: false, theme: 'mint', icon: 'leaf' },
       craft: { x: 140, y: 44, open: false, theme: 'mint', icon: 'hammer' },
       gacha: { x: 150, y: 44, open: false, theme: 'mint', icon: 'gift' },
@@ -94,7 +98,7 @@ export function createUiState() {
       auction: { x: 130, y: 40, open: false, tab: 0, theme: 'gold', icon: 'crown' },
     },
     // Window stacking, back to front. Clicking a window brings it to the front.
-    order: ['stats', 'skills', 'quests', 'bag', 'worldmap', 'cashshop', 'pet', 'online', 'collection', 'cook', 'mochi', 'race', 'eggs', 'raceinvite', 'gardenpick', 'mochiinfo', 'album', 'mochiname', 'craft', 'life', 'gacha', 'trade', 'auction', 'admin', 'profile', 'options'],
+    order: ['stats', 'skills', 'quests', 'bag', 'worldmap', 'cashshop', 'pet', 'online', 'collection', 'cook', 'mochi', 'race', 'eggs', 'wears', 'raceinvite', 'gardenpick', 'mochiinfo', 'closet', 'album', 'mochiname', 'craft', 'life', 'gacha', 'trade', 'auction', 'admin', 'profile', 'options'],
     // Whose profile is open: { kind: 'self' } or { kind: 'bot', id }.
     profile: null,
     // The right-click menu on a player or yourself: { kind: 'bot' | 'self', id, x, y }.
@@ -152,6 +156,8 @@ export function routeInput(state, world, input, dt) {
       state.windows.race.open = true;
     } else if (e.type === 'eggstall') {
       state.windows.eggs.open = true;
+    } else if (e.type === 'wearstall') {
+      state.windows.wears.open = true;
     } else if (e.type === 'raceinvite') {
       state.windows.raceinvite.open = true;
     } else if (e.type === 'gardenpick') {
@@ -160,6 +166,8 @@ export function routeInput(state, world, input, dt) {
       state.windows.mochiname.open = true;
     } else if (e.type === 'mochiinfo') {
       state.windows.mochiinfo.open = true;
+    } else if (e.type === 'closet') {
+      state.windows.closet.open = true;
     } else if (e.type === 'craft') {
       state.windows.craft.open = true;
     } else if (e.type === 'gacha') {
@@ -246,7 +254,7 @@ export function routeInput(state, world, input, dt) {
   return Boolean(state.npc) || state.death;
 }
 
-const WINDOWS = { stats: statsWindow, skills: skillsWindow, quests: questsWindow, bag: bagWindow, worldmap: worldMapWindow, admin: adminWindow, options: optionsWindow, profile: profileWindow, cashshop: cashShopWindow, pet: petWindow, online: onlineWindow, collection: collectionWindow, cook: cookingWindow, mochi: mochiCareWindow, race: raceBoardWindow, eggs: eggStallWindow, raceinvite: raceInviteWindow, gardenpick: gardenPickWindow, mochiname: mochiNameWindow, mochiinfo: mochiInfoWindow, album: mochiAlbumWindow, craft: craftingWindow, life: lifeWindow, gacha: gachaWindow, trade: tradeWindow, auction: auctionWindow };
+const WINDOWS = { stats: statsWindow, skills: skillsWindow, quests: questsWindow, bag: bagWindow, worldmap: worldMapWindow, admin: adminWindow, options: optionsWindow, profile: profileWindow, cashshop: cashShopWindow, pet: petWindow, online: onlineWindow, collection: collectionWindow, cook: cookingWindow, mochi: mochiCareWindow, race: raceBoardWindow, eggs: eggStallWindow, wears: wearStallWindow, raceinvite: raceInviteWindow, gardenpick: gardenPickWindow, mochiname: mochiNameWindow, mochiinfo: mochiInfoWindow, closet: mochiClosetWindow, album: mochiAlbumWindow, craft: craftingWindow, life: lifeWindow, gacha: gachaWindow, trade: tradeWindow, auction: auctionWindow };
 const POP = 0.22;
 
 // Opening windows pop in with a little overshoot.

@@ -202,7 +202,41 @@ export const EMOTE_MOVES = {
       },
     };
   },
+
+  // Hayate waking (render/hayate.js), at the end of the Mochi Grand Tour: the Queen has slept
+  // through the whole progress, and yours coming home is what finally wakes her. She hangs there
+  // asleep, head down and shoulders slumped; a start runs through her and her head comes up; she
+  // draws herself up to her full height, slow and heavy with sleep; and she lifts one hand out over
+  // the road in a long unhurried welcome, sways once with it held there, and lets it fall back to
+  // her side. Nothing is quick: a queen's weight is in every beat, eased in and eased out, and she
+  // ends standing at rest, so she settles back into standing without a jump.
+  queenwake(p) {
+    const sleep = 1 - soft(seg(p, 0.06, 0.24));
+    const start = bump(p, 0.06, 0.3);
+    const rise = soft(seg(p, 0.16, 0.5));
+    const raise = soft(seg(p, 0.46, 0.68)) * (1 - soft(seg(p, 0.86, 1)));
+    const sway = bump(p, 0.68, 0.88);
+    return {
+      expression: true,
+      tool: 'none', weapon: 0,
+      arm: lerp(lerp(30, 12, rise), 104, raise),
+      // (Her gown hides her legs, so the rise has to be read off her whole height, her head and the
+      // set of her shoulders: she sags a long way down asleep and comes up taller than she started.)
+      lift: lerp(-4.2, 1.2, rise) + 0.8 * start + 0.5 * sway,
+      tilt: 0.09 * sleep - 0.05 * rise - 0.03 * raise + 0.025 * sway,
+      rig: (r) => {
+        r.squat = q(3.4 * sleep);
+        r.hy = q(3.4 * sleep - 1.8 * start - 1.2 * rise);
+        r.hx = q(0.7 * sway - 0.5 * sleep);
+        r.tilt = q(11 * sleep - 3 * start + 2.5 * sway);
+        r.backArm = hand(lerp(-1, -4.5, raise), lerp(lerp(2.2, -1.4, rise), -8, raise));
+        r.hairLift = raise > 0.45 || start > 0.5 ? -1 : 0;
+        r.cape -= q(1.8 * sleep);
+        legs(r, rise * 0.3, [1.2, 0, 4], [-1.2, 0, -4]);
+      },
+    };
+  },
 };
 
 // How long each needs to read (seconds).
-export const EMOTE_MIN = { emcheer: 1.2, emdance: 2, emflip: 1.1, emlove: 1.6, embow: 1.4, emflex: 1.4, emsleepy: 2.2, emsad: 2 };
+export const EMOTE_MIN = { emcheer: 1.2, emdance: 2, emflip: 1.1, emlove: 1.6, embow: 1.4, emflex: 1.4, emsleepy: 2.2, emsad: 2, queenwake: 3.2 };
