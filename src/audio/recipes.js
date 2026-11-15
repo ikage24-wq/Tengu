@@ -100,6 +100,30 @@ const R = {
   kingChain: { db: -17, max: 1, gap: 400, layers: [{ wave: 'noise', env: { a: 4, s: 200, d: 400 }, lpf: [3000, 1200], db: -6 }] },
   kingHorn: { db: -21, max: 1, gap: 2000, layers: [{ wave: 'saw', f0: 220, env: { a: 150, s: 700, d: 900 }, lpf: [1200] }] },
   kingFanfare: { db: -9, max: 1, layers: [{ wave: 'saw', f0: 392, env: { a: 20, s: 900, d: 900 }, lpf: [1800] }] },
+  // Tanabata Hurdles' star night (2026-11-16; recorded - their level, gap and voice cap, and a soft
+  // stand-in until the recording loads): bamboo knocks, the LEAP! flourish, each leap's whoosh and
+  // twinkle, a knocked bar, a tumble, the wind chime, the podium's stars.
+  tanaKnock: { db: -12, vary: 2, max: 2, gap: 120, layers: [{ wave: 'sine', f0: 520, slide: 0.7, env: { a: 1, s: 20, d: 120 } }] },
+  tanaGo: { db: -10, max: 1, layers: [sparkle('E6:120 G6:120 B6:120 E7:400')] },
+  leapWhoosh: { db: -18, vary: 4, max: 3, gap: 60, layers: [whoosh(500, 260, 2000)] },
+  leapStar: { db: -15, vary: 3, max: 3, gap: 60, layers: [sparkle('B6:80 E7:300')] },
+  hurdleClack: { db: -14, vary: 3, max: 3, gap: 60, layers: [{ wave: 'noise', env: { a: 1, s: 20, d: 120 }, lpf: [2400, 800] }] },
+  hurdleTumble: { db: -13, vary: 3, max: 2, gap: 120, layers: [{ wave: 'sine', f0: 140, slide: 0.5, env: { a: 2, s: 40, d: 220 } }] },
+  furin: { db: -16, vary: 4, max: 2, gap: 300, layers: [sparkle('C7:600')] },
+  tanaStars: { db: -12, max: 1, layers: [sparkle('E6:150 B6:150 E7:150 G#7:500')] },
+  // Mochitsuki Mountain (2026-11-16; recorded): the temple bell's ding and the great bell, a boulder's
+  // blows and burst, a snowball's crunch, slip and thump, the rice cart's creak and a stuck wheel, a
+  // piece of kagami-mochi plopping on.
+  mtTing: { db: -12, vary: 1, max: 2, gap: 200, layers: [{ wave: 'sine', f0: 660, overtones: [2.76, 0.3], env: { a: 2, s: 60, d: 900 } }] },
+  mtGong: { db: -9, vary: 1, max: 3, gap: 80, layers: [{ wave: 'sine', f0: 110, overtones: [2.4, 0.4], env: { a: 4, s: 300, d: 2400 } }] },
+  rockHit: { db: -12, vary: 4, max: 4, gap: 40, layers: [{ wave: 'noise', env: { a: 1, s: 30, d: 200 }, lpf: [1400, 300] }] },
+  rockBreak: { db: -10, max: 2, gap: 200, layers: [{ wave: 'noise', env: { a: 4, s: 400, d: 900 }, lpf: [1200, 200] }] },
+  snowCrunch: { db: -14, vary: 6, max: 4, gap: 40, layers: [{ wave: 'noise', env: { a: 8, s: 120, d: 200 }, lpf: [3000, 900], db: -4 }] },
+  snowSlip: { db: -14, vary: 4, max: 2, gap: 120, layers: [whoosh(400, 500, 1800)] },
+  snowThump: { db: -14, vary: 4, max: 3, gap: 80, layers: [{ wave: 'noise', env: { a: 2, s: 60, d: 260 }, lpf: [900, 200] }] },
+  cartCreak: { db: -16, vary: 3, max: 4, gap: 60, layers: [{ wave: 'saw', f0: 300, slide: 1.3, env: { a: 40, s: 200, d: 200 }, lpf: [1400], db: -8 }] },
+  cartStuck: { db: -13, max: 2, gap: 200, layers: [{ wave: 'sine', f0: 120, slide: 0.6, env: { a: 2, s: 40, d: 260 } }] },
+  mochiPlop: { db: -13, vary: 4, max: 4, gap: 40, layers: [{ wave: 'sine', f0: 180, slide: 0.55, env: { a: 2, s: 30, d: 160 } }] },
   lakeLap: { db: -21, vary: 2, max: 2, gap: 900, layers: [{ wave: 'noise', env: { a: 600, s: 800, d: 900 }, lpf: [1200], db: -12 }] },
   // Paper Crane: a crisp flap of paper, and a soft rush as it settles into a glide.
   craneFlap: { db: -22, vary: 8, max: 1, layers: [{ rec: 'bookFlip', rate: 1.35, len: 130 }] },

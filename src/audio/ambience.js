@@ -23,6 +23,13 @@ export function dayPart(date = new Date()) {
 // level drifts: rate in Hz and depth 0-1), and its little sounds by day and by night, each
 // [recipe, shortest gap s, longest gap s].
 const PLACES = {
+  // Mochitsuki Mountain (2026-11-16): a winter wind over the peak, the festival murmuring, and a
+  // temple bell far off now and then - never the town's birds.
+  mountain: {
+    bed: { lp: 700, hp: 140, db: -36, lfo: 0.06, depth: 0.5 }, rec: 'softwind', recDb: -21,
+    day: [['chatter', 4, 9], ['mtTing', 16, 30]],
+    night: [['chatter', 5, 11], ['mtTing', 16, 30]],
+  },
   // Tanabata Hurdles' star night (2026-11-16): always night there, whatever the clock says -
   // crickets in the bamboo, a quiet wood, the festival crowd murmuring, a glass wind chime.
   tanabata: {

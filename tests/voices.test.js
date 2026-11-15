@@ -34,3 +34,10 @@ test("every Mochi voice style is recorded, two takes each (tools/build-mochi-voi
     for (const f of recFiles(name)) assert.ok(existsSync(new URL(`../${f}`, import.meta.url)), `${f} exists`);
   }
 });
+
+test('every recorded sound has its recipe (its level, gap and voice cap): without one it would never play', async () => {
+  const { RECORDED } = await import('../src/audio/recorded.js');
+  const { RECIPES } = await import('../src/audio/recipes.js');
+  const missing = Object.keys(RECORDED).filter((k) => !RECIPES[k]);
+  assert.deepEqual(missing, []);
+});

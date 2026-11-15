@@ -102,6 +102,16 @@ S = {
     'spear': '344 Audio - Historical Weapons Vol. 2/WEAPBlnt_Spear And Stick Impact, Wooden MKH 2_344 Audio_Medieval Weapons Vol 2.wav',
     # Tanabata Hurdles (2026-11-16): a cartoon dizzy for a Mochi seeing stars after a fall.
     'dizzy': 'Cinematic Sound Design - Cartoon Bloopers/Cartoon Confused Dizzy.wav',
+    # Mochitsuki Mountain (2026-11-16): a bell struck in a church tower (pitched down, a temple
+    # bell), a big gong, stone struck and a rock fall for the boulders, skis in soft snow for the
+    # snowball, a wooden door's creak for the rice cart.
+    'tbell': 'Ivo Vicic - Church Bells/04 Church Bells, Near Distance, In Church Tower-3 Different Bell 02.wav',
+    'gong': 'Orbital Emitter - Cinematic Transitions for Editors Volume 2/80,TheGong.wav',
+    'stone': 'BluezoneCorp - Stone Impact/Bluezone_BC0297_stone_impact_015.wav',
+    'stone2': 'BluezoneCorp - Stone Impact/Bluezone_BC0297_stone_impact_041.wav',
+    'rockfall': 'BluezoneCorp - Alien Tripod/Bluezone_BC0292_alien_tripod_debris_rock_collapse_earthquake_rumble_large_005.wav',
+    'ski': 'Wavemotion - Ski Ride/SPRTWntr-EXT_Skiing On Soft Snow 01_WM_SKIRIDE.wav',
+    'doorcreak': 'Rogue Waves - Creaking Door/DOORCreak_Wooden Door, Opening and Closing 09_RogueWaves_CreakingDoor.wav',
 }
 
 # name: [(source, start s, length s, pitch x, gain dB, delay ms), ...]
@@ -374,6 +384,22 @@ B = {
     'hurdleClack': [('spear', 0.0, 0.3, 1.2, 0, 0), ('arrow', 0.0, 0.7, 1.25, -6, 30)],
     'hurdleTumble': [('spear', 0.0, 0.35, 0.95, -2, 0), ('pats', 0.0, 0.3, 0.9, -3, 120), ('dizzy', 0.0, 1.6, 1.15, -5, 260)],
     'furin': [('handbell', 0.28, 1.3, 2.15, 0, 0)],
+    # Mochitsuki Mountain (2026-11-16). A temple bell's ding for each count (and far off now and
+    # then), and the great bell with a gong under it at Go - and for every bell a racer strikes;
+    # a boulder's blows (stone struck, a thump under it) and its burst (a rock fall); a snowball's
+    # crunch through the snow on each shove, its swish as it slips back and its thump into the
+    # drift; the rice cart's creak on each tug, a thunk and a strained creak as a wheel sticks; a
+    # piece of kagami-mochi plopping onto the stack.
+    'mtTing': [('tbell', 1.6, 1.15, 0.84, 0, 0)],
+    'mtGong': [('gong', 0.08, 3.4, 0.8, 0, 0), ('tbell', 15.24, 1.05, 0.62, -5, 0)],
+    'rockHit': [('stone', 0.0, 0.5, 0.8, 0, 0), ('taiko', 0.0, 0.35, 1.3, -10, 0)],
+    'rockBreak': [('stone2', 0.0, 0.28, 0.7, -1, 0), ('rockfall', 2.5, 2.0, 1.0, -2, 40)],
+    'snowCrunch': [('ski', 0.98, 0.5, 0.9, 0, 0)],
+    'snowSlip': [('ski', 12.75, 0.75, 1.05, 0, 0)],
+    'snowThump': [('ski', 13.9, 0.4, 0.85, -2, 0), ('pats', 0.0, 0.3, 0.7, -4, 0)],
+    'cartCreak': [('gatecreak', 11.55, 0.6, 0.9, 0, 0)],
+    'cartStuck': [('spear', 0.0, 0.3, 0.7, 0, 0), ('doorcreak', 4.64, 0.7, 0.85, -3, 120)],
+    'mochiPlop': [('woodsq', 0.0, 0.3, 0.75, 0, 0), ('pats', 0.0, 0.3, 0.85, -6, 0)],
     'tanaStars': [('twinkle', 0.0, 1.8, 0.95, -2, 0), ('handbell', 0.28, 1.6, 1.6, -6, 200), ('handbell', 0.28, 1.6, 2.0, -8, 520)],
 }
 

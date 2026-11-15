@@ -614,3 +614,40 @@ test('Mochitsuki Mountain rice cart: hauled up the slope between its shafts, a w
   assert.equal(seen['0c'].stuck, false, 'a cheer keeps it rolling');
   assert.ok(seen['2400'].secs < seen['0'].secs / 2.5, JSON.stringify(seen));
 });
+
+test('Mochitsuki Mountain sounds its work: temple bell dings for the count and the great bell at Go, every bell strike, blow, crunch, creak, plop and pound', async () => {
+  const { hearWorld } = await import('../src/audio/listen.js');
+  const { placeOf } = await import('../src/audio/ambience.js');
+  assert.equal(placeOf(MAPS.mrace_power), 'mountain', 'a winter wind and the festival, not the town');
+  const heard = [];
+  const was = globalThis.__tengu;
+  globalThis.__tengu = { onSound: (n, o) => heard.push([n, o?.db ?? 0, o?.pan ?? 0]) };
+  try {
+    const rec = mochi(77, 900);
+    rec.stats.power.points = 0;
+    const w = racer(rec);
+    assert.ok(startRace(w, rec, 'power'));
+    const R = w.race;
+    for (let t = 0; t < 300 && !(R.phase === 'done' && R.t > 2); t += 1 / 30) {
+      updateWorld(w, 1 / 30, keys());
+      hearWorld(w, { x: w.body.x - 320, y: 0 });
+    }
+    const me = R.racers[R.me];
+    // (Yours: dead centre and loudest; the others are at least 9 dB under.)
+    const mine = (n) => heard.filter(([m, db, pan]) => m === n && pan === 0 && db > -8.5).length;
+    const all = (n) => heard.filter(([m]) => m === n).length;
+    assert.equal(all('mtTing') >= 3, true);
+    assert.ok(!heard.some(([n]) => n === 'taikoDon' || n === 'taikoGo'), 'not the plain taiko');
+    assert.equal(mine('mtGong'), me.bell.done + 1, 'Go, and each strike of its bell');
+    assert.equal(mine('rockHit'), me.rock.done - 1, 'each blow but the last');
+    assert.equal(mine('rockBreak'), 1);
+    assert.ok(mine('snowCrunch') >= 5, 'crunching up the slope');
+    assert.ok(mine('snowSlip') >= 1, 'the weakest slips back');
+    assert.ok(all('cartCreak') >= 5, 'creaking up the slope');
+    assert.ok(mine('cartStuck') === 1, 'a wheel sticks once');
+    assert.equal(mine('mochiPlop'), 3);
+    assert.equal(mine('mochiPound'), me.pound.done);
+  } finally {
+    globalThis.__tengu = was;
+  }
+});

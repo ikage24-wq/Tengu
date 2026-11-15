@@ -405,6 +405,17 @@ Object.assign(RECORDED, {
   hurdleTumble: { trim: 0 },
   furin: { trim: 0 },
   tanaStars: { trim: 0 },
+  // (Mochitsuki Mountain, 2026-11-16: tools/build-fight.py.)
+  mtTing: { trim: 0 },
+  mtGong: { trim: 0 },
+  rockHit: { trim: 0 },
+  rockBreak: { trim: 0 },
+  snowCrunch: { trim: 0 },
+  snowSlip: { trim: 0 },
+  snowThump: { trim: 0 },
+  cartCreak: { trim: 0 },
+  cartStuck: { trim: 0 },
+  mochiPlop: { trim: 0 },
   kingFanfare: { trim: 0 },
 });
 

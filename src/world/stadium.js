@@ -369,6 +369,7 @@ function powerMap() {
   const G = 560;
   const terrain = [[0, G], [900, G], [1020, G - 14], [1200, G - 44], [1380, G - 64], [1500, G - 72], [2720, G - 72]];
   return courseMap('mrace_power', 'Mochitsuki Mountain', {
+    amb: 'mountain',
     width: 2720, height: 680, sky: 'winter', groundY: G, ground: 'snowpeak', skyline: 'course:snow',
     look: { aerial: 0.55, clouds: false, groundArt: 'snow', cast: 'pound', edges: 'snow', festival: true, bar: 'snow', flakes: true, calm: true, snowfall: true, kicks: ['#ffffff', '#eef4ff', '#dce8fb'], petals: ['#ffffff', '#eef4ff', '#dce8fb', '#ffe8f0'] },
     terrain,

@@ -16,7 +16,8 @@ import { getMap } from '../data/maps.js';
 import { hasRage, hasFaith, hasBond } from '../world/melee.js';
 import { SKILLS } from '../data/skills.js';
 import { isQueen } from '../world/story.js';
-import { introLen, COUNTDOWN, CREST_AHEAD, JUMP_PHASE, FALL } from '../world/mochi-race.js';
+import { introLen, COUNTDOWN, CREST_AHEAD, JUMP_PHASE, FALL, ROLL_BEAT } from '../world/mochi-race.js';
+import { CART_BEAT } from '../data/mochi-race.js';
 
 const memo = new WeakMap();
 
@@ -113,16 +114,18 @@ function hearFestival(world, m) {
   const kingdom = world.map.look.groundArt === 'kingdom';
   // (Tanabata Hurdles' star night: a bamboo knock for the count, two and a wind chime at LEAP!)
   const tanabata = world.map.look.groundArt === 'tanabata';
+  // (Mochitsuki Mountain: a temple bell's ding for the count, the great bell at Go.)
+  const mountain = world.map.look.cast === 'pound';
   if (R.phase === 'ready') {
     const il = introLen(R);
     const n = R.t >= il ? Math.ceil(il + COUNTDOWN - R.t) : null;
     if (n != null && n !== f.beat && n >= 1 && n <= 3) {
       f.beat = n;
-      sfx(lake ? 'lakeToot' : maple ? 'mochiPound' : snow ? 'snowBell' : sweets ? 'sweetPop' : matsuri ? 'matsuriDon' : kingdom ? 'kingTap' : tanabata ? 'tanaKnock' : 'taikoDon', { rate: n === 1 ? (sweets ? 1.12 : 1.06) : 1 });
+      sfx(lake ? 'lakeToot' : maple ? 'mochiPound' : snow ? 'snowBell' : sweets ? 'sweetPop' : matsuri ? 'matsuriDon' : kingdom ? 'kingTap' : tanabata ? 'tanaKnock' : mountain ? 'mtTing' : 'taikoDon', { rate: n === 1 ? (sweets ? 1.12 : 1.06) : 1 });
     }
   } else if (!f.go) {
     f.go = true;
-    sfx(lake ? 'lakeWhistle' : maple ? 'mochiPoundGo' : snow ? 'snowGo' : sweets ? 'sweetGo' : matsuri ? 'matsuriGo' : kingdom ? 'kingGo' : tanabata ? 'tanaGo' : 'taikoGo');
+    sfx(lake ? 'lakeWhistle' : maple ? 'mochiPoundGo' : snow ? 'snowGo' : sweets ? 'sweetGo' : matsuri ? 'matsuriGo' : kingdom ? 'kingGo' : tanabata ? 'tanaGo' : mountain ? 'mtGong' : 'taikoGo');
     if (kingdom) sfx('kingGate', { db: -4 });
   }
   if (lake) hearLake(world, R, f);
@@ -132,6 +135,7 @@ function hearFestival(world, m) {
   if (matsuri) hearMatsuri(R, f, t);
   if (kingdom) hearKingdom(world, R, f, t);
   if (tanabata) hearTanabata(R, f, t);
+  if (mountain) hearMountain(R, f);
   if (R.finalAt != null && !f.final) {
     f.final = true;
     sfx('crowdSwell');
@@ -203,6 +207,98 @@ function hearTanabata(R, f, t) {
   } else if (!f.starred && R.t > 1.4) {
     f.starred = true;
     sfx('tanaStars');
+  }
+}
+
+// Mochitsuki Mountain (2026-11-16): every racer's work - yours loudest, the rest softer and panned to
+// where they are from yours, those far off not at all: each strike of its temple bell (the great
+// bell, fuller the stronger it is), each blow on its boulder and the burst, its snowball crunching
+// up through the snow with each shove (a swish as it slips back, a thump into the drift), its rice
+// cart creaking with each tug (a thunk as a wheel sticks), each piece of kagami-mochi plopping on,
+// each pound of the mochi; a twinkle as a stack is crowned or the mochi's done.
+function hearMountain(R, f) {
+  const you = R.racers[R.me];
+  if (R.phase === 'ready') return;
+  f.mt ??= new WeakMap();
+  for (const r of R.racers) {
+    let s = f.mt.get(r);
+    if (!s) f.mt.set(r, (s = {}));
+    const far = Math.abs(r.x - you.x);
+    if (far > 300) continue;
+    const pan = Math.max(-0.6, Math.min(0.6, (r.x - you.x) / 260));
+    const db = r.you ? 0 : -9 - (far / 300) * 6;
+    // (How hard a range of Power hits: the weakest softer and lighter, the strongest full.)
+    const hard = (tier) => ({ db: db - (5 - tier) * 1.6, rate: 1.12 - tier * 0.035, pan });
+    const b = r.bell;
+    if (b && b.done > (s.bell ?? 0)) {
+      s.bell = b.done;
+      sfx('mtGong', hard(b.tier));
+    }
+    if (b?.rung != null && !s.rung) {
+      s.rung = true;
+      sfx('leapStar', { pan, db: db - 4 });
+    }
+    const k = r.rock;
+    if (k && k.done > (s.rock ?? 0)) {
+      s.rock = k.done;
+      if (k.broke == null) sfx('rockHit', hard(k.tier));
+    }
+    if (k?.broke != null && !s.broke) {
+      s.broke = true;
+      sfx('rockBreak', { pan, db });
+    }
+    const ball = r.ball;
+    if (ball) {
+      const beat = Math.floor((R.clock - ball.act) / ROLL_BEAT[ball.tier]);
+      if (ball.parked == null && ball.slip == null && (beat !== s.ballBeat || ball.act !== s.ballAct)) {
+        s.ballBeat = beat;
+        s.ballAct = ball.act;
+        sfx('snowCrunch', { pan, db: db - 7 + ball.tier * 0.6 });
+      }
+      if (ball.slip != null && ball.slip !== s.slip) {
+        s.slip = ball.slip;
+        sfx('snowSlip', { pan, db: db - 3 });
+      }
+      if (ball.parked != null && !s.parked) {
+        s.parked = true;
+        sfx('snowThump', { pan, db: db - 2 });
+      }
+    }
+    const c = r.cart;
+    if (c) {
+      const beat = Math.floor((R.clock - c.act) / CART_BEAT[c.tier]);
+      if (c.parked == null && c.stuck == null && (beat !== s.cartBeat || c.act !== s.cartAct)) {
+        s.cartBeat = beat;
+        s.cartAct = c.act;
+        sfx('cartCreak', { pan, db: db - 9, rate: 0.92 + ((beat * 7) % 5) * 0.04 });
+      }
+      if (c.stuck != null && c.stuck !== s.stuck) {
+        s.stuck = c.stuck;
+        sfx('cartStuck', { pan, db: db - 2 });
+      }
+      if (c.parked != null && !s.cartParked) {
+        s.cartParked = true;
+        sfx('snowThump', { pan, db: db - 4 });
+      }
+    }
+    const st = r.stack;
+    if (st && st.landed.length > (s.plops ?? 0)) {
+      s.plops = st.landed.length;
+      sfx('mochiPlop', { pan, db: db - (st.tier >= 4 ? 0 : 2), rate: [1, 1.12, 1.4][s.plops - 1] ?? 1 });
+    }
+    if (st?.done != null && !s.crowned) {
+      s.crowned = true;
+      sfx('leapStar', { pan, db: db - 4 });
+    }
+    const p = r.pound;
+    if (p && p.done > (s.pound ?? 0)) {
+      s.pound = p.done;
+      sfx('mochiPound', hard(p.tier));
+    }
+    if (p?.finished != null && !s.pounded) {
+      s.pounded = true;
+      sfx('leapStar', { pan, db: db - 4 });
+    }
   }
 }
 
