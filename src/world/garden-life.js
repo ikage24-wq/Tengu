@@ -54,6 +54,8 @@ import { choose, drainNeeds, satisfy, needsOf, mainNeed, befriend, bestFriend, i
 import { gardenWeatherTick } from './garden-weather.js';
 import { FEELINGS, SAD, feel, feelingOf, feelWant, quirksOf, hasQuirk, memoryOf, welcomeOf, giftDue, giftOf, gameFor, accepts, topicsFor, KIND_HEARTS } from './mochi-heart.js';
 import { FURNITURE_BY_ID } from '../data/furniture.js';
+import { noteDiary, diaryDay } from '../data/mochi-diary.js';
+import { festivalTick, stayUp, festivalSpot, OFFERING, MORTAR } from './garden-festival.js';
 
 // Where things are in the garden (world/garden.js).
 // (A row of them on the ground just inside the gate, where the square's lantern lights them:
@@ -203,6 +205,23 @@ function brainOptions(world, life, e) {
   if (walker) decorOptions(world, life, e, out);
   heartOptions(world, life, e, out, walker);
   weatherOptions(world, life, e, out, walker);
+  festivalOptions(world, life, e, out, walker);
+  // (A spot already taken - another Mochi stood there, or on its way there - it takes the place
+  // beside instead, still facing what it came for: two never stand one inside the other sniffing
+  // the same flower or reaching for the same fruit.)
+  for (const o of out) {
+    if (o.follow || o.ride || o.x == null || o.id === 'swim') continue;
+    const taken = (x) => life.mochi.some((q) => q !== e && !q.hidden && ((q.x != null && Math.abs(q.x - x) < 9) || (q.brain?.plan && !q.brain.plan.arrived && Math.abs(q.brain.plan.x - x) < 9)));
+    if (!taken(o.x)) continue;
+    for (const dx of [14, -14, 26, -26]) {
+      const nx = Math.max(LAND[0] + 6, Math.min(LAND[1] - 6, o.x + dx));
+      if (!taken(nx)) {
+        if (o.face == null && o.act) o.face = o.x;
+        o.x = nx;
+        break;
+      }
+    }
+  }
   // (Somewhere to be on its own - a wander, a rest, a roll - isn't right where two others already
   // stand: it picks a spot a little way off, so they never pile up in one place.)
   for (const o of out) {
@@ -313,6 +332,41 @@ function weatherOptions(world, life, e, out, walker) {
   }
   // A rainbow: everyone wants a look.
   if (W.rainbow > 0.4 && walker) out.push({ id: 'rainbow', kind: 'explore', like: 'explore', x: clearOfProps(Math.max(LAND[0] + 40, Math.min(LAND[1] - 40, e.x + (hash(rec.seed * 6.1) - 0.5) * 60))), act: 'wow', hold: 4.5, gains: { curious: 45, fun: 15 }, boost: 3 * W.rainbow, stay: 4 });
+}
+// The festival (world/garden-festival.js): by day a bow at the moon offering, once each; from dusk,
+// sitting out with a skewer of dango to watch the moon rise over the cliff - which nearly everyone
+// would rather do than anything else.
+export function festivalSpots(life) {
+  const placed = (life.owner?.garden?.placed ?? []).filter((p) => p.map === 'garden');
+  const key = placed.map((p) => `${p.uid}@${p.x}`).join();
+  if (life.festSpots?.key !== key) {
+    const widthOf = (p) => FURNITURE_BY_ID[p.id]?.w;
+    life.festSpots = { key, offering: festivalSpot(OFFERING, placed, gardenSpotWhy, widthOf), mortar: festivalSpot(MORTAR, placed, gardenSpotWhy, widthOf) };
+  }
+  return life.festSpots;
+}
+function festivalOptions(world, life, e, out, walker) {
+  const F = world.gardenFestival;
+  if (!F || F.k < 0.5 || !walker) return;
+  const rec = e.rec;
+  const spots = festivalSpots(life);
+  if (F.eve > 0.25) {
+    // (Each its own seat across the orchard's flat, facing the moon; the first few close by the offering.)
+    const i = Math.max(0, life.mochi.filter((o) => !o.guest).indexOf(e));
+    const seat = i < 3 ? spots.offering - 24 - i * 17 : 1452 + ((i * 97 + Math.floor(hash(rec.seed) * 40)) % 360);
+    const x = clearOfProps(Math.max(LAND[0] + 30, Math.min(LAND[1] - 24, seat)));
+    out.push({ id: 'moongaze', kind: 'rest', like: 'social', x, face: x + 60, act: 'moonsit', hold: 16, gains: { energy: 15, social: 25, curious: 30 }, boost: 8 * F.eve * (hasQuirk(rec, 'stargazer') ? 1.4 : 1), stay: 16, moon: true });
+    // (Anything else can wait - but a present for you, or sitting by you, or a sad friend.)
+    const KEEP = new Set(['moongaze', 'givegift', 'sitby']);
+    for (const o of out) if (!KEEP.has(o.id) && o.invite?.kind !== 'comfort') o.boost = (o.boost ?? 1) * (1 - 0.88 * F.eve);
+    return;
+  }
+  // A bow at the offering, once each this festival.
+  life.festBowed = life.festBowed?.day === F.day ? life.festBowed : { day: F.day, seen: new Set() };
+  if (!life.festBowed.seen.has(rec.seed)) {
+    const side = hash(rec.seed * 1.9) < 0.5 ? -1 : 1;
+    out.push({ id: 'offering', kind: 'explore', like: 'explore', x: spots.offering + side * 22, face: spots.offering, act: 'offerbow', hold: 2.4, gains: { curious: 30, social: 10 }, boost: 1.8, stay: 2.6, bow: true });
+  }
 }
 // What it holds over its head out in the rain: a big leaf - each picking one up at its own moment as
 // the rain gets going and putting it away as it eases off - but not while it's splashing in a
@@ -545,6 +599,7 @@ function startSeesaw(world, life, e) {
     Object.assign(other.ride, { waiting: false, go, pair: e });
     Object.assign(e.ride, { go, pair: other });
     life.seesaw = { go, down: other.ride.seat };
+    diary(world, life, 'seesaw', other, e);
   } else e.ride.waiting = true;
   e.m.action = { name: 'seesawsit', t0: world.now, hold: 60 };
   return true;
@@ -799,6 +854,8 @@ export function tickGarden(world, dt) {
       world.emote = { face: 'excited', t: 2 };
     }
   }
+  // The festival, if it's a festival day (world/garden-festival.js): the market's stall opens for it.
+  festivalTick(world);
   // (In the Mochi Market there is nothing else of the garden's to look after.)
   if (life.market) return;
   // The weather (world/garden-weather.js): the same for everyone, by the clock.
@@ -818,7 +875,8 @@ export function tickGarden(world, dt) {
   if (map.garden && !map.indoor) restSeesaw(map, life);
   const now = Date.now() / 1000;
   // (The world's own night: the game clock, or what a scene or a test has set.)
-  const night = (world.night ?? nightOf(new Date())) > 0.5;
+  // (A festival night, they're up late watching the moon.)
+  const night = (world.night ?? nightOf(new Date())) > 0.5 && !stayUp(world.gardenFestival);
   const inside = Boolean(map.indoor);
   // Greeting: the first moment you're here, the Mochi who love you most come running.
   const owner = !world.gardenVisit;
@@ -834,6 +892,7 @@ export function tickGarden(world, dt) {
       if (w?.kind === 'missed') {
         e.greet = { until: now + 7 + i * 0.4, missed: true };
         feel(e, 'excited', w.k, world.now, 'you');
+        diary(world, life, 'missed', e);
       } else if ((e.rec.bond ?? 0) >= 250) e.greet = { until: now + 6 + i * 0.4 };
       else if (w?.kind === 'shy') feel(e, 'shy', w.k, world.now, 'you');
     });
@@ -894,6 +953,7 @@ export function tickGarden(world, dt) {
         sm.noIdle = false;
         e.scene = null;
         if (owner) world.log(`${rec.name ?? 'It'} hatched again: a little Mochiko, generation ${rec.gen}!`, '#ffc2d4');
+        diary(world, life, 'reborn', e);
       } else return;
     }
     const m = e.m;
@@ -908,6 +968,7 @@ export function tickGarden(world, dt) {
       if (life.caring === e) life.caring = null;
       const who = rec.name ?? 'Your Mochiko';
       world.log(out.stage === 'tsukimochi' ? `${who} is glowing... a Tsukimochi! It will live forever.` : `${who} is glowing... evolving into ${STAGES[out.stage] ?? out.stage}!`, '#ffc2d4');
+      diary(world, life, 'evolved', e, null, `${/^[AEIOU]/.test(STAGES[out.stage] ?? '') ? 'an' : 'a'} ${STAGES[out.stage] ?? out.stage}`);
       return;
     }
     // The end of a long, happy life: back to its egg, to start again (stronger for it).
@@ -1038,7 +1099,7 @@ export function tickGarden(world, dt) {
     // (As it feels: skipping along when it's happy, trudging when it's sulking or lonely.)
     const fl = feelingOf(e, world.now);
     const vf = v0 * (fl && fl.k >= 0.3 ? FEELINGS[fl.kind].walk : 1);
-    const v = other ? Math.max(vf, 40) : e.ballChase && !e.ballPlayed ? Math.max(vf, 52) : inMoment ? Math.max(vf, mo.kind === 'tag' ? 50 : mo.kind === 'hide' ? 44 : 26) : vf;
+    const v = other ? Math.max(vf, 40) : e.ballChase && !e.ballPlayed ? Math.max(vf, 52) : inMoment ? Math.max(vf, mo.kind === 'tag' ? 50 : mo.kind === 'hide' || mo.kind === 'pound' ? 44 : 26) : vf;
     // It gets going and slows to a stop smoothly (never off at full speed, never a dead stop), and
     // turns round only once it's stopped.
     const dx = target - e.x;
@@ -1353,7 +1414,7 @@ export function applyGardenGift(world, msg, who) {
 // gentle one makes up with one it fell out with; two who don't get on, bumping into each other,
 // have a squabble.)
 export const momentOf = (personality) => gameFor({ personality, tricks: ['wave'] }, {}, 0);
-const DUO_SECS = { tag: 10, hide: 13, chat: 7.6, trick: 6.6, dance: 7, snack: 9, comfort: 7.6, makeup: 7.6, squabble: 5, decline: 2.6 };
+const DUO_SECS = { tag: 10, hide: 13, chat: 7.6, trick: 6.6, dance: 7, snack: 9, comfort: 7.6, makeup: 7.6, squabble: 5, decline: 2.6, pound: 12 };
 const SNUBS = ['grumpy', 'loner'];
 // Where to hide in hide-and-seek: tucked in beside the garden's big things.
 const HIDE_SPOTS = [1520, 1612, 1640, 1786, 1928, 1108, 640, 1036, 2052];
@@ -1366,7 +1427,9 @@ function heartOptions(world, life, e, out, walker) {
   const mine = !e.guest && !world.gardenVisit;
   const tick = e.brain?.tick ?? 0;
   // Asking a friend to play (the friendliest and nearest few).
-  const others = life.mochi.filter((o) => o !== e && !o.hidden && o.x != null && !o.guest && !o.duo && !o.ride && !o.scene && Math.abs(o.x - e.x) < 600);
+  // (Not one out in the pond, if it can't swim out to it.)
+  const reach = (o) => o.x <= LAND[1] || pts(rec, 'swim') >= CANT.swim;
+  const others = life.mochi.filter((o) => o !== e && !o.hidden && o.x != null && !o.guest && !o.duo && !o.ride && !o.scene && Math.abs(o.x - e.x) < 600 && reach(o));
   const cands = others.map((o) => [o, friendsOf(rec)[o.rec.seed] ?? 0]).sort((p, q) => q[1] - p[1] || Math.abs(p[0].x - e.x) - Math.abs(q[0].x - e.x)).slice(0, 3);
   for (const [o, f] of cands) {
     if (life.mochi.some((q) => q !== e && q.brain?.plan?.invite?.with === o)) continue;
@@ -1374,7 +1437,12 @@ function heartOptions(world, life, e, out, walker) {
     if (isRival(rec, o.rec)) {
       if (f > -40 && (KIND_HEARTS.has(rec.personality) || hasQuirk(rec, 'cuddler')) && !SAD.has(feelingOf(e, now)?.kind)) kind = 'makeup';
       else continue;
-    } else kind = gameFor(rec, o, now);
+    } else kind = gameFor(rec, o, now, hash(rec.seed * 0.37 + o.rec.seed * 0.11 + Math.floor(now / 30)));
+    // (A festival night, the moon's up: no games - only a sad friend gets fetched away from it.)
+    if ((world.gardenFestival?.eve ?? 0) > 0.25 && kind !== 'comfort' && kind !== 'makeup') continue;
+    // (A festival day: off to pound mochi together at the mortar, now and then - one pair at a time.)
+    const F = world.gardenFestival;
+    if (F && F.k > 0.5 && F.eve < 0.25 && kind !== 'makeup' && kind !== 'comfort' && !(life.duos ?? []).some((d) => d.kind === 'pound') && hash(rec.seed * 0.53 + o.rec.seed * 0.29 + Math.floor(now / 40)) < 0.4) kind = 'pound';
     const running = ['tag', 'hide', 'dance', 'snack'].includes(kind);
     if (running && (pts(rec, 'run') < CANT.run || pts(o.rec, 'run') < CANT.run)) kind = 'chat';
     const fun = ['chat', 'comfort', 'makeup'].includes(kind) ? 15 : 40;
@@ -1429,6 +1497,11 @@ function quirkWant(rec, o) {
   return k;
 }
 // What it feels, and what it remembers, once it's got where it was going.
+// The garden's diary (data/mochi-diary.js): what they got up to, written in your own garden.
+function diary(world, life, k, a, b = null, x = null) {
+  if (world.gardenVisit || !life.owner?.garden) return;
+  noteDiary(life.owner.garden, diaryDay(world.dayClock?.() ?? new Date()), k, b ? [a.rec, b.rec] : [a.rec], x);
+}
 function arrivedAt(world, life, e, p) {
   const now = world.now;
   if (p.kind === 'play' || p.kind === 'ride') feel(e, 'joy', 0.4, now);
@@ -1442,8 +1515,18 @@ function arrivedAt(world, life, e, p) {
   if (p.news) {
     p.news.seen.add(e.rec.seed);
     feel(e, 'curious', 0.7, now);
+    if (p.news.what) diary(world, life, 'news', e, null, p.news.what);
+    else if (p.news.who && p.news.who !== e) diary(world, life, 'hello', e, p.news.who);
   }
-  if (p.sitby) feel(e, 'loving', 0.8, now, 'you');
+  if (p.sitby) {
+    feel(e, 'loving', 0.8, now, 'you');
+    diary(world, life, 'sitby', e);
+  }
+  if (p.bow) life.festBowed?.seen.add(e.rec.seed);
+  if (p.moon) {
+    feel(e, 'loving', 0.6, now, 'moon');
+    diary(world, life, 'moon', e);
+  }
 }
 // Asked a friend: does it want to?
 function askToPlay(world, life, e, p) {
@@ -1461,7 +1544,9 @@ export function startDuo(world, life, kind, a, b, asked = kind) {
   const duo = { kind, asked, a, b, t0: now, t: 0, mx, side: hash(a.rec.seed * 0.7 + now) < 0.5 ? -1 : 1, done: new Set(), len: DUO_SECS[kind] };
   const near = (list, x, not = null) => [...list].filter((v) => v !== not).sort((p, q) => Math.abs(p - x) - Math.abs(q - x));
   if (kind === 'hide') {
-    duo.tree = near(COUNT_TREES, mx)[0];
+    // (It counts against the nearest tree - or, with none near, right where it is, eyes covered.)
+    const tree = near(COUNT_TREES, mx)[0];
+    duo.tree = Math.abs(tree - b.x) < 150 ? tree : b.x + (b.x < mx ? -6 : 6);
     const spots = near(HIDE_SPOTS, duo.tree).filter((x) => Math.abs(x - duo.tree) > 40 && Math.abs(x - duo.tree) < 420);
     duo.spot = spots[Math.floor(hash(now * 0.37) * Math.min(3, spots.length))] ?? duo.tree + 80;
     duo.wrong = spots.find((x) => x !== duo.spot) ?? duo.tree - 60;
@@ -1470,6 +1555,11 @@ export function startDuo(world, life, kind, a, b, asked = kind) {
     const blanket = (life.owner?.garden?.placed ?? []).filter((p) => p.map === 'garden' && FURNITURE_BY_ID[p.id]?.use === 'picnic').map((p) => p.x);
     duo.food = near([1537, 2074, ...blanket], mx)[0];
     duo.tree = blanket.includes(duo.food) ? null : duo.food;
+  }
+  if (kind === 'pound') {
+    duo.mortar = festivalSpots(life).mortar;
+    // (However far it is to the mortar, time to get there and still pound a while.)
+    duo.len += Math.max(Math.abs(a.x - duo.mortar), Math.abs(b.x - duo.mortar)) / 44;
   }
   if (kind === 'chat') {
     const w = world.gardenWeather?.kind ?? null;
@@ -1493,6 +1583,10 @@ function duoTarget(world, d, e) {
   const other = lead ? d.b : d.a;
   const { mx, side } = d;
   switch (d.kind) {
+    // Pounding mochi: the one who asked swings the mallet at the mortar's left, the other kneels at
+    // its right to turn the mochi between strikes.
+    case 'pound':
+      return lead ? d.mortar - 22 : d.mortar + 13;
     // Tag: one chases, the other runs; caught, the other way round.
     case 'tag': {
       const round = Math.floor(t / 3.3);
@@ -1501,7 +1595,7 @@ function duoTarget(world, d, e) {
     }
     // Hide-and-seek: the seeker counts at a tree, looks in the wrong place, then finds it.
     case 'hide':
-      if (e === d.b) return t < 3.6 ? d.tree + (mx < d.tree ? -10 : 10) : t < 7 ? d.wrong + 12 : d.spot + (d.wrong < d.spot ? -13 : 13);
+      if (e === d.b) return t < 3.6 ? (COUNT_TREES.includes(d.tree) ? d.tree + (mx < d.tree ? -10 : 10) : d.tree) : t < 7 ? d.wrong + 12 : d.spot + (d.wrong < d.spot ? -13 : 13);
       return t < 0.4 ? e.x : d.spot;
     case 'snack':
       return d.food + (lead ? -10 : 10);
@@ -1642,6 +1736,29 @@ function duoBeats(world, d) {
         act(b, 'sulk', 1);
       });
       break;
+    // Pounding: once both are in place, the mallet swings (its own way, by its Power: render/
+    // mochi-anim.js pound0-5) and the other turns the mochi in time between the strikes; then a taste.
+    case 'pound': {
+      const ready = Math.abs(a.x - (d.mortar - 22)) < 1.5 && Math.abs(b.x - (d.mortar + 13)) < 1.5 && Math.abs(a.vx ?? 0) < 2 && Math.abs(b.vx ?? 0) < 2;
+      // (Started together, so the turning keeps time with the strikes - and if either's move is
+      // dropped part way, both start again together, on the same beat.)
+      const going = d.poundAt != null && t < d.len - 2.2 && (a.m.action?.name !== `pound${styleOf(pts(a.rec, 'power'))}` || b.m.action?.name !== 'festturn');
+      if ((ready && d.poundAt == null) || (going && ready)) {
+        d.poundAt ??= t;
+        act(a, `pound${styleOf(pts(a.rec, 'power'))}`, Math.max(2, d.len - t - 2.2));
+        act(b, 'festturn', Math.max(2, d.len - t - 2.2));
+      }
+      // (Facing each other across the mortar.)
+      if (ready) {
+        a.m.dir = 1;
+        b.m.dir = -1;
+      }
+      if (d.poundAt != null) once('taste', d.len - 1.6, () => {
+        act(a, 'yum');
+        act(b, 'yum');
+      });
+      break;
+    }
     case 'decline':
       once('no', 0.15, () => act(b, feelingOf(b, world.now)?.kind === 'sleepy' ? 'yawn' : 'nope'));
       once('aw', 1.2, () => act(a, SNUBS.includes(b.rec.personality) ? 'sulk' : 'sigh', 1));
@@ -1679,9 +1796,10 @@ const OUTCOME = {
   tag: [3, { fun: 40, social: 30 }, 'joy', 'play'], hide: [3, { fun: 45, social: 30 }, 'joy', 'play'], chat: [2, { social: 45, curious: 15 }, 'joy', 'social'],
   trick: [2, { social: 30, fun: 25 }, 'joy', 'social'], dance: [3, { fun: 40, social: 35 }, 'joy', 'play'], snack: [2, { hunger: 45, social: 30 }, 'joy', 'snack'],
   comfort: [4, { social: 50 }, 'loving', 'social'], makeup: [0, { social: 30 }, 'loving', 'social'], squabble: [-3, {}, 'sulky', null], decline: [0, {}, null, null],
+  pound: [3, { fun: 35, social: 35, hunger: 25 }, 'joy', 'play'],
 };
 function endDuo(world, life, d, finished) {
-  const games = ['count', 'hidecrouch', 'talk', 'hug', 'pat', 'stomp', 'dance1', 'giggle', 'lookaround', 'sigh', 'nope'];
+  const games = ['count', 'hidecrouch', 'talk', 'hug', 'pat', 'stomp', 'dance1', 'giggle', 'lookaround', 'sigh', 'nope', 'festturn', 'pound0', 'pound1', 'pound2', 'pound3', 'pound4', 'pound5'];
   for (const e of [d.a, d.b]) {
     e.duo = null;
     if (e.m.action && games.includes(e.m.action.name)) e.m.action = null;
@@ -1701,6 +1819,7 @@ function endDuo(world, life, d, finished) {
   }
   if (d.kind === 'trick') feel(d.a, 'proud', 0.85, now, 'trick');
   if (d.kind === 'decline') feel(d.a, SNUBS.includes(d.b.rec.personality) ? 'sulky' : 'shy', 0.55, now, 'no');
+  diary(world, life, d.kind, d.a, d.b, d.kind === 'chat' ? d.say?.[0] ?? null : null);
 }
 
 // Each moment: how each feels, as it is and as it's catching from those round it; its habits; its
@@ -1715,7 +1834,7 @@ function tickHearts(world, life, night, dt) {
   life.news = (life.news ?? []).filter((n) => now < n.until);
   for (const p of placed) if (!life.known.decor.has(p.uid)) {
     life.known.decor.add(p.uid);
-    life.news.push({ id: `d${p.uid}`, x: p.x, until: now + 90, seen: new Set() });
+    life.news.push({ id: `d${p.uid}`, x: p.x, what: FURNITURE_BY_ID[p.id]?.name?.toLowerCase() ?? null, until: now + 90, seen: new Set() });
   }
   for (const e of life.mochi) if (!life.known.mochi.has(e.rec.seed) && e.x != null) {
     life.known.mochi.add(e.rec.seed);
@@ -1738,7 +1857,10 @@ function tickHearts(world, life, night, dt) {
       if (n.social < 22 && !friendNear && !e.duo) feel(e, 'lonely', 0.65, now, 'alone');
       if (n.fun < 18 && n.curious < 40) feel(e, 'bored', 0.6, now, 'bored');
       // (One that loves the rain is happiest in it.)
-      if (W?.kind === 'rain' && W.k > 0.3 && hasQuirk(rec, 'rainlover')) feel(e, 'joy', 0.7, now, 'rain');
+      if (W?.kind === 'rain' && W.k > 0.3 && hasQuirk(rec, 'rainlover') && !e.guest) {
+        feel(e, 'joy', 0.7, now, 'rain');
+        diary(world, life, 'rain', e);
+      }
       // Catching it from a friend beside it: a happy one cheers it up, a yawn sets it yawning.
       const f = feelingOf(e, now);
       if (f && f.k > 0.5 && FEELINGS[f.kind].spread) {
@@ -1749,9 +1871,15 @@ function tickHearts(world, life, night, dt) {
         }
       }
     }
+    // (A move begun while it's off out of sight is never drawn, so it never plays out: let go after a
+    // few seconds, so it doesn't hang on and turn up late, or stop the next one.)
+    if (e.m.action && e.m.action.t0 == null) {
+      e.m.action.seenAt ??= now;
+      if (now - e.m.action.seenAt > 6) e.m.action = null;
+    }
     // How it shows: on its face, and a happy twirler twirls.
     const f = feelingOf(e, now);
-    e.m.feelFace = f && f.k >= 0.3 && !night ? FEELINGS[f.kind].face : null;
+    e.m.feelFace = f && f.k >= (FEELINGS[f.kind].shows ?? 0.3) && !night ? FEELINGS[f.kind].face : null;
     e.m.hum = hasQuirk(rec, 'hummer') && !night;
     if (f?.kind === 'joy' && hasQuirk(rec, 'twirler') && f.t0 !== e.twirled && !e.m.action && !e.duo && !e.ride && Math.abs(e.vx ?? 0) < 2) {
       e.twirled = f.t0;
@@ -1768,6 +1896,7 @@ function tickHearts(world, life, night, dt) {
         mem.giftDay = Math.floor(Date.now() / 86400000);
         rec.bond = Math.min(1000, (rec.bond ?? 0) + 3);
         world.log(`${rec.name ?? 'Your Mochi'} brought you ${GIFT_WORDS[id] ?? 'a present'}!`, '#ffd6e4');
+        diary(world, life, 'gift', e, null, GIFT_WORDS[id] ?? 'a present');
         feel(e, 'loving', 0.9, now, 'gift');
       }
     }
@@ -1817,6 +1946,7 @@ function tickPairing(world, life, now, night) {
       (g.eggs ??= []).push({ seed, genes: breedGenes(a.rec, b.rec, seed) });
       for (const e of [a, b]) Object.assign(e.rec, { bloom: 0, bredRest: BLOOM.rest });
       life.pairing = null;
+      diary(world, life, 'egg', a, b);
       // (One of them a friend's Mochi, visiting: an egg for them too, in their own garden.)
       const guest = [a, b].find((e) => e.guest && e.guest !== 'me');
       if (guest) {
@@ -2171,6 +2301,7 @@ export function finishHatch(world) {
   h.m.noIdle = false;
   life.mochi.push({ rec, m: h.m, x: h.x + h.m.dir * 14 });
   life.hatching = null;
+  diary(world, life, 'hatched', life.mochi[life.mochi.length - 1]);
   if (h.egg.name) {
     rec.name = h.egg.name;
     world.log(`It's ${rec.name}! Your old friend, hatched in a garden of its own.`, '#ffc2d4');

@@ -421,7 +421,7 @@ export function drawShowScreen(ctx, S, cam, time) {
 
 // One of the audience, seen from behind: its round body, its top lit by the stage, a sprout, and its
 // paws up when it's cheering.
-function audienceMochi(ctx, x, y, r, base, dim, cheering, time, h) {
+export function audienceMochi(ctx, x, y, r, base, dim, cheering, time, h) {
   const body = mix(base, PIT, dim);
   const lit = mix(base, PIT, dim * 0.45);
   if (cheering) {
@@ -579,7 +579,7 @@ function drawRosettes(ctx, S, time) {
   }
 }
 
-const say = (ctx, words, x, y, { size = 18, color = '#ffffff', edge = '#e0659f', alpha = 1 } = {}) => {
+export const say = (ctx, words, x, y, { size = 18, color = '#ffffff', edge = '#e0659f', alpha = 1 } = {}) => {
   ctx.save();
   ctx.globalAlpha = Math.max(0, alpha);
   ctx.font = `900 ${size}px Nunito, "Trebuchet MS", system-ui, sans-serif`;
@@ -679,7 +679,7 @@ function rosette(ctx, x, y, place, k, time) {
   ctx.restore();
 }
 // Confetti over the whole screen, tumbling down, each piece flipping as it falls.
-function confetti(ctx, t, time) {
+export function confetti(ctx, t, time) {
   const colors = ['#ff9ec0', '#ffe680', '#8fd3ff', '#9fe0a0', '#c8a8f0', '#ffffff'];
   for (let i = 0; i < 90; i++) {
     const fall = 40 + hash(i * 2.1) * 50;

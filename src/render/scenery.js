@@ -1166,8 +1166,9 @@ function drawSky(ctx, t, theme, width, height, time) {
     }
   }
   // The sun (or moon) smiles down and bobs gently.
-  // (Under the ridge's great moon there is no second, smaller one in the sky.)
-  if (t.face && !t.bigMoon) {
+  // (Under the ridge's great moon there is no second, smaller one in the sky; nor under the Mochi
+  // Garden's harvest moon on a festival night, `noFace`: render/garden-festival.js.)
+  if (t.face && !t.bigMoon && !t.noFace) {
     const sx = width * 0.8;
     const sy = 56 + Math.sin(time * 0.8) * 2;
     glow(ctx, sx, sy, 70, t.sun, 0.9);

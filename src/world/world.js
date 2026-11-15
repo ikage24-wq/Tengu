@@ -47,6 +47,8 @@ import { WADE, MOUNTS } from '../data/mounts.js';
 import { refreshHome } from './home.js';
 import { refreshGarden, grantGarden } from './garden.js';
 import { tickShow, showTentUp } from './mochi-show.js';
+import { tickSumo, sumoHallUp } from './mochi-sumo.js';
+import { festStallUp } from './garden-festival.js';
 import { enterGarden, tickGarden, rockEgg, finishHatch, harvestCrops, tossBall, mochiNear, eggStallUp, wearStallUp, stallClothes, gardenGateUp, shakeTree, wakeUp, openMail } from './garden-life.js';
 import './stadium.js';
 import './market.js';
@@ -142,6 +144,7 @@ export function loadMap(world, mapId, portalId) {
   if (MAPS[mapId]?.mochiRace && MAPS[mapId].race && !world.race) [mapId, portalId] = ['mochi_stadium', 'board'];
   // (Likewise the Mochi Show's hall: back out in the Mochi Market.)
   if (MAPS[mapId]?.mochiShow && !world.show) [mapId, portalId] = ['mochi_market', 'start'];
+  if (MAPS[mapId]?.mochiSumo && !world.sumo) [mapId, portalId] = ['mochi_market', 'start'];
   // Your island is built fresh from how far Shelly has got (world/home.js).
   if (mapId === 'home' || mapId === 'home_in') refreshHome(world.char, world.visiting ?? null);
   // (Leaving a friend's island ends the visit: net/visit.js.)
@@ -510,7 +513,7 @@ function interact(world) {
   }
   if (world.map.garden && (openMail(world) || rockEgg(world) || harvestCrops(world) || tossBall(world) || shakeTree(world))) return true;
   // (The egg and clothes stalls, wherever they stand: the Mochi Market.)
-  if (eggStallUp(world) || wearStallUp(world) || showTentUp(world)) return true;
+  if (eggStallUp(world) || wearStallUp(world) || showTentUp(world) || sumoHallUp(world) || festStallUp(world)) return true;
   // Your skiff at your island's dock: Up to sail back to Pastel Harbor (world/voyage.js).
   if (world.map.home && !world.map.indoor && b.x < 150 && b.y <= 530) {
     setSail(world);
@@ -772,6 +775,12 @@ export function updateWorld(world, dt, input) {
   if (world.show) {
     world.map.night = 0;
     tickShow(world, dt, input);
+    return;
+  }
+  // And Mochi Sumo (world/mochi-sumo.js).
+  if (world.sumo) {
+    world.map.night = 0;
+    tickSumo(world, dt, input);
     return;
   }
   // A Mochi race holds everything else still while it runs (world/mochi-race.js).

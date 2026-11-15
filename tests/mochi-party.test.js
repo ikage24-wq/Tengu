@@ -24,6 +24,8 @@ function player(name, rec) {
   const char = createCharacter(name, { hairStyle: 'bob' });
   char.garden = { back: null, mochi: rec ? [rec] : [], eggs: [], unlocked: {} };
   const w = createWorld(char);
+  // (No festival unless a test asks for one: they come round by the real clock.)
+  w.forceFestival = null;
   w.logs = [];
   w.log = (m) => w.logs.push(m);
   w.forceNight = 0;

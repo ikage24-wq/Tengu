@@ -19,6 +19,7 @@ const { DUNGEONS } = await import('../src/data/dungeons.js');
 const { startRun } = await import('../src/world/dungeon.js');
 const { startRace } = await import('../src/world/mochi-race.js');
 const { startShow } = await import('../src/world/mochi-show.js');
+const { startSumo } = await import('../src/world/mochi-sumo.js');
 const { RACE_STAGES } = await import('../src/data/mochi-race.js');
 const { rollMochi } = await import('../src/data/mochi-genes.js');
 const { newRecord } = await import('../src/data/mochi-raise.js');
@@ -94,6 +95,8 @@ export function checkMaps(ids = Object.keys(MAPS), warm = 300, frames = 300) {
   for (const id of ids) steady(11, () => {
     const need = MAPS[id].dungeon ? DUNGEONS[MAPS[id].dungeon].minLevel ?? 1 : 1;
     const w = createWorld(balanceChar('archer', Math.max(40, need + 2)));
+    // (A garden festival, forced on or off for the check: PERF_FESTIVAL='{"eve":1,"hour":20}' or 'null'.)
+    if (process.env.PERF_FESTIVAL) w.forceFestival = JSON.parse(process.env.PERF_FESTIVAL);
     w.log = () => {};
     w.god = true;
     // (Midday whatever the real clock says: the light and the night creatures follow the hour.)
@@ -127,6 +130,13 @@ export function checkMaps(ids = Object.keys(MAPS), warm = 300, frames = 300) {
         w.char.garden = { back: null, mochi: [rec], eggs: [], unlocked: {} };
         loadMap(w, 'mochi_market', 'start');
         if (!startShow(w, rec, 'beginner')) throw new Error("couldn't start the show");
+      } else if (map.mochiSumo) {
+        // And Mochi Sumo's hall (world/mochi-sumo.js): a tournament, from the market's sumo hall.
+        const rec = newRecord(rollMochi(7));
+        for (const st of Object.values(rec.stats)) st.points = 900;
+        w.char.garden = { back: null, mochi: [rec], eggs: [], unlocked: {} };
+        loadMap(w, 'mochi_market', 'start');
+        if (!startSumo(w, rec, 'beginner')) throw new Error("couldn't start the sumo");
       } else {
         loadMap(w, id, 'west');
         w.bots = createBots(w, seeded(7), { daily: true, alts: [], clock: CROWD_HOUR });

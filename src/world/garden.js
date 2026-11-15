@@ -152,6 +152,7 @@ export function refreshGarden(char, guest = null) {
   // The nursery's trophy shelf: a cup for each course won, in its best rank's metal.
   MAPS.garden_in.trophies = trophiesOf(owner);
   MAPS.garden_in.showCup = showCupOf(owner);
+  MAPS.garden_in.sumoCup = sumoCupOf(owner);
   if (guest) {
     map.guestOf = guest;
     // Kinako by the nest, minding your friend's garden: leave them an egg or some sweets.
@@ -171,6 +172,11 @@ export const hasGarden = (char) => Boolean(char.garden);
 // end of the trophy shelf.
 export function showCupOf(char) {
   return ['master', 'challenge', 'beginner'].find((r) => char.showWins?.[r]) ?? null;
+}
+// The best rank of Mochi Sumo `char` has been champion at (world/mochi-sumo.js), or null: its cup
+// stands beside the show's.
+export function sumoCupOf(char) {
+  return ['master', 'challenge', 'beginner'].find((r) => char.sumoWins?.[r]) ?? null;
 }
 // Each race course and the best rank `char` has won it at (null if not yet), in the board's order.
 export function trophiesOf(char) {

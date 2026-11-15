@@ -28,6 +28,10 @@ function garden() {
   const baby = newRecord(rollMochi(902, { coat: null }));
   char.garden = { back: null, mochi: [swimmer, baby], eggs: [], unlocked: {} };
   const w = createWorld(char);
+  // (No festival unless a test asks for one: they come round by the real clock.)
+  w.forceFestival = null;
+  // (Clear skies: the garden's own forecast follows the real clock.)
+  w.forceWeather = process.env.WX ? JSON.parse(process.env.WX) : {};
   const logs = [];
   w.log = (m) => logs.push(m);
   w.forceNight = 0;
@@ -177,6 +181,8 @@ test("visiting a friend's garden: same Mochi, same places; pets and sweets reach
   const char = createCharacter('Bea', { hairStyle: 'bob' });
   char.garden = { back: null, mochi: [], eggs: [], unlocked: {} };
   const bea = createWorld(char);
+  // (No festival unless a test asks for one: they come round by the real clock.)
+  bea.forceFestival = null;
   const beaLogs = [];
   bea.log = (m) => beaLogs.push(m);
   bea.forceNight = 0;
@@ -367,6 +373,9 @@ function gardenOf(personalities, { friends = 0, bond = 0, enter = true } = {}) {
   for (const a of recs) for (const b of recs) if (a !== b) (a.friends ??= {})[b.seed] = friends;
   char.garden = { back: null, mochi: recs, eggs: [], unlocked: {} };
   const w = createWorld(char);
+  // (No festival unless a test asks for one: they come round by the real clock.)
+  w.forceFestival = null;
+  w.forceWeather = process.env.WX ? JSON.parse(process.env.WX) : {};
   const logs = [];
   w.log = (m) => logs.push(m);
   w.forceNight = 0;
@@ -398,7 +407,10 @@ test('their own minds bring them together: one asks a friend to play, and they p
     const games = seen.filter((d) => !['decline', 'squabble', 'comfort', 'makeup'].includes(d.kind));
     assert.ok(games.length >= 3, `games played: ${kinds}`);
     // (Each the game its asker likes - or a chat, when one of them is too little to run about.)
-    for (const d of games) assert.ok(d.kind === d.asked && (d.kind === gameFor(d.a.rec, { feel: null }, 0) || d.kind === 'chat' || d.kind === 'dance'), `${d.a.rec.personality} asked for ${d.kind}`);
+    // (Each the game its asker asked for - mostly its favourite, now and then something else.)
+    for (const d of games) assert.equal(d.kind, d.asked);
+    const fav = games.filter((d) => d.kind === gameFor(d.a.rec, { feel: null }, 0)).length;
+    assert.ok(fav >= games.length * 0.4, `mostly its favourite: ${fav} of ${games.length}`);
     // (Playing together brings them closer.)
     const [a] = g.recs;
     assert.ok(Object.values(a.friends ?? {}).some((v) => v > 40), JSON.stringify(a.friends));
@@ -546,17 +558,19 @@ test('Garden Mochi walk on the ground and swim at the pond surface, easing in an
       // path, off the ground: world/garden-life.js ridePath.)
       if (e.ride) {
         const p = last.get(e);
-        if (p) assert.ok(Math.abs(e.y - p) < 10, `${where}: rides smoothly (was ${p.toFixed(1)})`);
-        last.set(e, e.y);
+        if (p) assert.ok(Math.abs(e.y - p.y) < 10, `${where}: rides smoothly (was ${p.y.toFixed(1)})`);
+        last.set(e, { y: e.y, g: e.y });
         continue;
       }
       // (A flyer fluttering across the garden is drawn up in the air; it is still over the ground.)
       assert.equal(e.m.mode, e.flying ? 'fly' : f.swim ? 'swim' : 'run', `${where}: swims only in the pond`);
       assert.ok(Math.abs(e.y - f.y) < 7, `${where}: on the ground or the water (${f.y})`);
       if (f.swim) swam += 1;
+      // (No popping: its height changes only as the ground under it does - up a slope at a run in
+      // the rain, that's a few px a step.)
       const p = last.get(e);
-      if (p) assert.ok(Math.abs(e.y - p) < 4, `${where}: no popping (was ${p.toFixed(1)})`);
-      last.set(e, e.y);
+      if (p) assert.ok(Math.abs(e.y - p.y) < 4 || Math.abs(e.y - p.y - (f.y - p.g)) < 4, `${where}: no popping (was ${p.y.toFixed(1)}, ground ${p.g.toFixed(1)} -> ${f.y.toFixed(1)})`);
+      last.set(e, { y: e.y, g: f.y });
     }
   }
   assert.ok(swam > 0, 'the swimmer went for a swim');
@@ -597,6 +611,8 @@ test("visiting with your Mochi: it follows you round a friend's garden, and two 
   char.garden = { back: null, mochi: [pet], eggs: [], unlocked: {} };
   char.pet = { seed: pet.seed, out: true, opts: {} };
   const bea = createWorld(char);
+  // (No festival unless a test asks for one: they come round by the real clock.)
+  bea.forceFestival = null;
   bea.log = () => {};
   bea.forceNight = 0;
   loadMap(bea, 'sprout', 'start');
@@ -863,5 +879,56 @@ test('the Mochi use what you set out: two sit side by side on a bench', async ()
     if (sitters.length === 2) assert.ok(Math.abs(sitters[0].x - sitters[1].x) > 12, 'side by side, not on top of each other');
   } finally {
     g.done();
+  }
+});
+
+test('the diary: a page a day of what the Mochi got up to, repeats counted, names marked, in your own garden only', async () => {
+  const { noteDiary, diaryWords, dayName, PER_DAY, DAYS } = await import('../src/data/mochi-diary.js');
+  const a = { seed: 1, name: 'Pip' };
+  const b = { seed: 2, name: 'Momo' };
+  const g = {};
+  noteDiary(g, '2026-11-15', 'tag', [a, b]);
+  noteDiary(g, '2026-11-15', 'tag', [b, a]);
+  noteDiary(g, '2026-11-15', 'sitby', [a]);
+  noteDiary(g, '2026-11-15', 'sitby', [a]);
+  noteDiary(g, '2026-11-15', 'chat', [a, b], 'kite');
+  assert.equal(g.diary.length, 1);
+  const [tag, sit, chat] = g.diary[0].notes;
+  assert.equal(tag.c, 2, 'the same two playing tag again is counted');
+  assert.equal(sit.c, undefined, 'sitting by you is written once a day');
+  const words = diaryWords(chat);
+  assert.deepEqual(words.filter((p) => p.name).map((p) => p.text), ['Pip', 'Momo']);
+  assert.match(words.map((p) => p.text).join(''), /kites/);
+  assert.match(diaryWords(tag).map((p) => p.text).join(''), /2 times/);
+  assert.equal(diaryWords(tag, (s) => (s === 1 ? 'Pippa' : null)).find((p) => p.name).text, 'Pippa', 'a renamed Mochi shows its new name');
+  for (let i = 0; i < 30; i++) noteDiary(g, '2026-11-15', 'dance', [{ seed: 10 + i, name: `D${i}` }, a]);
+  assert.equal(g.diary[0].notes.length, PER_DAY);
+  for (let d = 1; d <= 20; d++) noteDiary(g, `2026-12-${d}`, 'tag', [a, b]);
+  assert.equal(g.diary.length, DAYS);
+  assert.equal(dayName('2026-12-20', '2026-12-20', '2026-12-19'), 'Today');
+  assert.equal(dayName('2026-12-3', '2026-12-20', '2026-12-19'), 'Dec 3');
+
+  // Lived: a day in the garden fills today's page.
+  const { w, char, run, done } = gardenOf(['playful', 'chatty', 'gentle', 'sweet'], { friends: 40, bond: 600 });
+  try {
+    w.dayClock = () => new Date(2026, 5, 10, 13, 0);
+    run(500);
+    const page = char.garden.diary?.at(-1);
+    assert.ok(page, 'something was written');
+    assert.equal(page.day, '2026-6-10');
+    assert.ok(page.notes.some((n) => n.who.length === 2), `things done together: ${page.notes.map((n) => n.k)}`);
+    // A friend visiting writes nothing in your diary (their game doesn't own it).
+    const vis = createWorld(createCharacter('Bea', { hairStyle: 'bob' }));
+    // (No festival unless a test asks for one: they come round by the real clock.)
+    vis.forceFestival = null;
+    vis.log = () => {};
+    vis.forceNight = 0;
+    vis.gardenVisit = { ownerId: 'A', name: 'Mina', garden: JSON.parse(JSON.stringify({ ...char.garden, diary: [] })) };
+    loadMap(vis, 'garden', 'start');
+    for (let t = 0; t < 200; t += 0.1) updateWorld(vis, 0.1, keys());
+    assert.equal(vis.char.garden?.diary?.length ?? 0, 0);
+    assert.equal(vis.gardenVisit.garden.diary.length, 0);
+  } finally {
+    done();
   }
 });

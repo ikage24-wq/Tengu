@@ -22,6 +22,8 @@ import { featureOf, budOf, drawFeature } from './mochi-features.js';
 import { drawSweet, drawBall } from './mochi-sweets.js';
 import { SHOW_ACTS } from './mochi-show-acts.js';
 import { TOY_ACTS, drawKite, drawBubbleWand, drawTop, drawGift } from './mochi-toys.js';
+import { SUMO_ACTS, drawGunbai } from './mochi-sumo-acts.js';
+import { FESTIVAL_ACTS, drawDango } from './mochi-festival-acts.js';
 import { WEATHER_WIND } from './terrain.js';
 import { drawMic, drawBachi, drawTopHat, drawWand, drawMask, drawScript, drawRose, drawRibbon, drawMime, twinkle } from './mochi-show-props.js';
 import { lookOf, drawCoat, drawCoatBack, MOCHI_SIZE } from './wagashi.js';
@@ -2442,6 +2444,8 @@ export function drawMochiPose(ctx, g, x, y, P0, { facing = 1, over = null, under
 Object.assign(ACTIONS, SHOW_ACTS);
 // (And the garden's new toys: render/mochi-toys.js.)
 Object.assign(ACTIONS, TOY_ACTS);
+Object.assign(ACTIONS, SUMO_ACTS);
+Object.assign(ACTIONS, FESTIVAL_ACTS);
 const SHOW_HOLDS = new Set(['mic', 'bachi', 'magic', 'mask', 'script', 'rose', 'ribbon', 'mime', 'kite', 'bubblewand', 'top', 'gift']);
 // (Each prop's size in a Mochi's little paws: a mic about as long as its head is tall, a mask
 // just over its face.)
@@ -2806,6 +2810,8 @@ export function drawMochiAnim(ctx, m, x, y, time) {
     else if (target.hold === 'ball') drawBall(c, hand[0] + (flip ? -1 : 1) * live.ball[0] * s, hand[1] + live.ball[1] * s, s, live.spin);
     else if (target.hold === 'can') drawCan(c, hand[0], hand[1], s, flip, Boolean(target.pour), time);
     else if (target.hold === 'mallet') drawMallet(c, hand[0], hand[1], s, flip, target.swing ?? 0, target.smear ?? 0);
+    else if (target.hold === 'dango') drawDango(c, hand[0], hand[1], (s / 0.6) * 0.8, flip ? -1 : 1);
+    else if (target.hold === 'gunbai') drawGunbai(c, hand[0], hand[1], (s / 0.6) * 0.44, flip ? -1 : 1, live.swing ?? 0);
     else if (SHOW_HOLDS.has(target.hold)) drawShowProp(c, target, live, hand, other, flip, s, time, m.anchors, m);
   } : null;
   // (A prop in the far paw goes behind it: the second drumstick.)

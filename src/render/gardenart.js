@@ -28,6 +28,7 @@ import { WATER_BED, WATER_LIFE, swell } from './water.js';
 import { groundAt } from '../world/physics.js';
 import { hash } from './propkit.js';
 import { drawWeatherSky } from './garden-weather.js';
+import { drawFestivalSky } from './garden-festival.js';
 
 const FAR_F = 0.2;
 const MID_F = 0.45;
@@ -413,6 +414,8 @@ BACKDROPS.push({
   far: (ctx, t, cam, width, y0, time) => {
     if (t.skyline !== 'course:moonmortar') return false;
     drawWeatherSky(ctx, cam, width, y0, time);
+    // (A festival's moon, coming up from behind the hills: render/garden-festival.js.)
+    drawFestivalSky(ctx, cam, width, y0, time);
     return far(ctx, t, cam, width, y0, time);
   },
   mid: (ctx, t, cam, width, y0, time) => (t.skyline === 'course:moonmortar' ? mid(ctx, t, cam, width, y0, time) : false),

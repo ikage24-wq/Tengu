@@ -18,8 +18,8 @@ const LANE = 600;
 const TERRACE = 470;
 
 // Where each thing stands along the market (the world and the tests use these).
-// (The show tent: the Mochi Show, world/mochi-show.js.)
-export const MARKET = { shop: 330, keeper: 298, eggs: 580, wears: 820, stadium: 1360, show: 1525, garden: 1680 };
+// (The show tent: the Mochi Show, world/mochi-show.js; the sumo hall: Mochi Sumo, world/mochi-sumo.js.)
+export const MARKET = { shop: 330, keeper: 298, eggs: 580, wears: 820, sumo: 950, fest: 1236, stadium: 1360, show: 1525, garden: 1680 };
 
 function marketMap() {
   const width = 1760;
@@ -40,12 +40,12 @@ function marketMap() {
       { name: 'Stadium Terrace', from: 1060, color: '#b8a8f0' },
     ],
     townPieces: [
-      ['mg_lantern', 150, 2], ['mg_shop', MARKET.shop], ['mg_eggstall', MARKET.eggs], ['mg_wearstall', MARKET.wears], ['mg_lantern', 960, 3],
+      ['mg_lantern', 150, 2], ['mg_shop', MARKET.shop], ['mg_eggstall', MARKET.eggs], ['mg_wearstall', MARKET.wears], ['mg_sumohall', MARKET.sumo],
       // Flags strung across from each stall to the next, so the lane reads as a market street.
       ['mg_flagline', 412, { to: 516, h: 74 }], ['mg_flagline', 648, { to: 734, h: 74 }],
       // A lantern part way up the bank, lighting the way up to the terrace.
       ['mg_lantern', 1110, 1],
-      ['mg_stadium', MARKET.stadium], ['mg_showtent', MARKET.show], ['mg_lantern', 1612, 4],
+      ['mg_moonstall', MARKET.fest], ['mg_stadium', MARKET.stadium], ['mg_showtent', MARKET.show], ['mg_lantern', 1612, 4],
     ],
     // The egg stall and the clothes stall (ui/egg-stall.js, ui/wear-stall.js), and the race board at
     // Kinako's counter (her menu opens it: ui/npc.js).
@@ -54,6 +54,10 @@ function marketMap() {
     raceBoard: MARKET.keeper,
     // (Up by the show tent: the Mochi Show's window, ui/mochi-show.js.)
     showTent: MARKET.show,
+    // (Up by the sumo hall: Mochi Sumo's window, ui/mochi-sumo.js.)
+    sumoHall: MARKET.sumo,
+    // (On a festival day, its stall up on the terrace: world/garden-festival.js, ui/festival-stall.js.)
+    festStall: MARKET.fest,
     portals: [
       { id: 'sprout', x: 70, y: LANE, to: 'sprout', toPortal: 'garden', label: 'Sprout Village' },
       { id: 'start', x: 200, y: LANE, hidden: true },
@@ -62,7 +66,7 @@ function marketMap() {
     ],
     lamps: [
       { x: 150, y: LANE - 44, c: '#ffd6a0' }, { x: MARKET.shop, y: LANE - 40, c: '#ffd27a' }, { x: MARKET.wears, y: LANE - 58, c: '#ffe0c0' },
-      { x: 960, y: LANE - 44, c: '#ffd6a0' }, { x: 1612, y: TERRACE - 44, c: '#ffd6a0' }, { x: MARKET.show, y: TERRACE - 60, c: '#ffc8e0' },
+      { x: MARKET.sumo, y: LANE - 30, c: '#ffd27a' }, { x: 1612, y: TERRACE - 44, c: '#ffd6a0' }, { x: MARKET.show, y: TERRACE - 60, c: '#ffc8e0' },
     ],
     // Kinako, the Garden Keeper, at her shop's counter (data/npcs.js kinako).
     npcs: [{ id: 'kinako', x: MARKET.keeper }],

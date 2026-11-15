@@ -40,7 +40,8 @@ export function gardenShopWindow(ui, state, world) {
   }
   const { ctx } = ui;
   const char = world.char;
-  const all = GARDEN_DECOR();
+  // (A festival's own pieces aren't sold here: they're won at its stall.)
+  const all = GARDEN_DECOR().filter((f) => f.price != null);
   dlg.pickDecor = all.some((f) => f.id === dlg.pickDecor) ? dlg.pickDecor : all[0].id;
   const pick = all.find((f) => f.id === dlg.pickDecor);
   const x = win.x + 10;

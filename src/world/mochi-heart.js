@@ -17,7 +17,7 @@
 // One that loves you misses you while you're away, and brings you little presents.
 
 export const FEELINGS = {
-  joy: { icon: 'note', face: { mouth: 'D', closed: [true, true], sprout: 'happy' }, walk: 1.15, wants: { play: 1.3, social: 1.2, ride: 1.2 }, spread: 0.55, secs: 14 },
+  joy: { icon: 'note', face: { mouth: 'D', closed: [true, true], sprout: 'happy' }, walk: 1.15, wants: { play: 1.3, social: 1.2, ride: 1.2 }, spread: 0.42, secs: 14, shows: 0.5 },
   excited: { icon: 'bang', face: { mouth: 'D', wide: true, sprout: 'excited' }, walk: 1.35, wants: { play: 1.4, ride: 1.4 }, spread: 0.6, secs: 9 },
   proud: { icon: 'star', face: { mouth: 'smirk', sprout: 'excited' }, walk: 1.1, wants: { social: 1.3, play: 1.1 }, spread: 0, secs: 12 },
   loving: { icon: 'heart', face: { mouth: 'mochiw', blush: 1.9, closed: [true, true], sprout: 'happy' }, walk: 1, wants: { social: 1.6, rest: 1.1 }, spread: 0.35, secs: 16 },
@@ -119,9 +119,12 @@ const GAME_OF = {
   chatty: 'chat', sweet: 'chat', gentle: 'chat', polite: 'chat', dreamy: 'chat', bossy: 'chat', stoic: 'chat', grumpy: 'chat', loner: 'chat',
 };
 export const KIND_HEARTS = new Set(['gentle', 'sweet', 'clingy', 'polite', 'dreamy', 'shy']);
-export function gameFor(rec, other, now) {
+// (Mostly its favourite; now and then, for a change, something else - `roll` 0-1.)
+const CHANGE = ['tag', 'hide', 'dance', 'snack', 'chat', 'trick'];
+export function gameFor(rec, other, now, roll = 0) {
   if (SAD.has(other.feel && now < other.feel.until ? other.feel.kind : '') && (KIND_HEARTS.has(rec.personality) || hasQuirk(rec, 'cuddler'))) return 'comfort';
   let g = GAME_OF[rec.personality] ?? 'chat';
+  if (roll > 0.6) g = CHANGE[Math.floor(((roll - 0.6) / 0.4) * CHANGE.length) % CHANGE.length];
   if (g === 'trick' && !(rec.tricks?.length)) g = 'dance';
   return g;
 }

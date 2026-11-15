@@ -144,6 +144,51 @@ const ART = {
       F(E(4.6, 12.6, 0.6, 0.6, '#ff9e60')), F(E(9.6, 12.2, 0.6, 0.6, '#ffe680')), F(E(17, 12.4, 0.6, 0.6, '#ffe680')), F(E(22, 12.6, 0.6, 0.6, '#ff9e60')),
     ];
   },
+  // The Moon Viewing festival's prizes.
+  garden_pampas(w, h) {
+    const out = [];
+    // The plumes (behind the vase's mouth), each on its arching stalk.
+    for (const [sx, tx, ty, c] of [[7, 2, 6, '#f4eedf'], [8, 6, 1, '#fbf6ea'], [9, 11, 2, '#f4eedf'], [8, 14, 9, '#ece4d0']]) {
+      out.push(F(T([[sx - 0.4, 16], [sx + 0.4, 16], [tx + 0.4, ty + 4], [tx - 0.4, ty + 4]], '#b8b07a')));
+      out.push(E(tx, ty + 3.6, 1.8, 4.6, c), F(E(tx - 0.5, ty + 2.4, 0.6, 2.4, '#ffffff')));
+    }
+    // The vase: indigo, its shoulder lit, a white band.
+    out.push(T([[w / 2 - 3, 16], [w / 2 + 3, 16], [w / 2 + 6, 24], [w / 2 + 4.6, h], [w / 2 - 4.6, h], [w / 2 - 6, 24]], '#34508a'));
+    out.push(F(R(w / 2 - 3.4, 15, 6.8, 1.6, '#5a7ac0')), F(R(w / 2 - 5.4, 25, 10.8, 1.2, '#e8eef8')), F(R(w / 2 - 4, 19, 1.2, 10, '#5a7ac0')));
+    return out;
+  },
+  garden_moonlantern(w, h) {
+    const wd = ramp('#b88a5a', 0.8);
+    return [
+      // The post and its foot.
+      R(w / 2 - 1.4, 16, 2.8, h - 18, wd.base), F(R(w / 2 - 1.4, 16, 0.9, h - 18, wd.hi ?? '#d8a878')), R(2, h - 3, w - 4, 3, wd.sh),
+      // The arm and the lantern hung from it.
+      R(w / 2 - 1, 1, 2, 3, wd.sh),
+      E(w / 2, 9, 6.6, 7, '#fff2d6'), F(E(w / 2 - 2, 7, 2.4, 3.4, '#ffffff')),
+      F(R(w / 2 - 4.4, 2.4, 8.8, 1.4, '#e05a3a')), F(R(w / 2 - 4.4, 14.4, 8.8, 1.4, '#e05a3a')),
+      F(E(w / 2, 9, 2.6, 2.6, '#f2b84a')), F(E(w / 2 + 0.9, 8.4, 2.1, 2.1, '#fff2d6')),
+    ];
+  },
+  garden_offering(w, h) {
+    const wd = ramp('#d8b07a', 0.8);
+    const out = [
+      // The stand: a tray on a box, a round hole cut in its side.
+      R(5, h - 10, w - 10, 10, wd.base), F(E(w / 2, h - 5, 3.4, 2.6, '#8a6440')), R(2, h - 13, w - 4, 3, '#e2c08a'), F(R(2, h - 10.6, w - 4, 0.8, wd.sh)),
+      // The paper.
+      R(4, h - 14, w - 8, 1.4, '#ffffff'), F(T([[4, h - 13], [2, h - 9.6], [5, h - 12.6]], '#ffffff')), F(T([[w - 4, h - 13], [w - 2, h - 9.6], [w - 5, h - 12.6]], '#ffffff')),
+    ];
+    // The dango, four, three, two, one.
+    for (const [row, n] of [[0, 4], [1, 3], [2, 2], [3, 1]]) {
+      for (let i = 0; i < n; i++) {
+        const bx = w / 2 + (i - (n - 1) / 2) * 4.6;
+        const by = h - 16.4 - row * 4;
+        out.push(E(bx + 0.3, by + 0.3, 2.3, 2.3, '#e6dece'), E(bx, by, 2.2, 2.2, '#fffcf4'), F(E(bx - 0.8, by - 0.8, 0.6, 0.5, '#ffffff')));
+      }
+    }
+    // A sprig of pampas tucked behind.
+    out.push(F(T([[w - 7, h - 14], [w - 6.4, h - 14], [w - 3, 2], [w - 3.6, 2]], '#b8b07a')), E(w - 3.2, 4, 1.6, 4, '#f4eedf'));
+    return out;
+  },
   garden_statue(w, h) {
     const st = ramp('#d8d2e2', 0.8);
     return [
@@ -552,6 +597,17 @@ export function drawPiece(ctx, p, x, y, time, { night = 0, char = null, ghost = 
     ctx.fillRect(bx - 1, top + 7, 0.9, 0.9);
     ctx.fillRect(bx + 5, y - 9, 0.9, 0.9);
     ctx.restore();
+  }
+  // The moon lantern: lit warm from inside at dusk.
+  if (def.id === 'garden_moonlantern') {
+    const k = Math.min(1, night * 1.4);
+    if (k > 0.02) {
+      glow(ctx, x, top + 9, 24, '#ffd27a', 0.55 * k);
+      ctx.fillStyle = `rgba(255,226,160,${0.6 * k})`;
+      ctx.beginPath();
+      ctx.ellipse(x, top + 9, 6, 6.4, 0, 0, TAU);
+      ctx.fill();
+    }
   }
   // The stone lantern: its window lit warm at dusk, a glow round it.
   if (def.id === 'garden_lantern') {

@@ -29,6 +29,8 @@ export const FURN_SETS = {
 const F = (id, name, set, layer, w, h, needs, o = {}) => ({ id, name, set, layer, w, h, needs, where: 'any', level: 1, stage: 1, ...o });
 // (A garden piece: bought, not made, and only for the garden.)
 const G = (id, name, layer, w, h, price, use, desc) => F(id, name, 'garden', layer, w, h, null, { where: 'garden', price, use, desc });
+// (A festival's own pieces: not sold, won at its stall for its tokens - world/garden-festival.js.)
+const GF = (festival, tokens, id, name, layer, w, h, use, desc) => F(id, name, 'garden', layer, w, h, null, { where: 'garden', price: null, festival, tokens, use, desc });
 export const GARDEN_DECOR = () => FURNITURE.filter((f) => f.where === 'garden');
 
 export const FURNITURE = [
@@ -72,6 +74,10 @@ export const FURNITURE = [
   G('garden_lantern', 'Stone Lantern', 'floor', 16, 30, 1800, null, 'A little stone lantern. It glows warm when the evening comes.'),
   G('garden_pinwheels', 'Pinwheel Planter', 'floor', 26, 22, 900, 'sniff', 'A planter of flowers with three pinwheels in it, spinning in the breeze.'),
   G('garden_statue', 'Mochi Statue', 'floor', 22, 30, 12000, null, 'A stone Mochi on a pedestal, its sprout up high. Very grand.'),
+  // ----- The Moon Viewing festival's prizes (ui/festival-stall.js), for Moon Tokens -----
+  GF('moon', 3, 'garden_pampas', 'Pampas Vase', 'floor', 16, 34, 'sniff', 'A tall indigo vase of silver pampas grass, nodding in the breeze.'),
+  GF('moon', 5, 'garden_moonlantern', 'Moon Lantern', 'floor', 16, 36, null, 'A round paper lantern with a gold moon on it, on a little wooden post. It glows at dusk.'),
+  GF('moon', 8, 'garden_offering', 'Moon Offering', 'floor', 32, 30, 'gaze', 'A little stand laid with a pyramid of white dango and a sprig of pampas, for the moon. The Mochi come to admire it.'),
 ];
 export const FURNITURE_BY_ID = Object.fromEntries(FURNITURE.map((f) => [f.id, f]));
 export const LAYERS = ['rug', 'wall', 'hang', 'floor', 'surface'];

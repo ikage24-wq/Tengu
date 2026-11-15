@@ -32,6 +32,8 @@ const LOOKS = {
   throne: { light: '#c9b6ff', shade: '#1f1846', rays: 0, sun: 0.5, pool: 0.22, warm: '#e6dcff' },
   // (The Mochi Show's hall, world/mochi-show.js: a theatre - no daylight, darker toward its edges.)
   showhall: { light: '#ffe2c8', shade: '#160a1e', rays: 0, sun: 0.5, pool: 0, top: false },
+  // (Mochi Sumo's hall: warm lantern light on wood.)
+  sumohall: { light: '#ffe6c0', shade: '#1e120a', rays: 0, sun: 0.55, pool: 0, top: false },
 };
 
 const rgba = (hex, a) => `rgba(${parseInt(hex.slice(1, 3), 16)},${parseInt(hex.slice(3, 5), 16)},${parseInt(hex.slice(5, 7), 16)},${a})`;

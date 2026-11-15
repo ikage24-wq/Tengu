@@ -20,6 +20,8 @@ function islander() {
   const char = createCharacter('Isla', { hairStyle: 'bob' });
   char.level = 12;
   const w = createWorld(char);
+  // (No festival unless a test asks for one: they come round by the real clock.)
+  w.forceFestival = null;
   w.log = () => {};
   acceptQuest(char, 'island_deed');
   completeQuest(char, 'island_deed');
@@ -46,6 +48,8 @@ test('the Home Shell takes you home and back where you were, and is never used u
   assert.equal(countItem(w.char.inventory, 'home_shell'), 1);
   // Without an island it does nothing.
   const none = createWorld(createCharacter('N', { hairStyle: 'bob' }));
+  // (No festival unless a test asks for one: they come round by the real clock.)
+  none.forceFestival = null;
   none.log = () => {};
   addItem(none.char.inventory, 'home_shell', 1);
   assert.equal(useItem(none, 'home_shell'), false);
@@ -124,7 +128,8 @@ test('every piece of furniture is craftable at a bench, once you have an island'
     assert.ok(r && r.cat === 'home', f.id);
     assert.ok(['floor', 'rug', 'surface', 'wall', 'hang'].includes(f.layer));
   }
-  for (const f of FURNITURE.filter((x) => x.where === 'garden')) assert.ok(f.price > 0 && !RECIPES.some((x) => x.makes === f.id), `${f.id} is bought`);
+  // (Or, a festival's own, won at its stall for its tokens: ui/festival-stall.js.)
+  for (const f of FURNITURE.filter((x) => x.where === 'garden')) assert.ok((f.festival ? f.tokens > 0 : f.price > 0) && !RECIPES.some((x) => x.makes === f.id), `${f.id} is bought or won`);
   const none = createCharacter('N', { hairStyle: 'bob' });
   assert.equal(craftBlocker(none, RECIPES.find((x) => x.makes === 'sea_table')), 'island');
   const w = islander();

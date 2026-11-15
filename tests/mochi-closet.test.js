@@ -19,6 +19,8 @@ function garden() {
   char.garden = { back: null, mochi: [rec], eggs: [], unlocked: {} };
   char.gold = 100000;
   const w = createWorld(char);
+  // (No festival unless a test asks for one: they come round by the real clock.)
+  w.forceFestival = null;
   w.log = () => {};
   loadMap(w, 'garden', 'start');
   return { w, char, rec };

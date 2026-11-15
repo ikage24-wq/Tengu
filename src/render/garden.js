@@ -41,7 +41,9 @@
 
 import { R, E, T, F, snap, mix } from './pixel.js';
 import { drawWeatherGround, drawWeatherFront, drawSplashes } from './garden-weather.js';
+import { drawFestivalBack, drawFestivalFront, drawFestivalStall } from './garden-festival.js';
 import { drawShowTent } from './show.js';
+import { drawSumoHall } from './sumo.js';
 import { drawHearts } from './mochi-hearts.js';
 import { ramp, planks, foliage, bark, band, gable, hash, swing, pivoted, flicker, lean } from './propkit.js';
 // (Eased 0 to 1: slow out, slow in.)
@@ -53,7 +55,7 @@ import { drawMochiAnim } from './mochi-anim.js';
 import { drawHatch, drawEvolve, drawRebirth } from './mochi-life.js';
 import { drawMochiEgg } from './wagashi.js';
 import { rollMochi } from '../data/mochi-genes.js';
-import { EGG_SLOTS, EGG_BACK, NURSERY_BEDS, cropGrowth, stallOnShow, HARVEST_FREE, EGG_HOP, eggHopSecs, SEESAW } from '../world/garden-life.js';
+import { EGG_SLOTS, EGG_BACK, NURSERY_BEDS, cropGrowth, stallOnShow, HARVEST_FREE, EGG_HOP, eggHopSecs, SEESAW, festivalSpots } from '../world/garden-life.js';
 import { drawSweet } from './mochi-sweets.js';
 import { SWEET_BY_ID } from '../data/mochi-raise.js';
 import { drawShopModel } from './shopmodel.js';
@@ -1599,9 +1601,11 @@ function hearthFire(ctx, x, y, time) {
 // still to win; a glint now and then on the gold. (ox, oy): where the room's picture starts.
 const CUP = { beginner: ['#e0a070', '#b8784a'], challenge: ['#e4e8f2', '#a8b0c4'], master: ['#ffd75e', '#d8a030'] };
 // (Nine courses' cups along the shelf, and at its end the Mochi Show's: a taller cup on a pink base
-// with a gold star on top and a ribbon tied round it, once a show is won.)
-function trophyShelf(ctx, cups, ox, oy, time, show = null) {
+// with a gold star on top and a ribbon tied round it, once a show is won. Mochi Sumo's champion's
+// cup stands on the shelf below, past the books.)
+function trophyShelf(ctx, cups, ox, oy, time, show = null, sumo = null) {
   showCup(ctx, ox + 676, oy + 196, show, time);
+  sumoCup(ctx, ox + 686, oy + 263, sumo, time);
   ctx.font = '800 5px Nunito, "Trebuchet MS", "Segoe UI", system-ui, sans-serif';
   ctx.textAlign = 'center';
   ctx.fillStyle = '#8a5a34';
@@ -1654,6 +1658,67 @@ function trophyShelf(ctx, cups, ox, oy, time, show = null) {
     }
     ctx.restore();
   });
+}
+// Mochi Sumo's champion's cup (world/garden.js sumoCupOf): a tall lidded cup in the metal of the
+// best rank won, on a dark wooden stand with a red-and-white cord round it, a little tassel hanging.
+// A faint ring until one is won.
+function sumoCup(ctx, x, y, rank, time) {
+  if (!rank) {
+    ctx.strokeStyle = 'rgba(200,140,100,0.35)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.ellipse(x, y - 1, 5, 1.6, 0, 0, Math.PI * 2);
+    ctx.stroke();
+    return;
+  }
+  const [m, dk] = CUP[rank];
+  ctx.save();
+  ctx.translate(x, y);
+  // The stand, and the cord round it.
+  ctx.fillStyle = '#4a2e1e';
+  ctx.fillRect(-5.4, -3.6, 10.8, 3.6);
+  ctx.fillStyle = '#e05050';
+  ctx.fillRect(-5.4, -2.6, 10.8, 0.9);
+  ctx.fillStyle = '#ffffff';
+  for (let k = -4.6; k < 5; k += 2.4) ctx.fillRect(k, -2.6, 1.2, 0.9);
+  // Its foot and stem.
+  ctx.fillStyle = dk;
+  ctx.fillRect(-3, -5, 6, 1.6);
+  ctx.fillRect(-1.1, -9, 2.2, 4.2);
+  // The tall bowl.
+  ctx.fillStyle = m;
+  ctx.beginPath();
+  ctx.moveTo(-4.6, -21);
+  ctx.lineTo(4.6, -21);
+  ctx.quadraticCurveTo(4.8, -11, 0, -9);
+  ctx.quadraticCurveTo(-4.8, -11, -4.6, -21);
+  ctx.fill();
+  ctx.fillStyle = dk;
+  ctx.fillRect(-4.8, -21, 9.6, 1);
+  ctx.fillRect(-4.2, -15, 8.4, 0.8);
+  ctx.fillStyle = 'rgba(255,255,255,0.6)';
+  ctx.fillRect(-3, -20, 1, 7);
+  // The lid and its knob.
+  ctx.fillStyle = m;
+  ctx.beginPath();
+  ctx.ellipse(0, -21.6, 4.8, 1.8, 0, Math.PI, 0);
+  ctx.fill();
+  ctx.fillStyle = dk;
+  ctx.beginPath();
+  ctx.arc(0, -24.4, 1.3, 0, Math.PI * 2);
+  ctx.fill();
+  // A tassel hanging off one side, stirring.
+  const sw = Math.sin(time * 1.5) * 0.5;
+  ctx.fillStyle = '#7a4ab0';
+  ctx.fillRect(4.6, -19, 0.8, 4);
+  ctx.beginPath();
+  ctx.moveTo(4.2 + sw, -15);
+  ctx.lineTo(6 + sw, -15);
+  ctx.lineTo(6.4 + sw * 1.3, -11);
+  ctx.lineTo(3.8 + sw * 1.3, -11);
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
 }
 // The Mochi Show's cup (world/garden.js showCupOf): in the metal of the best rank won, a pink plinth,
 // a ribbon round its stem, a star on top that twinkles. A faint ring until one is won.
@@ -1969,10 +2034,19 @@ export function drawGardenLife(ctx, world, cam, time, layer = 'back') {
     if (outside) {
       drawSplashes(ctx, world, cam, time);
       drawWeatherFront(ctx, world, cam, time);
+      drawFestivalFront(ctx, time);
     }
     return;
   }
   if (outside) drawWeatherGround(ctx, world, cam, time);
+  // A festival's things about the garden (world/garden-festival.js), and the mortar's strikes: the
+  // pounder's move lands its mallet half a second in, then every 0.8 s (render/mochi-anim.js pound0-5).
+  if (outside && world.gardenFestival && map.id === 'garden') {
+    const d = (life.duos ?? []).find((q) => q.kind === 'pound' && q.poundAt != null);
+    const a0 = d?.a.m.action?.name?.startsWith('pound') ? d.a.m.action.t0 : null;
+    const pounding = a0 != null ? { since: time - a0 < 0.5 ? 9 : (time - a0 - 0.5) % 0.8 } : d ? { since: 9 } : null;
+    drawFestivalBack(ctx, world, cam, time, festivalSpots(life), pounding);
+  }
   if (map.garden && !map.indoor) {
     const eggs = life.owner?.garden?.eggs ?? [];
     // The two set back up the grass are drawn first, so the front three lap over them and the
@@ -2707,6 +2781,12 @@ export function drawGardenPiece(ctx, map, kind, wx, extra, cam, width, time) {
     case 'mg_showtent':
       drawShowTent(ctx, x, gy, time, wx);
       return true;
+    case 'mg_moonstall':
+      drawFestivalStall(ctx, x, gy, time, wx);
+      return true;
+    case 'mg_sumohall':
+      drawSumoHall(ctx, x, gy, time, wx);
+      return true;
     case 'mg_seesaw':
       drawSeesaw(ctx, x, gy, map.seesawAngle ?? -SEESAW.tilt);
       return true;
@@ -2734,7 +2814,7 @@ export function drawGardenPiece(ctx, map, kind, wx, extra, cam, width, time) {
       // Everything in the room that moves.
       map.stoveHeat = (map.stoveHeat ?? 0) + ((map.stoveBusy ? 1 : 0) - (map.stoveHeat ?? 0)) * 0.05;
       nurseryLife(ctx, x - 380, gy + 40 - 400, time, map.outsideNight ?? 0, map.stoveHeat);
-      trophyShelf(ctx, map.trophies ?? [], x - 380, gy - 360, time, map.showCup);
+      trophyShelf(ctx, map.trophies ?? [], x - 380, gy - 360, time, map.showCup, map.sumoCup);
       return true;
     }
     default:

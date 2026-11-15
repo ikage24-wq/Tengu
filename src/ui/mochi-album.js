@@ -3,6 +3,8 @@
 // card, the ones you've raised drawn as a Mochi that is it (a form, a coat, a hairstyle, eyes) or
 // named (a personality, a voice: click a voice to hear it), the rest a soft "?"; underneath, the
 // page's two rewards (half full, complete) and Claim. Opened from Kinako or a Mochi's page.
+// Last down the left, the Diary: what your Mochi got up to in the garden, a page a day
+// (data/mochi-diary.js).
 
 import { ALBUM_PAGES, PAGE_ORDER, seenOn, milestones, claimAlbum } from '../data/mochi-album.js';
 import { rollMochi } from '../data/mochi-genes.js';
@@ -11,6 +13,8 @@ import { drawMochiAnim } from '../render/mochi-anim.js';
 import { sfx } from '../audio/sfx.js';
 import { COLORS, windowFrame, text, button, hover, clicked, roundRect, icon, tooltip, fit } from './kit.js';
 import { heading } from './mochi-kit.js';
+import { LINES, diaryWords, dayName, diaryDay } from '../data/mochi-diary.js';
+import { drawIcon } from '../render/mochi-hearts.js';
 
 const W = 372;
 const H = 270;
@@ -42,7 +46,7 @@ export function mochiAlbumWindow(ui, state, world) {
   if (!windowFrame(ui, win, W, H, 'Mochi Album', { icon: 'book' })) return;
   const { ctx } = ui;
   const char = world.char;
-  win.page = PAGE_ORDER.includes(win.page) ? win.page : PAGE_ORDER[0];
+  win.page = PAGE_ORDER.includes(win.page) || win.page === 'diary' ? win.page : PAGE_ORDER[0];
   const x = win.x + 10;
   const y = win.y + 28;
   // ---- The pages.
@@ -80,11 +84,32 @@ export function mochiAlbumWindow(ui, state, world) {
       win.scroll = 0;
     }
   });
+  // ---- The diary, last.
+  {
+    const py = y + PAGE_ORDER.length * 30 + 4;
+    const on = win.page === 'diary';
+    const days = char.garden?.diary ?? [];
+    const today = days[days.length - 1]?.day === diaryDay(world.dayClock?.() ?? new Date()) ? days[days.length - 1].notes.length : 0;
+    ctx.fillStyle = on ? '#ffe8f0' : hover(ui, x, py, lw, 26) ? '#fff6fa' : '#fffaf2';
+    roundRect(ctx, x, py, lw, 26, 8);
+    ctx.fill();
+    ctx.strokeStyle = on ? '#ff8fb8' : '#f0dcc8';
+    ctx.lineWidth = on ? 1.3 : 1;
+    ctx.stroke();
+    icon(ctx, 'feather', x + 10, py + 13, 8, on ? '#e0659f' : '#c8a0b8');
+    text(ctx, 'Diary', x + 19, py + 12, { size: 7, bold: true, color: on ? '#a8467a' : COLORS.ink });
+    text(ctx, today ? `${today} today` : 'Their days', x + 19, py + 21, { size: 5.8, color: COLORS.muted });
+    if (clicked(ui, x, py, lw, 26)) {
+      win.page = 'diary';
+      win.scroll = 0;
+    }
+  }
+  const rx = x + lw + 10;
+  const rw = W - 20 - lw - 10;
+  if (win.page === 'diary') return diaryPage(ui, win, world, rx, y, rw);
   // ---- The page.
   const page = ALBUM_PAGES[win.page];
   const seen = new Set(seenOn(char, win.page));
-  const rx = x + lw + 10;
-  const rw = W - 20 - lw - 10;
   heading(ctx, `${page.name} · ${seen.size} of ${page.keys.length}`, rx, y, rw);
   const per = COLS * ROWS;
   const pages = Math.ceil(page.keys.length / per);
@@ -146,4 +171,52 @@ export function mochiAlbumWindow(ui, state, world) {
     }
     if (!m.claimed && hover(ui, bx, by, bw, 20)) tooltip(ui, [{ text: words, bold: true }]);
   });
+}
+
+// The diary: a day a page, newest first - each note a line with its little picture, the Mochi's
+// names in pink; Older / Newer underneath.
+const ROW = 14;
+function diaryPage(ui, win, world, x, y, w) {
+  const { ctx } = ui;
+  const g = world.char.garden ?? {};
+  const days = g.diary ?? [];
+  const now = world.dayClock?.() ?? new Date();
+  const today = diaryDay(now);
+  const yesterday = diaryDay(new Date(now.getTime() - 86400000));
+  win.scroll = Math.max(0, Math.min(days.length - 1, win.scroll ?? 0));
+  const page = days[days.length - 1 - win.scroll];
+  heading(ctx, page ? `Diary · ${dayName(page.day, today, yesterday)}` : 'Diary', x, y, w);
+  if (!page) {
+    icon(ctx, 'feather', x + w / 2, y + 70, 16, '#f0c8d8');
+    text(ctx, 'Nothing written yet.', x + w / 2, y + 100, { size: 7.5, bold: true, align: 'center', color: '#a8467a' });
+    text(ctx, 'Your Mochi fill this in as they live their days', x + w / 2, y + 113, { size: 6.5, align: 'center', color: COLORS.muted });
+    text(ctx, 'in the garden: games, friends, little presents.', x + w / 2, y + 123, { size: 6.5, align: 'center', color: COLORS.muted });
+    return;
+  }
+  // (Names as they're called now, for a Mochi you've renamed since.)
+  const named = new Map((g.mochi ?? []).map((r) => [r.seed, r.name]));
+  const nameOf = (seed) => named.get(seed) ?? null;
+  page.notes.forEach((n, i) => {
+    const ly = y + 13 + i * ROW;
+    ctx.save();
+    ctx.fillStyle = i % 2 ? '#fffafc' : '#fff3f7';
+    roundRect(ctx, x, ly, w, ROW - 2, 6);
+    ctx.fill();
+    ctx.clip();
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.arc(x + 7, ly + 6, 4.8, 0, Math.PI * 2);
+    ctx.fill();
+    drawIcon(ctx, LINES[n.k]?.icon ?? 'heart', x + 7, ly + 6, world.now);
+    let tx = x + 15;
+    for (const part of diaryWords(n, nameOf)) {
+      text(ctx, part.text, tx, ly + 8.6, { size: 6.4, bold: Boolean(part.name), color: part.name ? '#c04f88' : part.muted ? COLORS.muted : COLORS.ink });
+      tx += ctx.measureText(part.text).width;
+    }
+    ctx.restore();
+  });
+  const by = win.y + H - 24;
+  if (button(ui, x, by, 52, 14, '< Older', { size: 6.5, enabled: win.scroll < days.length - 1 })) win.scroll += 1;
+  text(ctx, `${days.length - win.scroll} / ${days.length}`, x + w / 2, by + 10, { size: 6.5, align: 'center', color: COLORS.muted });
+  if (button(ui, x + w - 52, by, 52, 14, 'Newer >', { size: 6.5, enabled: win.scroll > 0 })) win.scroll -= 1;
 }

@@ -3,6 +3,8 @@
 import { lapStart, lap } from '../core/frametimes.js';
 import { WEATHER_WIND } from './terrain.js';
 import { HALL, showShot } from '../world/mochi-show.js';
+import { SUMO_HALL, sumoShot } from '../world/mochi-sumo.js';
+import { drawSumoScreen } from './sumo.js';
 import { drawShowScreen } from './show.js';
 import { usingSkin } from '../data/cosmetics.js';
 import { drawSkinTag } from './cosmetics.js';
@@ -99,13 +101,15 @@ export function updateCamera(cam, world, dt) {
   // the next - starting gently and settling gently (a critically damped spring) - and never past the
   // hall's edges. (The spring moves the view's edges and its width together, from one shot's frame -
   // kept inside the hall - toward the next's, so the frames between stay inside the hall too.)
-  if (world.show) {
-    const goal = showShot(world.show);
+  // (Mochi Sumo's hall the same way: world/mochi-sumo.js sumoShot, its own box SUMO_HALL.)
+  if (world.show || world.sumo) {
+    const goal = world.show ? showShot(world.show) : sumoShot(world.sumo);
+    const HB = world.show ? HALL : SUMO_HALL;
     const gw = VIEW_W / goal.zoom;
     const gh = VIEW_H / goal.zoom;
     const to = {
-      x: Math.max(HALL.x0, Math.min(HALL.x1 - gw, goal.x - gw / 2)),
-      y: Math.max(HALL.y0, Math.min(HALL.y1 - gh, goal.y - gh / 2)),
+      x: Math.max(HB.x0, Math.min(HB.x1 - gw, goal.x - gw / 2)),
+      y: Math.max(HB.y0, Math.min(HB.y1 - gh, goal.y - gh / 2)),
       w: gw,
     };
     // (The spring chases the new frame as it eases in, rather than the frame itself, so a move starts
@@ -124,11 +128,11 @@ export function updateCamera(cam, world, dt) {
       }
     }
     const s = cam.show;
-    s.w = Math.min(s.w, HALL.x1 - HALL.x0);
+    s.w = Math.min(s.w, HB.x1 - HB.x0);
     cam.zoom = VIEW_W / s.w;
     const vh = VIEW_H / cam.zoom;
-    cam.x = Math.max(HALL.x0, Math.min(HALL.x1 - s.w, s.x));
-    cam.y = Math.max(HALL.y0, Math.min(HALL.y1 - vh, s.y));
+    cam.x = Math.max(HB.x0, Math.min(HB.x1 - s.w, s.x));
+    cam.y = Math.max(HB.y0, Math.min(HB.y1 - vh, s.y));
     Object.assign(cam, { ready: true, mapId: map.id });
     return;
   }
@@ -508,13 +512,14 @@ export function drawWorld(ctx, world, viewCam, time) {
   // spikes along a lip, outlines) was drawn half in two pixels and flickered as it slid across them
   // while you walked. On the pixel grid the whole scene steps together, crisp, every frame.
   // (In the Mochi Show's close shots, on the zoomed screen's pixels: render/show.js.)
-  const zs = world.show ? (viewCam.zoom ?? 1) : 1;
+  const zs = world.show || world.sumo ? (viewCam.zoom ?? 1) : 1;
   const cam = { x: snap((viewCam.x + ox) * zs) / zs, y: snap((viewCam.y + oy) * zs) / zs };
   // A race's closer camera (updateCamera): the whole scene drawn larger. (Anything a race draws in
   // screen space finds the unzoomed screen in `world.race.screenT`.)
-  const zoom = (world.race || world.show) && (viewCam.zoom ?? 1) !== 1 ? viewCam.zoom : 1;
+  const zoom = (world.race || world.show || world.sumo) && (viewCam.zoom ?? 1) !== 1 ? viewCam.zoom : 1;
   if (world.race) world.race.screenT = ctx.getTransform();
   if (world.show) world.show.zoom = zoom;
+  if (world.sumo) world.sumo.zoom = zoom;
   ctx.save();
   if (zoom !== 1) ctx.scale(zoom, zoom);
   try {
@@ -524,6 +529,7 @@ export function drawWorld(ctx, world, viewCam, time) {
   }
   // (The Mochi Show's words and confetti: on the screen itself, over everything, crisp.)
   if (world.show) drawShowScreen(ctx, world.show, cam, time);
+  if (world.sumo) drawSumoScreen(ctx, world.sumo, cam, time);
 }
 
 // Everything in the world, back to front, at the camera `cam` (drawWorld).

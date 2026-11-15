@@ -28,6 +28,8 @@ function world(rec) {
   const c = createCharacter('Owner', {});
   c.garden = { back: null, mochi: [rec], eggs: [], unlocked: {} };
   const w = createWorld(c);
+  // (No festival unless a test asks for one: they come round by the real clock.)
+  w.forceFestival = null;
   w.log = () => {};
   loadMap(w, 'meadow1', 'west');
   w.mobs = [];
@@ -156,6 +158,8 @@ test('your Mochi is always on something: the ground, a ledge or swimming at the 
 test('the Game Master can put a maxed Mochi in the Garden: every stat S at Lv 99, grown; not past 8', () => {
   const c = createCharacter('Owner', {});
   const w = createWorld(c);
+  // (No festival unless a test asks for one: they come round by the real clock.)
+  w.forceFestival = null;
   w.log = () => {};
   assert.match(gmCommand(w, 'mochi', ['demon', 'Zoomy']), /Zoomy/);
   const rec = c.garden.mochi.at(-1);

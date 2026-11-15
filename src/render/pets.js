@@ -2,6 +2,7 @@
 
 import { drawMochiAnim } from './mochi-anim.js';
 import { drawShow } from './show.js';
+import { drawSumo } from './sumo.js';
 import { fxSprite } from './fx-sprites.js';
 import { drawGardenLife } from './garden.js';
 import { drawRace } from './race.js';
@@ -19,6 +20,7 @@ export function drawPets(ctx, world, cam, time, layer) {
   if (world.race && layer === 'back') drawRace(ctx, world, cam, time);
   // (The Mochi Show: render/show.js.)
   if (world.show) drawShow(ctx, world, cam, world.now, layer);
+  if (world.sumo) drawSumo(ctx, world, cam, world.now, layer);
   // The Arbalist Engineer's turret: idle, its head swivelling (frames 0-3), or firing (4-5) for a
   // moment after each bolt, turned to face what it shoots at.
   const tr = world.turret;
