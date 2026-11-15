@@ -27,6 +27,7 @@ import { GROUND_ART } from './terrain.js';
 import { WATER_BED, WATER_LIFE, swell } from './water.js';
 import { groundAt } from '../world/physics.js';
 import { hash } from './propkit.js';
+import { drawWeatherSky } from './garden-weather.js';
 
 const FAR_F = 0.2;
 const MID_F = 0.45;
@@ -408,7 +409,12 @@ function mid(ctx, t, cam, width, y0, time) {
 }
 
 BACKDROPS.push({
-  far: (ctx, t, cam, width, y0, time) => (t.skyline === 'course:moonmortar' ? far(ctx, t, cam, width, y0, time) : false),
+  // (The weather's sky first, behind the far hills: render/garden-weather.js.)
+  far: (ctx, t, cam, width, y0, time) => {
+    if (t.skyline !== 'course:moonmortar') return false;
+    drawWeatherSky(ctx, cam, width, y0, time);
+    return far(ctx, t, cam, width, y0, time);
+  },
   mid: (ctx, t, cam, width, y0, time) => (t.skyline === 'course:moonmortar' ? mid(ctx, t, cam, width, y0, time) : false),
 });
 

@@ -94,6 +94,8 @@ const HIGH = new Set(['sky', 'starfall', 'terrace', 'cloudcatch_pier']);
 const TROPIC = new Set(['lagoon', 'voyage_out', 'voyage_home', 'voyage_isle', 'dawnbeach', 'dock', 'trainfield', 'home']);
 export function climate(map) {
   if (map.dungeon || map.indoor || map.ownLight || map.look?.ceiling || ['cave', 'hollow', 'aquarium'].includes(map.theme)) return null;
+  // (The Mochi Garden has weather of its own, the same for everyone: world/garden-weather.js.)
+  if (map.garden) return null;
   if (HIGH.has(map.id) || map.theme === 'sky' || map.theme === 'skywhale') return null;
   if (SNOWY(map)) return 'snowy';
   if (TROPIC.has(map.id) || map.home) return 'tropic';

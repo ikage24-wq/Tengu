@@ -40,6 +40,7 @@
 //                  mortars, basket beds, a round window, a rug, a toy shelf
 
 import { R, E, T, F, snap, mix } from './pixel.js';
+import { drawWeatherGround, drawWeatherFront, drawSplashes } from './garden-weather.js';
 import { ramp, planks, foliage, bark, band, gable, hash, swing, pivoted, flicker, lean } from './propkit.js';
 // (Eased 0 to 1: slow out, slow in.)
 const smooth = (u) => u * u * (3 - 2 * u);
@@ -1812,10 +1813,17 @@ export function drawGardenLife(ctx, world, cam, time, layer = 'back') {
   const life = world.gardenLife;
   const map = world.map;
   const h = life.hatching;
+  // (The weather, out in the garden: render/garden-weather.js.)
+  const outside = map.garden && !map.indoor;
   if (layer === 'front') {
     if (h && !map.indoor) drawHatch(ctx, h.m, h.x - cam.x, groundAt(map, h.x) - cam.y, time);
+    if (outside) {
+      drawSplashes(ctx, world, cam, time);
+      drawWeatherFront(ctx, world, cam, time);
+    }
     return;
   }
+  if (outside) drawWeatherGround(ctx, world, cam, time);
   if (map.garden && !map.indoor) {
     const eggs = life.owner?.garden?.eggs ?? [];
     // The two set back up the grass are drawn first, so the front three lap over them and the

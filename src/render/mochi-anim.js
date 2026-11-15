@@ -1658,6 +1658,80 @@ export const TRICK_BITS = {
   // A quick "Yes!" (world/mochi-race.js, the Power course): its boulder burst or its mochi pounded
   // smooth, both fists punched up with a little hop, and it's off; the weakest just sags with
   // relief instead - "phew" - a paw to its brow.
+  // The garden's weather (world/garden-weather.js, world/garden-life.js), 2026-11-15:
+  // `splash`: jumping in a puddle on purpose - a crouch, up with its arms flung high, and down with a
+  //   stomp (the splash: render/garden-weather.js, at 0.55 and the little one at 0.92 of each go),
+  //   a giggle, a little bounce for a smaller splash, and again.
+  // `rainwatch`: sat somewhere dry watching the rain come down, swaying, a paw held out now and then
+  //   to feel the drops (it tickles), cosy and a bit drowsy.
+  // `wow`: a rainbow! Stopped in its tracks looking up, wide-eyed; a hop, and clapping.
+  splash: { dur: 1.3, loop: [0.1, 1.1], crisp: true, fps: 48, keys: [
+    KEY(0, {}),
+    KEY(0.1, { squat: 1.6, front: [4, -5], back: [-3, -5], mouth: 'D', glance: 1 }),
+    KEY(0.3, { lift: 9, front: [7, -13], back: [-6, -13], over: true, tilt: -4, mouth: 'D', closed: [true, true], sprout: 'excited', ease: 'out' }),
+    KEY(0.42, { lift: 9.5, front: [8, -12], back: [-7, -12], over: true, tilt: -5, mouth: 'D', closed: [true, true], sprout: 'excited' }),
+    KEY(0.55, { squat: 2, front: [9, -4], back: [-8, -4], tilt: 6, mouth: 'D', closed: [true, true], ease: 'in' }),
+    KEY(0.66, { squat: 1, front: [7, -6], back: [-6, -6], tilt: 3, mouth: 'mochibeam', glance: 1 }),
+    KEY(0.8, { lift: 4, front: [5, -9], back: [-4, -9], tilt: -2, mouth: 'D', ease: 'out' }),
+    KEY(0.92, { squat: 1.4, front: [5, -5], back: [-4, -5], tilt: 2, mouth: 'D', ease: 'in' }),
+    KEY(1.1, { squat: 1.6, front: [4, -5], back: [-3, -5], mouth: 'D', glance: 1 }),
+    KEY(1.3, {})] },
+  rainwatch: { dur: 4.4, loop: [0.4, 4.0], keys: [
+    KEY(0, {}),
+    KEY(0.4, { ...SAT, look: 'up', mouth: 'mochibeam', tilt: 4 }),
+    KEY(1.2, { ...SAT, look: 'up', mouth: 'mochibeam', tilt: -4, hy: 0.4 }),
+    KEY(1.8, { ...SAT, look: 'up', mouth: 'mochio', front: [7, -8], tilt: -2 }),
+    KEY(2.3, { ...SAT, look: 'up', mouth: 'D', front: [7, -9], closed: [true, true], tilt: -6, sprout: 'happy' }),
+    KEY(2.8, { ...SAT, mouth: 'mochibeam', tilt: 3 }),
+    KEY(3.4, { ...SAT, look: 'up', lid: 0.3, mouth: 'mochiw', tilt: 5 }),
+    KEY(4.0, { ...SAT, look: 'up', mouth: 'mochibeam', tilt: 4 }),
+    KEY(4.4, {})] },
+  wow: { dur: 2.6, loop: [0.3, 2.3], crisp: true, fps: 48, keys: [
+    KEY(0, {}),
+    KEY(0.3, { look: 'up', mouth: 'o', wide: true, front: [3, -6], back: [2, -6], glance: 1 }),
+    KEY(0.7, { look: 'up', mouth: 'D', shine: true, front: [6, -10], back: [-5, -10], over: true, sprout: 'excited', extra: ['spark0'] }),
+    KEY(0.9, { look: 'up', mouth: 'D', shine: true, lift: 4, front: [6, -14], back: [-5, -14], over: true, sprout: 'excited', extra: ['spark1'], ease: 'out' }),
+    KEY(1.1, { look: 'up', mouth: 'D', shine: true, squat: 1, front: [3, -8], back: [3, -8], sprout: 'excited', ease: 'in' }),
+    KEY(1.35, { look: 'up', mouth: 'D', closed: [true, true], front: [4, -9], back: [3, -9] }),
+    KEY(1.5, { look: 'up', mouth: 'D', closed: [true, true], front: [6, -9], back: [-1, -9] }),
+    KEY(1.65, { look: 'up', mouth: 'D', closed: [true, true], front: [4, -9], back: [3, -9] }),
+    KEY(1.8, { look: 'up', mouth: 'D', closed: [true, true], front: [6, -9], back: [-1, -9] }),
+    KEY(2.3, { look: 'up', mouth: 'mochibeam', shine: true, front: [3, -6], back: [2, -6] }),
+    KEY(2.6, {})] },
+  // Snow and wind (world/garden-weather.js), 2026-11-15:
+  // `snowcatch`: looking up with its tongue out, hopping from foot to foot under the falling flakes,
+  //   eyes squeezed shut each time it catches one.
+  // `snowpat`: crouched by the snow-mochi, patting it into shape with both paws by turns, pleased.
+  // `catch`: a leaf blowing by - a crouch, a leap with both paws up, clapped shut on it, and down.
+  snowcatch: { dur: 2.6, loop: [0.2, 2.2], crisp: true, fps: 48, keys: [
+    KEY(0, {}),
+    KEY(0.2, { look: 'up', mouth: 'tongue', front: [3, -6], back: [2, -6], glance: 1 }),
+    KEY(0.5, { look: 'up', mouth: 'tongue', lift: 2.5, legF: [1.4, -1.6, 20], tilt: -5, front: [5, -8], back: [-2, -6], ease: 'out' }),
+    KEY(0.7, { look: 'up', mouth: 'tongue', squat: 0.8, tilt: -2, front: [4, -6], back: [1, -6], ease: 'in' }),
+    KEY(0.95, { look: 'up', mouth: 'D', closed: [true, true], tilt: 4, front: [4, -8], back: [3, -8], sprout: 'happy' }),
+    KEY(1.2, { look: 'up', mouth: 'tongue', front: [3, -6], back: [2, -6] }),
+    KEY(1.5, { look: 'up', mouth: 'tongue', lift: 2.5, legB: [-1.4, -1.6, -20], tilt: 5, front: [2, -6], back: [-5, -8], ease: 'out' }),
+    KEY(1.7, { look: 'up', mouth: 'tongue', squat: 0.8, tilt: 2, front: [3, -6], back: [-1, -6], ease: 'in' }),
+    KEY(1.95, { look: 'up', mouth: 'D', closed: [true, true], tilt: -4, front: [4, -8], back: [3, -8], sprout: 'happy' }),
+    KEY(2.2, { look: 'up', mouth: 'tongue', front: [3, -6], back: [2, -6] }),
+    KEY(2.6, {})] },
+  snowpat: { dur: 1.4, loop: [0.2, 1.2], keys: [
+    KEY(0, {}),
+    KEY(0.2, { squat: 2, lean: 0.12, front: [7, -3], back: [6, -2], mouth: 'mochibeam', glance: 1 }),
+    KEY(0.45, { squat: 2, lean: 0.14, front: [8, -6], back: [6, -2], mouth: 'mochio', glance: 1 }),
+    KEY(0.6, { squat: 2.2, lean: 0.16, front: [8, -3], back: [7, -3], mouth: 'mochibeam', closed: [true, true], glance: 1 }),
+    KEY(0.85, { squat: 2, lean: 0.14, front: [6, -2], back: [8, -6], mouth: 'mochio', glance: 1 }),
+    KEY(1.0, { squat: 2.2, lean: 0.16, front: [7, -3], back: [8, -3], mouth: 'mochibeam', closed: [true, true], glance: 1 }),
+    KEY(1.2, { squat: 2, lean: 0.12, front: [7, -3], back: [6, -2], mouth: 'mochibeam', glance: 1 }),
+    KEY(1.4, {})] },
+  catch: { dur: 1.1, crisp: true, fps: 48, keys: [
+    KEY(0, { look: 'up', mouth: 'mochio', front: [4, -7], back: [3, -7], glance: 1 }),
+    KEY(0.18, { look: 'up', squat: 1.8, front: [3, -5], back: [2, -5], mouth: 'grit', glance: 1, ease: 'in' }),
+    KEY(0.4, { look: 'up', lift: 10, front: [6, -16], back: [4, -16], over: true, tilt: -6, mouth: 'D', ease: 'out' }),
+    KEY(0.5, { look: 'up', lift: 10.5, front: [4, -15], back: [4, -15], over: true, tilt: -6, mouth: 'D', closed: [true, true] }),
+    KEY(0.72, { squat: 1.6, front: [5, -9], back: [5, -9], tilt: 2, mouth: 'D', closed: [true, true], sprout: 'excited', extra: ['spark0'], ease: 'in' }),
+    KEY(0.9, { front: [5, -8], back: [5, -8], mouth: 'mochibeam', sprout: 'excited', extra: ['spark1'] }),
+    KEY(1.1, {})] },
   power_win: { dur: 0.5, crisp: true, fps: 48, keys: [
     KEY(0, { mouth: 'D', glance: 1 }),
     KEY(0.12, { front: [6, -18], back: [-3, -17], over: true, lift: 5.5, tilt: -3, closed: [true, true], mouth: 'D', sprout: 'excited', ease: 'out' }),
@@ -1883,6 +1957,83 @@ function actionAt(m, time) {
   // (A quick move can ask for more drawings a second, `fps`, so its swing reads smooth.)
   const fps = bit.fps ?? MOMENT_FPS;
   return { bit, t, tq: map(Math.floor(e * fps + 1e-6) / fps) };
+}
+
+// A big leaf held over its head out in the rain (`m.carry`: world/garden-life.js leafFor): a broad
+// round leaf on its stem, its edge drooping either side, swaying a little as it goes, rain beading
+// on it and dripping off its two drooping tips.
+function drawLeafBrella(ctx, x, y, s, flip, time, seed) {
+  const d = flip ? -1 : 1;
+  const k = s / 0.6;
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.scale(d * k, k);
+  ctx.rotate(-0.04 + 0.05 * Math.sin(time * 2.4 + seed));
+  ctx.lineCap = 'round';
+  ctx.strokeStyle = '#3f7a46';
+  ctx.lineWidth = 1.6;
+  ctx.beginPath();
+  ctx.moveTo(0, 1);
+  ctx.quadraticCurveTo(-0.4, -10, -1.5, -19);
+  ctx.stroke();
+  ctx.strokeStyle = '#86cc8e';
+  ctx.lineWidth = 0.6;
+  ctx.beginPath();
+  ctx.moveTo(0.3, 0);
+  ctx.quadraticCurveTo(-0.1, -10, -1.2, -18);
+  ctx.stroke();
+  // (Just over its head, about as wide as it is: bigger, held higher, it read as a parasol.)
+  const cx = -1.5;
+  const cy = -21;
+  ctx.translate(cx, cy);
+  ctx.scale(0.76, 0.8);
+  ctx.translate(-cx, -cy);
+  const blade = (g) => {
+    ctx.beginPath();
+    ctx.moveTo(cx - 17 - g, cy + 5 + g * 0.5);
+    ctx.quadraticCurveTo(cx - 15 - g, cy - 9 - g, cx, cy - 10 - g);
+    ctx.quadraticCurveTo(cx + 15 + g, cy - 9 - g, cx + 17 + g, cy + 5 + g * 0.5);
+    ctx.quadraticCurveTo(cx + 9, cy + 1 + g, cx + 1.2, cy + 2.4 + g);
+    ctx.lineTo(cx, cy + 1 + g);
+    ctx.lineTo(cx - 1.2, cy + 2.4 + g);
+    ctx.quadraticCurveTo(cx - 9, cy + 1 + g, cx - 17 - g, cy + 5 + g * 0.5);
+    ctx.closePath();
+  };
+  ctx.fillStyle = '#2f6a3c';
+  blade(1);
+  ctx.fill();
+  ctx.fillStyle = '#5fb86a';
+  blade(0);
+  ctx.fill();
+  ctx.fillStyle = '#86d48e';
+  ctx.beginPath();
+  ctx.ellipse(cx - 5, cy - 5.5, 7, 2.6, -0.2, 0, TAU);
+  ctx.fill();
+  ctx.strokeStyle = '#3f8a4c';
+  ctx.lineWidth = 0.6;
+  ctx.beginPath();
+  for (const [ex, ey] of [[-12, 2], [-7, -6], [0, -9], [7, -6], [12, 2]]) {
+    ctx.moveTo(cx, cy + 1);
+    ctx.quadraticCurveTo(cx + ex * 0.5, cy + ey * 0.4 - 1, cx + ex, cy + ey);
+  }
+  ctx.stroke();
+  // (The rain: beads sitting on it, and drips gathering at its tips and falling.)
+  ctx.fillStyle = 'rgba(232,246,255,0.95)';
+  for (const [bx, by] of [[-8, -6], [5, -7], [10, -2]]) {
+    ctx.beginPath();
+    ctx.arc(cx + bx, cy + by, 0.7, 0, TAU);
+    ctx.fill();
+  }
+  for (const [tx, ph] of [[-17, 0], [17, 0.5]]) {
+    const u = (time * 1.4 + ph + seed * 0.13) % 1;
+    const ty = cy + 5.5;
+    ctx.globalAlpha = u < 0.55 ? 0.95 : 0.95 * (1 - (u - 0.55) / 0.45);
+    ctx.beginPath();
+    ctx.arc(cx + tx, ty + (u < 0.55 ? u * 1.4 : 0.8 + (u - 0.55) * 26), u < 0.55 ? 0.5 + u : 1, 0, TAU);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+  ctx.restore();
 }
 
 // The big wooden mallet (kine) for pounding mochi, in a Mochi's paws (the 'pound' move): a long
@@ -2437,7 +2588,8 @@ export function drawMochiAnim(ctx, m, x, y, time) {
   const downBy = fours ? Math.round(Math.max(0, Math.min(1, leanNow / CRAWL.lean)) * 8) / 8 : 1;
   // (Tipped over, the hair is carried back off the face, as far as it is tipped: long hair hung
   // straight down through the floor, going down, crawling and getting up again.)
-  const hairNow = fours ? P.hair - CRAWL.hairBack * downBy : P.hair;
+  // (`m.windHair`: blown by the garden's wind, world/garden-life.js.)
+  const hairNow = (fours ? P.hair - CRAWL.hairBack * downBy : P.hair) + (m.windHair ?? 0);
   // (Crawling, the body surges and eases about where it really is - see crawlPose - and that is
   // eased too, so a turn, where "behind" changes side, glides instead of jumping.)
   const slideTo = cant === 'crawl' && moving && !turning ? dir * (live.slide ?? 0) * mvT.stride * (s / 0.6) : 0;
@@ -2541,7 +2693,15 @@ export function drawMochiAnim(ctx, m, x, y, time) {
   const flipping = crisp && tip > 4 && !lying;
   // (A backstroke is drawn facing the other way, so tipped over its front faces the sky.)
   // (What it holds goes in its near hand: a sweet, bitten as it eats; its ball, moving smoothly.)
-  const over = posed && target.hold ? (c, hand, flip) => {
+  // (A leaf held up over its head in the rain: its near paw up by its chin, on the stem.)
+  const leaf = m.carry === 'leaf';
+  if (leaf) {
+    rig.frontArm = [q(4), q(-10)];
+    rig.armOver = null;
+  }
+  const over = (posed && target.hold) || leaf ? (c, hand, flip) => {
+    if (leaf) drawLeafBrella(c, hand[0], hand[1], s, flip, time, g.seed ?? 0);
+    if (!posed || !target.hold) return;
     if (target.hold === 'sweet') drawSweet(c, sweetKind, hand[0], hand[1] + s, s * 0.75, Math.round(target.bites ?? 0));
     else if (target.hold === 'ball') drawBall(c, hand[0] + (flip ? -1 : 1) * live.ball[0] * s, hand[1] + live.ball[1] * s, s, live.spin);
     else if (target.hold === 'can') drawCan(c, hand[0], hand[1], s, flip, Boolean(target.pour), time);

@@ -1,6 +1,7 @@
 // Draws one frame of the world: scenery, NPCs, loot, monsters, the player, effects, and numbers.
 
 import { lapStart, lap } from '../core/frametimes.js';
+import { WEATHER_WIND } from './terrain.js';
 import { usingSkin } from '../data/cosmetics.js';
 import { drawSkinTag } from './cosmetics.js';
 import { awayNow } from '../world/nightmarket.js';
@@ -428,6 +429,9 @@ function eliteCrown(ctx, m, x, y, time) {
 
 export function drawWorld(ctx, world, viewCam, time) {
   const b = world.body;
+  // (A windy day in the garden: the scene's one breeze blows harder there, nowhere else.)
+  const gw = world.map?.garden && !world.map.indoor ? world.gardenWeather : null;
+  WEATHER_WIND.boost = gw?.kind === 'wind' ? gw.k : 0;
   // The rim light on every figure takes the map's light and the hour (the hero redraw's light pass).
   setLight(rimLightOf(world.map, gameHour((world.dayClock ?? (() => new Date()))())));
   const dt = feel.last === null ? 0 : Math.min(0.1, Math.max(0, time - feel.last));

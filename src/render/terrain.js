@@ -150,7 +150,10 @@ export const MATERIALS = {
 // vines, drifting petals, and foreground leaves all lean with it, so weather reads as one thing.
 // `windAt` lets a gust roll across the world from left to right; `windTravel` is how far the air
 // has carried something (the wind's running total), for things that drift with it.
-export const wind = (time) => 0.6 + 0.4 * Math.sin(time * 0.8) + 0.25 * Math.sin(time * 1.9 + 1.3);
+// (A windy day in the Mochi Garden turns it up - `WEATHER_WIND.boost`, 0-1, set each frame by
+// render/scene.js from world/garden-weather.js - so everything there leans and tosses together.)
+export const WEATHER_WIND = { boost: 0 };
+export const wind = (time) => (0.6 + 0.4 * Math.sin(time * 0.8) + 0.25 * Math.sin(time * 1.9 + 1.3)) * (1 + 0.6 * WEATHER_WIND.boost) + 0.35 * WEATHER_WIND.boost;
 export const windAt = (time, wx) => wind(time - wx / 320);
 export const windTravel = (time) => 0.6 * time - 0.5 * Math.cos(time * 0.8) - 0.13 * Math.cos(time * 1.9 + 1.3);
 

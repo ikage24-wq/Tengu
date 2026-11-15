@@ -51,6 +51,7 @@ import { voiceAction, mochiVoice } from './mochi-voice.js';
 import { nightOf } from './daytime.js';
 import { groundAt, footingAt } from './physics.js';
 import { choose, drainNeeds, satisfy, needsOf, mainNeed, befriend, bestFriend, isRival, friendsOf, learn, enjoyment, likesOf } from './mochi-brain.js';
+import { gardenWeatherTick } from './garden-weather.js';
 
 // Where things are in the garden (world/garden.js).
 // (A row of them on the ground just inside the gate, where the square's lantern lights them:
@@ -179,6 +180,7 @@ function brainOptions(world, life, e) {
       out.push({ id: 'napwith', kind: 'rest', like: 'rest', x: pal.x + (e.x < pal.x ? -12 : 12), act: 'nap', hold: 6, pal, gains: { energy: 40, social: 20 }, stay: 3 });
     }
   }
+  weatherOptions(world, life, e, out, walker);
   const rivals = others.filter((o) => isRival(rec, o.rec));
   for (const o of out) if (rivals.some((r) => Math.abs(r.x - o.x) < 100)) o.boost = (o.boost ?? 1) * 0.4;
   // (You: the closer it is to you the keener, keener still if you gave it its favourite sweet
@@ -189,6 +191,73 @@ function brainOptions(world, life, e) {
     out.push({ id: 'you', kind: 'social', like: 'social', x: world.body.x, follow: 'you', tag: fond, act: 'wave', gains: { social: 40 }, boost: 0.4 + Math.min(1, (rec.bond ?? 0) / 600) + fed, stay: fond ? 10 : 3 });
   }
   return out;
+}
+// ---------- The weather (world/garden-weather.js) ----------
+// Puddles fill on the open grass where it rains (clear of every prop and place: render/
+// garden-weather.js draws them, as full as the ground is wet), and the dry spots to shelter under:
+// the big tree's crown, the fruit trees', the nursery's doorway. [x, how far either side]
+export const PUDDLES = [[312, 16], [602, 13], [905, 17], [1048, 13], [1272, 15], [1488, 17], [1752, 15]];
+export const SHELTERS = [[1660, 30], [1537, 9], [2074, 9], [990, 16]];
+// Where the snow-mochi gets built when the snow lies (render/garden-weather.js), and which way the
+// wind blows (as the rain slants and the clouds roll: toward the gate).
+export const SNOWMAN_X = 1240;
+export const WIND_DIR = -1;
+const underCover = (x) => SHELTERS.some(([sx, r]) => Math.abs(x - sx) <= r + 4);
+// Who loves a splash, and who'd sooner watch the rain from somewhere dry.
+const SPLASHY = new Set(['playful', 'hyper', 'mischief', 'cheeky', 'bubbly', 'sporty', 'brave', 'showoff', 'nosy']);
+const SNUG = new Set(['timid', 'shy', 'sleepy', 'lazy', 'gentle', 'polite', 'clingy', 'sweet', 'dreamy', 'grumpy']);
+// (In the rain, what's no fun out in it: the rides, the toy box, a roll or a nap in the wet grass,
+// watering what the sky's watering already.)
+const WASHED_OUT = new Set(['swing', 'slide', 'bounce', 'glide', 'roll', 'nap', 'meditate', 'water', 'play']);
+// What the weather adds to what Mochi `e` could do, and what it takes the shine off.
+function weatherOptions(world, life, e, out, walker) {
+  const W = world.gardenWeather;
+  if (!W) return;
+  const rec = e.rec;
+  const p = rec.personality;
+  if (W.kind === 'rain' && W.k > 0.3) {
+    for (const o of out) if (WASHED_OUT.has(o.act) || o.id === 'toy' || o.id === 'rest' || o.id === 'tumble') o.boost = (o.boost ?? 1) * 0.3;
+    // A splash in a puddle: the nearest two.
+    if (walker) {
+      const near = PUDDLES.map((pd, k) => [pd, k]).sort((a, b) => Math.abs(a[0][0] - e.x) - Math.abs(b[0][0] - e.x)).slice(0, 2);
+      for (const [[px], k] of near) out.push({ id: `puddle${k}`, kind: 'play', like: 'play', x: px + (hash(rec.seed * 1.3 + k) - 0.5) * 6, act: 'splash', hold: 6, gains: { fun: 45, curious: 10 }, boost: (SPLASHY.has(p) ? 2.2 : 0.7) * W.k, stay: 6, wet: true });
+    }
+    // Somewhere dry to sit and watch it come down: the nearest two (a little one makes for one too).
+    const dry = SHELTERS.map((sh, k) => [sh, k]).sort((a, b) => Math.abs(a[0][0] - e.x) - Math.abs(b[0][0] - e.x)).slice(0, 2);
+    for (const [[sx, r], k] of dry) out.push({ id: `shelter${k}`, kind: 'rest', like: 'rest', x: sx + (hash(rec.seed * 2.9 + k) - 0.5) * 2 * r, act: 'rainwatch', hold: 9, gains: { energy: 25, curious: 15, social: 5 }, boost: (SNUG.has(p) || !walker ? 2.4 : 1) * W.k, stay: 9 });
+  }
+  // Snow: catching flakes on its tongue, building the snow-mochi by the square (render/
+  // garden-weather.js: it grows as the snow lies), or watching it come down from somewhere snug.
+  if (W.kind === 'snow' && W.k > 0.3) {
+    for (const o of out) if (o.act === 'nap' || o.act === 'meditate' || o.act === 'water' || o.id === 'rest') o.boost = (o.boost ?? 1) * 0.4;
+    if (walker) {
+      out.push({ id: 'snowcatch', kind: 'play', like: 'play', x: clearOfProps(Math.max(LAND[0] + 40, Math.min(LAND[1] - 40, e.x + (hash(rec.seed * 4.7 + (e.brain?.tick ?? 0)) - 0.5) * 140))), act: 'snowcatch', hold: 6, gains: { fun: 40, curious: 15 }, boost: (SPLASHY.has(p) ? 1.8 : 1) * W.k, stay: 6 });
+      if (W.snow > 0.3) out.push({ id: 'snowman', kind: 'play', like: 'play', x: SNOWMAN_X + (hash(rec.seed * 7.3) < 0.5 ? -27 : 27) + (hash(rec.seed * 2.1) - 0.5) * 4, face: SNOWMAN_X, act: 'snowpat', hold: 6, gains: { fun: 35, curious: 25, social: 10 }, boost: 1.8 * W.snow, stay: 6 });
+    }
+    const dry = SHELTERS.map((sh, k) => [sh, k]).sort((a, b) => Math.abs(a[0][0] - e.x) - Math.abs(b[0][0] - e.x)).slice(0, 1);
+    for (const [[sx, r], k] of dry) out.push({ id: `snug${k}`, kind: 'rest', like: 'rest', x: sx + (hash(rec.seed * 2.9 + k) - 0.5) * 2 * r, act: 'rainwatch', hold: 9, gains: { energy: 25, curious: 15 }, boost: (SNUG.has(p) || !walker ? 2 : 0.6) * W.k, stay: 9 });
+  }
+  // Wind: off after a leaf blowing by, and a leap to catch it.
+  if (W.kind === 'wind' && W.k > 0.3 && walker) {
+    const to = clearOfProps(Math.max(LAND[0] + 40, Math.min(LAND[1] - 40, e.x + WIND_DIR * (90 + hash(rec.seed * 5.3 + (e.brain?.tick ?? 0)) * 120))));
+    out.push({ id: 'leafchase', kind: 'play', like: 'run', x: to, dash: true, act: 'catch', hold: 1.1, gains: { fun: 45, curious: 10 }, stat: 'run', boost: (SPLASHY.has(p) ? 2 : 0.9) * W.k, stay: 2 });
+  }
+  // A rainbow: everyone wants a look.
+  if (W.rainbow > 0.4 && walker) out.push({ id: 'rainbow', kind: 'explore', like: 'explore', x: clearOfProps(Math.max(LAND[0] + 40, Math.min(LAND[1] - 40, e.x + (hash(rec.seed * 6.1) - 0.5) * 60))), act: 'wow', hold: 4.5, gains: { curious: 45, fun: 15 }, boost: 3 * W.rainbow, stay: 4 });
+}
+// What it holds over its head out in the rain: a big leaf - each picking one up at its own moment as
+// the rain gets going and putting it away as it eases off - but not while it's splashing in a
+// puddle on purpose, sheltering, swimming, flying, riding, too little to carry one, or busy with
+// something in its paws.
+const LEAF_OK = new Set(['wave', 'cheer', 'wow', 'hum']);
+function leafFor(world, e, swimming) {
+  const W = world.gardenWeather;
+  const m = e.m;
+  if (W?.kind !== 'rain' || world.map.indoor || e.hidden || swimming || e.flying || e.ride || e.scene) return null;
+  if (pts(e.rec, 'run') < CANT.run || underCover(e.x)) return null;
+  if (m.action && !LEAF_OK.has(m.action.name)) return null;
+  const keen = 0.22 + hash(e.rec.seed * 3.7) * 0.3;
+  return W.k > (m.carry === 'leaf' ? keen - 0.08 : keen) ? 'leaf' : null;
 }
 // Where Mochi `e`'s own mind has it going by day, choosing something new once it's done the last.
 function brainTarget(world, life, e) {
@@ -540,6 +609,8 @@ export function tickGarden(world, dt) {
   }
   // (In the Mochi Market there is nothing else of the garden's to look after.)
   if (life.market) return;
+  // The weather (world/garden-weather.js): the same for everyone, by the clock.
+  gardenWeatherTick(world);
   if (!world.gardenVisit && world.char.garden) stallClothes(world.char);
   // (Your own Mochi fill in the album, data/mochi-album.js, a few times a second.)
   life.albumIn = (life.albumIn ?? 0) - dt;
@@ -570,6 +641,8 @@ export function tickGarden(world, dt) {
   const owls = night ? new Set(life.mochi.filter((e) => nightOwl(e.rec)).slice(0, 2)) : new Set();
   life.mochi.forEach((e, i) => {
     const { rec } = e;
+    // (Its leaf umbrella only while the rain and what it's doing call for one: leafFor, below.)
+    if (e.m) e.m.carry = null;
     // (The garden's time passes for them while you're here; a visiting Mochi's, in its own garden.)
     if (owner && !e.guest) tickRec(rec, dt);
     // (Ready for the moon: told once, so you know it'll be a Tsukimochi when it grows up.)
@@ -773,6 +846,13 @@ export function tickGarden(world, dt) {
     m.mode = e.flying ? 'fly' : foot.swim ? 'swim' : 'run';
     m.inWater = foot.swim;
     settle(e, foot.y, dt);
+    m.carry = leafFor(world, e, foot.swim);
+    // (In a wind its hair streams with it, and walking into it, it leans in: each gust a little
+    // differently, stepped, so its drawings come round again.)
+    const Wn = world.gardenWeather;
+    const gust = Wn?.kind === 'wind' && !inside ? Wn.k * (0.65 + 0.35 * Math.sin(world.now * 0.9 + rec.seed)) : 0;
+    m.windHair = gust ? Math.round((m.dir === WIND_DIR ? -3 : 2) * gust * 2) / 2 : 0;
+    m.hillLean = gust && m.dir === -WIND_DIR && m.speed > 2 ? Math.round(gust * 0.12 * 20) / 20 : 0;
     // A greeting ends in a happy wave.
     if (e.greet && Math.abs(dx) <= 0.5 && !e.waved) {
       e.waved = true;
