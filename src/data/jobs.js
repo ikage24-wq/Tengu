@@ -115,7 +115,7 @@ export const JOBS = {
     id: 'gamemaster', name: 'Game Master', family: 'gm', tier: 9, parent: null, hidden: true,
     hp: 60, mp: 60, advanceHp: 5000, advanceMp: 5000,
     weapons: ['none', 'sword', 'axe', 'spear', 'wand', 'staff', 'bow', 'crossbow', 'dagger', 'gauntlet'],
-    blurb: 'Keeper of Tengu Island. Uses anything, goes anywhere.',
+    blurb: 'Keeper of Windbag Island. Uses anything, goes anywhere.',
   },
 };
 

@@ -95,7 +95,7 @@ export const SIDE_SCENES = {
     { who: 'kuro', text: "You've got the hang of it! Grandma Hayate would be proud. If she were awake, anyway.", mood: 'happy' },
     { who: 'kuro', text: "The boat goes to Sprout Village. Find Mira there. She makes the best tea on the island." },
     { who: 'player', text: 'Will I see you again?' },
-    { who: 'kuro', text: "Of course! Tengu always find their friends. On the wind, you know.", mood: 'happy' },
+    { who: 'kuro', text: "Of course! Friends on this island always find each other. On the wind, you know.", mood: 'happy' },
   ],
   // ----- Sprout Village and the harbor -----
   // ----- Pip, who has never left the shop -----

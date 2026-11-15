@@ -1,5 +1,5 @@
 // The main story: seven chapters from level 1 to 50 (see docs/design/progression-plan.md). Cozy,
-// funny, and with heart (every queen has a sad backstory, and by the third you see it coming). Hayate, the great Tengu who guards the island, has fallen into a deep sleep and her
+// funny, and with heart (every queen has a sad backstory, and by the third you see it coming). Hayate, the Mochi Queen who guards the island, has fallen into a deep sleep and her
 // wind has stopped blowing; without it the island's spirits are growing lonely and sour. Mira takes
 // the newcomer under her wing, and chapter by chapter they calm each region's queen, find out why
 // the light is fading, and in the end hear Hayate stir.
@@ -251,7 +251,7 @@ export const STORY_QUESTS = {
   // ---------- Chapter 9: Above the Clouds (40-44) ----------
   story_6_1: s('story_6_1', 9, {
     name: 'The Sleeping Wind', giver: 'elowen', minLevel: 40, prereq: 'story_5_3',
-    text: "Every queen has said the same thing: the wind stopped. Three queens, three tragic speeches, one pattern. The great Tengu, Hayate, sleeps somewhere above the clouds. Climb to the top of the Sky Garden and calm 20 Sky Harpies; they guard the way up, and they're rude about it.",
+    text: "Every queen has said the same thing: the wind stopped. Three queens, three tragic speeches, one pattern. The Mochi Queen, Hayate, sleeps somewhere above the clouds. Climb to the top of the Sky Garden and calm 20 Sky Harpies; they guard the way up, and they're rude about it.",
     objectives: [{ type: 'visit', map: 'sky', above: 570, place: 'the top of the Sky Garden' }, { type: 'kill', mob: 'windbird', count: 20 }],
     rewards: { exp: 91000, gold: 1500, items: [{ id: 'elixir', qty: 10 }] },
     scenes: { accept: 'ch6_open', done: 'ch6_sky' },
@@ -376,7 +376,7 @@ export const SCENES = {
   ],
   ch1_wind: [
     { who: 'mira', text: "So you saw it. The sleepiest snails on the island, sneezing like pepper pots. One sneezed on my hat and I had hay fever for a week.", mood: 'sad' },
-    { who: 'mira', text: 'This island has a guardian: Hayate, the great Tengu. Her wind carries songs, seeds, kites, and good moods. Mostly good moods.' },
+    { who: 'mira', text: 'This island has a guardian: Hayate, Queen of the Mochi. Her wind carries songs, seeds, kites, and good moods. Mostly good moods.' },
     { who: 'mira', text: "A few weeks ago, her wind just... stopped. And the spirits have been getting lonely and sour ever since.", mood: 'sad' },
     { who: 'player', text: 'So... am I the chosen one?' },
     { together: [{ emote: 'mira', kind: 'note', dur: 1.4 }, { jump: 'mira', height: 8 }] },
@@ -739,7 +739,7 @@ export const SCENES = {
     { together: [{ spot: null, dur: 0.6 }, { face: 'encore', to: 'player' }, { wait: 0.6 }] },
     { who: 'encore', text: 'Forty years I played villains, darling. Witches. Wicked aunts. A very rude swan. Do you know what they all were, underneath? People nobody listened to.', mood: 'sad' },
     { together: [{ emote: 'encore', kind: 'heart', dur: 1.8 }, { fx: 'confetti', at: 'encore', n: 14 }] },
-    { who: 'encore', text: "So whoever is down there under the island, holding that poor Tengu's light: go and listen. Then give them a better ending. And save me a ticket.", mood: 'happy' },
+    { who: 'encore', text: "So whoever is down there under the island, holding that poor queen's light: go and listen. Then give them a better ending. And save me a ticket.", mood: 'happy' },
   ],
   ch6_stars: [
     { who: 'elowen', text: 'Ten stardust. She will see you now. Before you go: she will not give a tragic speech, she is not lonely, and she will not throw a forest at you.' },

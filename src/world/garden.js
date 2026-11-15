@@ -85,6 +85,9 @@ export function gardenMap(g = {}) {
       // and the bean frame), a flower bed and the well, the nursery, another flower bed, and the
       // lantern at the top of the slope.
       ['mg_fence', 248, { to: 872 }], ['mg_fence', 1092, { to: 1284 }], ['mg_mailbox', 226],
+      // Paper lanterns strung over the square on two poles, lit at dusk; the Mochi gather under
+      // them before bed.
+      ['mg_lanternline', 318, { to: 862, h: 82, skip: [[484, 574], [756, 826]] }],
       ['mg_cropbed', 440], ['mg_beanframe', 528], ['mg_flowerbed', 680, 0], ['mg_well', 790],
       ['mg_nursery', 990], ['mg_flowerbed', 1170, 1], ['mg_lantern', 1290, 1],
       // The play meadow (the orchard): a fruit tree at the foot of the slope, the toy box, the big tree
@@ -106,6 +109,8 @@ export function gardenMap(g = {}) {
     lamps: [
       { x: 1290, y: PLATEAU - 44, c: '#ffd6a0' }, { x: 1608, y: 552, c: '#ffd6a0' }, { x: 3110, y: TOP - 44, c: '#ffd6a0' },
       { x: 990, y: PLATEAU - 34, c: '#ffd27a' },
+      // (The strung lanterns over the square.)
+      { x: 420, y: PLATEAU - 70, c: '#ffc87a' }, { x: 590, y: PLATEAU - 66, c: '#ffb8d0' }, { x: 760, y: PLATEAU - 70, c: '#ffc87a' },
     ],
     // (Kinako keeps shop in the Mochi Market now; she is only here in a friend's garden, by the
     // nest, to take the presents you leave them: refreshGarden.)

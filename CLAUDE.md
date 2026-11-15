@@ -169,7 +169,8 @@ animation, no spam, never restyle a weapon) and show the result with pictures or
 Every character, monster, summon, NPC, move, prop, map, effect and UI piece meets all of these.
 "(test)" marks a rule a test checks: the rigs and motion in `tests/rig.test.js` (every frame of
 every move), placement and readability in `tests/placement.test.js`, sizes in `tests/assets.test.js`,
-map-change cleanup in `tests/session.test.js`. Moves or files that broke a rule when its check was
+map-change cleanup in `tests/session.test.js`, and silhouettes, faces, mouths, stamped props and
+wind-ups in `tests/art-standard.test.js`. Moves or files that broke a rule when its check was
 written sit on that test's KNOWN list, to be fixed (a fixed one must come off it). Rules without a
 test are checked by eye on the strips, the hold sheet and a real map before showing anything.
 
@@ -207,7 +208,7 @@ test are checked by eye on the strips, the hold sheet and a real map before show
   the anticipation and the heavier the recovery. For you, a big move shows its power in the pose, but
   it still starts on the frame you press, and skills keep their timing.
 - **Hits react to their direction:** a monster flinches away from the side it was hit on.
-- **Every enemy attack has a visible wind-up**, so you can see it coming.
+- **Every enemy attack has a visible wind-up**, so you can see it coming. (test)
 
 **Drawing**
 - **One light, one style:** every sprite, prop, map and effect is lit from the same upper-front light,
@@ -221,7 +222,7 @@ test are checked by eye on the strips, the hold sheet and a real map before show
 - **Consistent proportions:** each character keeps the same head-to-body ratio, eye height and hand
   size in every pose, outfit and scene. (test)
 - **Recognisable silhouettes:** every named character has its own hair shape or accessory; no two
-  share a silhouette.
+  share a silhouette. (test)
 - **Hands and feet stay readable** at game size, never blobs.
 - **A final polish pass:** zoomed in, at real size in a real map, and (for new designs and big
   changes) beside a reference from a top-quality game. If it looks worse side by side, it isn't done.
@@ -248,11 +249,11 @@ test are checked by eye on the strips, the hold sheet and a real map before show
 - **Marks are rare:** an extra flush, sweat drops and anger marks for real moments only. The soft
   cheek blush that's part of a normal face stays.
 - **A full set of mouth shapes:** closed, small o, open, wide, smile, frown, a tight line, teeth; at
-  least six in regular use.
+  least six in regular use. (test)
 - **Talking uses real shapes:** vowel-like mouths, not open-close flapping (fixed shapes, speed rules).
 - **Mouths stay centred and the same size,** on the face's centre line in every pose.
 - **No stuck default smile** on NPCs, bots and monsters: their mouths rest naturally and react. The
-  face a player picks for their own character in the creator is kept as chosen.
+  face a player picks for their own character in the creator is kept as chosen. (test)
 
 **Life**
 - **Personality in the idle:** every named character (NPCs, sweethearts, bosses) has an idle that says
@@ -281,7 +282,7 @@ test are checked by eye on the strips, the hold sheet and a real map before show
   (loot, portals, quest people) and to legendary gacha sets, the chase.
 
 **AI-like tells (banned)**
-- Stamped or mirrored copies of the same prop or building; random clutter; light from different
+- Stamped or mirrored copies of the same prop or building (test); random clutter; light from different
   directions in one scene; mixed pixel sizes; glow on things that don't give off light (effects, lamps
   and magic may glow); busy noise detail that adds nothing to the shape; things clipping into each other.
 

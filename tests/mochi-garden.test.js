@@ -598,3 +598,26 @@ test('by day Mochi choose for themselves: a mix of things, and a thought bubble 
     g.done();
   }
 });
+
+test('harvest helpers: pick the crop bed and a Mochi close by carries a crop in to the nursery door', () => {
+  const g = garden();
+  try {
+    const e = g.w.gardenLife.mochi.find((m) => m.rec === g.swimmer);
+    e.x = CROP_X + 60;
+    g.char.garden.cropAt = 0;
+    Object.assign(g.w.body, { x: CROP_X });
+    g.up();
+    g.run(2.5, 0.1);
+    assert.ok(e.chore, 'it comes to help');
+    let carried = false;
+    for (let t = 0; t < 120 && e.chore; t += 0.5) {
+      g.run(0.5, 0.1);
+      if (e.chore?.stage === 'carry') carried = true;
+    }
+    assert.ok(carried, 'it took a crop up');
+    assert.equal(e.chore, null, 'and delivered it');
+    assert.ok(Math.abs(e.x - 990) < 60, `at the nursery door (${Math.round(e.x)})`);
+  } finally {
+    g.done();
+  }
+});

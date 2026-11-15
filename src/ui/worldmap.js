@@ -1,4 +1,4 @@
-// The world map (M): Tengu Island laid out on a grid, each region a block of its own colour with
+// The world map (M): Windbag Island laid out on a grid, each region a block of its own colour with
 // its places in a row, Ember Crag the big landmark in the middle, and the sky places on a row of
 // clouds along the top. Every place shows its name and level range, and no road crosses another.
 // Your party and your friends show as little faces by the place each is at (tap one to warp to
@@ -854,7 +854,7 @@ export function worldMapWindow(ui, state, world) {
   ctx.restore();
   // (The island's name in the south-west corner of the sea, clear of Dawnlight Isle up north.)
   box(ctx, 8, MAP_H - 23, 74, 15, { fill: '#ffffff', edge: '#f4bcd8', r: 7.5, width: 1.5 });
-  text(ctx, 'Tengu Island', 45, MAP_H - 12.5, { size: 8.5, bold: true, align: 'center', color: INK });
+  text(ctx, 'Windbag Island', 45, MAP_H - 12.5, { size: 8.5, bold: true, align: 'center', color: INK });
 
   // The stops (fields first, then towns over them), then every name on top.
   let hovered = null;

@@ -43,7 +43,7 @@ test('needs run down with time and come back up with what meets them, between 0 
   assert.ok(m.needs.fun < fun);
   drainNeeds(m, 1e5);
   assert.equal(m.needs.fun, 0);
-  satisfy(m, { fun: 500 });
+  satisfy(m, { fun: 1000 });
   assert.equal(m.needs.fun, 100);
 });
 

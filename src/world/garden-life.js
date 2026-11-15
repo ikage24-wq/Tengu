@@ -155,6 +155,9 @@ function brainOptions(world, life, e) {
     if (wx < LAND[0] + 20 || wx > LAND[1] - 20) wx = (e.x ?? LAND[0]) - d * (40 + roam * 60);
   }
   out.push({ id: 'wander', kind: 'explore', like: 'explore', x: clearOfProps(wx), gains: { curious: 15 }, stay: walker ? 4 : 9 });
+  // (In the evening, before bed, under the lanterns strung over the square: render/garden.js.)
+  const dusk = world.night ?? nightOf(new Date());
+  if (dusk > 0.2 && dusk <= 0.5) out.push({ id: 'lanterns', kind: 'social', like: 'social', x: 360 + Math.round(hash(rec.seed * 5.7) * 460), act: 'hum', gains: { social: 30, curious: 15 }, boost: 2.4, stay: 10 });
   out.push({ id: 'rest', kind: 'rest', like: 'rest', x: e.x, gains: { energy: 25 }, stay: walker ? 8 : 14 });
   // (A roll about in the grass close by: fun anyone can have, even one too little to walk.)
   out.push({ id: 'tumble', kind: 'play', like: 'play', x: clearOfProps(Math.max(LAND[0], (e.x ?? LAND[0]) + (hash(rec.seed * 2.3 + (e.brain?.tick ?? 0)) - 0.5) * (walker ? 120 : 60))), act: 'roll', gains: { fun: 30 }, boost: walker ? 0.45 : 1, stay: 3 });
@@ -655,7 +658,10 @@ export function tickGarden(world, dt) {
     }
     // By day, its own mind has it (world/mochi-brain.js): what it needs and what it's like decide
     // what it does next. (At night they go to bed; a visiting Mochi follows its person.)
-    const minded = !night && !e.guest && e.x != null && !e.scene;
+    // (Carrying the harvest in: that first.)
+    if (e.chore && (night || e.guest)) e.chore = null;
+    if (e.chore) target = choreTarget(world, e);
+    const minded = !e.chore && !night && !e.guest && e.x != null && !e.scene;
     if (minded) {
       drainNeeds(rec, dt, Math.abs(e.vx ?? 0) > 2, pts(rec, 'run') >= CANT.run ? 1 : 2);
       target = brainTarget(world, life, e);
@@ -1365,6 +1371,42 @@ export function eggStallUp(world) {
   return true;
 }
 
+// ---------- Harvest helpers ----------
+// When you pick the crop bed, up to three Mochi close by come trotting over, each takes one of the
+// crops up onto its head, and carries it to the nursery door (render/garden.js draws it there), then
+// a cheer. A little job they're glad of: fun and company for them, nothing for you to do.
+const HARVEST_VEG = ['rice', 'bean', 'soy', 'pepper'];
+function callHelpers(world) {
+  const life = world.gardenLife;
+  if (!life || world.gardenVisit) return;
+  const near = life.mochi
+    .filter((e) => !e.hidden && !e.guest && !e.ride && !e.scene && !e.chore && e.x != null && pts(e.rec, 'run') >= CANT.run && Math.abs(e.x - CROP_X) < 500)
+    .sort((a, b) => Math.abs(a.x - CROP_X) - Math.abs(b.x - CROP_X))
+    .slice(0, 3);
+  near.forEach((e, k) => {
+    e.chore = { stage: 'fetch', veg: HARVEST_VEG[k % HARVEST_VEG.length], x: CROP_X - 40 + k * 40 };
+    e.m.action = null;
+  });
+}
+// Where a helper is off to, and what happens when it gets there.
+function choreTarget(world, e) {
+  const c = e.chore;
+  const m = e.m;
+  if (Math.abs(e.x - c.x) < 3) {
+    if (c.stage === 'fetch') {
+      Object.assign(c, { stage: 'carry', got: world.now, x: NURSERY_DOOR - 34 + Math.round((hash(e.rec.seed) - 0.5) * 28) });
+      m.action = { name: 'hops', t0: null };
+    } else if (c.stage === 'carry') {
+      e.chore = null;
+      m.action = { name: 'cheer', t0: null };
+      if (e.brain) e.brain.plan = null;
+      satisfy(e.rec, { fun: 15, social: 10 });
+      return e.x;
+    }
+  }
+  return c.x;
+}
+
 // ---------- The mailbox ----------
 // By the gate: presents your friends leave you (net/visit.js) wait in it, its flag up, until you
 // open it (Up beside it): sweets into your bag, eggs into the nest (one that won't fit stays in the
@@ -1405,7 +1447,8 @@ export function openMail(world) {
 // ---------- The toy box ----------
 // Up at the toy box: you toss the ball, and your Mochi nearby who can walk run after it and play (a
 // little care each). Once every two minutes, so it's a treat, not a button to press for care.
-const BALL = { every: 120, near: 280, secs: 14 };
+// (A ball thrown is a big event: any that can walk and are anywhere near this end come for it.)
+const BALL = { every: 120, near: 900, secs: 14 };
 export function tossBall(world) {
   const life = world.gardenLife;
   if (!life || world.gardenVisit || world.map.indoor || Math.abs(world.body.x - TOY_X) > 40) return false;
@@ -1464,7 +1507,9 @@ export function harvestCrops(world) {
       world.log('You pick the crop bed: 3 Mochi Rice, 2 Red Beans, 2 Kinako and a Fire Pepper!', '#d6f5b0');
       noteDaily(world, 'harvest');
       // (Any Mochi close by cheers the harvest in.)
-      for (const e of world.gardenLife?.mochi ?? []) if (e.m && !e.m.action && !e.hidden && Math.abs((e.x ?? 1e9) - CROP_X) < 170) e.m.action = { name: 'cheer', t0: null };
+      // (The nearest come and carry the crops in; any others close by cheer the harvest in.)
+      callHelpers(world);
+      for (const e of world.gardenLife?.mochi ?? []) if (e.m && !e.chore && !e.m.action && !e.hidden && Math.abs((e.x ?? 1e9) - CROP_X) < 170) e.m.action = { name: 'cheer', t0: null };
     },
   };
   world.gathering = work;

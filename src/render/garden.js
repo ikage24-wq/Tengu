@@ -34,6 +34,7 @@
 //   mg_fence       the picket fence with climbing roses along the back of the garden square
 //                  (extra.to: where it ends)
 //   mg_mailbox     the mailbox by the nest, its flag up while there's post in it
+//   mg_lanternline paper lanterns strung on two poles over the garden square, lit at dusk
 //   mg_slide       the slide in the play meadow
 //   mg_nurseryroom the nursery inside: plaster walls under a timber dome, the hearth, the eggs'
 //                  mortars, basket beds, a round window, a rug, a toy shelf
@@ -292,19 +293,27 @@ const flowerBedArt = () => art('mg-flowerbed', 100, 20, () => {
 });
 // One clump of flowers: leaves at its foot and three stems, each with a five-petal flower. Drawn
 // once each and swayed whole (drawGardenPiece mg_flowerbed), so the breeze never repaints them.
-const flowerClumpArt = (set, i) => art(`mg-flowers|${set}|${i}`, 22, 30, () => {
+// (`shut`: 0 open, 1 half closed at dusk, 2 shut into buds for the night - and the stems droop a
+// little as they close: drawGardenPiece crossfades from one to the next as the light goes.)
+const flowerClumpArt = (set, i, shut = 0) => art(`mg-flowers|${set}|${i}|${shut}`, 22, 30, () => {
   const [a, b] = FLOWER_SETS[set][i % 3];
-  const h = [22, 17, 25, 19, 23][i % 5];
+  const h = [22, 17, 25, 19, 23][i % 5] - shut * 1.5;
   const out = [F(E(7, 28, 5, 2.2, '#5f9a56')), F(E(15, 28, 5, 2.2, '#6faa5f')), F(E(11, 27, 4, 2.6, '#7fbf6a'))];
   for (const [dx, k] of [[-5, 0.75], [0, 1], [5, 0.85]]) {
     const tx = 11 + dx * 1.15;
     const ty = 30 - h * k;
     out.push(F(limb(11 + dx * 0.4, 30, tx, ty, 0.7, 0.5, '#5f9a56')), F(E(tx - 1.6, ty + 4, 1.6, 0.8, '#76b267')));
+    if (shut === 2) {
+      // A bud: the petals folded up into a little point, a green cup round its foot.
+      out.push(F(E(tx, ty - 0.6, 1.5, 2.2, b)), F(E(tx - 0.4, ty - 1.2, 0.6, 1.2, a)), F(E(tx, ty + 1.2, 1.6, 0.9, '#6faa5f')));
+      continue;
+    }
+    const r = shut ? 1.1 : 2;
     for (let p = 0; p < 5; p++) {
       const an = (p / 5) * Math.PI * 2 - Math.PI / 2;
-      out.push(F(E(tx + Math.cos(an) * 2, ty + Math.sin(an) * 1.7, 1.7, 1.5, p % 2 ? a : b)));
+      out.push(F(E(tx + Math.cos(an) * r, ty + Math.sin(an) * r * 0.85 - shut * 0.6, shut ? 1.3 : 1.7, shut ? 1.6 : 1.5, p % 2 ? a : b)));
     }
-    out.push(F(E(tx, ty, 1, 1, '#ffe8a0')));
+    if (!shut) out.push(F(E(tx, ty, 1, 1, '#ffe8a0')));
   }
   return out;
 });
@@ -1858,6 +1867,13 @@ export function drawGardenLife(ctx, world, cam, time, layer = 'back') {
     if (bloom) bloomFlowers(ctx, x, y, time, e.rec.seed, true);
     if (e.fade != null) ctx.restore();
   }
+  // A crop carried in from the harvest, balanced on its head, bobbing as it goes.
+  for (const e of life.mochi) {
+    const c = e.chore;
+    if (c?.stage !== 'carry' || e.hidden || e.x == null || time - c.got < 0.5) continue;
+    const bob = e.m.speed > 1 ? Math.abs(Math.sin(time * 9 + e.rec.seed)) * 1.2 : 0;
+    drawVeg(ctx, e.x - cam.x, e.y - cam.y - (e.m.size === 'baby' ? 27 : 33) - bob, c.veg);
+  }
   // What each is off to do, by what it needs (world/mochi-brain.js): a thought bubble for a moment
   // over the one that's just made up its mind.
   for (const e of life.mochi) {
@@ -1950,6 +1966,53 @@ function momentBubble(ctx, x, y, kind, alpha) {
 // A Mochi's thought (world/mochi-brain.js): a cloud with two little puffs trailing down from it,
 // and in it what it's off to see to - a ball (fun), z's (sleepy), a heart (company), a star
 // (curious), a cherry (peckish).
+// A harvested crop carried on a Mochi's head to the nursery (world/garden-life.js harvest helpers):
+// a sheaf of rice, a red bean pod, a green soy pod or a little red pepper.
+function drawVeg(ctx, x, y, kind) {
+  ctx.save();
+  ctx.translate(Math.round(x), Math.round(y));
+  ctx.fillStyle = '#3a2d4f';
+  if (kind === 'rice') {
+    ctx.fillRect(-3.4, -1, 6.8, 3);
+    ctx.fillStyle = '#e8c35e';
+    ctx.fillRect(-2.6, -0.4, 5.2, 1.8);
+    for (const dx of [-2.4, -0.8, 0.8, 2.4]) {
+      ctx.fillStyle = '#c8a24a';
+      ctx.fillRect(dx - 0.3, -6, 0.8, 5.4);
+      ctx.fillStyle = '#f6dc8a';
+      ctx.beginPath();
+      ctx.ellipse(dx + 0.6, -6, 1, 1.5, 0.4, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  } else if (kind === 'pepper') {
+    ctx.beginPath();
+    ctx.ellipse(0, -2, 3.6, 2.2, 0.5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#ff4f3a';
+    ctx.beginPath();
+    ctx.ellipse(0, -2, 2.8, 1.5, 0.5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#5f9a56';
+    ctx.fillRect(-3.6, -4.6, 2.2, 1.6);
+  } else {
+    const c = kind === 'bean' ? ['#a8423a', '#c8645a'] : ['#7fb850', '#a8d878'];
+    ctx.beginPath();
+    ctx.ellipse(0, -2, 4.4, 2, -0.2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = c[0];
+    ctx.beginPath();
+    ctx.ellipse(0, -2, 3.6, 1.3, -0.2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = c[1];
+    for (const dx of [-2, 0, 2]) {
+      ctx.beginPath();
+      ctx.arc(dx, -2.3 + dx * 0.15, 0.8, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+  ctx.restore();
+}
+
 function thoughtBubble(ctx, x, y, need, alpha) {
   ctx.save();
   ctx.globalAlpha = alpha;
@@ -2088,11 +2151,18 @@ export function drawGardenPiece(ctx, map, kind, wx, extra, cam, width, time) {
   switch (kind) {
     case 'mg_flowerbed': {
       place(ctx, flowerBedArt(), snap(x), gy + 2);
-      // Five clumps along it, each nodding on its own beat in the breeze.
+      // Five clumps along it, each nodding on its own beat in the breeze. They close up into buds as
+      // the light goes and open again with the morning (`night`), one drawing fading into the next.
+      const f = Math.max(0, Math.min(2, ((night - 0.15) / 0.6) * 2));
+      const s0 = Math.floor(f);
+      const k = f - s0;
       for (let i = 0; i < 5; i++) {
         const cx = x - 36 + i * 18;
         const a = (lean(time, wx + i * 37, 0.3 * i, i) + 0.3) * 0.06;
-        pivoted(ctx, cx, gy - 7, a, () => place(ctx, flowerClumpArt(extra ?? 0, i), snap(cx), gy - 7));
+        pivoted(ctx, cx, gy - 7, a, () => {
+          place(ctx, flowerClumpArt(extra ?? 0, i, s0), snap(cx), gy - 7, k > 0.02 && s0 < 2 ? { alpha: 1 - k } : undefined);
+          if (k > 0.02 && s0 < 2) place(ctx, flowerClumpArt(extra ?? 0, i, s0 + 1), snap(cx), gy - 7, { alpha: k });
+        });
       }
       return true;
     }
@@ -2140,6 +2210,40 @@ export function drawGardenPiece(ctx, map, kind, wx, extra, cam, width, time) {
         ctx.fillStyle = '#ff8f9a';
         ctx.fillRect(snap(fx + 6), snap(fy - 2), 4, 1.2);
       });
+      return true;
+    }
+    case 'mg_lanternline': {
+      // Two slim poles and a string sagging between them, a paper lantern every so often along it,
+      // each swinging on its own (lit by `night`, like the garden's other lanterns).
+      const x1 = extra.to - cam.x;
+      const top = gy - extra.h;
+      ctx.fillStyle = WOOD_DK;
+      for (const px of [x, x1]) {
+        ctx.fillRect(snap(px - 1), snap(top - 4), 2.4, extra.h + 6);
+        ctx.fillStyle = WOOD;
+        ctx.fillRect(snap(px - 1), snap(top - 4), 1, extra.h + 6);
+        ctx.fillStyle = WOOD_DK;
+      }
+      const sagAt = (u) => top + Math.sin(u * Math.PI) * 12;
+      ctx.strokeStyle = '#8a6a4a';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      for (let k = 0; k <= 24; k++) {
+        const u = k / 24;
+        const px = x + (x1 - x) * u;
+        if (k) ctx.lineTo(px, sagAt(u));
+        else ctx.moveTo(px, sagAt(u));
+      }
+      ctx.stroke();
+      const n = Math.max(2, Math.round((x1 - x) / 46));
+      for (let k = 1; k < n; k++) {
+        const u = k / n;
+        const lx = x + (x1 - x) * u;
+        // (None hung where a tall thing stands in front of the string: the bean frame, the well.)
+        if ((extra.skip ?? []).some(([a, b]) => lx + cam.x > a && lx + cam.x < b)) continue;
+        paperLantern(ctx, lx, sagAt(u) + 6, time, wx + k * 31, LANTERN_BANDS[k % LANTERN_BANDS.length], night);
+        if (night > 0.2) glow(ctx, lx, sagAt(u) + 12, 22, '#ffd6a0', 0.35 * night * flicker(time, wx + k * 13));
+      }
       return true;
     }
     case 'mg_mushroom': {
