@@ -431,3 +431,40 @@ test('Tanabata Hurdles: a weak flyer trips on the tall hurdles, a strong one sai
   assert.ok(seen[0].outcomes.slice(0, 2).every((o) => o !== 'fall'), `the low ones first: ${seen[0].outcomes}`);
   assert.ok(seen[2400].time < seen[0].time, JSON.stringify(seen));
 });
+
+test('Tanabata Hurdles sounds its own star night: bamboo knocks for the count, each leap heard as it goes, stars on the podium', async () => {
+  const { hearWorld } = await import('../src/audio/listen.js');
+  const { placeOf } = await import('../src/audio/ambience.js');
+  assert.equal(placeOf(MAPS.mrace_hurdles), 'tanabata', 'its own night, whatever the clock says');
+  const heard = [];
+  const was = globalThis.__tengu;
+  globalThis.__tengu = { onSound: (n, o) => heard.push([n, o?.db ?? 0]) };
+  try {
+    const rec = mochi(90, 900);
+    rec.stats.fly.points = 0;
+    const w = racer(rec);
+    assert.ok(startRace(w, rec, 'hurdles'));
+    const R = w.race;
+    const outs = [];
+    let last = null;
+    for (let t = 0; t < 260 && !(R.phase === 'done' && R.t > 2); t += 1 / 30) {
+      updateWorld(w, 1 / 30, keys());
+      hearWorld(w, { x: w.body.x - 320, y: 0 });
+      const j = R.racers[R.me].jump;
+      if (j && j !== last) outs.push(j.outcome);
+      last = j;
+    }
+    const loud = (n) => heard.filter(([m, db]) => m === n && db >= -3).length;
+    assert.equal(heard.filter(([n]) => n === 'tanaKnock').length, 3);
+    assert.equal(heard.filter(([n]) => n === 'tanaGo').length, 1);
+    assert.ok(!heard.some(([n]) => n === 'taikoDon' || n === 'taikoGo'), 'not the plain taiko');
+    // Yours, as each went: a clean leap twinkles, a caught toe clacks, a fall tumbles.
+    assert.equal(loud('leapStar'), outs.filter((o) => o === 'clear').length);
+    assert.equal(loud('hurdleClack'), outs.filter((o) => o === 'clip').length);
+    assert.equal(loud('hurdleTumble'), outs.filter((o) => o === 'fall').length);
+    assert.ok(heard.filter(([n]) => n === 'leapWhoosh').length >= 8);
+    assert.equal(heard.filter(([n]) => n === 'tanaStars').length, 1);
+  } finally {
+    globalThis.__tengu = was;
+  }
+});

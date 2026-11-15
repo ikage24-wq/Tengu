@@ -23,6 +23,13 @@ export function dayPart(date = new Date()) {
 // level drifts: rate in Hz and depth 0-1), and its little sounds by day and by night, each
 // [recipe, shortest gap s, longest gap s].
 const PLACES = {
+  // Tanabata Hurdles' star night (2026-11-16): always night there, whatever the clock says -
+  // crickets in the bamboo, a quiet wood, the festival crowd murmuring, a glass wind chime.
+  tanabata: {
+    bed: { lp: 520, hp: 90, db: -40, lfo: 0.05, depth: 0.3 }, rec: 'nightwood', recDb: -22,
+    day: [['cricket', 0.4, 1.3], ['chatter', 4, 9], ['furin', 6, 13]],
+    night: [['cricket', 0.4, 1.3], ['chatter', 4, 9], ['furin', 6, 13]],
+  },
   meadow: {
     bed: { lp: 700, hp: 140, db: -36, lfo: 0.08, depth: 0.5 }, rec: 'field', recDb: -17,
     day: [['birdChirp', 2, 6], ['birdTrill', 5, 12], ['leafRustle', 6, 14]],

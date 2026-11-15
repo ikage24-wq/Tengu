@@ -16,7 +16,7 @@ import { getMap } from '../data/maps.js';
 import { hasRage, hasFaith, hasBond } from '../world/melee.js';
 import { SKILLS } from '../data/skills.js';
 import { isQueen } from '../world/story.js';
-import { introLen, COUNTDOWN, CREST_AHEAD } from '../world/mochi-race.js';
+import { introLen, COUNTDOWN, CREST_AHEAD, JUMP_PHASE, FALL } from '../world/mochi-race.js';
 
 const memo = new WeakMap();
 
@@ -111,16 +111,18 @@ function hearFestival(world, m) {
   const matsuri = world.map.look.groundArt === 'matsuri';
   // (The Grand Tour's kingdom: spears for the count, horns and a gate at Go, a far horn now and then.)
   const kingdom = world.map.look.groundArt === 'kingdom';
+  // (Tanabata Hurdles' star night: a bamboo knock for the count, two and a wind chime at LEAP!)
+  const tanabata = world.map.look.groundArt === 'tanabata';
   if (R.phase === 'ready') {
     const il = introLen(R);
     const n = R.t >= il ? Math.ceil(il + COUNTDOWN - R.t) : null;
     if (n != null && n !== f.beat && n >= 1 && n <= 3) {
       f.beat = n;
-      sfx(lake ? 'lakeToot' : maple ? 'mochiPound' : snow ? 'snowBell' : sweets ? 'sweetPop' : matsuri ? 'matsuriDon' : kingdom ? 'kingTap' : 'taikoDon', { rate: n === 1 ? (sweets ? 1.12 : 1.06) : 1 });
+      sfx(lake ? 'lakeToot' : maple ? 'mochiPound' : snow ? 'snowBell' : sweets ? 'sweetPop' : matsuri ? 'matsuriDon' : kingdom ? 'kingTap' : tanabata ? 'tanaKnock' : 'taikoDon', { rate: n === 1 ? (sweets ? 1.12 : 1.06) : 1 });
     }
   } else if (!f.go) {
     f.go = true;
-    sfx(lake ? 'lakeWhistle' : maple ? 'mochiPoundGo' : snow ? 'snowGo' : sweets ? 'sweetGo' : matsuri ? 'matsuriGo' : kingdom ? 'kingGo' : 'taikoGo');
+    sfx(lake ? 'lakeWhistle' : maple ? 'mochiPoundGo' : snow ? 'snowGo' : sweets ? 'sweetGo' : matsuri ? 'matsuriGo' : kingdom ? 'kingGo' : tanabata ? 'tanaGo' : 'taikoGo');
     if (kingdom) sfx('kingGate', { db: -4 });
   }
   if (lake) hearLake(world, R, f);
@@ -129,6 +131,7 @@ function hearFestival(world, m) {
   if (sweets) hearSweets(world, R, f, t);
   if (matsuri) hearMatsuri(R, f, t);
   if (kingdom) hearKingdom(world, R, f, t);
+  if (tanabata) hearTanabata(R, f, t);
   if (R.finalAt != null && !f.final) {
     f.final = true;
     sfx('crowdSwell');
@@ -163,6 +166,43 @@ function hearFestival(world, m) {
   while (f.queue.length && f.queue[0].at <= t) {
     const c = f.queue.shift();
     sfx(c.name ?? 'chimeBell', { rate: c.rate, pan: c.pan, db: c.db });
+  }
+}
+
+// Tanabata Hurdles' star night (2026-11-16): each racer's leap - yours loudest, the rest softer and
+// panned to where they are from yours - a soft whoosh off the ground, then over the bar a star's
+// twinkle (clean), a clack and rattle (a toe caught it) or a bump, a pat and seeing stars (down
+// over it); a glass wind chime in the bamboo now and then; the podium's shower of stars.
+function hearTanabata(R, f, t) {
+  const you = R.racers[R.me];
+  f.leaps ??= new WeakMap();
+  for (const r of R.racers) {
+    const j = r.jump;
+    if (!j || R.phase === 'ready') continue;
+    let s = f.leaps.get(j);
+    if (!s) f.leaps.set(j, (s = {}));
+    const pan = Math.max(-0.6, Math.min(0.6, (r.x - you.x) / 260));
+    const db = r.you ? 0 : -9;
+    const e = R.clock - j.from + (j.gain ?? 0);
+    if (!s.off && e >= JUMP_PHASE.pre - 0.02) {
+      s.off = true;
+      sfx('leapWhoosh', { pan, db: db - 8 });
+    }
+    const over = j.outcome === 'fall' ? FALL.hit : JUMP_PHASE.pre + j.T / 2;
+    if (!s.over && e >= over) {
+      s.over = true;
+      sfx(j.outcome === 'fall' ? 'hurdleTumble' : j.outcome === 'clip' ? 'hurdleClack' : 'leapStar', { pan, db: db - (j.outcome === 'clear' ? 3 : 0) });
+    }
+  }
+  if (R.phase !== 'done') {
+    f.furinAt ??= t + 2.5;
+    if (t >= f.furinAt) {
+      f.furinAt = t + 4 + Math.random() * 6;
+      sfx('furin', { pan: Math.random() * 1.2 - 0.6, db: -13 - Math.random() * 5, rate: [1, 1.12, 1.26, 0.94][Math.floor(Math.random() * 4)] });
+    }
+  } else if (!f.starred && R.t > 1.4) {
+    f.starred = true;
+    sfx('tanaStars');
   }
 }
 

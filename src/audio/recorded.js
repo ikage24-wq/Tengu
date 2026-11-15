@@ -396,6 +396,15 @@ Object.assign(RECORDED, {
   kingFlag: { trim: 0 },
   kingChain: { trim: 0 },
   kingHorn: { trim: 0 },
+  // (Tanabata Hurdles' star night, 2026-11-16: tools/build-fight.py.)
+  tanaKnock: { trim: 0 },
+  tanaGo: { trim: 0 },
+  leapWhoosh: { trim: 0 },
+  leapStar: { trim: 0 },
+  hurdleClack: { trim: 0 },
+  hurdleTumble: { trim: 0 },
+  furin: { trim: 0 },
+  tanaStars: { trim: 0 },
   kingFanfare: { trim: 0 },
 });
 

@@ -100,6 +100,8 @@ S = {
     'gatecreak': 'Jake Fielding - Squeaky Gates/DOORGate_Wooden Metal Hinge Creaks_Jake Fielding_Squeaky Gates.wav',
     'chainrat': 'Jake Fielding - Squeaky Gates/DOORGate_Metal Gate Spring Latch Mechanism, Screech_Jake Fielding_Squeaky Gates_01.wav',
     'spear': '344 Audio - Historical Weapons Vol. 2/WEAPBlnt_Spear And Stick Impact, Wooden MKH 2_344 Audio_Medieval Weapons Vol 2.wav',
+    # Tanabata Hurdles (2026-11-16): a cartoon dizzy for a Mochi seeing stars after a fall.
+    'dizzy': 'Cinematic Sound Design - Cartoon Bloopers/Cartoon Confused Dizzy.wav',
 }
 
 # name: [(source, start s, length s, pitch x, gain dB, delay ms), ...]
@@ -361,6 +363,18 @@ B = {
     'kingChain': [('chainrat', 2.0, 1.3, 0.9, 0, 0)],
     'kingHorn': [('horn2', 0.2, 1.8, 1.25, 0, 0, 0.3)],
     'kingFanfare': [('hornbig', 0.0, 2.4, 1.42, 0, 0), ('horn2', 0.2, 1.8, 1.9, -7, 260), ('cheer', 1.0, 2.6, 1.0, -5, 420, 0.3)],
+    # Tanabata Hurdles' star night (2026-11-16). A bamboo knock on each count; at LEAP! two knocks
+    # and a wind-chime flourish with a twinkle; a soft whoosh as yours takes off and a star's
+    # twinkle as it clears; a knocked bar's clack and rattle; a fall's bump and pat, and seeing
+    # stars; a glass wind chime now and then (high, the furin); the podium's shower of stars.
+    'tanaKnock': [('spear', 0.0, 0.3, 1.4, 0, 0)],
+    'tanaGo': [('spear', 0.0, 0.3, 1.4, 0, 0), ('spear', 0.0, 0.3, 1.62, -2, 140), ('handbell', 0.28, 1.4, 1.9, -6, 260), ('twinkle', 0.0, 1.2, 1.0, -7, 300)],
+    'leapWhoosh': [('airy', 0.6, 0.32, 1.35, -3, 0)],
+    'leapStar': [('twinkle', 0.0, 0.9, 1.15, -2, 0)],
+    'hurdleClack': [('spear', 0.0, 0.3, 1.2, 0, 0), ('arrow', 0.0, 0.7, 1.25, -6, 30)],
+    'hurdleTumble': [('spear', 0.0, 0.35, 0.95, -2, 0), ('pats', 0.0, 0.3, 0.9, -3, 120), ('dizzy', 0.0, 1.6, 1.15, -5, 260)],
+    'furin': [('handbell', 0.28, 1.3, 2.15, 0, 0)],
+    'tanaStars': [('twinkle', 0.0, 1.8, 0.95, -2, 0), ('handbell', 0.28, 1.6, 1.6, -6, 200), ('handbell', 0.28, 1.6, 2.0, -8, 520)],
 }
 
 

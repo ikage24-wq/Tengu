@@ -115,9 +115,10 @@ function groundAtX(terrain, x) {
 const finishPieces = (x) => [['mr_arch', x, { kind: 'finish' }], ['mr_stands', x + 250, { w: 260 }]];
 // (`groundY`: where the land's horizon sits, the backdrop's hills along it; the start's height unless
 // most of the course is lower.)
-function courseMap(id, name, { width, height = 640, terrain, water = [], sky, pieces, race, groundY = terrain[0][1], zones = null, ground = null, grounds = null, platforms = [], skyline = null, look = null, lamps = [], dusk = 0 }) {
+// (`amb`: its own kind of place to hear, audio/ambience.js - the star night's crickets.)
+function courseMap(id, name, { width, height = 640, terrain, water = [], sky, pieces, race, groundY = terrain[0][1], zones = null, ground = null, grounds = null, platforms = [], skyline = null, look = null, lamps = [], dusk = 0, amb = null }) {
   return {
-    id, name, theme: 'town', isTown: true, private: true, mochiRace: true, town: 'sprout',
+    id, name, theme: 'town', isTown: true, private: true, mochiRace: true, town: 'sprout', ...(amb ? { amb } : {}),
     width, height, groundY,
     look: { ...LOOK, sky: SKIES[sky], ...(ground ? GROUNDS[ground] : {}), ...(skyline ? { skyline, painted: null } : {}), ...(look ?? {}) },
     grounds,
@@ -346,7 +347,7 @@ function hurdleMap() {
     for (let a = from; a + 120 <= to; a += 120) lamps.push({ x: a + 60, y: G - 64, c: '#ffc890' });
   }
   return courseMap('mrace_hurdles', 'Tanabata Hurdles', {
-    dusk: 0.45, lamps,
+    dusk: 0.45, lamps, amb: 'tanabata',
     width: 2700, sky: 'tanabata', ground: 'festground', skyline: 'course:tanabata',
     // (No sun or moon in it: a moonless night, the Milky Way at its brightest.)
     look: { aerial: 0.55, clouds: false, face: null, groundArt: 'tanabata', edges: 'tanabata', cast: 'leap', festival: true, bar: 'lantern', calm: true, kicks: ['#ffe680', '#c8d8ff', '#ff8fb0', '#9fe0a0'], petals: ['#ffe680', '#ffffff', '#c8d8ff', '#ffb8cc'] },
