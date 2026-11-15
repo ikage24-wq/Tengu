@@ -188,11 +188,11 @@ function brainOptions(world, life, e) {
   out.push({ id: 'wander', kind: 'explore', like: 'explore', x: clearOfProps(wx), gains: { curious: walker ? 15 : 30 }, stay: walker ? 4 : 9 });
   // (A nibble of the clover where it is: anyone can, even one too little to reach the fruit trees, so
   // a hungry Mochi never has to wait on you.)
-  out.push({ id: 'nibble', kind: 'snack', like: 'snack', x: e.x, act: 'yum', gains: { hunger: 30 }, boost: walker ? 0.6 : 1, stay: 3 });
+  out.push({ id: 'nibble', kind: 'snack', like: 'snack', x: clearOfProps(e.x), act: 'yum', gains: { hunger: 30 }, boost: walker ? 0.6 : 1, stay: 3 });
   // (In the evening, before bed, under the lanterns strung over the square: render/garden.js.)
   const dusk = world.night ?? nightOf(new Date());
   if (dusk > 0.2 && dusk <= 0.5) out.push({ id: 'lanterns', kind: 'social', like: 'social', x: 360 + Math.round(hash(rec.seed * 5.7) * 460), act: 'hum', gains: { social: 30, curious: 15 }, boost: 2.4, stay: 10 });
-  out.push({ id: 'rest', kind: 'rest', like: 'rest', x: e.x, gains: { energy: 25 }, stay: walker ? 8 : 14 });
+  out.push({ id: 'rest', kind: 'rest', like: 'rest', x: clearOfProps(e.x), gains: { energy: 25 }, stay: walker ? 8 : 14 });
   // (A roll about in the grass close by: fun anyone can have, even one too little to walk.)
   out.push({ id: 'tumble', kind: 'play', like: 'play', x: clearOfProps(Math.max(LAND[0], (e.x ?? LAND[0]) + (hash(rec.seed * 2.3 + (e.brain?.tick ?? 0)) - 0.5) * (walker ? 120 : 60))), act: 'roll', gains: { fun: 30 }, boost: walker ? 0.45 : 1, stay: 3 });
   // (Company: the nearest of the others out in the garden, and you, the closer it is to you the keener.)
@@ -220,9 +220,11 @@ function brainOptions(world, life, e) {
     if (o.follow || o.ride || o.x == null || o.id === 'swim') continue;
     const taken = (x) => life.mochi.some((q) => q !== e && !q.hidden && ((q.x != null && Math.abs(q.x - x) < 9) || (q.brain?.plan && !q.brain.plan.arrived && Math.abs(q.brain.plan.x - x) < 9)));
     if (!taken(o.x)) continue;
+    // (Nor inside one of the garden's pieces, unless that's where it was going: a roll in the bed.)
+    const own = inProps(o.x);
     for (const dx of [14, -14, 26, -26]) {
       const nx = Math.max(LAND[0] + 6, Math.min(LAND[1] - 6, o.x + dx));
-      if (!taken(nx)) {
+      if (!taken(nx) && (own || !inProps(nx))) {
         if (o.face == null && o.act) o.face = o.x;
         o.x = nx;
         break;
@@ -302,7 +304,7 @@ export function openPuddles(placed = []) {
 // Where a garden piece taking `w` of ground, centred at `x`, can be set out (world/decor.js): on the
 // garden's grass, clear of the nursery. (Its other pieces it mustn't bump into: world/decor.js
 // placeAt.) Why not, or null.
-const DECOR_LAND = [210, 2092];
+const DECOR_LAND = [210, 2100];
 const DECOR_KEEP = [[958, 1022]];
 export function gardenSpotWhy(x, w) {
   const a = x - w / 2;
@@ -361,7 +363,11 @@ export function festivalSpots(life) {
   const key = placed.map((p) => `${p.uid}@${p.x}`).join();
   if (life.festSpots?.key !== key) {
     const widthOf = (p) => FURNITURE_BY_ID[p.id]?.w;
-    life.festSpots = { key, offering: festivalSpot(OFFERING, placed, gardenSpotWhy, widthOf), mortar: festivalSpot(MORTAR, placed, gardenSpotWhy, widthOf), mat: festivalSpot(MAT, placed, gardenSpotWhy, widthOf) };
+    // (Each with room round it for the Mochi bowing, pounding, sat on the mat.)
+    // (Each with room round it for the Mochi bowing, pounding, sat on the mat - or squeezed in, in a
+    // garden packed full.)
+    const spot = (pref, room) => festivalSpot({ ...pref, w: room }, placed, gardenSpotWhy, widthOf) ?? festivalSpot(pref, placed, gardenSpotWhy, widthOf) ?? pref.x;
+    life.festSpots = { key, offering: spot(OFFERING, 64), mortar: spot(MORTAR, 64), mat: spot(MAT, 96) };
   }
   return life.festSpots;
 }
@@ -497,7 +503,11 @@ function brainTarget(world, life, e) {
   if (p?.follow && (!p.arrived || (p.tag && t < (p.until ?? 0)))) {
     const f = p.follow === 'you' ? world.body : p.follow;
     if (!f || (f !== world.body && (f.hidden || f.x == null))) p = br.plan = null;
-    else p.x = f.x + (e.x < f.x ? -1 : 1) * (p.follow === 'you' ? 24 : 14);
+    else {
+      const off = (e.x < f.x ? -1 : 1) * (p.follow === 'you' ? 24 : 14);
+      // (To you, right up to you wherever you stand; to a friend, beside it but not inside the well.)
+      p.x = p.follow === 'you' ? f.x + off : besideProps(f.x + off, f.x - off);
+    }
   }
   // Arrived: what it came for, and a while at it.
   if (p && !p.arrived && Math.abs(e.x - p.x) < (p.follow ? 8 : 3)) {
@@ -801,24 +811,37 @@ function applyLayout(L) {
   if (L.bigtree != null) SHELTERS.push([L.bigtree, 30]);
   for (const t of L.trees) SHELTERS.push([t.x, 9]);
   SHELTERS.push([NURSERY_DOOR, 16]);
+  // (Each beside its own piece - none inside another one set close by: no room there to hide.)
+  const of = (kind) => L.pieces.filter((p) => FURNITURE_BY_ID[p.id].kind === kind);
+  const spots = [];
+  for (const p of of('mg_fruittree')) spots.push([p.x - 18, p]);
+  for (const p of of('mg_toybox')) spots.push([p.x + 30, p]);
+  for (const p of of('mg_bigtree')) spots.push([p.x - 20, p]);
+  for (const p of of('mg_slide')) spots.push([p.x - 44, p]);
+  for (const p of of('mg_mushroom')) spots.push([p.x - 37, p]);
+  for (const p of of('mg_flowerbed')) spots.push([p.x - (FURNITURE_BY_ID[p.id].extra ? 62 : 40), p]);
+  spots.push([NURSERY_DOOR + 46, null]);
+  const solid = L.pieces.filter((p) => PROP_KINDS.has(FURNITURE_BY_ID[p.id].kind));
   HIDE_SPOTS.length = 0;
-  for (const t of L.trees) HIDE_SPOTS.push(t.x - 18);
-  if (L.toy != null) HIDE_SPOTS.push(L.toy + 30);
-  if (L.bigtree != null) HIDE_SPOTS.push(L.bigtree - 20);
-  if (L.slide != null) HIDE_SPOTS.push(L.slide - 44);
-  if (L.mush != null) HIDE_SPOTS.push(L.mush - 37);
-  for (const b of L.beds) HIDE_SPOTS.push(b.x - (b.v ? 62 : 40));
-  HIDE_SPOTS.push(NURSERY_DOOR + 46);
+  for (const [x, by] of spots) if (!solid.some((q) => q !== by && x > footOf(q)[0] + 2 && x < footOf(q)[1] - 2)) HIDE_SPOTS.push(x);
   COUNT_TREES.length = 0;
   COUNT_TREES.push(...[...L.trees.map((t) => t.x), ...(L.bigtree != null ? [L.bigtree] : [])].sort((a, b) => a - b));
   PLACES.length = 0;
   PLACES.push(...placesFor(L));
   const on = standing(L.list ?? []);
-  SNOWMAN_X = festivalSpot({ x: 1240, w: 36 }, [...on, ...L.pieces.filter((p) => FURNITURE_BY_ID[p.id].layer === 'floor').map((p) => ({ id: p.id, map: 'garden', x: (footOf(p)[0] + footOf(p)[1]) / 2 }))], gardenSpotWhy, (p) => FURNITURE_BY_ID[p.id]?.w);
+  // (With room for the Mochi patting it either side; the pieces still where they always stood were
+  // laid out round it.)
+  SNOWMAN_X = festivalSpot({ x: 1240, w: 72 }, on, gardenSpotWhy, (p) => FURNITURE_BY_ID[p.id]?.w) ?? festivalSpot({ x: 1240, w: 36 }, on, gardenSpotWhy, (p) => FURNITURE_BY_ID[p.id]?.w) ?? 1240;
 }
 // Something was moved or put away: the rides on it end (Decorate won't pick up one in use: busyPiece),
-// and every Mochi thinks again about where it's off to.
-function layoutMoved(map, life) {
+// a game of hide-and-seek or a snack under a tree wraps up (its tree may have gone), and every Mochi
+// thinks again about where it's off to.
+function layoutMoved(world, map, life) {
+  life.duos = (life.duos ?? []).filter((d) => {
+    if (d.kind !== 'hide' && d.kind !== 'snack') return true;
+    endDuo(world, life, d, true);
+    return false;
+  });
   for (const e of life.mochi ?? []) {
     if (e.ride) {
       e.ride = null;
@@ -833,6 +856,8 @@ function layoutMoved(map, life) {
   map.swingAngle = null;
   map.mushDip = 0;
 }
+// (The ground the Mochi keep out of when they idle, for the tests: [[x1, x2]].)
+export const propsNow = () => PROPS.map(([a, b]) => [a, b]);
 // The Mochi using garden piece `p` right now (on its ride), or null: Decorate leaves it be till it's done.
 const RIDE_OF = { mg_bigtree: 'swing', mg_slide: 'slide', mg_mushroom: 'bounce', mg_seesaw: 'seesaw' };
 export function busyPiece(world, p) {
@@ -852,6 +877,26 @@ export function restSeesaw(map, life) {
 // (The ground taken by the mailbox, the vegetable patch, the flower beds, the well, the see-saw, the
 // toy box, the slide and the mushroom, wherever they stand: applyLayout.)
 const PROPS = [[214, 238], [384, 568], [636, 726], [764, 818], [1124, 1216], [1434, 1502], [1560, 1604], [1784, 1884], [1932, 2000]];
+// The nearest x to `x` with `half` either side clear of them all (a game of two, played out on open
+// grass), or failing that, clear where it stands.
+const DUO_SPAN = { tag: 78, squabble: 70, dance: 32, sumo: 48, trick: 26 };
+function clearSpan(x, half) {
+  for (let d = 0; d <= 480; d += 4) {
+    for (const s of d ? [1, -1] : [1]) {
+      const c = x + s * d;
+      if (c - half < LAND[0] || c + half > LAND[1]) continue;
+      if (!PROPS.some(([a, b]) => c + half > a && c - half < b)) return c;
+    }
+  }
+  return clearOfProps(x);
+}
+// `x`, or if that's inside one of them, `alt` (the other side of whatever it was going to), or the
+// nearest clear spot.
+const inProps = (v) => PROPS.some(([a, b]) => v > a && v < b);
+function besideProps(x, alt) {
+  if (!inProps(x)) return x;
+  return alt != null && !inProps(alt) ? alt : clearOfProps(x);
+}
 function clearOfProps(x) {
   for (const [a, b] of PROPS) if (x > a && x < b) return x - a < b - x ? a - 6 : b + 6;
   return x;
@@ -1047,7 +1092,7 @@ export function tickGarden(world, dt) {
   if (!world.gardenVisit && map.id === 'garden' && seedGarden(world.char.garden, (x) => groundAt(map, x))) life.layoutVersion = null;
   const L = syncGarden(map, life.owner ?? world.char);
   if (life.layoutVersion !== L.version) {
-    if (life.layoutVersion != null) layoutMoved(map, life);
+    if (life.layoutVersion != null) layoutMoved(world, map, life);
     life.layoutVersion = L.version;
     applyLayout(L);
   }
@@ -1265,7 +1310,12 @@ export function tickGarden(world, dt) {
     // (In a moment with a neighbour: where the moment has it.)
     const mo = e.duo;
     const inMoment = mo && !other && e.x != null;
-    if (inMoment) target = duoTarget(world, mo, e);
+    if (inMoment) {
+      target = duoTarget(world, mo, e);
+      // (Asked while walking past the well, it doesn't stop inside it to say no: it steps clear first.
+      // Hiding in a flower bed is another thing.)
+      if (mo.kind !== 'hide' && inProps(target)) target = clearOfProps(target);
+    }
     // (Being cared for, it stays put, looking up at you.)
     const busy = now < (e.busyUntil ?? 0);
     // (A sweet of yours on the grass beats staying put: you put one down from its care panel, which
@@ -1645,7 +1695,7 @@ function heartOptions(world, life, e, out, walker) {
   // An early bird's morning stretch by the well, once a day.
   const day = Math.floor(Date.now() / 86400000);
   const mem = memoryOf(rec);
-  if (q.includes('earlybird') && mem.stretchDay !== day) out.push({ id: 'stretch', kind: 'rest', like: 'rest', x: (LAYOUT.well ?? 790) + 46 + (hash(rec.seed) - 0.5) * 16, face: LAYOUT.well ?? 790, act: 'stretch', gains: { energy: 20, fun: 10 }, boost: 4, stay: 3, stretch: day });
+  if (q.includes('earlybird') && mem.stretchDay !== day) out.push({ id: 'stretch', kind: 'rest', like: 'rest', x: clearOfProps((LAYOUT.well ?? 790) + 46 + (hash(rec.seed) - 0.5) * 16), face: LAYOUT.well ?? 790, act: 'stretch', gains: { energy: 20, fun: 10 }, boost: 4, stay: 3, stretch: day });
   // A show-off: a trick for whoever's there to see it.
   if (q.includes('showy') && rec.tricks?.length) {
     const fan = life.mochi.find((o) => o !== e && o.x != null && !o.hidden && Math.abs(o.x - e.x) < 90) ?? (mine && Math.abs(world.body.x - e.x) < 90 ? world.body : null);
@@ -1666,7 +1716,9 @@ function heartOptions(world, life, e, out, walker) {
   // Something new in the garden: a piece you've just set out, a Mochi just hatched. Come and see!
   for (const n of life.news ?? []) {
     if (now > n.until || Math.abs(n.x - e.x) > 700 || n.seen.has(rec.seed) || n.who === e) continue;
-    out.push({ id: `news${n.id}`, kind: 'explore', like: 'explore', x: n.x + (e.x < n.x ? -16 : 16), face: n.x, act: hash(rec.seed + n.x) < 0.5 ? 'peek' : 'wow', gains: { curious: 55, social: n.who ? 25 : 0 }, boost: 2.4, stay: 3, news: n });
+    const near = e.x < n.x ? -1 : 1;
+    const at = n.foot ? besideProps(n.foot[near < 0 ? 0 : 1] + near * 8, n.foot[near < 0 ? 1 : 0] - near * 8) : n.x + near * 16;
+    out.push({ id: `news${n.id}`, kind: 'explore', like: 'explore', x: at, face: n.x, act: hash(rec.seed + n.x) < 0.5 ? 'peek' : 'wow', gains: { curious: 55, social: n.who ? 25 : 0 }, boost: 2.4, stay: 3, news: n });
   }
 }
 // How its habits lean an option.
@@ -1742,16 +1794,16 @@ function askToPlay(world, life, e, p) {
 }
 export function startDuo(world, life, kind, a, b, asked = kind) {
   const now = world.now;
-  const mx = clearOfProps(Math.max(LAND[0] + 40, Math.min(LAND[1] - 40, (a.x + b.x) / 2)));
+  const mx = clearSpan(Math.max(LAND[0] + 40, Math.min(LAND[1] - 40, (a.x + b.x) / 2)), DUO_SPAN[kind] ?? 22);
   const duo = { kind, asked, a, b, t0: now, t: 0, mx, side: hash(a.rec.seed * 0.7 + now) < 0.5 ? -1 : 1, done: new Set(), len: DUO_SECS[kind] };
   const near = (list, x, not = null) => [...list].filter((v) => v !== not).sort((p, q) => Math.abs(p - x) - Math.abs(q - x));
   if (kind === 'hide') {
     // (It counts against the nearest tree - or, with none near, right where it is, eyes covered.)
     const tree = near(COUNT_TREES, mx)[0];
-    duo.tree = Math.abs(tree - b.x) < 150 ? tree : b.x + (b.x < mx ? -6 : 6);
+    duo.tree = tree != null && Math.abs(tree - b.x) < 150 ? tree : besideProps(b.x + (b.x < mx ? -6 : 6), b.x - (b.x < mx ? -6 : 6));
     const spots = near(HIDE_SPOTS, duo.tree).filter((x) => Math.abs(x - duo.tree) > 40 && Math.abs(x - duo.tree) < 420);
-    duo.spot = spots[Math.floor(hash(now * 0.37) * Math.min(3, spots.length))] ?? duo.tree + 80;
-    duo.wrong = spots.find((x) => x !== duo.spot) ?? duo.tree - 60;
+    duo.spot = spots[Math.floor(hash(now * 0.37) * Math.min(3, spots.length))] ?? clearOfProps(duo.tree + 80);
+    duo.wrong = spots.find((x) => x !== duo.spot) ?? clearOfProps(duo.tree - 60);
   }
   if (kind === 'snack') {
     const blanket = (life.owner?.garden?.placed ?? []).filter((p) => p.map === 'garden' && FURNITURE_BY_ID[p.id]?.use === 'picnic').map((p) => p.x);
@@ -1810,11 +1862,12 @@ function duoTarget(world, d, e) {
     case 'tag': {
       const round = Math.floor(t / 3.3);
       const it = round % 2 ? d.b : d.a;
-      return e === it ? other.x : mx + side * (round % 2 ? -1 : 1) * 72;
+      const run = side * (round % 2 ? -1 : 1) * 72;
+      return e === it ? other.x : besideProps(mx + run, mx - run);
     }
     // Hide-and-seek: the seeker counts at a tree, looks in the wrong place, then finds it.
     case 'hide':
-      if (e === d.b) return t < 3.6 ? (COUNT_TREES.includes(d.tree) ? d.tree + (mx < d.tree ? -10 : 10) : d.tree) : t < 7 ? d.wrong + 12 : d.spot + (d.wrong < d.spot ? -13 : 13);
+      if (e === d.b) return t < 3.6 ? (COUNT_TREES.includes(d.tree) ? d.tree + (mx < d.tree ? -10 : 10) : d.tree) : t < 7 ? besideProps(d.wrong + 12, d.wrong - 12) : besideProps(d.spot + (d.wrong < d.spot ? -13 : 13), d.spot - (d.wrong < d.spot ? -13 : 13));
       return t < 0.4 ? e.x : d.spot;
     case 'snack':
       return d.food + (lead ? -10 : 10);
@@ -1826,7 +1879,7 @@ function duoTarget(world, d, e) {
     // Comforting, making up: it goes over; the other stays where it is.
     case 'comfort':
     case 'makeup':
-      return lead ? other.x + (e.x < other.x ? -13 : 13) : e.x;
+      return lead ? besideProps(other.x + (e.x < other.x ? -13 : 13), other.x - (e.x < other.x ? -13 : 13)) : e.x;
     // A squabble: face to face, then off in a huff, each its own way.
     case 'squabble':
       return t < 2.6 ? mx + (lead ? -12 : 12) : mx + (lead ? -64 : 64);
@@ -2115,7 +2168,7 @@ function tickHearts(world, life, night, dt) {
   life.news = (life.news ?? []).filter((n) => now < n.until);
   for (const p of placed) if (!life.known.decor.has(p.uid)) {
     life.known.decor.add(p.uid);
-    life.news.push({ id: `d${p.uid}`, x: p.x, what: FURNITURE_BY_ID[p.id]?.name?.toLowerCase() ?? null, until: now + 90, seen: new Set() });
+    life.news.push({ id: `d${p.uid}`, x: p.x, foot: footOf(p), what: FURNITURE_BY_ID[p.id]?.name?.toLowerCase() ?? null, until: now + 90, seen: new Set() });
   }
   for (const e of life.mochi) if (!life.known.mochi.has(e.rec.seed) && e.x != null) {
     life.known.mochi.add(e.rec.seed);

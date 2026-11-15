@@ -113,8 +113,9 @@ export const MAT = { x: 1073, w: 56 };
 // are set afloat - the lily pond's near bank.
 export const SHADE = [1600, 1700];
 export const LAUNCH = 2068;
+// (Anywhere in the garden if it must; null if there's nowhere at all - a garden packed full.)
 export function festivalSpot(pref, placed, why, widthOf) {
   const clear = (x) => !why(x, pref.w) && !placed.some((p) => p.map === 'garden' && Math.abs(p.x - x) < (pref.w + (widthOf(p) ?? 20)) / 2 + 2);
-  for (let d = 0; d < 400; d += 4) for (const s of d ? [1, -1] : [1]) if (clear(pref.x + s * d)) return pref.x + s * d;
-  return pref.x;
+  for (let d = 0; d < 2000; d += 4) for (const s of d ? [1, -1] : [1]) if (clear(pref.x + s * d)) return pref.x + s * d;
+  return null;
 }

@@ -97,7 +97,7 @@ test('the garden\'s own pieces: picked up by their crown, never flipped, never s
     assert.equal(pieceAt(char, 'garden', 1582, groundAt(w.map, 1582) - 10)?.id, 'garden_toybox');
     const lamp = g.piece('garden_lamp');
     assert.equal(pickUpPiece(char, lamp), lamp);
-    const q = placePiece(w.map, char, 'garden_lamp', 1240, groundAt(w.map, 1240), { flip: true, carried: true, free: true });
+    const q = placePiece(w.map, char, 'garden_lamp', 1262, groundAt(w.map, 1262), { flip: true, carried: true, free: true });
     assert.equal(typeof q, 'object');
     assert.equal(q.flip, false, 'never flipped');
     assert.ok(ITEMS.garden_seesaw.keep && ITEMS.garden_bigtree.keep, 'kept');
