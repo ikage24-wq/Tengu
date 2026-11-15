@@ -26,6 +26,7 @@
 //     me (which racer is yours), party (the host's: its friends' ids), remote (a friend's: the
 //     host's id), back (a friend's: where it was before), first, finished, results, prize, cam }
 
+import { learn } from './mochi-brain.js';
 import { MAPS } from '../data/maps.js';
 import { rollMochi, seededRandom, STATS } from '../data/mochi-genes.js';
 import { wearFor, tierForPoints } from '../data/mochi-wardrobe.js';
@@ -877,6 +878,8 @@ function award(world, R) {
     R.medal = { medal, best: !had || MEDALS.indexOf(medal) < MEDALS.indexOf(had) };
   }
   // (What a win opens: the next rank here, and the Grand course once enough Beginner races are won.)
+  // (A race run well teaches a Mochi to love running: world/mochi-brain.js, part 3.)
+  if (you.rec && you.done != null) learn(you.rec, 'run', you.place === 1 ? 2 : you.place <= 3 ? 1.7 : 1.4, 0.12);
   if (you.place === 1 && you.done != null) {
     const char = world.char;
     const before = Object.keys(RACE_STAGES).flatMap((id) => RANK_ORDER.filter((rk) => rankOpen(char, id, rk)).map((rk) => medalKey(id, rk)));

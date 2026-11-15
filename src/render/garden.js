@@ -1982,6 +1982,13 @@ function thoughtBubble(ctx, x, y, need, alpha) {
     ctx.font = 'bold 5px Nunito, sans-serif';
     ctx.fillText('z', x + 2.6, y - 0.6);
   } else if (need === 'social') heart(ctx, x, y - 0.4, 2.8, '#ff6f9a');
+  // (Off to do the thing it has learned to love best: a big heart with a sparkle.)
+  else if (need === 'love') {
+    heart(ctx, x - 0.4, y, 3.4, '#ff4f8a');
+    ctx.fillStyle = '#fff3a0';
+    ctx.fillRect(x + 3, y - 4.4, 1.2, 1.2);
+    ctx.fillRect(x + 2.4, y - 3.8, 2.4, 0.6);
+  }
   else if (need === 'hunger') {
     ctx.strokeStyle = '#6f9a52';
     ctx.beginPath();

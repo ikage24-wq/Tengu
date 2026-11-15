@@ -46,3 +46,31 @@ test('needs run down with time and come back up with what meets them, between 0 
   satisfy(m, { fun: 500 });
   assert.equal(m.needs.fun, 100);
 });
+
+test('friends: playing together brings two closer, a best friend is sought out, a rival kept away from', async () => {
+  const { befriend, bestFriend, isRival } = await import('../src/world/mochi-brain.js');
+  const a = mochi('gentle', {});
+  const b = { ...mochi('playful', {}), seed: 7 };
+  const c = { ...mochi('grumpy', {}), seed: 9 };
+  for (let i = 0; i < 9; i++) befriend(a, b, 4);
+  befriend(a, c, -20);
+  assert.equal(a.friends[7], 36);
+  assert.equal(b.friends[42], 36, 'both ways');
+  assert.equal(bestFriend(a, [{ rec: b }, { rec: c }])?.rec, b);
+  assert.ok(isRival(a, c) && !isRival(a, b));
+});
+
+test('it learns what it likes: needed and done, it comes to love it, and is keener on it after', async () => {
+  const { learn, enjoyment, favourite } = await import('../src/world/mochi-brain.js');
+  const m = mochi('gentle', { fun: 10 });
+  const swim = { id: 'swim', kind: 'play', like: 'swim', x: 500, gains: { fun: 45 } };
+  const before = wantOf(m, swim, 500, []);
+  for (let i = 0; i < 40; i++) learn(m, 'swim', enjoyment(m, swim.gains));
+  assert.ok(m.likes.swim > 0.4, `likes swimming (${m.likes.swim})`);
+  assert.equal(favourite(m), 'swim');
+  assert.ok(wantOf(m, swim, 500, []) > before * 1.2);
+  // (Done when it didn't need it at all, it goes off it a little.)
+  const full = mochi('gentle', { fun: 100 });
+  learn(full, 'swim', enjoyment(full, swim.gains));
+  assert.ok(full.likes.swim < 0);
+});

@@ -50,7 +50,7 @@ import { breedGenes } from '../data/mochi-breed.js';
 import { voiceAction, mochiVoice } from './mochi-voice.js';
 import { nightOf } from './daytime.js';
 import { groundAt, footingAt } from './physics.js';
-import { choose, drainNeeds, satisfy, needsOf, mainNeed } from './mochi-brain.js';
+import { choose, drainNeeds, satisfy, needsOf, mainNeed, befriend, bestFriend, isRival, friendsOf, learn, enjoyment, likesOf } from './mochi-brain.js';
 
 // Where things are in the garden (world/garden.js).
 // (A row of them on the ground just inside the gate, where the square's lantern lights them:
@@ -135,22 +135,52 @@ function brainOptions(world, life, e) {
       // (One at a time on each play thing, and only one heading for it.)
       if (pl.ride && life.mochi.some((o) => o !== e && (o.ride?.kind === pl.act || o.brain?.plan?.id === `p${k}`))) return;
       const [kind, gains, stat] = ACT_NEEDS[pl.act] ?? ['explore', { curious: 15 }];
-      out.push({ id: `p${k}`, kind, x: pl.x + (hash(rec.seed * 0.9 + k) - 0.5) * 2 * pl.spread, act: pl.act, ride: pl.ride, hold: pl.hold, face: pl.face, gains, stat, stay: 4 });
+      const like = pl.act === 'paddle' ? 'swim' : kind;
+      out.push({ id: `p${k}`, kind, like, x: pl.x + (hash(rec.seed * 0.9 + k) - 0.5) * 2 * pl.spread, act: pl.act, ride: pl.ride, hold: pl.hold, face: pl.face, gains, stat, stay: 4 });
     });
+    // (A good run round the meadow, there and back at full tilt: what a runner loves.)
+    const far = (e.x ?? LAND[0]) < (LAND[0] + LAND[1]) / 2 ? LAND[1] - 120 * hash(rec.seed * 4.1 + (e.brain?.tick ?? 0)) : LAND[0] + 260 + 120 * hash(rec.seed * 4.1 + (e.brain?.tick ?? 0));
+    out.push({ id: 'dash', kind: 'play', like: 'run', x: clearOfProps(far), dash: true, gains: { fun: 30, curious: 10 }, stat: 'run', stay: 2 });
     out.push({ id: 'toy', kind: 'play', x: TOY_X + (hash(rec.seed) < 0.5 ? -14 : 14), act: 'play', face: TOY_X, gains: { fun: 40 }, stat: 'run', stay: 3 });
   }
-  if (pts(rec, 'swim') >= CANT.swim) out.push({ id: 'swim', kind: 'play', x: POND[0] + 40 + hash(rec.seed * 3.3 + (e.brain?.tick ?? 0)) * (POND[1] - POND[0] - 80), gains: { fun: 45, curious: 20 }, stat: 'swim', boost: 1.3, stay: 10 });
+  if (pts(rec, 'swim') >= CANT.swim) out.push({ id: 'swim', kind: 'play', like: 'swim', x: POND[0] + 40 + hash(rec.seed * 3.3 + (e.brain?.tick ?? 0)) * (POND[1] - POND[0] - 80), gains: { fun: 45, curious: 20 }, stat: 'swim', boost: 1.3, stay: 10 });
   // (A wander somewhere new, a little rest where it is.)
-  const span = walker ? LAND[1] - LAND[0] : 420;
-  const from = walker ? LAND[0] : Math.max(LAND[0], (e.x ?? LAND[0]) - 210);
-  out.push({ id: 'wander', kind: 'explore', x: clearOfProps(from + hash(rec.seed * 1.9 + (e.brain?.tick ?? 0) * 0.77) * span), gains: { curious: 15 }, stay: 4 });
-  out.push({ id: 'rest', kind: 'rest', x: e.x, gains: { energy: 25 }, stay: 8 });
+  // (A little one too young to walk keeps close, and keeps on the way it's facing - a short crawl
+  // on, turning only at the end of the grass - instead of to and fro across the same patch.)
+  const roam = hash(rec.seed * 1.9 + (e.brain?.tick ?? 0) * 0.77);
+  let wx = LAND[0] + roam * (LAND[1] - LAND[0]);
+  if (!walker) {
+    const d = e.m.dir || 1;
+    wx = (e.x ?? LAND[0]) + d * (40 + roam * 60);
+    if (wx < LAND[0] + 20 || wx > LAND[1] - 20) wx = (e.x ?? LAND[0]) - d * (40 + roam * 60);
+  }
+  out.push({ id: 'wander', kind: 'explore', like: 'explore', x: clearOfProps(wx), gains: { curious: 15 }, stay: walker ? 4 : 9 });
+  out.push({ id: 'rest', kind: 'rest', like: 'rest', x: e.x, gains: { energy: 25 }, stay: walker ? 8 : 14 });
   // (A roll about in the grass close by: fun anyone can have, even one too little to walk.)
-  out.push({ id: 'tumble', kind: 'play', x: clearOfProps(Math.max(LAND[0], (e.x ?? LAND[0]) + (hash(rec.seed * 2.3 + (e.brain?.tick ?? 0)) - 0.5) * 120)), act: 'roll', gains: { fun: 30 }, boost: walker ? 0.45 : 1, stay: 3 });
+  out.push({ id: 'tumble', kind: 'play', like: 'play', x: clearOfProps(Math.max(LAND[0], (e.x ?? LAND[0]) + (hash(rec.seed * 2.3 + (e.brain?.tick ?? 0)) - 0.5) * (walker ? 120 : 60))), act: 'roll', gains: { fun: 30 }, boost: walker ? 0.45 : 1, stay: 3 });
   // (Company: the nearest of the others out in the garden, and you, the closer it is to you the keener.)
-  const pal = life.mochi.filter((o) => o !== e && !o.hidden && o.x != null && !o.ride && !o.guest).sort((a, b) => Math.abs(a.x - e.x) - Math.abs(b.x - e.x))[0];
-  if (pal) out.push({ id: 'friend', kind: 'social', x: pal.x, follow: pal, act: 'cheer', gains: { social: 45, fun: 10 }, stay: 3 });
-  if (world.map.garden && !world.map.indoor && !world.gardenVisit) out.push({ id: 'you', kind: 'social', x: world.body.x, follow: 'you', act: 'wave', gains: { social: 40 }, boost: 0.4 + Math.min(1, (rec.bond ?? 0) / 600), stay: 3 });
+  // (Part 2: its best friend most of all, the nearest one too; napping beside a best friend that's
+  // resting; and any it doesn't get on with, it keeps away from.)
+  const others = life.mochi.filter((o) => o !== e && !o.hidden && o.x != null && !o.ride && !o.guest);
+  const near = [...others].sort((a, b) => Math.abs(a.x - e.x) - Math.abs(b.x - e.x))[0];
+  const bf = bestFriend(rec, others);
+  for (const pal of new Set([bf, near].filter(Boolean))) {
+    if ((!walker && Math.abs(pal.x - e.x) >= 220) || isRival(rec, pal.rec)) continue;
+    const score = Math.max(0, friendsOf(rec)[pal.rec.seed] ?? 0);
+    out.push({ id: pal === bf ? 'bestie' : 'friend', kind: 'social', like: 'social', x: pal.x, follow: pal, act: 'cheer', gains: { social: 45, fun: 10 }, boost: 1 + score / 60, stay: 3 });
+    if (pal === bf && (pal.brain?.plan?.id === 'rest' || pal.m.action?.name === 'nap')) {
+      out.push({ id: 'napwith', kind: 'rest', like: 'rest', x: pal.x + (e.x < pal.x ? -12 : 12), act: 'nap', hold: 6, pal, gains: { energy: 40, social: 20 }, stay: 3 });
+    }
+  }
+  const rivals = others.filter((o) => isRival(rec, o.rec));
+  for (const o of out) if (rivals.some((r) => Math.abs(r.x - o.x) < 100)) o.boost = (o.boost ?? 1) * 0.4;
+  // (You: the closer it is to you the keener, keener still if you gave it its favourite sweet
+  // lately; and one that's really fond of you tags along after you a while.)
+  if (world.map.garden && !world.map.indoor && !world.gardenVisit) {
+    const fed = Date.now() / 1000 - (rec.lovedAt ?? -1e9) < 1800 ? 0.8 : 0;
+    const fond = (rec.bond ?? 0) >= 400;
+    out.push({ id: 'you', kind: 'social', like: 'social', x: world.body.x, follow: 'you', tag: fond, act: 'wave', gains: { social: 40 }, boost: 0.4 + Math.min(1, (rec.bond ?? 0) / 600) + fed, stay: fond ? 10 : 3 });
+  }
   return out;
 }
 // Where Mochi `e`'s own mind has it going by day, choosing something new once it's done the last.
@@ -161,7 +191,7 @@ function brainTarget(world, life, e) {
   const t = world.now;
   let p = br.plan;
   // (Going over to someone: wherever they've got to.)
-  if (p?.follow && !p.arrived) {
+  if (p?.follow && (!p.arrived || (p.tag && t < (p.until ?? 0)))) {
     const f = p.follow === 'you' ? world.body : p.follow;
     if (!f || (f !== world.body && (f.hidden || f.x == null))) p = br.plan = null;
     else p.x = f.x + (e.x < f.x ? -1 : 1) * (p.follow === 'you' ? 24 : 14);
@@ -174,6 +204,11 @@ function brainTarget(world, life, e) {
     if (p.ride && !startRide(world, e, p.act)) p = br.plan = null;
     else {
       if (p.act && !p.ride) m.action = { name: p.act, t0: null, ...(p.hold ? { hold: p.hold } : {}) };
+      // (Part 3: the more it needed it, the more it comes to like doing it.)
+      learn(rec, p.like ?? p.kind, enjoyment(rec, p.gains));
+      // (Part 2: meeting up with a friend brings them closer.)
+      const pal = p.pal ?? (p.follow && p.follow !== 'you' ? p.follow : null);
+      if (pal?.rec) befriend(rec, pal.rec, p.id === 'napwith' ? 2 : 1);
       satisfy(rec, p.gains);
       p.until = t + p.stay;
     }
@@ -184,13 +219,14 @@ function brainTarget(world, life, e) {
   const over = p?.arrived && !e.ride && t >= p.until && (!m.action || t >= p.until + 8);
   if (over && m.action) m.action = null;
   if (!p || (!p.arrived && t - p.at > 40) || over) {
-    const best = choose(rec, brainOptions(world, life, e), e.x, br.memory, br.tick++);
+    const best = choose(rec, brainOptions(world, life, e), e.x, br.memory, br.tick++, m.dir);
     br.plan = best ? { ...best, at: t, arrived: false } : null;
     if (best) {
       br.memory.push(best.id);
       if (br.memory.length > 5) br.memory.shift();
       // (A thought bubble says what it's off to do, by what it needs: render/garden.js.)
-      if (best.id !== 'rest' || needsOf(rec).energy < 40) e.thought = { need: mainNeed(best.gains), t0: t };
+      const loved = (likesOf(rec)[best.like ?? best.kind] ?? 0) >= 0.5;
+      if (best.id !== 'rest' || needsOf(rec).energy < 40) e.thought = { need: loved ? 'love' : mainNeed(best.gains), t0: t };
     }
   }
   return br.plan ? br.plan.x : e.x;
@@ -621,7 +657,7 @@ export function tickGarden(world, dt) {
     // what it does next. (At night they go to bed; a visiting Mochi follows its person.)
     const minded = !night && !e.guest && e.x != null && !e.scene;
     if (minded) {
-      drainNeeds(rec, dt, Math.abs(e.vx ?? 0) > 2);
+      drainNeeds(rec, dt, Math.abs(e.vx ?? 0) > 2, pts(rec, 'run') >= CANT.run ? 1 : 2);
       target = brainTarget(world, life, e);
     }
     if (e.greet && now < e.greet.until) target = world.body.x + (e.x != null && e.x < world.body.x ? -26 - i * 14 : 26 + i * 14);
@@ -692,7 +728,7 @@ export function tickGarden(world, dt) {
     if (pts(rec, 'swim') < CANT.swim && target > LAND[1]) target = LAND[1];
     if (e.x == null) e.x = sched.x;
     const wet = footingAt(map, e.x).swim;
-    const v0 = wet ? (pts(rec, 'swim') >= CANT.swim ? SWIM_SPEED[tierOf(rec, 'swim')] * 0.6 : 18) : strollSpeed(rec) * (e.greet ? 2 : Math.abs(target - e.x) > 40 ? 1.5 : 1);
+    const v0 = wet ? (pts(rec, 'swim') >= CANT.swim ? SWIM_SPEED[tierOf(rec, 'swim')] * 0.6 : 18) : strollSpeed(rec) * (e.greet ? 2 : Math.abs(target - e.x) > 40 ? 1.5 : 1) * (e.brain?.plan?.dash && !e.brain.plan.arrived ? 2.6 : 1);
     const v = other ? Math.max(v0, 40) : e.ballChase && !e.ballPlayed ? Math.max(v0, 52) : inMoment ? Math.max(v0, mo.kind === 'chase' ? 46 : 26) : v0;
     // It gets going and slows to a stop smoothly (never off at full speed, never a dead stop), and
     // turns round only once it's stopped.
@@ -891,6 +927,8 @@ function dropFor(life, e, rec) {
 function takeDrop(world, e, d) {
   const sw = SWEET_BY_ID[d.id];
   const out = feedRec(e.rec, d.id);
+  // (Part 2: it remembers you gave it its favourite.)
+  if (e.rec.loves === SWEET_BY_ID[d.id]?.kind) e.rec.lovedAt = Date.now() / 1000;
   const life = world.gardenLife;
   // (It stays where it lies until the paws close on it, then it's in them: drawn by the pick-up.)
   d.taken = e;
@@ -925,6 +963,7 @@ export function feedMochi(world, e, id) {
   const sw = SWEET_BY_ID[id];
   if (!sw || e.scene || e.leaving || countItem(world.char.inventory, id) < 1) return null;
   const out = feedRec(e.rec, id);
+  if (e.rec.loves === SWEET_BY_ID[id]?.kind) e.rec.lovedAt = Date.now() / 1000;
   if (!out) return null;
   if (!out.refused) removeItem(world.char.inventory, id, 1);
   if (!out.refused && world.gardenVisit) sendGardenGift(world, e.rec.seed, 'feed', id);
@@ -1006,16 +1045,24 @@ function tickMoment(world, life, now, night) {
   if (life.momentWindow === k || now < t0 || now > t0 + 1) return;
   life.momentWindow = k;
   if (hash(k * 0.917) > 0.6) return;
-  // Who: a Mochi the clock picks; with whom: its nearest neighbour where the clock has them.
+  // Who: a Mochi the clock picks; with whom: its nearest neighbour. (Where they really are: by day
+  // their own minds have them, not the clock, and a meeting place picked from where the clock would
+  // have had them sent the pair off across the garden and back.)
   const free = life.mochi.filter((e) => e.x != null && !e.hidden && !e.scene && !e.leaving && !e.greet && life.pairing?.a !== e && life.pairing?.b !== e && now >= (e.busyUntil ?? 0));
   if (free.length < 2) return;
-  const at = (e) => scheduledAt(e.rec, t0 + life.mochi.indexOf(e) * 3.7).x;
+  const at = (e) => e.x;
   const a = free[Math.floor(hash(k * 1.37) * free.length) % free.length];
   const b = free.filter((e) => e !== a).sort((p, q) => Math.abs(at(p) - at(a)) - Math.abs(at(q) - at(a)))[0];
   if (!b || Math.abs(at(b) - at(a)) > MOMENT_NEAR) return;
   let kind = momentOf(a.rec.personality);
+  // (Too little to walk, no games of tag or hide-and-seek on hands and knees - it went to and fro at
+  // a crawl and looked stuck: a chat instead.)
+  const crawler = (e) => pts(e.rec, 'run') < CANT.run;
+  if ((crawler(a) || crawler(b)) && ['chase', 'hide', 'parade'].includes(kind)) kind = 'chat';
   // (A grumpy or loner neighbour isn't in the mood: it snubs them.)
   if (kind !== 'huff' && kind !== 'nap' && SNUBS.includes(b.rec.personality) && hash(k * 2.11) < 0.6) kind = 'snub';
+  // (Part 2: a game or a chat together brings two closer; a snub or a huff sets them back.)
+  if (!a.guest && !b.guest) befriend(a.rec, b.rec, { chase: 2, hide: 2, parade: 2, chat: 1, nap: 1, huff: -2, snub: -4 }[kind] ?? 0);
   life.moment = { kind, a, b, t0: now, mx: Math.max(LAND[0], Math.min(LAND[1], (at(a) + at(b)) / 2)), side: hash(k * 3.3) < 0.5 ? -1 : 1, done: new Set() };
 }
 // Where each of the two is headed, moment by moment.

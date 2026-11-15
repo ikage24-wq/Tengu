@@ -14,6 +14,10 @@ import { RACE_STAGES, RANK_ORDER, MEDAL_COLOR, medalKey } from '../data/mochi-ra
 import { DRESS } from '../data/mochi-dress.js';
 import { SLOTS, SETS } from '../data/mochi-wardrobe.js';
 import { drawItemIcon } from '../render/icons.js';
+import { favourite } from '../world/mochi-brain.js';
+import { calledOf } from '../data/mochi-names.js';
+// (What each sort of thing it can come to love is called, for its page.)
+const LOVES_WORDS = { swim: 'swimming', ride: 'the swing, the slide and the mushroom', run: 'running about', play: 'playing', chore: 'helping in the garden', explore: 'exploring', social: 'company', rest: 'a good nap', snack: 'picking fruit' };
 import { VW, VH } from '../input.js';
 import { COLORS, windowFrame, text, button, hover, tooltip, fit, roundRect, icon } from './kit.js';
 import { STAT_ORDER, STAT_INFO, RARITY_COLOR, portraitCard, statRow, feelMeter, heading, tag, cap } from './mochi-kit.js';
@@ -112,6 +116,21 @@ export function mochiInfoWindow(ui, state, world) {
   ry += 14;
   // Who it is: its personality, the sweet it loves and the one it hates (their pictures), its voice.
   text(ctx, cap(rec.personality), rx, ry + 7, { size: 7, bold: true });
+  // (Hovered: what its own mind has made of its days - its best friend, one it doesn't get on with,
+  // and what it's come to love doing: world/mochi-brain.js.)
+  if (hover(ui, rx, ry - 2, 50, 12)) {
+    const garden = world.char.garden?.mochi ?? [];
+    const nameOf = (seed) => calledOf(garden.find((r) => r.seed === Number(seed)) ?? {}, 'a friend');
+    const pals = Object.entries(rec.friends ?? {}).sort((a, b) => b[1] - a[1]);
+    const lines = [{ text: cap(rec.personality), bold: true }];
+    if (pals[0]?.[1] >= 30) lines.push({ text: `Best friend: ${nameOf(pals[0][0])}`, color: '#ff6f9a' });
+    const rival = pals.at(-1);
+    if (rival?.[1] <= -15) lines.push({ text: `Doesn't get on with ${nameOf(rival[0])}`, color: COLORS.muted });
+    const fav = favourite(rec);
+    if (fav) lines.push({ text: `Loves ${LOVES_WORDS[fav] ?? fav}`, color: '#ff6f9a' });
+    if (lines.length === 1) lines.push({ text: 'Still finding its feet in the garden.', color: COLORS.muted });
+    tooltip(ui, lines);
+  }
   const love = sweetOf(rec.loves);
   const hate = sweetOf(rec.hates);
   let sx = rx + 54;
