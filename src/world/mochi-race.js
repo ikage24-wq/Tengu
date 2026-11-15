@@ -31,7 +31,7 @@ import { MAPS } from '../data/maps.js';
 import { rollMochi, seededRandom, STATS } from '../data/mochi-genes.js';
 import { wearFor, tierForPoints } from '../data/mochi-wardrobe.js';
 import { newRecord, evolve, styleOf, STYLE_POINTS, CANT_POINTS as CANT } from '../data/mochi-raise.js';
-import { RACE_STAGES, RACE_RANKS, RANK_ORDER, RIVAL_NAMES, paceOf, CHEER, RACE_TAIL, RACE_MAX, prizeOf, MEDALS, medalKey, rankOpen } from '../data/mochi-race.js';
+import { RACE_STAGES, RACE_RANKS, RANK_ORDER, RIVAL_NAMES, paceOf, CHEER, RACE_TAIL, RACE_MAX, prizeOf, MEDALS, medalKey, rankOpen, STACK_L, STACK_GRAB, STACK_REL } from '../data/mochi-race.js';
 import { groundAt, waterAt } from './physics.js';
 import { addItem } from '../core/inventory.js';
 import { mochiVoice, voiceAction } from './mochi-voice.js';
@@ -109,6 +109,23 @@ export const ROLL_SLIP = { secs: 0.7, back: 14, gap: [2.6, 4.4] };
 export const ballStart = (leg, r) => leg.x - r.lane * SMASH_LANE;
 export const ballEnd = (leg, r) => leg.to - r.lane * SMASH_LANE;
 export const ballRadius = (leg, r, x) => ROLL_R[0] + (ROLL_R[1] - ROLL_R[0]) * Math.max(0, Math.min(1, (x - ballStart(leg, r)) / Math.max(1, ballEnd(leg, r) - ballStart(leg, r))));
+// A kagami-mochi to stack (`{ kind: 'stack', x }`, Mochitsuki Mountain, 2026-11-16): in each lane a
+// little wooden offering stand (staggered like the boulders) and, at the racer's feet, a tub with the
+// three pieces waiting in it - a big round mochi, a smaller one, the bitter orange for the top. The
+// racer lifts each out and sets it on the stand, one a lift (STACK_L long, by range: a weak one slow
+// and straining, a strong one hoisting it up in a moment, the strongest two tossing it on): out of
+// the tub at STACK_GRAB of the lift, out of its paws at STACK_REL, and down on the stack STACK_FLY
+// later. A weak one's stack wobbles as the small one lands and it has to steady it (STACK_STEADY)
+// before the orange goes on - every time for the weakest, by its seed for the next (the same on every
+// screen), never while it's being cheered. Crowned, a "Yes!", and on.
+export const STACK_FLY = [0.24, 0.22, 0.2, 0.2, 0.32, 0.34];
+export const STACK_STEADY = 1.0;
+// (The stand's middle, this far ahead of the racer; its tub, just in front of its feet; each lane's
+// a little further back than the boulders', so every racer's tub and stand are its own to see.)
+export const STACK_REACH = 18;
+export const STACK_TUB = 6;
+export const STACK_LANE = 40;
+export const standX = (leg, r) => leg.x - r.lane * STACK_LANE;
 const ROLL_PAW = 9;
 const ROLL_REACH = 3;
 export const behindBall = (R0) => Math.sqrt(Math.max(0, R0 * R0 - (R0 - Math.min(ROLL_PAW, 2 * R0 - 1)) ** 2)) + ROLL_REACH;
@@ -350,6 +367,7 @@ function runEnd(course, r) {
   if (next?.kind === 'smash') return boulderX(next, r) - SMASH_REACH;
   if (next?.kind === 'pound') return boulderX(next, r) - POUND_REACH;
   if (next?.kind === 'roll') return ballStart(next, r) - behindBall(ROLL_R[0]);
+  if (next?.kind === 'stack') return standX(next, r) - STACK_REACH;
   if (next?.kind === 'hurdle') return next.x - takeoffOf(r);
   return next?.kind === 'climb' ? next.x - WALL_GAP - r.lane * WALL_LANE : legOf(course, r).to;
 }
@@ -481,7 +499,7 @@ function stepRacer(R, r, dt, course, map) {
       m.action = null;
       r.y = groundAt(map, r.x);
       if (leg.kind === 'hurdle') nextLeg(course, r);
-    } else if (/^(smash|pound|power_|hurdle|roll)/.test(m.action?.name ?? '')) m.action = null;
+    } else if (/^(smash|pound|power_|hurdle|roll|stack)/.test(m.action?.name ?? '')) m.action = null;
     m.speed = Math.max(0, m.speed - 70 * dt);
     m.tired = Math.max(0, (m.tired ?? 0) - dt * 0.4);
     if (leg.kind === 'run') {
@@ -597,6 +615,61 @@ function stepRacer(R, r, dt, course, map) {
         const R0 = ballRadius(leg, r, b.x);
         b.spin += (b.x - was) / R0;
         r.x = b.x - behindBall(R0);
+        r.y = groundAt(map, r.x);
+      } else if (leg.kind === 'stack') {
+        // Stacking its kagami-mochi: each piece lifted out of the tub and set on the stand, the big
+        // one, the small one, the orange on top; a weak one steadying it when it wobbles.
+        // (Its own way of lifting for its range of Power: render/mochi-stack-acts.js stack0-5.)
+        const tier = styleOf(s.power.points);
+        const st = (r.stack ??= { tier, k: 0, cycleFrom: C, actFrom: C, released: [], landed: [], steadyAt: null, done: null,
+          wobbly: tier === 0 || (tier === 1 && seededRandom(Math.floor(r.seed * 1000) + 113)() < 0.5) });
+        Object.assign(m, { mode: 'run', inWater: false, speed: 0, tired: r.spent ?? 0 });
+        const L = STACK_L[tier];
+        let held = null;
+        if (st.done == null) {
+          if (st.steadyAt != null) {
+            // (Steadied: on to the orange.)
+            if (C - st.steadyAt >= STACK_STEADY) {
+              st.steadyAt = null;
+              st.cycleFrom = st.actFrom = C;
+              m.action = { name: `stack${tier}`, t0: null, hold: 120 };
+            }
+          } else {
+            if (m.action?.name !== `stack${tier}`) {
+              st.actFrom = st.cycleFrom;
+              m.action = { name: `stack${tier}`, t0: null, hold: 120 };
+            }
+            const e = C - st.cycleFrom;
+            if (st.released.length === st.k && e >= STACK_GRAB * L) held = st.k;
+            // (Out of its paws, and onto the stack a moment later.)
+            if (st.released.length === st.k && e >= STACK_REL[tier] * L) {
+              st.released.push(C);
+              held = null;
+            }
+          }
+          if (st.released.length > st.landed.length && C - st.released[st.landed.length] >= STACK_FLY[tier]) {
+            st.landed.push(C);
+            // (A weak one's stack wobbles as the small one goes on: steady it first.)
+            if (st.landed.length === 2 && st.wobbly && C >= (r.cheerUntil ?? 0)) {
+              st.steadyAt = C;
+              m.action = { name: 'stack_steady', t0: null };
+            }
+          }
+          if (st.landed.length >= 3) {
+            st.done = C;
+            m.action = { name: tier ? 'power_win' : 'power_phew', t0: null };
+          } else if (st.steadyAt == null && st.landed.length > st.k && C - st.cycleFrom >= L) {
+            st.k += 1;
+            st.cycleFrom += L;
+          } else if (st.steadyAt != null) st.k = 2;
+        } else if (C - st.done >= WIN_BEAT) {
+          m.action = null;
+          m.stackHeld = null;
+          nextLeg(course, r);
+        }
+        // (Which piece is in its paws: render/mochi-anim.js draws it there.)
+        m.stackHeld = held;
+        r.x = standX(leg, r) - STACK_REACH;
         r.y = groundAt(map, r.x);
       } else if (leg.kind === 'pound') {
         // Pounding its mochi: the mallet swung up and brought down, again and again, the mochi in

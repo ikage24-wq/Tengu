@@ -509,3 +509,44 @@ test('Mochitsuki Mountain snowball: pushed up the slope growing as it goes, a we
   assert.equal(seen[2400].slips, 0);
   assert.ok(seen[2400].secs < seen[0].secs / 2.5, JSON.stringify(seen));
 });
+
+test('Mochitsuki Mountain kagami-mochi: three pieces lifted on in order, a weak one steadies its wobble (not when cheered), a strong one is quick', () => {
+  const seen = {};
+  for (const [pw, cheer] of [[0, false], [2400, false], [0, true]]) {
+    const rec = mochi(77, 900);
+    rec.stats.power.points = pw;
+    const w = racer(rec);
+    assert.ok(startRace(w, rec, 'power'));
+    const R = w.race;
+    const me = R.racers[R.me];
+    const leg = w.map.race.legs.find((l) => l.kind === 'stack');
+    let from = null;
+    let held = 0;
+    let steadies = 0;
+    for (let t = 0; t < 300 && R.phase !== 'done'; t += 1 / 30) {
+      if (cheer && me.stack) me.cheerUntil = R.clock + 1;
+      updateWorld(w, 1 / 30, keys());
+      const st = me.stack;
+      if (!st || st.done != null) continue;
+      from ??= R.clock;
+      if (me.m.action?.name === 'stack_steady') steadies++;
+      // (Stood at its stand the whole time, a piece in its paws only between lifting it out and letting it go.)
+      assert.ok(Math.abs(me.x - (leg.x - me.lane * 40 - 18)) < 0.01, `at its stand: ${me.x}`);
+      if (me.m.stackHeld != null) {
+        held++;
+        assert.equal(me.m.stackHeld, st.released.length, 'holds the next piece');
+      }
+    }
+    const st = me.stack;
+    assert.ok(me.done != null, 'home');
+    assert.equal(st.released.length, 3);
+    assert.equal(st.landed.length, 3);
+    for (let i = 1; i < 3; i++) assert.ok(st.landed[i] > st.landed[i - 1] && st.released[i] > st.landed[i - 1], 'one at a time, in order');
+    assert.ok(held > 0, 'lifted');
+    seen[`${pw}${cheer ? 'c' : ''}`] = { secs: st.done - from, steadies: steadies > 0 };
+  }
+  assert.equal(seen['0'].steadies, true, JSON.stringify(seen));
+  assert.equal(seen['2400'].steadies, false);
+  assert.equal(seen['0c'].steadies, false, 'a cheer keeps it steady');
+  assert.ok(seen['2400'].secs < seen['0'].secs / 2.5, JSON.stringify(seen));
+});

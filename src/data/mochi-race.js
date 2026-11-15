@@ -106,3 +106,9 @@ export const CHEER = { boost: 1.18, secs: 1.2, every: 2.5, window: 0.45, first: 
 // at this time at the latest.
 export const RACE_TAIL = 15;
 export const RACE_MAX = 120;
+// The kagami-mochi stack's lifts (world/mochi-race.js 'stack'), here so its moves keep the same time
+// (render/mochi-stack-acts.js): how long a lift takes by range of Power; when the piece comes out of
+// the tub, and when it leaves its paws (parts of the lift).
+export const STACK_L = [2.4, 2.0, 1.6, 1.3, 1.15, 1.0];
+export const STACK_GRAB = 0.26;
+export const STACK_REL = [0.74, 0.72, 0.7, 0.68, 0.6, 0.58];

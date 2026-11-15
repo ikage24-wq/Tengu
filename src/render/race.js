@@ -22,7 +22,8 @@ import { art, place } from './scenery.js';
 import { cragArt, CRAG_FACE_AT } from './garden.js';
 import { groundAt } from '../world/physics.js';
 import { drawMochiAnim, drawSpectator, drawMallet, SPECTATOR_BEATS, GAITS, SWIMS, FLIES, CLIMBS, runStyle } from './mochi-anim.js';
-import { runSpeed, lineupOffset, PODIUM, podiumSpot, INTRO, introLen, standings, progressOf, boulderX, JUMP_H, JUMP_PHASE, ballStart, ballEnd, ballRadius, ROLL_R } from '../world/mochi-race.js';
+import { runSpeed, lineupOffset, PODIUM, podiumSpot, INTRO, introLen, standings, progressOf, boulderX, JUMP_H, JUMP_PHASE, ballStart, ballEnd, ballRadius, ROLL_R, standX, STACK_REACH, STACK_TUB, STACK_FLY } from '../world/mochi-race.js';
+import { drawKagamiPiece, KAGAMI } from './mochi-stack-acts.js';
 import { VW, VH } from '../input.js';
 import { CANT_POINTS, newRecord } from '../data/mochi-raise.js';
 import { rollMochi } from '../data/mochi-genes.js';
@@ -919,6 +920,150 @@ function drawSnowballs(ctx, map, race, course, cam, time) {
     }
   }
 }
+// Mochitsuki Mountain's kagami-mochi (world/mochi-race.js 'stack', 2026-11-16), one in each lane: a
+// little wooden offering stand - the same pale wood as the giant one at the summit - with its folded
+// paper, a fern frond each side, and the pieces as they go on: each one flying from the racer's paws
+// (gently for the weak, tossed in an arc by the strong, turning over for the show-off), landing with
+// a little bounce and a puff of flour; the stack swaying when a weak one's wobbles, until it's held
+// still; crowned with the orange, a glint and sparkles. (Its tub is drawn in front of the racer.)
+const sanboArt = () => art('mr-sanbo', 14, 6, () => [
+  R(3.2, 2.2, 7.6, 3.8, '#e8b070'), F(R(3.2, 2.2, 7.6, 0.6, '#f8d4a0')),
+  F(R(5.8, 3.4, 2.4, 2.6, '#c88048')), F(E(7, 3.4, 1.2, 0.8, '#c88048')),
+  R(1, 0.6, 12, 1.8, '#d89a5a'), F(R(1, 0.6, 12, 0.6, '#f0c080')),
+  R(0.5, 0, 0.9, 2.2, '#c88048'), R(12.6, 0, 0.9, 2.2, '#c88048'),
+]);
+// (Where each piece sits on its stand: its bottom, up from the stand's top; the stand's top over the
+// ground. Each sits a little down into the one under it.)
+const SANBO_TOP = 5;
+const SITS = [0, KAGAMI[0].h - 0.8, KAGAMI[0].h - 0.8 + KAGAMI[1].h - 0.6];
+function drawStacks(ctx, map, race, course, cam, time) {
+  const leg = course.legs.find((l) => l.kind === 'stack');
+  if (!leg) return;
+  const at = course.legs.indexOf(leg);
+  const C = race.clock;
+  for (const r of [...race.racers].sort((a, b) => b.lane - a.lane)) {
+    const sx = standX(leg, r);
+    const x = sx - cam.x;
+    if (x < -30 || x > VW + 30) continue;
+    const gy = groundAt(map, sx) - cam.y;
+    const st = r.stack;
+    // (A friend's ghost or a racer seen from afar has none of its own here: past it, it's built.)
+    const landed = st ? st.landed : r.leg > at ? [-9, -9, -9] : [];
+    // Its shadow, the stand, its paper hanging down the front, and a fern frond each side.
+    ctx.fillStyle = 'rgba(110,130,175,0.22)';
+    ctx.beginPath();
+    ctx.ellipse(x, gy + 0.6, 7.5, 1.6, 0, 0, Math.PI * 2);
+    ctx.fill();
+    const top = gy - SANBO_TOP;
+    ctx.fillStyle = '#4f9a50';
+    for (const s of [-1, 1]) {
+      ctx.beginPath();
+      ctx.ellipse(x + s * 5.4, top - 0.3, 2.6, 0.8, s * -0.35, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    place(ctx, sanboArt(), snap(x), gy + 0.6);
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(x - 5, top - 0.2, 10, 0.6);
+    ctx.beginPath();
+    ctx.moveTo(x - 1.6, top + 0.2);
+    ctx.lineTo(x + 1.6, top + 0.2);
+    ctx.lineTo(x, top + 2.2);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = '#e04848';
+    ctx.fillRect(x - 5.4, top - 0.2, 0.6, 0.6);
+    ctx.fillRect(x + 4.8, top - 0.2, 0.6, 0.6);
+    // (Swaying, a weak one's, from the moment the small one lands until it's held still.)
+    const w = st?.steadyAt != null ? C - st.steadyAt : null;
+    const env = w == null ? 0 : w < 0.12 ? w / 0.12 : w < 0.3 ? 1 : Math.max(0, 1 - (w - 0.3) / 0.5);
+    const sway = env * 0.22 * Math.sin(2 * Math.PI * 2.4 * (w ?? 0));
+    for (let i = 0; i < 3; i++) {
+      if (landed[i] == null) {
+        // On its way from its paws: the last place they held it, to its spot on the stack.
+        const rel = st?.released[i];
+        if (rel == null) continue;
+        const u = Math.min(1, (C - rel) / STACK_FLY[st.tier]);
+        const from = r.stackPaw ?? [sx - STACK_REACH + 5, groundAt(map, sx) - 9];
+        r.stackFrom ??= [];
+        r.stackFrom[i] ??= [from[0], from[1] + KAGAMI[i].h / 2];
+        const [fx, fy] = r.stackFrom[i];
+        const e = u * u * (3 - 2 * u);
+        const ty = groundAt(map, sx) - SANBO_TOP - SITS[i];
+        const arc = st.tier >= 4 ? 9 : st.tier === 3 ? 5 : 3;
+        const px = fx + (sx - fx) * e - cam.x;
+        const py = fy + (ty - fy) * u - arc * 4 * u * (1 - u) - cam.y;
+        const turn = st.tier === 5 ? Math.PI * 2 * e : st.tier === 4 ? 0.35 * Math.sin(Math.PI * u) : 0;
+        drawKagamiPiece(ctx, i, px, py, 1, 1, turn);
+        continue;
+      }
+      // On the stack: a little bounce as it lands, and the sway.
+      const v = (C - landed[i]) / 0.3;
+      const hop = v >= 0 && v < 1 ? 1.1 * Math.sin(Math.PI * v) * (1 - v) : 0;
+      const by = top - SITS[i] - hop;
+      ctx.save();
+      ctx.translate(x, top);
+      ctx.rotate(sway * (i === 0 ? 0.45 : 1));
+      ctx.translate(-x, -top);
+      drawKagamiPiece(ctx, i, x + sway * (i === 2 ? 2 : 0), by, 1, 1, sway * (i === 1 ? 0.6 : 0));
+      ctx.restore();
+      // A puff of flour where it lands.
+      const pu = (C - landed[i]) / 0.4;
+      if (pu >= 0 && pu < 1) {
+        ctx.save();
+        ctx.globalAlpha = (1 - pu) * 0.85;
+        ctx.fillStyle = '#ffffff';
+        for (let k = 0; k < 4; k++) {
+          const s = k < 2 ? -1 : 1;
+          const d = KAGAMI[i].w / 2 + 0.6 + pu * 3 * (1 + (k % 2) * 0.6);
+          ctx.beginPath();
+          ctx.arc(x + s * d, top - SITS[i] - 0.6 - pu * 2 * (k % 2 ? 1.5 : 1), 0.7 + pu * 0.8, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.restore();
+      }
+    }
+    // Crowned: sparkles round the orange.
+    const cu = st?.done != null ? (C - st.done) / 1.2 : 9;
+    if (cu < 1) {
+      const oy = top - SITS[2] - KAGAMI[2].h / 2;
+      for (let k = 0; k < 4; k++) {
+        const a = (k / 4) * Math.PI * 2 + cu * 2;
+        const d = 4.5 + cu * 6;
+        twinkle(ctx, x + Math.cos(a) * d, oy + Math.sin(a) * d * 0.7, 1.8 * (1 - cu) * (k % 2 ? 0.7 : 1));
+      }
+    }
+  }
+}
+// A racer's tub (`world/mochi-race.js` STACK_TUB in front of its feet): a low wooden tub, two copper
+// bands round it, with whichever pieces it hasn't lifted out yet nestled inside.
+const tubArt = () => art('mr-oke', 12, 3, () => [E(6, 1.5, 5, 1.1, '#8a5a30')]);
+const tubFrontArt = () => art('mr-oke-f', 12, 5, () => [
+  T([[1, 0.5], [11, 0.5], [10.3, 4], [1.7, 4]], '#d8a868'),
+  ...[3.6, 6, 8.4].map((sx) => F(R(sx, 1, 0.4, 2.8, '#c69252'))),
+  F(R(1.2, 1.3, 9.6, 0.5, '#a87038')), F(R(1.6, 2.9, 8.8, 0.5, '#a87038')),
+  F(R(1, 0.3, 10, 0.6, '#ecc490')),
+]);
+function drawStackTub(ctx, map, race, course, cam, r) {
+  const leg = course.legs.find((l) => l.kind === 'stack');
+  if (!leg) return;
+  const at = course.legs.indexOf(leg);
+  const sx = standX(leg, r) - STACK_REACH + STACK_TUB;
+  const x = sx - cam.x;
+  if (x < -20 || x > VW + 20) return;
+  const gy = groundAt(map, sx) - cam.y;
+  const st = r.stack;
+  // (What's out of it: none before the stack, all three past it.)
+  const out = st ? st.released.length + (r.m.stackHeld != null ? 1 : 0) : r.leg > at ? 3 : 0;
+  ctx.fillStyle = 'rgba(110,130,175,0.22)';
+  ctx.beginPath();
+  ctx.ellipse(x, gy + 0.6, 6, 1.4, 0, 0, Math.PI * 2);
+  ctx.fill();
+  const rim = gy - 3.2;
+  place(ctx, tubArt(), snap(x), rim + 1.5);
+  const SPOT = [[-0.8, rim + 2.2], [2.2, rim + 1.8], [-2.6, rim + 0.5]];
+  for (let i = 0; i < 3; i++) if (i >= out) drawKagamiPiece(ctx, i, x + SPOT[i][0], SPOT[i][1]);
+  place(ctx, tubFrontArt(), snap(x), gy + 1.2);
+}
 function drawMortars(ctx, map, race, course, cam) {
   const leg = course.legs.find((l) => l.kind === 'pound');
   if (!leg) return;
@@ -1121,6 +1266,7 @@ export function drawRace(ctx, world, cam, time) {
   drawBoulders(ctx, map, R, course, cam);
   drawMortars(ctx, map, R, course, cam);
   drawSnowballs(ctx, map, R, course, cam, time);
+  drawStacks(ctx, map, R, course, cam, time);
   drawHurdles(ctx, map, R, course, cam, time);
   for (const r of [...R.racers].sort((a, b) => b.lane - a.lane)) {
     // (On the line before Go, each lane a little apart: world/mochi-race.js lineupOffset.)
@@ -1165,7 +1311,7 @@ export function drawRace(ctx, world, cam, time) {
     // just when the race counts them: started on its first drawing, one that came into view
     // mid-smash, or any stutter of the frames, would have swung out of step with its own hits.)
     const a = r.m.action;
-    const beatFrom = !a ? null : a.name.startsWith('smash') ? r.rock?.from : a.name.startsWith('pound') ? r.pound?.from : a.name === 'roll_slip' ? r.ball?.slip : a.name.startsWith('roll') ? r.ball?.act : a.name.startsWith('power_') ? r.pound?.finished ?? r.ball?.parked ?? r.rock?.broke : a.name === 'hurdle_stumble' ? r.jump?.landAt ?? null : a.name.startsWith('hurdle') && r.jump ? r.jump.from - (r.jump.gain ?? 0) : null;
+    const beatFrom = !a ? null : a.name.startsWith('smash') ? r.rock?.from : a.name.startsWith('pound') ? r.pound?.from : a.name === 'roll_slip' ? r.ball?.slip : a.name.startsWith('roll') ? r.ball?.act : a.name === 'stack_steady' ? r.stack?.steadyAt : a.name.startsWith('stack') ? r.stack?.actFrom : a.name.startsWith('power_') ? r.pound?.finished ?? r.stack?.done ?? r.ball?.parked ?? r.rock?.broke : a.name === 'hurdle_stumble' ? r.jump?.landAt ?? null : a.name.startsWith('hurdle') && r.jump ? r.jump.from - (r.jump.gain ?? 0) : null;
     if (beatFrom != null) a.t0 = time - (R.clock - beatFrom);
     // (The two best jumpers leave a trail along their arc: where they were a moment ago.)
     const jj = r.jump;
@@ -1178,7 +1324,23 @@ export function drawRace(ctx, world, cam, time) {
       const now = at(0);
       if (now > 2) r.m.trail = [[jj.v * 0.1, now - at(0.1), 0.14], [jj.v * 0.05, now - at(0.05), 0.28]];
     }
+    // (Stacking: where the piece in its paws is drawn, so it can fly on from there.)
+    const stacking = course.legs[r.leg ?? 0]?.kind === 'stack';
+    if (stacking) r.m.anchors ??= {};
     drawMochiAnim(ctx, r.m, x, y, time);
+    if (stacking) {
+      const p = r.m.anchors.kagami;
+      const t = ctx.getTransform?.();
+      if (p && t) {
+        const det = t.a * t.d - t.b * t.c;
+        const px = p[0] - t.e;
+        const py = p[1] - t.f;
+        r.stackPaw = [(t.d * px - t.c * py) / det + cam.x, (t.a * py - t.b * px) / det + cam.y];
+      }
+      r.m.anchors.kagami = null;
+    }
+    // (Its tub in front of its feet, so it reaches down into it.)
+    drawStackTub(ctx, map, R, course, cam, r);
     // (Swimming, it sits down in the water, so what floats over its head (its tag, heart, crown)
     // comes down with it, easing.)
     const sinkTo = r.m.mode === 'swim' ? 10 : 0;

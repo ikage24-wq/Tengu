@@ -367,9 +367,9 @@ function hurdleMap() {
 // before the dash to the line - with the great mortar beyond it. All about Power.
 function powerMap() {
   const G = 560;
-  const terrain = [[0, G], [900, G], [1020, G - 14], [1200, G - 44], [1380, G - 64], [1500, G - 72], [2100, G - 72]];
+  const terrain = [[0, G], [900, G], [1020, G - 14], [1200, G - 44], [1380, G - 64], [1500, G - 72], [2560, G - 72]];
   return courseMap('mrace_power', 'Mochitsuki Mountain', {
-    width: 2100, height: 680, sky: 'winter', groundY: G, ground: 'snowpeak', skyline: 'course:snow',
+    width: 2560, height: 680, sky: 'winter', groundY: G, ground: 'snowpeak', skyline: 'course:snow',
     look: { aerial: 0.55, clouds: false, groundArt: 'snow', cast: 'pound', edges: 'snow', festival: true, bar: 'snow', flakes: true, calm: true, snowfall: true, kicks: ['#ffffff', '#eef4ff', '#dce8fb'], petals: ['#ffffff', '#eef4ff', '#dce8fb', '#ffe8f0'] },
     terrain,
     pieces: [
@@ -377,10 +377,12 @@ function powerMap() {
       // (The boulders themselves are drawn by the race, one in each lane: render/race.js.)
       ['mr_toro', 880, 0], ['mr_pine', 1010, 2], ['mr_kagami', 1170, 0], ['mr_squad', 1300, 0],
       // (The mortars for the pounding, one in each lane, are the race's own too: render/race.js.)
-      ['mr_snowman', 1640, 1], ['mg_moonmortar', 1860], ['mr_pine', 2020, 0],
+      // (The kagami-mochi stands and tubs, each lane's own, are the race's: render/race.js.)
+      ['mr_snowman', 1420, 1], ['mg_moonmortar', 2260], ['mr_pine', 2440, 0],
     ],
     // (Up the slope between them, a snowball to roll, 2026-11-16: world/mochi-race.js 'roll'.)
-    race: course(240, 1700, [{ kind: 'run', to: 760 }, { kind: 'smash', x: 760, hp: 120 }, { kind: 'run', to: 1080 }, { kind: 'roll', x: 1080, to: 1320 }, { kind: 'run', to: 1580 }, { kind: 'pound', x: 1580, need: 6 }, { kind: 'run', to: 1700 }]),
+    // (On the flat top, a kagami-mochi to stack before the pounding, 2026-11-16: 'stack'.)
+    race: course(240, 2090, [{ kind: 'run', to: 760 }, { kind: 'smash', x: 760, hp: 120 }, { kind: 'run', to: 1080 }, { kind: 'roll', x: 1080, to: 1320 }, { kind: 'run', to: 1682 }, { kind: 'stack', x: 1700 }, { kind: 'run', to: 1950 }, { kind: 'pound', x: 1950, need: 6 }, { kind: 'run', to: 2090 }]),
   });
 }
 
