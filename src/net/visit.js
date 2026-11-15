@@ -10,8 +10,7 @@
 // your game sends that to theirs (world/garden-life.js applyGardenGift). The Mochi Bell or the gate
 // takes you back.
 
-import { guestArrives, EGG_SLOTS } from '../world/garden-life.js';
-import { addItem } from '../core/inventory.js';
+import { guestArrives } from '../world/garden-life.js';
 import { BLOOM } from '../data/mochi-raise.js';
 import { online, send } from './online.js';
 import { loadMap } from '../world/world.js';
@@ -113,13 +112,12 @@ export function onVisit(world, msg, g) {
   if (msg.op === 'ggift') {
     const gd = world.char.garden;
     if (!gd) return;
-    if (msg.egg && (gd.eggs ?? []).length < EGG_SLOTS.length) {
-      (gd.eggs ??= []).push(msg.egg);
-      world.log(`${g?.name ?? 'A friend'} left you an egg by the stall!`, '#ffc2d4');
-    } else if (msg.sweet && msg.n > 0) {
-      addItem(world.char.inventory, msg.sweet, msg.n);
-      world.log(`${g?.name ?? 'A friend'} left you ${msg.n} sweets!`, '#ffc2d4');
-    }
+    // (It waits in the mailbox by your garden gate until you open it: world/garden-life.js openMail.)
+    const from = g?.name ?? 'a friend';
+    if (msg.egg) (gd.mail ??= []).push({ from, egg: msg.egg });
+    else if (msg.sweet && msg.n > 0) (gd.mail ??= []).push({ from, sweet: msg.sweet, n: msg.n });
+    else return;
+    world.log(`${g?.name ?? 'A friend'} left you a present: it's in the mailbox by your garden gate!`, '#ffc2d4');
     return;
   }
   if (msg.op === 'gnone') {

@@ -46,7 +46,7 @@ import { rideStep, rideAfter, dismount, toggleMount, giveMount, ownsMount } from
 import { WADE, MOUNTS } from '../data/mounts.js';
 import { refreshHome } from './home.js';
 import { refreshGarden, grantGarden } from './garden.js';
-import { enterGarden, tickGarden, rockEgg, finishHatch, harvestCrops, tossBall, mochiNear, eggStallUp, wearStallUp, stallClothes, gardenGateUp, shakeTree, wakeUp } from './garden-life.js';
+import { enterGarden, tickGarden, rockEgg, finishHatch, harvestCrops, tossBall, mochiNear, eggStallUp, wearStallUp, stallClothes, gardenGateUp, shakeTree, wakeUp, openMail } from './garden-life.js';
 import './stadium.js';
 import './market.js';
 import { tickRace } from './mochi-race.js';
@@ -505,7 +505,7 @@ function interact(world) {
     world.events.push({ type: 'mochi' });
     return true;
   }
-  if (world.map.garden && (rockEgg(world) || harvestCrops(world) || tossBall(world) || shakeTree(world))) return true;
+  if (world.map.garden && (openMail(world) || rockEgg(world) || harvestCrops(world) || tossBall(world) || shakeTree(world))) return true;
   // (The egg and clothes stalls, wherever they stand: the Mochi Market.)
   if (eggStallUp(world) || wearStallUp(world)) return true;
   // Your skiff at your island's dock: Up to sail back to Pastel Harbor (world/voyage.js).

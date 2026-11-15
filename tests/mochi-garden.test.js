@@ -554,3 +554,42 @@ test('the play meadow: a Mochi swings, slides, bounces and glides off the cliff,
     g.done();
   }
 });
+
+test('the mailbox by the gate: a friend\'s present waits in it, flag up, until you open it', async () => {
+  const { openMail, MAILBOX_X } = await import('../src/world/garden-life.js');
+  const g = garden();
+  try {
+    g.char.garden.eggs = [];
+    g.char.garden.mail = [{ from: 'Bea', sweet: 'msweet_dango', n: 2 }, { from: 'Bea', egg: { seed: 5 } }];
+    const before = countItem(g.char.inventory, 'msweet_dango');
+    Object.assign(g.w.body, { x: MAILBOX_X });
+    assert.ok(openMail(g.w));
+    assert.equal(countItem(g.char.inventory, 'msweet_dango'), before + 2);
+    assert.deepEqual(g.char.garden.eggs.map((e) => e.seed), [5]);
+    assert.deepEqual(g.char.garden.mail, []);
+    // (Away from it, Up does whatever else is there.)
+    Object.assign(g.w.body, { x: MAILBOX_X + 60 });
+    assert.equal(openMail(g.w), false);
+  } finally {
+    g.done();
+  }
+});
+
+test('by day Mochi choose for themselves: a mix of things, and a thought bubble as they decide', () => {
+  const g = garden();
+  try {
+    const seen = new Set();
+    let thoughts = 0;
+    for (let t = 0; t < 1200; t += 1 / 10) {
+      g.run(1 / 10, 1 / 10);
+      for (const e of g.w.gardenLife.mochi) {
+        if (e.brain?.plan) seen.add(e.brain.plan.id);
+        if (e.thought && Math.abs(e.thought.t0 - g.w.now) < 0.05) thoughts += 1;
+      }
+    }
+    assert.ok(seen.size >= 5, `a mix (${[...seen].join(', ')})`);
+    assert.ok(thoughts >= 5, `thought bubbles (${thoughts})`);
+  } finally {
+    g.done();
+  }
+});

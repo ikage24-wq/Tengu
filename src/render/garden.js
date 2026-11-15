@@ -31,6 +31,9 @@
 //   mg_well        the stone well in the square, under a little pink roof, its bucket swinging
 //   mg_flagline    the Mochi Market's flags strung from one stall to the next
 //   mg_mushroom    the bouncy mushroom in the play meadow, its cap giving as a Mochi lands
+//   mg_fence       the picket fence with climbing roses along the back of the garden square
+//                  (extra.to: where it ends)
+//   mg_mailbox     the mailbox by the nest, its flag up while there's post in it
 //   mg_slide       the slide in the play meadow
 //   mg_nurseryroom the nursery inside: plaster walls under a timber dome, the hearth, the eggs'
 //                  mortars, basket beds, a round window, a rug, a toy shelf
@@ -357,6 +360,41 @@ const slideArt = () => art('mg-slide', 100, 60, () => {
   out.push(F(E(52, 59, 46, 1.6, '#6f9a52')));
   return out;
 });
+
+// The picket fence along the back of the garden square: cream pickets with pointed tops on two
+// rails, a capped post at each bay, and climbing roses rambling over some bays (v 1 and 2: on the
+// left or the right of it). Drawn bay by bay (mg_fence), behind everything else in the square.
+const FENCE_BAY = 48;
+const fenceBayArt = (v) => art(`mg-fence|${v}`, FENCE_BAY, 28, () => {
+  const out = [F(R(0, 11, FENCE_BAY, 2.4, '#efe2d2')), F(R(0, 20, FENCE_BAY, 2.4, '#efe2d2'))];
+  for (let i = 0; i < 5; i++) {
+    const x = 6 + i * 8.6;
+    out.push(T([[x, 8], [x + 2.5, 4], [x + 5, 8], [x + 5, 27], [x, 27]], '#fff8f0'), F(R(x + 3.6, 8.6, 1.4, 18, '#eadccb')));
+  }
+  out.push(R(0, 4, 4, 23, '#fff4ea'), F(E(2, 4, 2.8, 1.8, '#fffaf4')));
+  if (v) {
+    // The roses: a rambling stem along the top rail, leaves, and a few open blooms.
+    const at = v === 1 ? [6, 15, 24] : [24, 33, 42];
+    out.push(F(limb(at[0] - 4, 13, at[2] + 4, 11, 0.6, 0.5, '#5f9a56')), F(limb(at[1], 12, at[1] + 2, 22, 0.5, 0.4, '#5f9a56')));
+    for (const [k, x] of at.entries()) {
+      const y = 10 + (k % 2) * 3;
+      out.push(F(E(x - 3, y + 2, 2.4, 1.4, '#6faa5f')), F(E(x + 3, y + 1.6, 2.2, 1.3, '#7fbf6a')));
+      out.push(F(E(x, y, 3, 2.6, k % 2 ? '#ff8fb1' : '#ffb3c8')), F(E(x - 0.4, y - 0.4, 1.4, 1.1, k % 2 ? '#ffc6d6' : '#ffe0ea')));
+    }
+  }
+  out.push(F(E(FENCE_BAY / 2, 27, FENCE_BAY / 2, 1.2, '#6f9a52')));
+  return out;
+});
+const fencePostArt = () => art('mg-fencepost', 6, 28, () => [R(1, 4, 4, 23, '#fff4ea'), F(E(3, 4, 2.8, 1.8, '#fffaf4'))]);
+// The mailbox: a little pink box with a rounded top on a wooden post, a heart on its side and its
+// door at the front. (Its flag is drawn live, mg_mailbox: up while there's post in it.)
+const mailboxArt = () => art('mg-mailbox', 24, 38, () => [
+  R(10, 18, 4, 20, WOOD), F(R(10, 18, 1.2, 20, ramp(WOOD).hi)),
+  R(2, 7, 20, 12, '#ff9ec0'), E(12, 7, 10, 5, '#ff9ec0'), F(E(12, 6, 8, 3, '#ffc0d4')),
+  F(R(2.6, 8, 2.4, 10, '#e07a98')), F(E(3.8, 9.4, 0.9, 0.9, '#ffe36b')),
+  F(E(11, 12, 1.8, 1.6, '#ffffff')), F(E(14, 12, 1.8, 1.6, '#ffffff')), F(T([[9.4, 12.6], [15.6, 12.6], [12.5, 16]], '#ffffff')),
+  F(E(12, 37, 8, 1.2, '#6f9a52')),
+]);
 
 // ---------- Kinako's shop ----------
 // The Garden Keeper's little wagashi shop on the square: a cream front under a pink-tiled roof,
@@ -1820,6 +1858,15 @@ export function drawGardenLife(ctx, world, cam, time, layer = 'back') {
     if (bloom) bloomFlowers(ctx, x, y, time, e.rec.seed, true);
     if (e.fade != null) ctx.restore();
   }
+  // What each is off to do, by what it needs (world/mochi-brain.js): a thought bubble for a moment
+  // over the one that's just made up its mind.
+  for (const e of life.mochi) {
+    if (!e.thought || e.hidden || e.scene || e.x == null) continue;
+    const t = time - e.thought.t0;
+    if (t < 0 || t >= 2.4) continue;
+    const fade = Math.min(1, t * 4, (2.4 - t) * 2.5);
+    thoughtBubble(ctx, e.x - cam.x + 4, e.y - cam.y - (e.m.size === 'baby' ? 40 : 48) - Math.sin(t * 4) * 1, e.thought.need, fade);
+  }
   // In the nursery: the front of each basket bed, over whoever's curled up asleep in it.
   if (map.indoor) for (const bx of NURSERY_BEDS) place(ctx, bedFrontArt(), snap(bx - cam.x), groundAt(map, bx) + 4 - cam.y);
   // A moment between two Mochi (world/garden-life.js): a little bubble over the one who started it.
@@ -1900,6 +1947,67 @@ function momentBubble(ctx, x, y, kind, alpha) {
   }
   ctx.restore();
 }
+// A Mochi's thought (world/mochi-brain.js): a cloud with two little puffs trailing down from it,
+// and in it what it's off to see to - a ball (fun), z's (sleepy), a heart (company), a star
+// (curious), a cherry (peckish).
+function thoughtBubble(ctx, x, y, need, alpha) {
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  ctx.fillStyle = '#ffffff';
+  ctx.strokeStyle = '#d8c8e8';
+  ctx.lineWidth = 1;
+  for (const [dx, dy, r] of [[-5, 12, 1.1], [-3, 8.6, 1.8]]) {
+    ctx.beginPath();
+    ctx.arc(x + dx, y + dy, r, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+  }
+  ctx.beginPath();
+  ctx.ellipse(x, y, 8, 6.4, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+  if (need === 'fun') {
+    ctx.fillStyle = '#ff8fb0';
+    ctx.beginPath();
+    ctx.arc(x, y, 3.2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(x - 3.2, y - 0.6, 6.4, 1.2);
+    ctx.fillRect(x - 1.6, y - 2.2, 1.2, 1.2);
+  } else if (need === 'energy') {
+    ctx.fillStyle = '#8a9ad8';
+    ctx.font = 'bold 7px Nunito, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('z', x - 1.6, y + 2.6);
+    ctx.font = 'bold 5px Nunito, sans-serif';
+    ctx.fillText('z', x + 2.6, y - 0.6);
+  } else if (need === 'social') heart(ctx, x, y - 0.4, 2.8, '#ff6f9a');
+  else if (need === 'hunger') {
+    ctx.strokeStyle = '#6f9a52';
+    ctx.beginPath();
+    ctx.moveTo(x - 1.8, y + 0.6);
+    ctx.quadraticCurveTo(x - 0.6, y - 3.4, x + 1.4, y - 3.6);
+    ctx.moveTo(x + 1.8, y + 1);
+    ctx.lineTo(x + 1.4, y - 3.6);
+    ctx.stroke();
+    ctx.fillStyle = '#ff4f6a';
+    for (const cx of [-2, 2]) {
+      ctx.beginPath();
+      ctx.arc(x + cx, y + 1.8, 1.9, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  } else {
+    ctx.fillStyle = '#ffcf4a';
+    ctx.beginPath();
+    for (let k = 0; k < 10; k++) {
+      const r = k % 2 ? 1.4 : 3.4;
+      const a = -Math.PI / 2 + (k * Math.PI) / 5;
+      ctx.lineTo(x + Math.cos(a) * r, y + Math.sin(a) * r);
+    }
+    ctx.fill();
+  }
+  ctx.restore();
+}
 function heart(ctx, x, y, s, color) {
   ctx.fillStyle = color;
   ctx.beginPath();
@@ -1964,7 +2072,8 @@ export function drawGardenPiece(ctx, map, kind, wx, extra, cam, width, time) {
   // has the shop and the stalls: world/market.js.)
   if (!(map.garden || map.mochiRace || map.mochiTown) || !kind.startsWith('mg_')) return false;
   const x = wx - cam.x;
-  if (x < -280 && kind !== 'mg_falls') return true;
+  // (A fence runs on far past where it starts: it culls its own bays.)
+  if (x < -280 && kind !== 'mg_falls' && kind !== 'mg_fence') return true;
   if (x > width + 280 && kind !== 'mg_falls') return true;
   const gy = groundAt(map, wx) - cam.y;
   // (Night, or a part of a long course at dusk, `look.glow`: lanterns lit.)
@@ -1982,9 +2091,48 @@ export function drawGardenPiece(ctx, map, kind, wx, extra, cam, width, time) {
     }
     case 'mg_well': {
       place(ctx, wellArt(), snap(x), gy + 2);
-      // The bucket on its rope, swinging gently under the winch.
+      // The bucket on its rope, swinging gently under the winch: down in the shaft, and wound up
+      // to the top while a Mochi turns the crank (`map.wellPull`), eased up and down.
+      map.wellShown = (map.wellShown ?? 0) + ((map.wellPull ?? 0) - (map.wellShown ?? 0)) * 0.04;
       const py = gy + 2 - WELL_H + WELL_WINCH;
-      pivoted(ctx, x, py, Math.sin(time * 0.9 + wx * 0.01) * 0.06, () => place(ctx, bucketArt(), snap(x), py + 16));
+      const drop = Math.round(14 - 13 * map.wellShown);
+      ctx.strokeStyle = '#cdb485';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(snap(x) + 0.5, py);
+      ctx.lineTo(snap(x) + 0.5, py + drop);
+      ctx.stroke();
+      pivoted(ctx, x, py + drop, Math.sin(time * 0.9 + wx * 0.01) * 0.06, () => place(ctx, bucketArt(), snap(x), py + drop + 16));
+      return true;
+    }
+    case 'mg_fence': {
+      const n = Math.round((extra.to - wx) / FENCE_BAY);
+      for (let i = 0; i < n; i++) {
+        const bx = wx + i * FENCE_BAY;
+        const sx = bx - cam.x;
+        if (sx < -60 || sx > width + 60) continue;
+        const v = hash(bx * 0.37) < 0.45 ? 1 + (i % 2) : 0;
+        place(ctx, fenceBayArt(v), snap(sx + FENCE_BAY / 2), groundAt(map, bx + FENCE_BAY / 2) - cam.y + 2);
+      }
+      const ex = wx + n * FENCE_BAY;
+      if (ex - cam.x > -20 && ex - cam.x < width + 20) place(ctx, fencePostArt(), snap(ex - cam.x + 1), groundAt(map, ex) - cam.y + 2);
+      return true;
+    }
+    case 'mg_mailbox': {
+      place(ctx, mailboxArt(), snap(x), gy + 2);
+      // The flag on its side: up while there's post waiting, eased up and down.
+      const want = (map.gardenData?.mail ?? []).length ? 1 : 0;
+      map.mailFlag = (map.mailFlag ?? want) + (want - (map.mailFlag ?? want)) * 0.06;
+      const fx = x + 10;
+      const fy = gy - 22;
+      pivoted(ctx, fx, fy, -Math.PI / 2 * map.mailFlag + Math.sin(time * 2 + wx) * 0.04 * map.mailFlag, () => {
+        ctx.fillStyle = '#3a2d4f';
+        ctx.fillRect(snap(fx), snap(fy - 0.5), 9, 2);
+        ctx.fillStyle = '#ff5d6c';
+        ctx.fillRect(snap(fx + 6), snap(fy - 2), 4, 4);
+        ctx.fillStyle = '#ff8f9a';
+        ctx.fillRect(snap(fx + 6), snap(fy - 2), 4, 1.2);
+      });
       return true;
     }
     case 'mg_mushroom': {

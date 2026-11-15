@@ -50,6 +50,7 @@ import { breedGenes } from '../data/mochi-breed.js';
 import { voiceAction, mochiVoice } from './mochi-voice.js';
 import { nightOf } from './daytime.js';
 import { groundAt, footingAt } from './physics.js';
+import { choose, drainNeeds, satisfy, needsOf, mainNeed } from './mochi-brain.js';
 
 // Where things are in the garden (world/garden.js).
 // (A row of them on the ground just inside the gate, where the square's lantern lights them:
@@ -111,6 +112,89 @@ function toyTime(rec, now) {
 // under the orchard lantern gazing up at the moon. Like the toy box, its turn comes by the hour and
 // its seed, so a visitor sees it at the same place at the same time. [where, how far either side,
 // what it does there (render/mochi-anim.js ACTIONS), for how long, who goes, day or night]
+
+// ---------- Their own minds (world/mochi-brain.js) ----------
+// What each of the garden's places and play things does for a Mochi: the kind of thing it is (for
+// its personality's leanings), the needs it meets and how much, and the stat that makes it keener.
+const ACT_NEEDS = {
+  nap: ['rest', { energy: 50 }], reach: ['snack', { hunger: 55, fun: 5 }], paddle: ['play', { fun: 30 }, 'swim'],
+  meditate: ['rest', { energy: 20, curious: 10 }], roll: ['play', { fun: 35, curious: 5 }],
+  water: ['chore', { curious: 20, fun: 15 }], crank: ['chore', { curious: 20, fun: 15 }], sniff: ['explore', { curious: 30 }],
+  peek: ['explore', { curious: 35 }], swing: ['ride', { fun: 50 }, 'run'], slide: ['ride', { fun: 50 }, 'run'],
+  bounce: ['ride', { fun: 50 }, 'power'], glide: ['ride', { fun: 45, curious: 35 }, 'fly'],
+};
+// Everything Mochi `e` could do right now.
+function brainOptions(world, life, e) {
+  const rec = e.rec;
+  const walker = pts(rec, 'run') >= CANT.run;
+  const out = [];
+  if (walker) {
+    PLACES.forEach((pl, k) => {
+      if (pl.when !== 'day' || !pl.who(rec)) return;
+      if (pl.mail && !(life.owner?.garden?.mail ?? []).length) return;
+      // (One at a time on each play thing, and only one heading for it.)
+      if (pl.ride && life.mochi.some((o) => o !== e && (o.ride?.kind === pl.act || o.brain?.plan?.id === `p${k}`))) return;
+      const [kind, gains, stat] = ACT_NEEDS[pl.act] ?? ['explore', { curious: 15 }];
+      out.push({ id: `p${k}`, kind, x: pl.x + (hash(rec.seed * 0.9 + k) - 0.5) * 2 * pl.spread, act: pl.act, ride: pl.ride, hold: pl.hold, face: pl.face, gains, stat, stay: 4 });
+    });
+    out.push({ id: 'toy', kind: 'play', x: TOY_X + (hash(rec.seed) < 0.5 ? -14 : 14), act: 'play', face: TOY_X, gains: { fun: 40 }, stat: 'run', stay: 3 });
+  }
+  if (pts(rec, 'swim') >= CANT.swim) out.push({ id: 'swim', kind: 'play', x: POND[0] + 40 + hash(rec.seed * 3.3 + (e.brain?.tick ?? 0)) * (POND[1] - POND[0] - 80), gains: { fun: 45, curious: 20 }, stat: 'swim', boost: 1.3, stay: 10 });
+  // (A wander somewhere new, a little rest where it is.)
+  const span = walker ? LAND[1] - LAND[0] : 420;
+  const from = walker ? LAND[0] : Math.max(LAND[0], (e.x ?? LAND[0]) - 210);
+  out.push({ id: 'wander', kind: 'explore', x: clearOfProps(from + hash(rec.seed * 1.9 + (e.brain?.tick ?? 0) * 0.77) * span), gains: { curious: 15 }, stay: 4 });
+  out.push({ id: 'rest', kind: 'rest', x: e.x, gains: { energy: 25 }, stay: 8 });
+  // (A roll about in the grass close by: fun anyone can have, even one too little to walk.)
+  out.push({ id: 'tumble', kind: 'play', x: clearOfProps(Math.max(LAND[0], (e.x ?? LAND[0]) + (hash(rec.seed * 2.3 + (e.brain?.tick ?? 0)) - 0.5) * 120)), act: 'roll', gains: { fun: 30 }, boost: walker ? 0.45 : 1, stay: 3 });
+  // (Company: the nearest of the others out in the garden, and you, the closer it is to you the keener.)
+  const pal = life.mochi.filter((o) => o !== e && !o.hidden && o.x != null && !o.ride && !o.guest).sort((a, b) => Math.abs(a.x - e.x) - Math.abs(b.x - e.x))[0];
+  if (pal) out.push({ id: 'friend', kind: 'social', x: pal.x, follow: pal, act: 'cheer', gains: { social: 45, fun: 10 }, stay: 3 });
+  if (world.map.garden && !world.map.indoor && !world.gardenVisit) out.push({ id: 'you', kind: 'social', x: world.body.x, follow: 'you', act: 'wave', gains: { social: 40 }, boost: 0.4 + Math.min(1, (rec.bond ?? 0) / 600), stay: 3 });
+  return out;
+}
+// Where Mochi `e`'s own mind has it going by day, choosing something new once it's done the last.
+function brainTarget(world, life, e) {
+  const rec = e.rec;
+  const m = e.m;
+  const br = (e.brain ??= { plan: null, memory: [], tick: 0 });
+  const t = world.now;
+  let p = br.plan;
+  // (Going over to someone: wherever they've got to.)
+  if (p?.follow && !p.arrived) {
+    const f = p.follow === 'you' ? world.body : p.follow;
+    if (!f || (f !== world.body && (f.hidden || f.x == null))) p = br.plan = null;
+    else p.x = f.x + (e.x < f.x ? -1 : 1) * (p.follow === 'you' ? 24 : 14);
+  }
+  // Arrived: what it came for, and a while at it.
+  if (p && !p.arrived && Math.abs(e.x - p.x) < (p.follow ? 8 : 3)) {
+    p.arrived = true;
+    if (p.face != null) m.dir = Math.sign(p.face - e.x) || m.dir;
+    else if (p.follow) m.dir = Math.sign((p.follow === 'you' ? world.body.x : p.follow.x) - e.x) || m.dir;
+    if (p.ride && !startRide(world, e, p.act)) p = br.plan = null;
+    else {
+      if (p.act && !p.ride) m.action = { name: p.act, t0: null, ...(p.hold ? { hold: p.hold } : {}) };
+      satisfy(rec, p.gains);
+      p.until = t + p.stay;
+    }
+  }
+  // Done (or it's been too long getting there): what next?
+  // (A move only plays out while it's drawn, so it isn't waited on for ever - say while you're
+  // indoors: a few seconds after it should have finished, it's let go.)
+  const over = p?.arrived && !e.ride && t >= p.until && (!m.action || t >= p.until + 8);
+  if (over && m.action) m.action = null;
+  if (!p || (!p.arrived && t - p.at > 40) || over) {
+    const best = choose(rec, brainOptions(world, life, e), e.x, br.memory, br.tick++);
+    br.plan = best ? { ...best, at: t, arrived: false } : null;
+    if (best) {
+      br.memory.push(best.id);
+      if (br.memory.length > 5) br.memory.shift();
+      // (A thought bubble says what it's off to do, by what it needs: render/garden.js.)
+      if (best.id !== 'rest' || needsOf(rec).energy < 40) e.thought = { need: mainNeed(best.gains), t0: t };
+    }
+  }
+  return br.plan ? br.plan.x : e.x;
+}
 
 // ---------- Rides: the swing, the slide, the bouncy mushroom, and a glide off the cliff ----------
 // The play things in the meadow (world/garden.js) and what a Mochi does on each. Each ride is a path
@@ -242,7 +326,7 @@ function rideStep(world, e, map) {
 }
 // Where the Mochi stop to idle: never inside one of the square's or the meadow's things, so none
 // is ever seen standing in the well or half inside the slide. (Places and rides are their own.)
-const PROPS = [[384, 568], [636, 726], [764, 818], [1124, 1216], [1560, 1604], [1784, 1884], [1932, 2000]];
+const PROPS = [[214, 238], [384, 568], [636, 726], [764, 818], [1124, 1216], [1560, 1604], [1784, 1884], [1932, 2000]];
 function clearOfProps(x) {
   for (const [a, b] of PROPS) if (x > a && x < b) return x - a < b - x ? a - 6 : b + 6;
   return x;
@@ -256,6 +340,14 @@ const PLACES = [
   // The flower beds in the square: a roll about in one, a nap among the other.
   { x: 680, spread: 12, act: 'roll', who: () => true, when: 'day' },
   { x: 1170, spread: 12, act: 'nap', hold: 7, who: () => true, when: 'day' },
+  // Garden chores in the square, so it is lived in: watering the vegetable patch, winding up the
+  // well's bucket, a good sniff of each flower bed (`face`: what it turns to once there).
+  { x: CROP_X - 62, spread: 0, act: 'water', face: CROP_X, who: () => true, when: 'day' },
+  { x: 828, spread: 0, act: 'crank', hold: 5.2, face: 790, who: () => true, when: 'day' },
+  { x: 628, spread: 0, act: 'sniff', face: 680, who: () => true, when: 'day' },
+  { x: 1228, spread: 0, act: 'sniff', face: 1170, who: () => true, when: 'day' },
+  // (While there's post in the mailbox, a peek inside: `mail`.)
+  { x: 244, spread: 0, act: 'peek', face: 226, mail: true, who: () => true, when: 'day' },
   // The play things in the meadow, and for a flyer a glide off the cliff (rides: startRide).
   { x: PLAY.swing + 60, spread: 0, act: 'swing', ride: true, who: () => true, when: 'day' },
   { x: PLAY.slide - 37, spread: 0, act: 'slide', ride: true, who: () => true, when: 'day' },
@@ -263,7 +355,8 @@ const PLACES = [
   { x: PLAY.glide, spread: 0, act: 'glide', ride: true, who: (rec) => pts(rec, 'fly') >= CANT.fly, when: 'day' },
 ];
 // (Long enough to walk over from wherever the hour had it, and to use the place a while.)
-const PLACE = { chance: 0.3, at: [6, 26], stay: 30, reach: 340 };
+// (Nearly half their hours: the garden is busy with them.)
+const PLACE = { chance: 0.45, at: [6, 26], stay: 30, reach: 340 };
 // The place Mochi `rec` is at (or on its way to) now, or null. (Never the hour it's at the toy box.)
 export function placeTime(rec, now, night) {
   const b = Math.floor(now / HOUR);
@@ -503,6 +596,8 @@ export function tickGarden(world, dt) {
       e.y = groundAt(map, e.x);
       e.vx = 0;
       if (night && !m.action) m.action = { name: 'nap', t0: null, hold: 1e9 };
+      // (A night's sleep puts its energy back.)
+      if (night && !e.guest) satisfy(rec, { energy: dt * 1.5 });
       return;
     }
     if (night && !owl) {
@@ -522,6 +617,13 @@ export function tickGarden(world, dt) {
       if (e.x == null) e.x = gx;
       target = gx;
     }
+    // By day, its own mind has it (world/mochi-brain.js): what it needs and what it's like decide
+    // what it does next. (At night they go to bed; a visiting Mochi follows its person.)
+    const minded = !night && !e.guest && e.x != null && !e.scene;
+    if (minded) {
+      drainNeeds(rec, dt, Math.abs(e.vx ?? 0) > 2);
+      target = brainTarget(world, life, e);
+    }
     if (e.greet && now < e.greet.until) target = world.body.x + (e.x != null && e.x < world.body.x ? -26 - i * 14 : 26 + i * 14);
     else e.greet = null;
     // (Blooming and paired: off to find the other.)
@@ -529,7 +631,7 @@ export function tickGarden(world, dt) {
     const other = pair && !pair.met ? (pair.a === e ? pair.b : pair.b === e ? pair.a : null) : null;
     if (other && other.x != null && e.x != null) target = other.x + (e.x < other.x ? -11 : 11);
     // (Its turn at the toy box: over to it, and a game with the ball once it's there.)
-    const toy = !other && !night && pts(rec, 'run') >= CANT.run && toyTime(rec, now);
+    const toy = !minded && !other && !night && pts(rec, 'run') >= CANT.run && toyTime(rec, now);
     if (toy) {
       target = TOY_X + (i % 2 ? 14 : -14);
       // (Arrived: a game with the ball, whatever it was last up to; once, for this turn.)
@@ -541,16 +643,17 @@ export function tickGarden(world, dt) {
     // (Its turn at one of the garden's places: over to it, and once there, what that place is for.)
     // (Only one that can walk, from near enough to get there and have a while at it: decided once
     // when its turn comes, from where the clock had it, so a visitor sees the same.)
-    let place = !toy && !other && (!night || owl) && pts(rec, 'run') >= CANT.run && placeTime(rec, now, night);
+    let place = !minded && !toy && !other && (!night || owl) && pts(rec, 'run') >= CANT.run && placeTime(rec, now, night);
     if (place) {
       const hr = Math.floor(now / HOUR);
       if (e.placeOk?.hr !== hr) e.placeOk = { hr, ok: e.x != null && Math.abs(e.x - place.x) < PLACE.reach };
-      if (!e.placeOk.ok) place = null;
+      if (!e.placeOk.ok || (place.mail && !(life.owner?.garden?.mail ?? []).length)) place = null;
     }
     if (place) {
       target = place.x + (hash(rec.seed * 0.9) - 0.5) * 2 * place.spread;
       if (e.x != null && Math.abs(e.x - target) < 3 && e.placeTurn !== Math.floor(now / HOUR) && !m.action) {
         e.placeTurn = Math.floor(now / HOUR);
+        if (place.face != null) m.dir = Math.sign(place.face - e.x) || m.dir;
         if (place.ride) startRide(world, e, place.act);
         else m.action = { name: place.act, t0: null, ...(place.hold ? { hold: place.hold } : {}) };
       }
@@ -628,6 +731,9 @@ export function tickGarden(world, dt) {
       m.action = { name: 'cheer', t0: null, hold: 1.5 };
     }
   });
+  // (Someone winding the well's crank: its bucket comes up, render/garden.js mg_well.)
+  const crank = life.mochi.find((e) => e.m?.action?.name === 'crank' && e.m.action.t0 != null);
+  world.map.wellPull = crank && world.now - crank.m.action.t0 > 0.4 && world.now - crank.m.action.t0 < 4 ? 1 : 0;
   // (How many are asleep in the nursery, for the sleepy z's drifting out of its window: render/garden.js.)
   world.map.sleepers = night && !inside ? life.mochi.filter((e) => e.hidden && !e.guest).length : 0;
   if (owner && !inside) tickPairing(world, life, now, night);
@@ -1209,6 +1315,43 @@ export function eggStallUp(world) {
   const at = world.map.eggStall;
   if (at == null || world.gardenVisit || !world.char.garden || Math.abs(world.body.x - at) > 40) return false;
   world.events.push({ type: 'eggstall' });
+  return true;
+}
+
+// ---------- The mailbox ----------
+// By the gate: presents your friends leave you (net/visit.js) wait in it, its flag up, until you
+// open it (Up beside it): sweets into your bag, eggs into the nest (one that won't fit stays in the
+// box for later). In the daytime, while there's post, a Mochi now and then trots over and peeks in.
+export const MAILBOX_X = 226;
+export function openMail(world) {
+  const g = world.gardenLife?.owner?.garden;
+  if (!g || !world.map.garden || world.gardenVisit || world.map.indoor || Math.abs(world.body.x - MAILBOX_X) > 14) return false;
+  const mail = g.mail ?? [];
+  world.body.facing = MAILBOX_X >= world.body.x ? 1 : -1;
+  if (!mail.length) {
+    world.log('The mailbox is empty. Presents your friends leave you turn up here.', '#cfe8ff');
+    return true;
+  }
+  const kept = [];
+  const got = [];
+  for (const p of mail) {
+    if (p.egg) {
+      if ((g.eggs ??= []).length < EGG_SLOTS.length) {
+        g.eggs.push(p.egg);
+        got.push(`an egg from ${p.from}`);
+      } else kept.push(p);
+    } else if (p.sweet && p.n > 0) {
+      addItem(world.char.inventory, p.sweet, p.n);
+      got.push(`${p.n} sweet${p.n === 1 ? '' : 's'} from ${p.from}`);
+    }
+  }
+  g.mail = kept;
+  world.map.mailOpen = world.now;
+  if (got.length) {
+    world.log(`You open the mailbox: ${got.join(', ')}!`, '#ffc2d4');
+    if (world.gardenLife) world.gardenLife.cheerAt = world.now + 0.5;
+  }
+  if (kept.length) world.log('An egg is still waiting in the mailbox: hatch one from the nest to make room for it.', '#cfe8ff');
   return true;
 }
 

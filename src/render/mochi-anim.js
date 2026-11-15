@@ -1363,6 +1363,29 @@ export const TRICK_BITS = {
     KEY(1, { ...TUCK, lean: Math.PI * 1.5, tip: 6, sink: 9, closed: [true, true], mouth: 'D' }),
     KEY(1.25, { lean: TWO, tip: 6, sink: 6, squat: 2, closed: [true, true], mouth: 'D', ease: 'out' }),
     KEY(1.6, { lean: TWO, ...OUT(-12), closed: [true, true], mouth: 'D', extra: ['spark0', 'spark1'], sprout: 'excited' }), KEY(2.4, { lean: TWO })] },
+  // Watering the vegetable patch with a little can (world/garden-life.js places): tipped over the
+  // crops, a stream of drops from its rose, eyes shut happily as it goes.
+  water: { dur: 5, loop: [1, 3.4], keys: [
+    KEY(0, {}), KEY(0.5, { hold: 'can', front: [5, -4], mouth: 'mochio', glance: 1 }),
+    KEY(1, { hold: 'can', pour: true, front: [7, -2], lean: 0.1, tilt: 6, mouth: 'mochiw', sprout: 'happy', glance: 1 }),
+    KEY(2.2, { hold: 'can', pour: true, front: [7.6, -1], lean: 0.14, tilt: 8, closed: [true, true], mouth: 'D', sprout: 'happy' }),
+    KEY(3.4, { hold: 'can', pour: true, front: [7, -2], lean: 0.1, tilt: 6, mouth: 'mochiw', sprout: 'happy', glance: 1 }),
+    KEY(4.2, { hold: 'can', front: [4, -5], mouth: 'D', extra: ['spark0'] }), KEY(5, {})] },
+  // At the well: both paws on the crank, winding it round (one turn a loop; the bucket comes up,
+  // render/garden.js mg_well), then a happy puff.
+  crank: { dur: 2.8, loop: [0.4, 1.6], keys: [
+    KEY(0, {}), KEY(0.4, { front: [7, -9], back: [6, -9], tilt: 4, mouth: 'mochio', glance: 1 }),
+    KEY(0.7, { front: [9, -6], back: [8, -6], tilt: 6, mouth: 'grit', glance: 1 }),
+    KEY(1, { front: [7, -3], back: [6, -3], tilt: 4, mouth: 'mochio', glance: 1 }),
+    KEY(1.3, { front: [5, -6], back: [4, -6], tilt: 2, mouth: 'grit', glance: 1 }),
+    KEY(1.6, { front: [7, -9], back: [6, -9], tilt: 4, mouth: 'mochio', glance: 1 }),
+    KEY(2.2, { front: [2, -3], back: [1, -3], mouth: 'D', closed: [true, true], sprout: 'happy', extra: ['spark0'] }), KEY(2.8, {})] },
+  // A good long sniff of the flowers: leaning in, eyes shut, then up with a happy sigh and hearts.
+  sniff: { dur: 3.6, keys: [
+    KEY(0, {}), KEY(0.5, { lean: 0.22, tilt: 10, hy: 1.6, closed: [true, true], mouth: 'mochio', glance: 1 }),
+    KEY(1.4, { lean: 0.26, tilt: 12, hy: 1.8, closed: [true, true], mouth: 'mochiw', sprout: 'happy', glance: 1 }),
+    KEY(2.2, { tilt: -6, closed: [true, true], mouth: 'D', extra: ['hearts'], sprout: 'happy' }),
+    KEY(3, { mouth: 'D', sprout: 'happy' }), KEY(3.6, {})] },
   // On the swing (world/garden-life.js rides): up onto the seat, then sat holding the ropes, legs
   // kicked out as it swings forward and tucked under as it swings back (the loop is one swing,
   // 1.8 s, the ride's own beat), and a hop down. Tipped whole (tip 6): the ride tilts it with the
@@ -1553,6 +1576,63 @@ function actionAt(m, time) {
     return m.action ? actionAt(m, time) : null;
   }
   return { bit, t, tq: map(Math.floor(e * MOMENT_FPS) / MOMENT_FPS) };
+}
+
+// The little watering can a Mochi waters the vegetable patch with (the `water` act): pale blue, its
+// spout forward with a rose on the end, tipped over when it pours, and a stream of drops falling
+// from the rose. Drawn live at the near hand (small, and it moves with the paw).
+function drawCan(ctx, x, y, s, flip, pour, time) {
+  const d = flip ? -1 : 1;
+  const k = s / 0.6;
+  const a = pour ? 0.5 : 0.08;
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.scale(d * k, k);
+  ctx.rotate(a);
+  ctx.fillStyle = '#3a2d4f';
+  ctx.fillRect(-4, -2.2, 9.4, 8);
+  ctx.beginPath();
+  ctx.moveTo(4.6, 1);
+  ctx.lineTo(10.6, -3.6);
+  ctx.lineTo(11.6, -2.4);
+  ctx.lineTo(5, 3.4);
+  ctx.fill();
+  ctx.fillStyle = '#9fd0ee';
+  ctx.fillRect(-3.2, -1.4, 7.8, 6.4);
+  ctx.fillStyle = '#c8e6f8';
+  ctx.fillRect(-3.2, -1.4, 7.8, 1.6);
+  ctx.fillStyle = '#7fb4d8';
+  ctx.fillRect(-3.2, 3.6, 7.8, 1.4);
+  ctx.beginPath();
+  ctx.moveTo(4.6, 1.4);
+  ctx.lineTo(10.4, -2.8);
+  ctx.lineTo(10.9, -2.2);
+  ctx.lineTo(4.8, 2.6);
+  ctx.fillStyle = '#9fd0ee';
+  ctx.fill();
+  ctx.fillStyle = '#3a2d4f';
+  ctx.beginPath();
+  ctx.ellipse(11.3, -3, 1.6, 1.4, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#c8e6f8';
+  ctx.beginPath();
+  ctx.ellipse(11.3, -3, 1, 0.9, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = '#3a2d4f';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.arc(0.6, -2.2, 3, Math.PI, 0);
+  ctx.stroke();
+  ctx.restore();
+  if (!pour) return;
+  // The drops fall straight down from the rose, wherever the can is tipped.
+  const tx = x + d * k * (11.3 * Math.cos(a) + 3 * Math.sin(a));
+  const ty = y + k * (11.3 * Math.sin(a) - 3 * Math.cos(a));
+  ctx.fillStyle = 'rgba(160,214,244,0.9)';
+  for (let i = 0; i < 6; i++) {
+    const u = (time * 2.4 + i / 6) % 1;
+    ctx.fillRect(tx + d * (u * 2 + (i % 3) - 1) * k, ty + u * 16 * k, 0.9 * k, 1.6 * k);
+  }
 }
 
 // ---------- Following: every number of the pose is carried to the next on a spring ----------
@@ -2083,6 +2163,7 @@ export function drawMochiAnim(ctx, m, x, y, time) {
   const over = posed && target.hold ? (c, hand, flip) => {
     if (target.hold === 'sweet') drawSweet(c, sweetKind, hand[0], hand[1] + s, s * 0.75, Math.round(target.bites ?? 0));
     else if (target.hold === 'ball') drawBall(c, hand[0] + (flip ? -1 : 1) * live.ball[0] * s, hand[1] + live.ball[1] * s, s, live.spin);
+    else if (target.hold === 'can') drawCan(c, hand[0], hand[1], s, flip, Boolean(target.pour), time);
   } : null;
   const leanW = ((((lean + Math.PI) % TAU) + TAU) % TAU) - Math.PI;
   // (`m.alpha`: drawn faded, a ghost or a photo on a card fading out; the figure's own pictures

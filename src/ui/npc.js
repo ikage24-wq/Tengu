@@ -302,7 +302,7 @@ export function npcWindow(ui, state, world) {
       ? { label: `Leave an egg for ${friend}`, sub: 'One of the eggs in your own garden', icon: 'gift', primary: true, run: () => {
         if (sendGardenPresent(world, { egg: mine[0] })) {
           mine.shift();
-          say(world, 'kinako', `How kind! I'll tuck it in ${friend}'s nest.`);
+          say(world, 'kinako', `How kind! I'll pop it in ${friend}'s mailbox.`);
         }
       } }
       : { label: `Leave an egg for ${friend}`, sub: 'You have no eggs waiting in your garden', icon: 'gift', run: () => say(world, 'kinako', 'Bring one from your own garden next time, dear.') });
@@ -312,7 +312,7 @@ export function npcWindow(ui, state, world) {
         const n = Math.min(3, sw.n);
         if (sendGardenPresent(world, { sweet: sw.s.id, n })) {
           removeItem(world.char.inventory, sw.s.id, n);
-          say(world, 'kinako', `I'll make sure ${friend} gets them!`);
+          say(world, 'kinako', `Into ${friend}'s mailbox they go!`);
         }
       } }
       : { label: `Leave sweets for ${friend}`, sub: 'No sweets in your bag', icon: 'gift', run: () => say(world, 'kinako', 'Cook some at the hearth in your nursery first!') });

@@ -80,8 +80,11 @@ export function gardenMap(g = {}) {
     // shops, the egg and clothes stalls and the stadium gate moved out to the Mochi Market,
     // 2026-11-15, so the garden is the Mochi's.)
     townPieces: [
-      // The garden square: the vegetable patch (the crop bed and the bean frame), a flower bed and
-      // the well, the nursery, another flower bed, and the lantern at the top of the slope.
+      // The garden square: a low picket fence with climbing roses along the back of it (first, so
+      // all the rest stands in front), the mailbox by the nest, the vegetable patch (the crop bed
+      // and the bean frame), a flower bed and the well, the nursery, another flower bed, and the
+      // lantern at the top of the slope.
+      ['mg_fence', 248, { to: 872 }], ['mg_fence', 1092, { to: 1284 }], ['mg_mailbox', 226],
       ['mg_cropbed', 440], ['mg_beanframe', 528], ['mg_flowerbed', 680, 0], ['mg_well', 790],
       ['mg_nursery', 990], ['mg_flowerbed', 1170, 1], ['mg_lantern', 1290, 1],
       // The play meadow (the orchard): a fruit tree at the foot of the slope, the toy box, the big tree
@@ -145,7 +148,7 @@ export function refreshGarden(char, guest = null) {
   if (guest) {
     map.guestOf = guest;
     // Kinako by the nest, minding your friend's garden: leave them an egg or some sweets.
-    map.npcs = [{ id: 'kinako', x: 236 }];
+    map.npcs = [{ id: 'kinako', x: 262 }];
     MAPS.garden_in.guestOf = guest;
     map.name = `${guest.name}'s Mochi Garden`;
     MAPS.garden_in.name = `${guest.name}'s Nursery`;
