@@ -11,7 +11,7 @@
 // time alone, so nothing needs keeping between frames.
 
 import { SKY } from '../world/garden-weather.js';
-import { PUDDLES, SNOWMAN_X, WIND_DIR } from '../world/garden-life.js';
+import { openPuddles, SNOWMAN_X, WIND_DIR } from '../world/garden-life.js';
 import { groundAt } from '../world/physics.js';
 import { VW, VH } from '../input.js';
 
@@ -190,7 +190,7 @@ export function drawWeatherGround(ctx, world, cam, time) {
   const raining = W.kind === 'rain' ? W.k : 0;
   // The puddles, as full as the ground is wet.
   if (W.wet > 0.02) {
-    for (const [px, r] of PUDDLES) {
+    for (const [px, r] of openPuddles((map.guestOf ?? world.char).garden?.placed)) {
       const x = px - cam.x;
       if (x < -30 || x > VW + 30) continue;
       const gy = groundAt(map, px) - cam.y;

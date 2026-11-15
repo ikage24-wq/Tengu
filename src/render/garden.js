@@ -52,7 +52,7 @@ import { drawMochiAnim } from './mochi-anim.js';
 import { drawHatch, drawEvolve, drawRebirth } from './mochi-life.js';
 import { drawMochiEgg } from './wagashi.js';
 import { rollMochi } from '../data/mochi-genes.js';
-import { EGG_SLOTS, EGG_BACK, NURSERY_BEDS, cropGrowth, stallOnShow, HARVEST_FREE, EGG_HOP, eggHopSecs } from '../world/garden-life.js';
+import { EGG_SLOTS, EGG_BACK, NURSERY_BEDS, cropGrowth, stallOnShow, HARVEST_FREE, EGG_HOP, eggHopSecs, SEESAW } from '../world/garden-life.js';
 import { drawSweet } from './mochi-sweets.js';
 import { SWEET_BY_ID } from '../data/mochi-raise.js';
 import { drawShopModel } from './shopmodel.js';
@@ -1597,14 +1597,17 @@ function hearthFire(ctx, x, y, time) {
 // best rank won there (bronze Beginner, silver Challenge, gold Master), a faint ring where one's
 // still to win; a glint now and then on the gold. (ox, oy): where the room's picture starts.
 const CUP = { beginner: ['#e0a070', '#b8784a'], challenge: ['#e4e8f2', '#a8b0c4'], master: ['#ffd75e', '#d8a030'] };
-function trophyShelf(ctx, cups, ox, oy, time) {
+// (Nine courses' cups along the shelf, and at its end the Mochi Show's: a taller cup on a pink base
+// with a gold star on top and a ribbon tied round it, once a show is won.)
+function trophyShelf(ctx, cups, ox, oy, time, show = null) {
+  showCup(ctx, ox + 676, oy + 196, show, time);
   ctx.font = '800 5px Nunito, "Trebuchet MS", "Segoe UI", system-ui, sans-serif';
   ctx.textAlign = 'center';
   ctx.fillStyle = '#8a5a34';
   ctx.fillText('TROPHIES', snap(ox + 595), snap(oy + 213));
   ctx.textAlign = 'left';
   cups.forEach((c, i) => {
-    const x = ox + 530 + i * 22;
+    const x = ox + 510 + i * 17.5;
     const y = oy + 196;
     if (!c.rank) {
       ctx.strokeStyle = 'rgba(160,120,90,0.35)';
@@ -1650,6 +1653,150 @@ function trophyShelf(ctx, cups, ox, oy, time) {
     }
     ctx.restore();
   });
+}
+// The Mochi Show's cup (world/garden.js showCupOf): in the metal of the best rank won, a pink plinth,
+// a ribbon round its stem, a star on top that twinkles. A faint ring until one is won.
+function showCup(ctx, x, y, rank, time) {
+  if (!rank) {
+    ctx.strokeStyle = 'rgba(200,120,150,0.35)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.ellipse(x, y - 1, 6, 1.8, 0, 0, Math.PI * 2);
+    ctx.stroke();
+    return;
+  }
+  const [m, dk] = CUP[rank];
+  ctx.save();
+  ctx.translate(x, y);
+  // The plinth.
+  ctx.fillStyle = '#c0385e';
+  ctx.fillRect(-6, -4, 12, 4);
+  ctx.fillStyle = '#ff8fb4';
+  ctx.fillRect(-6, -4, 12, 1.4);
+  // Stem, and the ribbon tied round it.
+  ctx.fillStyle = dk;
+  ctx.fillRect(-1.4, -10, 2.8, 6);
+  ctx.fillStyle = '#ff6f9a';
+  ctx.beginPath();
+  ctx.moveTo(0, -8);
+  ctx.lineTo(-3.6, -6.2);
+  ctx.lineTo(-3, -9.4);
+  ctx.closePath();
+  ctx.moveTo(0, -8);
+  ctx.lineTo(3.6, -6.2);
+  ctx.lineTo(3, -9.4);
+  ctx.closePath();
+  ctx.fill();
+  // The bowl, its handles, its shine.
+  ctx.strokeStyle = dk;
+  ctx.lineWidth = 1.4;
+  ctx.beginPath();
+  ctx.arc(-6.2, -16, 2.6, Math.PI * 0.5, Math.PI * 1.5);
+  ctx.arc(6.2, -16, 2.6, Math.PI * 1.5, Math.PI * 0.5);
+  ctx.stroke();
+  ctx.fillStyle = m;
+  ctx.beginPath();
+  ctx.moveTo(-6.2, -20);
+  ctx.lineTo(6.2, -20);
+  ctx.quadraticCurveTo(6, -11, 0, -10);
+  ctx.quadraticCurveTo(-6, -11, -6.2, -20);
+  ctx.fill();
+  ctx.fillStyle = dk;
+  ctx.fillRect(-6.2, -20, 12.4, 1);
+  ctx.fillStyle = 'rgba(255,255,255,0.6)';
+  ctx.fillRect(-4, -19, 1.2, 6);
+  // The star on top, twinkling.
+  const tw = (Math.sin(time * 2 + 1) + 1) / 2;
+  ctx.fillStyle = '#ffe680';
+  ctx.beginPath();
+  for (let i = 0; i < 10; i++) {
+    const a = -Math.PI / 2 + (i / 10) * Math.PI * 2;
+    const r = i % 2 ? 1.5 : 3.4;
+    ctx.lineTo(Math.cos(a) * r, -24 + Math.sin(a) * r);
+  }
+  ctx.closePath();
+  ctx.fill();
+  ctx.globalAlpha = 0.5 + 0.5 * tw;
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(-0.5, -27.5, 1, 2.6);
+  ctx.fillRect(-1.3, -26.7, 2.6, 1);
+  ctx.globalAlpha = 1;
+  ctx.restore();
+}
+// The see-saw (world/garden-life.js SEESAW): a sturdy little A-frame painted mint, and on it the
+// board, striped pink and cream, a cushioned seat and a peg handle at each end, tipped to `a` (+: the
+// right end down). Drawn live, as it rocks.
+function drawSeesaw(ctx, x, gy, a) {
+  const INK = '#5a3a4a';
+  const top = gy - SEESAW.pivot;
+  // The frame: two splayed legs and a foot plank, a round pin at the top.
+  ctx.lineCap = 'round';
+  for (const [w, c] of [[3.6, INK], [2, '#8fd0b0']]) {
+    ctx.strokeStyle = c;
+    ctx.lineWidth = w;
+    ctx.beginPath();
+    ctx.moveTo(x - 7, gy);
+    ctx.lineTo(x, top + 1);
+    ctx.lineTo(x + 7, gy);
+    ctx.stroke();
+  }
+  ctx.fillStyle = INK;
+  ctx.fillRect(x - 10, gy - 1.6, 20, 2.6);
+  ctx.fillStyle = '#a8dcc0';
+  ctx.fillRect(x - 9.4, gy - 1.2, 18.8, 1.2);
+  // The board, turned about the pin.
+  ctx.save();
+  ctx.translate(x, top);
+  ctx.rotate(a);
+  const L = SEESAW.half + 4;
+  ctx.fillStyle = INK;
+  ctx.beginPath();
+  ctx.roundRect(-L - 0.8, -2.8, L * 2 + 1.6, 4.4, 1.6);
+  ctx.fill();
+  for (let i = 0; i < 8; i++) {
+    ctx.fillStyle = i % 2 ? '#fff4ea' : '#ff9ec0';
+    ctx.fillRect(-L + (i * L * 2) / 8, -2.1, (L * 2) / 8 + 0.2, 3);
+  }
+  ctx.fillStyle = 'rgba(255,255,255,0.5)';
+  ctx.fillRect(-L, -2.1, L * 2, 0.7);
+  // Seats and handles at each end.
+  for (const s of [-1, 1]) {
+    ctx.fillStyle = INK;
+    ctx.beginPath();
+    ctx.roundRect(s * (L - 6) - 4.6, -4.4, 9.2, 2.6, 1.2);
+    ctx.fill();
+    ctx.fillStyle = '#ffd36a';
+    ctx.beginPath();
+    ctx.roundRect(s * (L - 6) - 4, -4, 8, 1.8, 0.9);
+    ctx.fill();
+    // (The handle, just inboard of the seat.)
+    ctx.strokeStyle = INK;
+    ctx.lineWidth = 1.8;
+    ctx.beginPath();
+    ctx.moveTo(s * (L - 13), -2);
+    ctx.lineTo(s * (L - 13), -8);
+    ctx.stroke();
+    ctx.strokeStyle = '#8fd0b0';
+    ctx.lineWidth = 0.8;
+    ctx.stroke();
+    ctx.fillStyle = INK;
+    ctx.beginPath();
+    ctx.arc(s * (L - 13), -8.4, 1.6, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#ff8fb4';
+    ctx.beginPath();
+    ctx.arc(s * (L - 13), -8.4, 1, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.restore();
+  ctx.fillStyle = INK;
+  ctx.beginPath();
+  ctx.arc(x, top, 2, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#ffd36a';
+  ctx.beginPath();
+  ctx.arc(x, top, 1.1, 0, Math.PI * 2);
+  ctx.fill();
 }
 // The front of a basket bed's rim, woven, drawn in front of the Mochi asleep in it (its middle at x,
 // sitting on the floor).
@@ -2595,6 +2742,9 @@ export function drawGardenPiece(ctx, map, kind, wx, extra, cam, width, time) {
     case 'mg_showtent':
       drawShowTent(ctx, x, gy, time, wx);
       return true;
+    case 'mg_seesaw':
+      drawSeesaw(ctx, x, gy, map.seesawAngle ?? -SEESAW.tilt);
+      return true;
     case 'mg_stadium':
       place(ctx, stadiumArt(), snap(x), gy + 2);
       signText(ctx, 'RACES', x + 8, gy - 134, { align: 'center', color: '#e0659f', shadow: '#ffe0ee' });
@@ -2619,7 +2769,7 @@ export function drawGardenPiece(ctx, map, kind, wx, extra, cam, width, time) {
       // Everything in the room that moves.
       map.stoveHeat = (map.stoveHeat ?? 0) + ((map.stoveBusy ? 1 : 0) - (map.stoveHeat ?? 0)) * 0.05;
       nurseryLife(ctx, x - 380, gy + 40 - 400, time, map.outsideNight ?? 0, map.stoveHeat);
-      trophyShelf(ctx, map.trophies ?? [], x - 380, gy - 360, time);
+      trophyShelf(ctx, map.trophies ?? [], x - 380, gy - 360, time, map.showCup);
       return true;
     }
     default:

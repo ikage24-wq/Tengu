@@ -94,7 +94,8 @@ export function gardenMap(g = {}) {
       // with its swing, the slide and the bouncy mushroom, and the far fruit tree by the pond. The
       // Mochi play on all of them (world/garden-life.js rides). (The wash line and the crates went,
       // 2026-11-15: the meadow is for running about in.)
-      ['mg_fruittree', 1537, 0], ['mg_toybox', 1582], ['mg_bigtree', 1660],
+      // (The see-saw on the flat at the foot of the slope, 2026-11-15: world/garden-life.js SEESAW.)
+      ['mg_seesaw', 1468], ['mg_fruittree', 1537, 0], ['mg_toybox', 1582], ['mg_bigtree', 1660],
       ['mg_slide', 1830], ['mg_mushroom', 1965], ['mg_fruittree', 2074, 2],
       ['mg_reeds', 2168, 0], ['mg_lilies', 2330, 0], ['mg_lilies', 2480, 1], ['mg_reeds', 2576, 1],
       ['mg_earthwall', 2711, { left: 2662, right: 2760, top: 562, bottom: 900, seed: 4 }], ['mg_earthwall', 2982, { left: 2764, right: 3200, top: 382, bottom: 900, seed: 9, burrow: [70, 250] }], ['mg_rockface', 2660, { top: LEDGE, bottom: POND, seed: 3, vines: 4, vineLen: 60 }], ['mg_rockface', 2762, { top: TOP, bottom: LEDGE, seed: 7, vines: 6, vineLen: 90 }], ['mg_falls', 2762],
@@ -150,6 +151,7 @@ export function refreshGarden(char, guest = null) {
   MAPS.garden_in = gardenInside();
   // The nursery's trophy shelf: a cup for each course won, in its best rank's metal.
   MAPS.garden_in.trophies = trophiesOf(owner);
+  MAPS.garden_in.showCup = showCupOf(owner);
   if (guest) {
     map.guestOf = guest;
     // Kinako by the nest, minding your friend's garden: leave them an egg or some sweets.
@@ -165,6 +167,11 @@ refreshGarden({});
 
 export const hasGarden = (char) => Boolean(char.garden);
 
+// The best rank of the Mochi Show `char` has won (world/mochi-show.js), or null: its cup stands at the
+// end of the trophy shelf.
+export function showCupOf(char) {
+  return ['master', 'challenge', 'beginner'].find((r) => char.showWins?.[r]) ?? null;
+}
 // Each race course and the best rank `char` has won it at (null if not yet), in the board's order.
 export function trophiesOf(char) {
   const wins = char.raceWins ?? {};

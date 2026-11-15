@@ -40,6 +40,7 @@ import { itemTooltip } from './tooltips.js';
 import { questAccepted, questCompleted, thanksFor } from './questfx.js';
 import { shopWindow } from './shop.js';
 import { dressShopWindow } from './mochi-dress-shop.js';
+import { gardenShopWindow } from './garden-decor-shop.js';
 import { isNight } from '../world/daytime.js';
 import { countItem, removeItem } from '../core/inventory.js';
 import { sendGardenPresent } from '../net/visit.js';
@@ -243,9 +244,11 @@ export function npcWindow(ui, state, world) {
   const dlg = state.npc;
   // The shop and the salon are bigger than the talk box, so each places itself when it opens.
   if (dlg.mode !== 'shop') dlg.placedShop = false;
+  if (dlg.mode !== 'decor') dlg.placedDecor = false;
   if (dlg.mode !== 'style') dlg.placed = false;
   if (dlg.mode === 'shop') return shopWindow(ui, state, world);
   if (dlg.mode === 'dress') return dressShopWindow(ui, state, world);
+  if (dlg.mode === 'decor') return gardenShopWindow(ui, state, world);
   if (dlg.mode === 'style') return styleWindow(ui, state, world);
   if (dlg.mode === 'polish') return polishWindow(ui, state, world);
   if (dlg.mode !== 'storage') dlg.placedStore = false;
@@ -324,6 +327,7 @@ export function npcWindow(ui, state, world) {
       state.windows.npc.open = false;
     } });
     choices.push({ label: 'Mochi outfits', sub: 'Glasses, scarves and cute clothes for your Mochi', icon: 'hanger', run: () => (dlg.mode = 'dress') });
+    choices.push({ label: 'Garden things', sub: 'Benches, a fountain, a parasol... your Mochi use them', icon: 'gift', run: () => (dlg.mode = 'decor') });
     choices.push({ label: "Today's goals", sub: dailyLine(world.char) || 'Three small things to do each day', icon: 'check', run: () => {
       const d = dailyGoals(world.char);
       say(world, 'kinako', d ? `Today: ${d.goals.map((x) => `${DAILY_KINDS[x.kind].words(x.need)} (${x.have}/${x.need})`).join(', ')}. ${d.all ? 'All done, well done!' : `${DAILY_PAY.each} gold for each!`}` : 'Come by your garden first!');

@@ -118,11 +118,13 @@ function decorator(stage = 5) {
 }
 
 test('every piece of furniture is craftable at a bench, once you have an island', () => {
-  for (const f of FURNITURE) {
+  // (The Mochi Garden's own pieces are bought from Kinako instead: ui/garden-decor-shop.js.)
+  for (const f of FURNITURE.filter((x) => x.where !== 'garden')) {
     const r = RECIPES.find((x) => x.makes === f.id);
     assert.ok(r && r.cat === 'home', f.id);
     assert.ok(['floor', 'rug', 'surface', 'wall', 'hang'].includes(f.layer));
   }
+  for (const f of FURNITURE.filter((x) => x.where === 'garden')) assert.ok(f.price > 0 && !RECIPES.some((x) => x.makes === f.id), `${f.id} is bought`);
   const none = createCharacter('N', { hairStyle: 'bob' });
   assert.equal(craftBlocker(none, RECIPES.find((x) => x.makes === 'sea_table')), 'island');
   const w = islander();

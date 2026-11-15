@@ -15,6 +15,7 @@ import { drawItemIcon } from './icons.js';
 import { drawMount } from './mounts.js';
 import { FISH_BY_ID } from '../data/fishing.js';
 import { gameHour } from '../world/daytime.js';
+import { WEATHER_WIND } from './terrain.js';
 
 const TAU = Math.PI * 2;
 const WOOD = '#c89a6a';
@@ -46,6 +47,114 @@ const star = (cx, cy, r, c) => {
 
 // ---------- Each piece's art (its own box, base at the bottom centre) ----------
 const ART = {
+  // ----- Mochi Garden (2026-11-15): painted cream and pink, soft stone, flowers everywhere -----
+  garden_bench(w, h) {
+    const wd = ramp('#e8c8a0', 0.8);
+    const out = [
+      // (Back posts and legs first, then the slats, the seat and the curled arms over them.)
+      R(5, 1, 3, 13, wd.base), R(w - 8, 1, 3, 13, wd.base), R(4, 15, 3, h - 15, wd.sh), R(w - 7, 15, 3, h - 15, wd.sh),
+      R(3, 2, w - 6, 3.2, '#fff4ea'), R(3, 6.6, w - 6, 3.2, '#fff4ea'),
+      F(R(3, 2, w - 6, 1, '#ffffff')), F(R(3, 6.6, w - 6, 1, '#ffffff')),
+      // A little heart cut in the top slat.
+      F(E(w / 2 - 1, 3.4, 1.2, 1.1, '#ff8fb4')), F(E(w / 2 + 1, 3.4, 1.2, 1.1, '#ff8fb4')), F(T([[w / 2 - 2.2, 3.7], [w / 2 + 2.2, 3.7], [w / 2, 5.6]], '#ff8fb4')),
+      R(1, 11, w - 2, 4, '#ff9ec0'), F(R(1, 11, w - 2, 1.2, '#ffc2d8')), F(R(1, 14, w - 2, 1, '#e0759a')),
+      R(0, 8, 6, 2.4, wd.base), R(w - 6, 8, 6, 2.4, wd.base), E(1.4, 9.2, 1.6, 1.6, wd.base), E(w - 1.4, 9.2, 1.6, 1.6, wd.base),
+    ];
+    return out;
+  },
+  garden_parasol(w, h) {
+    const out = [E(w / 2, h - 2.4, 7, 2.4, '#b8b0c8'), F(E(w / 2, h - 3.2, 5.6, 1.3, '#d8d0e4')), R(w / 2 - 0.9, 7, 1.8, h - 9, '#f2e2c4'), F(R(w / 2 - 0.9, 7, 0.6, h - 9, '#fff8e8'))];
+    // The canopy: six panels from the top down to a scalloped rim, pink and cream by turns.
+    const rim = [];
+    for (let i = 0; i <= 6; i++) {
+      const u = i / 6;
+      rim.push([1 + u * (w - 2), 15 + Math.sin(Math.PI * u) * -1.2]);
+    }
+    const apex = [w / 2, 3];
+    out.push(T([apex, ...rim, [w - 1, 16], [1, 16]], '#ff9ec0'));
+    for (let i = 0; i < 6; i++) if (i % 2) out.push(F(T([apex, rim[i], rim[i + 1]], '#fff4ea')));
+    for (let i = 0; i < 6; i++) out.push(F(E((rim[i][0] + rim[i + 1][0]) / 2, 15.6, (w - 2) / 12, 2, i % 2 ? '#fff4ea' : '#ff9ec0')));
+    out.push(F(T([apex, [w / 2 - 3, 7], [w / 2 + 3, 7]], 'rgba(255,255,255,0.35)')));
+    out.push(E(w / 2, 2.4, 1.6, 1.6, '#ffd36a'));
+    return out;
+  },
+  garden_fountain(w, h) {
+    const st = ramp('#d0c8dc', 0.8);
+    return [
+      // The lower basin: its wall, the water in it, its rim.
+      E(w / 2, h - 3, w / 2 - 1, 3, st.sh), R(2, h - 8, w - 4, 5, st.base), F(R(2, h - 8, w - 4, 1.2, st.hi ?? '#e8e0f0')),
+      E(w / 2, h - 8, w / 2 - 2, 3, st.base), F(E(w / 2, h - 8.2, w / 2 - 4.4, 2, '#8fd3ff')), F(E(w / 2 - 4, h - 8.8, 6, 0.8, '#c8ecff')),
+      // The column and the top bowl, its water and the spout.
+      R(w / 2 - 2.4, 10, 4.8, h - 18, st.base), F(R(w / 2 - 2.4, 10, 1.4, h - 18, '#e8e0f0')),
+      E(w / 2, 10, 9, 2.8, st.base), F(E(w / 2, 9.6, 7.4, 1.6, '#8fd3ff')),
+      R(w / 2 - 0.9, 4, 1.8, 6, st.sh), E(w / 2, 4, 1.8, 1.3, st.base),
+    ];
+  },
+  garden_picnic(w, h) {
+    const out = [T([[5, h - 6], [w - 2, h - 6], [w - 5, h], [2, h]], '#ffffff')];
+    // The checks: pink squares on the white.
+    for (let r = 0; r < 2; r++) for (let c = 0; c < 7; c++) if ((r + c) % 2 === 0) {
+      const x0 = 4.4 + c * 6 - r * 1.5;
+      out.push(F(T([[x0, h - 6 + r * 3], [x0 + 6, h - 6 + r * 3], [x0 + 6 - 1.5, h - 3 + r * 3], [x0 - 1.5, h - 3 + r * 3]], '#ff9ec0')));
+    }
+    // A basket of dango on it, and a skewer of three by the basket.
+    out.push(R(w - 17, h - 11, 10, 6, '#d8a46a'), F(R(w - 17, h - 11, 10, 1.4, '#ecc890')), F(R(w - 15, h - 9, 1, 3.6, '#b8844a')), F(R(w - 11, h - 9, 1, 3.6, '#b8844a')));
+    out.push(F(T([[w - 16, h - 11], [w - 12, h - 16], [w - 8, h - 11], [w - 9, h - 11], [w - 12, h - 14.6], [w - 15, h - 11]], '#b8844a')));
+    out.push(F(R(9, h - 7.6, 14, 0.8, '#c8945a')), E(11, h - 7.8, 2, 1.8, '#ffb3c8'), E(15, h - 7.8, 2, 1.8, '#fff8f2'), E(19, h - 7.8, 2, 1.8, '#9fd87a'));
+    return out;
+  },
+  garden_arch(w, h) {
+    const out = [R(2, 20, 4, h - 20, '#fff4ea'), R(w - 6, 20, 4, h - 20, '#fff4ea'), F(R(2, 20, 1.2, h - 20, '#ffffff')), F(R(w - 6, 20, 1.2, h - 20, '#ffffff'))];
+    // The arch: a white trellis band, round from post to post.
+    const band = [];
+    for (let i = 0; i <= 14; i++) {
+      const a = Math.PI + (i / 14) * Math.PI;
+      band.push([w / 2 + Math.cos(a) * (w / 2 - 2), 22 + Math.sin(a) * 19]);
+    }
+    for (let i = 14; i >= 0; i--) {
+      const a = Math.PI + (i / 14) * Math.PI;
+      band.push([w / 2 + Math.cos(a) * (w / 2 - 6), 22 + Math.sin(a) * 15.6]);
+    }
+    out.push(T(band, '#fff4ea'));
+    // Roses climbing it: leaves, then pink blooms with a deeper heart.
+    const spots = [[4, 44], [5, 34], [4, 26], [7, 16], [12, 8], [w / 2 - 4, 4.4], [w / 2 + 5, 4], [w - 12, 8], [w - 7, 16], [w - 4, 26], [w - 5, 36], [w - 4, 46]];
+    for (const [i, [rx, ry]] of spots.entries()) out.push(F(E(rx + (i % 2 ? 2.4 : -2.4), ry + 1.6, 2.4, 1.2, '#7cc87a')));
+    for (const [i, [rx, ry]] of spots.entries()) out.push(E(rx, ry, 2.4, 2.2, i % 3 === 1 ? '#ffc2d8' : '#ff8fb4'), F(E(rx - 0.4, ry - 0.4, 1, 0.9, '#e0507a')));
+    return out;
+  },
+  garden_lantern(w, h) {
+    const st = ramp('#c8c0d0', 0.8);
+    return [
+      R(1, h - 4, w - 2, 4, st.sh), F(R(1, h - 4, w - 2, 1, '#e0dae8')), R(w / 2 - 2, 15, 4, h - 19, st.base), F(R(w / 2 - 2, 15, 1.2, h - 19, '#e0dae8')),
+      R(2, 13, w - 4, 2.4, st.sh),
+      R(3, 7, w - 6, 6.4, st.base), F(R(5, 8.4, w - 10, 3.8, '#4a3a5a')),
+      T([[-1, 8], [1, 5.4], [w / 2, 2], [w - 1, 5.4], [w + 1, 8]], st.sh), F(T([[1, 5.6], [w / 2, 2.6], [w / 2, 4.6]], '#e0dae8')),
+      E(w / 2, 1.6, 1.5, 1.5, st.base),
+    ];
+  },
+  garden_pinwheels(w, h) {
+    const wd = ramp('#d8a46a', 0.8);
+    return [
+      // The sticks (the pinwheels themselves turn live).
+      R(6, 3, 0.9, 12, '#c8945a'), R(13, 1, 0.9, 13, '#c8945a'), R(20, 4, 0.9, 11, '#c8945a'),
+      // The planter, its soil, and flowers peeping over.
+      R(2, 14, w - 4, h - 14, wd.base), F(R(2, 14, w - 4, 1.4, wd.hi ?? '#ecc890')), F(R(2, 18, w - 4, 0.8, wd.sh)),
+      F(R(3, 13.2, w - 6, 1.6, '#8a5a3a')),
+      E(4.6, 12.6, 1.8, 1.6, '#ffe680'), E(9.6, 12.2, 1.8, 1.6, '#ffb3c8'), E(17, 12.4, 1.8, 1.6, '#c8a8f0'), E(22, 12.6, 1.8, 1.6, '#ffe680'),
+      F(E(4.6, 12.6, 0.6, 0.6, '#ff9e60')), F(E(9.6, 12.2, 0.6, 0.6, '#ffe680')), F(E(17, 12.4, 0.6, 0.6, '#ffe680')), F(E(22, 12.6, 0.6, 0.6, '#ff9e60')),
+    ];
+  },
+  garden_statue(w, h) {
+    const st = ramp('#d8d2e2', 0.8);
+    return [
+      // The pedestal.
+      R(3, 20, w - 6, h - 20, st.base), F(R(3, 20, 1.6, h - 20, '#ece8f2')), R(1, 18, w - 2, 3, st.sh), R(2, h - 2, w - 4, 2, st.sh),
+      // The stone Mochi on it: round, smiling, and its sprout in gold.
+      E(w / 2, 12.4, 8, 6.4, st.base), F(E(w / 2 - 2.4, 10.4, 3.4, 2.4, '#f2eef6')),
+      F(E(w / 2 - 2.6, 12.4, 0.8, 1, '#8a8098')), F(E(w / 2 + 2.6, 12.4, 0.8, 1, '#8a8098')), F(E(w / 2, 14.4, 1.2, 0.5, '#a89eb8')),
+      R(w / 2 - 0.5, 2.6, 1, 4.4, '#e0a830'), T([[w / 2, 3.4], [w / 2 - 4.4, 1.2], [w / 2 - 2, 4.4]], '#ffd36a'), T([[w / 2, 3.4], [w / 2 + 4.4, 1.2], [w / 2 + 2, 4.4]], '#ffd36a'),
+    ];
+  },
   sea_table(w, h) {
     const wd = ramp(DRIFT, 0.8);
     return [...planks(0, 0, w, 5, wd, 4, 1), R(4, 5, 4, h - 5, wd.sh), R(w - 8, 5, 4, h - 5, wd.sh), F(R(4, 5, 1.4, h - 5, wd.base)), F(R(w - 8, 5, 1.4, h - 5, wd.base)), R(6, h - 9, w - 12, 2, wd.sh)];
@@ -394,6 +503,104 @@ export function drawPiece(ctx, p, x, y, time, { night = 0, char = null, ghost = 
   ctx.restore();
   const top = y - def.h;
   // ----- Each piece's moving parts -----
+  // ----- The Mochi Garden's pieces -----
+  // The parasol's soft shade on the grass under it.
+  if (def.id === 'garden_parasol') {
+    ctx.fillStyle = 'rgba(70,40,90,0.12)';
+    ctx.beginPath();
+    ctx.ellipse(x, y - 0.5, 15, 2.2, 0, 0, TAU);
+    ctx.fill();
+  }
+  // The fountain's water: a jet up from the spout, arching over into the top bowl, falling in a
+  // sheet from its lip into the basin, rings spreading on the water, sparkles.
+  if (def.id === 'garden_fountain') {
+    const bx = x;
+    ctx.save();
+    ctx.strokeStyle = 'rgba(200,236,255,0.85)';
+    ctx.lineWidth = 0.9;
+    for (const s of [-1, 1]) {
+      ctx.beginPath();
+      ctx.moveTo(bx, top + 4);
+      ctx.quadraticCurveTo(bx + s * 3, top - 3 + Math.sin(time * 6 + s) * 0.4, bx + s * 6, top + 9);
+      ctx.stroke();
+    }
+    // (Falling from the top bowl's lip into the basin.)
+    ctx.strokeStyle = 'rgba(160,215,250,0.7)';
+    for (const s of [-1, 1]) {
+      ctx.beginPath();
+      ctx.moveTo(bx + s * 8.6, top + 10.6);
+      ctx.quadraticCurveTo(bx + s * 10, top + 15, bx + s * 10.4, y - 8.4);
+      ctx.stroke();
+    }
+    // (Drops, and rings on the water.)
+    for (let i = 0; i < 6; i++) {
+      const u = (time * 1.4 + i / 6 + wx * 0.01) % 1;
+      const s = i % 2 ? 1 : -1;
+      ctx.fillStyle = `rgba(220,245,255,${1 - u})`;
+      ctx.fillRect(bx + s * (2 + u * 5), top + 2 + u * 7 - Math.sin(u * Math.PI) * 4, 0.8, 0.8);
+    }
+    for (let i = 0; i < 2; i++) {
+      const u = (time * 0.8 + i * 0.5) % 1;
+      ctx.strokeStyle = `rgba(255,255,255,${0.5 * (1 - u)})`;
+      ctx.lineWidth = 0.5;
+      ctx.beginPath();
+      ctx.ellipse(bx + (i ? 10 : -10), y - 8.2, 1 + u * 4, 0.4 + u * 1.2, 0, 0, TAU);
+      ctx.stroke();
+    }
+    const tw = (Math.sin(time * 3 + wx) + 1) / 2;
+    ctx.fillStyle = `rgba(255,255,255,${0.4 + 0.6 * tw})`;
+    ctx.fillRect(bx - 1, top + 7, 0.9, 0.9);
+    ctx.fillRect(bx + 5, y - 9, 0.9, 0.9);
+    ctx.restore();
+  }
+  // The stone lantern: its window lit warm at dusk, a glow round it.
+  if (def.id === 'garden_lantern') {
+    const k = Math.min(1, night * 1.4);
+    if (k > 0.02) {
+      glow(ctx, x, top + 10, 22, '#ffd27a', 0.5 * k);
+      ctx.fillStyle = `rgba(255,214,140,${0.95 * k})`;
+      ctx.fillRect(x - def.w / 2 + 5, top + 8.4, def.w - 10, 3.8);
+    }
+  }
+  // The pinwheels, turning - faster in a wind.
+  if (def.id === 'garden_pinwheels') {
+    const spin = time * (2.4 + WEATHER_WIND.boost * 6);
+    const sticks = [[6.4, 3], [13.4, 1], [20.4, 4]];
+    for (const [i, [sx, sy]] of sticks.entries()) {
+      const px = x - def.w / 2 + (p.flip ? def.w - sx : sx);
+      const py = top + sy;
+      ctx.save();
+      ctx.translate(px, py);
+      ctx.rotate(spin * (i % 2 ? -1 : 1) + i);
+      for (let b = 0; b < 4; b++) {
+        ctx.rotate(Math.PI / 2);
+        ctx.fillStyle = ['#ff9ec0', '#8fd3ff', '#ffe680', '#9fe0a0'][(b + i) % 4];
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(3.4, -0.4);
+        ctx.lineTo(2.6, -3);
+        ctx.closePath();
+        ctx.fill();
+      }
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.arc(0, 0, 0.6, 0, TAU);
+      ctx.fill();
+      ctx.restore();
+    }
+  }
+  // The statue's gold sprout catching the light now and then.
+  if (def.id === 'garden_statue') {
+    const g = Math.max(0, Math.sin(time * 0.9 + wx * 0.03)) ** 8;
+    if (g > 0.05) {
+      ctx.save();
+      ctx.globalAlpha *= g;
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(x - 0.4, top + 0.2, 0.8, 3.2);
+      ctx.fillRect(x - 1.6, top + 1.4, 3.2, 0.8);
+      ctx.restore();
+    }
+  }
   if (def.id === 'sea_lamp' || def.id === 'bake_lamp') glow(ctx, x, top + 6, 18, '#ffe08a', 0.2 + night * 0.6);
   if (def.id === 'bake_cake') {
     // Its glass dome, see-through, with a shine.

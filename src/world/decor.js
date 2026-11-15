@@ -9,14 +9,22 @@
 //   hang     from the hut's ceiling beam, or under a ledge outside
 // Pieces of the same kind never overlap; nothing floats; and a table with something on it has to
 // be cleared before it moves. Placed pieces are `char.home.placed`: { uid, id, map, x, y, flip },
-// x the centre and y the base, in world px.
+// x the centre and y the base, in world px. Your Mochi Garden's own pieces (2026-11-15, the Mochi
+// Garden set, bought from Kinako) are `char.garden.placed`, set out on the garden's grass clear of
+// everything already there (world/garden-life.js gardenSpotWhy).
 
 import { FURNITURE_BY_ID, PLACED_MAX, GRID } from '../data/furniture.js';
 import { surfacesOf, waterAt, groundAt } from './physics.js';
 import { addItem, removeItem, countItem } from '../core/inventory.js';
+import { gardenSpotWhy } from './garden-life.js';
 
 const BEAM = 16;
-export const placedOn = (char, mapId) => (char.home?.placed ?? []).filter((p) => p.map === mapId);
+export const placedOn = (char, mapId) => [...(char.home?.placed ?? []), ...(char.garden?.placed ?? [])].filter((p) => p.map === mapId);
+// The list a piece on map `mapId` lives in: the garden's own, or your island's.
+export const placedList = (char, mapId) => (mapId === 'garden' ? (char.garden.placed ??= []) : char.home.placed);
+const listOf = (char, p) => [char.home?.placed, char.garden?.placed].find((l) => l?.includes(p)) ?? null;
+// Your own Mochi Garden, out on its grass (not a friend's, not the nursery).
+export const ownGarden = (map, char) => Boolean(map.garden && !map.indoor && !map.guestOf && char.garden);
 const rectOf = (p) => {
   const d = FURNITURE_BY_ID[p.id];
   return { x1: p.x - d.w / 2, x2: p.x + d.w / 2, y1: p.y - d.h, y2: p.y };
@@ -36,7 +44,14 @@ export function placeAt(map, char, id, px, py, { free = false, ignore = null } =
   const placed = placedOn(char, map.id).filter((p) => p !== ignore);
   const indoor = Boolean(map.indoor);
   const out = { x, y: py, why: null };
-  if (!map.home) return { ...out, why: 'Only on your own island.' };
+  const garden = ownGarden(map, char);
+  if (!map.home && !garden) return { ...out, why: 'Only on your own island, or in your Mochi Garden.' };
+  if (garden && def.where !== 'garden') return { ...out, why: 'That one goes on your island.' };
+  if (!garden && def.where === 'garden') return { ...out, why: 'That one goes in your Mochi Garden.' };
+  if (garden) {
+    const why = gardenSpotWhy(x, def.w);
+    if (why) return { ...out, why };
+  }
   if (def.where === 'in' && !indoor) return { ...out, why: 'This one goes inside your hut.' };
   if (def.where === 'out' && indoor) return { ...out, why: 'This one goes outside, on the island.' };
   if (x - def.w / 2 < 8 || x + def.w / 2 > map.width - 8) return { ...out, why: 'Too close to the edge.' };
@@ -86,7 +101,7 @@ export function placeAt(map, char, id, px, py, { free = false, ignore = null } =
 }
 
 let uid = 0;
-const nextUid = (char) => Math.max(uid, ...(char.home?.placed ?? []).map((p) => p.uid ?? 0)) + 1;
+const nextUid = (char) => Math.max(uid, ...[...(char.home?.placed ?? []), ...(char.garden?.placed ?? [])].map((p) => p.uid ?? 0)) + 1;
 
 // Puts a piece down (from your bag, or the one you're carrying when `carried`). Returns the placed
 // piece, or a reason.
@@ -96,14 +111,14 @@ export function placePiece(map, char, id, px, py, { flip = false, free = false, 
   if (!carried && countItem(char.inventory, id) < 1) return "You don't have one.";
   if (!carried) removeItem(char.inventory, id, 1);
   const p = { uid: (uid = nextUid(char)), id, map: map.id, x: spot.x, y: spot.y, flip: Boolean(flip) };
-  char.home.placed.push(p);
+  placedList(char, map.id).push(p);
   return p;
 }
 
 // Picks a placed piece up to move it (it's carried, not yet back in the bag). Returns it, or why not.
 export function pickUpPiece(char, p) {
-  const placed = char.home?.placed ?? [];
-  if (!placed.includes(p)) return 'Nothing there.';
+  const placed = listOf(char, p);
+  if (!placed) return 'Nothing there.';
   if (placed.some((q) => q !== p && restsOn(placed, q) === p)) return 'Take the things off it first.';
   placed.splice(placed.indexOf(p), 1);
   return p;
@@ -111,8 +126,7 @@ export function pickUpPiece(char, p) {
 
 // Back in the bag (a placed or carried piece).
 export function putAway(char, p) {
-  const placed = char.home?.placed ?? [];
-  if (placed.includes(p)) {
+  if (listOf(char, p)) {
     if (pickUpPiece(char, p) !== p) return false;
   }
   return Boolean(addItem(char.inventory, p.id, 1));
@@ -128,6 +142,8 @@ export function pieceAt(char, mapId, x, y) {
 }
 
 // The furniture in your bag: [{ id, n }].
-export function furnitureInBag(char) {
-  return (char.inventory.etc ?? []).filter((e) => FURNITURE_BY_ID[e.id]).map((e) => ({ id: e.id, n: e.qty }));
+// (On a map: only what can go there - the garden's pieces in the garden, the rest on your island.)
+export function furnitureInBag(char, map = null) {
+  const here = (id) => !map || (FURNITURE_BY_ID[id].where === 'garden') === Boolean(map.garden);
+  return (char.inventory.etc ?? []).filter((e) => FURNITURE_BY_ID[e.id] && here(e.id)).map((e) => ({ id: e.id, n: e.qty }));
 }

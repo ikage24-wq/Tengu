@@ -22,9 +22,14 @@ export const FURN_SETS = {
   bake: { name: 'Sweet Bakery', color: '#ff9ec0' },
   star: { name: 'Starry Night', color: '#8f7fe0' },
   trophy: { name: 'Trophies and Catches', color: '#e0a52f' },
+  // (Bought from Kinako in the Mochi Market, not made: for your Mochi Garden, 2026-11-15.)
+  garden: { name: 'Mochi Garden', color: '#8fd0a0' },
 };
 
 const F = (id, name, set, layer, w, h, needs, o = {}) => ({ id, name, set, layer, w, h, needs, where: 'any', level: 1, stage: 1, ...o });
+// (A garden piece: bought, not made, and only for the garden.)
+const G = (id, name, layer, w, h, price, use, desc) => F(id, name, 'garden', layer, w, h, null, { where: 'garden', price, use, desc });
+export const GARDEN_DECOR = () => FURNITURE.filter((f) => f.where === 'garden');
 
 export const FURNITURE = [
   // ----- Seaside Cottage: driftwood, rope, shells and sea-blue -----
@@ -57,6 +62,16 @@ export const FURNITURE = [
   F('trophy_tank', 'Home Aquarium', 'trophy', 'floor', 64, 50, { oak_log: 4, shell: 3, rose_quartz: 2 }, { level: 6, show: 'tank', fish: 4, desc: 'A glass tank on a wooden stand. Four of the rarest fish you have caught swim in it.' }),
   F('trophy_grandtank', 'Grand Aquarium', 'trophy', 'floor', 112, 66, { maple_log: 6, amethyst: 3, sea_kelp: 4, shell: 4 }, { level: 18, stage: 2, show: 'tank', fish: 8, desc: 'A great tank with a coral garden. Eight of the rarest fish you have caught swim in it.' }),
   F('trophy_ribbon', 'Derby Ribbon', 'trophy', 'wall', 18, 28, { cotton: 2 }, { where: 'in', level: 3, show: 'derby', desc: 'A rosette that shows how many Fishing Derbies you have won.' }),
+  // ----- Mochi Garden: set out in your garden, and your Mochi use them (world/garden-life.js) -----
+  // (`price` in gold from Kinako; `use`: what the Mochi do with it.)
+  G('garden_bench', 'Garden Bench', 'floor', 40, 22, 1200, 'sit', 'A little bench painted cream and pink. Two Mochi can sit on it together, swinging their feet.'),
+  G('garden_parasol', 'Sun Parasol', 'floor', 34, 44, 1500, 'shade', 'A frilly sunshade on a pole. A Mochi likes a nap in its shade.'),
+  G('garden_fountain', 'Little Fountain', 'floor', 38, 30, 6000, 'gaze', 'Two stone basins and a sparkling spout. The Mochi come to watch the water play.'),
+  G('garden_picnic', 'Picnic Blanket', 'rug', 48, 16, 800, 'picnic', 'A checked blanket with a basket of dango on it. Mochi stop by for a snack together.'),
+  G('garden_arch', 'Rose Arch', 'floor', 44, 52, 2500, null, 'An arch of trellis climbed by pink roses, to walk through.'),
+  G('garden_lantern', 'Stone Lantern', 'floor', 16, 30, 1800, null, 'A little stone lantern. It glows warm when the evening comes.'),
+  G('garden_pinwheels', 'Pinwheel Planter', 'floor', 26, 22, 900, 'sniff', 'A planter of flowers with three pinwheels in it, spinning in the breeze.'),
+  G('garden_statue', 'Mochi Statue', 'floor', 22, 30, 12000, null, 'A stone Mochi on a pedestal, its sprout up high. Very grand.'),
 ];
 export const FURNITURE_BY_ID = Object.fromEntries(FURNITURE.map((f) => [f.id, f]));
 export const LAYERS = ['rug', 'wall', 'hang', 'floor', 'surface'];

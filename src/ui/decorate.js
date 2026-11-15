@@ -8,7 +8,7 @@
 // The Sims ghost and reason, FFXIV settings kept, Unpacking's settle.)
 
 import { FURNITURE_BY_ID, FURN_SETS } from '../data/furniture.js';
-import { placeAt, placePiece, pickUpPiece, putAway, pieceAt, furnitureInBag } from '../world/decor.js';
+import { placeAt, placePiece, pickUpPiece, putAway, pieceAt, furnitureInBag, placedList, ownGarden } from '../world/decor.js';
 import { addItem, removeItem } from '../core/inventory.js';
 import { drawPiece, drawPieceIcon } from '../render/furniture.js';
 import { sfx } from '../audio/sfx.js';
@@ -20,7 +20,8 @@ const TABS = ['All', ...Object.values(FURN_SETS).map((s) => s.name.split(' ')[0]
 const SET_KEYS = [null, ...Object.keys(FURN_SETS)];
 
 export const decorating = (state) => Boolean(state.decor?.on);
-export const canDecorate = (world) => Boolean(world.map.home && !world.map.guestOf && world.char.home);
+// (On your own island, or out in your own Mochi Garden.)
+export const canDecorate = (world) => Boolean((world.map.home && !world.map.guestOf && world.char.home) || (!world.gardenVisit && ownGarden(world.map, world.char)));
 
 export function toggleDecorate(state, world) {
   state.decor ??= { on: false, carry: null, undo: [], redo: [], tab: 0, scroll: 0, msg: null };
@@ -47,14 +48,14 @@ function dropCarry(d, world) {
   const c = d.carry;
   if (!c) return;
   if (c.from) {
-    world.char.home.placed.push(c.from);
+    placedList(world.char, c.from.map).push(c.from);
     d.undo.pop();
   }
   d.carry = null;
 }
 
 function apply(world, rec, back) {
-  const placed = world.char.home.placed;
+  const placed = placedList(world.char, rec.p.map ?? world.map.id);
   if (rec.kind === 'add') {
     if (back) {
       placed.splice(placed.indexOf(rec.p), 1);
@@ -162,7 +163,7 @@ export function drawDecorate(ui, state, world) {
           p.at = t;
           if (c.from) {
             // A move: keep the same piece (its place in the undo history).
-            const placed = char.home.placed;
+            const placed = placedList(char, world.map.id);
             placed.splice(placed.indexOf(p), 1);
             const to = { x: p.x, y: p.y, flip: p.flip };
             Object.assign(c.from, to, { at: t });
@@ -172,7 +173,7 @@ export function drawDecorate(ui, state, world) {
           d.redo = [];
           sfx('furnPlace');
           // Keep placing more of the same while you have them (and it came from the bag).
-          d.carry = !c.from && furnitureInBag(char).some((e) => e.id === c.id) ? { id: c.id, flip: c.flip } : null;
+          d.carry = !c.from && furnitureInBag(char, world.map).some((e) => e.id === c.id) ? { id: c.id, flip: c.flip } : null;
         }
       } else sfx('denied');
     }
@@ -211,7 +212,7 @@ export function drawDecorate(ui, state, world) {
   box(ctx, bx, by, bw, BAR_H, { fill: 'rgba(255,250,252,0.95)', edge: '#f4bcd8', r: 10, width: 1.5 });
   const tab = tabs(ui, bx + 8, by - 13, TABS, d.tab, { w: 52, h: 13 });
   if (tab !== d.tab) Object.assign(d, { tab, scroll: 0 });
-  const list = furnitureInBag(char).filter((e) => !SET_KEYS[d.tab] || FURNITURE_BY_ID[e.id].set === SET_KEYS[d.tab]);
+  const list = furnitureInBag(char, world.map).filter((e) => !SET_KEYS[d.tab] || FURNITURE_BY_ID[e.id].set === SET_KEYS[d.tab]);
   const size = 34;
   const per = Math.floor((bw - 120) / (size + 4));
   if (hover(ui, bx, by, bw, BAR_H)) d.scroll = Math.max(0, Math.min(Math.max(0, list.length - per), d.scroll + Math.sign(m.wheel || 0)));

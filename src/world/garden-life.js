@@ -52,6 +52,7 @@ import { nightOf } from './daytime.js';
 import { groundAt, footingAt } from './physics.js';
 import { choose, drainNeeds, satisfy, needsOf, mainNeed, befriend, bestFriend, isRival, friendsOf, learn, enjoyment, likesOf } from './mochi-brain.js';
 import { gardenWeatherTick } from './garden-weather.js';
+import { FURNITURE_BY_ID } from '../data/furniture.js';
 
 // Where things are in the garden (world/garden.js).
 // (A row of them on the ground just inside the gate, where the square's lantern lights them:
@@ -143,6 +144,24 @@ function brainOptions(world, life, e) {
     const far = (e.x ?? LAND[0]) < (LAND[0] + LAND[1]) / 2 ? LAND[1] - 120 * hash(rec.seed * 4.1 + (e.brain?.tick ?? 0)) : LAND[0] + 260 + 120 * hash(rec.seed * 4.1 + (e.brain?.tick ?? 0));
     out.push({ id: 'dash', kind: 'play', like: 'run', x: clearOfProps(far), dash: true, gains: { fun: 30, curious: 10 }, stat: 'run', stay: 2 });
     out.push({ id: 'toy', kind: 'play', x: TOY_X + (hash(rec.seed) < 0.5 ? -14 : 14), act: 'play', face: TOY_X, gains: { fun: 40 }, stat: 'run', stay: 3 });
+    // The toy box's other toys (2026-11-15), played out on the grass of the meadow, each its own way
+    // (render/mochi-toys.js): a kite (best of all on a windy day), the bubble wand, a spinning top.
+    const style = playStyle(rec);
+    const spot = (k) => clearOfProps(TOY_X - 80 + hash(rec.seed * 3.1 + k * 1.7 + (e.brain?.tick ?? 0) * 0.31) * 340);
+    const windy = world.gardenWeather?.kind === 'wind' ? world.gardenWeather.k : 0;
+    out.push({ id: 'kite', kind: 'play', like: 'play', toy: true, x: spot(1), act: `kite${style}`, hold: 9, gains: { fun: 40, curious: 20 }, stat: 'fly', boost: 0.8 + windy * 2.4, stay: 9 });
+    out.push({ id: 'bubbles', kind: 'play', like: 'play', toy: true, x: spot(2), act: `bubbles${style}`, hold: 8, gains: { fun: 45 }, stay: 8 });
+    out.push({ id: 'top', kind: 'play', like: 'play', toy: true, x: spot(3), act: `top${style}`, hold: 7, gains: { fun: 35, curious: 15 }, stay: 7 });
+    // The see-saw: an end to sit on and wait for a friend - or, when someone's sat waiting, the other
+    // end (all the keener the closer a friend it is).
+    const on = life.mochi.filter((o) => o.ride?.kind === 'seesaw');
+    const coming = life.mochi.some((o) => o !== e && o.brain?.plan?.id === 'seesaw' && !o.brain.plan.arrived);
+    const waiting = on.length === 1 && on[0] !== e && on[0].ride.waiting ? on[0] : null;
+    if (!on.length && !coming) out.push({ id: 'seesaw', kind: 'play', like: 'social', x: SEESAW.x + ((e.x ?? 0) < SEESAW.x ? -1 : 1) * (SEESAW.half + 12), act: 'seesaw', ride: true, face: SEESAW.x, gains: { fun: 35, social: 25 }, stat: 'power', stay: 3 });
+    else if (waiting && !coming && !isRival(rec, waiting.rec)) {
+      const fond = Math.max(0, friendsOf(rec)[waiting.rec.seed] ?? 0);
+      out.push({ id: 'seesaw', kind: 'social', like: 'social', x: SEESAW.x + (waiting.ride.seat ? -1 : 1) * (SEESAW.half + 12), act: 'seesaw', ride: true, face: SEESAW.x, gains: { fun: 45, social: 45 }, stat: 'power', boost: 2.4 + fond / 40, stay: 3 });
+    }
   }
   if (pts(rec, 'swim') >= CANT.swim) out.push({ id: 'swim', kind: 'play', like: 'swim', x: POND[0] + 40 + hash(rec.seed * 3.3 + (e.brain?.tick ?? 0)) * (POND[1] - POND[0] - 80), gains: { fun: 45, curious: 20 }, stat: 'swim', boost: 1.3, stay: 10 });
   // (A wander somewhere new, a little rest where it is.)
@@ -180,6 +199,7 @@ function brainOptions(world, life, e) {
       out.push({ id: 'napwith', kind: 'rest', like: 'rest', x: pal.x + (e.x < pal.x ? -12 : 12), act: 'nap', hold: 6, pal, gains: { energy: 40, social: 20 }, stay: 3 });
     }
   }
+  if (walker) decorOptions(world, life, e, out);
   weatherOptions(world, life, e, out, walker);
   const rivals = others.filter((o) => isRival(rec, o.rec));
   for (const o of out) if (rivals.some((r) => Math.abs(r.x - o.x) < 100)) o.boost = (o.boost ?? 1) * 0.4;
@@ -192,23 +212,63 @@ function brainOptions(world, life, e) {
   }
   return out;
 }
+// ---------- What you've set out in the garden (world/decor.js) ----------
+// The pieces they use: sitting side by side on a bench, a nap under the parasol, watching the
+// fountain play, a snack on the picnic blanket, a sniff of the pinwheel planter's flowers. (One to
+// a spot: two to a bench.)
+function decorOptions(world, life, e, out) {
+  const rec = e.rec;
+  const placed = (life.owner?.garden?.placed ?? []).filter((p) => p.map === 'garden');
+  const taken = (id) => life.mochi.some((o) => o !== e && o.brain?.plan?.id === id);
+  for (const p of placed) {
+    const def = FURNITURE_BY_ID[p.id];
+    const id = (k) => `decor${p.uid}${k}`;
+    if (def?.use === 'sit') {
+      for (const k of [0, 1]) {
+        if (taken(id(k))) continue;
+        out.push({ id: id(k), kind: 'rest', like: 'social', x: p.x + (k ? 9 : -9), act: 'benchsit', hold: 9, face: p.x, gains: { energy: 20, social: 30 }, boost: 1.2, stay: 9 });
+        break;
+      }
+    } else if (def?.use === 'shade' && !taken(id(0))) out.push({ id: id(0), kind: 'rest', like: 'rest', x: p.x + (hash(rec.seed * 1.7) - 0.5) * 8, act: 'nap', hold: 8, gains: { energy: 55 }, boost: 1.3, stay: 8 });
+    else if (def?.use === 'gaze') {
+      for (const k of [0, 1]) if (!taken(id(k))) out.push({ id: id(k), kind: 'explore', like: 'explore', x: p.x + (k ? 26 : -26), face: p.x, act: 'wow', hold: 5, gains: { curious: 35, fun: 15 }, boost: 1.2, stay: 5 });
+    } else if (def?.use === 'picnic') {
+      for (const k of [0, 1]) if (!taken(id(k))) out.push({ id: id(k), kind: 'snack', like: 'snack', x: p.x + (k ? 12 : -12), face: p.x, act: 'yum', gains: { hunger: 35, social: 20 }, boost: 1.3, stay: 4 });
+    } else if (def?.use === 'sniff' && !taken(id(0))) out.push({ id: id(0), kind: 'explore', like: 'explore', x: p.x + (e.x < p.x ? -18 : 18), face: p.x, act: 'sniff', gains: { curious: 30 }, stay: 3 });
+  }
+}
 // ---------- The weather (world/garden-weather.js) ----------
 // Puddles fill on the open grass where it rains (clear of every prop and place: render/
 // garden-weather.js draws them, as full as the ground is wet), and the dry spots to shelter under:
 // the big tree's crown, the fruit trees', the nursery's doorway. [x, how far either side]
-export const PUDDLES = [[312, 16], [602, 13], [905, 17], [1048, 13], [1272, 15], [1488, 17], [1752, 15]];
+export const PUDDLES = [[312, 16], [602, 13], [905, 17], [1048, 13], [1272, 15], [1752, 15]];
 export const SHELTERS = [[1660, 30], [1537, 9], [2074, 9], [990, 16]];
 // Where the snow-mochi gets built when the snow lies (render/garden-weather.js), and which way the
 // wind blows (as the rain slants and the clouds roll: toward the gate).
 export const SNOWMAN_X = 1240;
 export const WIND_DIR = -1;
 const underCover = (x) => SHELTERS.some(([sx, r]) => Math.abs(x - sx) <= r + 4);
+// The puddles that can fill: none under a piece you've set out in the garden (world/decor.js).
+export function openPuddles(placed = []) {
+  return PUDDLES.filter(([px, r]) => !placed.some((p) => p.map === 'garden' && Math.abs(p.x - px) < r + (FURNITURE_BY_ID[p.id]?.w ?? 0) / 2));
+}
+// Where a garden piece `w` wide can be set out, centred at `x` (world/decor.js): on the garden's
+// grass, clear of its own things - the square's beds and well, the lantern poles, the nursery, the
+// trees' trunks, the toys and rides. Why not, or null.
+const DECOR_KEEP = [[306, 330], [852, 872], [958, 1022], [1278, 1302], [1526, 1548], [1645, 1765], [2062, 2086]];
+export function gardenSpotWhy(x, w) {
+  const a = x - w / 2;
+  const b = x + w / 2;
+  if (a < LAND[0] + 4 || b > LAND[1] - 4) return "Keep it on the garden's grass.";
+  for (const [k0, k1] of [...PROPS, ...DECOR_KEEP]) if (a < k1 && b > k0) return 'Too close to something already there.';
+  return null;
+}
 // Who loves a splash, and who'd sooner watch the rain from somewhere dry.
 const SPLASHY = new Set(['playful', 'hyper', 'mischief', 'cheeky', 'bubbly', 'sporty', 'brave', 'showoff', 'nosy']);
 const SNUG = new Set(['timid', 'shy', 'sleepy', 'lazy', 'gentle', 'polite', 'clingy', 'sweet', 'dreamy', 'grumpy']);
 // (In the rain, what's no fun out in it: the rides, the toy box, a roll or a nap in the wet grass,
 // watering what the sky's watering already.)
-const WASHED_OUT = new Set(['swing', 'slide', 'bounce', 'glide', 'roll', 'nap', 'meditate', 'water', 'play']);
+const WASHED_OUT = new Set(['swing', 'slide', 'bounce', 'glide', 'roll', 'nap', 'meditate', 'water', 'play', 'seesaw']);
 // What the weather adds to what Mochi `e` could do, and what it takes the shine off.
 function weatherOptions(world, life, e, out, walker) {
   const W = world.gardenWeather;
@@ -216,10 +276,10 @@ function weatherOptions(world, life, e, out, walker) {
   const rec = e.rec;
   const p = rec.personality;
   if (W.kind === 'rain' && W.k > 0.3) {
-    for (const o of out) if (WASHED_OUT.has(o.act) || o.id === 'toy' || o.id === 'rest' || o.id === 'tumble') o.boost = (o.boost ?? 1) * 0.3;
+    for (const o of out) if (WASHED_OUT.has(o.act) || o.toy || o.id === 'toy' || o.id === 'rest' || o.id === 'tumble') o.boost = (o.boost ?? 1) * 0.3;
     // A splash in a puddle: the nearest two.
     if (walker) {
-      const near = PUDDLES.map((pd, k) => [pd, k]).sort((a, b) => Math.abs(a[0][0] - e.x) - Math.abs(b[0][0] - e.x)).slice(0, 2);
+      const near = openPuddles(life.owner?.garden?.placed).map((pd, k) => [pd, k]).sort((a, b) => Math.abs(a[0][0] - e.x) - Math.abs(b[0][0] - e.x)).slice(0, 2);
       for (const [[px], k] of near) out.push({ id: `puddle${k}`, kind: 'play', like: 'play', x: px + (hash(rec.seed * 1.3 + k) - 0.5) * 6, act: 'splash', hold: 6, gains: { fun: 45, curious: 10 }, boost: (SPLASHY.has(p) ? 2.2 : 0.7) * W.k, stay: 6, wet: true });
     }
     // Somewhere dry to sit and watch it come down: the nearest two (a little one makes for one too).
@@ -314,6 +374,14 @@ function brainTarget(world, life, e) {
 // flying), and for the swing the angle of the ropes, for the mushroom how far its cap is pressed
 // down. While one rides, the clock's plans for it wait; it ends on the grass, cheering.
 export const PLAY = { swing: 1660, slide: 1830, mush: 1965, glide: 2050 };
+// The see-saw (2026-11-15), on the flat at the foot of the slope: two Mochi, one on each end, up and
+// down; one on its own sits and waits for a friend a while (render/garden.js mg_seesaw draws the
+// board at `map.seesawAngle`, + with the right end down).
+export const SEESAW = { x: 1468, half: 24, pivot: 8, tilt: 0.3, wait: 10, ride: 7.2, beat: 1.6 };
+// How a Mochi plays with its toys (render/mochi-toys.js): gently, playfully, or boldly.
+const GENTLE = new Set(['shy', 'timid', 'gentle', 'sweet', 'dreamy', 'sleepy', 'polite', 'lazy', 'clingy', 'loner', 'stoic']);
+const BOLD = new Set(['showoff', 'brave', 'proud', 'bossy', 'sassy', 'sporty', 'cool', 'dramatic', 'grumpy', 'artsy']);
+export const playStyle = (rec) => (BOLD.has(rec.personality) ? 2 : GENTLE.has(rec.personality) ? 0 : 1);
 const SWING_ROPE = 96;
 const easeIO = (u) => u * u * (3 - 2 * u);
 const hop = (a, b, u, h) => [a[0] + (b[0] - a[0]) * u, a[1] + (b[1] - a[1]) * u - Math.sin(Math.PI * u) * h];
@@ -389,6 +457,7 @@ export function ridePath(map, kind, t) {
 // Starts Mochi `e` on ride `kind` (if nobody else is on that one).
 export function startRide(world, e, kind) {
   const life = world.gardenLife;
+  if (kind === 'seesaw') return startSeesaw(world, life, e);
   if (life?.mochi.some((o) => o !== e && o.ride?.kind === kind)) return false;
   e.ride = { kind, t0: world.now };
   const r = RIDES[kind];
@@ -398,6 +467,7 @@ export function startRide(world, e, kind) {
 // One step of a ride: true while it is still going.
 function rideStep(world, e, map) {
   const r = e.ride;
+  if (r.kind === 'seesaw') return seesawStep(world, e, map);
   const m = e.m;
   const t = world.now - r.t0;
   const p = ridePath(map, r.kind, t);
@@ -436,9 +506,107 @@ function rideStep(world, e, map) {
   }
   return true;
 }
+// ---------- The see-saw ----------
+// On it: up onto its end and sat, then waiting for a friend - or, someone's waiting, the other end, and
+// off they go. (`seat` 0 the left end, facing right; 1 the right, facing left.)
+function startSeesaw(world, life, e) {
+  const on = (life?.mochi ?? []).filter((o) => o !== e && o.ride?.kind === 'seesaw');
+  if (on.length >= 2 || (on[0] && !on[0].ride.waiting)) return false;
+  const other = on[0] ?? null;
+  const seat = other ? 1 - other.ride.seat : (e.x ?? SEESAW.x) < SEESAW.x ? 0 : 1;
+  e.ride = { kind: 'seesaw', t0: world.now, seat, from: e.x ?? SEESAW.x + (seat ? 1 : -1) * 36 };
+  if (other) {
+    // (Off they go once it's up and sat: the board starts from the end that was down.)
+    const go = world.now + 0.75;
+    Object.assign(other.ride, { waiting: false, go, pair: e });
+    Object.assign(e.ride, { go, pair: other });
+    life.seesaw = { go, down: other.ride.seat };
+  } else e.ride.waiting = true;
+  e.m.action = { name: 'seesawsit', t0: world.now, hold: 60 };
+  return true;
+}
+// The board's tilt now (+: the right end down), and where a rider on `seat` sits on it.
+function seesawAngle(world, life) {
+  const riders = (life?.mochi ?? []).filter((o) => o.ride?.kind === 'seesaw' && o.ride.sat);
+  const S = life?.seesaw;
+  if (S && riders.length === 2 && world.now >= S.go) {
+    const u = world.now - S.go;
+    const k = Math.min(1, u / 0.6) * Math.min(1, Math.max(0, (SEESAW.ride - u) / 0.8));
+    const sway = Math.cos((2 * Math.PI * u) / SEESAW.beat);
+    // (Easing in from the end that was down, and out to level.)
+    return (S.down ? 1 : -1) * SEESAW.tilt * (k * sway + (1 - k) * (u < 1 ? 1 : 0));
+  }
+  if (riders.length === 1) return (riders[0].ride.seat ? 1 : -1) * SEESAW.tilt;
+  return -SEESAW.tilt;
+}
+const seatAt = (map, seat, a) => {
+  const g = groundAt(map, SEESAW.x) - SEESAW.pivot;
+  const s = seat ? 1 : -1;
+  const r = SEESAW.half - 2;
+  return [SEESAW.x + s * r * Math.cos(a), g + s * r * Math.sin(a) - 1.5];
+};
+function seesawStep(world, e, map) {
+  const life = world.gardenLife;
+  const r = e.ride;
+  const m = e.m;
+  const t = world.now - r.t0;
+  const target = seesawAngle(world, life);
+  // (The board swings over smoothly whatever it's doing: eased on toward where it's going.)
+  map.seesawAngle = map.seesawAngle == null ? target : map.seesawAngle + (target - map.seesawAngle) * Math.min(1, 0.18);
+  const a = map.seesawAngle;
+  const dir = r.seat ? -1 : 1;
+  const [sx, sy] = seatAt(map, r.seat, a);
+  const off = [SEESAW.x + (r.seat ? 1 : -1) * (SEESAW.half + 12), groundAt(map, SEESAW.x + (r.seat ? 1 : -1) * (SEESAW.half + 12))];
+  let x = sx;
+  let y = sy;
+  // Up onto the end.
+  if (t < 0.5) {
+    [x, y] = hop([r.from, groundAt(map, r.from)], [sx, sy], easeIO(t / 0.5), 10);
+  } else if (!r.sat) r.sat = true;
+  const ride = r.go != null ? world.now - r.go : null;
+  // Waited long enough on its own: a sigh, and off. Ridden its fill: off, both.
+  if (!r.leave && ((r.waiting && t > SEESAW.wait) || (ride != null && ride > SEESAW.ride))) {
+    r.leave = world.now;
+    r.alone = r.waiting;
+    m.action = null;
+  }
+  if (r.leave != null) {
+    const u = Math.min(1, (world.now - r.leave) / 0.55);
+    [x, y] = hop([sx, sy], off, easeIO(u), 10);
+    if (u >= 1) {
+      e.ride = null;
+      m.hillLean = 0;
+      if (life?.seesaw && !(life.mochi ?? []).some((o) => o.ride?.kind === 'seesaw')) life.seesaw = null;
+      m.action = { name: r.alone ? 'sigh' : 'cheer', t0: null };
+      e.x = off[0];
+      e.y = off[1];
+      return false;
+    }
+  } else if (ride != null && ride >= 0 && m.action?.name === 'seesawsit') m.action = { name: `seesaw${playStyle(e.rec)}`, t0: world.now, hold: SEESAW.ride };
+  const moved = Math.abs(x - (e.x ?? x));
+  e.x = x;
+  e.y = y;
+  e.baseY = null;
+  e.yOff = 0;
+  e.vx = 0;
+  m.dir = dir;
+  m.mode = 'run';
+  m.dist += moved;
+  m.speed = 0;
+  // (Sat on the board, it tips with it: forward as its end goes down, back as it comes up.)
+  m.hillLean = r.sat && r.leave == null ? a * dir * 0.8 : 0;
+  return true;
+}
+// (With nobody on it, it rests on its left end.)
+export function restSeesaw(map, life) {
+  if ((life?.mochi ?? []).some((o) => o.ride?.kind === 'seesaw')) return;
+  const target = -SEESAW.tilt;
+  map.seesawAngle = map.seesawAngle == null ? target : map.seesawAngle + (target - map.seesawAngle) * 0.12;
+}
+
 // Where the Mochi stop to idle: never inside one of the square's or the meadow's things, so none
 // is ever seen standing in the well or half inside the slide. (Places and rides are their own.)
-const PROPS = [[214, 238], [384, 568], [636, 726], [764, 818], [1124, 1216], [1560, 1604], [1784, 1884], [1932, 2000]];
+const PROPS = [[214, 238], [384, 568], [636, 726], [764, 818], [1124, 1216], [1434, 1502], [1560, 1604], [1784, 1884], [1932, 2000]];
 function clearOfProps(x) {
   for (const [a, b] of PROPS) if (x > a && x < b) return x - a < b - x ? a - 6 : b + 6;
   return x;
@@ -622,6 +790,8 @@ export function tickGarden(world, dt) {
     }
   }
   const map = world.map;
+  // (The see-saw settles back onto its end when nobody's on it.)
+  if (map.garden && !map.indoor) restSeesaw(map, life);
   const now = Date.now() / 1000;
   // (The world's own night: the game clock, or what a scene or a test has set.)
   const night = (world.night ?? nightOf(new Date())) > 0.5;

@@ -21,6 +21,8 @@ import { drawPosed, posedMouth, posedFrame } from './hero.js';
 import { featureOf, budOf, drawFeature } from './mochi-features.js';
 import { drawSweet, drawBall } from './mochi-sweets.js';
 import { SHOW_ACTS } from './mochi-show-acts.js';
+import { TOY_ACTS, drawKite, drawBubbleWand, drawTop } from './mochi-toys.js';
+import { WEATHER_WIND } from './terrain.js';
 import { drawMic, drawBachi, drawTopHat, drawWand, drawMask, drawScript, drawRose, drawRibbon, drawMime, twinkle } from './mochi-show-props.js';
 import { lookOf, drawCoat, drawCoatBack, MOCHI_SIZE } from './wagashi.js';
 
@@ -2438,11 +2440,13 @@ export function drawMochiPose(ctx, g, x, y, P0, { facing = 1, over = null, under
 // never slide), mood (the sprout, optional), size ('grown' or 'baby') }.
 // The Mochi Show's acts (render/mochi-show-acts.js), and drawing their props.
 Object.assign(ACTIONS, SHOW_ACTS);
-const SHOW_HOLDS = new Set(['mic', 'bachi', 'magic', 'mask', 'script', 'rose', 'ribbon', 'mime']);
+// (And the garden's new toys: render/mochi-toys.js.)
+Object.assign(ACTIONS, TOY_ACTS);
+const SHOW_HOLDS = new Set(['mic', 'bachi', 'magic', 'mask', 'script', 'rose', 'ribbon', 'mime', 'kite', 'bubblewand', 'top']);
 // (Each prop's size in a Mochi's little paws: a mic about as long as its head is tall, a mask
 // just over its face.)
-export const PROP_SIZE = { mic: 0.56, bachi: 0.62, wand: 0.62, hat: 0.46, mask: 0.95, script: 0.72, rose: 0.62, ribbon: 0.7, mime: 1 };
-function drawShowProp(c, target, live, hand, other, flip, s, time, out) {
+export const PROP_SIZE = { mic: 0.56, bachi: 0.62, wand: 0.62, hat: 0.46, mask: 0.95, script: 0.72, rose: 0.62, ribbon: 0.7, mime: 1, kite: 1, bubblewand: 0.8, top: 0.62 };
+function drawShowProp(c, target, live, hand, other, flip, s, time, out, m = {}) {
   const k0 = s / 0.6;
   const z = (name) => k0 * PROP_SIZE[name];
   const d = flip ? -1 : 1;
@@ -2458,6 +2462,9 @@ function drawShowProp(c, target, live, hand, other, flip, s, time, out) {
     case 'script': return drawScript(c, hx, hy, z('script'), d, a);
     case 'rose': return drawRose(c, hx, hy, z('rose'), d, a, out);
     case 'ribbon': return drawRibbon(c, hx, hy, z('ribbon'), d, a, live.reveal ?? 0, time, out);
+    case 'kite': return drawKite(c, hx, hy, z('kite'), d, live.reveal ?? 0, WEATHER_WIND.boost ?? 0, time, (m.genes?.seed ?? 0) % 7, m);
+    case 'bubblewand': return drawBubbleWand(c, hx, hy, z('bubblewand'), d, a, m, (target.reveal ?? 0) >= 0.5, live.swing2 ?? 0, target.alt, time);
+    case 'top': return drawTop(c, hx, hy, z('top'), d, live.reveal ?? 0, m.feet, time, m);
     case 'mime': {
       const k = z('mime');
       drawMime(c, hx, hy, k, d, target.alt, live.reveal ?? 0, time);
@@ -2470,6 +2477,8 @@ function drawShowProp(c, target, live, hand, other, flip, s, time, out) {
 }
 
 export function drawMochiAnim(ctx, m, x, y, time) {
+  // (Where its feet are, for a toy set down on the grass by them: render/mochi-toys.js drawTop.)
+  m.feet = [x, y];
   const g = m.genes;
   let st = STATE.get(m);
   if (!st) STATE.set(m, (st = { last: time }));
@@ -2779,7 +2788,7 @@ export function drawMochiAnim(ctx, m, x, y, time) {
     else if (target.hold === 'ball') drawBall(c, hand[0] + (flip ? -1 : 1) * live.ball[0] * s, hand[1] + live.ball[1] * s, s, live.spin);
     else if (target.hold === 'can') drawCan(c, hand[0], hand[1], s, flip, Boolean(target.pour), time);
     else if (target.hold === 'mallet') drawMallet(c, hand[0], hand[1], s, flip, target.swing ?? 0, target.smear ?? 0);
-    else if (SHOW_HOLDS.has(target.hold)) drawShowProp(c, target, live, hand, other, flip, s, time, m.anchors);
+    else if (SHOW_HOLDS.has(target.hold)) drawShowProp(c, target, live, hand, other, flip, s, time, m.anchors, m);
   } : null;
   // (A prop in the far paw goes behind it: the second drumstick.)
   const under = posed && target.hold === 'bachi' ? (c, hand, flip, other) => drawBachi(c, other[0], other[1], (s / 0.6) * PROP_SIZE.bachi, flip ? -1 : 1, live.swing2 ?? 0, m.anchors, 'tip2') : null;

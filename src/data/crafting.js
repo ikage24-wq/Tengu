@@ -223,7 +223,7 @@ export const RECIPE_BY_ID = Object.fromEntries(RECIPES.map((r) => [r.id, r]));
 recipe({ id: 'craft_mount_kettle', cat: 'tool', tier: 2, level: 12, needs: { copper_ore: 10, iron_ore: 6, maple_log: 4 }, makes: 'mount_kettle' });
 
 // Furniture (data/furniture.js), in the Home tab.
-for (const f of FURNITURE) recipe({ id: `craft_${f.id}`, cat: 'home', tier: f.level >= 24 ? 3 : f.level >= 12 ? 2 : 1, level: f.level, needs: f.needs, makes: f.id, stage: f.stage });
+for (const f of FURNITURE.filter((f) => f.needs)) recipe({ id: `craft_${f.id}`, cat: 'home', tier: f.level >= 24 ? 3 : f.level >= 12 ? 2 : 1, level: f.level, needs: f.needs, makes: f.id, stage: f.stage });
 
 // The Sweethearts' special gifts (data/sweethearts.js), in the Gifts tab.
 recipe({ id: 'craft_promise_bouquet', cat: 'gift', tier: 1, level: 4, needs: { cherry: 3, moonpetal: 2, clover: 3, cotton: 1 }, makes: 'promise_bouquet' });

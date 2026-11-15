@@ -547,6 +547,11 @@ function drawWorldLayers(ctx, world, cam, time, b, zoom = 1) {
     const owner = world.map.guestOf ?? world.char;
     drawFurniture(ctx, world.map, owner.home?.placed, cam, VIEW_W, time, owner);
   }
+  // (And out in a Mochi Garden, the garden's own pieces - a friend's too, when you're visiting.)
+  if (world.map.garden && !world.map.indoor) {
+    const owner = world.map.guestOf ?? world.char;
+    drawFurniture(ctx, world.map, owner.garden?.placed, cam, VIEW_W, time, owner);
+  }
   drawTownsfolk(ctx, world.map, cam, VIEW_W, time, botsIn(world.bots, world.map.id), world.hoverBot, world.body);
   drawNpcs(ctx, world, cam, time);
   lap('people');

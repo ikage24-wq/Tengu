@@ -621,3 +621,132 @@ test('harvest helpers: pick the crop bed and a Mochi close by carries a crop in 
     g.done();
   }
 });
+
+test('the see-saw: one sits and waits, a friend hops on the other end, up and down they go, and off they both hop', async () => {
+  const { startRide, SEESAW } = await import('../src/world/garden-life.js');
+  const g = garden();
+  try {
+    const [a, b] = g.w.gardenLife.mochi;
+    a.x = SEESAW.x - 40;
+    b.x = SEESAW.x + 40;
+    assert.ok(startRide(g.w, a, 'seesaw'), 'the first on');
+    g.run(1.5, 1 / 20);
+    assert.ok(a.ride?.waiting, 'waiting for a friend');
+    assert.ok(g.w.map.seesawAngle < -0.2, 'its end down');
+    assert.ok(startRide(g.w, b, 'seesaw'), 'a friend joins');
+    assert.equal(b.ride.seat, 1 - a.ride.seat, 'on the other end');
+    // (Nobody else can get on now.)
+    const c = { rec: g.baby, m: { dir: 1 }, x: SEESAW.x };
+    assert.ok(!startRide(g.w, c, 'seesaw'));
+    let lo = Infinity;
+    let hi = -Infinity;
+    let lastA = null;
+    for (let t = 0; t < 12 && (a.ride || b.ride); t += 1 / 20) {
+      g.run(1 / 20, 1 / 20);
+      if (a.ride && b.ride && a.ride.sat && b.ride.sat) {
+        lo = Math.min(lo, g.w.map.seesawAngle);
+        hi = Math.max(hi, g.w.map.seesawAngle);
+        // (Sat on the board: it rides up and down with its end, smoothly.)
+        if (lastA != null && !a.ride.leave && !b.ride.leave) assert.ok(Math.abs(a.y - lastA) < 3, `smooth: ${lastA.toFixed(1)} -> ${a.y.toFixed(1)}`);
+        lastA = a.y;
+      }
+    }
+    assert.ok(lo < -0.2 && hi > 0.2, `up and down: ${lo.toFixed(2)} to ${hi.toFixed(2)}`);
+    assert.equal(a.ride, null);
+    assert.equal(b.ride, null);
+    for (const e of [a, b]) assert.ok(Math.abs(e.y - groundAt(g.w.map, e.x)) < 3, 'back on the grass');
+  } finally {
+    g.done();
+  }
+});
+
+test('a Mochi left waiting on the see-saw on its own gives up after a while and hops off', async () => {
+  const { startRide, SEESAW } = await import('../src/world/garden-life.js');
+  const g = garden();
+  try {
+    const [a] = g.w.gardenLife.mochi;
+    a.x = SEESAW.x - 40;
+    assert.ok(startRide(g.w, a, 'seesaw'));
+    g.run(SEESAW.wait + 1.5, 1 / 20);
+    assert.equal(a.ride, null);
+    assert.equal(a.m.action?.name, 'sigh');
+  } finally {
+    g.done();
+  }
+});
+
+test('the toy box\'s kite, bubbles and top: each played gently, playfully or boldly by the Mochi\'s nature', async () => {
+  const { playStyle } = await import('../src/world/garden-life.js');
+  const { TOY_ACTS } = await import('../src/render/mochi-toys.js');
+  assert.equal(playStyle({ personality: 'shy' }), 0);
+  assert.equal(playStyle({ personality: 'playful' }), 1);
+  assert.equal(playStyle({ personality: 'showoff' }), 2);
+  for (const toy of ['kite', 'bubbles', 'top', 'seesaw']) for (const k of [0, 1, 2]) {
+    const bit = TOY_ACTS[`${toy}${k}`];
+    assert.ok(bit, `${toy}${k}`);
+    const ts = bit.keys.map(([t]) => t);
+    assert.equal(ts[0], 0);
+    assert.equal(ts.at(-1), bit.dur);
+    assert.ok(ts.every((t, i) => !i || t > ts[i - 1]), `${toy}${k} in order`);
+    assert.ok(bit.loop[0] >= 0 && bit.loop[1] <= bit.dur, `${toy}${k} loops inside it`);
+  }
+  // (A toy put away at the end.)
+  for (const toy of ['kite', 'bubbles', 'top']) for (const k of [0, 1, 2]) assert.ok(!TOY_ACTS[`${toy}${k}`].keys.at(-1)[1].hold, `${toy}${k} put away`);
+});
+
+test('garden things: set out on your own garden\'s grass, clear of what\'s there; island pieces stay on the island', async () => {
+  const { placeAt, placePiece, putAway, placedOn, furnitureInBag } = await import('../src/world/decor.js');
+  const { canDecorate } = await import('../src/ui/decorate.js');
+  const { GARDEN_DECOR } = await import('../src/data/furniture.js');
+  const g = garden();
+  try {
+    const map = g.w.map;
+    assert.ok(canDecorate(g.w), 'Decorate works out in your garden');
+    for (const f of GARDEN_DECOR()) addItem(g.char.inventory, f.id, 1);
+    addItem(g.char.inventory, 'sea_chair', 1);
+    // (In the garden the bar shows only the garden's set.)
+    assert.ok(furnitureInBag(g.char, map).every((e) => e.id.startsWith('garden_')));
+    const gy = groundAt(map, 1100);
+    assert.equal(placeAt(map, g.char, 'garden_bench', 1100, gy).why, null, 'beside the nursery is fine');
+    assert.ok(placeAt(map, g.char, 'garden_bench', 790, groundAt(map, 790)).why, 'not in the well');
+    assert.ok(placeAt(map, g.char, 'garden_fountain', 1468, groundAt(map, 1468)).why, 'not on the see-saw');
+    assert.ok(placeAt(map, g.char, 'sea_chair', 1100, gy).why, 'an island chair stays on the island');
+    const bench = placePiece(map, g.char, 'garden_bench', 1100, gy);
+    assert.equal(typeof bench, 'object');
+    assert.ok(g.char.garden.placed.includes(bench));
+    assert.equal(countItem(g.char.inventory, 'garden_bench'), 0);
+    assert.ok(placedOn(g.char, 'garden').includes(bench));
+    assert.ok(placeAt(map, g.char, 'garden_parasol', 1104, gy).why, 'never two in one spot');
+    // Away it goes again.
+    assert.ok(putAway(g.char, bench));
+    assert.equal(g.char.garden.placed.length, 0);
+    assert.equal(countItem(g.char.inventory, 'garden_bench'), 1);
+  } finally {
+    g.done();
+  }
+});
+
+test('the Mochi use what you set out: two sit side by side on a bench', async () => {
+  const { placePiece } = await import('../src/world/decor.js');
+  const g = garden();
+  try {
+    addItem(g.char.inventory, 'garden_bench', 1);
+    const gy = groundAt(g.w.map, 1100);
+    const bench = placePiece(g.w.map, g.char, 'garden_bench', 1100, gy);
+    assert.equal(typeof bench, 'object');
+    // (Both keen for a sit: tired and lonely.)
+    for (const r of g.char.garden.mochi) Object.assign(r, { needs: { energy: 5, social: 5, fun: 90, hunger: 90, curious: 90 } });
+    let sat = 0;
+    for (let t = 0; t < 120 && sat < 2; t += 0.5) {
+      g.run(0.5, 0.1);
+      sat = g.w.gardenLife.mochi.filter((e) => e.m.action?.name === 'benchsit').length;
+      if (sat === 1 && !g.w.gardenLife.mochi.some((e) => e.brain?.plan?.id?.startsWith(`decor${bench.uid}`) && e.m.action?.name !== 'benchsit')) break;
+    }
+    const sitters = g.w.gardenLife.mochi.filter((e) => e.m.action?.name === 'benchsit');
+    assert.ok(sitters.length >= 1, 'someone sits on the bench');
+    for (const e of sitters) assert.ok(Math.abs(e.x - 1100) <= 10, 'on its seat');
+    if (sitters.length === 2) assert.ok(Math.abs(sitters[0].x - sitters[1].x) > 12, 'side by side, not on top of each other');
+  } finally {
+    g.done();
+  }
+});
