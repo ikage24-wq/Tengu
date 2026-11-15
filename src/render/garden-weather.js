@@ -11,8 +11,9 @@
 // time alone, so nothing needs keeping between frames.
 
 import { SKY } from '../world/garden-weather.js';
+import { BEHIND_GROUND } from './scenery.js';
 import { openPuddles, SNOWMAN_X, WIND_DIR } from '../world/garden-life.js';
-import { groundAt } from '../world/physics.js';
+import { groundAt, waterAt } from '../world/physics.js';
 import { VW, VH } from '../input.js';
 
 const TAU = Math.PI * 2;
@@ -93,25 +94,64 @@ function drawRainbow(ctx, cam, width, y0, k) {
   ctx.restore();
 }
 
+// ---------- Behind the ground: the far hills under snow ----------
+// On a snowy day the hills and woods behind the garden go pale under a white haze, as deep as the
+// snow lies (`snowCap`, set as the ground's snow is drawn), so the garden reads as winter, not a
+// green spring with a white edge. (First in line behind the ground: the garden's own trees after.)
+BEHIND_GROUND.unshift((ctx, map) => {
+  const k = map.garden && !map.indoor ? map.snowCap ?? 0 : 0;
+  if (k <= 0.02) return;
+  ctx.save();
+  ctx.globalAlpha = 0.34 * k;
+  ctx.fillStyle = '#eef3f9';
+  ctx.fillRect(-20, -20, VW + 40, VH + 40);
+  ctx.restore();
+});
+
 // ---------- On the ground (render/garden.js drawGardenLife, behind the Mochi) ----------
-// Snow lying on the grass: a soft white blanket along the top of the ground (the square and the
-// orchard), as deep as it lies, its edge a little uneven, a cool shade under it.
+// Snow lying on the ground: a soft white blanket over every bit of ground but the water (the
+// square, the orchard, the banks, the cliff's ledges and top), as deep as it lies - up to about
+// eight pixels deep, gathering into soft drifts and lumps, its top lit, a cool shade along its
+// face. Each run of ground is its own strip, so it never stretches across a drop or the pond.
+// (Deeper since 2026-11-16: it read as a thin white edge, not a snowy day.)
 function drawSnowCover(ctx, map, cam, W) {
-  const th = 4.2 * W.snow;
+  const th = 10 * W.snow;
   if (th < 0.2) return;
-  const pts = [];
+  const runs = [];
+  let run = null;
+  let last = null;
   for (let sx = -6; sx <= VW + 6; sx += 3) {
-    const wx = Math.max(LAND[0], Math.min(LAND[1] - 8, sx + cam.x));
+    const wx = sx + cam.x;
     const gy = groundAt(map, wx) - cam.y;
-    pts.push([wx - cam.x, gy, th * (0.85 + 0.15 * Math.sin(wx * 0.09) + 0.08 * Math.sin(wx * 0.31))]);
+    const wet = waterAt(map, wx);
+    if ((wet != null && gy + cam.y > wet - 1) || (last != null && Math.abs(gy - last) > 6)) {
+      if (run?.length > 1) runs.push(run);
+      run = null;
+    }
+    last = gy;
+    if (wet != null && gy + cam.y > wet - 1) continue;
+    const drift = 0.78 + 0.22 * Math.sin(wx * 0.021) + 0.12 * Math.sin(wx * 0.067 + 1.3) + 0.06 * Math.sin(wx * 0.29);
+    (run ??= []).push([sx, gy, th * drift]);
   }
-  for (const [col, dy] of [['#d6e2f2', 0.9], ['#f6f9ff', 0]]) {
+  if (run?.length > 1) runs.push(run);
+  // (Its face: soft white, a cool shade over the lower third, a bright lip along the top.)
+  const band = (pts, col, top, bottom) => {
     ctx.fillStyle = col;
     ctx.beginPath();
-    pts.forEach(([x, gy, t], i) => (i ? ctx.lineTo(x, gy - t + dy) : ctx.moveTo(x, gy - t + dy)));
-    for (let i = pts.length - 1; i >= 0; i--) ctx.lineTo(pts[i][0], pts[i][1] + 1.2);
+    pts.forEach(([x, gy, t], i) => (i ? ctx.lineTo(x, gy - top(t)) : ctx.moveTo(x, gy - top(t))));
+    for (let i = pts.length - 1; i >= 0; i--) ctx.lineTo(pts[i][0], pts[i][1] - bottom(pts[i][2]));
     ctx.closePath();
     ctx.fill();
+  };
+  // (The grass's edge under it frosted pale.)
+  ctx.save();
+  ctx.globalAlpha = Math.min(1, W.snow) * 0.62;
+  for (const pts of runs) band(pts, '#f2f6fb', () => 0, (t) => -10 - 1.5 * Math.sin(t * 3.1));
+  ctx.restore();
+  for (const pts of runs) {
+    band(pts, '#f4f8ff', (t) => t, () => -1.2);
+    band(pts, '#d8e3f2', (t) => t * 0.34, () => -1.2);
+    band(pts, '#ffffff', (t) => t, (t) => t - 1.1);
   }
 }
 // The snow-mochi the Mochi build by the square: two snowballs, a dot face with rosy cheeks, a little
@@ -181,8 +221,13 @@ function drawSnowMochi(ctx, map, cam, W, time) {
 }
 export function drawWeatherGround(ctx, world, cam, time) {
   const W = world.gardenWeather;
-  if (!W) return;
+  if (!W) {
+    if (world.map) world.map.snowCap = 0;
+    return;
+  }
   const map = world.map;
+  // (The garden's pieces wear the snow too, as deep as it lies: render/garden.js, from `snowCap`.)
+  map.snowCap = map.garden && !map.indoor ? Math.max(0, Math.min(1, (W.snow - 0.15) / 0.6)) : 0;
   if (W.snow > 0.01) {
     drawSnowCover(ctx, map, cam, W);
     drawSnowMochi(ctx, map, cam, W, time);

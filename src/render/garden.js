@@ -49,7 +49,7 @@ import { ramp, planks, foliage, bark, band, gable, hash, swing, pivoted, flicker
 // (Eased 0 to 1: slow out, slow in.)
 const smooth = (u) => u * u * (3 - 2 * u);
 import { limb } from './figure.js';
-import { art, place, BEHIND_GROUND, zoneAt } from './scenery.js';
+import { art, place, BEHIND_GROUND, zoneAt, SNOW_CAPS } from './scenery.js';
 import { setBuiltinDrawer } from './furniture.js';
 import { groundAt } from '../world/physics.js';
 import { drawMochiAnim } from './mochi-anim.js';
@@ -2338,6 +2338,15 @@ function treeTufts(ctx, map, wx, cam) {
 // none stands on air.
 function fruitTreesBehind(ctx, map, cam, width, time) {
   if (!(map.garden || map.mochiRace || map.mochiTown)) return;
+  // (Snow lying in the garden lies on the trees too: render/garden-weather.js sets `snowCap`.)
+  SNOW_CAPS.k = map.garden ? map.snowCap ?? 0 : 0;
+  try {
+    fruitTreesDrawn(ctx, map, cam, width, time);
+  } finally {
+    SNOW_CAPS.k = 0;
+  }
+}
+function fruitTreesDrawn(ctx, map, cam, width, time) {
   for (const [kind, wx, extra] of map.townPieces ?? []) {
     if (kind !== 'mg_fruittree') continue;
     const x = wx - cam.x;
@@ -2416,7 +2425,20 @@ function builtinIcon(ctx, def, x, y, size) {
 setBuiltinDrawer({ draw: drawBuiltin, icon: builtinIcon });
 
 // ---------- Drawing ----------
+// (In a snowy garden every piece wears its snow: `map.snowCap`, set by render/garden-weather.js.)
+const NO_SNOW = new Set(['mg_earthwall', 'mg_falls', 'mg_lilies', 'mg_reeds']);
 export function drawGardenPiece(ctx, map, kind, wx, extra, cam, width, time) {
+  // (Not in the earth of the cliff, on the falling water or the pond's own plants.)
+  const k = map.garden && !map.indoor && !NO_SNOW.has(kind) ? map.snowCap ?? 0 : 0;
+  if (k <= 0.02) return drawPiece(ctx, map, kind, wx, extra, cam, width, time);
+  SNOW_CAPS.k = k;
+  try {
+    return drawPiece(ctx, map, kind, wx, extra, cam, width, time);
+  } finally {
+    SNOW_CAPS.k = 0;
+  }
+}
+function drawPiece(ctx, map, kind, wx, extra, cam, width, time) {
   // (The race stadium and courses borrow the trees and lanterns: world/stadium.js; the Mochi Market
   // has the shop and the stalls: world/market.js.)
   if (!(map.garden || map.mochiRace || map.mochiTown) || !kind.startsWith('mg_')) return false;

@@ -201,6 +201,88 @@ export function place(ctx, s, x, y, opts) {
   const px = snap(x - s.w / 2);
   const py = snap(y - s.h);
   blit(ctx, veil ? { ...s, canvas: veiled(s, veil.color, veil.k) } : s, px, py, opts);
+  // (Snow lying on it: its cap laid over it, as deep as the snow lies.)
+  if (SNOW_CAPS.k > 0.02) {
+    const cap = capOf(s);
+    if (cap) blit(ctx, { ...s, canvas: cap }, px, py, { ...opts, alpha: (opts?.alpha ?? 1) * Math.min(1, SNOW_CAPS.k) });
+  }
+}
+
+// Snow lying on things (2026-11-16: the Mochi Garden on a snowy day, render/garden.js sets `k` while
+// it draws its own pieces, as deep as the snow lies; 0 everywhere else). Each picture's cap is made
+// once and kept with it: along every edge that faces up - a fence's top rail, a roof, a tree's
+// crown, the well's little roof - a soft white layer just inside its ink line, thick where the top
+// is flat, a dusting where it slopes, lumpy, with a cool shade along its lower edge.
+export const SNOW_CAPS = { k: 0 };
+const caps = new WeakMap();
+function capOf(s) {
+  const src = s.canvas;
+  if (!src?.width || !src.getContext) return null;
+  if (caps.has(src)) return caps.get(src);
+  const W = src.width;
+  const H = src.height;
+  const res = s.res ?? 1;
+  let d;
+  try {
+    d = src.getContext('2d').getImageData(0, 0, W, H).data;
+  } catch {
+    caps.set(src, null);
+    return null;
+  }
+  const c = document.createElement('canvas');
+  c.width = W;
+  c.height = H;
+  const g = c.getContext('2d');
+  const img = g.createImageData(W, H);
+  const o = img.data;
+  const solid = (x, y) => x >= 0 && x < W && y >= 0 && y < H && d[(y * W + x) * 4 + 3] > 140;
+  // Where the topmost edge is in a column near y (for how steep the top is there).
+  const topNear = (x, y) => {
+    if (x < 0 || x >= W) return null;
+    for (let dy = 0; dy <= 6 * res; dy++) for (const yy of [y - dy, y + dy]) if (solid(x, yy) && !solid(x, yy - 1)) return yy;
+    return null;
+  };
+  const r = Math.max(1, Math.round(2 * res));
+  const lump = (x) => {
+    const v = Math.sin(x / res * 0.9) * 0.5 + Math.sin(x / res * 0.37 + 1.7) * 0.5;
+    return 0.8 + 0.3 * v;
+  };
+  const put = (x, y, rgb) => {
+    const i = (y * W + x) * 4;
+    o[i] = rgb[0];
+    o[i + 1] = rgb[1];
+    o[i + 2] = rgb[2];
+    o[i + 3] = 255;
+  };
+  let any = false;
+  for (let x = 0; x < W; x++) {
+    for (let y = 0; y < H; y++) {
+      if (!solid(x, y) || solid(x, y - 1)) continue;
+      // How steep: the edge a little either side.
+      const yl = topNear(x - r, y);
+      const yr = topNear(x + r, y);
+      const slope = yl == null || yr == null ? 3 : Math.abs(yl - yr) / (2 * r);
+      const T = (slope < 0.55 ? 3.8 : slope < 1.2 ? 2.6 : slope < 2.4 ? 1.5 : slope < 3.6 ? 0.8 : 0) * lump(x);
+      if (T <= 0) continue;
+      // (Just inside its ink line, which stays on top.)
+      const skip = Math.max(1, Math.round(0.5 * res));
+      const n = Math.round(T * res);
+      for (let k = 0; k < n; k++) {
+        const yy = y + skip + k;
+        if (!solid(x, yy)) break;
+        const u = k / Math.max(1, n - 1);
+        put(x, yy, u < 0.34 ? [255, 255, 255] : u < 0.8 ? [240, 245, 252] : [206, 219, 236]);
+        any = true;
+      }
+    }
+  }
+  if (!any) {
+    caps.set(src, null);
+    return null;
+  }
+  g.putImageData(img, 0, 0);
+  caps.set(src, c);
+  return c;
 }
 
 // A sprite already washed toward a color, made once and kept with the sprite.
