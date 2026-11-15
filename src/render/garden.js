@@ -50,6 +50,7 @@ import { ramp, planks, foliage, bark, band, gable, hash, swing, pivoted, flicker
 const smooth = (u) => u * u * (3 - 2 * u);
 import { limb } from './figure.js';
 import { art, place, BEHIND_GROUND, zoneAt } from './scenery.js';
+import { setBuiltinDrawer } from './furniture.js';
 import { groundAt } from '../world/physics.js';
 import { drawMochiAnim } from './mochi-anim.js';
 import { drawHatch, drawEvolve, drawRebirth } from './mochi-life.js';
@@ -2349,6 +2350,70 @@ function fruitTreesBehind(ctx, map, cam, width, time) {
   }
 }
 BEHIND_GROUND.push(fruitTreesBehind);
+
+// ---------- The garden's own pieces, carried in Decorate (world/garden-layout.js) ----------
+// A see-through ghost of one where it would go, and its picture for Decorate's bar: drawn by the very
+// code the garden draws it with, on a flat strip of ground of its own (`map`: the garden, for how
+// ripe the crops are and whether there's post).
+const FLAT = { id: 'flat', garden: true, terrain: [[-1e6, 0], [1e6, 0]], platforms: [], water: [], zones: [], width: 2e6, night: 0, gardenData: null };
+// (A ghost is drawn onto a canvas of its own first, so its tint colours only the piece itself, not a
+// box of sky round it.)
+let ghostCanvas = null;
+function drawBuiltin(ctx, def, p, sx, sy, time, { ghost = null, alpha = 1, map = null, icon = false } = {}) {
+  if (ghost) {
+    const w = Math.ceil((def.kind === 'mg_fence' || def.kind === 'mg_lanternline' ? def.w : def.pick?.w ?? def.w) + 40);
+    const h = Math.ceil((def.pick?.h ?? def.h) + 30);
+    ghostCanvas ??= document.createElement('canvas');
+    if (ghostCanvas.width < w || ghostCanvas.height < h) Object.assign(ghostCanvas, { width: Math.max(w, ghostCanvas.width), height: Math.max(h, ghostCanvas.height) });
+    const g = ghostCanvas.getContext('2d');
+    g.setTransform(1, 0, 0, 1, 0, 0);
+    g.clearRect(0, 0, ghostCanvas.width, ghostCanvas.height);
+    drawBuiltin(g, def, p, w / 2, h - 10, time, { map });
+    g.globalCompositeOperation = 'source-atop';
+    g.globalAlpha = 0.4;
+    g.fillStyle = ghost === 'ok' ? '#7fe0a0' : '#ff8aa0';
+    g.fillRect(0, 0, w, h);
+    g.globalCompositeOperation = 'source-over';
+    g.globalAlpha = 1;
+    ctx.save();
+    ctx.globalAlpha *= alpha * 0.66;
+    ctx.drawImage(ghostCanvas, 0, 0, w, h, Math.round(sx - w / 2), Math.round(sy - (h - 10)), w, h);
+    ctx.restore();
+    return;
+  }
+  FLAT.gardenData = map?.gardenData ?? null;
+  FLAT.night = map?.night ?? 0;
+  const cam = { x: p.x - sx, y: -sy };
+  ctx.save();
+  ctx.globalAlpha *= alpha;
+  if (def.kind === 'mg_fruittree') {
+    place(ctx, fruitTreeArt(def.extra ?? 0), snap(sx), sy + 5);
+    treeTufts(ctx, FLAT, p.x, cam);
+  } else if (def.kind === 'mg_fence' || def.kind === 'mg_lanternline') {
+    // (Its picture: a short run of it.)
+    const w = icon ? (def.kind === 'mg_fence' ? FENCE_BAY * 3 : 150) : def.w;
+    const x1 = p.x - w / 2;
+    drawGardenPiece(ctx, FLAT, def.kind, x1, { ...(def.extra ?? {}), to: x1 + w, skip: [] }, cam, 1e6, time);
+  } else drawGardenPiece(ctx, FLAT, def.kind, p.x, def.extra ?? null, cam, 1e6, time);
+  ctx.restore();
+}
+// Its picture: drawn once, small, on a canvas of its own, then fitted into the bar's box.
+const icons = new Map();
+function builtinIcon(ctx, def, x, y, size) {
+  let c = icons.get(def.id);
+  if (!c) {
+    const w = Math.ceil(def.kind === 'mg_fence' ? FENCE_BAY * 3 + 12 : def.kind === 'mg_lanternline' ? 162 : (def.pick?.w ?? def.w) + 12);
+    const h = Math.ceil((def.pick?.h ?? def.h) + 12);
+    c = document.createElement('canvas');
+    c.width = w;
+    c.height = h;
+    drawBuiltin(c.getContext('2d'), def, { id: def.id, x: 0 }, w / 2, h - 6, 0, { icon: true });
+    icons.set(def.id, c);
+  }
+  const k = Math.min(1.4, (size - 4) / Math.max(c.width, c.height));
+  ctx.drawImage(c, Math.round(x + (size - c.width * k) / 2), Math.round(y + size - 2 - c.height * k), c.width * k, c.height * k);
+}
+setBuiltinDrawer({ draw: drawBuiltin, icon: builtinIcon });
 
 // ---------- Drawing ----------
 export function drawGardenPiece(ctx, map, kind, wx, extra, cam, width, time) {

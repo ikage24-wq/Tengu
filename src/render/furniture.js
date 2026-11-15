@@ -564,11 +564,22 @@ function drawTankLife(ctx, def, fish, x, y, time, wx, night) {
 }
 
 const riders = new Map();
+// (The Mochi Garden's own pieces - the see-saw, the trees, the well... - are drawn by render/garden.js,
+// which hands its drawers over here: a ghost of one while you carry it in Decorate, and its picture
+// for the bar. The garden draws them where they stand itself: world/garden-layout.js.)
+let builtin = null;
+export const setBuiltinDrawer = (d) => {
+  builtin = d;
+};
 // Draws one placed piece (p: { id, x, y, flip }) at screen (x, y); `ghost` draws it see-through and
-// tinted (green fits, red doesn't), for Decorate mode.
-export function drawPiece(ctx, p, x, y, time, { night = 0, char = null, ghost = null, alpha = 1 } = {}) {
+// tinted (green fits, red doesn't), for Decorate mode. (`map`: the map it's on, for a garden piece.)
+export function drawPiece(ctx, p, x, y, time, { night = 0, char = null, ghost = null, alpha = 1, map = null } = {}) {
   const def = FURNITURE_BY_ID[p.id];
   if (!def) return;
+  if (def.builtin) {
+    builtin?.draw(ctx, def, p, x, y, time, { ghost, alpha, map });
+    return;
+  }
   const s = pieceSprite(def);
   const wx = p.x;
   // Just set down: a little hop and settle (never a squash).
@@ -923,6 +934,10 @@ export function drawPiece(ctx, p, x, y, time, { night = 0, char = null, ghost = 
 export function drawPieceIcon(ctx, id, x, y, size, time) {
   const def = FURNITURE_BY_ID[id];
   if (!def) return;
+  if (def.builtin) {
+    builtin?.icon(ctx, def, x, y, size);
+    return;
+  }
   const k = Math.min(1.4, (size - 4) / Math.max(def.w, def.h + 4));
   ctx.save();
   ctx.translate(x + size / 2, y + size - 3);
@@ -936,7 +951,8 @@ export function drawPieceIcon(ctx, id, x, y, size, time) {
 export function drawFurniture(ctx, map, placed, cam, width, time, char) {
   if (!placed?.length) return;
   const order = { rug: 0, wall: 1, hang: 2, floor: 3, surface: 4 };
-  const list = placed.filter((p) => p.map === map.id && FURNITURE_BY_ID[p.id]).sort((a, b) => order[FURNITURE_BY_ID[a.id].layer] - order[FURNITURE_BY_ID[b.id].layer]);
+  // (Not the garden's own pieces: the garden draws those, world/garden-layout.js.)
+  const list = placed.filter((p) => p.map === map.id && FURNITURE_BY_ID[p.id] && !FURNITURE_BY_ID[p.id].builtin).sort((a, b) => order[FURNITURE_BY_ID[a.id].layer] - order[FURNITURE_BY_ID[b.id].layer]);
   for (const p of list) {
     const x = p.x - cam.x;
     if (x < -80 || x > width + 80) continue;

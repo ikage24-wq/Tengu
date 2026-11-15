@@ -850,7 +850,7 @@ test('garden things: set out on your own garden\'s grass, clear of what\'s there
     assert.ok(placeAt(map, g.char, 'garden_parasol', 1104, gy).why, 'never two in one spot');
     // Away it goes again.
     assert.ok(putAway(g.char, bench));
-    assert.equal(g.char.garden.placed.length, 0);
+    assert.ok(!g.char.garden.placed.includes(bench));
     assert.equal(countItem(g.char.inventory, 'garden_bench'), 1);
   } finally {
     g.done();

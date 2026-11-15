@@ -68,8 +68,8 @@ function entriesOf(npc, char, dlg) {
   const tab = ['equip', 'use', 'etc'][dlg.sellTab ?? 0];
   const out = [];
   char.inventory[tab].forEach((e, index) => {
-    // Quest items stay with you.
-    if (ITEMS[e.id].quest) return;
+    // Quest items stay with you (and the Mochi Garden's own pieces, `keep`).
+    if (ITEMS[e.id].quest || ITEMS[e.id].keep) return;
     if (tab === 'equip') out.push({ id: e.id, inst: e, index, tab, key: `u${e.uid}` });
     else {
       const have = out.find((o) => o.id === e.id);

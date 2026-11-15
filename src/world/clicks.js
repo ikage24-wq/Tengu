@@ -15,8 +15,9 @@ export function clickTargets(world) {
   if (map.raceBoard != null && map.mochiRace) out.push({ x: map.raceBoard, w: 60, h: 70, label: 'Race board' });
   if (map.garden) {
     if (!world.gardenVisit) {
-      out.push({ x: CROP_X, w: 90, h: 30, label: 'Crop bed' });
-      out.push({ x: TOY_X, w: 44, h: 30, label: 'Toy box' });
+      // (Wherever they're set out; not while they're put away.)
+      if (CROP_X != null) out.push({ x: CROP_X, w: 90, h: 30, label: 'Crop bed' });
+      if (TOY_X != null) out.push({ x: TOY_X, w: 44, h: 30, label: 'Toy box' });
       (world.char.garden?.eggs ?? []).forEach((e, i) => EGG_SLOTS[i] != null && out.push({ x: EGG_SLOTS[i], w: 18, h: 22, label: 'Egg' }));
     }
     if (map.stove != null) out.push({ x: map.stove, w: 70, h: 90, label: 'Sweet Kitchen' });

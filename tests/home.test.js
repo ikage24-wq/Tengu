@@ -129,7 +129,8 @@ test('every piece of furniture is craftable at a bench, once you have an island'
     assert.ok(['floor', 'rug', 'surface', 'wall', 'hang'].includes(f.layer));
   }
   // (Or, a festival's own, won at its stall for its tokens: ui/festival-stall.js.)
-  for (const f of FURNITURE.filter((x) => x.where === 'garden')) assert.ok((f.festival ? f.tokens > 0 : f.price > 0) && !RECIPES.some((x) => x.makes === f.id), `${f.id} is bought or won`);
+  // (Or the garden's own, there from the start: never bought.)
+  for (const f of FURNITURE.filter((x) => x.where === 'garden')) assert.ok((f.builtin ? f.price == null : f.festival ? f.tokens > 0 : f.price > 0) && !RECIPES.some((x) => x.makes === f.id), `${f.id} is bought, won or the garden's own`);
   const none = createCharacter('N', { hairStyle: 'bob' });
   assert.equal(craftBlocker(none, RECIPES.find((x) => x.makes === 'sea_table')), 'island');
   const w = islander();

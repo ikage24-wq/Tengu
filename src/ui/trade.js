@@ -34,7 +34,7 @@ export function tradeWindow(ui, state, world) {
   // Your bag.
   win.tab = tabs(ui, x, y, TABS, win.tab ?? 0, { w: 42, h: 14 });
   const key = ['equip', 'use', 'etc'][win.tab];
-  const list = char.inventory[key].filter((e) => e && ITEMS[e.id] && !ITEMS[e.id].quest && ITEMS[e.id].type !== 'cash');
+  const list = char.inventory[key].filter((e) => e && ITEMS[e.id] && !ITEMS[e.id].quest && !ITEMS[e.id].keep && ITEMS[e.id].type !== 'cash');
   list.slice(0, 24).forEach((e, i) => {
     const sx = x + (i % 6) * 22;
     const sy = y + 20 + Math.floor(i / 6) * 22;

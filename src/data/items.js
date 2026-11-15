@@ -581,7 +581,8 @@ for (const [id, name, price, color, desc] of GATHERED) add({ id, name, type: 'et
 // everything the craft benches make (data/crafting.js).
 for (const [id, name, price, color, desc] of CRAFT_MATERIALS) if (!ITEMS[id]) add({ id, name, type: 'etc', gathered: true, price, color, desc });
 // Furniture for your island (data/furniture.js): kept in the Etc bag until it's placed.
-for (const f of FURNITURE) add({ id: f.id, name: f.name, type: 'etc', furniture: true, price: f.price ? Math.round(f.price / 4) : 10, color: FURN_SETS[f.set].color, desc: `${f.desc} (${FURN_SETS[f.set].name}; place it in Decorate mode ${f.where === 'garden' ? 'in your Mochi Garden' : 'on your island'}.)` });
+// (The Mochi Garden's own pieces are the garden's: never sold, traded or thrown away, `keep`.)
+for (const f of FURNITURE) add({ id: f.id, name: f.name, type: 'etc', furniture: true, price: f.price ? Math.round(f.price / 4) : 10, ...(f.builtin ? { keep: true } : {}), color: FURN_SETS[f.set].color, desc: `${f.desc} (${f.builtin ? "Your garden's own" : FURN_SETS[f.set].name}; place it in Decorate mode ${f.where === 'garden' ? 'in your Mochi Garden' : 'on your island'}.)` });
 for (const def of craftedItemDefs(ITEMS, JOB_SETS, GEAR_LEVELS)) if (!ITEMS[def.id]) add(def);
 
 // The capsule machines' tickets (data/outfits-gacha.js): earned by playing, one turn of the crank.

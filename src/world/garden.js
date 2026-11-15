@@ -19,6 +19,8 @@ import { MAPS } from '../data/maps.js';
 import { RACE_STAGES, RANK_ORDER } from '../data/mochi-race.js';
 import { SPOTS } from '../data/fishing.js';
 import { HOME_POND_POOL } from '../data/home.js';
+import { seedGarden, syncGarden, mendGarden } from './garden-layout.js';
+import { groundAt } from './physics.js';
 // (The way in is through the Mochi Market.)
 import './market.js';
 
@@ -74,45 +76,28 @@ export function gardenMap(g = {}) {
       { name: 'Lily Pond', from: 2100, color: '#6fc8e0', look: { sky: ['#a6d6ee', '#d2ebeb', '#f4f4e8'] } },
       { name: 'Moonmortar Cliff', from: 2620, color: '#b8a8f0', look: { sky: ['#8ec6e8', '#bee0e8', '#eef6ec'] } },
     ],
-    // The garden's pieces (render/garden.js), left to right: the square (the vegetable patch, the
-    // flower beds, the well, the nursery), the orchard (fruit trees to shake, the big tree with its
-    // swing), the pond, the cliff. (The
-    // shops, the egg and clothes stalls and the stadium gate moved out to the Mochi Market,
-    // 2026-11-15, so the garden is the Mochi's.)
-    townPieces: [
-      // The garden square: a low picket fence with climbing roses along the back of it (first, so
-      // all the rest stands in front), the mailbox by the nest, the vegetable patch (the crop bed
-      // and the bean frame), a flower bed and the well, the nursery, another flower bed, and the
-      // lantern at the top of the slope.
-      ['mg_fence', 248, { to: 872 }], ['mg_fence', 1092, { to: 1284 }], ['mg_mailbox', 226],
-      // Paper lanterns strung over the square on two poles, lit at dusk; the Mochi gather under
-      // them before bed.
-      ['mg_lanternline', 318, { to: 862, h: 82, skip: [[484, 574], [756, 826]] }],
-      ['mg_cropbed', 440], ['mg_beanframe', 528], ['mg_flowerbed', 680, 0], ['mg_well', 790],
-      ['mg_nursery', 990], ['mg_flowerbed', 1170, 1], ['mg_lantern', 1290, 1],
-      // The play meadow (the orchard): a fruit tree at the foot of the slope, the toy box, the big tree
-      // with its swing, the slide and the bouncy mushroom, and the far fruit tree by the pond. The
-      // Mochi play on all of them (world/garden-life.js rides). (The wash line and the crates went,
-      // 2026-11-15: the meadow is for running about in.)
-      // (The see-saw on the flat at the foot of the slope, 2026-11-15: world/garden-life.js SEESAW.)
-      ['mg_seesaw', 1468], ['mg_fruittree', 1537, 0], ['mg_toybox', 1582], ['mg_bigtree', 1660],
-      ['mg_slide', 1830], ['mg_mushroom', 1965], ['mg_fruittree', 2074, 2],
+    // The garden's pieces (render/garden.js). The fixed ones are here: the nursery, the pond's reeds
+    // and lilies, the cliff. The rest - the fences, the lantern string, the mailbox, the vegetable
+    // patch, the flower beds, the well, the lantern, the see-saw, the trees, the toy box, the slide,
+    // the mushroom - are the garden's own pieces, set out where you like in Decorate
+    // (world/garden-layout.js puts them in `townPieces`: syncGarden). (The shops, the egg and clothes
+    // stalls and the stadium gate moved out to the Mochi Market, 2026-11-15.)
+    fixedPieces: [
+      ['mg_nursery', 990],
       ['mg_reeds', 2168, 0], ['mg_lilies', 2330, 0], ['mg_lilies', 2480, 1], ['mg_reeds', 2576, 1],
       ['mg_earthwall', 2711, { left: 2662, right: 2760, top: 562, bottom: 900, seed: 4 }], ['mg_earthwall', 2982, { left: 2764, right: 3200, top: 382, bottom: 900, seed: 9, burrow: [70, 250] }], ['mg_rockface', 2660, { top: LEDGE, bottom: POND, seed: 3, vines: 4, vineLen: 60 }], ['mg_rockface', 2762, { top: TOP, bottom: LEDGE, seed: 7, vines: 6, vineLen: 90 }], ['mg_falls', 2762],
       ['mg_boulders', 2688], ['mg_glide', 2794], ['mg_moonmortar', 2960], ['mg_lantern', 3110, 5],
     ],
+    townPieces: [],
     portals: [
       // The gate from the Mochi Market (and where the Mochi Bell sets you down), and the nursery's door.
       { id: 'gate', x: 70, y: PLATEAU, to: 'mochi_market', toPortal: 'garden', label: 'Mochi Market' },
       { id: 'start', x: 200, y: PLATEAU, hidden: true },
       { id: 'nursery', x: 990, y: PLATEAU, to: 'garden_in', toPortal: 'door', label: 'Nursery', door: true },
     ],
-    lamps: [
-      { x: 1290, y: PLATEAU - 44, c: '#ffd6a0' }, { x: 1608, y: 552, c: '#ffd6a0' }, { x: 3110, y: TOP - 44, c: '#ffd6a0' },
-      { x: 990, y: PLATEAU - 34, c: '#ffd27a' },
-      // (The strung lanterns over the square.)
-      { x: 420, y: PLATEAU - 70, c: '#ffc87a' }, { x: 590, y: PLATEAU - 66, c: '#ffb8d0' }, { x: 760, y: PLATEAU - 70, c: '#ffc87a' },
-    ],
+    // (The cliff's lantern and the nursery's door; the pieces' own lamps are added: syncGarden.)
+    fixedLamps: [{ x: 3110, y: TOP - 44, c: '#ffd6a0' }, { x: 990, y: PLATEAU - 34, c: '#ffd27a' }],
+    lamps: [],
     // (Kinako keeps shop in the Mochi Market now; she is only here in a friend's garden, by the
     // nest, to take the presents you leave them: refreshGarden.)
     npcs: [],
@@ -147,6 +132,11 @@ export function gardenInside() {
 export function refreshGarden(char, guest = null) {
   const owner = guest ?? char;
   const { map, spots } = gardenMap(owner.garden ?? {});
+  // (A garden gets its own pieces the first time, where they always stood: world/garden-layout.js;
+  // none of them ever goes missing. A piece a save was made carrying is back already: createWorld.)
+  seedGarden(owner.garden, (x) => groundAt(map, x));
+  if (!guest) mendGarden(char);
+  syncGarden(map, owner);
   MAPS.garden = map;
   MAPS.garden_in = gardenInside();
   // The nursery's trophy shelf: a cup for each course won, in its best rank's metal.

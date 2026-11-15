@@ -11,12 +11,17 @@
 // be cleared before it moves. Placed pieces are `char.home.placed`: { uid, id, map, x, y, flip },
 // x the centre and y the base, in world px. Your Mochi Garden's own pieces (2026-11-15, the Mochi
 // Garden set, bought from Kinako) are `char.garden.placed`, set out on the garden's grass clear of
-// everything already there (world/garden-life.js gardenSpotWhy).
+// everything already there (world/garden-life.js gardenSpotWhy) - and so are the pieces the garden
+// came with (data/furniture.js GB: the see-saw, the trees, the well, the fences...), moved and put
+// away the same way. Those take the ground `w` wide from their middle `ox` along, need only their
+// `base` flat, are picked up by their `pick` box, can't be flipped, and the 'back' ones (the fences,
+// the lantern string) stand behind everything and only mind their own kind.
 
 import { FURNITURE_BY_ID, PLACED_MAX, GRID } from '../data/furniture.js';
 import { surfacesOf, waterAt, groundAt } from './physics.js';
 import { addItem, removeItem, countItem } from '../core/inventory.js';
 import { gardenSpotWhy } from './garden-life.js';
+import { footOf } from './garden-layout.js';
 
 const BEAM = 16;
 export const placedOn = (char, mapId) => [...(char.home?.placed ?? []), ...(char.garden?.placed ?? [])].filter((p) => p.map === mapId);
@@ -27,8 +32,19 @@ const listOf = (char, p) => [char.home?.placed, char.garden?.placed].find((l) =>
 export const ownGarden = (map, char) => Boolean(map.garden && !map.indoor && !map.guestOf && char.garden);
 const rectOf = (p) => {
   const d = FURNITURE_BY_ID[p.id];
-  return { x1: p.x - d.w / 2, x2: p.x + d.w / 2, y1: p.y - d.h, y2: p.y };
+  const [x1, x2] = footOf(p);
+  return { x1, x2, y1: p.y - d.h, y2: p.y };
 };
+// The box you click to pick a piece up (a tree by its whole crown, not just its trunk).
+const pickOf = (p) => {
+  const d = FURNITURE_BY_ID[p.id];
+  if (!d.pick) return rectOf(p);
+  const w = d.pick.w ?? d.w;
+  const h = d.pick.h ?? d.h;
+  return { x1: p.x - w / 2, x2: p.x + w / 2, y1: p.y - h, y2: p.y };
+};
+// What has to be on the ground (and flat) under it: its `base`, or all of it.
+const baseOf = (def, x) => (def.base ? [x - def.base / 2, x + def.base / 2] : footOf({ id: def.id, x }));
 const overlaps = (a, b) => a.x1 < b.x2 - 1 && b.x1 < a.x2 - 1 && a.y1 < b.y2 - 1 && b.y1 < a.y2 - 1;
 // What a piece sits on (a table under a vase): the placed piece with a top it rests on, or null.
 function restsOn(placed, p) {
@@ -49,22 +65,24 @@ export function placeAt(map, char, id, px, py, { free = false, ignore = null } =
   if (garden && def.where !== 'garden') return { ...out, why: 'That one goes on your island.' };
   if (!garden && def.where === 'garden') return { ...out, why: 'That one goes in your Mochi Garden.' };
   if (garden) {
-    const why = gardenSpotWhy(x, def.w);
+    const why = gardenSpotWhy(x + (def.ox ?? 0), def.w);
     if (why) return { ...out, why };
   }
   if (def.where === 'in' && !indoor) return { ...out, why: 'This one goes inside your hut.' };
   if (def.where === 'out' && indoor) return { ...out, why: 'This one goes outside, on the island.' };
   if (x - def.w / 2 < 8 || x + def.w / 2 > map.width - 8) return { ...out, why: 'Too close to the edge.' };
-  if (placed.length >= PLACED_MAX) return { ...out, why: `Room for ${PLACED_MAX} pieces here.` };
-  const spans = (s) => x - def.w / 2 >= s.x1 - 2 && x + def.w / 2 <= s.x2 + 2;
-  if (def.layer === 'floor' || def.layer === 'rug') {
+  // (The garden's own pieces don't count: they came with it.)
+  if (!def.builtin && placed.filter((p) => !FURNITURE_BY_ID[p.id].builtin).length >= PLACED_MAX) return { ...out, why: `Room for ${PLACED_MAX} pieces here.` };
+  const [b0, b1] = baseOf(def, x);
+  const spans = (s) => b0 >= s.x1 - 2 && b1 <= s.x2 + 2;
+  if (def.layer === 'floor' || def.layer === 'rug' || def.layer === 'back') {
     // The surface right under the pointer (or just above it), that the whole piece fits on.
-    const list = surfacesOf(map).filter((s) => (def.layer === 'rug' ? s.ground : true) && spans(s)).map((s) => ({ s, y: Math.max(s.yAt(x - def.w / 2), s.yAt(x + def.w / 2)) })).filter((c) => c.y >= py - 24).sort((a, b) => a.y - b.y);
+    const list = surfacesOf(map).filter((s) => (def.layer !== 'floor' ? s.ground : true) && spans(s)).map((s) => ({ s, y: Math.max(s.yAt(b0), s.yAt(b1)) })).filter((c) => c.y >= py - 24).sort((a, b) => a.y - b.y);
     const hit = list[0];
-    if (!hit) return { ...out, why: def.layer === 'rug' ? 'Rugs go on the floor.' : 'Needs a floor under it.' };
+    if (!hit) return { ...out, why: def.layer === 'rug' ? 'Rugs go on the floor.' : def.layer === 'back' ? 'It needs the grass under all of it.' : 'Needs a floor under it.' };
     out.y = hit.y;
-    const slope = Math.abs(hit.s.yAt(x - def.w / 2) - hit.s.yAt(x + def.w / 2));
-    if (slope > 3) return { ...out, why: 'Needs flat ground.' };
+    const slope = Math.abs(hit.s.yAt(b0) - hit.s.yAt(b1));
+    if (slope > 3 && (def.layer !== 'back' || def.flat)) return { ...out, why: 'Needs flat ground.' };
     const wy = waterAt(map, x);
     if (wy != null && out.y > wy) return { ...out, why: "It would get wet!" };
   } else if (def.layer === 'surface') {
@@ -90,7 +108,9 @@ export function placeAt(map, char, id, px, py, { free = false, ignore = null } =
   const me = rectOf({ id, x: out.x, y: out.y });
   const same = placed.filter((q) => {
     const ql = FURNITURE_BY_ID[q.id].layer;
-    // Rugs only clash with rugs; floor pieces with floor pieces; things on tops with each other.
+    // Rugs only clash with rugs; floor pieces with floor pieces; things on tops with each other; a
+    // fence with fences, a lantern string with lantern strings.
+    if (def.layer === 'back') return ql === 'back' && FURNITURE_BY_ID[q.id].kind === def.kind;
     return ql === def.layer || (def.layer === 'surface' && ql === 'floor' && !FURNITURE_BY_ID[q.id].top);
   });
   const hit = same.find((q) => overlaps(me, rectOf(q)));
@@ -110,17 +130,21 @@ export function placePiece(map, char, id, px, py, { flip = false, free = false, 
   if (spot.why) return spot.why;
   if (!carried && countItem(char.inventory, id) < 1) return "You don't have one.";
   if (!carried) removeItem(char.inventory, id, 1);
-  const p = { uid: (uid = nextUid(char)), id, map: map.id, x: spot.x, y: spot.y, flip: Boolean(flip) };
+  else delete char.carrying;
+  const p = { uid: (uid = nextUid(char)), id, map: map.id, x: spot.x, y: spot.y, flip: Boolean(flip) && !FURNITURE_BY_ID[id].builtin };
   placedList(char, map.id).push(p);
   return p;
 }
 
 // Picks a placed piece up to move it (it's carried, not yet back in the bag). Returns it, or why not.
+// (What you carry is noted on you, `carrying`, so a save made while you hold it can't lose it: it's
+// put back where it was next time, restoreCarried.)
 export function pickUpPiece(char, p) {
   const placed = listOf(char, p);
   if (!placed) return 'Nothing there.';
   if (placed.some((q) => q !== p && restsOn(placed, q) === p)) return 'Take the things off it first.';
   placed.splice(placed.indexOf(p), 1);
+  char.carrying = { ...p };
   return p;
 }
 
@@ -129,17 +153,35 @@ export function putAway(char, p) {
   if (listOf(char, p)) {
     if (pickUpPiece(char, p) !== p) return false;
   }
+  delete char.carrying;
   return Boolean(addItem(char.inventory, p.id, 1));
 }
-
-// The placed piece under a point (the front-most).
-export function pieceAt(char, mapId, x, y) {
-  const order = { rug: 0, wall: 1, hang: 2, floor: 3, surface: 4 };
-  return placedOn(char, mapId).filter((p) => {
-    const r = rectOf(p);
-    return x >= r.x1 - 2 && x <= r.x2 + 2 && y >= r.y1 - 2 && y <= r.y2 + 3;
-  }).sort((a, b) => order[FURNITURE_BY_ID[b.id].layer] - order[FURNITURE_BY_ID[a.id].layer])[0] ?? null;
+// Set down where it was, the carried piece (or the one a save was made holding).
+export function restoreCarried(char) {
+  const c = char?.carrying;
+  if (!c) return false;
+  delete char.carrying;
+  const list = c.map === 'garden' ? char.garden?.placed : char.home?.placed;
+  if (!list || list.some((q) => q.uid === c.uid)) return false;
+  list.push(c);
+  return true;
 }
+
+// The placed piece under a point (the front-most; of two on the same layer, the smaller - the toy box
+// in front of the big tree's crown).
+export function pieceAt(char, mapId, x, y) {
+  const order = { back: -1, rug: 0, wall: 1, hang: 2, floor: 3, surface: 4 };
+  const area = (p) => {
+    const r = pickOf(p);
+    return (r.x2 - r.x1) * (r.y2 - r.y1);
+  };
+  return placedOn(char, mapId).filter((p) => {
+    const r = pickOf(p);
+    return x >= r.x1 - 2 && x <= r.x2 + 2 && y >= r.y1 - 2 && y <= r.y2 + 3;
+  }).sort((a, b) => order[FURNITURE_BY_ID[b.id].layer] - order[FURNITURE_BY_ID[a.id].layer] || area(a) - area(b))[0] ?? null;
+}
+// Its pick-up box, for Decorate's outline.
+export const pieceBox = (p) => pickOf(p);
 
 // The furniture in your bag: [{ id, n }].
 // (On a map: only what can go there - the garden's pieces in the garden, the rest on your island.)

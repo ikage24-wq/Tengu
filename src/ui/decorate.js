@@ -5,10 +5,14 @@
 // it; F or right-click flips it; Delete puts it away (back in the bag, free); Ctrl+Z / Ctrl+Y undo
 // and redo; hold Shift to place off the grid; Esc drops what you're holding, then leaves. You can
 // still walk about while decorating, so the whole island is in reach. (research home-mounts.md:
-// The Sims ghost and reason, FFXIV settings kept, Unpacking's settle.)
+// The Sims ghost and reason, FFXIV settings kept, Unpacking's settle.) In the Mochi Garden the
+// garden's own pieces move and go away the same way (world/garden-layout.js); they don't flip, and
+// one a Mochi is riding stays put till it's done.
 
 import { FURNITURE_BY_ID, FURN_SETS } from '../data/furniture.js';
-import { placeAt, placePiece, pickUpPiece, putAway, pieceAt, furnitureInBag, placedList, ownGarden } from '../world/decor.js';
+import { placeAt, placePiece, pickUpPiece, putAway, pieceAt, pieceBox, furnitureInBag, placedList, ownGarden, restoreCarried } from '../world/decor.js';
+import { footOf } from '../world/garden-layout.js';
+import { busyPiece } from '../world/garden-life.js';
 import { addItem, removeItem } from '../core/inventory.js';
 import { drawPiece, drawPieceIcon } from '../render/furniture.js';
 import { sfx } from '../audio/sfx.js';
@@ -48,6 +52,7 @@ function dropCarry(d, world) {
   const c = d.carry;
   if (!c) return;
   if (c.from) {
+    delete world.char.carrying;
     placedList(world.char, c.from.map).push(c.from);
     d.undo.pop();
   }
@@ -107,13 +112,24 @@ export function drawDecorate(ui, state, world) {
     sfx('click');
   }
   if (d.carry && (keys.has('KeyF') || (m.right && !overBar))) {
-    d.carry.flip = !d.carry.flip;
     m.right = false;
-    sfx('cursor');
+    if (FURNITURE_BY_ID[d.carry.id].builtin) {
+      d.note = { text: 'This one stays the way round it is.', until: t + 1.6 };
+      sfx('denied');
+    } else {
+      d.carry.flip = !d.carry.flip;
+      sfx('cursor');
+    }
   }
+  // (Someone on it: it waits till they're done.)
+  const busy = (p) => {
+    const e = busyPiece(world, p);
+    return e ? `${e.rec?.name ?? 'A Mochi'} is playing on it. Wait till they're done!` : null;
+  };
   if (keys.has('Delete') || keys.has('Backspace')) {
     if (d.carry?.from) {
       const p = d.carry.from;
+      delete char.carrying;
       addItem(char.inventory, p.id, 1);
       d.undo.pop();
       d.undo.push({ kind: 'remove', p });
@@ -124,7 +140,10 @@ export function drawDecorate(ui, state, world) {
     } else if (d.carry) d.carry = null;
     else {
       const p = pieceAt(char, world.map.id, wx, wy);
-      if (p && putAway(char, p)) {
+      if (p && busy(p)) {
+        d.msg = busy(p);
+        sfx('denied');
+      } else if (p && putAway(char, p)) {
         d.undo.push({ kind: 'remove', p });
         d.redo = [];
         d.msg = `${FURNITURE_BY_ID[p.id].name} put away.`;
@@ -148,11 +167,14 @@ export function drawDecorate(ui, state, world) {
       ctx.strokeStyle = '#ff8aa0';
       ctx.lineWidth = 1;
       const b = FURNITURE_BY_ID[spot.blocker.id];
-      ctx.strokeRect(spot.blocker.x - b.w / 2 - cam.x - 2, spot.blocker.y - b.h - cam.y - 2, b.w + 4, b.h + 4);
+      // (The ground it takes: a tree by its trunk and the swing's sweep, not its whole crown.)
+      const [x1, x2] = footOf(spot.blocker);
+      ctx.strokeRect(x1 - cam.x - 2, spot.blocker.y - b.h - cam.y - 2, x2 - x1 + 4, b.h + 4);
       ctx.restore();
     }
-    drawPiece(ctx, { id: d.carry.id, x: spot.x, y: spot.y, flip: d.carry.flip }, spot.x - cam.x, spot.y - cam.y, t, { ghost: ok ? 'ok' : 'no', char });
-    d.msg = spot.why ?? (d.carry.from ? 'Click to set it down here · F flip · Delete put away' : 'Click to place · F flip · Shift free placement');
+    drawPiece(ctx, { id: d.carry.id, x: spot.x, y: spot.y, flip: d.carry.flip }, spot.x - cam.x, spot.y - cam.y, t, { ghost: ok ? 'ok' : 'no', char, map: world.map });
+    const flips = !FURNITURE_BY_ID[d.carry.id].builtin;
+    d.msg = (d.note && t < d.note.until ? d.note.text : null) ?? spot.why ?? (d.carry.from ? `Click to set it down here${flips ? ' · F flip' : ''} · Delete put away` : `Click to place${flips ? ' · F flip' : ''} · Shift free placement`);
     if (m.clicked) {
       m.clicked = false;
       used = true;
@@ -163,6 +185,7 @@ export function drawDecorate(ui, state, world) {
           p.at = t;
           if (c.from) {
             // A move: keep the same piece (its place in the undo history).
+            delete char.carrying;
             const placed = placedList(char, world.map.id);
             placed.splice(placed.indexOf(p), 1);
             const to = { x: p.x, y: p.y, flip: p.flip };
@@ -182,17 +205,18 @@ export function drawDecorate(ui, state, world) {
     const p = pieceAt(char, world.map.id, wx, wy);
     if (p) {
       const def = FURNITURE_BY_ID[p.id];
+      const r0 = pieceBox(p);
       ctx.save();
       ctx.strokeStyle = '#ffffff';
       ctx.setLineDash([2, 2]);
       ctx.lineDashOffset = -t * 8;
-      ctx.strokeRect(p.x - def.w / 2 - cam.x - 3, p.y - def.h - cam.y - 3, def.w + 6, def.h + 6);
+      ctx.strokeRect(r0.x1 - cam.x - 3, r0.y1 - cam.y - 3, r0.x2 - r0.x1 + 6, r0.y2 - r0.y1 + 6);
       ctx.restore();
-      d.msg = `${def.name} · click to move · Delete to put away`;
+      d.msg = busy(p) ?? `${def.name} · click to move · Delete to put away`;
       if (m.clicked) {
         m.clicked = false;
         used = true;
-        const r = pickUpPiece(char, p);
+        const r = busy(p) ?? pickUpPiece(char, p);
         if (r === p) {
           d.carry = { id: p.id, flip: p.flip, from: p, was: { x: p.x, y: p.y, flip: p.flip } };
           d.undo.push({ kind: 'move', p, from: { x: p.x, y: p.y, flip: p.flip }, to: { x: p.x, y: p.y, flip: p.flip } });
@@ -236,7 +260,7 @@ export function drawDecorate(ui, state, world) {
     }
   });
   // (In the garden, its pieces come from Kinako's shop or a festival stall, not a bench.)
-  const none = world.map.garden ? 'No garden pieces yet: Kinako sells them, and festival stalls give them as prizes.' : 'No furniture yet: craft some at a bench (Home tab).';
+  const none = world.map.garden ? 'No garden pieces in your bag: put one away (Delete), buy more from Kinako, or win them at a festival stall.' : 'No furniture yet: craft some at a bench (Home tab).';
   if (!list.length) text(ctx, d.tab ? 'None of this set yet.' : none, bx + 12, by + 26, { size: 8, color: COLORS.muted });
   if (button(ui, bx + bw - 104, by + 8, 44, 16, 'Undo', { size: 7, enabled: d.undo.length > 0 && !d.carry })) {
     const rec = d.undo.pop();

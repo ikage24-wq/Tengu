@@ -46,6 +46,7 @@ import { rideStep, rideAfter, dismount, toggleMount, giveMount, ownsMount } from
 import { WADE, MOUNTS } from '../data/mounts.js';
 import { refreshHome } from './home.js';
 import { refreshGarden, grantGarden } from './garden.js';
+import { restoreCarried } from './decor.js';
 import { tickShow, showTentUp } from './mochi-show.js';
 import { tickSumo, sumoHallUp } from './mochi-sumo.js';
 import { festStallUp } from './garden-festival.js';
@@ -76,6 +77,8 @@ const TALK_RANGE = 34;
 const PORTAL_RANGE = 22;
 
 export function createWorld(char) {
+  // (A piece of furniture a save was made carrying in Decorate: back where it was.)
+  restoreCarried(char);
   const world = {
     char,
     map: null,
@@ -269,6 +272,10 @@ export function dropItem(world, tab, index, qty = Infinity) {
   }
   if (ITEMS[entry.id]?.quest) {
     world.log('You need that for a quest.', '#ffb3c6');
+    return false;
+  }
+  if (ITEMS[entry.id]?.keep) {
+    world.log("That's your Mochi Garden's own: set it out again with Decorate (Y).", '#ffb3c6');
     return false;
   }
   let item;

@@ -460,9 +460,11 @@ function details(ui, state, world, tab, x, y, w, h, entry, index) {
       text(ctx, 'Throw this away?', x + 52, y + 15, { size: 8.5, bold: true, color: COLORS.bad });
       const name = `${itemName(c.entry.uid ? c.entry : c.entry.id)}${c.entry.qty > 1 ? ` x${c.entry.qty}` : ''}`;
       text(ctx, fit(ctx, name, w - 58, 7.5), x + 52, y + 26, { size: 7.5, bold: true, color: COLORS.ink });
-      wrap(ctx, c.tab === 'cash' ? "It's gone for good, Cash and all." : "It's gone for good. Shops pay for most things instead.", x + 52, y + 36, w - 58, { size: 6.5, color: COLORS.muted, lineHeight: 8.5 });
+      // (The Mochi Garden's own pieces aren't thrown away: they go back out with Decorate.)
+      const keep = Boolean(ITEMS[c.entry.id]?.keep);
+      wrap(ctx, keep ? "It's your garden's own. Set it out again with Decorate (Y)." : c.tab === 'cash' ? "It's gone for good, Cash and all." : "It's gone for good. Shops pay for most things instead.", x + 52, y + 36, w - 58, { size: 6.5, color: COLORS.muted, lineHeight: 8.5 });
       if (button(ui, x + w - 104, y + h - 20, 50, 15, 'Keep it', { size: 7.5 })) bagOf(state).confirm = null;
-      if (button(ui, x + w - 50, y + h - 20, 44, 15, 'Throw', { theme: 'pink', size: 7.5 })) {
+      if (!keep && button(ui, x + w - 50, y + h - 20, 44, 15, 'Throw', { theme: 'pink', size: 7.5 })) {
         list.splice(at, 1);
         world.log(`Threw away ${name}.`, '#ffb3c6');
         bagOf(state).confirm = null;

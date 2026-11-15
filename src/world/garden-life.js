@@ -56,7 +56,8 @@ import { FEELINGS, SAD, feel, feelingOf, feelWant, quirksOf, hasQuirk, memoryOf,
 import { FURNITURE_BY_ID } from '../data/furniture.js';
 import { noteDiary, diaryDay } from '../data/mochi-diary.js';
 import { sumoStrength } from '../data/mochi-sumo.js';
-import { festivalTick, festivalWeather, stayUp, festivalSpot, OFFERING, MORTAR, SNOW_LANTERNS, MAT, SHADE, LAUNCH } from './garden-festival.js';
+import { festivalTick, festivalWeather, stayUp, festivalSpot, OFFERING, MORTAR, SNOW_LANTERNS, MAT, LAUNCH } from './garden-festival.js';
+import { LAYOUT, GARDEN_START, footOf, syncGarden, seedGarden } from './garden-layout.js';
 
 // Where things are in the garden (world/garden.js).
 // (A row of them on the ground just inside the gate, where the square's lantern lights them:
@@ -99,16 +100,17 @@ export const VISITOR_CARE = ['pet', 'play', 'cheer'];
 // Its styles' speeds (render/mochi-anim.js GAITS, SWIMS), by points.
 const GAIT_SPEED = [34, 60, 80, 104, 136, 168];
 const SWIM_SPEED = [26, 44, 64, 88, 112, 140];
-// The crop bed (world/garden.js mg_cropbed): ripe again this long after you pick it, and what it gives.
-// (In the vegetable patch in the square, by the bean frame, since 2026-11-15.)
-export const CROP_X = 440;
-// The toy box in the orchard (world/garden.js mg_toybox): now and then a Mochi wanders over to it and
-// plays with the ball a while. Its turn comes at the same time for a visitor (by the hour and its seed).
-export const TOY_X = 1582;
+// The crop bed (the Vegetable Bed piece): ripe again this long after you pick it, and what it gives.
+// (Wherever it's set out - world/garden-layout.js - or null while it's put away: applyLayout.)
+export let CROP_X = 440;
+// The toy box (the Toy Box piece): now and then a Mochi wanders over to it and plays with the ball a
+// while. Its turn comes at the same time for a visitor (by the hour and its seed). (Null while it's
+// put away: no toys out then.)
+export let TOY_X = 1582;
 const TOY = { chance: 0.22, at: [4, 24], stay: 32 };
 function toyTime(rec, now) {
   const b = Math.floor(now / HOUR);
-  if (hash(rec.seed * 0.53 + b * 2.17) > TOY.chance) return false;
+  if (TOY_X == null || hash(rec.seed * 0.53 + b * 2.17) > TOY.chance) return false;
   const start = b * HOUR + TOY.at[0] + hash(rec.seed * 0.29 + b) * (TOY.at[1] - TOY.at[0]);
   return now >= start && now < start + TOY.stay;
 }
@@ -147,24 +149,28 @@ function brainOptions(world, life, e) {
     // (A good run round the meadow, there and back at full tilt: what a runner loves.)
     const far = (e.x ?? LAND[0]) < (LAND[0] + LAND[1]) / 2 ? LAND[1] - 120 * hash(rec.seed * 4.1 + (e.brain?.tick ?? 0)) : LAND[0] + 260 + 120 * hash(rec.seed * 4.1 + (e.brain?.tick ?? 0));
     out.push({ id: 'dash', kind: 'play', like: 'run', x: clearOfProps(far), dash: true, gains: { fun: 30, curious: 10 }, stat: 'run', stay: 2 });
-    out.push({ id: 'toy', kind: 'play', x: TOY_X + (hash(rec.seed) < 0.5 ? -14 : 14), act: 'play', face: TOY_X, gains: { fun: 40 }, stat: 'run', stay: 3 });
-    // The toy box's other toys (2026-11-15), played out on the grass of the meadow, each its own way
-    // (render/mochi-toys.js): a kite (best of all on a windy day), the bubble wand, a spinning top.
-    const style = playStyle(rec);
-    const spot = (k) => clearOfProps(TOY_X - 80 + hash(rec.seed * 3.1 + k * 1.7 + (e.brain?.tick ?? 0) * 0.31) * 340);
-    const windy = world.gardenWeather?.kind === 'wind' ? world.gardenWeather.k : 0;
-    out.push({ id: 'kite', kind: 'play', like: 'play', toy: true, x: spot(1), act: `kite${style}`, hold: 9, gains: { fun: 40, curious: 20 }, stat: 'fly', boost: 0.8 + windy * 2.4, stay: 9 });
-    out.push({ id: 'bubbles', kind: 'play', like: 'play', toy: true, x: spot(2), act: `bubbles${style}`, hold: 8, gains: { fun: 45 }, stay: 8 });
-    out.push({ id: 'top', kind: 'play', like: 'play', toy: true, x: spot(3), act: `top${style}`, hold: 7, gains: { fun: 35, curious: 15 }, stay: 7 });
+    if (TOY_X != null) {
+      out.push({ id: 'toy', kind: 'play', x: TOY_X + (hash(rec.seed) < 0.5 ? -14 : 14), act: 'play', face: TOY_X, gains: { fun: 40 }, stat: 'run', stay: 3 });
+      // The toy box's other toys (2026-11-15), played out on the grass of the meadow, each its own way
+      // (render/mochi-toys.js): a kite (best of all on a windy day), the bubble wand, a spinning top.
+      const style = playStyle(rec);
+      const spot = (k) => clearOfProps(TOY_X - 80 + hash(rec.seed * 3.1 + k * 1.7 + (e.brain?.tick ?? 0) * 0.31) * 340);
+      const windy = world.gardenWeather?.kind === 'wind' ? world.gardenWeather.k : 0;
+      out.push({ id: 'kite', kind: 'play', like: 'play', toy: true, x: spot(1), act: `kite${style}`, hold: 9, gains: { fun: 40, curious: 20 }, stat: 'fly', boost: 0.8 + windy * 2.4, stay: 9 });
+      out.push({ id: 'bubbles', kind: 'play', like: 'play', toy: true, x: spot(2), act: `bubbles${style}`, hold: 8, gains: { fun: 45 }, stay: 8 });
+      out.push({ id: 'top', kind: 'play', like: 'play', toy: true, x: spot(3), act: `top${style}`, hold: 7, gains: { fun: 35, curious: 15 }, stay: 7 });
+    }
     // The see-saw: an end to sit on and wait for a friend - or, when someone's sat waiting, the other
     // end (all the keener the closer a friend it is).
     const on = life.mochi.filter((o) => o.ride?.kind === 'seesaw');
     const coming = life.mochi.some((o) => o !== e && o.brain?.plan?.id === 'seesaw' && !o.brain.plan.arrived);
     const waiting = on.length === 1 && on[0] !== e && on[0].ride.waiting ? on[0] : null;
-    if (!on.length && !coming) out.push({ id: 'seesaw', kind: 'play', like: 'social', x: SEESAW.x + ((e.x ?? 0) < SEESAW.x ? -1 : 1) * (SEESAW.half + 12), act: 'seesaw', ride: true, face: SEESAW.x, gains: { fun: 35, social: 25 }, stat: 'power', stay: 3 });
-    else if (waiting && !coming && !isRival(rec, waiting.rec)) {
-      const fond = Math.max(0, friendsOf(rec)[waiting.rec.seed] ?? 0);
-      out.push({ id: 'seesaw', kind: 'social', like: 'social', x: SEESAW.x + (waiting.ride.seat ? -1 : 1) * (SEESAW.half + 12), act: 'seesaw', ride: true, face: SEESAW.x, gains: { fun: 45, social: 45 }, stat: 'power', boost: 2.4 + fond / 40, stay: 3 });
+    if (SEESAW.x != null) {
+      if (!on.length && !coming) out.push({ id: 'seesaw', kind: 'play', like: 'social', x: SEESAW.x + ((e.x ?? 0) < SEESAW.x ? -1 : 1) * (SEESAW.half + 12), act: 'seesaw', ride: true, face: SEESAW.x, gains: { fun: 35, social: 25 }, stat: 'power', stay: 3 });
+      else if (waiting && !coming && !isRival(rec, waiting.rec)) {
+        const fond = Math.max(0, friendsOf(rec)[waiting.rec.seed] ?? 0);
+        out.push({ id: 'seesaw', kind: 'social', like: 'social', x: SEESAW.x + (waiting.ride.seat ? -1 : 1) * (SEESAW.half + 12), act: 'seesaw', ride: true, face: SEESAW.x, gains: { fun: 45, social: 45 }, stat: 'power', boost: 2.4 + fond / 40, stay: 3 });
+      }
     }
   }
   if (pts(rec, 'swim') >= CANT.swim) out.push({ id: 'swim', kind: 'play', like: 'swim', x: POND[0] + 40 + hash(rec.seed * 3.3 + (e.brain?.tick ?? 0)) * (POND[1] - POND[0] - 80), gains: { fun: 45, curious: 20 }, stat: 'swim', boost: 1.3, stay: 10 });
@@ -270,26 +276,39 @@ function decorOptions(world, life, e, out) {
 // Puddles fill on the open grass where it rains (clear of every prop and place: render/
 // garden-weather.js draws them, as full as the ground is wet), and the dry spots to shelter under:
 // the big tree's crown, the fruit trees', the nursery's doorway. [x, how far either side]
+// (The shelters are the trees' wherever they stand, and the nursery's doorway: applyLayout.)
 export const PUDDLES = [[312, 16], [602, 13], [905, 17], [1048, 13], [1272, 15], [1752, 15]];
 export const SHELTERS = [[1660, 30], [1537, 9], [2074, 9], [990, 16]];
-// Where the snow-mochi gets built when the snow lies (render/garden-weather.js), and which way the
-// wind blows (as the rain slants and the clouds roll: toward the gate).
-export const SNOWMAN_X = 1240;
+// Where the snow-mochi gets built when the snow lies (render/garden-weather.js) - by the square, or
+// the nearest clear spot to it - and which way the wind blows (as the rain slants and the clouds
+// roll: toward the gate).
+export let SNOWMAN_X = 1240;
 export const WIND_DIR = -1;
 const underCover = (x) => SHELTERS.some(([sx, r]) => Math.abs(x - sx) <= r + 4);
+// What stands on the garden's grass that the festival's things, the puddles and the snowman keep
+// clear of: the pieces you've set out (by the ground they take), and the garden's own pieces you've
+// moved - not those still where they always stood, which were laid out round them, nor the fences
+// and the lantern string at the back. [{ id, map, x }], x the middle of what it takes.
+const STARTED = new Map(GARDEN_START.map(([id, x]) => [id, x]));
+export function standing(placed = []) {
+  return placed.filter((p) => p.map === 'garden' && FURNITURE_BY_ID[p.id] && FURNITURE_BY_ID[p.id].layer !== 'back' && !(FURNITURE_BY_ID[p.id].builtin && STARTED.get(p.id) === p.x))
+    .map((p) => ({ id: p.id, map: 'garden', uid: p.uid, x: (footOf(p)[0] + footOf(p)[1]) / 2 }));
+}
 // The puddles that can fill: none under a piece you've set out in the garden (world/decor.js).
 export function openPuddles(placed = []) {
-  return PUDDLES.filter(([px, r]) => !placed.some((p) => p.map === 'garden' && Math.abs(p.x - px) < r + (FURNITURE_BY_ID[p.id]?.w ?? 0) / 2));
+  const on = standing(placed);
+  return PUDDLES.filter(([px, r]) => !on.some((p) => Math.abs(p.x - px) < r + (FURNITURE_BY_ID[p.id]?.w ?? 0) / 2));
 }
-// Where a garden piece `w` wide can be set out, centred at `x` (world/decor.js): on the garden's
-// grass, clear of its own things - the square's beds and well, the lantern poles, the nursery, the
-// trees' trunks, the toys and rides. Why not, or null.
-const DECOR_KEEP = [[306, 330], [852, 872], [958, 1022], [1278, 1302], [1526, 1548], [1645, 1765], [2062, 2086]];
+// Where a garden piece taking `w` of ground, centred at `x`, can be set out (world/decor.js): on the
+// garden's grass, clear of the nursery. (Its other pieces it mustn't bump into: world/decor.js
+// placeAt.) Why not, or null.
+const DECOR_LAND = [210, 2092];
+const DECOR_KEEP = [[958, 1022]];
 export function gardenSpotWhy(x, w) {
   const a = x - w / 2;
   const b = x + w / 2;
-  if (a < LAND[0] + 4 || b > LAND[1] - 4) return "Keep it on the garden's grass.";
-  for (const [k0, k1] of [...PROPS, ...DECOR_KEEP]) if (a < k1 && b > k0) return 'Too close to something already there.';
+  if (a < DECOR_LAND[0] + 4 || b > DECOR_LAND[1] - 4) return "Keep it on the garden's grass.";
+  for (const [k0, k1] of DECOR_KEEP) if (a < k1 && b > k0) return 'Keep the nursery clear.';
   return null;
 }
 // Who loves a splash, and who'd sooner watch the rain from somewhere dry.
@@ -338,7 +357,7 @@ function weatherOptions(world, life, e, out, walker) {
 // sitting out with a skewer of dango to watch the moon rise over the cliff - which nearly everyone
 // would rather do than anything else.
 export function festivalSpots(life) {
-  const placed = (life.owner?.garden?.placed ?? []).filter((p) => p.map === 'garden');
+  const placed = standing(life.owner?.garden?.placed ?? []);
   const key = placed.map((p) => `${p.uid}@${p.x}`).join();
   if (life.festSpots?.key !== key) {
     const widthOf = (p) => FURNITURE_BY_ID[p.id]?.w;
@@ -381,7 +400,7 @@ function festNight(out, F, ...own) {
 // heartOptions); from dusk, off to light a snow lantern still dark - one each - and then sat by one,
 // paws out to its glow.
 export function snowLanterns(life) {
-  const placed = (life.owner?.garden?.placed ?? []).filter((p) => p.map === 'garden');
+  const placed = standing(life.owner?.garden?.placed ?? []);
   return SNOW_LANTERNS.filter((x) => !placed.some((p) => Math.abs(p.x - x) < (FURNITURE_BY_ID[p.id]?.w ?? 20) / 2 + 8));
 }
 export function litLanterns(life, F) {
@@ -441,7 +460,9 @@ function lanternOptions(world, life, e, out, F) {
     for (const o of out) if (o.id === 'hanabi' && !life.festBoats.set.has(rec.seed) && F.eve < 0.9) o.boost *= 0.4;
     return festNight(out, F, 'floatlantern', 'hanabi');
   }
-  const x = SHADE[0] + ((i * 37 + Math.floor(hash(rec.seed * 1.7) * 20)) % (SHADE[1] - SHADE[0]));
+  const shade = LAYOUT.bigtree != null ? [LAYOUT.bigtree - 60, LAYOUT.bigtree + 40] : LAYOUT.trees.length ? [LAYOUT.trees[0].x - 30, LAYOUT.trees[0].x + 30] : null;
+  if (!shade) return;
+  const x = shade[0] + ((i * 37 + Math.floor(hash(rec.seed * 1.7) * 20)) % (shade[1] - shade[0]));
   out.push({ id: 'fansit', kind: 'rest', like: 'rest', x: clearOfProps(x), face: x + (i % 2 ? -30 : 30), act: 'fansit', hold: 12, gains: { energy: 35, social: 10 }, boost: 1.8, stay: 12 });
 }
 // What it holds over its head out in the rain: a big leaf - each picking one up at its own moment as
@@ -527,6 +548,8 @@ function brainTarget(world, life, e) {
 // through time (ridePath): where the Mochi is, which way it faces, how it moves (walking, climbing,
 // flying), and for the swing the angle of the ropes, for the mushroom how far its cap is pressed
 // down. While one rides, the clock's plans for it wait; it ends on the grass, cheering.
+// (`swing` is the big tree's x, the swing hung 80 along its branch; each follows its piece, null while
+// it's put away: applyLayout. The glide is the cliff's, and stays.)
 export const PLAY = { swing: 1660, slide: 1830, mush: 1965, glide: 2050 };
 // The see-saw (2026-11-15), on the flat at the foot of the slope: two Mochi, one on each end, up and
 // down; one on its own sits and waits for a friend a while (render/garden.js mg_seesaw draws the
@@ -611,7 +634,8 @@ export function ridePath(map, kind, t) {
 // Starts Mochi `e` on ride `kind` (if nobody else is on that one).
 export function startRide(world, e, kind) {
   const life = world.gardenLife;
-  if (kind === 'seesaw') return startSeesaw(world, life, e);
+  if (kind === 'seesaw') return SEESAW.x != null && startSeesaw(world, life, e);
+  if ((kind === 'swing' ? PLAY.swing : kind === 'slide' ? PLAY.slide : kind === 'bounce' ? PLAY.mush : PLAY.glide) == null) return false;
   if (life?.mochi.some((o) => o !== e && o.ride?.kind === kind)) return false;
   e.ride = { kind, t0: world.now };
   const r = RIDES[kind];
@@ -752,6 +776,70 @@ function seesawStep(world, e, map) {
   m.hillLean = r.sat && r.leave == null ? a * dir * 0.8 : 0;
   return true;
 }
+// ---------- The garden's own pieces, wherever they stand (world/garden-layout.js) ----------
+// Everything here that goes by where a piece is - the rides, the places, the props to stand clear of,
+// the shelters, the hiding spots, the crop bed, the toy box, the mailbox, the snowman's spot - from
+// the layout. A piece put away: what it was for waits till it's set out again.
+const PROP_KINDS = new Set(['mg_mailbox', 'mg_cropbed', 'mg_beanframe', 'mg_flowerbed', 'mg_well', 'mg_seesaw', 'mg_toybox', 'mg_slide', 'mg_mushroom']);
+function applyLayout(L) {
+  CROP_X = L.crop;
+  TOY_X = L.toy;
+  MAILBOX_X = L.mailbox;
+  PLAY.swing = L.bigtree;
+  PLAY.slide = L.slide;
+  PLAY.mush = L.mush;
+  SEESAW.x = L.seesaw;
+  // (Side by side ones run together, so nobody's put down in the gap between.)
+  const props = L.pieces.filter((p) => PROP_KINDS.has(FURNITURE_BY_ID[p.id].kind)).map(footOf).sort((a, b) => a[0] - b[0]);
+  PROPS.length = 0;
+  for (const [a, b] of props) {
+    const last = PROPS[PROPS.length - 1];
+    if (last && a < last[1] + 14) last[1] = Math.max(last[1], b);
+    else PROPS.push([a, b]);
+  }
+  SHELTERS.length = 0;
+  if (L.bigtree != null) SHELTERS.push([L.bigtree, 30]);
+  for (const t of L.trees) SHELTERS.push([t.x, 9]);
+  SHELTERS.push([NURSERY_DOOR, 16]);
+  HIDE_SPOTS.length = 0;
+  for (const t of L.trees) HIDE_SPOTS.push(t.x - 18);
+  if (L.toy != null) HIDE_SPOTS.push(L.toy + 30);
+  if (L.bigtree != null) HIDE_SPOTS.push(L.bigtree - 20);
+  if (L.slide != null) HIDE_SPOTS.push(L.slide - 44);
+  if (L.mush != null) HIDE_SPOTS.push(L.mush - 37);
+  for (const b of L.beds) HIDE_SPOTS.push(b.x - (b.v ? 62 : 40));
+  HIDE_SPOTS.push(NURSERY_DOOR + 46);
+  COUNT_TREES.length = 0;
+  COUNT_TREES.push(...[...L.trees.map((t) => t.x), ...(L.bigtree != null ? [L.bigtree] : [])].sort((a, b) => a - b));
+  PLACES.length = 0;
+  PLACES.push(...placesFor(L));
+  const on = standing(L.list ?? []);
+  SNOWMAN_X = festivalSpot({ x: 1240, w: 36 }, [...on, ...L.pieces.filter((p) => FURNITURE_BY_ID[p.id].layer === 'floor').map((p) => ({ id: p.id, map: 'garden', x: (footOf(p)[0] + footOf(p)[1]) / 2 }))], gardenSpotWhy, (p) => FURNITURE_BY_ID[p.id]?.w);
+}
+// Something was moved or put away: the rides on it end (Decorate won't pick up one in use: busyPiece),
+// and every Mochi thinks again about where it's off to.
+function layoutMoved(map, life) {
+  for (const e of life.mochi ?? []) {
+    if (e.ride) {
+      e.ride = null;
+      e.m.hillLean = 0;
+      e.m.glideLean = 0;
+      e.m.action = null;
+    }
+    if (e.brain?.plan && !e.duo) e.brain.plan = null;
+    e.toyTurn = null;
+  }
+  life.seesaw = null;
+  map.swingAngle = null;
+  map.mushDip = 0;
+}
+// The Mochi using garden piece `p` right now (on its ride), or null: Decorate leaves it be till it's done.
+const RIDE_OF = { mg_bigtree: 'swing', mg_slide: 'slide', mg_mushroom: 'bounce', mg_seesaw: 'seesaw' };
+export function busyPiece(world, p) {
+  const ride = RIDE_OF[FURNITURE_BY_ID[p?.id]?.kind];
+  if (!ride) return null;
+  return (world.gardenLife?.mochi ?? []).find((e) => e.ride?.kind === ride) ?? null;
+}
 // (With nobody on it, it rests on its left end.)
 export function restSeesaw(map, life) {
   if ((life?.mochi ?? []).some((o) => o.ride?.kind === 'seesaw')) return;
@@ -761,34 +849,40 @@ export function restSeesaw(map, life) {
 
 // Where the Mochi stop to idle: never inside one of the square's or the meadow's things, so none
 // is ever seen standing in the well or half inside the slide. (Places and rides are their own.)
+// (The ground taken by the mailbox, the vegetable patch, the flower beds, the well, the see-saw, the
+// toy box, the slide and the mushroom, wherever they stand: applyLayout.)
 const PROPS = [[214, 238], [384, 568], [636, 726], [764, 818], [1124, 1216], [1434, 1502], [1560, 1604], [1784, 1884], [1932, 2000]];
 function clearOfProps(x) {
   for (const [a, b] of PROPS) if (x > a && x < b) return x - a < b - x ? a - 6 : b + 6;
   return x;
 }
-const PLACES = [
-  { x: 1660, spread: 16, act: 'nap', hold: 7, who: () => true, when: 'day' },
-  { x: 1537, spread: 10, act: 'reach', who: () => true, when: 'day' },
-  { x: 2074, spread: 10, act: 'reach', who: () => true, when: 'day' },
-  { x: 2090, spread: 6, act: 'paddle', who: (rec) => pts(rec, 'swim') >= CANT.swim, when: 'day' },
-  { x: 1608, spread: 12, act: 'meditate', who: () => true, when: 'night' },
-  // The flower beds in the square: a roll about in one, a nap among the other.
-  { x: 680, spread: 12, act: 'roll', who: () => true, when: 'day' },
-  { x: 1170, spread: 12, act: 'nap', hold: 7, who: () => true, when: 'day' },
-  // Garden chores in the square, so it is lived in: watering the vegetable patch, winding up the
-  // well's bucket, a good sniff of each flower bed (`face`: what it turns to once there).
-  { x: CROP_X - 62, spread: 0, act: 'water', face: CROP_X, who: () => true, when: 'day' },
-  { x: 828, spread: 0, act: 'crank', hold: 5.2, face: 790, who: () => true, when: 'day' },
-  { x: 628, spread: 0, act: 'sniff', face: 680, who: () => true, when: 'day' },
-  { x: 1228, spread: 0, act: 'sniff', face: 1170, who: () => true, when: 'day' },
+const always = () => true;
+const swimmer = (rec) => pts(rec, 'swim') >= CANT.swim;
+const flyer = (rec) => pts(rec, 'fly') >= CANT.fly;
+// (Each place is by its piece, wherever that stands: placesFor, from the layout.)
+const PLACES = [];
+function placesFor(L) {
+  const out = [];
+  if (L.bigtree != null) out.push({ x: L.bigtree, spread: 16, act: 'nap', hold: 7, who: always, when: 'day' });
+  for (const t of L.trees) out.push({ x: t.x, spread: 10, act: 'reach', who: always, when: 'day' });
+  out.push({ x: 2090, spread: 6, act: 'paddle', who: swimmer, when: 'day' });
+  if (L.bigtree != null) out.push({ x: L.bigtree - 52, spread: 12, act: 'meditate', who: always, when: 'night' });
+  // The flower beds: a roll about in the pink one, a nap among the blue.
+  for (const b of L.beds) out.push({ x: b.x, spread: 12, act: b.v ? 'nap' : 'roll', ...(b.v ? { hold: 7 } : {}), who: always, when: 'day' });
+  // Garden chores, so it is lived in: watering the vegetable patch, winding up the well's bucket, a
+  // good sniff of each flower bed (`face`: what it turns to once there).
+  if (L.crop != null) out.push({ x: L.crop - 62, spread: 0, act: 'water', face: L.crop, who: always, when: 'day' });
+  if (L.well != null) out.push({ x: L.well + 38, spread: 0, act: 'crank', hold: 5.2, face: L.well, who: always, when: 'day' });
+  for (const b of L.beds) out.push({ x: b.x + (b.v ? 58 : -52), spread: 0, act: 'sniff', face: b.x, who: always, when: 'day' });
   // (While there's post in the mailbox, a peek inside: `mail`.)
-  { x: 244, spread: 0, act: 'peek', face: 226, mail: true, who: () => true, when: 'day' },
-  // The play things in the meadow, and for a flyer a glide off the cliff (rides: startRide).
-  { x: PLAY.swing + 60, spread: 0, act: 'swing', ride: true, who: () => true, when: 'day' },
-  { x: PLAY.slide - 37, spread: 0, act: 'slide', ride: true, who: () => true, when: 'day' },
-  { x: PLAY.mush - 30, spread: 0, act: 'bounce', ride: true, who: () => true, when: 'day' },
-  { x: PLAY.glide, spread: 0, act: 'glide', ride: true, who: (rec) => pts(rec, 'fly') >= CANT.fly, when: 'day' },
-];
+  if (L.mailbox != null) out.push({ x: L.mailbox + 18, spread: 0, act: 'peek', face: L.mailbox, mail: true, who: always, when: 'day' });
+  // The play things, and for a flyer a glide off the cliff (rides: startRide).
+  if (L.bigtree != null) out.push({ x: L.bigtree + 60, spread: 0, act: 'swing', ride: true, who: always, when: 'day' });
+  if (L.slide != null) out.push({ x: L.slide - 37, spread: 0, act: 'slide', ride: true, who: always, when: 'day' });
+  if (L.mush != null) out.push({ x: L.mush - 30, spread: 0, act: 'bounce', ride: true, who: always, when: 'day' });
+  out.push({ x: PLAY.glide, spread: 0, act: 'glide', ride: true, who: flyer, when: 'day' });
+  return out;
+}
 // (Long enough to walk over from wherever the hour had it, and to use the place a while.)
 // (Nearly half their hours: the garden is busy with them.)
 const PLACE = { chance: 0.45, at: [6, 26], stay: 30, reach: 340 };
@@ -948,8 +1042,17 @@ export function tickGarden(world, dt) {
     }
   }
   const map = world.map;
+  // The garden's own pieces, wherever they're set out (world/garden-layout.js): everything that goes by
+  // them follows. (Your own garden gets its pieces the first time.)
+  if (!world.gardenVisit && map.id === 'garden' && seedGarden(world.char.garden, (x) => groundAt(map, x))) life.layoutVersion = null;
+  const L = syncGarden(map, life.owner ?? world.char);
+  if (life.layoutVersion !== L.version) {
+    if (life.layoutVersion != null) layoutMoved(map, life);
+    life.layoutVersion = L.version;
+    applyLayout(L);
+  }
   // (The see-saw settles back onto its end when nobody's on it.)
-  if (map.garden && !map.indoor) restSeesaw(map, life);
+  if (map.garden && !map.indoor && SEESAW.x != null) restSeesaw(map, life);
   const now = Date.now() / 1000;
   // (The world's own night: the game clock, or what a scene or a test has set.)
   // (A festival night, they're up late watching the moon.)
@@ -1299,15 +1402,17 @@ export function shakeTree(world) {
   if (!map.garden || map.indoor) return false;
   const tree = (map.townPieces ?? []).find(([k, x]) => k === 'mg_fruittree' && Math.abs(x - world.body.x) < 26);
   if (!tree) return false;
+  // (When it was last picked goes by the tree, so moving it doesn't ripen it.)
+  const id = tree[3] != null ? `t${tree[3]}` : tree[1];
   const now = Date.now() / 1000;
   // (The tree sways hard for a moment: render/garden.js reads `map.shook`.)
   (map.shook ??= {})[tree[1]] = world.now;
   const shaken = ((world.char.garden ??= { mochi: [], eggs: [], unlocked: {} }).shaken ??= {});
-  if (now - (shaken[tree[1]] ?? -1e9) < TREE_REST) {
+  if (now - (shaken[id] ?? -1e9) < TREE_REST) {
     world.log('It rustles... nothing ripe yet.', '#c8d8b8');
     return true;
   }
-  shaken[tree[1]] = now;
+  shaken[id] = now;
   const n = 1 + (hash(now * 0.37 + tree[1]) < 0.5 ? 1 : 0) + (hash(now * 0.71 + tree[1]) < 0.12 ? 1 : 0);
   const y = groundAt(map, tree[1]);
   world.drops.push(...spawnDrops(Array.from({ length: n }, () => ({ kind: 'item', id: 'cherry', qty: 1 })), tree[1], y - 40));
@@ -1494,6 +1599,8 @@ export const momentOf = (personality) => gameFor({ personality, tricks: ['wave']
 const DUO_SECS = { tag: 10, hide: 13, chat: 7.6, trick: 6.6, dance: 7, snack: 9, comfort: 7.6, makeup: 7.6, squabble: 5, decline: 2.6, pound: 12, snowball: 9.4, sumo: 9.6 };
 const SNUBS = ['grumpy', 'loner'];
 // Where to hide in hide-and-seek: tucked in beside the garden's big things.
+// (Beside the trees, the toy box, the slide, the mushroom, the beds, wherever they stand, and by the
+// nursery: applyLayout.)
 const HIDE_SPOTS = [1520, 1612, 1640, 1786, 1928, 1108, 640, 1036, 2052];
 // The trees to count against.
 const COUNT_TREES = [1537, 1660, 2074];
@@ -1538,7 +1645,7 @@ function heartOptions(world, life, e, out, walker) {
   // An early bird's morning stretch by the well, once a day.
   const day = Math.floor(Date.now() / 86400000);
   const mem = memoryOf(rec);
-  if (q.includes('earlybird') && mem.stretchDay !== day) out.push({ id: 'stretch', kind: 'rest', like: 'rest', x: 836 + (hash(rec.seed) - 0.5) * 16, face: 790, act: 'stretch', gains: { energy: 20, fun: 10 }, boost: 4, stay: 3, stretch: day });
+  if (q.includes('earlybird') && mem.stretchDay !== day) out.push({ id: 'stretch', kind: 'rest', like: 'rest', x: (LAYOUT.well ?? 790) + 46 + (hash(rec.seed) - 0.5) * 16, face: LAYOUT.well ?? 790, act: 'stretch', gains: { energy: 20, fun: 10 }, boost: 4, stay: 3, stretch: day });
   // A show-off: a trick for whoever's there to see it.
   if (q.includes('showy') && rec.tricks?.length) {
     const fan = life.mochi.find((o) => o !== e && o.x != null && !o.hidden && Math.abs(o.x - e.x) < 90) ?? (mine && Math.abs(world.body.x - e.x) < 90 ? world.body : null);
@@ -1648,8 +1755,9 @@ export function startDuo(world, life, kind, a, b, asked = kind) {
   }
   if (kind === 'snack') {
     const blanket = (life.owner?.garden?.placed ?? []).filter((p) => p.map === 'garden' && FURNITURE_BY_ID[p.id]?.use === 'picnic').map((p) => p.x);
-    duo.food = near([1537, 2074, ...blanket], mx)[0];
-    duo.tree = blanket.includes(duo.food) ? null : duo.food;
+    const trees = LAYOUT.trees.map((t) => t.x);
+    duo.food = near([...trees, ...blanket], mx)[0] ?? mx;
+    duo.tree = trees.includes(duo.food) ? duo.food : null;
   }
   // (A sumo match: who'll win, by their strength - and a little luck.)
   if (kind === 'sumo') duo.aWins = sumoStrength(a.rec) + (hash(now * 0.17 + a.rec.seed) - 0.5) * 0.3 >= sumoStrength(b.rec) + (hash(now * 0.23 + b.rec.seed) - 0.5) * 0.3;
@@ -2293,7 +2401,7 @@ export function eggStallUp(world) {
 const HARVEST_VEG = ['rice', 'bean', 'soy', 'pepper'];
 function callHelpers(world) {
   const life = world.gardenLife;
-  if (!life || world.gardenVisit) return;
+  if (!life || world.gardenVisit || CROP_X == null) return;
   const near = life.mochi
     .filter((e) => !e.hidden && !e.guest && !e.ride && !e.scene && !e.chore && e.x != null && pts(e.rec, 'run') >= CANT.run && Math.abs(e.x - CROP_X) < 500)
     .sort((a, b) => Math.abs(a.x - CROP_X) - Math.abs(b.x - CROP_X))
@@ -2326,10 +2434,10 @@ function choreTarget(world, e) {
 // By the gate: presents your friends leave you (net/visit.js) wait in it, its flag up, until you
 // open it (Up beside it): sweets into your bag, eggs into the nest (one that won't fit stays in the
 // box for later). In the daytime, while there's post, a Mochi now and then trots over and peeks in.
-export const MAILBOX_X = 226;
+export let MAILBOX_X = 226;
 export function openMail(world) {
   const g = world.gardenLife?.owner?.garden;
-  if (!g || !world.map.garden || world.gardenVisit || world.map.indoor || Math.abs(world.body.x - MAILBOX_X) > 14) return false;
+  if (!g || MAILBOX_X == null || !world.map.garden || world.gardenVisit || world.map.indoor || Math.abs(world.body.x - MAILBOX_X) > 14) return false;
   const mail = g.mail ?? [];
   world.body.facing = MAILBOX_X >= world.body.x ? 1 : -1;
   if (!mail.length) {
@@ -2366,7 +2474,7 @@ export function openMail(world) {
 const BALL = { every: 120, near: 900, secs: 14 };
 export function tossBall(world) {
   const life = world.gardenLife;
-  if (!life || world.gardenVisit || world.map.indoor || Math.abs(world.body.x - TOY_X) > 40) return false;
+  if (!life || TOY_X == null || world.gardenVisit || world.map.indoor || Math.abs(world.body.x - TOY_X) > 40) return false;
   const now = Date.now() / 1000;
   if (life.ballAt && now - life.ballAt < BALL.every) {
     world.log('The ball is still rolling about. Give them a little while!', '#cfe8ff');
@@ -2390,7 +2498,7 @@ export const cropGrowth = (g, now = Date.now() / 1000) => Math.max(0, Math.min(1
 // Up at the bed: when it's ripe, you pick its crops.
 export function harvestCrops(world) {
   const g = world.gardenLife?.owner?.garden;
-  if (!g || world.gardenVisit || world.map.indoor || Math.abs(world.body.x - CROP_X) > 44) return false;
+  if (!g || CROP_X == null || world.gardenVisit || world.map.indoor || Math.abs(world.body.x - CROP_X) > 44) return false;
   const now = Date.now() / 1000;
   if (cropGrowth(g, now) < 1) {
     const mins = Math.ceil((CROP_GROW - (now - g.cropAt)) / 60);
@@ -2529,3 +2637,6 @@ export function wearStallUp(world) {
   world.events.push({ type: 'wearstall' });
   return true;
 }
+
+// (As the garden was, until the first look at its layout: tickGarden.)
+applyLayout(LAYOUT);

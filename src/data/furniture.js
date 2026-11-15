@@ -32,6 +32,13 @@ const G = (id, name, layer, w, h, price, use, desc) => F(id, name, 'garden', lay
 // (A festival's own pieces: not sold, won at its stall for its tokens - world/garden-festival.js.)
 const GF = (festival, tokens, id, name, layer, w, h, use, desc) => F(id, name, 'garden', layer, w, h, null, { where: 'garden', price: null, festival, tokens, use, desc });
 export const GARDEN_DECOR = () => FURNITURE.filter((f) => f.where === 'garden');
+// (The garden's own pieces, 2026-11-15: there from the start, and yours to move about or put away in
+// Decorate - never sold or made, only the ones the garden came with. Drawn by render/garden.js as
+// `kind` (with `extra`); `w` is the ground one takes (its middle `ox` off the piece's own), `base`
+// what has to be flat under it, `pick` the box you click to pick it up. 'back' pieces (the fences,
+// the lantern string) stand behind everything and only mind their own kind.)
+const GB = (id, name, kind, layer, w, h, o, desc) => F(id, name, 'garden', layer, w, h, null, { where: 'garden', price: null, builtin: true, kind, desc, ...o });
+export const GARDEN_BUILTINS = () => FURNITURE.filter((f) => f.builtin);
 
 export const FURNITURE = [
   // ----- Seaside Cottage: driftwood, rope, shells and sea-blue -----
@@ -90,9 +97,27 @@ export const FURNITURE = [
   GF('lantern', 5, 'garden_chochin', 'Festival Lantern', 'floor', 20, 36, null, 'A red paper lantern hung from a wooden frame. It glows at dusk.'),
   GF('lantern', 8, 'garden_asagao', 'Morning Glory Trellis', 'floor', 26, 40, 'sniff', 'A bamboo trellis climbed by blue and purple morning glories.'),
   GF('snow', 8, 'garden_snowmochi', 'Snow-Mochi', 'floor', 22, 28, 'gaze', 'A round snow Mochi in a red scarf and a knitted hat, twig arms out for a hug. It never melts.'),
+  // ----- The garden's own pieces (GB): what the garden came with, to move or put away -----
+  GB('garden_mailbox', 'Mailbox', 'mg_mailbox', 'floor', 24, 38, {}, 'The garden\'s mailbox. Its little flag goes up when there\'s post for you.'),
+  GB('garden_cropbed', 'Vegetable Bed', 'mg_cropbed', 'floor', 104, 50, {}, 'Rice, beans and peppers in a bed of dark soil. Pick them when they\'re ripe; a Mochi comes to water it.'),
+  GB('garden_beanframe', 'Bean Frame', 'mg_beanframe', 'floor', 64, 96, { pick: { w: 72 } }, 'A bamboo frame climbed by runner beans.'),
+  GB('garden_flowerbed_pink', 'Pink Flower Bed', 'mg_flowerbed', 'floor', 96, 36, { extra: 0, pick: { w: 100 } }, 'A bed of pink, cream and gold flowers that close up at dusk. Mochi like a roll about in it.'),
+  GB('garden_flowerbed_blue', 'Blue Flower Bed', 'mg_flowerbed', 'floor', 96, 36, { extra: 1, pick: { w: 100 } }, 'A bed of blue, lilac and lemon flowers that close up at dusk. Mochi like a nap among them.'),
+  GB('garden_well', 'Well', 'mg_well', 'floor', 56, 84, { pick: { w: 68 } }, 'A stone well with a bucket on a winch. A Mochi likes to wind the bucket up.'),
+  GB('garden_lamp', 'Garden Lantern', 'mg_lantern', 'floor', 22, 64, { extra: 1, pick: { w: 26 }, lamp: [8, -44] }, 'A paper lantern on a wooden post. It glows at dusk.'),
+  GB('garden_seesaw', 'See-Saw', 'mg_seesaw', 'floor', 68, 26, { base: 30, pick: { w: 56 } }, 'A see-saw for two. One Mochi sits on an end and waits for a friend.'),
+  GB('garden_peachtree', 'Peach Tree', 'mg_fruittree', 'floor', 22, 150, { extra: 0, pick: { w: 96 } }, 'A peach tree. Shake it (Up) for fruit when it\'s ripe; a Mochi shelters under it in the rain.'),
+  GB('garden_plumtree', 'Plum Tree', 'mg_fruittree', 'floor', 22, 150, { extra: 2, pick: { w: 96 } }, 'A plum tree. Shake it (Up) for fruit when it\'s ripe; a Mochi shelters under it in the rain.'),
+  GB('garden_toybox', 'Toy Box', 'mg_toybox', 'floor', 44, 52, { base: 30, pick: { w: 64 } }, 'A toy box with a pinwheel on top: the ball, the kite, the bubble wand and the spinning top live in it.'),
+  GB('garden_bigtree', 'Big Old Tree', 'mg_bigtree', 'floor', 120, 236, { ox: 45, base: 40, pick: { w: 260 }, lamp: [-52, -148] }, 'The garden\'s great old tree, with a swing on its branch and a lantern in its leaves. Mochi nap in its shade.'),
+  GB('garden_slide', 'Slide', 'mg_slide', 'floor', 104, 60, { ox: 6, pick: { w: 100 } }, 'A slide with a ladder up the back. Whee!'),
+  GB('garden_mushroom', 'Bouncy Mushroom', 'mg_mushroom', 'floor', 68, 44, { ox: 1, pick: { w: 60 } }, 'A big springy mushroom cap to bounce on.'),
+  GB('garden_fence', 'Picket Fence', 'mg_fence', 'back', 624, 28, {}, 'A long low picket fence with roses climbing it. It stands at the back, behind everything.'),
+  GB('garden_fence_short', 'Short Picket Fence', 'mg_fence', 'back', 192, 28, {}, 'A short run of picket fence with roses climbing it. It stands at the back, behind everything.'),
+  GB('garden_lanternstring', 'Lantern String', 'mg_lanternline', 'back', 544, 88, { flat: true, extra: { h: 82 } }, 'Paper lanterns strung between two poles, lit at dusk. The Mochi gather under them before bed.'),
 ];
 export const FURNITURE_BY_ID = Object.fromEntries(FURNITURE.map((f) => [f.id, f]));
-export const LAYERS = ['rug', 'wall', 'hang', 'floor', 'surface'];
+export const LAYERS = ['back', 'rug', 'wall', 'hang', 'floor', 'surface'];
 // How many pieces each map holds.
 export const PLACED_MAX = 60;
 // The placement grid (px); hold Shift for free placement.

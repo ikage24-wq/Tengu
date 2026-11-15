@@ -32,7 +32,9 @@ function islandOf(char) {
 // What of you a visitor needs to see your Mochi Garden as it is.
 function gardenOf(char) {
   const g = char.garden;
-  return { name: char.name, garden: { mochi: g.mochi, eggs: g.eggs ?? [], cropAt: g.cropAt ?? 0, unlocked: g.unlocked ?? {} } };
+  // (With what's set out in it, where you've put it: the garden's own pieces too, world/garden-layout.js.)
+  const placed = (g.placed ?? []).map(({ uid, id, map, x, y, flip }) => ({ uid, id, map, x, y, flip }));
+  return { name: char.name, garden: { mochi: g.mochi, eggs: g.eggs ?? [], cropAt: g.cropAt ?? 0, unlocked: g.unlocked ?? {}, placed, ...(g.pieces ? { pieces: g.pieces } : {}) } };
 }
 
 // Friends in your room who have a Mochi Garden (the gate asks which garden: ui/garden-pick.js).
