@@ -22,8 +22,10 @@ import { art, place } from './scenery.js';
 import { cragArt, CRAG_FACE_AT } from './garden.js';
 import { groundAt } from '../world/physics.js';
 import { drawMochiAnim, drawSpectator, drawMallet, SPECTATOR_BEATS, GAITS, SWIMS, FLIES, CLIMBS, runStyle } from './mochi-anim.js';
-import { runSpeed, lineupOffset, PODIUM, podiumSpot, INTRO, introLen, standings, progressOf, boulderX, JUMP_H, JUMP_PHASE, ballStart, ballEnd, ballRadius, ROLL_R, standX, STACK_REACH, STACK_TUB, STACK_FLY } from '../world/mochi-race.js';
+import { runSpeed, lineupOffset, PODIUM, podiumSpot, INTRO, introLen, standings, progressOf, boulderX, JUMP_H, JUMP_PHASE, ballStart, ballEnd, ballRadius, ROLL_R, standX, STACK_REACH, STACK_TUB, STACK_FLY, bellX, BELL_REACH } from '../world/mochi-race.js';
 import { drawKagamiPiece, KAGAMI } from './mochi-stack-acts.js';
+import { bellSwing, BELL_REST } from './mochi-bell-acts.js';
+import { BELL_L } from '../data/mochi-race.js';
 import { VW, VH } from '../input.js';
 import { CANT_POINTS, newRecord } from '../data/mochi-raise.js';
 import { rollMochi } from '../data/mochi-genes.js';
@@ -1064,6 +1066,247 @@ function drawStackTub(ctx, map, race, course, cam, r) {
   for (let i = 0; i < 3; i++) if (i >= out) drawKagamiPiece(ctx, i, x + SPOT[i][0], SPOT[i][1]);
   place(ctx, tubFrontArt(), snap(x), gy + 1.2);
 }
+// A point noted on the canvas while a racer was drawn, back to where it is in the world.
+function worldOf(ctx, p, cam) {
+  const t = ctx.getTransform?.();
+  if (!t) return null;
+  const det = t.a * t.d - t.b * t.c;
+  const px = p[0] - t.e;
+  const py = p[1] - t.f;
+  return [(t.d * px - t.c * py) / det + cam.x, (t.a * py - t.b * px) / det + cam.y];
+}
+
+// Mochitsuki Mountain's temple bells (world/mochi-race.js 'bell', 2026-11-16), one in each lane: a
+// little bell tower - a stone step, two posts, a beam, a tiled roof with snow on it - its bronze bell
+// hung in the middle, and the striker log hung beside it on two ropes. The log swings back as the
+// racer hauls on its rope and in to meet the bell (bellSwing, render/mochi-bell-acts.js, in step with
+// its move); the bell rocks away from each strike, rings of sound spread from it (wider for the
+// stronger), snow shakes off the roof, and the bronze warms to gold as it's rung. Rung, a great golden
+// ring and sparkles. (Its pull-rope runs from the log to the racer's paws, behind it: drawBellRope.)
+const BELL_HANG = 31.5;
+const LOG = { len: 15, rope: 11.5, front: -5.4, y: 20 };
+const bellTowerArt = () => art('mr-shoro', 46, 44, () => [
+  // (Its step, posts, beam and roof; the bell tower's middle at x 27.)
+  R(14, 40.5, 25, 3, '#b0b2bc'), F(R(14, 40.5, 25, 0.8, '#c8cad2')),
+  R(16.6, 9, 2, 32, '#7a4e34'), F(R(16.6, 9, 0.6, 32, '#94664a')),
+  R(34.6, 9, 2, 32, '#7a4e34'), F(R(34.6, 9, 0.6, 32, '#94664a')),
+  R(2, 8, 37, 2.5, '#6a4028'), F(R(2, 8, 37, 0.7, '#8a5a3a')),
+  T([[-0.5, 8.4], [6, 5.8], [11, 2], [31, 2], [36, 5.8], [42.5, 8.4], [42, 9.2], [0, 9.2]], '#4c5268'),
+  F(R(11, 2, 20, 0.8, '#646b84')), F(T([[1.6, 8.2], [6.4, 6.2], [36, 6.2], [40.8, 8.2]], '#5a6078')),
+]);
+const ROOF_SNOW = [[-0.5, 8.4], [6, 5.8], [11, 2], [31, 2], [36, 5.8], [42.5, 8.4]];
+// The log's angle now: its move's place in the pull-and-strike, at rest before and after.
+function logAngle(r, C) {
+  const b = r.bell;
+  if (!b) return BELL_REST;
+  const L = BELL_L[b.tier];
+  const e = C - b.from;
+  const k = Math.floor(e / L);
+  if (b.rung != null && k > b.done - 1) return BELL_REST;
+  return bellSwing(b.tier, e / L - k);
+}
+// Where the log's back end is (its rope tied there), for a lane's bell at bx: the world.
+function logEnd(bx, gy, a) {
+  return [bx + LOG.front - LOG.len + LOG.rope * Math.sin(a), gy - LOG.y - LOG.rope * (1 - Math.cos(a))];
+}
+function bellShape(ctx, x, y) {
+  ctx.beginPath();
+  ctx.moveTo(x - 3.4, y + 4);
+  ctx.quadraticCurveTo(x - 3.2, y + 1.6, x, y + 1.6);
+  ctx.quadraticCurveTo(x + 3.2, y + 1.6, x + 3.4, y + 4);
+  ctx.lineTo(x + 4.3, y + 14);
+  ctx.quadraticCurveTo(x + 4.9, y + 15.4, x + 4.9, y + 16.5);
+  ctx.lineTo(x - 4.9, y + 16.5);
+  ctx.quadraticCurveTo(x - 4.9, y + 15.4, x - 4.3, y + 14);
+  ctx.closePath();
+}
+function drawBells(ctx, map, race, course, cam, time) {
+  const leg = course.legs.find((l) => l.kind === 'bell');
+  if (!leg) return;
+  const at = course.legs.indexOf(leg);
+  const C = race.clock;
+  for (const r of [...race.racers].sort((a, b) => b.lane - a.lane)) {
+    const wx = bellX(leg, r);
+    const x = wx - cam.x;
+    if (x < -50 || x > VW + 50) continue;
+    const gy = groundAt(map, wx) - cam.y;
+    const b = r.bell;
+    const force = FORCE[b?.tier ?? 3];
+    const last = b?.hits.length ? b.hits[b.hits.length - 1] : null;
+    const since = last != null ? C - last : 9;
+    // (How rung it is: eased in over each strike, so the gold and the snow go gently.)
+    const k = !b ? (r.leg > at ? 1 : 0) : ((b.prev ?? 0) + (b.got - (b.prev ?? 0)) * Math.min(1, since / 0.35)) / b.need;
+    ctx.fillStyle = 'rgba(110,130,175,0.22)';
+    ctx.beginPath();
+    ctx.ellipse(x + 0.5, gy + 1, 15, 2.2, 0, 0, Math.PI * 2);
+    ctx.fill();
+    place(ctx, bellTowerArt(), snap(x - 4), gy + 2);
+    const ox = snap(x - 4) - 23;
+    const oy = gy + 2 - 44;
+    // Snow on the roof, less with every strike.
+    const snow = Math.max(0, 1 - k);
+    if (snow > 0.02) {
+      ctx.fillStyle = '#f6f9ff';
+      ctx.beginPath();
+      ROOF_SNOW.forEach(([px, py], i) => (i ? ctx.lineTo(ox + px, oy + py - 2.4 * snow) : ctx.moveTo(ox + px, oy + py - 2.4 * snow)));
+      for (let i = ROOF_SNOW.length - 1; i >= 0; i--) ctx.lineTo(ox + ROOF_SNOW[i][0], oy + ROOF_SNOW[i][1] - 0.2);
+      ctx.closePath();
+      ctx.fill();
+    }
+    // The bell: rocked away by each strike, swinging back and settling; warming to gold as it's rung.
+    const sway = since < 2.4 ? -0.11 * force * Math.exp(-2.4 * since) * Math.sin(2 * Math.PI * 1.7 * since) : 0;
+    const hx = x;
+    const hy = gy - BELL_HANG;
+    ctx.save();
+    ctx.translate(hx, hy);
+    ctx.rotate(sway);
+    ctx.fillStyle = '#3a2d4f';
+    ctx.fillRect(-0.6, -0.4, 1.2, 2.4);
+    ctx.beginPath();
+    ctx.arc(0, 1.2, 1.3, Math.PI, Math.PI * 2);
+    ctx.lineWidth = 0.8;
+    ctx.strokeStyle = '#3a2d4f';
+    ctx.stroke();
+    ctx.lineWidth = 1.2;
+    bellShape(ctx, 0, 0);
+    ctx.stroke();
+    ctx.fillStyle = '#6f7d5e';
+    bellShape(ctx, 0, 0);
+    ctx.fill();
+    ctx.save();
+    bellShape(ctx, 0, 0);
+    ctx.clip();
+    ctx.fillStyle = '#56634a';
+    ctx.fillRect(1.6, 0, 4, 17);
+    ctx.fillStyle = '#93a07c';
+    ctx.fillRect(-2.6, 2, 1.1, 14);
+    ctx.fillStyle = '#4f5a44';
+    ctx.fillRect(-5, 6.4, 10, 0.6);
+    ctx.fillRect(-5, 12.2, 10, 0.6);
+    ctx.fillRect(-0.3, 6.4, 0.6, 6);
+    // (Its rows of little knobs, up in the top band.)
+    ctx.fillStyle = '#8a9772';
+    for (const [dx, dy] of [[-2.2, 4.4], [-0.6, 4.4], [1, 4.4], [-1.4, 5.5], [0.2, 5.5]]) ctx.fillRect(dx, dy, 0.7, 0.7);
+    if (k > 0.01) {
+      ctx.globalAlpha = 0.42 * Math.min(1, k) + (b?.rung != null ? 0.12 * Math.sin((C - b.rung) * 6) : 0);
+      ctx.fillStyle = '#ffd860';
+      ctx.fillRect(-6, 0, 12, 18);
+      ctx.globalAlpha = 1;
+    }
+    ctx.restore();
+    ctx.restore();
+    // The striker log, on its two ropes, swung back and in.
+    const a = logAngle(r, C);
+    const [ex, ey] = logEnd(wx, groundAt(map, wx), a);
+    const lx = ex - cam.x;
+    const ly = ey - cam.y;
+    const ropeX = [lx + LOG.len * 0.27, lx + LOG.len * 0.73];
+    ctx.strokeStyle = '#3a2d4f';
+    ctx.lineWidth = 0.9;
+    for (const rx of ropeX) {
+      ctx.beginPath();
+      ctx.moveTo(rx - LOG.rope * Math.sin(a), gy - BELL_HANG - 0.6);
+      ctx.lineTo(rx, ly);
+      ctx.stroke();
+    }
+    ctx.fillStyle = '#3a2d4f';
+    ctx.beginPath();
+    ctx.roundRect(lx - 0.6, ly - 2.2, LOG.len + 1.2, 4.4, 2);
+    ctx.fill();
+    ctx.fillStyle = '#d2a876';
+    ctx.beginPath();
+    ctx.roundRect(lx, ly - 1.6, LOG.len, 3.2, 1.6);
+    ctx.fill();
+    ctx.fillStyle = '#e6c49a';
+    ctx.fillRect(lx + 1, ly - 1.4, LOG.len - 2, 0.8);
+    ctx.fillStyle = '#a87a4a';
+    ctx.fillRect(lx + LOG.len - 1.4, ly - 1.4, 1, 2.8);
+    // Its pull-rope, behind the racer, so its paws close round it.
+    drawBellRope(ctx, map, race, course, cam, r, a);
+    // Rings of sound from each strike, wider for the stronger, and a great golden one when it's rung.
+    const cy = gy - BELL_HANG + 9;
+    ctx.save();
+    ctx.strokeStyle = '#fff3c0';
+    for (const h of b?.hits ?? []) {
+      for (let j = 0; j < 2; j++) {
+        const u = (C - h - j * 0.14) / 0.9;
+        if (u <= 0 || u >= 1) continue;
+        const rad = 7 + u * 30 * force;
+        ctx.globalAlpha = (1 - u) * 0.85;
+        ctx.lineWidth = 1.4 - u * 0.6;
+        for (const side of [0, Math.PI]) {
+          ctx.beginPath();
+          ctx.arc(x, cy, rad, side - 0.55, side + 0.55);
+          ctx.stroke();
+        }
+      }
+    }
+    const ru = b?.rung != null ? (C - b.rung) / 1.3 : 9;
+    if (ru < 1) {
+      // (Rung: great golden waves of sound rolling out both ways, one after another.)
+      ctx.strokeStyle = '#ffd860';
+      for (let j = 0; j < 3; j++) {
+        const u = ru * 1.3 - j * 0.16;
+        if (u <= 0 || u >= 1) continue;
+        ctx.globalAlpha = (1 - u) * 0.95;
+        ctx.lineWidth = 2.2 - u * 1.2;
+        for (const side of [0, Math.PI]) {
+          ctx.beginPath();
+          ctx.arc(x, cy, 9 + u * 44, side - 0.7, side + 0.7);
+          ctx.stroke();
+        }
+      }
+      ctx.globalAlpha = 1;
+      for (let j = 0; j < 5; j++) {
+        const an = (j / 5) * Math.PI * 2 + ru * 2.4;
+        const d = 10 + ru * 14;
+        twinkle(ctx, x + Math.cos(an) * d, cy + Math.sin(an) * d * 0.8, 2.2 * (1 - ru) * (j % 2 ? 0.7 : 1));
+      }
+    }
+    ctx.restore();
+    // Snow shaken off the roof by each strike, falling.
+    ctx.fillStyle = '#ffffff';
+    for (const h of b?.hits ?? []) {
+      const t = C - h;
+      if (t <= 0 || t > 0.9) continue;
+      ctx.globalAlpha = Math.min(1, (0.9 - t) / 0.3);
+      for (let j = 0; j < 6; j++) {
+        const sx = ox + 2 + ((j * 7.3 + h * 13) % 38);
+        const sy = oy + 9 + 70 * t * t + j * 0.6;
+        const s = 1 + (j % 2) * 0.5;
+        ctx.fillRect(sx + Math.sin(t * 8 + j) * 0.8, sy, s, s);
+      }
+    }
+    ctx.globalAlpha = 1;
+  }
+}
+// A racer's bell rope: from the end of its striker log down to its paws while it holds it (where they
+// were last drawn), hanging loose (swinging with the log) while it doesn't; a little tassel at the end.
+function drawBellRope(ctx, map, race, course, cam, r, a) {
+  const leg = course.legs.find((l) => l.kind === 'bell');
+  const wx = bellX(leg, r);
+  const g = groundAt(map, wx);
+  const [ex, ey] = logEnd(wx, g, a);
+  const sx = ex - cam.x + 0.6;
+  const sy = ey - cam.y;
+  const held = course.legs[r.leg ?? 0] === leg && r.bellPaw;
+  const [tx, ty] = held ? [r.bellPaw[0] - cam.x, r.bellPaw[1] - cam.y] : [sx - 2 - 6 * Math.sin(a), g - 9 - cam.y];
+  const mx = (sx + tx) / 2 + (held ? 0 : -1.5);
+  const my = (sy + ty) / 2 + (held ? 1.6 : 0);
+  for (const [col, w] of [['#3a2d4f', 2.2], ['#efe6d2', 1.2]]) {
+    ctx.strokeStyle = col;
+    ctx.lineWidth = w;
+    ctx.beginPath();
+    ctx.moveTo(sx, sy);
+    ctx.quadraticCurveTo(mx, my, tx, ty);
+    ctx.stroke();
+  }
+  if (!held) {
+    ctx.fillStyle = '#8a5aa8';
+    ctx.fillRect(tx - 0.9, ty, 1.8, 2.4);
+  }
+}
+
 function drawMortars(ctx, map, race, course, cam) {
   const leg = course.legs.find((l) => l.kind === 'pound');
   if (!leg) return;
@@ -1267,6 +1510,7 @@ export function drawRace(ctx, world, cam, time) {
   drawMortars(ctx, map, R, course, cam);
   drawSnowballs(ctx, map, R, course, cam, time);
   drawStacks(ctx, map, R, course, cam, time);
+  drawBells(ctx, map, R, course, cam, time);
   drawHurdles(ctx, map, R, course, cam, time);
   for (const r of [...R.racers].sort((a, b) => b.lane - a.lane)) {
     // (On the line before Go, each lane a little apart: world/mochi-race.js lineupOffset.)
@@ -1311,7 +1555,7 @@ export function drawRace(ctx, world, cam, time) {
     // just when the race counts them: started on its first drawing, one that came into view
     // mid-smash, or any stutter of the frames, would have swung out of step with its own hits.)
     const a = r.m.action;
-    const beatFrom = !a ? null : a.name.startsWith('smash') ? r.rock?.from : a.name.startsWith('pound') ? r.pound?.from : a.name === 'roll_slip' ? r.ball?.slip : a.name.startsWith('roll') ? r.ball?.act : a.name === 'stack_steady' ? r.stack?.steadyAt : a.name.startsWith('stack') ? r.stack?.actFrom : a.name.startsWith('power_') ? r.pound?.finished ?? r.stack?.done ?? r.ball?.parked ?? r.rock?.broke : a.name === 'hurdle_stumble' ? r.jump?.landAt ?? null : a.name.startsWith('hurdle') && r.jump ? r.jump.from - (r.jump.gain ?? 0) : null;
+    const beatFrom = !a ? null : a.name.startsWith('smash') ? r.rock?.from : a.name.startsWith('pound') ? r.pound?.from : a.name === 'roll_slip' ? r.ball?.slip : a.name.startsWith('roll') ? r.ball?.act : a.name === 'stack_steady' ? r.stack?.steadyAt : a.name.startsWith('stack') ? r.stack?.actFrom : a.name.startsWith('bell') ? r.bell?.from : a.name.startsWith('power_') ? r.pound?.finished ?? r.stack?.done ?? r.ball?.parked ?? r.rock?.broke ?? r.bell?.rung : a.name === 'hurdle_stumble' ? r.jump?.landAt ?? null : a.name.startsWith('hurdle') && r.jump ? r.jump.from - (r.jump.gain ?? 0) : null;
     if (beatFrom != null) a.t0 = time - (R.clock - beatFrom);
     // (The two best jumpers leave a trail along their arc: where they were a moment ago.)
     const jj = r.jump;
@@ -1324,21 +1568,18 @@ export function drawRace(ctx, world, cam, time) {
       const now = at(0);
       if (now > 2) r.m.trail = [[jj.v * 0.1, now - at(0.1), 0.14], [jj.v * 0.05, now - at(0.05), 0.28]];
     }
-    // (Stacking: where the piece in its paws is drawn, so it can fly on from there.)
-    const stacking = course.legs[r.leg ?? 0]?.kind === 'stack';
-    if (stacking) r.m.anchors ??= {};
+    // (Stacking or ringing: where the piece in its paws is, so it can fly on from there; where its
+    // paws are on the bell's rope, for the rope to be drawn to them.)
+    const doing = course.legs[r.leg ?? 0]?.kind;
+    const noting = doing === 'stack' || doing === 'bell';
+    if (noting) r.m.anchors ??= {};
     drawMochiAnim(ctx, r.m, x, y, time);
-    if (stacking) {
-      const p = r.m.anchors.kagami;
-      const t = ctx.getTransform?.();
-      if (p && t) {
-        const det = t.a * t.d - t.b * t.c;
-        const px = p[0] - t.e;
-        const py = p[1] - t.f;
-        r.stackPaw = [(t.d * px - t.c * py) / det + cam.x, (t.a * py - t.b * px) / det + cam.y];
-      }
+    if (noting) {
+      if (r.m.anchors.kagami) r.stackPaw = worldOf(ctx, r.m.anchors.kagami, cam);
+      r.bellPaw = r.m.anchors.bellPaw ? worldOf(ctx, r.m.anchors.bellPaw, cam) : null;
       r.m.anchors.kagami = null;
-    }
+      r.m.anchors.bellPaw = null;
+    } else r.bellPaw = null;
     // (Its tub in front of its feet, so it reaches down into it.)
     drawStackTub(ctx, map, R, course, cam, r);
     // (Swimming, it sits down in the water, so what floats over its head (its tag, heart, crown)

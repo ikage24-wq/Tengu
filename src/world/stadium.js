@@ -373,16 +373,18 @@ function powerMap() {
     look: { aerial: 0.55, clouds: false, groundArt: 'snow', cast: 'pound', edges: 'snow', festival: true, bar: 'snow', flakes: true, calm: true, snowfall: true, kicks: ['#ffffff', '#eef4ff', '#dce8fb'], petals: ['#ffffff', '#eef4ff', '#dce8fb', '#ffe8f0'] },
     terrain,
     pieces: [
-      ['mr_pine', 96, 0], ['mr_toro', 176, 0], ['mr_starter', 322, 0], ['mr_kagami', 450, 0], ['mr_pine', 530, 1],
+      // (The bell towers, each lane's own, are the race's: render/race.js.)
+      ['mr_pine', 96, 0], ['mr_toro', 176, 0], ['mr_starter', 322, 0], ['mr_pine', 676, 1],
       // (The boulders themselves are drawn by the race, one in each lane: render/race.js.)
-      ['mr_toro', 880, 0], ['mr_pine', 1010, 2], ['mr_kagami', 1170, 0], ['mr_squad', 1300, 0],
+      ['mr_toro', 924, 0], ['mr_pine', 1010, 2], ['mr_kagami', 1170, 0], ['mr_squad', 1300, 0],
       // (The mortars for the pounding, one in each lane, are the race's own too: render/race.js.)
       // (The kagami-mochi stands and tubs, each lane's own, are the race's: render/race.js.)
-      ['mr_snowman', 1420, 1], ['mg_moonmortar', 2260], ['mr_pine', 2440, 0],
+      ['mr_snowman', 1420, 1], ['mr_kagami', 2170, 0], ['mg_moonmortar', 2260], ['mr_pine', 2440, 0],
     ],
     // (Up the slope between them, a snowball to roll, 2026-11-16: world/mochi-race.js 'roll'.)
     // (On the flat top, a kagami-mochi to stack before the pounding, 2026-11-16: 'stack'.)
-    race: course(240, 2090, [{ kind: 'run', to: 760 }, { kind: 'smash', x: 760, hp: 120 }, { kind: 'run', to: 1080 }, { kind: 'roll', x: 1080, to: 1320 }, { kind: 'run', to: 1682 }, { kind: 'stack', x: 1700 }, { kind: 'run', to: 1950 }, { kind: 'pound', x: 1950, need: 6 }, { kind: 'run', to: 2090 }]),
+    // (Before all of it, on the flat by the start, a temple bell to ring in the New Year: 'bell'.)
+    race: course(240, 2090, [{ kind: 'run', to: 610 }, { kind: 'bell', x: 640, need: 4 }, { kind: 'run', to: 830 }, { kind: 'smash', x: 860, hp: 120 }, { kind: 'run', to: 1080 }, { kind: 'roll', x: 1080, to: 1320 }, { kind: 'run', to: 1682 }, { kind: 'stack', x: 1700 }, { kind: 'run', to: 1950 }, { kind: 'pound', x: 1950, need: 6 }, { kind: 'run', to: 2090 }]),
   });
 }
 

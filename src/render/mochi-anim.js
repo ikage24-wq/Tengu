@@ -26,6 +26,7 @@ import { SUMO_ACTS, drawGunbai } from './mochi-sumo-acts.js';
 import { FESTIVAL_ACTS, drawDango, drawDango3, drawUchiwa, drawLanternBoat, drawSparkler } from './mochi-festival-acts.js';
 import { ROLL_ACTS } from './mochi-roll-acts.js';
 import { STACK_ACTS, drawKagamiHeld } from './mochi-stack-acts.js';
+import { BELL_ACTS, noteBellPaws } from './mochi-bell-acts.js';
 import { WEATHER_WIND } from './terrain.js';
 import { drawMic, drawBachi, drawTopHat, drawWand, drawMask, drawScript, drawRose, drawRibbon, drawMime, twinkle } from './mochi-show-props.js';
 import { lookOf, drawCoat, drawCoatBack, MOCHI_SIZE } from './wagashi.js';
@@ -2514,6 +2515,7 @@ Object.assign(ACTIONS, FESTIVAL_ACTS);
 // (Mochitsuki Mountain's snowball: render/mochi-roll-acts.js, 2026-11-16.)
 Object.assign(ACTIONS, ROLL_ACTS);
 Object.assign(ACTIONS, STACK_ACTS);
+Object.assign(ACTIONS, BELL_ACTS);
 // (The garden's play moves flow too, with a little bounce as they settle: the rides, the ball, the
 // weather's games, and the dance two Mochi share. 2026-11-15.)
 for (const n of ['swing', 'slide', 'bounce', 'flaps', 'play', 'splash', 'catch', 'snowcatch', 'snowpat', 'rainwatch', 'dance1']) {
@@ -2892,6 +2894,7 @@ export function drawMochiAnim(ctx, m, x, y, time) {
     else if (target.hold === 'boat') drawLanternBoat(c, hand[0], hand[1], (s / 0.6) * 0.8, flip ? -1 : 1);
     else if (target.hold === 'sparkler') drawSparkler(c, hand[0], hand[1], (s / 0.6) * 0.8, flip ? -1 : 1, time);
     else if (target.hold === 'kagami') drawKagamiHeld(c, m, hand, other, flip);
+    else if (target.hold === 'bellrope') noteBellPaws(c, m, hand, other);
     else if (target.hold === 'gunbai') drawGunbai(c, hand[0], hand[1], (s / 0.6) * 0.44, flip ? -1 : 1, live.swing ?? 0);
     else if (SHOW_HOLDS.has(target.hold)) drawShowProp(c, target, live, hand, other, flip, s, time, m.anchors, m);
   } : null;

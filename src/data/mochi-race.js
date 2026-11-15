@@ -112,3 +112,10 @@ export const RACE_MAX = 120;
 export const STACK_L = [2.4, 2.0, 1.6, 1.3, 1.15, 1.0];
 export const STACK_GRAB = 0.26;
 export const STACK_REL = [0.74, 0.72, 0.7, 0.68, 0.6, 0.58];
+// The temple bell's strikes (world/mochi-race.js 'bell'), the same for its moves and its striker log
+// (render/mochi-bell-acts.js): how long a pull-and-strike takes by range of Power; where in it the
+// rope is pulled all the way back, where it's let go, and where the log meets the bell.
+export const BELL_L = [2.0, 1.8, 1.6, 1.4, 1.3, 1.2];
+export const BELL_PULL = [0.45, 0.42, 0.4, 0.38, 0.36, 0.32];
+export const BELL_GO = [0.52, 0.5, 0.48, 0.46, 0.46, 0.44];
+export const BELL_AT = [0.66, 0.64, 0.62, 0.6, 0.6, 0.58];

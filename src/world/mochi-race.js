@@ -31,7 +31,7 @@ import { MAPS } from '../data/maps.js';
 import { rollMochi, seededRandom, STATS } from '../data/mochi-genes.js';
 import { wearFor, tierForPoints } from '../data/mochi-wardrobe.js';
 import { newRecord, evolve, styleOf, STYLE_POINTS, CANT_POINTS as CANT } from '../data/mochi-raise.js';
-import { RACE_STAGES, RACE_RANKS, RANK_ORDER, RIVAL_NAMES, paceOf, CHEER, RACE_TAIL, RACE_MAX, prizeOf, MEDALS, medalKey, rankOpen, STACK_L, STACK_GRAB, STACK_REL } from '../data/mochi-race.js';
+import { RACE_STAGES, RACE_RANKS, RANK_ORDER, RIVAL_NAMES, paceOf, CHEER, RACE_TAIL, RACE_MAX, prizeOf, MEDALS, medalKey, rankOpen, STACK_L, STACK_GRAB, STACK_REL, BELL_L, BELL_AT } from '../data/mochi-race.js';
 import { groundAt, waterAt } from './physics.js';
 import { addItem } from '../core/inventory.js';
 import { mochiVoice, voiceAction } from './mochi-voice.js';
@@ -126,6 +126,15 @@ export const STACK_REACH = 18;
 export const STACK_TUB = 6;
 export const STACK_LANE = 40;
 export const standX = (leg, r) => leg.x - r.lane * STACK_LANE;
+// A temple bell to ring (`{ kind: 'bell', x, need }`, Mochitsuki Mountain, 2026-11-16 - the New Year's
+// Eve bells, rung before the mochi-making): in each lane a little bell tower, its striker log hung
+// beside the bell on two ropes and a pull-rope from its end. The racer pulls it back and drives it
+// into the bell, one strike a pull (BELL_L long by range, the log meeting the bell at BELL_AT of it),
+// each counting 1 + power/700 (a cheer adds to it) towards `need`: the weakest four strikes, the
+// strongest one mighty gong. Rung, a "Yes!", and on.
+export const BELL_REACH = 34;
+export const BELL_LANE = 54;
+export const bellX = (leg, r) => leg.x - r.lane * BELL_LANE;
 const ROLL_PAW = 9;
 const ROLL_REACH = 3;
 export const behindBall = (R0) => Math.sqrt(Math.max(0, R0 * R0 - (R0 - Math.min(ROLL_PAW, 2 * R0 - 1)) ** 2)) + ROLL_REACH;
@@ -368,6 +377,7 @@ function runEnd(course, r) {
   if (next?.kind === 'pound') return boulderX(next, r) - POUND_REACH;
   if (next?.kind === 'roll') return ballStart(next, r) - behindBall(ROLL_R[0]);
   if (next?.kind === 'stack') return standX(next, r) - STACK_REACH;
+  if (next?.kind === 'bell') return bellX(next, r) - BELL_REACH;
   if (next?.kind === 'hurdle') return next.x - takeoffOf(r);
   return next?.kind === 'climb' ? next.x - WALL_GAP - r.lane * WALL_LANE : legOf(course, r).to;
 }
@@ -499,7 +509,7 @@ function stepRacer(R, r, dt, course, map) {
       m.action = null;
       r.y = groundAt(map, r.x);
       if (leg.kind === 'hurdle') nextLeg(course, r);
-    } else if (/^(smash|pound|power_|hurdle|roll|stack)/.test(m.action?.name ?? '')) m.action = null;
+    } else if (/^(smash|pound|power_|hurdle|roll|stack|bell)/.test(m.action?.name ?? '')) m.action = null;
     m.speed = Math.max(0, m.speed - 70 * dt);
     m.tired = Math.max(0, (m.tired ?? 0) - dt * 0.4);
     if (leg.kind === 'run') {
@@ -615,6 +625,34 @@ function stepRacer(R, r, dt, course, map) {
         const R0 = ballRadius(leg, r, b.x);
         b.spin += (b.x - was) / R0;
         r.x = b.x - behindBall(R0);
+        r.y = groundAt(map, r.x);
+      } else if (leg.kind === 'bell') {
+        // Ringing its bell: the rope pulled back and the log driven into the bell, again and again,
+        // the bell booming louder for the stronger; rung, it's off to its boulder.
+        // (Its own way of ringing for its range of Power: render/mochi-bell-acts.js bell0-5.)
+        const tier = styleOf(s.power.points);
+        const b = (r.bell ??= { got: 0, need: leg.need, from: C, done: 0, hits: [], tier, rung: null });
+        Object.assign(m, { mode: 'run', inWater: false, speed: 0, tired: r.spent ?? 0 });
+        const L = BELL_L[tier];
+        if (b.rung == null) {
+          if (m.action?.name !== `bell${tier}`) m.action = { name: `bell${tier}`, t0: null, hold: 120 };
+          const due = Math.floor((C - b.from - BELL_AT[tier] * L) / L) + 1;
+          while (b.done < due && b.got < b.need) {
+            b.done += 1;
+            b.prev = b.got;
+            b.got = Math.min(b.need, b.got + (1 + s.power.points / 700) * boost);
+            b.hits.push(C);
+            if (b.hits.length > 4) b.hits.shift();
+          }
+          if (b.got >= b.need) {
+            b.rung = C;
+            m.action = { name: tier ? 'power_win' : 'power_phew', t0: null };
+          }
+        } else if (C - b.rung >= WIN_BEAT) {
+          m.action = null;
+          nextLeg(course, r);
+        }
+        r.x = bellX(leg, r) - BELL_REACH;
         r.y = groundAt(map, r.x);
       } else if (leg.kind === 'stack') {
         // Stacking its kagami-mochi: each piece lifted out of the tub and set on the stand, the big

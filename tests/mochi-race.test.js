@@ -550,3 +550,33 @@ test('Mochitsuki Mountain kagami-mochi: three pieces lifted on in order, a weak 
   assert.equal(seen['0c'].steadies, false, 'a cheer keeps it steady');
   assert.ok(seen['2400'].secs < seen['0'].secs / 2.5, JSON.stringify(seen));
 });
+
+test('Mochitsuki Mountain temple bell: rung at its own tower, four strikes for the weakest, one mighty gong for the strongest', () => {
+  const seen = {};
+  for (const pw of [0, 1100, 2100]) {
+    const rec = mochi(77, 900);
+    rec.stats.power.points = pw;
+    const w = racer(rec);
+    assert.ok(startRace(w, rec, 'power'));
+    const R = w.race;
+    const me = R.racers[R.me];
+    const leg = w.map.race.legs.find((l) => l.kind === 'bell');
+    assert.equal(w.map.race.legs.indexOf(leg), 1, 'rung first, before the boulders');
+    let from = null;
+    for (let t = 0; t < 300 && R.phase !== 'done'; t += 1 / 30) {
+      updateWorld(w, 1 / 30, keys());
+      const b = me.bell;
+      if (!b || b.rung != null) continue;
+      from ??= R.clock;
+      assert.ok(Math.abs(me.x - (leg.x - me.lane * 54 - 34)) < 0.01, `at its bell: ${me.x}`);
+      assert.ok(/^bell\d$/.test(me.m.action?.name ?? ''), me.m.action?.name);
+    }
+    assert.ok(me.done != null, 'home');
+    assert.ok(me.bell.got >= me.bell.need);
+    seen[pw] = { strikes: me.bell.done, secs: +(me.bell.rung - from).toFixed(2) };
+  }
+  assert.equal(seen[0].strikes, 4, JSON.stringify(seen));
+  assert.equal(seen[2100].strikes, 1, JSON.stringify(seen));
+  assert.ok(seen[1100].strikes === 2, JSON.stringify(seen));
+  assert.ok(seen[2100].secs < seen[0].secs / 4, JSON.stringify(seen));
+});
