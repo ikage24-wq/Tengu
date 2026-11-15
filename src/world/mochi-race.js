@@ -84,15 +84,52 @@ const LIP = 8;
 export const SMASH_LANE = 30;
 const SMASH_REACH = 30;
 const SMASH_HIT = 0.8;
-const SMASH_AT = 0.55;
+// (A frame after the fists land at 0.55, so the flash and the chips follow the blow, never lead it.)
+const SMASH_AT = 0.57;
 export const boulderX = (leg, r) => leg.x - r.lane * SMASH_LANE;
+// (Its boulder burst, or its mochi pounded smooth: a quick "Yes!" this long before it runs on.)
+export const WIN_BEAT = 0.5;
+// Hurdles (`{ kind: 'hurdle', x, h }`, Tanabata Hurdles): a bamboo bar `h` px high across the track
+// at x, the same one for everyone. Each racer leaps it as it comes: as high as its Fly takes it
+// (JUMP_H, by its range; its own way of jumping too, render/mochi-anim.js hurdle0-5), as far as its
+// Run carries it (on through the air at the speed it came in), and a cheer just before gives it a
+// lift. Clear, and it's away; a little short, a toe catches the bar - a stumble as it lands; well
+// short, and it goes over in a heap (down on its face, sat up dizzy, back up; a cheer while it's
+// down gets it up quicker). A little luck in every jump, from its seed, the same on every screen.
+export const JUMP_H = [12, 16, 20, 25, 29, 34];
+export const JUMP_T = [0.4, 0.45, 0.5, 0.55, 0.6, 0.66];
+const JUMP_LUCK = 3.5;
+const JUMP_CHEER = 5;
+// (Every jump: a crouch on the ground first, `pre`; then the air; then the landing - a dip of the
+// knees and a little spring back up, on at nearly full speed, `land`; a clipped one stumbles on
+// instead, slowing, for `stumble`.)
+export const JUMP_PHASE = { pre: 0.08, land: 0.12, stumble: 0.42 };
+// (A fall: it meets the bar at `hit`, is face down on the far side by `down`, back on its feet at
+// `up`, all from the start of its jump; cheered while it's down, the getting up goes `quick` times
+// as fast.)
+export const FALL = { hit: 0.3, down: 0.54, up: 1.83, quick: 1.8 };
+// Its jump at hurdle `leg`: how high (world px), how it goes, and how far it takes off before it.
+function jumpOf(R, r, leg, course) {
+  const s = r.rec.stats;
+  const tier = styleOf(s.fly.points);
+  const idx = course.legs.indexOf(leg);
+  const rng = seededRandom(Math.floor(r.seed * 1000) + idx * 131 + 7);
+  const cheered = R.clock < (r.cheerUntil ?? 0);
+  const H = JUMP_H[tier] * (r.m.size === 'baby' ? 0.85 : 1) + (rng() * 2 - 1) * JUMP_LUCK + (cheered ? JUMP_CHEER : 0);
+  const margin = H - leg.h;
+  const outcome = margin >= 3 ? 'clear' : margin >= -4 ? 'clip' : 'fall';
+  return { tier, H, outcome, cheered, idx, T: JUMP_T[tier] };
+}
+const takeoffOf = (r) => Math.max(30, r.m.speed || runSpeed(r.rec.stats.run.points)) * (JUMP_PHASE.pre + JUMP_T[styleOf(r.rec.stats.fly.points)] / 2);
+
 // The mochi pounding at the top (`{ kind: 'pound', x, need }`): a wooden mortar of mochi in each
 // lane, staggered like the boulders. One pound a swing of the 'pound' move (POUND_HIT long, the
 // mallet landing POUND_AT in), each worth more the stronger it is; when the mochi is smooth
 // (`need` worth of pounding) it's off to the line.
 const POUND_REACH = 22;
 const POUND_HIT = 0.8;
-const POUND_AT = 0.5;
+// (Likewise a frame after the mallet lands at 0.5.)
+const POUND_AT = 0.52;
 // Off the mark: from a standing start to full speed over the first moments after Go.
 const GETAWAY = [0.35, 1.3];
 // Off the launch: a little hop up before the glide takes it down (px high, over how far along).
@@ -289,6 +326,7 @@ function runEnd(course, r) {
   const next = course.legs[r.leg + 1];
   if (next?.kind === 'smash') return boulderX(next, r) - SMASH_REACH;
   if (next?.kind === 'pound') return boulderX(next, r) - POUND_REACH;
+  if (next?.kind === 'hurdle') return next.x - takeoffOf(r);
   return next?.kind === 'climb' ? next.x - WALL_GAP - r.lane * WALL_LANE : legOf(course, r).to;
 }
 const nextLeg = (course, r) => {
@@ -341,6 +379,7 @@ function stepLuck(R, r, course, leg) {
   r.luckKind = next.kind;
   if (next.kind === 'trip') {
     r.stunUntil = R.clock + LUCK.trip;
+    Object.assign(r, { rampAt: r.stunUntil, rampFrom: 0.2 });
     r.m.action = { name: 'sig_clumsy', t0: null };
   } else r.windUntil = R.clock + LUCK.wind;
 }
@@ -411,6 +450,14 @@ function stepRacer(R, r, dt, course, map) {
   m.rest = false;
   if (leg.kind === 'glide') glideStep(course, r, dt, map, boost);
   else if (over) {
+    // (Caught mid-jump, mid-fall or mid-swing as the race ends - its move timed by the race's clock,
+    // which stops - it would have hung there frozen, in the air: down on its feet instead.)
+    if (r.jump || leg.kind === 'hurdle') {
+      r.jump = null;
+      m.action = null;
+      r.y = groundAt(map, r.x);
+      if (leg.kind === 'hurdle') nextLeg(course, r);
+    } else if (/^(smash|pound|power_|hurdle)/.test(m.action?.name ?? '')) m.action = null;
     m.speed = Math.max(0, m.speed - 70 * dt);
     m.tired = Math.max(0, (m.tired ?? 0) - dt * 0.4);
     if (leg.kind === 'run') {
@@ -439,7 +486,9 @@ function stepRacer(R, r, dt, course, map) {
       const wading = (course.slow ?? []).some(([a, b]) => r.x >= a && r.x < b);
       const run = (wading ? WADE + runSpeed(s.run.points) * 0.05 : runSpeed(s.run.points) * hill) * (leg.slow ?? 1);
       const worn = Math.min(TIRED_MAX, TIRED_SLOW * (course.drag ?? 1) * bar);
-      const v = (run * (1 - worn) + Math.min(run, PLOD) * worn) * pace * wob * boost * Math.min(1, GETAWAY[0] + C * GETAWAY[1]);
+      // (Picking itself up after a fall, a stumble or a trip, it gets back up to speed over a moment.)
+      const ramp = r.rampAt != null && C > r.rampAt ? Math.min(1, r.rampFrom + (C - r.rampAt) * 1.8) : 1;
+      const v = (run * (1 - worn) + Math.min(run, PLOD) * worn) * pace * wob * boost * ramp * Math.min(1, GETAWAY[0] + C * GETAWAY[1]);
       const end = runEnd(course, r);
       r.x = Math.min(end, r.x + v * dt);
       r.y = (leg.y ?? groundAt(map, r.x)) - rampLift(map, course, r);
@@ -456,38 +505,104 @@ function stepRacer(R, r, dt, course, map) {
       if (leg.kind === 'smash') {
         // Smashing its boulder: a big wind-up and a slam, again and again, each hit taking off more
         // the stronger it is; cracks spread, then it bursts and it's off up the mountain.
-        const rock = (r.rock ??= { hp: leg.hp, max: leg.hp, from: C, done: 0, hits: [] });
+        // (Its own way of smashing for its range of Power: render/mochi-anim.js smash0-5.)
+        const rock = (r.rock ??= { hp: leg.hp, max: leg.hp, from: C, done: 0, hits: [], tier: styleOf(s.power.points) });
         Object.assign(m, { mode: 'run', inWater: false, speed: 0, tired: r.spent ?? 0 });
-        if (m.action?.name !== 'smash') m.action = { name: 'smash', t0: null, hold: 120 };
-        const due = Math.floor((C - rock.from - SMASH_AT) / SMASH_HIT) + 1;
-        while (rock.done < due && rock.hp > 0) {
-          rock.done += 1;
-          rock.hp = Math.max(0, rock.hp - (8 + s.power.points / 120) * boost);
-          rock.hits.push(C);
-          if (rock.hits.length > 4) rock.hits.shift();
-        }
-        if (rock.hp <= 0) {
-          rock.broke = C;
+        if (rock.broke == null) {
+          if (m.action?.name !== `smash${rock.tier}`) m.action = { name: `smash${rock.tier}`, t0: null, hold: 120 };
+          const due = Math.floor((C - rock.from - SMASH_AT) / SMASH_HIT) + 1;
+          while (rock.done < due && rock.hp > 0) {
+            rock.done += 1;
+            rock.hp = Math.max(0, rock.hp - (8 + s.power.points / 120) * boost);
+            rock.hits.push(C);
+            if (rock.hits.length > 4) rock.hits.shift();
+          }
+          if (rock.hp <= 0) {
+            rock.broke = C;
+            m.action = { name: rock.tier ? 'power_win' : 'power_phew', t0: null };
+          }
+        } else if (C - rock.broke >= WIN_BEAT) {
           m.action = null;
           nextLeg(course, r);
         }
       } else if (leg.kind === 'pound') {
         // Pounding its mochi: the mallet swung up and brought down, again and again, the mochi in
         // the mortar smoother each time; done, it's off to the line.
-        const mo = (r.pound ??= { got: 0, need: leg.need, from: C, done: 0, hits: [] });
+        // (Its own way of pounding for its range of Power: render/mochi-anim.js pound0-5.)
+        const mo = (r.pound ??= { got: 0, need: leg.need, from: C, done: 0, hits: [], tier: styleOf(s.power.points) });
         Object.assign(m, { mode: 'run', inWater: false, speed: 0, tired: r.spent ?? 0 });
-        if (m.action?.name !== 'pound') m.action = { name: 'pound', t0: null, hold: 120 };
-        const due = Math.floor((C - mo.from - POUND_AT) / POUND_HIT) + 1;
-        while (mo.done < due && mo.got < mo.need) {
-          mo.done += 1;
-          mo.got = Math.min(mo.need, mo.got + (1 + s.power.points / 1200) * boost);
-          mo.hits.push(C);
-          if (mo.hits.length > 4) mo.hits.shift();
-        }
-        if (mo.got >= mo.need) {
-          mo.finished = C;
+        if (mo.finished == null) {
+          if (m.action?.name !== `pound${mo.tier}`) m.action = { name: `pound${mo.tier}`, t0: null, hold: 120 };
+          const due = Math.floor((C - mo.from - POUND_AT) / POUND_HIT) + 1;
+          while (mo.done < due && mo.got < mo.need) {
+            mo.done += 1;
+            mo.got = Math.min(mo.need, mo.got + (1 + s.power.points / 1200) * boost);
+            mo.hits.push(C);
+            if (mo.hits.length > 4) mo.hits.shift();
+          }
+          // (The last pound lands, and it lets the mallet down against the mortar: render/race.js.)
+          if (mo.got >= mo.need) {
+            mo.finished = C;
+            m.action = { name: mo.tier ? 'power_win' : 'power_phew', t0: null };
+          }
+        } else if (C - mo.finished >= WIN_BEAT) {
           m.action = null;
           nextLeg(course, r);
+        }
+      } else if (leg.kind === 'hurdle') {
+        // Over a hurdle: up and on through the air at the speed it came in, and down beyond it - or,
+        // too low, caught on the bar and down in a heap on the far side, and up again.
+        if (!r.jump) {
+          const j = jumpOf(R, r, leg, course);
+          r.jump = { ...j, from: C, x0: r.x, v: Math.max(30, m.speed || runSpeed(s.run.points)), gain: 0 };
+          m.action = { name: j.outcome === 'fall' ? 'hurdle_fall' : `hurdle${j.tier}`, t0: null };
+          // (The bar shakes as a toe catches it, and rocks hard as one goes over it.)
+          if (j.outcome !== 'clear') {
+            const bars = ((R.bars ??= {})[j.idx] ??= []);
+            bars.push({ at: C + (j.outcome === 'fall' ? FALL.hit : JUMP_PHASE.pre + j.T / 2), k: j.outcome === 'fall' ? 2 : 1 });
+            if (bars.length > 4) bars.shift();
+          }
+        }
+        const j = r.jump;
+        Object.assign(m, { mode: 'run', inWater: false, speed: 0, tired: r.spent ?? 0 });
+        if (j.outcome !== 'fall') {
+          // The crouch and the leap at the speed it came in; down, and on at nearly that speed while
+          // its knees take the landing - or, its toe caught, stumbling on, slowing, a few steps.
+          const e = C - j.from;
+          const air = JUMP_PHASE.pre + j.T;
+          if (e >= air && j.landAt == null) {
+            j.landAt = C;
+            r.landed = { at: C, x: r.x, k: j.tier };
+            if (j.outcome === 'clip') m.action = { name: 'hurdle_stumble', t0: null };
+          }
+          const u = Math.max(0, e - air);
+          const after = j.outcome === 'clip' ? JUMP_PHASE.stumble : JUMP_PHASE.land;
+          const q = Math.min(u, after);
+          const on = j.outcome === 'clip' ? 0.8 * q - (0.45 * q * q) / (2 * after) : 0.85 * q;
+          r.x = j.x0 + j.v * (Math.min(e, air) + on);
+          r.y = groundAt(map, r.x);
+          if (u >= after) {
+            r.jump = null;
+            m.action = null;
+            // (Back up to speed smoothly, not all at once.)
+            Object.assign(r, { rampAt: C, rampFrom: j.outcome === 'clip' ? 0.35 : 0.85 });
+            nextLeg(course, r);
+          }
+        } else {
+          // (Cheered while it's down: up quicker.)
+          const e = C - j.from + j.gain;
+          if (e > FALL.down && C < (r.cheerUntil ?? 0)) j.gain += dt * (FALL.quick - 1);
+          // (On through the air to the bar, then pitched over it to land well clear of the far post.)
+          const hit = j.x0 + j.v * FALL.hit;
+          const k = Math.min(1, Math.max(0, (e - FALL.hit) / (FALL.down - FALL.hit)));
+          r.x = e < FALL.hit ? j.x0 + j.v * e : hit + (Math.max(hit, leg.x + 24) - hit) * (1 - (1 - k) * (1 - k));
+          r.y = groundAt(map, r.x);
+          if (e >= FALL.up) {
+            r.jump = null;
+            m.action = null;
+            Object.assign(r, { rampAt: C, rampFrom: 0.2 });
+            nextLeg(course, r);
+          }
         }
       } else if (leg.kind === 'swim') {
         const v = speedOf(SWIM_SPEED, s.swim.points, CANT.swim, FLAIL) * pace * wob * boost;

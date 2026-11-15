@@ -1395,6 +1395,14 @@ const CASTS = {
     pom: { shade: 'rgba(200,60,80,0.35)', outer: ['#ffffff', '#ff6a7a', '#ffd75e'], inner: ['#fff0c0', '#ff9aa8'], heart: '#fff4e0' },
     banner: { text: 'WASSHOI!', ink: '#d8384e', edge: '#ff9aa8', tri: ['#ff6a7a', '#ffd75e'] },
   },
+  // Tanabata Hurdles' star festival: the starter in Starry Night waving an indigo flag with a gold
+  // star on it; the squad in Disco Star, blue and gold pom-poms, a "LEAP!" banner.
+  leap: {
+    id: 'leap', starter: 'starry', seed: 11113, squad: 'disco', crew: [11119, 11131, 11149],
+    flag: { cloth: '#4a58c8', hem: '#ffe680', mark: 'star' },
+    pom: { shade: 'rgba(70,80,180,0.35)', outer: ['#ffffff', '#8fa8ff', '#ffe680'], inner: ['#fff6c0', '#c8d4ff'], heart: '#fff8e0' },
+    banner: { text: 'LEAP!', ink: '#4a58c8', edge: '#c8d4ff', tri: ['#8fa8ff', '#ffe680'] },
+  },
   // The Grand Tour's royal progress: the starter a herald in the Study Buddy with the kingdom's
   // red flag; the squad by the finish in Berry Overalls, red and gold pom-poms, a "HURRAH!" banner.
   kingdom: {
@@ -1524,6 +1532,18 @@ function flag(ctx, hand, ang, face, time, brisk, look = CASTS.sakura.flag) {
       ctx.arc(mx, my + dy, 1.5, 0, TAU);
       ctx.fill();
     }
+  } else if (look.mark === 'star') {
+    // A gold star, turning a little this way and that.
+    const a0 = -Math.PI / 2 + Math.sin(time * 0.8) * 0.2;
+    ctx.fillStyle = '#ffe680';
+    ctx.beginPath();
+    for (let q = 0; q < 10; q++) {
+      const a = a0 + (q * Math.PI) / 5;
+      const r = q % 2 ? 1.5 : 3.6;
+      ctx.lineTo(mx + Math.cos(a) * r, my + Math.sin(a) * r);
+    }
+    ctx.closePath();
+    ctx.fill();
   } else if (look.mark === 'flake') {
     // A snowflake, white, slowly turning.
     ctx.strokeStyle = '#ffffff';
@@ -6515,7 +6535,210 @@ GROUND_SPECS.stadium = {
   near: null,
 };
 
-const TRACKSIDE = new Set(['mr_squad', 'mr_starter', 'mr_parasol', 'mr_pound', 'mr_kagami', 'mr_onsen', 'mr_toro', 'mr_snowman', 'mr_cocoa', 'mr_bigsnow', 'mr_fans', 'mr_bigdango', 'mr_yatai', 'mr_taiko', 'mr_bigchochin', 'mr_kgate', 'mr_kbanner', 'mr_ksubjects', 'mr_kpole', 'mr_kcrown', 'mr_hayate', 'mr_podium', 'mr_flag']);
+// ---------- Tanabata Hurdles ('course:tanabata', 2026-11-15) ----------
+// The star festival on a summer night. Far off: the Milky Way, a soft river of light slanting up
+// across the sky thick with tiny stars, and the two lovers' stars either side of it - Orihime
+// (Vega), pale rose, above it, Hikoboshi (Altair), pale blue, below - twinkling; blue hills and a
+// ridge of bamboo forest. In the middle: a night meadow with bamboo groves, some hung with wishes on
+// paper strips, paper lanterns glowing among them.
+const TANZAKU = ['#ff8fb0', '#ffd75e', '#8fd3ff', '#9fe0a0', '#c8a8f0', '#ffffff'];
+// (Where the Milky Way runs: its middle's height at screen x.)
+const riverAt = (sx, y0, width) => y0 * 0.86 - (sx / width) * y0 * 0.95 + Math.sin(sx * 0.011) * 5;
+function nightSky(ctx, cam, width, y0, time) {
+  const off = cam.x * 0.008;
+  // The river of light: soft glows laid along it, a brighter thread down its middle.
+  for (let sx = -40; sx < width + 40; sx += 10) {
+    const cy = riverAt(sx + off, y0, width);
+    glow(ctx, sx, cy, 26, '214,206,255', 0.4);
+    if (((sx / 10) | 0) % 2 === 0) glow(ctx, sx, cy + Math.sin(sx * 0.05) * 3, 12, '255,246,236', 0.4);
+  }
+  // Its dust of tiny stars, thick in the river and thinning out across the sky.
+  for (let i = 0; i < 150; i++) {
+    const h = hash(i * 7.3 + 1.1);
+    const sx = ((h * (width + 80) - off * 3) % (width + 80) + width + 80) % (width + 80) - 40;
+    const inRiver = i < 90;
+    const sy = inRiver ? riverAt(sx + off, y0, width) + (hash(i * 3.1) - 0.5) * 34 * hash(i * 5.7) : 4 + hash(i * 4.3) * y0 * 0.9;
+    if (sy < 0 || sy > y0) continue;
+    ctx.globalAlpha = (inRiver ? 0.45 : 0.55) + 0.35 * Math.sin(time * (0.8 + h * 1.4) + i * 1.7);
+    ctx.fillStyle = h > 0.85 ? '#fff4d8' : '#ffffff';
+    const sz = !inRiver && h > 0.88 ? 1.6 : 1;
+    ctx.fillRect(sx, sy, sz, sz);
+  }
+  ctx.globalAlpha = 1;
+  // The two stars, either side of the river: a glow, and a cross of light that twinkles.
+  for (const [fx, fy, rgb, c, ph] of [[0.28, 0.24, '255,214,226', '#ffeef4', 0], [0.7, 0.62, '206,226,255', '#eef6ff', 1.7]]) {
+    const sx = fx * width - off * 2;
+    const sy = fy * y0;
+    const tw = 0.8 + 0.2 * Math.sin(time * 1.6 + ph);
+    glow(ctx, sx, sy, 12, rgb, 0.9 * tw);
+    ctx.fillStyle = c;
+    ctx.fillRect(sx - 4.5 * tw, sy - 0.5, 9 * tw, 1);
+    ctx.fillRect(sx - 0.5, sy - 4.5 * tw, 1, 9 * tw);
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(sx - 1, sy - 1, 2, 2);
+  }
+}
+// Bamboo far off: tall thin stalks, nodding a little, short leaves off their upper part on both sides
+// (a tuft on top read as palm trees).
+function bambooRidge(ctx, cam, width, land, par, col, leaf) {
+  ctx.lineCap = 'round';
+  repeat(cam.x, par, 7, width, (i, x) => {
+    const h = hash(i * 1.9 + 4);
+    if (h < 0.25) return;
+    const gy = land(x) + 3;
+    const tall = 18 + h * 18;
+    ctx.fillStyle = col;
+    ctx.fillRect(x, gy - tall, 1.2, tall);
+    ctx.strokeStyle = leaf;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    for (let q = 0; q < 3; q++) {
+      const ly = gy - tall + 2 + q * 4;
+      const side = (q + i) % 2 ? 1 : -1;
+      ctx.moveTo(x + 0.6, ly);
+      ctx.lineTo(x + 0.6 + side * 3.6, ly + 2.4);
+    }
+    ctx.stroke();
+  });
+  ctx.lineCap = 'butt';
+}
+COURSES.tanabata = {
+  far(ctx, t, cam, width, y0, time) {
+    const air = t.sky[1];
+    nightSky(ctx, cam, width, y0, time);
+    hills(ctx, cam, width, y0 - 10, 34, 0.03, 3.1, mix('#3c3f86', air, 0.3), mix('#5c5aa6', air, 0.26));
+    const ridge = hills(ctx, cam, width, y0 + 8, 16, 0.06, 5.2, mix('#2c4466', air, 0.28), mix('#46648a', air, 0.24));
+    bambooRidge(ctx, cam, width, ridge, 0.06, mix('#2c4c62', air, 0.3), mix('#3a5e72', air, 0.3));
+    return true;
+  },
+  mid(ctx, t, cam, width, y0, time) {
+    const air = t.sky[1];
+    const land = hills(ctx, cam, width, y0 + 6, 9, 0.45, 8.3, mix('#2f5458', air, 0.22), mix('#4c7a78', air, 0.18));
+    repeat(cam.x, 0.45, 64, width, (i, x) => {
+      const h = hash(i * 3.3 + 2);
+      const sx = x + hash(i * 1.1) * 20;
+      const gy = land(sx) + 3;
+      const stalk = mix('#3c7a62', air, 0.2);
+      const node = mix('#5e9c7c', air, 0.2);
+      const n = 3 + Math.floor(h * 3);
+      for (let k = 0; k < n; k++) {
+        const bx = sx + (k - n / 2) * 4 + hash(i * 5 + k) * 2;
+        const tall = 34 + hash(i * 7 + k) * 22;
+        ctx.fillStyle = stalk;
+        ctx.fillRect(bx, gy - tall, 1.6, tall);
+        ctx.fillStyle = node;
+        for (let ny = gy - 8; ny > gy - tall + 4; ny -= 9) ctx.fillRect(bx - 0.3, ny, 2.2, 0.8);
+        // (Its leaves: narrow blades drooping off both sides of its upper part, stirring.)
+        ctx.strokeStyle = mix(k % 2 ? '#4e9a72' : '#5aa87c', air, 0.22);
+        ctx.lineWidth = 1.3;
+        ctx.lineCap = 'round';
+        const sway = Math.sin(time * 0.9 + i + k) * 0.6;
+        ctx.beginPath();
+        for (let q = 0; q < 6; q++) {
+          const ly = gy - tall + 1 + q * 3.4;
+          const side = (q + k) % 2 ? 1 : -1;
+          ctx.moveTo(bx + 0.8, ly);
+          ctx.quadraticCurveTo(bx + 0.8 + side * 3, ly - 0.6, bx + 0.8 + side * (5.5 - q * 0.3) + sway, ly + 2.6);
+        }
+        ctx.stroke();
+        ctx.lineCap = 'butt';
+      }
+      // Some hung with wishes: paper strips swaying under a branch.
+      if (h > 0.45) {
+        for (let q = 0; q < 5; q++) {
+          const tx = sx - 8 + q * 4;
+          const ty = gy - 30 - (q % 2) * 4;
+          const sw = Math.sin(time * 1.3 + i * 2 + q) * 0.6;
+          ctx.fillStyle = mix(TANZAKU[(((i + q) % TANZAKU.length) + TANZAKU.length) % TANZAKU.length], air, 0.2);
+          ctx.fillRect(tx + sw, ty, 1.6, 5);
+        }
+      }
+      // And a paper lantern among them, lit.
+      if (h < 0.3) {
+        const lx = sx + 10;
+        const ly = gy - 18;
+        glow(ctx, lx, ly, 12, '255,206,150', 0.8);
+        ctx.fillStyle = '#fff2dc';
+        ctx.beginPath();
+        ctx.ellipse(lx, ly, 2.4, 3, 0, 0, TAU);
+        ctx.fill();
+        ctx.fillStyle = '#e8584e';
+        ctx.fillRect(lx - 1.6, ly - 3.4, 3.2, 0.8);
+        ctx.fillRect(lx - 1.6, ly + 2.6, 3.2, 0.8);
+      }
+    });
+    return true;
+  },
+};
+// Its ground: the festival's night meadow, as the Grand course's dusk (confetti pressed in, morning
+// glories closed for the night along the top), with stars among the confetti.
+GROUND_SPECS.tanabata = { ...GROUND_SPECS.matsuri, flecks: ['#ffe680', '#c8d8ff', '#ffffff'] };
+EDGE_KINDS.tanabata = EDGE_KINDS.matsuri;
+// A bamboo by the track, decorated for the festival (`mr_sasa`): a tall stalk nodding over at the
+// top in sprays of leaves, its twigs hung with wishes written on paper strips, a paper ball with
+// long streamers, all swaying in the night breeze.
+const sasaArt = (v) => art(`mr-sasa|${v}`, 48, 84, () => {
+  const out = [];
+  for (let y = 84; y > 14; y -= 12) out.push(R(22, y - 12, 4, 12, '#5aa06a'), F(R(23, y - 12, 1.4, 12, '#7cc488')), F(R(21.5, y - 1.4, 5, 1.4, '#3f7a4c')));
+  // (Twigs out to where the wishes hang, then the leaves in sprays over the top.)
+  const twig = (x1, y1, x2, y2) => F(T([[x1, y1 - 0.6], [x2, y2 - 0.4], [x2, y2 + 0.4], [x1, y1 + 0.6]], '#5aa06a'));
+  out.push(twig(24, 34, 8, 30), twig(24, 44, 40, 40), twig(24, 26, 38, 22), twig(24, 30, 10, 24));
+  // (Each spray a fan of narrow leaves drooping from a twig's end, the way bamboo leaves hang: round
+  // discs of leaves read as a pagoda.)
+  const blade = (x, y, a, len, c) => {
+    const nx = -Math.sin(a) * 0.9;
+    const ny = Math.cos(a) * 0.9;
+    return T([[x - nx, y - ny], [x + Math.cos(a) * len * 0.55 - nx * 1.1, y + Math.sin(a) * len * 0.55 - ny * 1.1], [x + Math.cos(a) * len, y + Math.sin(a) * len], [x + Math.cos(a) * len * 0.55 + nx * 1.1, y + Math.sin(a) * len * 0.55 + ny * 1.1], [x + nx, y + ny]], c);
+  };
+  const sprays = [[24, 8, 0], [17, 13, -1], [31, 13, 1], [8, 24, -1], [10, 30, -1], [38, 22, 1], [40, 40, 1], [24, 18, 0]];
+  sprays.forEach(([x, y, side], n) => {
+    const fan = side < 0 ? [2.2, 2.6, 2.9, 3.3] : side > 0 ? [0.25, 0.55, 0.85, 1.15] : [0.35, 1.1, 2.0, 2.8];
+    fan.forEach((a, q) => out.push(blade(x, y, a, 9 + ((n + q) % 3) * 2, (n + q) % 2 ? '#4e9a62' : '#62ae72')));
+    out.push(F(blade(x, y, fan[1], 7, '#86cc92')));
+  });
+  return out;
+});
+function sasa(ctx, x, gy, wx, time, v) {
+  const sway = lean(time, wx, 0.3);
+  pivoted(ctx, x, gy, sway * 0.03, () => place(ctx, sasaArt(v), snap(x), gy + 2));
+  // The wishes: paper strips on threads from its twigs, each swinging a little on its own.
+  const hangs = [[-16, -54], [-11, -53], [10, -44], [15, -43], [12, -62], [-6, -60], [-14, -56]];
+  hangs.forEach(([dx, dy], k) => {
+    const px = x + dx + sway * 1.4;
+    const py = gy + dy;
+    const a = swing(time, wx + k * 9, 1.4, k);
+    pivoted(ctx, px, py, a, () => {
+      ctx.fillStyle = '#e8e0d0';
+      ctx.fillRect(px - 0.25, py, 0.5, 2);
+      ctx.fillStyle = TANZAKU[(k + v) % TANZAKU.length];
+      ctx.fillRect(px - 1.5, py + 2, 3, 8);
+      ctx.fillStyle = 'rgba(80,60,90,0.35)';
+      ctx.fillRect(px - 0.4, py + 3.5, 0.8, 4.5);
+    });
+  });
+  // The paper ball and its streamers.
+  const bx = x + 2 + sway * 1.2;
+  const by = gy - 46;
+  ctx.fillStyle = v % 2 ? '#ff8fb0' : '#ffd75e';
+  ctx.beginPath();
+  ctx.arc(bx, by, 3.2, 0, TAU);
+  ctx.fill();
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(bx - 1.6, by - 1.8, 1.2, 1.2);
+  for (let q = 0; q < 5; q++) {
+    const sx = bx - 2.4 + q * 1.2;
+    const wave = Math.sin(time * 2 + q * 0.7 + wx) * 1.6;
+    ctx.fillStyle = TANZAKU[(q + 1) % TANZAKU.length];
+    ctx.beginPath();
+    ctx.moveTo(sx - 0.5, by + 2);
+    ctx.quadraticCurveTo(sx + wave, by + 12, sx + wave * 1.4, by + 22);
+    ctx.lineTo(sx + wave * 1.4 + 1, by + 22);
+    ctx.quadraticCurveTo(sx + wave + 1, by + 12, sx + 0.5, by + 2);
+    ctx.fill();
+  }
+}
+
+const TRACKSIDE = new Set(['mr_sasa', 'mr_squad', 'mr_starter', 'mr_parasol', 'mr_pound', 'mr_kagami', 'mr_onsen', 'mr_toro', 'mr_snowman', 'mr_cocoa', 'mr_bigsnow', 'mr_fans', 'mr_bigdango', 'mr_yatai', 'mr_taiko', 'mr_bigchochin', 'mr_kgate', 'mr_kbanner', 'mr_ksubjects', 'mr_kpole', 'mr_kcrown', 'mr_hayate', 'mr_podium', 'mr_flag']);
 // A quarter sign beside the track. (As yours goes past it: the sign hops, its balloons jump, and
 // confetti pops off its top.)
 function quarterSign(ctx, map, x, gy, wx, n, time) {
@@ -6566,6 +6789,7 @@ function behindGround(ctx, map, cam, width, time) {
     else if (kind === 'mr_hayate') kingHayate(ctx, map, x, gy, wx, time);
     else if (kind === 'mr_podium') stadPodium(ctx, x, gy, time);
     else if (kind === 'mr_flag') stadFlag(ctx, x, gy, wx, time, extra ?? 0);
+    else if (kind === 'mr_sasa') sasa(ctx, x, gy, wx, time, extra ?? 0);
     else pivoted(ctx, x, gy, (lean(time, wx, 0.2) + 0.2) * 0.02, () => place(ctx, parasolArt(extra ?? 0), snap(x), gy + 2));
   }
   for (const [kind, wx, extra] of map.townPieces ?? []) {
@@ -6646,6 +6870,7 @@ export function drawCoursePiece(ctx, map, kind, wx, extra, cam, width, time) {
     case 'mr_hayate':
     case 'mr_podium':
     case 'mr_flag':
+    case 'mr_sasa':
     case 'mr_kstring':
     case 'mr_chochin':
     case 'mr_yatai':

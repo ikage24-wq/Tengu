@@ -23,7 +23,7 @@ const mochi = (seed, points, personality = 'stoic') => {
 function racer(...recs) {
   const char = createCharacter('Mina', { hairStyle: 'bob' });
   char.garden = { back: null, mochi: recs, eggs: [], unlocked: {} };
-  char.raceWins = Object.fromEntries(['sprint', 'swim', 'climb', 'glide', 'hills', 'grand'].map((s) => [s + '|beginner', true]));
+  char.raceWins = Object.fromEntries(['sprint', 'swim', 'climb', 'glide', 'hills', 'power', 'hurdles', 'grand'].map((s) => [s + '|beginner', true]));
   const w = createWorld(char);
   w.log = () => {};
   loadMap(w, 'mochi_stadium', 'board');
@@ -401,4 +401,33 @@ test('Mochitsuki Mountain: each racer smashes its own boulder (the stronger, the
   }
   assert.ok(times[2400] < times[300], `strong ${times[2400].toFixed(1)}s, weak ${times[300].toFixed(1)}s`);
   assert.ok(times[2400] > 2 && times[300] < 16, JSON.stringify(times));
+});
+
+test('Tanabata Hurdles: a weak flyer trips on the tall hurdles, a strong one sails over them all, and both get home', () => {
+  const seen = {};
+  for (const fly of [0, 2400]) {
+    const rec = mochi(90 + fly, 900);
+    rec.stats.fly.points = fly;
+    const w = racer(rec);
+    assert.ok(startRace(w, rec, 'hurdles'));
+    const R = w.race;
+    const outcomes = [];
+    let last = null;
+    for (let t = 0; t < 240 && R.phase !== 'done'; t += 1 / 30) {
+      updateWorld(w, 1 / 30, keys());
+      const j = R.racers[R.me].jump;
+      if (j && j !== last) outcomes.push(j.outcome);
+      last = j;
+    }
+    assert.ok(R.racers[R.me].done != null, 'yours home');
+    assert.equal(outcomes.length, 8, `jumped all eight: ${outcomes}`);
+    // (Anyone still mid-jump or mid-fall as it ends is put down on its feet, never left hanging.)
+    for (let t = 0; t < 0.5; t += 1 / 30) updateWorld(w, 1 / 30, keys());
+    for (const r of R.racers) assert.ok(!r.jump && !/^hurdle/.test(r.m.action?.name ?? ''), `lane ${r.lane} left mid-jump`);
+    seen[fly] = { outcomes, time: R.racers[R.me].done };
+  }
+  assert.ok(seen[2400].outcomes.every((o) => o === 'clear'), `strong: ${seen[2400].outcomes}`);
+  assert.ok(seen[0].outcomes.includes('fall'), `weak: ${seen[0].outcomes}`);
+  assert.ok(seen[0].outcomes.slice(0, 2).every((o) => o !== 'fall'), `the low ones first: ${seen[0].outcomes}`);
+  assert.ok(seen[2400].time < seen[0].time, JSON.stringify(seen));
 });

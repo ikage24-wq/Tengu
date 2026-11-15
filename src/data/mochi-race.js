@@ -16,6 +16,8 @@ export const RACE_STAGES = {
   // (2026-11-15: a strength course - obstacles only Power gets you through. The first look: one
   // huge boulder to smash, then the climb to the mortar.)
   power: { name: 'Mochitsuki Mountain', tab: 'Power', stat: 'power', map: 'mrace_power', about: 'Up a snowy mountain for the New Year mochi pounding: smash right through a huge boulder, then on up to the giant mortar at the top. All about Power.' },
+  // (2026-11-15: hurdles to leap, by Fly, at the speed Run brings it: `stat2`, the second stat it tests.)
+  hurdles: { name: 'Tanabata Hurdles', tab: 'Hurdles', stat: 'fly', stat2: 'run', map: 'mrace_hurdles', about: 'The star festival on a summer night: eight bamboo hurdles to leap, low ones first and the tallest last. Fly sets how high it jumps, Run how fast it comes at them; too low and it trips. Cheer just before a jump for a lift.' },
   grand: { name: 'Grand Mochi Course', tab: 'Grand', stat: null, map: 'mrace_grand', about: 'The meadow, the lake, a wall, a glide over the clouds and home over the hills. Everything.', prizeMul: 1.5, needs: 3 },
   tour: { name: 'Mochi Grand Tour', tab: 'Tour', stat: null, map: 'mrace_tour', about: 'A whole day: meadow, river, cliffs, a sunset glide and the lantern hills home. Stamina most of all.', prizeMul: 2.5, needs: 6 },
 };

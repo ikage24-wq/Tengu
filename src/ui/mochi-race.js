@@ -81,7 +81,7 @@ export function raceBoardWindow(ui, state, world) {
   // What it tests (its stat's icon), and the prizes.
   if (stage.stat) statIcon(ctx, stage.stat, x + W - 30, y + 11.5, 5);
   else STAT_ORDER.forEach((st, k) => statIcon(ctx, st, x + W - 30 - (4 - k) * 9, y + 11.5, 4));
-  text(ctx, `${rank.name} · ${stage.stat ? `tests ${STAT_WORD[stage.stat]}` : 'tests everything'}`, tx, y + 24, { size: 6.5, color: '#d0507a' });
+  text(ctx, `${rank.name} · ${stage.stat ? `tests ${STAT_WORD[stage.stat]}${stage.stat2 ? ` & ${STAT_WORD[stage.stat2]}` : ''}` : 'tests everything'}`, tx, y + 24, { size: 6.5, color: '#d0507a' });
   wrap(ctx, stage.about, tx, y + 34, W - 20 - 92 - 12, { size: 6.5, lineHeight: 8.4, color: COLORS.muted });
   icon(ctx, 'coin', tx + 4, y + 50, 7, '#e0a82a');
   text(ctx, [1, 2, 3].map((p) => `${NTH[p - 1]} ${prizeOf(win.stage, win.rank, p).toLocaleString()}`).join('  ·  '), tx + 12, y + 52.5, { size: 6.5, bold: true, color: '#b08a2a' });
@@ -128,7 +128,7 @@ export function raceBoardWindow(ui, state, world) {
     text(ctx, fit(ctx, lineOf(rec), cw - 30, 7, true), cx + 26, cy + 10, { size: 7, bold: true });
     // (What this stage tests, and Stamina; the Grand course, its best two.)
     // (What this stage tests, and Stamina; the Grand course, its best two: icon, grade, level.)
-    const shown = stage.stat ? [stage.stat, stage.stat === 'stamina' ? 'run' : 'stamina'] : Object.keys(STAT_WORD).sort((a, b) => rec.stats[b].points - rec.stats[a].points).slice(0, 2);
+    const shown = stage.stat ? [stage.stat, stage.stat2 ?? (stage.stat === 'stamina' ? 'run' : 'stamina')] : Object.keys(STAT_WORD).sort((a, b) => rec.stats[b].points - rec.stats[a].points).slice(0, 2);
     shown.forEach((st, k) => {
       const sx = cx + 30 + k * 50;
       statIcon(ctx, st, sx, cy + 16.5, 3.6);
@@ -173,7 +173,7 @@ export function raceBoardWindow(ui, state, world) {
   if (!times.length && win.pick && ty + 34 < by0) {
     const rec = win.pick;
     const [lo, hi] = RACE_RANKS[win.rank].rivals;
-    const stats = stage.stat ? [stage.stat, stage.stat === 'stamina' ? 'run' : 'stamina'] : STAT_ORDER;
+    const stats = stage.stat ? [stage.stat, stage.stat2 ?? (stage.stat === 'stamina' ? 'run' : 'stamina')] : STAT_ORDER;
     text(ctx, fit(ctx, `${rec.name ?? 'Your Mochi'} against the ${RACE_RANKS[win.rank].name} rivals`, W - 20, 7, true), x, ty + 4, { size: 7, bold: true, color: COLORS.muted });
     ty += 9;
     for (const st of stats) {

@@ -16,13 +16,13 @@
 //               behind, and (drawn with the racers) low wisps over the feet of anyone wading
 
 import { R, E, T, F, snap } from './pixel.js';
-import { ramp, planks, gable, hash, lean, pivoted } from './propkit.js';
+import { ramp, planks, gable, hash, lean, pivoted, swing } from './propkit.js';
 import { limb } from './figure.js';
 import { art, place } from './scenery.js';
 import { cragArt, CRAG_FACE_AT } from './garden.js';
 import { groundAt } from '../world/physics.js';
-import { drawMochiAnim, drawSpectator, SPECTATOR_BEATS, GAITS, SWIMS, FLIES, CLIMBS, runStyle } from './mochi-anim.js';
-import { runSpeed, lineupOffset, PODIUM, podiumSpot, INTRO, introLen, standings, progressOf, boulderX } from '../world/mochi-race.js';
+import { drawMochiAnim, drawSpectator, drawMallet, SPECTATOR_BEATS, GAITS, SWIMS, FLIES, CLIMBS, runStyle } from './mochi-anim.js';
+import { runSpeed, lineupOffset, PODIUM, podiumSpot, INTRO, introLen, standings, progressOf, boulderX, JUMP_H, JUMP_PHASE } from '../world/mochi-race.js';
 import { VW, VH } from '../input.js';
 import { CANT_POINTS, newRecord } from '../data/mochi-raise.js';
 import { rollMochi } from '../data/mochi-genes.js';
@@ -30,6 +30,7 @@ import { CHEER } from '../data/mochi-race.js';
 import { drawCoursePiece, noteRace, drawRaceBehind, drawRaceFront, archDango } from './courseart.js';
 
 const TAU = Math.PI * 2;
+const smooth01 = (k) => k * k * (3 - 2 * k);
 const WOOD = '#c8945a';
 const WOOD_DK = '#9a6a40';
 const SAKURA = '#ffb3c8';
@@ -542,10 +543,22 @@ function paintAhead(ctx, R, course, time) {
 }
 // ---------- The Power course's boulders (world/mochi-race.js, a 'smash' leg) ----------
 // A huge snow-capped granite boulder in each lane, cracking a little more with every hit (four
-// drawings), shaking as it's struck with chips of stone and snow flying off; then it bursts - chunks
-// thrown up and out, tumbling as they fall, a puff of snow - and a little heap of rubble is left.
+// drawings). Polished 2026-11-15: each blow lands with a flash, jolts the boulder back on its heel to
+// rock there a moment, throws chips of stone and snow back past the racer to bounce and lie in the
+// snow, kicks stone dust off its face and shakes snow off its cap to sift down it; grit drops out as
+// the cracks spread. The last blow lights the cracks up for a couple of frames, then it bursts -
+// chunks thrown up and out, tumbling, bouncing and lying there; a cloud of dust and snow boiling up
+// and thinning away, more rolling out along the ground - and a heap of rubble settles where it was.
 const BOULDER_W = 58;
 const BOULDER_H = 52;
+// (How long the last blow's lit-up cracks show before it bursts.)
+const BURST_AT = 0.07;
+// (How big a racer's blows land, by its range of Power - the smash or pound it does, render/
+// mochi-anim.js: a weak pat barely chips it, the strongest rock it right back.)
+const FORCE = [0.55, 0.7, 0.85, 1, 1.18, 1.36];
+// (Where a racer's fists meet its boulder, from the middle of the boulder's foot: the face it hits.)
+const HIT_DX = -25;
+const HIT_DY = -14;
 // (Three shapes, and every other lane's turned round, so the row never reads as one boulder stamped
 // six times: a round one, a tall one with a shoulder of rock, a broad flat one.)
 const BOULDER_SHAPES = [
@@ -553,20 +566,107 @@ const BOULDER_SHAPES = [
   [[28, 29, 23, 23], [25, 25, 18, 18], [21, 17, 8, 7], [40, 40, 14, 9], [26, 8, 14, 5]],
   [[30, 33, 28, 19], [27, 30, 23, 14], [19, 25, 11, 6], [41, 43, 15, 7], [30, 16, 20, 5]],
 ];
+const CRACKS = [
+  [[30, 16, 26, 30, 0.8, 0.6], [26, 30, 30, 40, 0.7, 0.5]],
+  [[26, 30, 14, 34, 0.7, 0.5], [30, 22, 42, 28, 0.7, 0.5], [42, 28, 46, 38, 0.6, 0.4]],
+  [[14, 34, 10, 44, 0.6, 0.4], [30, 40, 34, 49, 0.6, 0.4], [42, 28, 50, 22, 0.6, 0.4]],
+];
 const boulderArt = (crack, v = 0) => art(`mr-boulder|${crack}|${v}`, BOULDER_W, BOULDER_H, () => {
   const [body, lit, glint, dark, cap] = BOULDER_SHAPES[v % BOULDER_SHAPES.length];
   const out = [E(...body, '#8a93a6'), F(E(...lit, '#9aa3b6')), F(E(...glint, '#b3bccd')), F(E(...dark, '#767f92'))];
   if (v === 1) out.push(E(46, 36, 10, 12, '#838ca0'), F(E(44, 33, 7, 8, '#959eb2')));
   out.push(F(E(...cap, '#f4f8ff')), F(E(cap[0] - 6, cap[1] - 2, cap[2] / 2, cap[3] * 0.56, '#ffffff')), F(E(cap[0] + 12, cap[1] + 3, 6, 3, '#eaf0fb')));
   out.push(F(E(29, 51, 27, 1.4, '#c8d4e8')));
-  const C = '#4f566a';
-  if (crack >= 1) out.push(F(limb(30, 16, 26, 30, 0.8, 0.6, C)), F(limb(26, 30, 30, 40, 0.7, 0.5, C)));
-  if (crack >= 2) out.push(F(limb(26, 30, 14, 34, 0.7, 0.5, C)), F(limb(30, 22, 42, 28, 0.7, 0.5, C)), F(limb(42, 28, 46, 38, 0.6, 0.4, C)));
-  if (crack >= 3) out.push(F(limb(14, 34, 10, 44, 0.6, 0.4, C)), F(limb(30, 40, 34, 49, 0.6, 0.4, C)), F(limb(42, 28, 50, 22, 0.6, 0.4, C)), F(E(30, 30, 2.4, 2, '#3a3f50')));
+  // (Crack 4 is the last blow landing: every crack blazing with light from inside.)
+  const lines = CRACKS.slice(0, Math.min(3, crack)).flat();
+  if (crack >= 4) {
+    for (const [x1, y1, x2, y2, w1, w2] of lines) out.push(F(limb(x1, y1, x2, y2, w1 * 2.4, w2 * 2.4, '#ffc977')));
+    for (const [x1, y1, x2, y2, w1, w2] of lines) out.push(F(limb(x1, y1, x2, y2, w1 * 1.1, w2 * 1.1, '#fffbe8')));
+    out.push(F(E(30, 30, 3.4, 3, '#fff3c4')));
+  } else {
+    for (const [x1, y1, x2, y2, w1, w2] of lines) out.push(F(limb(x1, y1, x2, y2, w1, w2, '#4f566a')));
+    if (crack >= 3) out.push(F(E(30, 30, 2.4, 2, '#3a3f50')));
+  }
   return out;
 });
 const chunkArt = (k) => art(`mr-chunk|${k % 3}`, 14, 12, () => [T([[1, 6], [5, 1], [12, 3], [13, 9], [6, 11]], ['#8a93a6', '#9aa3b6', '#767f92'][k % 3]), F(T([[4, 3], [9, 3], [6, 6]], '#b3bccd'))]);
 const rubbleArt = () => art('mr-rubble', 40, 12, () => [E(10, 8, 7, 4, '#8a93a6'), E(22, 9, 8, 3.6, '#9aa3b6'), E(31, 8, 6, 4, '#767f92'), F(E(20, 4.6, 12, 2, '#f4f8ff')), F(E(20, 11.4, 18, 1, '#c8d4e8'))]);
+// Where a piece thrown from (x0, y0) at (vx, vy) is `t` seconds on, under gravity `g`: one bounce off
+// the ground at `floor` (a third of its speed back up, half along), then sliding to a stop and lying
+// there. [x, y, lying still, when it first landed].
+function thrown(t, x0, y0, vx, vy, g, floor) {
+  const a = g / 2;
+  const t1 = (-vy + Math.sqrt(Math.max(0, vy * vy - 4 * a * (y0 - floor)))) / (2 * a);
+  if (t <= t1) return [x0 + vx * t, y0 + vy * t + a * t * t, false, t1];
+  const x1 = x0 + vx * t1;
+  const up = -(vy + g * t1) * 0.32;
+  const side = vx * 0.5;
+  const t2 = (-2 * up) / g;
+  const u = t - t1;
+  if (u <= t2) return [x1 + side * u, floor + up * u + a * u * u, false, t1];
+  const v = Math.min(u - t2, 0.25);
+  return [x1 + side * t2 + side * (v - v * v * 2), floor, v >= 0.25, t1];
+}
+// The flash where a blow lands: a jagged star, white at its heart, there for a few frames and gone.
+function impactStar(ctx, x, y, u, size, seed) {
+  if (u < 0 || u > 0.12) return;
+  const k = u < 0.04 ? 1 : 1 - (u - 0.04) / 0.08;
+  const turn = hash(seed) * 0.8;
+  for (const [col, sc] of [['#fff1c2', 1], ['#ffffff', 0.5]]) {
+    ctx.fillStyle = col;
+    ctx.beginPath();
+    for (let i = 0; i < 16; i++) {
+      const a = turn + (i * Math.PI) / 8;
+      const r = (i % 2 ? 0.36 : 0.75 + 0.45 * hash(seed + i)) * size * sc * (0.55 + 0.45 * k);
+      ctx.lineTo(x + Math.cos(a) * r, y + Math.sin(a) * r);
+    }
+    ctx.closePath();
+    ctx.globalAlpha = Math.min(1, k * 1.5);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+}
+// A cloud of soft puffs - dust, snow, flour - `[x, y, r]` each: every puff's shaded round first,
+// then every lit top over them, so they billow into one solid shape (as pixel art's clouds are,
+// never see-through rounds showing through each other); each thins away by shrinking.
+function cloud(ctx, puffs, col, lit) {
+  ctx.fillStyle = col;
+  for (const [x, y, r] of puffs) {
+    if (r <= 0.3) continue;
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, TAU);
+    ctx.fill();
+  }
+  ctx.fillStyle = lit;
+  for (const [x, y, r] of puffs) {
+    if (r <= 0.6) continue;
+    ctx.beginPath();
+    ctx.arc(x - r * 0.15, y - r * 0.22, r * 0.74, 0, TAU);
+    ctx.fill();
+  }
+}
+// How big a puff is `q` seconds into its `life`: swelling quickly to `r`, holding, then shrinking
+// away to nothing over the second half.
+const puffR = (q, life, r) => (q < 0 || q > life ? 0 : r * Math.min(1, q / (life * 0.2)) ** 0.5 * (q < life / 2 ? 1 : 1 - ((q - life / 2) / (life / 2)) ** 1.5));
+// A four-pointed twinkle, `r` to its points.
+function twinkle(ctx, x, y, r) {
+  if (r < 0.4) return;
+  ctx.fillStyle = '#fff3a0';
+  ctx.beginPath();
+  ctx.moveTo(x, y - r);
+  ctx.lineTo(x + r * 0.28, y);
+  ctx.lineTo(x, y + r);
+  ctx.lineTo(x - r * 0.28, y);
+  ctx.closePath();
+  ctx.moveTo(x - r, y);
+  ctx.lineTo(x, y - r * 0.28);
+  ctx.lineTo(x + r, y);
+  ctx.lineTo(x, y + r * 0.28);
+  ctx.closePath();
+  ctx.fill();
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(x - 0.5, y - 0.5, 1, 1);
+}
 function drawBoulders(ctx, map, race, course, cam) {
   const leg = course.legs.find((l) => l.kind === 'smash');
   if (!leg) return;
@@ -575,62 +675,162 @@ function drawBoulders(ctx, map, race, course, cam) {
   for (const r of [...race.racers].sort((a, b) => b.lane - a.lane)) {
     const wx = boulderX(leg, r);
     const x = wx - cam.x;
-    if (x < -90 || x > VW + 90) continue;
+    if (x < -120 || x > VW + 120) continue;
     const gy = groundAt(map, wx) - cam.y;
     const rock = r.rock;
     // (A friend's ghost or a racer seen from afar has no boulder of its own here: past it, it's broken.)
     const broke = rock?.broke != null ? C - rock.broke : r.leg > at && !rock ? 9 : null;
-    if (broke == null) {
+    const hx = x + HIT_DX;
+    const hy = gy + HIT_DY;
+    const fx = (r.fx ??= { crack: 0, crackAt: -9 });
+    const force = FORCE[rock?.tier ?? 3];
+    if (broke == null || broke < BURST_AT) {
       const k = rock ? 1 - rock.hp / rock.max : 0;
-      const crack = k <= 0 ? 0 : k < 0.34 ? 1 : k < 0.67 ? 2 : 3;
+      const crack = broke != null ? 4 : k <= 0 ? 0 : k < 0.34 ? 1 : k < 0.67 ? 2 : 3;
+      if (crack < 4 && crack > fx.crack) Object.assign(fx, { crack, crackAt: C });
       const since = rock?.hits.length ? C - rock.hits[rock.hits.length - 1] : 9;
-      const shake = since < 0.18 ? Math.sin(since * 90) * 1.6 * (1 - since / 0.18) : 0;
-      place(ctx, boulderArt(crack, r.lane), snap(x + shake), gy + 3, { flip: r.lane % 2 === 1 });
-      for (const h of rock?.hits ?? []) {
-        const u = C - h;
-        if (u > 0.6 || u < 0) continue;
-        ctx.globalAlpha = 1 - u / 0.6;
-        for (let i = 0; i < 5; i++) {
-          const a = -2.5 + i * 0.32 + hash(h * 7 + i) * 0.3;
-          const v = 40 + hash(h * 3 + i) * 34;
-          ctx.fillStyle = i % 2 ? '#9aa3b6' : '#f4f8ff';
-          ctx.fillRect(x - 22 + Math.cos(a) * v * u, gy - 24 + Math.sin(a) * v * u + 110 * u * u, 2, 2);
+      // Each blow jolts it back on its heel, and it rocks there a moment, settling; the last one
+      // sets it shuddering.
+      const tipBack = since < 0.5 ? 0.045 * force ** 1.6 * Math.exp(-since * 8) * Math.sin(since * 28 + 1.3) : 0;
+      const push = since < 0.3 ? 1.6 * force * Math.exp(-since * 14) : 0;
+      const quake = broke != null ? (Math.floor(broke * 60) % 2 ? 1.5 : -1.5) : 0;
+      pivoted(ctx, x + 22, gy + 2, tipBack, () => place(ctx, boulderArt(crack, r.lane), snap(x + push + quake), gy + 3, { flip: r.lane % 2 === 1 }));
+      // (Grit and dust dropping out of the cracks as they spread.)
+      const cu = C - fx.crackAt;
+      if (cu < 0.8) {
+        cloud(ctx, [0, 1, 2].map((i) => [x - 6 + i * 6, gy - 30 + i * 5 + 10 * cu, puffR(cu - i * 0.05, 0.75, 3.4)]), '#bfc6d2', '#dde2ea');
+        ctx.fillStyle = '#767f92';
+        for (let i = 0; i < 4; i++) {
+          const py = gy - 28 + i * 4 + 140 * cu * cu;
+          if (py < gy) ctx.fillRect(x - 5 + i * 4, py, 1.4, 1.4);
+        }
+      }
+    } else {
+      const b = broke - BURST_AT;
+      const seed = r.seed * 7 + 3;
+      // Rubble settling in where it stood, as the dust clears.
+      place(ctx, rubbleArt(), snap(x), gy + 3, { alpha: Math.min(1, b / 0.35) });
+      if (b < 1.6) {
+        // Dust rolling out along the snow either side...
+        if (b < 0.9) {
+          for (const side of [-1, 1]) {
+            const e = 1 - (1 - b / 0.9) ** 3;
+            ctx.globalAlpha = 0.65 * (1 - b / 0.9);
+            ctx.fillStyle = '#e6ebf3';
+            ctx.beginPath();
+            ctx.ellipse(x + side * (14 + 46 * e), gy - 2, 10 + 16 * e, 3.5 + 2 * e, 0, 0, TAU);
+            ctx.fill();
+          }
+          ctx.globalAlpha = 1;
+        }
+        // ...a cloud of dust and snow boiling up and out where it stood, rising, spreading and
+        // breaking up as it thins away...
+        // (Rock dust, grey: big rounds low in its heart, smaller ones thrown out round its edge.)
+        const puffs = [];
+        for (let i = 0; i < 16; i++) {
+          const edge = i >= 7;
+          const q = b - (i % 4) * 0.025;
+          const e = 1 - (1 - Math.min(1, Math.max(0, q) / 1.0)) ** 2;
+          const a = Math.PI + ((i % 7) / 6) * Math.PI + (hash(seed + 60 + i) - 0.5) * 0.4;
+          const d0 = (edge ? 12 : 4) + 6 * hash(seed + 70 + i);
+          const reach = 1 + (edge ? 2.4 : 1.4) * e;
+          puffs.push([x + Math.cos(a) * d0 * reach * 1.4, gy - 14 + Math.sin(a) * d0 * reach * 0.7 - 8 * e, puffR(q, edge ? 0.8 : 1.0, edge ? 3 + 2.5 * hash(seed + 80 + i) : 7 + 3 * hash(seed + 80 + i))]);
+        }
+        cloud(ctx, puffs, '#aeb6c4', '#d6dce6');
+        // ...and the boulder thrown apart: chunks from all over it flung out from its heart and up,
+        // tumbling, bouncing and lying there before they fade into the heap...
+        const alpha = Math.min(1, (1.6 - b) / 0.4);
+        for (let i = 0; i < 14; i++) {
+          const a = Math.PI + ((i + 0.5) / 14) * Math.PI + (hash(seed + i) - 0.5) * 0.35;
+          const d0 = 0.35 + 0.6 * hash(seed + 20 + i);
+          const ox = Math.cos(a) * 20 * d0;
+          const oy = Math.sin(a) * 16 * d0;
+          const v = 60 + hash(seed * 3 + i) * 60;
+          const [px, py, , t1] = thrown(b, x + ox, gy - 20 + oy, Math.cos(a) * v * 0.9, Math.sin(a) * v * 0.7 - 55, 340, gy + 1);
+          if (i % 3 !== 2) {
+            const turn = (Math.cos(a) > 0 ? 9 : -9) * (0.7 + hash(seed + 30 + i) * 0.6) * Math.min(b, t1 + 0.15);
+            pivoted(ctx, px, py - 6, turn, () => place(ctx, chunkArt(i), snap(px), py, { alpha }));
+          } else {
+            ctx.globalAlpha = alpha;
+            ctx.fillStyle = i % 2 ? '#9aa3b6' : '#767f92';
+            ctx.fillRect(px - 1.5, py - 3, 3, 3);
+            ctx.globalAlpha = 1;
+          }
+        }
+        // ...and its snow cap flung up in flakes, drifting down.
+        for (let i = 0; i < 12; i++) {
+          const a = -Math.PI / 2 + (i - 5.5) * 0.24;
+          const v = 60 + hash(seed + 90 + i) * 50;
+          const drag = (1 - Math.exp(-3 * b)) / 3;
+          const py = gy - 40 + Math.sin(a) * v * drag + 22 * b * b;
+          if (py > gy) continue;
+          ctx.globalAlpha = Math.min(1, (1.6 - b) / 0.5);
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(x + Math.cos(a) * v * drag + Math.sin(b * 4 + i) * 3, py, i % 2 ? 1.6 : 1.2, i % 2 ? 1.6 : 1.2);
         }
         ctx.globalAlpha = 1;
       }
-      continue;
     }
-    if (broke < 1.1) {
-      for (let i = 0; i < 7; i++) {
-        const a = -Math.PI / 2 + (i - 3) * 0.42 + hash(r.seed * 3 + i) * 0.2;
-        const v = 80 + hash(r.seed + i) * 70;
-        const px = x + Math.cos(a) * v * broke;
-        const py = gy - 26 + Math.sin(a) * v * broke + 260 * broke * broke;
-        if (py > gy + 4) continue;
-        pivoted(ctx, px, py, broke * (i % 2 ? 9 : -7), () => place(ctx, chunkArt(i), snap(px), py + 6, { alpha: Math.min(1, (1.1 - broke) * 3) }));
+    // Every blow: the flash, stone dust off its face, chips flung back and snow shaken off its cap.
+    for (const h of rock?.hits ?? []) {
+      const u = C - h;
+      if (u < 0 || u > 1.1) continue;
+      const seed = r.seed * 13 + Math.round(h * 30);
+      impactStar(ctx, hx, hy, u, 9 * force, seed);
+      cloud(ctx, [0, 1, 2].map((i) => {
+        const q = u - i * 0.03;
+        return [hx - 3 - q * (14 + i * 6) * force, hy - 2 - q * (10 + i * 5) * force + i * 3, puffR(q, 0.55, (3.2 + i * 0.8) * force)];
+      }), '#c3cad6', '#e3e7ef');
+      ctx.globalAlpha = Math.min(1, (1.1 - u) / 0.3);
+      for (let i = 0; i < Math.round(7 * force ** 1.4); i++) {
+        const a = -Math.PI * (0.55 + 0.4 * hash(seed + i));
+        const v = (45 + hash(seed * 3 + i) * 55) * (0.6 + 0.4 * force);
+        const [px, py, lying] = thrown(u, hx, hy, Math.cos(a) * v, Math.sin(a) * v, 330, gy);
+        const sz = i % 2 ? 2 : 1.4;
+        ctx.fillStyle = i % 3 === 0 ? '#f4f8ff' : i % 3 === 1 ? '#9aa3b6' : '#767f92';
+        ctx.fillRect(px - sz / 2, py - sz, sz, lying ? sz * 0.7 : sz);
       }
-      const puff = Math.min(1, broke / 0.5);
-      ctx.globalAlpha = 0.7 * (1 - broke / 1.1);
-      ctx.fillStyle = '#ffffff';
-      ctx.beginPath();
-      ctx.ellipse(x, gy - 18 - puff * 10, 18 + puff * 26, 12 + puff * 10, 0, 0, Math.PI * 2);
-      ctx.fill();
+      ctx.globalAlpha = 1;
+      for (let i = 0; i < Math.round(6 * force ** 1.4); i++) {
+        const q = u - 0.03 - hash(seed + 40 + i) * 0.12;
+        if (q < 0 || q > 0.9) continue;
+        const sx = x - 15 + i * 6 + hash(seed + 50 + i) * 3;
+        const py = gy - 44 + Math.abs(sx - x) * 0.35 + 18 * q + 50 * q * q;
+        ctx.globalAlpha = Math.min(1, (0.9 - q) / 0.3);
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(sx + Math.sin(q * 9 + i) * 2, py, i % 2 ? 1.6 : 1.2, i % 2 ? 1.6 : 1.2);
+      }
       ctx.globalAlpha = 1;
     }
-    place(ctx, rubbleArt(), snap(x), gy + 3);
   }
 }
 
 // The Power course's mortars (world/mochi-race.js, a 'pound' leg): a wooden usu in each lane with a
-// lump of mochi in it. Each pound squashes it down and springs it back up with a puff of rice
-// flour, and it grows smoother and rounder as it's pounded - lumpy at first, a smooth shining dome
-// when it's done, with a sparkle as yours dashes for the line.
+// lump of mochi in it, and the mallet leant against it, waiting. Polished 2026-11-15: each pound
+// lands with a thump, jolts the mortar down into the snow and splats the mochi flat and wide, with
+// rice flour puffing out either side and flecks of it flung up; as the mallet's tugged free the
+// sticky mochi stretches up after it, lets go and wobbles back. It grows smoother and rounder as
+// it's pounded - lumpy at first, a smooth shining dome when it's done, a glint sweeping across it
+// and twinkles popping up as the mallet's put back.
 // (Sized for a Mochi: about knee to waist on one, as a real mortar is on a person.)
 const mortarArt = () => art('mr-usu', 26, 14, () => [
   T([[2, 3], [24, 3], [21, 13], [5, 13]], '#b07848'), F(T([[2, 3], [24, 3], [23.4, 4.6], [2.6, 4.6]], '#c8915a')),
   E(13, 3, 11, 2.4, '#c8915a'), F(E(13, 3, 9, 1.8, '#6a4428')),
   F(R(4, 7, 18, 1.4, '#8a5a34')), F(R(5, 10, 16, 1.4, '#8a5a34')), F(E(13, 13.6, 12, 1, '#c8d4e8')),
 ]);
+// (Where the mallet's head comes down on the mochi, from the mortar's middle.)
+const POUND_DX = 3;
+// The mochi stretched up after the mallet, `h` tall: wide at its foot, pinched in the middle.
+function strand(ctx, x, y, h, w, col) {
+  ctx.fillStyle = col;
+  ctx.beginPath();
+  ctx.moveTo(x - 3.5 - w, y + 1);
+  ctx.quadraticCurveTo(x - 0.8 - w, y - h * 0.5, x - 2.2 - w, y - h - w);
+  ctx.lineTo(x + 2.2 + w, y - h - w);
+  ctx.quadraticCurveTo(x + 0.8 + w, y - h * 0.5, x + 3.5 + w, y + 1);
+  ctx.closePath();
+  ctx.fill();
+}
 function drawMortars(ctx, map, race, course, cam) {
   const leg = course.legs.find((l) => l.kind === 'pound');
   if (!leg) return;
@@ -641,22 +841,32 @@ function drawMortars(ctx, map, race, course, cam) {
     const x = wx - cam.x;
     if (x < -60 || x > VW + 60) continue;
     const gy = groundAt(map, wx) - cam.y;
-    place(ctx, mortarArt(), snap(x), gy + 2);
     const p = r.pound;
+    const force = FORCE[p?.tier ?? 3];
     const k = p ? p.got / p.need : r.leg > at ? 1 : 0;
     const since = p?.hits.length ? C - p.hits[p.hits.length - 1] : 9;
-    const squash = since < 0.3 ? 1 - 0.4 * Math.sin((since / 0.3) * Math.PI) * (1 - since / 0.3) : 1;
-    const cy = gy - 9;
-    const ry = (2.4 + 2.2 * k) * squash;
-    const rx = (7 + 1 * k) * (2 - squash) ** 0.5;
+    const jolt = since < 0.07 && force >= 0.7 ? 1 : 0;
+    place(ctx, mortarArt(), snap(x), gy + 2 + jolt);
+    // The mochi: splatted flat and wide by each pound, springing back up, and wobbling after the tug.
+    const squash = since < 0.3 ? 1 - 0.4 * Math.min(1.2, force) * Math.sin((since / 0.3) * Math.PI) * (1 - since / 0.3) : 1;
+    const wob = since > 0.3 && since < 0.6 ? 0.12 * Math.sin((since - 0.3) * 40) * (1 - (since - 0.3) / 0.3) : 0;
+    const cy = gy - 9 + jolt;
+    const ry = (2.4 + 2.2 * k) * squash * (1 + wob);
+    const rx0 = 7 + 1 * k;
+    const rx = rx0 * (2 - squash) ** 0.5 * (1 + (0.25 * (1 - squash)) / 0.4);
+    // (Stuck to the mallet as it's tugged free, then letting go.)
+    const pull = p && since >= 0.16 && since < 0.36 ? (since < 0.3 ? smooth01((since - 0.16) / 0.14) : 1 - (since - 0.3) / 0.06) : 0;
+    const sx = x + POUND_DX;
     ctx.fillStyle = '#3a2d4f';
     ctx.beginPath();
     ctx.ellipse(x, cy, rx + 1, ry + 1, 0, Math.PI, Math.PI * 2);
     ctx.fill();
+    if (pull > 0) strand(ctx, sx, cy - ry, 6 * pull, 1, '#3a2d4f');
     ctx.fillStyle = '#fbf7f0';
     ctx.beginPath();
     ctx.ellipse(x, cy, rx, ry, 0, Math.PI, Math.PI * 2);
     ctx.fill();
+    if (pull > 0) strand(ctx, sx, cy - ry, 6 * pull, 0, '#fbf7f0');
     // (Lumpy until it's well pounded: a couple of knobs that smooth away.)
     if (k < 0.8) {
       ctx.fillStyle = '#eee6da';
@@ -668,31 +878,142 @@ function drawMortars(ctx, map, race, course, cam) {
     }
     ctx.fillStyle = '#ffffff';
     ctx.fillRect(Math.round(x - rx * 0.45), Math.round(cy - ry * 0.75), Math.max(1, Math.round(rx * 0.35)), 1);
-    // A puff of rice flour off each pound.
-    if (since < 0.5) {
-      ctx.globalAlpha = 0.8 * (1 - since / 0.5);
+    // Every pound: a thump, rice flour puffing out either side, flecks of it flung up.
+    for (const h of p?.hits ?? []) {
+      const u = C - h;
+      if (u < 0 || u > 0.7) continue;
+      const seed = r.seed * 11 + Math.round(h * 30);
+      impactStar(ctx, sx, cy - ry - 1, u, 5 * force, seed);
+      cloud(ctx, [0, 1, 2, 3].map((i) => {
+        const q = u - (i >> 1) * 0.04;
+        const e = 1 - (1 - Math.min(1, Math.max(0, q) / 0.6)) ** 2;
+        return [sx + (i % 2 ? 1 : -1) * (rx0 + 1 + 9 * e * force + (i >> 1) * 3), cy - 3 - 8 * e * force - (i >> 1) * 3, puffR(q, 0.55, (2.6 + (i >> 1) * 0.6) * force)];
+      }), '#ebe4d8', '#ffffff');
+      ctx.globalAlpha = Math.min(1, (0.7 - u) / 0.25);
       ctx.fillStyle = '#ffffff';
-      for (let i = 0; i < 5; i++) {
-        const a = Math.PI + (i + 0.5) * (Math.PI / 5);
-        ctx.fillRect(x + Math.cos(a) * (rx + since * 30), cy - 2 + Math.sin(a) * (ry + since * 18), 1.6, 1.6);
+      for (let i = 0; i < Math.round(6 * force ** 1.4); i++) {
+        const a = -Math.PI * (0.15 + 0.7 * hash(seed + i));
+        const v = (35 + hash(seed * 5 + i) * 35) * (0.6 + 0.4 * force);
+        const fy = cy - 3 + Math.sin(a) * v * u + 160 * u * u;
+        if (fy < gy) ctx.fillRect(sx + Math.cos(a) * v * u, fy, 1.2, 1.2);
       }
       ctx.globalAlpha = 1;
     }
-    // Done: a little sparkle over the finished mochi.
+    // Done: a glint sweeping across the smooth mochi, and twinkles popping up over it.
     const doneFor = p?.finished != null ? C - p.finished : null;
-    if (doneFor != null && doneFor < 0.8) {
-      ctx.globalAlpha = 1 - doneFor / 0.8;
-      ctx.fillStyle = '#fff3a0';
-      for (let i = 0; i < 3; i++) {
-        const sx = x - 8 + i * 8;
-        const sy = cy - ry - 4 - doneFor * 10 - (i % 2) * 3;
-        ctx.fillRect(sx - 0.6, sy - 2, 1.2, 4);
-        ctx.fillRect(sx - 2, sy - 0.6, 4, 1.2);
+    if (doneFor != null && doneFor < 1) {
+      if (doneFor < 0.4) {
+        ctx.save();
+        ctx.beginPath();
+        ctx.ellipse(x, cy, rx, ry, 0, Math.PI, Math.PI * 2);
+        ctx.clip();
+        const gx = x - rx - 3 + (2 * rx + 6) * (doneFor / 0.4);
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.moveTo(gx, cy - ry - 1);
+        ctx.lineTo(gx + 2.5, cy - ry - 1);
+        ctx.lineTo(gx + 0.5, cy + 1);
+        ctx.lineTo(gx - 2, cy + 1);
+        ctx.fill();
+        ctx.restore();
       }
-      ctx.globalAlpha = 1;
+      for (let i = 0; i < 5; i++) {
+        const q = doneFor - i * 0.08;
+        if (q >= 0 && q < 0.6) twinkle(ctx, x - 9 + i * 4.5, cy - ry - 3 - (i % 3) * 3 - q * 8, Math.sin((q / 0.6) * Math.PI) * 3.2);
+      }
+    }
+    // The mallet, leant against the mortar: waiting for its racer, and put back when it's done.
+    // (Its head down in the snow by the mortar's foot, its handle up against the rim.)
+    if (!p || p.finished != null) drawMallet(ctx, x - 13 + 21 * Math.sin(0.35), gy - 5.5 - 21 * Math.cos(0.35), 0.6, false, Math.PI + 0.35);
+  }
+}
+
+// ---------- Tanabata Hurdles' hurdles (world/mochi-race.js, a 'hurdle' leg) ----------
+// A bamboo hurdle across the track: two green posts on stone feet, lashed to a bamboo bar at its
+// height, two wishes on paper strips hanging from the bar. A toe catching it shakes it; a racer going
+// over it in a heap rocks it hard on its feet, and it settles. Around the racers: a puff of dust
+// where each lands (more the higher it came from), a splat where one goes down, and little stars
+// lifting off with one that was cheered into its jump.
+const hurdleArt = (h) => art(`mr-hurdle|${h}`, 24, h + 8, () => {
+  const foot = h + 8;
+  const out = [];
+  for (const px of [2.6, 18.8]) {
+    out.push(R(px, 6, 2.6, foot - 7, '#5aa06a'), F(R(px + 0.4, 6, 0.9, foot - 7, '#7cc488')));
+    for (let y = foot - 6; y > 9; y -= 6) out.push(F(R(px - 0.3, y, 3.2, 0.9, '#3f7a4c')));
+  }
+  out.push(R(0.5, 8, 23, 2.6, '#6ab078'), F(R(0.5, 8, 23, 0.9, '#8ed49a')), F(R(8, 8, 0.9, 2.6, '#3f7a4c')), F(R(15, 8, 0.9, 2.6, '#3f7a4c')));
+  out.push(F(R(2.4, 7.6, 3, 3.4, '#d8c49a')), F(R(18.6, 7.6, 3, 3.4, '#d8c49a')));
+  out.push(E(3.9, foot - 0.8, 3.4, 1.6, '#8a8ea8'), E(20.1, foot - 0.8, 3.4, 1.6, '#8a8ea8'));
+  return out;
+});
+function drawHurdles(ctx, map, race, course, cam, time) {
+  const C = race.clock;
+  course.legs.forEach((leg, idx) => {
+    if (leg.kind !== 'hurdle') return;
+    const x = leg.x - cam.x;
+    if (x < -40 || x > VW + 40) return;
+    const gy = groundAt(map, leg.x) - cam.y;
+    let rock = 0;
+    for (const b of race.bars?.[idx] ?? []) {
+      const u = C - b.at;
+      if (u >= 0 && u < 1.6) rock += b.k * 0.09 * Math.exp(-u * 4) * Math.sin(u * 22);
+    }
+    pivoted(ctx, x, gy + 1, rock, () => {
+      place(ctx, hurdleArt(leg.h), snap(x), gy + 1);
+      for (const [dx, k] of [[-5, 0], [5, 1]]) {
+        const px = x + dx;
+        const py = gy - leg.h + 2.6;
+        pivoted(ctx, px, py, swing(time, leg.x + k * 9, 1.4, k) - rock * 4, () => {
+          ctx.fillStyle = TANZAKU_RACE[(idx + k) % TANZAKU_RACE.length];
+          ctx.fillRect(px - 1.4, py + 1, 2.8, 6.5);
+          ctx.fillStyle = 'rgba(80,60,90,0.35)';
+          ctx.fillRect(px - 0.4, py + 2.2, 0.8, 4);
+        });
+      }
+    });
+  });
+  for (const r of race.racers) {
+    const x = r.x - cam.x;
+    if (x < -40 || x > VW + 40) continue;
+    const gy = groundAt(map, r.x) - cam.y;
+    const land = r.landed;
+    if (land && C - land.at < 0.45) {
+      const u = C - land.at;
+      const lx = land.x - cam.x;
+      const size = 0.7 + land.k * 0.12;
+      cloud(ctx, [[-1, -4], [1, 4]].map(([s, dx]) => [lx + dx + s * u * 14, gy - 2 - u * 4, puffR(u, 0.42, 2.4 * size)]), '#c8bcd0', '#ece4f0');
+    }
+    const j = r.jump;
+    if (!j) continue;
+    const e = C - j.from + (j.gain ?? 0);
+    if (j.outcome === 'fall' && e > 0.52 && e < 1.1) {
+      const u = e - 0.52;
+      cloud(ctx, [-8, -2, 4, 10].map((dx, i) => [x + dx + (i % 2 ? 1 : -1) * u * 10, gy - 3 - u * 6 - (i % 2) * 2, puffR(u, 0.5, 3.4)]), '#c8bcd0', '#ece4f0');
+    }
+    // (Each range's own touch in the air: the scrambler's sweat flying off, the star jump's stars.)
+    const air = (e - JUMP_PHASE.pre) / j.T;
+    const h = air > 0 && air < 1 ? JUMP_H[j.tier] * 4 * air * (1 - air) : 0;
+    if (j.outcome !== 'fall' && j.tier === 0 && air > 0.3 && air < 1) {
+      const u = (air - 0.3) * j.T;
+      ctx.fillStyle = '#8fd3ff';
+      for (const [sx, sy] of [[-1, -1], [1, -0.6], [0.4, -1.3]]) ctx.fillRect(x + sx * (5 + u * 40), gy - h - 24 + sy * u * 30 + u * u * 160, 1.4, 1.8);
+    }
+    if (j.outcome !== 'fall' && j.tier === 3 && air > 0.4 && air < 0.95) {
+      const u = (air - 0.4) / 0.55;
+      for (let i = 0; i < 6; i++) {
+        const a = (i / 6) * TAU + 0.4;
+        twinkle(ctx, x + Math.cos(a) * (8 + u * 14), gy - h - 14 + Math.sin(a) * (8 + u * 12), Math.sin(u * Math.PI) * 2.4);
+      }
+    }
+    if (j.cheered && e < 0.4) {
+      for (let i = 0; i < 4; i++) {
+        const q = e - i * 0.05;
+        if (q >= 0 && q < 0.3) twinkle(ctx, x - 6 + i * 4, gy - 2 - q * 30 - (i % 2) * 3, Math.sin((q / 0.3) * Math.PI) * 2.6);
+      }
     }
   }
 }
+const TANZAKU_RACE = ['#ff8fb0', '#ffd75e', '#8fd3ff', '#9fe0a0', '#c8a8f0', '#ffffff'];
 
 export function drawRace(ctx, world, cam, time) {
   const R = world.race;
@@ -711,6 +1032,7 @@ export function drawRace(ctx, world, cam, time) {
   // (The Power course: a boulder in each lane, behind everyone.)
   drawBoulders(ctx, map, R, course, cam);
   drawMortars(ctx, map, R, course, cam);
+  drawHurdles(ctx, map, R, course, cam, time);
   for (const r of [...R.racers].sort((a, b) => b.lane - a.lane)) {
     // (On the line before Go, each lane a little apart: world/mochi-race.js lineupOffset.)
     const x = r.x + lineupOffset(R, r) - cam.x;
@@ -750,6 +1072,23 @@ export function drawRace(ctx, world, cam, time) {
     r.hillLean = (r.hillLean ?? 0) + (hill - (r.hillLean ?? 0)) * (1 - Math.exp(-since * 5));
     r.m.hillLean = r.hillLean;
     r.m.groundTilt = Math.atan(sl);
+    // (A smash, a pound and the "Yes!" after keep time with the race's own clock, so its blows land
+    // just when the race counts them: started on its first drawing, one that came into view
+    // mid-smash, or any stutter of the frames, would have swung out of step with its own hits.)
+    const a = r.m.action;
+    const beatFrom = !a ? null : a.name.startsWith('smash') ? r.rock?.from : a.name.startsWith('pound') ? r.pound?.from : a.name.startsWith('power_') ? r.pound?.finished ?? r.rock?.broke : a.name === 'hurdle_stumble' ? r.jump?.landAt ?? null : a.name.startsWith('hurdle') && r.jump ? r.jump.from - (r.jump.gain ?? 0) : null;
+    if (beatFrom != null) a.t0 = time - (R.clock - beatFrom);
+    // (The two best jumpers leave a trail along their arc: where they were a moment ago.)
+    const jj = r.jump;
+    r.m.trail = null;
+    if (jj && jj.outcome !== 'fall' && jj.tier >= 4) {
+      const at = (dt) => {
+        const u = (R.clock - jj.from - dt - JUMP_PHASE.pre) / jj.T;
+        return u > 0 && u < 1 ? JUMP_H[jj.tier] * 4 * u * (1 - u) : 0;
+      };
+      const now = at(0);
+      if (now > 2) r.m.trail = [[jj.v * 0.1, now - at(0.1), 0.14], [jj.v * 0.05, now - at(0.05), 0.28]];
+    }
     drawMochiAnim(ctx, r.m, x, y, time);
     // (Swimming, it sits down in the water, so what floats over its head (its tag, heart, crown)
     // comes down with it, easing.)

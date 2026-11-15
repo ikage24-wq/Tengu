@@ -1032,8 +1032,9 @@ export const IDLE_BITS = {
 export const SIGNATURE = Object.fromEntries(Object.keys(IDLE_BITS).filter((k) => k.startsWith('sig_')).map((k) => [k.slice(4), k]));
 const SHARED = Object.keys(IDLE_BITS).filter((k) => !k.startsWith('sig_') && k !== 'hungry');
 // (What a pose's numbers ease between; everything else changes on its key.)
-// (`swing`: the angle of a mallet in its paws, the 'pound' move.)
-const EASED = ['tilt', 'hx', 'hy', 'lean', 'tip', 'sink', 'lift', 'bob', 'squat', 'hair', 'front', 'back', 'legF', 'legB', 'ball', 'spin', 'flame', 'swing'];
+// (`swing`: the angle of a mallet in its paws, the 'pound' move; `smear`: how far back round its
+// swing the blur of it reaches, on the frame it lands.)
+const EASED = ['tilt', 'hx', 'hy', 'lean', 'tip', 'sink', 'lift', 'bob', 'squat', 'hair', 'front', 'back', 'legF', 'legB', 'ball', 'spin', 'flame', 'swing', 'smear'];
 const EASE = { in: (k) => k * k, out: (k) => 1 - (1 - k) * (1 - k) };
 // Idle moments and actions step through their keys at this many drawings a second (each drawn
 // once, then reused): enough to read smooth.
@@ -1356,6 +1357,29 @@ export const ACTIONS = {
 export const BASIC_IDLES = ['stretch', 'lookaround', 'scratch', 'yawn', 'sigh', 'tidy'];
 const TWO = Math.PI * 2;
 const TUCK = { legF: [2.2, -3, 60], legB: [1.6, -2.6, 50], front: [3, -5], back: [2, -5] };
+
+// A hurdle jump's keys (world/mochi-race.js 'hurdle', JUMP_PHASE): a quick crouch to spring from,
+// `T` seconds in the air rising to `top` (body px) and back down on a smooth arc - posed at takeoff,
+// rising, at the top, coming down - then the landing: knees taking it, a little spring back up, and
+// settled. `spin`, a whole turn it has made by the end.
+const PRE = 0.08;
+const leap = (T, top, [take, rise, peak, fall, land], spin = 0) => {
+  const end = { ...land, ...(spin ? { lean: spin } : {}) };
+  return { dur: PRE + T + 0.16, crisp: true, fps: 48, keys: [
+    KEY(0, { ...take, lift: 0 }),
+    KEY(PRE, { ...take, squat: 2, lift: 0, ease: 'in' }),
+    KEY(PRE + T * 0.22, { ...rise, lift: top * 0.66, ease: 'out' }),
+    KEY(PRE + T * 0.5, { ...peak, lift: top }),
+    KEY(PRE + T * 0.78, { ...fall, lift: top * 0.66, ease: 'in' }),
+    KEY(PRE + T, { ...end, lift: 0, squat: 1.8, ease: 'in' }),
+    KEY(PRE + T + 0.07, { ...end, lift: 1.4, squat: 0, ease: 'out' }),
+    // (Settled, it's plainly on its feet: a dive or a flip turned about its middle, set down to match,
+    // but once it runs on nothing sets it down, and it hovered a moment.)
+    ...(end.tip ? [KEY(PRE + T + 0.1, { ...end, lift: 0.7, squat: 0.2, tip: 3, sink: 1.2 })] : []),
+    KEY(PRE + T + 0.13, { ...end, lift: 0, squat: 0.5, tip: 0, sink: 0 }),
+    KEY(PRE + T + 0.16, { ...end, lift: 0, squat: 0.3, tip: 0, sink: 0 }),
+  ] };
+};
 export const TRICK_BITS = {
   // A forward roll: tucks up and rolls right over, and comes up with its arms out.
   roll: { dur: 2.4, keys: [
@@ -1365,28 +1389,264 @@ export const TRICK_BITS = {
     KEY(1, { ...TUCK, lean: Math.PI * 1.5, tip: 6, sink: 9, closed: [true, true], mouth: 'D' }),
     KEY(1.25, { lean: TWO, tip: 6, sink: 6, squat: 2, closed: [true, true], mouth: 'D', ease: 'out' }),
     KEY(1.6, { lean: TWO, ...OUT(-12), closed: [true, true], mouth: 'D', extra: ['spark0', 'spark1'], sprout: 'excited' }), KEY(2.4, { lean: TWO })] },
-  // Pounding the mochi (world/mochi-race.js, Mochitsuki Mountain): the big wooden mallet swung up
-  // over its head and back, down onto the mochi with a shout, a beat resting on it, and up again (the
-  // loop is one pound, 0.8 s, the race's beat: the mallet lands at 0.5). `swing`: the mallet's angle
-  // from straight up (drawMallet).
-  pound: { dur: 1.2, loop: [0.2, 1.0], keys: [
+  // Pounding the mochi (world/mochi-race.js, Mochitsuki Mountain), one way for each range of Power,
+  // 2026-11-15 - every one a loop of 0.8 s, the race's beat, the mallet landing at 0.5 on the same
+  // spot (its paws, its angle `swing` and its lean together put the head on the mochi); `smear`,
+  // the blur of the swing on the frame it lands; `crisp` and `fps` as the smashes:
+  //   pound0  too heavy for it: heaved up, teetering back, over the top and flopping down, a stumble
+  //           after it, and dragging it back up
+  //   pound1  lifted carefully just over its head and brought down
+  //   pound2  a steady swing back over its head and down, a dip of the knees as it lands
+  //   pound3  swung right back with a hang at the top, then down hard; a tug to pull it free of the
+  //           sticky mochi
+  //   pound4  a crouch and a jump with the mallet flung back, crashing down with it as it lands
+  //   pound5  a spin on the spot with the mallet held high, up into a jump, and down with the lot; cool
+  pound0: { dur: 1.2, loop: [0.2, 1.0], crisp: true, fps: 48, keys: [
+    KEY(0, { hold: 'mallet', swing: 0.9, front: [5, -9], back: [4, -9], glance: 1 }),
+    KEY(0.2, { hold: 'mallet', swing: 0.9, front: [5, -10], back: [4, -10], squat: 1, mouth: 'grit', glance: 1, extra: ['sweat0'] }),
+    KEY(0.32, { hold: 'mallet', swing: 0.25, front: [3, -14], back: [2, -14], over: true, lean: -0.08, tilt: 5, mouth: 'grit', closed: [true, true], glance: 1, extra: ['sweat0'] }),
+    KEY(0.4, { hold: 'mallet', swing: -0.3, front: [2, -15], back: [1, -15], over: true, lean: -0.18, tilt: 9, mouth: 'wavy', glance: 1, extra: ['sweat1'], ease: 'out' }),
+    KEY(0.45, { hold: 'mallet', swing: 0.1, front: [3, -15], back: [2, -15], over: true, lean: -0.08, tilt: 4, mouth: 'mochio', glance: 1, extra: ['sweat1'] }),
+    KEY(0.5, { hold: 'mallet', swing: 1.44, smear: 0.8, front: [5, -24], back: [4, -24], over: true, lean: 0.24, tilt: -6, mouth: 'mochio', closed: [true, true], glance: 1, ease: 'in' }),
+    KEY(0.58, { hold: 'mallet', swing: 1.42, front: [5, -24], back: [4, -24], over: true, lean: 0.28, tilt: -8, mouth: 'wavy', glance: 1 }),
+    KEY(0.7, { hold: 'mallet', swing: 1.54, front: [5, -23], back: [4, -23], over: true, lean: 0.12, tilt: -2, mouth: 'wavy', glance: 1, extra: ['sweat0'] }),
+    KEY(0.85, { hold: 'mallet', swing: 1.25, front: [4, -17], back: [3, -17], lean: -0.04, squat: 1, tilt: 3, mouth: 'grit', glance: 1, extra: ['sweat0'], ease: 'in' }),
+    KEY(1.0, { hold: 'mallet', swing: 0.9, front: [5, -10], back: [4, -10], squat: 1, mouth: 'grit', glance: 1, extra: ['sweat0'] }),
+    KEY(1.2, { hold: 'mallet', swing: 0.9, front: [5, -9], back: [4, -9], glance: 1 })] },
+  pound1: { dur: 1.2, loop: [0.2, 1.0], crisp: true, fps: 48, keys: [
     KEY(0, { hold: 'mallet', swing: 0.5, front: [5, -9], back: [4, -9], glance: 1 }),
-    KEY(0.2, { hold: 'mallet', swing: 0, front: [3, -13], back: [2, -13], over: true, tilt: 4, mouth: 'mochio', glance: 1 }),
-    KEY(0.4, { hold: 'mallet', swing: -0.7, front: [1, -17], back: [0, -16], over: true, lean: -0.12, tilt: 10, squat: 1, mouth: 'grit', closed: [true, true], glance: 1 }),
-    KEY(0.5, { hold: 'mallet', swing: 1.68, front: [5, -24], back: [4, -24], over: true, lean: 0.24, tilt: -8, mouth: 'D', glance: 1, ease: 'in' }),
-    KEY(0.66, { hold: 'mallet', swing: 1.6, front: [5, -23], back: [4, -23], over: true, lean: 0.16, tilt: -4, mouth: 'mochiw', glance: 1 }),
-    KEY(1.0, { hold: 'mallet', swing: 0, front: [3, -13], back: [2, -13], over: true, tilt: 4, mouth: 'mochio', glance: 1 }),
+    KEY(0.2, { hold: 'mallet', swing: 0.3, front: [4, -13], back: [3, -13], over: true, tilt: 3, mouth: 'mochio', glance: 1 }),
+    KEY(0.36, { hold: 'mallet', swing: -0.35, front: [2, -17], back: [1, -16], over: true, lean: -0.08, tilt: 7, mouth: 'mochiopen', glance: 1, ease: 'out' }),
+    KEY(0.43, { hold: 'mallet', swing: -0.42, front: [1, -18], back: [0, -17], over: true, lean: -0.1, tilt: 8, mouth: 'mochio', closed: [true, true], glance: 1 }),
+    KEY(0.5, { hold: 'mallet', swing: 1.46, smear: 1.2, front: [5, -24], back: [4, -24], over: true, lean: 0.22, tilt: -6, mouth: 'D', glance: 1, ease: 'in' }),
+    KEY(0.56, { hold: 'mallet', swing: 1.46, front: [5, -23.5], back: [4, -23.5], over: true, lean: 0.24, tilt: -7, mouth: 'D', glance: 1 }),
+    KEY(0.68, { hold: 'mallet', swing: 1.5, front: [5, -23], back: [4, -23], over: true, lean: 0.16, tilt: -4, mouth: 'mochiw', glance: 1 }),
+    KEY(0.8, { hold: 'mallet', swing: 1.48, front: [3, -23], back: [2, -23], over: true, lean: 0.02, tilt: 2, mouth: 'mochio', glance: 1, ease: 'in' }),
+    KEY(0.9, { hold: 'mallet', swing: 0.8, front: [4, -17], back: [3, -17], over: true, lean: -0.02, tilt: 3, mouth: 'mochio', glance: 1, ease: 'out' }),
+    KEY(1.0, { hold: 'mallet', swing: 0.3, front: [4, -13], back: [3, -13], over: true, tilt: 3, mouth: 'mochio', glance: 1 }),
     KEY(1.2, { hold: 'mallet', swing: 0.5, front: [5, -9], back: [4, -9], glance: 1 })] },
-  // Smashing a boulder (world/mochi-race.js, the Power course): both arms flung up and back in a big
-  // wind-up, a lunge and a slam down onto the rock with a shout, a little bounce back off it, and
-  // again (the loop is one swing, 0.8 s, the race's own beat: the hit lands at 0.55).
-  smash: { dur: 1.4, loop: [0.2, 1.0], keys: [
-    KEY(0, {}), KEY(0.2, { front: [2, -8], back: [1, -8], tilt: 2, mouth: 'grit', glance: 1 }),
-    KEY(0.42, { lean: -0.18, squat: 1, front: [-3, -17], back: [-4, -16], over: true, tilt: 10, mouth: 'grit', closed: [true, true], glance: 1 }),
-    KEY(0.55, { lean: 0.32, front: [9, 0], back: [8, 1], tilt: -10, hx: 1.2, mouth: 'D', glance: 1, ease: 'in' }),
-    KEY(0.68, { lean: 0.16, front: [7, -3], back: [6, -2], tilt: -4, mouth: 'mochio', glance: 1 }),
-    KEY(1.0, { front: [2, -8], back: [1, -8], tilt: 2, mouth: 'grit', glance: 1 }),
+  pound2: { dur: 1.2, loop: [0.2, 1.0], crisp: true, fps: 48, keys: [
+    KEY(0, { hold: 'mallet', swing: 0.5, front: [5, -9], back: [4, -9], glance: 1 }),
+    KEY(0.2, { hold: 'mallet', swing: 0.1, front: [3, -14], back: [2, -14], over: true, tilt: 4, mouth: 'mochio', glance: 1 }),
+    KEY(0.35, { hold: 'mallet', swing: -0.6, front: [1, -18], back: [0, -17], over: true, lean: -0.12, tilt: 9, squat: 0.6, mouth: 'grit', glance: 1, ease: 'out' }),
+    KEY(0.43, { hold: 'mallet', swing: -0.68, front: [0, -18.5], back: [-1, -17.5], over: true, lean: -0.14, tilt: 10, squat: 0.6, mouth: 'grit', closed: [true, true], glance: 1 }),
+    KEY(0.5, { hold: 'mallet', swing: 1.42, smear: 1.5, front: [5, -24], back: [4, -24], over: true, lean: 0.24, squat: 0.6, tilt: -8, mouth: 'D', glance: 1, ease: 'in' }),
+    KEY(0.56, { hold: 'mallet', swing: 1.42, front: [5, -23.5], back: [4, -23.5], over: true, lean: 0.26, squat: 0.8, tilt: -9, mouth: 'D', glance: 1 }),
+    KEY(0.68, { hold: 'mallet', swing: 1.49, front: [5, -23], back: [4, -23], over: true, lean: 0.17, tilt: -5, mouth: 'mochiw', glance: 1 }),
+    KEY(0.8, { hold: 'mallet', swing: 1.45, front: [3, -23], back: [2, -23], over: true, lean: 0.02, tilt: 2, mouth: 'grit', glance: 1, ease: 'in' }),
+    KEY(0.9, { hold: 'mallet', swing: 0.7, front: [4, -18], back: [3, -18], over: true, lean: -0.04, tilt: 4, mouth: 'mochio', glance: 1, ease: 'out' }),
+    KEY(1.0, { hold: 'mallet', swing: 0.1, front: [3, -14], back: [2, -14], over: true, tilt: 4, mouth: 'mochio', glance: 1 }),
+    KEY(1.2, { hold: 'mallet', swing: 0.5, front: [5, -9], back: [4, -9], glance: 1 })] },
+  pound3: { dur: 1.2, loop: [0.2, 1.0], crisp: true, fps: 48, keys: [
+    KEY(0, { hold: 'mallet', swing: 0.5, front: [5, -9], back: [4, -9], glance: 1 }),
+    KEY(0.2, { hold: 'mallet', swing: 0.1, front: [3, -14], back: [2, -14], over: true, tilt: 4, mouth: 'mochio', glance: 1 }),
+    KEY(0.34, { hold: 'mallet', swing: -0.75, front: [1, -18], back: [0, -17], over: true, lean: -0.14, tilt: 10, squat: 1, mouth: 'grit', closed: [true, true], glance: 1, ease: 'out' }),
+    KEY(0.42, { hold: 'mallet', swing: -0.86, front: [0, -19], back: [-1, -18], over: true, lean: -0.17, tilt: 11, squat: 1, mouth: 'grit', closed: [true, true], glance: 1 }),
+    KEY(0.5, { hold: 'mallet', swing: 1.44, smear: 1.6, front: [5, -24], back: [4, -24], over: true, lean: 0.24, tilt: -8, mouth: 'D', glance: 1, ease: 'in' }),
+    KEY(0.56, { hold: 'mallet', swing: 1.43, front: [5, -23.5], back: [4, -23.5], over: true, lean: 0.27, tilt: -9, mouth: 'D', glance: 1 }),
+    KEY(0.66, { hold: 'mallet', swing: 1.48, front: [5, -23], back: [4, -23], over: true, lean: 0.18, tilt: -5, mouth: 'mochiw', glance: 1 }),
+    KEY(0.78, { hold: 'mallet', swing: 1.44, front: [3, -23], back: [2, -23], over: true, lean: 0.02, tilt: 2, mouth: 'grit', glance: 1, ease: 'in' }),
+    KEY(0.88, { hold: 'mallet', swing: 0.7, front: [4, -18], back: [3, -18], over: true, lean: -0.04, tilt: 4, mouth: 'mochio', glance: 1, ease: 'out' }),
+    KEY(1.0, { hold: 'mallet', swing: 0.1, front: [3, -14], back: [2, -14], over: true, tilt: 4, mouth: 'mochio', glance: 1 }),
+    KEY(1.2, { hold: 'mallet', swing: 0.5, front: [5, -9], back: [4, -9], glance: 1 })] },
+  pound4: { dur: 1.2, loop: [0.2, 1.0], crisp: true, fps: 48, keys: [
+    KEY(0, { hold: 'mallet', swing: 0.5, front: [5, -9], back: [4, -9], glance: 1 }),
+    KEY(0.2, { hold: 'mallet', swing: 0.1, front: [3, -14], back: [2, -14], over: true, tilt: 4, mouth: 'grit', glance: 1 }),
+    KEY(0.3, { hold: 'mallet', swing: -0.5, front: [2, -16], back: [1, -15], over: true, squat: 2, lean: -0.08, tilt: 6, mouth: 'grit', closed: [true, true], glance: 1 }),
+    KEY(0.38, { hold: 'mallet', swing: -1.05, front: [0, -19], back: [-1, -18], over: true, lift: 8, lean: -0.2, tilt: 11, mouth: 'yell', glance: 1, ease: 'out' }),
+    KEY(0.43, { hold: 'mallet', swing: -1.15, front: [-1, -20], back: [-2, -19], over: true, lift: 8, lean: -0.22, tilt: 12, mouth: 'yell', closed: [true, true], glance: 1 }),
+    KEY(0.5, { hold: 'mallet', swing: 1.38, smear: 2.2, front: [5, -24], back: [4, -24], over: true, squat: 1.2, lean: 0.26, tilt: -9, mouth: 'D', glance: 1, ease: 'in' }),
+    KEY(0.57, { hold: 'mallet', swing: 1.38, front: [5, -23.5], back: [4, -23.5], over: true, squat: 1.4, lean: 0.28, tilt: -10, mouth: 'D', glance: 1 }),
+    KEY(0.68, { hold: 'mallet', swing: 1.48, front: [5, -23], back: [4, -23], over: true, lean: 0.18, tilt: -5, mouth: 'grin', glance: 1 }),
+    KEY(0.8, { hold: 'mallet', swing: 1.44, front: [3, -23], back: [2, -23], over: true, lean: 0.02, tilt: 2, mouth: 'grit', glance: 1, ease: 'in' }),
+    KEY(0.9, { hold: 'mallet', swing: 0.6, front: [4, -18], back: [3, -18], over: true, lean: -0.04, tilt: 4, mouth: 'grit', glance: 1, ease: 'out' }),
+    KEY(1.0, { hold: 'mallet', swing: 0.1, front: [3, -14], back: [2, -14], over: true, tilt: 4, mouth: 'grit', glance: 1 }),
+    KEY(1.2, { hold: 'mallet', swing: 0.5, front: [5, -9], back: [4, -9], glance: 1 })] },
+  pound5: { dur: 1.2, loop: [0.2, 1.0], crisp: true, fps: 48, keys: [
+    KEY(0, { hold: 'mallet', swing: 0.5, front: [5, -9], back: [4, -9], glance: 1 }),
+    KEY(0.2, { hold: 'mallet', swing: 0.1, front: [3, -14], back: [2, -14], over: true, tilt: 4, mouth: 'smirk', glance: 1 }),
+    KEY(0.25, { hold: 'mallet', turned: true, swing: 0.15, front: [3, -17], back: [2, -17], over: true, lift: 2, tilt: -4, mouth: 'smirk', closed: [true, true] }),
+    KEY(0.29, { hold: 'mallet', swing: 0.1, front: [2, -18], back: [1, -17], over: true, lift: 3, tilt: 4, mouth: 'smirk', closed: [true, true] }),
+    KEY(0.33, { hold: 'mallet', turned: true, swing: 0.05, front: [3, -18], back: [2, -18], over: true, lift: 3, tilt: -4, mouth: 'smirk', closed: [true, true] }),
+    KEY(0.37, { hold: 'mallet', swing: -0.3, front: [2, -18], back: [1, -17], over: true, squat: 1.6, tilt: 4, mouth: 'grit', glance: 1 }),
+    KEY(0.42, { hold: 'mallet', swing: -1.2, front: [0, -20], back: [-1, -19], over: true, lift: 12, lean: -0.22, tilt: 12, mouth: 'yell', glance: 1, ease: 'out' }),
+    KEY(0.45, { hold: 'mallet', swing: -1.3, front: [-1, -21], back: [-2, -20], over: true, lift: 12, lean: -0.25, tilt: 12, mouth: 'yell', closed: [true, true], glance: 1 }),
+    KEY(0.5, { hold: 'mallet', swing: 1.37, smear: 2.8, front: [5, -24], back: [4, -24], over: true, squat: 1.4, lean: 0.27, tilt: -10, mouth: 'D', glance: 1, ease: 'in' }),
+    KEY(0.57, { hold: 'mallet', swing: 1.36, front: [5, -23.5], back: [4, -23.5], over: true, squat: 1.6, lean: 0.29, tilt: -11, mouth: 'D', glance: 1 }),
+    KEY(0.68, { hold: 'mallet', swing: 1.48, front: [5, -23], back: [4, -23], over: true, lean: 0.18, tilt: -5, mouth: 'smirk', glance: 1, extra: ['spark0'] }),
+    KEY(0.8, { hold: 'mallet', swing: 1.44, front: [3, -23], back: [2, -23], over: true, lean: 0.02, tilt: 2, mouth: 'smirk', glance: 1, ease: 'in' }),
+    KEY(0.9, { hold: 'mallet', swing: 0.6, front: [4, -18], back: [3, -18], over: true, lean: -0.04, tilt: 4, mouth: 'smirk', glance: 1, ease: 'out' }),
+    KEY(1.0, { hold: 'mallet', swing: 0.1, front: [3, -14], back: [2, -14], over: true, tilt: 4, mouth: 'smirk', glance: 1 }),
+    KEY(1.2, { hold: 'mallet', swing: 0.5, front: [5, -9], back: [4, -9], glance: 1 })] },
+  // Over a hurdle (world/mochi-race.js, Tanabata Hurdles), one way for each range of Fly - each as
+  // long in the air as the race says (JUMP_T) and as high (JUMP_H, here in body px). Arms and legs
+  // are small on a Mochi, so each reads by what its whole body does (2026-11-15: the first six read
+  // alike at race size), with the race's own touches (render/race.js drawHurdles):
+  //   hurdle0  a panicky scramble, rocking back and forth, arms flung about, sweat flying off
+  //   hurdle1  a happy bunny hop, knees tucked, arms straight up, a heart
+  //   hurdle2  a hurdler's dip: leaning hard over the bar, leading leg out straight, trailing one
+  //            tucked out behind, arms swapping
+  //   hurdle3  a star jump with a twirl at the top, arms and legs flung wide, stars bursting
+  //   hurdle4  a superman dive, flat out over the bar, arms ahead, a trail behind it
+  //   hurdle5  a somersault right over, a trail behind it, a "ta-da" as it lands
+  // `hurdle_stumble`: a toe caught the bar - a few staggering steps, arms flung out, and on again.
+  // `hurdle_fall`: caught it properly - over it goes, flat on its face, a little bounce, up on its
+  // hands, sat up with its head spinning, a shake, and up.
+  hurdle0: leap(0.4, 20, [
+    { squat: 1, front: [4, -4], back: [-3, -4], mouth: 'grit', closed: [true, true], extra: ['sweat0'] },
+    { lean: -0.22, tilt: -10, front: [-3, -15], back: [7, -11], over: true, legF: [2.8, -2.8, 45], legB: [-2, -1, -35], mouth: 'mochio', extra: ['sweat1'] },
+    { lean: 0.28, tilt: 10, front: [7, -14], back: [-4, -15], over: true, legF: [-1.4, -1.2, -35], legB: [2.6, -3, 45], mouth: 'wavy', closed: [true, true], extra: ['sweat0'] },
+    { lean: -0.18, tilt: -8, front: [-3, -12], back: [7, -9], over: true, legF: [2.6, -2.2, 35], legB: [-1.6, -0.8, -25], mouth: 'mochio', extra: ['sweat1'] },
+    { lean: 0.12, front: [6, -6], back: [-3, -5], mouth: 'mochiw', closed: [true, true] }]),
+  hurdle1: leap(0.45, 27, [
+    { front: [3, -6], back: [2, -6], mouth: 'mochio' },
+    { ...TUCK, lean: -0.1, front: [2, -16], back: [1, -15], over: true, mouth: 'D', sprout: 'happy' },
+    { ...TUCK, lean: -0.16, front: [1, -17], back: [0, -16], over: true, mouth: 'D', closed: [true, true], sprout: 'excited', extra: ['hearts'] },
+    { legF: [1.4, -1.6, 30], legB: [1.2, -1.4, 24], lean: -0.06, front: [4, -12], back: [3, -12], over: true, mouth: 'D', extra: ['hearts'] },
+    { front: [5, -8], back: [4, -8], mouth: 'mochibeam' }]),
+  hurdle2: leap(0.5, 33, [
+    { lean: 0.15, front: [-4, -6], back: [6, -7], mouth: 'grit' },
+    { lean: 0.32, legF: [5, -3.4, 85], legB: [-2.6, -2.4, -60], front: [-6, -8], back: [9, -9], mouth: 'grit' },
+    { lean: 0.5, legF: [5.4, -3.8, 90], legB: [-3, -3, -80], front: [-7, -7], back: [10, -8], mouth: 'grit', closed: [true, true] },
+    { lean: 0.3, legF: [4, -2, 50], legB: [-2, -2, -50], front: [-5, -7], back: [8, -8], mouth: 'mochio' },
+    { lean: 0.12, front: [-3, -6], back: [5, -7], mouth: 'smirk' }]),
+  hurdle3: leap(0.55, 42, [
+    { front: [4, -6], back: [3, -6], mouth: 'D' },
+    { front: [6, -14], back: [-5, -14], over: true, legF: [1.4, -1.6, 20], legB: [-1.4, -1.6, -20], mouth: 'D' },
+    { turned: true, front: [9, -15], back: [-8, -15], over: true, legF: [2.6, -1, 40], legB: [-2.6, -1, -40], mouth: 'D', closed: [true, true], sprout: 'excited', extra: ['spark0'] },
+    { front: [8, -13], back: [-7, -13], over: true, legF: [1.6, -1.4, 24], legB: [-1.6, -1.4, -24], mouth: 'mochibeam', extra: ['spark1'] },
+    { front: [5, -8], back: [-3, -8], mouth: 'mochibeam' }]),
+  hurdle4: leap(0.6, 48, [
+    { lean: 0.12, tip: 5.5, sink: 5.5, front: [6, -8], back: [5, -8], mouth: 'grit' },
+    { lean: 0.9, tip: 5.5, sink: 5.5, front: [11, -12], back: [10, -11], over: true, legF: [-2, -2, -50], legB: [-2.4, -1.6, -60], mouth: 'grit' },
+    { lean: 1.35, tip: 5.5, sink: 5.5, front: [12, -12], back: [11, -11], over: true, legF: [-2.4, -2.4, -70], legB: [-2.8, -1.8, -80], mouth: 'D', extra: ['spark0'] },
+    { lean: 0.7, tip: 5.5, sink: 5.5, front: [9, -10], back: [8, -10], over: true, legF: [-1, -1.6, -30], legB: [-1.6, -1.2, -40], mouth: 'D' },
+    { lean: 0.08, tip: 5.5, sink: 5.5, front: [6, -9], back: [5, -9], mouth: 'smirk' }]),
+  hurdle5: leap(0.66, 57, [
+    { tip: 5.5, sink: 5.5, front: [4, -7], back: [3, -7], mouth: 'smirk' },
+    { ...TUCK, tip: 5.5, sink: 5.5, lean: 1.5, mouth: 'grit', closed: [true, true] },
+    { ...TUCK, tip: 5.5, sink: 5.5, lean: 3.3, mouth: 'grit', closed: [true, true] },
+    { ...TUCK, tip: 5.5, sink: 5.5, lean: 5.1, mouth: 'D' },
+    { tip: 5.5, sink: 5.5, lean: TWO, front: [6, -14], back: [-4, -14], over: true, mouth: 'smirk', extra: ['spark0'] }], TWO),
+  hurdle_stumble: { dur: 0.44, crisp: true, fps: 48, keys: [
+    KEY(0, { squat: 1.4, lean: 0.24, front: [8, -5], back: [-5, -11], over: true, legF: [2.6, -0.6, 20], legB: [-1.6, 0, -10], mouth: 'gasp', extra: ['bang1'] }),
+    KEY(0.12, { lean: 0.38, lift: 1.4, front: [9, -10], back: [-6, -6], over: true, legF: [-1.2, 0, -10], legB: [2.8, -1.4, 25], mouth: 'mochio', extra: ['bang1'], ease: 'out' }),
+    KEY(0.24, { squat: 0.8, lean: 0.22, front: [7, -7], back: [-4, -9], legF: [2.4, -1, 18], legB: [-1.4, 0, -10], mouth: 'mochio' }),
+    KEY(0.34, { lean: 0.06, lift: 0.8, front: [5, -7], back: [-2, -8], legF: [-0.6, 0, -6], legB: [1.6, -0.8, 14], mouth: 'mochiw', ease: 'out' }),
+    KEY(0.44, { front: [4, -7], back: [3, -7], mouth: 'mochiw' })] },
+  hurdle_fall: { dur: 1.93, crisp: true, fps: 48, keys: [
+    KEY(0, { front: [4, -6], back: [3, -6], mouth: 'grit' }),
+    KEY(0.08, { squat: 2, front: [4, -4], back: [-3, -4], mouth: 'grit', ease: 'in' }),
+    KEY(0.2, { lift: 15, front: [-2, -13], back: [6, -12], over: true, legF: [2.4, -2.6, 40], legB: [-1.6, -1.2, -30], mouth: 'mochio', ease: 'out' }),
+    KEY(0.3, { lift: 18, lean: 0.3, front: [6, -10], back: [5, -11], over: true, legB: [-2.6, -0.6, -70], mouth: 'gasp', extra: ['bang1'] }),
+    KEY(0.42, { lift: 9, tip: 5.5, lean: 1.0, front: [9, -6], back: [8, -7], mouth: 'gasp', ease: 'in' }),
+    KEY(0.54, { tip: 6, lean: Math.PI / 2, sink: 17.4, front: [9, -2], back: [8, -3], mouth: 'mochiw', closed: [true, true], ease: 'in' }),
+    KEY(0.64, { tip: 6, lean: Math.PI / 2, sink: 15, lift: 3, front: [9, -4], back: [8, -4], legF: [1, -3, 40], legB: [1, -2.6, 30], mouth: 'mochiw', closed: [true, true], ease: 'out' }),
+    KEY(0.74, { tip: 6, lean: Math.PI / 2, sink: 17.4, front: [9, -2], back: [8, -2], mouth: 'mochiw', closed: [true, true], ease: 'in' }),
+    KEY(0.93, { tip: 6, lean: Math.PI / 2, sink: 17.4, front: [8, -2], back: [7, -2], mouth: 'mochiw', closed: [true, true], extra: ['orbit'] }),
+    KEY(1.03, { ...SAT, tip: 6, lean: 0.9, sink: 9.3, front: [6, 2], back: [5, 2], mouth: 'wavy', extra: ['orbit'], ease: 'out' }),
+    KEY(1.06, { ...SAT, tip: 6, lean: 0.68, sink: 6.4, front: [5, 2], back: [4, 2], mouth: 'wavy', extra: ['orbit'] }),
+    KEY(1.09, { ...SAT, tip: 6, lean: 0.4, sink: 4, front: [4, 2], back: [3, 2], mouth: 'wavy', extra: ['orbit'] }),
+    KEY(1.13, { ...SAT, tip: 6, sink: 5.4, spiral: 1, extra: ['orbit'], mouth: 'wavy', tilt: 10 }),
+    KEY(1.36, { ...SAT, spiral: 2, extra: ['orbit'], mouth: 'wavy', tilt: -10 }),
+    KEY(1.56, { ...SAT, mouth: 'mochio', tilt: 0, front: [3, -12], back: [-3, -12], over: true }),
+    KEY(1.74, { squat: 1.2, front: [4, -7], back: [3, -7], mouth: 'grit' }),
+    KEY(1.84, { lift: 1.4, front: [4, -8], back: [3, -8], mouth: 'D', ease: 'out' }),
+    KEY(1.93, { front: [4, -7], back: [3, -7], mouth: 'grit' })] },
+  // Smashing a boulder (world/mochi-race.js, the Power course), one way for each range of Power
+  // (data/mochi-raise.js STYLE_POINTS), 2026-11-15 - every one a loop of 0.8 s, the race's own beat,
+  // its blow landing at 0.55; `crisp`, on a tight spring with just a little bounce, and drawn at
+  // `fps` so a quick swing still reads smooth:
+  //   smash0  a wobbly little pat with both paws; bounced off, teetering back, shaking them out
+  //   smash1  fists up over its head and down - bonk - with a dip of the knees
+  //   smash2  a hop with its fists raised and a hammer-fist chop as it comes down
+  //   smash3  a crouch, a big leap with its fists high, a hang, and a slam down into it
+  //   smash4  wound right round with its back to it, whirling back with a hop into a straight punch
+  //   smash5  a crouch, a leap and a somersault right over in the air into a two-fisted slam; cool
+  smash0: { dur: 1.4, loop: [0.2, 1.0], crisp: true, fps: 48, keys: [
+    KEY(0, {}),
+    KEY(0.2, { front: [3, -6], back: [2, -6], tilt: 2, mouth: 'wavy', glance: 1, extra: ['sweat0'] }),
+    KEY(0.4, { lean: -0.07, front: [1, -9], back: [0, -9], tilt: 6, mouth: 'mochio', closed: [true, true], glance: 1, extra: ['sweat0'] }),
+    KEY(0.55, { lean: 0.14, front: [8, -6], back: [7, -5], tilt: -4, hx: 0.6, mouth: 'mochiw', closed: [true, true], glance: 1, ease: 'in' }),
+    KEY(0.62, { lean: 0.15, front: [8, -6], back: [7, -5], tilt: -5, hx: 0.7, mouth: 'mochiw', closed: [true, true], glance: 1 }),
+    KEY(0.74, { lean: -0.24, front: [2, -11], back: [1, -10], tilt: 12, mouth: 'wavy', glance: 1, extra: ['sweat1'], ease: 'out' }),
+    KEY(0.86, { lean: 0.04, front: [4, -5], back: [3, -8], tilt: -2, mouth: 'wavy', glance: 1, extra: ['sweat1'] }),
+    KEY(0.93, { lean: 0.02, front: [3, -8], back: [4, -5], tilt: 1, mouth: 'wavy', glance: 1, extra: ['sweat0'] }),
+    KEY(1.0, { front: [3, -6], back: [2, -6], tilt: 2, mouth: 'wavy', glance: 1, extra: ['sweat0'] }),
     KEY(1.4, {})] },
+  smash1: { dur: 1.4, loop: [0.2, 1.0], crisp: true, fps: 48, keys: [
+    KEY(0, {}),
+    KEY(0.2, { squat: 0.5, front: [4, -8], back: [3, -8], tilt: 2, mouth: 'mochio', glance: 1 }),
+    KEY(0.4, { front: [0, -17], back: [-1, -16], over: true, lean: -0.1, tilt: 6, mouth: 'mochiopen', glance: 1, ease: 'out' }),
+    KEY(0.47, { front: [-1, -18], back: [-2, -17], over: true, lean: -0.12, tilt: 7, mouth: 'mochiopen', closed: [true, true], glance: 1 }),
+    KEY(0.55, { squat: 1, lean: 0.24, front: [9, -3], back: [8, -2], tilt: -7, hx: 0.8, mouth: 'D', closed: [true, true], glance: 1, ease: 'in' }),
+    KEY(0.62, { squat: 1.2, lean: 0.26, front: [9, -3], back: [8, -2], tilt: -8, hx: 0.9, mouth: 'D', closed: [true, true], glance: 1 }),
+    KEY(0.74, { lift: 1.6, lean: 0.02, front: [5, -9], back: [4, -9], tilt: -1, mouth: 'mochiw', glance: 1, ease: 'out' }),
+    KEY(0.88, { squat: 0.7, front: [4, -8], back: [3, -8], tilt: 2, mouth: 'mochio', glance: 1, ease: 'in' }),
+    KEY(1.0, { squat: 0.5, front: [4, -8], back: [3, -8], tilt: 2, mouth: 'mochio', glance: 1 }),
+    KEY(1.4, {})] },
+  smash2: { dur: 1.4, loop: [0.2, 1.0], crisp: true, fps: 48, keys: [
+    KEY(0, {}),
+    KEY(0.2, { squat: 1, front: [4, -7], back: [3, -7], tilt: 3, mouth: 'grit', glance: 1 }),
+    KEY(0.33, { squat: 1.8, lean: -0.05, front: [0, -5], back: [-1, -5], tilt: 4, mouth: 'grit', closed: [true, true], glance: 1 }),
+    KEY(0.42, { lift: 6, lean: -0.16, front: [-1, -19], back: [-2, -18], over: true, tilt: 8, mouth: 'mochiopen', glance: 1, ease: 'out' }),
+    KEY(0.47, { lift: 6, lean: -0.18, front: [-2, -20], back: [-3, -19], over: true, tilt: 9, mouth: 'grit', closed: [true, true], glance: 1 }),
+    KEY(0.55, { lean: 0.3, squat: 1, front: [10, -4], back: [9, -3], tilt: -9, hx: 1, mouth: 'D', glance: 1, ease: 'in' }),
+    KEY(0.62, { lean: 0.32, squat: 1.3, front: [10, -3], back: [9, -2], tilt: -10, hx: 1.2, mouth: 'D', glance: 1 }),
+    KEY(0.74, { lean: 0.03, lift: 2, front: [5, -9], back: [4, -9], tilt: -2, mouth: 'mochiw', glance: 1, ease: 'out' }),
+    KEY(0.88, { squat: 1.3, front: [4, -7], back: [3, -7], tilt: 3, mouth: 'grit', glance: 1, ease: 'in' }),
+    KEY(1.0, { squat: 1, front: [4, -7], back: [3, -7], tilt: 3, mouth: 'grit', glance: 1 }),
+    KEY(1.4, {})] },
+  smash3: { dur: 1.4, loop: [0.2, 1.0], crisp: true, fps: 48, keys: [
+    KEY(0, {}),
+    KEY(0.2, { squat: 1, front: [4, -7], back: [3, -7], tilt: 3, mouth: 'grit', glance: 1 }),
+    KEY(0.31, { squat: 2.6, lean: -0.08, front: [-1, -4], back: [-2, -4], tilt: 5, mouth: 'grit', closed: [true, true], glance: 1 }),
+    KEY(0.41, { lift: 11, lean: -0.2, front: [-2, -20], back: [-3, -19], over: true, tilt: 9, mouth: 'mochio', glance: 1, ease: 'out' }),
+    KEY(0.47, { lift: 11.5, lean: -0.24, front: [-3, -21], back: [-4, -20], over: true, tilt: 10, mouth: 'grit', closed: [true, true], glance: 1 }),
+    KEY(0.55, { lean: 0.36, squat: 1, front: [10, -4], back: [9, -3], tilt: -10, hx: 1.2, mouth: 'D', glance: 1, ease: 'in' }),
+    KEY(0.62, { lean: 0.38, squat: 1.4, front: [10, -3], back: [9, -2], tilt: -11, hx: 1.4, mouth: 'D', glance: 1 }),
+    KEY(0.74, { lean: 0.04, lift: 2.5, front: [5, -9], back: [4, -9], tilt: -2, mouth: 'mochiw', glance: 1, ease: 'out' }),
+    KEY(0.88, { squat: 1.4, front: [4, -7], back: [3, -7], tilt: 3, mouth: 'grit', glance: 1, ease: 'in' }),
+    KEY(1.0, { squat: 1, front: [4, -7], back: [3, -7], tilt: 3, mouth: 'grit', glance: 1 }),
+    KEY(1.4, {})] },
+  smash4: { dur: 1.4, loop: [0.2, 1.0], crisp: true, fps: 48, keys: [
+    KEY(0, {}),
+    KEY(0.2, { squat: 1, front: [5, -9], back: [2, -7], tilt: 2, mouth: 'grit', glance: 1 }),
+    KEY(0.31, { turned: true, squat: 1.8, lean: -0.06, front: [4, -8], back: [3, -7], tilt: 6, mouth: 'grit', closed: [true, true] }),
+    KEY(0.4, { turned: true, lift: 5, lean: -0.1, front: [6, -11], back: [-3, -8], tilt: 8, mouth: 'grit', closed: [true, true], ease: 'out' }),
+    KEY(0.46, { lift: 6, lean: -0.14, front: [-6, -11], back: [5, -9], tilt: 6, mouth: 'yell', glance: 1 }),
+    KEY(0.55, { squat: 1.2, lean: 0.34, front: [13, -8], back: [-3, -6], tilt: -9, hx: 1.6, mouth: 'D', glance: 1, ease: 'in' }),
+    KEY(0.62, { squat: 1.4, lean: 0.36, front: [13, -8], back: [-3, -6], tilt: -10, hx: 1.8, mouth: 'D', glance: 1 }),
+    KEY(0.74, { lean: 0.06, lift: 2, front: [6, -9], back: [2, -8], tilt: -2, mouth: 'smirk', glance: 1, ease: 'out' }),
+    KEY(0.88, { squat: 1.3, front: [5, -9], back: [2, -7], tilt: 2, mouth: 'grit', glance: 1, ease: 'in' }),
+    KEY(1.0, { squat: 1, front: [5, -9], back: [2, -7], tilt: 2, mouth: 'grit', glance: 1 }),
+    KEY(1.4, {})] },
+  smash5: { dur: 1.4, loop: [0.2, 1.0], crisp: true, fps: 48, keys: [
+    KEY(0, {}),
+    KEY(0.2, { squat: 1, front: [4, -7], back: [3, -7], tilt: 2, mouth: 'smirk', glance: 1 }),
+    KEY(0.29, { squat: 2.6, lean: -0.1, front: [-2, -4], back: [-3, -4], tilt: 4, mouth: 'grit', closed: [true, true], glance: 1 }),
+    KEY(0.36, { lift: 13, tip: 5.5, lean: 0.5, front: [2, -18], back: [1, -17], over: true, mouth: 'grit', closed: [true, true], ease: 'out' }),
+    KEY(0.42, { ...TUCK, lift: 16, tip: 5.5, lean: 2.7, mouth: 'grit', closed: [true, true] }),
+    KEY(0.48, { lift: 12, tip: 5.5, lean: 5.2, front: [-2, -21], back: [-3, -20], over: true, tilt: 10, mouth: 'yell', glance: 1 }),
+    KEY(0.55, { lean: TWO + 0.38, squat: 1.2, front: [10, -4], back: [9, -3], tilt: -10, hx: 1.4, mouth: 'D', glance: 1, ease: 'in' }),
+    KEY(0.62, { lean: TWO + 0.4, squat: 1.6, front: [10, -3], back: [9, -2], tilt: -11, hx: 1.6, mouth: 'D', glance: 1 }),
+    KEY(0.74, { lean: TWO + 0.04, lift: 3, front: [5, -9], back: [4, -9], tilt: -2, mouth: 'smirk', glance: 1, extra: ['spark0'], ease: 'out' }),
+    KEY(0.88, { lean: TWO, squat: 1.3, front: [4, -7], back: [3, -7], tilt: 2, mouth: 'smirk', glance: 1, ease: 'in' }),
+    KEY(1.0, { lean: TWO, squat: 1, front: [4, -7], back: [3, -7], tilt: 2, mouth: 'smirk', glance: 1 }),
+    KEY(1.4, { lean: TWO })] },
+  // A quick "Yes!" (world/mochi-race.js, the Power course): its boulder burst or its mochi pounded
+  // smooth, both fists punched up with a little hop, and it's off; the weakest just sags with
+  // relief instead - "phew" - a paw to its brow.
+  power_win: { dur: 0.5, crisp: true, fps: 48, keys: [
+    KEY(0, { mouth: 'D', glance: 1 }),
+    KEY(0.12, { front: [6, -18], back: [-3, -17], over: true, lift: 5.5, tilt: -3, closed: [true, true], mouth: 'D', sprout: 'excited', ease: 'out' }),
+    KEY(0.32, { front: [6, -17], back: [-3, -16], over: true, squat: 1, closed: [true, true], mouth: 'mochibeam', sprout: 'excited', ease: 'in' }),
+    KEY(0.5, { front: [4, -8], back: [3, -8], mouth: 'D' })] },
+  power_phew: { dur: 0.5, crisp: true, fps: 48, keys: [
+    KEY(0, { mouth: 'mochio', glance: 1 }),
+    KEY(0.14, { squat: 1.4, front: [-2, -15], back: [2, -4], over: true, tilt: 6, closed: [true, true], mouth: 'mochiw', extra: ['sweat1'], ease: 'out' }),
+    KEY(0.34, { squat: 1, front: [-1, -14], back: [2, -4], over: true, tilt: 4, closed: [true, true], mouth: 'mochibeam', extra: ['sweat0'] }),
+    KEY(0.5, { front: [4, -8], back: [3, -8], mouth: 'D' })] },
   // Watering the vegetable patch with a little can (world/garden-life.js places): tipped over the
   // crops, a stream of drops from its rose, eyes shut happily as it goes.
   water: { dur: 5, loop: [1, 3.4], keys: [
@@ -1599,17 +1859,33 @@ function actionAt(m, time) {
     m.action = m.queue?.length ? { ...m.queue.shift(), t0: time } : null;
     return m.action ? actionAt(m, time) : null;
   }
-  return { bit, t, tq: map(Math.floor(e * MOMENT_FPS) / MOMENT_FPS) };
+  // (A quick move can ask for more drawings a second, `fps`, so its swing reads smooth.)
+  const fps = bit.fps ?? MOMENT_FPS;
+  return { bit, t, tq: map(Math.floor(e * fps + 1e-6) / fps) };
 }
 
 // The big wooden mallet (kine) for pounding mochi, in a Mochi's paws (the 'pound' move): a long
-// handle and a barrel of a head across its end, turned to `swing` (from straight up, forward).
-function drawMallet(ctx, x, y, s, flip, swing) {
+// handle and a barrel of a head across its end, turned to `swing` (from straight up, forward). On
+// the frame it lands, the blur of the swing trails back round behind the head (`smear`, radians):
+// a pale crescent along the head's path, thinning to nothing. (Also leant against each mortar,
+// waiting, by render/race.js.)
+export function drawMallet(ctx, x, y, s, flip, swing, smear = 0) {
   const d = flip ? -1 : 1;
   const k = s / 0.6;
   ctx.save();
   ctx.translate(x, y);
   ctx.scale(d * k, k);
+  if (smear > 0.05) {
+    const at = (a, r) => [Math.sin(a) * r, -Math.cos(a) * r];
+    ctx.globalAlpha = 0.55;
+    ctx.fillStyle = '#fff6e6';
+    ctx.beginPath();
+    for (let i = 0; i <= 12; i++) ctx.lineTo(...at(swing - smear * (i / 12), 25.5));
+    for (let i = 12; i >= 0; i--) ctx.lineTo(...at(swing - smear * (i / 12), 16 + 9.5 * (i / 12) ** 0.7));
+    ctx.closePath();
+    ctx.fill();
+    ctx.globalAlpha = 1;
+  }
   ctx.rotate(swing);
   ctx.fillStyle = '#3a2d4f';
   ctx.fillRect(-1.5, -18, 3, 22);
@@ -2065,16 +2341,25 @@ export function drawMochiAnim(ctx, m, x, y, time) {
   // upright and back down past its crawl at every stop and start, and it read as a spin.)
   if (cant === 'crawl') st.crawlSoft = time;
   const soft = time - (st.crawlSoft ?? -9) < 0.9;
+  // (A move marked `crisp` - a leap and a slam, a mallet's pound - hops on a tight spring with just a
+  // little bounce: on the lively one a hop a tenth of a second long came out half its height and a
+  // slam half its lean, and with none at all it looked stiff. Never below the ground on the way
+  // down from a hop, either.)
+  const crisp = Boolean(act?.bit?.crisp);
   const bouncy = (key, to0) => {
     // (A lean is an angle: a whole turn more or less is the same pose, never spun back.)
     const to = key === 'lean' && D.P[key] != null ? to0 + TAU * Math.round((D.P[key] - to0) / TAU) : to0;
-    if (D.P[key] == null) {
+    // (Its lean held exact - a mallet's a long lever, and the least overshoot of the body after a
+    // slam dipped its head through the floor - and its height too: on the spring its feet were still
+    // 2.5-5.5 px up on the frame it landed, so it took the landing in mid-air. Its bounce is in its
+    // keys instead: the dip of the knees and the little spring back up.)
+    if (D.P[key] == null || (crisp && (key === 'lean' || key === 'lift'))) {
       D.P[key] = to;
       D.V[key] = 0;
       return to;
     }
-    const k = soft ? 150 : 520;
-    const c = 2 * Math.sqrt(k) * (soft ? 1 : 0.5);
+    const k = soft ? 150 : crisp ? 2400 : 520;
+    const c = 2 * Math.sqrt(k) * (soft ? 1 : crisp ? 0.62 : 0.5);
     const n = Math.max(1, Math.ceil(dt / (1 / 240)));
     const h = dt / n;
     let x0 = D.P[key];
@@ -2085,10 +2370,12 @@ export function drawMochiAnim(ctx, m, x, y, time) {
     }
     D.P[key] = x0;
     D.V[key] = v;
-    return x0;
+    return crisp && key === 'lift' ? Math.max(0, x0) : x0;
   };
   const blendK = st.P && time - st.blendAt < 0.33 ? Math.min(1, (time - st.blendAt) / 0.33) : 1;
-  const liftNow = bouncy('lift', lerp(P.lift, live.lift, blendK));
+  // (A crisp move's height comes straight from its keys, not eased in from the last way of
+  // moving: a hurdle jump is over in half a second, and eased in it never got high enough.)
+  const liftNow = bouncy('lift', crisp ? live.lift : lerp(P.lift, live.lift, blendK));
   // (`m.glideLean`: a race's glider tips forward into its glide, eased like any lean; `m.hillLean`,
   // a racer running up a hill leans into it, down one sits back a touch.)
   // (Getting up off all fours into anything upright, it comes up to upright first, so it is never
@@ -2209,24 +2496,28 @@ export function drawMochiAnim(ctx, m, x, y, time) {
   if (kind === 'run' && moving && tier === 5) drawSpeedLines(ctx, x, y, dir, s, time);
   drawCoatBack(ctx, g, x, y, s, time);
   const tip = tipNow;
+  // (A crisp move's flip - tipped about its middle - is lifted whole and turned there, like a
+  // flyer's loop: raised on its legs, a full turn swung it back down to the ground.)
+  // (Lying flat - a fall over a hurdle - it is laid on the ground as for a nap, not lifted.)
+  const flipping = crisp && tip > 4 && !lying;
   // (A backstroke is drawn facing the other way, so tipped over its front faces the sky.)
   // (What it holds goes in its near hand: a sweet, bitten as it eats; its ball, moving smoothly.)
   const over = posed && target.hold ? (c, hand, flip) => {
     if (target.hold === 'sweet') drawSweet(c, sweetKind, hand[0], hand[1] + s, s * 0.75, Math.round(target.bites ?? 0));
     else if (target.hold === 'ball') drawBall(c, hand[0] + (flip ? -1 : 1) * live.ball[0] * s, hand[1] + live.ball[1] * s, s, live.spin);
     else if (target.hold === 'can') drawCan(c, hand[0], hand[1], s, flip, Boolean(target.pour), time);
-    else if (target.hold === 'mallet') drawMallet(c, hand[0], hand[1], s, flip, target.swing ?? 0);
+    else if (target.hold === 'mallet') drawMallet(c, hand[0], hand[1], s, flip, target.swing ?? 0, target.smear ?? 0);
   } : null;
   const leanW = ((((lean + Math.PI) % TAU) + TAU) % TAU) - Math.PI;
   // (`m.alpha`: drawn faded, a ghost or a photo on a card fading out; the figure's own pictures
   // otherwise draw fully opaque whatever the canvas's alpha.)
-  const opts = { scale: s, facing: target.flip || target.turned ? -dir : dir, lean: Math.abs(leanW) > 0.005 || Math.abs(tip) > 0.005 ? { tilt: leanW, lift: tip, air: kind === 'fly' || kind === 'climb' ? 1 : undefined } : null, ...(over ? { over, hold: 'front' } : {}), ...(m.alpha != null && m.alpha < 1 ? { alpha: m.alpha } : {}) };
+  const opts = { scale: s, facing: target.flip || target.turned ? -dir : dir, lean: Math.abs(leanW) > 0.005 || Math.abs(tip) > 0.005 ? { tilt: leanW, lift: tip, air: kind === 'fly' || kind === 'climb' || flipping ? 1 : undefined } : null, ...(over ? { over, hold: 'front' } : {}), ...(m.alpha != null && m.alpha < 1 ? { alpha: m.alpha } : {}) };
   // (A ninja dash leaves two fading after-images behind: the same drawing stamped again, nothing
   // painted afresh.)
   // (Swimming, it sits down in the water: its feet below the waterline at `y`.)
   // (Flying, it's drawn up at its height rather than lifted on its legs, so a loop turns round
   // its own middle.)
-  const alt = kind === 'fly' || kind === 'climb' ? liftNow : 0;
+  const alt = kind === 'fly' || kind === 'climb' || flipping ? liftNow : 0;
   if (alt) rig.lift = 0;
   // (Lying down for a nap, it's laid on the ground the same way.)
   // (Crawling, it's tipped right over, which the rig only does off the ground, so it's set back down.)
@@ -2251,6 +2542,9 @@ export function drawMochiAnim(ctx, m, x, y, time) {
     };
     opts.hold = 'front';
   }
+  // (A great jumper's trail - `m.trail`, from render/race.js: [back, down, alpha] - the same drawing
+  // stamped again where it just was along its arc.)
+  if (m.trail) for (const [back, down, alpha] of m.trail) drawPosed(ctx, look, Math.round((x - dir * back) * 2) / 2, Math.round((y + dy + down) * 2) / 2, rig, { ...opts, alpha, under: null, over: null });
   if (kind === 'run' && moving && tier === 5) {
     for (const [back, alpha] of [[26, 0.12], [13, 0.26]]) drawPosed(ctx, look, Math.round((x - dir * back * (s / 0.6)) * 2) / 2, Math.round((y + dy) * 2) / 2, rig, { ...opts, alpha, under: null, over: null });
   }

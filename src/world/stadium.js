@@ -97,6 +97,9 @@ const SKIES = {
   // (The Grand Mochi Course's, from its redraw: a summer dusk, violet above going rosy, then warm
   // peach at the horizon where the sun went down.)
   matsuri: ['#5a4aa0', '#f2b6b6', '#ffe0c4'],
+  // (Tanabata Hurdles': a summer night, deep indigo above going violet, a last mauve glow at the
+  // horizon under the Milky Way.)
+  tanabata: ['#2a2f6e', '#5a4c9a', '#a888b8'],
 };
 // (The ground's height at x along a terrain line, for placing things before the map exists.)
 function groundAtX(terrain, x) {
@@ -323,6 +326,39 @@ function tourMap() {
   });
 }
 
+// Tanabata Hurdles (2026-11-15, the first look at a Hurdles course): the star festival on a summer
+// night - the Milky Way overhead with the two lovers' stars either side of it, decorated bamboo
+// hung with wishes along the track, lantern strings - and eight bamboo hurdles across a flat track,
+// low ones first, the tallest last, a pair close together in the middle. All about Fly (how high it
+// jumps) and Run (how fast it comes at them).
+function hurdleMap() {
+  const G = 520;
+  const terrain = [[0, G], [2700, G]];
+  // (Spaced so even the best jumper, the furthest through the air, gets a few strides between each:
+  // a pair 60 apart had them landing straight into the next.)
+  const bars = [[560, 10], [770, 12], [980, 14], [1190, 15], [1350, 15], [1560, 18], [1770, 20], [1980, 22]];
+  const legs = [];
+  for (const [x, h] of bars) legs.push({ kind: 'run', to: x }, { kind: 'hurdle', x, h });
+  legs.push({ kind: 'run', to: 2200 });
+  // (The lantern strings' light at night: one in the middle of each span.)
+  const lamps = [];
+  for (const [from, to] of [[620, 1100], [1400, 1880]]) {
+    for (let a = from; a + 120 <= to; a += 120) lamps.push({ x: a + 60, y: G - 64, c: '#ffc890' });
+  }
+  return courseMap('mrace_hurdles', 'Tanabata Hurdles', {
+    dusk: 0.45, lamps,
+    width: 2700, sky: 'tanabata', ground: 'festground', skyline: 'course:tanabata',
+    // (No sun or moon in it: a moonless night, the Milky Way at its brightest.)
+    look: { aerial: 0.55, clouds: false, face: null, groundArt: 'tanabata', edges: 'tanabata', cast: 'leap', festival: true, bar: 'lantern', calm: true, kicks: ['#ffe680', '#c8d8ff', '#ff8fb0', '#9fe0a0'], petals: ['#ffe680', '#ffffff', '#c8d8ff', '#ffb8cc'] },
+    terrain,
+    pieces: [
+      ['mr_sasa', 110, 0], ['mr_starter', 322, 0], ['mr_sasa', 470, 1], ['mr_chochin', 620, { to: 1100 }], ['mr_sasa', 1270, 2],
+      ['mr_chochin', 1400, { to: 1880 }], ['mr_squad', 2070, 0], ['mr_sasa', 2250, 3],
+    ],
+    race: course(240, 2200, legs),
+  });
+}
+
 // Mochitsuki Mountain (2026-11-15, the first look at a Power course): a snowy New Year mountain
 // festival - pines and stone lanterns, kagami mochi set out, the cheering squad - with a huge
 // boulder in each lane to smash right through, a long climb up the slope after it, and at the top
@@ -347,4 +383,4 @@ function powerMap() {
 }
 
 MAPS.mochi_stadium = stadiumMap();
-for (const map of [sprintMap(), swimMap(), climbMap(), glideMap(), hillsMap(), powerMap(), grandMap(), tourMap()]) MAPS[map.id] = map;
+for (const map of [sprintMap(), swimMap(), climbMap(), glideMap(), hillsMap(), powerMap(), hurdleMap(), grandMap(), tourMap()]) MAPS[map.id] = map;
