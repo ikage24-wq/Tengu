@@ -102,71 +102,92 @@ const pump = (phi, out, swing, rise) => {
   const x = along * out >= 0 ? along : out * 0.5 * Math.abs(sw) * swing * 0.5;
   return [x, -(rise * (0.6 + 0.4 * Math.abs(sw)) + (along * out < 0 ? 1.2 * Math.abs(sw) : 0))];
 };
-// The pose at `p` (0-1) through a gait's cycle of two steps.
+// A springy step (`u` 0-1, one footfall to the next): `sink`, the knees taking the landing and
+// springing back; `air`, up off the ground once it has pushed off, hanging near the top (`hang`
+// under 1 hangs longer) and down onto the next footfall. Its feet are on the ground at every one.
+// (The float is a jump's own arc, flattened at the top to hang: never dropping the last of it onto
+// the footfall in one frame, as a sharper curve did.)
+const stepCurve = (u, hang = 0.85, push = 0.16) => {
+  const v = u > push ? (u - push) / (1 - push) : 0;
+  const arc = 4 * v * (1 - v);
+  return { sink: u < push * 1.5 ? Math.sin((Math.PI * u) / (push * 1.5)) : 0, air: 1 - (1 - arc) ** (1 / hang) };
+};
+// The pose at `p` (0-1) through a gait's cycle of two steps. (Redone 2026-11-15, "a lil bouncy,
+// funny, and epic at the end speeds": every step lands on springy knees and floats, and since arms
+// and legs are small on a Mochi, each style reads by what its whole body does.)
 function gaitPose(tier, p) {
-  const s2 = Math.sin(TAU * p * 2); // once a step
-  // Every gait bounces: a springy hop up off each step (eased, fastest leaving the ground and
-  // hanging at the top), a little sink as it lands, the head a beat behind, the sprout boinging.
-  const u = (p * 2) % 1;
-  const hop = Math.sin(Math.PI * u) ** 0.8; // up and down within each step
-  const land = Math.max(0, Math.cos(Math.PI * u * 2.4)) * (u < 0.25 || u > 0.9 ? 1 : 0); // the sink at each footfall
+  const u = (p * 2) % 1; // through each step
   const lag = Math.sin(Math.PI * ((u + 0.82) % 1)); // the head a beat behind the body
   const boing = Math.sin(TAU * u - 1.2); // the sprout and hair, later still
+  const sw = Math.sin(TAU * p); // swinging side to side, a step each way
   if (tier === 0) {
-    // Waddle: little hops from foot to foot, rocking side to side, arms held out for balance and
-    // flapping with each step, the head bobbing after, cheeks puffed with effort.
+    // Waddle (funny): stumpy little steps rocking from foot to foot, a hop off each, the head tipping
+    // right over to each side, both arms out like little wings flapping as hard as they can (twice
+    // a step), cheeks puffed and huffing - a puff of breath with every step - the sprout boinging.
+    const { sink, air } = stepCurve(u, 1, 0.22);
+    const flap = Math.abs(Math.sin(TAU * u));
     return pose({
-      legF: foot(p, 1.8, 1.8, 10), legB: foot(p + 0.5, 1.8, 1.8, 10), bob: 0.9 * land, lift: 1.8 * hop,
-      tilt: -2 + 8 * Math.sin(TAU * p - 0.7), hx: 0.5 * Math.sin(TAU * p), hy: 1 + 0.9 * lag,
-      front: [3.2, -4 - 2.2 * hop], back: [-3, -3.8 - 2.2 * hop], hair: 1.6 * boing,
-      blush: 1.5,
+      legF: foot(p, 1.6, 1.6, 8), legB: foot(p + 0.5, 1.6, 1.6, 8), bob: 1.4 * sink, lift: 1.8 * air,
+      lean: 0.03 * sw, tilt: -2 + 13 * Math.sin(TAU * p - 0.5), hx: 0.8 * sw, hy: 1 + 1 * lag,
+      front: [4.4, -3 - 3.8 * flap], back: [-4.2, -2.8 - 3.8 * flap], hair: 2.4 * boing, blush: 1.7,
     });
   }
   if (tier === 1) {
-    // Trot: a cute, bouncy jog, upright, short quick steps, high up off every one; the hands held
-    // up by the chest bobbing with each bounce, the head rocking side to side, the sprout boinging.
+    // Skip (bouncy, happy): a skip off every step, up high and hanging there, the leading knee up and
+    // the other foot kicked back, arms swinging up by turns, eyes squeezed shut with glee at the
+    // top, the head rocking, the sprout boinging; a little note at the top of every other one.
+    const { sink, air } = stepCurve(u, 0.65, 0.18);
+    const top = u > 0.36 && u < 0.68;
     return pose({
-      legF: foot(p, 2.2, 2.6, 18), legB: foot(p + 0.5, 2.2, 2.6, 18), bob: 1.2 * land, lift: 4.4 * hop,
-      lean: -0.02, tilt: -2 + 6 * Math.sin(TAU * p - 0.6), hy: 1 + 1.4 * lag, hx: 0.2,
-      front: [1.6 + 0.5 * Math.sin(TAU * p), -4.4 - 0.8 * hop], back: [-0.8 - 0.5 * Math.sin(TAU * p), -4.2 - 0.8 * hop], hair: 2.2 * boing,
+      legF: foot(p, 2.4, 3.6, 28), legB: foot(p + 0.5, 2.4, 3.6, 28), bob: 1.5 * sink, lift: 6.2 * air,
+      lean: -0.05, tilt: -2 + 8 * Math.sin(TAU * p - 0.6), hy: 1 + 1.5 * lag, hx: 0.3,
+      front: [2.2 + 2.8 * sw, -6 - 4 * Math.max(0, sw)], back: [-1.2 - 2.8 * sw, -6 - 4 * Math.max(0, -sw)],
+      hair: 2.8 * boing, mouth: 'D', runClosed: top, runExtra: top && p < 0.5 ? ['note'] : null,
     });
   }
   if (tier === 2) {
-    // Run: a natural steady run, a light lean, a medium stride with a clean float between steps,
-    // the arms swinging relaxed and bent, the head steady over it all.
+    // Run (cheerful): a natural run with a clean float between steps, a light lean, arms pumping
+    // relaxed, a smile, the hair flowing back and bouncing.
+    const { sink, air } = stepCurve(u, 0.8, 0.16);
     return pose({
-      legF: foot(p, 4, 3.2, 32), legB: foot(p + 0.5, 4, 3.2, 32), bob: 0.8 * land, lift: 2.6 * hop,
-      lean: 0.2, tip: 1.6, tilt: -7 + 1.2 * boing, hy: 1.6 + 0.8 * lag, hx: 1.2,
-      front: pump(p + 0.5, 1, 3.4, 3.2), back: pump(p, -1, 3.4, 3.2), hair: -2.2 + 1 * boing,
+      // (Set down a touch: its lean swings its feet up off the ground half a pixel - measured.)
+      legF: foot(p, 4, 3.4, 32), legB: foot(p + 0.5, 4, 3.4, 32), bob: 1.1 * sink, lift: 3.6 * air - 0.5,
+      lean: 0.2, tip: 1.6, tilt: -6 + 1.4 * boing, hy: 1.6 + 0.9 * lag, hx: 1.2,
+      front: pump(p + 0.5, 1, 3.6, 3.4), back: pump(p, -1, 3.6, 3.4), hair: -2.4 + 1.2 * boing, mouth: 'mochibeam',
     });
   }
   if (tier === 3) {
-    // Sprint: long bounding strides, the head driving forward, arms pumping hard, mouth open, hair
-    // streaming and bouncing.
+    // Sprint (determined): long bounding strides with a real float, leaning in, knees driving, arms
+    // pumping hard, mouth open, the hair streaming and bouncing; dust off every footfall.
+    const { sink, air } = stepCurve(u, 0.7, 0.14);
     return pose({
-      legF: foot(p, 4.4, 4.2, 38), legB: foot(p + 0.5, 4.4, 4.2, 38), bob: 1.2 * land, lift: 4.6 * hop,
-      lean: 0.28, tip: 1.6, tilt: -9 + 2 * boing, hy: 1.6 + 1.2 * lag, hx: 1.2, mouth: 'mochiopen',
-      front: pump(p + 0.5, 1, 3.6, 4.4), back: pump(p, -1, 3.6, 4.4), hair: -2.6 + 1.6 * boing,
+      legF: foot(p, 4.6, 4.6, 40), legB: foot(p + 0.5, 4.6, 4.6, 40), bob: 1.4 * sink, lift: 5.4 * air,
+      lean: 0.3, tip: 1.8, tilt: -9 + 2 * boing, hy: 1.6 + 1.3 * lag, hx: 1.3, mouth: 'mochiopen',
+      front: pump(p + 0.5, 1, 4, 4.6), back: pump(p, -1, 4, 4.6), hair: -3 + 1.6 * boing,
       brows: [[-0.2, 0.4], [-0.2, 0.4]],
     });
   }
   if (tier === 4) {
-    // Power sprint: all out but clean: a deep lean, the knees driving high, long powerful strides,
-    // the arms pumping hard and fast, jaw set, the hair streaming flat.
+    // Power sprint (epic): all out, a deep driving lean, knees punching high, arms pumping hard and
+    // fast, jaw set, the hair streaming flat; big dust kicked up and the wind streaming past.
+    const { sink, air } = stepCurve(u, 0.75, 0.13);
     return pose({
-      legF: foot(p, 4.8, 4.8, 44), legB: foot(p + 0.5, 4.8, 4.8, 44), bob: 1.2 * land, lift: 4 * hop,
-      lean: 0.4, tip: 2.2, tilt: -11 + 1.5 * boing, hy: 1.8 + 1 * lag, hx: 1.4, mouth: 'grit',
-      front: pump(p + 0.5, 1, 4.2, 5), back: pump(p, -1, 4.2, 5), hair: -3.6 + 1.2 * boing,
+      // (Set down by as much as its deep lean swings its feet up - measured, a pixel.)
+      legF: foot(p, 5, 5.2, 48), legB: foot(p + 0.5, 5, 5.2, 48), bob: 1.3 * sink, lift: 4.4 * air - 1,
+      lean: 0.48, tip: 2.4, tilt: -12 + 1.5 * boing, hy: 1.9 + 1 * lag, hx: 1.6, mouth: 'grit',
+      front: pump(p + 0.5, 1, 4.6, 5.4), back: pump(p, -1, 4.6, 5.4), hair: -4 + 1.2 * boing,
       brows: [[-0.4, 0.7], [-0.4, 0.7]],
     });
   }
-  // Ninja dash: bent right over, both arms flung straight out behind and held there, legs a blur
-  // of long low bounds, the head thrust forward, a fierce little frown; hair and sprout flat out
-  // behind, bouncing.
+  // Ninja dash (epic): bent nearly flat out, both arms swept straight back and held there, the legs
+  // a blur of long low bounds, the head thrust forward, a fierce little frown, hair and sprout flat
+  // out behind; after-images, speed lines and a streak of light along the ground behind it.
+  const { sink, air } = stepCurve(u, 0.9, 0.12);
   return pose({
-    legF: foot(p, 5, 3.8, 46), legB: foot(p + 0.5, 5, 3.8, 46), bob: 1.2 + 0.8 * land, lift: 2.8 * hop,
-    lean: 0.62, tip: 2.6, tilt: -12 + 2 * boing, hx: 1.6, hy: 2 + 1 * lag, mouth: 'mochiflat',
-    front: [-7.4, 3.6 + 0.4 * boing], back: [-8.2, 2.6 - 0.4 * boing], hair: -4.4 + 1 * boing,
+    // (Set down by as much as bending right over swings its feet up - measured, a pixel and a half.)
+    legF: foot(p, 5.4, 4, 50), legB: foot(p + 0.5, 5.4, 4, 50), bob: 1.2 + 0.9 * sink, lift: 3 * air - 1.9,
+    lean: 0.7, tip: 2.8, tilt: -13 + 2 * boing, hx: 1.8, hy: 2.1 + 1 * lag, mouth: 'mochiflat',
+    front: [-7.6, 3.6 + 0.5 * boing], back: [-8.4, 2.6 - 0.5 * boing], hair: -4.8 + 1 * boing,
     brows: [[-0.5, 0.9], [-0.5, 0.9]],
   });
 }
@@ -2252,14 +2273,16 @@ export function drawMochiAnim(ctx, m, x, y, time) {
   m.cant = cant;
   const mvT = cant ? CANT_MOVES[cant] : table[tier];
   // The cycle follows the distance travelled. Arms, legs and face (what's drawn) step through it on
-  // fixed frames, more of them the slower the cycle (16 to 32), so every drawing
+  // fixed frames, more of them the slower the cycle (20 to 40), so every drawing
   // comes round again; how high it is, how far it leans and how deep it sits are worked out fresh
   // every frame (they only move the drawing, never repaint it), so the motion itself is smooth.
   const travelled = cant && cant !== 'crawl' ? time * mvT.speed : (m.speed ?? 0) > 1 ? (m.dist ?? 0) / (mvT.stride * s / 0.6) : time * 0.8;
   const pc = ((travelled % 1) + 1) % 1;
   const cycle = cant && cant !== 'crawl' ? 1 / mvT.speed : mvT.stride / mvT.speed;
   // (While an act's face is on, the limbs step at half the rate: the face is what's being drawn new.)
-  const N0 = kind === 'swim' ? 32 : Math.max(16, Math.min(32, Math.round((cycle * 30) / 4) * 4));
+  // (2026-11-15: 20 to 40 a cycle, about 50 drawings a second whatever the gait - 16 left the slow
+  // gaits stepping.)
+  const N0 = kind === 'swim' ? 32 : Math.max(20, Math.min(40, Math.round((cycle * 50) / 4) * 4));
   const N = st.act && kind !== 'swim' ? N0 / 2 : N0;
   // (Held down on all fours through a turn, it keeps the stroke it was in rather than snapping back.)
   const phase = moving ? Math.floor(pc * N) / N : cant === 'crawl' ? st.crawlPh ?? 0 : 0;
@@ -2375,7 +2398,16 @@ export function drawMochiAnim(ctx, m, x, y, time) {
   const blendK = st.P && time - st.blendAt < 0.33 ? Math.min(1, (time - st.blendAt) / 0.33) : 1;
   // (A crisp move's height comes straight from its keys, not eased in from the last way of
   // moving: a hurdle jump is over in half a second, and eased in it never got high enough.)
-  const liftNow = bouncy('lift', crisp ? live.lift : lerp(P.lift, live.lift, blendK));
+  // (Running, its height comes straight off its step too: on the lively spring every step's float
+  // was smoothed off and late, and its feet never quite came down - 0.5 to 1 px up all the way.)
+  // (The spring kept up with it, so stopping eases on from where it is.)
+  const runExact = !crisp && moving && kind === 'run' && !cant;
+  let liftNow;
+  if (runExact) {
+    liftNow = lerp(P.lift, live.lift, blendK);
+    D.P.lift = liftNow;
+    D.V.lift = 0;
+  } else liftNow = bouncy('lift', crisp ? live.lift : lerp(P.lift, live.lift, blendK));
   // (`m.glideLean`: a race's glider tips forward into its glide, eased like any lean; `m.hillLean`,
   // a racer running up a hill leans into it, down one sits back a touch.)
   // (Getting up off all fours into anything upright, it comes up to upright first, so it is never
@@ -2446,6 +2478,9 @@ export function drawMochiAnim(ctx, m, x, y, time) {
     if (face.eyes) rig.eyes = face.eyes;
     for (const k of ['brows', 'blush', 'glance', 'wide', 'shine', 'teary', 'spiral', 'cross', 'lid', 'closed']) if (face[k] != null) rig.face[k] = face[k];
     if (face.extra) rig.face.extra = face.extra;
+    // (The skip's own glee at the top of each: eyes squeezed shut, a note now and then.)
+    if (!beat && target.runClosed) rig.face.closed = [true, true];
+    if (!beat && target.runExtra) rig.face.extra = target.runExtra;
     if (beat && kind === 'run') {
       rig.tilt += Math.round((beat.tilt ?? 0) / 2) * 2;
       rig.hx = q(rig.hx + (beat.hx ?? 0));
@@ -2492,8 +2527,12 @@ export function drawMochiAnim(ctx, m, x, y, time) {
     ctx.ellipse(sx, y, Math.max(2, 7 - liftNow * 0.22) * (s / 0.6) * (1 + 0.45 * downK), Math.max(0.8, 1.8 - liftNow * 0.04) * (s / 0.6), m.groundTilt ?? 0, 0, TAU);
     ctx.fill();
   }
-  if (kind === 'run' && moving && tier >= 3) drawDust(ctx, x, y, dir, phase, GAITS[tier].stride * (s / 0.6), tier);
-  if (kind === 'run' && moving && tier === 5) drawSpeedLines(ctx, x, y, dir, s, time);
+  // (`m.noFx`: just the Mochi, its dust and streaks left out - for measuring it against the ground.)
+  const fx = !m.noFx;
+  if (fx && kind === 'run' && moving && tier === 0 && !cant) drawHuffs(ctx, x, y, dir, phase, s);
+  if (fx && kind === 'run' && moving && tier >= 3) drawDust(ctx, x, y, dir, phase, GAITS[tier].stride * (s / 0.6), tier);
+  if (fx && kind === 'run' && moving && tier === 5) drawStreak(ctx, x, y, dir, s, time);
+  if (fx && kind === 'run' && moving && tier >= 4) drawSpeedLines(ctx, x, y, dir, s, time, tier === 4 ? 2 : 4);
   drawCoatBack(ctx, g, x, y, s, time);
   const tip = tipNow;
   // (A crisp move's flip - tipped about its middle - is lifted whole and turned there, like a
@@ -2630,12 +2669,45 @@ function drawDust(ctx, x, y, dir, phase, stride, tier) {
   }
   ctx.restore();
 }
-// Speed lines streaming behind a ninja dash.
-function drawSpeedLines(ctx, x, y, dir, s, time) {
+// A waddler huffing: a little puff of breath off its mouth with each step, drifting back and up and
+// fading (by the step, so it comes round with the drawings).
+function drawHuffs(ctx, x, y, dir, phase, s) {
+  const k = s / 0.6;
+  ctx.save();
+  for (const at of [0.05, 0.55]) {
+    const age = (((phase - at) % 1) + 1) % 1;
+    if (age > 0.4) continue;
+    const u = age / 0.4;
+    ctx.globalAlpha = 0.75 * (1 - u);
+    ctx.fillStyle = '#ffffff';
+    const px = x + dir * (9 - u * 9) * k;
+    const py = y - (20 + u * 6) * k;
+    ctx.beginPath();
+    ctx.arc(px, py, (1 + u * 1.6) * k, 0, TAU);
+    ctx.arc(px + dir * 1.6 * k, py - 0.8 * k, (0.8 + u * 1.2) * k, 0, TAU);
+    ctx.fill();
+  }
+  ctx.restore();
+}
+// A streak of light along the ground behind a ninja dash: bright at its heels, fading away behind,
+// shimmering.
+function drawStreak(ctx, x, y, dir, s, time) {
+  const k = s / 0.6;
+  ctx.save();
+  for (let i = 0; i < 6; i++) {
+    const a = 0.55 * (1 - i / 6) * (0.85 + 0.15 * Math.sin(time * 30 + i));
+    ctx.globalAlpha = a;
+    ctx.fillStyle = i % 2 ? '#e8f4ff' : '#ffffff';
+    ctx.fillRect(dir > 0 ? x - (6 + (i + 1) * 7) * k : x + (6 + i * 7) * k, y - 1.2 * k, 7 * k, (1.6 - i * 0.18) * k);
+  }
+  ctx.restore();
+}
+// Speed lines streaming behind a ninja dash (all four) or a power sprint (the wind past it: two).
+function drawSpeedLines(ctx, x, y, dir, s, time, n = 4) {
   ctx.save();
   ctx.strokeStyle = '#ffffff';
   ctx.lineCap = 'round';
-  [[-14, 0.1], [-22, 0.45], [-30, 0.75], [-8, 0.3]].forEach(([dy, ph]) => {
+  [[-14, 0.1], [-22, 0.45], [-30, 0.75], [-8, 0.3]].slice(0, n).forEach(([dy, ph]) => {
     const u = Math.floor(((time * 3 + ph) % 1) * 12) / 12;
     ctx.globalAlpha = Math.sin(u * Math.PI) * 0.85;
     ctx.lineWidth = 1.1 * (s / 0.6);
