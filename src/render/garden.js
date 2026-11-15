@@ -2421,8 +2421,10 @@ export function drawGardenPiece(ctx, map, kind, wx, extra, cam, width, time) {
   // has the shop and the stalls: world/market.js.)
   if (!(map.garden || map.mochiRace || map.mochiTown) || !kind.startsWith('mg_')) return false;
   const x = wx - cam.x;
-  // (A fence runs on far past where it starts: it culls its own bays.)
-  if (x < -280 && kind !== 'mg_falls' && kind !== 'mg_fence') return true;
+  // (A long one - a fence, the lantern string, a string of flags - runs on far past where it starts:
+  // it stays until its far end is off the screen too. A fence culls its own bays.)
+  const far = typeof extra?.to === 'number' ? extra.to - cam.x : x;
+  if (far < -280 && kind !== 'mg_falls') return true;
   if (x > width + 280 && kind !== 'mg_falls') return true;
   const gy = groundAt(map, wx) - cam.y;
   // (Night, or a part of a long course at dusk, `look.glow`: lanterns lit.)
