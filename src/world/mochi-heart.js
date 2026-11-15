@@ -112,7 +112,7 @@ export const giftOf = (rec, roll) => (roll > 0.88 ? 'mochi_clover' : hasQuirk(re
 // The game or the time together a Mochi asks a friend for, by its nature (and a kind one, seeing a
 // friend sad, comes to comfort it; a gentle one makes up with one it fell out with).
 const GAME_OF = {
-  playful: 'tag', hyper: 'tag', cheeky: 'tag', sporty: 'tag', mischief: 'tag', brave: 'tag', sneaky: 'hide',
+  playful: 'tag', hyper: 'tag', cheeky: 'tag', sporty: 'sumo', mischief: 'tag', brave: 'sumo', sneaky: 'hide',
   shy: 'hide', timid: 'hide', clingy: 'hide', curious: 'hide', nosy: 'hide',
   showoff: 'trick', proud: 'trick', dramatic: 'dance', cool: 'dance', artsy: 'dance', sassy: 'dance', bubbly: 'dance',
   foodie: 'snack', lazy: 'snack', sleepy: 'snack',
@@ -120,7 +120,7 @@ const GAME_OF = {
 };
 export const KIND_HEARTS = new Set(['gentle', 'sweet', 'clingy', 'polite', 'dreamy', 'shy']);
 // (Mostly its favourite; now and then, for a change, something else - `roll` 0-1.)
-const CHANGE = ['tag', 'hide', 'dance', 'snack', 'chat', 'trick'];
+const CHANGE = ['tag', 'hide', 'dance', 'snack', 'chat', 'trick', 'sumo'];
 export function gameFor(rec, other, now, roll = 0) {
   if (SAD.has(other.feel && now < other.feel.until ? other.feel.kind : '') && (KIND_HEARTS.has(rec.personality) || hasQuirk(rec, 'cuddler'))) return 'comfort';
   let g = GAME_OF[rec.personality] ?? 'chat';

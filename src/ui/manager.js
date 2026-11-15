@@ -262,15 +262,16 @@ export function routeInput(state, world, input, dt) {
       state.selectedSkill = null;
     }
   }
-  // Dango Stack going (ui/festival-stall.js): Space or Up drops the dango, not a jump.
+  // A festival stall's game going (ui/festival-stall.js): the keys are the game's - Space or Up
+  // plays it, Left and Right steer Petal Catch's basket - and the world's locked, as with a talk
+  // window open, so you neither jump nor walk off.
   const fs = state.windows.feststall;
-  if (fs.open && fs.game && fs.game.phase !== 'done' && (input.pressed.has('Space') || input.pressed.has('ArrowUp'))) {
-    fs.drop = fs.game.phase === 'swing';
-    input.pressed.delete('Space');
-    input.pressed.delete('ArrowUp');
-  }
+  const gameOn = Boolean(fs.open && fs.game && fs.game.phase !== 'done');
+  if (gameOn && (input.pressed.has('Space') || input.pressed.has('ArrowUp'))) fs.drop = true;
+  fs.left = gameOn && input.held.has('ArrowLeft');
+  fs.right = gameOn && input.held.has('ArrowRight');
   if (!state.windows.npc.open) state.npc = null;
-  return Boolean(state.npc) || state.death;
+  return Boolean(state.npc) || state.death || gameOn;
 }
 
 const WINDOWS = { stats: statsWindow, skills: skillsWindow, quests: questsWindow, bag: bagWindow, worldmap: worldMapWindow, admin: adminWindow, options: optionsWindow, profile: profileWindow, cashshop: cashShopWindow, pet: petWindow, online: onlineWindow, collection: collectionWindow, cook: cookingWindow, mochi: mochiCareWindow, race: raceBoardWindow, show: mochiShowWindow, sumo: mochiSumoWindow, feststall: festivalStallWindow, eggs: eggStallWindow, wears: wearStallWindow, raceinvite: raceInviteWindow, gardenpick: gardenPickWindow, mochiname: mochiNameWindow, mochiinfo: mochiInfoWindow, closet: mochiClosetWindow, album: mochiAlbumWindow, craft: craftingWindow, life: lifeWindow, gacha: gachaWindow, trade: tradeWindow, auction: auctionWindow };

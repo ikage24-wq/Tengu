@@ -1,15 +1,20 @@
-// The Moon Viewing festival stall's window (world/garden-festival.js; the stall stands on the Mochi
-// Market's terrace on festival days). Two tabs:
-//   Dango Stack  the game (world/dango-stack.js): 100 gold a go; Space, Up or a click drops each
-//                dango onto the skewer; at the end, Moon Tokens for how high it got
-//   Prizes       the festival's own garden pieces, swapped for Moon Tokens (kept after the festival)
+// A festival stall's window (world/garden-festival.js; the stall stands on the Mochi Market's terrace
+// on festival days). Two tabs:
+//   the game     the festival's own (Moon Viewing: Dango Stack, world/dango-stack.js; Snow Lanterns:
+//                Snowball Toss, world/snowball-toss.js): 100 gold a go, Space, Up or a click to play;
+//                at the end, the festival's tokens for the score
+//   Prizes       the festival's own garden pieces, swapped for its tokens (kept after the festival)
 // Walk away, or the festival ends, and the window closes (a game going on is finished first).
 
 import { FURNITURE } from '../data/furniture.js';
 import { addItem } from '../core/inventory.js';
 import { drawPieceIcon } from '../render/furniture.js';
 import { STACK, newStack, tickStack, dropDango, tokensFor } from '../world/dango-stack.js';
-import { FEST } from '../world/garden-festival.js';
+import { FEST, FESTIVALS } from '../world/garden-festival.js';
+import { TOSS, newToss, tickToss, throwToss, tossTokens } from '../world/snowball-toss.js';
+import { drawTossGame, drawPetalGame, drawRingGame } from './festival-games.js';
+import { PETAL, newCatch, tickCatch, petalTokens } from '../world/petal-catch.js';
+import { RING, newRings, tickRings, throwRing, ringTokens } from '../world/ring-toss.js';
 import { sfx } from '../audio/sfx.js';
 import { COLORS, windowFrame, text, button, box, clicked, hover, tabs, fit } from './kit.js';
 import { heading } from './mochi-kit.js';
@@ -17,8 +22,36 @@ import { heading } from './mochi-kit.js';
 const W = 300;
 const H = 254;
 const TAU = Math.PI * 2;
-const prizes = () => FURNITURE.filter((f) => f.festival === 'moon');
-export const tokensOf = (char) => char.festTokens?.moon ?? 0;
+// Each festival's game: how it starts, steps, takes a press, scores, and what's said under it.
+const GAMES = {
+  dango: {
+    name: 'Dango Stack', cost: STACK.cost, create: newStack, tick: tickStack, press: dropDango, tokens: tokensFor, draw: (ctx, x, y, w, h, g, time) => drawGame(ctx, x, y, w, h, g, time),
+    going: (g) => `Stacked ${g.n}   Score ${g.score}`, lives: (g) => [g.lives, STACK.lives], how: ['Drop each dango onto the stack. Off-centre, it leans;', "miss three, or let it lean too far, and it's over."],
+    result: (g, got) => (g.last === 'full' ? `A full skewer! ${g.score} points, +${got} tokens` : `${g.n} high, ${g.score} points: +${got} token${got === 1 ? '' : 's'}`),
+    sounds: { perfect: 'coin', miss: 'hit' },
+  },
+  snowball: {
+    name: 'Snowball Toss', cost: TOSS.cost, create: newToss, tick: tickToss, press: throwToss, tokens: tossTokens, draw: drawTossGame,
+    going: (g) => `Hits ${g.hits}   Score ${g.score}   ${Math.max(0, Math.ceil(TOSS.time - g.t))}s`, lives: null, how: ['Throw at the snow-Mochi as they pop up - a golden one', 'is worth two. Thirty seconds!'],
+    result: (g, got) => `${g.hits} hits, ${g.score} points: +${got} token${got === 1 ? '' : 's'}`,
+    sounds: { hit: 'coin', gold: 'itemGet', miss: 'click' },
+  },
+  petal: {
+    name: 'Petal Catch', cost: PETAL.cost, create: newCatch, tick: (g, dt, win) => tickCatch(g, dt, { left: win.left, right: win.right, aim: win.aim }), press: () => false, tokens: petalTokens, draw: drawPetalGame,
+    going: (g) => `Caught ${g.caught}   Score ${g.score}   ${Math.max(0, Math.ceil(PETAL.time - g.t))}s`, lives: null, how: ['Catch the petals in the basket: Left and Right, or the', 'mouse. A golden petal is worth two. Thirty seconds!'],
+    result: (g, got) => `${g.caught} petals, ${g.score} points: +${got} token${got === 1 ? '' : 's'}`,
+    sounds: { catch: 'pickup', gold: 'itemGet' }, keys: 'arrows',
+  },
+  ring: {
+    name: 'Ring Toss', cost: RING.cost, create: newRings, tick: tickRings, press: throwRing, tokens: ringTokens, draw: drawRingGame,
+    going: (g) => `Rings ${RING.rings - g.n}   Score ${g.score}`, lives: null, how: ['Throw as the meter says: near peg 1, middle 2, far 3.', 'Ten rings - the meter speeds up as you go.'],
+    result: (g, got) => `${g.on.length} ringers, ${g.score} points: +${got} token${got === 1 ? '' : 's'}`,
+    sounds: { ringer: 'coin', clink: 'click', miss: 'cancel' },
+  },
+};
+const festOf = () => FEST.now?.id ?? 'moon';
+const prizes = (id) => FURNITURE.filter((f) => f.festival === id);
+export const tokensOf = (char, id = festOf()) => char.festTokens?.[id] ?? 0;
 
 export function festivalStallWindow(ui, state, world) {
   const win = state.windows.feststall;
@@ -29,14 +62,23 @@ export function festivalStallWindow(ui, state, world) {
     win.game = null;
     return;
   }
-  if (!windowFrame(ui, win, W, H, 'Moon Viewing Stall', { icon: 'star' })) return;
+  // (The festival it was opened for, kept while a game's going even if the day turns over.)
+  if (!playing) {
+    // (A finished game of another festival's put away.)
+    if (win.fest !== festOf()) win.game = null;
+    win.fest = festOf();
+  }
+  const id = win.fest ?? festOf();
+  const F = FESTIVALS[id];
+  const G = GAMES[F.game];
+  if (!windowFrame(ui, win, W, H, F.stall, { icon: 'star' })) return;
   const { ctx } = ui;
   const char = world.char;
   const x = win.x + 10;
   let y = win.y + 28;
-  win.tab = tabs(ui, x, y, ['Dango Stack', `Prizes (${tokensOf(char)} tokens)`], win.tab ?? 0, { total: W - 20, h: 14 });
+  win.tab = tabs(ui, x, y, [G.name, `Prizes (${tokensOf(char, id)} tokens)`], win.tab ?? 0, { total: W - 20, h: 14 });
   y += 20;
-  if (win.tab === 1) return prizesTab(ui, win, world, x, y);
+  if (win.tab === 1) return prizesTab(ui, win, world, x, y, id);
   // ---- The game.
   const aw = W - 20;
   const ah = 150;
@@ -45,57 +87,59 @@ export function festivalStallWindow(ui, state, world) {
   const g = win.game;
   if (g) {
     // (A press - Space or Up, kept from the world by ui/manager.js routeInput - or a click on the play area.)
-    if (win.drop || (clicked(ui, x, y, aw, ah) && g.phase === 'swing')) dropDango(g);
+    if (win.drop || clicked(ui, x, y, aw, ah)) G.press(g);
     win.drop = false;
-    const out = tickStack(g, dt);
-    if (out === 'perfect') sfx('coin');
-    else if (out === 'miss') sfx('hit');
+    // (Petal Catch: the mouse over the play area steers the basket.)
+    win.aim = G.keys === 'arrows' && hover(ui, x, y, aw, ah) ? ((ui.mouse.x - (x + aw / 2)) / (aw / 2)) * PETAL.half : null;
+    const out = G.tick(g, dt, win);
+    if (G.sounds[out]) sfx(G.sounds[out]);
     if (g.phase === 'done' && !g.paid) {
       g.paid = true;
-      const got = tokensFor(g.score);
+      const got = G.tokens(g.score);
       char.festTokens ??= {};
-      char.festTokens.moon = tokensOf(char) + got;
+      char.festTokens[id] = tokensOf(char, id) + got;
       char.festBest ??= {};
-      char.festBest.moon = Math.max(char.festBest.moon ?? 0, g.score);
+      char.festBest[id] = Math.max(char.festBest[id] ?? 0, g.score);
       g.got = got;
-      world.log(got ? `Dango Stack: ${g.n} high! +${got} Moon Token${got > 1 ? 's' : ''}.` : `Dango Stack: ${g.n} high. Stack 4 for a token!`, '#ffe08a');
+      world.log(`${G.name}: ${g.score} points. ${got ? `+${got} ${F.token}${got > 1 ? 's' : ''}!` : 'Four points for a token!'}`, '#ffe08a');
     }
   }
-  drawGame(ctx, x, y, aw, ah, g, world.now);
+  G.draw(ctx, x, y, aw, ah, g, world.now);
   y += ah + 6;
   // Under it: how it's going, or how to play and a go.
   if (g && g.phase !== 'done') {
-    text(ctx, `Stacked ${g.n}   Score ${g.score}`, x, y + 8, { size: 7.5, bold: true, color: '#2e3a7a' });
-    for (let i = 0; i < STACK.lives; i++) heart(ctx, x + aw - 8 - i * 11, y + 5, i < g.lives);
-    text(ctx, 'Space, Up or click: drop it', x, y + 20, { size: 6.5, color: COLORS.muted });
+    text(ctx, G.going(g), x, y + 8, { size: 7.5, bold: true, color: '#2e3a7a' });
+    const lv = G.lives?.(g);
+    if (lv) for (let i = 0; i < lv[1]; i++) heart(ctx, x + aw - 8 - i * 11, y + 5, i < lv[0]);
+    text(ctx, G.keys === 'arrows' ? 'Left and Right, or the mouse' : 'Space, Up or click', x, y + 20, { size: 6.5, color: COLORS.muted });
     return;
   }
-  if (g?.phase === 'done') text(ctx, g.last === 'full' ? `A full skewer! ${g.score} points, +${g.got} tokens` : `${g.n} high, ${g.score} points: +${g.got} token${g.got === 1 ? '' : 's'}`, x, y + 8, { size: 7.5, bold: true, color: '#2e3a7a' });
-  else text(ctx, 'Drop each dango onto the stack. Off-centre, it leans;', x, y + 7, { size: 6.5, color: COLORS.muted });
-  if (g?.phase !== 'done') text(ctx, 'miss three, or let it lean too far, and it\'s over.', x, y + 16, { size: 6.5, color: COLORS.muted });
-  else text(ctx, `Best: ${char.festBest?.moon ?? 0}  ·  One token for every four points`, x, y + 18, { size: 6.5, color: COLORS.muted });
-  const can = char.gold >= STACK.cost;
-  if (button(ui, x + aw - 110, y + 24, 110, 16, `${g ? 'Again' : 'Play'} · ${STACK.cost}g`, { size: 7.5, primary: can, enabled: can, iconName: 'star' })) {
-    char.gold -= STACK.cost;
-    win.game = newStack();
+  if (g?.phase === 'done') text(ctx, G.result(g, g.got), x, y + 8, { size: 7.5, bold: true, color: '#2e3a7a' });
+  else text(ctx, G.how[0], x, y + 7, { size: 6.5, color: COLORS.muted });
+  if (g?.phase !== 'done') text(ctx, G.how[1], x, y + 16, { size: 6.5, color: COLORS.muted });
+  else text(ctx, `Best: ${char.festBest?.[id] ?? 0}  ·  One token for every four points`, x, y + 18, { size: 6.5, color: COLORS.muted });
+  const can = char.gold >= G.cost;
+  if (button(ui, x + aw - 110, y + 24, 110, 16, `${g ? 'Again' : 'Play'} · ${G.cost}g`, { size: 7.5, primary: can, enabled: can, iconName: 'star' })) {
+    char.gold -= G.cost;
+    win.game = G.create();
     sfx('buy');
   }
 }
 
-function prizesTab(ui, win, world, x, y) {
+function prizesTab(ui, win, world, x, y, id) {
   const { ctx } = ui;
   const char = world.char;
-  heading(ctx, `Moon Tokens: ${tokensOf(char)}`, x, y, W - 20);
-  const list = prizes();
+  heading(ctx, `${FESTIVALS[id].token}s: ${tokensOf(char, id)}`, x, y, W - 20);
+  const list = prizes(id);
   list.forEach((f, i) => {
     const cy = y + 12 + i * 58;
     box(ctx, x, cy, W - 20, 52, { fill: '#fffaf2', edge: '#f0dcc0', r: 8 });
     drawPieceIcon(ctx, f.id, x + 4, cy + 4, 44, world.now);
     text(ctx, f.name, x + 54, cy + 13, { size: 8, bold: true, color: '#2e3a7a' });
     text(ctx, fit(ctx, f.desc, W - 20 - 60, 6.2, false), x + 54, cy + 25, { size: 6.2, color: COLORS.muted });
-    const can = tokensOf(char) >= f.tokens;
+    const can = tokensOf(char, id) >= f.tokens;
     if (button(ui, x + W - 20 - 92, cy + 32, 86, 15, `Swap · ${f.tokens} tokens`, { size: 7, primary: can, enabled: can, iconName: 'gift' })) {
-      char.festTokens.moon -= f.tokens;
+      char.festTokens[id] -= f.tokens;
       addItem(char.inventory, f.id, 1);
       sfx('buy');
       world.log(`${f.name}: in your bag. Set it out in your garden (Decorate, Y).`, '#ffe08a');
@@ -185,6 +229,12 @@ function drawGame(ctx, x, y, w, h, g, time) {
       ctx.textAlign = 'left';
     }
   } else {
+    // (Its name on a little banner, clear of the skewer behind it.)
+    ctx.fillStyle = 'rgba(46,58,122,0.92)';
+    ctx.beginPath();
+    if (ctx.roundRect) ctx.roundRect(cx - 46, y + h / 2 - 26, 92, 22, 8);
+    else ctx.rect(cx - 46, y + h / 2 - 26, 92, 22);
+    ctx.fill();
     ctx.font = '900 12px Nunito, sans-serif';
     ctx.textAlign = 'center';
     ctx.fillStyle = '#ffe08a';

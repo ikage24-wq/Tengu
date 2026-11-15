@@ -55,7 +55,7 @@ import { drawMochiAnim } from './mochi-anim.js';
 import { drawHatch, drawEvolve, drawRebirth } from './mochi-life.js';
 import { drawMochiEgg } from './wagashi.js';
 import { rollMochi } from '../data/mochi-genes.js';
-import { EGG_SLOTS, EGG_BACK, NURSERY_BEDS, cropGrowth, stallOnShow, HARVEST_FREE, EGG_HOP, eggHopSecs, SEESAW, festivalSpots } from '../world/garden-life.js';
+import { EGG_SLOTS, EGG_BACK, NURSERY_BEDS, cropGrowth, stallOnShow, HARVEST_FREE, EGG_HOP, eggHopSecs, SEESAW, festivalSpots, snowLanterns, litLanterns } from '../world/garden-life.js';
 import { drawSweet } from './mochi-sweets.js';
 import { SWEET_BY_ID } from '../data/mochi-raise.js';
 import { drawShopModel } from './shopmodel.js';
@@ -2045,7 +2045,26 @@ export function drawGardenLife(ctx, world, cam, time, layer = 'back') {
     const d = (life.duos ?? []).find((q) => q.kind === 'pound' && q.poundAt != null);
     const a0 = d?.a.m.action?.name?.startsWith('pound') ? d.a.m.action.t0 : null;
     const pounding = a0 != null ? { since: time - a0 < 0.5 ? 9 : (time - a0 - 0.5) % 0.8 } : d ? { since: 9 } : null;
-    drawFestivalBack(ctx, world, cam, time, festivalSpots(life), pounding);
+    // (The Snow Lantern Festival: its lanterns and which are lit, and snowballs in the air - each
+    // thrown at its moment in the fight, half a second across, then a splat.)
+    const F = world.gardenFestival;
+    const extras = {};
+    if (F.id === 'snow') {
+      extras.lanterns = snowLanterns(life);
+      extras.lit = litLanterns(life, F);
+      extras.snowballs = [];
+      for (const q of life.duos ?? []) {
+        if (q.kind !== 'snowball' || !q.throws) continue;
+        for (const th of q.throws) {
+          const k = (time - (q.t0 + th.at)) / 0.4;
+          if (k < 0 || k > 4) continue;
+          const d = Math.sign(th.to.x - th.by.x) || 1;
+          extras.snowballs.push({ k, x0: th.by.x + d * 9, y0: th.by.y - 16, x1: th.to.x - d * 4, y1: th.to.y - 13 });
+        }
+      }
+    }
+    if (F.id === 'lantern') extras.boats = life.festBoats?.boats ?? [];
+    drawFestivalBack(ctx, world, cam, time, F.id === 'moon' || F.id === 'blossom' ? festivalSpots(life) : null, pounding, extras);
   }
   if (map.garden && !map.indoor) {
     const eggs = life.owner?.garden?.eggs ?? [];

@@ -78,6 +78,18 @@ export const FURNITURE = [
   GF('moon', 3, 'garden_pampas', 'Pampas Vase', 'floor', 16, 34, 'sniff', 'A tall indigo vase of silver pampas grass, nodding in the breeze.'),
   GF('moon', 5, 'garden_moonlantern', 'Moon Lantern', 'floor', 16, 36, null, 'A round paper lantern with a gold moon on it, on a little wooden post. It glows at dusk.'),
   GF('moon', 8, 'garden_offering', 'Moon Offering', 'floor', 32, 30, 'gaze', 'A little stand laid with a pyramid of white dango and a sprig of pampas, for the moon. The Mochi come to admire it.'),
+  // ----- The Snow Lantern Festival's prizes, for Snow Tokens -----
+  GF('snow', 3, 'garden_snowlantern', 'Snow Lantern', 'floor', 18, 18, null, 'A little lantern of packed snow with a candle inside. It glows at dusk, and never melts.'),
+  GF('snow', 5, 'garden_camellia', 'Winter Camellia', 'floor', 22, 30, 'sniff', 'A glazed pot of glossy leaves and red camellias, a cap of snow on top.'),
+  // ----- Blossom Day's prizes, for Blossom Tokens -----
+  GF('blossom', 3, 'garden_bonbori', 'Bonbori Lantern', 'floor', 12, 34, null, 'A pink-and-white paper lantern on a slim red post. It glows at dusk.'),
+  GF('blossom', 5, 'garden_hanamimat', 'Hanami Mat', 'rug', 50, 14, 'picnic', 'A red picnic mat with a stacked lunch box on it. Mochi stop by for a snack together.'),
+  GF('blossom', 8, 'garden_sakura', 'Little Sakura', 'floor', 44, 56, 'shade', 'A young cherry tree in full pink bloom. A Mochi likes a nap in its shade.'),
+  // ----- Lantern Night's prizes, for Lantern Tokens -----
+  GF('lantern', 3, 'garden_furin', 'Wind Chime', 'floor', 14, 32, null, 'A glass wind chime on a little wooden stand, its paper strip swinging in the breeze.'),
+  GF('lantern', 5, 'garden_chochin', 'Festival Lantern', 'floor', 20, 36, null, 'A red paper lantern hung from a wooden frame. It glows at dusk.'),
+  GF('lantern', 8, 'garden_asagao', 'Morning Glory Trellis', 'floor', 26, 40, 'sniff', 'A bamboo trellis climbed by blue and purple morning glories.'),
+  GF('snow', 8, 'garden_snowmochi', 'Snow-Mochi', 'floor', 22, 28, 'gaze', 'A round snow Mochi in a red scarf and a knitted hat, twig arms out for a hug. It never melts.'),
 ];
 export const FURNITURE_BY_ID = Object.fromEntries(FURNITURE.map((f) => [f.id, f]));
 export const LAYERS = ['rug', 'wall', 'hang', 'floor', 'surface'];

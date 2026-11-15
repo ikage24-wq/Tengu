@@ -189,6 +189,93 @@ const ART = {
     out.push(F(T([[w - 7, h - 14], [w - 6.4, h - 14], [w - 3, 2], [w - 3.6, 2]], '#b8b07a')), E(w - 3.2, 4, 1.6, 4, '#f4eedf'));
     return out;
   },
+  // The Snow Lantern Festival's prizes.
+  garden_snowlantern(w, h) {
+    return [
+      E(w / 2, h - 1.4, w / 2, 1.8, '#d4e0f4'),
+      T([[2, h - 1], [2.4, 8], [w / 2 - 4, 5.4], [w / 2 + 4, 5.4], [w - 2.4, 8], [w - 2, h - 1]], '#f4f8ff'), F(T([[w / 2 + 3, 5.6], [w - 2.4, 8], [w - 2, h - 1], [w / 2 + 4, h - 1]], '#dce6f6')),
+      E(w / 2, 4.6, w / 2 - 0.6, 2.8, '#ffffff'), F(R(3, 5.4, w - 6, 0.9, '#e6eefa')),
+      F(T([[w / 2 - 2.6, h - 4.4], [w / 2 - 2.6, h - 9], [w / 2, h - 11.2], [w / 2 + 2.6, h - 9], [w / 2 + 2.6, h - 4.4]], '#5a6a8a')),
+    ];
+  },
+  garden_camellia(w, h) {
+    const out = [
+      // Leaves, glossy dark green.
+      E(w / 2, 11, 9.6, 7.6, '#2e6a4a'), E(w / 2 - 5, 13, 5, 4, '#3a7a56'), E(w / 2 + 5, 9.6, 5, 4, '#3a7a56'), F(E(w / 2 - 3, 8, 2.4, 1.2, '#5a9a74')),
+    ];
+    // The flowers: red, gold at their hearts.
+    for (const [fx, fy] of [[w / 2 - 4, 8], [w / 2 + 4, 12], [w / 2 - 1, 14.4], [w / 2 + 5, 6]]) out.push(E(fx, fy, 2.6, 2.4, '#d83a4a'), F(E(fx - 0.6, fy - 0.6, 1.2, 1, '#f06070')), F(E(fx, fy, 0.8, 0.8, '#f2c94c')));
+    // A cap of snow on top, and the glazed pot.
+    out.push(E(w / 2, 4.6, 7.6, 2.4, '#ffffff'), F(E(w / 2 - 2, 4, 3, 1, '#f4f8ff')));
+    out.push(T([[w / 2 - 7, 18], [w / 2 + 7, 18], [w / 2 + 5.4, h], [w / 2 - 5.4, h]], '#4a6ab0'), F(R(w / 2 - 7, 18, 14, 1.6, '#6a8ad0')), F(R(w / 2 - 5, 22, 1.2, 6, '#7a9ae0')));
+    return out;
+  },
+  garden_snowmochi(w, h) {
+    return [
+      // Twig arms, out for a hug.
+      F(T([[2, 13], [7, 15.4], [7, 16.4], [1.4, 14.2]], '#7a5232')), F(T([[w - 2, 13], [w - 7, 15.4], [w - 7, 16.4], [w - 1.4, 14.2]], '#7a5232')),
+      // Its round body and face.
+      E(w / 2, h - 9.4, 9.4, 9, '#ffffff'), F(E(w / 2 + 3, h - 7, 5.6, 5.4, '#e6eefa')),
+      F(E(w / 2 - 3, h - 11, 1, 1.2, '#3a3a4a')), F(E(w / 2 + 3, h - 11, 1, 1.2, '#3a3a4a')), F(E(w / 2, h - 8.4, 1.4, 0.7, '#e08a6a')),
+      F(E(w / 2 - 5.6, h - 8.4, 1.8, 1, '#ffb0c0')), F(E(w / 2 + 5.6, h - 8.4, 1.8, 1, '#ffb0c0')),
+      // The red scarf, its end hanging down.
+      R(w / 2 - 8, h - 4.4, 16, 2.4, '#d83a4a'), F(R(w / 2 + 3, h - 3, 2.4, 3, '#d83a4a')), F(R(w / 2 - 8, h - 4.4, 16, 0.8, '#f06070')),
+      // The knitted hat and its bobble.
+      E(w / 2, h - 17.4, 6.4, 4, '#5a8ad8'), F(R(w / 2 - 6.4, h - 16.4, 12.8, 1.6, '#ffffff')), E(w / 2, h - 22, 2, 2, '#ffffff'),
+    ];
+  },
+  // Blossom Day's prizes.
+  garden_bonbori(w, h) {
+    return [
+      R(w / 2 - 1, 12, 2, h - 14, '#c8303a'), F(R(w / 2 - 1, 12, 0.7, h - 14, '#e05a5a')), R(w / 2 - 4, h - 2.4, 8, 2.4, '#8a2a30'),
+      R(1.4, 2, w - 2.8, 10, '#ffe4ee'), F(R(1.4, 2, 2.4, 10, '#ffffff')), F(R(1, 1, w - 2, 1.6, '#ff8fb4')), F(R(1, 11, w - 2, 1.4, '#ff8fb4')),
+      F(E(w / 2, 6.8, 1.8, 1.8, '#ffb3c8')),
+    ];
+  },
+  garden_hanamimat(w, h) {
+    return [
+      T([[0, h], [w, h], [w - 3, h - 5], [3, h - 5]], '#c8303a'), F(R(1, h - 1, w - 2, 0.9, '#f2e8e0')), F(R(3, h - 5, w - 6, 0.8, '#f2e8e0')),
+      R(w / 2 + 2, h - 13, 10, 8, '#2a1e2a'), F(R(w / 2 + 2, h - 10.4, 10, 0.8, '#c8303a')), F(R(w / 2 + 5.6, h - 13, 2.8, 8, '#ffb3c8')),
+      E(w / 2 - 9, h - 8, 4, 3.4, '#6a8a6a'), F(R(w / 2 - 6, h - 9, 3, 1, '#6a8a6a')), F(R(w / 2 - 19, h - 7, 3, 2.4, '#f4f0e8')),
+    ];
+  },
+  garden_sakura(w, h) {
+    const out = [
+      T([[w / 2 - 3, h], [w / 2 + 3, h], [w / 2 + 2, h - 22], [w / 2 - 1, h - 22]], '#8a5a3a'), F(T([[w / 2 + 1, h - 18], [w / 2 + 9, h - 26], [w / 2 + 10, h - 24.6], [w / 2 + 2, h - 15]], '#8a5a3a')),
+      E(w / 2, h - 34, 20, 15, '#ffc2d6'), E(w / 2 - 11, h - 29, 11, 9, '#ffb3c8'), E(w / 2 + 12, h - 30, 11, 9, '#ffb3c8'), E(w / 2 + 1, h - 44, 13, 9, '#ffd6e4'),
+    ];
+    for (let i = 0; i < 16; i++) {
+      const a = i * 2.39;
+      const r = 4 + (i % 5) * 3;
+      out.push(F(E(w / 2 + Math.cos(a) * r * 1.3, h - 34 + Math.sin(a) * r * 0.8, 1.5, 1.5, i % 3 ? '#ffe4ee' : '#ff8fb4')));
+    }
+    return out;
+  },
+  // Lantern Night's prizes.
+  garden_furin(w, h) {
+    return [
+      R(1, 2, 1.6, h - 2, '#8a5a34'), R(1, 2, w - 4, 1.6, '#8a5a34'), R(0, h - 2, 6, 2, '#6a4628'),
+    ];
+  },
+  garden_chochin(w, h) {
+    return [
+      R(1, 0, 1.6, h, '#6a4628'), R(w - 2.6, 0, 1.6, h, '#6a4628'), R(1, 1, w - 2, 1.6, '#8a5a34'), R(0, h - 2, w, 2, '#6a4628'),
+      E(w / 2, 12, 7.4, 8.6, '#e04a3a'), F(E(w / 2 - 2.6, 10, 2.4, 4, '#ff7a6a')), F(R(w / 2 - 5, 3.4, 10, 1.6, '#2a2a3a')), F(R(w / 2 - 5, 19.6, 10, 1.6, '#2a2a3a')),
+      F(R(w / 2 - 6.6, 8, 13.2, 0.6, '#c8303a')), F(R(w / 2 - 7, 12, 14, 0.6, '#c8303a')), F(R(w / 2 - 6.6, 16, 13.2, 0.6, '#c8303a')),
+      F(R(w / 2 - 0.6, 21, 1.2, 3, '#f2c94c')),
+    ];
+  },
+  garden_asagao(w, h) {
+    const out = [
+      R(3, 2, 1.4, h - 6, '#c8b070'), R(w - 4.4, 2, 1.4, h - 6, '#c8b070'), R(w / 2 - 0.7, 0, 1.4, h - 6, '#c8b070'),
+      R(2, 10, w - 4, 1, '#c8b070'), R(2, 22, w - 4, 1, '#c8b070'),
+      R(2, h - 6, w - 4, 6, '#a8703e'), F(R(2, h - 6, w - 4, 1.2, '#c8915a')),
+    ];
+    // The vine's leaves, and its flowers: blue and purple trumpets, white at their throats.
+    for (let i = 0; i < 12; i++) out.push(E(4 + ((i * 7.3) % (w - 8)), 4 + ((i * 11.7) % (h - 12)), 3, 2.4, '#5aa060'));
+    for (const [fx, fy, c] of [[6, 8, '#5a7ae0'], [17, 5, '#a86ad8'], [12, 16, '#5a7ae0'], [21, 20, '#a86ad8'], [7, 26, '#a86ad8'], [18, 30, '#5a7ae0']]) out.push(E(fx, fy, 3, 3, c), F(E(fx, fy, 1.1, 1.1, '#ffffff')));
+    return out;
+  },
   garden_statue(w, h) {
     const st = ramp('#d8d2e2', 0.8);
     return [
@@ -597,6 +684,58 @@ export function drawPiece(ctx, p, x, y, time, { night = 0, char = null, ghost = 
     ctx.fillRect(bx - 1, top + 7, 0.9, 0.9);
     ctx.fillRect(bx + 5, y - 9, 0.9, 0.9);
     ctx.restore();
+  }
+  // The bonbori and the festival lantern: lit at dusk.
+  if (def.id === 'garden_bonbori' || def.id === 'garden_chochin') {
+    const k = Math.min(1, night * 1.4);
+    if (k > 0.02) {
+      const cy = top + (def.id === 'garden_bonbori' ? 7 : 12);
+      glow(ctx, x, cy, 22, def.id === 'garden_bonbori' ? '#ffc8dc' : '#ff9a6a', 0.55 * k);
+      ctx.fillStyle = def.id === 'garden_bonbori' ? `rgba(255,236,244,${0.7 * k})` : `rgba(255,170,120,${0.6 * k})`;
+      ctx.beginPath();
+      ctx.ellipse(x, cy, def.id === 'garden_bonbori' ? 4 : 6, def.id === 'garden_bonbori' ? 4.4 : 7.4, 0, 0, TAU);
+      ctx.fill();
+    }
+  }
+  // The wind chime: its glass bell and paper strip swinging, harder in a wind.
+  if (def.id === 'garden_furin') {
+    const sw = Math.sin(time * 2.4 + wx) * (0.18 + WEATHER_WIND.boost * 0.4) + Math.sin(time * 5.3 + wx) * 0.06;
+    const px = x - def.w / 2 + (p.flip ? 3.4 : def.w - 3.4);
+    ctx.save();
+    ctx.translate(px, top + 3.4);
+    ctx.rotate(sw * 0.5);
+    ctx.fillStyle = 'rgba(220,240,255,0.9)';
+    ctx.beginPath();
+    ctx.arc(0, 4, 3.4, Math.PI, TAU);
+    ctx.lineTo(3.4, 5.4);
+    ctx.lineTo(-3.4, 5.4);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = '#e05a3a';
+    ctx.beginPath();
+    ctx.arc(0, 3, 1, 0, TAU);
+    ctx.fill();
+    ctx.rotate(sw);
+    ctx.strokeStyle = '#6a4a2a';
+    ctx.lineWidth = 0.4;
+    ctx.beginPath();
+    ctx.moveTo(0, 5.4);
+    ctx.lineTo(0, 9);
+    ctx.stroke();
+    ctx.fillStyle = '#fff6d6';
+    ctx.fillRect(-1.2, 9, 2.4, 8);
+    ctx.fillStyle = '#5a8ad8';
+    ctx.fillRect(-1.2, 11, 2.4, 0.8);
+    ctx.restore();
+  }
+  // The snow lantern: its candle lit at dusk, glowing warm on the snow.
+  if (def.id === 'garden_snowlantern') {
+    const k = Math.min(1, night * 1.4);
+    if (k > 0.02) {
+      glow(ctx, x, top + def.h - 7, 20, '#ffc878', 0.5 * k);
+      ctx.fillStyle = `rgba(255,204,106,${0.9 * k})`;
+      ctx.fillRect(x - 2.2, top + def.h - 10.4, 4.4, 5.6);
+    }
   }
   // The moon lantern: lit warm from inside at dusk.
   if (def.id === 'garden_moonlantern') {

@@ -278,7 +278,21 @@ const gyojipoint = act(2.4, [0.4, 2.0], [
   KEY(2.4, { ...FAN, front: [6, -7], back: [-3, -6], swing: 0.4 }),
 ]);
 
-export const SUMO_ACTS = { sumohop, sumoshiko, sumosalt, sumocrouch, sumocharge, sumopush, sumobrace, sumobelly, sumothrust, sumodrive, sumolift, sumothrow, sumoduck, sumolifted, sumoflung, sumotumble, sumotrip, sumodazed, sumodazed2, sumowin, gyojiready, gyojicall, gyojipoint };
+// Losing a garden match (world/garden-life.js): no ring to fall from - it plops back onto its bottom
+// on the grass, legs up, a bounce, a giggle, and gets up.
+const sumoplop = act(1.6, null, [
+  KEY(0, { ...BRACE }),
+  KEY(0.12, { lean: -0.1, squat: 0.6, front: [-4, -13], back: [7, -12], brows: WORRY, mouth: 'gasp', extra: ['bang1'] }),
+  KEY(0.3, { ...SAT, tip: 6, lean: -0.5, sink: 6.4, legF: [3.8, -3, 50], legB: [2.6, -2.6, 40], front: [6, -10], back: [-4, -10], mouth: 'mochio', ease: 'in' }),
+  KEY(0.42, { ...SAT, tip: 6, lean: -0.3, sink: 5.4, front: [5, -4], back: [3, -4], closed: C2, mouth: 'mochiw', ease: 'out' }),
+  KEY(0.52, { ...SAT, tip: 6, lean: -0.32, sink: 6, front: [5, -4], back: [3, -4], closed: C2, mouth: 'mochiw' }),
+  KEY(0.8, { ...SAT, tip: 6, lean: -0.2, sink: 5.4, front: [3, -8], back: [2, -8], closed: C2, mouth: 'D', blush: 1.8, extra: ['sweat0'] }),
+  KEY(1.1, { ...SAT, tip: 6, lean: -0.2, sink: 5.4, front: [3, -8], back: [2, -8], closed: C2, mouth: 'D', blush: 1.8, tilt: 6 }),
+  KEY(1.35, { squat: 1.4, front: [4, -7], back: [3, -7], mouth: 'mochiw', ease: 'out' }),
+  KEY(1.6, { mouth: 'mochiw' }),
+]);
+
+export const SUMO_ACTS = { sumohop, sumoshiko, sumosalt, sumocrouch, sumocharge, sumopush, sumobrace, sumobelly, sumothrust, sumodrive, sumolift, sumothrow, sumoduck, sumolifted, sumoflung, sumotumble, sumotrip, sumodazed, sumodazed2, sumowin, sumoplop, gyojiready, gyojicall, gyojipoint };
 
 // The referee's fan (a gunbai): a lacquered gourd-shaped paddle, black with a gold rim and a gold
 // sun, on a short red-wrapped handle, a purple tassel swinging under it. Held at (x, y), `d` the way

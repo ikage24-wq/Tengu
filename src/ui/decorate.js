@@ -235,7 +235,9 @@ export function drawDecorate(ui, state, world) {
       }
     }
   });
-  if (!list.length) text(ctx, d.tab ? 'None of this set yet.' : 'No furniture yet: craft some at a bench (Home tab).', bx + 12, by + 26, { size: 8, color: COLORS.muted });
+  // (In the garden, its pieces come from Kinako's shop or a festival stall, not a bench.)
+  const none = world.map.garden ? 'No garden pieces yet: Kinako sells them, and festival stalls give them as prizes.' : 'No furniture yet: craft some at a bench (Home tab).';
+  if (!list.length) text(ctx, d.tab ? 'None of this set yet.' : none, bx + 12, by + 26, { size: 8, color: COLORS.muted });
   if (button(ui, bx + bw - 104, by + 8, 44, 16, 'Undo', { size: 7, enabled: d.undo.length > 0 && !d.carry })) {
     const rec = d.undo.pop();
     apply(world, rec, true);

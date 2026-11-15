@@ -55,7 +55,8 @@ import { gardenWeatherTick } from './garden-weather.js';
 import { FEELINGS, SAD, feel, feelingOf, feelWant, quirksOf, hasQuirk, memoryOf, welcomeOf, giftDue, giftOf, gameFor, accepts, topicsFor, KIND_HEARTS } from './mochi-heart.js';
 import { FURNITURE_BY_ID } from '../data/furniture.js';
 import { noteDiary, diaryDay } from '../data/mochi-diary.js';
-import { festivalTick, stayUp, festivalSpot, OFFERING, MORTAR } from './garden-festival.js';
+import { sumoStrength } from '../data/mochi-sumo.js';
+import { festivalTick, festivalWeather, stayUp, festivalSpot, OFFERING, MORTAR, SNOW_LANTERNS, MAT, SHADE, LAUNCH } from './garden-festival.js';
 
 // Where things are in the garden (world/garden.js).
 // (A row of them on the ground just inside the gate, where the square's lantern lights them:
@@ -341,13 +342,16 @@ export function festivalSpots(life) {
   const key = placed.map((p) => `${p.uid}@${p.x}`).join();
   if (life.festSpots?.key !== key) {
     const widthOf = (p) => FURNITURE_BY_ID[p.id]?.w;
-    life.festSpots = { key, offering: festivalSpot(OFFERING, placed, gardenSpotWhy, widthOf), mortar: festivalSpot(MORTAR, placed, gardenSpotWhy, widthOf) };
+    life.festSpots = { key, offering: festivalSpot(OFFERING, placed, gardenSpotWhy, widthOf), mortar: festivalSpot(MORTAR, placed, gardenSpotWhy, widthOf), mat: festivalSpot(MAT, placed, gardenSpotWhy, widthOf) };
   }
   return life.festSpots;
 }
 function festivalOptions(world, life, e, out, walker) {
   const F = world.gardenFestival;
   if (!F || F.k < 0.5 || !walker) return;
+  if (F.id === 'snow') return snowOptions(world, life, e, out, F);
+  if (F.id === 'blossom') return blossomOptions(world, life, e, out, F);
+  if (F.id === 'lantern') return lanternOptions(world, life, e, out, F);
   const rec = e.rec;
   const spots = festivalSpots(life);
   if (F.eve > 0.25) {
@@ -367,6 +371,78 @@ function festivalOptions(world, life, e, out, walker) {
     const side = hash(rec.seed * 1.9) < 0.5 ? -1 : 1;
     out.push({ id: 'offering', kind: 'explore', like: 'explore', x: spots.offering + side * 22, face: spots.offering, act: 'offerbow', hold: 2.4, gains: { curious: 30, social: 10 }, boost: 1.8, stay: 2.6, bow: true });
   }
+}
+// (Anything else can wait on a festival night - but a present for you, sitting by you, a sad friend.)
+const FEST_KEEP = new Set(['givegift', 'sitby']);
+function festNight(out, F, ...own) {
+  for (const o of out) if (!own.includes(o.id) && !FEST_KEEP.has(o.id) && o.invite?.kind !== 'comfort') o.boost = (o.boost ?? 1) * (1 - 0.88 * F.eve);
+}
+// The Snow Lantern Festival: by day, a pat for the big snow-Mochi (snowball fights are games together:
+// heartOptions); from dusk, off to light a snow lantern still dark - one each - and then sat by one,
+// paws out to its glow.
+export function snowLanterns(life) {
+  const placed = (life.owner?.garden?.placed ?? []).filter((p) => p.map === 'garden');
+  return SNOW_LANTERNS.filter((x) => !placed.some((p) => Math.abs(p.x - x) < (FURNITURE_BY_ID[p.id]?.w ?? 20) / 2 + 8));
+}
+export function litLanterns(life, F) {
+  life.festLit = life.festLit?.day === F.day ? life.festLit : { day: F.day, lit: new Set() };
+  return life.festLit.lit;
+}
+function snowOptions(world, life, e, out, F) {
+  const rec = e.rec;
+  if (F.eve > 0.25) {
+    const all = snowLanterns(life);
+    const lit = litLanterns(life, F);
+    // A dark one, not already being seen to by another.
+    // (By full night they're all lit, as render/garden-festival.js draws them.)
+    const dark = F.eve > 0.8 ? [] : all.filter((x) => !lit.has(x) && !life.mochi.some((o) => o !== e && o.brain?.plan?.light === x)).sort((p, q) => Math.abs(p - e.x) - Math.abs(q - e.x));
+    if (dark.length) {
+      const x = dark[0];
+      const side = e.x < x ? -1 : 1;
+      out.push({ id: 'lightlantern', kind: 'explore', like: 'explore', x: x + side * 11, face: x, act: 'lightlantern', hold: 2.4, gains: { curious: 25, fun: 15 }, boost: 9 * F.eve, stay: 2.6, light: x });
+    }
+    // Then sat by one, warm (each its own, round them in turn).
+    const i = Math.max(0, life.mochi.filter((o) => !o.guest).indexOf(e));
+    const by = all.length ? all[i % all.length] : e.x;
+    const side = (Math.floor(i / Math.max(1, all.length)) + i) % 2 ? 1 : -1;
+    out.push({ id: 'warmsit', kind: 'rest', like: 'social', x: clearOfProps(by + side * 13), face: by, act: 'warmsit', hold: 16, gains: { energy: 20, social: 25, curious: 15 }, boost: 7 * F.eve, stay: 16, warm: true });
+    festNight(out, F, 'lightlantern', 'warmsit');
+    for (const o of out) if (o.id === 'warmsit' && dark.length) o.boost *= 0.5;
+    return;
+  }
+  // A pat for the big snow-Mochi by the square.
+  out.push({ id: 'snowmochi', kind: 'play', like: 'play', x: SNOWMAN_X + (hash(rec.seed * 7.3) < 0.5 ? -27 : 27) + (hash(rec.seed * 2.1) - 0.5) * 4, face: SNOWMAN_X, act: 'snowpat', hold: 5, gains: { fun: 30, curious: 20 }, boost: 1.3, stay: 5 });
+}
+// Blossom Day: a picnic on the mat, sat round it with three-colour dango (by day and on into the
+// lantern-lit evening), and petals to chase on the breeze.
+function blossomOptions(world, life, e, out, F) {
+  const rec = e.rec;
+  const mat = festivalSpots(life).mat;
+  // (Six places round the mat, facing in; a seventh and after sit just off it.)
+  const i = Math.max(0, life.mochi.filter((o) => !o.guest).indexOf(e));
+  const place = [-22, 22, -11, 11, -30, 30][i % 6] + (i >= 6 ? Math.sign(i % 2 - 0.5) * 40 : 0);
+  const x = mat + place;
+  out.push({ id: 'hanami', kind: 'social', like: 'social', x, face: place < 0 ? x + 20 : x - 20, act: 'hanamisit', hold: 14, gains: { social: 40, hunger: 25, fun: 15 }, boost: (F.eve > 0.25 ? 7 * F.eve : 1.6), stay: 14, hanami: true });
+  if (F.eve > 0.25) return festNight(out, F, 'hanami');
+  // A petal blowing by: after it, and a leap to catch it.
+  const to = clearOfProps(Math.max(LAND[0] + 40, Math.min(LAND[1] - 40, e.x + (hash(rec.seed * 5.3 + (e.brain?.tick ?? 0)) - 0.5) * 240)));
+  out.push({ id: 'petalchase', kind: 'play', like: 'run', x: to, dash: true, act: 'catch', hold: 1.1, gains: { fun: 40, curious: 10 }, stat: 'run', boost: 1.2, stay: 2 });
+}
+// Lantern Night: by day, sat in the big tree's shade fanning itself; at dusk, off to the pond's bank to
+// set a lantern boat afloat (once each); at night, sat out with a sparkler watching the fireworks.
+function lanternOptions(world, life, e, out, F) {
+  const rec = e.rec;
+  const i = Math.max(0, life.mochi.filter((o) => !o.guest).indexOf(e));
+  if (F.eve > 0.25) {
+    life.festBoats = life.festBoats?.day === F.day ? life.festBoats : { day: F.day, set: new Set(), boats: [] };
+    if (!life.festBoats.set.has(rec.seed) && F.eve < 0.9) out.push({ id: 'floatlantern', kind: 'explore', like: 'explore', x: LAUNCH - (i % 3) * 7, face: LAUNCH + 60, act: 'floatlantern', hold: 2.6, gains: { curious: 30, fun: 15 }, boost: 8 * F.eve, stay: 2.8, boat: true });
+    const x = clearOfProps(1460 + ((i * 89 + Math.floor(hash(rec.seed) * 30)) % 560));
+    out.push({ id: 'hanabi', kind: 'rest', like: 'social', x, face: x + 60, act: 'sparklesit', hold: 16, gains: { fun: 30, social: 20, curious: 25 }, boost: 7 * F.eve, stay: 16, hanabi: true });
+    for (const o of out) if (o.id === 'hanabi' && !life.festBoats.set.has(rec.seed) && F.eve < 0.9) o.boost *= 0.4;
+    return festNight(out, F, 'floatlantern', 'hanabi');
+  }
+  const x = SHADE[0] + ((i * 37 + Math.floor(hash(rec.seed * 1.7) * 20)) % (SHADE[1] - SHADE[0]));
+  out.push({ id: 'fansit', kind: 'rest', like: 'rest', x: clearOfProps(x), face: x + (i % 2 ? -30 : 30), act: 'fansit', hold: 12, gains: { energy: 35, social: 10 }, boost: 1.8, stay: 12 });
 }
 // What it holds over its head out in the rain: a big leaf - each picking one up at its own moment as
 // the rain gets going and putting it away as it eases off - but not while it's splashing in a
@@ -860,6 +936,7 @@ export function tickGarden(world, dt) {
   if (life.market) return;
   // The weather (world/garden-weather.js): the same for everyone, by the clock.
   gardenWeatherTick(world);
+  festivalWeather(world);
   if (!world.gardenVisit && world.char.garden) stallClothes(world.char);
   // (Your own Mochi fill in the album, data/mochi-album.js, a few times a second.)
   life.albumIn = (life.albumIn ?? 0) - dt;
@@ -1414,7 +1491,7 @@ export function applyGardenGift(world, msg, who) {
 // gentle one makes up with one it fell out with; two who don't get on, bumping into each other,
 // have a squabble.)
 export const momentOf = (personality) => gameFor({ personality, tricks: ['wave'] }, {}, 0);
-const DUO_SECS = { tag: 10, hide: 13, chat: 7.6, trick: 6.6, dance: 7, snack: 9, comfort: 7.6, makeup: 7.6, squabble: 5, decline: 2.6, pound: 12 };
+const DUO_SECS = { tag: 10, hide: 13, chat: 7.6, trick: 6.6, dance: 7, snack: 9, comfort: 7.6, makeup: 7.6, squabble: 5, decline: 2.6, pound: 12, snowball: 9.4, sumo: 9.6 };
 const SNUBS = ['grumpy', 'loner'];
 // Where to hide in hide-and-seek: tucked in beside the garden's big things.
 const HIDE_SPOTS = [1520, 1612, 1640, 1786, 1928, 1108, 640, 1036, 2052];
@@ -1442,7 +1519,8 @@ function heartOptions(world, life, e, out, walker) {
     if ((world.gardenFestival?.eve ?? 0) > 0.25 && kind !== 'comfort' && kind !== 'makeup') continue;
     // (A festival day: off to pound mochi together at the mortar, now and then - one pair at a time.)
     const F = world.gardenFestival;
-    if (F && F.k > 0.5 && F.eve < 0.25 && kind !== 'makeup' && kind !== 'comfort' && !(life.duos ?? []).some((d) => d.kind === 'pound') && hash(rec.seed * 0.53 + o.rec.seed * 0.29 + Math.floor(now / 40)) < 0.4) kind = 'pound';
+    const festGame = F?.id === 'snow' ? 'snowball' : F?.id === 'moon' ? 'pound' : null;
+    if (festGame && F.k > 0.5 && F.eve < 0.25 && kind !== 'makeup' && kind !== 'comfort' && (life.duos ?? []).filter((d) => d.kind === festGame).length < (festGame === 'pound' ? 1 : 2) && hash(rec.seed * 0.53 + o.rec.seed * 0.29 + Math.floor(now / 40)) < 0.4) kind = festGame;
     const running = ['tag', 'hide', 'dance', 'snack'].includes(kind);
     if (running && (pts(rec, 'run') < CANT.run || pts(o.rec, 'run') < CANT.run)) kind = 'chat';
     const fun = ['chat', 'comfort', 'makeup'].includes(kind) ? 15 : 40;
@@ -1523,6 +1601,23 @@ function arrivedAt(world, life, e, p) {
     diary(world, life, 'sitby', e);
   }
   if (p.bow) life.festBowed?.seen.add(e.rec.seed);
+  if (p.light != null && world.gardenFestival) {
+    litLanterns(life, world.gardenFestival).add(p.light);
+    diary(world, life, 'litlantern', e);
+  }
+  if (p.hanami) diary(world, life, 'hanami', e);
+  if (p.hanabi) diary(world, life, 'hanabi', e);
+  if (p.boat && world.gardenFestival) {
+    // (Its boat set on the water at the bank, drifting off across the pond: render/garden-festival.js.)
+    const B = (life.festBoats ??= { day: world.gardenFestival.day, set: new Set(), boats: [] });
+    B.set.add(e.rec.seed);
+    B.boats.push({ t0: now + 1.4, x0: LAUNCH + 22, seed: e.rec.seed });
+    diary(world, life, 'boat', e);
+  }
+  if (p.warm) {
+    feel(e, 'loving', 0.55, now, 'lantern');
+    diary(world, life, 'warm', e);
+  }
   if (p.moon) {
     feel(e, 'loving', 0.6, now, 'moon');
     diary(world, life, 'moon', e);
@@ -1556,6 +1651,8 @@ export function startDuo(world, life, kind, a, b, asked = kind) {
     duo.food = near([1537, 2074, ...blanket], mx)[0];
     duo.tree = blanket.includes(duo.food) ? null : duo.food;
   }
+  // (A sumo match: who'll win, by their strength - and a little luck.)
+  if (kind === 'sumo') duo.aWins = sumoStrength(a.rec) + (hash(now * 0.17 + a.rec.seed) - 0.5) * 0.3 >= sumoStrength(b.rec) + (hash(now * 0.23 + b.rec.seed) - 0.5) * 0.3;
   if (kind === 'pound') {
     duo.mortar = festivalSpots(life).mortar;
     // (However far it is to the mortar, time to get there and still pound a while.)
@@ -1587,6 +1684,20 @@ function duoTarget(world, d, e) {
     // its right to turn the mochi between strikes.
     case 'pound':
       return lead ? d.mortar - 22 : d.mortar + 13;
+    // A snowball fight: face to face a little way apart.
+    case 'snowball':
+      return mx + (lead ? -24 : 24);
+    // A sumo match on the grass: stamping a little way apart, in to their lines, then shoving to and
+    // fro - and the winner drives the other back.
+    case 'sumo': {
+      // (Its clock starts once both are at their spots: `d.go`.)
+      const s = lead ? -1 : 1;
+      const u = d.go == null ? -1 : t - d.go;
+      if (u < 2.3) return mx + s * 20;
+      if (u < 3.4) return mx + s * 12;
+      const c = u < 4.9 ? Math.sin((u - 3.4) * 4.2) * 4 : (d.aWins ? 1 : -1) * Math.min(14, (u - 4.9) * 16);
+      return mx + c + s * 8;
+    }
     // Tag: one chases, the other runs; caught, the other way round.
     case 'tag': {
       const round = Math.floor(t / 3.3);
@@ -1759,6 +1870,66 @@ function duoBeats(world, d) {
       });
       break;
     }
+    // Sumo: a stamp each, crouched at their lines, the charge, a shove to and fro - and the loser plops
+    // down on its bottom, a giggle, while the winner throws its fists up; then a bow.
+    case 'sumo': {
+      const W = d.aWins ? a : b;
+      const L = d.aWins ? b : a;
+      // (Both at their spots - or long enough waiting - and off it goes, the match's own clock.)
+      if (d.go == null && ((Math.abs(a.x - (d.mx - 20)) < 2 && Math.abs(b.x - (d.mx + 20)) < 2) || t > 3)) {
+        d.go = t - 0.3;
+        d.len = d.go + 9.6;
+      }
+      if (d.go == null) break;
+      const go = d.go;
+      const at = (k, when, fn) => once(k, go + when, fn);
+      at('shiko', 0.3, () => {
+        act(a, 'sumoshiko');
+        act(b, 'sumoshiko');
+      });
+      at('crouch', 2.8, () => {
+        act(a, 'sumocrouch', 1.2);
+        act(b, 'sumocrouch', 1.2);
+      });
+      at('charge', 3.7, () => {
+        act(a, 'sumocharge');
+        act(b, 'sumocharge');
+      });
+      at('push', 4.05, () => {
+        act(a, 'sumopush', 1.4);
+        act(b, 'sumopush', 1.4);
+      });
+      at('give', 5.1, () => act(L, 'sumobrace', 1.6));
+      at('plop', 6.4, () => {
+        act(L, 'sumoplop');
+        act(W, 'sumowin');
+      });
+      at('bow', 8.5, () => {
+        act(a, 'bow');
+        act(b, 'bow');
+      });
+      break;
+    }
+    // Snowballs: once they're facing each other, a throw each way, three in all - scooped, wound up,
+    // thrown (render/garden-festival.js flies it across), and a splat and a giggle where it lands.
+    case 'snowball': {
+      const ready = Math.abs(a.x - (d.mx - 24)) < 2 && Math.abs(b.x - (d.mx + 24)) < 2;
+      if (ready && d.readyAt == null) {
+        d.readyAt = t;
+        d.throws = [0, 2.1, 4.2].map((at, k) => ({ at: t + at + 0.55, by: k % 2 ? b : a, to: k % 2 ? a : b }));
+      }
+      if (d.readyAt != null) {
+        d.throws.forEach((th, k) => {
+          once(`throw${k}`, th.at - 0.55, () => act(th.by, 'snowthrow'));
+          once(`hit${k}`, th.at + 0.4, () => act(th.to, 'snowhit'));
+        });
+        once('end', d.len - 1.2, () => {
+          act(a, 'giggle');
+          act(b, 'giggle');
+        });
+      }
+      break;
+    }
     case 'decline':
       once('no', 0.15, () => act(b, feelingOf(b, world.now)?.kind === 'sleepy' ? 'yawn' : 'nope'));
       once('aw', 1.2, () => act(a, SNUBS.includes(b.rec.personality) ? 'sulk' : 'sigh', 1));
@@ -1797,9 +1968,11 @@ const OUTCOME = {
   trick: [2, { social: 30, fun: 25 }, 'joy', 'social'], dance: [3, { fun: 40, social: 35 }, 'joy', 'play'], snack: [2, { hunger: 45, social: 30 }, 'joy', 'snack'],
   comfort: [4, { social: 50 }, 'loving', 'social'], makeup: [0, { social: 30 }, 'loving', 'social'], squabble: [-3, {}, 'sulky', null], decline: [0, {}, null, null],
   pound: [3, { fun: 35, social: 35, hunger: 25 }, 'joy', 'play'],
+  snowball: [3, { fun: 50, social: 30 }, 'joy', 'play'],
+  sumo: [3, { fun: 45, social: 30 }, 'joy', 'play'],
 };
 function endDuo(world, life, d, finished) {
-  const games = ['count', 'hidecrouch', 'talk', 'hug', 'pat', 'stomp', 'dance1', 'giggle', 'lookaround', 'sigh', 'nope', 'festturn', 'pound0', 'pound1', 'pound2', 'pound3', 'pound4', 'pound5'];
+  const games = ['count', 'hidecrouch', 'talk', 'hug', 'pat', 'stomp', 'dance1', 'giggle', 'lookaround', 'sigh', 'nope', 'festturn', 'snowthrow', 'snowhit', 'sumoshiko', 'sumocrouch', 'sumocharge', 'sumopush', 'sumobrace', 'sumoplop', 'sumowin', 'pound0', 'pound1', 'pound2', 'pound3', 'pound4', 'pound5'];
   for (const e of [d.a, d.b]) {
     e.duo = null;
     if (e.m.action && games.includes(e.m.action.name)) e.m.action = null;
@@ -1819,7 +1992,7 @@ function endDuo(world, life, d, finished) {
   }
   if (d.kind === 'trick') feel(d.a, 'proud', 0.85, now, 'trick');
   if (d.kind === 'decline') feel(d.a, SNUBS.includes(d.b.rec.personality) ? 'sulky' : 'shy', 0.55, now, 'no');
-  diary(world, life, d.kind, d.a, d.b, d.kind === 'chat' ? d.say?.[0] ?? null : null);
+  diary(world, life, d.kind, d.a, d.b, d.kind === 'chat' ? d.say?.[0] ?? null : d.kind === 'sumo' ? (d.aWins ? d.a : d.b).rec.name ?? null : null);
 }
 
 // Each moment: how each feels, as it is and as it's catching from those round it; its habits; its

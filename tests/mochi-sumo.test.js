@@ -109,7 +109,7 @@ test('Up by the sumo hall opens its window; a tournament runs bout by bout to th
   assert.equal(w.char.gold - gold0, sumoPrize('beginner', 3));
   assert.ok(sumoOpen(w.char, 'challenge'), 'the next ring opens');
   assert.equal(sumoCupOf(w.char), 'beginner', 'a cup for the shelf');
-  assert.match(w.char.garden.diary?.at(-1)?.notes.at(-1)?.k ?? '', /sumo/, 'in the diary');
+  assert.equal(w.char.garden.diary?.at(-1)?.notes.at(-1)?.k, 'sumoring', 'in the diary');
   // Up: back out to the hall's door.
   updateWorld(w, 1 / 60, keys(['ArrowUp']));
   assert.equal(w.sumo, null);
@@ -173,4 +173,45 @@ test("each wrestler's moves lead smoothly into the next: every one starts leanin
     assert.ok(ts.every((t, i) => !i || t > ts[i - 1]), `${name}'s keys in order`);
     assert.ok(bit.crisp && bit.fps === 48, `${name} crisp`);
   }
+});
+
+test('in the garden, two Mochi have a sumo match of their own: stamps, a shove, and the loser plops down on its bottom', async () => {
+  const { startDuo } = await import('../src/world/garden-life.js');
+  const char = createCharacter('Mina', { hairStyle: 'bob' });
+  const strong = mochi(61, { personality: 'brave', points: 2100 });
+  const weak = mochi(62, { personality: 'sporty', points: 150 });
+  Object.assign(strong, { name: 'Taro' });
+  Object.assign(weak, { name: 'Mame' });
+  char.garden = { back: null, mochi: [strong, weak], eggs: [], unlocked: {} };
+  const w = createWorld(char);
+  w.log = () => {};
+  w.forceFestival = null;
+  w.forceWeather = {};
+  w.forceNight = 0;
+  w.dayClock = () => new Date(2026, 5, 10, 13, 0);
+  loadMap(w, 'garden', 'start');
+  for (let t = 0; t < 1; t += 0.1) updateWorld(w, 0.1, keys());
+  const L = w.gardenLife;
+  const [a, b] = L.mochi;
+  // (Free of whatever they'd got up to in that first second - a game of their own, a ride.)
+  for (const e of [a, b]) {
+    if (e.duo) L.duos = L.duos.filter((q) => q !== e.duo);
+    Object.assign(e, { duo: null, ride: null, hidden: false });
+    e.m.action = null;
+    if (e.brain) e.brain.plan = null;
+  }
+  a.x = 640;
+  b.x = 700;
+  startDuo(w, L, 'sumo', a, b);
+  const d = L.duos.find((q) => q.kind === 'sumo');
+  const seen = new Set();
+  for (let t = 0; t < 14 && L.duos.includes(d); t += 1 / 30) {
+    updateWorld(w, 1 / 30, keys());
+    for (const e of [a, b]) if (e.m.action) seen.add(`${e === a ? 'a' : 'b'}:${e.m.action.name}`);
+  }
+  assert.ok(!L.duos.includes(d), 'over');
+  assert.ok(d.aWins, 'the much stronger one wins');
+  for (const k of ['a:sumoshiko', 'b:sumoshiko', 'a:sumocharge', 'a:sumopush', 'b:sumobrace', 'b:sumoplop', 'a:sumowin']) assert.ok(seen.has(k), `${k} (${[...seen]})`);
+  const note = char.garden.diary.at(-1).notes.find((n) => n.k === 'sumo');
+  assert.equal(note?.x, 'Taro', 'in the diary, with who won');
 });

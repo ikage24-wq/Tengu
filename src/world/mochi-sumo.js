@@ -481,7 +481,7 @@ function award(world, S) {
     char.sumoWins[S.rank] = true;
     const next = SUMO_ORDER[SUMO_ORDER.indexOf(S.rank) + 1];
     if (first && next) S.opened = SUMO_RANKS[next].name;
-    if (world.char.garden && !world.gardenVisit) noteDiary(world.char.garden, diaryDay(world.dayClock?.() ?? new Date()), 'sumo', [rec], SUMO_RANKS[S.rank].name);
+    if (world.char.garden && !world.gardenVisit) noteDiary(world.char.garden, diaryDay(world.dayClock?.() ?? new Date()), 'sumoring', [rec], SUMO_RANKS[S.rank].name);
   }
   // (A good tussle: happier, a little closer to you, and keener on a romp.)
   rec.mood = Math.min(100, (rec.mood ?? 60) + 6 + S.wins * 3);

@@ -51,7 +51,7 @@ function festGarden(n = 6, festival = { eve: 0, hour: 12 }) {
   return { w, char, recs, run, done: () => (Date.now = real) };
 }
 
-test('a festival every fourth game day in its season: dressed through the day, the moon up from dusk', () => {
+test('a festival every fourth game day, each season its own: dressed through the day, the moon up from dusk', () => {
   // (A day in October, then one in June.)
   const oct = Date.UTC(2026, 9, 10);
   const days = [];
@@ -69,7 +69,7 @@ test('a festival every fourth game day in its season: dressed through the day, t
   assert.ok(at(3) == null || at(3).k === 0, 'not up in the small hours');
   assert.ok(at(20.5).eve > 0.9, 'the moon up at night');
   const june = Math.ceil(Date.UTC(2026, 5, 10) / DAY_MS / EVERY) * EVERY + 1;
-  assert.equal(festivalAt(new Date(june * DAY_MS + DAY_MS / 2)), null, 'autumn only, so far');
+  assert.equal(festivalAt(new Date(june * DAY_MS + DAY_MS / 2)).id, 'lantern', 'each season its own');
   assert.ok(nextFestivalIn(new Date(oct)) <= EVERY * DAY_MS);
 });
 
@@ -199,4 +199,166 @@ test("the turning keeps time with the mallet: hands well out of the mortar as ea
     const ts = ACTIONS[name].keys.map(([t]) => t);
     assert.ok(ts.every((t, i) => !i || t > ts[i - 1]) && ts.at(-1) === ACTIONS[name].dur, name);
   }
+});
+
+test('winter: the Snow Lantern Festival in December - snowball fights by day, lanterns lit at dusk, sat by them at night', async () => {
+  const { snowLanterns, litLanterns } = await import('../src/world/garden-life.js');
+  const dec = Math.ceil(Date.UTC(2026, 11, 10) / DAY_MS / EVERY) * EVERY + 1;
+  assert.equal(festivalAt(new Date(dec * DAY_MS + DAY_MS / 2)).id, 'snow');
+  const g = festGarden(6, { id: 'snow', eve: 0, hour: 12 });
+  try {
+    const L = g.w.gardenLife;
+    // (Snow lying deep all day, whatever the weather.)
+    g.run(1);
+    assert.ok(g.w.gardenWeather.snow > 0.8);
+    let fights = 0;
+    let thrown = 0;
+    g.run(300, 0.1, () => {
+      for (const d of L.duos ?? []) {
+        if (d.kind !== 'snowball') continue;
+        fights += 1;
+        if (d.a.m.action?.name === 'snowthrow' || d.b.m.action?.name === 'snowthrow') thrown += 1;
+      }
+    });
+    assert.ok(fights > 0 && thrown > 0, `snowball fights (${fights}, ${thrown})`);
+    assert.ok(g.char.garden.diary.at(-1).notes.some((n) => n.k === 'snowball'));
+    // Dusk: off round the lanterns, lighting them; then sat by them, warm.
+    g.w.forceFestival = { id: 'snow', eve: 0.6, hour: 18.8 };
+    g.w.forceNight = 0.4;
+    g.run(60);
+    const lit = litLanterns(L, g.w.gardenFestival);
+    assert.ok(lit.size >= 4, `${lit.size} of ${snowLanterns(L).length} lit`);
+    g.w.forceFestival = { id: 'snow', eve: 1, hour: 20.5 };
+    g.w.forceNight = 0.9;
+    g.run(60);
+    assert.equal(L.mochi.filter((e) => !e.hidden).length, 6, 'up late');
+    const warm = L.mochi.filter((e) => e.m.action?.name === 'warmsit' || e.brain?.plan?.id === 'warmsit');
+    assert.ok(warm.length >= 3, `${warm.length} warming by the lanterns`);
+    assert.ok(g.char.garden.diary.at(-1).notes.some((n) => n.k === 'litlantern' && n.who.length >= 2));
+  } finally {
+    g.done();
+  }
+});
+
+test('Snowball Toss: hit a head while it is up for a point (a golden one two), miss it and it is a splat; thirty seconds', async () => {
+  const { TOSS, newToss, tickToss, throwToss, tossTokens, isUp } = await import('../src/world/snowball-toss.js');
+  const g = newToss(77);
+  let hits = 0;
+  let gold = 0;
+  for (let t = 0; t < TOSS.time + 1; t += 1 / 60) {
+    const out = tickToss(g, 1 / 60);
+    if (out === 'hit') hits += 1;
+    if (out === 'gold') gold += 1;
+    // (Thrown whenever the aim's over a head that will still be up when the ball gets there.)
+    const q = g.targets.find((p) => isUp(p, g.t) && p.until - g.t > TOSS.fly && Math.abs(p.hole - g.x) < 6);
+    if (q) throwToss(g);
+  }
+  assert.equal(g.phase, 'done');
+  assert.ok(hits + gold >= 6, `${hits} hits, ${gold} golden`);
+  assert.equal(g.score, hits + gold * 2);
+  assert.equal(tossTokens(g.score), Math.min(5, Math.floor(g.score / 4)));
+  // Thrown at nothing: a splat, no score.
+  const m = newToss(5);
+  throwToss(m);
+  let out = null;
+  for (let t = 0; t < 0.5 && !out; t += 1 / 60) out = tickToss(m, 1 / 60);
+  assert.equal(out, 'miss');
+  assert.equal(m.score, 0);
+  // Its prizes.
+  const prizes = FURNITURE.filter((x) => x.festival === 'snow');
+  assert.equal(prizes.length, 3);
+  assert.ok(prizes.every((x) => x.tokens > 0 && x.price == null));
+});
+
+test('spring and summer: Blossom Day in April (a picnic on the mat), Lantern Night in July (boats at dusk, fireworks and sparklers at night)', () => {
+  const at = (y, m) => festivalAt(new Date((Math.ceil(Date.UTC(y, m, 10) / DAY_MS / EVERY) * EVERY + 1) * DAY_MS + DAY_MS / 2)).id;
+  assert.equal(at(2026, 3), 'blossom');
+  assert.equal(at(2026, 6), 'lantern');
+  // A festival for every month of the year now.
+  for (let m = 0; m < 12; m++) assert.ok(at(2026, m), `month ${m + 1}`);
+  const b = festGarden(6, { id: 'blossom', eve: 0, hour: 12 });
+  try {
+    b.run(240);
+    const L = b.w.gardenLife;
+    assert.ok(b.char.garden.diary.at(-1).notes.some((n) => n.k === 'hanami'), 'a picnic');
+    b.w.forceFestival = { id: 'blossom', eve: 1, hour: 20 };
+    b.w.forceNight = 0.9;
+    b.run(50);
+    const out = L.mochi.filter((e) => !e.hidden);
+    assert.equal(out.length, 6, 'up late under the lanterns');
+    assert.ok(out.filter((e) => e.m.action?.name === 'hanamisit' || e.brain?.plan?.id === 'hanami').length >= 4);
+  } finally {
+    b.done();
+  }
+  const s = festGarden(6, { id: 'lantern', eve: 0.6, hour: 18.8 });
+  try {
+    s.w.forceNight = 0.4;
+    s.run(70);
+    const L = s.w.gardenLife;
+    assert.ok(L.festBoats?.boats.length >= 4, `${L.festBoats?.boats.length} boats afloat`);
+    s.w.forceFestival = { id: 'lantern', eve: 1, hour: 20.5 };
+    s.w.forceNight = 0.9;
+    s.run(50);
+    assert.ok(L.mochi.filter((e) => e.m.action?.name === 'sparklesit' || e.brain?.plan?.id === 'hanabi').length >= 4, 'out with sparklers');
+    assert.ok(s.char.garden.diary.at(-1).notes.some((n) => n.k === 'boat' && n.who.length >= 3));
+  } finally {
+    s.done();
+  }
+});
+
+test('Petal Catch: the basket under a petal catches it (a golden one two); Ring Toss: a throw right over a peg is a ringer for its points', async () => {
+  const { PETAL, newCatch, tickCatch } = await import('../src/world/petal-catch.js');
+  const g = newCatch(9);
+  for (let t = 0; t < PETAL.time + 1; t += 1 / 60) {
+    // (Steered under the lowest petal still falling.)
+    const p = [...g.petals].sort((a, c) => c.y - a.y)[0];
+    tickCatch(g, 1 / 60, { aim: p?.x ?? 0 });
+  }
+  assert.equal(g.phase, 'done');
+  assert.ok(g.caught >= 20, `${g.caught} caught, ${g.missed} missed`);
+  const idle = newCatch(9);
+  for (let t = 0; t < PETAL.time + 1; t += 1 / 60) tickCatch(idle, 1 / 60, {});
+  assert.ok(idle.caught < g.caught / 2, 'standing still catches few');
+  const { RING, newRings, tickRings, throwRing, landAt } = await import('../src/world/ring-toss.js');
+  const r = newRings();
+  for (let i = 0; i < RING.rings; i++) {
+    // (Thrown just as the meter's at the far peg.)
+    const want = (RING.pegs[2][0] - 26) / (RING.reach - 26);
+    for (let k = 0; k < 5000 && Math.abs(r.meter - want) > 0.004; k++) tickRings(r, 1 / 600);
+    assert.ok(Math.abs(landAt(r.meter) - RING.pegs[2][0]) <= RING.ringer);
+    throwRing(r);
+    for (let t = 0; t < RING.fly + 0.05; t += 1 / 60) tickRings(r, 1 / 60);
+  }
+  assert.equal(r.phase, 'done');
+  assert.equal(r.score, 30, 'ten ringers on the far peg');
+  for (const id of ['blossom', 'lantern']) assert.equal(FURNITURE.filter((x) => x.festival === id).length, 3, id);
+});
+
+test('playing a stall game, its keys are the game\'s: Space or Up plays it, Left and Right steer, and you neither jump nor walk off', async () => {
+  const { createUiState, routeInput } = await import('../src/ui/manager.js');
+  const { newCatch } = await import('../src/world/petal-catch.js');
+  const char = createCharacter('Mina', { hairStyle: 'bob' });
+  char.garden = { back: null, mochi: [], eggs: [], unlocked: {} };
+  const w = createWorld(char);
+  w.log = () => {};
+  w.forceFestival = { id: 'blossom', eve: 0, hour: 12 };
+  loadMap(w, 'mochi_market', 'start');
+  w.body.x = MARKET.fest;
+  const state = createUiState();
+  const fs = state.windows.feststall;
+  const input = (held, pressed) => ({ held: new Set(held), pressed: new Set(pressed), mouse: { x: -9, y: -9 } });
+  // (No game going: the keys are yours.)
+  assert.ok(!routeInput(state, w, input(['ArrowLeft'], []), 1 / 60));
+  Object.assign(fs, { open: true, game: newCatch(1) });
+  const i1 = input(['ArrowLeft', 'Space'], ['Space']);
+  assert.ok(routeInput(state, w, i1, 1 / 60), 'the world locked');
+  assert.ok(fs.drop && fs.left && !fs.right);
+  assert.ok(i1.held.has('ArrowLeft'), 'the arrow stays held, frame after frame');
+  // The world, locked, takes no step or jump from them.
+  const x0 = w.body.x;
+  for (let k = 0; k < 30; k++) updateWorld(w, 1 / 60, { held: new Set(['ArrowLeft', 'Space']), pressed: new Set(['Space']), locked: true });
+  assert.ok(Math.abs(w.body.x - x0) < 0.5 && w.body.vy >= -1, 'stood still');
+  // Over: the keys are yours again.
+  fs.game.phase = 'done';
+  assert.ok(!routeInput(state, w, input(['ArrowLeft'], []), 1 / 60));
 });

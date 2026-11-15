@@ -32,7 +32,14 @@ export const LINES = {
   reborn: { icon: 'star', say: ['{a} went back to its egg, and hatched a little Mochiko again.'] },
   pound: { icon: 'sweet', say: ['{a} and {b} pounded mochi for the moon festival.', '{a} swung the mallet and {b} turned the mochi.'] },
   moon: { icon: 'moon', say: ['{a} watched the full moon rise, with a dango.', '{a} sat out late under the harvest moon.'], group: true },
-  sumo: { icon: 'star', say: ['{a} won the {x} sumo, all three bouts!'] },
+  sumo: { icon: 'star', say: ['{a} and {b} had a sumo match on the grass - {x} won!', '{a} and {b} stamped, shoved and giggled: a sumo match, and {x} won.'] },
+  hanami: { icon: 'flower', say: ['{a} had a picnic under the blossom.'], group: true },
+  boat: { icon: 'star', say: ['{a} set a lantern boat afloat on the pond.'], group: true },
+  hanabi: { icon: 'star', say: ['{a} watched the fireworks with a sparkler.'], group: true },
+  snowball: { icon: 'ball', say: ['{a} and {b} had a snowball fight.', '{a} got {b} with a snowball - and {b} got it back!'] },
+  litlantern: { icon: 'star', say: ['{a} lit the snow lanterns at dusk.'], group: true },
+  warm: { icon: 'heart', say: ['{a} sat up late by the snow lanterns, warm and cosy.'], group: true },
+  sumoring: { icon: 'star', say: ['{a} won the {x} sumo, all three bouts!'] },
   egg: { icon: 'star', say: ['{a} and {b} nuzzled and danced, and there was an egg!'] },
   gift: { icon: 'flower', say: ['{a} found {x} and brought it to you.'] },
   missed: { icon: 'heart', say: ['{a} missed you, and ran up for a hug.'], group: true },
@@ -42,7 +49,7 @@ export const LINES = {
   rain: { icon: 'rain', say: ['{a} played out in the rain, and loved it.'], group: true },
 };
 // (Things that last a while, written once a day, not counted each moment.)
-const ONCE = new Set(['missed', 'sitby', 'news', 'hello', 'rain', 'moon']);
+const ONCE = new Set(['missed', 'sitby', 'news', 'hello', 'rain', 'moon', 'litlantern', 'warm', 'hanami', 'boat', 'hanabi']);
 // The day, as the diary keys it (the player's own calendar).
 export const diaryDay = (date) => `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
 // What a chat was about (its first picture word), in words.
