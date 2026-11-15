@@ -610,30 +610,112 @@ function climbPose(style, p) {
 }
 
 // ---------- Can't yet ----------
-// Below the first few points a Mochiko can't do it yet (as a Chao child crawls before it walks,
-// thrashes in water before it swims, and can't take off): under CANT.run Run points it crawls
-// on its hands and knees; under CANT.swim Swim points it flails in the water, splashing, eyes
-// squeezed, until someone lifts it out (data/mochi-raise.js rescue); under CANT.fly Fly points
-// it crouches, leaps flapping like mad, hangs a moment, and flops back down on its bottom.
+// Before it can walk, a Mochiko crawls on its hands and knees, head first.
+//
+// (Three crawls were turned down before this one, all on 2026-11-15: one slid along on its chin,
+// one held its face up and out at the camera over a tucked-in body and looked as if it went
+// backwards, and a bottom scoot was not a crawl at all. The head is three times the size of the
+// body and draws over it, so what reads is the head: tipped well forward, turned only part way back
+// up, eyes on where it is going, with the hands patting out under the chin and the knees tucked
+// under the hips behind.)
+//
+// A diagonal gait: near hand with far knee, then far hand with near knee. Each limb stays planted
+// for half a cycle while the body passes over it, then comes forward. Nothing slides:
+//  - the body surges as each pair pushes and eases as the next lands (`slide`, in cycles, which
+//    drawMochiAnim turns into distance), and every planted limb is swept back on that same curve;
+//  - a hand is swept along the floor as the tipped figure sees it;
+//  - a knee is placed by its thigh's angle. The legs are drawn squashed on this rig (narrowed by KX,
+//    shortened by KY*KL), so a knee moves on an ellipse round the hip; the angle that puts it where
+//    the floor needs it is solved back through that squash and the tip. The shin lies back along
+//    the floor with the foot just off it, and the foot flicks up as the leg comes through.
+// A knee is lowest straight under its hip, so the body rises a touch over each planted knee and
+// settles as it passes: that is the bounce, and the head bobs and nods a beat behind it.
+const CRAWL = {
+  stride: 4, // a cycle's travel at full size (drawMochiAnim scales it)
+  surge: 0.6, // how much faster the body goes mid-push than as the limbs land
+  lean: 1.2, // how far the whole figure tips forward
+  reach: 2.2, back: -3.6, lift: 2.6, // a hand: planted from, swept to, raised by
+  kneeAt: 0.95, shin: -1.75, flick: 0.6, // a knee's centre under the hip; the shin's angle; the kick
+  sink: 17, // down onto the floor, from standing height
+  tip: 6, // tipped right over, the rig turns the whole figure about its middle (and lifts it this much)
+  hairBack: 3.6, // how far the hair is carried back when tipped right over
+};
+// How far the figure has to be set down at a lean, on the way down onto all fours or back up, to
+// stay on the floor: turned about its middle, its low end swings up as the lean grows.
+const foursSink = (lean) => CRAWL.tip + ((CRAWL.sink - CRAWL.tip) * (1 - Math.cos(lean))) / (1 - Math.cos(CRAWL.lean));
+const CRAWL_FLOOR = [0.36, -0.93]; // forward along the floor, in the tipped figure's own frame
+const CRAWL_UP = [-0.93, -0.36]; // up off it
+const LEG_SQUASH = [0.66, 0.56 * 0.72]; // hero.js: KX across, KY*KL down (below the waist)
+const THIGH_LEN = 7.8;
+const SHIN_LEN = 7.6;
+const LEG_REST = THIGH_LEN + SHIN_LEN;
+function crawlPose(p) {
+  const C = CRAWL;
+  const ease = (t) => t * t * (3 - 2 * t);
+  const fr = (t) => ((t % 1) + 1) % 1;
+  // How far through its half of the cycle the body has gone: it surges, then eases.
+  const along = (t) => t - (C.surge * Math.sin(4 * Math.PI * t)) / (4 * Math.PI);
+  const u = (p * 2) % 1;
+  const w = TAU * u;
+  const lean = C.lean + 0.03 * Math.sin(w - 0.5);
+  const cL = Math.cos(lean);
+  const sL = Math.sin(lean);
+  const [ax, ay] = [LEG_SQUASH[0] * THIGH_LEN, LEG_SQUASH[1] * THIGH_LEN];
+  const [bx, by] = [LEG_SQUASH[0] * SHIN_LEN, LEG_SQUASH[1] * SHIN_LEN];
+  // Where a knee sits across the floor from its hip, as the thigh's angle turns: A sin(th - phx).
+  const A = Math.hypot(ax * cL, ay * sL);
+  const phx = Math.atan2(ay * sL, ax * cL);
+  const W = C.stride / 1.2; // half a cycle's travel, in the figure's own units
+  const kneeDown = (th) => sL * ax * Math.sin(th) + cL * ay * Math.cos(th);
+  const thighFor = (X) => phx + Math.asin(Math.max(-1, Math.min(1, X / A)));
+  const knee = (ph) => {
+    const t = fr(ph);
+    let X;
+    let shin = C.shin;
+    if (t < 0.5) X = C.kneeAt + W / 2 - W * (along(t) / 0.5);
+    else {
+      const v = ease((t - 0.5) / 0.5);
+      X = C.kneeAt - W / 2 + W * v;
+      shin -= C.flick * Math.sin(Math.PI * v);
+    }
+    const th = thighFor(X);
+    const psi = Math.atan2(Math.sin(shin + lean) / bx, Math.cos(shin + lean) / by);
+    const foot = [THIGH_LEN * Math.sin(th) + SHIN_LEN * Math.sin(psi), THIGH_LEN * Math.cos(th) + SHIN_LEN * Math.cos(psi) - LEG_REST, (psi * 180) / Math.PI];
+    return { foot, down: kneeDown(th), planted: t < 0.5 };
+  };
+  const kF = knee(p + 0.5);
+  const kB = knee(p);
+  const rise = (kF.planted ? kF.down : kB.down) - kneeDown(thighFor(C.kneeAt + W / 2));
+  const hand = (ph) => {
+    const t = fr(ph);
+    let d;
+    let h = 0;
+    if (t < 0.5) {
+      d = C.reach + (C.back - C.reach) * (along(t) / 0.5);
+      h = -rise;
+    } else {
+      const v = ease((t - 0.5) / 0.5);
+      d = C.back + (C.reach - C.back) * v;
+      h = C.lift * Math.sin(Math.PI * v);
+    }
+    return [d * CRAWL_FLOOR[0] + h * CRAWL_UP[0], d * CRAWL_FLOOR[1] + h * CRAWL_UP[1]];
+  };
+  const hN = hand(p);
+  const hF = hand(p + 0.5);
+  // The head dips as each hand lands and comes up as the body rides over it, a beat behind, with
+  // a little nod; the hair and the sprout swing after it (carried back off the face as well, by
+  // drawMochiAnim, as far as it is tipped).
+  return pose({ lean, tip: C.tip, sink: C.sink - rise, tilt: -35 + 4 * Math.cos(w - 0.9),
+    hx: -1 + 0.8 * Math.cos(w - 0.6), hy: -1.5 + 0.5 * Math.sin(w - 0.7), hair: 1.4 * Math.sin(w - 1.6), glance: 1, armOver: true,
+    front: [5.5 + hN[0], -6.5 + hN[1]], back: [4.8 + hF[0], -5.2 + hF[1]], legF: kF.foot, legB: kB.foot,
+    slide: (-C.surge * Math.sin(4 * Math.PI * p)) / (4 * Math.PI), mouth: 'mochiblep', sprout: 'curious', blush: 1.5 });
+}
 export const CANT = { run: 50, swim: 100, fly: 100 };
-const CANT_MOVES = { crawl: { stride: 9, speed: 6 }, flail: { stride: 10, speed: 2 }, flop: { stride: 1, speed: 0.42 } };
+const CANT_MOVES = { crawl: { stride: CRAWL.stride, speed: 4.5 }, flail: { stride: 10, speed: 2 }, flop: { stride: 1, speed: 0.42 } };
 const SAT = { squat: 3, bob: 3, legF: [3.4, -1.6, 40], legB: [2.2, -1.2, 30], front: [1, 1.5], back: [1.6, 1.5] };
 function cantPose(what, p) {
   const a = TAU * p;
-  if (what === 'crawl') {
-    // A crawl on hands and knees: its body tipped right over, its head held up looking where it's
-    // going; a hand and the opposite knee step ahead together, then the other pair, the head
-    // nodding a little with each; tongue out, concentrating. (Tipped this far the rig needs it off
-    // the ground, `tip`, so `sink` sets it back down onto its hands and knees.)
-    const c = Math.sin(a);
-    const up1 = Math.max(0, Math.sin(a));
-    const up2 = Math.max(0, -Math.sin(a));
-    const nod = Math.sin(a * 2);
-    return pose({ lean: 1.1 + 0.03 * nod, tip: 6, sink: 18 - 0.5 * Math.abs(c), tilt: -62 + 3 * nod, hy: 0.4 + 0.3 * nod,
-      front: [9 + 2.4 * c, -1.6 - 1.8 * up1], back: [8 - 2.4 * c, -1.6 - 1.8 * up2], armOver: true,
-      legF: [-2 - 2 * c, -5 - 1.4 * up2, 60], legB: [-1 + 2 * c, -5 - 1.4 * up1, 60],
-      hair: 0.5 * nod, mouth: 'mochiblep', sprout: 'curious', blush: 1.5 });
-  }
+  if (what === 'crawl') return crawlPose(p);
   if (what === 'flail') {
     // Arms thrashing up out of the water by turns, legs kicking, bobbing low, splashing.
     const b = Math.sin(a * 2);
@@ -1753,7 +1835,7 @@ export function drawMochiAnim(ctx, m, x, y, time) {
   // Running wears it out, as much as its Stamina allows (standing, it gets its breath back); the
   // most tired stop to catch their breath. (`m.fatigue` and `m.resting` tell whoever moves it.)
   const stam = STAMINAS[runStyle(m.staminaPoints ?? g.stats?.stamina?.points ?? 0)];
-  st.runFor = Math.max(0, (st.runFor ?? 0) + (kind === 'run' && moving && !st.restUntil ? dt : -2 * dt));
+  st.runFor = Math.max(0, (st.runFor ?? 0) + (kind === 'run' && moving && !cant && !st.restUntil ? dt : -2 * dt));
   if (st.restUntil && time >= st.restUntil) {
     st.restUntil = null;
     st.runFor *= 0.35;
@@ -1778,27 +1860,37 @@ export function drawMochiAnim(ctx, m, x, y, time) {
     st.nextIdle = null;
   }
   // Something the garden has it doing (eating, napping, playing...) comes before idling.
+  // (Paused on all fours a moment, it holds the stroke it was in rather than standing.)
+  const paused = !moving && cant === 'crawl';
+  // Down on all fours: crawling, or paused in a crawl (not when it has stopped to get its breath).
+  const downCrawl = cant === 'crawl' && !resting;
+  // (Turning round on all fours, it sits up, turns, and goes back down onto its hands: flipped while
+  // tipped right over, the whole figure jumped from one side of where it is to the other.)
+  if (st.face == null || !st.onFours) st.face = m.dir || 1;
+  const turning = downCrawl && Boolean(st.onFours) && (m.dir || 1) !== st.face;
   const act = !moving && !resting && m.action ? actionAt(m, time) : null;
   if (act) {
     st.idle = null;
     st.nextIdle = null;
   }
   const sweetKind = act ? m.action.sweet ?? (m.action.name === 'hated' ? g.hates : g.loves) : null;
-  const idle = !act && !moving && !resting && !m.noIdle ? idleAt(st, g, time, m.idleBits) : null;
+  const idle = !act && !moving && !paused && !resting && !m.noIdle ? idleAt(st, g, time, m.idleBits) : null;
   m.idling = idle?.name ?? null;
   const posed = idle || act;
   const baby = (m.size ?? 'grown') === 'baby';
   const still = posed ? pose(baby ? babyOf(STANCE[g.personality] ?? STANCE.gentle) : STANCE[g.personality] ?? STANCE.gentle) : null;
-  let target = resting ? restPose(restT) : moving ? poseAt(phase) : act ? idlePose(act.bit, act.tq, still) : idle ? idlePose(IDLE_BITS[idle.name], Math.floor((time - idle.t0) * MOMENT_FPS) / MOMENT_FPS, still) : standPose(g, time, baby);
-  let live = resting ? target : moving ? poseAt(pc) : act ? idlePose(act.bit, act.t, still) : idle ? idlePose(IDLE_BITS[idle.name], time - idle.t0, still) : target;
+  let target = resting ? restPose(restT) : moving || paused ? poseAt(phase) : act ? idlePose(act.bit, act.tq, still) : idle ? idlePose(IDLE_BITS[idle.name], Math.floor((time - idle.t0) * MOMENT_FPS) / MOMENT_FPS, still) : standPose(g, time, baby);
+  let live = resting ? target : moving ? poseAt(pc) : paused ? target : act ? idlePose(act.bit, act.t, still) : idle ? idlePose(IDLE_BITS[idle.name], time - idle.t0, still) : target;
+  if (turning) target = live = pose({ ...SAT, hair: -CRAWL.hairBack, mouth: 'mochio', sprout: 'curious', blush: 1.5 });
   if (!resting && kind === 'run' && moving && !cant) {
     target = tiredPose(target, fq);
     live = tiredPose(live, fatigue);
   }
   // Springs only carry it from one way of moving to the next (a third of a second); once there it
   // runs on its fixed frames exactly, so every drawing comes round again.
-  const mode = resting ? 'rest' : moving ? `${kind}${tier}` : act ? 'act' : idle ? 'idle' : 'stand';
+  const mode = resting ? 'rest' : turning ? 'turn' : moving || paused ? `${kind}${tier}` : act ? 'act' : idle ? 'idle' : 'stand';
   if (st.mode !== mode) {
+    st.fromMode = st.mode;
     st.mode = mode;
     st.blendAt = time;
   }
@@ -1811,6 +1903,11 @@ export function drawMochiAnim(ctx, m, x, y, time) {
   }
   // The smooth part, carried on a lively spring so it overshoots a touch and settles: the bounce.
   const D = (st.D ??= { P: {}, V: {} });
+  // (Going down onto all fours and getting back up, the spring is slowed and damped right down: on
+  // the lively one a Mochi that wandered and paused - which they do all the time - swung up past
+  // upright and back down past its crawl at every stop and start, and it read as a spin.)
+  if (cant === 'crawl') st.crawlSoft = time;
+  const soft = time - (st.crawlSoft ?? -9) < 0.9;
   const bouncy = (key, to0) => {
     // (A lean is an angle: a whole turn more or less is the same pose, never spun back.)
     const to = key === 'lean' && D.P[key] != null ? to0 + TAU * Math.round((D.P[key] - to0) / TAU) : to0;
@@ -1819,8 +1916,8 @@ export function drawMochiAnim(ctx, m, x, y, time) {
       D.V[key] = 0;
       return to;
     }
-    const k = 520;
-    const c = 2 * Math.sqrt(k) * 0.5;
+    const k = soft ? 150 : 520;
+    const c = 2 * Math.sqrt(k) * (soft ? 1 : 0.5);
     const n = Math.max(1, Math.ceil(dt / (1 / 240)));
     const h = dt / n;
     let x0 = D.P[key];
@@ -1837,19 +1934,48 @@ export function drawMochiAnim(ctx, m, x, y, time) {
   const liftNow = bouncy('lift', lerp(P.lift, live.lift, blendK));
   // (`m.glideLean`: a race's glider tips forward into its glide, eased like any lean; `m.hillLean`,
   // a racer running up a hill leans into it, down one sits back a touch.)
-  const leanNow = bouncy('lean', lerp(P.lean, live.lean, blendK) + (kind === 'fly' ? Math.max(0, (m.glideLean ?? 0) - P.lean) : 0) + (kind === 'run' ? m.hillLean ?? 0 : 0));
-  const sinkNow = bouncy('sink', lerp(P.sink, live.sink, blendK));
-  const tipNow = lerp(P.tip, live.tip, blendK);
-  const dir = m.dir || 1;
+  // (Getting up off all fours into anything upright, it comes up to upright first, so it is never
+  // half tipped over on its feet; into something lying down - a nap - it goes straight over.)
+  const lying = (target.tip ?? 0) >= 5.9;
+  const leaving = Boolean(st.onFours) && !downCrawl;
+  const leanNow = bouncy('lean', leaving && !lying ? 0 : lerp(P.lean, live.lean, blendK) + (kind === 'fly' ? Math.max(0, (m.glideLean ?? 0) - P.lean) : 0) + (kind === 'run' ? m.hillLean ?? 0 : 0));
+  // Down on all fours and back up: the tip, and how far it is set back down, go by the lean it has
+  // got to, so it stays on the floor the whole way. (Sprung each on its own, they floated it on the
+  // way down and sank it into the ground and threw it forward on the way up: 2026-11-15.)
+  if (turning && Math.abs(leanNow) < 0.05) st.face = m.dir || 1;
+  if (downCrawl) st.onFours = true;
+  else if (lying || (Math.abs(leanNow) < 0.03 && time - st.blendAt >= 0.33)) st.onFours = false;
+  const fours = Boolean(st.onFours);
+  const sinkSprung = bouncy('sink', lerp(P.sink, live.sink, blendK));
+  // (Part way, the arms and legs are on their own blend, ahead of the lean: still folded into the
+  // crawl they sit higher and it has to go down further; already straightened to stand, less. How
+  // far, was measured against the floor through every frame of going down, up and round.)
+  // (Back down after turning round, it comes from sitting, already low: as good as folded.)
+  const folded = turning ? 0 : downCrawl ? (st.fromMode === 'turn' ? 1 : blendK) : 1 - blendK;
+  const partWay = Math.sin(Math.PI * Math.max(0, Math.min(1, leanNow / CRAWL.lean)));
+  const sinkNow = fours ? foursSink(leanNow) + (3 * folded - 1) * partWay + (downCrawl && !turning ? live.sink - CRAWL.sink : 0) : sinkSprung;
+  const tipNow = fours ? CRAWL.tip : lerp(P.tip, live.tip, blendK);
+  const dir = fours ? st.face : m.dir || 1;
+  // (How far down it has got, in eighths: the head's turn back up is made for the full tip, and
+  // part way down it tipped the head backwards.)
+  const downBy = fours ? Math.round(Math.max(0, Math.min(1, leanNow / CRAWL.lean)) * 8) / 8 : 1;
+  // (Tipped over, the hair is carried back off the face, as far as it is tipped: long hair hung
+  // straight down through the floor, going down, crawling and getting up again.)
+  const hairNow = fours ? P.hair - CRAWL.hairBack * downBy : P.hair;
+  // (Crawling, the body surges and eases about where it really is - see crawlPose - and that is
+  // eased too, so a turn, where "behind" changes side, glides instead of jumping.)
+  const slideTo = cant === 'crawl' && moving && !turning ? dir * (live.slide ?? 0) * mvT.stride * (s / 0.6) : 0;
+  st.slideX = (st.slideX ?? slideTo) + (slideTo - (st.slideX ?? slideTo)) * Math.min(1, dt * 30);
+  x += st.slideX;
   const tl = loopTime(g, time);
   const blink = moving || posed ? null : eyesAt(g, tl);
   const rig = {
-    tx: 0, by: q(P.bob), hx: q(P.hx), hy: q(P.hy), tilt: Math.round(P.tilt / 2) * 2, lift: liftNow, squat: Math.round(P.squat),
+    tx: 0, by: q(P.bob), hx: q(P.hx), hy: q(P.hy), tilt: Math.round((P.tilt * downBy) / 2) * 2, lift: liftNow, squat: Math.round(P.squat),
     backArm: [q(P.back[0]), q(P.back[1])], frontArm: [q(P.front[0]), q(P.front[1])], armSide: moving ? 0.35 : 0.6, hipIn: moving ? 0.6 : 0,
     frontLeg: [q(P.legF[0]), q(P.legF[1]), q3(P.legF[2])], backLeg: [q(P.legB[0]), q(P.legB[1]), q3(P.legB[2])],
-    air: target.lift > 1.5, hair: Math.round(P.hair * 2) / 2, hairTip: Math.round(P.hair * 2.4) / 2,
+    air: target.lift > 1.5, hair: Math.round(hairNow * 2) / 2, hairTip: Math.round(hairNow * 2.4) / 2,
     // Cloth streams with the hair (see drawMochiPose): a skirt, a scarf's end, a satchel.
-    cape: Math.round(P.hair * 2) / 2,
+    cape: Math.round(hairNow * 2) / 2,
     eyes: target.eyes ?? blink ?? 'open',
     view: target.view ?? 'side', climb: Math.round((P.climb ?? 0) * 4) / 4, armOver: target.armOver ?? null,
     face: { brows: target.brows ?? REST.brows, extra: [], blush: target.blush ?? REST.blush, glance: target.glance ?? (moving || posed ? 0 : glanceAt(g, tl)), look: target.look },
@@ -1914,9 +2040,12 @@ export function drawMochiAnim(ctx, m, x, y, time) {
   if (kind !== 'swim' && kind !== 'climb' && !m.noShadow) {
     ctx.fillStyle = 'rgba(70,40,90,0.16)';
     ctx.beginPath();
-    // (Crawling, its weight sits back on its knees: the shadow goes with it.)
-    const sx = x - (cant === 'crawl' ? dir * 6 * (s / 0.6) : 0);
-    ctx.ellipse(sx, y, Math.max(2, 7 - liftNow * 0.22) * (s / 0.6), Math.max(0.8, 1.8 - liftNow * 0.04) * (s / 0.6), m.groundTilt ?? 0, 0, TAU);
+    // (Down on all fours it lies along the ground behind its head - hands under its chin, knees
+    // well back - so the shadow goes back under all of it and stretches to its length, as far as
+    // it has gone down: left under the feet, it sat out in front of the face.)
+    const downK = fours ? Math.max(0, Math.min(1, leanNow / CRAWL.lean)) : 0;
+    const sx = x - dir * 6 * s * downK;
+    ctx.ellipse(sx, y, Math.max(2, 7 - liftNow * 0.22) * (s / 0.6) * (1 + 0.45 * downK), Math.max(0.8, 1.8 - liftNow * 0.04) * (s / 0.6), m.groundTilt ?? 0, 0, TAU);
     ctx.fill();
   }
   if (kind === 'run' && moving && tier >= 3) drawDust(ctx, x, y, dir, phase, GAITS[tier].stride * (s / 0.6), tier);
@@ -1944,7 +2073,7 @@ export function drawMochiAnim(ctx, m, x, y, time) {
   // (Crawling, it's tipped right over, which the rig only does off the ground, so it's set back down.)
   // (A race's swimmers ride a little higher, `m.floatUp` px, so the waterline stays under their
   // eyes as they stroke instead of cutting across them.)
-  const dy = kind === 'swim' ? Math.max(0, (sinkNow + tip) * s - (m.floatUp ?? 0)) : -alt * s + (posed || cant === 'crawl' ? sinkNow * s : 0);
+  const dy = kind === 'swim' ? Math.max(0, (sinkNow + tip) * s - (m.floatUp ?? 0)) : -alt * s + (posed || fours ? sinkNow * s : 0);
   // (Painting ahead, `m.ahead`: only its body's drawing is asked for, for the sprite worker.)
   if (m.ahead) {
     drawPosed(ctx, look, 0, 0, rig, { ...opts, ahead: true });

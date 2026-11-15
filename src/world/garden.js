@@ -78,8 +78,8 @@ export function gardenMap(g = {}) {
     // orchard (fruit trees to shake, the big tree with its swing, the crop bed), the pond, the cliff.
     townPieces: [
       ['mg_shop', 280], ['mg_eggstall', 450], ['mg_wearstall', 624], ['mg_kitchen', 808], ['mg_nursery', 990], ['mg_stadium', 1190], ['mg_lantern', 1290, 1],
-      ['mg_fruittree', 1520, 0], ['mg_crates', 1482], ['mg_toybox', 1562], ['mg_bigtree', 1660],
-      ['mg_lantern', 1736, 1], ['mg_washline', 1796], ['mg_beanframe', 1884], ['mg_cropbed', 1980], ['mg_fruittree', 2038, 2],
+      ['mg_fruittree', 1537, 0], ['mg_crates', 1482], ['mg_toybox', 1582], ['mg_bigtree', 1660],
+      ['mg_washline', 1812], ['mg_beanframe', 1900], ['mg_cropbed', 1996], ['mg_fruittree', 2074, 2],
       ['mg_reeds', 2168, 0], ['mg_lilies', 2330, 0], ['mg_lilies', 2480, 1], ['mg_reeds', 2576, 1],
       ['mg_earthwall', 2711, { left: 2662, right: 2760, top: 562, bottom: 900, seed: 4 }], ['mg_earthwall', 2982, { left: 2764, right: 3200, top: 382, bottom: 900, seed: 9, burrow: [70, 250] }], ['mg_rockface', 2660, { top: LEDGE, bottom: POND, seed: 3, vines: 4, vineLen: 60 }], ['mg_rockface', 2762, { top: TOP, bottom: LEDGE, seed: 7, vines: 6, vineLen: 90 }], ['mg_falls', 2762],
       ['mg_boulders', 2688], ['mg_glide', 2794], ['mg_moonmortar', 2960], ['mg_lantern', 3110, 5],
@@ -93,7 +93,7 @@ export function gardenMap(g = {}) {
       { id: 'stadium', x: 1190, y: PLATEAU, to: 'mochi_stadium', toPortal: 'gate', label: 'Race Stadium', door: true },
     ],
     lamps: [
-      { x: 1290, y: PLATEAU - 44, c: '#ffd6a0' }, { x: 1736, y: ORCHARD - 44, c: '#ffd6a0' }, { x: 3110, y: TOP - 44, c: '#ffd6a0' },
+      { x: 1290, y: PLATEAU - 44, c: '#ffd6a0' }, { x: 1608, y: 552, c: '#ffd6a0' }, { x: 3110, y: TOP - 44, c: '#ffd6a0' },
       { x: 990, y: PLATEAU - 34, c: '#ffd27a' }, { x: 808, y: PLATEAU - 40, c: '#ffd27a' }, { x: 280, y: PLATEAU - 40, c: '#ffd27a' },
       // Under the clothes stall's awning, so the four on the counter are lit after dark.
       { x: 624, y: PLATEAU - 58, c: '#ffe0c0' },

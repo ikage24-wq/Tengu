@@ -55,13 +55,17 @@ import { groundAt, footingAt } from './physics.js';
 // (A row of them on the ground just inside the gate, where the square's lantern lights them:
 // clear of the shop's counter and of every stall, so rocking an egg never eats a press meant for
 // the keeper or a stall.)
-// Spread along the grass inside the gate rather than huddled together (the player, 2026-11-14:
-// "too many eggs in 1 place"): three along the front and two set back between them, far enough
-// apart that you can walk up to any one of them and rock it without catching its neighbour.
-export const EGG_SLOTS = [100, 152, 204, 126, 178];
-// How far back from the front row an egg sits, so they lie as a clutch rather than a straight line
-// (render/garden.js lifts and shrinks the back ones).
-export const EGG_BACK = [0, 0, 0, 1, 1];
+// Three along the front and two set back between them. They used to run from 100 to 204 at an even twenty-six apart, which put the first one under the
+// gate's arch and the last against the shop, and made the five of them read as a row of bins on
+// open lawn. They are pulled in clear of both now, and the two at the back sit far enough up the
+// grass to be read as behind rather than as part of the line. No two gaps are the same and no
+// two sit at quite the same depth, so the five of them never line up into a rank. (A bed of straw
+// under them was tried and taken out again: at this size a low heap the width of the clutch reads
+// as a plank lying in the grass, whatever it is painted like.)
+export const EGG_SLOTS = [110, 145, 183, 130, 165];
+// How far back from the front row an egg sits (render/garden.js lifts and shrinks the back ones,
+// and draws them first so the front row laps over them).
+export const EGG_BACK = [0, 0.14, 0.05, 1, 0.72];
 // The egg stall: where it stands, what an egg costs.
 export const STALL_X = 450;
 export const EGG_PRICE = 3000;
@@ -91,10 +95,10 @@ export const VISITOR_CARE = ['pet', 'play', 'cheer'];
 const GAIT_SPEED = [34, 60, 80, 104, 136, 168];
 const SWIM_SPEED = [26, 44, 64, 88, 112, 140];
 // The crop bed (world/garden.js mg_cropbed): ripe again this long after you pick it, and what it gives.
-export const CROP_X = 1980;
+export const CROP_X = 1996;
 // The toy box in the orchard (world/garden.js mg_toybox): now and then a Mochi wanders over to it and
 // plays with the ball a while. Its turn comes at the same time for a visitor (by the hour and its seed).
-export const TOY_X = 1562;
+export const TOY_X = 1582;
 const TOY = { chance: 0.22, at: [4, 24], stay: 32 };
 function toyTime(rec, now) {
   const b = Math.floor(now / HOUR);
@@ -110,10 +114,10 @@ function toyTime(rec, now) {
 // what it does there (render/mochi-anim.js ACTIONS), for how long, who goes, day or night]
 const PLACES = [
   { x: 1660, spread: 16, act: 'nap', hold: 7, who: () => true, when: 'day' },
-  { x: 1520, spread: 10, act: 'reach', who: () => true, when: 'day' },
-  { x: 2038, spread: 10, act: 'reach', who: () => true, when: 'day' },
+  { x: 1537, spread: 10, act: 'reach', who: () => true, when: 'day' },
+  { x: 2074, spread: 10, act: 'reach', who: () => true, when: 'day' },
   { x: 2090, spread: 6, act: 'paddle', who: (rec) => pts(rec, 'swim') >= CANT.swim, when: 'day' },
-  { x: 1736, spread: 12, act: 'meditate', who: () => true, when: 'night' },
+  { x: 1608, spread: 12, act: 'meditate', who: () => true, when: 'night' },
 ];
 // (Long enough to walk over from wherever the hour had it, and to use the place a while.)
 const PLACE = { chance: 0.3, at: [6, 26], stay: 30, reach: 340 };
@@ -143,7 +147,7 @@ const swimPts = (rec) => rec.stats?.swim?.points ?? 0;
 // who can't walk yet crawls along slowly.
 function strollSpeed(rec) {
   const p = runPts(rec);
-  if (p < CANT.run) return 6;
+  if (p < CANT.run) return 4.5;
   const tier = [0, 300, 700, 1100, 1600, 2100].reduce((t, need, i) => (p >= need ? i : t), 0);
   return Math.max(18, GAIT_SPEED[tier] * 0.5);
 }

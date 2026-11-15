@@ -659,6 +659,39 @@ function falls(ctx, map, x, cam, time) {
   const sy0 = ledge - 6;
   const sy1 = ledge + 12;
   place(ctx, spoutArt(), snap((sx0 + sx1) / 2), sy1 + 6);
+  // The trestle it stands on, down on the strip of shore at the foot of the cliff: two legs
+  // splayed out, a brace across them, and a rope lashing where they take the pipe.
+  const tx = x - 140;
+  const tTop = ledge + 7;
+  for (const [dx0, dx1] of [[-5, -17], [5, 17]]) {
+    ctx.strokeStyle = WOOD_DK;
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(snap(tx + dx0), snap(tTop));
+    ctx.lineTo(snap(tx + dx1), snap(pond));
+    ctx.stroke();
+    ctx.strokeStyle = WOOD;
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.moveTo(snap(tx + dx0 - 0.6), snap(tTop));
+    ctx.lineTo(snap(tx + dx1 - 0.6), snap(pond));
+    ctx.stroke();
+  }
+  // One tie across it and one diagonal brace: two rungs made it read as a step ladder.
+  const legX = (k, side) => tx + side * (5 + 12 * k);
+  const legY = (k) => tTop + (pond - tTop) * k;
+  ctx.strokeStyle = WOOD_DK;
+  ctx.lineWidth = 2.4;
+  ctx.beginPath();
+  ctx.moveTo(snap(legX(0.62, -1)), snap(legY(0.62)));
+  ctx.lineTo(snap(legX(0.62, 1)), snap(legY(0.62)));
+  ctx.moveTo(snap(legX(0.62, -1)), snap(legY(0.62)));
+  ctx.lineTo(snap(legX(0.26, 1)), snap(legY(0.26)));
+  ctx.stroke();
+  ctx.fillStyle = '#e8d8b8';
+  ctx.fillRect(snap(tx - 8), snap(tTop - 3), 16, 3.4);
+  ctx.fillStyle = '#cdbb94';
+  ctx.fillRect(snap(tx - 8), snap(tTop - 3), 16, 1.2);
   // The stream from its end: a rope of water, a deeper edge and a bright core, widening as it falls,
   // ripples of light running down it.
   const fx = sx1 - 2;
@@ -698,7 +731,8 @@ const spoutArt = () => art('mg-spout', 150, 30, () => {
     // The bamboo pipe, jointed, sloping down to its cut end over the pond; its prop post.
     F(limb(148, 4, 4, 22, 3.6, 3.4, g.base)), F(limb(148, 3, 4, 21, 1, 0.9, g.hi)),
     ...[30, 66, 102, 132].map((x) => F(R(x, 6 + (148 - x) * 0.125 - 2, 2, 5, g.deep))),
-    F(limb(40, 18, 44, 30, 2.2, 2.4, WOOD_DK)), F(limb(36, 20, 48, 20, 1.6, 1.6, WOOD_DK)),
+    // (Its prop is drawn live, in falls(): a stub in here ended in mid air, a long way above the
+    // ground it was meant to be standing on.)
   ];
 });
 
@@ -1534,10 +1568,10 @@ function hopHome(ctx, map, cam, time, arr, ex, back, genes) {
     x = arr.from + (dist * (hop + smooth(v))) / n;
     up = Math.sin(Math.PI * v) * (hop === n - 1 ? 3.5 : 7) + (hop === 0 ? COUNTER * (1 - smooth(v)) : 0);
     tilt = Math.sign(dist) * 0.24 * Math.sin(Math.PI * 2 * v);
-    sink = back * 7 * smooth(Math.min(1, u * 1.15));
+    sink = back * 13 * smooth(Math.min(1, u * 1.15));
   }
   const gy = groundAt(map, x) - cam.y;
-  const k = GARDEN_EGG * (1 - back * 0.16 * Math.max(0, u));
+  const k = GARDEN_EGG * (1 - back * 0.2 * Math.max(0, u));
   // (Its shadow stays on the grass, shrinking as it rises; the counter's own, while it waits up there.)
   const floor = up > COUNTER - 1 ? COUNTER : 0;
   ctx.fillStyle = 'rgba(70,50,40,0.18)';
@@ -1635,19 +1669,24 @@ export function drawGardenLife(ctx, world, cam, time, layer = 'back') {
     return;
   }
   if (!map.indoor) {
-    (life.owner?.garden?.eggs ?? []).forEach((egg, i) => {
-      if (life.hatching?.egg === egg) return;
+    const eggs = life.owner?.garden?.eggs ?? [];
+    // The two set back up the grass are drawn first, so the front three lap over them and the
+    // clutch reads in depth: they used to be drawn last, which put the far ones in front.
+    const order = eggs.map((_, i) => i).sort((a, b) => (EGG_BACK[b] ?? 0) - (EGG_BACK[a] ?? 0));
+    for (const i of order) {
+      const egg = eggs[i];
+      if (life.hatching?.egg === egg) continue;
       const ex = EGG_SLOTS[i];
-      if (ex == null) return;
-      // The back row of the clutch sits a little further up the grass and a little smaller, so the
-      // five of them read as a nest by the gate rather than a line of bollards.
+      if (ex == null) continue;
+      // The back row sits further up the grass and smaller, so the five read as a clutch in a bed
+      // rather than as a line of bollards.
       const back = EGG_BACK[i] ?? 0;
       const genes = egg.genes ?? genesOf(egg.seed);
       const arr = life.arrivals?.get(egg);
-      if (arr && hopHome(ctx, map, cam, time, arr, ex, back, genes)) return;
+      if (arr && hopHome(ctx, map, cam, time, arr, ex, back, genes)) continue;
       if (arr) life.arrivals.delete(egg);
-      drawMochiEgg(ctx, ex - cam.x, groundAt(map, ex) - cam.y - back * 7, genes, time, GARDEN_EGG * (1 - back * 0.16));
-    });
+      drawMochiEgg(ctx, ex - cam.x, groundAt(map, ex) - cam.y - back * 13, genes, time, GARDEN_EGG * (1 - back * 0.2));
+    }
   }
   for (const h of life.handoffs ?? []) handOff(ctx, map, cam, time, h, world.body);
   // Sweets you have put down, waiting to be found: each one sits in the grass with its own shadow,

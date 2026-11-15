@@ -109,6 +109,9 @@ const shoeIn = (c, sole) => (p, k, tint) => [k.sole(tint(sole)), k.poly([[-2.7, 
   k.poly([[-2.7, -1], [2.8, -1], [2.85, -0.4], [-2.75, -0.4]], tint(shade(c, 14)))];
 
 // ---------- The cloth the beginner tier is cut from ----------
+// A traveller's hood: a soft sage, light enough to sit in a pastel world (the stock forest
+// green read as a hole cut in the picture at Mochi size).
+const HOOD_CLOTH = '#7f9b6e';
 const CLOTH = {
   sky: '#8fc4ea', cream: '#fff2e0', sage: '#8fae94', clay: '#e0a173', coral: '#ef6e88',
   oat: '#e0cfae', navy: '#5d7fad', plum: '#a8688c', denim: '#7f93b8', slate: '#6f7f86',
@@ -2000,11 +2003,16 @@ export const WARDROBE_ACC = {
   },
   // A soft cloth cap, pulled down over the crown with its brim out over the face.
   cap: {
-    hat: () => [T([...arc(15.5, 7.6, 12, 9.6, 8, 172), [3.6, 8.4], [27.4, 8.4]], '#7f8aa0'),
-      F(T([...arc(15.5, 7.6, 12, 9.6, 98, 166), ...arc(15.5, 8, 10, 7.6, 164, 100)], '#9aa6bc')),
-      F(T([[21.4, 6.6], [28.2, 7.6], [28, 9.2], [21.6, 8.8]], '#6b7488')),
-      F(T([[21.4, 6.6], [28.2, 7.6], [28.1, 8.2], [21.5, 7.4]], '#8c97ac')),
-      F(E(15.5, -1.4, 1.1, 0.8, '#6b7488'))],
+    hat: () => [
+      // The crown sits on the head instead of being pulled down over it, so the fringe still shows
+      // under it and the face keeps its frame.
+      T([...arc(15.2, 7.4, 11.2, 8, 10, 170), [4.2, 8.2], [26.4, 8.2]], '#93a8c4'),
+      F(T([...arc(15.2, 7.4, 11.2, 8, 100, 168), ...arc(15.4, 7.8, 8.8, 5.8, 166, 102)], '#b6c9df')),
+      // A band round its edge and a proper brim out over the face, dark under and lit along the top.
+      F(T([[4.2, 6.6], [26.4, 6.6], [26.4, 8.4], [4.2, 8.4]], '#7b8ea9')),
+      T([[20.4, 6.8], [29.4, 8.6], [29, 10.6], [20.6, 9.2]], '#6d7f9b'),
+      F(T([[20.4, 6.8], [29.4, 8.6], [29.2, 9.4], [20.5, 7.8]], '#9cb0cb')),
+      F(E(15.2, -0.4, 1.2, 0.9, '#7b8ea9')), F(E(14.8, -0.6, 0.5, 0.4, '#b6c9df'))],
   },
   // A herb pouch on her hip, with sprigs poking out of the top of it.
   pouch: {
@@ -2025,11 +2033,13 @@ export const WARDROBE_ACC = {
   // ---------- Middling ----------
   // A soft beret, worn on the slant with its stalk on top.
   beret: {
-    hat: () => [T([...arc(15.2, 7.4, 10.8, 8.4, 12, 172), [4.5, 9.2], [25.8, 5.8]], '#a2546a'),
-      F(T([...arc(15.2, 7.4, 10.8, 8.4, 104, 166), ...arc(15.4, 7.8, 8.8, 6.4, 164, 106)], '#bd6c82')),
-      // It slips down over the near side, and its stalk stands on top.
-      F(E(24, 5.6, 3, 2.1, '#8c4458')), F(E(24.4, 5, 1.4, 0.8, '#a2546a')),
-      F(limb(15.2, -0.6, 15.4, -2.4, 0.9, 0.7, '#8c4458')), F(E(15.4, -2.6, 0.9, 0.8, '#bd6c82'))],
+    // A soft disc worn on the back of the head and slipping over one side, with the band it sits on
+    // showing under it. (It was a dome the size of the head, which read as a bare painted scalp.)
+    hat: () => [T([...arc(15.4, 6, 10.8, 5.8, 8, 172), [4.8, 7.8], [26.2, 5.4]], '#c47a90'),
+      F(T([...arc(15.4, 6, 10.8, 5.8, 100, 168), ...arc(15.6, 6.4, 8.6, 4, 166, 102)], '#dd9aae')),
+      F(T([[18.2, 4.6], [26.4, 5], [26.2, 7], [18.4, 7.2]], '#a85f76')),
+      F(E(26, 5.8, 2.4, 1.8, '#a85f76')), F(E(26.4, 5.3, 1.1, 0.7, '#c47a90')),
+      F(limb(15.4, 0.4, 15.6, -1.8, 0.9, 0.7, '#a85f76')), F(E(15.6, -2, 0.9, 0.8, '#dd9aae'))],
   },
   // A short wool capelet buttoned at the throat, its hem swinging with her.
   capelet: {
@@ -2075,17 +2085,28 @@ export const WARDROBE_ACC = {
   // A traveller's hood, pulled up: the cowl over the head with her face in the opening, and the
   // hair tucked away under it.
   hood: {
-    tucks: true,
-    hat: () => [T([...arc(15.5, 12.6, 14.2, 13.4, -42, 222), ...arc(15.5, 16.2, 9.9, 9.1, 222, -42)], CLOTH.forest),
-      F(T([...arc(15.5, 16.2, 10.9, 10.1, -40, 220), ...arc(15.5, 16.2, 9.9, 9.1, 220, -40)], shade(CLOTH.forest, 18))),
+    // The hair is left on (it used to be tucked away): a hood is a rim round the face, not a cap
+    // of paint over the whole head. What is drawn here is that rim, with the back of it behind.
+    hat: () => [
+      // A band round the face, deep over the crown and narrowing to the cheeks (the opening is set
+      // lower than the outside, which is what gives it its thickness where a hood has it). The hair
+      // shows inside it, as hair does inside a hood.
+      T([...arc(15.5, 11.4, 14.6, 13.4, -28, 208), ...arc(15.5, 13.8, 10.6, 9.2, 208, -28)], HOOD_CLOTH),
+      F(T([...arc(15.5, 11.4, 13.2, 12, -26, 206), ...arc(15.5, 13.8, 10.6, 9.2, 206, -26)], shade(HOOD_CLOTH, 20))),
+      F(T([...arc(15.5, 11.4, 14.6, 13.4, 152, 206), ...arc(15.5, 13.8, 10.6, 9.2, 206, 152)], shade(HOOD_CLOTH, -14))),
+      // A cream lining just inside the opening: it is what tells you the thing is a hood with a
+      // face in it and not a painted ball.
+      F(T([...arc(15.5, 13.8, 10.6, 9.2, -24, 204), ...arc(15.5, 14.2, 9.3, 7.9, 204, -24)], '#efe3c6')),
+      F(T([...arc(15.5, 13.8, 10.6, 9.2, 150, 204), ...arc(15.5, 14.2, 9.3, 7.9, 204, 150)], '#d6c6a2')),
       // A point at the crown, and the drawstring at the throat.
-      F(T([[13.4, 0.4], [18.4, 0.8], [17.4, -4.4]], shade(CLOTH.forest, -14))), F(E(17.4, -4.8, 0.9, 0.9, '#d8c9a4')),
-      F(E(6.2, 10.4, 2.4, 1.4, shade(CLOTH.forest, 14))),
+      F(T([[13.4, -1.6], [18.4, -1.2], [17.4, -6.4]], shade(CLOTH.forest, -14))), F(E(17.4, -6.8, 0.9, 0.9, '#d8c9a4')),
       F(limb(9.4, 24.4, 21.6, 24.4, 0.45, 0.45, '#d8c9a4')), F(E(15.5, 24.6, 0.9, 0.6, '#c2b183'))],
     hatBack: (p, m) => {
       const sw = (m?.sway ?? 0) * 0.3;
-      return [E(15.5, 12.8, 14, 13.2, shade(CLOTH.forest, -14)),
-        T([[4.2, 18.6], [26.8, 18.6], [24.2 + sw, 26.4], [15.5 + sw, 28], [6.8 + sw, 26.4]], shade(CLOTH.forest, -18))];
+      // Only the drape at the back of the neck. (This used to be a filled ellipse the size of the
+      // whole head: the back layer is painted OVER the hair, not under it, so with the hair left on
+      // it covered the lot and the Mochi came out as a green egg with a face.)
+      return [T([[4.2, 18.6], [26.8, 18.6], [24.2 + sw, 26.4], [15.5 + sw, 28], [6.8 + sw, 26.4]], shade(CLOTH.forest, -18))];
     },
   },
 
