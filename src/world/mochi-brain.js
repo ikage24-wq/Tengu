@@ -17,7 +17,7 @@
 export const NEEDS = ['energy', 'fun', 'social', 'curious', 'hunger'];
 // How fast each runs down, per second the garden is open (fun goes in about six minutes; energy
 // in about seventeen, so a nap or two a day).
-const DRAIN = { energy: 0.1, fun: 0.28, social: 0.17, curious: 0.2, hunger: 0.08 };
+const DRAIN = { energy: 0.1, fun: 0.26, social: 0.14, curious: 0.16, hunger: 0.08 };
 const clamp = (v) => Math.max(0, Math.min(100, v));
 // (Deterministic: the same Mochi in the same state chooses the same, so a visitor sees much the same.)
 const hash = (n) => {
@@ -36,10 +36,10 @@ export function drainNeeds(rec, dt, active = true, tiring = 1) {
   const n = needsOf(rec);
   for (const k of NEEDS) n[k] = clamp(n[k] - DRAIN[k] * dt * (k === 'energy' ? (active ? tiring : 0.4) : 1));
 }
-// Doing something: the needs it meets go back up - by about a third of what the thing is worth,
+// Doing something: the needs it meets go back up - by a little under half what the thing is worth,
 // so its needs rise and fall through the day instead of sitting full (they were all at 97 in a
 // play-test, 2026-11-15, and nothing it thought about meant much).
-const GAIN = 0.35;
+const GAIN = 0.45;
 export function satisfy(rec, gains) {
   const n = needsOf(rec);
   for (const [k, v] of Object.entries(gains ?? {})) n[k] = clamp(n[k] + v * GAIN);

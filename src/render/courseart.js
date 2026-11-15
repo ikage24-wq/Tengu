@@ -1369,6 +1369,14 @@ const CASTS = {
     pom: { shade: 'rgba(120,150,220,0.35)', outer: ['#ffffff', '#bfe0ff', '#ffd0e0'], inner: ['#ffffff', '#e0f0ff'], heart: '#ffffff' },
     banner: { text: 'FLY! FLY!', ink: '#4a80d0', edge: '#a8d0ff', tri: ['#bfe0ff', '#ffd0e0'] },
   },
+  // Mochitsuki Mountain (the Power course): the snow cast in New Year red and white - a red flag
+  // with a white flake, and a "SMASH IT!" banner for the boulders.
+  pound: {
+    id: 'pound', starter: 'sakura', seed: 9851, squad: 'cloud', crew: [9953, 9967, 9973],
+    flag: { cloth: '#e8505a', hem: '#ffe0e4', mark: 'flake' },
+    pom: { shade: 'rgba(200,80,100,0.3)', outer: ['#ffffff', '#ff8f9a', '#ffd0e0'], inner: ['#ffffff', '#ffe0e4'], heart: '#ffffff' },
+    banner: { text: 'SMASH IT!', ink: '#d0404f', edge: '#ffb0b8', tri: ['#ff8f9a', '#ffffff'] },
+  },
   // Long Hill Run: the starter in the Monaka Knight (the hills' prize) waving a matcha-green flag
   // with a dango on it; the squad by the finish in Little Chef, pastry cooks with pink and green
   // pom-poms and a "SWEET!" banner.

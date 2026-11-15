@@ -16,13 +16,13 @@
 //               behind, and (drawn with the racers) low wisps over the feet of anyone wading
 
 import { R, E, T, F, snap } from './pixel.js';
-import { ramp, planks, gable, hash, lean } from './propkit.js';
+import { ramp, planks, gable, hash, lean, pivoted } from './propkit.js';
 import { limb } from './figure.js';
 import { art, place } from './scenery.js';
 import { cragArt, CRAG_FACE_AT } from './garden.js';
 import { groundAt } from '../world/physics.js';
 import { drawMochiAnim, drawSpectator, SPECTATOR_BEATS, GAITS, SWIMS, FLIES, CLIMBS, runStyle } from './mochi-anim.js';
-import { runSpeed, lineupOffset, PODIUM, podiumSpot, INTRO, introLen, standings, progressOf } from '../world/mochi-race.js';
+import { runSpeed, lineupOffset, PODIUM, podiumSpot, INTRO, introLen, standings, progressOf, boulderX } from '../world/mochi-race.js';
 import { VW, VH } from '../input.js';
 import { CANT_POINTS, newRecord } from '../data/mochi-raise.js';
 import { rollMochi } from '../data/mochi-genes.js';
@@ -540,6 +540,160 @@ function paintAhead(ctx, R, course, time) {
   }
   ctx.restore();
 }
+// ---------- The Power course's boulders (world/mochi-race.js, a 'smash' leg) ----------
+// A huge snow-capped granite boulder in each lane, cracking a little more with every hit (four
+// drawings), shaking as it's struck with chips of stone and snow flying off; then it bursts - chunks
+// thrown up and out, tumbling as they fall, a puff of snow - and a little heap of rubble is left.
+const BOULDER_W = 58;
+const BOULDER_H = 52;
+// (Three shapes, and every other lane's turned round, so the row never reads as one boulder stamped
+// six times: a round one, a tall one with a shoulder of rock, a broad flat one.)
+const BOULDER_SHAPES = [
+  [[29, 30, 27, 22], [26, 26, 22, 17], [20, 20, 10, 7], [38, 41, 16, 8], [28, 11, 18, 6]],
+  [[28, 29, 23, 23], [25, 25, 18, 18], [21, 17, 8, 7], [40, 40, 14, 9], [26, 8, 14, 5]],
+  [[30, 33, 28, 19], [27, 30, 23, 14], [19, 25, 11, 6], [41, 43, 15, 7], [30, 16, 20, 5]],
+];
+const boulderArt = (crack, v = 0) => art(`mr-boulder|${crack}|${v}`, BOULDER_W, BOULDER_H, () => {
+  const [body, lit, glint, dark, cap] = BOULDER_SHAPES[v % BOULDER_SHAPES.length];
+  const out = [E(...body, '#8a93a6'), F(E(...lit, '#9aa3b6')), F(E(...glint, '#b3bccd')), F(E(...dark, '#767f92'))];
+  if (v === 1) out.push(E(46, 36, 10, 12, '#838ca0'), F(E(44, 33, 7, 8, '#959eb2')));
+  out.push(F(E(...cap, '#f4f8ff')), F(E(cap[0] - 6, cap[1] - 2, cap[2] / 2, cap[3] * 0.56, '#ffffff')), F(E(cap[0] + 12, cap[1] + 3, 6, 3, '#eaf0fb')));
+  out.push(F(E(29, 51, 27, 1.4, '#c8d4e8')));
+  const C = '#4f566a';
+  if (crack >= 1) out.push(F(limb(30, 16, 26, 30, 0.8, 0.6, C)), F(limb(26, 30, 30, 40, 0.7, 0.5, C)));
+  if (crack >= 2) out.push(F(limb(26, 30, 14, 34, 0.7, 0.5, C)), F(limb(30, 22, 42, 28, 0.7, 0.5, C)), F(limb(42, 28, 46, 38, 0.6, 0.4, C)));
+  if (crack >= 3) out.push(F(limb(14, 34, 10, 44, 0.6, 0.4, C)), F(limb(30, 40, 34, 49, 0.6, 0.4, C)), F(limb(42, 28, 50, 22, 0.6, 0.4, C)), F(E(30, 30, 2.4, 2, '#3a3f50')));
+  return out;
+});
+const chunkArt = (k) => art(`mr-chunk|${k % 3}`, 14, 12, () => [T([[1, 6], [5, 1], [12, 3], [13, 9], [6, 11]], ['#8a93a6', '#9aa3b6', '#767f92'][k % 3]), F(T([[4, 3], [9, 3], [6, 6]], '#b3bccd'))]);
+const rubbleArt = () => art('mr-rubble', 40, 12, () => [E(10, 8, 7, 4, '#8a93a6'), E(22, 9, 8, 3.6, '#9aa3b6'), E(31, 8, 6, 4, '#767f92'), F(E(20, 4.6, 12, 2, '#f4f8ff')), F(E(20, 11.4, 18, 1, '#c8d4e8'))]);
+function drawBoulders(ctx, map, race, course, cam) {
+  const leg = course.legs.find((l) => l.kind === 'smash');
+  if (!leg) return;
+  const at = course.legs.indexOf(leg);
+  const C = race.clock;
+  for (const r of [...race.racers].sort((a, b) => b.lane - a.lane)) {
+    const wx = boulderX(leg, r);
+    const x = wx - cam.x;
+    if (x < -90 || x > VW + 90) continue;
+    const gy = groundAt(map, wx) - cam.y;
+    const rock = r.rock;
+    // (A friend's ghost or a racer seen from afar has no boulder of its own here: past it, it's broken.)
+    const broke = rock?.broke != null ? C - rock.broke : r.leg > at && !rock ? 9 : null;
+    if (broke == null) {
+      const k = rock ? 1 - rock.hp / rock.max : 0;
+      const crack = k <= 0 ? 0 : k < 0.34 ? 1 : k < 0.67 ? 2 : 3;
+      const since = rock?.hits.length ? C - rock.hits[rock.hits.length - 1] : 9;
+      const shake = since < 0.18 ? Math.sin(since * 90) * 1.6 * (1 - since / 0.18) : 0;
+      place(ctx, boulderArt(crack, r.lane), snap(x + shake), gy + 3, { flip: r.lane % 2 === 1 });
+      for (const h of rock?.hits ?? []) {
+        const u = C - h;
+        if (u > 0.6 || u < 0) continue;
+        ctx.globalAlpha = 1 - u / 0.6;
+        for (let i = 0; i < 5; i++) {
+          const a = -2.5 + i * 0.32 + hash(h * 7 + i) * 0.3;
+          const v = 40 + hash(h * 3 + i) * 34;
+          ctx.fillStyle = i % 2 ? '#9aa3b6' : '#f4f8ff';
+          ctx.fillRect(x - 22 + Math.cos(a) * v * u, gy - 24 + Math.sin(a) * v * u + 110 * u * u, 2, 2);
+        }
+        ctx.globalAlpha = 1;
+      }
+      continue;
+    }
+    if (broke < 1.1) {
+      for (let i = 0; i < 7; i++) {
+        const a = -Math.PI / 2 + (i - 3) * 0.42 + hash(r.seed * 3 + i) * 0.2;
+        const v = 80 + hash(r.seed + i) * 70;
+        const px = x + Math.cos(a) * v * broke;
+        const py = gy - 26 + Math.sin(a) * v * broke + 260 * broke * broke;
+        if (py > gy + 4) continue;
+        pivoted(ctx, px, py, broke * (i % 2 ? 9 : -7), () => place(ctx, chunkArt(i), snap(px), py + 6, { alpha: Math.min(1, (1.1 - broke) * 3) }));
+      }
+      const puff = Math.min(1, broke / 0.5);
+      ctx.globalAlpha = 0.7 * (1 - broke / 1.1);
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.ellipse(x, gy - 18 - puff * 10, 18 + puff * 26, 12 + puff * 10, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+    }
+    place(ctx, rubbleArt(), snap(x), gy + 3);
+  }
+}
+
+// The Power course's mortars (world/mochi-race.js, a 'pound' leg): a wooden usu in each lane with a
+// lump of mochi in it. Each pound squashes it down and springs it back up with a puff of rice
+// flour, and it grows smoother and rounder as it's pounded - lumpy at first, a smooth shining dome
+// when it's done, with a sparkle as yours dashes for the line.
+// (Sized for a Mochi: about knee to waist on one, as a real mortar is on a person.)
+const mortarArt = () => art('mr-usu', 26, 14, () => [
+  T([[2, 3], [24, 3], [21, 13], [5, 13]], '#b07848'), F(T([[2, 3], [24, 3], [23.4, 4.6], [2.6, 4.6]], '#c8915a')),
+  E(13, 3, 11, 2.4, '#c8915a'), F(E(13, 3, 9, 1.8, '#6a4428')),
+  F(R(4, 7, 18, 1.4, '#8a5a34')), F(R(5, 10, 16, 1.4, '#8a5a34')), F(E(13, 13.6, 12, 1, '#c8d4e8')),
+]);
+function drawMortars(ctx, map, race, course, cam) {
+  const leg = course.legs.find((l) => l.kind === 'pound');
+  if (!leg) return;
+  const at = course.legs.indexOf(leg);
+  const C = race.clock;
+  for (const r of [...race.racers].sort((a, b) => b.lane - a.lane)) {
+    const wx = boulderX(leg, r);
+    const x = wx - cam.x;
+    if (x < -60 || x > VW + 60) continue;
+    const gy = groundAt(map, wx) - cam.y;
+    place(ctx, mortarArt(), snap(x), gy + 2);
+    const p = r.pound;
+    const k = p ? p.got / p.need : r.leg > at ? 1 : 0;
+    const since = p?.hits.length ? C - p.hits[p.hits.length - 1] : 9;
+    const squash = since < 0.3 ? 1 - 0.4 * Math.sin((since / 0.3) * Math.PI) * (1 - since / 0.3) : 1;
+    const cy = gy - 9;
+    const ry = (2.4 + 2.2 * k) * squash;
+    const rx = (7 + 1 * k) * (2 - squash) ** 0.5;
+    ctx.fillStyle = '#3a2d4f';
+    ctx.beginPath();
+    ctx.ellipse(x, cy, rx + 1, ry + 1, 0, Math.PI, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#fbf7f0';
+    ctx.beginPath();
+    ctx.ellipse(x, cy, rx, ry, 0, Math.PI, Math.PI * 2);
+    ctx.fill();
+    // (Lumpy until it's well pounded: a couple of knobs that smooth away.)
+    if (k < 0.8) {
+      ctx.fillStyle = '#eee6da';
+      for (const [dx, r0] of [[-3.6, 2.2], [3, 1.9]]) {
+        ctx.beginPath();
+        ctx.arc(x + dx, cy - ry * 0.6, r0 * (1 - k), 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(Math.round(x - rx * 0.45), Math.round(cy - ry * 0.75), Math.max(1, Math.round(rx * 0.35)), 1);
+    // A puff of rice flour off each pound.
+    if (since < 0.5) {
+      ctx.globalAlpha = 0.8 * (1 - since / 0.5);
+      ctx.fillStyle = '#ffffff';
+      for (let i = 0; i < 5; i++) {
+        const a = Math.PI + (i + 0.5) * (Math.PI / 5);
+        ctx.fillRect(x + Math.cos(a) * (rx + since * 30), cy - 2 + Math.sin(a) * (ry + since * 18), 1.6, 1.6);
+      }
+      ctx.globalAlpha = 1;
+    }
+    // Done: a little sparkle over the finished mochi.
+    const doneFor = p?.finished != null ? C - p.finished : null;
+    if (doneFor != null && doneFor < 0.8) {
+      ctx.globalAlpha = 1 - doneFor / 0.8;
+      ctx.fillStyle = '#fff3a0';
+      for (let i = 0; i < 3; i++) {
+        const sx = x - 8 + i * 8;
+        const sy = cy - ry - 4 - doneFor * 10 - (i % 2) * 3;
+        ctx.fillRect(sx - 0.6, sy - 2, 1.2, 4);
+        ctx.fillRect(sx - 2, sy - 0.6, 4, 1.2);
+      }
+      ctx.globalAlpha = 1;
+    }
+  }
+}
+
 export function drawRace(ctx, world, cam, time) {
   const R = world.race;
   const map = world.map;
@@ -554,6 +708,9 @@ export function drawRace(ctx, world, cam, time) {
   if (R.phase === 'done') drawPodium(ctx, map, cam, R.t);
   const lead = R.phase === 'run' ? standings(R, course)[0] : null;
   noteEffects(R, course, time);
+  // (The Power course: a boulder in each lane, behind everyone.)
+  drawBoulders(ctx, map, R, course, cam);
+  drawMortars(ctx, map, R, course, cam);
   for (const r of [...R.racers].sort((a, b) => b.lane - a.lane)) {
     // (On the line before Go, each lane a little apart: world/mochi-race.js lineupOffset.)
     const x = r.x + lineupOffset(R, r) - cam.x;

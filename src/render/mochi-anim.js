@@ -1032,7 +1032,8 @@ export const IDLE_BITS = {
 export const SIGNATURE = Object.fromEntries(Object.keys(IDLE_BITS).filter((k) => k.startsWith('sig_')).map((k) => [k.slice(4), k]));
 const SHARED = Object.keys(IDLE_BITS).filter((k) => !k.startsWith('sig_') && k !== 'hungry');
 // (What a pose's numbers ease between; everything else changes on its key.)
-const EASED = ['tilt', 'hx', 'hy', 'lean', 'tip', 'sink', 'lift', 'bob', 'squat', 'hair', 'front', 'back', 'legF', 'legB', 'ball', 'spin', 'flame'];
+// (`swing`: the angle of a mallet in its paws, the 'pound' move.)
+const EASED = ['tilt', 'hx', 'hy', 'lean', 'tip', 'sink', 'lift', 'bob', 'squat', 'hair', 'front', 'back', 'legF', 'legB', 'ball', 'spin', 'flame', 'swing'];
 const EASE = { in: (k) => k * k, out: (k) => 1 - (1 - k) * (1 - k) };
 // Idle moments and actions step through their keys at this many drawings a second (each drawn
 // once, then reused): enough to read smooth.
@@ -1058,8 +1059,9 @@ function idlePose(bit, t, base) {
   // (A hand on its way to or from the face is drawn over the head the whole way.)
   out.armOver = Boolean(a.over || b.over) || null;
   out.bubble = Boolean(a.bubble);
-  // A prop in hand, and the bites out of a sweet, stay as the last key that set them.
-  for (let j = 0; j <= i; j++) for (const key of ['hold', 'bites']) if (keys[j][1][key] !== undefined) out[key] = keys[j][1][key];
+  // A prop in hand, the bites out of a sweet, and whether the watering can is tipped to pour, stay as
+  // the last key that set them. (`pour` wasn't carried before, 2026-11-15: the can never poured.)
+  for (let j = 0; j <= i; j++) for (const key of ['hold', 'bites', 'pour']) if (keys[j][1][key] !== undefined) out[key] = keys[j][1][key];
   // The face changes on its key, a beat (0.12 s) before the body gets there (the face reacts
   // first). Floating hearts and dizzy stars go round on their own little cycle.
   let fi = 0;
@@ -1363,6 +1365,28 @@ export const TRICK_BITS = {
     KEY(1, { ...TUCK, lean: Math.PI * 1.5, tip: 6, sink: 9, closed: [true, true], mouth: 'D' }),
     KEY(1.25, { lean: TWO, tip: 6, sink: 6, squat: 2, closed: [true, true], mouth: 'D', ease: 'out' }),
     KEY(1.6, { lean: TWO, ...OUT(-12), closed: [true, true], mouth: 'D', extra: ['spark0', 'spark1'], sprout: 'excited' }), KEY(2.4, { lean: TWO })] },
+  // Pounding the mochi (world/mochi-race.js, Mochitsuki Mountain): the big wooden mallet swung up
+  // over its head and back, down onto the mochi with a shout, a beat resting on it, and up again (the
+  // loop is one pound, 0.8 s, the race's beat: the mallet lands at 0.5). `swing`: the mallet's angle
+  // from straight up (drawMallet).
+  pound: { dur: 1.2, loop: [0.2, 1.0], keys: [
+    KEY(0, { hold: 'mallet', swing: 0.5, front: [5, -9], back: [4, -9], glance: 1 }),
+    KEY(0.2, { hold: 'mallet', swing: 0, front: [3, -13], back: [2, -13], over: true, tilt: 4, mouth: 'mochio', glance: 1 }),
+    KEY(0.4, { hold: 'mallet', swing: -0.7, front: [1, -17], back: [0, -16], over: true, lean: -0.12, tilt: 10, squat: 1, mouth: 'grit', closed: [true, true], glance: 1 }),
+    KEY(0.5, { hold: 'mallet', swing: 1.68, front: [5, -24], back: [4, -24], over: true, lean: 0.24, tilt: -8, mouth: 'D', glance: 1, ease: 'in' }),
+    KEY(0.66, { hold: 'mallet', swing: 1.6, front: [5, -23], back: [4, -23], over: true, lean: 0.16, tilt: -4, mouth: 'mochiw', glance: 1 }),
+    KEY(1.0, { hold: 'mallet', swing: 0, front: [3, -13], back: [2, -13], over: true, tilt: 4, mouth: 'mochio', glance: 1 }),
+    KEY(1.2, { hold: 'mallet', swing: 0.5, front: [5, -9], back: [4, -9], glance: 1 })] },
+  // Smashing a boulder (world/mochi-race.js, the Power course): both arms flung up and back in a big
+  // wind-up, a lunge and a slam down onto the rock with a shout, a little bounce back off it, and
+  // again (the loop is one swing, 0.8 s, the race's own beat: the hit lands at 0.55).
+  smash: { dur: 1.4, loop: [0.2, 1.0], keys: [
+    KEY(0, {}), KEY(0.2, { front: [2, -8], back: [1, -8], tilt: 2, mouth: 'grit', glance: 1 }),
+    KEY(0.42, { lean: -0.18, squat: 1, front: [-3, -17], back: [-4, -16], over: true, tilt: 10, mouth: 'grit', closed: [true, true], glance: 1 }),
+    KEY(0.55, { lean: 0.32, front: [9, 0], back: [8, 1], tilt: -10, hx: 1.2, mouth: 'D', glance: 1, ease: 'in' }),
+    KEY(0.68, { lean: 0.16, front: [7, -3], back: [6, -2], tilt: -4, mouth: 'mochio', glance: 1 }),
+    KEY(1.0, { front: [2, -8], back: [1, -8], tilt: 2, mouth: 'grit', glance: 1 }),
+    KEY(1.4, {})] },
   // Watering the vegetable patch with a little can (world/garden-life.js places): tipped over the
   // crops, a stream of drops from its rose, eyes shut happily as it goes.
   water: { dur: 5, loop: [1, 3.4], keys: [
@@ -1576,6 +1600,33 @@ function actionAt(m, time) {
     return m.action ? actionAt(m, time) : null;
   }
   return { bit, t, tq: map(Math.floor(e * MOMENT_FPS) / MOMENT_FPS) };
+}
+
+// The big wooden mallet (kine) for pounding mochi, in a Mochi's paws (the 'pound' move): a long
+// handle and a barrel of a head across its end, turned to `swing` (from straight up, forward).
+function drawMallet(ctx, x, y, s, flip, swing) {
+  const d = flip ? -1 : 1;
+  const k = s / 0.6;
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.scale(d * k, k);
+  ctx.rotate(swing);
+  ctx.fillStyle = '#3a2d4f';
+  ctx.fillRect(-1.5, -18, 3, 22);
+  ctx.fillStyle = '#c89a64';
+  ctx.fillRect(-0.8, -17.4, 1.6, 20.8);
+  ctx.fillStyle = '#3a2d4f';
+  ctx.fillRect(-6.6, -25, 13.2, 8);
+  ctx.fillStyle = '#d8a46a';
+  ctx.fillRect(-5.8, -24.2, 11.6, 6.4);
+  ctx.fillStyle = '#e8c08a';
+  ctx.fillRect(-5.8, -24.2, 11.6, 1.8);
+  ctx.fillStyle = '#a8763f';
+  ctx.fillRect(-5.8, -19.4, 11.6, 1.6);
+  ctx.fillStyle = '#8a5a34';
+  ctx.fillRect(-3.6, -24.2, 1, 6.4);
+  ctx.fillRect(2.6, -24.2, 1, 6.4);
+  ctx.restore();
 }
 
 // The little watering can a Mochi waters the vegetable patch with (the `water` act): pale blue, its
@@ -2164,6 +2215,7 @@ export function drawMochiAnim(ctx, m, x, y, time) {
     if (target.hold === 'sweet') drawSweet(c, sweetKind, hand[0], hand[1] + s, s * 0.75, Math.round(target.bites ?? 0));
     else if (target.hold === 'ball') drawBall(c, hand[0] + (flip ? -1 : 1) * live.ball[0] * s, hand[1] + live.ball[1] * s, s, live.spin);
     else if (target.hold === 'can') drawCan(c, hand[0], hand[1], s, flip, Boolean(target.pour), time);
+    else if (target.hold === 'mallet') drawMallet(c, hand[0], hand[1], s, flip, target.swing ?? 0);
   } : null;
   const leanW = ((((lean + Math.PI) % TAU) + TAU) % TAU) - Math.PI;
   // (`m.alpha`: drawn faded, a ghost or a photo on a card fading out; the figure's own pictures

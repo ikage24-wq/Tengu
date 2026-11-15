@@ -154,7 +154,11 @@ function brainOptions(world, life, e) {
     wx = (e.x ?? LAND[0]) + d * (40 + roam * 60);
     if (wx < LAND[0] + 20 || wx > LAND[1] - 20) wx = (e.x ?? LAND[0]) - d * (40 + roam * 60);
   }
-  out.push({ id: 'wander', kind: 'explore', like: 'explore', x: clearOfProps(wx), gains: { curious: 15 }, stay: walker ? 4 : 9 });
+  // (For a little one, every crawl somewhere new is an adventure: it feeds its curiosity twice over.)
+  out.push({ id: 'wander', kind: 'explore', like: 'explore', x: clearOfProps(wx), gains: { curious: walker ? 15 : 30 }, stay: walker ? 4 : 9 });
+  // (A nibble of the clover where it is: anyone can, even one too little to reach the fruit trees, so
+  // a hungry Mochi never has to wait on you.)
+  out.push({ id: 'nibble', kind: 'snack', like: 'snack', x: e.x, act: 'yum', gains: { hunger: 30 }, boost: walker ? 0.6 : 1, stay: 3 });
   // (In the evening, before bed, under the lanterns strung over the square: render/garden.js.)
   const dusk = world.night ?? nightOf(new Date());
   if (dusk > 0.2 && dusk <= 0.5) out.push({ id: 'lanterns', kind: 'social', like: 'social', x: 360 + Math.round(hash(rec.seed * 5.7) * 460), act: 'hum', gains: { social: 30, curious: 15 }, boost: 2.4, stay: 10 });
@@ -635,6 +639,8 @@ export function tickGarden(world, dt) {
       e.y = groundAt(map, e.x);
       e.vx = 0;
       if (night && !m.action) m.action = { name: 'nap', t0: null, hold: 1e9 };
+      // (A night's sleep puts its energy back, and it wakes with a fresh mind: yesterday's plans are gone.)
+      if (night && e.brain?.plan) e.brain.plan = null;
       // (A night's sleep puts its energy back.)
       if (night && !e.guest) satisfy(rec, { energy: dt * 1.5 });
       return;

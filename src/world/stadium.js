@@ -323,5 +323,28 @@ function tourMap() {
   });
 }
 
+// Mochitsuki Mountain (2026-11-15, the first look at a Power course): a snowy New Year mountain
+// festival - pines and stone lanterns, kagami mochi set out, the cheering squad - with a huge
+// boulder in each lane to smash right through, a long climb up the slope after it, and at the top
+// the New Year's mochi pounding - a mortar of mochi in each lane to pound smooth with a big mallet
+// before the dash to the line - with the great mortar beyond it. All about Power.
+function powerMap() {
+  const G = 560;
+  const terrain = [[0, G], [900, G], [1020, G - 14], [1200, G - 44], [1380, G - 64], [1500, G - 72], [2100, G - 72]];
+  return courseMap('mrace_power', 'Mochitsuki Mountain', {
+    width: 2100, height: 680, sky: 'winter', groundY: G, ground: 'snowpeak', skyline: 'course:snow',
+    look: { aerial: 0.55, clouds: false, groundArt: 'snow', cast: 'pound', edges: 'snow', festival: true, bar: 'snow', flakes: true, calm: true, snowfall: true, kicks: ['#ffffff', '#eef4ff', '#dce8fb'], petals: ['#ffffff', '#eef4ff', '#dce8fb', '#ffe8f0'] },
+    terrain,
+    pieces: [
+      ['mr_pine', 96, 0], ['mr_toro', 176, 0], ['mr_starter', 322, 0], ['mr_kagami', 450, 0], ['mr_pine', 530, 1],
+      // (The boulders themselves are drawn by the race, one in each lane: render/race.js.)
+      ['mr_toro', 880, 0], ['mr_pine', 1010, 2], ['mr_kagami', 1170, 0], ['mr_squad', 1300, 0],
+      // (The mortars for the pounding, one in each lane, are the race's own too: render/race.js.)
+      ['mr_snowman', 1640, 1], ['mg_moonmortar', 1860], ['mr_pine', 2020, 0],
+    ],
+    race: course(240, 1700, [{ kind: 'run', to: 760 }, { kind: 'smash', x: 760, hp: 120 }, { kind: 'run', to: 1580 }, { kind: 'pound', x: 1580, need: 6 }, { kind: 'run', to: 1700 }]),
+  });
+}
+
 MAPS.mochi_stadium = stadiumMap();
-for (const map of [sprintMap(), swimMap(), climbMap(), glideMap(), hillsMap(), grandMap(), tourMap()]) MAPS[map.id] = map;
+for (const map of [sprintMap(), swimMap(), climbMap(), glideMap(), hillsMap(), powerMap(), grandMap(), tourMap()]) MAPS[map.id] = map;

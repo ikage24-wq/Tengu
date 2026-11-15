@@ -378,3 +378,27 @@ test("the race board says when a Mochi is too little for a course: can't walk, s
   assert.match(tooLittle(walker, 'glide'), /fly.*Sakura/);
   assert.equal(tooLittle(mochi(6, 800), 'grand'), null);
 });
+
+test('Mochitsuki Mountain: each racer smashes its own boulder (the stronger, the quicker), pounds its mochi, and runs on home', () => {
+  const times = {};
+  for (const points of [300, 2400]) {
+    const rec = mochi(70 + points, points);
+    const w = racer(rec);
+    assert.ok(startRace(w, rec, 'power'));
+    const R = w.race;
+    let start = null;
+    let broke = null;
+    for (let t = 0; t < 240 && R.phase !== 'done'; t += 1 / 30) {
+      updateWorld(w, 1 / 30, keys());
+      const you = R.racers[R.me];
+      if (you.rock && start == null) start = R.clock;
+      if (you.rock?.broke != null && broke == null) broke = R.clock;
+    }
+    assert.ok(R.racers.every((r) => r.rock?.broke != null || r.ghost), 'every boulder broken');
+    assert.ok(R.racers[R.me].done != null, 'yours home');
+    assert.ok(R.racers[R.me].pound?.finished != null, 'its mochi pounded smooth on the way');
+    times[points] = broke - start;
+  }
+  assert.ok(times[2400] < times[300], `strong ${times[2400].toFixed(1)}s, weak ${times[300].toFixed(1)}s`);
+  assert.ok(times[2400] > 2 && times[300] < 16, JSON.stringify(times));
+});

@@ -65,7 +65,7 @@ export function raceBoardWindow(ui, state, world) {
   win.stage ??= ids[0];
   // (New to racing: the Hatchling races first.)
   win.rank ??= Object.keys(world.char.raceWins ?? {}).length ? 'beginner' : 'hatchling';
-  win.stage = ids[tabs(ui, x, y, ids.map((id) => RACE_STAGES[id].tab), ids.indexOf(win.stage), { w: 39, h: 14 })];
+  win.stage = ids[tabs(ui, x, y, ids.map((id) => RACE_STAGES[id].tab), ids.indexOf(win.stage), { total: W - 20, h: 14 })];
   y += 18;
   const char = world.char;
   const stage = RACE_STAGES[win.stage];

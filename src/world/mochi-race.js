@@ -77,6 +77,22 @@ const WADE = 22;
 const WALL_GAP = 8;
 const WALL_LANE = 6;
 const LIP = 8;
+// A boulder to smash (`{ kind: 'smash', x, hp }`): one in each lane, a little further back the further
+// out the lane, and the racer stands this far short of its middle. It hits once a swing of the smash
+// move (render/mochi-anim.js 'smash': SMASH_HIT long, landing SMASH_AT in), each hit worth more the
+// stronger it is (and a cheer behind it), until the boulder bursts and it runs on.
+export const SMASH_LANE = 30;
+const SMASH_REACH = 30;
+const SMASH_HIT = 0.8;
+const SMASH_AT = 0.55;
+export const boulderX = (leg, r) => leg.x - r.lane * SMASH_LANE;
+// The mochi pounding at the top (`{ kind: 'pound', x, need }`): a wooden mortar of mochi in each
+// lane, staggered like the boulders. One pound a swing of the 'pound' move (POUND_HIT long, the
+// mallet landing POUND_AT in), each worth more the stronger it is; when the mochi is smooth
+// (`need` worth of pounding) it's off to the line.
+const POUND_REACH = 22;
+const POUND_HIT = 0.8;
+const POUND_AT = 0.5;
 // Off the mark: from a standing start to full speed over the first moments after Go.
 const GETAWAY = [0.35, 1.3];
 // Off the launch: a little hop up before the glide takes it down (px high, over how far along).
@@ -271,6 +287,8 @@ function preferAlt(rec, leg) {
 // Where a run leg ends for this racer: at a climbing wall, each lane at its own spot along its foot.
 function runEnd(course, r) {
   const next = course.legs[r.leg + 1];
+  if (next?.kind === 'smash') return boulderX(next, r) - SMASH_REACH;
+  if (next?.kind === 'pound') return boulderX(next, r) - POUND_REACH;
   return next?.kind === 'climb' ? next.x - WALL_GAP - r.lane * WALL_LANE : legOf(course, r).to;
 }
 const nextLeg = (course, r) => {
@@ -435,7 +453,43 @@ function stepRacer(R, r, dt, course, map) {
     } else {
       // Swimming and climbing don't tire it; it gets its breath back a little.
       r.runFor = Math.max(0, r.runFor - dt * 0.5);
-      if (leg.kind === 'swim') {
+      if (leg.kind === 'smash') {
+        // Smashing its boulder: a big wind-up and a slam, again and again, each hit taking off more
+        // the stronger it is; cracks spread, then it bursts and it's off up the mountain.
+        const rock = (r.rock ??= { hp: leg.hp, max: leg.hp, from: C, done: 0, hits: [] });
+        Object.assign(m, { mode: 'run', inWater: false, speed: 0, tired: r.spent ?? 0 });
+        if (m.action?.name !== 'smash') m.action = { name: 'smash', t0: null, hold: 120 };
+        const due = Math.floor((C - rock.from - SMASH_AT) / SMASH_HIT) + 1;
+        while (rock.done < due && rock.hp > 0) {
+          rock.done += 1;
+          rock.hp = Math.max(0, rock.hp - (8 + s.power.points / 120) * boost);
+          rock.hits.push(C);
+          if (rock.hits.length > 4) rock.hits.shift();
+        }
+        if (rock.hp <= 0) {
+          rock.broke = C;
+          m.action = null;
+          nextLeg(course, r);
+        }
+      } else if (leg.kind === 'pound') {
+        // Pounding its mochi: the mallet swung up and brought down, again and again, the mochi in
+        // the mortar smoother each time; done, it's off to the line.
+        const mo = (r.pound ??= { got: 0, need: leg.need, from: C, done: 0, hits: [] });
+        Object.assign(m, { mode: 'run', inWater: false, speed: 0, tired: r.spent ?? 0 });
+        if (m.action?.name !== 'pound') m.action = { name: 'pound', t0: null, hold: 120 };
+        const due = Math.floor((C - mo.from - POUND_AT) / POUND_HIT) + 1;
+        while (mo.done < due && mo.got < mo.need) {
+          mo.done += 1;
+          mo.got = Math.min(mo.need, mo.got + (1 + s.power.points / 1200) * boost);
+          mo.hits.push(C);
+          if (mo.hits.length > 4) mo.hits.shift();
+        }
+        if (mo.got >= mo.need) {
+          mo.finished = C;
+          m.action = null;
+          nextLeg(course, r);
+        }
+      } else if (leg.kind === 'swim') {
         const v = speedOf(SWIM_SPEED, s.swim.points, CANT.swim, FLAIL) * pace * wob * boost;
         r.x = Math.min(leg.to, r.x + v * dt);
         r.y = leg.y;

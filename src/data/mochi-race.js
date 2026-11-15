@@ -13,6 +13,9 @@ export const RACE_STAGES = {
   climb: { name: 'Mortar Cliff Climb', tab: 'Climb', stat: 'power', map: 'mrace_climb', about: 'Up three climbing walls, a ledge run between each and a sprint along the top. All about Power.' },
   glide: { name: 'Cloud Glide', tab: 'Glide', stat: 'fly', map: 'mrace_glide', about: 'Off a high cliff and down over the cloud fluff: the further it glides, the less fluff to wade. All about Fly.' },
   hills: { name: 'Long Hill Run', tab: 'Hills', stat: 'stamina', map: 'mrace_hills', about: 'A long way over big hills: uphill slows and tires it. All about Stamina.' },
+  // (2026-11-15: a strength course - obstacles only Power gets you through. The first look: one
+  // huge boulder to smash, then the climb to the mortar.)
+  power: { name: 'Mochitsuki Mountain', tab: 'Power', stat: 'power', map: 'mrace_power', about: 'Up a snowy mountain for the New Year mochi pounding: smash right through a huge boulder, then on up to the giant mortar at the top. All about Power.' },
   grand: { name: 'Grand Mochi Course', tab: 'Grand', stat: null, map: 'mrace_grand', about: 'The meadow, the lake, a wall, a glide over the clouds and home over the hills. Everything.', prizeMul: 1.5, needs: 3 },
   tour: { name: 'Mochi Grand Tour', tab: 'Tour', stat: null, map: 'mrace_tour', about: 'A whole day: meadow, river, cliffs, a sunset glide and the lantern hills home. Stamina most of all.', prizeMul: 2.5, needs: 6 },
 };
