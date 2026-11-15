@@ -899,8 +899,9 @@ Object.assign(MAPS, {
 });
 // The road down to Coinbridge leaves Sprout Village's Gate Lane, past the farmhouse.
 MAPS.sprout.portals.push({ id: 'coin', x: 470, y: 480, to: 'coinbridge', toPortal: 'west', label: 'Coinbridge' });
-// The lane to your own Mochi Garden (world/garden.js), at the far end of the Pond Garden.
-MAPS.sprout.portals.push({ id: 'garden', x: 2336, y: 480, to: 'garden', toPortal: 'gate', label: 'Mochi Garden', style: 'mochi' });
+// The lane to the Mochi Market and your own Mochi Garden beyond it (world/market.js), at the far
+// end of the Pond Garden.
+MAPS.sprout.portals.push({ id: 'garden', x: 2336, y: 480, to: 'mochi_market', toPortal: 'sprout', label: 'Mochi Market', style: 'mochi' });
 
 // Towns in world-map order, for fast travel.
 export const TOWNS = ['sprout', 'harbor', 'crag', 'grove'];

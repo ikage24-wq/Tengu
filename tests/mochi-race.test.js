@@ -36,8 +36,9 @@ function run(w, cheering = false) {
   return R;
 }
 
-test('the stadium gate at the top of the garden leads to the Race Stadium; Up at its board opens it', () => {
-  assert.ok(MAPS.garden.portals.some((p) => p.to === 'mochi_stadium'));
+test('the stadium gate on the Mochi Market terrace leads to the Race Stadium; Up at its board opens it', () => {
+  assert.ok(MAPS.mochi_market.portals.some((p) => p.to === 'mochi_stadium'));
+  assert.ok(!MAPS.garden.portals.some((p) => p.to === 'mochi_stadium'), 'not from the garden any more');
   const w = racer(mochi(1, 300));
   assert.equal(w.map.id, 'mochi_stadium');
   Object.assign(w.body, { x: w.map.raceBoard });

@@ -14,8 +14,8 @@
 // time passes for them (data/mochi-raise.js tick); one ready to evolve does, there and then, and one
 // at the end of a long, happy life goes back to its egg and hatches again, a generation on. You can
 // say goodbye to one (it waves, and is off to a new home); the garden has room for GARDEN_MAX. The
-// crop bed in the orchard grows the kitchen's crops: ripe every CROP_GROW seconds.
-// Eggs (docs/design/mochi.md step 6): the egg stall by the gate has three of its own a day for
+// crop bed in the square's vegetable patch grows the kitchen's crops: ripe every CROP_GROW seconds.
+// Eggs (docs/design/mochi.md step 6): the egg stall in the Mochi Market has three of its own a day for
 // EGG_PRICE gold (read them: the rare ones glint); eggs from monsters, quests and the Race Stadium
 // come in your bag and are set down by the gate when you arrive (a Star Egg's is the rarest of a few
 // rolls). Up to EGG_SLOTS.length wait by the gate.
@@ -66,10 +66,8 @@ export const EGG_SLOTS = [110, 145, 183, 130, 165];
 // How far back from the front row an egg sits (render/garden.js lifts and shrinks the back ones,
 // and draws them first so the front row laps over them).
 export const EGG_BACK = [0, 0.14, 0.05, 1, 0.72];
-// The egg stall: where it stands, what an egg costs.
-export const STALL_X = 450;
+// What an egg at the egg stall costs (the stall stands in the Mochi Market: `map.eggStall`).
 export const EGG_PRICE = 3000;
-// The clothes stall, between the egg stall and the kitchen.
 const LAND = [236, 2080];
 const POND = [2230, 2530];
 const NURSERY_DOOR = 990;
@@ -95,7 +93,8 @@ export const VISITOR_CARE = ['pet', 'play', 'cheer'];
 const GAIT_SPEED = [34, 60, 80, 104, 136, 168];
 const SWIM_SPEED = [26, 44, 64, 88, 112, 140];
 // The crop bed (world/garden.js mg_cropbed): ripe again this long after you pick it, and what it gives.
-export const CROP_X = 1996;
+// (In the vegetable patch in the square, by the bean frame, since 2026-11-15.)
+export const CROP_X = 440;
 // The toy box in the orchard (world/garden.js mg_toybox): now and then a Mochi wanders over to it and
 // plays with the ball a while. Its turn comes at the same time for a visitor (by the hour and its seed).
 export const TOY_X = 1582;
@@ -112,12 +111,156 @@ function toyTime(rec, now) {
 // under the orchard lantern gazing up at the moon. Like the toy box, its turn comes by the hour and
 // its seed, so a visitor sees it at the same place at the same time. [where, how far either side,
 // what it does there (render/mochi-anim.js ACTIONS), for how long, who goes, day or night]
+
+// ---------- Rides: the swing, the slide, the bouncy mushroom, and a glide off the cliff ----------
+// The play things in the meadow (world/garden.js) and what a Mochi does on each. Each ride is a path
+// through time (ridePath): where the Mochi is, which way it faces, how it moves (walking, climbing,
+// flying), and for the swing the angle of the ropes, for the mushroom how far its cap is pressed
+// down. While one rides, the clock's plans for it wait; it ends on the grass, cheering.
+export const PLAY = { swing: 1660, slide: 1830, mush: 1965, glide: 2050 };
+const SWING_ROPE = 96;
+const easeIO = (u) => u * u * (3 - 2 * u);
+const hop = (a, b, u, h) => [a[0] + (b[0] - a[0]) * u, a[1] + (b[1] - a[1]) * u - Math.sin(Math.PI * u) * h];
+// (How long each lasts, and the act it plays through it: render/mochi-anim.js.)
+const RIDES = { swing: { act: 'swing', hold: 7 }, bounce: { act: 'bounce', hold: 4.2 }, slide: {}, glide: {} };
+export function ridePath(map, kind, t) {
+  const g = (x) => groundAt(map, x);
+  if (kind === 'swing') {
+    // Up onto the seat, three swings (pumped higher, then let die down), and a hop off.
+    const px = PLAY.swing + 80;
+    const py = g(PLAY.swing) - 126;
+    const seat = (th) => [px + SWING_ROPE * Math.sin(th), py + SWING_ROPE * Math.cos(th) + 5];
+    if (t < 0.6) {
+      const [x, y] = hop([px - 20, g(px - 20)], seat(0), easeIO(t / 0.6), 14);
+      return { x, y, dir: 1, swing: 0 };
+    }
+    const sw = t - 0.6;
+    if (sw < 5.4) {
+      const amp = 0.42 * Math.min(1, sw / 1.6) * Math.min(1, (5.4 - sw) / 1.4);
+      const th = amp * Math.sin((2 * Math.PI * sw) / 1.8);
+      const [x, y] = seat(th);
+      return { x, y, dir: 1, swing: th };
+    }
+    const u = Math.min(1, (sw - 5.4) / 0.8);
+    const [x, y] = hop(seat(0), [px + 26, g(px + 26)], easeIO(u), 12);
+    return { x, y, dir: 1, swing: 0, done: u >= 1 };
+  }
+  if (kind === 'slide') {
+    // Up the ladder, along onto the top and sat down, whoosh down the chute, and a hop off its end.
+    const sx = PLAY.slide;
+    const gy = g(sx);
+    const lx = sx - 37;
+    if (t < 1.4) return { x: lx, y: g(lx) + (gy - 50 - g(lx)) * easeIO(t / 1.4), dir: 1, mode: 'climb', moving: true };
+    if (t < 2) return { x: lx + 13 * easeIO((t - 1.4) / 0.6), y: gy - 50, dir: 1 };
+    if (t < 2.8) {
+      const u = ((t - 2) / 0.8) ** 2;
+      return { x: sx - 24 + 66 * u, y: gy - 43 + 41 * u, dir: 1 };
+    }
+    const u = Math.min(1, (t - 2.8) / 0.5);
+    const [x, y] = hop([sx + 42, gy - 2], [sx + 56, g(sx + 56)], easeIO(u), 8);
+    return { x, y, dir: 1, done: u >= 1 };
+  }
+  if (kind === 'bounce') {
+    // Up onto the cap, four big bounces (it presses the cap down each time it lands), and off.
+    const mx = PLAY.mush;
+    const top = g(mx) - 36;
+    if (t < 0.6) {
+      const [x, y] = hop([mx - 30, g(mx - 30)], [mx, top], easeIO(t / 0.6), 16);
+      return { x, y, dir: 1, dip: 0 };
+    }
+    const b = t - 0.6;
+    if (b < 3.2) {
+      const f = (b % 0.8) / 0.8;
+      return { x: mx, y: top - 16 * Math.sin(Math.PI * f), dir: 1, dip: Math.max(0, 1 - Math.min(f, 1 - f) / 0.14) };
+    }
+    const u = Math.min(1, (b - 3.2) / 0.6);
+    const [x, y] = hop([mx, top], [mx + 32, g(mx + 32)], easeIO(u), 14);
+    return { x, y, dir: 1, dip: 0, done: u >= 1 };
+  }
+  // The glide (a flyer): up and away over the pond to the launch board on the cliff top, a flap of
+  // its arms up there, then a long glide back down over the water to the meadow.
+  const x0 = PLAY.glide;
+  const [lx, ly] = [2730, 380];
+  const land = 2096;
+  if (t < 7) {
+    const u = easeIO(t / 7);
+    return { x: x0 + (lx - x0) * u, y: g(x0) + (ly - g(x0)) * u - Math.sin(Math.PI * u) * 40, dir: 1, mode: 'fly', moving: true };
+  }
+  if (t < 8.6) return { x: lx, y: ly, dir: -1 };
+  const u = Math.min(1, (t - 8.6) / 6.4);
+  return { x: lx + (land - lx) * u, y: ly + (g(land) - ly) * u ** 1.4, dir: -1, mode: u >= 1 ? 'run' : 'fly', moving: u < 1, glide: 0.3, done: u >= 1 };
+}
+// Starts Mochi `e` on ride `kind` (if nobody else is on that one).
+export function startRide(world, e, kind) {
+  const life = world.gardenLife;
+  if (life?.mochi.some((o) => o !== e && o.ride?.kind === kind)) return false;
+  e.ride = { kind, t0: world.now };
+  const r = RIDES[kind];
+  e.m.action = r?.act ? { name: r.act, t0: world.now, hold: r.hold } : null;
+  return true;
+}
+// One step of a ride: true while it is still going.
+function rideStep(world, e, map) {
+  const r = e.ride;
+  const m = e.m;
+  const t = world.now - r.t0;
+  const p = ridePath(map, r.kind, t);
+  const moved = Math.hypot(p.x - (e.x ?? p.x), p.y - (e.y ?? p.y));
+  e.x = p.x;
+  e.y = p.y;
+  e.baseY = null;
+  e.yOff = 0;
+  e.vx = 0;
+  m.dir = p.dir ?? m.dir;
+  m.mode = p.mode ?? 'run';
+  m.dist += moved;
+  m.speed = p.moving ? (m.mode === 'fly' ? 100 : 30) : 0;
+  // (The rider hangs from the ropes: tipped back as the seat swings forward, and forward as it
+  // swings back. A glider tips into its glide.)
+  m.hillLean = p.swing != null ? -p.swing : 0;
+  m.glideLean = p.glide ?? 0;
+  if (r.kind === 'swing') map.swingAngle = p.done ? null : -(p.swing ?? 0);
+  if (r.kind === 'bounce') map.mushDip = p.dip ?? 0;
+  if (r.kind === 'slide' && t >= 1.4 && !r.sat) {
+    r.sat = true;
+    m.action = { name: 'slide', t0: world.now };
+  }
+  if (r.kind === 'glide' && t >= 7 && !r.perched) {
+    r.perched = true;
+    m.action = { name: 'flaps', t0: world.now };
+  }
+  if (p.done) {
+    e.ride = null;
+    m.hillLean = 0;
+    m.glideLean = 0;
+    if (r.kind === 'swing') map.swingAngle = null;
+    if (r.kind === 'bounce') map.mushDip = 0;
+    m.action = { name: 'cheer', t0: null };
+    return false;
+  }
+  return true;
+}
+// Where the Mochi stop to idle: never inside one of the square's or the meadow's things, so none
+// is ever seen standing in the well or half inside the slide. (Places and rides are their own.)
+const PROPS = [[384, 568], [636, 726], [764, 818], [1124, 1216], [1560, 1604], [1784, 1884], [1932, 2000]];
+function clearOfProps(x) {
+  for (const [a, b] of PROPS) if (x > a && x < b) return x - a < b - x ? a - 6 : b + 6;
+  return x;
+}
 const PLACES = [
   { x: 1660, spread: 16, act: 'nap', hold: 7, who: () => true, when: 'day' },
   { x: 1537, spread: 10, act: 'reach', who: () => true, when: 'day' },
   { x: 2074, spread: 10, act: 'reach', who: () => true, when: 'day' },
   { x: 2090, spread: 6, act: 'paddle', who: (rec) => pts(rec, 'swim') >= CANT.swim, when: 'day' },
   { x: 1608, spread: 12, act: 'meditate', who: () => true, when: 'night' },
+  // The flower beds in the square: a roll about in one, a nap among the other.
+  { x: 680, spread: 12, act: 'roll', who: () => true, when: 'day' },
+  { x: 1170, spread: 12, act: 'nap', hold: 7, who: () => true, when: 'day' },
+  // The play things in the meadow, and for a flyer a glide off the cliff (rides: startRide).
+  { x: PLAY.swing + 60, spread: 0, act: 'swing', ride: true, who: () => true, when: 'day' },
+  { x: PLAY.slide - 37, spread: 0, act: 'slide', ride: true, who: () => true, when: 'day' },
+  { x: PLAY.mush - 30, spread: 0, act: 'bounce', ride: true, who: () => true, when: 'day' },
+  { x: PLAY.glide, spread: 0, act: 'glide', ride: true, who: (rec) => pts(rec, 'fly') >= CANT.fly, when: 'day' },
 ];
 // (Long enough to walk over from wherever the hour had it, and to use the place a while.)
 const PLACE = { chance: 0.3, at: [6, 26], stay: 30, reach: 340 };
@@ -259,6 +402,8 @@ export function tickGarden(world, dt) {
       world.emote = { face: 'excited', t: 2 };
     }
   }
+  // (In the Mochi Market there is nothing else of the garden's to look after.)
+  if (life.market) return;
   if (!world.gardenVisit && world.char.garden) stallClothes(world.char);
   // (Your own Mochi fill in the album, data/mochi-album.js, a few times a second.)
   life.albumIn = (life.albumIn ?? 0) - dt;
@@ -364,8 +509,10 @@ export function tickGarden(world, dt) {
       // Bedtime: off to the nursery door, and in.
       e.hidden = e.x != null && Math.abs(e.x - NURSERY_DOOR) < 4;
     } else e.hidden = false;
+    // (On a ride - the swing, the slide, the mushroom, a glide - the ride has it until it's done.)
+    if (e.ride && !e.guest && rideStep(world, e, map)) return;
     const sched = night && !owl ? { x: NURSERY_DOOR, moving: true } : scheduledAt(rec, now + i * 3.7);
-    let target = sched.x;
+    let target = night && !owl ? sched.x : clearOfProps(sched.x);
     if (e.guest) {
       const gx = guestTarget(world, e, i);
       if (gx == null) {
@@ -404,7 +551,8 @@ export function tickGarden(world, dt) {
       target = place.x + (hash(rec.seed * 0.9) - 0.5) * 2 * place.spread;
       if (e.x != null && Math.abs(e.x - target) < 3 && e.placeTurn !== Math.floor(now / HOUR) && !m.action) {
         e.placeTurn = Math.floor(now / HOUR);
-        m.action = { name: place.act, t0: null, ...(place.hold ? { hold: place.hold } : {}) };
+        if (place.ride) startRide(world, e, place.act);
+        else m.action = { name: place.act, t0: null, ...(place.hold ? { hold: place.hold } : {}) };
       }
     }
     // (A sweet being picked up is in its paws from the grab on.)
@@ -466,7 +614,12 @@ export function tickGarden(world, dt) {
     // In the pond it swims, at the surface; on land it walks on the ground (or crawls, if it can't
     // yet). Where one gives way to the other it eases up or down, never popping.
     const foot = footingAt(map, e.x);
-    m.mode = foot.swim ? 'swim' : 'run';
+    // A flyer going a long way across the garden now and then takes off and flutters there,
+    // landing as it gets close (by the hour and its seed, so a visitor sees the same).
+    const far = Math.abs(target - e.x);
+    if (!e.flying && !night && far > 160 && pts(rec, 'fly') >= CANT.fly && hash(rec.seed * 1.37 + Math.floor(now / HOUR) * 0.71) < 0.5) e.flying = true;
+    if (e.flying && (far < 30 || night)) e.flying = false;
+    m.mode = e.flying ? 'fly' : foot.swim ? 'swim' : 'run';
     m.inWater = foot.swim;
     settle(e, foot.y, dt);
     // A greeting ends in a happy wave.
@@ -1012,7 +1165,8 @@ export function buyStallEgg(world, i) {
   const char = world.char;
   const g = char.garden;
   const day = dayOf();
-  if (world.gardenVisit || !g) return 'Only at your own garden.';
+  const at = world.map.eggStall;
+  if (world.gardenVisit || !g || at == null) return 'Only at the egg stall.';
   const sold = stallSold(char, day);
   if (sold.includes(i)) return 'Already sold.';
   if ((g.eggs ?? []).length >= EGG_SLOTS.length) return 'No room by the gate: hatch one first.';
@@ -1021,11 +1175,9 @@ export function buyStallEgg(world, i) {
   char.eggStall = { day, sold: [...sold, i] };
   const egg = { seed: stallEggs(char, day)[i] };
   (g.eggs ??= []).push(egg);
-  // Paid over the counter, and the egg hops off the stall and all the way along the grass to its
-  // place in the nest by the gate (render/garden.js draws it on its way).
-  handOver(world, STALL_X, null);
-  world.gardenLife?.arrivals?.set(egg, { from: STALL_X - 6, t0: world.now + 0.45 });
-  world.log('You buy the egg, and off it hops to the nest by the gate. Rock it to hatch it!', '#ffc2d4');
+  // Paid over the counter, and it is sent on to the nest inside your garden gate.
+  handOver(world, at, null);
+  world.log('You buy the egg. It will be waiting in the nest inside your garden gate: rock it to hatch it!', '#ffc2d4');
   return null;
 }
 // Paying at a garden stall at `x`: a few coins hop from you onto its counter, then what you bought
@@ -1052,9 +1204,10 @@ export function gardenGateUp(world, portal) {
   world.events.push({ type: 'gardenpick' });
   return true;
 }
-// Up at the egg stall (your own garden): its window (ui/egg-stall.js).
+// Up at the egg stall (the Mochi Market's: `map.eggStall`): its window (ui/egg-stall.js).
 export function eggStallUp(world) {
-  if (!world.map.garden || world.map.indoor || world.gardenVisit || Math.abs(world.body.x - STALL_X) > 40) return false;
+  const at = world.map.eggStall;
+  if (at == null || world.gardenVisit || !world.char.garden || Math.abs(world.body.x - at) > 40) return false;
   world.events.push({ type: 'eggstall' });
   return true;
 }

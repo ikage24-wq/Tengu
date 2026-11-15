@@ -48,9 +48,9 @@ import { dailyGoals, dailyLine, DAILY_KINDS, DAILY_PAY } from '../world/garden-l
 
 // Kinako's tips for a new gardener, one each time you ask "How do I start?".
 const KINAKO_HELP = [
-  "First, the eggs by my neighbour's stall: stand by one and press Up to rock it. Out pops a Mochiko!",
+  "First, the eggs in the nest inside your garden gate: stand by one and press Up to rock it. Out pops a Mochiko!",
   "A new Mochiko can only crawl. Feed it two Kinako Mochi (stand by it, Up, then pick the sweet) and it'll be walking!",
-  "Sweets come from the Sweet Kitchen. The crop bed in the orchard gives rice, beans and kinako; shake the fruit trees for cherries.",
+  "Cook sweets at the hearth in your nursery: that's your Sweet Kitchen. The crop bed in your vegetable patch gives rice, beans and kinako; shake the fruit trees for cherries.",
   "A Mochi's tummy holds about four sweets an hour. Sweets raise its stats; petting and play make it happy.",
   "Race your Mochi from my counter! The Hatchling races are for little ones, and everybody gets a little something.",
   "Short of gold? I'll buy your crops, cherries and sweets. And after dark... come and see my secret stall!",
@@ -302,7 +302,7 @@ export function npcWindow(ui, state, world) {
       ? { label: `Leave an egg for ${friend}`, sub: 'One of the eggs in your own garden', icon: 'gift', primary: true, run: () => {
         if (sendGardenPresent(world, { egg: mine[0] })) {
           mine.shift();
-          say(world, 'kinako', `How kind! I'll set it by ${friend}'s stall.`);
+          say(world, 'kinako', `How kind! I'll tuck it in ${friend}'s nest.`);
         }
       } }
       : { label: `Leave an egg for ${friend}`, sub: 'You have no eggs waiting in your garden', icon: 'gift', run: () => say(world, 'kinako', 'Bring one from your own garden next time, dear.') });
@@ -315,7 +315,7 @@ export function npcWindow(ui, state, world) {
           say(world, 'kinako', `I'll make sure ${friend} gets them!`);
         }
       } }
-      : { label: `Leave sweets for ${friend}`, sub: 'No sweets in your bag', icon: 'gift', run: () => say(world, 'kinako', 'Cook some at the Sweet Kitchen first!') });
+      : { label: `Leave sweets for ${friend}`, sub: 'No sweets in your bag', icon: 'gift', run: () => say(world, 'kinako', 'Cook some at the hearth in your nursery first!') });
   }
   if (npc.role === 'mochikeeper' && !world.gardenVisit) {
     choices.unshift({ label: 'Enter a race', sub: 'Pick a course and one of your Mochi', icon: 'star', primary: true, run: () => {

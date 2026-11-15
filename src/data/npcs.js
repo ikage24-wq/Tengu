@@ -197,7 +197,7 @@ export const NPCS = {
     quests: ['malv_minion', 'malv_well', 'malv_mob', 'malv_diary'],
     chatter: ['Ohohoho!', 'Fear me! ...Please?', 'Today I shall do something TERRIBLE. After lunch.', 'Why does everyone keep THANKING me?'],
   },
-  // Kinako keeps your Mochi Garden's little wagashi shop on the square: she enters your Mochi in
+  // Kinako keeps the little wagashi shop in the Mochi Market (world/market.js): she enters your Mochi in
   // races (the race board is at her counter), sells costumes (data/mochi-dress.js: the ones not won
   // racing) and the Garden's crops and treats, and after dark opens a secret stall with rarer stock.
   kinako: {
@@ -207,7 +207,7 @@ export const NPCS = {
     look: { hairStyle: 'comma', hairColor: '#a8703f', skinTone: '#ffe6d2', eyeColor: '#8a5a3a', outfitColor: '#ff9ec0', eyeStyle: 'round', face: 'grin', browStyle: 'dots' },
     nightLook: { hairStyle: 'comma', hairColor: '#a8703f', skinTone: '#ffe6d2', eyeColor: '#8a5a3a', outfitColor: '#3a2e4a', eyeStyle: 'round', face: 'smug', browStyle: 'dots' },
     // (One line each: his eight choices fill the rest of the window.)
-    greeting: "Welcome to the square! Races, outfits and treats for your Mochi!",
+    greeting: "Welcome to the market! Races, outfits and treats for your Mochi!",
     nightGreeting: "Psst... it's me. After dark I've got rarer things. Shh!",
     chatter: ['Fresh sweets today!', 'Your Mochi look so happy!', 'Races start at my counter!', 'Ooh, a customer?'],
     nightChatter: ['Psst...', 'Nothing to see here.', '*adjusts glasses*', 'Rare finds, after dark...'],

@@ -48,6 +48,7 @@ import { refreshHome } from './home.js';
 import { refreshGarden, grantGarden } from './garden.js';
 import { enterGarden, tickGarden, rockEgg, finishHatch, harvestCrops, tossBall, mochiNear, eggStallUp, wearStallUp, stallClothes, gardenGateUp, shakeTree, wakeUp } from './garden-life.js';
 import './stadium.js';
+import './market.js';
 import { tickRace } from './mochi-race.js';
 import { tickDate, DATES } from './dates.js';
 import { movedAway, welcomeHome } from './sweethearts.js';
@@ -150,13 +151,15 @@ export function loadMap(world, mapId, portalId) {
       // (Kinako's welcome: a little gold and two sweets, so the first Mochi can be fed straight away.)
       addItem(world.char.inventory, 'msweet_kinakomochi', 2);
       world.char.gold += 500;
-      world.log('This little valley is your Mochi Garden! Two eggs are waiting by the egg stall: walk up and press Up to rock them. (You got a Mochi Bell: ring it to come back from anywhere.)', '#ffc2d4');
-      world.log("Kinako, the Garden Keeper, gives you 500 gold and two Kinako Mochi to welcome you. Talk to him (Up) if you're not sure what to do!", '#ffe36b');
+      world.log('This little valley is your Mochi Garden! Two eggs are waiting in the nest by the gate: walk up and press Up to rock them. (You got a Mochi Bell: ring it to come back from anywhere.)', '#ffc2d4');
+      world.log("Kinako, the Garden Keeper, gives you 500 gold and two Kinako Mochi to welcome you. His shop is in the Mochi Market, just outside the gate: talk to him (Up) if you're not sure what to do!", '#ffe36b');
     }
     refreshGarden(world.char, world.gardenVisit ?? null);
     enterGarden(world, world.gardenVisit ?? world.char);
   } else {
-    world.gardenLife = null;
+    // (The Mochi Market keeps just enough of the garden's life to show what you pay for changing
+    // hands over its counters: handOver.)
+    world.gardenLife = MAPS[mapId]?.mochiTown ? { owner: world.char, market: true, mochi: [], hatching: null, arrivals: new Map(), handoffs: [], drops: [] } : null;
     world.gardenVisit = null;
   }
   const map = getMap(mapId);
@@ -502,7 +505,9 @@ function interact(world) {
     world.events.push({ type: 'mochi' });
     return true;
   }
-  if (world.map.garden && (rockEgg(world) || harvestCrops(world) || tossBall(world) || eggStallUp(world) || wearStallUp(world) || shakeTree(world))) return true;
+  if (world.map.garden && (rockEgg(world) || harvestCrops(world) || tossBall(world) || shakeTree(world))) return true;
+  // (The egg and clothes stalls, wherever they stand: the Mochi Market.)
+  if (eggStallUp(world) || wearStallUp(world)) return true;
   // Your skiff at your island's dock: Up to sail back to Pastel Harbor (world/voyage.js).
   if (world.map.home && !world.map.indoor && b.x < 150 && b.y <= 530) {
     setSail(world);

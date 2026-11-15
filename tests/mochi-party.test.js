@@ -111,20 +111,21 @@ test('a party race: invite, join with your own Mochi, race together, cheer, and 
 
 test('the way into the Mochi Garden asks whose garden when a friend online has one', () => {
   const A = player('Ann', mochi(52, 300));
-  loadMap(A, 'sprout', 'start');
+  // (The garden gate is at the far end of the Mochi Market: world/market.js.)
+  loadMap(A, 'mochi_market', 'start');
   const gate = A.map.portals.find((p) => p.to === 'garden');
   const net = room({ A });
   try {
     Object.assign(A.body, { x: gate.x, y: gate.y });
     net.as('A', (w) => updateWorld(w, 1 / 60, keys(['ArrowUp'])));
-    assert.equal(A.map.id, 'sprout', 'it asks first');
+    assert.equal(A.map.id, 'mochi_market', 'it asks first');
     assert.ok(A.events.some((e) => e.type === 'gardenpick'));
   } finally {
     net.done();
   }
   // With no one online, straight in.
   const C = player('Cid', mochi(53, 300));
-  loadMap(C, 'sprout', 'start');
+  loadMap(C, 'mochi_market', 'start');
   Object.assign(C.body, { x: gate.x, y: gate.y });
   updateWorld(C, 1 / 60, keys(['ArrowUp']));
   assert.equal(C.map.id, 'garden');

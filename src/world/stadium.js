@@ -1,5 +1,5 @@
 // The Mochi Race Stadium and its courses (docs/design/mochi.md step 5; the race: world/mochi-race.js).
-// The stadium is through the gate at the top of your Mochi Garden: a sunny plaza, the race board (Up:
+// The stadium is through the gate on the Mochi Market's terrace (world/market.js): a sunny plaza, the race board (Up:
 // ui/mochi-race.js) standing on its own by the gate, the stands, and the arch out to the courses. Each stage is its
 // own course map, run left to right from its start arch to its finish arch along its legs (see
 // `course` below), with the crowd's stands just past the line, where you watch from.
@@ -35,7 +35,7 @@ function stadiumMap() {
     // Up at the board: the race board (ui/mochi-race.js).
     raceBoard: 220,
     portals: [
-      { id: 'gate', x: 60, y: FLOOR, to: 'garden', toPortal: 'stadium', label: 'Mochi Garden' },
+      { id: 'gate', x: 60, y: FLOOR, to: 'mochi_market', toPortal: 'stadium', label: 'Mochi Market' },
       { id: 'start', x: 150, y: FLOOR, hidden: true },
       { id: 'board', x: 220, y: FLOOR, hidden: true },
     ],

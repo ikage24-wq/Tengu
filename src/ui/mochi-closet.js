@@ -115,7 +115,7 @@ export function mochiClosetWindow(ui, state, world) {
   let trying = null;
   if (!items.length) {
     text(ctx, tab === 'costume' ? 'Costumes are won in the races.' : `No ${TAB_NAMES[tab].toLowerCase()} pieces yet.`, rx + rw / 2, gy + 64, { size: 7, bold: true, align: 'center', color: COLORS.muted });
-    if (tab !== 'costume') text(ctx, 'The clothes stall on the square has new ones every day.', rx + rw / 2, gy + 76, { size: 6.2, align: 'center', color: COLORS.muted });
+    if (tab !== 'costume') text(ctx, 'The clothes stall in the Mochi Market has new ones every day.', rx + rw / 2, gy + 76, { size: 6.2, align: 'center', color: COLORS.muted });
   }
   items.slice(page * per, page * per + per).forEach((it, i) => {
     const cx = rx + (i % COLS) * (cw + 4);

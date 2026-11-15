@@ -920,14 +920,16 @@ function pondLife(ctx, map, w, cam, time, x0, x1, at) {
     if (wx < lo || wx > hi) continue;
     ctx.fillRect(wx - cam.x, at(wx) + 6 + hash(c * 3.1) * 5, 9 + hash(c * 8.1) * 9, 1);
   }
-  // After dark the moon lies on the water: under the sky's moon (it hangs at four fifths of the way
-  // across the screen, render/scenery.js, so its picture in the pond stays under it as you walk),
-  // a pale disc broken into strips that sway apart and back on the ripples, a long glitter trail
-  // under it, and here and there a star caught in the water, twinkling.
+  // After dark the moon lies on the water: a pale disc broken into strips that sway apart and back
+  // on the ripples, a long glitter trail under it, and here and there a star caught in the water,
+  // twinkling. (It lies at one place on the pond. It used to sit under the sky's moon, a fixed
+  // place on the screen, so as you walked it slid across the water with you - the player,
+  // 2026-11-15: "this thing follows the camera".)
   const night = map.night ?? 0;
   if (night <= 0.05) return;
   const k = Math.min(1, (night - 0.05) / 0.5);
-  const mx = cam.x + (map.viewW ?? 640) * 0.8;
+  // (`w.x1`..`w.x2` is the whole pond; x0..x1 is only the part on screen, which moves with you.)
+  const mx = w.x1 + (w.x2 - w.x1) * 0.62;
   ctx.save();
   if (mx > lo + 10 && mx < hi - 10) {
     const top = at(mx) + 3;

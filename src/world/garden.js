@@ -7,17 +7,20 @@
 //                   (data/mochi-raise.js), eggs: [{ seed }], unlocked: { dawn, dusk } }
 //
 // Left to right, high on the left and dipping to a pond under a cliff:
-//   Mortar Gate       the Mochi gate from Sprout Village, the egg stall, the sweet kitchen, the nursery
+//   Mortar Gate       the gate from the Mochi Market (world/market.js, where the shops are now),
+//                     the nest of eggs, the nursery (its hearth is the sweet kitchen)
 //   The Orchard       fruit trees down the slope, the running track, the big old tree with a swing
 //   Lily Pond         the lowest point: the swimming pond, lily pads, a little fishing dock, the
 //                     waterfall (and a nook behind it, the garden's secret)
 //   Moonmortar Cliff  up the climbing rocks and the ropes: the glide launch over the pond, the
-//                     Moonmortar (the landmark), the stadium gate (to the Race Stadium)
+//                     Moonmortar (the landmark)
 
 import { MAPS } from '../data/maps.js';
 import { RACE_STAGES, RANK_ORDER } from '../data/mochi-race.js';
 import { SPOTS } from '../data/fishing.js';
 import { HOME_POND_POOL } from '../data/home.js';
+// (The way in is through the Mochi Market.)
+import './market.js';
 
 const PLATEAU = 620;
 const ORCHARD = 700;
@@ -55,9 +58,8 @@ export function gardenMap(g = {}) {
     // (`groundY` is where the backdrop's land sits: the valley floor, not the gate's plateau high up
     // it, or the far hills and trees would hang in the sky.)
     width, height: 900, groundY: 730,
-    // The sweet kitchen cooks Mochi sweets (ui/cooking.js); the garden's own data (the crop bed).
-    // (The stove is the pot in the kitchen's open front, left of its door: she cooks facing it.)
-    stove: 776, wearStall: 624, gardenData: g,
+    // The garden's own data (the crop bed). (The sweet kitchen is the nursery's hearth now.)
+    gardenData: g,
     look: { sky: ['#bfe4f2', '#e2f2ea', '#fdf6e2'], far: '#a8c8a0', mid: '#8fb88a', midTrim: '#7aa676', skyline: 'course:moonmortar', painted: null, groundArt: 'moonmortar', edges: 'flowers', islands: 'planks', material: 'mochifield', propKeep: 1, portal: 'mochi', critters: [] },
     // (No birds or butterflies: the Garden's life is your Mochi.)
     cottages: [],
@@ -72,36 +74,39 @@ export function gardenMap(g = {}) {
       { name: 'Lily Pond', from: 2100, color: '#6fc8e0', look: { sky: ['#a6d6ee', '#d2ebeb', '#f4f4e8'] } },
       { name: 'Moonmortar Cliff', from: 2620, color: '#b8a8f0', look: { sky: ['#8ec6e8', '#bee0e8', '#eef6ec'] } },
     ],
-    // The garden's pieces (render/garden.js), left to right: the square (the keeper's shop, the egg
-    // stall, the clothes stall, the sweet kitchen, the nursery and the gate to the Race Stadium, side
-    // by side), the
-    // orchard (fruit trees to shake, the big tree with its swing, the crop bed), the pond, the cliff.
+    // The garden's pieces (render/garden.js), left to right: the square (the vegetable patch, the
+    // flower beds, the well, the nursery), the orchard (fruit trees to shake, the big tree with its
+    // swing), the pond, the cliff. (The
+    // shops, the egg and clothes stalls and the stadium gate moved out to the Mochi Market,
+    // 2026-11-15, so the garden is the Mochi's.)
     townPieces: [
-      ['mg_shop', 280], ['mg_eggstall', 450], ['mg_wearstall', 624], ['mg_kitchen', 808], ['mg_nursery', 990], ['mg_stadium', 1190], ['mg_lantern', 1290, 1],
-      ['mg_fruittree', 1537, 0], ['mg_crates', 1482], ['mg_toybox', 1582], ['mg_bigtree', 1660],
-      ['mg_washline', 1812], ['mg_beanframe', 1900], ['mg_cropbed', 1996], ['mg_fruittree', 2074, 2],
+      // The garden square: the vegetable patch (the crop bed and the bean frame), a flower bed and
+      // the well, the nursery, another flower bed, and the lantern at the top of the slope.
+      ['mg_cropbed', 440], ['mg_beanframe', 528], ['mg_flowerbed', 680, 0], ['mg_well', 790],
+      ['mg_nursery', 990], ['mg_flowerbed', 1170, 1], ['mg_lantern', 1290, 1],
+      // The play meadow (the orchard): a fruit tree at the foot of the slope, the toy box, the big tree
+      // with its swing, the slide and the bouncy mushroom, and the far fruit tree by the pond. The
+      // Mochi play on all of them (world/garden-life.js rides). (The wash line and the crates went,
+      // 2026-11-15: the meadow is for running about in.)
+      ['mg_fruittree', 1537, 0], ['mg_toybox', 1582], ['mg_bigtree', 1660],
+      ['mg_slide', 1830], ['mg_mushroom', 1965], ['mg_fruittree', 2074, 2],
       ['mg_reeds', 2168, 0], ['mg_lilies', 2330, 0], ['mg_lilies', 2480, 1], ['mg_reeds', 2576, 1],
       ['mg_earthwall', 2711, { left: 2662, right: 2760, top: 562, bottom: 900, seed: 4 }], ['mg_earthwall', 2982, { left: 2764, right: 3200, top: 382, bottom: 900, seed: 9, burrow: [70, 250] }], ['mg_rockface', 2660, { top: LEDGE, bottom: POND, seed: 3, vines: 4, vineLen: 60 }], ['mg_rockface', 2762, { top: TOP, bottom: LEDGE, seed: 7, vines: 6, vineLen: 90 }], ['mg_falls', 2762],
       ['mg_boulders', 2688], ['mg_glide', 2794], ['mg_moonmortar', 2960], ['mg_lantern', 3110, 5],
     ],
     portals: [
-      // The gate from Sprout Village (and where the Mochi Bell sets you down), and the nursery's door.
-      { id: 'gate', x: 70, y: PLATEAU, to: 'sprout', toPortal: 'garden', label: 'Sprout Village' },
+      // The gate from the Mochi Market (and where the Mochi Bell sets you down), and the nursery's door.
+      { id: 'gate', x: 70, y: PLATEAU, to: 'mochi_market', toPortal: 'garden', label: 'Mochi Market' },
       { id: 'start', x: 200, y: PLATEAU, hidden: true },
       { id: 'nursery', x: 990, y: PLATEAU, to: 'garden_in', toPortal: 'door', label: 'Nursery', door: true },
-      // The gate to the Race Stadium, at the end of the square (world/stadium.js).
-      { id: 'stadium', x: 1190, y: PLATEAU, to: 'mochi_stadium', toPortal: 'gate', label: 'Race Stadium', door: true },
     ],
     lamps: [
       { x: 1290, y: PLATEAU - 44, c: '#ffd6a0' }, { x: 1608, y: 552, c: '#ffd6a0' }, { x: 3110, y: TOP - 44, c: '#ffd6a0' },
-      { x: 990, y: PLATEAU - 34, c: '#ffd27a' }, { x: 808, y: PLATEAU - 40, c: '#ffd27a' }, { x: 280, y: PLATEAU - 40, c: '#ffd27a' },
-      // Under the clothes stall's awning, so the four on the counter are lit after dark.
-      { x: 624, y: PLATEAU - 58, c: '#ffe0c0' },
+      { x: 990, y: PLATEAU - 34, c: '#ffd27a' },
     ],
-    // The garden keeper, at her shop's counter (data/npcs.js kinako).
-    npcs: [{ id: 'kinako', x: 248 }],
-    // The race board is at Kinako's counter (her menu opens it: ui/npc.js).
-    raceBoard: 248,
+    // (Kinako keeps shop in the Mochi Market now; she is only here in a friend's garden, by the
+    // nest, to take the presents you leave them: refreshGarden.)
+    npcs: [],
     spawns: [],
     deco: [],
   };
@@ -113,6 +118,9 @@ export function gardenMap(g = {}) {
 export function gardenInside() {
   return {
     id: 'garden_in', name: 'The Nursery', theme: 'town', isTown: true, private: true, garden: true, indoor: true, town: 'sprout',
+    // The sweet kitchen is the hearth: you cook at the kettle on its hearthstone (ui/cooking.js), and
+    // the room draws its own fire and steam (`ownStove`: no town stove set down in front of it).
+    stove: 250, ownStove: true,
     width: 760, height: 400, groundY: 360,
     look: { ceiling: true, floor: 'painted', sky: ['#ffe8e0', '#fff2ea', '#fff8f2'], material: 'parquet', propKeep: 1, critters: [] },
     cottages: [],
@@ -136,6 +144,8 @@ export function refreshGarden(char, guest = null) {
   MAPS.garden_in.trophies = trophiesOf(owner);
   if (guest) {
     map.guestOf = guest;
+    // Kinako by the nest, minding your friend's garden: leave them an egg or some sweets.
+    map.npcs = [{ id: 'kinako', x: 236 }];
     MAPS.garden_in.guestOf = guest;
     map.name = `${guest.name}'s Mochi Garden`;
     MAPS.garden_in.name = `${guest.name}'s Nursery`;

@@ -13,9 +13,9 @@ import { rollMochi, STATS } from '../src/data/mochi-genes.js';
 import { newRecord, giveExp, evolve, MOCHI_SWEETS, GARDEN_CROPS } from '../src/data/mochi-raise.js';
 import { addItem, countItem } from '../src/core/inventory.js';
 import { ITEMS } from '../src/data/items.js';
-import { careFor, feedMochi, sayGoodbye, scheduledAt, CROP_X, CROP_GROW, GARDEN_MAX, EGG_SLOTS, STALL_X } from '../src/world/garden-life.js';
+import { careFor, feedMochi, sayGoodbye, scheduledAt, CROP_X, CROP_GROW, GARDEN_MAX, EGG_SLOTS } from '../src/world/garden-life.js';
 import { online } from '../src/net/online.js';
-import { footingAt } from '../src/world/physics.js';
+import { footingAt, groundAt } from '../src/world/physics.js';
 import { onVisit, askGardenVisit } from '../src/net/visit.js';
 
 const keys = (pressed = []) => ({ held: new Set(), pressed: new Set(pressed) });
@@ -246,8 +246,11 @@ test('eggs: from your bag to the gate on arriving; the stall sells three a day; 
     assert.equal(g.char.garden.eggs.length, 5);
     assert.equal(countItem(g.char.inventory, 'mochi_egg_star'), 0);
     assert.equal(countItem(g.char.inventory, 'mochi_egg'), 2);
-    // The stall: the same three all day; a buy costs EGG_PRICE and sets that very egg by the gate.
+    // The stall (in the Mochi Market): the same three all day; a buy costs EGG_PRICE and sets that
+    // very egg in the nest by the garden gate.
     g.char.garden.eggs = [];
+    const { MARKET } = await import('../src/world/market.js');
+    loadMap(g.w, 'mochi_market', 'start');
     const seeds = stallEggs(g.char);
     assert.deepEqual(stallEggs(g.char), seeds);
     g.char.gold = EGG_PRICE + 10;
@@ -257,9 +260,7 @@ test('eggs: from your bag to the gate on arriving; the stall sells three a day; 
     assert.ok(buyStallEgg(g.w, 1), 'sold already');
     assert.ok(buyStallEgg(g.w, 0), 'not enough gold');
     // Up at the stall opens it.
-    // (No Mochi at your feet: that would come first.)
-    for (const e of g.w.gardenLife.mochi) e.x = 1500;
-    Object.assign(g.w.body, { x: STALL_X, y: g.w.body.y });
+    Object.assign(g.w.body, { x: MARKET.eggs, y: g.w.body.y });
     assert.deepEqual(g.up(), [{ type: 'eggstall' }]);
     // A monster, very rarely (here, always); and the end of each open story chain.
     const mob = Object.values(MOBS).find((d) => !d.boss);
@@ -421,7 +422,16 @@ test('Garden Mochi walk on the ground and swim at the pond surface, easing in an
       if (e.hidden || e.x == null || e.scene) continue;
       const f = footingAt(map, e.x);
       const where = `${e.rec.seed} at ${e.x.toFixed(1)},${e.y.toFixed(1)}`;
-      assert.equal(e.m.mode, f.swim ? 'swim' : 'run', `${where}: swims only in the pond`);
+      // (On a ride - the swing, the slide, the mushroom, a glide - it follows the ride's own smooth
+      // path, off the ground: world/garden-life.js ridePath.)
+      if (e.ride) {
+        const p = last.get(e);
+        if (p) assert.ok(Math.abs(e.y - p) < 10, `${where}: rides smoothly (was ${p.toFixed(1)})`);
+        last.set(e, e.y);
+        continue;
+      }
+      // (A flyer fluttering across the garden is drawn up in the air; it is still over the ground.)
+      assert.equal(e.m.mode, e.flying ? 'fly' : f.swim ? 'swim' : 'run', `${where}: swims only in the pond`);
       assert.ok(Math.abs(e.y - f.y) < 7, `${where}: on the ground or the water (${f.y})`);
       if (f.swim) swam += 1;
       const p = last.get(e);
@@ -510,5 +520,37 @@ test("visiting with your Mochi: it follows you round a friend's garden, and two 
   } finally {
     Object.assign(online, was);
     host.done();
+  }
+});
+
+test('the play meadow: a Mochi swings, slides, bounces and glides off the cliff, and lands back on the grass', async () => {
+  const { startRide, ridePath } = await import('../src/world/garden-life.js');
+  const g = garden();
+  try {
+    const e = g.w.gardenLife.mochi.find((m) => m.rec !== g.baby) ?? g.w.gardenLife.mochi[0];
+    for (const kind of ['swing', 'slide', 'bounce', 'glide']) {
+      assert.ok(startRide(g.w, e, kind), kind);
+      let top = Infinity;
+      let last = null;
+      for (let t = 0; t < 16 && e.ride; t += 1 / 20) {
+        g.run(1 / 20, 1 / 20);
+        if (e.ride) {
+          top = Math.min(top, e.y);
+          if (last != null) assert.ok(Math.abs(e.y - last) < 10, `${kind}: smooth at ${t.toFixed(2)}s`);
+          last = e.y;
+        }
+      }
+      assert.equal(e.ride, null, `${kind}: over`);
+      assert.ok(top < groundAt(g.w.map, e.x) - 20, `${kind}: up off the ground`);
+      assert.ok(Math.abs(e.y - groundAt(g.w.map, e.x)) < 7, `${kind}: back on the grass`);
+      assert.equal(g.w.map.swingAngle ?? null, null, `${kind}: the swing hangs free again`);
+    }
+    // (Each ride starts where its place in the meadow is, so it never jumps there.)
+    for (const kind of ['swing', 'slide', 'bounce', 'glide']) {
+      const p = ridePath(g.w.map, kind, 0);
+      assert.ok(Math.abs(p.y - groundAt(g.w.map, p.x)) < 1, `${kind} starts on the ground`);
+    }
+  } finally {
+    g.done();
   }
 });

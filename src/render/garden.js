@@ -26,6 +26,12 @@
 //   mg_moonmortar  the Moonmortar: a great stone mortar with its wooden mallet, a sacred rope and
 //                  paper streamers round it, a crescent carved in its side, softly lit at night
 //   mg_stadium     the stadium gate at the top of the cliff, its doors open onto the Race Stadium
+//   mg_flowerbed   a bed of flowers in the garden square, each clump swaying on its own (extra:
+//                  which colours)
+//   mg_well        the stone well in the square, under a little pink roof, its bucket swinging
+//   mg_flagline    the Mochi Market's flags strung from one stall to the next
+//   mg_mushroom    the bouncy mushroom in the play meadow, its cap giving as a Mochi lands
+//   mg_slide       the slide in the play meadow
 //   mg_nurseryroom the nursery inside: plaster walls under a timber dome, the hearth, the eggs'
 //                  mortars, basket beds, a round window, a rug, a toy shelf
 
@@ -257,6 +263,99 @@ const crateStackArt = () => art('mg-crates', 76, 62, () => {
       .flatMap(([x, y, c]) => [F(E(x, y, 5, 4.4, c)), F(E(x - 1.6, y - 1.6, 1.8, 1.2, '#ffffff')), F(limb(x, y - 4, x + 1, y - 7, 0.7, 0.5, '#6f9a52'))]),
     F(E(38, 60, 32, 3, '#6f9a52')),
   ];
+});
+
+// ---------- The garden square (2026-11-15) ----------
+// With the shops gone out to the Mochi Market, the square inside the gate is a garden: the vegetable
+// patch (the crop bed and the bean frame, up from the orchard), two flower beds the Mochi roll and
+// nap in, and a stone well under a little pink roof like the nursery's.
+// Each bed's flowers: pink, cream and gold; blue, lilac and lemon (a colour and its shade).
+const FLOWER_SETS = [
+  [['#ffb3c8', '#ff8fb1'], ['#fff6ea', '#ffd9e4'], ['#ffd27a', '#f6b04e']],
+  [['#a8c8ff', '#7fa6f0'], ['#e3c8ff', '#c49cf0'], ['#fff1a0', '#f2d35a']],
+];
+// The bed: a low mound of dark soil with a border of round stones along its front.
+const flowerBedArt = () => art('mg-flowerbed', 100, 20, () => {
+  const out = [E(50, 11, 47, 7, '#7a5a3e'), F(E(50, 9.6, 43, 4.4, '#8f6a48')), F(E(50, 8.8, 37, 2.4, '#a07a52'))];
+  // (Flat, grey and of mixed sizes, half sunk in the grass: pale round ones read as a row of eggs.)
+  for (let i = 0; i < 13; i++) {
+    const x = 6 + i * 7.3 + Math.sin(i * 2.3) * 1.2;
+    const rx = 3.2 + ((i * 7) % 3) * 0.6;
+    const c = ['#b9b0a2', '#a89e90', '#c4bbad'][i % 3];
+    out.push(E(x, 15.2, rx, 2.2, c), F(E(x - 0.8, 14.3, rx * 0.5, 0.7, mix(c, '#ffffff', 0.25))));
+  }
+  out.push(F(E(50, 19, 46, 1.4, '#6f9a52')));
+  return out;
+});
+// One clump of flowers: leaves at its foot and three stems, each with a five-petal flower. Drawn
+// once each and swayed whole (drawGardenPiece mg_flowerbed), so the breeze never repaints them.
+const flowerClumpArt = (set, i) => art(`mg-flowers|${set}|${i}`, 22, 30, () => {
+  const [a, b] = FLOWER_SETS[set][i % 3];
+  const h = [22, 17, 25, 19, 23][i % 5];
+  const out = [F(E(7, 28, 5, 2.2, '#5f9a56')), F(E(15, 28, 5, 2.2, '#6faa5f')), F(E(11, 27, 4, 2.6, '#7fbf6a'))];
+  for (const [dx, k] of [[-5, 0.75], [0, 1], [5, 0.85]]) {
+    const tx = 11 + dx * 1.15;
+    const ty = 30 - h * k;
+    out.push(F(limb(11 + dx * 0.4, 30, tx, ty, 0.7, 0.5, '#5f9a56')), F(E(tx - 1.6, ty + 4, 1.6, 0.8, '#76b267')));
+    for (let p = 0; p < 5; p++) {
+      const an = (p / 5) * Math.PI * 2 - Math.PI / 2;
+      out.push(F(E(tx + Math.cos(an) * 2, ty + Math.sin(an) * 1.7, 1.7, 1.5, p % 2 ? a : b)));
+    }
+    out.push(F(E(tx, ty, 1, 1, '#ffe8a0')));
+  }
+  return out;
+});
+// The well: a round wall of stones about the shaft, the rim lit along its top and dark water just
+// showing, two posts with a winch across them and a crank, and a little pink-tiled roof over all.
+// (Its bucket hangs from the winch and swings: drawn live, mg_well.)
+const WELL_H = 84;
+const WELL_WINCH = 33;
+const wellArt = () => art('mg-well', 68, WELL_H, () => {
+  const s = ramp(STONE);
+  const out = [R(12, 18, 4, 44, WOOD), R(52, 18, 4, 44, WOOD)];
+  out.push(T([[2, 22], [34, 4], [66, 22], [62, 25], [34, 9], [6, 25]], '#e88aa0'));
+  out.push(F(T([[6, 22.4], [34, 6.4], [62, 22.4], [60, 23.4], [34, 8], [8, 23.4]], '#f6b0c0')));
+  out.push(F(R(14, 30, 40, 3.4, WOOD_DK)), F(R(28, 29.4, 12, 4.6, '#d8c49a')), F(R(28, 29.4, 12, 1.2, '#e8d8b4')));
+  out.push(F(limb(56, 31.5, 61, 35, 1, 1, WOOD_DK)), F(limb(61, 35, 61, 39, 1, 1, WOOD_DK)));
+  out.push(R(8, 52, 52, 28, STONE));
+  for (let r = 0; r < 3; r++) {
+    for (let c = 0; c < 5; c++) {
+      const x = 13 + c * 10.5 + (r % 2) * 5;
+      const y = 58 + r * 8;
+      if (x < 58) out.push(F(E(x, y, 4.6, 3.3, (r + c) % 2 ? s.sh : STONE)), F(E(x - 1, y - 1.2, 2, 1, s.hi)));
+    }
+  }
+  out.push(E(34, 52, 28, 6.4, s.hi), F(E(34, 52, 23, 4.2, '#4f6f7a')), F(E(34, 51, 20, 2.6, '#6f93a0')));
+  out.push(F(E(34, 82, 30, 2.4, '#6f9a52')));
+  return out;
+});
+const bucketArt = () => art('mg-bucket', 12, 16, () => [F(limb(6, 0, 6, 8, 0.5, 0.5, '#cdb485')), R(2, 8, 8, 7, WOOD),
+  F(R(2, 8, 8, 1.6, ramp(WOOD).hi)), F(R(2, 12.6, 8, 1.4, WOOD_DK)), F(limb(2.4, 9, 6, 6.4, 0.4, 0.4, '#8a8a8a')), F(limb(9.6, 9, 6, 6.4, 0.4, 0.4, '#8a8a8a'))]);
+
+// ---------- The play meadow (2026-11-15) ----------
+// The bouncy mushroom: a fat cream stem with a sleepy little face, and a pink cap with white spots
+// that the Mochi bounce on (the cap is drawn on its own, so it can give under them: mg_mushroom).
+const mushStemArt = () => art('mg-mushstem', 24, 26, () => [
+  E(12, 23.5, 10, 3, '#f3e2c8'), R(5, 2, 14, 22, '#fff1de'), F(R(14.5, 3, 3.5, 20, '#f2dcc2')), F(R(6, 3, 2, 18, '#fffaf2')),
+  F(E(9, 11, 1, 1.4, '#5a3a3a')), F(E(15, 11, 1, 1.4, '#5a3a3a')), F(E(9.3, 10.4, 0.4, 0.4, '#ffffff')), F(E(15.3, 10.4, 0.4, 0.4, '#ffffff')),
+  F(E(7, 14, 1.8, 1, '#ffb7c2')), F(E(17, 14, 1.8, 1, '#ffb7c2')), F(E(12, 13.6, 1.3, 0.8, '#c86a6a')),
+  F(E(12, 25.2, 11, 1.4, '#6f9a52')),
+]);
+const mushCapArt = () => art('mg-mushcap', 60, 22, () => [
+  E(30, 18, 29, 16, '#ff8fb0'), F(E(30, 19, 26, 3.4, '#f9c4d2')), F(E(24, 7, 9, 3, '#ffb3c8')),
+  ...[[16, 10, 4, 3], [33, 5.5, 5, 3.2], [47, 11, 4, 3], [26, 15, 2.6, 2], [41, 16, 2.4, 1.8]].map(([x, y, rx, ry]) => F(E(x, y, rx, ry, '#fff6fa'))),
+]);
+// The slide: a little wooden ladder up to a pink deck, and the pink chute curving down to a lip on
+// the grass, a post under it (a Mochi climbs up, sits, and whooshes down: world/garden-life.js).
+const slideArt = () => art('mg-slide', 100, 60, () => {
+  const out = [R(8, 8, 2.4, 52, WOOD), R(17, 8, 2.4, 52, WOOD)];
+  for (let k = 0; k < 6; k++) out.push(F(R(8, 15 + k * 8, 11, 2, WOOD_DK)));
+  out.push(R(58, 32, 3, 28, WOOD), F(R(58, 32, 1, 28, ramp(WOOD).hi)));
+  out.push(R(6, 7, 26, 5, '#f6a8bc'), F(R(6, 7, 26, 1.6, '#ffd0dc')));
+  out.push(limb(26, 13, 92, 54, 4, 4, '#ff9ec0'), F(limb(27, 11, 92, 52, 1.4, 1.4, '#ffd0dc')), F(limb(28, 9, 90, 49, 0.8, 0.8, '#e07a98')));
+  out.push(R(86, 52, 12, 5, '#ff9ec0'), F(R(86, 52, 12, 1.4, '#ffd0dc')));
+  out.push(F(E(52, 59, 46, 1.6, '#6f9a52')));
+  return out;
 });
 
 // ---------- Kinako's shop ----------
@@ -1036,7 +1135,7 @@ const NUR = {
 // slowly over the cots, and the sun through the round window lays a soft beam across the floor with
 // dust turning in it. Everything eases and is phased off its own position, so nothing moves in
 // lockstep and nothing snaps.
-function nurseryLife(ctx, ox, oy, time, night) {
+function nurseryLife(ctx, ox, oy, time, night, heat = 0) {
   const N = NUR;
   const day = 1 - Math.min(1, night);
   // --- The bunting, strung from the ribs either side of the window. Each flag swings on its own
@@ -1118,9 +1217,11 @@ function nurseryLife(ctx, ox, oy, time, night) {
   hearthFire(ctx, fx, fy, time);
 
   // --- The kettle stands on the hearthstone (it is painted into the room), so what moves here is
-  // its steam, curling up the face of the brick and thinning as it goes.
-  for (let i = 0; i < 4; i++) {
-    const u = (time * 0.3 + i / 4) % 1;
+  // its steam, curling up the face of the brick and thinning as it goes. (The hearth is the sweet
+  // kitchen: while you cook at it, `heat`, the kettle comes up to a rolling steam.)
+  const puffs = 4 + Math.round(4 * heat);
+  for (let i = 0; i < puffs; i++) {
+    const u = (time * (0.3 + 0.25 * heat) + i / puffs) % 1;
     const sx = ox + 278 + Math.sin(u * 5 + i * 1.6) * (2 + u * 8);
     const sy = oy + 328 - u * 56;
     ctx.globalAlpha = Math.min(1, u * 5) * (1 - u) ** 1.3 * 0.5;
@@ -1668,7 +1769,7 @@ export function drawGardenLife(ctx, world, cam, time, layer = 'back') {
     if (h && !map.indoor) drawHatch(ctx, h.m, h.x - cam.x, groundAt(map, h.x) - cam.y, time);
     return;
   }
-  if (!map.indoor) {
+  if (map.garden && !map.indoor) {
     const eggs = life.owner?.garden?.eggs ?? [];
     // The two set back up the grass are drawn first, so the front three lap over them and the
     // clutch reads in depth: they used to be drawn last, which put the far ones in front.
@@ -1843,7 +1944,7 @@ function treeTufts(ctx, map, wx, cam) {
 // grows up out of the ground. Set on the lower side of the ground under its trunk, so on a slope
 // none stands on air.
 function fruitTreesBehind(ctx, map, cam, width, time) {
-  if (!(map.garden || map.mochiRace)) return;
+  if (!(map.garden || map.mochiRace || map.mochiTown)) return;
   for (const [kind, wx, extra] of map.townPieces ?? []) {
     if (kind !== 'mg_fruittree') continue;
     const x = wx - cam.x;
@@ -1859,8 +1960,9 @@ BEHIND_GROUND.push(fruitTreesBehind);
 
 // ---------- Drawing ----------
 export function drawGardenPiece(ctx, map, kind, wx, extra, cam, width, time) {
-  // (The race stadium and courses borrow the trees and lanterns: world/stadium.js.)
-  if (!(map.garden || map.mochiRace) || !kind.startsWith('mg_')) return false;
+  // (The race stadium and courses borrow the trees and lanterns: world/stadium.js; the Mochi Market
+  // has the shop and the stalls: world/market.js.)
+  if (!(map.garden || map.mochiRace || map.mochiTown) || !kind.startsWith('mg_')) return false;
   const x = wx - cam.x;
   if (x < -280 && kind !== 'mg_falls') return true;
   if (x > width + 280 && kind !== 'mg_falls') return true;
@@ -1868,6 +1970,40 @@ export function drawGardenPiece(ctx, map, kind, wx, extra, cam, width, time) {
   // (Night, or a part of a long course at dusk, `look.glow`: lanterns lit.)
   const night = Math.max(map.night ?? 0, zoneAt(map, 0, wx)?.look?.glow ?? 0);
   switch (kind) {
+    case 'mg_flowerbed': {
+      place(ctx, flowerBedArt(), snap(x), gy + 2);
+      // Five clumps along it, each nodding on its own beat in the breeze.
+      for (let i = 0; i < 5; i++) {
+        const cx = x - 36 + i * 18;
+        const a = (lean(time, wx + i * 37, 0.3 * i, i) + 0.3) * 0.06;
+        pivoted(ctx, cx, gy - 7, a, () => place(ctx, flowerClumpArt(extra ?? 0, i), snap(cx), gy - 7));
+      }
+      return true;
+    }
+    case 'mg_well': {
+      place(ctx, wellArt(), snap(x), gy + 2);
+      // The bucket on its rope, swinging gently under the winch.
+      const py = gy + 2 - WELL_H + WELL_WINCH;
+      pivoted(ctx, x, py, Math.sin(time * 0.9 + wx * 0.01) * 0.06, () => place(ctx, bucketArt(), snap(x), py + 16));
+      return true;
+    }
+    case 'mg_mushroom': {
+      place(ctx, mushStemArt(), snap(x), gy + 2);
+      // (Pressed down as a Mochi lands on it, `map.mushDip` 0-1, and springing back up: a gentle
+      // nod in the breeze otherwise.)
+      const dip = (map.mushDip ?? 0) * 3 + Math.sin(time * 1.1 + wx * 0.02) * 0.3;
+      place(ctx, mushCapArt(), snap(x), Math.round(gy - 18 + dip));
+      return true;
+    }
+    case 'mg_slide':
+      place(ctx, slideArt(), snap(x), gy + 2);
+      return true;
+    case 'mg_flagline': {
+      // A string of little flags strung across from one stall's eave to the next (the Mochi
+      // Market's lane: world/market.js), each turning on its own thread like the shop's.
+      bunting(ctx, x, extra.to - cam.x, gy - extra.h, time, wx, ['#ffb3cf', '#fff4ea', '#c8e8a8', '#ffd9e4', '#a8d8f0']);
+      return true;
+    }
     case 'mg_lantern': {
       const v = extra ?? 0;
       place(ctx, lanternPostArt(v), snap(x), gy + 2);
@@ -2106,7 +2242,8 @@ export function drawGardenPiece(ctx, map, kind, wx, extra, cam, width, time) {
       // The swing on its ropes, swaying.
       const bx = x + 80;
       const by = gy - 126;
-      pivoted(ctx, bx, by, Math.sin(time * 1.3 + wx * 0.01) * 0.12, () => {
+      // (A Mochi on it: the ropes follow its ride, `map.swingAngle`; empty, it sways in the breeze.)
+      pivoted(ctx, bx, by, map.swingAngle ?? Math.sin(time * 1.3 + wx * 0.01) * 0.12, () => {
         ctx.strokeStyle = '#d8b47a';
         ctx.lineWidth = 1;
         ctx.beginPath();
@@ -2209,7 +2346,8 @@ export function drawGardenPiece(ctx, map, kind, wx, extra, cam, width, time) {
       // The sky in the round window: the garden's day or night (map.outsideNight: world/daytime.js).
       nurseryWindow(ctx, x, gy + 40 - 400 + 150, map.outsideNight ?? 0, time);
       // Everything in the room that moves.
-      nurseryLife(ctx, x - 380, gy + 40 - 400, time, map.outsideNight ?? 0);
+      map.stoveHeat = (map.stoveHeat ?? 0) + ((map.stoveBusy ? 1 : 0) - (map.stoveHeat ?? 0)) * 0.05;
+      nurseryLife(ctx, x - 380, gy + 40 - 400, time, map.outsideNight ?? 0, map.stoveHeat);
       trophyShelf(ctx, map.trophies ?? [], x - 380, gy - 360, time);
       return true;
     }

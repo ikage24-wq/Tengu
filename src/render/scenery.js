@@ -5559,7 +5559,7 @@ function drawCritters(ctx, t, map, cam, width, height, time) {
   else if (t.painted === 'forest') drawWoodlandLife(ctx, map, cam, width, height, time);
   if (t.painted === 'meadow') drawMeadowLife(ctx, map, cam, width, height, time, groundAt);
   // (Not in the Mochi places, the Garden, the stadium and its courses: their life is the Mochi.)
-  if (t.painted === 'town' && !(map.garden || map.mochiRace)) {
+  if (t.painted === 'town' && !(map.garden || map.mochiRace || map.mochiTown)) {
     drawVillageLife(ctx, map, cam, width, height, time, groundAt);
   }
   // Birds hop and peck along the ground.

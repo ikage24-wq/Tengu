@@ -1,11 +1,11 @@
-// The egg stall by your Mochi Garden's gate (world/garden-life.js): three eggs of its own each day,
+// The egg stall in the Mochi Market (world/market.js, world/garden-life.js): three eggs of its own each day,
 // drawn as they'll sit by the gate (render/wagashi.js), so you can read them before you buy: the
 // rarer the egg, the stronger its tint, and rare ones glint. Buy one and it's set down by the gate,
 // ready to rock and hatch. Walk away and the window closes.
 
 import { rollMochi } from '../data/mochi-genes.js';
 import { drawMochiEgg } from '../render/wagashi.js';
-import { stallEggs, stallSold, buyStallEgg, STALL_X, EGG_PRICE, EGG_SLOTS } from '../world/garden-life.js';
+import { stallEggs, stallSold, buyStallEgg, EGG_PRICE, EGG_SLOTS } from '../world/garden-life.js';
 import { COLORS, windowFrame, text, button, hover, tooltip, roundRect, photoCorners, icon } from './kit.js';
 import { heading } from './mochi-kit.js';
 
@@ -21,7 +21,8 @@ const CARD_SKY = [['#ffe4ee', '#fff6f0'], ['#e4f0ff', '#f6fbff'], ['#eaf6e0', '#
 
 export function eggStallWindow(ui, state, world) {
   const win = state.windows.eggs;
-  if (!world.map.garden || world.map.indoor || world.gardenVisit || Math.abs(world.body.x - STALL_X) > 80) {
+  const at = world.map.eggStall;
+  if (at == null || world.gardenVisit || !world.char.garden || Math.abs(world.body.x - at) > 80) {
     win.open = false;
     return;
   }

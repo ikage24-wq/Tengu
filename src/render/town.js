@@ -536,7 +536,8 @@ export function drawStreet(ctx, map, cam, width, time, hero = {}) {
   // The town stove: the fire licking in its arch (three drawings flowing one into the next), the
   // pot's lid rattling on the boil now and then, and cel puffs of steam curling up and tearing
   // apart. Every beat is phased from the stove's own place in town.
-  if (map.stove != null) {
+  // (`ownStove`: a room that draws its own, the nursery's hearth.)
+  if (map.stove != null && !map.ownStove) {
     const x = snap(map.stove - cam.x);
     const gy = ground(map.stove);
     if (x > -60 && x < width + 60) {

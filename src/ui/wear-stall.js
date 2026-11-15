@@ -1,4 +1,4 @@
-// The clothes stall on your Mochi Garden's square (world/garden-life.js): four models standing on
+// The clothes stall in the Mochi Market (world/market.js, world/garden-life.js): four models standing on
 // the counter, one at each tier, every one of them dressed from its hat down to its shoes on the
 // same little figures the stall itself stands out front (render/shopmodel.js), so the card and the
 // counter agree. Pick a model and every piece of its look is there to buy on its own: the whole

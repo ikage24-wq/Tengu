@@ -113,7 +113,7 @@ export function mochiCareWindow(ui, state, world) {
   if (!guest) text(ctx, `Today: ${dailyLine(world.char)}`, x + W - 20, by + 6, { size: 5.8, bold: true, align: 'right', color: '#c89a20' });
   by += 10;
   const sweets = MOCHI_SWEETS.filter((sw) => countItem(world.char.inventory, sw.id) > 0);
-  if (!sweets.length) text(ctx, 'No sweets in your bag: cook some at the Sweet Kitchen!', x + 2, by + 12, { size: 6.5, color: COLORS.muted });
+  if (!sweets.length) text(ctx, 'No sweets in your bag: cook some at the nursery hearth!', x + 2, by + 12, { size: 6.5, color: COLORS.muted });
   sweets.slice(0, 12).forEach((sw, i) => {
     const ix = x + i * 23;
     const iy = by;

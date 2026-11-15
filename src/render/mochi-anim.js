@@ -1363,6 +1363,32 @@ export const TRICK_BITS = {
     KEY(1, { ...TUCK, lean: Math.PI * 1.5, tip: 6, sink: 9, closed: [true, true], mouth: 'D' }),
     KEY(1.25, { lean: TWO, tip: 6, sink: 6, squat: 2, closed: [true, true], mouth: 'D', ease: 'out' }),
     KEY(1.6, { lean: TWO, ...OUT(-12), closed: [true, true], mouth: 'D', extra: ['spark0', 'spark1'], sprout: 'excited' }), KEY(2.4, { lean: TWO })] },
+  // On the swing (world/garden-life.js rides): up onto the seat, then sat holding the ropes, legs
+  // kicked out as it swings forward and tucked under as it swings back (the loop is one swing,
+  // 1.8 s, the ride's own beat), and a hop down. Tipped whole (tip 6): the ride tilts it with the
+  // ropes (m.hillLean).
+  swing: { dur: 3.2, loop: [0.6, 2.4], keys: [
+    KEY(0, {}), KEY(0.3, { squat: 1, mouth: 'mochio' }),
+    KEY(0.6, { ...SIT, tip: 6, sink: 6, front: [-1, -15], back: [1, -15], over: true, mouth: 'D', sprout: 'happy' }),
+    KEY(1.05, { ...SIT, tip: 6, sink: 6, front: [-1, -15], back: [1, -15], over: true, legF: [4.4, -4.4, 44], legB: [3.4, -4, 38], mouth: 'D', sprout: 'happy' }),
+    KEY(1.5, { ...SIT, tip: 6, sink: 6, front: [-1, -15], back: [1, -15], over: true, mouth: 'mochiw', sprout: 'happy' }),
+    KEY(1.95, { ...SIT, tip: 6, sink: 6, front: [-1, -15], back: [1, -15], over: true, legF: [-2.2, -2, -22], legB: [-2.6, -1.6, -26], mouth: 'D', sprout: 'happy' }),
+    KEY(2.4, { ...SIT, tip: 6, sink: 6, front: [-1, -15], back: [1, -15], over: true, mouth: 'D', sprout: 'happy' }),
+    KEY(2.8, { squat: 1, mouth: 'D', extra: ['spark0'] }), KEY(3.2, {})] },
+  // Down the slide: sat at the top, arms flung up, and whee all the way down.
+  slide: { dur: 2, keys: [
+    KEY(0, {}), KEY(0.3, { ...SIT, mouth: 'mochio', sprout: 'curious' }),
+    KEY(0.6, { ...SIT, front: [-3, -15], back: [3, -15], over: true, mouth: 'D', sprout: 'excited' }),
+    KEY(1.4, { ...SIT, front: [-3, -15], back: [3, -15], over: true, mouth: 'D', sprout: 'excited', extra: ['spark0'] }),
+    KEY(1.7, { squat: 1, mouth: 'D' }), KEY(2, {})] },
+  // On the bouncy mushroom: a crouch as it lands on the cap, arms and legs flung out at the top of
+  // each bounce, eyes squeezed shut with glee (the loop is one bounce, 0.8 s, the ride's own beat).
+  bounce: { dur: 1.8, loop: [0.6, 1.4], keys: [
+    KEY(0, {}), KEY(0.3, { squat: 1, mouth: 'mochio' }),
+    KEY(0.6, { squat: 1, front: [2, -2], back: [-2, -2], mouth: 'D', sprout: 'excited' }),
+    KEY(1, { front: [-3, -15], back: [3, -15], over: true, legF: [1.6, -2.2, 16], legB: [-1.6, -2.2, -16], mouth: 'D', closed: [true, true], sprout: 'excited' }),
+    KEY(1.4, { squat: 1, front: [2, -2], back: [-2, -2], mouth: 'D', sprout: 'excited' }),
+    KEY(1.6, { mouth: 'D', extra: ['spark0'] }), KEY(1.8, {})] },
   // Sit-ups: lies back, sits up, lies back, sits up, puffing.
   situps: { dur: 4, keys: [
     KEY(0, {}), KEY(0.3, { ...SAT, mouth: 'mochiflat', brows: [[-0.4, 0.8], [-0.4, 0.8]] }),
