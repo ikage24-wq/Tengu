@@ -31,7 +31,7 @@ import { MAPS } from '../data/maps.js';
 import { rollMochi, seededRandom, STATS } from '../data/mochi-genes.js';
 import { wearFor, tierForPoints } from '../data/mochi-wardrobe.js';
 import { newRecord, evolve, styleOf, STYLE_POINTS, CANT_POINTS as CANT } from '../data/mochi-raise.js';
-import { RACE_STAGES, RACE_RANKS, RANK_ORDER, RIVAL_NAMES, paceOf, CHEER, RACE_TAIL, RACE_MAX, prizeOf, MEDALS, medalKey, rankOpen, STACK_L, STACK_GRAB, STACK_REL, BELL_L, BELL_AT } from '../data/mochi-race.js';
+import { RACE_STAGES, RACE_RANKS, RANK_ORDER, RIVAL_NAMES, paceOf, CHEER, RACE_TAIL, RACE_MAX, prizeOf, MEDALS, medalKey, rankOpen, STACK_L, STACK_GRAB, STACK_REL, BELL_L, BELL_AT, CART_BEAT } from '../data/mochi-race.js';
 import { groundAt, waterAt } from './physics.js';
 import { addItem } from '../core/inventory.js';
 import { mochiVoice, voiceAction } from './mochi-voice.js';
@@ -135,6 +135,19 @@ export const standX = (leg, r) => leg.x - r.lane * STACK_LANE;
 export const BELL_REACH = 34;
 export const BELL_LANE = 54;
 export const bellX = (leg, r) => leg.x - r.lane * BELL_LANE;
+// A cart of rice to haul (`{ kind: 'cart', x, to }`, Mochitsuki Mountain, 2026-11-16 - the rice for the
+// mochi, up to the top where it's made): in each lane a big wooden cart loaded with straw rice bales,
+// waiting on the upper slope, nose to tail with the next lane's (staggered like the snowballs). The
+// racer steps in between its shafts and hauls it up to `to`, as fast as its Power lets it (CART_V,
+// by range; a cheer behind it helps), in tugs for the strong ones (CART_PULSE, in step with its move's
+// beat, CART_BEAT), and leaves it parked there. A weak one's wheel can sink in a rut once on the way
+// (by its seed, the same on every screen; never while it's being cheered) and it has to heave it free
+// (CART_STUCK). Parked, a "Yes!", and on.
+export const CART_V = [22, 28, 36, 45, 55, 66];
+const CART_PULSE = [[0.3, 0.45], [0.3, 0.47], [0.35, 0.5], [0.85, 0.675], [0.95, 0.686], [0.25, 0.53]];
+export const CART_STUCK = 0.9;
+export const cartStart = (leg, r) => leg.x - r.lane * SMASH_LANE;
+export const cartEnd = (leg, r) => leg.to - r.lane * SMASH_LANE;
 const ROLL_PAW = 9;
 const ROLL_REACH = 3;
 export const behindBall = (R0) => Math.sqrt(Math.max(0, R0 * R0 - (R0 - Math.min(ROLL_PAW, 2 * R0 - 1)) ** 2)) + ROLL_REACH;
@@ -378,6 +391,7 @@ function runEnd(course, r) {
   if (next?.kind === 'roll') return ballStart(next, r) - behindBall(ROLL_R[0]);
   if (next?.kind === 'stack') return standX(next, r) - STACK_REACH;
   if (next?.kind === 'bell') return bellX(next, r) - BELL_REACH;
+  if (next?.kind === 'cart') return cartStart(next, r);
   if (next?.kind === 'hurdle') return next.x - takeoffOf(r);
   return next?.kind === 'climb' ? next.x - WALL_GAP - r.lane * WALL_LANE : legOf(course, r).to;
 }
@@ -509,7 +523,7 @@ function stepRacer(R, r, dt, course, map) {
       m.action = null;
       r.y = groundAt(map, r.x);
       if (leg.kind === 'hurdle') nextLeg(course, r);
-    } else if (/^(smash|pound|power_|hurdle|roll|stack|bell)/.test(m.action?.name ?? '')) m.action = null;
+    } else if (/^(smash|pound|power_|hurdle|roll|stack|bell|cart)/.test(m.action?.name ?? '')) m.action = null;
     m.speed = Math.max(0, m.speed - 70 * dt);
     m.tired = Math.max(0, (m.tired ?? 0) - dt * 0.4);
     if (leg.kind === 'run') {
@@ -625,6 +639,55 @@ function stepRacer(R, r, dt, course, map) {
         const R0 = ballRadius(leg, r, b.x);
         b.spin += (b.x - was) / R0;
         r.x = b.x - behindBall(R0);
+        r.y = groundAt(map, r.x);
+      } else if (leg.kind === 'cart') {
+        // Hauling its rice cart up the slope between the shafts, in tugs; a weak one's wheel stuck in
+        // a rut once and heaved free; parked at the top, "Yes!", and on.
+        // (Its own way of hauling for its range of Power: render/mochi-cart-acts.js cart0-5.)
+        const tier = styleOf(s.power.points);
+        const start = cartStart(leg, r);
+        const end = cartEnd(leg, r);
+        // (Where a weak one's wheel sinks, by its seed: somewhere in the middle of the haul.)
+        const c = (r.cart ??= { x: start, from: C, act: C, tier, v: 0, stuck: null, stuckAt: tier <= 1 ? start + (end - start) * (0.3 + 0.4 * seededRandom(Math.floor(r.seed * 1000) + 131)()) : null, parked: null, turn: 0 });
+        Object.assign(m, { mode: 'run', inWater: false, speed: 0, tired: r.spent ?? 0 });
+        const was = c.x;
+        if (c.parked == null) {
+          if (c.stuck != null) {
+            // Stuck in a rut: a heave back and a heave forward, and it's free.
+            if (C - c.stuck >= CART_STUCK) {
+              c.stuck = null;
+              c.act = C;
+              m.action = { name: `cart${tier}`, t0: null, hold: 120 };
+            }
+            c.v = 0;
+          } else if (c.stuckAt != null && c.x >= c.stuckAt && C >= (r.cheerUntil ?? 0)) {
+            c.stuck = C;
+            c.stuckAt = null;
+            m.action = { name: 'cart_stuck', t0: null };
+          } else {
+            if (c.stuckAt != null && c.x >= c.stuckAt) c.stuckAt = null;
+            if (m.action?.name !== `cart${tier}`) {
+              c.act = C;
+              m.action = { name: `cart${tier}`, t0: null, hold: 120 };
+            }
+            // (In tugs for the strong: a surge on each, easing between.)
+            const [amp, peak] = CART_PULSE[tier];
+            const u = (((C - c.act) / CART_BEAT[tier]) % 1 + 1) % 1;
+            c.v = CART_V[tier] * boost * (1 + amp * Math.cos(2 * Math.PI * (u - peak)));
+            c.x = Math.min(end, c.x + c.v * dt);
+          }
+          if (c.x >= end) {
+            c.parked = C;
+            c.v = 0;
+            m.action = { name: tier ? 'power_win' : 'power_phew', t0: null };
+          }
+        } else if (C - c.parked >= WIN_BEAT) {
+          m.action = null;
+          nextLeg(course, r);
+        }
+        // (Its wheels turn by the ground they cover.)
+        c.turn += c.x - was;
+        r.x = c.x;
         r.y = groundAt(map, r.x);
       } else if (leg.kind === 'bell') {
         // Ringing its bell: the rope pulled back and the log driven into the bell, again and again,

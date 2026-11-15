@@ -27,6 +27,7 @@ import { FESTIVAL_ACTS, drawDango, drawDango3, drawUchiwa, drawLanternBoat, draw
 import { ROLL_ACTS } from './mochi-roll-acts.js';
 import { STACK_ACTS, drawKagamiHeld } from './mochi-stack-acts.js';
 import { BELL_ACTS, noteBellPaws } from './mochi-bell-acts.js';
+import { CART_ACTS } from './mochi-cart-acts.js';
 import { WEATHER_WIND } from './terrain.js';
 import { drawMic, drawBachi, drawTopHat, drawWand, drawMask, drawScript, drawRose, drawRibbon, drawMime, twinkle } from './mochi-show-props.js';
 import { lookOf, drawCoat, drawCoatBack, MOCHI_SIZE } from './wagashi.js';
@@ -2516,6 +2517,7 @@ Object.assign(ACTIONS, FESTIVAL_ACTS);
 Object.assign(ACTIONS, ROLL_ACTS);
 Object.assign(ACTIONS, STACK_ACTS);
 Object.assign(ACTIONS, BELL_ACTS);
+Object.assign(ACTIONS, CART_ACTS);
 // (The garden's play moves flow too, with a little bounce as they settle: the rides, the ball, the
 // weather's games, and the dance two Mochi share. 2026-11-15.)
 for (const n of ['swing', 'slide', 'bounce', 'flaps', 'play', 'splash', 'catch', 'snowcatch', 'snowpat', 'rainwatch', 'dance1']) {

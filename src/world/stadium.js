@@ -367,9 +367,9 @@ function hurdleMap() {
 // before the dash to the line - with the great mortar beyond it. All about Power.
 function powerMap() {
   const G = 560;
-  const terrain = [[0, G], [900, G], [1020, G - 14], [1200, G - 44], [1380, G - 64], [1500, G - 72], [2560, G - 72]];
+  const terrain = [[0, G], [900, G], [1020, G - 14], [1200, G - 44], [1380, G - 64], [1500, G - 72], [2720, G - 72]];
   return courseMap('mrace_power', 'Mochitsuki Mountain', {
-    width: 2560, height: 680, sky: 'winter', groundY: G, ground: 'snowpeak', skyline: 'course:snow',
+    width: 2720, height: 680, sky: 'winter', groundY: G, ground: 'snowpeak', skyline: 'course:snow',
     look: { aerial: 0.55, clouds: false, groundArt: 'snow', cast: 'pound', edges: 'snow', festival: true, bar: 'snow', flakes: true, calm: true, snowfall: true, kicks: ['#ffffff', '#eef4ff', '#dce8fb'], petals: ['#ffffff', '#eef4ff', '#dce8fb', '#ffe8f0'] },
     terrain,
     pieces: [
@@ -379,12 +379,14 @@ function powerMap() {
       ['mr_toro', 924, 0], ['mr_pine', 1010, 2], ['mr_kagami', 1170, 0], ['mr_squad', 1300, 0],
       // (The mortars for the pounding, one in each lane, are the race's own too: render/race.js.)
       // (The kagami-mochi stands and tubs, each lane's own, are the race's: render/race.js.)
-      ['mr_snowman', 1420, 1], ['mr_kagami', 2170, 0], ['mg_moonmortar', 2260], ['mr_pine', 2440, 0],
+      // (The rice carts too, each lane's own, waiting on the upper slope: render/race.js.)
+      ['mr_snowman', 2180, 1], ['mr_kagami', 2325, 0], ['mg_moonmortar', 2415], ['mr_pine', 2595, 0],
     ],
     // (Up the slope between them, a snowball to roll, 2026-11-16: world/mochi-race.js 'roll'.)
     // (On the flat top, a kagami-mochi to stack before the pounding, 2026-11-16: 'stack'.)
     // (Before all of it, on the flat by the start, a temple bell to ring in the New Year: 'bell'.)
-    race: course(240, 2090, [{ kind: 'run', to: 610 }, { kind: 'bell', x: 640, need: 4 }, { kind: 'run', to: 830 }, { kind: 'smash', x: 860, hp: 120 }, { kind: 'run', to: 1080 }, { kind: 'roll', x: 1080, to: 1320 }, { kind: 'run', to: 1682 }, { kind: 'stack', x: 1700 }, { kind: 'run', to: 1950 }, { kind: 'pound', x: 1950, need: 6 }, { kind: 'run', to: 2090 }]),
+    // (And after the snowball, the rice for the mochi to haul up to the top in a cart: 'cart'.)
+    race: course(240, 2245, [{ kind: 'run', to: 610 }, { kind: 'bell', x: 640, need: 4 }, { kind: 'run', to: 830 }, { kind: 'smash', x: 860, hp: 120 }, { kind: 'run', to: 1080 }, { kind: 'roll', x: 1080, to: 1320 }, { kind: 'run', to: 1420 }, { kind: 'cart', x: 1420, to: 1625 }, { kind: 'run', to: 1837 }, { kind: 'stack', x: 1855 }, { kind: 'run', to: 2105 }, { kind: 'pound', x: 2105, need: 6 }, { kind: 'run', to: 2245 }]),
   });
 }
 

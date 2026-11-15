@@ -119,3 +119,6 @@ export const BELL_L = [2.0, 1.8, 1.6, 1.4, 1.3, 1.2];
 export const BELL_PULL = [0.45, 0.42, 0.4, 0.38, 0.36, 0.32];
 export const BELL_GO = [0.52, 0.5, 0.48, 0.46, 0.46, 0.44];
 export const BELL_AT = [0.66, 0.64, 0.62, 0.6, 0.6, 0.58];
+// The rice cart's hauling (world/mochi-race.js 'cart'), the same for its moves (render/mochi-cart-acts.js):
+// one step-and-tug of the haul, by range of Power.
+export const CART_BEAT = [1.0, 0.9, 0.8, 0.8, 0.7, 0.7];

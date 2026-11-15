@@ -22,7 +22,7 @@ import { art, place } from './scenery.js';
 import { cragArt, CRAG_FACE_AT } from './garden.js';
 import { groundAt } from '../world/physics.js';
 import { drawMochiAnim, drawSpectator, drawMallet, SPECTATOR_BEATS, GAITS, SWIMS, FLIES, CLIMBS, runStyle } from './mochi-anim.js';
-import { runSpeed, lineupOffset, PODIUM, podiumSpot, INTRO, introLen, standings, progressOf, boulderX, JUMP_H, JUMP_PHASE, ballStart, ballEnd, ballRadius, ROLL_R, standX, STACK_REACH, STACK_TUB, STACK_FLY, bellX, BELL_REACH } from '../world/mochi-race.js';
+import { runSpeed, lineupOffset, PODIUM, podiumSpot, INTRO, introLen, standings, progressOf, boulderX, JUMP_H, JUMP_PHASE, ballStart, ballEnd, ballRadius, ROLL_R, standX, STACK_REACH, STACK_TUB, STACK_FLY, bellX, BELL_REACH, cartStart, cartEnd } from '../world/mochi-race.js';
 import { drawKagamiPiece, KAGAMI } from './mochi-stack-acts.js';
 import { bellSwing, BELL_REST } from './mochi-bell-acts.js';
 import { BELL_L } from '../data/mochi-race.js';
@@ -1066,6 +1066,154 @@ function drawStackTub(ctx, map, race, course, cam, r) {
   for (let i = 0; i < 3; i++) if (i >= out) drawKagamiPiece(ctx, i, x + SPOT[i][0], SPOT[i][1]);
   place(ctx, tubFrontArt(), snap(x), gy + 1.2);
 }
+// Mochitsuki Mountain's rice carts (world/mochi-race.js 'cart', 2026-11-16), one in each lane: a big
+// two-wheeled wooden cart loaded with three straw rice bales, waiting on the upper slope nose to tail
+// with the next lane's. Hauled, it tips with the slope, its wheel turning by the ground it covers, a
+// track left in the snow behind it and snow flicked up off the wheel; a weak one's wheel sinks in a
+// rut and is heaved up out of it; parked at the top with a puff of snow. Its shafts run forward to
+// the crossbar in the racer's paws (drawn behind it, so it stands between them).
+// (Short enough that the waiting carts, one a lane apart, stand neatly nose to tail.)
+const CART = { wheel: 6, axle: -19, bar: [5, -6.2], bed: [-9, 9] };
+const baleArt = () => art('mr-bale', 11, 8, () => [
+  E(5.5, 4, 4.8, 3.2, '#e2c27a'), F(E(5.5, 3, 3.9, 1.4, '#eed59a')),
+  F(E(1.4, 4, 0.9, 2.6, '#ecd296')), F(E(9.6, 4, 0.9, 2.6, '#d6b46a')),
+  F(R(2.9, 1, 0.8, 6, '#8a6a3a')), F(R(7.3, 1, 0.8, 6, '#8a6a3a')),
+  ...[4.3, 5.5, 6.5].map((x) => F(R(x, 2, 0.4, 4, '#c9a456'))),
+]);
+const BALES = [[-4.4, -3], [4.4, -3], [0, -8]];
+function drawCarts(ctx, map, race, course, cam) {
+  const leg = course.legs.find((l) => l.kind === 'cart');
+  if (!leg) return;
+  const at = course.legs.indexOf(leg);
+  const C = race.clock;
+  for (const r of [...race.racers].sort((a, b) => b.lane - a.lane)) {
+    const c = r.cart;
+    // (A friend's ghost or a racer seen from afar has none of its own here: past it, it's parked up top.)
+    const cx = c ? c.x : r.leg > at ? cartEnd(leg, r) : cartStart(leg, r);
+    const x = cx - cam.x;
+    if (x < -60 || x > VW + 60) continue;
+    const g = (wx) => groundAt(map, wx);
+    const wx = cx + CART.axle;
+    // Its track in the snow behind it.
+    const from = cartStart(leg, r) + CART.axle;
+    if (wx > from + 2) {
+      ctx.save();
+      ctx.strokeStyle = 'rgba(150,172,206,0.4)';
+      ctx.lineWidth = 1.6;
+      ctx.beginPath();
+      for (let tx = from; tx <= wx; tx += 6) {
+        const ty = g(tx) - cam.y - 0.6;
+        if (tx === from) ctx.moveTo(tx - cam.x, ty);
+        else ctx.lineTo(tx - cam.x, ty);
+      }
+      ctx.lineTo(wx - cam.x, g(wx) - cam.y - 0.6);
+      ctx.stroke();
+      ctx.restore();
+    }
+    // (Sunk in a rut, a weak one's: down with a jolt, and up again with its heave.)
+    const su = c?.stuck != null ? C - c.stuck : -1;
+    const sink = su < 0 ? 0 : su < 0.12 ? (su / 0.12) * 1.6 : su < 0.56 ? 1.6 : Math.max(0, 1.6 * (1 - (su - 0.56) / 0.2));
+    const tilt = Math.atan2(g(wx + 8) - g(wx - 8), 16) + (su >= 0 ? -0.05 * Math.min(1, sink) : 0);
+    const ax = wx - cam.x;
+    const ay = g(wx) - cam.y - CART.wheel + sink;
+    ctx.fillStyle = 'rgba(110,130,175,0.22)';
+    ctx.beginPath();
+    ctx.ellipse(ax + 2, g(wx) - cam.y + 1, 12, 2, tilt, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.save();
+    ctx.translate(ax, ay);
+    ctx.rotate(tilt);
+    // The bed, its load of rice bales, and the near wheel in front.
+    const [b0, b1] = CART.bed;
+    ctx.fillStyle = '#3a2d4f';
+    ctx.fillRect(b0 - 0.6, -3.6, b1 - b0 + 1.2, 3.6);
+    ctx.fillStyle = '#9a6a42';
+    ctx.fillRect(b0, -3, b1 - b0, 2.4);
+    ctx.fillStyle = '#b8845a';
+    ctx.fillRect(b0, -3, b1 - b0, 0.7);
+    for (const [bx, by] of BALES) place(ctx, baleArt(), bx, by + 0.4);
+    const turn = (c?.turn ?? 0) / CART.wheel;
+    ctx.strokeStyle = '#3a2d4f';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(0, 0, CART.wheel - 0.6, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.strokeStyle = '#8a5a36';
+    ctx.lineWidth = 1.6;
+    ctx.beginPath();
+    ctx.arc(0, 0, CART.wheel - 0.6, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.strokeStyle = '#a87a4a';
+    ctx.lineWidth = 0.9;
+    for (let k = 0; k < 6; k++) {
+      const a = turn + (k / 6) * Math.PI * 2;
+      ctx.beginPath();
+      ctx.moveTo(Math.cos(a) * 1.4, Math.sin(a) * 1.4);
+      ctx.lineTo(Math.cos(a) * (CART.wheel - 1.2), Math.sin(a) * (CART.wheel - 1.2));
+      ctx.stroke();
+    }
+    ctx.fillStyle = '#3a2d4f';
+    ctx.beginPath();
+    ctx.arc(0, 0, 1.8, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#5a3a24';
+    ctx.beginPath();
+    ctx.arc(0, 0, 1.2, 0, Math.PI * 2);
+    ctx.fill();
+    // (Where the bed's front end is, for the shafts.)
+    const t = [Math.cos(tilt), Math.sin(tilt)];
+    ctx.restore();
+    const fx = ax + t[0] * b1 - t[1] * -1.8;
+    const fy = ay + t[1] * b1 + t[0] * -1.8;
+    // Its shafts, up to the crossbar in the racer's paws (or resting on the snow, waiting / parked).
+    const hauling = c && c.parked == null;
+    const [bx, by] = hauling ? [x + CART.bar[0], g(cx) - cam.y + CART.bar[1]] : [x + CART.bar[0], g(cx + CART.bar[0]) - cam.y - 1.2];
+    for (const [dy, col] of [[-0.8, '#7a5234'], [0, '#9a6a42']]) {
+      ctx.strokeStyle = '#3a2d4f';
+      ctx.lineWidth = 2.4;
+      ctx.beginPath();
+      ctx.moveTo(fx, fy + dy);
+      ctx.lineTo(bx, by + dy);
+      ctx.stroke();
+      ctx.strokeStyle = col;
+      ctx.lineWidth = 1.1;
+      ctx.beginPath();
+      ctx.moveTo(fx, fy + dy);
+      ctx.lineTo(bx, by + dy);
+      ctx.stroke();
+    }
+    ctx.fillStyle = '#3a2d4f';
+    ctx.fillRect(bx - 1.1, by - 2, 2.2, 3.2);
+    ctx.fillStyle = '#b8845a';
+    ctx.fillRect(bx - 0.5, by - 1.4, 1, 2);
+    // Snow flicked up off the wheel as it goes, and sprayed as it's heaved out of the rut.
+    const wy = g(wx) - cam.y;
+    if (hauling && (c.v ?? 0) > 1) {
+      ctx.fillStyle = '#ffffff';
+      for (let k = 0; k < 3; k++) {
+        const u = ((c.turn * 0.05 + k / 3) % 1 + 1) % 1;
+        ctx.globalAlpha = 1 - u;
+        ctx.fillRect(ax - 4 - u * 6, wy - 1 - u * (3 - u * 2), 1.2, 1.2);
+      }
+      ctx.globalAlpha = 1;
+    }
+    const sp = su >= 0.56 ? (su - 0.56) / 0.4 : c?.parked != null ? (C - c.parked) / 0.6 : 9;
+    if (sp >= 0 && sp < 1) {
+      ctx.save();
+      ctx.globalAlpha = (1 - sp) * 0.9;
+      ctx.fillStyle = '#ffffff';
+      for (let k = 0; k < 5; k++) {
+        const a = Math.PI * (1.05 + (k / 4) * 0.9);
+        const d = 4 + sp * 7;
+        ctx.beginPath();
+        ctx.arc(ax + Math.cos(a) * d * 1.3, wy - 1 + Math.sin(a) * d * 0.5, 1.4 + sp * 1.6, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.restore();
+    }
+  }
+}
+
 // A point noted on the canvas while a racer was drawn, back to where it is in the world.
 function worldOf(ctx, p, cam) {
   const t = ctx.getTransform?.();
@@ -1509,6 +1657,7 @@ export function drawRace(ctx, world, cam, time) {
   drawBoulders(ctx, map, R, course, cam);
   drawMortars(ctx, map, R, course, cam);
   drawSnowballs(ctx, map, R, course, cam, time);
+  drawCarts(ctx, map, R, course, cam);
   drawStacks(ctx, map, R, course, cam, time);
   drawBells(ctx, map, R, course, cam, time);
   drawHurdles(ctx, map, R, course, cam, time);
@@ -1555,7 +1704,7 @@ export function drawRace(ctx, world, cam, time) {
     // just when the race counts them: started on its first drawing, one that came into view
     // mid-smash, or any stutter of the frames, would have swung out of step with its own hits.)
     const a = r.m.action;
-    const beatFrom = !a ? null : a.name.startsWith('smash') ? r.rock?.from : a.name.startsWith('pound') ? r.pound?.from : a.name === 'roll_slip' ? r.ball?.slip : a.name.startsWith('roll') ? r.ball?.act : a.name === 'stack_steady' ? r.stack?.steadyAt : a.name.startsWith('stack') ? r.stack?.actFrom : a.name.startsWith('bell') ? r.bell?.from : a.name.startsWith('power_') ? r.pound?.finished ?? r.stack?.done ?? r.ball?.parked ?? r.rock?.broke ?? r.bell?.rung : a.name === 'hurdle_stumble' ? r.jump?.landAt ?? null : a.name.startsWith('hurdle') && r.jump ? r.jump.from - (r.jump.gain ?? 0) : null;
+    const beatFrom = !a ? null : a.name.startsWith('smash') ? r.rock?.from : a.name.startsWith('pound') ? r.pound?.from : a.name === 'roll_slip' ? r.ball?.slip : a.name.startsWith('roll') ? r.ball?.act : a.name === 'stack_steady' ? r.stack?.steadyAt : a.name.startsWith('stack') ? r.stack?.actFrom : a.name.startsWith('bell') ? r.bell?.from : a.name === 'cart_stuck' ? r.cart?.stuck : a.name.startsWith('cart') ? r.cart?.act : a.name.startsWith('power_') ? r.pound?.finished ?? r.stack?.done ?? r.cart?.parked ?? r.ball?.parked ?? r.rock?.broke ?? r.bell?.rung : a.name === 'hurdle_stumble' ? r.jump?.landAt ?? null : a.name.startsWith('hurdle') && r.jump ? r.jump.from - (r.jump.gain ?? 0) : null;
     if (beatFrom != null) a.t0 = time - (R.clock - beatFrom);
     // (The two best jumpers leave a trail along their arc: where they were a moment ago.)
     const jj = r.jump;

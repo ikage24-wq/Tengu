@@ -580,3 +580,37 @@ test('Mochitsuki Mountain temple bell: rung at its own tower, four strikes for t
   assert.ok(seen[1100].strikes === 2, JSON.stringify(seen));
   assert.ok(seen[2100].secs < seen[0].secs / 4, JSON.stringify(seen));
 });
+
+test('Mochitsuki Mountain rice cart: hauled up the slope between its shafts, a weak one heaves a stuck wheel free (not when cheered), a strong one is quick', () => {
+  const seen = {};
+  for (const [pw, cheer] of [[0, false], [2400, false], [0, true]]) {
+    const rec = mochi(77, 900);
+    rec.stats.power.points = pw;
+    const w = racer(rec);
+    assert.ok(startRace(w, rec, 'power'));
+    const R = w.race;
+    const me = R.racers[R.me];
+    const leg = w.map.race.legs.find((l) => l.kind === 'cart');
+    let from = null;
+    let stuck = 0;
+    let lastX = null;
+    for (let t = 0; t < 300 && R.phase !== 'done'; t += 1 / 30) {
+      if (cheer && me.cart) me.cheerUntil = R.clock + 1;
+      updateWorld(w, 1 / 30, keys());
+      const c = me.cart;
+      if (!c || c.parked != null) continue;
+      from ??= R.clock;
+      if (me.m.action?.name === 'cart_stuck') stuck++;
+      assert.equal(me.x, c.x, 'between its shafts');
+      if (lastX != null) assert.ok(c.x >= lastX, 'never rolls back');
+      lastX = c.x;
+    }
+    assert.ok(me.done != null, 'home');
+    assert.ok(Math.abs(me.cart.x - (leg.to - me.lane * 30)) < 0.01, 'parked at the top of its lane');
+    seen[`${pw}${cheer ? 'c' : ''}`] = { secs: +(me.cart.parked - from).toFixed(2), stuck: stuck > 0 };
+  }
+  assert.equal(seen['0'].stuck, true, JSON.stringify(seen));
+  assert.equal(seen['2400'].stuck, false);
+  assert.equal(seen['0c'].stuck, false, 'a cheer keeps it rolling');
+  assert.ok(seen['2400'].secs < seen['0'].secs / 2.5, JSON.stringify(seen));
+});
