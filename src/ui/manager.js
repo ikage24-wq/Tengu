@@ -35,6 +35,7 @@ import { mochiNameWindow } from './mochi-name.js';
 import { mochiInfoWindow } from './mochi-info.js';
 import { mochiClosetWindow } from './mochi-closet.js';
 import { eggStallWindow } from './egg-stall.js';
+import { mochiShowWindow } from './mochi-show.js';
 import { wearStallWindow } from './wear-stall.js';
 import { lifeWindow } from './life.js';
 import { craftingWindow } from './crafting.js';
@@ -85,6 +86,7 @@ export function createUiState() {
       mochi: { x: 396, y: 34, open: false, theme: 'pink', icon: 'heart' },
       race: { x: 170, y: 50, open: false, theme: 'pink', icon: 'star' },
       eggs: { x: 190, y: 60, open: false, theme: 'peach', icon: 'gift' },
+      show: { x: 150, y: 40, open: false, theme: 'peach', icon: 'star' },
       wears: { x: 172, y: 56, open: false, theme: 'peach', icon: 'hanger' },
       raceinvite: { x: 180, y: 60, open: false, theme: 'pink', icon: 'star' },
       gardenpick: { x: 220, y: 80, open: false, theme: 'pink', icon: 'heart' },
@@ -98,7 +100,7 @@ export function createUiState() {
       auction: { x: 130, y: 40, open: false, tab: 0, theme: 'gold', icon: 'crown' },
     },
     // Window stacking, back to front. Clicking a window brings it to the front.
-    order: ['stats', 'skills', 'quests', 'bag', 'worldmap', 'cashshop', 'pet', 'online', 'collection', 'cook', 'mochi', 'race', 'eggs', 'wears', 'raceinvite', 'gardenpick', 'mochiinfo', 'closet', 'album', 'mochiname', 'craft', 'life', 'gacha', 'trade', 'auction', 'admin', 'profile', 'options'],
+    order: ['stats', 'skills', 'quests', 'bag', 'worldmap', 'cashshop', 'pet', 'online', 'collection', 'cook', 'mochi', 'race', 'show', 'eggs', 'wears', 'raceinvite', 'gardenpick', 'mochiinfo', 'closet', 'album', 'mochiname', 'craft', 'life', 'gacha', 'trade', 'auction', 'admin', 'profile', 'options'],
     // Whose profile is open: { kind: 'self' } or { kind: 'bot', id }.
     profile: null,
     // The right-click menu on a player or yourself: { kind: 'bot' | 'self', id, x, y }.
@@ -154,6 +156,8 @@ export function routeInput(state, world, input, dt) {
       state.windows.mochi.open = true;
     } else if (e.type === 'race') {
       state.windows.race.open = true;
+    } else if (e.type === 'show') {
+      state.windows.show.open = true;
     } else if (e.type === 'eggstall') {
       state.windows.eggs.open = true;
     } else if (e.type === 'wearstall') {
@@ -254,7 +258,7 @@ export function routeInput(state, world, input, dt) {
   return Boolean(state.npc) || state.death;
 }
 
-const WINDOWS = { stats: statsWindow, skills: skillsWindow, quests: questsWindow, bag: bagWindow, worldmap: worldMapWindow, admin: adminWindow, options: optionsWindow, profile: profileWindow, cashshop: cashShopWindow, pet: petWindow, online: onlineWindow, collection: collectionWindow, cook: cookingWindow, mochi: mochiCareWindow, race: raceBoardWindow, eggs: eggStallWindow, wears: wearStallWindow, raceinvite: raceInviteWindow, gardenpick: gardenPickWindow, mochiname: mochiNameWindow, mochiinfo: mochiInfoWindow, closet: mochiClosetWindow, album: mochiAlbumWindow, craft: craftingWindow, life: lifeWindow, gacha: gachaWindow, trade: tradeWindow, auction: auctionWindow };
+const WINDOWS = { stats: statsWindow, skills: skillsWindow, quests: questsWindow, bag: bagWindow, worldmap: worldMapWindow, admin: adminWindow, options: optionsWindow, profile: profileWindow, cashshop: cashShopWindow, pet: petWindow, online: onlineWindow, collection: collectionWindow, cook: cookingWindow, mochi: mochiCareWindow, race: raceBoardWindow, show: mochiShowWindow, eggs: eggStallWindow, wears: wearStallWindow, raceinvite: raceInviteWindow, gardenpick: gardenPickWindow, mochiname: mochiNameWindow, mochiinfo: mochiInfoWindow, closet: mochiClosetWindow, album: mochiAlbumWindow, craft: craftingWindow, life: lifeWindow, gacha: gachaWindow, trade: tradeWindow, auction: auctionWindow };
 const POP = 0.22;
 
 // Opening windows pop in with a little overshoot.
@@ -342,6 +346,8 @@ export function drawUi(ui, state, world) {
     raceHud(ui, state, world);
     return;
   }
+  // And the Mochi Show: its words are on the screen already (render/show.js).
+  if (world.show) return;
   // Interface hidden (the ` key): only a moment's note of how to bring it back.
   if (state.hideUi) {
     const a = 1 - Math.max(0, performance.now() / 1000 - (state.hideAt ?? 0) - 2) / 0.6;

@@ -20,6 +20,8 @@
 import { drawPosed, posedMouth, posedFrame } from './hero.js';
 import { featureOf, budOf, drawFeature } from './mochi-features.js';
 import { drawSweet, drawBall } from './mochi-sweets.js';
+import { SHOW_ACTS } from './mochi-show-acts.js';
+import { drawMic, drawBachi, drawTopHat, drawWand, drawMask, drawScript, drawRose, drawRibbon, drawMime, twinkle } from './mochi-show-props.js';
 import { lookOf, drawCoat, drawCoatBack, MOCHI_SIZE } from './wagashi.js';
 
 const clamp01 = (v) => Math.max(0, Math.min(1, v));
@@ -1055,7 +1057,9 @@ const SHARED = Object.keys(IDLE_BITS).filter((k) => !k.startsWith('sig_') && k !
 // (What a pose's numbers ease between; everything else changes on its key.)
 // (`swing`: the angle of a mallet in its paws, the 'pound' move; `smear`: how far back round its
 // swing the blur of it reaches, on the frame it lands.)
-const EASED = ['tilt', 'hx', 'hy', 'lean', 'tip', 'sink', 'lift', 'bob', 'squat', 'hair', 'front', 'back', 'legF', 'legB', 'ball', 'spin', 'flame', 'swing', 'smear'];
+// (`swing2`: the far paw's prop, turned likewise; `reveal`: how far along a prop's own business is -
+// render/mochi-show-props.js.)
+const EASED = ['tilt', 'hx', 'hy', 'lean', 'tip', 'sink', 'lift', 'bob', 'squat', 'hair', 'front', 'back', 'legF', 'legB', 'ball', 'spin', 'flame', 'swing', 'smear', 'swing2', 'reveal'];
 const EASE = { in: (k) => k * k, out: (k) => 1 - (1 - k) * (1 - k) };
 // Idle moments and actions step through their keys at this many drawings a second (each drawn
 // once, then reused): enough to read smooth.
@@ -1083,7 +1087,8 @@ function idlePose(bit, t, base) {
   out.bubble = Boolean(a.bubble);
   // A prop in hand, the bites out of a sweet, and whether the watering can is tipped to pour, stay as
   // the last key that set them. (`pour` wasn't carried before, 2026-11-15: the can never poured.)
-  for (let j = 0; j <= i; j++) for (const key of ['hold', 'bites', 'pour']) if (keys[j][1][key] !== undefined) out[key] = keys[j][1][key];
+  // (`alt`: which kind of the prop - the happy mask or the sad one.)
+  for (let j = 0; j <= i; j++) for (const key of ['hold', 'bites', 'pour', 'alt']) if (keys[j][1][key] !== undefined) out[key] = keys[j][1][key];
   // The face changes on its key, a beat (0.12 s) before the body gets there (the face reacts
   // first). Floating hearts and dizzy stars go round on their own little cycle.
   let fi = 0;
@@ -1732,6 +1737,41 @@ export const TRICK_BITS = {
     KEY(0.72, { squat: 1.6, front: [5, -9], back: [5, -9], tilt: 2, mouth: 'D', closed: [true, true], sprout: 'excited', extra: ['spark0'], ease: 'in' }),
     KEY(0.9, { front: [5, -8], back: [5, -8], mouth: 'mochibeam', sprout: 'excited', extra: ['spark1'] }),
     KEY(1.1, {})] },
+  // The Mochi Show (world/mochi-show.js), 2026-11-15:
+  // `bow`: a proper bow from the waist to the judges, a paw on its chest, and back up beaming.
+  // `showwave`: one with no trick to show yet - a big wave with both paws and a hop, a bit shy of it.
+  // `showwait`: waiting on the judges' cards - paws clasped under its chin, looking down at the table,
+  //   bobbing on its toes with nerves.
+  bow: { dur: 1.0, crisp: true, fps: 48, keys: [
+    KEY(0, { mouth: 'mochibeam', glance: 1 }),
+    // (A little dip to start it, then down from the waist, a paw on its chest...)
+    KEY(0.12, { squat: 0.7, mouth: 'mochibeam', glance: 1, front: [1, -5] }),
+    KEY(0.32, { lean: 0.5, squat: 0, front: [2, -6], back: [-3, -3], tilt: -6, closed: [true, true], mouth: 'mochiw', ease: 'out' }),
+    KEY(0.56, { lean: 0.53, front: [2, -6], back: [-3, -3], tilt: -7, closed: [true, true], mouth: 'mochiw' }),
+    // (...and back up beaming, with a tiny hop.)
+    KEY(0.74, { lean: 0, lift: 1, front: [3, -6], back: [2, -6], mouth: 'D', closed: [true, true], sprout: 'happy', ease: 'out' }),
+    KEY(0.86, { lift: 0, squat: 0.6, front: [3, -6], back: [2, -6], mouth: 'D', closed: [true, true], ease: 'in' }),
+    KEY(1.0, { mouth: 'D', closed: [true, true] })] },
+  showwave: { dur: 2.8, loop: [0.2, 2.4], crisp: true, fps: 48, keys: [
+    KEY(0, {}),
+    KEY(0.2, { front: [7, -14], back: [-6, -14], over: true, mouth: 'mochio', blush: 1.8, glance: 1 }),
+    KEY(0.45, { front: [9, -13], back: [-8, -13], over: true, tilt: 6, mouth: 'D', blush: 1.8 }),
+    KEY(0.7, { front: [7, -15], back: [-6, -15], over: true, tilt: -6, mouth: 'D', blush: 1.8 }),
+    KEY(0.95, { front: [9, -13], back: [-8, -13], over: true, tilt: 6, mouth: 'D', blush: 1.8 }),
+    KEY(1.25, { lift: 4, front: [6, -15], back: [-5, -15], over: true, closed: [true, true], mouth: 'D', blush: 1.8, ease: 'out' }),
+    KEY(1.5, { squat: 1, front: [4, -8], back: [3, -8], mouth: 'mochiw', blush: 1.9, ease: 'in' }),
+    KEY(1.9, { front: [-4, -9], back: [3, -6], over: true, mouth: 'mochiw', blush: 1.9, glance: -1 }),
+    KEY(2.4, { front: [7, -14], back: [-6, -14], over: true, mouth: 'mochio', blush: 1.8, glance: 1 }),
+    KEY(2.8, {})] },
+  showwait: { dur: 2.6, loop: [0.3, 2.3], crisp: true, fps: 48, keys: [
+    KEY(0, {}),
+    KEY(0.3, { front: [4, -9], back: [3, -9], mouth: 'mochio', look: 'down', glance: 1, tilt: 3 }),
+    KEY(0.65, { lift: 1.2, front: [4, -10], back: [3, -10], mouth: 'mochio', look: 'down', glance: 1, tilt: -2 }),
+    KEY(1.0, { front: [4, -9], back: [3, -9], mouth: 'mochiw', look: 'down', glance: 1, tilt: 3, extra: ['sweat0'] }),
+    KEY(1.35, { lift: 1.2, front: [4, -10], back: [3, -10], mouth: 'mochio', look: 'down', glance: 1, tilt: -2 }),
+    KEY(1.8, { front: [4, -9], back: [3, -9], mouth: 'mochiw', look: 'down', closed: [true, true], tilt: 4 }),
+    KEY(2.3, { front: [4, -9], back: [3, -9], mouth: 'mochio', look: 'down', glance: 1, tilt: 3 }),
+    KEY(2.6, {})] },
   power_win: { dur: 0.5, crisp: true, fps: 48, keys: [
     KEY(0, { mouth: 'D', glance: 1 }),
     KEY(0.12, { front: [6, -18], back: [-3, -17], over: true, lift: 5.5, tilt: -3, closed: [true, true], mouth: 'D', sprout: 'excited', ease: 'out' }),
@@ -2396,6 +2436,39 @@ export function drawMochiPose(ctx, g, x, y, P0, { facing = 1, over = null, under
 // Draws Mochi `m` with its feet at (x, y) at `time` seconds. `m`: { genes, dir (1 right, -1 left),
 // speed (px/s along the ground; 0 standing), dist (px it has travelled: the steps follow it, so feet
 // never slide), mood (the sprout, optional), size ('grown' or 'baby') }.
+// The Mochi Show's acts (render/mochi-show-acts.js), and drawing their props.
+Object.assign(ACTIONS, SHOW_ACTS);
+const SHOW_HOLDS = new Set(['mic', 'bachi', 'magic', 'mask', 'script', 'rose', 'ribbon', 'mime']);
+// (Each prop's size in a Mochi's little paws: a mic about as long as its head is tall, a mask
+// just over its face.)
+export const PROP_SIZE = { mic: 0.56, bachi: 0.62, wand: 0.62, hat: 0.46, mask: 0.95, script: 0.72, rose: 0.62, ribbon: 0.7, mime: 1 };
+function drawShowProp(c, target, live, hand, other, flip, s, time, out) {
+  const k0 = s / 0.6;
+  const z = (name) => k0 * PROP_SIZE[name];
+  const d = flip ? -1 : 1;
+  const [hx, hy] = hand;
+  const a = live.swing ?? 0;
+  switch (target.hold) {
+    case 'mic': return drawMic(c, hx, hy, z('mic'), d, a, out);
+    case 'bachi': return drawBachi(c, hx, hy, z('bachi'), d, a, out, 'tip');
+    case 'magic':
+      drawTopHat(c, other[0], other[1], z('hat'), d, live.swing2 ?? 0, Number(target.alt ?? 1), live.reveal ?? 0, time, out);
+      return drawWand(c, hx, hy, z('wand'), d, a, Math.max(0, Math.min(1, (a - 1) * 2.5)), time, out);
+    case 'mask': return drawMask(c, hx, hy, z('mask'), d, a, target.alt, out);
+    case 'script': return drawScript(c, hx, hy, z('script'), d, a);
+    case 'rose': return drawRose(c, hx, hy, z('rose'), d, a, out);
+    case 'ribbon': return drawRibbon(c, hx, hy, z('ribbon'), d, a, live.reveal ?? 0, time, out);
+    case 'mime': {
+      const k = z('mime');
+      drawMime(c, hx, hy, k, d, target.alt, live.reveal ?? 0, time);
+      // (Its other paw on the glass too.)
+      if (target.alt === 'wall' || target.alt === 'roof') twinkle(c, other[0] + (target.alt === 'wall' ? d * 1.8 * k : 0), other[1], 1.1 * k, '#ffffff', 0.8 * (live.reveal ?? 0));
+      return undefined;
+    }
+    default: return undefined;
+  }
+}
+
 export function drawMochiAnim(ctx, m, x, y, time) {
   const g = m.genes;
   let st = STATE.get(m);
@@ -2699,18 +2772,21 @@ export function drawMochiAnim(ctx, m, x, y, time) {
     rig.frontArm = [q(4), q(-10)];
     rig.armOver = null;
   }
-  const over = (posed && target.hold) || leaf ? (c, hand, flip) => {
+  const over = (posed && target.hold) || leaf ? (c, hand, flip, other) => {
     if (leaf) drawLeafBrella(c, hand[0], hand[1], s, flip, time, g.seed ?? 0);
     if (!posed || !target.hold) return;
     if (target.hold === 'sweet') drawSweet(c, sweetKind, hand[0], hand[1] + s, s * 0.75, Math.round(target.bites ?? 0));
     else if (target.hold === 'ball') drawBall(c, hand[0] + (flip ? -1 : 1) * live.ball[0] * s, hand[1] + live.ball[1] * s, s, live.spin);
     else if (target.hold === 'can') drawCan(c, hand[0], hand[1], s, flip, Boolean(target.pour), time);
     else if (target.hold === 'mallet') drawMallet(c, hand[0], hand[1], s, flip, target.swing ?? 0, target.smear ?? 0);
+    else if (SHOW_HOLDS.has(target.hold)) drawShowProp(c, target, live, hand, other, flip, s, time, m.anchors);
   } : null;
+  // (A prop in the far paw goes behind it: the second drumstick.)
+  const under = posed && target.hold === 'bachi' ? (c, hand, flip, other) => drawBachi(c, other[0], other[1], (s / 0.6) * PROP_SIZE.bachi, flip ? -1 : 1, live.swing2 ?? 0, m.anchors, 'tip2') : null;
   const leanW = ((((lean + Math.PI) % TAU) + TAU) % TAU) - Math.PI;
   // (`m.alpha`: drawn faded, a ghost or a photo on a card fading out; the figure's own pictures
   // otherwise draw fully opaque whatever the canvas's alpha.)
-  const opts = { scale: s, facing: target.flip || target.turned ? -dir : dir, lean: Math.abs(leanW) > 0.005 || Math.abs(tip) > 0.005 ? { tilt: leanW, lift: tip, air: kind === 'fly' || kind === 'climb' || flipping ? 1 : undefined } : null, ...(over ? { over, hold: 'front' } : {}), ...(m.alpha != null && m.alpha < 1 ? { alpha: m.alpha } : {}) };
+  const opts = { scale: s, facing: target.flip || target.turned ? -dir : dir, lean: Math.abs(leanW) > 0.005 || Math.abs(tip) > 0.005 ? { tilt: leanW, lift: tip, air: kind === 'fly' || kind === 'climb' || flipping ? 1 : undefined } : null, ...(over ? { over, hold: 'front' } : {}), ...(under ? { under } : {}), ...(m.alpha != null && m.alpha < 1 ? { alpha: m.alpha } : {}) };
   // (A ninja dash leaves two fading after-images behind: the same drawing stamped again, nothing
   // painted afresh.)
   // (Swimming, it sits down in the water: its feet below the waterline at `y`.)
@@ -2734,7 +2810,11 @@ export function drawMochiAnim(ctx, m, x, y, time) {
     const Fr = posedFrame(Math.round(x * 2) / 2, Math.round((y + dy) * 2) / 2, rig, { scale: s, facing: opts.facing });
     const mvF = { mode: moving ? kind : 'stand', phase, pc, time, skin: look.skinTone, path: g.path };
     const prop = opts.over;
-    opts.under = (c) => drawFeature(c, feat, 'under', Fr, mvF);
+    const propUnder = opts.under;
+    opts.under = (c, hand, flip, other) => {
+      drawFeature(c, feat, 'under', Fr, mvF);
+      propUnder?.(c, hand, flip, other);
+    };
     opts.over = (c, hand, flip, other) => {
       drawFeature(c, feat, 'over', Fr, mvF, hand);
       prop?.(c, hand, flip, other);
@@ -2748,6 +2828,8 @@ export function drawMochiAnim(ctx, m, x, y, time) {
     for (const [back, alpha] of [[26, 0.12], [13, 0.26]]) drawPosed(ctx, look, Math.round((x - dir * back * (s / 0.6)) * 2) / 2, Math.round((y + dy) * 2) / 2, rig, { ...opts, alpha, under: null, over: null });
   }
   drawPosed(ctx, look, Math.round(x * 2) / 2, Math.round((y + dy) * 2) / 2, rig, { ...opts, slot: m });
+  // (On the show's stage, where its mouth is, for the notes it sings: render/show.js.)
+  if (m.anchors) m.anchors.mouth = posedMouth(Math.round(x * 2) / 2, Math.round((y + dy) * 2) / 2, rig, { scale: s, facing: opts.facing, lean: opts.lean });
   if (posed && live.flame > 0.05) drawFlame(ctx, Math.round(x * 2) / 2, Math.round((y + dy) * 2) / 2, rig, opts, s, time, live.flame);
   if (posed && target.bubble) drawSnooze(ctx, Math.round(x * 2) / 2, Math.round((y + dy) * 2) / 2, rig, opts, s, time);
   if (kind === 'swim') drawWater(ctx, x, y, s, cant === 'flail' ? 'flail' : tier, pc, time, dir, m.inWater);

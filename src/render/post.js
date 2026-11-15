@@ -30,6 +30,8 @@ const LOOKS = {
   snow: { light: '#ffffff', shade: '#7a8ad0', rays: 0.4, sun: 0.9, pool: 0.05 },
   starfall: { light: '#e2d8ff', shade: '#2a2266', rays: 0.15, sun: 0.6, pool: 0.18, warm: '#fff0c8' },
   throne: { light: '#c9b6ff', shade: '#1f1846', rays: 0, sun: 0.5, pool: 0.22, warm: '#e6dcff' },
+  // (The Mochi Show's hall, world/mochi-show.js: a theatre - no daylight, darker toward its edges.)
+  showhall: { light: '#ffe2c8', shade: '#160a1e', rays: 0, sun: 0.5, pool: 0, top: false },
 };
 
 const rgba = (hex, a) => `rgba(${parseInt(hex.slice(1, 3), 16)},${parseInt(hex.slice(3, 5), 16)},${parseInt(hex.slice(5, 7), 16)},${a})`;
@@ -220,7 +222,8 @@ export function drawLighting(ctx, map, cam, w, h, time, lights = []) {
   g.setTransform(1, 0, 0, 1, 0, 0);
   g.clearRect(0, 0, LIGHT_W, LIGHT_H);
   g.drawImage(shadeOf(theme, look), 0, 0);
-  g.drawImage(brightOf(theme, look), 0, 0);
+  // (`top: false`: no daylight from above - indoors, a theatre.)
+  if (look.top !== false) g.drawImage(brightOf(theme, look), 0, 0);
   if (look.pool && lights.length) drawPools(g, look, lights, w, h);
   if (look.rays) {
     g.scale(LIGHT_W / w, LIGHT_H / h);

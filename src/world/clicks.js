@@ -56,7 +56,7 @@ const ARROWS = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Space', 'Key
 export function steer(world, held, pressed) {
   const g = world.goTo;
   if (!g) return { held, pressed };
-  if (ARROWS.some((k) => held.has(k) || pressed.has(k)) || world.now > g.until || world.race || world.scene) {
+  if (ARROWS.some((k) => held.has(k) || pressed.has(k)) || world.now > g.until || world.race || world.show || world.scene) {
     world.goTo = null;
     return { held, pressed };
   }

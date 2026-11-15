@@ -41,6 +41,7 @@
 
 import { R, E, T, F, snap, mix } from './pixel.js';
 import { drawWeatherGround, drawWeatherFront, drawSplashes } from './garden-weather.js';
+import { drawShowTent } from './show.js';
 import { ramp, planks, foliage, bark, band, gable, hash, swing, pivoted, flicker, lean } from './propkit.js';
 // (Eased 0 to 1: slow out, slow in.)
 const smooth = (u) => u * u * (3 - 2 * u);
@@ -2591,6 +2592,9 @@ export function drawGardenPiece(ctx, map, kind, wx, extra, cam, width, time) {
       if (night > 0.1) glow(ctx, x, gy - 86, 46, '#fff4c8', 0.4 * night);
       return true;
     }
+    case 'mg_showtent':
+      drawShowTent(ctx, x, gy, time, wx);
+      return true;
     case 'mg_stadium':
       place(ctx, stadiumArt(), snap(x), gy + 2);
       signText(ctx, 'RACES', x + 8, gy - 134, { align: 'center', color: '#e0659f', shadow: '#ffe0ee' });

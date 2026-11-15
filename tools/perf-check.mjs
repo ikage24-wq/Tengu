@@ -18,6 +18,7 @@ const { MAPS } = await import('../src/data/maps.js');
 const { DUNGEONS } = await import('../src/data/dungeons.js');
 const { startRun } = await import('../src/world/dungeon.js');
 const { startRace } = await import('../src/world/mochi-race.js');
+const { startShow } = await import('../src/world/mochi-show.js');
 const { RACE_STAGES } = await import('../src/data/mochi-race.js');
 const { rollMochi } = await import('../src/data/mochi-genes.js');
 const { newRecord } = await import('../src/data/mochi-raise.js');
@@ -119,6 +120,13 @@ export function checkMaps(ids = Object.keys(MAPS), warm = 300, frames = 300) {
         w.char.raceWins = Object.fromEntries(Object.keys(RACE_STAGES).map((s) => [s + '|beginner', true]));
         loadMap(w, 'mochi_stadium', 'board');
         if (!startRace(w, rec, Object.keys(RACE_STAGES).find((k) => RACE_STAGES[k].map === id))) throw new Error("couldn't start the race");
+      } else if (map.mochiShow) {
+        // Likewise the Mochi Show's hall (world/mochi-show.js): one show, from the market's tent.
+        const rec = newRecord(rollMochi(7));
+        for (const st of Object.values(rec.stats)) st.points = 900;
+        w.char.garden = { back: null, mochi: [rec], eggs: [], unlocked: {} };
+        loadMap(w, 'mochi_market', 'start');
+        if (!startShow(w, rec, 'beginner')) throw new Error("couldn't start the show");
       } else {
         loadMap(w, id, 'west');
         w.bots = createBots(w, seeded(7), { daily: true, alts: [], clock: CROWD_HOUR });

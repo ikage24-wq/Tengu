@@ -2,6 +2,8 @@
 
 import { lapStart, lap } from '../core/frametimes.js';
 import { WEATHER_WIND } from './terrain.js';
+import { HALL, showShot } from '../world/mochi-show.js';
+import { drawShowScreen } from './show.js';
 import { usingSkin } from '../data/cosmetics.js';
 import { drawSkinTag } from './cosmetics.js';
 import { awayNow } from '../world/nightmarket.js';
@@ -93,6 +95,44 @@ export function updateCamera(cam, world, dt) {
     }
     cine.view = { x: cam.x + VIEW_W / 2, y: cam.y + VIEW_H * 0.55 };
   }
+  // The Mochi Show (world/mochi-show.js): its shots, wide or close, the camera gliding from one to
+  // the next - starting gently and settling gently (a critically damped spring) - and never past the
+  // hall's edges. (The spring moves the view's edges and its width together, from one shot's frame -
+  // kept inside the hall - toward the next's, so the frames between stay inside the hall too.)
+  if (world.show) {
+    const goal = showShot(world.show);
+    const gw = VIEW_W / goal.zoom;
+    const gh = VIEW_H / goal.zoom;
+    const to = {
+      x: Math.max(HALL.x0, Math.min(HALL.x1 - gw, goal.x - gw / 2)),
+      y: Math.max(HALL.y0, Math.min(HALL.y1 - gh, goal.y - gh / 2)),
+      w: gw,
+    };
+    // (The spring chases the new frame as it eases in, rather than the frame itself, so a move starts
+    // from stillness without a kick.)
+    const sv = cam.show;
+    if (fresh || !sv) cam.show = { ...to, vx: 0, vy: 0, vw: 0, to: { ...to } };
+    else {
+      const w = 3.4;
+      for (let left = Math.min(dt, 0.1); left > 1e-6; left -= 1 / 120) {
+        const h = Math.min(left, 1 / 120);
+        for (const [p, v] of [['x', 'vx'], ['y', 'vy'], ['w', 'vw']]) {
+          sv.to[p] += (to[p] - sv.to[p]) * (1 - Math.exp(-h * 5));
+          sv[v] += (w * w * (sv.to[p] - sv[p]) - 2 * w * sv[v]) * h;
+          sv[p] += sv[v] * h;
+        }
+      }
+    }
+    const s = cam.show;
+    s.w = Math.min(s.w, HALL.x1 - HALL.x0);
+    cam.zoom = VIEW_W / s.w;
+    const vh = VIEW_H / cam.zoom;
+    cam.x = Math.max(HALL.x0, Math.min(HALL.x1 - s.w, s.x));
+    cam.y = Math.max(HALL.y0, Math.min(HALL.y1 - vh, s.y));
+    Object.assign(cam, { ready: true, mapId: map.id });
+    return;
+  }
+  cam.show = null;
   // A Mochi race (world/mochi-race.js): the camera runs alongside your Mochi, closer in than usual
   // (`rc.zoom`: drawWorld scales the whole scene), easing in and out with the shot.
   const rc = world.race?.cam;
@@ -467,11 +507,14 @@ export function drawWorld(ctx, world, viewCam, time) {
   // The camera sits on whole screen pixels: between them, every thin line (grass blades, the
   // spikes along a lip, outlines) was drawn half in two pixels and flickered as it slid across them
   // while you walked. On the pixel grid the whole scene steps together, crisp, every frame.
-  const cam = { x: snap(viewCam.x + ox), y: snap(viewCam.y + oy) };
+  // (In the Mochi Show's close shots, on the zoomed screen's pixels: render/show.js.)
+  const zs = world.show ? (viewCam.zoom ?? 1) : 1;
+  const cam = { x: snap((viewCam.x + ox) * zs) / zs, y: snap((viewCam.y + oy) * zs) / zs };
   // A race's closer camera (updateCamera): the whole scene drawn larger. (Anything a race draws in
   // screen space finds the unzoomed screen in `world.race.screenT`.)
-  const zoom = world.race && (viewCam.zoom ?? 1) !== 1 ? viewCam.zoom : 1;
+  const zoom = (world.race || world.show) && (viewCam.zoom ?? 1) !== 1 ? viewCam.zoom : 1;
   if (world.race) world.race.screenT = ctx.getTransform();
+  if (world.show) world.show.zoom = zoom;
   ctx.save();
   if (zoom !== 1) ctx.scale(zoom, zoom);
   try {
@@ -479,6 +522,8 @@ export function drawWorld(ctx, world, viewCam, time) {
   } finally {
     ctx.restore();
   }
+  // (The Mochi Show's words and confetti: on the screen itself, over everything, crisp.)
+  if (world.show) drawShowScreen(ctx, world.show, cam, time);
 }
 
 // Everything in the world, back to front, at the camera `cam` (drawWorld).
