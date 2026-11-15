@@ -21,7 +21,9 @@ export function newStack() {
 export function tickStack(g, dt) {
   g.t += dt;
   if (g.phase === 'swing') {
-    g.x += g.dir * speedAt(g.n) * dt;
+    // (Easing round at each end of its swing, like a thing on a string, never bouncing off a wall.)
+    const edge = Math.min(1, (STACK.swing - Math.abs(g.x)) / (STACK.swing * 0.22));
+    g.x += g.dir * speedAt(g.n) * (0.4 + 0.6 * edge * edge * (3 - 2 * edge)) * dt;
     if (Math.abs(g.x) > STACK.swing) {
       g.x = Math.sign(g.x) * STACK.swing;
       g.dir = -g.dir;
@@ -47,6 +49,9 @@ function land(g, x) {
   const gold = g.falling.gold;
   g.falling = null;
   const off = x - g.topX;
+  // (When, and which way off-centre: the drawing gives the landing its hop and the stack its wobble.)
+  g.landAt = g.t;
+  g.landOff = off;
   if (Math.abs(off) > STACK.R * 1.25) {
     // Off the edge: it rolls away.
     g.lives -= 1;

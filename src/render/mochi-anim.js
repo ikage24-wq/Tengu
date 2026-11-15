@@ -1069,6 +1069,47 @@ const EASE = { in: (k) => k * k, out: (k) => 1 - (1 - k) * (1 - k) };
 // once, then reused): enough to read smooth.
 export const MOMENT_FPS = 24;
 const smooth01 = (k) => k * k * (3 - 2 * k);
+// A move marked `flow` (2026-11-15, the polish of the garden's new moves: "smooth, a lil bouncy")
+// eases two ways more. Through a key in the middle of one motion - its head going on down the way it
+// was going - it carries straight on instead of stopping dead there (the key's speed is its
+// neighbours' slope, kept within what can't overshoot: Fritsch-Carlson). And coming to rest on a
+// pose, the head, the arms and the crouch go a touch past it and settle back (SETTLE: about 6% of
+// the move, smooth at both ends) - a little bounce in every arrival. Never its feet, its height or
+// its lean: those are exact, so nothing slides or dips through the ground.
+const SETTLE = new Set(['tilt', 'hx', 'hy', 'front', 'back', 'squat', 'bob']);
+const settle01 = (k) => smooth01(k) + 8 * k * k * k * (1 - k) * (1 - k);
+function flowSlope(keys, i, key, j, at) {
+  if (i <= 0 || i >= keys.length - 1 || keys[i][1].ease || keys[i + 1][1].ease) return 0;
+  const v = (n) => {
+    const x = at(keys[n][1], key);
+    return Array.isArray(x) ? x[j] : x;
+  };
+  const d0 = (v(i) - v(i - 1)) / Math.max(1e-6, keys[i][0] - keys[i - 1][0]);
+  const d1 = (v(i + 1) - v(i)) / Math.max(1e-6, keys[i + 1][0] - keys[i][0]);
+  if (d0 * d1 <= 0) return 0;
+  const m = (v(i + 1) - v(i - 1)) / Math.max(1e-6, keys[i + 1][0] - keys[i - 1][0]);
+  return Math.sign(m) * Math.min(Math.abs(m), 3 * Math.abs(d0), 3 * Math.abs(d1));
+}
+// (Landing a pose - the arms come to rest, the head settles - the body gives a little: it dips
+// under a pixel and comes back in a quarter of a second, more for a bigger move. On the ground
+// only, and not where the next beat follows straight on.)
+const DIP = 0.24;
+function dipsOf(bit) {
+  if (bit.dips) return bit.dips;
+  const ks = bit.keys;
+  const num = (o, key) => o[key] ?? 0;
+  const arm = (o, key) => o[key] ?? [0, 0];
+  bit.dips = [];
+  for (let j = 1; j < ks.length - 1; j++) {
+    const [ta, a] = ks[j - 1];
+    const [tb, b] = ks[j];
+    if (b.ease || tb - ta < 0.12 || ks[j + 1][0] - tb < 0.1 || num(b, 'lift') > 0.5 || num(a, 'lift') > 0.5) continue;
+    const da = (key) => Math.hypot(arm(b, key)[0] - arm(a, key)[0], arm(b, key)[1] - arm(a, key)[1]);
+    const M = Math.abs(num(b, 'tilt') - num(a, 'tilt')) * 0.08 + (da('front') + da('back')) * 0.06 + Math.abs(num(b, 'squat') - num(a, 'squat')) * 0.25 + (Math.abs(num(b, 'hx') - num(a, 'hx')) + Math.abs(num(b, 'hy') - num(a, 'hy'))) * 0.2;
+    if (M >= 0.5) bit.dips.push([tb, Math.min(0.75, 0.2 + 0.08 * M)]);
+  }
+  return bit.dips;
+}
 // The pose `t` seconds into idle moment (or action) `bit`, over the still stance `base`.
 function idlePose(bit, t, base) {
   const keys = bit.keys;
@@ -1076,14 +1117,36 @@ function idlePose(bit, t, base) {
   while (i < keys.length - 1 && keys[i + 1][0] <= t) i++;
   const [t0, a] = keys[i];
   const [t1, b] = keys[Math.min(i + 1, keys.length - 1)];
-  const k = t1 > t0 ? (EASE[b.ease] ?? smooth01)(Math.min(1, (t - t0) / (t1 - t0))) : 1;
+  const u = t1 > t0 ? Math.min(1, (t - t0) / (t1 - t0)) : 1;
+  const k = t1 > t0 ? (EASE[b.ease] ?? smooth01)(u) : 1;
   const at = (o, key) => o[key] ?? base[key] ?? (key === 'ball' ? [0, -3] : 0);
   // (A flip or a roll goes all the way round: `lean` keeps whatever turn it's reached.)
   const out = { ...base };
+  const flow = bit.flow && t1 > t0 && !b.ease && i + 1 < keys.length;
   for (const key of EASED) {
     const va = at(a, key);
     const vb = at(b, key);
-    out[key] = Array.isArray(va) ? va.map((v, j) => lerp(v, vb[j], k)) : lerp(va, vb, k);
+    if (!flow) {
+      out[key] = Array.isArray(va) ? va.map((v, j) => lerp(v, vb[j], k)) : lerp(va, vb, k);
+      continue;
+    }
+    // (Flowing: a cubic through the two keys with their speeds; at rest on the far one, a settle.)
+    const h = t1 - t0;
+    const one = (p0, p1, j) => {
+      const m0 = flowSlope(keys, i, key, j, at) * h;
+      const m1 = flowSlope(keys, i + 1, key, j, at) * h;
+      if (!m0 && !m1) return lerp(p0, p1, SETTLE.has(key) && h >= 0.12 ? settle01(u) : smooth01(u));
+      const u2 = u * u;
+      const u3 = u2 * u;
+      return (2 * u3 - 3 * u2 + 1) * p0 + (u3 - 2 * u2 + u) * m0 + (-2 * u3 + 3 * u2) * p1 + (u3 - u2) * m1;
+    };
+    out[key] = Array.isArray(va) ? va.map((v, j) => one(v, vb[j], j)) : one(va, vb, 0);
+  }
+  if (bit.flow) {
+    for (const [tk, amp] of dipsOf(bit)) {
+      const u = (t - tk) / DIP;
+      if (u > 0 && u < 1) out.bob = (out.bob ?? 0) + amp * Math.sin(Math.PI * u) * (1 - 0.35 * u);
+    }
   }
   out.turned = Boolean(a.turned);
   // (A hand on its way to or from the face is drawn over the head the whole way.)
@@ -2446,6 +2509,13 @@ Object.assign(ACTIONS, SHOW_ACTS);
 Object.assign(ACTIONS, TOY_ACTS);
 Object.assign(ACTIONS, SUMO_ACTS);
 Object.assign(ACTIONS, FESTIVAL_ACTS);
+// (The garden's play moves flow too, with a little bounce as they settle: the rides, the ball, the
+// weather's games, and the dance two Mochi share. 2026-11-15.)
+for (const n of ['swing', 'slide', 'bounce', 'flaps', 'play', 'splash', 'catch', 'snowcatch', 'snowpat', 'rainwatch', 'dance1']) {
+  const bit = ACTIONS[n] ?? TRICK_BITS[n];
+  bit.flow = true;
+  bit.fps = Math.max(bit.fps ?? MOMENT_FPS, 48);
+}
 const SHOW_HOLDS = new Set(['mic', 'bachi', 'magic', 'mask', 'script', 'rose', 'ribbon', 'mime', 'kite', 'bubblewand', 'top', 'gift']);
 // (Each prop's size in a Mochi's little paws: a mic about as long as its head is tall, a mask
 // just over its face.)
@@ -2686,7 +2756,8 @@ export function drawMochiAnim(ctx, m, x, y, time) {
   const tl = loopTime(g, time);
   const blink = moving || posed ? null : eyesAt(g, tl);
   const rig = {
-    tx: 0, by: q(P.bob), hx: q(P.hx), hy: q(P.hy), tilt: Math.round((P.tilt * downBy) / 2) * 2, lift: liftNow, squat: Math.round(P.squat),
+    // (A flowing move's tilt in whole degrees, not twos: a slow sway glides instead of ticking over.)
+    tx: 0, by: q(P.bob), hx: q(P.hx), hy: q(P.hy), tilt: act?.bit?.flow ? Math.round(P.tilt * downBy) : Math.round((P.tilt * downBy) / 2) * 2, lift: liftNow, squat: Math.round(P.squat),
     backArm: [q(P.back[0]), q(P.back[1])], frontArm: [q(P.front[0]), q(P.front[1])], armSide: moving ? 0.35 : 0.6, hipIn: moving ? 0.6 : 0,
     frontLeg: [q(P.legF[0]), q(P.legF[1]), q3(P.legF[2])], backLeg: [q(P.legB[0]), q(P.legB[1]), q3(P.legB[2])],
     air: target.lift > 1.5, hair: Math.round(hairNow * 2) / 2, hairTip: Math.round(hairNow * 2.4) / 2,

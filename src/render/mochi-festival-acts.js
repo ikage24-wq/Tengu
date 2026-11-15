@@ -10,7 +10,9 @@
 //             0.8 s, the mallet landing 0.5 in)
 
 const KEY = (t, o) => [t, o];
-const act = (dur, loop, keys) => ({ dur, loop, crisp: true, fps: 48, keys });
+// (`flow`: carried through the middle of a motion, and settling with a little bounce:
+// render/mochi-anim.js idlePose.)
+const act = (dur, loop, keys) => ({ dur, loop, crisp: true, fps: 48, flow: true, keys });
 const C2 = [true, true];
 const SAT = { squat: 3, bob: 3, legF: [3.4, -1.6, 40], legB: [2.2, -1.2, 30] };
 const DANGO = { hold: 'dango' };

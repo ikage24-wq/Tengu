@@ -22,7 +22,9 @@
 //                swept up), gyojipoint (the fan at the winner)
 
 const KEY = (t, o) => [t, o];
-const act = (dur, loop, keys) => ({ dur, loop, crisp: true, fps: 48, keys });
+// (`flow`: carried through the middle of a motion, and settling with a little bounce:
+// render/mochi-anim.js idlePose.)
+const act = (dur, loop, keys) => ({ dur, loop, crisp: true, fps: 48, flow: true, keys });
 const TAU = Math.PI * 2;
 const C2 = [true, true];
 const SET = [[-0.4, 0.8], [-0.4, 0.8]];

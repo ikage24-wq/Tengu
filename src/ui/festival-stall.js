@@ -186,9 +186,15 @@ function drawGame(ctx, x, y, w, h, g, time) {
   const R = STACK.R;
   const gap = R * 1.7;
   const n = g?.tower.length ?? 0;
-  // (The stack scrolls down as it grows, so its top stays in view.)
-  const scroll = Math.max(0, (n - 6) * gap);
-  const tip = !g ? 0 : g.phase === 'topple' ? Math.sign(g.lean || 1) * Math.min(1.4, ((g.t - g.toppleAt) / 1.2) ** 2 * 1.4) : (g.lean / STACK.lean) * 0.22 + Math.sin(time * 3) * 0.01 * Math.abs(g.lean);
+  // (The stack scrolls down as it grows, so its top stays in view: eased down, never a jump.)
+  const dtd = g ? Math.max(0, Math.min(0.1, time - (g.drawAt ?? time))) : 0;
+  if (g) g.drawAt = time;
+  const want = Math.max(0, (n - 6) * gap);
+  const scroll = g ? (g.scroll = g.scroll == null || want < g.scroll - gap * 2 ? want : g.scroll + (want - g.scroll) * Math.min(1, dtd * 9)) : 0;
+  // (Just landed: the top dango hops and settles, and the stack wobbles the way it came down off-centre.)
+  const lu = g?.landAt != null ? (g.t - g.landAt) / 0.5 : 1;
+  const wob = lu < 1 ? Math.sin(lu * Math.PI * 2.5) * (1 - lu) * (0.025 + Math.min(0.05, Math.abs(g.landOff ?? 0) * 0.008)) * (Math.sign(g.landOff ?? 0) || 1) : 0;
+  const tip = !g ? 0 : g.phase === 'topple' ? Math.sign(g.lean || 1) * Math.min(1.4, ((g.t - g.toppleAt) / 1.2) ** 2 * 1.4) : (g.lean / STACK.lean) * 0.22 + Math.sin(time * 3) * 0.01 * Math.abs(g.lean) + wob;
   ctx.save();
   ctx.translate(cx, base + scroll);
   ctx.rotate(tip);
@@ -199,22 +205,31 @@ function drawGame(ctx, x, y, w, h, g, time) {
   ctx.moveTo(0, 0);
   ctx.lineTo(0, -(STACK.max + 0.6) * gap);
   ctx.stroke();
-  for (const [i, d] of (g?.tower ?? []).entries()) dango(ctx, d.dx, -R - i * gap, R, d.gold, time);
+  const hop = lu < 0.5 ? 2.2 * Math.sin(Math.PI * lu * 2) : 0;
+  for (const [i, d] of (g?.tower ?? []).entries()) dango(ctx, d.dx, -R - i * gap - (i === n - 1 ? hop : 0), R, d.gold, time);
   ctx.restore();
   if (g) {
     const topY = base + scroll - R - n * gap;
-    // The one swinging above, or falling.
-    if (g.phase === 'swing') dango(ctx, cx + g.x, Math.min(topY - gap * 2.2, y + 22), R, (g.n + 1) % 5 === 0, time);
+    // The one swinging above (a little higher at each end of its swing, as on a string; a new one
+    // drops in from above), or falling.
+    const hang = Math.min(topY - gap * 2.2, y + 22);
+    const arc = (x0) => hang - 5 * (x0 / STACK.swing) ** 2;
+    const enter = g.landAt != null || g.misses.length ? Math.max(0, 1 - (g.t - Math.max(g.landAt ?? -9, g.misses.at(-1)?.t ?? -9)) / 0.3) : 0;
+    if (g.phase === 'swing') dango(ctx, cx + g.x, arc(g.x) - 16 * enter * enter, R, (g.n + 1) % 5 === 0, time);
     if (g.phase === 'fall' && g.falling) {
       const k = g.falling.t / STACK.fall;
-      const from = Math.min(topY - gap * 2.2, y + 22);
+      const from = arc(g.falling.x);
       dango(ctx, cx + g.falling.x, from + (topY - from) * k * k, R, g.falling.gold, time);
     }
-    // A miss, rolling off and away.
+    // A miss, falling off the side, bouncing on the grass and rolling away.
     for (const m of g.misses) {
       const a = g.t - m.t;
-      if (a > 1.2) continue;
-      dango(ctx, cx + m.x + m.dir * a * 70, Math.min(base - R, topY + a * a * 200), R, false, time, a * 6 * m.dir);
+      if (a > 1.3) continue;
+      const ground = base - R;
+      const tg = Math.sqrt(Math.max(0, ground - topY) / 200);
+      const b = a - tg;
+      const my = b < 0 ? topY + a * a * 200 : ground - 9 * Math.abs(Math.sin((Math.PI * b) / 0.32)) * Math.exp(-b * 4.5);
+      dango(ctx, cx + m.x + m.dir * a * 70, my, R, false, time, a * 6 * m.dir);
     }
     // A word for the last one.
     const words = { perfect: 'Perfect!', miss: 'Oops!', topple: 'Toppled!', full: 'Full skewer!' }[g.last];
@@ -273,3 +288,6 @@ function heart(ctx, x, y, full) {
   ctx.closePath();
   ctx.fill();
 }
+
+// (The Dango Stack's play area on its own, for a film of the stall games.)
+export const drawDangoGame = (...a) => drawGame(...a);

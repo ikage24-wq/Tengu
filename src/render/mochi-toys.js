@@ -13,7 +13,9 @@ const C2 = [true, true];
 const SET = [[-0.4, 0.8], [-0.4, 0.8]];
 const OUT = (y = -12) => ({ front: [10, y], back: [-10, y] });
 const SAT = { squat: 3, bob: 3, legF: [3.4, -1.6, 40], legB: [2.2, -1.2, 30] };
-const act = (dur, loop, keys) => ({ dur, loop, crisp: true, fps: 48, keys });
+// (`flow`: carried through the middle of a motion, and settling with a little bounce:
+// render/mochi-anim.js idlePose.)
+const act = (dur, loop, keys) => ({ dur, loop, crisp: true, fps: 48, flow: true, keys });
 const TAU = Math.PI * 2;
 
 // ---------- The kite ----------

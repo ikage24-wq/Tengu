@@ -51,10 +51,13 @@ export function drawTossGame(ctx, x, y, w, h, g, time) {
   // The heads, behind the wall: up out of their holes as far as they're up.
   for (const q of g?.targets ?? []) {
     const hx = cx + q.hole;
+    // (Up it pops, a touch past and back - a little bounce - and ducks down smoothly; hit, it
+    // drops away.)
     let up;
-    if (q.hit != null) up = Math.max(0, 1 - (g.t - q.hit) / 0.35);
-    else if (g.t < q.at + 0.15) up = (g.t - q.at) / 0.15;
-    else if (g.t > q.until) up = Math.max(0, 1 - (g.t - q.until) / 0.15);
+    const pop = (u) => 1 + 2.4 * (u - 1) ** 3 + 1.4 * (u - 1) ** 2;
+    if (q.hit != null) up = Math.max(0, 1 - ((g.t - q.hit) / 0.35) ** 2);
+    else if (g.t < q.at + 0.22) up = pop(Math.max(0, (g.t - q.at) / 0.22));
+    else if (g.t > q.until) up = Math.max(0, 1 - ((g.t - q.until) / 0.18) ** 2);
     else up = 1;
     head(ctx, hx, wallY + 6 - up * 20, q, g, time);
   }
@@ -255,9 +258,17 @@ export function drawPetalGame(ctx, x, y, w, h, g, time) {
   ctx.fillRect(x, y + h - 14, w, 1.6);
   if (g) {
     for (const p of g.petals) petal(ctx, cx + p.x * s, y + p.y, time + p.ph, p.gold);
-    // The basket.
-    const bx = cx + g.x * s;
-    const by = y + PETAL.catchY;
+    // The basket: leaning into its way, and dipping as a petal lands in it.
+    const bx0 = cx + g.x * s;
+    const caughtAt = g.pops.length ? g.pops.at(-1).t : -9;
+    const dip = g.t - caughtAt < 0.24 ? 2 * Math.sin((Math.PI * (g.t - caughtAt)) / 0.24) : 0;
+    const by0 = y + PETAL.catchY + dip;
+    ctx.save();
+    ctx.translate(bx0, by0 + 4);
+    ctx.rotate(-((g.vx ?? 0) / PETAL.speed) * 0.14);
+    ctx.translate(-bx0, -(by0 + 4));
+    const bx = bx0;
+    const by = by0;
     ctx.fillStyle = '#c8945a';
     ctx.beginPath();
     ctx.moveTo(bx - PETAL.basket * s - 2, by - 2);
@@ -278,6 +289,7 @@ export function drawPetalGame(ctx, x, y, w, h, g, time) {
     ctx.fillRect(bx - PETAL.basket * s - 2, by + 2, (PETAL.basket * s + 2) * 2, 2);
     ctx.fillStyle = '#ffc2d6';
     ctx.fillRect(bx - 1, by - 3, 2, 3);
+    ctx.restore();
     // A sparkle at each catch.
     for (const q of g.pops) {
       const a = (g.t - q.t) / 0.7;
@@ -375,15 +387,33 @@ export function drawRingGame(ctx, x, y, w, h, g, time) {
   if (g) {
     // Rings on the pegs, stacked.
     const stack = {};
+    const top = boardY - 26;
     for (const r of g.on) {
       const n = (stack[r.peg] = (stack[r.peg] ?? 0) + 1);
-      ring(ctx, ox + r.peg, boardY - 2 - n * 2.6, 0, '#ffd24a');
+      const rest = boardY - 2 - n * 2.6;
+      const a = g.t - (r.t ?? -9);
+      const fall = 0.16;
+      const ry = a < fall ? top + (rest - top) * (a / fall) ** 2 : rest - (a < fall + 0.18 ? 1.6 * Math.sin((Math.PI * (a - fall)) / 0.18) : 0);
+      const wobble = a > fall && a < fall + 0.6 ? 0.55 * Math.sin((a - fall) * 22) * (1 - (a - fall) / 0.6) : 0;
+      ring(ctx, ox + r.peg, ry, wobble, '#ffd24a');
     }
-    // Misses, rolling off.
+    // Misses: down onto the board (a clink first bounces up off the peg's top), and rolling away.
     for (const m of g.off) {
       const a = g.t - m.t;
-      if (a > 1.4) continue;
-      ring(ctx, ox + m.x + m.dir * a * (m.clink ? 30 : 12), boardY - 2 + (m.clink ? -6 * Math.sin(Math.min(1, a / 0.3) * Math.PI) : 0), a * 10 * m.dir, '#ffb08a');
+      if (a > 1.5) continue;
+      const floor = boardY - 2;
+      let my;
+      let ax;
+      if (m.clink) {
+        const up = 0.22;
+        my = a < up ? top - 32 * (a / up) * (1 - a / up) : top + (floor - top) * Math.min(1, ((a - up) / 0.22) ** 2);
+        ax = a * 30;
+      } else {
+        const drop = 0.17;
+        my = a < drop ? top + (floor - top) * (a / drop) ** 2 : floor - 3 * Math.abs(Math.sin((Math.PI * (a - drop)) / 0.2)) * Math.exp(-(a - drop) * 9);
+        ax = Math.max(0, a - drop) * 14;
+      }
+      ring(ctx, ox + m.x + m.dir * ax, my, a * 10 * m.dir, '#ffb08a');
     }
     // The one in the air.
     if (g.flying) {

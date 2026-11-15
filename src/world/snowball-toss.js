@@ -27,7 +27,9 @@ export function tickToss(g, dt) {
   if (g.phase !== 'play') return null;
   g.t += dt;
   const speed = 110 + g.score * 2.5;
-  g.x += g.dir * speed * dt;
+  // (The aim eases round at each end of its sweep, never bouncing off a wall.)
+  const edge = Math.min(1, (TOSS.swing - Math.abs(g.x)) / (TOSS.swing * 0.2));
+  g.x += g.dir * speed * (0.4 + 0.6 * edge * edge * (3 - 2 * edge)) * dt;
   if (Math.abs(g.x) > TOSS.swing) {
     g.x = Math.sign(g.x) * TOSS.swing;
     g.dir = -g.dir;

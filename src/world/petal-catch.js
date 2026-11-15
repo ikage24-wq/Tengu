@@ -19,7 +19,12 @@ export function tickCatch(g, dt, input = {}) {
   if (g.phase !== 'play') return null;
   g.t += dt;
   const want = input.aim != null ? Math.sign(input.aim - g.x) * Math.min(1, Math.abs(input.aim - g.x) / 6) : (input.right ? 1 : 0) - (input.left ? 1 : 0);
-  g.x = Math.max(-PETAL.half + PETAL.basket, Math.min(PETAL.half - PETAL.basket, g.x + want * PETAL.speed * dt));
+  // (It picks up speed and slows down quickly but smoothly - a basket in a pair of paws - and the
+  // drawing leans it into its way, by `vx`.)
+  g.vx = (g.vx ?? 0) + (want * PETAL.speed - (g.vx ?? 0)) * Math.min(1, dt * 18);
+  const nx = Math.max(-PETAL.half + PETAL.basket, Math.min(PETAL.half - PETAL.basket, g.x + g.vx * dt));
+  if (nx !== g.x + g.vx * dt) g.vx = 0;
+  g.x = nx;
   if (g.t >= g.next && g.t < PETAL.time - 1.5) {
     g.petals.push({ x0: (g.rng() * 2 - 1) * (PETAL.half - 12), y: -6, vy: 34 + g.t * 1.6 + g.rng() * 14, sway: 6 + g.rng() * 12, ph: g.rng() * 6, gold: g.rng() < 0.12, done: false });
     g.next = g.t + (0.55 - (g.t / PETAL.time) * 0.25) * (0.6 + 0.8 * g.rng());

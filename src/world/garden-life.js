@@ -622,7 +622,10 @@ export function ridePath(map, kind, t) {
     const b = t - 0.6;
     if (b < 3.2) {
       const f = (b % 0.8) / 0.8;
-      return { x: mx, y: top - 16 * Math.sin(Math.PI * f), dir: 1, dip: Math.max(0, 1 - Math.min(f, 1 - f) / 0.14) };
+      // (A real bounce: quick off the cap, a hang at the top, quick back down - a parabola, not a
+      // sine, which floated at the top and stopped dead on the cap. The last one's the biggest.)
+      const h = b >= 2.4 ? 19 : 16;
+      return { x: mx, y: top - h * 4 * f * (1 - f), dir: 1, dip: Math.max(0, 1 - Math.min(f, 1 - f) / 0.14) };
     }
     const u = Math.min(1, (b - 3.2) / 0.6);
     const [x, y] = hop([mx, top], [mx + 32, g(mx + 32)], easeIO(u), 14);
