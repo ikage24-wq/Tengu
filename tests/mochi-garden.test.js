@@ -354,41 +354,156 @@ test('breeding: a Heart Mochi makes a grown Mochi bloom; two blooming find each 
   }
 });
 
-test('personality in play: moments that fit who starts them, for a visitor too', async () => {
-  const { momentOf } = await import('../src/world/garden-life.js');
-  const { PERSONALITIES } = await import('../src/data/mochi-genes.js');
-  const KINDS = ['chase', 'hide', 'parade', 'nap', 'huff', 'chat'];
-  assert.ok(PERSONALITIES.every((p) => KINDS.includes(momentOf(p))));
-  // Two gardens of the same Mochi on the same clock: the owner's, and a visitor's.
-  const g = garden();
-  try {
-    g.swimmer.personality = 'playful';
-    g.baby.personality = 'sleepy';
-    const visitor = createWorld(createCharacter('Bea', { hairStyle: 'bob' }));
-    visitor.log = () => {};
-    visitor.forceNight = 0;
-    visitor.gardenVisit = { ownerId: 'A', name: 'Mina', garden: JSON.parse(JSON.stringify(g.char.garden)) };
-    loadMap(visitor, 'garden', 'start');
-    const seen = [];
-    const seenV = [];
-    const note = (w, list) => {
-      const mo = w.gardenLife.moment;
-      if (mo && list.at(-1)?.t0 !== mo.t0) list.push({ t0: Math.round(mo.t0), kind: mo.kind, who: mo.a.rec.personality });
-    };
-    for (let k = 0; k < 6000; k++) {
-      g.run(0.2, 0.2);
-      updateWorld(visitor, 0.2, keys());
-      note(g.w, seen);
-      note(visitor, seenV);
+// A garden of grown Mochi, one of each personality given, on a clock the test moves: friends with
+// each other as much as `friends`, as fond of you as `bond`.
+function gardenOf(personalities, { friends = 0, bond = 0, enter = true } = {}) {
+  const char = createCharacter('Mina', { hairStyle: 'bob' });
+  const recs = personalities.map((personality, i) => {
+    const rec = newRecord(rollMochi(7100 + i * 37, { coat: null }));
+    for (const st of ['run', 'fly', 'power', 'stamina', 'swim']) giveExp(rec, st, 1500);
+    Object.assign(rec, { personality, bond, tricks: ['twirl'], name: `M${i}` });
+    return rec;
+  });
+  for (const a of recs) for (const b of recs) if (a !== b) (a.friends ??= {})[b.seed] = friends;
+  char.garden = { back: null, mochi: recs, eggs: [], unlocked: {} };
+  const w = createWorld(char);
+  const logs = [];
+  w.log = (m) => logs.push(m);
+  w.forceNight = 0;
+  let now = 1.8e12;
+  const realNow = Date.now;
+  Date.now = () => now;
+  if (enter) loadMap(w, 'garden', 'start');
+  const run = (secs, step = 0.1) => {
+    for (let t = 0; t < secs; t += step) {
+      now += step * 1000;
+      updateWorld(w, step, keys());
     }
-    assert.ok(seen.length >= 3, `${seen.length} moments`);
-    // (A Mochi too little to walk isn't asked to play tag or hide-and-seek: a chat instead.)
-    const running = ['chase', 'hide', 'parade'];
-    for (const m of seen) assert.ok(m.kind === momentOf(m.who) || m.kind === 'snub' || (m.kind === 'chat' && running.includes(momentOf(m.who))), JSON.stringify(m));
-    // (Since the Mochi have minds of their own, a visitor's screen has them where their minds take
-    // them there, so the moments can differ: the visitor still sees moments, each in character.)
-    assert.ok(seenV.length >= 3, `the visitor sees moments too (${seenV.length})`);
-    for (const m of seenV) assert.ok(m.kind === momentOf(m.who) || m.kind === 'snub' || (m.kind === 'chat' && running.includes(momentOf(m.who))), JSON.stringify(m));
+  };
+  if (enter) run(0.5);
+  return { w, char, recs, logs, run, clock: () => now, done: () => (Date.now = realNow) };
+}
+
+test('their own minds bring them together: one asks a friend to play, and they play the game that fits who asked', async () => {
+  const { gameFor } = await import('../src/world/mochi-heart.js');
+  const g = gardenOf(['playful', 'chatty', 'showoff', 'shy'], { friends: 40 });
+  try {
+    const seen = [];
+    for (let k = 0; k < 3000; k++) {
+      g.run(0.2, 0.2);
+      for (const d of g.w.gardenLife.duos ?? []) if (!seen.includes(d)) seen.push(d);
+    }
+    const kinds = seen.map((d) => d.kind);
+    assert.ok(seen.length >= 4, `${seen.length} times together: ${kinds}`);
+    const games = seen.filter((d) => !['decline', 'squabble', 'comfort', 'makeup'].includes(d.kind));
+    assert.ok(games.length >= 3, `games played: ${kinds}`);
+    // (Each the game its asker likes - or a chat, when one of them is too little to run about.)
+    for (const d of games) assert.ok(d.kind === d.asked && (d.kind === gameFor(d.a.rec, { feel: null }, 0) || d.kind === 'chat' || d.kind === 'dance'), `${d.a.rec.personality} asked for ${d.kind}`);
+    // (Playing together brings them closer.)
+    const [a] = g.recs;
+    assert.ok(Object.values(a.friends ?? {}).some((v) => v > 40), JSON.stringify(a.friends));
+  } finally {
+    g.done();
+  }
+});
+
+test('feelings: alone with no friend about it feels lonely; a kind friend comes over and comforts it', async () => {
+  const { feelingOf } = await import('../src/world/mochi-heart.js');
+  const g = gardenOf(['grumpy', 'gentle'], { friends: 60 });
+  try {
+    const [sad, kind] = g.w.gardenLife.mochi;
+    Object.assign(sad.rec, { needs: { energy: 90, fun: 90, social: 4, curious: 90, hunger: 90 } });
+    sad.x = 400;
+    kind.x = 1400;
+    g.run(1, 0.1);
+    assert.equal(feelingOf(sad, g.w.now)?.kind, 'lonely');
+    // (A sulk, now: it wants to be left alone - but a kind friend comes anyway.)
+    const { feel } = await import('../src/world/mochi-heart.js');
+    feel(sad, 'sulky', 0.95, g.w.now);
+    kind.x = 800;
+    Object.assign(kind.rec, { needs: { energy: 90, fun: 70, social: 30, curious: 80, hunger: 90 } });
+    kind.brain = null;
+    let comforted = false;
+    for (let k = 0; k < 900 && !comforted; k++) {
+      g.run(0.2, 0.2);
+      comforted = (g.w.gardenLife.duos ?? []).some((d) => d.kind === 'comfort' && d.b === sad && d.done.has('hug'));
+    }
+    assert.ok(comforted, 'comforted with a pat and a hug');
+    g.run(1, 0.1);
+    assert.ok(!['lonely', 'sulky'].includes(feelingOf(sad, g.w.now)?.kind), 'and it feels better');
+  } finally {
+    g.done();
+  }
+});
+
+test('it remembers you: back after two days away, one that loves you missed you and runs to hug you', async () => {
+  const { memoryOf, feelingOf } = await import('../src/world/mochi-heart.js');
+  const g = gardenOf(['sweet'], { bond: 400, enter: false });
+  try {
+    memoryOf(g.recs[0]).seen = g.clock() / 1000 - 2 * 86400;
+    loadMap(g.w, 'garden', 'start');
+    g.run(0.2, 0.1);
+    const [e] = g.w.gardenLife.mochi;
+    assert.ok(e.greet?.missed, 'missed you');
+    assert.equal(feelingOf(e, g.w.now)?.kind, 'excited');
+    let hugged = false;
+    for (let k = 0; k < 200 && !hugged; k++) {
+      g.run(0.1, 0.1);
+      hugged = e.m.action?.name === 'missyou';
+    }
+    assert.ok(hugged, 'a run-up bounce and a hug');
+    assert.ok(memoryOf(g.recs[0]).seen > g.clock() / 1000 - 5, 'and it remembers it saw you today');
+  } finally {
+    g.done();
+  }
+});
+
+test('a present: one that loves you finds something and brings it straight to you', async () => {
+  const { giftDue } = await import('../src/world/mochi-heart.js');
+  assert.equal(giftDue({ bond: 100, seed: 1 }, 5, 0), false, 'only one that loves you');
+  assert.equal(giftDue({ bond: 600, seed: 1, memory: { giftDay: 5 } }, 5, 0), false, 'once a day');
+  assert.equal(giftDue({ bond: 600, seed: 1 }, 5, 0.1), true);
+  const g = gardenOf(['sweet'], { bond: 600 });
+  try {
+    const [e] = g.w.gardenLife.mochi;
+    e.giftFound = 'mochi_clover';
+    e.brain = null;
+    g.w.body.x = 700;
+    let got = false;
+    for (let k = 0; k < 600 && !got; k++) {
+      g.run(0.1, 0.1);
+      got = countItem(g.char.inventory, 'mochi_clover') > 0;
+    }
+    assert.ok(got, 'the clover is yours');
+    assert.ok(Math.abs(e.x - g.w.body.x) < 30, 'handed over beside you');
+    assert.ok(g.logs.some((l) => /brought you a four-leaf clover/.test(l)));
+  } finally {
+    g.done();
+  }
+});
+
+test('its own two habits, the same every time; one that loves you sits by you while you stand still', async () => {
+  const { quirksOf, QUIRKS } = await import('../src/world/mochi-heart.js');
+  const r = { seed: 4242 };
+  const q = quirksOf(r);
+  assert.equal(q.length, 2);
+  assert.notEqual(q[0], q[1]);
+  assert.deepEqual(quirksOf({ seed: 4242 }), q);
+  assert.ok(q.every((k) => QUIRKS[k]));
+  const g = gardenOf(['clingy'], { bond: 500 });
+  try {
+    const [e] = g.w.gardenLife.mochi;
+    g.w.body.x = 900;
+    let sat = false;
+    for (let k = 0; k < 900 && !sat; k++) {
+      g.run(0.1, 0.1);
+      sat = e.m.action?.name === 'sitby';
+    }
+    assert.ok(sat, 'sat by you');
+    assert.ok(Math.abs(e.x - g.w.body.x) < 24);
+    g.w.body.x += 60;
+    g.run(0.3, 0.1);
+    assert.notEqual(e.m.action?.name, 'sitby', 'up it gets when you walk off');
   } finally {
     g.done();
   }

@@ -21,7 +21,7 @@ import { drawPosed, posedMouth, posedFrame } from './hero.js';
 import { featureOf, budOf, drawFeature } from './mochi-features.js';
 import { drawSweet, drawBall } from './mochi-sweets.js';
 import { SHOW_ACTS } from './mochi-show-acts.js';
-import { TOY_ACTS, drawKite, drawBubbleWand, drawTop } from './mochi-toys.js';
+import { TOY_ACTS, drawKite, drawBubbleWand, drawTop, drawGift } from './mochi-toys.js';
 import { WEATHER_WIND } from './terrain.js';
 import { drawMic, drawBachi, drawTopHat, drawWand, drawMask, drawScript, drawRose, drawRibbon, drawMime, twinkle } from './mochi-show-props.js';
 import { lookOf, drawCoat, drawCoatBack, MOCHI_SIZE } from './wagashi.js';
@@ -2442,7 +2442,7 @@ export function drawMochiPose(ctx, g, x, y, P0, { facing = 1, over = null, under
 Object.assign(ACTIONS, SHOW_ACTS);
 // (And the garden's new toys: render/mochi-toys.js.)
 Object.assign(ACTIONS, TOY_ACTS);
-const SHOW_HOLDS = new Set(['mic', 'bachi', 'magic', 'mask', 'script', 'rose', 'ribbon', 'mime', 'kite', 'bubblewand', 'top']);
+const SHOW_HOLDS = new Set(['mic', 'bachi', 'magic', 'mask', 'script', 'rose', 'ribbon', 'mime', 'kite', 'bubblewand', 'top', 'gift']);
 // (Each prop's size in a Mochi's little paws: a mic about as long as its head is tall, a mask
 // just over its face.)
 export const PROP_SIZE = { mic: 0.56, bachi: 0.62, wand: 0.62, hat: 0.46, mask: 0.95, script: 0.72, rose: 0.62, ribbon: 0.7, mime: 1, kite: 1, bubblewand: 0.8, top: 0.62 };
@@ -2465,6 +2465,8 @@ function drawShowProp(c, target, live, hand, other, flip, s, time, out, m = {}) 
     case 'kite': return drawKite(c, hx, hy, z('kite'), d, live.reveal ?? 0, WEATHER_WIND.boost ?? 0, time, (m.genes?.seed ?? 0) % 7, m);
     case 'bubblewand': return drawBubbleWand(c, hx, hy, z('bubblewand'), d, a, m, (target.reveal ?? 0) >= 0.5, live.swing2 ?? 0, target.alt, time);
     case 'top': return drawTop(c, hx, hy, z('top'), d, live.reveal ?? 0, m.feet, time, m);
+    // (A present it's bringing you: `m.gift`, the item.)
+    case 'gift': return drawGift(c, hx, hy, k0 * 0.8, d, m.gift, time);
     case 'mime': {
       const k = z('mime');
       drawMime(c, hx, hy, k, d, target.alt, live.reveal ?? 0, time);
@@ -2737,6 +2739,22 @@ export function drawMochiAnim(ctx, m, x, y, time) {
     sprout = 'sad';
   }
   if (kind === 'run' && moving && stam.tire === 0 && st.runFor > 6 && (time % 6) < 2) {
+    rig.face.extra = ['note'];
+    rig.face.closed = [true, true];
+    mouth = 'o';
+  }
+  // What it's feeling (world/mochi-heart.js, `m.feelFace`) shows on its face whenever what it's doing
+  // doesn't have a face of its own - stood about, walking along, idling - so a sulky one pouts as it
+  // trudges and a happy one beams. (Not when it's puffed out from running.)
+  const ff = m.feelFace;
+  if (ff && !(posed && target.mouth) && !(kind === 'run' && moving && fq >= 0.5) && !resting) {
+    if (ff.mouth) mouth = ff.mouth;
+    if (ff.eyes) rig.eyes = ff.eyes;
+    for (const k of ['wide', 'closed', 'glance', 'brows', 'blush']) if (ff[k] != null) rig.face[k] = ff[k];
+    if (ff.sprout) sprout = ff.sprout;
+  }
+  // (A hummer hums as it walks: eyes shut, a little note, now and then.)
+  if (m.hum && kind === 'run' && moving && !cant && fq < 0.5 && (time + (g.seed ?? 0) % 5) % 4.5 < 1.3) {
     rig.face.extra = ['note'];
     rig.face.closed = [true, true];
     mouth = 'o';

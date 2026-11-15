@@ -42,6 +42,7 @@
 import { R, E, T, F, snap, mix } from './pixel.js';
 import { drawWeatherGround, drawWeatherFront, drawSplashes } from './garden-weather.js';
 import { drawShowTent } from './show.js';
+import { drawHearts } from './mochi-hearts.js';
 import { ramp, planks, foliage, bark, band, gable, hash, swing, pivoted, flicker, lean } from './propkit.js';
 // (Eased 0 to 1: slow out, slow in.)
 const smooth = (u) => u * u * (3 - 2 * u);
@@ -2041,15 +2042,8 @@ export function drawGardenLife(ctx, world, cam, time, layer = 'back') {
   }
   // In the nursery: the front of each basket bed, over whoever's curled up asleep in it.
   if (map.indoor) for (const bx of NURSERY_BEDS) place(ctx, bedFrontArt(), snap(bx - cam.x), groundAt(map, bx) + 4 - cam.y);
-  // A moment between two Mochi (world/garden-life.js): a little bubble over the one who started it.
-  const mo = life.moment;
-  if (mo && !mo.a.hidden && mo.a.x != null) {
-    const t = world.now - mo.t0;
-    if (t < 1.8) {
-      const fade = Math.min(1, t * 4, (1.8 - t) * 3);
-      momentBubble(ctx, mo.a.x - cam.x, mo.a.y - cam.y - (mo.a.m.size === 'baby' ? 40 : 48) - Math.sin(t * 5) * 1, mo.kind, fade);
-    }
-  }
+  // What they feel, and what two together are up to (render/mochi-hearts.js).
+  if (!map.indoor) drawHearts(ctx, world, life, cam, time);
   // A pair that's met: hearts rising between them as they dance.
   const pair = life.pairing;
   if (pair?.met) {
@@ -2090,35 +2084,6 @@ function bloomFlowers(ctx, x, y, time, seed, front) {
 }
 // A little speech bubble with what the moment is: ! a chase, ? hiding, a note a parade, z a nap, a
 // scribble a huff, a heart a chat, ... a snub.
-function momentBubble(ctx, x, y, kind, alpha) {
-  ctx.save();
-  ctx.globalAlpha = alpha;
-  ctx.fillStyle = '#ffffff';
-  ctx.strokeStyle = '#e8c8d8';
-  ctx.lineWidth = 1;
-  ctx.beginPath();
-  ctx.ellipse(x, y, 7.5, 6, 0, 0, Math.PI * 2);
-  ctx.moveTo(x - 2, y + 5);
-  ctx.lineTo(x - 1, y + 9);
-  ctx.lineTo(x + 2, y + 5);
-  ctx.fill();
-  ctx.stroke();
-  if (kind === 'chat') heart(ctx, x, y - 0.5, 2.6, '#ff6f9a');
-  else if (kind === 'huff') {
-    ctx.strokeStyle = '#7a5a7a';
-    ctx.beginPath();
-    ctx.moveTo(x - 4, y + 1);
-    for (let i = 0; i < 5; i++) ctx.lineTo(x - 3 + i * 2, y + (i % 2 ? -2 : 1.5));
-    ctx.stroke();
-  } else {
-    const mark = { chase: '!', hide: '?', parade: '♪', nap: 'z', snub: '...' }[kind] ?? '!';
-    ctx.fillStyle = kind === 'nap' ? '#8a9ad8' : kind === 'snub' ? '#a88a9e' : '#ff6f9a';
-    ctx.font = 'bold 8px Nunito, sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText(mark, x, y + 3);
-  }
-  ctx.restore();
-}
 // A Mochi's thought (world/mochi-brain.js): a cloud with two little puffs trailing down from it,
 // and in it what it's off to see to - a ball (fun), z's (sleepy), a heart (company), a star
 // (curious), a cherry (peckish).

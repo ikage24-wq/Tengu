@@ -282,7 +282,156 @@ const benchsit = act(9.6, [1.0, 8.4], [
   KEY(9.6, {}),
 ]);
 
-export const TOY_ACTS = { kite0, kite1, kite2, bubbles0, bubbles1, bubbles2, top0, top1, top2, seesawsit, seesaw0, seesaw1, seesaw2, benchsit };
+
+// ---------- Together (world/garden-life.js: two Mochi's games and moments, and you) ----------
+const EYES2 = { front: [-4, -16], back: [2, -15], over: true };
+const FISTS = { front: [5, -6], back: [-4, -5] };
+// Hide-and-seek: counting with its paws over its eyes, nodding along...
+const count = act(3.2, [0.2, 3.0], [
+  KEY(0, {}),
+  KEY(0.2, { ...EYES2, mouth: 'o', tilt: 4 }),
+  KEY(0.6, { ...EYES2, mouth: 'mochio', tilt: -3, lift: 0.5, ease: 'out' }),
+  KEY(1.0, { ...EYES2, mouth: 'o', tilt: 4, lift: 0, ease: 'in' }),
+  KEY(1.4, { ...EYES2, mouth: 'mochio', tilt: -3, lift: 0.5, ease: 'out' }),
+  KEY(1.8, { ...EYES2, mouth: 'o', tilt: 4, lift: 0, ease: 'in' }),
+  KEY(2.2, { ...EYES2, mouth: 'mochio', tilt: -3, lift: 0.5, ease: 'out' }),
+  KEY(2.6, { ...EYES2, mouth: 'o', tilt: 4, lift: 0, ease: 'in' }),
+  KEY(3.0, { ...EYES2, mouth: 'mochio', tilt: 0 }),
+  KEY(3.2, {}),
+]);
+// ...and hiding: crouched low, a paw to its mouth (shh!), peeking out, trying not to giggle.
+const HIDE = { squat: 2.6, front: [-5, -9], over: true, back: [3, -5] };
+const hidecrouch = act(3.6, [0.3, 3.3], [
+  KEY(0, {}),
+  KEY(0.3, { ...HIDE, mouth: 'mochidot', glance: 1 }),
+  KEY(1.0, { ...HIDE, squat: 2.8, mouth: 'mochidot', glance: -1, tilt: -6 }),
+  KEY(1.6, { ...HIDE, mouth: 'mochiw', closed: C2, blush: 1.8, tilt: 4 }),
+  KEY(2.2, { ...HIDE, squat: 2.8, mouth: 'mochidot', glance: 1, tilt: -6 }),
+  KEY(2.8, { ...HIDE, mouth: 'mochidot', glance: -1 }),
+  KEY(3.3, { ...HIDE, mouth: 'mochidot', glance: 1 }),
+  KEY(3.6, {}),
+]);
+// A chat: its mouth going, paws talking, bobbing as it gets to the good bit.
+const talk = act(2.4, [0.1, 2.2], [
+  KEY(0, {}),
+  KEY(0.1, { mouth: 'ah', front: [6, -9], glance: 1 }),
+  KEY(0.4, { mouth: 'o', front: [9, -11], tilt: -4, lift: 0.5, ease: 'out' }),
+  KEY(0.7, { mouth: 'e', front: [4, -7], back: [-6, -8], tilt: 4, lift: 0, ease: 'in' }),
+  KEY(1.0, { mouth: 'ah', front: [10, -10], back: [-1, -3] }),
+  KEY(1.3, { mouth: 'D', closed: C2, front: [7, -12], back: [-6, -10], tilt: -6, lift: 0.6, ease: 'out' }),
+  KEY(1.6, { mouth: 'o', front: [5, -8], tilt: 2, lift: 0, ease: 'in' }),
+  KEY(1.9, { mouth: 'e', front: [9, -9], glance: 1 }),
+  KEY(2.2, { mouth: 'ah', front: [6, -9] }),
+  KEY(2.4, {}),
+]);
+// A fit of giggles: paws to its mouth, eyes squeezed shut, wobbling with it.
+const GIG = { front: [-5, -9], over: true, back: [3, -6], mouth: 'D', closed: C2, blush: 1.8 };
+const giggle = act(1.6, [0.1, 1.4], [
+  KEY(0, {}),
+  KEY(0.1, { ...GIG, tilt: 6 }),
+  KEY(0.3, { ...GIG, tilt: -6, lift: 0.7, ease: 'out' }),
+  KEY(0.5, { ...GIG, tilt: 6, lift: 0, ease: 'in' }),
+  KEY(0.7, { ...GIG, tilt: -6, lift: 0.7, ease: 'out' }),
+  KEY(0.9, { ...GIG, tilt: 6, lift: 0, ease: 'in' }),
+  KEY(1.4, { ...GIG, mouth: 'mochiw', tilt: 0, extra: ['spark0'] }),
+  KEY(1.6, {}),
+]);
+// Comforting a sad friend: up on its toes to give it a pat on the head, gently.
+const PAT = { over: true, back: [3, -6], mouth: 'mochiw' };
+const pat = act(2.2, [0.3, 1.9], [
+  KEY(0, {}),
+  KEY(0.3, { ...PAT, front: [11, -15], lift: 1, glance: 1 }),
+  KEY(0.6, { ...PAT, front: [11, -13], lift: 0.6, closed: C2 }),
+  KEY(0.9, { ...PAT, front: [11, -15], lift: 1, closed: C2 }),
+  KEY(1.2, { ...PAT, front: [11, -13], lift: 0.6, closed: C2 }),
+  KEY(1.5, { ...PAT, front: [11, -15], lift: 1, glance: 1 }),
+  KEY(1.9, { ...PAT, front: [11, -13], lift: 0.6, closed: C2, extra: ['hearts'] }),
+  KEY(2.2, {}),
+]);
+// A hug: arms right round, eyes shut, rocking side to side, hearts.
+const HUG = { front: [9, -8], back: [8, -9], over: true, lean: 0.12, closed: C2, blush: 1.9, mouth: 'mochiw' };
+const hug = act(3, [0.3, 2.7], [
+  KEY(0, {}),
+  KEY(0.3, { ...HUG, tilt: 4, extra: ['hearts'] }),
+  KEY(0.9, { ...HUG, tilt: -5, lift: 0.5, ease: 'out', extra: ['hearts'] }),
+  KEY(1.5, { ...HUG, tilt: 5, lift: 0, ease: 'in', extra: ['hearts'] }),
+  KEY(2.1, { ...HUG, tilt: -4, mouth: 'cat', extra: ['hearts'] }),
+  KEY(2.7, { ...HUG, tilt: 3, extra: ['hearts'] }),
+  KEY(3, {}),
+]);
+// A squabble: stamping, fists balled, puffed up - harrumph.
+const CROSS = { front: [-9.7, -5.1], back: [9.5, -5.6] };
+const stomp = act(2, [0.1, 1.8], [
+  KEY(0, {}),
+  KEY(0.1, { ...FISTS, squat: 1, brows: SET, mouth: 'grit', blush: 1.7 }),
+  KEY(0.25, { ...FISTS, lift: 1.2, squat: 0, brows: SET, mouth: 'mochipout', legF: [1.6, -1.6, 22], extra: ['steam0'], ease: 'out' }),
+  KEY(0.4, { ...FISTS, lift: 0, squat: 1.2, brows: SET, mouth: 'grit', ease: 'in' }),
+  KEY(0.6, { ...FISTS, lift: 1.2, squat: 0, brows: SET, mouth: 'mochipout', legB: [-1.6, -1.6, -22], extra: ['steam1'], ease: 'out' }),
+  KEY(0.75, { ...FISTS, lift: 0, squat: 1.2, brows: SET, mouth: 'grit', ease: 'in' }),
+  KEY(1.2, { ...CROSS, squat: 0, brows: SET, mouth: 'mochipout', tilt: -8, extra: ['steam0'] }),
+  KEY(1.8, { ...CROSS, brows: SET, mouth: 'mochipout', tilt: -10 }),
+  KEY(2, {}),
+]);
+// No thank you: a shake of the head, arms folded.
+const nope = act(1.4, null, [
+  KEY(0, {}),
+  KEY(0.15, { ...CROSS, tilt: 9, mouth: 'mochiflat', closed: C2 }),
+  KEY(0.35, { ...CROSS, tilt: -9, mouth: 'mochiflat', closed: C2 }),
+  KEY(0.55, { ...CROSS, tilt: 8, mouth: 'mochiflat', closed: C2 }),
+  KEY(0.8, { ...CROSS, tilt: 0, mouth: 'mochiflat', glance: -1 }),
+  KEY(1.4, {}),
+]);
+// You're back! A run-up bounce, arms flung wide, and a great big hug.
+const missyou = act(3.2, null, [
+  KEY(0, {}),
+  KEY(0.12, { squat: 1.4, wide: true, mouth: 'o', sprout: 'excited', front: [3, -4], back: [2, -4], ease: 'in' }),
+  KEY(0.32, { lift: 4, squat: 0, ...OUT(-14), mouth: 'D', closed: C2, sprout: 'excited', extra: ['hearts'], ease: 'out' }),
+  KEY(0.52, { lift: 0, squat: 1.4, ...OUT(-12), mouth: 'D', closed: C2, extra: ['hearts'], ease: 'in' }),
+  KEY(0.66, { lift: 2.4, squat: 0, ...OUT(-13), mouth: 'D', closed: C2, ease: 'out' }),
+  KEY(0.82, { lift: 0, squat: 1, ...OUT(-12), mouth: 'D', closed: C2, ease: 'in' }),
+  KEY(1.0, { ...HUG, squat: 0, tilt: 5, extra: ['hearts'] }),
+  KEY(1.6, { ...HUG, tilt: -5, extra: ['hearts'] }),
+  KEY(2.2, { ...HUG, tilt: 5, mouth: 'cat', extra: ['hearts'] }),
+  KEY(2.8, { lean: 0, front: [4, -7], back: [3, -7], mouth: 'D', closed: C2, blush: 1.9, sprout: 'happy' }),
+  KEY(3.2, {}),
+]);
+// Sat down beside you, leaning your way, eyes closed, happy as anything.
+const BY = { ...SAT, front: [2, 0], back: [1.6, 0.5] };
+const sitby = act(4, [0.5, 3.7], [
+  KEY(0, {}),
+  KEY(0.5, { ...BY, tilt: -6, mouth: 'mochiw', glance: 1, blush: 1.7 }),
+  KEY(1.4, { ...BY, tilt: -9, hx: 0.4, mouth: 'cat', closed: C2, blush: 1.8, extra: ['hearts'] }),
+  KEY(2.4, { ...BY, tilt: -7, mouth: 'mochiw', closed: C2, blush: 1.8 }),
+  KEY(3.2, { ...BY, tilt: -9, hx: 0.4, mouth: 'mochiw', glance: 1, blush: 1.7, extra: ['hearts'] }),
+  KEY(3.7, { ...BY, tilt: -6, mouth: 'mochiw', closed: C2, blush: 1.7 }),
+  KEY(4, {}),
+]);
+// A present for you: held out in both paws, shy and blushing - then handed over with a happy hop.
+const giftgive = act(3, null, [
+  KEY(0, {}),
+  KEY(0.3, { hold: 'gift', front: [7, -8], back: [6, -8], mouth: 'mochiw', blush: 2, glance: -1, tilt: 4 }),
+  KEY(1.0, { hold: 'gift', front: [9, -9], back: [8, -9], mouth: 'mochiw', blush: 2, glance: 1, tilt: -3, lift: 0.6, ease: 'out' }),
+  KEY(1.5, { hold: 'gift', front: [10, -9], back: [9, -9], mouth: 'mochio', blush: 2, lift: 0, ease: 'in' }),
+  KEY(1.9, { hold: null, front: [6, -7], back: [5, -7], mouth: 'D', closed: C2, blush: 1.9, extra: ['hearts'] }),
+  KEY(2.1, { squat: 1.2, front: [5, -9], back: [-5, -9], mouth: 'D', closed: C2, ease: 'in' }),
+  KEY(2.3, { lift: 2, squat: 0, front: [5, -12], back: [-5, -12], mouth: 'D', closed: C2, extra: ['hearts'], ease: 'out' }),
+  KEY(2.5, { lift: 0, squat: 1, mouth: 'D', closed: C2, ease: 'in' }),
+  KEY(2.7, { squat: 0, mouth: 'mochiw' }),
+  KEY(3, {}),
+]);
+// Its morning stretch (a habit): up on its toes, arms high, a yawn, a lean each way.
+const UP2 = { front: [3, -17], back: [-2, -16], over: true };
+const stretch = act(3.2, null, [
+  KEY(0, {}),
+  KEY(0.4, { ...UP2, lift: 1, mouth: 'yawn', closed: C2, ease: 'out' }),
+  KEY(1.1, { ...UP2, lift: 1.2, mouth: 'yawn', closed: C2 }),
+  KEY(1.6, { ...UP2, lift: 0.6, tilt: 10, mouth: 'mochio', closed: C2 }),
+  KEY(2.1, { ...UP2, lift: 0.6, tilt: -10, mouth: 'mochio', closed: C2 }),
+  KEY(2.6, { lift: 0, tilt: 0, front: [4, -6], back: [3, -6], mouth: 'mochiw', sprout: 'happy', ease: 'in' }),
+  KEY(3.2, {}),
+]);
+
+export const TOY_ACTS = { kite0, kite1, kite2, bubbles0, bubbles1, bubbles2, top0, top1, top2, seesawsit, seesaw0, seesaw1, seesaw2, benchsit, count, hidecrouch, talk, giggle, pat, hug, stomp, nope, missyou, sitby, giftgive, stretch };
 
 // ---------- Their props ----------
 const INK = '#3a2d4f';
@@ -608,4 +757,56 @@ export function drawTop(ctx, x, y, k, d, on, ground, time, m) {
       ctx.stroke();
     }
   }
+}
+
+// A present in its paws (data/items.js mochi_daisy, mochi_pebble, mochi_clover): a little daisy, a
+// shiny pebble, a four-leaf clover.
+export function drawGift(ctx, x, y, k, d, kind, time) {
+  ctx.save();
+  ctx.translate(x, y - 1.5 * k);
+  ctx.scale(k, k);
+  if (kind === 'mochi_pebble') {
+    inked(ctx, () => {
+      ctx.beginPath();
+      ctx.ellipse(0, 0, 2.6, 1.9, -0.2, 0, TAU);
+    }, '#b9c4e8', 0.45);
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(-1.2, -1, 0.9, 0.6);
+    const tw = (Math.sin(time * 5) + 1) / 2;
+    ctx.fillStyle = `rgba(255,246,200,${0.5 + 0.5 * tw})`;
+    ctx.fillRect(1.6, -3.2, 0.6, 1.8);
+    ctx.fillRect(1, -2.6, 1.8, 0.6);
+  } else if (kind === 'mochi_clover') {
+    ctx.strokeStyle = '#4a9a5a';
+    ctx.lineWidth = 0.6;
+    ctx.beginPath();
+    ctx.moveTo(0, 1.5);
+    ctx.lineTo(d * 0.4, -2);
+    ctx.stroke();
+    for (const [dx, dy] of [[-1.1, -3.1], [1.1, -3.1], [-1.1, -1.1], [1.1, -1.1]]) {
+      inked(ctx, () => {
+        ctx.beginPath();
+        ctx.arc(dx + d * 0.4, dy, 1.15, 0, TAU);
+      }, '#5cbf6a', 0.35);
+    }
+  } else {
+    ctx.strokeStyle = '#5aa85a';
+    ctx.lineWidth = 0.6;
+    ctx.beginPath();
+    ctx.moveTo(0, 1.5);
+    ctx.lineTo(0, -2.4);
+    ctx.stroke();
+    ctx.fillStyle = '#ffffff';
+    for (let i = 0; i < 7; i++) {
+      const a = (i / 7) * TAU;
+      ctx.beginPath();
+      ctx.ellipse(Math.cos(a) * 1.5, -3.6 + Math.sin(a) * 1.5, 1, 0.55, a, 0, TAU);
+      ctx.fill();
+    }
+    ctx.fillStyle = '#ffd64a';
+    ctx.beginPath();
+    ctx.arc(0, -3.6, 0.9, 0, TAU);
+    ctx.fill();
+  }
+  ctx.restore();
 }

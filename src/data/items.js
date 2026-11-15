@@ -542,6 +542,10 @@ add({ id: 'derby_medal', name: 'Derby Medal', type: 'etc', price: 1, color: '#ff
 // The Mochi Garden's crops, and the sweets cooked from them at its kitchen (data/mochi-raise.js):
 // food for your Mochi.
 const STAT_WORD = { run: 'Run', fly: 'Fly', power: 'Power', stamina: 'Stamina', swim: 'Swim' };
+// Little presents your Mochi bring you (world/mochi-heart.js GIFTS): keepsakes, and a few gold.
+add({ id: 'mochi_daisy', name: 'Daisy from a Mochi', type: 'etc', price: 30, color: '#ffffff', desc: 'A daisy one of your Mochi picked for you. It held it out with both paws, blushing.' });
+add({ id: 'mochi_pebble', name: 'Shiny Pebble', type: 'etc', price: 60, color: '#b9c4e8', desc: 'A smooth pebble one of your Mochi found and thought you should have. It is very shiny.' });
+add({ id: 'mochi_clover', name: 'Four-leaf Clover', type: 'etc', price: 400, color: '#5cbf6a', desc: 'Lucky! One of your Mochi found it in the grass and brought it straight to you.' });
 for (const [id, c] of Object.entries(GARDEN_CROPS)) add({ id, name: c.name, type: 'etc', price: 6, color: c.color, desc: "Grown in your Mochi Garden's crop bed. The garden's kitchen cooks Mochi sweets with it." });
 for (const sw of MOCHI_SWEETS) {
   const trains = Object.keys(sw.trains).map((st) => STAT_WORD[st]);

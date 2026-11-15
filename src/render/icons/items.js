@@ -1071,11 +1071,46 @@ function nekomata_bell() {
   return out;
 }
 
+// ---------- Presents from your Mochi (world/mochi-heart.js GIFTS) ----------
+// A daisy it picked for you: white petals round a sunny middle, on a green stem with a leaf.
+function mochi_daisy() {
+  const out = [S(tube(bez([8, 15.4], [7.2, 12], [8, 8.6], 10), 0.9, 0.7), '#5aa85a')];
+  out.push(...leaf([7.6, 12.6], [4.2, 10.6], 2.2, '#7cc87a', { bend: 0.6 }));
+  for (let i = 0; i < 8; i++) {
+    const a = (i / 8) * 360;
+    const r = a * D2R;
+    out.push(S(oval(8 + Math.cos(r) * 3, 5.6 + Math.sin(r) * 3, 1.9, 1.1, a, 14), i % 2 ? '#ffffff' : '#fff4f8'));
+  }
+  out.push(...ball(oval(8, 5.6, 1.9, 1.9, 0, 18), '#ffd64a'));
+  out.push(...glint(6.6, 4.4, 0.6));
+  return out;
+}
+// A shiny pebble it found: smooth, pearly blue-lilac, with a twinkle on it.
+function mochi_pebble() {
+  const stone = oval(8, 9.6, 5.8, 4.2, -12, 32);
+  const out = [...ball(stone, '#b9c4e8', { glow: 1.1 })];
+  out.push(S(clip(stone, oval(9.6, 11.6, 4.4, 1.6, -12, 20)), sh('#b9c4e8')));
+  out.push(...glint(5.8, 8, 0.8), twinkle(12.6, 4, 2.2, '#fff6c8'));
+  return out;
+}
+// A four-leaf clover - lucky! Four round heart leaves on a little stem.
+function mochi_clover() {
+  const g = '#5cbf6a';
+  const out = [S(tube(bez([8, 15.4], [9.4, 12.4], [8, 8.6], 10), 0.8, 0.6), '#4a9a5a')];
+  for (const [dx, dy] of [[-2.6, -2.4], [2.6, -2.4], [-2.6, 2.4], [2.6, 2.4]]) {
+    out.push(...ball(oval(8 + dx, 7 + dy, 2.7, 2.5, 0, 18), g, { glow: 0.8 }));
+  }
+  out.push(S(oval(8, 7, 1, 1, 0, 10), sh(g)));
+  out.push(...glint(4.6, 3.8, 0.6), twinkle(13.4, 2.6, 1.8, '#fff6c8'));
+  return out;
+}
+
 const ART = {
   fluff, shell, sprout_leaf, mushcap, pebble, stinger, leaf_fragment, tusk, moss_stone, wisp_flame,
   bat_wing, bone_shard, crystal_gel, rock_core, shade_cloth, wool, feather, stardust, king_crystal, hollow_acorn, letter, parcel, gacha_ticket, party_token,
   sylph_feather, moon_plume, lamia_scale, snow_gem, nekomata_bell, moon_fang, bramble_claw,
   red_potion, orange_potion, white_potion, blue_potion, mana_elixir, elixir, return_scroll,
+  mochi_daisy, mochi_pebble, mochi_clover,
 };
 
 export const ITEM_ART = Object.fromEntries(Object.entries(ART).map(([id, draw]) => [id, framed(draw)]));

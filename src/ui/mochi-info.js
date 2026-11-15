@@ -15,6 +15,8 @@ import { DRESS } from '../data/mochi-dress.js';
 import { SLOTS, SETS } from '../data/mochi-wardrobe.js';
 import { drawItemIcon } from '../render/icons.js';
 import { favourite } from '../world/mochi-brain.js';
+import { quirksOf, QUIRKS, feelingOf } from '../world/mochi-heart.js';
+const FEEL_WORDS = { joy: 'happy', excited: 'excited', proud: 'proud of itself', loving: 'loved', sulky: 'sulky', lonely: 'lonely', sleepy: 'sleepy', bored: 'bored', shy: 'shy', curious: 'curious' };
 import { calledOf } from '../data/mochi-names.js';
 // (What each sort of thing it can come to love is called, for its page.)
 const LOVES_WORDS = { swim: 'swimming', ride: 'the swing, the slide and the mushroom', run: 'running about', play: 'playing', chore: 'helping in the garden', explore: 'exploring', social: 'company', rest: 'a good nap', snack: 'picking fruit' };
@@ -128,7 +130,13 @@ export function mochiInfoWindow(ui, state, world) {
     if (rival?.[1] <= -15) lines.push({ text: `Doesn't get on with ${nameOf(rival[0])}`, color: COLORS.muted });
     const fav = favourite(rec);
     if (fav) lines.push({ text: `Loves ${LOVES_WORDS[fav] ?? fav}`, color: '#ff6f9a' });
-    if (lines.length === 1) lines.push({ text: 'Still finding its feet in the garden.', color: COLORS.muted });
+    // (Its two habits of its own, and what it's feeling now: world/mochi-heart.js.)
+    lines.push({ text: `Habits: ${quirksOf(rec).map((q) => QUIRKS[q].name.toLowerCase()).join(', ')}`, color: '#7a8ad8' });
+    const here = world.gardenLife?.mochi.find((e) => e.rec === rec);
+    const now = feelingOf(here, world.now);
+    if (now) lines.push({ text: `Feeling ${FEEL_WORDS[now.kind]} right now`, color: '#ff8a3a' });
+    const mem = rec.memory;
+    if (mem?.gifts) lines.push({ text: `Has brought you ${mem.gifts} present${mem.gifts > 1 ? 's' : ''}`, color: '#ff6f9a' });
     tooltip(ui, lines);
   }
   const love = sweetOf(rec.loves);
