@@ -24,6 +24,7 @@ import { SHOW_ACTS } from './mochi-show-acts.js';
 import { TOY_ACTS, drawKite, drawBubbleWand, drawTop, drawGift } from './mochi-toys.js';
 import { SUMO_ACTS, drawGunbai } from './mochi-sumo-acts.js';
 import { FESTIVAL_ACTS, drawDango, drawDango3, drawUchiwa, drawLanternBoat, drawSparkler } from './mochi-festival-acts.js';
+import { ROLL_ACTS } from './mochi-roll-acts.js';
 import { WEATHER_WIND } from './terrain.js';
 import { drawMic, drawBachi, drawTopHat, drawWand, drawMask, drawScript, drawRose, drawRibbon, drawMime, twinkle } from './mochi-show-props.js';
 import { lookOf, drawCoat, drawCoatBack, MOCHI_SIZE } from './wagashi.js';
@@ -2509,6 +2510,8 @@ Object.assign(ACTIONS, SHOW_ACTS);
 Object.assign(ACTIONS, TOY_ACTS);
 Object.assign(ACTIONS, SUMO_ACTS);
 Object.assign(ACTIONS, FESTIVAL_ACTS);
+// (Mochitsuki Mountain's snowball: render/mochi-roll-acts.js, 2026-11-16.)
+Object.assign(ACTIONS, ROLL_ACTS);
 // (The garden's play moves flow too, with a little bounce as they settle: the rides, the ball, the
 // weather's games, and the dance two Mochi share. 2026-11-15.)
 for (const n of ['swing', 'slide', 'bounce', 'flaps', 'play', 'splash', 'catch', 'snowcatch', 'snowpat', 'rainwatch', 'dance1']) {

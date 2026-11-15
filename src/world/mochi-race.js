@@ -89,6 +89,29 @@ const SMASH_AT = 0.57;
 export const boulderX = (leg, r) => leg.x - r.lane * SMASH_LANE;
 // (Its boulder burst, or its mochi pounded smooth: a quick "Yes!" this long before it runs on.)
 export const WIN_BEAT = 0.5;
+// A snowball to roll (`{ kind: 'roll', x, to }`, Mochitsuki Mountain, 2026-11-16): one in each lane at
+// the foot of the slope (staggered like the boulders), small. The racer puts its paws to it and
+// pushes it up to `to`, the snow it gathers making it bigger and bigger (ROLL_R, radius in px), as
+// fast as its Power pushes (ROLL_V, by range; a cheer behind it helps) - in shoves for the strong
+// ones, each a surge (ROLL_PULSE: how hard, and where in its move's beat, ROLL_BEAT). A weak one
+// can't always hold it: now and then it slips back a little and digs in again (ROLL_SLIP, by its
+// seed, the same on every screen; never while it's being cheered). At the top it gives it a last
+// shove into the drift there, where it stays, a "Yes!", and it runs on.
+export const ROLL_R = [9, 23];
+export const ROLL_V = [21, 28, 36, 45, 55, 66];
+export const ROLL_BEAT = [1.0, 0.9, 0.8, 0.8, 0.7, 0.7];
+// (Each peak is where its move's shove lands in the beat, counted from the move's start: roll3's at
+// 0.54 s of its 0.8 s beat, roll4's hop at 0.48 of 0.7.)
+const ROLL_PULSE = [[0.3, 0.45], [0.3, 0.47], [0.35, 0.5], [0.85, 0.675], [0.95, 0.686], [0.25, 0.53]];
+export const ROLL_SLIP = { secs: 0.7, back: 14, gap: [2.6, 4.4] };
+// (Where a lane's snowball starts and ends, its middle; how big it is there; how far behind it the
+// racer stands to have its paws on it - at chest height, ROLL_PAW up, on the ball's curve.)
+export const ballStart = (leg, r) => leg.x - r.lane * SMASH_LANE;
+export const ballEnd = (leg, r) => leg.to - r.lane * SMASH_LANE;
+export const ballRadius = (leg, r, x) => ROLL_R[0] + (ROLL_R[1] - ROLL_R[0]) * Math.max(0, Math.min(1, (x - ballStart(leg, r)) / Math.max(1, ballEnd(leg, r) - ballStart(leg, r))));
+const ROLL_PAW = 9;
+const ROLL_REACH = 3;
+export const behindBall = (R0) => Math.sqrt(Math.max(0, R0 * R0 - (R0 - Math.min(ROLL_PAW, 2 * R0 - 1)) ** 2)) + ROLL_REACH;
 // Hurdles (`{ kind: 'hurdle', x, h }`, Tanabata Hurdles): a bamboo bar `h` px high across the track
 // at x, the same one for everyone. Each racer leaps it as it comes: as high as its Fly takes it
 // (JUMP_H, by its range; its own way of jumping too, render/mochi-anim.js hurdle0-5), as far as its
@@ -326,6 +349,7 @@ function runEnd(course, r) {
   const next = course.legs[r.leg + 1];
   if (next?.kind === 'smash') return boulderX(next, r) - SMASH_REACH;
   if (next?.kind === 'pound') return boulderX(next, r) - POUND_REACH;
+  if (next?.kind === 'roll') return ballStart(next, r) - behindBall(ROLL_R[0]);
   if (next?.kind === 'hurdle') return next.x - takeoffOf(r);
   return next?.kind === 'climb' ? next.x - WALL_GAP - r.lane * WALL_LANE : legOf(course, r).to;
 }
@@ -457,7 +481,7 @@ function stepRacer(R, r, dt, course, map) {
       m.action = null;
       r.y = groundAt(map, r.x);
       if (leg.kind === 'hurdle') nextLeg(course, r);
-    } else if (/^(smash|pound|power_|hurdle)/.test(m.action?.name ?? '')) m.action = null;
+    } else if (/^(smash|pound|power_|hurdle|roll)/.test(m.action?.name ?? '')) m.action = null;
     m.speed = Math.max(0, m.speed - 70 * dt);
     m.tired = Math.max(0, (m.tired ?? 0) - dt * 0.4);
     if (leg.kind === 'run') {
@@ -525,6 +549,55 @@ function stepRacer(R, r, dt, course, map) {
           m.action = null;
           nextLeg(course, r);
         }
+      } else if (leg.kind === 'roll') {
+        // Rolling its snowball up the slope, paws to it, the ball growing as it goes; a weak one
+        // slipping back now and then and digging in; at the top, into the drift, "Yes!", and on.
+        // (Its own way of pushing for its range of Power: render/mochi-roll-acts.js roll0-5.)
+        const tier = styleOf(s.power.points);
+        const rnd = (r.rollRng ??= seededRandom(Math.floor((r.rec?.seed ?? r.lane * 977) * 31 + 7) % 1e9));
+        const b = (r.ball ??= { x: ballStart(leg, r), from: C, act: C, tier, spin: 0, slip: null, next: C + ROLL_SLIP.gap[0] + rnd() * (ROLL_SLIP.gap[1] - ROLL_SLIP.gap[0]), parked: null, v: 0 });
+        const end = ballEnd(leg, r);
+        Object.assign(m, { mode: 'run', inWater: false, speed: 0, tired: r.spent ?? 0 });
+        const was = b.x;
+        if (b.parked == null) {
+          if (b.slip != null) {
+            // Slipping back, scrabbling, and dug in again.
+            const u = (C - b.slip) / ROLL_SLIP.secs;
+            if (u >= 1) {
+              b.slip = null;
+              b.next = C + ROLL_SLIP.gap[0] + rnd() * (ROLL_SLIP.gap[1] - ROLL_SLIP.gap[0]);
+              b.act = C;
+              m.action = { name: `roll${tier}`, t0: null, hold: 120 };
+            } else b.x = b.slipFrom - ROLL_SLIP.back * (1 - (1 - Math.min(1, u * 1.6)) ** 2);
+          } else if (tier <= 1 && C >= b.next && C >= (r.cheerUntil ?? 0) && b.x < end - 30) {
+            b.slip = C;
+            b.slipFrom = b.x;
+            m.action = { name: 'roll_slip', t0: null };
+          } else {
+            if (m.action?.name !== `roll${tier}`) {
+              b.act = C;
+              m.action = { name: `roll${tier}`, t0: null, hold: 120 };
+            }
+            // (In shoves for the strong: a surge on each, easing between.)
+            const [amp, peak] = ROLL_PULSE[tier];
+            const beat = ROLL_BEAT[tier];
+            const u = (((C - b.act) / beat) % 1 + 1) % 1;
+            b.v = ROLL_V[tier] * boost * (1 + amp * Math.cos(2 * Math.PI * (u - peak)));
+            b.x = Math.min(end, b.x + b.v * dt);
+          }
+          if (b.x >= end) {
+            b.parked = C;
+            m.action = { name: tier ? 'power_win' : 'power_phew', t0: null };
+          }
+        } else if (C - b.parked >= WIN_BEAT) {
+          m.action = null;
+          nextLeg(course, r);
+        }
+        // (It turns as it goes, by the ground it covers over its size.)
+        const R0 = ballRadius(leg, r, b.x);
+        b.spin += (b.x - was) / R0;
+        r.x = b.x - behindBall(R0);
+        r.y = groundAt(map, r.x);
       } else if (leg.kind === 'pound') {
         // Pounding its mochi: the mallet swung up and brought down, again and again, the mochi in
         // the mortar smoother each time; done, it's off to the line.

@@ -379,7 +379,8 @@ function powerMap() {
       // (The mortars for the pounding, one in each lane, are the race's own too: render/race.js.)
       ['mr_snowman', 1640, 1], ['mg_moonmortar', 1860], ['mr_pine', 2020, 0],
     ],
-    race: course(240, 1700, [{ kind: 'run', to: 760 }, { kind: 'smash', x: 760, hp: 120 }, { kind: 'run', to: 1580 }, { kind: 'pound', x: 1580, need: 6 }, { kind: 'run', to: 1700 }]),
+    // (Up the slope between them, a snowball to roll, 2026-11-16: world/mochi-race.js 'roll'.)
+    race: course(240, 1700, [{ kind: 'run', to: 760 }, { kind: 'smash', x: 760, hp: 120 }, { kind: 'run', to: 1080 }, { kind: 'roll', x: 1080, to: 1320 }, { kind: 'run', to: 1580 }, { kind: 'pound', x: 1580, need: 6 }, { kind: 'run', to: 1700 }]),
   });
 }
 

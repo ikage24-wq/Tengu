@@ -22,7 +22,7 @@ import { art, place } from './scenery.js';
 import { cragArt, CRAG_FACE_AT } from './garden.js';
 import { groundAt } from '../world/physics.js';
 import { drawMochiAnim, drawSpectator, drawMallet, SPECTATOR_BEATS, GAITS, SWIMS, FLIES, CLIMBS, runStyle } from './mochi-anim.js';
-import { runSpeed, lineupOffset, PODIUM, podiumSpot, INTRO, introLen, standings, progressOf, boulderX, JUMP_H, JUMP_PHASE } from '../world/mochi-race.js';
+import { runSpeed, lineupOffset, PODIUM, podiumSpot, INTRO, introLen, standings, progressOf, boulderX, JUMP_H, JUMP_PHASE, ballStart, ballEnd, ballRadius, ROLL_R } from '../world/mochi-race.js';
 import { VW, VH } from '../input.js';
 import { CANT_POINTS, newRecord } from '../data/mochi-raise.js';
 import { rollMochi } from '../data/mochi-genes.js';
@@ -831,6 +831,94 @@ function strand(ctx, x, y, h, w, col) {
   ctx.closePath();
   ctx.fill();
 }
+// Mochitsuki Mountain's snowballs (world/mochi-race.js 'roll', 2026-11-16), one in each lane: small at
+// the foot of the slope, waiting; pushed up it, growing, turning as it goes - the pebbles, twigs and
+// grass it has picked up going round with it - a packed track behind it, crumbs falling off its back;
+// at the top, shoved into the drift with a puff of snow, and there it stays.
+const snowballArt = (r) => art(`mr-snowball|${r}`, 2 * r + 4, 2 * r + 4, () => {
+  const c = r + 2;
+  return [
+    E(c, c, r, r, '#f4f8ff'),
+    F(E(c + r * 0.22, c + r * 0.26, r * 0.8, r * 0.74, '#d9e4f4')),
+    F(E(c - r * 0.1, c - r * 0.12, r * 0.8, r * 0.8, '#f4f8ff')),
+    F(E(c - r * 0.36, c - r * 0.4, r * 0.32, r * 0.22, '#ffffff')),
+    // (Lumps of snow it has gathered.)
+    ...[[0.55, -0.62, 0.2], [-0.62, 0.3, 0.18], [0.2, 0.7, 0.16], [0.75, 0.15, 0.15]].map(([dx, dy, k]) => F(E(c + dx * r, c + dy * r, r * k, r * k * 0.8, dy > 0.2 ? '#e2eaf6' : '#ffffff'))),
+  ];
+});
+const SPECKS = [[0.62, 0.0, '#8a7a6a', 1.1], [0.42, 1.3, '#6a5040', 0.8], [0.72, 2.4, '#7aa86a', 0.9], [0.5, 3.6, '#8a7a6a', 0.9], [0.66, 4.8, '#6a5040', 0.7], [0.32, 5.6, '#7aa86a', 0.8]];
+function drawSnowballs(ctx, map, race, course, cam, time) {
+  const leg = course.legs.find((l) => l.kind === 'roll');
+  if (!leg) return;
+  const at = course.legs.indexOf(leg);
+  const C = race.clock;
+  for (const r of [...race.racers].sort((a, b) => b.lane - a.lane)) {
+    const b = r.ball;
+    // (A friend's ghost or a racer seen from afar has no snowball of its own here: past it, it's up top.)
+    const bx = b ? b.x : r.leg > at ? ballEnd(leg, r) : ballStart(leg, r);
+    const rad = b ? ballRadius(leg, r, b.x) : r.leg > at ? ROLL_R[1] : ROLL_R[0];
+    const x = bx - cam.x;
+    if (x < -60 || x > VW + 60) continue;
+    const gy = groundAt(map, bx) - cam.y;
+    // Its track behind it, where the snow it picked up was.
+    if (b && b.x > ballStart(leg, r) + 2) {
+      ctx.save();
+      ctx.strokeStyle = 'rgba(150,172,206,0.4)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      for (let tx = ballStart(leg, r); tx <= b.x; tx += 6) {
+        const ty = groundAt(map, tx) - cam.y - 0.8;
+        if (tx === ballStart(leg, r)) ctx.moveTo(tx - cam.x, ty);
+        else ctx.lineTo(tx - cam.x, ty);
+      }
+      ctx.stroke();
+      ctx.restore();
+    }
+    // Its shadow.
+    ctx.fillStyle = 'rgba(110,130,175,0.22)';
+    ctx.beginPath();
+    ctx.ellipse(x, gy + 1, rad * 0.85, 2.2, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // (A little nudge as each shove lands: the bigger the push, the more it rocks forward.)
+    const R0 = Math.round(rad);
+    const cy = gy - R0 + 1;
+    place(ctx, snowballArt(R0), snap(x), cy + R0 + 2);
+    // What it has picked up, going round as it turns.
+    const spin = b?.spin ?? 0;
+    for (const [k, a0, col, s] of SPECKS) {
+      const a = a0 + spin;
+      const sx = x + Math.cos(a) * rad * k;
+      const sy = cy + Math.sin(a) * rad * k;
+      ctx.fillStyle = col;
+      ctx.fillRect(sx - s / 2, sy - s / 2, s, s * 0.8);
+    }
+    // Crumbs of snow falling off its back as it rolls.
+    if (b && b.parked == null && b.slip == null && (b.v ?? 0) > 1) {
+      ctx.fillStyle = '#ffffff';
+      for (let k = 0; k < 3; k++) {
+        const u = (spin * 0.35 + k / 3) % 1;
+        ctx.globalAlpha = 1 - u;
+        ctx.fillRect(x - rad * 0.75 - u * 5, cy + rad * 0.35 + u * u * rad * 0.6, 1.4, 1.4);
+      }
+      ctx.globalAlpha = 1;
+    }
+    // Shoved into the drift at the top: a puff of snow.
+    const pu = b?.parked != null ? (C - b.parked) / 0.6 : 9;
+    if (pu < 1) {
+      ctx.save();
+      ctx.globalAlpha = (1 - pu) * 0.9;
+      ctx.fillStyle = '#ffffff';
+      for (let k = 0; k < 6; k++) {
+        const a = Math.PI * (1.05 + (k / 5) * 0.9);
+        const d = rad * (0.9 + pu * 0.9);
+        ctx.beginPath();
+        ctx.arc(x + Math.cos(a) * d * 1.2, gy - 2 + Math.sin(a) * d * 0.5, 2.2 + pu * 2.6, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.restore();
+    }
+  }
+}
 function drawMortars(ctx, map, race, course, cam) {
   const leg = course.legs.find((l) => l.kind === 'pound');
   if (!leg) return;
@@ -1032,6 +1120,7 @@ export function drawRace(ctx, world, cam, time) {
   // (The Power course: a boulder in each lane, behind everyone.)
   drawBoulders(ctx, map, R, course, cam);
   drawMortars(ctx, map, R, course, cam);
+  drawSnowballs(ctx, map, R, course, cam, time);
   drawHurdles(ctx, map, R, course, cam, time);
   for (const r of [...R.racers].sort((a, b) => b.lane - a.lane)) {
     // (On the line before Go, each lane a little apart: world/mochi-race.js lineupOffset.)
@@ -1076,7 +1165,7 @@ export function drawRace(ctx, world, cam, time) {
     // just when the race counts them: started on its first drawing, one that came into view
     // mid-smash, or any stutter of the frames, would have swung out of step with its own hits.)
     const a = r.m.action;
-    const beatFrom = !a ? null : a.name.startsWith('smash') ? r.rock?.from : a.name.startsWith('pound') ? r.pound?.from : a.name.startsWith('power_') ? r.pound?.finished ?? r.rock?.broke : a.name === 'hurdle_stumble' ? r.jump?.landAt ?? null : a.name.startsWith('hurdle') && r.jump ? r.jump.from - (r.jump.gain ?? 0) : null;
+    const beatFrom = !a ? null : a.name.startsWith('smash') ? r.rock?.from : a.name.startsWith('pound') ? r.pound?.from : a.name === 'roll_slip' ? r.ball?.slip : a.name.startsWith('roll') ? r.ball?.act : a.name.startsWith('power_') ? r.pound?.finished ?? r.ball?.parked ?? r.rock?.broke : a.name === 'hurdle_stumble' ? r.jump?.landAt ?? null : a.name.startsWith('hurdle') && r.jump ? r.jump.from - (r.jump.gain ?? 0) : null;
     if (beatFrom != null) a.t0 = time - (R.clock - beatFrom);
     // (The two best jumpers leave a trail along their arc: where they were a moment ago.)
     const jj = r.jump;

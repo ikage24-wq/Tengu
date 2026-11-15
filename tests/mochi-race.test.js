@@ -468,3 +468,44 @@ test('Tanabata Hurdles sounds its own star night: bamboo knocks for the count, e
     globalThis.__tengu = was;
   }
 });
+
+test('Mochitsuki Mountain snowball: pushed up the slope growing as it goes, a weak one slips and digs in, a strong one shoves it up fast', () => {
+  const seen = {};
+  for (const pw of [0, 2400]) {
+    const rec = mochi(77, 900);
+    rec.stats.power.points = pw;
+    const w = racer(rec);
+    assert.ok(startRace(w, rec, 'power'));
+    const R = w.race;
+    const me = R.racers[R.me];
+    const leg = w.map.race.legs.find((l) => l.kind === 'roll');
+    let rollIn = null;
+    let rollOut = null;
+    let slips = 0;
+    let lastSlip = null;
+    let grew = 0;
+    let lastX = null;
+    let backwards = 0;
+    for (let t = 0; t < 300 && R.phase !== 'done'; t += 1 / 30) {
+      updateWorld(w, 1 / 30, keys());
+      const b = me.ball;
+      if (b && rollIn == null) rollIn = R.clock;
+      if (b?.parked != null && rollOut == null) rollOut = R.clock;
+      if (b?.slip != null && b.slip !== lastSlip) {
+        slips++;
+        lastSlip = b.slip;
+      }
+      if (b && b.parked == null && lastX != null && b.x < lastX - 0.01 && b.slip == null) backwards++;
+      if (b) lastX = b.x;
+      // (Its paws on it while it pushes: never inside the ball, never far behind it.)
+      if (b && b.parked == null) assert.ok(me.x < b.x && me.x > b.x - 40, `behind its ball: ${me.x} / ${b.x}`);
+    }
+    assert.ok(me.done != null, 'home');
+    assert.ok(Math.abs(me.ball.x - (leg.to - me.lane * 30)) < 0.5, 'up to the top of its lane');
+    assert.equal(backwards, 0, 'only ever rolls back in a slip');
+    seen[pw] = { secs: rollOut - rollIn, slips };
+  }
+  assert.ok(seen[0].slips >= 1, `weak slips: ${JSON.stringify(seen)}`);
+  assert.equal(seen[2400].slips, 0);
+  assert.ok(seen[2400].secs < seen[0].secs / 2.5, JSON.stringify(seen));
+});
