@@ -979,7 +979,7 @@ export const SIDE_SCENES = {
   ],
   trial_vex_done: [
     { who: 'vex', text: "Twenty, and not one of them turned round in time. Look at you. Not a scratch on the front of you.", mood: 'happy' },
-    { who: 'vex', text: "Now the fun part. When the moon slides over the sun, everything goes dark but a ring of fire. That's the Eclipse. Want it?" },
+    { who: 'vex', text: "Now the fun part. Two ways from here. When the moon slides over the sun, everything goes dark but a ring of fire: that's the Eclipse. Or go back to where moths begin, and spin: that's the Silkweaver. Pick one." },
   ],
   trial_elowen: [
     { who: 'elowen', text: "Twenty Gem Mimics in the Crystal Cave. They look like treasure. They are not treasure. They bite." },
@@ -1795,6 +1795,11 @@ export const JOB_SCENES = {
     { card: 'A New Path', sub: 'Thunderguard' },
     { who: 'brann', text: "Welcome to Ember Crag, {name}. Feel that? The air's gone tight around you. That's the storm, and it's yours now. You stand in front, and you let it out on whatever comes.", mood: 'happy' },
     { who: 'brann', text: "Wind it up, let it go, take the hits and send them back as thunder. Now go strike something that deserves it! Not me." },
+  ],
+  silkweaver: [
+    { card: 'A New Path', sub: 'Silkweaver' },
+    { who: 'vex', text: "There. Feel that tug on your fingers? Every moth came out of a cocoon once, {name}. Now you can put things back in one.", mood: 'happy' },
+    { who: 'vex', text: "Tie them up, reel them in, and let your friends do the heavy lifting. And when the pearl moon rises, wrap the lot. Then bow. Always bow." },
   ],
   eclipse: [
     { card: 'A New Path', sub: 'Eclipse' },

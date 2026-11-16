@@ -27,6 +27,8 @@ const BG = {
   mothbg: ['#e6dcff', '#24184e'],
   // The Eclipse's: a gold dawn edge down into the dark of totality.
   eclipsebg: ['#ffe4a0', '#140a2e'],
+  // The Silkweaver's: warm pearl down into soft plum.
+  silkbg: ['#fff3e2', '#5a3a62'],
 };
 
 const FRAME = { active: '#fff0f6', buff: '#ffd25a', passive: '#d4cdee' };
@@ -649,6 +651,44 @@ function nighteyes() {
   out.push(...mothIcon(10.8, 6.4, 3.6, '#9a7ae8'), ...spark(3.4, 3.2, 1, MOTHSIL));
   return out;
 }
+// Moth Veil: three moths circling on a soft ring of light, a glow in the middle where she'd stand.
+function mothveil() {
+  const out = [...tile('mothbg', 'active'), ...aura(8, 8, 6.4, '#f4f2ff', 1.1, 5)];
+  out.push(S(tube(arcPts(8, 9, 6.2, 2.6, 180, 360, 14), 0.25, 0.7), mix(MOTHC, cur.deep, 0.35)));
+  out.push(S(tube(arcPts(8, 9, 6.2, 2.6, 0, 180, 14), 0.3, 0.9), mix(MOTHC, '#ffffff', 0.55)));
+  out.push(...mothIcon(3, 9.6, 2.2), ...mothIcon(12.6, 7.6, 2.4), ...mothIcon(8.2, 12.6, 2));
+  out.push(...spark(12.8, 3, 1, MOTHGOLD), ...spark(3.6, 3.8, 0.8, MOTHSIL));
+  return out;
+}
+// Dazzle Dust: a puff of glittering dust blown off an open hand, big sparkles in it.
+function dazzledust() {
+  const out = [...tile('mothbg', 'active'), ...aura(8, 8, 6.4, '#f4f2ff')];
+  out.push(...solid(oval(10.2, 7, 4.6, 3.4, -10, 22), mix(MOTHC, '#ffffff', 0.55), { d: 0.3, ink: mix(MOTHC, cur.deep, 0.35), shadow: false }));
+  // (The hand, palm up, at the bottom left.)
+  out.push(...solid([[1.6, 12.2], [4.2, 10.6], [6.8, 10.4], [7.2, 11.4], [5, 12.4], [3.6, 14]], '#f6d2bc', { d: 0.3, ink: '#7a4a52', shadow: false }));
+  out.push(...spark(9.2, 6.4, 1.6, '#ffffff'), ...spark(12.4, 8.6, 1.1, MOTHGOLD), ...spark(11.6, 4.4, 0.9, MOTHSIL), ...spark(6.6, 8, 0.8, MOTHSIL));
+  return out;
+}
+// Moonlure: a little round paper lantern glowing on the floor, a gold crescent on it, a moth drawn
+// to it.
+function moonlure() {
+  const out = [...tile('mothbg', 'active'), ...aura(8, 9, 6.4, '#fff3c8')];
+  out.push(S(oval(7.6, 14, 5.4, 1.2, 0, 20), mix(MOTHC, '#ffffff', 0.5)));
+  out.push(...solid(oval(7.6, 9.6, 3.8, 4, 0, 24), '#f4f2ff', { d: 0.3, ink: MOTHINK, shadow: false }));
+  out.push(S(tube(arcPts(7.6, 9.6, 1.8, 3.8, 250, 470, 10), 0.12, 0.3), mix(MOTHC, '#ffffff', 0.2)));
+  out.push(...solid([...arcPts(7, 9.8, 1.5, 1.5, 60, 300, 10), ...arcPts(7.8, 9.4, 1.2, 1.2, 300, 60, 10)], MOTHGOLD, { d: 0.3, ink: '#8e5228', shadow: false }));
+  out.push(S(oval(7.6, 5.4, 1.8, 0.7, 0, 12), MOTHGOLD), S(oval(7.6, 13.6, 1.6, 0.6, 0, 12), MOTHGOLD));
+  out.push(...mothIcon(12.6, 4.2, 2.2), ...spark(3, 3.6, 0.9, MOTHSIL));
+  return out;
+}
+// Wing Feint: a dagger held back low one way, three moths flicked off the other way.
+function wingfeint() {
+  const out = [...tile('mothbg', 'active'), ...aura(8, 8, 6.4, '#e6dcff')];
+  out.push(S(tube([[6.4, 9.6], [9.6, 7.2], [13.2, 5.6]], 0.2, 0.9), mix(MOTHC, cur.deep, 0.4)));
+  out.push(...mothIcon(9.4, 7.4, 2), ...mothIcon(12.4, 4.4, 2.4), ...mothIcon(13.6, 9, 1.7));
+  out.push(...daggerIcon(5.6, 6, 2.2, 13.2), ...spark(3.6, 3, 1, MOTHGOLD));
+  return out;
+}
 // Midnight Swarm: a full moon with moths across its face.
 function midnightswarm() {
   const out = [...tile('mothbg', 'active'), ...aura(8, 7, 6.6, '#f4f2ff', 1.2, 5)];
@@ -714,6 +754,83 @@ function umbralmastery() {
 function totaleclipse() {
   const out = [...tile('eclipsebg', 'active'), ...aura(8, 8, 6.8, '#ffe4a0', 1.2, 5)];
   out.push(...eclipseIcon(8, 8.4, 4.2), ...spark(4.6, 4.8, 1.6, '#ffffff'), ...spark(13.4, 13, 0.9, ECGOLDC));
+  return out;
+}
+
+// ---------- Silkweaver (pearl silk, gold thread, soft plum) ----------
+const SVPEARL = '#fdf8f0';
+const SVCREAM = '#efe4d6';
+const SVMAUVE = '#cbb2c6';
+const SVINK = '#563a62';
+const SVGOLDC = '#ffe08a';
+// A thread along `pts`: a plum edge and a pearl core.
+const thread = (pts, w = 0.5) => [S(tube(pts, w * 0.9, w * 0.9), SVINK), S(tube(pts, w * 0.45, w * 0.45), SVPEARL)];
+// A little gold bow at (x, y), `r` across.
+const bowIcon = (x, y, r) => [
+  ...solid(oval(x - r * 0.55, y, r * 0.55, r * 0.4, -20, 12), SVGOLDC, { d: 0.3, ink: '#7a5222', shadow: false }),
+  ...solid(oval(x + r * 0.55, y, r * 0.55, r * 0.4, 20, 12), SVGOLDC, { d: 0.3, ink: '#7a5222', shadow: false }),
+  S(oval(x, y, r * 0.2, r * 0.2, 0, 8), '#e2ab52'),
+];
+// A cocoon at (x, y): a pearl oval wound with silk, a gold bow on top.
+function cocoonIcon(x, y, rx, ry) {
+  const out = [...solid(oval(x, y, rx, ry, 0, 22), SVCREAM, { d: 0.35, ink: SVINK, shadow: false })];
+  for (let j = -1; j <= 1; j++) out.push(S(tube(arcPts(x, y + j * ry * 0.42 - ry * 0.35, rx * 0.95, ry * 0.3, 20, 160, 8), 0.2, 0.2), j % 2 ? SVMAUVE : '#ffffff'));
+  out.push(...bowIcon(x, y - ry + 0.1, rx * 0.5));
+  return out;
+}
+// Silk Swing: a thread from a gold glint high up, a dagger swinging on its end along a soft arc.
+function silkswing() {
+  const out = [...tile('silkbg', 'active'), ...aura(8, 8, 6.4, '#fff3e2')];
+  out.push(S(tube(arcPts(9, 2.6, 7.4, 9, 115, 60, 10), 0.3, 0.9), mix(SVMAUVE, cur.deep, 0.3)));
+  out.push(...thread([[11.4, 2.6], [6.4, 11.2]]));
+  out.push(...daggerIcon(4.6, 12.6, 8.8, 9), ...spark(11.4, 2.6, 1.3, SVGOLDC), ...spark(3, 4, 0.8, SVPEARL));
+  return out;
+}
+// Binding Thread: three threads fanning out from her fingers, a pearl bead on each.
+function bindingthread() {
+  const out = [...tile('silkbg', 'active'), ...aura(8, 8, 6.4, '#fff3e2')];
+  for (const [ex, ey] of [[13.4, 3.6], [14, 8.6], [11.6, 13]]) {
+    out.push(...thread([[2.6, 10.6], [(2.6 + ex) / 2, (10.6 + ey) / 2 - 1], [ex, ey]]));
+    out.push(...solid(oval(ex, ey, 1.2, 1.2, 0, 12), SVPEARL, { d: 0.3, ink: SVINK, shadow: false }));
+  }
+  out.push(...spark(5, 4, 1, SVGOLDC));
+  return out;
+}
+// Reel In: a spool wound with silk, its thread pulled in from a loop off to the right.
+function reelin() {
+  const out = [...tile('silkbg', 'active'), ...aura(8, 8, 6.4, '#fff3e2')];
+  out.push(...solid(oval(6.4, 4.4, 4, 1.3, 0, 16), SVGOLDC, { d: 0.3, ink: '#7a5222', shadow: false }));
+  out.push(...solid([[3.4, 4.6], [9.4, 4.6], [9.4, 11.4], [3.4, 11.4]], SVCREAM, { d: 0.3, ink: SVINK, shadow: false }));
+  for (let j = 0; j < 4; j++) out.push(S(tube([[3.6, 5.8 + j * 1.5], [9.2, 6.4 + j * 1.5]], 0.25, 0.25), j % 2 ? SVMAUVE : '#ffffff'));
+  out.push(...solid(oval(6.4, 11.6, 4, 1.3, 0, 16), SVGOLDC, { d: 0.3, ink: '#7a5222', shadow: false }));
+  out.push(...thread([[9.2, 8], [11.6, 8.6], [13.6, 7.2]]), S(tube(arcPts(13.4, 9.6, 1.5, 2.2, 250, 600, 16), 0.3, 0.3), SVPEARL));
+  out.push(...spark(13, 3.2, 1, SVGOLDC));
+  return out;
+}
+// Spindle: a dagger point-down at the middle, silk whirling round it on three flat rings.
+function spindle() {
+  const out = [...tile('silkbg', 'active'), ...aura(8, 8, 6.6, '#fff3e2')];
+  for (const [y, rx] of [[11.6, 6.2], [8.4, 5.4], [5.2, 4.4]]) out.push(S(tube(arcPts(8, y, rx, 1.4, 190, 350, 10), 0.2, 0.2), mix(SVMAUVE, cur.deep, 0.3)));
+  out.push(...daggerIcon(8, 1.8, 8, 14.2));
+  for (const [y, rx] of [[11.6, 6.2], [8.4, 5.4], [5.2, 4.4]]) out.push(...thread(arcPts(8, y, rx, 1.4, 10, 170, 10)));
+  out.push(...spark(13.4, 3, 1, SVGOLDC));
+  return out;
+}
+// Weaver's Mastery: a cocoon wound in pearl silk with its gold bow, a sparkle by it.
+function weavermastery() {
+  const out = [...tile('silkbg', 'passive'), ...aura(8, 8.4, 6, '#fff3e2')];
+  out.push(...cocoonIcon(8, 8.8, 3.3, 5.2), ...spark(13, 4, 1, SVGOLDC), ...spark(3.2, 12.4, 0.8, SVPEARL));
+  return out;
+}
+// Moonspun Cocoon: a great pearl moon wound like a spool, threads streaming off it to two little
+// cocoons below.
+function moonspun() {
+  const out = [...tile('silkbg', 'active'), ...aura(8, 7, 6.8, '#fff3e2', 1.2, 5)];
+  out.push(...solid(oval(8, 6.2, 4.6, 4.6, 0, 26), SVPEARL, { d: 0.4, ink: SVINK }));
+  for (let j = -2; j <= 2; j++) out.push(S(tube(arcPts(8, 6.2 + j * 1.6 - 1.2, 4.2, 1.2, 20, 160, 8), 0.18, 0.18), j % 2 ? SVMAUVE : '#ffffff'));
+  out.push(...thread([[5, 9.6], [3.6, 11.4]], 0.4), ...thread([[11, 9.6], [12.4, 11.4]], 0.4));
+  out.push(...cocoonIcon(3.4, 13, 1.6, 2), ...cocoonIcon(12.6, 13, 1.6, 2));
+  out.push(...spark(13.2, 2.6, 1.3, SVGOLDC));
   return out;
 }
 
@@ -950,8 +1067,9 @@ const ART = {
   lightningcage, stormbarrier, magnetize, overcast, bedrock, fortress,
   gmsmite, gmhaste, gmblessing,
   bubbleshield, tidepool, riptide, tidalwave, flow, waverider, oceanheart, greatwave,
-  mothstep, wingflurry, mothswarm, nighteyes, midnightswarm,
+  mothstep, wingflurry, mothswarm, nighteyes, midnightswarm, mothveil, dazzledust, moonlure, wingfeint,
   shadowstep, nighteye, umbraledge, corona, umbralmastery, totaleclipse,
+  silkswing, bindingthread, reelin, spindle, weavermastery, moonspun,
   tidallance, undertow, hydrocannon, depthcharge, deepmastery, abyssmaelstrom,
   healingrain, springsurge, moonblessing, tidesreturn, moonfall, tidesong, moontide,
 };

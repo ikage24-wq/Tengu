@@ -980,7 +980,7 @@ function eclipse() {
 test('the Eclipse asks for Vex\'s trial, fights her own way and builds Umbra', async () => {
   const { gaugeOf, pathOf } = await import('../src/world/melee.js');
   const { nextJobs } = await import('../src/data/jobs.js');
-  assert.deepEqual(nextJobs('moonmoth', 30, { thief_trial: { state: 'done' } }).map((j) => j.id), ['eclipse']);
+  assert.deepEqual(nextJobs('moonmoth', 30, { thief_trial: { state: 'done' } }).map((j) => j.id), ['eclipse', 'silkweaver']);
   assert.equal(nextJobs('moonmoth', 30, {}).length, 0, 'not before the trial');
   const w = eclipse();
   assert.equal(gaugeOf(w.char), 'umbra');
@@ -1089,4 +1089,206 @@ test('a thief flutter-jumps once in the air (Jump again), springing on with a li
   const v = arena('sword_20');
   jump(v);
   assert.ok(!v.flutterUsed, 'a warrior has no flutter jump');
+});
+
+// ---------- The Moon Moth's second four (2026-11-16) ----------
+test('Moth Veil: some blows miss her outright, and every miss sends a moth back at the attacker', async () => {
+  const { veilOf } = await import('../src/world/melee.js');
+  const w = moonmoth();
+  w.god = false;
+  w.char.skills.mothveil = 10;
+  assert.ok(cast(w, 'mothveil').ok);
+  run(w, 1);
+  assert.ok(veilOf(w) > 0, 'the veil is up');
+  assert.ok(w.char.buffs.mothveil.values.eva > 0, 'and she is harder to hit');
+  const m = w.mobs[0];
+  m.def = { ...m.def, acc: 1e6, atk: 1, aggro: true };
+  m.aggroUntil = w.now + 99;
+  let missed = 0;
+  let nipped = false;
+  const real = Math.random;
+  Math.random = () => 0.01;
+  try {
+    for (let i = 0; i < 60 * 6; i++) {
+      w.body.x = m.x;
+      w.char.hp = 999;
+      const n = w.numbers.length;
+      updateWorld(w, DT, idle);
+      missed += w.numbers.slice(n).filter((x) => x.text === 'MISS').length;
+      if (w.fx.some((f) => f.kind === 'mmnip' && f.look === 'mm')) nipped = true;
+    }
+  } finally {
+    Math.random = real;
+  }
+  assert.ok(missed > 0, 'the moths took a blow');
+  assert.ok(nipped && m.hp < 1e9, 'and a moth nipped it back');
+});
+
+test('Dazzle Dust: a dazzled monster stops chasing, cannot land a hit, and is easier to crit', async () => {
+  const { DAZZLE_CRIT } = await import('../src/world/melee.js');
+  const w = moonmoth();
+  w.god = false;
+  w.char.skills.dazzledust = 20;
+  const m = w.mobs[0];
+  assert.ok(cast(w, 'dazzledust').ok);
+  run(w, 0.6);
+  assert.ok(w.mobs.every((k) => k.dazzleUntil > w.now + 2), 'every monster in the cloud is dazzled');
+  m.def = { ...m.def, acc: 1e6, atk: 50, aggro: true };
+  m.aggroUntil = w.now + 99;
+  const hp = w.char.hp;
+  for (let i = 0; i < 120; i++) {
+    w.body.x = m.x;
+    updateWorld(w, DT, idle);
+  }
+  assert.equal(w.char.hp, hp, 'it cannot land a hit on her');
+  assert.ok(DAZZLE_CRIT > 0);
+});
+
+test('Moonlure: monsters near the lantern gather under it, then it pops and hits them all', () => {
+  const w = moonmoth();
+  w.char.skills.moonlure = 20;
+  for (const m of w.mobs) m.def = { ...m.def, speed: 60 };
+  const far = w.mobs[2];
+  far.x = w.body.x + 300;
+  assert.ok(cast(w, 'moonlure').ok);
+  run(w, 0.6);
+  assert.ok(w.lure, 'the lantern is out');
+  const x0 = Math.abs(far.x - w.lure.x);
+  run(w, 2);
+  assert.ok(Math.abs(far.x - w.lure.x) < x0, 'they wander over to it');
+  run(w, 4);
+  assert.ok(!w.lure, 'it popped');
+  assert.ok(w.mobs.some((m) => m.hp < 1e9), 'and hit what gathered round it');
+});
+
+test('Wing Feint: the monsters turn away, frozen, and her next blow is a backstab crit', () => {
+  const w = moonmoth();
+  w.char.skills.wingfeint = 10;
+  for (const m of w.mobs) m.dir = -1;
+  assert.ok(cast(w, 'wingfeint').ok);
+  run(w, 0.4);
+  const m = w.mobs[0];
+  assert.equal(m.dir, 1, 'it turned to watch the moths');
+  assert.equal(m.hold, 'feint');
+  assert.ok(m.frozenUntil > w.now, 'frozen a moment');
+  updateWorld(w, DT, attack);
+  run(w, 0.4);
+  assert.ok(w.juice.some((j) => j.type === 'hit' && j.crit) || m.hp < 1e9, 'a backstab');
+  assert.ok(m.hp < 1e9);
+});
+
+test("her paths play the second four in their own look", async () => {
+  const { skillAt } = await import('../src/data/skills.js');
+  for (const id of ['mothveil', 'dazzledust', 'moonlure', 'wingfeint']) {
+    const at = skillAt(id, 10);
+    assert.ok(at.paths?.eclipse, `${id} has the Eclipse's version`);
+    assert.notEqual(at.paths.eclipse[0].move, at.combo[0].move, `${id}: her own move`);
+  }
+});
+
+// ---------- The Silkweaver (docs/design/silkweaver.md) ----------
+// A level 40 Silkweaver with daggers, in the arena (past Vex's trial).
+function silkweaver() {
+  const w = arena('dagger_30');
+  const c = w.char;
+  gainExp(c, 4e8);
+  c.job = 'novice';
+  assert.ok(advanceJob(c, 'moonmoth'));
+  assert.ok(!advanceJob(c, 'silkweaver'), 'not before the trial');
+  c.quests.thief_trial = { state: 'done', kills: {} };
+  assert.ok(advanceJob(c, 'silkweaver'));
+  c.equipment.weapon = makeEquip('dagger_30', {});
+  c.mp = 99999;
+  c.baseMp = 99999;
+  for (let i = 0; i < 5; i++) updateWorld(w, DT, idle);
+  return w;
+}
+
+test('the Silkweaver asks for Vex\'s trial, fights her own way and builds Spool', async () => {
+  const { gaugeOf, pathOf } = await import('../src/world/melee.js');
+  const w = silkweaver();
+  assert.equal(gaugeOf(w.char), 'spool');
+  assert.equal(pathOf(w), 'silkweaver');
+  const kinds = new Set();
+  for (let i = 0; i < 200; i++) {
+    updateWorld(w, DT, i % 16 === 0 ? attack : idle);
+    if (w.pose) kinds.add(w.pose.kind);
+  }
+  assert.ok([...kinds].every((k) => k.startsWith('sv')), `her own moves only (${[...kinds]})`);
+  assert.ok(w.spool > 0, 'her hits build it');
+});
+
+test('Silkweaver threads slow a monster, and the third wraps it in a cocoon that takes her blows harder', async () => {
+  const { addThread, threadsOf, cocooned, THREAD_SLOW, COCOON_HURT } = await import('../src/world/melee.js');
+  const w = silkweaver();
+  const m = w.mobs[0];
+  addThread(w, m, 1);
+  assert.equal(threadsOf(w, m), 1);
+  assert.ok(Math.abs(m.threadSlow - (1 - THREAD_SLOW)) < 1e-9, 'a thread slows it a fifth');
+  addThread(w, m, 2);
+  assert.ok(cocooned(w, m), 'the third wraps it in a cocoon');
+  assert.equal(m.hold, 'silk');
+  assert.ok(m.frozenUntil > w.now + 1, 'it hangs helpless a while');
+  assert.ok(COCOON_HURT > 0);
+  // A boss takes threads but is never cocooned.
+  const boss = w.mobs[1];
+  boss.def = { ...boss.def, boss: true };
+  addThread(w, boss, 3);
+  assert.ok(!cocooned(w, boss), 'bosses are never cocooned');
+  assert.ok(boss.threadSlow > 1 - 3 * THREAD_SLOW, 'and slowed half as much');
+});
+
+test('Binding Thread ties a thread on the nearest monsters; Reel In hauls the threaded ones in', async () => {
+  const { threadsOf } = await import('../src/world/melee.js');
+  const w = silkweaver();
+  w.char.skills.bindingthread = 20;
+  w.char.skills.reelin = 20;
+  assert.ok(cast(w, 'bindingthread').ok);
+  run(w, 1);
+  assert.ok(w.mobs.every((m) => threadsOf(w, m) >= 1), 'a thread on each');
+  const far = w.mobs[2];
+  far.x = w.body.x + 220;
+  run(w, 0.5);
+  assert.ok(cast(w, 'reelin').ok);
+  run(w, 1);
+  assert.ok(Math.abs(far.x - w.body.x) < 120, `hauled in (${Math.round(far.x - w.body.x)} px away)`);
+  assert.ok(far.hp < 1e9);
+});
+
+test('Moonspun Cocoon needs a full Spool, wraps everything in front of her, then bursts the cocoons', async () => {
+  const { cocooned } = await import('../src/world/melee.js');
+  const w = silkweaver();
+  w.char.skills.moonspun = 10;
+  assert.ok(!cast(w, 'moonspun').ok, 'not without a full Spool');
+  w.spool = 100;
+  w.spoolAt = w.now;
+  assert.ok(cast(w, 'moonspun').ok);
+  let most = 0;
+  let burst = false;
+  for (let i = 0; i < 150; i++) {
+    updateWorld(w, DT, idle);
+    most = Math.max(most, w.mobs.filter((m) => cocooned(w, m)).length);
+    if (w.fx.some((f) => f.kind === 'svpop')) burst = true;
+  }
+  assert.equal(most, w.mobs.length, 'every one wrapped at once');
+  assert.ok(burst && w.mobs.every((m) => !cocooned(w, m)), 'and the cocoons burst');
+  assert.ok(w.mobs.every((m) => m.hp < 1e9));
+  assert.ok(!(w.spool > 0), 'it spends the Spool');
+});
+
+test('Silk Swing carries her over the monsters and she cuts back at them', async () => {
+  const { threadsOf } = await import('../src/world/melee.js');
+  const w = silkweaver();
+  w.char.skills.silkswing = 10;
+  const x0 = w.body.x;
+  assert.ok(cast(w, 'silkswing').ok);
+  let up = 0;
+  for (let i = 0; i < 60; i++) {
+    updateWorld(w, DT, idle);
+    up = Math.max(up, w.map.groundY - w.body.y);
+  }
+  assert.ok(w.body.x - x0 > 120, `she swung on past them (${Math.round(w.body.x - x0)} px)`);
+  assert.ok(up > 20, 'up off the floor');
+  assert.equal(w.body.facing, -1, 'turned round');
+  assert.ok(w.mobs.some((m) => threadsOf(w, m) >= 1), 'a thread on what she passed');
 });

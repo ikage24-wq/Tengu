@@ -268,7 +268,7 @@ export function speedOf(m, chasing) {
 // How fast a monster's gait carries it right now, as a share of its speed (averaging about 1).
 function pace(m, chasing, dt) {
   m.walked = (m.walked ?? 0) + dt;
-  return gait(m, chasing);
+  return gait(m, chasing) * (m.slowK ?? 1);
 }
 function gait(m, chasing) {
   switch (m.def.gait) {
@@ -356,6 +356,8 @@ export function updateMob(m, player, dt, now) {
   }
   m.flash = Math.max(0, m.flash - dt);
   m.age += dt;
+  // (Tied with the Silkweaver's threads it goes slower, a fifth for each.)
+  m.slowK = m.threadUntil > now ? m.threadSlow ?? 1 : 1;
   if (tickYank(m, dt) || tickAir(m, dt)) {
     unburyFlyer(m);
     return null;
@@ -390,7 +392,19 @@ export function updateMob(m, player, dt, now) {
     m.knockVx *= 0.85;
   } else if (m.special?.warn > 0) {
     // Bosses stand still while winding up.
-  } else if (now < m.aggroUntil && m.def.aggro) {
+  } else if (m.lureUntil > now && !m.def.boss && m.lureX != null) {
+    // Drawn to a Moonlure (world/melee.js): over to its own place round the lantern, then it stands
+    // gazing up at the light.
+    const dx = m.lureX - m.x;
+    if (Math.abs(dx) > 3) {
+      m.dir = Math.sign(dx);
+      m.state = 'walk';
+      m.x += m.dir * Math.min(Math.abs(dx), speedOf(m, true) * 1.2 * pace(m, true, dt) * dt);
+    } else {
+      m.state = 'idle';
+      m.dir = Math.sign(m.lureX - m.lureSlot - m.x) || m.dir;
+    }
+  } else if (now < m.aggroUntil && m.def.aggro && !(m.dazzleUntil > now && !m.def.boss)) {
     const dx = player.x - m.x;
     if (Math.abs(dx) > 6) m.dir = Math.sign(dx);
     m.state = 'walk';

@@ -112,6 +112,14 @@ export const BUFF_LOOKS = {
     back: (ctx, x, y, t, dir, a) => fxSprite(ctx, 'celringshadow', x, y, { frame: 2, scale: 0.32, sy: 0.32, alpha: a * 0.6 }),
     front: (ctx, x, y, t, dir, a) => fxSprite(ctx, 'celstreakshadow', x - dir * 22, y - 10, { frame: Math.floor(t * 10) % 2, flip: dir < 0, scale: 0.3, alpha: a * 0.75 }),
   },
+  // Moth Veil (the thieves' dodge buff): two of her moths circling her at chest height, the near one
+  // in front of her and the far one behind, bobbing as they fly; in her path's look (`values.look`:
+  // 0 the Moon Moth's lilac, 1 the Eclipse's dark moths, 2 the Silkweaver's pearl ones).
+  mothveil: {
+    color: '#c9b4ff',
+    back: (ctx, x, y, t, dir, a, b) => veilMoths(ctx, x, y, t, a, b, false),
+    front: (ctx, x, y, t, dir, a, b) => veilMoths(ctx, x, y, t, a, b, true),
+  },
   gmhaste: {
     color: '#ff9ec0', cast: 'gust',
     front: (ctx, x, y, t, dir, a) => {
@@ -121,6 +129,16 @@ export const BUFF_LOOKS = {
   },
 };
 
+const VEIL_LOOK = ['mm', 'ec', 'sv'];
+function veilMoths(ctx, x, y, t, a, b, front) {
+  const look = VEIL_LOOK[b?.values?.look ?? 0] ?? 'mm';
+  for (let i = 0; i < 2; i++) {
+    const ang = t * 1.7 + i * Math.PI;
+    const near = Math.sin(ang);
+    if (near > 0 !== front) continue;
+    fxSprite(ctx, `cel${look}moth`, x + Math.cos(ang) * 19, y - 30 + near * 4 + Math.sin(t * 3.1 + i * 2) * 3, { t: t + i * 0.37, flip: Math.cos(ang + 0.3) > 0 === (near > 0), scale: 0.24 + 0.04 * near, alpha: a * (0.8 + 0.2 * near) });
+  }
+}
 // A whirl of wind circling the ankles; `front` draws the near half.
 function windSwirl(ctx, x, y, t, a, color, front) {
   ctx.save();
@@ -147,7 +165,7 @@ export function drawBuffEffects(ctx, buffs, layer, x, y, time, now, dir) {
     const ending = left < 3 ? (Math.floor(left * 6) % 2 ? 0.35 : 1) : 1;
     const start = b.since != null ? Math.min(1, (now - b.since) * 3) : 1;
     ctx.save();
-    look[layer](ctx, x, y, time, dir, ending * start);
+    look[layer](ctx, x, y, time, dir, ending * start, b);
     ctx.restore();
   }
 }
@@ -164,7 +182,8 @@ export function drawBuffCast(ctx, f, x, y, p, time) {
   // Maelstrom's and the Tidecaller's too: her shell, pool, rain and blessing are their own effects.)
   const own = SKILLS[f.skill]?.school;
   // (The Thunderguard's too: his clap, his static shell.)
-  if (['tide', 'deep', 'moon', 'thunder', 'redstorm', 'indigo'].includes(school) || ['tide', 'deep', 'moon', 'thunder', 'redstorm', 'indigo'].includes(own)) {
+  // (And the thieves': her moths settling round her are the picture.)
+  if (['tide', 'deep', 'moon', 'thunder', 'redstorm', 'indigo', 'moth', 'eclipse', 'silk'].includes(school) || ['tide', 'deep', 'moon', 'thunder', 'redstorm', 'indigo', 'moth', 'eclipse', 'silk'].includes(own)) {
     ctx.restore();
     return;
   }

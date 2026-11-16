@@ -14,8 +14,8 @@ down on everything.
 
 - **Weapons:** daggers, drawn exactly as equipped, one in each hand (the off hand holds a copy of
   the same dagger). The dagger items are real knives again (they were chakrams for the Wind Dancer).
-- **Colour:** lilac and moon silver, inked in deep dusk violet, with the warm gold of a moth's eye
-  spot as the accent.
+- **Colour:** lilac and moon silver, inked in deep dusk violet, with the warm gold of the little
+  crescents on her moths' wings as the accent.
 - **Shapes, hers alone:** spirit moths (round petal wings glowing pale at the root with a little
   gold crescent moon on each, short soft tails, a small round body, curled feelers with bead tips;
   cute, never realistic: real moth anatomy, eye spots, crowded swarms and speck dust read as gross,
@@ -70,10 +70,25 @@ full, three moths circle her.
 - **Midnight Swarm** (finisher): on a full Moondust, she springs up as a full moon rises behind her,
   throws her arms wide, and the swarm pours down across the screen through every monster.
 
+The second four (2026-11-16, the player's "do 1 and 2"):
+
+- **Moth Veil** (buff, 30-60 s): moths settle round her like a veil. She's harder to hit, the veil
+  takes some blows outright (a MISS), and every blow that misses her sends a moth back to nip the
+  monster that tried.
+- **Dazzle Dust:** she blows a handful of glittering moon dust ahead. Every monster in the cloud is
+  dazzled for a few seconds: it stumbles about instead of chasing, can't land a hit on her, and her
+  blows on it crit more often. (Bosses only give up the crits, for half as long.)
+- **Moonlure:** she sets a little moon lantern glowing on the floor ahead. For a few seconds every
+  monster round it wanders over and gathers under its light, gazing up; then it pops in a burst of
+  moths that hits them all. (Not bosses.)
+- **Wing Feint:** she flicks a burst of moths off past the monsters ahead; they all turn to watch them
+  go, frozen a moment with their backs to her, and every blow she lands on them for a few seconds is
+  a backstab.
+
 Her level-30 paths, after Vex's trial (Lamias at the Hot Spring Pools): the **Eclipse**, the
-boss-killer (docs/design/eclipse.md, built 2026-11-16), and the **Silkweaver**, the controller (to
-make). Still to make: four more Moon Moth skills (a dodge buff, a blinding powder, a lure, a feint)
-and a thief armour set (there is none yet, so thieves fight in plain gear).
+boss-killer (docs/design/eclipse.md), and the **Silkweaver**, the controller
+(docs/design/silkweaver.md), both built 2026-11-16. Still to make: a thief armour set (there is none
+yet, so thieves fight in plain gear) and the full dagger line (one sample dagger so far).
 
 ## Where things live
 

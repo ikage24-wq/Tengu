@@ -584,7 +584,7 @@ export const SKILLS = {
   // monster. The first pass: four skills and her mastery; four more and her paths come later.
   mothstep: skill({
     id: 'mothstep', anim: 'mmstep', name: 'Moth Step', job: 'moonmoth', type: 'attack', fx: null, icon: 'mothstep', school: 'moth', maxLevel: 10, movement: true,
-    pathNames: { eclipse: 'Umbra Step' },
+    pathNames: { eclipse: 'Umbra Step', silkweaver: 'Silk Step' },
     desc: 'Break into a cloud of moths and re-form past them, turned round to cut whatever you passed through: a backstab on anything facing away. Nothing touches you while you\'re moths.',
     weapons: ['dagger'],
     at: (lv, m) => {
@@ -603,13 +603,20 @@ export const SKILLS = {
           { at: 0.06, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, gauge: 0, burst: 'eccloud', burstAt: 0, burstDur: 0.5 },
           { at: 0.46, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, gauge: 0, turn: true },
           { at: 0.62, school: 'eclipse', fx: 'echit', pct: k(90, 150), reach: k(160, 220), h: 60, targets: 4, knock: 120, turn: true, backstab: 1.5, burst: 'eccloud', burstAt: 0, burstDur: 0.5, big: true, stop: 0.05 },
-        ] }] },
+        ] }],
+          // Silk Step: she bursts into pearl moths, flies on as them, and re-forms on a thread,
+          // cutting back at what she passed and tying a thread on each.
+          silkweaver: [{ move: 'svstep', dur: 0.38, step: k(140, 200), carry: 0.7, guard: 0.5, moths: [0.12, 0.5], flight: 'svflight', strikes: [
+            { at: 0.06, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, gauge: 0, burst: 'svcloud', burstAt: 0, burstDur: 0.5 },
+            { at: 0.46, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, gauge: 0, turn: true },
+            { at: 0.62, school: 'silk', fx: 'svhit', pct: k(90, 150), reach: k(160, 220), h: 60, targets: 4, knock: 120, turn: true, backstab: 1.5, thread: 1, burst: 'svcloud', burstAt: 0, burstDur: 0.5, big: true, stop: 0.05 },
+          ] }] },
       };
     },
   }),
   wingflurry: skill({
     id: 'wingflurry', anim: 'mmflurry', name: 'Wing Flurry', job: 'moonmoth', type: 'attack', fx: null, icon: 'wingflurry', school: 'moth', maxLevel: 20,
-    pathNames: { eclipse: 'Black Flurry' },
+    pathNames: { eclipse: 'Black Flurry', silkweaver: 'Silk Flurry' },
     desc: 'Cut six times in a blur, both daggers flashing, wing dust whirling off every cut; the last cut throws them back.',
     weapons: ['dagger'],
     at: (lv, m) => {
@@ -627,13 +634,14 @@ export const SKILLS = {
       return {
         mp: k(8, 16), pct: per, hits: 6, targets: 3,
         combo: flurry('mmflurry', 'moth', 'mmhit', 'mmflurry'),
-        paths: { eclipse: flurry('ecflurry', 'eclipse', 'echit', 'ecflurry') },
+        // (Silk Flurry: the same six cuts trailing silk, the last tying a thread.)
+        paths: { eclipse: flurry('ecflurry', 'eclipse', 'echit', 'ecflurry'), silkweaver: flurry('svflurry', 'silk', 'svhit', 'svflurry').map((st) => ({ ...st, strikes: st.strikes.map((x, i, all) => (i === all.length - 1 ? { ...x, thread: 1 } : x)) })) },
       };
     },
   }),
   mothswarm: skill({
     id: 'mothswarm', anim: 'mmswarm', name: 'Moth Swarm', job: 'moonmoth', type: 'attack', fx: null, icon: 'mothswarm', school: 'moth', maxLevel: 20,
-    pathNames: { eclipse: 'Shadow Swarm' },
+    pathNames: { eclipse: 'Shadow Swarm', silkweaver: 'Silkmoth Swarm' },
     desc: 'Draw both daggers in to your chest, then fling your hands forward: a swarm of moths pours out ahead, nibbling through every monster in a line.',
     weapons: ['dagger'],
     at: (lv, m) => {
@@ -643,7 +651,10 @@ export const SKILLS = {
         combo: [{ move: 'mmswarm', dur: 0.5, step: -4, strikes: [{ at: 0.48, school: 'moth', burst: 'mmhit', shot: 'mmswarm', pct: k(150, 250), range: 360, h: 80, targets: 6, pierce: true, knock: 120, speed: 400, big: true, stop: 0.04 }] }],
         // Shadow Swarm: she cups her hands at her chest and opens them like a book; the dark moths
         // pour out, their gold crescents lit.
-        paths: { eclipse: [{ move: 'ecswarmcast', dur: 0.5, step: -4, strikes: [{ at: 0.48, school: 'eclipse', burst: 'echit', shot: 'ecswarm', pct: k(150, 250), range: 360, h: 80, targets: 6, pierce: true, knock: 120, speed: 400, big: true, stop: 0.04 }] }] },
+        paths: { eclipse: [{ move: 'ecswarmcast', dur: 0.5, step: -4, strikes: [{ at: 0.48, school: 'eclipse', burst: 'echit', shot: 'ecswarm', pct: k(150, 250), range: 360, h: 80, targets: 6, pierce: true, knock: 120, speed: 400, big: true, stop: 0.04 }] }],
+          // Silkmoth Swarm: she draws a thread round her fingers like a cat's cradle and pulls it open;
+          // pearl moths pour through it, each one trailing a thread onto what it reaches.
+          silkweaver: [{ move: 'svswarmcast', dur: 0.5, step: -4, strikes: [{ at: 0.48, school: 'silk', burst: 'svhit', shot: 'svswarm', pct: k(150, 250), range: 360, h: 80, targets: 6, pierce: true, knock: 100, speed: 400, thread: 1, big: true, stop: 0.04 }] }] },
       };
     },
   }),
@@ -654,7 +665,7 @@ export const SKILLS = {
   }),
   midnightswarm: skill({
     id: 'midnightswarm', anim: 'mmmidnight', dmg: 2, name: 'Midnight Swarm', job: 'moonmoth', type: 'attack', fx: null, icon: 'midnightswarm', school: 'moth', maxLevel: 10, fullGauge: true,
-    pathNames: { eclipse: 'New Moon' },
+    pathNames: { eclipse: 'New Moon', silkweaver: 'Pearl Moon' },
     desc: 'Finisher: needs a full Moondust, and spends it. Spring up as a full moon rises behind you, hang there with your daggers crossed while the moths gather, then throw your arms wide: the swarm pours down across the screen through every monster in front of you.',
     weapons: ['dagger'],
     at: (lv, m) => {
@@ -670,7 +681,85 @@ export const SKILLS = {
         paths: { eclipse: [{ move: 'ecnewmoon', dur: 1.35, step: 0, finisher: true, guard: 1.2, strikes: [
           { at: 0.2, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, gauge: 0, burst: 'ecnewmoon', burstAt: 0, burstDur: 1.4 },
           { at: 0.62, school: 'eclipse', fx: 'echit', pct: k(170, 270), reach: 520, h: 220, targets: 12, knock: 260, launch: 160, burst: 'ecpour', burstAt: 0.02, burstDur: 0.9, big: true, stop: 0.1, shake: 4 },
-        ] }] },
+        ] }],
+          // Pearl Moon (the Silkweaver's): she spins a thread up over her head as a pearl moon rises
+          // behind her, then draws it down; the pearl moths pour, tying two threads on all they reach.
+          silkweaver: [{ move: 'svpearlmoon', dur: 1.35, step: 0, finisher: true, guard: 1.2, strikes: [
+            { at: 0.2, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, gauge: 0, burst: 'svpearlmoon', burstAt: 0, burstDur: 1.4 },
+            { at: 0.62, school: 'silk', fx: 'svhit', pct: k(170, 270), reach: 520, h: 220, targets: 12, knock: 220, launch: 140, thread: 2, burst: 'svpour', burstAt: 0.02, burstDur: 0.9, big: true, stop: 0.1, shake: 4 },
+          ] }] },
+      };
+    },
+  }),
+
+  // The Moon Moth's second four (2026-11-16): a dodge buff, a blinding powder, a lure and a feint
+  // (world/melee.js: Moth Veil, Dazzle Dust, Moonlure, Wing Feint). Her paths play them in their own
+  // colours (`look`: 'ec' the Eclipse's, 'sv' the Silkweaver's).
+  mothveil: skill({
+    id: 'mothveil', anim: 'mmveil', name: 'Moth Veil', job: 'moonmoth', type: 'buff', fx: null, icon: 'mothveil', school: 'moth', maxLevel: 10,
+    pathNames: { eclipse: 'Umbral Veil', silkweaver: 'Silk Veil' },
+    desc: "Moths settle round you like a veil for a while: you're harder to hit, the veil takes some blows for you outright, and every blow that misses you sends a moth back to nip whoever swung.",
+    weapons: ['dagger'],
+    at: (lv, m) => {
+      const k = (a, b) => lerp(a, b, lv, m);
+      const kf = (a, b) => lerpf(a, b, lv, m);
+      // (`look`: which thief's moths circle her while it lasts, render/buffs.js.)
+      const veil = (burst, look, move = 'mmveil') => [{ move, dur: 0.6, step: 0, strikes: [{ at: 0.5, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, gauge: 0, burst, burstAt: 0, burstDur: 0.8, follow: true, grant: { id: 'mothveil', duration: k(30, 60), buff: { eva: k(8, 30), veil: kf(0.1, 0.25), look }, range: { w: 0, h: 0 } } }] }];
+      return {
+        mp: k(14, 24), pct: 0, hits: 0, targets: 0, duration: k(30, 60),
+        combo: veil('mmveil', 0),
+        paths: { eclipse: veil('ecveil', 1, 'ecveil'), silkweaver: veil('svveil', 2, 'svveil') },
+      };
+    },
+  }),
+  dazzledust: skill({
+    id: 'dazzledust', anim: 'mmdust', name: 'Dazzle Dust', job: 'moonmoth', type: 'attack', fx: null, icon: 'dazzledust', school: 'moth', maxLevel: 20,
+    pathNames: { eclipse: 'Corona Dust', silkweaver: 'Pearl Dust' },
+    desc: "Blow a handful of glittering moon dust ahead. Every monster in the cloud is dazzled for a few seconds: it stumbles about instead of chasing you, can't land a hit on you, and your blows on it crit more often. (Bosses only give up the crits.)",
+    weapons: ['dagger'],
+    at: (lv, m) => {
+      const k = (a, b) => lerp(a, b, lv, m);
+      const kf = (a, b) => lerpf(a, b, lv, m);
+      // (The Silkweaver's pearl dust ties a thread on everything it dazzles: `thread`.)
+      const dust = (look, school, move = 'mmdust', thread = undefined) => [{ move, dur: 0.5, step: -4, strikes: [{ at: 0.5, school, fx: `${look}hit`, look, pct: k(40, 70), reach: 170, h: 100, targets: 8, knock: 20, dazzle: kf(3, 6), thread, burst: `${look}dazzle`, burstAt: 0.1, burstDur: 0.8, gauge: 2, quiet: true, stop: 0.03 }] }];
+      return {
+        mp: k(10, 18), pct: k(40, 70), hits: 1, targets: 8, cooldown: 10,
+        combo: dust('mm', 'moth'),
+        paths: { eclipse: dust('ec', 'eclipse', 'ecdust'), silkweaver: dust('sv', 'silk', 'svdust', 1) },
+      };
+    },
+  }),
+  moonlure: skill({
+    id: 'moonlure', anim: 'mmlure', name: 'Moonlure', job: 'moonmoth', type: 'attack', fx: null, icon: 'moonlure', school: 'moth', maxLevel: 20,
+    pathNames: { eclipse: 'Eclipse Lantern', silkweaver: 'Silk Lantern' },
+    desc: 'Toss a little moon lantern out onto the floor ahead. For a few seconds every monster round it wanders over and gathers under its light, gazing up and paying you no mind; then it pops in a burst of moths that hits them all. (Not bosses.)',
+    weapons: ['dagger'],
+    at: (lv, m) => {
+      const k = (a, b) => lerp(a, b, lv, m);
+      const kf = (a, b) => lerpf(a, b, lv, m);
+      // (The Silkweaver's lantern ties two threads on everything its pop hits: `thread`.)
+      const lure = (look, school, move = 'mmlure', thread = undefined) => [{ move, dur: 0.55, step: 0, strikes: [{ at: 0.55, school, look, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, gauge: 0, thread, lure: { secs: kf(3, 5), r: k(220, 320), pct: k(150, 250) } }] }];
+      return {
+        mp: k(12, 22), pct: k(150, 250), hits: 1, targets: 10, cooldown: 12,
+        combo: lure('mm', 'moth'),
+        paths: { eclipse: lure('ec', 'eclipse', 'eclure'), silkweaver: lure('sv', 'silk', 'svlure', 2) },
+      };
+    },
+  }),
+  wingfeint: skill({
+    id: 'wingfeint', anim: 'mmfeint', name: 'Wing Feint', job: 'moonmoth', type: 'attack', fx: null, icon: 'wingfeint', school: 'moth', maxLevel: 10,
+    pathNames: { eclipse: 'Shadow Feint', silkweaver: 'Silk Feint' },
+    desc: 'Fake a lunge, then flick a burst of moths off past the monsters ahead: they all turn to watch them go, frozen a moment with their backs to you, and every blow you land on them for a few seconds is a backstab.',
+    weapons: ['dagger'],
+    at: (lv, m) => {
+      const k = (a, b) => lerp(a, b, lv, m);
+      const kf = (a, b) => lerpf(a, b, lv, m);
+      // (The Silkweaver's ties a thread on each one it turns: `thread`.)
+      const fake = (look, school, move = 'mmfeint', thread = undefined) => [{ move, dur: 0.42, step: 0, strikes: [{ at: 0.45, school, look, pct: 0, reach: 150, h: 90, targets: 6, knock: 0, feint: kf(1, 1.8), thread, quiet: true, gauge: 0 }] }];
+      return {
+        mp: k(8, 14), pct: 0, hits: 0, targets: 6, cooldown: 8,
+        combo: fake('mm', 'moth'),
+        paths: { eclipse: fake('ec', 'eclipse', 'ecfeint'), silkweaver: fake('sv', 'silk', 'svfeint', 1) },
       };
     },
   }),
@@ -753,6 +842,88 @@ export const SKILLS = {
           { at: 0.12, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, gauge: 0, burst: 'ectotal', burstAt: 0, burstDur: 1.6 },
           flick(0.32), flick(0.44), flick(0.56),
           { at: 0.76, school: 'eclipse', fx: 'echit', pct: k(240, 400), reach: 400, h: 200, around: true, targets: 12, knock: 300, launch: 300, detonateAll: k(60, 100), burst: 'ecdiamond', burstAt: 0, burstDur: 0.7, big: true, stop: 0.14, shake: 6, gauge: 0 },
+        ] }],
+      };
+    },
+  }),
+
+  // ---------- Silkweaver (the Moon Moth's control path: pearl silk and gold thread) ----------
+  // docs/design/silkweaver.md. The controller. Her blows tie threads (`thread`, world/melee.js) that
+  // slow what they catch; the third wraps it in a cocoon, helpless, taking more from her blows. Her
+  // hits build Spool; full, every blow ties a thread and Moonspun Cocoon is ready. She plays the Moon
+  // Moth's skills her own way (their `paths`), and these are hers.
+  silkswing: skill({
+    id: 'silkswing', anim: 'svswing', name: 'Silk Swing', job: 'silkweaver', type: 'attack', fx: null, icon: 'silkswing', school: 'silk', maxLevel: 10, movement: true,
+    desc: 'Cast a thread up high and swing forward on it over the monsters, landing beyond them and cutting back at everything you passed, a thread on each. Nothing touches you on the swing.',
+    weapons: ['dagger'],
+    at: (lv, m) => {
+      const k = (a, b) => lerp(a, b, lv, m);
+      return {
+        mp: k(10, 6), pct: k(110, 180), hits: 1, targets: 4,
+        combo: [{ move: 'svswing', dur: 0.5, step: k(170, 230), carry: 0.6, guard: 0.6, swing: true, strikes: [
+          { at: 0.02, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, gauge: 0, hop: 380, burst: 'svswing', burstAt: 0, burstDur: 0.55, follow: true },
+          { at: 0.58, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, gauge: 0, turn: true },
+          { at: 0.74, school: 'silk', fx: 'svhit', pct: k(110, 180), reach: k(170, 230), h: 70, targets: 4, knock: 100, turn: true, thread: 1, big: true, stop: 0.05 },
+        ] }],
+      };
+    },
+  }),
+  bindingthread: skill({
+    id: 'bindingthread', anim: 'svthreadcast', name: 'Binding Thread', job: 'silkweaver', type: 'attack', fx: null, icon: 'bindingthread', school: 'silk', maxLevel: 20,
+    desc: 'Fling a spray of threads off your fingertips: they catch the five nearest monsters ahead, a little damage and a thread on each.',
+    weapons: ['dagger'],
+    at: (lv, m) => {
+      const k = (a, b) => lerp(a, b, lv, m);
+      return {
+        mp: k(8, 14), pct: k(60, 100), hits: 1, targets: 5,
+        combo: [{ move: 'svthreadcast', dur: 0.4, step: 0, strikes: [{ at: 0.44, school: 'silk', burst: 'svhit', shot: 'svthread', fan: 5, pct: k(60, 100), range: 360, h: 110, knock: 20, speed: 640, thread: 1, stop: 0.03 }] }],
+      };
+    },
+  }),
+  reelin: skill({
+    id: 'reelin', anim: 'svreel', dmg: 1.1, name: 'Reel In', job: 'silkweaver', type: 'attack', fx: null, icon: 'reelin', school: 'silk', maxLevel: 20,
+    desc: "Grab every thread you've tied near you and haul: the threaded monsters are yanked in to you and cut as they arrive, harder for every thread on them (cocoons count as three).",
+    weapons: ['dagger'],
+    at: (lv, m) => {
+      const k = (a, b) => lerp(a, b, lv, m);
+      return {
+        mp: k(14, 24), pct: k(110, 180), hits: 1, targets: 8, cooldown: 4,
+        combo: [{ move: 'svreel', dur: 0.56, step: -6, strikes: [{ at: 0.42, school: 'silk', fx: 'svhit', pct: k(110, 180), reach: 340, h: 120, targets: 8, reel: 0.35, knock: 0, burst: 'svknot', burstAt: 0.08, burstDur: 0.5, big: true, stop: 0.07, shake: 2 }] }],
+      };
+    },
+  }),
+  spindle: skill({
+    id: 'spindle', anim: 'svspindle', name: 'Spindle', job: 'silkweaver', type: 'attack', fx: null, icon: 'spindle', school: 'silk', maxLevel: 20,
+    desc: 'Spin like a spindle with both daggers out, silk whirling out round you: everything near is cut twice, and each cut ties a thread.',
+    weapons: ['dagger'],
+    at: (lv, m) => {
+      const k = (a, b) => lerp(a, b, lv, m);
+      return {
+        mp: k(14, 26), pct: k(70, 120), hits: 2, targets: 8,
+        combo: [{ move: 'svspindle', dur: 0.56, step: 0, strikes: [
+          { at: 0.32, school: 'silk', fx: 'svhit', pct: k(70, 120), reach: 130, h: 100, around: true, targets: 8, knock: 20, thread: 1, burst: 'svwhirl', burstAt: 0, burstDur: 0.62 },
+          { at: 0.66, school: 'silk', fx: 'svhit', pct: k(70, 120), reach: 130, h: 100, around: true, targets: 8, knock: 120, launch: 100, thread: 1, big: true, stop: 0.06, shake: 2 },
+        ] }],
+      };
+    },
+  }),
+  weavermastery: skill({
+    id: 'weavermastery', name: "Weaver's Mastery", job: 'silkweaver', type: 'passive', grows: true, fx: null, icon: 'weavermastery',
+    desc: 'Your hands know the silk by heart: truer, steadier cuts, and your threads and cocoons last longer (up to 40% longer).',
+    at: (lv, m) => ({ passive: { acc: lerp(4, 30, lv, m), mastery: lerpf(0.15, 0.4, lv, m), critRate: lerpf(0.02, 0.06, lv, m) } }),
+  }),
+  moonspun: skill({
+    id: 'moonspun', anim: 'svmoonspun', dmg: 1.5, name: 'Moonspun Cocoon', job: 'silkweaver', type: 'attack', fx: null, icon: 'moonspun', school: 'silk', maxLevel: 10, fullGauge: true,
+    desc: 'Finisher: needs a full Spool, and spends it. A pearl moon rises behind you like a great spool of silk; threads shoot out to every monster in front of you and wrap them all in cocoons; then you pull the threads tight and every cocoon bursts.',
+    weapons: ['dagger'],
+    at: (lv, m) => {
+      const k = (a, b) => lerp(a, b, lv, m);
+      return {
+        mp: k(30, 50), pct: k(240, 400), hits: 2, targets: 12,
+        combo: [{ move: 'svmoonspun', dur: 1.5, step: 0, finisher: true, guard: 1.4, strikes: [
+          { at: 0.12, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, gauge: 0, burst: 'svmoon', burstAt: 0, burstDur: 1.6 },
+          { at: 0.42, school: 'silk', fx: 'svhit', pct: k(50, 80), reach: 440, h: 220, targets: 12, knock: 0, thread: 3, lines: true, gauge: 0, stop: 0.03 },
+          { at: 0.78, school: 'silk', fx: 'svhit', pct: k(240, 400), reach: 440, h: 220, targets: 12, knock: 260, launch: 200, unwrap: true, burst: 'svburst', burstAt: 0.35, burstDur: 0.7, big: true, stop: 0.12, shake: 5, gauge: 0 },
         ] }],
       };
     },

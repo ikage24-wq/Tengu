@@ -69,6 +69,10 @@ const MOUNT_STRIDE = { bun: 60, crane: 34, nimbus: 90, kettle: 40, turtle: 30, g
 const NAMED = new Set(['pillar', 'aegis', 'consecrate', 'verdict', 'bloodmoon', 'eclipse', 'rageburst', 'crack', 'roar', 'hook', 'fullmoon',
   // The Eclipse (her swarm and eyes in flight are shots).
   'echit', 'eceyeopen', 'ecring', 'ecringbig', 'ecportal', 'ecedge', 'ecpop', 'eccloud', 'ecflurry', 'ecnewmoon', 'ecpour', 'ectotal', 'ecdiamond',
+  // The Moon Moth's second four, and her paths' versions.
+  'mmveil', 'mmdodge', 'mmdazzle', 'mmlure', 'mmlurepop', 'mmfeint', 'ecveil', 'ecdodge', 'ecdazzle', 'eclure', 'eclurepop', 'ecfeint',
+  // The Silkweaver (her thread and her swarm in flight are shots).
+  'svhit', 'svwrapup', 'svpop', 'svknot', 'svlash', 'svzipline', 'svswing', 'svwhirl', 'svreel', 'svmoon', 'svburst', 'svcloud', 'svflurry', 'svflutter', 'svpearlmoon', 'svpour', 'svveil', 'svdodge', 'svdazzle', 'svlure', 'svlurepop', 'svfeint',
   // The Moon Moth (the swarm in flight is a shot: audio/sfx.js SHOTS).
   'mmflutter', 'ecflutter', 'mmhit', 'mmcloud', 'mmwings', 'mmflurry', 'mmnip', 'mmmoon', 'mmpour',
   // The Tide Mage.

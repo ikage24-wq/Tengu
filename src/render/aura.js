@@ -202,6 +202,21 @@ function mothAura(ctx, x, y, t, s, k, layer) {
   }
 }
 
+// Spool (the Silkweaver): a pearl thread winding round her in a slow loop as it builds, a pearl moth
+// circling her from halfway; full (Full Spool), a little pearl moon like a spool glows behind her head.
+function spoolAura(ctx, x, y, t, s, k, layer) {
+  if (layer === 'back') {
+    if (k >= 1) fxSprite(ctx, 'celsvhalo', x - 4 * s, y - 62 * s, { t, scale: s * 0.55 });
+    return;
+  }
+  if (k > 0.5) {
+    const a = t * 1.5;
+    fxSprite(ctx, 'celsvmoth', x + Math.cos(a) * 18 * s, y - (34 + 5 * Math.sin(t * 2.2)) * s + Math.sin(a) * 4 * s, { t, flip: Math.sin(a) > 0, scale: s * 0.28, alpha: Math.min(1, (k - 0.5) * 3) });
+  }
+  if (k <= 0.2) return;
+  fxSprite(ctx, 'celsvloop', x, y - 28 * s, { t, scale: s * 0.5, alpha: Math.min(1, (k - 0.2) * 2) });
+}
+
 // Umbra (the Eclipse): gold flecks sinking round her as it builds, a dark moth with gold crescents
 // circling her from halfway; full (Totality), a small eclipse burns behind her head.
 function umbraAura(ctx, x, y, t, s, k, layer) {
@@ -286,7 +301,7 @@ function voltAura(ctx, x, y, t, s, k, layer) {
 }
 
 // Draws a combat aura: `kind` a job's gauge (see COMBAT), `k` how full (0-1).
-const COMBAT = { volt: voltAura, gale: galeAura, bulwark: bulwarkAura, rage: rageAura, faith: faithAura, tide: tideAura, moon: moonAura, depth: depthAura, moondust: mothAura, umbra: umbraAura };
+const COMBAT = { volt: voltAura, gale: galeAura, bulwark: bulwarkAura, rage: rageAura, faith: faithAura, tide: tideAura, moon: moonAura, depth: depthAura, moondust: mothAura, umbra: umbraAura, spool: spoolAura };
 export function drawCombatAura(ctx, kind, layer, x, y, time, scale, k, dir = 1) {
   if (k <= 0.02 || !COMBAT[kind]) return;
   ctx.save();

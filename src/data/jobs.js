@@ -72,7 +72,15 @@ export const JOBS = {
   eclipse: {
     id: 'eclipse', power: 3.21, spread: 1.94, name: 'Eclipse', family: 'thief', tier: 2, parent: 'moonmoth', level: 30, trial: 'thief_trial',
     hp: 26, mp: 20, advanceHp: 380, advanceMp: 300, weapons: ['dagger'],
-    blurb: 'The Moon Moth who learned to put out the light: the boss-killer, in eclipse violet and corona gold. She marks a monster with a gold eye spot, gets behind it and ends it. Her hits build Umbra, and the fuller it runs the harder her crits land; at Totality every blow crits. Shadow Step, Umbral Edge, Corona, and Total Eclipse: the sky goes dark and every mark goes off.',
+    blurb: 'The Moon Moth who learned to put out the light: the boss-killer, in eclipse violet and corona gold. She marks a monster with a little eclipse, gets behind it and ends it. Her hits build Umbra, and the fuller it runs the harder her crits land; at Totality every blow crits. Shadow Step, Umbral Edge, Corona, and Total Eclipse: the sky goes dark and every mark goes off.',
+  },
+
+  // The Moon Moth's control path (docs/design/silkweaver.md): the controller. Asks for Vex's trial
+  // first (the same trial as the Eclipse).
+  silkweaver: {
+    id: 'silkweaver', power: 5.0, spread: 3.0, name: 'Silkweaver', family: 'thief', tier: 2, parent: 'moonmoth', level: 30, trial: 'thief_trial',
+    hp: 26, mp: 22, advanceHp: 380, advanceMp: 320, weapons: ['dagger'],
+    blurb: 'The Moon Moth who spins: the controller, in pearl silk and gold thread. Her blows tie threads that slow whatever they catch, and the third wraps it in a cocoon, helpless. Her hits build Spool; full, every blow ties a thread. Silk Swing, Reel In, Spindle, and Moonspun Cocoon: everything in front of her wrapped up at once.',
   },
 
   // The Tide Mage's healer path (docs/design/tidecaller.md), the party's healer. Asks for Elowen's

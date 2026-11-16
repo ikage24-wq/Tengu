@@ -481,11 +481,27 @@ function drawMonsterNow(ctx, m, x, y, time, now = time) {
   if (puff >= 0) poofCloud(ctx, x, y, s.w, puff);
   if (m.poison && m.hp > 0) (m.poison.kind === 'bleed' ? bleedDrops : poisonBubbles)(ctx, x, y, s, time + m.uid);
   if (frozen && m.hold === 'stun') dizzyStars(ctx, x, y - s.h * sy - 2, time + m.uid);
+  // The Silkweaver's cocoon: wrapped in pearl silk, swaying a little, loosening as it runs out.
+  // (Fitted to its shape: as wide as it and as tall, kept a cocoon's shape between those; fading in as
+  // the threads wind round it.)
+  else if (frozen && m.hold === 'silk') {
+    const ch = Math.min(2.2, Math.max(0.5, (s.h * sy * 1.1) / 56));
+    const cw = Math.min(ch * 1.35, Math.max(ch * 0.8, (s.w * 1.1) / 40));
+    fxSprite(ctx, 'celsvcocoon', x, y - (s.h * sy) / 2, { t: time + m.uid, sx: cw, sy: ch, alpha: Math.min(1, (m.frozenUntil - now) / 0.3, (now - (m.cocoonAt ?? now - 1)) / 0.28) });
+  }
+  // A Wing Feint: it stands turned away, watching one of her moths flutter off behind it.
+  else if (frozen && m.hold === 'feint') {
+    const away = (m.dir || 1) < 0 ? -1 : 1;
+    const bob = Math.sin((time + m.uid) * 5) * 3;
+    fxSprite(ctx, `cel${m.feintLook ?? 'mm'}moth`, x + away * (s.w * 0.45 + 14), y - s.h * sy - 6 + bob, { t: time + m.uid, flip: away < 0, scale: 0.3, alpha: Math.min(1, (m.frozenUntil - now) / 0.25) });
+  }
   // A Snare Arrow's net over it (Tengu's own art), slipping off as the hold runs out.
   else if (frozen && m.hold === 'snare' && m.holdLook === 'ribbon') fxSprite(ctx, 'celacribbon', x, y - (s.h * sy) / 2, { t: time + m.uid, scale: Math.max(0.35, s.w / 70), alpha: Math.min(1, (m.frozenUntil - now) / 0.25) });
   else if (frozen && m.hold === 'snare') fxSprite(ctx, 'celnet', x, y - (s.h * sy) / 2, { t: time + m.uid, scale: Math.max(0.7, s.w / 30), alpha: Math.min(1, (m.frozenUntil - now) / 0.25) });
   // (Up in the air with it, if it's been lifted while frozen.)
   else if (frozen) iceBlock(ctx, x, y - (m.air > 0 && m.hp > 0 ? m.air : 0), s, m.frozenUntil - now, time + m.uid);
+  // Dazzled (Dazzle Dust): glittering dust circling its head while it lasts.
+  if (m.dazzleUntil > now && m.hp > 0) fxSprite(ctx, `cel${m.dazzleLook ?? 'mm'}dazzled`, x, y - s.h * sy - 4, { t: time + m.uid, scale: Math.min(0.9, Math.max(0.5, s.w / 60)), alpha: Math.min(1, (m.dazzleUntil - now) / 0.3) });
   if (alpha > 0.5 && !frozen) drawEmote(ctx, m, mood, x, y - s.h * sy, t, now);
 }
 

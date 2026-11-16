@@ -24,7 +24,7 @@ import { MOBS } from '../src/data/mobs.js';
 import { roleOf } from '../src/data/dungeons.js';
 import { GEAR_LEVELS, ITEMS } from '../src/data/items.js';
 
-export const WEAPON = { warrior: 'sword', paladin: 'sword', berserker: 'axe', tempest: 'sword', stormwall: 'sword', tidemage: 'staff', maelstrom: 'staff', tidecaller: 'staff', moonmoth: 'dagger', eclipse: 'dagger' };
+export const WEAPON = { warrior: 'sword', paladin: 'sword', berserker: 'axe', tempest: 'sword', stormwall: 'sword', tidemage: 'staff', maelstrom: 'staff', tidecaller: 'staff', moonmoth: 'dagger', eclipse: 'dagger', silkweaver: 'dagger' };
 // (Only jobs that still exist: the old Paladin and Berserker are kept above for old notes.)
 export const BALANCE_JOBS = Object.keys(WEAPON).filter((j) => JOBS[j]);
 const DT = 1 / 60;

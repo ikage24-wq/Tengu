@@ -9,7 +9,7 @@
 //   - fallen members get back up once the fight is over; if everyone falls, the room resets and
 //     the group regroups at its entrance.
 
-import { faithGuard, pathSchool, cloudBolt } from './melee.js';
+import { faithGuard, pathSchool, cloudBolt, veilDodge, veilMissed, blinded, lured } from './melee.js';
 import { hurtProcs, blockOnHit } from './combat.js';
 import { DUNGEONS, GROUP, ROLES, roleOf, PROVOKE, TANK_THREAT } from '../data/dungeons.js';
 import { JOBS } from '../data/jobs.js';
@@ -145,7 +145,7 @@ function recruit(world, def, role) {
   const level = Math.floor(between(lo, hi + 1, rng));
   // (A healer comes as a Tidecaller past level 30, the party's healer; before, while no first job
   // heals, a sturdy Warrior fills the seat.)
-  const jobs = role === 'tank' ? ['warrior'] : role === 'healer' ? (level >= 30 ? ['tidemage', 'tidecaller'] : ['warrior']) : level >= 30 ? pick([['warrior', 'tempest'], ['tidemage', 'maelstrom'], ['moonmoth', 'eclipse']], rng) : [pick(['warrior', 'tidemage', 'moonmoth'], rng)];
+  const jobs = role === 'tank' ? ['warrior'] : role === 'healer' ? (level >= 30 ? ['tidemage', 'tidecaller'] : ['warrior']) : level >= 30 ? pick([['warrior', 'tempest'], ['tidemage', 'maelstrom'], ['moonmoth', 'eclipse'], ['moonmoth', 'silkweaver']], rng) : [pick(['warrior', 'tidemage', 'moonmoth'], rng)];
   const bot = recruitBot(world.bots, world, { level, jobs });
   joinParty(world.bots, bot, world);
   const ranged = bot.ai.weapon.ranged;
@@ -924,6 +924,14 @@ function fight(world, m, up, dt) {
   }
   m.phase += dt;
   m.aggroUntil = now + 1;
+  // (Drawn to a Moonlure: over to the lantern, gazing up, no fighting.)
+  if (lured(now, m) && m.lureX != null && !m.windup) {
+    const dx = m.lureX - m.x;
+    m.state = Math.abs(dx) > 3 ? 'walk' : 'idle';
+    if (Math.abs(dx) > 3) m.dir = Math.sign(dx);
+    m.x = Math.max(m.x1, Math.min(m.x2, m.x + Math.sign(dx) * Math.min(Math.abs(dx), speedOf(m, true) * 1.2 * dt)));
+    return;
+  }
   if (m.stagger > 0 && !m.def.boss) {
     m.stagger -= dt;
     m.x = Math.max(m.x1, Math.min(m.x2, m.x + m.knockVx * dt));
@@ -945,7 +953,7 @@ function fight(world, m, up, dt) {
     const stop = f.range ? f.range * 0.8 : reach * 0.7;
     if (Math.abs(dx) > stop) {
       m.state = 'walk';
-      m.x += m.dir * speedOf(m, true) * 1.3 * (m.speedK ?? 1) * dt;
+      m.x += m.dir * speedOf(m, true) * 1.3 * (m.speedK ?? 1) * (m.threadUntil > now ? m.threadSlow ?? 1 : 1) * dt;
     } else m.state = 'idle';
     m.x = Math.max(m.x1, Math.min(m.x2, m.x));
     // Stopped at the edge with its target on a floor below: hop down after them.
@@ -983,8 +991,9 @@ function swing(world, m, up) {
     world.dungeon.vfx.push({ kind: 'spit', x: m.x + m.dir * m.def.w * 0.3, y: m.y - m.def.h * 0.6, tx: g.body.x, ty: g.body.y - g.body.h / 2, t: 0, dur: travel });
     return;
   }
-  if (Math.abs(g.body.x - m.x) > reachOf(m) + 16 || Math.abs(g.body.y - m.y) > 60) {
+  if (Math.abs(g.body.x - m.x) > reachOf(m) + 16 || Math.abs(g.body.y - m.y) > 60 || blinded(world.now, m)) {
     world.numbers.push({ x: g.body.x, y: g.body.y - g.body.h - 6, text: 'MISS', color: '#d4cbe8', t: 0, small: true });
+    if (g.id === 'you') veilMissed(world, m);
     return;
   }
   land(world, g, m.def.atk * mul, m.def.acc, m.x, mul > 1);
@@ -992,8 +1001,11 @@ function swing(world, m, up) {
 
 function land(world, g, raw, acc, fromX, heavy = false) {
   const stats = g.bot ? g.bot.stats : world.stats;
+  // (Your Moth Veil takes some blows outright, and sends a moth back at whoever missed.)
+  if (g.id === 'you' && !heavy && veilDodge(world, null, fromX)) return;
   if (!heavy && Math.random() >= mobHitChance(acc, avoid(stats))) {
     world.numbers.push({ x: g.body.x, y: g.body.y - g.body.h - 6, text: 'MISS', color: '#d4cbe8', t: 0, small: true });
+    if (g.id === 'you') veilMissed(world, null, fromX);
     return;
   }
   hurtMember(world, g, raw, fromX, { knock: heavy });

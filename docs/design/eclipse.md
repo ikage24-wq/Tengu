@@ -57,7 +57,8 @@ she lands is a crit, and Total Eclipse is ready.
 
 Her Moon Moth skills, her way: Moth Step is **Umbra Step** (dark moths with gold crescents), Wing Flurry
 is **Black Flurry**, Moth Swarm is **Shadow Swarm**, Midnight Swarm is **New Moon** (a dark moon
-in its corona, the dark swarm pouring down).
+in its corona, the dark swarm pouring down), Moth Veil is **Umbral Veil**, Dazzle Dust is **Corona
+Dust**, Moonlure is **Eclipse Lantern** and Wing Feint is **Shadow Feint**.
 
 ## Where things live
 

@@ -27,7 +27,7 @@ import { createSpawner, tickSpawner, updateMob, hitMob, mobBox, MOB_ATTACK_GAP }
 import { rollLoot, spawnDrops, updateDrops, dropInReach, dropFromHero } from './drops.js';
 import { cast, castBlocker, weaponElement, hurtProcs, blockOnHit, drinkBlood, tickLater } from './combat.js';
 import { tickMelee, faithGuard, addAim, hasRage, hasFaith, hasVolt, overcharged, eyeOfStorm, hasBulwark, barrageRelease, BARRAGE_WALK, THIEF_FEET } from './melee.js';
-import { healAround, hasTide, hasDepth, hasMoon, springDrop, hasGale, hasMoth, hasUmbra, addMark, flutterJump } from './melee.js';
+import { healAround, hasTide, hasDepth, hasMoon, springDrop, hasGale, hasMoth, hasUmbra, addMark, flutterJump, veilDodge, veilMissed, blinded, lured, addThread, hasSpool } from './melee.js';
 import { JOBS, nextJobs } from '../data/jobs.js';
 import { celebrateLevels } from './levelup.js';
 import { DUNGEONS } from '../data/dungeons.js';
@@ -1006,9 +1006,11 @@ export function updateWorld(world, dt, input) {
       if (h.mend) healAround(world, m.x, m.y, h.mend, 220, true, h.el);
       // (The Eclipse's Eye of the Night marks what it lands on.)
       if (h.mark) addMark(world, m, h.mark);
+      // (The Silkweaver's threads, off her shots.)
+      if (h.thread) addThread(world, m, h.thread);
       drinkBlood(world, h.damage);
     }
-    if (!hasTide(world.char) && !hasDepth(world.char) && !hasMoon(world.char) && !hasVolt(world.char) && !hasGale(world.char) && !hasBulwark(world.char) && !hasMoth(world.char) && !hasUmbra(world.char)) world.fx.push({ kind: 'spark', via: h.via, weapon: world.stats.weaponType, path: hasRage(world.char) ? 'rage' : hasFaith(world.char) ? 'holy' : hasVolt(world.char) ? 'thunder' : null, dir: world.body.facing, x: m.x, y: m.y - (m.air ?? 0) - m.def.h / 2, t: 0, dur: h.big ? 0.32 : 0.25, crit: h.crit || h.big, seed: Math.random() });
+    if (!hasTide(world.char) && !hasDepth(world.char) && !hasMoon(world.char) && !hasVolt(world.char) && !hasGale(world.char) && !hasBulwark(world.char) && !hasMoth(world.char) && !hasUmbra(world.char) && !hasSpool(world.char)) world.fx.push({ kind: 'spark', via: h.via, weapon: world.stats.weaponType, path: hasRage(world.char) ? 'rage' : hasFaith(world.char) ? 'holy' : hasVolt(world.char) ? 'thunder' : null, dir: world.body.facing, x: m.x, y: m.y - (m.air ?? 0) - m.def.h / 2, t: 0, dur: h.big ? 0.32 : 0.25, crit: h.crit || h.big, seed: Math.random() });
     world.juice.push({ type: 'hit', x: m.x, y: m.y - m.def.h / 2, crit: h.crit, big: h.big, party: Boolean(h.party), element: h.party ? null : h.element ?? weaponElement(char), dir: Math.sign(m.x - h.fromX) || 1, via: h.via, school: h.school, weapon: h.weapon, mob: m.def.id, boss: Boolean(m.def.boss) });
     // Endgame weapons add an elemental impact on every hit.
     const element = h.party ? null : h.element ?? weaponElement(char);
@@ -1106,13 +1108,18 @@ export function updateWorld(world, dt, input) {
     if (input?.locked && !m.def.aggro && !(world.now < m.aggroUntil)) continue;
     if (world.now - (m.attackAt ?? -9) < MOB_ATTACK_GAP) continue;
     if (!overlaps(pbox, mobBox(m))) continue;
+    // (Gathered under a Moonlure, gazing up at it, it pays her no mind.)
+    if (lured(world.now, m)) continue;
     m.attackAt = world.now;
-    if (Math.random() < mobHitChance(m.def.acc, avoid(world.stats))) {
+    // (A Moth Veil takes some blows outright; a dazzled monster can't land one at all.)
+    if (veilDodge(world, m)) continue;
+    if (!blinded(world.now, m) && Math.random() < mobHitChance(m.def.acc, avoid(world.stats))) {
       hurtPlayer(world, m.def.atk, m.x);
       m.gloatAt = world.now;
     } else {
       world.numbers.push({ x: world.body.x, y: world.body.y - world.body.h - 6, text: 'MISS', color: '#d4cbe8', t: 0 });
       world.invuln = 0.5;
+      veilMissed(world, m);
     }
   }
   // Team moves: revives, the side-by-side link, a Group Finisher's burst (world/teamwork.js).

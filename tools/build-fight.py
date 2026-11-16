@@ -71,6 +71,11 @@ S = {
     'shimmer': 'Epic Stock Media - Strange Game Ambient Loops 3/MAGShim_Shimmer Loop Small Bell Metal Taps_ESM_SGA3.wav',
     # The Moon Moth's moths (2026-11-16): a soft jacket flutter for a wing beat, a book riffled
     # through for a burst of many wings, and an insect's wings for the swarm's hum.
+    'harp': 'CB Sound Design - Dreamcatcher - The Sound of Dreams & Magic/Harp_Glissando_10b.wav',
+    'confetti': 'Cinematic Sound Design - Hybrid Game & UI Elements/Cofetti Whoosh Pluck Spill.wav',
+    'ropezip': 'Rogue Waves - Yacht & Marina/BOATMech_EXT Small yacht, rope moving through metal_RogueWaves_YachtMarina.wav',
+    'carab': '344 Audio - Climbing Gear Foley Vol. 1/EQUISprt_Climbing Gear, Flicking Carabiner On Rope_344 Audio_Climbing Gear Foley Vol 1.wav',
+    'strings': 'Eiravaein Works - 48Kilos/AcGtrFX,headstock,slowstroke,soft,strings,bright,airy,ringing,tonal,E.wav',
     'mmflut': 'Systematic-Sound - Sound Themes - Modern Cloth Foley 01/SFX CLOTH Foley Jacket Synthetic Soft Shell Whoosh Flutter.wav',
     'mmriffle': 'Sonic Bat - Turning The Page/SBttp_Regular Book Flip Through 001.wav',
     'mmwingfx': 'Red Libraries - Mutant Insects (FLYING)/RL_Mutant_Insects_Unknown_Wings Sweetner-E_Idle_03.wav',
@@ -236,6 +241,49 @@ B = {
     'ecpour': [('mmwingfx', 2.0, 1.5, 0.75, 0, 0), ('mmriffle', 0.16, 1.1, 0.7, -2, 50), ('boom', 0.0, 0.8, 0.9, -6, 300)],
     'ectotal': [('braam', 0.0, 2.0, 0.8, 0, 0), ('gong', 0.08, 2.2, 0.75, -6, 400), ('astral', 0.0, 2.0, 0.9, -10, 200)],
     'ecdiamond': [('flare', 0.0, 0.6, 0.85, 0, 0), ('boom', 0.0, 1.0, 0.9, -3, 20), ('brightup', 0.0, 1.0, 1.2, -8, 0)],
+    # The Moon Moth's second four (2026-11-16): wings settling with a harp run for her veil, a quick
+    # flutter as a blow misses, a breath and a spill of glitter for the dust, a little tap and a glow
+    # for the lantern and a pop of wings, a cloth flick for the feint. The Eclipse's, a shade lower.
+    'mmveil': [('mmriffle', 0.16, 0.7, 1.15, -2, 0), ('harp', 0.0, 1.1, 1.25, -7, 60), ('shimmer', 2.0, 0.6, 1.1, -12, 120)],
+    'mmdodge': [('mmriffle', 0.16, 0.32, 1.45, -1, 0), ('airy', 0.0, 0.25, 1.6, -7, 0), ('twinkle', 0.0, 0.25, 1.5, -14, 30)],
+    'mmdazzle': [('airy', 0.0, 0.45, 1.0, -3, 0), ('confetti', 0.05, 0.9, 1.15, -2, 60), ('twinkle', 0.0, 0.5, 1.25, -9, 140)],
+    'mmlure': [('wooddrop', 0.0, 0.25, 1.4, -8, 0), ('light', 0.0, 0.9, 1.15, -3, 40)],
+    'mmlurepop': [('flare', 0.0, 0.45, 1.5, -5, 0), ('mmriffle', 0.16, 0.7, 1.05, -1, 20), ('twinkle', 0.0, 0.45, 1.05, -8, 60)],
+    'mmfeint': [('mmflut', 0.19, 0.45, 1.3, -1, 0), ('mmriffle', 0.16, 0.55, 1.25, -4, 80), ('twinkle', 0.0, 0.3, 1.6, -12, 120)],
+    'ecveil': [('mmriffle', 0.16, 0.7, 0.977, -2, 0), ('harp', 0.0, 1.1, 1.062, -7, 60), ('shimmer', 2.0, 0.6, 0.935, -12, 120)],
+    'ecdodge': [('mmriffle', 0.16, 0.32, 1.232, -1, 0), ('airy', 0.0, 0.25, 1.36, -7, 0), ('twinkle', 0.0, 0.25, 1.275, -14, 30)],
+    'ecdazzle': [('airy', 0.0, 0.45, 0.85, -3, 0), ('confetti', 0.05, 0.9, 0.977, -2, 60), ('twinkle', 0.0, 0.5, 1.062, -9, 140)],
+    'eclure': [('wooddrop', 0.0, 0.25, 1.19, -8, 0), ('light', 0.0, 0.9, 0.977, -3, 40)],
+    'eclurepop': [('flare', 0.0, 0.45, 1.275, -5, 0), ('mmriffle', 0.16, 0.7, 0.892, -1, 20), ('twinkle', 0.0, 0.45, 0.892, -8, 60)],
+    'ecfeint': [('mmflut', 0.19, 0.45, 1.105, -1, 0), ('mmriffle', 0.16, 0.55, 1.062, -4, 80), ('twinkle', 0.0, 0.3, 1.36, -12, 120)],
+    # The Silkweaver (2026-11-16): a thread plucked and snapped for her mark, a quick wind of cloth and
+    # a harp run as a cocoon wraps, rope running through a ring for her zip, swing and haul, a
+    # carabiner's flick for a tug, a confetti spill as a cocoon bursts, a slow harp for her moon;
+    # her pearl moths (brighter, no insect wings).
+    'svhit': [('strings', 0.07, 0.25, 1.6, -6, 0), ('carab', 3.16, 0.18, 1.4, -3, 0), ('twinkle', 0.0, 0.25, 1.2, -14, 20)],
+    'svwrapup': [('mmflut', 3.07, 0.4, 1.4, -2, 0), ('harp', 0.0, 0.6, 1.5, -8, 40)],
+    'svpop': [('confetti', 0.05, 0.6, 1.3, -2, 0), ('mmriffle', 0.16, 0.5, 1.2, -6, 40), ('strings', 0.07, 0.4, 1.8, -12, 0)],
+    'svknot': [('carab', 4.61, 0.3, 1.2, 0, 0), ('strings', 0.07, 0.5, 1.25, -6, 60)],
+    'svlash': [('whip', 0.0, 0.3, 1.5, -6, 0), ('carab', 0.04, 0.25, 1.4, -4, 0)],
+    'svzipline': [('ropezip', 2.42, 0.45, 1.4, 0, 0), ('twinkle', 0.0, 0.3, 1.3, -12, 100)],
+    'svswing': [('ropezip', 0.28, 0.6, 1.2, -2, 0), ('airy', 0.0, 0.45, 1.1, -6, 60)],
+    'svwhirl': [('mmflut', 0.19, 0.6, 1.1, 0, 0), ('strings', 0.07, 0.5, 1.4, -8, 100), ('airy', 0.0, 0.5, 1.2, -8, 0)],
+    'svreel': [('ropezip', 14.1, 0.4, 1.0, 0, 0), ('carab', 3.16, 0.3, 1.0, -4, 300)],
+    'svmoon': [('harp', 0.0, 1.6, 0.9, -2, 0), ('farbells', 10.5, 1.4, 1.0, -8, 300)],
+    'svburst': [('confetti', 0.05, 0.9, 1.0, 0, 0), ('boom', 0.0, 0.8, 1.2, -6, 0), ('harp', 0.0, 0.8, 1.4, -8, 60)],
+    'svthread': [('strings', 0.07, 0.3, 1.8, -4, 0), ('airy', 0.0, 0.3, 1.6, -8, 0)],
+    'svswarm': [('mmriffle', 0.16, 1.0, 1.0, -1, 0), ('harp', 0.0, 0.8, 1.6, -10, 80)],
+    'svcloud': [('mmriffle', 0.16, 0.6, 1.35, 0, 0), ('mmflut', 3.07, 0.5, 1.3, -4, 0), ('shimmer', 2.0, 0.5, 1.2, -12, 0)],
+    'svflurry': [('mmriffle', 0.16, 0.8, 1.2, -1, 0), ('strings', 0.07, 0.4, 1.5, -10, 380)],
+    'svflutter': [('mmflut', 0.19, 0.32, 1.45, 0, 0), ('airy', 0.0, 0.28, 1.6, -8, 0)],
+    'svpearlmoon': [('light', 0.0, 1.4, 0.9, -2, 0), ('harp', 0.0, 1.2, 1.0, -8, 100), ('shimmer', 16.0, 1.4, 1.0, -6, 0)],
+    'svpour': [('mmriffle', 0.16, 1.1, 0.9, 0, 0), ('harp', 0.0, 1.0, 1.1, -6, 50), ('mmflut', 5.66, 0.9, 0.9, -3, 150)],
+    'svveil': [('mmriffle', 0.16, 0.7, 1.25, -2, 0), ('harp', 0.0, 1.1, 1.4, -7, 60), ('shimmer', 2.0, 0.6, 1.2, -12, 120)],
+    'svdodge': [('mmriffle', 0.16, 0.32, 1.55, -1, 0), ('strings', 0.07, 0.25, 1.9, -10, 0)],
+    'svdazzle': [('airy', 0.0, 0.45, 1.1, -3, 0), ('confetti', 0.05, 0.9, 1.25, -2, 60), ('twinkle', 0.0, 0.5, 1.35, -9, 140)],
+    'svlure': [('wooddrop', 0.0, 0.25, 1.5, -8, 0), ('light', 0.0, 0.9, 1.25, -3, 40)],
+    'svlurepop': [('confetti', 0.05, 0.5, 1.3, -4, 0), ('mmriffle', 0.16, 0.7, 1.15, -1, 20), ('twinkle', 0.0, 0.45, 1.15, -8, 60)],
+    'svfeint': [('mmflut', 0.19, 0.45, 1.4, -1, 0), ('carab', 0.93, 0.2, 1.4, -6, 60), ('twinkle', 0.0, 0.3, 1.7, -12, 120)],
     # The Moon Moth (2026-11-16): her mark (a soft puff of wings and a glint), the cloud of moths she
     # breaks into, the wings her finisher opens, Wing Flurry's whirl, the swarm in flight, the Full
     # Moon moth's nip, Midnight Swarm's moon rising and the swarm pouring down.

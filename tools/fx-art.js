@@ -11565,6 +11565,272 @@
       if (i >= 1 && i <= 3) sparkle(ctx, MMSIL, cx + Math.cos(a1) * R, cy + Math.sin(a1) * R, 10 * (1 - (i - 1) * 0.3), 0.3);
     },
   };
+  // ----- The Moon Moth's second four (2026-11-16): Moth Veil, Dazzle Dust, Moonlure, Wing Feint -----
+  // (Strip units: three to a game pixel, like the rest of hers.)
+
+  // Moth Veil settling (follows her; foot on the floor at her feet): a soft bloom swells round her,
+  // and five moths swirl in round her body on a flat ring, wide then close, circling once before they
+  // settle into a faint shimmering veil and fade; a few sparkles drift down.
+  E.mmveil = (() => {
+    const x = 120;
+    const y = 220;
+    const n = 32;
+    const R = rng(7301);
+    const M = Array.from({ length: 5 }, (_, j) => ({ a: (j / 5) * TAU + R() * 0.3, ph: R(), r: 20 + R() * 6, dy: (R() - 0.5) * 40 }));
+    return {
+      w: 240, h: 240, n, fps: 40, px: x, py: y,
+      draw(ctx, i) {
+        const k = i / (n - 1);
+        const cy = y - 96;
+        mmBloom(ctx, x, cy, 70 + 30 * smooth(win(k, 0, 0.4)), 0.55 * swell(k, 0, 0.75), { sy: 1.2 });
+        // The veil: a soft upright oval of light round her, brightest as the moths settle.
+        const veil = swell(k, 0.35, 1);
+        if (veil > 0.01) {
+          ctx.save();
+          ctx.globalAlpha *= 0.1 * veil;
+          fill(ctx, mmEll(x, cy + 4, 66, 108, 0, 36), (MBLOOM ?? MMS)[1]);
+          ctx.restore();
+        }
+        const close = smooth(win(k, 0.05, 0.7));
+        const placed = M.map((m, j) => {
+          const a = m.a + TAU * 1.1 * smooth(win(k, 0, 0.85));
+          const rx = 96 - 44 * close;
+          return { m, j, a, px: x + Math.cos(a) * rx, py: cy + m.dy * (1 - 0.5 * close) + Math.sin(a) * 18, depth: Math.sin(a) };
+        }).sort((p, q) => p.depth - q.depth);
+        for (const { m, j, a, px, py, depth } of placed) {
+          const al = Math.min(1, k * 6) * (1 - win(k, 0.7, 1));
+          mmMoth(ctx, px, py, m.r * (0.85 + 0.15 * depth), (m.ph + k * 6) % 1, a + (Math.PI / 2), { alpha: al * (0.75 + 0.25 * depth) });
+        }
+        for (let j = 0; j < 4; j++) {
+          const u = win(k, 0.3 + j * 0.1, 0.8 + j * 0.05);
+          if (u <= 0 || u >= 1) continue;
+          mmDust(ctx, x + (j - 1.5) * 34, cy - 50 + 90 * u, 4.5 * (1 - u * 0.4), j * 3 + 2, 1 - win(u, 0.6, 1));
+        }
+      },
+    };
+  })();
+
+  // A blow missing her while she's veiled: three moths scatter off her and a few sparkles; a soft
+  // flash. Foot on the floor at her feet.
+  E.mmdodge = {
+    w: 200, h: 200, n: 18, fps: 40, px: 100, py: 180,
+    draw(ctx, i) {
+      const k = i / 17;
+      const cy = 180 - 90;
+      mmBloom(ctx, 100, cy, 50, 0.5 * (1 - win(k, 0, 0.6)));
+      for (let j = 0; j < 3; j++) {
+        const a = -Math.PI / 2 + (j - 1) * 1.1;
+        const u = smooth(win(k, 0.02, 1));
+        mmMoth(ctx, 100 + Math.cos(a) * 80 * u, cy + Math.sin(a) * 60 * u - 10 * u, 19, (k * 5 + j * 0.3) % 1, a + Math.PI / 2, { alpha: 1 - win(k, 0.6, 1) });
+      }
+      for (let j = 0; j < 3; j++) mmDust(ctx, 100 + (j - 1) * 46, cy + 30 + 40 * k, 4 * (1 - k * 0.5), j * 3, 1 - win(k, 0.5, 1));
+    },
+  };
+
+  // Dazzle Dust: a cloud of glittering moon dust blown out ahead of her from her hand (at the left
+  // end), billowing as it goes: soft glowing puffs and big four-point sparkles twinkling, drifting
+  // forward and slowly down, then winking out. No specks. Foot on the floor under her hand.
+  E.mmdazzle = (() => {
+    const x0 = 30;
+    const y = 300;
+    const n = 30;
+    const R = rng(7311);
+    const G = Array.from({ length: 16 }, () => ({ d: 0.2 + 0.8 * R(), up: (R() - 0.5) * 0.9, at: R() * 0.25, r: 9 + R() * 11, tw: R() }));
+    return {
+      w: 600, h: 320, n, fps: 40, px: x0 + 30, py: y,
+      draw(ctx, i) {
+        const k = i / (n - 1);
+        const cy = y - 150;
+        const go = smooth(win(k, 0, 0.55));
+        // (One soft cloud, stretched along the way it's blown, thinning as it goes.)
+        if (k < 0.97) {
+          ctx.save();
+          ctx.globalAlpha *= 0.55 * swell(k, 0, 1);
+          const B = MBLOOM ?? MMS;
+          // (A real soft falloff: stepped discs left hard rings, a flat plate.)
+          const rx = 60 + 200 * go;
+          ctx.translate(x0 + 60 + 250 * go, cy + 20 * k);
+          ctx.scale(1, (34 + 46 * go) / rx);
+          const g = ctx.createRadialGradient(0, 0, 0, 0, 0, rx);
+          g.addColorStop(0, '#ffffff');
+          g.addColorStop(0.35, B[1]);
+          g.addColorStop(0.7, B[2] + '88');
+          g.addColorStop(1, B[2] + '00');
+          ctx.fillStyle = g;
+          ctx.beginPath();
+          ctx.arc(0, 0, rx, 0, TAU);
+          ctx.fill();
+          ctx.restore();
+        }
+        for (let j = 0; j < G.length; j++) {
+          const g = G[j];
+          const u = win(k, g.at, g.at + 0.75);
+          if (u <= 0 || u >= 1) continue;
+          const e = 1 - (1 - u) ** 2;
+          const gx = x0 + 30 + 520 * g.d * e;
+          const gy = cy + g.up * 160 * e + 50 * u * u;
+          const tw = 0.6 + 0.4 * Math.sin((k * 9 + g.tw) * TAU);
+          sparkle(ctx, j % 3 ? (MDUST ?? MMSIL) : (MDUST ?? MMS), gx, gy, g.r * tw * (1 - win(u, 0.7, 1)), j * 0.7 + k * 2);
+        }
+      },
+    };
+  })();
+
+  // Dazzled (loops, over a dazzled monster's head): three sparkles and a little crescent circling on a
+  // flat ring, twinkling.
+  E.mmdazzled = {
+    w: 120, h: 60, n: 24, fps: 24, px: 60, py: 34, loop: true,
+    draw(ctx, i) {
+      const ph = i / 24;
+      for (let j = 0; j < 4; j++) {
+        const a = (ph + j / 4) * TAU;
+        const px = 60 + Math.cos(a) * 40;
+        const py = 30 + Math.sin(a) * 10;
+        const near = 0.75 + 0.25 * Math.sin(a);
+        if (j === 0) mmCrescent(ctx, px, py, 8 * near, -0.4, 1, MMARK ?? MMGOLD[2]);
+        else sparkle(ctx, j % 2 ? (MDUST ?? MMSIL) : (MDUST ?? MMS), px, py, 7 * near * (0.8 + 0.2 * Math.sin((ph * 3 + j * 0.3) * TAU)), a);
+      }
+    },
+  };
+
+  // Moonlure (loops while it lasts): a little round paper moon lantern hovering above the crowd it
+  // draws (on the floor the monsters hid it), bobbing gently, a gold crescent on its face, a gold cap
+  // and ring on top; a soft beam of its light falls to a pool on the floor, and two moths circle it.
+  // Foot on the floor.
+  E.mmlure = {
+    w: 340, h: 440, n: 32, fps: 24, px: 170, py: 420, loop: true,
+    draw(ctx, i) {
+      const ph = i / 32;
+      const P = MBLOOM ?? MMS;
+      const L = MMOTH ?? MMS;
+      const bob = 7 * Math.sin(ph * TAU);
+      const ly = 190 + bob;
+      // The beam and the pool of light on the floor.
+      ctx.save();
+      ctx.globalAlpha *= 0.08 + 0.03 * Math.sin(ph * TAU);
+      fill(ctx, [[170 - 22, ly + 30], [170 + 22, ly + 30], [170 + 120, 418], [170 - 120, 418]], P[1]);
+      ctx.restore();
+      ctx.save();
+      ctx.globalAlpha *= 0.35 + 0.08 * Math.sin(ph * TAU);
+      fill(ctx, mmEll(170, 418, 130, 18, 0, 32), P[1]);
+      ctx.globalAlpha *= 0.7;
+      fill(ctx, mmEll(170, 418, 70, 9, 0, 28), '#ffffff');
+      ctx.restore();
+      mmBloom(ctx, 170, ly, 96 + 6 * Math.sin(ph * TAU), 0.55 + 0.1 * Math.sin(ph * TAU));
+      ctx.save();
+      ctx.translate(170, ly);
+      ctx.rotate(0.07 * Math.sin(ph * TAU + 1));
+      // The lantern: a round glowing paper body, ribbed, a crescent on it, a cap and ring on top and a
+      // little gold tassel under it.
+      inked(ctx, mmEll(0, 0, 36, 38, 0, 32), P[2], L[4], 3.5);
+      fill(ctx, mmEll(0, -2, 28, 30, 0, 28), P[1]);
+      fill(ctx, mmEll(0, -4, 16, 18, 0, 22), '#ffffff');
+      ctx.save();
+      ctx.globalAlpha *= 0.55;
+      ctx.strokeStyle = P[3];
+      ctx.lineWidth = 2;
+      for (const rx of [12, 26]) {
+        ctx.beginPath();
+        ctx.ellipse(0, 0, rx, 37, 0, 0, TAU);
+        ctx.stroke();
+      }
+      ctx.restore();
+      mmCrescent(ctx, 6, 2, 13, 0.4, 1, MMOTH ? MMOTH[3] : MMGOLD[2]);
+      inked(ctx, mmEll(0, -38, 16, 6, 0, 18), MMGOLD[2], MMGOLD[4], 2.5);
+      inked(ctx, mmEll(0, 38, 12, 5, 0, 16), MMGOLD[2], MMGOLD[4], 2.5);
+      ctx.strokeStyle = MMGOLD[4];
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(0, -48, 8, Math.PI, TAU);
+      ctx.stroke();
+      ctx.lineWidth = 2.5;
+      ctx.strokeStyle = MMGOLD[3];
+      ctx.beginPath();
+      ctx.moveTo(0, 42);
+      ctx.quadraticCurveTo(4 * Math.sin(ph * TAU), 56, 2 * Math.sin(ph * TAU + 1), 66);
+      ctx.stroke();
+      ctx.restore();
+      for (let j = 0; j < 2; j++) {
+        const a = (ph + j * 0.5) * TAU;
+        const depth = Math.sin(a);
+        mmMoth(ctx, 170 + Math.cos(a) * 78, ly - 20 + Math.sin(a) * 16 + 10 * Math.sin(a * 2), 19 + 3 * depth, (ph * 8 + j * 0.4) % 1, a + Math.PI / 2, { alpha: 0.75 + 0.25 * depth });
+      }
+      sparkle(ctx, MDUST ?? MMSIL, 170 + 40 * Math.sin(ph * TAU * 2), ly - 60 - 10 * Math.cos(ph * TAU), 6 * (0.5 + 0.5 * Math.sin(ph * TAU * 3)), ph * 4);
+    },
+  };
+
+  // The lantern popping: a flash of moonlight, a ring of light rippling out over the floor, and six
+  // moths bursting out of it in every direction; sparkles falling. Foot on the floor.
+  E.mmlurepop = (() => {
+    const x = 320;
+    const y = 420;
+    const n = 26;
+    const R = rng(7321);
+    const M = Array.from({ length: 6 }, (_, j) => ({ a: -Math.PI + (j / 5) * Math.PI + (R() - 0.5) * 0.3, d: 200 + R() * 90, ph: R(), r: 21 + R() * 6 }));
+    return {
+      w: 640, h: 520, n, fps: 40, px: x, py: y,
+      draw(ctx, i) {
+        const k = i / (n - 1);
+        const cy = y - 230;
+        mmBloom(ctx, x, cy, 60 + 160 * smooth(win(k, 0, 0.4)), 0.85 * (1 - win(k, 0.1, 0.6)));
+        const ring = smooth(win(k, 0.02, 0.6));
+        if (ring > 0 && ring < 1) {
+          ctx.save();
+          ctx.globalAlpha *= 0.8 * (1 - ring);
+          ctx.strokeStyle = (MBLOOM ?? MMS)[1];
+          ctx.lineWidth = 10 * (1 - ring) + 2;
+          ctx.beginPath();
+          ctx.ellipse(x, y - 4, 40 + 280 * ring, 10 + 40 * ring, 0, 0, TAU);
+          ctx.stroke();
+          ctx.restore();
+        }
+        if (k < 0.3) sparkle(ctx, MDUST ?? MMSIL, x, cy, 40 * swell(k, 0, 0.3), 0.3);
+        for (const m of M) {
+          const u = smooth(win(k, 0.04, 1));
+          mmMoth(ctx, x + Math.cos(m.a) * m.d * u, cy + Math.sin(m.a) * m.d * 0.6 * u, m.r, (m.ph + k * 6) % 1, m.a + Math.PI / 2, { alpha: Math.min(1, k * 8) * (1 - win(k, 0.7, 1)) });
+        }
+        for (let j = 0; j < 5; j++) {
+          const u = win(k, 0.2 + j * 0.05, 0.9);
+          if (u <= 0 || u >= 1) continue;
+          mmDust(ctx, x + (j - 2) * 70, cy - 40 + 120 * u, 5 * (1 - u * 0.4), j * 3, 1 - win(u, 0.6, 1));
+        }
+      },
+    };
+  })();
+
+  // Wing Feint's moths: four moths flicked off her hand, fluttering away ahead and up past the
+  // monsters on their own wavering lines, a trail of sparkles behind; anchored ahead of her on the
+  // floor (her hand off to the left).
+  E.mmfeint = (() => {
+    const x = 240;
+    const y = 320;
+    const n = 30;
+    const R = rng(7331);
+    const M = Array.from({ length: 4 }, (_, j) => ({ at: j * 0.06, dy: (R() - 0.5) * 70, ph: R(), r: 23 + R() * 6, wob: R() * TAU }));
+    return {
+      w: 680, h: 380, n, fps: 40, px: x, py: y,
+      draw(ctx, i) {
+        const k = i / (n - 1);
+        const hx = 30;
+        const hy = y - 130;
+        mmBloom(ctx, hx + 20, hy, 50, 0.6 * (1 - win(k, 0, 0.4)));
+        for (const m of M) {
+          const u = win(k, m.at, m.at + 0.85);
+          if (u <= 0 || u >= 1) continue;
+          const e = smooth(u);
+          const px = hx + 600 * e;
+          const py = hy + m.dy - 150 * e * e + 22 * Math.sin(u * 9 + m.wob);
+          for (let j = 1; j <= 2; j++) {
+            const v = Math.max(0, u - j * 0.07);
+            const ev = smooth(v);
+            mmDust(ctx, hx + 600 * ev, hy + m.dy - 150 * ev * ev + 22 * Math.sin(v * 9 + m.wob) + 6, 4 - j, j * 3 + 1, (1 - j * 0.3) * (1 - win(u, 0.7, 1)));
+          }
+          mmMoth(ctx, px, py, m.r, (m.ph + k * 7) % 1, -0.35 + 0.3 * Math.sin(u * 9 + m.wob), { alpha: Math.min(1, u * 8) * (1 - win(u, 0.75, 1)) });
+        }
+      },
+    };
+  })();
+
   E.mmspin = asLight(spin(MMS), MMS);
   E.mmstreak = asLight(streaks(MMS), MMS);
 
@@ -11697,6 +11963,14 @@
   E.ecmoth = eclit(E.mmmoth);
   E.ecdust = eclit(E.mmdustfleck);
   E.ecslash = eclit(E.mmslash);
+  // (Her versions of the Moon Moth's second four.)
+  E.ecveil = eclit(E.mmveil);
+  E.ecdodge = eclit(E.mmdodge);
+  E.ecdazzle = eclit(E.mmdazzle);
+  E.ecdazzled = eclit(E.mmdazzled);
+  E.eclure = eclit(E.mmlure);
+  E.eclurepop = eclit(E.mmlurepop);
+  E.ecfeint = eclit(E.mmfeint);
   E.ecspin = asLight(spin(ECV), ECV);
   E.ecstreak = asLight(streaks(ECV), ECV);
 
@@ -12036,6 +12310,458 @@
       ecEclipse(ctx, 60, 60, 22, 0.7 + 0.3 * Math.sin(ph * TAU), ph);
     },
   };
+
+  // ---------- The Silkweaver (docs/design/silkweaver.md) ----------
+  // The Moon Moth's control path: pearl silk off her daggers. Her shapes: fine threads (a soft plum
+  // edge, a pearl core, a white light along them and a gold glint running down them), loose loops of
+  // thread, cocoons wrapped in pearl silk with a little gold bow on top, a pearl moon like a spool of
+  // silk, and the Moon Moth's spirit moths in pearl and gold (`silklit`). Cute and soft: no webs,
+  // nothing sticky.
+  const SVP = ['#ffffff', '#fdf8f0', '#efe4d6', '#cbb2c6', '#563a62'];
+  const SVGOLD = ['#ffffff', '#fff4d6', '#ffe08a', '#e2ab52', '#7a5222'];
+  const SVMOTH = ['#ffffff', '#fbf6ee', '#ecdfd0', '#c9a8c0', '#563a62'];
+  const SVBODY = ['#ffffff', '#fffaf2', '#f0e4d4', '#cbb2c6', '#563a62'];
+  const SVSIL = ['#ffffff', '#fffaf4', '#f3e9dc', '#d9c6d2', '#8a6a8e'];
+  const silklit = (e) => ({
+    ...e,
+    draw(ctx, i) {
+      const keep = [MMS, MMSIL, MMOTH, MBODY, MBLOOM, MDUST, MMARK];
+      MMS = SVP;
+      MMSIL = SVSIL;
+      MMOTH = SVMOTH;
+      MBODY = SVBODY;
+      MBLOOM = SVP;
+      MDUST = SVGOLD;
+      MMARK = SVGOLD[2];
+      try {
+        e.draw(ctx, i);
+      } finally {
+        [MMS, MMSIL, MMOTH, MBODY, MBLOOM, MDUST, MMARK] = keep;
+      }
+    },
+  });
+  // A thread along `pts` (a polyline, smooth enough to draw as one), `w` thick: a soft plum edge, a
+  // pearl core and a white light down it; a gold glint at `glint` (0-1 along it) when given.
+  function svThread(ctx, pts, { w = 4, alpha = 1, glint = -1, gold = false } = {}) {
+    if (alpha <= 0 || pts.length < 2) return;
+    ctx.save();
+    ctx.globalAlpha *= alpha;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    const line = (lw, c) => {
+      ctx.strokeStyle = c;
+      ctx.lineWidth = lw;
+      ctx.beginPath();
+      pts.forEach(([x, y], j) => (j ? ctx.lineTo(x, y) : ctx.moveTo(x, y)));
+      ctx.stroke();
+    };
+    line(w + 3, SVP[4]);
+    line(w, gold ? SVGOLD[2] : SVP[2]);
+    line(Math.max(1, w * 0.45), '#ffffff');
+    if (glint >= 0 && glint <= 1) {
+      const at = glint * (pts.length - 1);
+      const j = Math.min(pts.length - 2, Math.floor(at));
+      const f = at - j;
+      const gx = pts[j][0] + (pts[j + 1][0] - pts[j][0]) * f;
+      const gy = pts[j][1] + (pts[j + 1][1] - pts[j][1]) * f;
+      mmBloomGold(ctx, gx, gy, w * 3, 0.8);
+      sparkle(ctx, SVGOLD, gx, gy, w * 1.8, glint * 6);
+    }
+    ctx.restore();
+  }
+  // Points along a quadratic curve from (x0, y0) through the pull of (cx, cy) to (x1, y1), drawn only
+  // from `a` to `b` (0-1) of the way.
+  function svCurve(x0, y0, cx, cy, x1, y1, a = 0, b = 1, n = 18) {
+    const pts = [];
+    for (let j = 0; j <= n; j++) {
+      const t = a + ((b - a) * j) / n;
+      const u = 1 - t;
+      pts.push([u * u * x0 + 2 * u * t * cx + t * t * x1, u * u * y0 + 2 * u * t * cy + t * t * y1]);
+    }
+    return pts;
+  }
+  // A loop of thread round (x, y): an ellipse `rx` by `ry`, tilted `rot`, drawn from 0 to `upto` (0-1)
+  // of the way round, the far half fainter, with a little loose end hanging off it.
+  function svLoop(ctx, x, y, rx, ry, rot, upto = 1, { w = 4, alpha = 1, glint = -1, end = true, ph = 0 } = {}) {
+    if (alpha <= 0 || upto <= 0) return;
+    const N = 36;
+    const at = (t) => {
+      const a = t * TAU + Math.PI * 0.5;
+      const ex = Math.cos(a) * rx;
+      const ey = Math.sin(a) * ry;
+      return [x + ex * Math.cos(rot) - ey * Math.sin(rot), y + ex * Math.sin(rot) + ey * Math.cos(rot), Math.sin(a)];
+    };
+    const far = [];
+    const near = [];
+    for (let j = 0; j <= N * upto; j++) {
+      const [px, py, d] = at(j / N);
+      (d < 0 ? far : near).push([px, py, j]);
+    }
+    // (Drawn as runs, so the far half sits behind the near one.)
+    const runs = (list) => {
+      const out = [];
+      let cur = [];
+      for (let j = 0; j < list.length; j++) {
+        if (j && list[j][2] !== list[j - 1][2] + 1) {
+          out.push(cur);
+          cur = [];
+        }
+        cur.push([list[j][0], list[j][1]]);
+      }
+      if (cur.length) out.push(cur);
+      return out;
+    };
+    for (const r of runs(far)) svThread(ctx, r, { w: w * 0.8, alpha: alpha * 0.45 });
+    for (const r of runs(near)) svThread(ctx, r, { w, alpha });
+    if (end && upto >= 1) {
+      const [ex, ey] = at(0.02);
+      svThread(ctx, svCurve(ex, ey, ex + 6, ey + 12 + 3 * Math.sin(ph * TAU), ex + 2 + 4 * Math.sin(ph * TAU), ey + 22), { w: w * 0.85, alpha });
+    }
+    if (glint >= 0) {
+      const [gx, gy] = at(glint);
+      mmBloomGold(ctx, gx, gy, w * 3, 0.7 * alpha);
+      sparkle(ctx, SVGOLD, gx, gy, w * 1.6 * alpha, glint * 5);
+    }
+  }
+  // A little gold bow (the knot on a cocoon, her finisher's knot): two round loops and two tails.
+  function svBow(ctx, x, y, r, { alpha = 1, rot = 0 } = {}) {
+    if (alpha <= 0 || r <= 1) return;
+    ctx.save();
+    ctx.globalAlpha *= alpha;
+    ctx.translate(x, y);
+    ctx.rotate(rot);
+    for (const s of [-1, 1]) {
+      inked(ctx, mmPath([[[0, 0], [s * r * 0.9, -r * 0.9], [s * r * 1.5, -r * 0.2], [s * r * 1.2, r * 0.25]], [[s * r * 1.2, r * 0.25], [s * r * 0.9, r * 0.6], [s * r * 0.3, r * 0.2], [0, 0]]], 8), SVGOLD[2], SVGOLD[4], Math.max(1.5, r * 0.14));
+      fill(ctx, mmPath([[[s * r * 0.2, -r * 0.1], [s * r * 0.7, -r * 0.6], [s * r * 1.1, -r * 0.2], [s * r * 0.8, r * 0.1]]], 6).concat([[s * r * 0.2, r * 0.05]]), SVGOLD[1]);
+      inked(ctx, mmPath([[[0, r * 0.1], [s * r * 0.2, r * 0.6], [s * r * 0.4, r * 0.9], [s * r * 0.55, r * 1.2]], [[s * r * 0.55, r * 1.2], [s * r * 0.35, r * 1.1], [s * r * 0.15, r * 0.9], [0, r * 0.1]]], 6), SVGOLD[3], SVGOLD[4], Math.max(1.2, r * 0.1));
+    }
+    inked(ctx, mmEll(0, 0, r * 0.32, r * 0.3, 0, 12), SVGOLD[2], SVGOLD[4], Math.max(1.2, r * 0.1));
+    ctx.restore();
+  }
+  // A cocoon at (x, y), `rx` by `ry`: a soft pearl oval wound round with silk, the bands spiralling
+  // round it (`wind` turns them), a glint, and a little gold bow on top.
+  function svCocoon(ctx, x, y, rx, ry, { wind = 0, alpha = 1, bow = true, sway = 0 } = {}) {
+    if (alpha <= 0) return;
+    ctx.save();
+    ctx.globalAlpha *= alpha;
+    ctx.translate(x, y);
+    ctx.rotate(sway);
+    const body = mmPath([
+      [[0, -ry], [rx * 0.75, -ry], [rx, -ry * 0.35], [rx, ry * 0.1]],
+      [[rx, ry * 0.1], [rx, ry * 0.7], [rx * 0.55, ry], [0, ry]],
+      [[0, ry], [-rx * 0.55, ry], [-rx, ry * 0.7], [-rx, ry * 0.1]],
+      [[-rx, ry * 0.1], [-rx, -ry * 0.35], [-rx * 0.75, -ry], [0, -ry]],
+    ], 10);
+    inked(ctx, body, SVP[2], SVP[4], 3.5);
+    fill(ctx, mmIn(body, 0.78).map(([px, py]) => [px - rx * 0.08, py - ry * 0.08]), SVP[1]);
+    // The silk wound round it: soft bands spiralling down, clipped to its shape.
+    ctx.save();
+    ctx.beginPath();
+    body.forEach(([px, py], j) => (j ? ctx.lineTo(px, py) : ctx.moveTo(px, py)));
+    ctx.closePath();
+    ctx.clip();
+    for (let j = -4; j <= 4; j++) {
+      const yy = j * ry * 0.26 + ((wind * ry * 0.26) % (ry * 0.26));
+      ctx.strokeStyle = j % 2 ? SVP[3] : '#ffffff';
+      ctx.globalAlpha = (j % 2 ? 0.7 : 0.85) * alpha;
+      ctx.lineWidth = j % 2 ? 3.5 : 4.5;
+      ctx.beginPath();
+      ctx.moveTo(-rx * 1.1, yy - rx * 0.32);
+      ctx.quadraticCurveTo(0, yy + rx * 0.18, rx * 1.1, yy - rx * 0.32);
+      ctx.stroke();
+    }
+    ctx.restore();
+    fill(ctx, mmEll(-rx * 0.4, -ry * 0.45, rx * 0.16, ry * 0.12, -0.5, 12), '#ffffff');
+    if (bow) svBow(ctx, 0, -ry - 2, rx * 0.36);
+    ctx.restore();
+  }
+
+  // Her mark on a monster: a pearl flash, a crescent nick of silk, a loop of thread snapping round the
+  // spot and loosening away, a gold glint racing round it, and a couple of sparkles.
+  E.svhit = (() => {
+    const c = 130;
+    const n = 26;
+    return {
+      w: 260, h: 260, n, fps: 48, px: c, py: c,
+      draw(ctx, i) {
+        const k = i / (n - 1);
+        mmBloom(ctx, c, c, 22 + 40 * smooth(win(k, 0, 0.3)), 0.9 * (1 - win(k, 0.1, 0.5)));
+        const cut = win(k, 0, 0.3);
+        if (cut < 1) mmCut(ctx, c + 6, c + 26, 48, -2.7, 2.1, smooth(win(cut, 0.35, 1)), smooth(Math.min(1, cut * 2.4)), 12);
+        const draw = smooth(win(k, 0.04, 0.34));
+        const loose = smooth(win(k, 0.4, 1));
+        svLoop(ctx, c, c + 4, 44 + 22 * loose, 15 + 6 * loose, -0.3, draw, { w: 4.5, alpha: 1 - win(k, 0.6, 1), glint: draw >= 1 ? (k * 2.2) % 1 : -1, end: false });
+        if (k < 0.32) sparkle(ctx, SVGOLD, c + 30, c - 30, 14 * swell(k, 0, 0.32), 0.3);
+        for (let j = 0; j < 2; j++) {
+          const u = win(k, 0.2 + j * 0.1, 0.9);
+          if (u <= 0 || u >= 1) continue;
+          sparkle(ctx, j ? SVP : SVGOLD, c + (j ? -40 : 36) * (0.6 + 0.4 * u), c - 30 + 70 * u * u, 7 * (1 - u * 0.5), j + k * 3);
+        }
+      },
+    };
+  })();
+
+  // A loose loop of pearl thread (loops): the threads on a monster (one per thread, render/moth-fx.js)
+  // and the thread winding round her as her Spool builds (render/aura.js). It bobs and its loose end
+  // sways; a gold glint runs round it.
+  E.svloop = {
+    w: 150, h: 80, n: 24, fps: 24, px: 75, py: 36, loop: true,
+    draw(ctx, i) {
+      const ph = i / 24;
+      svLoop(ctx, 75, 34 + 2 * Math.sin(ph * TAU), 52, 12, -0.08 + 0.04 * Math.sin(ph * TAU), 1, { w: 4, glint: ph, ph });
+    },
+  };
+
+  // A monster wrapped up (the cocoon forming, round its middle): threads spiral round it from the top
+  // down, fast, a pearl flash and a sparkle, as the cocoon itself fades in under them (drawn with the
+  // monster, render/monsters.js: drawn here too it doubled up). Centred on it.
+  E.svwrapup = {
+    w: 240, h: 280, n: 18, fps: 40, px: 120, py: 140,
+    draw(ctx, i) {
+      const k = i / 17;
+      const wind = smooth(win(k, 0, 0.7));
+      mmBloom(ctx, 120, 140, 70, 0.6 * swell(k, 0, 0.8));
+      for (let j = 0; j < 5; j++) {
+        const u = win(wind, j * 0.14, j * 0.14 + 0.4);
+        if (u <= 0) continue;
+        svLoop(ctx, 120, 60 + j * 40, 66 - 6 * Math.abs(j - 2), 14, 0.12 * (j % 2 ? 1 : -1), u, { w: 4, alpha: 1 - win(k, 0.75, 1), end: false });
+      }
+      if (k > 0.5) sparkle(ctx, SVGOLD, 160, 50, 14 * swell(k, 0.5, 1), 0.4);
+    },
+  };
+
+  // A cocoon (loops, while it holds; drawn over the monster, render/monsters.js): wound pearl silk,
+  // a gold bow on top, swaying gently on its own, the silk bands slowly turning.
+  E.svcocoon = {
+    w: 180, h: 220, n: 32, fps: 24, px: 90, py: 116, loop: true,
+    draw(ctx, i) {
+      const ph = i / 32;
+      mmBloom(ctx, 90, 116, 74, 0.25 + 0.05 * Math.sin(ph * TAU));
+      svCocoon(ctx, 90, 116, 60, 84, { wind: ph, sway: 0.05 * Math.sin(ph * TAU) });
+      sparkle(ctx, SVGOLD, 90 + 48 * Math.cos(ph * TAU), 60 + 70 * ((ph * 2) % 1), 6 * Math.sin(Math.PI * ((ph * 2) % 1)), ph * 6);
+    },
+  };
+
+  // A cocoon bursting (her Moonspun Cocoon's last pull, `unwrap`): a pearl flash, the shell splitting
+  // into loose strands that whip away, and three pearl moths flying out of it; sparkles. Centred on it.
+  E.svpop = (() => {
+    const c = 150;
+    const n = 26;
+    const R = rng(7401);
+    const M = Array.from({ length: 3 }, (_, j) => ({ a: -Math.PI / 2 + (j - 1) * 0.9 + (R() - 0.5) * 0.3, ph: R(), r: 22 + R() * 5 }));
+    return {
+      w: 300, h: 300, n, fps: 40, px: c, py: c,
+      draw(ctx, i) {
+        const k = i / (n - 1);
+        mmBloom(ctx, c, c, 40 + 70 * smooth(win(k, 0, 0.35)), 0.9 * (1 - win(k, 0.1, 0.6)));
+        if (k < 0.18) svCocoon(ctx, c, c, 60 * (1 + 0.4 * k), 84 * (1 + 0.3 * k), { alpha: 1 - k / 0.18, bow: false });
+        for (let j = 0; j < 6; j++) {
+          const a = (j / 6) * TAU + 0.3;
+          const u = smooth(win(k, 0.05, 0.8));
+          if (u <= 0 || u >= 1) continue;
+          const r0 = 40 + 90 * u;
+          const pts = svCurve(c + Math.cos(a) * r0, c + Math.sin(a) * r0 * 0.9, c + Math.cos(a + 0.5) * (r0 + 30), c + Math.sin(a + 0.5) * (r0 + 30) * 0.9 + 20 * u, c + Math.cos(a + 0.9) * (r0 + 20), c + Math.sin(a + 0.9) * (r0 + 20) * 0.9 + 40 * u, 0, 1 - 0.6 * u, 10);
+          svThread(ctx, pts, { w: 3.5, alpha: 1 - win(u, 0.5, 1) });
+        }
+        for (const m of M) {
+          const u = smooth(win(k, 0.08, 1));
+          mmMoth(ctx, c + Math.cos(m.a) * 120 * u, c + Math.sin(m.a) * 110 * u, m.r * (0.6 + 0.4 * Math.min(1, u * 4)), (m.ph + k * 6) % 1, m.a + Math.PI / 2, { alpha: 1 - win(u, 0.7, 1), pal: SVMOTH });
+        }
+        if (k < 0.35) sparkle(ctx, SVGOLD, c + 34, c - 40, 22 * swell(k, 0, 0.35), 0.2);
+      },
+    };
+  })();
+
+  // Her finisher's knot (Bind; Yank; Reel In landing): two loops of gold-flecked thread drawn round
+  // into a bow tied tight in front of her with a little tug, a pearl flash and sparkles; anchored
+  // where the blow lands, on the floor.
+  E.svknot = {
+    w: 260, h: 260, n: 24, fps: 40, px: 130, py: 230,
+    draw(ctx, i) {
+      const k = i / 23;
+      const cy = 130;
+      mmBloom(ctx, 130, cy, 30 + 50 * smooth(win(k, 0.2, 0.5)), 0.8 * swell(k, 0.15, 0.9));
+      const tie = smooth(win(k, 0, 0.4));
+      const tug = swell(k, 0.4, 0.6);
+      for (const sd of [-1, 1]) svLoop(ctx, 130 + sd * (34 - 6 * tug), cy - 6, 36 - 8 * tug, 22 - 4 * tug, sd * 0.5, tie, { w: 4.5, alpha: 1 - win(k, 0.75, 1), end: false, glint: tie >= 1 ? (k * 2) % 1 : -1 });
+      if (k > 0.35) svBow(ctx, 130, cy - 4, 22 + 6 * tug, { alpha: Math.min(1, (k - 0.35) * 6) * (1 - win(k, 0.78, 1)) });
+      if (k > 0.4 && k < 0.8) sparkle(ctx, SVGOLD, 170, cy - 40, 16 * swell(k, 0.4, 0.8), 0.3);
+    },
+  };
+
+  // Yank's lash: a thread whipped out straight from her hand (at the left, chest high) to the one
+  // ahead, snapping taut with a glint at its tip, then hauled back in. Foot on the floor.
+  E.svlash = {
+    w: 520, h: 200, n: 20, fps: 40, px: 30, py: 180,
+    draw(ctx, i) {
+      const k = i / 19;
+      const hx = 40;
+      const hy = 80;
+      const out = smooth(win(k, 0, 0.35));
+      const back = smooth(win(k, 0.5, 1));
+      const len = 440 * out * (1 - back);
+      if (len < 6) return;
+      const sag = 26 * (1 - out) * Math.sin(k * 20);
+      svThread(ctx, svCurve(hx, hy, hx + len / 2, hy + sag, hx + len, hy), { w: 4, glint: 0.98 });
+      if (out >= 1 && back < 0.3) sparkle(ctx, SVGOLD, hx + len, hy, 14 * swell(k, 0.35, 0.55), 0.3);
+    },
+  };
+
+  // Her zip (out of a run): a thread stretched out ahead of her at shoulder height, glinting as a gold
+  // light races along it, then slackening and fading. Foot on the floor where she starts.
+  E.svzipline = {
+    w: 440, h: 240, n: 22, fps: 40, px: 30, py: 220,
+    draw(ctx, i) {
+      const k = i / 21;
+      const hy = 80;
+      const draw = smooth(win(k, 0, 0.25));
+      const slack = smooth(win(k, 0.55, 1));
+      svThread(ctx, svCurve(20, hy + 6, 210, hy - 8 + 40 * slack, 410, hy - 20 + 20 * slack, 0, draw, 20), { w: 4, alpha: 1 - win(k, 0.65, 1), glint: draw >= 1 ? win(k, 0.2, 0.6) : -1 });
+      if (k < 0.3) mmBloom(ctx, 30, hy, 40, 0.6 * (1 - k / 0.3));
+    },
+  };
+
+  // Spindle: three threads whirling round her on flat rings as she spins, rising and widening, gold
+  // glints running round them, a soft pearl glow; then they fly off loose. Foot on the floor.
+  E.svwhirl = {
+    w: 460, h: 320, n: 30, fps: 40, px: 230, py: 290,
+    draw(ctx, i) {
+      const k = i / 29;
+      mmBloom(ctx, 230, 230, 110, 0.32 * swell(k, 0, 0.9), { sy: 0.5 });
+      for (let j = 0; j < 3; j++) {
+        const u = win(k, j * 0.08, 0.85 + j * 0.05);
+        if (u <= 0 || u >= 1) continue;
+        const rx = 90 + 90 * smooth(u);
+        const yy = 272 - j * 30 - 22 * u;
+        svLoop(ctx, 230, yy, rx, 16 + 6 * u, 0.06 * (j - 1), Math.min(1, u * 2.5), { w: 4, alpha: 1 - win(u, 0.7, 1), end: false, glint: (k * 3 + j / 3) % 1 });
+      }
+      for (let j = 0; j < 3; j++) {
+        const u = win(k, 0.3 + j * 0.1, 0.95);
+        if (u <= 0 || u >= 1) continue;
+        sparkle(ctx, j % 2 ? SVP : SVGOLD, 230 + (j - 1) * 120, 190 - 40 * u, 9 * (1 - u * 0.5), k * 4 + j);
+      }
+    },
+  };
+
+  // Moonspun Cocoon's moon: a great pearl moon rises behind her like a spool of silk, thread wound
+  // round it in soft bands, a gold glint turning on its rim; threads stream off it as it climbs, then
+  // it fades. Foot on the floor.
+  E.svmoon = (() => {
+    const x = 280;
+    const y = 520;
+    const n = 40;
+    return {
+      w: 560, h: 560, n, fps: 30, px: x, py: y,
+      draw(ctx, i) {
+        const k = i / (n - 1);
+        const rise = smooth(win(k, 0, 0.35));
+        const a = 1 - win(k, 0.8, 1);
+        const cy = y - 120 - 210 * rise;
+        const R = 110 * (0.7 + 0.3 * rise);
+        mmBloom(ctx, x, cy, R * 2.2, 0.55 * a * Math.min(1, k * 4));
+        ctx.save();
+        ctx.globalAlpha *= a * Math.min(1, k * 5);
+        inked(ctx, mmEll(x, cy, R, R, 0, 48), SVP[2], SVP[4], 4);
+        fill(ctx, mmEll(x - R * 0.08, cy - R * 0.08, R * 0.84, R * 0.84, 0, 44), SVP[1]);
+        // The thread wound round it.
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(x, cy, R * 0.97, 0, TAU);
+        ctx.clip();
+        for (let j = -6; j <= 6; j++) {
+          const yy = cy + j * R * 0.16 + ((k * 40) % (R * 0.16));
+          ctx.strokeStyle = j % 2 ? SVP[3] : '#ffffff';
+          ctx.globalAlpha = (j % 2 ? 0.28 : 0.5) * a;
+          ctx.lineWidth = j % 2 ? 3 : 4;
+          ctx.beginPath();
+          ctx.moveTo(x - R, yy + R * 0.12);
+          ctx.quadraticCurveTo(x, yy - R * 0.1, x + R, yy + R * 0.12);
+          ctx.stroke();
+        }
+        ctx.restore();
+        ctx.restore();
+        // A glint turning on its rim, and threads streaming off it.
+        const ga = k * TAU * 0.8 - 1;
+        sparkle(ctx, SVGOLD, x + Math.cos(ga) * R, cy + Math.sin(ga) * R, 16 * a * rise, ga);
+        for (let j = 0; j < 4; j++) {
+          const u = win(k, 0.2 + j * 0.08, 0.8 + j * 0.04);
+          if (u <= 0 || u >= 1) continue;
+          const sa = -Math.PI * 0.85 + j * 0.55;
+          const sx = x + Math.cos(sa) * R;
+          const sy = cy + Math.sin(sa) * R;
+          svThread(ctx, svCurve(sx, sy, sx + Math.cos(sa) * 90, sy + Math.sin(sa) * 60 + 50, sx + Math.cos(sa) * 170, sy + 120, 0, smooth(u), 14), { w: 3.5, alpha: a * (1 - win(u, 0.6, 1)) });
+        }
+      },
+    };
+  })();
+
+  // A thread in flight (Binding Thread; loops): a pearl bead at the front, the thread trailing off it
+  // in a soft wave, a gold glint on the bead.
+  E.svthread = {
+    w: 200, h: 80, n: 12, fps: 40, px: 160, py: 40, loop: true,
+    draw(ctx, i) {
+      const ph = i / 12;
+      const pts = [];
+      for (let j = 0; j <= 20; j++) {
+        const t = j / 20;
+        pts.push([20 + 140 * t, 40 + 9 * Math.sin(t * 7 - ph * TAU) * (1 - t)]);
+      }
+      svThread(ctx, pts, { w: 3.5, alpha: 1 });
+      mmBloom(ctx, 162, 40, 18, 0.7);
+      inked(ctx, mmEll(162, 40, 8, 8, 0, 14), SVP[1], SVP[4], 2.5);
+      fill(ctx, mmEll(160, 38, 3.5, 3.5, 0, 10), '#ffffff');
+      sparkle(ctx, SVGOLD, 168, 34, 6 + 2 * Math.sin(ph * TAU), ph * 3);
+    },
+  };
+
+  // Full Spool's glow behind her head (loops): a little pearl spool moon, slowly turning, glinting.
+  E.svhalo = {
+    w: 120, h: 120, n: 24, fps: 24, px: 60, py: 60, loop: true,
+    draw(ctx, i) {
+      const ph = i / 24;
+      mmBloom(ctx, 60, 60, 46, 0.6 + 0.1 * Math.sin(ph * TAU));
+      inked(ctx, mmEll(60, 60, 22, 22, 0, 32), SVP[2], SVP[4], 3);
+      fill(ctx, mmEll(58, 58, 18, 18, 0, 28), SVP[1]);
+      for (let j = -2; j <= 2; j++) {
+        ctx.save();
+        ctx.globalAlpha *= j % 2 ? 0.35 : 0.6;
+        ctx.strokeStyle = j % 2 ? SVP[3] : '#ffffff';
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        const yy = 60 + j * 7 + ((ph * 7) % 7) - 3;
+        ctx.moveTo(42, yy + 2);
+        ctx.quadraticCurveTo(60, yy - 3, 78, yy + 2);
+        ctx.stroke();
+        ctx.restore();
+      }
+      sparkle(ctx, SVGOLD, 60 + 22 * Math.cos(ph * TAU), 60 + 22 * Math.sin(ph * TAU), 7, ph * 5);
+    },
+  };
+
+  // (Her own effects drawn in her light: pearl blooms and silk crescents, gold sparkles.)
+  for (const id of ['svhit', 'svloop', 'svwrapup', 'svcocoon', 'svpop', 'svknot', 'svlash', 'svzipline', 'svwhirl', 'svmoon', 'svthread', 'svhalo']) E[id] = silklit(E[id]);
+
+  // Her versions of the Moon Moth's effects: the same moths, light and sparkles in pearl and gold.
+  E.svcloud = silklit(E.mmcloud);
+  E.svflight = silklit(E.mmflight);
+  E.svflurry = silklit(E.mmflurry);
+  E.svswarm = silklit(E.mmswarm);
+  E.svpour = silklit(E.mmpour);
+  E.svpourbig = grown(E.svpour, 2.3);
+  E.svpearlmoon = silklit(E.mmmoon);
+  E.svmoth = silklit(E.mmmoth);
+  E.svdust = silklit(E.mmdustfleck);
+  E.svslash = silklit(E.mmslash);
+  E.svspin = asLight(spin(SVP), SVP);
+  E.svstreak = asLight(streaks(SVP), SVP);
+  E.svveil = silklit(E.mmveil);
+  E.svdodge = silklit(E.mmdodge);
+  E.svdazzle = silklit(E.mmdazzle);
+  E.svdazzled = silklit(E.mmdazzled);
+  E.svlure = silklit(E.mmlure);
+  E.svlurepop = silklit(E.mmlurepop);
+  E.svfeint = silklit(E.mmfeint);
+  E.svburst = grown(silklit(E.mmlurepop), 1.7);
 
   window.FXART = E;
   window.FXHD = { render, RAW };

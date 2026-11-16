@@ -36,6 +36,7 @@ import { strikePose } from '../render/hero.js';
 import { wornGear } from '../core/character.js';
 import { launchWisp } from './foxwheel.js';
 import { GRAVITY, groundAt, JUMP_SPEED } from './physics.js';
+import { yank } from './mobs.js';
 import { provoke, healMembers, groupOf, isUp, hpOf, maxHpOf, giveBuff, reviveMember } from './dungeon.js';
 
 // The longest freeze a blow gets; anything heavier turns the rest into slow motion.
@@ -219,6 +220,25 @@ const ECL_POOL = {
   turn: { move: 'ecturn', dur: 0.44, step: 8, finisher: true, strikes: [ecl({ at: 0.4, pct: 70, reach: 76, h: 66, around: true, targets: 4, knock: 40, arc: [-140, 330], thick: 10 }), ecl({ at: 0.6, pct: 82, reach: 76, h: 66, around: true, targets: 4, knock: 180, mark: 1, burst: 'ecring', burstAt: 0, burstDur: 0.5, big: true, stop: 0.07, shake: 2 })] },
 };
 
+// The Silkweaver (docs/design/silkweaver.md), the Moon Moth's control path: pearl silk off her
+// daggers. Her own string: a quick cut trailing a silver thread, a turn winding silk round her as
+// both daggers cut all round, and both daggers crossed and pulled apart so a thread snaps taut
+// across them (ties a thread). Her pool: a cut and a thread flicked out from the off hand that snaps
+// at them farther off; a rising cut on a thread that lifts them; a thread lashed out to the one
+// ahead and yanked in to her daggers (ties a thread).
+const silk = (st) => ({ school: 'silk', fx: 'svhit', ...st });
+const soff = (st) => silk({ reach: 62, h: 50, knock: 25, ...st });
+PATH_COMBOS.silkweaver = [
+  { move: 'svcut', dur: 0.24, step: 8, strikes: [silk({ at: 0.45, pct: 46, reach: 66, h: 52, knock: 20, arc: [-110, 200], thick: 6 }), soff({ at: 0.64, pct: 42, knock: 30 })] },
+  { move: 'svwrap', dur: 0.32, step: 8, strikes: [silk({ at: 0.34, pct: 48, reach: 66, h: 58, around: true, targets: 3, knock: 15, arc: [-120, 330], thick: 6 }), silk({ at: 0.66, pct: 52, reach: 66, h: 58, around: true, targets: 3, knock: 45, arc: [60, -330], thick: 6 })] },
+  { move: 'svbind', dur: 0.44, step: 10, finisher: true, strikes: [silk({ at: 0.5, pct: 78, reach: 78, h: 64, targets: 3, knock: 30, arc: [-150, 300], thick: 9 }), silk({ at: 0.6, pct: 92, reach: 78, h: 64, targets: 3, knock: 150, thread: 1, burst: 'svknot', burstAt: 0.6, burstDur: 0.55, big: true, stop: 0.08, shake: 2 })] },
+];
+const SILK_POOL = {
+  flick: { move: 'svflick', dur: 0.26, step: 6, strikes: [silk({ at: 0.4, pct: 44, reach: 64, h: 52, knock: 20, arc: [-100, 190], thick: 6 }), silk({ at: 0.62, pct: 46, reach: 124, h: 46, targets: 1, knock: 30, pierce: true })] },
+  lift: { move: 'svlift', dur: 0.3, step: 8, strikes: [silk({ at: 0.44, pct: 52, reach: 66, h: 72, targets: 2, knock: 20, launch: 300, arc: [100, -215], thick: 7 }), soff({ at: 0.66, pct: 44, h: 72, targets: 2, knock: 20, launch: 160 })] },
+  yank: { move: 'svyank', dur: 0.46, step: 0, finisher: true, strikes: [silk({ at: 0.34, pct: 60, reach: 150, h: 60, targets: 1, knock: 0, pull: 130, thread: 1, burst: 'svlash', burstAt: 0, burstDur: 0.4 }), silk({ at: 0.66, pct: 96, reach: 76, h: 64, targets: 2, knock: 170, arc: [-150, 300], thick: 10, burst: 'svknot', burstAt: 0.4, burstDur: 0.5, big: true, stop: 0.07, shake: 2 })] },
+};
+
 // The Maelstrom (docs/design/maelstrom.md): the deep sea out of her staff. Her own string: a spear
 // of pressurised water through two, a vortex bolt spinning in, and a vortex opened ahead that drags
 // them in and bursts. Her pool: a jet of pressure or two glowing bubbles that go off; two crossing
@@ -364,6 +384,11 @@ export const PATH_VARIANTS = {
     [PATH_COMBOS.maelstrom[0], DEEP_POOL.jet, DEEP_POOL.glow],
     [PATH_COMBOS.maelstrom[1], DEEP_POOL.cross, DEEP_POOL.slash],
     [PATH_COMBOS.maelstrom[2], DEEP_POOL.beam, DEEP_POOL.slam],
+  ],
+  silkweaver: [
+    [PATH_COMBOS.silkweaver[0], SILK_POOL.flick],
+    [PATH_COMBOS.silkweaver[1], SILK_POOL.lift],
+    [PATH_COMBOS.silkweaver[2], SILK_POOL.yank],
   ],
   eclipse: [
     [PATH_COMBOS.eclipse[0], ECL_POOL.feint],
@@ -537,6 +562,22 @@ const ECL_COMMANDS = {
   ] },
 };
 
+// The Silkweaver's command moves: up + attack, she climbs a thread up through them cutting; in the
+// air, two cuts hanging off a thread; out of a run, she zips along a thread through the line and
+// cuts back at what she passed (a thread on each).
+const SILK_COMMANDS = {
+  up: { move: 'svrise', dur: 0.36, step: 8, strikes: [silk({ at: 0.32, pct: 62, reach: 66, h: 90, targets: 3, knock: 20, launch: 320, hop: 300, arc: [80, -175], thick: 7 }), silk({ at: 0.6, pct: 70, reach: 66, h: 110, targets: 3, knock: 30, launch: 420, hop: 260, arc: [60, -150], thick: 8, thread: 1, stop: 0.04 })] },
+  air: [
+    { move: 'svaircut', dur: 0.26, hang: true, strikes: [silk({ at: 0.45, pct: 48, reach: 66, h: 80, targets: 2, knock: 15, launch: 150, arc: [-115, 205], thick: 7 }), soff({ at: 0.63, pct: 44, h: 80, targets: 2, knock: 15, launch: 120 })] },
+    { move: 'svaircut', dur: 0.3, hang: true, finisher: true, strikes: [silk({ at: 0.45, pct: 56, reach: 72, h: 86, targets: 3, knock: 60, launch: 100, arc: [-140, 260], thick: 9 }), soff({ at: 0.63, pct: 60, reach: 72, h: 86, targets: 3, knock: 140, launch: 120, thread: 1, big: true, stop: 0.05, shake: 1 })] },
+  ],
+  dash: { move: 'svzip', dur: 0.36, step: 100, carry: 0.7, guard: 0.4, strikes: [
+    { at: 0.06, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, gauge: 0, burst: 'svzipline', burstAt: 0, burstDur: 0.5 },
+    { at: 0.44, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, gauge: 0, turn: true },
+    silk({ at: 0.6, pct: 136, reach: 120, h: 56, targets: 4, knock: 120, turn: true, thread: 1, big: true, stop: 0.05 }),
+  ] },
+};
+
 // The warrior paths fight in a blade's reach and put their weight into it.
 const warriorPath = (char) => hasVolt(char) || hasGale(char) || hasBulwark(char) || hasRage(char) || hasFaith(char);
 // How long you must have been running for an attack to become a dash attack.
@@ -620,7 +661,7 @@ const MOONDUST_HOLD = 5;
 const MOONDUST_DRAIN = 10;
 export const MOONDUST_CRIT = 0.2;
 export const MOTH_NIP = 40; // % of a basic hit: the Full Moon moth's nip
-export const hasMoth = (char) => jobChain(char.job).includes('moonmoth') && !hasUmbra(char);
+export const hasMoth = (char) => jobChain(char.job).includes('moonmoth') && !hasUmbra(char) && !hasSpool(char);
 export function addMoondust(world, n) {
   if (!hasMoth(world.char) || n <= 0) return;
   world.moondust = Math.min(MOONDUST_MAX, (world.moondust ?? 0) + n);
@@ -630,8 +671,8 @@ export const fullMoon = (world) => hasMoth(world.char) && (world.moondust ?? 0) 
 // Her crits: how much more often she crits for how full the Moondust runs, and the stats a hit is
 // rolled with (the Eclipse's Umbra makes them land harder instead).
 export const moondustCrit = (world) => (hasMoth(world.char) ? (MOONDUST_CRIT * Math.min(MOONDUST_MAX, world.moondust ?? 0)) / MOONDUST_MAX : 0);
-function critStats(world, stats) {
-  const rate = moondustCrit(world);
+function critStats(world, stats, m = null) {
+  const rate = moondustCrit(world) + (dazzled(world, m) ? DAZZLE_CRIT : 0);
   const harder = umbraCritDamage(world);
   return rate || harder ? { ...stats, critRate: (stats.critRate ?? 0) + rate, critDamage: (stats.critDamage ?? 0) + harder } : stats;
 }
@@ -688,6 +729,83 @@ function detonateMarks(world, s) {
     i++;
   }
 }
+// Spool: the Silkweaver's gauge (docs/design/silkweaver.md). Her hits build it, hits on threaded or
+// cocooned monsters half again faster; it fades once the fighting stops. The fuller it runs, the
+// longer her cocoons hold (up to half again). Full (Full Spool): every blow she lands ties a thread,
+// and Moonspun Cocoon is ready.
+export const SPOOL_MAX = 100;
+const SPOOL_HOLD = 5;
+const SPOOL_DRAIN = 10;
+export const hasSpool = (char) => jobChain(char.job).includes('silkweaver');
+export function addSpool(world, n) {
+  if (!hasSpool(world.char) || n <= 0) return;
+  world.spool = Math.min(SPOOL_MAX, (world.spool ?? 0) + n);
+  world.spoolAt = world.now;
+}
+export const fullSpool = (world) => hasSpool(world.char) && (world.spool ?? 0) >= SPOOL_MAX;
+function tickSpool(world, dt) {
+  if (world.spool > 0 && world.now - (world.spoolAt ?? 0) > SPOOL_HOLD) world.spool = Math.max(0, world.spool - SPOOL_DRAIN * dt);
+}
+// Her threads: up to THREAD_MAX on a monster, for THREAD_SECS since the last (longer with Weaver's
+// Mastery), each slowing it by THREAD_SLOW (a boss half as much). The third wraps it in a cocoon:
+// it hangs helpless COCOON_SECS (longer the fuller her Spool) and takes COCOON_HURT more from her
+// blows; then it breaks free and can't be cocooned again for COCOON_GUARD s. Bosses are never
+// cocooned. Drawn as loops of silk round it (`svthreads`) and the cocoon (render/monsters.js).
+export const THREAD_MAX = 3;
+const THREAD_SECS = 6;
+export const THREAD_SLOW = 0.2;
+export const COCOON_SECS = 2;
+const COCOON_GUARD = 5;
+export const COCOON_HURT = 0.25;
+export const threadsOf = (world, m) => (m && m.threadUntil > world.now ? m.threads ?? 0 : 0);
+export const cocooned = (world, m) => Boolean(m && m.cocoonUntil > world.now && m.frozenUntil > world.now && m.hold === 'silk');
+// (Weaver's Mastery: threads and cocoons last up to 40% longer as it grows.)
+function weaveLonger(char) {
+  const wm = SKILLS.weavermastery;
+  return wm ? 1 + (0.4 * grownLevel(char, wm)) / wm.maxLevel : 1;
+}
+export function addThread(world, m, n = 1) {
+  if (!m || m.hp <= 0 || !n || cocooned(world, m)) return;
+  const longer = weaveLonger(world.char);
+  m.threads = Math.min(THREAD_MAX, threadsOf(world, m) + n);
+  m.threadUntil = world.now + THREAD_SECS * longer;
+  m.threadSlow = 1 - THREAD_SLOW * m.threads * (m.def.boss ? 0.5 : 1);
+  if (m.threads >= THREAD_MAX && !m.def.boss && !(m.cocoonGuard > world.now)) return cocoon(world, m, longer);
+  // (One drawing per monster, kept alive as long as the threads are.)
+  if (m.threadFx && m.threadFx.t < m.threadFx.dur && world.fx.includes(m.threadFx)) m.threadFx.dur = m.threadFx.t + THREAD_SECS * longer + 0.3;
+  else {
+    m.threadFx = { kind: 'svthreads', mob: m, x: m.x, y: m.y, h: m.def.h, w: m.def.w, t: 0, dur: THREAD_SECS * longer + 0.3 };
+    world.fx.push(m.threadFx);
+  }
+}
+function cocoon(world, m, longer = 1) {
+  const secs = COCOON_SECS * longer * (1 + (0.5 * (world.spool ?? 0)) / SPOOL_MAX);
+  m.hold = 'silk';
+  m.frozenUntil = Math.max(m.frozenUntil ?? 0, world.now + secs);
+  m.cocoonUntil = world.now + secs;
+  m.cocoonAt = world.now;
+  m.cocoonGuard = world.now + secs + COCOON_GUARD;
+  m.threads = 0;
+  m.threadUntil = 0;
+  m.threadSlow = 1;
+  if (m.threadFx) m.threadFx.dur = Math.min(m.threadFx.dur, m.threadFx.t + 0.15);
+  world.fx.push({ kind: 'svwrapup', x: m.x, y: m.y, h: m.def.h, w: m.def.w, mob: m, t: 0, dur: 0.45, seed: Math.random() });
+}
+// Her blows that end a cocoon (Moonspun Cocoon's last, `unwrap`): it bursts into pearl moths.
+function unwrapCocoon(world, m, i = 0) {
+  if (!cocooned(world, m)) return;
+  m.frozenUntil = world.now;
+  m.cocoonUntil = world.now;
+  world.fx.push({ kind: 'svpop', x: m.x, y: m.y, h: m.def.h, mob: m, t: -i * 0.04, dur: 0.6, seed: Math.random() });
+}
+// Reel In: every monster she has a thread on (or wrapped in a cocoon) within reach, nearest first.
+function reelTargets(world, s) {
+  const { body } = world;
+  const caught = world.mobs.filter((m) => m.hp > 0 && (threadsOf(world, m) || cocooned(world, m)) && Math.abs(m.x - body.x) <= s.reach && Math.abs(m.y - body.y) < s.h).sort((a, b) => Math.abs(a.x - body.x) - Math.abs(b.x - body.x)).slice(0, s.targets ?? 8);
+  if (caught.length) world.fx.push({ kind: 'svreel', x: body.x, y: body.y, mobs: caught, dir: s.dir, t: 0, dur: 0.42 });
+  return caught;
+}
+
 // Shadow Step: out of a disc of shadow behind the nearest monster ahead (within `behind` px),
 // turned to face its back. The blow then lands on it from behind.
 function shadowBehind(world, s) {
@@ -717,10 +835,121 @@ export function flutterJump(world, intent) {
   body.facing = dir;
   body.vy = -JUMP_SPEED * FLUTTER.up;
   body.vx = dir * FLUTTER.on;
-  world.fx.push({ kind: hasUmbra(char) ? 'ecflutter' : 'mmflutter', x: body.x, y: body.y, dir, t: 0, dur: 0.45, seed: Math.random() });
+  world.fx.push({ kind: `${thiefLook(char)}flutter`, x: body.x, y: body.y, dir, t: 0, dur: 0.45, seed: Math.random() });
   world.juice.push({ type: 'flutter', x: body.x, y: body.y });
   return true;
 }
+// ---------- The Moon Moth's second four (docs/design/moon-moth.md, 2026-11-16) ----------
+// Which thief's look an effect takes: the Moon Moth's lilac ('mm'), the Eclipse's violet and gold
+// ('ec'), the Silkweaver's pearl ('sv').
+export const thiefLook = (char) => (hasUmbra(char) ? 'ec' : hasSpool(char) ? 'sv' : 'mm');
+// Moth Veil (the `mothveil` buff): its `veil` is the share of blows the moths take outright, and
+// every blow that misses her while it lasts sends a moth back to nip whoever swung (VEIL_NIP % of a
+// hit, at most one every quarter second).
+export const VEIL_NIP = 80;
+export function veilOf(world) {
+  const b = world.char.buffs?.mothveil;
+  return b && b.until > world.now ? b.values?.veil ?? 0 : 0;
+}
+// A blow at her (from monster `m`, or from `fromX`): do the moths take it? Then it's a MISS.
+export function veilDodge(world, m = null, fromX = null) {
+  const v = veilOf(world);
+  if (!v || world.dead || Math.random() >= v) return false;
+  const { body } = world;
+  world.numbers.push({ x: body.x, y: body.y - body.h - 6, text: 'MISS', color: '#d4cbe8', t: 0 });
+  world.invuln = Math.max(world.invuln, 0.5);
+  veilMissed(world, m, fromX);
+  return true;
+}
+// A blow that missed her while she's veiled: her moths scatter off her and one darts back at it.
+export function veilMissed(world, m = null, fromX = null) {
+  if (!veilOf(world)) return;
+  const { body, char } = world;
+  const look = thiefLook(char);
+  world.fx.push({ kind: `${look}dodge`, x: body.x, y: body.y, dir: body.facing, t: 0, dur: 0.5, seed: Math.random() });
+  const x = m?.x ?? fromX ?? body.x;
+  const foe = m && m.hp > 0 ? m : world.mobs.filter((k) => k.hp > 0 && Math.abs(k.x - x) < 120 && Math.abs(k.y - body.y) < 90).sort((a, b) => Math.abs(a.x - x) - Math.abs(b.x - x))[0];
+  if (!foe || world.now - (world.veilNipAt ?? -9) < 0.25) return;
+  world.veilNipAt = world.now;
+  const dir = Math.sign(foe.x - body.x) || body.facing;
+  world.fx.push({ kind: 'mmnip', look, x: body.x, y: body.y - body.h * 0.6, tx: foe.x, ty: foe.y - foe.def.h * 0.55, mob: foe, dir, t: 0, dur: 0.36, seed: Math.random() });
+  shotHit(world, { pct: VEIL_NIP, scale: 100, key: 'procveil', dir, knock: 40, burst: `${look}hit`, gauge: 2 }, foe, 0.3, 0);
+}
+// Dazzle Dust: a dazzled monster (`dazzle` s on a blow) stumbles about instead of chasing, can't land
+// a hit on her, and her blows on it crit DAZZLE_CRIT more often. A boss only gives up the crits, for
+// half as long. Drawn with sparkles circling its head (render/monsters.js).
+export const DAZZLE_CRIT = 0.25;
+export const dazzled = (world, m) => Boolean(m && m.dazzleUntil > world.now);
+export const blinded = (now, m) => Boolean(m && !m.def.boss && m.dazzleUntil > now);
+function dazzle(world, m, secs, look) {
+  m.dazzleUntil = Math.max(m.dazzleUntil ?? 0, world.now + (m.def.boss ? secs / 2 : secs));
+  m.dazzleLook = look;
+  if (!m.def.boss) m.aggroUntil = 0;
+}
+// Moonlure: a moon lantern glowing on the floor (`lure` on a blow: { secs, r, pct }). Every monster
+// within `r` of it on its floor wanders over and gathers under its light, gazing up, harmless; then it
+// pops in a burst of moths that hits everything gathered round it (`pct`). Never bosses.
+export const LURE_POP = 110; // px round the lantern its burst reaches
+function setLure(world, s) {
+  const { body } = world;
+  const x = Math.max(40, Math.min(world.map.width - 40, body.x + s.dir * (s.lure.at ?? 110)));
+  const look = s.look ?? thiefLook(world.char);
+  const secs = s.lure.secs;
+  world.lure = { x, y: body.y, until: world.now + secs, r: s.lure.r, pct: s.lure.pct, scale: s.scale ?? 100, key: s.key, dir: s.dir, look, thread: s.thread };
+  world.fx.push({ kind: `${look}lure`, x, y: body.y, dir: s.dir, t: 0, dur: secs + 0.15, seed: Math.random() });
+}
+function tickLure(world) {
+  const L = world.lure;
+  if (!L) return;
+  if (world.now < L.until) {
+    // (Each one its own place round the lantern, so they gather in a ring instead of one heap.)
+    let n = 0;
+    for (const m of world.mobs) {
+      if (m.hp <= 0 || m.def.boss || Math.abs(m.y - L.y) > 90 || Math.abs(m.x - L.x) > L.r) continue;
+      if (!(m.lureUntil > world.now)) m.lureSlot = n % 2 ? -(14 + 10 * (n >> 1)) : 14 + 10 * (n >> 1);
+      m.lureX = L.x + (m.lureSlot ?? 0);
+      m.lureUntil = L.until;
+      n++;
+    }
+    return;
+  }
+  world.lure = null;
+  world.fx.push({ kind: `${L.look}lurepop`, x: L.x, y: L.y, dir: L.dir, t: 0, dur: 0.6, seed: Math.random() });
+  world.juice.push({ type: 'shake', mag: 2, dur: 0.2 });
+  let i = 0;
+  for (const m of world.mobs) {
+    if (m.hp <= 0 || Math.abs(m.y - L.y) > 90 || Math.abs(m.x - L.x) > LURE_POP) continue;
+    m.lureUntil = 0;
+    shotHit(world, { pct: L.pct, scale: L.scale, key: L.key, dir: Math.sign(m.x - L.x) || L.dir, fromX: L.x, knock: 160, launch: 120, burst: `${L.look}hit`, big: true, thread: L.thread }, m, 0.04 + i * 0.03, i % 3);
+    i++;
+  }
+}
+// Is a monster gathered under the lantern (harmless, gazing up)?
+export const lured = (now, m) => Boolean(m && !m.def.boss && m.lureUntil > now);
+// Wing Feint: every monster a feint catches (`feint` s) turns to watch the moths flying off past it,
+// frozen that long with its back to her (half as long for a boss), and her blows on it for
+// FEINT_OPEN s are backstabs (FEINT_STAB harder, and crits).
+export const FEINT_OPEN = 3;
+export const FEINT_STAB = 1.5;
+function feint(world, s, targets) {
+  const { body } = world;
+  const look = s.look ?? thiefLook(world.char);
+  targets.forEach((m, i) => {
+    m.dir = Math.sign(m.x - body.x) || m.dir;
+    m.heading = m.dir;
+    const secs = m.def.boss ? s.feint / 2 : s.feint;
+    if (!(m.frozenUntil > world.now)) m.hold = 'feint';
+    m.frozenUntil = Math.max(m.frozenUntil ?? 0, world.now + secs);
+    m.feintUntil = world.now + Math.max(secs, FEINT_OPEN);
+    m.feintLook = look;
+    world.fx.push({ kind: `${look}hit`, x: m.x, y: m.y, h: m.def.h, mob: m, dir: s.dir, t: -i * 0.03, dur: 0.5, seed: Math.random() });
+  });
+  // The moths she flicked off, flying away past them.
+  world.fx.push({ kind: `${look}feint`, x: body.x + s.dir * s.reach * 0.55, y: body.y, r: s.reach, dir: s.dir, t: 0, dur: 0.75, seed: Math.random() });
+  // (The Silkweaver's Silk Feint ties a thread on each one it turns.)
+  if (s.thread) targets.forEach((m) => addThread(world, m, s.thread));
+}
+
 // Full Moon: a moth flutters off a basic attack that lands and nips the nearest monster the blow
 // didn't catch (else the one it hit), at most one every quarter second.
 function moonNip(world, hit, s) {
@@ -1092,7 +1321,7 @@ const STAR_SHOTS = new Set(['star', 'moonstar']);
 // A job's own gauge: which one the character has ('volt', 'gale', 'bulwark', 'rage', 'faith',
 // 'depth', 'moon' or 'tide'), and how full it is (0-1). Finishers need it full and spend it.
 export function gaugeOf(char) {
-  return hasVolt(char) ? 'volt' : hasGale(char) ? 'gale' : hasBulwark(char) ? 'bulwark' : hasRage(char) ? 'rage' : hasFaith(char) ? 'faith' : hasDepth(char) ? 'depth' : hasMoon(char) ? 'moon' : hasTide(char) ? 'tide' : hasUmbra(char) ? 'umbra' : hasMoth(char) ? 'moondust' : null;
+  return hasVolt(char) ? 'volt' : hasGale(char) ? 'gale' : hasBulwark(char) ? 'bulwark' : hasRage(char) ? 'rage' : hasFaith(char) ? 'faith' : hasDepth(char) ? 'depth' : hasMoon(char) ? 'moon' : hasTide(char) ? 'tide' : hasUmbra(char) ? 'umbra' : hasSpool(char) ? 'spool' : hasMoth(char) ? 'moondust' : null;
 }
 export function gaugeFull(world) {
   const g = gaugeOf(world.char);
@@ -1104,6 +1333,7 @@ export function addAim(world, n, mob = null, el = null) {
   addTide(world, n);
   addMoondust(world, n);
   addUmbra(world, n);
+  addSpool(world, n);
   addDepth(world, n);
   addMoon(world, n);
   if (mob && n > 0) abyssVortex(world, mob);
@@ -1113,6 +1343,7 @@ export function pathOf(world) {
   const { char } = world;
   const w = world.stats.weaponType;
   if (w === 'dagger' && hasUmbra(char)) return 'eclipse';
+  if (w === 'dagger' && hasSpool(char)) return 'silkweaver';
   if (w === 'dagger' && hasMoth(char)) return 'moonmoth';
   if (MELEE.has(w) && w !== 'none') return hasVolt(char) ? 'warrior' : hasGale(char) ? 'tempest' : hasBulwark(char) ? 'stormwall' : null;
   if (w === 'none') return 'fists';
@@ -1150,7 +1381,7 @@ export function basicCombo(world) {
   // Blades, axes, spears, daggers and fists have command variants: in the air, an air combo;
   // Up + attack on the ground, a launcher that follows them up; running, a dash attack.
   if (MELEE.has(world.stats.weaponType)) {
-    const own = { warrior: STORM_COMMANDS, tempest: RED_COMMANDS, stormwall: WALL_COMMANDS, moonmoth: MOTH_COMMANDS, eclipse: ECL_COMMANDS }[pathOf(world)] ?? null;
+    const own = { warrior: STORM_COMMANDS, tempest: RED_COMMANDS, stormwall: WALL_COMMANDS, moonmoth: MOTH_COMMANDS, eclipse: ECL_COMMANDS, silkweaver: SILK_COMMANDS }[pathOf(world)] ?? null;
     const air = own?.air ?? AIR;
     const blades = barrageOf(world);
     if (!body.onGround && !body.rope) {
@@ -1277,7 +1508,8 @@ function playStep(world, step, scale, key, school = null, after = 0) {
   }
   world.owed = ownStep && dx <= -15 ? -dx : 0;
   const first = (step.carry ?? step.strikes[0].at) * dur;
-  if (dx) world.lunge = { v: (body.facing * dx) / Math.max(0.05, first), until: now + first };
+  // (`swing`: Silk Swing carries her on through the air, off the floor.)
+  if (dx) world.lunge = { v: (body.facing * dx) / Math.max(0.05, first), until: now + first, air: Boolean(step.swing) };
   if (step.guard) world.invuln = Math.max(world.invuln, step.guard);
   // A dash leaves speed lines and a shock cone along its path.
   // Shield Rush's wall of light, carried before her as she marches.
@@ -1352,6 +1584,8 @@ export function tickMelee(world, dt) {
   tickTide(world, dt);
   tickMoondust(world, dt);
   tickUmbra(world, dt);
+  tickSpool(world, dt);
+  tickLure(world);
   tickDepth(world, dt);
   tickMoon(world, dt);
   if (world.volt > 0 && world.now - (world.voltAt ?? 0) > VOLT_HOLD) world.volt = Math.max(0, world.volt - VOLT_DRAIN * dt);
@@ -1414,10 +1648,14 @@ function land(world, s) {
   if (s.rain) return rain(world, s);
   if (s.shot) return fire(world, s);
   if (s.behind) s = shadowBehind(world, s);
+  if (s.lure) return setLure(world, s);
   // A form reaches farther: every cut grows by FORM_REACH (once, not again for its echo).
   if (inForm(world) && !s.formGrown) s = { ...s, reach: s.reach * FORM_REACH, h: s.h * FORM_HEIGHT, formGrown: true };
   const range = s.around ? { w: s.reach * 2, h: s.h, around: true } : { w: s.reach, h: s.h };
-  const targets = s.only ? (s.only.hp > 0 ? [s.only] : []) : pickTargets(world.mobs, body, range, s.targets ?? 1);
+  const targets = s.only ? (s.only.hp > 0 ? [s.only] : []) : s.reel ? reelTargets(world, s) : pickTargets(world.mobs, body, range, s.targets ?? 1);
+  if (s.feint) return feint(world, s, targets);
+  // (Moonspun Cocoon: her threads shooting out to every monster it catches.)
+  if (s.lines && targets.length) world.fx.push({ kind: 'svreel', out: true, x: body.x, y: body.y, mobs: targets, dir: s.dir, t: 0, dur: 0.5 });
   const acc = accuracy(JOBS[char.job].family, stats, char.level);
   const weight = weightOf(world);
   // A finisher hits harder the fewer it catches: double on one, half again on two (its whole
@@ -1453,23 +1691,38 @@ function land(world, s) {
   if (s.revive) reviveAround(world, s.revive, s.reviveR ?? 320);
   let crits = 0;
   let sly = 0;
+  let tied = 0;
   targets.forEach((m, i) => {
     const miss = Math.random() >= hitChance(acc, char.level, m.def);
     // (At Totality every blow is a crit.)
-    let roll = miss ? null : rollHit(dmgRange, critStats(world, stats), m.def, char.level, Math.random, s.crit || totality(world) ? 1 : 0);
+    let roll = miss ? null : rollHit(dmgRange, critStats(world, stats, m), m.def, char.level, Math.random, s.crit || totality(world) ? 1 : 0);
     // A backstab hits harder on a monster that isn't facing you.
     const behind = Math.sign(m.dir || 1) === Math.sign(m.x - body.x);
-    if (roll && s.backstab && behind) roll = { ...roll, damage: Math.round(roll.damage * s.backstab), crit: true };
+    // (A monster her Wing Feint turned round takes every blow from behind as a backstab.)
+    const stab = s.backstab ?? (m.feintUntil > now ? FEINT_STAB : 0);
+    if (roll && stab && behind) roll = { ...roll, damage: Math.round(roll.damage * stab), crit: true };
     // (The Eclipse: a backstab or a marked monster builds Umbra twice as fast; Umbral Edge spends
     // the marks for a much harder blow.)
     const marked = marksOf(world, m);
-    if (!miss && ((s.backstab && behind) || marked)) sly++;
+    if (!miss && ((stab && behind) || marked)) sly++;
     if (roll && s.consume && marked) {
       roll = { ...roll, damage: Math.round(roll.damage * (1 + s.consume * marked)), crit: true };
       clearMarks(m);
       world.fx.push({ kind: 'ecpop', school: 'eclipse', x: m.x, y: m.y, h: m.def.h, mob: m, n: marked, dir: s.dir, t: 0, dur: 0.6, seed: Math.random() });
     }
     if (!miss && s.mark) addMark(world, m, s.mark);
+    if (!miss && s.dazzle) dazzle(world, m, s.dazzle, s.look ?? thiefLook(char));
+    // (The Silkweaver: a cocoon takes her blows harder; Reel In hauls harder for every thread; a
+    // threaded or cocooned monster builds Spool half again faster.)
+    const wrapped = cocooned(world, m);
+    const held = threadsOf(world, m);
+    if (roll && wrapped) roll = { ...roll, damage: Math.round(roll.damage * (1 + COCOON_HURT)) };
+    if (roll && s.reel) roll = { ...roll, damage: Math.round(roll.damage * (1 + s.reel * (wrapped ? THREAD_MAX : held))) };
+    if (!miss && (wrapped || held)) tied++;
+    // (Reel In hauls each one in on its thread to just in front of her, nearest first.)
+    if (!miss && s.reel && !m.def.boss) yank(m, body.x + s.dir * (22 + (m.def.w ?? 30) / 2 + i * 14), 0.04 + i * 0.03);
+    if (!miss && s.unwrap && wrapped) unwrapCocoon(world, m, i);
+    else if (!miss && (s.thread || (fullSpool(world) && !s.phantom))) addThread(world, m, s.thread ?? 1);
     const knock = s.pull ? -Math.sign(m.x - body.x) * s.pull : s.knock * weight;
     world.pending.push({
       at: now, mob: m, miss, damage: roll?.damage ?? 0, crit: roll?.crit ?? false, fromX: body.x, stack: s.n % 3, knock, launch: s.launch, big: s.big, small: s.around && !s.big,
@@ -1517,6 +1770,7 @@ function land(world, s) {
   if (targets.length && !s.phantom) addTide(world, (s.gauge ?? (s.key.startsWith('basic') ? 3 : 4)) * (1 + 0.3 * (targets.length - 1)));
   if (targets.length && !s.phantom) addMoondust(world, (s.gauge ?? (s.key.startsWith('basic') ? 3 : 4)) * (1 + 0.3 * (targets.length - 1)));
   if (targets.length && !s.phantom) addUmbra(world, (s.gauge ?? (s.key.startsWith('basic') ? 3 : 4)) * (1 + 0.3 * (targets.length - 1) + sly / targets.length));
+  if (targets.length && !s.phantom) addSpool(world, (s.gauge ?? (s.key.startsWith('basic') ? 3 : 4)) * (1 + 0.3 * (targets.length - 1) + (0.5 * tied) / targets.length));
   if (s.detonateAll) detonateMarks(world, s);
   if (s.key.startsWith('basic') && !s.phantom) moonNip(world, targets, s);
   if (targets.length && !s.phantom) addDepth(world, (s.gauge ?? (s.key.startsWith('basic') ? 3 : 4)) * (1 + 0.3 * (targets.length - 1)));
@@ -1643,11 +1897,13 @@ function shotHit(world, s, m, delay, stack = 0, element = null, rank = 0) {
   const miss = !sure && Math.random() >= hitChance(acc, char.level, m.def);
   const extraCrit = sure || totality(world) ? 1 : 0;
   const range = s.magic ? magicRange(stats, (s.pct * s.scale * tuneOf(s.key)) / 100) : physicalRange(stats, stats.weaponType, (s.pct * s.scale * tuneOf(s.key)) / 100);
-  const roll = miss ? null : rollHit(range, critStats(world, stats), m.def, char.level, Math.random, extraCrit);
+  const rolled = miss ? null : rollHit(range, critStats(world, stats, m), m.def, char.level, Math.random, extraCrit);
+  const roll = rolled && cocooned(world, m) ? { ...rolled, damage: Math.round(rolled.damage * (1 + COCOON_HURT)) } : rolled;
   world.pending.push({
     at: world.now + delay, mob: m, miss, damage: roll?.damage ?? 0, crit: roll?.crit ?? false, fromX: s.fromX ?? body.x, stack, knock: s.knock, launch: s.launch, big: s.big, stop: s.stop, shake: s.shake, element,
     via: s.shot ?? (s.rain ? 'rain' : undefined), stun: miss ? undefined : s.stun, burn: miss ? undefined : s.burn, freeze: miss ? undefined : s.freeze, burst: s.burst, dir: s.dir,
     gauge: s.gauge ?? (s.key.startsWith('basic') ? 3 : 5), rank, el: s.el, mend: miss ? undefined : s.mend, basic: s.key.startsWith('basic') || undefined, mark: miss ? undefined : s.mark,
+    thread: miss ? undefined : s.thread ?? (fullSpool(world) && !s.phantom ? 1 : undefined),
   });
 }
 
@@ -1717,7 +1973,7 @@ function fire(world, strike) {
   };
   // A little snap of the string (or flick of the wrist) as it goes; a heavy shot kicks back.
   // (The Tide Mage's water carries its own splash: no flash off her staff.)
-  if (!hasTide(world.char) && !hasDepth(world.char) && !hasMoon(world.char) && !hasMoth(world.char) && !hasUmbra(world.char)) world.fx.push({ kind: 'spark', x: ox, y: oy, t: 0, dur: 0.16, muzzle: true });
+  if (!hasTide(world.char) && !hasDepth(world.char) && !hasMoon(world.char) && !hasMoth(world.char) && !hasUmbra(world.char) && !hasSpool(world.char)) world.fx.push({ kind: 'spark', x: ox, y: oy, t: 0, dur: 0.16, muzzle: true });
   // Heavy shots kick the view back (research/archery.md 37).
   if (s.big) world.juice.push({ type: 'kick', x: -s.dir * 2, y: 0 });
   // Shots aimed up or down (`lift`, `drop`) look for monsters above or below you.
