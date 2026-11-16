@@ -20,9 +20,8 @@
 // you untouchable for that long (dodges).
 // A blow can also leave something on what it hits: `stun` (seconds), `bleed` ({ pct, secs }),
 // `provoke` (seconds they stick to you, the tank's taunt), and `fx` (an effect on each monster hit,
-// like a pillar of light). `burst` is one effect where the blow lands (a shield of light, a holy
-// ring, a burst of rage), `burstAt` how far out along the reach (0 = on you). `rage` is the Rage
-// a Berserker's blow builds (see addRage).
+// like a pillar of light). `burst` is one effect where the blow lands (a ring, a bolt, a splash),
+// `burstAt` how far out along the reach (0 = on you).
 // Pressing again while a step plays carries on to the next one; wait too long and it starts over.
 
 import { thrownStars } from '../core/items.js';
@@ -30,7 +29,7 @@ import { physicalRange, magicRange, rollHit, accuracy, hitChance } from '../core
 import { grownLevel } from '../core/stats.js';
 import { JOBS, jobChain } from '../data/jobs.js';
 import { SKILLS, skillAt } from '../data/skills.js';
-import { pickTargets, weaponElement, procOf, frenzyOnCrit, transform, applyBuff } from './combat.js';
+import { pickTargets, weaponElement, procOf, applyBuff } from './combat.js';
 import { moveAt } from '../render/moves.js';
 import { strikePose } from '../render/hero.js';
 import { wornGear } from '../core/character.js';
@@ -63,10 +62,10 @@ const BLADE = '#8fb8ff';
 const HEAVY = '#ffb347';
 const TINTS = { holy: ['#ffe9a0', '#ffd24f'], rage: ['#c0102e', '#ff4a1f'] };
 
-// The colour a warrior path's own skills come in: the Warrior's steel, the Paladin's holy gold,
-// the Berserker's demonic crimson. The Warrior's skills the paths inherit (Blade Rush, Whirlwind,
+// The colour a warrior path's own skills come in: the Thunderguard's storm, the Tempest's red, the
+// Stormwall's indigo. The Warrior's skills the paths inherit (Blade Rush, Whirlwind,
 // War Cry, Iron Guard, Shoulder Charge) take the path's colour, never the Warrior's blue.
-export const pathSchool = (char) => (hasFaith(char) ? 'holy' : hasRage(char) ? 'rage' : hasVolt(char) ? 'thunder' : hasGale(char) ? 'redstorm' : hasBulwark(char) ? 'indigo' : 'steel');
+export const pathSchool = (char) => (hasVolt(char) ? 'thunder' : hasGale(char) ? 'redstorm' : hasBulwark(char) ? 'indigo' : 'steel');
 // (The Thunderguard's skills, played by the Tempest, come in his red.)
 export const schoolFor = (char, school) => (school === 'steel' || (school === 'thunder' && (hasGale(char) || hasBulwark(char))) ? pathSchool(char) : school);
 // The colour a pop-up word comes in, by its school.
@@ -676,7 +675,7 @@ const SILK_COMMANDS = {
 };
 
 // The warrior paths fight in a blade's reach and put their weight into it.
-const warriorPath = (char) => hasVolt(char) || hasGale(char) || hasBulwark(char) || hasRage(char) || hasFaith(char);
+const warriorPath = (char) => hasVolt(char) || hasGale(char) || hasBulwark(char);
 // How long you must have been running for an attack to become a dash attack.
 const DASH_AFTER = 0.3;
 // How slowly you sink while an air cut hangs you up (px/s).
@@ -690,29 +689,9 @@ export function outgoing(world) {
   return { kind: p.kind, progress: world.pose ? 1 - p.t / p.dur : 1, dur: p.dur };
 }
 
-// Rage: a Berserker's blows build it up to RAGE_MAX, and it drains away once the fighting stops.
-export const RAGE_MAX = 100;
-const RAGE_HOLD = 8; // seconds after the last gain before it starts draining
-const RAGE_DRAIN = 8; // per second
-export const hasRage = (char) => jobChain(char.job).includes('berserker');
-
-// Faith: the Paladin's gauge. Her blows and the hits she takes build it; it drains slowly once the
-// fighting stops, and the fuller it is the less damage she takes (up to FAITH_CUT at full).
-export const FAITH_MAX = 100;
-const FAITH_HOLD = 6;
-const FAITH_DRAIN = 8;
-export const FAITH_CUT = 0.15;
-const FAITH_ON_HURT = 7;
-export const hasFaith = (char) => jobChain(char.job).includes('paladin');
-export function addFaith(world, n) {
-  if (!hasFaith(world.char) || n <= 0) return;
-  const before = world.faith ?? 0;
-  world.faith = Math.min(FAITH_MAX, before + n);
-  world.faithAt = world.now;
-  if (before < FAITH_MAX && world.faith >= FAITH_MAX) transform(world);
-}
-// The share Faith takes off a hit; a hit taken also builds it.
-export function faithGuard(world, fromX = null) {
+// The share a path's gauge takes off a hit (the Thunderguard's Charge, the Stormwall's
+// Thunderhead); a hit taken also builds it.
+export function gaugeGuard(world, fromX = null) {
   // (The Thunderguard's Charge takes its share off too, builds on the hit, and at Overcharge, or in
   // Static Guard, shocks back.)
   // (The Stormwall's Thunderhead too, and at half its cloud answers the blow with a bolt.)
@@ -728,10 +707,7 @@ export function faithGuard(world, fromX = null) {
     addVolt(world, VOLT_ON_HURT);
     return cut;
   }
-  if (!hasFaith(world.char)) return 0;
-  const cut = (FAITH_CUT * (world.faith ?? 0)) / FAITH_MAX;
-  addFaith(world, FAITH_ON_HURT);
-  return cut;
+  return 0;
 }
 // Tide: the Tide Mage's gauge. Her water that lands builds it, and so do her heals and shields; it
 // ebbs once the fighting stops. The fuller it runs, the bigger her waves; full (High Tide), every
@@ -1520,10 +1496,10 @@ export function healAround(world, x, y, pct, r, gauge = true, el = null) {
 }
 // The thrown stars a gauntlet uses up (one each from the set in your bag).
 const STAR_SHOTS = new Set(['star', 'moonstar']);
-// A job's own gauge: which one the character has ('volt', 'gale', 'bulwark', 'rage', 'faith',
+// A job's own gauge: which one the character has ('volt', 'gale', 'bulwark',
 // 'depth', 'moon' or 'tide'), and how full it is (0-1). Finishers need it full and spend it.
 export function gaugeOf(char) {
-  return hasVolt(char) ? 'volt' : hasGale(char) ? 'gale' : hasBulwark(char) ? 'bulwark' : hasRage(char) ? 'rage' : hasFaith(char) ? 'faith' : hasDepth(char) ? 'depth' : hasMoon(char) ? 'moon' : hasTide(char) ? 'tide' : hasUmbra(char) ? 'umbra' : hasSpool(char) ? 'spool' : hasMoth(char) ? 'moondust' : hasKindling(char) ? 'kindling' : hasMelody(char) ? 'melody' : hasDaybreak(char) ? 'daybreak' : null;
+  return hasVolt(char) ? 'volt' : hasGale(char) ? 'gale' : hasBulwark(char) ? 'bulwark' : hasDepth(char) ? 'depth' : hasMoon(char) ? 'moon' : hasTide(char) ? 'tide' : hasUmbra(char) ? 'umbra' : hasSpool(char) ? 'spool' : hasMoth(char) ? 'moondust' : hasKindling(char) ? 'kindling' : hasMelody(char) ? 'melody' : hasDaybreak(char) ? 'daybreak' : null;
 }
 export function gaugeFull(world) {
   const g = gaugeOf(world.char);
@@ -1561,27 +1537,10 @@ export function pathOf(world) {
   return null;
 }
 
-// Rage makes a Berserker's blows hit harder: up to RAGE_POWER more at full Rage.
-const RAGE_POWER = 0.25;
-const ragePower = (world) => (hasRage(world.char) ? 1 + (RAGE_POWER * (world.rage ?? 0)) / RAGE_MAX : 1);
-// How much heavier each path's blows land: longer hit-stop, harder knockback.
-const WEIGHT = { berserker: 1.4, paladin: 1.2, overcharge: 1.3 };
-// Overcharge (a full Charge) lands the Thunderguard's blows heavier too.
-const weightOf = (world) => (hasRage(world.char) ? WEIGHT.berserker : hasFaith(world.char) ? WEIGHT.paladin : overcharged(world) ? WEIGHT.overcharge : 1);
-export function addRage(world, n) {
-  if (!hasRage(world.char) || n <= 0) return;
-  const before = world.rage ?? 0;
-  world.rage = Math.min(RAGE_MAX, before + n);
-  world.rageAt = world.now;
-  if (before < RAGE_MAX && world.rage >= RAGE_MAX) transform(world);
-}
-// A warrior path's form, while it lasts (see combat.js's transform): Demon Form for a Berserker,
-// Judgment for a Paladin. The gauge stays full, the cuts reach farther and higher, and each swing
-// strikes again (a Berserker's blood-red shadow swings it; a Paladin's is light alone).
-const FORM_REACH = 1.35;
-const FORM_HEIGHT = 1.2;
-export const inForm = (world) => (hasRage(world.char) || hasFaith(world.char)) && (world.formUntil ?? 0) > world.now;
-export const formSkill = (char) => (hasRage(char) ? 'demonform' : 'judgment');
+// How much heavier each path's blows land: longer hit-stop, harder knockback. Overcharge (a full
+// Charge) lands the Thunderguard's blows heavier.
+const OVERCHARGE_WEIGHT = 1.3;
+const weightOf = (world) => (overcharged(world) ? OVERCHARGE_WEIGHT : 1);
 
 // Basic attack with a melee weapon: the next step of its combo.
 export function basicCombo(world) {
@@ -1727,7 +1686,7 @@ function playStep(world, step, scale, key, school = null, after = 0) {
   if (step.trail) world.fx.push({ kind: 'chargetrail', school: school ?? pathSchool(world.char), x: body.x, y: body.y, tx: body.x + body.facing * step.step, dir: body.facing, t: 0, dur: 0.5 });
   // Warrior paths put their weight into big moves: a stomp that kicks up dust as the move starts,
   // and power gathering at the weapon until the first blow lands.
-  const heavy = hasVolt(world.char) || hasGale(world.char) || hasBulwark(world.char) || hasRage(world.char) || hasFaith(world.char);
+  const heavy = hasVolt(world.char) || hasGale(world.char) || hasBulwark(world.char);
   if (heavy && body.onGround && (step.finisher || step.strikes.some((st) => st.big))) {
     world.juice.push({ type: 'stomp', school: school ?? pathSchool(world.char), x: body.x, y: body.y, dir: body.facing, big: !key.startsWith('basic') });
     const lead = (step.strikes.find((st) => !st.onLand)?.at ?? 0.4) * dur;
@@ -1787,8 +1746,6 @@ function playStep(world, step, scale, key, school = null, after = 0) {
 export function tickMelee(world, dt) {
   const b = world.body;
   if (b.onGround || b.rope) world.flutterUsed = false;
-  if (world.rage > 0 && world.now - (world.rageAt ?? 0) > RAGE_HOLD && !inForm(world)) world.rage = Math.max(0, world.rage - RAGE_DRAIN * dt);
-  if (world.faith > 0 && world.now - (world.faithAt ?? 0) > FAITH_HOLD && !inForm(world)) world.faith = Math.max(0, world.faith - FAITH_DRAIN * dt);
   tickTide(world, dt);
   tickMoondust(world, dt);
   tickUmbra(world, dt);
@@ -1861,8 +1818,6 @@ function land(world, s) {
   if (s.shot) return fire(world, s);
   if (s.behind) s = shadowBehind(world, s);
   if (s.lure) return setLure(world, s);
-  // A form reaches farther: every cut grows by FORM_REACH (once, not again for its echo).
-  if (inForm(world) && !s.formGrown) s = { ...s, reach: s.reach * FORM_REACH, h: s.h * FORM_HEIGHT, formGrown: true };
   const range = s.around ? { w: s.reach * 2, h: s.h, around: true } : { w: s.reach, h: s.h };
   const targets = s.only ? (s.only.hp > 0 ? [s.only] : []) : s.reel ? reelTargets(world, s) : pickTargets(world.mobs, body, range, s.targets ?? 1);
   if (s.feint) return feint(world, s, targets);
@@ -1876,8 +1831,7 @@ function land(world, s) {
   const tune = tuneOf(s.key) * focus;
   // ...and it feels it: its big blow, a whole gauge into one or two, lands with a heavier stop and shake.
   if (focus > 1 && (s.stop ?? 0) >= 0.1) s = { ...s, stop: Math.max(s.stop ?? 0, 0.1 + 0.04 * focus), shake: Math.max(s.shake ?? 0, 3 + 2 * focus) };
-  const power = ragePower(world);
-  const dmgRange = s.magic ? magicRange(stats, (s.pct * s.scale * tune) / 100) : physicalRange(stats, stats.weaponType, (s.pct * s.scale * power * tune) / 100);
+  const dmgRange = s.magic ? magicRange(stats, (s.pct * s.scale * tune) / 100) : physicalRange(stats, stats.weaponType, (s.pct * s.scale * tune) / 100);
   const cy = body.y - body.h / 2;
   // The smear, spike, or whirl of the blow. (The Thunderguard's and the Tempest's thrusts draw their
   // own streaks of lightning, so the old steel spike and its star burst stay off them.)
@@ -1886,7 +1840,7 @@ function land(world, s) {
     world.fx.push({ kind: 'pierce', school: s.school ? schoolFor(char, s.school) : pathSchool(char), x: body.x, y: body.y, dir: s.dir, box: { x, y: cy - 10, w: s.reach, h: 20 }, t: 0, dur: s.big ? 0.35 : 0.25, move: s.move, at: s.at, moveDur: s.dur, hit: s.hit, fin: s.finisher });
   }
   if (s.arc) {
-    world.fx.push({ kind: 'arc', weapon: world.stats.weaponType, snd: s.school ? schoolFor(char, s.school) : undefined, path: hasRage(char) ? 'rage' : hasFaith(char) ? 'holy' : hasVolt(char) ? 'thunder' : hasGale(char) ? 'redstorm' : hasBulwark(char) ? 'indigo' : null, x: body.x + s.dir * (s.around ? 0 : 10), y: cy - 2, bx: body.x, by: body.y, move: s.move, at: s.at, moveDur: s.dur, hit: s.hit, fin: s.finisher, dir: s.dir, r: s.around ? s.reach * 0.8 : s.reach * 0.52, start: s.arc[0], sweep: s.arc[1], thick: s.thick ?? 7, big: s.big, flat: s.around, color: TINTS[s.school]?.[s.big ? 1 : 0] ?? (s.big ? HEAVY : BLADE), element: s.key.startsWith('basic') ? weaponElement(char) : null, t: 0, dur: s.big ? 0.32 : 0.24 });
+    world.fx.push({ kind: 'arc', weapon: world.stats.weaponType, snd: s.school ? schoolFor(char, s.school) : undefined, path: hasVolt(char) ? 'thunder' : hasGale(char) ? 'redstorm' : hasBulwark(char) ? 'indigo' : null, x: body.x + s.dir * (s.around ? 0 : 10), y: cy - 2, bx: body.x, by: body.y, move: s.move, at: s.at, moveDur: s.dur, hit: s.hit, fin: s.finisher, dir: s.dir, r: s.around ? s.reach * 0.8 : s.reach * 0.52, start: s.arc[0], sweep: s.arc[1], thick: s.thick ?? 7, big: s.big, flat: s.around, color: TINTS[s.school]?.[s.big ? 1 : 0] ?? (s.big ? HEAVY : BLADE), element: s.key.startsWith('basic') ? weaponElement(char) : null, t: 0, dur: s.big ? 0.32 : 0.24 });
   }
 
   if (s.crack) {
@@ -1943,8 +1897,6 @@ function land(world, s) {
     if (roll?.crit) crits++;
     // (`mob`: a mark that rides on the monster it hit, knocked back or thrown up, never left behind.)
     if (s.fx) world.fx.push({ kind: s.fx, school: s.school, x: m.x, y: m.y, h: m.def.h, mob: m, dir: s.dir, t: -i * 0.03, dur: 0.6, seed: Math.random() });
-    // Each path's own spark on every blow that lands: shards of rage, or a burst of holy light.
-    if (!miss && (hasRage(char) || hasFaith(char))) world.fx.push({ kind: hasRage(char) ? 'ragehit' : 'holyhit', school: hasRage(char) ? 'rage' : 'holy', x: m.x, y: m.y - (m.air ?? 0), h: m.def.h, big: s.big, dir: s.dir, t: 0, dur: s.big ? 0.42 : 0.32, seed: Math.random() });
   });
   // A tank's taunting blow: everything it hits turns on you (in a dungeon, sticking for a while).
   if (s.provoke && targets.length) {
@@ -1954,20 +1906,9 @@ function land(world, s) {
       m.dir = Math.sign(body.x - m.x) || m.dir;
     }
   }
-  // Procs go off from the swing itself, hit or miss (Whirlwind's crowd rule needs a hit, though);
-  // Blood Frenzy from a critical hit.
-  if (s.key.startsWith('basic')) bladeProcs(world, s, targets.length);
   if (s.key.startsWith('basic') && !s.phantom && hasGale(char)) galeEcho(world, s);
   // A flash-step finisher (and every finisher at Lightspeed): he blinks through to the far side.
   if (!s.phantom && hasGale(char) && (s.blink || (lightspeed(world) && s.finisher && s.key.startsWith('basic')))) blinkThrough(world, s, s.blink || 160);
-  if (s.key.startsWith('basic') && !s.phantom && inForm(world)) {
-    formEcho(world, s);
-    // Too much power for the blow to hold: it bursts where the swing ends (just for show).
-    world.fx.push({ kind: 'formburst', school: pathSchool(char), x: body.x + s.dir * s.reach * 0.7, y: body.y - body.h * 0.5, dir: s.dir, t: 0, dur: 0.4, seed: Math.random() });
-    world.juice.push({ type: 'shake', mag: 1.2, dur: 0.12 });
-  }
-  if (crits && !s.phantom) frenzyOnCrit(world);
-  if (targets.length) addRage(world, s.rage ?? (s.key.startsWith('basic') ? 3 : 5));
   // Valor builds faster the more monsters a blow catches at once (half again for each extra one).
   // A healing blow mends you and the party around you.
   // (A finisher's heal, built to build nothing (`gauge: 0`), doesn't refill the gauge it spent.)
@@ -1979,7 +1920,6 @@ function land(world, s) {
   // (Thunderhead: a little from his blows, more from holding them on him.)
   if (targets.length && !s.phantom) addBulwark(world, (s.gauge ?? 2) + (s.provoke ? 6 : 0));
   if (targets.length && !s.phantom && s.key !== 'procecho') addGale(world, (s.gauge ?? (s.key.startsWith('basic') ? 5 : 4)) * (1 + 0.3 * (targets.length - 1)));
-  if (targets.length) addFaith(world, s.faith ?? (s.key.startsWith('basic') ? 2 : 4));
   if (targets.length && !s.phantom) addTide(world, (s.gauge ?? (s.key.startsWith('basic') ? 3 : 4)) * (1 + 0.3 * (targets.length - 1)));
   if (targets.length && !s.phantom) addMoondust(world, (s.gauge ?? (s.key.startsWith('basic') ? 3 : 4)) * (1 + 0.3 * (targets.length - 1)));
   if (targets.length && !s.phantom) addUmbra(world, (s.gauge ?? (s.key.startsWith('basic') ? 3 : 4)) * (1 + 0.3 * (targets.length - 1) + sly / targets.length));
@@ -2035,60 +1975,6 @@ function land(world, s) {
 const procStrike = (world, s, key, delay, fields) => ({
   at: s.at, due: world.now + delay, n: 0, of: 1, dir: s.dir, scale: 100, key, move: s.move, dur: s.dur, finisher: false, quiet: true, keepFacing: true, ...fields,
 });
-
-// Aegis Smite's pillar: light crashes down just ahead, on everything under it, and stuns.
-function smiteStrikes(world, s, p) {
-  world.strikes.push(procStrike(world, s, 'procaegissmite', 0.14, {
-    pct: p.pct, reach: 92, h: 110, targets: p.targets, knock: 60, stun: p.stun, fx: 'pillar', burst: 'aegis', burstAt: 0.75, school: 'holy', stop: 0.05, shake: 1,
-  }));
-}
-
-// Ravage's cleaves: two savage chops back and forth that make them bleed.
-function ravageStrikes(world, s, p) {
-  const chop = (delay, arc, knock) => procStrike(world, s, 'procravage', delay, { pct: p.pct, reach: 82, h: 66, targets: p.targets, knock, arc, thick: 12, bleed: p.bleed, school: 'rage', rage: 4 });
-  world.strikes.push(chop(0.1, [-150, 230], 40), chop(0.24, [110, -240], 90));
-}
-
-// Judgment (Paladin, at full Faith): holy swords rain down ahead, and their light mends you and
-// the party around you.
-function judgmentRain(world, s, p) {
-  world.strikes.push(procStrike(world, s, 'procjudgment', 0.1, {
-    pct: p.pct, rain: p.swords, variant: 'sword', rainFrom: 10, rainW: 240, span: 0.55, targets: p.swords, knock: 40, stun: 0.3, school: 'holy',
-  }));
-  healAround(world, world.body.x, world.body.y, p.heal, 260);
-}
-
-// Sacred Bulwark (Paladin): the holy shockwave that answers a blocked hit, stunning all around.
-export function bulwarkWave(world, p) {
-  const s = { at: 0, dir: world.body.facing, move: null, dur: 0 };
-  world.strikes.push(procStrike(world, s, 'procsacredbulwark', 0.08, {
-    pct: p.pct, reach: 110, h: 90, around: true, targets: p.targets, knock: 160, stun: p.stun, burst: 'consecrate', burstAt: 0, big: true, stop: 0.06, shake: 3, school: 'holy',
-  }));
-}
-
-// A form's echo: each swing strikes again a beat later, lighter, and knocks nothing back (in Demon
-// Form his blood-red shadow plays the swing; render/scene.js).
-function formEcho(world, s) {
-  const p = procOf(world.char, formSkill(world.char));
-  if (!p) return;
-  world.strikes.push({ ...s, due: world.now + 0.13, key: 'procform', fx: undefined, provoke: undefined, scale: (s.scale * p.echo) / 100, keepFacing: true, quiet: true, knock: 0, launch: 0, pull: 0, hop: 0, crack: false, burst: undefined, big: false, stop: 0.02, shake: 0, rage: 0, faith: 0, gauge: 0, finisher: false, school: pathSchool(world.char), arc: undefined, pierce: false });
-  if (!(world.formSwing && world.now < world.formSwing.until)) world.formSwing = { kind: s.move, since: world.now + 0.13 - s.at * s.dur, dur: s.dur, until: world.now + 0.13 + (1 - s.at) * s.dur };
-}
-
-
-
-// After a basic swing lands (on `count` monsters, maybe none). `rng` for tests.
-function bladeProcs(world, s, count, rng = Math.random) {
-  const { char } = world;
-  for (const [id, strikes] of [['aegissmite', smiteStrikes], ['ravage', ravageStrikes]]) {
-    const p = procOf(char, id);
-    if (p && rng() < p.chance) strikes(world, s, p);
-  }
-  // Only the ground combo's own finisher flows on (not a dive, a slam, or a dash).
-  if (!s.finisher || !/^basic\d$/.test(s.key)) return;
-  const judgment = procOf(char, 'judgment');
-  if (judgment && (world.faith ?? 0) >= FAITH_MAX) judgmentRain(world, s, judgment);
-}
 
 // A proc's own move, a beat after the blow that set it off (on the ground, and still standing).
 function playQueued(world) {
@@ -2292,15 +2178,11 @@ export function commandsOf(char, weaponType) {
   return { up: own?.up ?? LAUNCHER, air: own?.air ?? AIR, dash };
 }
 
-// The procs a bot's basic swing or shot sets off, the same ones yours do (Blade Rush, Aegis Smite,
-// Ravage, Ribbon Lash, Gust Line, Whirlwind; Blast and Snare Arrow and the rest): `s` is the
-// swing's (or shot's) strike, `count` how many it caught. Returns { strikes } (extra blows, `due`
-// seconds after the swing's strike), { step } (a move that flows on, like the Whirlwind), or
-// { shot } (the shot as it flies, maybe a Blast Arrow).
-export function botProcs(char, weaponType, s, finisher, count, rng = Math.random) {
-  const world = { now: 0, strikes: [], char, stats: { weaponType }, faith: 0, body: { x: 0, facing: 1 } };
+// The procs a bot's basic swing or shot sets off: a shot flies as it is (`{ shot }`); a swing sets
+// off none of its own now (the Warrior paths' old procs went with the Paladin and the Berserker),
+// so it brings no extra blows (`{ strikes: [] }`) and no move that flows on (`step: null`).
+export function botProcs(char, weaponType, s, finisher) {
   const key = finisher ? 'basic2' : 'basic0';
   if (s.shot) return { shot: { ...s, key, finisher } };
-  bladeProcs(world, { ...s, dir: 1, scale: 100, key, finisher }, count, rng);
-  return { strikes: world.strikes, step: world.queuedStep?.step ?? null };
+  return { strikes: [], step: null };
 }

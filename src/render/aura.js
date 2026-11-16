@@ -85,16 +85,6 @@ const sparkle = (color) => (ctx, x, y, r) => {
 
 // Each job: its glow color and what it does on each layer.
 const JOBS = {
-  // Paladin: a few diamonds of light drifting up round her, faintly.
-  paladin: {
-    back: () => {},
-    front: (ctx, x, y, t, s, k) => fxSprite(ctx, 'celmotes', x, y, { t: t * 0.6, scale: s * 0.5, alpha: k * 0.5 }),
-  },
-  // Berserker: a few embers drifting up round him, faintly.
-  berserker: {
-    back: (ctx, x, y, t, s, k) => fxSprite(ctx, 'celembers', x, y, { t: t * 0.5, scale: s * 0.45, alpha: k * 0.45 }),
-    front: () => {},
-  },
   // The Game Master: a faint ring and a few stars in every color.
   gamemaster: {
     back: (ctx, x, y, t, s, k) => {
@@ -127,51 +117,6 @@ export function drawJobAura(ctx, job, layer, x, y, time, scale, k) {
 // glow, then a turning ring of light diamonds, then a halo and slow rays behind; full (Sanctified)
 // adds wings of light.
 
-
-// Rage, in Tengu's own effect art (fx-sprites.js), demonic and meant to frighten, in three stages:
-// as it builds, black smoke curls up round his feet and embers climb; from halfway, a flame
-// aura burns up round his whole body, behind him and see-through so he shows inside it (the way a
-// Dragon Ball fighter powers up), never over him; full (Berserk), the
-// ground splits open in cracks of ember light round him, and a jagged shockwave rips out with every heartbeat
-// (the screen's edges thump in time; ui/hud.js).
-function rageAura(ctx, x, y, t, s, k, layer) {
-  const fire = Math.min(1, (k - 0.5) * 2.5);
-  // The flame aura flickers a little as it burns.
-  const flicker = 0.9 + 0.1 * Math.sin(t * 17) * Math.sin(t * 7.3);
-  if (layer === 'back') {
-    if (k >= 1) {
-      fxSprite(ctx, 'celragecracks', x, y, { t, scale: s * 0.9, sy: 0.6, alpha: 0.95 });
-    }
-    if (k > 0.1) fxSprite(ctx, 'celembers', x, y, { t, scale: s * (0.4 + 0.3 * k), alpha: Math.min(1, (k - 0.1) * 2) });
-    if (k >= 1 && heartbeat(t) < 1) fxSprite(ctx, 'celshockred', x, y, { p: heartbeat(t), scale: s * 0.9, sy: 0.32 });
-    if (k > 0.5) fxSprite(ctx, 'celragefire', x, y + 4 * s, { t, scale: s * (0.8 + 0.55 * k), alpha: fire * 0.62 * flicker });
-    return;
-  }
-  // (No lick of flame over him any more, the all-class pass: even faint, it burned across his
-  // face. The fire burns behind him only.)
-}
-
-// Where a heart's beat is (0-1 through each thump), lub-dub about 70 beats a minute: two quick
-// pulses close together, then a rest. Shared with the screen's Berserk edges (ui/hud.js).
-export function heartbeat(t) {
-  const c = t % 0.86;
-  return c < 0.18 ? c / 0.18 : c < 0.34 ? (c - 0.18) / 0.16 : 1;
-}
-
-// Faith: a golden ring at her feet, diamonds of light rising round her as Faith builds, and full
-// (Sanctified), the golden magic circle under her and a pillar of light rising through her again
-// and again.
-function faithAura(ctx, x, y, t, s, k, layer) {
-  if (layer === 'back') {
-    if (k > 0.25) fxSprite(ctx, 'celringholy', x, y, { frame: 2, scale: s * (0.35 + 0.25 * k), sy: 0.32, alpha: Math.min(1, (k - 0.25) * 2) });
-    if (k >= 1) {
-      fxSprite(ctx, 'celcircle', x, y, { frame: 0, scale: s * 0.5, sy: 0.3, alpha: 0.85 });
-      lightPillar(ctx, 'celpillarholy', x, y, (t % 1.1) / 1.1, 70 * s);
-    }
-    return;
-  }
-  if (k > 0.4) fxSprite(ctx, 'celmotes', x, y, { t, scale: s * 0.6, alpha: Math.min(1, (k - 0.4) * 2.5) });
-}
 
 // Tide (the Tide Mage): a whirlpool turns flat round her feet as it builds, wider and faster the
 // fuller it is; full (High Tide), it runs at full size and bubbles rise round her.
@@ -355,7 +300,7 @@ function voltAura(ctx, x, y, t, s, k, layer) {
 }
 
 // Draws a combat aura: `kind` a job's gauge (see COMBAT), `k` how full (0-1).
-const COMBAT = { volt: voltAura, gale: galeAura, bulwark: bulwarkAura, rage: rageAura, faith: faithAura, tide: tideAura, moon: moonAura, depth: depthAura, moondust: mothAura, umbra: umbraAura, spool: spoolAura, daybreak: daybreakAura, kindling: kindlingAura, melody: melodyAura };
+const COMBAT = { volt: voltAura, gale: galeAura, bulwark: bulwarkAura, tide: tideAura, moon: moonAura, depth: depthAura, moondust: mothAura, umbra: umbraAura, spool: spoolAura, daybreak: daybreakAura, kindling: kindlingAura, melody: melodyAura };
 export function drawCombatAura(ctx, kind, layer, x, y, time, scale, k, dir = 1) {
   if (k <= 0.02 || !COMBAT[kind]) return;
   ctx.save();

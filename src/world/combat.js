@@ -10,7 +10,7 @@ import { mobBox } from './mobs.js';
 import { ITEMS } from '../data/items.js';
 import { MOVE_MIN, basicMove, defaultMove } from '../render/moves.js';
 import { healMembers, buffMembers, reviveTarget, reviveMember, provoke } from './dungeon.js';
-import { hasCombo, hasPathCombo, basicCombo, skillCombo, addRage, addAim, RAGE_MAX, outgoing, gaugeOf, gaugeFull, AFTER, pathSchool, schoolFor, SCHOOL_TEXT, bulwarkWave, inForm, formSkill, healAround } from './melee.js';
+import { hasCombo, hasPathCombo, basicCombo, skillCombo, addAim, outgoing, gaugeOf, gaugeFull, AFTER, pathSchool, schoolFor, SCHOOL_TEXT, healAround } from './melee.js';
 
 // The element of the player's weapon (endgame weapons only); attack effects take it on.
 export function weaponElement(char) {
@@ -98,7 +98,6 @@ export function castBlocker(world, skillId) {
   if (s.type === 'passive') return 'passive';
   if (s.weapons && !s.weapons.includes(stats.weaponType)) return 'weapon';
   if (char.mp < skillAt(skillId, lv).mp) return 'mp';
-  if (s.rageCost && (world.rage ?? 0) < s.rageCost) return 'rage';
   if (s.fullGauge && !gaugeFull(world)) return `gauge:${gaugeOf(char) ?? 'none'}`;
   if (cooldownLeft(world, skillId) > 0) return 'cooldown';
   if (s.type === 'revive' && !reviveTarget(world, hitBox(world.body, skillAt(skillId, lv).range))) return 'noone';
@@ -156,76 +155,9 @@ export function rallyOnHit(world) {
   world.fx.push({ kind: 'powerup', school: 'holy', x: world.body.x, y: world.body.y, t: 0, dur: 0.6, big: true });
 }
 
-// Before a hit lands, it may not land at all. Divine Aegis (Paladin): a shield of light flashes
-// up and blocks it, then a holy shockwave answers it (twice as often while the Aegis is up). True if
-// the hit is gone. `rng` for tests.
-export function blockOnHit(world, fromX = null, rng = Math.random) {
-  const { body } = world;
-  if (world.dead) return false;
-  const p = procOf(world.char, 'divineaegis');
-  const raised = (world.char.buffs.divineaegis?.until ?? 0) > world.now;
-  if (p && rng() < p.block * (raised ? 2 : 1)) {
-    world.invuln = Math.max(world.invuln, 0.5);
-    world.fx.push({ kind: 'aegis', school: 'holy', x: body.x, y: body.y, dir: body.facing, t: 0, dur: 0.6 });
-    world.fx.push({ kind: 'powerup', school: 'holy', x: body.x, y: body.y, t: 0, dur: 0.5 });
-    world.numbers.push({ x: body.x, y: body.y - body.h - 6, text: 'BLOCK', color: SCHOOL_TEXT.holy, t: 0 });
-    world.juice.push({ type: 'shake', mag: 1.5, dur: 0.15 });
-    bulwarkWave(world, p);
-    return true;
-  }
-  return false;
-}
-
-// A warrior path's form: his Rage (Demon Form) or her Faith (Judgment) just filled, so the form
-// takes them for a while (not while it already has).
-export function transform(world) {
-  const id = formSkill(world.char);
-  const p = procOf(world.char, id);
-  if (!p || world.dead || inForm(world)) return;
-  world.formUntil = world.now + p.duration;
-  applyBuff(world, id, p);
-  world.juice.push({ type: 'shake', mag: 3, dur: 0.3 });
-}
-
-// Bloodlust (Berserker): a blow that lands heals him for a share of its damage, more the lower his
-// HP. The healing is added up and shown about twice a second, not on every hit.
-export function drinkBlood(world, dmg) {
-  const p = procOf(world.char, 'bloodlust');
-  const { char, stats, body } = world;
-  if (!p || world.dead || dmg <= 0 || char.hp >= stats.maxHp) return 0;
-  const missing = 1 - char.hp / stats.maxHp;
-  const more = 1 + (p.low - 1) * missing;
-  // (No more than `cap` of max HP a second, so a whole crowd can't make him unkillable.)
-  if (world.now - (world.drinkSec?.at ?? -9) >= 1) world.drinkSec = { at: world.now, n: 0 };
-  const room = Math.max(0, stats.maxHp * (p.cap ?? 1) * more - world.drinkSec.n);
-  // (Whole HP only: a share of a share can come out fractional.)
-  const heal = Math.floor(Math.min(stats.maxHp - char.hp, room, Math.max(1, Math.round(dmg * p.steal * more))));
-  if (heal <= 0) return 0;
-  world.drinkSec.n += heal;
-  char.hp += heal;
-  world.drunk = (world.drunk ?? 0) + heal;
-  if (world.now - (world.drunkAt ?? -9) >= 0.5) {
-    world.numbers.push({ x: body.x, y: body.y - body.h - 6, text: `+${world.drunk}`, color: '#ff8a9a', t: 0 });
-    world.fx.push({ kind: 'healglow', x: body.x, y: body.y, t: 0, dur: 0.5 });
-    world.drunk = 0;
-    world.drunkAt = world.now;
-  }
-  return heal;
-}
-
 // Everything that answers a hit you take.
 export function hurtProcs(world, dmg) {
   rallyOnHit(world);
-}
-
-// Blood Frenzy (Berserker): a critical hit may send you into a frenzy, with a quarter of your Rage
-// at once (not while you're already in one). `rng` for tests.
-export function frenzyOnCrit(world, rng = Math.random) {
-  const p = procOf(world.char, 'bloodfrenzy');
-  if (!p || world.dead || (world.char.buffs.bloodfrenzy?.until ?? 0) > world.now || rng() >= p.chance) return;
-  applyBuff(world, 'bloodfrenzy', p);
-  addRage(world, p.rageGain);
-  world.fx.push({ kind: 'powerup', school: 'rage', x: world.body.x, y: world.body.y, t: 0, dur: 0.6, big: true });
 }
 
 // Uses a skill (or a basic attack when skillId is null). Returns { ok, reason }.
@@ -268,15 +200,7 @@ export function cast(world, skillId, rng = Math.random) {
       // (Your party may join in with theirs: a party combo, world/raids.js.)
       world.finisherCast = { at: world.now, id: skillId };
     }
-    if (params.rageGain) addRage(world, params.rageGain);
     if (params.aimGain) addAim(world, params.aimGain);
-    // Rampage spends its Rage and feeds on the rest: the more there was, the harder every blow
-    // hits (double at full).
-    if (s.rageCost) {
-      scale += Math.round((100 * world.rage) / RAGE_MAX);
-      if (world.rage >= RAGE_MAX) world.juice?.push({ type: 'shake', mag: 2, dur: 0.25 });
-      world.rage = Math.max(0, world.rage - s.rageCost);
-    }
     // Hallowed Ground's warmth mends you and the party around you.
     if (params.mend) healAround(world, body.x, body.y, params.mend, 260);
     skillCombo(world, skillId, { ...params, school: schoolFor(char, s.school), fullGauge: s.fullGauge }, scale);
@@ -345,7 +269,6 @@ export function cast(world, skillId, rng = Math.random) {
   if (type === 'buff') {
     onMove(() => {
       applyBuff(world, skillId, params);
-      if (params.rageGain) addRage(world, params.rageGain);
       if (params.aimGain) addAim(world, params.aimGain);
     });
     return { ok: true };

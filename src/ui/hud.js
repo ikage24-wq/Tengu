@@ -10,7 +10,6 @@ import { drawItemIcon, drawSkillIcon } from '../render/icons.js';
 import { COLORS, THEMES, softShadow, text, box, bar, hover, clicked, tooltip, icon, sparkle, font, roundRect, lighten, darken, paper, tape, sticker, photoCorners, roughRect, doodle } from './kit.js';
 import { calmOf, soothes, CALM, SOUR } from '../world/calm.js';
 import { drawHero } from '../render/hero.js';
-import { heartbeat } from '../render/aura.js';
 import { settings, saveSettings } from '../core/settings.js';
 import { partyMembers, PLAYSTYLES } from '../world/party.js';
 import { price } from '../world/chatter.js';
@@ -555,10 +554,6 @@ const GAUGES = {
     tip: 'Your hits build it fast, and it falls fast once you stop hitting. The fuller it runs, the faster you swing; at half, every blow leaves a red afterimage of you that strikes again. Full (Lightspeed), the afterimage hits as hard as you, every finisher blinks you through the pack, and Red Thunder is ready.' },
   volt: { color: '#3f6cf0', hot: '#fff3b0', icon: 'shield', name: 'Charge', full: 'OVERCHARGE', notch: () => null, edge: 'rgba(255,243,176,', ink: '#1c2a78',
     tip: 'Your blows build it, faster the more monsters one blow hits, and so do the hits you take; it fades once the fighting stops. The fuller it runs, the harder you hit and the less you take. Full (Overcharge), lightning jumps from every blow to the monsters near it, a static shell shocks whatever hits you, nothing knocks you back, and Thunderfall is ready.' },
-  rage: { color: '#c0102e', hot: '#ff6a3a', icon: 'flame', name: 'Rage', full: 'BERSERK', notch: () => SKILLS.rampage?.rageCost ?? 30,
-    tip: 'Your blows build it and it drains once the fighting stops. The fuller it is, the harder you hit. Rampage spends it all; full, it powers Crimson Eclipse.' },
-  faith: { color: '#e8b02a', hot: '#ffe36b', icon: 'star', name: 'Faith', full: 'SANCTIFIED', notch: () => null,
-    tip: 'Your blows and the hits you take build it; it drains once the fighting stops. The fuller it is, the less damage you take; full, it powers Grand Verdict.' },
   depth: { color: '#1f3f9a', hot: '#5fe8e0', icon: 'drop', name: 'Depth', full: 'THE ABYSS', notch: () => null, edge: 'rgba(95,232,224,', ink: '#070d33',
     tip: 'Your hits build it; it drains once the fighting stops. The deeper it runs, the harder you hit. Full (the Abyss), every hit opens a little vortex on what it struck that shreds it three times more, and Maelstrom is ready.' },
   moon: { color: '#2f9a8a', hot: '#fff3c0', icon: 'drop', name: 'Moonsong', full: 'SPRING TIDE', notch: () => null, edge: 'rgba(255,243,192,', ink: '#1d4a52',
@@ -594,12 +589,8 @@ function drawGauge(ui, world, kind, value, x = 566) {
   const beat = full ? 0.5 + 0.5 * Math.sin(world.now * 7) : 0;
   const gainAt = world[`${kind}At`] ?? -9;
   const gained = !full && world.now - gainAt < 0.09;
-  // Berserk's edges are dark blood that thumps with a heartbeat (lub-dub, render/aura.js), with
-  // the demon behind him; every other full gauge glows its colour on a slow pulse.
-  if (full && kind === 'rage') {
-    const h = heartbeat(world.now);
-    edgeTint(ctx, 'rgba(110,4,28,', 0.3 + 0.28 * (1 - h) * (h < 1 ? 1 : 0));
-  } else if (full) edgeTint(ctx, G.edge ?? 'rgba(255,214,90,', 0.22 + 0.12 * beat);
+  // A full gauge glows its colour round the screen's edges on a slow pulse.
+  if (full) edgeTint(ctx, G.edge ?? 'rgba(255,214,90,', 0.22 + 0.12 * beat);
   // (Scrapbook: a strip of paper taped down at its end, the gauge's sticker on it, the bar marked
   // off like a ruler; full, pencil sparks fizz at both ends.)
   paper(ctx, x, y, 70, 16, { fill: '#fffbf2', edge: full ? (beat > 0.5 ? G.color : G.hot) : '#8a6a9a', r: 4, seed: 13, width: full ? 1.8 : 1.4 });

@@ -1840,6 +1840,26 @@ export const JOB_SCENES = {
     { who: 'elowen', text: "The water answers you, {name}. It came up the moment you touched the staff. It usually sulks for a week first. Rude of it, really.", mood: 'happy' },
     { who: 'elowen', text: "Strike with it, and mend with it. And keep your feet dry if you can. You won't. Nobody does." },
   ],
+  tempest: [
+    { card: 'A New Path', sub: 'Tempest' },
+    { who: 'brann', text: "Ha! Look at your feet, {name}. You've not stood still since you walked in. The storm's gone red in you. That's not thunder any more, that's the bolt itself.", mood: 'happy' },
+    { who: 'brann', text: "Don't wait for them to come to you. Cut, flash through, cut again from the other side. Keep moving and keep hitting, and when it all comes to a head, let the red thunder fall. Go on, I can barely see you already." },
+  ],
+  stormwall: [
+    { card: 'A New Path', sub: 'Stormwall' },
+    { who: 'brann', text: "There. Feel how heavy the air's gone? A thunderhead's settled over you, {name}, and it isn't going anywhere. Neither are you.", mood: 'happy' },
+    { who: 'brann', text: "Plant your feet. Pull them in to you, hold them there, and let the cloud answer anything that touches your friends. A wall doesn't chase. A wall stands. Make them break on you." },
+  ],
+  tidecaller: [
+    { card: 'A New Path', sub: 'Tidecaller' },
+    { who: 'elowen', text: "Oh, look. The moon's come out for you, {name}. In the middle of the day, too. The tide only listens to the moon, you know, so now it listens to you.", mood: 'happy' },
+    { who: 'elowen', text: "Mend them, lift them, carry them on the water. When they fall, call the tide in and bring them back up. Your friends will forget you're there. That's how you know you're good at it." },
+  ],
+  maelstrom: [
+    { card: 'A New Path', sub: 'Maelstrom' },
+    { who: 'elowen', text: "Goodness. That's not the shallows answering, {name}, that's the deep. Things down there have never seen the sun. And now they're coming up because you asked.", mood: 'happy' },
+    { who: 'elowen', text: "Hold it, let it build, then let it all go at once. Pull them into the whirlpool and don't let go. And do try not to flood the village. Again. That was someone else, but still." },
+  ],
   path: [
     { card: 'A New Path', sub: '{job}' },
     { who: null, text: "Something settles inside you, like a key turning in a lock you never knew you had. Also, your numbers went up." },

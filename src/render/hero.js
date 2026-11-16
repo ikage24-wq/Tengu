@@ -2687,11 +2687,17 @@ const UPRIGHT_BEHIND = new Set(['sword', 'axe', 'spear']);
 // head, so it passes behind the head instead of across the face; a move can say so itself (`back`).
 export function weaponBehind(type, angle, mv = null, toolKind = null) {
   const tipped = ((((angle % 360) + 540) % 360) - 180);
+  // In a move a spear or staff stays in front of her, over her head too: behind her big head only
+  // its tip showed, poking out of her hair as if growing out of it (the player prefers it in front,
+  // like a bow). Slung on her back out of a move it still goes behind her.
+  if (!toolKind && mv?.weapon != null && FRONT_IN_MOVES.has(type) && !mv.armBack && mv.back == null) return false;
   const overTop = !toolKind && mv?.weapon != null && UPRIGHT_BEHIND.has(type) && tipped >= -22 && tipped < 35;
   // (A crossbow slung on her back, nose up behind her, out of a move.)
   const slung = !toolKind && !mv && type === 'crossbow' && tipped < -40 && tipped > -175;
   return Boolean(mv?.armBack || (mv?.back ?? (overTop || slung || ((toolKind ? true : BACKSLUNG.has(type)) && tipped < -22 && tipped > -165))));
 }
+// Long weapons drawn in front of her all through a move (see `weaponBehind`).
+const FRONT_IN_MOVES = new Set(['spear', 'staff']);
 // How close a weapon may come to the floor under her (art px).
 const FLOOR_PAD = 1;
 // The weapon's angle raised toward level (and on toward upright) by as little as it takes for all of it to stay

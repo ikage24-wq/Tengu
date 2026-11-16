@@ -25,8 +25,8 @@ import { avoid, mobHitChance, damageTaken } from '../core/formulas.js';
 import { createBody, stepBody, knockBack, groundAt } from './physics.js';
 import { createSpawner, tickSpawner, updateMob, hitMob, mobBox, MOB_ATTACK_GAP } from './mobs.js';
 import { rollLoot, spawnDrops, updateDrops, dropInReach, dropFromHero } from './drops.js';
-import { cast, castBlocker, weaponElement, hurtProcs, blockOnHit, drinkBlood, tickLater } from './combat.js';
-import { tickMelee, faithGuard, addAim, hasRage, hasFaith, hasVolt, overcharged, eyeOfStorm, hasBulwark, barrageRelease, BARRAGE_WALK, THIEF_FEET } from './melee.js';
+import { cast, castBlocker, weaponElement, hurtProcs, tickLater } from './combat.js';
+import { tickMelee, gaugeGuard, addAim, hasVolt, overcharged, eyeOfStorm, hasBulwark, barrageRelease, BARRAGE_WALK, THIEF_FEET } from './melee.js';
 import { healAround, hasTide, hasDepth, hasMoon, springDrop, hasGale, hasMoth, hasUmbra, addMark, flutterJump, veilDodge, veilMissed, blinded, lured, addThread, hasSpool, daybreakHurt, sunLine, stickSmoulder, kindleBite, chorusMend } from './melee.js';
 import { JOBS, nextJobs } from '../data/jobs.js';
 import { celebrateLevels } from './levelup.js';
@@ -724,10 +724,10 @@ export function setDropFor(char, bossId, chance, rng = Math.random) {
 }
 
 export function hurtPlayer(world, rawAtk, fromX) {
-  if (world.god || blockOnHit(world, fromX)) return;
+  if (world.god) return;
   const char = world.char;
   const s = world.stats;
-  let dmg = absorb(world, world.body, char.buffs, Math.round(damageTaken(rawAtk, s.wdef) * (s.guard ?? 1) * (1 - cutOf(char.buffs, world.now)) * (1 - faithGuard(world, fromX))));
+  let dmg = absorb(world, world.body, char.buffs, Math.round(damageTaken(rawAtk, s.wdef) * (s.guard ?? 1) * (1 - cutOf(char.buffs, world.now)) * (1 - gaugeGuard(world, fromX))));
   if (s.manaShield > 0) {
     const toMp = Math.min(char.mp, Math.floor(dmg * s.manaShield));
     char.mp -= toMp;
@@ -1014,9 +1014,8 @@ export function updateWorld(world, dt, input) {
       if (h.thread) addThread(world, m, h.thread);
       // (The Phoenix's Smoulder: a bolt stuck in it, bursting a moment later.)
       if (h.smoulder) stickSmoulder(world, m, h);
-      drinkBlood(world, h.damage);
     }
-    if (!hasTide(world.char) && !hasDepth(world.char) && !hasMoon(world.char) && !hasVolt(world.char) && !hasGale(world.char) && !hasBulwark(world.char) && !hasMoth(world.char) && !hasUmbra(world.char) && !hasSpool(world.char) && !sunLine(world.char)) world.fx.push({ kind: 'spark', via: h.via, weapon: world.stats.weaponType, path: hasRage(world.char) ? 'rage' : hasFaith(world.char) ? 'holy' : hasVolt(world.char) ? 'thunder' : null, dir: world.body.facing, x: m.x, y: m.y - (m.air ?? 0) - m.def.h / 2, t: 0, dur: h.big ? 0.32 : 0.25, crit: h.crit || h.big, seed: Math.random() });
+    if (!hasTide(world.char) && !hasDepth(world.char) && !hasMoon(world.char) && !hasVolt(world.char) && !hasGale(world.char) && !hasBulwark(world.char) && !hasMoth(world.char) && !hasUmbra(world.char) && !hasSpool(world.char) && !sunLine(world.char)) world.fx.push({ kind: 'spark', via: h.via, weapon: world.stats.weaponType, path: hasVolt(world.char) ? 'thunder' : null, dir: world.body.facing, x: m.x, y: m.y - (m.air ?? 0) - m.def.h / 2, t: 0, dur: h.big ? 0.32 : 0.25, crit: h.crit || h.big, seed: Math.random() });
     world.juice.push({ type: 'hit', x: m.x, y: m.y - m.def.h / 2, crit: h.crit, big: h.big, party: Boolean(h.party), element: h.party ? null : h.element ?? weaponElement(char), dir: Math.sign(m.x - h.fromX) || 1, via: h.via, school: h.school, weapon: h.weapon, mob: m.def.id, boss: Boolean(m.def.boss) });
     // Endgame weapons add an elemental impact on every hit.
     const element = h.party ? null : h.element ?? weaponElement(char);

@@ -13708,6 +13708,20 @@
   E.sbgolden = songlit(E.sfgolden);
   E.sbsun = songlit(E.sfsun);
 
+  // The archers' effects drawn as smoothly as the Tide Mage's (24-40 drawings, docs/design/
+  // making-a-job.md): every drawing above is a moment `i` of its own, so the same effect is drawn
+  // again at in-between moments, more of them over the same time (a loop 24 to its turn, a one-off
+  // at least 30). The fps rises to match, so nothing plays faster or slower.
+  const denser = (e, n) => ({
+    ...e, n, fps: (e.fps * n) / e.n,
+    draw: (ctx, j) => e.draw(ctx, e.loop ? (j * e.n) / n : (j * (e.n - 1)) / (n - 1)),
+  });
+  for (const [k, e] of Object.entries(E)) {
+    if (!/^(sf|ph|sb)/.test(k) || !e?.draw || !e.n) continue;
+    const want = e.loop ? 24 : 30;
+    if (e.n < want) E[k] = denser(e, want);
+  }
+
   window.FXART = E;
   window.FXHD = { render, RAW };
 })();

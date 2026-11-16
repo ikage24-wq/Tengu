@@ -292,20 +292,6 @@ const R = {
     ],
   },
   rageburst: { db: -10, max: 2, duck: [-4, 300], layers: [{ rec: 'darkFire', len: 1000 }, { rec: 'punchHeavy', rate: 0.8, db: -3 }] },
-  berserk: {
-    db: -10, max: 1, duck: [-5, 900], layers: [
-      { rec: 'darkWave', len: 1800 },
-      { seq: 'C2:60 C2:60 C2:60 C2:60 C2:60 C2:600', inst: 'timpani', db: -4 },
-      { seq: 'r:300 C3+G3+Db4:600', inst: 'brass_section', db: -6 },
-    ],
-  },
-  sanctified: {
-    db: -10, max: 1, room: true, duck: [-6, 1200], layers: [
-      { seq: 'C5:70 E5:70 G5:70 C6:70 E6:70 G6:700', inst: 'orchestral_harp' },
-      { seq: 'r:300 C5+E5+G5+C6:900', inst: 'choir_aahs', attack: 0.1, db: -4 },
-      { seq: 'r:400 C7:800', inst: 'glockenspiel', db: -8 },
-    ],
-  },
   // Team moves (world/teamwork.js): a catch clinks two notes together (a high five), a revive
   // rises on warm strings, a Group Finisher lands on the whole band.
   teamcatch: { db: -12, vary: 4, max: 2, gap: 60, layers: [{ seq: 'G5+B5:40 D6+G6:160', synth: 'pluck', cut: 6000, ring: 0.2, tail: 200 }, sparkle('r:30 G7:60 D8:120', { db: -8 })] },

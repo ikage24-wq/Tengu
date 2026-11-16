@@ -10,7 +10,7 @@ import { openLink, newCode } from './link.js';
 import { spawnMob, hitMob } from '../world/mobs.js';
 import { MOBS } from '../data/mobs.js';
 import { wornGear } from '../core/character.js';
-import { gaugeOf, inForm } from '../world/melee.js';
+import { gaugeOf } from '../world/melee.js';
 import { killMob, hurtPlayer } from '../world/world.js';
 import { playerPose } from '../render/scene.js';
 import { createAnim } from '../render/animator.js';
@@ -392,7 +392,7 @@ function sendMe(world) {
     x: round(b.x), y: round(b.y), vx: round(b.vx), vy: round(b.vy), g: b.onGround, r: Boolean(b.rope), f: b.facing,
     p, hurt: world.invuln > 0.6 && !world.pose, dead: world.dead,
     hp: c.hp, mhp: world.stats.maxHp,
-    gauge, gk: gauge ? (inForm(world) ? 1 : (world[gauge] ?? 0) / 100) : 0, form: inForm(world),
+    gauge, gk: gauge ? (world[gauge] ?? 0) / 100 : 0,
     buffs, emote: world.emote?.face ?? null,
     // Riding (world/mount.js): which mount, and its trick right now, so friends see it move.
     // Whose island you're on (net/visit.js), so only the others on that same island see you.

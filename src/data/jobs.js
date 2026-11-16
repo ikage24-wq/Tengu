@@ -5,11 +5,12 @@
 // Novices. The new Thief, the Moon Moth, came the same day.)
 //
 // Balance (tools/tune.mjs finds these from the real game, tools/balance.mjs measures it): `power`
-// scales everything a job hits for, `spread` its hits on monsters past the one it's on. Damage
-// jobs come out level overall, each with its own lean (one target or crowds, up to 8% either
-// way); tanks deal 75% of that and healers 65%, on one target and on a crowd alike, so neither
-// ever outdoes a damage job: they make up for it in toughness and support. A tank's `guard` is the
-// share of every hit it actually takes.
+// scales everything a job hits for, `spread` its hits on monsters past the one it's on. Against
+// the damage jobs' average: melee damage jobs 108% (first jobs 106%), ranged ones 96% (first jobs
+// 94%), each with its own lean (one target or crowds, up to 5% either way), and tanks and healers
+// 88%, on one target and on a crowd alike, so neither ever outdoes a damage job: they make up for
+// it in toughness and support (the player's rule, 2026-11-07; tools/tune.mjs). A tank's `guard` is
+// the share of every hit it actually takes.
 
 export const FAMILY_STATS = {
   beginner: { primary: 'str', secondary: 'dex' },
@@ -35,7 +36,7 @@ export const JOBS = {
   // The Thunderguard (the Warrior remade, 2026-11-09; docs/design/thunderguard.md): the job's id
   // stays `warrior` (old saves, the trial, the tank's seat).
   warrior: {
-    id: 'warrior', guard: 0.85, power: 1.38, spread: 0.64, name: 'Thunderguard', family: 'warrior', tier: 1, parent: 'novice', level: FIRST_JOB_LEVEL,
+    id: 'warrior', guard: 0.85, power: 1.38, spread: 0.95, name: 'Thunderguard', family: 'warrior', tier: 1, parent: 'novice', level: FIRST_JOB_LEVEL,
     hp: 28, mp: 12, advanceHp: 350, advanceMp: 150, weapons: ['sword', 'axe', 'spear'],
     blurb: 'A warrior who fights inside a storm of his own: sudden explosive strikes with sword, axe or spear, and the tank of the party. His blows and the hits he takes build Charge; full (Overcharge), lightning jumps from every blow and a static shell shocks whatever hits him. Thunder Rush, Storm Cleave, Thunderclap, Static Guard, and Thunderfall: he falls riding a giant bolt. Raises STR.',
   },
@@ -72,20 +73,20 @@ export const JOBS = {
   // The Sunfeather's support path (docs/design/sunfeather.md): her arrows carry music, songbirds
   // mend her party. Asks for Kestrel's trial first.
   songbird: {
-    id: 'songbird', power: 5.3, spread: 1.45, name: 'Songbird', family: 'archer', tier: 2, parent: 'sunfeather', level: 30, trial: 'archer_trial',
+    id: 'songbird', power: 4.79, spread: 1.64, name: 'Songbird', family: 'archer', tier: 2, parent: 'sunfeather', level: 30, trial: 'archer_trial',
     hp: 24, mp: 30, advanceHp: 300, advanceMp: 460, weapons: ['bow'],
     blurb: 'The Sunfeather who sings: the party\'s healer with a bow. Her arrows trail music and songbirds follow her; her shots and heals build Melody, and the fuller it runs the more her heals mend. Full (Chorus), every shot she lands mends the party round her. Healing Melody, Lullaby, Anthem, and Grand Chorus: the whole party mended and the fallen brought back.',
   },
   // Warrior branches. Both ask for Brann's trial first (see `trial`).
   // The Thunderguard's tank path (docs/design/stormwall.md): the storm as a fortress.
   stormwall: {
-    id: 'stormwall', guard: 0.8, power: 4.29, spread: 2.22, name: 'Stormwall', family: 'warrior', tier: 2, parent: 'warrior', level: 30, trial: 'warrior_trial',
+    id: 'stormwall', guard: 0.8, power: 4.87, spread: 1.85, name: 'Stormwall', family: 'warrior', tier: 2, parent: 'warrior', level: 30, trial: 'warrior_trial',
     hp: 34, mp: 14, advanceHp: 520, advanceMp: 200, weapons: ['sword', 'axe', 'spear'],
     blurb: 'The Thunderguard who became the storm\'s fortress: the tank. Huge, slow and unmovable, he pulls monsters in and holds them while a thunderhead gathers over him. The hits he takes build Thunderhead; the fuller it runs the less he takes, and from half its cloud answers anything that hits him or his party with a bolt. Lightning Cage, Storm Wall, Magnetize, Overcast, and Fortress: a thunderhead over the whole fight.',
   },
   // The Thunderguard's damage path (docs/design/tempest.md): red lightning, speed itself.
   tempest: {
-    id: 'tempest', power: 2.45, spread: 2.01, name: 'Tempest', family: 'warrior', tier: 2, parent: 'warrior', level: 30, trial: 'warrior_trial',
+    id: 'tempest', power: 2.76, spread: 2.01, name: 'Tempest', family: 'warrior', tier: 2, parent: 'warrior', level: 30, trial: 'warrior_trial',
     hp: 26, mp: 14, advanceHp: 400, advanceMp: 200, weapons: ['sword', 'axe', 'spear'],
     blurb: 'The Thunderguard who let the storm loose: speed itself, red lightning. Short wind-ups and flash-steps; his hits build Velocity, and the fuller it runs the faster he swings, red afterimages of him striking again behind every blow. Full (Lightspeed), every finisher blinks him through the pack. Flash Step, Thousand Cuts, Crimson Arc, and Red Thunder: he blinks from monster to monster across the screen. Deals damage in a group.',
   },
@@ -108,7 +109,7 @@ export const JOBS = {
   // The Tide Mage's healer path (docs/design/tidecaller.md), the party's healer. Asks for Elowen's
   // trial first, like the Maelstrom.
   tidecaller: {
-    id: 'tidecaller', power: 6.54, spread: 2.13, name: 'Tidecaller', family: 'mage', tier: 2, parent: 'tidemage', level: 30, trial: 'mage_trial',
+    id: 'tidecaller', power: 5.89, spread: 2.02, name: 'Tidecaller', family: 'mage', tier: 2, parent: 'tidemage', level: 30, trial: 'mage_trial',
     hp: 24, mp: 34, advanceHp: 300, advanceMp: 520, weapons: ['staff'],
     blurb: 'The Tide Mage the moon answers: the party\'s healer. Pearls, crescents and pillars of moonlight; her hits and heals build Moonsong, and the fuller it runs the stronger she heals. Full (Spring Tide), her heals leave bubbles on everyone and her attacks rain healing on whoever is hurt most. Healing Rain, Spring Surge, Tide\'s Return, and Moon Tide: the tide floods the screen and brings everyone back.',
   },

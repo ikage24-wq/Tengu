@@ -114,12 +114,10 @@ export const RECORDED = {
   aegis: { trim: 3.4 },
   consecrate: { trim: 4.8, music: true },
   verdict: { trim: -2.4, music: true },
-  sanctified: { trim: -5.1, music: true },
   // Berserker.
   bloodmoon: { trim: -2.8, music: true },
   eclipse: { trim: 2.5 },
   rageburst: { trim: -1.3 },
-  berserk: { trim: -0.6, music: true },
   // The title show's bell bonk.
   bellbonk: { trim: 1.9, music: true },
   // Locking on, and the steel cast.

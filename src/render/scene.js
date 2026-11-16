@@ -10,8 +10,8 @@ import { usingSkin } from '../data/cosmetics.js';
 import { drawSkinTag } from './cosmetics.js';
 import { awayNow } from '../world/nightmarket.js';
 import { wornGear } from '../core/character.js';
-import { drawCombatAura, heartbeat } from './aura.js';
-import { gaugeOf, inForm, hasFaith, hasGale } from '../world/melee.js';
+import { drawCombatAura } from './aura.js';
+import { gaugeOf, hasGale } from '../world/melee.js';
 import { moveAt, MOVES, streamHover } from './moves.js';
 import { wheelShape, wheelWisps } from '../world/foxwheel.js';
 import { settings } from '../core/settings.js';
@@ -638,9 +638,6 @@ function drawWorldLayers(ctx, world, cam, time, b, zoom = 1) {
   drawBuffClones(ctx, buffs, look, gear, hx, hy, heroState, time);
   // A dash with a dagger or gloves leaves violet afterimages along the way, fading fast.
   drawAfterimages(ctx, world, look, gear, cam, heroState, time);
-  // A warrior path's form: a glow round the hero that breathes with the heartbeat, and in Demon Form
-  // a blood-red shadow of him just behind him that strikes again a beat after each swing.
-  if (!world.dead && inForm(world)) drawForm(ctx, world, look, gear, hx, hy, heroState, time);
   // The Tempest's red afterimage: a copy of him a step behind, playing the swing again a beat
   // after he does, fading as it ends.
   if (!world.dead && hasGale(world.char)) drawEcho(ctx, world, look, gear, hx, hy, heroState);
@@ -660,11 +657,11 @@ function drawWorldLayers(ctx, world, cam, time, b, zoom = 1) {
     // Momentum, a Berserker's Rage, a Paladin's Faith, a Beastmaster's Bond (each 0-100).
     const gauge = gaugeOf(world.char);
     // In a form the aura stays at its fullest.
-    const power = gauge ? [gauge, inForm(world) ? 1 : (world[gauge] ?? 0) / 100] : null;
+    const power = gauge ? [gauge, (world[gauge] ?? 0) / 100] : null;
     // (Floating in Endless Fox-Fire's Ascension, the aura rises with her.)
     const ay = hy - (p.pose ? moveAt(p.pose, p.progress ?? 0, p.dur)?.lift ?? 0 : 0) - (p.flow && p.flow.float !== false ? streamHover(p.flow.heat, p.flow.t0 + (p.progress ?? 0) * (p.dur ?? 0)) : 0);
     // A form draws the whole aura larger.
-    const auraScale = inForm(world) ? 1.4 : 1;
+    const auraScale = 1;
     if (power) drawCombatAura(ctx, power[0], 'back', hx, ay, time, auraScale, power[1], b.facing);
     drawFoxWheel(ctx, world, hx, hy, time, 'back');
     // On a date: your sweetheart beside you, walking (or on a Puff Bun on a ride) (world/dates.js).
@@ -933,26 +930,6 @@ function stampCopy(ctx, x, y, alpha, img) {
 
 
 // The two forms' looks: the glow round the hero, and the tint of the shadow (Demon Form only).
-const FORM_LOOKS = {
-  rage: { glow: 'celdemonglow', shadow: '#e8344e' },
-  holy: { glow: 'celholyglow', shadow: null },
-};
-
-function drawForm(ctx, world, look, gear, x, y, state, time) {
-  const sw = world.formSwing;
-  const form = FORM_LOOKS[hasFaith(world.char) ? 'holy' : 'rage'];
-  const live = sw && world.now >= sw.since && world.now < sw.until;
-  const pose = live ? { pose: sw.kind, progress: (world.now - sw.since) / sw.dur, dur: sw.dur, from: null, blend: 1 } : {};
-  const beat = heartbeat(time);
-  // A glow round them that breathes (a slow swell) and blinks bright on each heartbeat.
-  const breath = 0.5 + 0.5 * Math.sin(time * 2.4);
-  const blink = beat < 1 ? 1 - beat : 0;
-  fxSprite(ctx, form.glow, x, y + 10, { t: time, scale: 1.6 + 0.25 * breath + 0.15 * blink, alpha: Math.min(1, 0.45 + 0.3 * breath + 0.4 * blink) });
-  if (!form.shadow) return;
-  const sx = x - state.facing * (live ? 8 : 12);
-  drawTinted(ctx, sx, y, form.shadow, 0.85, (c) => drawHero(c, look, gear, sx, y, { ...state, ...pose, job: null, alpha: state.alpha * (0.6 + 0.2 * beat) }, live ? null : feel.anim));
-}
-
 function drawEcho(ctx, world, look, gear, x, y, state) {
   const sw = world.echoSwing;
   if (!sw || world.now < sw.since || world.now >= sw.until) return;

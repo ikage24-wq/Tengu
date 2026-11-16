@@ -341,12 +341,10 @@ S['pillar'] = [[('chord', peak('chord', 0.25, 1.48), 1.1, 0, 0), ('bigboom', 0.0
 S['aegis'] = [[('shield', peak('shield', 0.01, 0.54), 0.5, 0, 0), ('light', 0.0, 1.4, -4, 0), ('handbell', 0.05, 1.0, -10, 0)]]
 S['consecrate'] = [[('cinehit', 0.1, 1.4, 0, 0), ('light', 0.0, 1.2, -4, 0)]]
 S['verdict'] = [[('boomC', 0.25, 1.8, 0, 0), ('chord', peak('chord', 0.25, 1.48), 1.0, -4, 0), ('light', 0.0, 1.2, -6, 0)]]
-S['sanctified'] = [[('light', 0.0, 1.2, 0, 0), ('handbell', 0.05, 1.0, -6, 0)]]
 # Berserker.
 S['bloodmoon'] = [[('groan', 1.95, 1.4, 0, 0), ('braam', 0.3, 1.2, -4, 0)]]
 S['eclipse'] = [[('deepmetal', 1.2, 2.2, 0, 0), ('nuke', 0.0, 2.0, -6, 0)]]
 S['rageburst'] = [[('fire', 0.15, 1.0, 0, 0), ('smash', peak('smash', 0, 0.6), 0.45, -2, 0), ('lowring', peak('lowring', 0, 1), 0.6, -6, 0)]]
-S['berserk'] = [[('growl', 0.05, 1.4, 0, 0), ('deepmetal', 1.2, 1.4, -6, 0)]]
 # Star Witch, and her doll.
 S['spiritwave'] = [[('airy', 0.5, 1.2, 0, 0), ('chord', peak('chord', 0.25, 1.48), 1.0, -4, 0), ('handbell', 0.05, 1.0, -6, 0)]]
 S['blessing'] = [[('astonish', 3.0, 1.5, 0, 0), ('light', 0.0, 1.2, -4, 0)]]

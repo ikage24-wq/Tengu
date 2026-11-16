@@ -83,7 +83,8 @@ The Sunfeather who sings. Her arrows carry music; songbirds follow her and mend 
 
 Single target / pack, as a share of the damage jobs' average: Sunfeather about 99% / 102% at 20 and
 96% / 100% at 28; Phoenix about 96% / 97% at 40 and 93% / 97% at 50; Songbird about 100% / 96% at
-40 and 99% / 90% at 50, beside the Tidecaller (the other healer path, about 100% / 108%). The rain
+40 and 99% / 90% at 50 at first, then brought down to the healers' 88% with the Tidecaller
+(2026-11-16: about 89% / 91% at 40 and 87% / 85% at 50; tools/tune.mjs has the targets). The rain
 skills cap how many of their arrows one monster takes (`rainCap`), or Feather Rain melts a lone
 target.
 

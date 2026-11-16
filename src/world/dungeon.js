@@ -9,8 +9,8 @@
 //   - fallen members get back up once the fight is over; if everyone falls, the room resets and
 //     the group regroups at its entrance.
 
-import { faithGuard, pathSchool, cloudBolt, veilDodge, veilMissed, blinded, lured } from './melee.js';
-import { hurtProcs, blockOnHit } from './combat.js';
+import { gaugeGuard, pathSchool, cloudBolt, veilDodge, veilMissed, blinded, lured } from './melee.js';
+import { hurtProcs } from './combat.js';
 import { DUNGEONS, GROUP, ROLES, roleOf, PROVOKE, TANK_THREAT } from '../data/dungeons.js';
 import { JOBS } from '../data/jobs.js';
 import { ITEMS, JOB_SLOTS, GEAR_FAMILIES, jobGearId } from '../data/items.js';
@@ -700,10 +700,10 @@ export function hurtMember(world, g, raw, fromX, { knock = false, pierce = false
     }
     return dmg;
   }
-  if (world.god || blockOnHit(world, fromX)) return 0;
+  if (world.god) return 0;
   const char = world.char;
   const s = world.stats;
-  let dmg = absorb(world, body, char.buffs, Math.round((pierce ? raw : damageTaken(raw, s.wdef)) * (s.guard ?? 1) * (1 - cutOf(char.buffs, world.now)) * (1 - faithGuard(world, fromX))));
+  let dmg = absorb(world, body, char.buffs, Math.round((pierce ? raw : damageTaken(raw, s.wdef)) * (s.guard ?? 1) * (1 - cutOf(char.buffs, world.now)) * (1 - gaugeGuard(world, fromX))));
   if (s.manaShield > 0) {
     const toMp = Math.min(char.mp, Math.floor(dmg * s.manaShield));
     char.mp -= toMp;

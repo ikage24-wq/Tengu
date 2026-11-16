@@ -13,7 +13,6 @@ import { updateMusic, setFight, setMuffle } from './music.js';
 import { updateAmbience, dayPart } from './ambience.js';
 import { prepareSongs } from './bank.js';
 import { getMap } from '../data/maps.js';
-import { hasRage, hasFaith } from '../world/melee.js';
 import { SKILLS } from '../data/skills.js';
 import { isQueen } from '../world/story.js';
 import { introLen, COUNTDOWN, CREST_AHEAD, JUMP_PHASE, FALL, ROLL_BEAT } from '../world/mochi-race.js';
@@ -566,8 +565,7 @@ export function hearWorld(world, cam) {
     else if (j.type === 'swing') sfx(j.pierce ? 'thrust' : 'swing', { weight: j.big ? 1.8 : j.thick > 11 ? 1.4 : 1, school: j.school, weapon: j.weapon, lead: j.in, pan: 0 });
   }
   if (hit) {
-    const path = hit.party ? null : hasRage(char) ? 'rage' : hasFaith(char) ? 'holy' : null;
-    sfx('hit', { big: hit.big, crit: hit.crit, path, school: hit.school, via: hit.via, weapon: hit.weapon, element: hit.element, many: hits, pan: pan(hit.x), mob: hit.mob, boss: hit.boss });
+    sfx('hit', { big: hit.big, crit: hit.crit, school: hit.school, via: hit.via, weapon: hit.weapon, element: hit.element, many: hits, pan: pan(hit.x), mob: hit.mob, boss: hit.boss });
   }
   if (theirs) sfx('hit', { big: theirs.big, via: theirs.via, weapon: theirs.weapon, school: theirs.school, pan: pan(theirs.x), ally: true });
 
@@ -630,8 +628,6 @@ export function hearWorld(world, cam) {
     if ((world.volt ?? 0) >= 100 && !(m.volt >= 100)) sfx('tgovercharge');
     if ((world.gale ?? 0) >= 100 && !(m.gale >= 100)) sfx('tplightspeed');
     if ((world.bulwark ?? 0) >= 100 && !(m.bulwark >= 100)) sfx('bweye');
-    if ((world.rage ?? 0) >= 100 && !(m.rage >= 100)) sfx('berserk');
-    if ((world.faith ?? 0) >= 100 && !(m.faith >= 100)) sfx('sanctified');
     // Jumps, landings, steps, and climbing.
     // Riding, the mount's own sounds stand in for your feet (world/mount.js).
     const ride = world.riding && !world.riding.stowed ? world.riding.id : null;
@@ -678,7 +674,7 @@ export function hearWorld(world, cam) {
     [m.active, m.done] = questCounts(char);
   }
   m.fall = b.onGround ? 0 : Math.max(m.fall ?? 0, b.vy);
-  Object.assign(m, { job: char.job, level: char.level, map: world.map.id, dead: world.dead, gold: char.gold, ground: b.onGround, x: b.x, y: b.y, volt: world.volt, gale: world.gale, bulwark: world.bulwark, rage: world.rage, faith: world.faith });
+  Object.assign(m, { job: char.job, level: char.level, map: world.map.id, dead: world.dead, gold: char.gold, ground: b.onGround, x: b.x, y: b.y, volt: world.volt, gale: world.gale, bulwark: world.bulwark });
 
   // ----- The summons' voices: each one speaks up when it sets about something new -----
   hearSummons(world, m, pan);

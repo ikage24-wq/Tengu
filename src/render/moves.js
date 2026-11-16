@@ -1400,19 +1400,21 @@ export const MOVES = {
     const a = u * Math.PI * 2 * 5;
     const raise = ease(seg(p, 0.72, 0.84));
     const back = soft(seg(p, 0.9, 1));
-    const on = u > 0 && u < 1 ? 1 : 0;
+    // The spin eases in and out (`on`, 0-1) rather than switching on, so he leans into it and out
+    // of it without his body jumping on the first and last frames.
+    const on = soft(seg(p, 0.19, 0.25)) * (1 - soft(seg(p, 0.67, 0.73)));
+    const restWeapon = p < 0.72 ? lerp(-58, 104, draw) : lerp(104, 160, raise) - 30 * back;
     return {
-      weapon: (on ? 100 + 90 * Math.sin(a) : lerp(-58, 104, draw)) * (p < 0.72 ? 1 : 0) + (p >= 0.72 ? lerp(104, 160, raise) - 30 * back : 0), arm: on ? 54 + 6 * Math.cos(a) : lerp(lerp(54, 36, draw), 50, raise) - 6 * back,
-      lunge: on ? 6 : -2 * draw * (1 - raise) + 2 * raise * (1 - back), tilt: on ? 0.22 : 0.12 * draw * (1 - raise) + 0.2 * raise * (1 - back), trail: on > 0,
+      weapon: lerp(restWeapon, 100 + 90 * Math.sin(a), on), arm: lerp(lerp(lerp(54, 36, draw), 50, raise) - 6 * back, 54 + 6 * Math.cos(a), on),
+      lunge: lerp(-2 * draw * (1 - raise) + 2 * raise * (1 - back), 6, on), tilt: lerp(0.12 * draw * (1 - raise) + 0.2 * raise * (1 - back), 0.22, on), trail: on > 0.5,
       rig: (r) => {
-        r.squat = q(on ? 1.2 : 2 * draw * (1 - raise) + 2.4 * raise * (1 - back));
-        if (on) danceLegs(r, [1, [5, -0.6, 10], [-5.4, -1, -24]]);
-        else danceLegs(r, [draw * (1 - raise), [2.6, 0, 4], [-3.8, 0, -10]], [raise * (1 - back), [4.6, 0, 8], [-5, 0, -18]]);
-        r.backArm = [q(on ? -6 : -2 * raise * (1 - back)), q(on ? -3 : -1)];
-        r.hairLift = on ? 1 : 0;
-        r.cape = Math.round(on ? -6 : -4 * raise * (1 - back));
-        if (draw > 0.5 && !on && raise < 0.1) r.eyes = 'half';
-        else if (on || (raise > 0.3 && back < 0.5)) strikeFace(r);
+        r.squat = q(lerp(2 * draw * (1 - raise) + 2.4 * raise * (1 - back), 1.2, on));
+        danceLegs(r, [draw * (1 - raise), [2.6, 0, 4], [-3.8, 0, -10]], [raise * (1 - back), [4.6, 0, 8], [-5, 0, -18]], [on, [5, -0.6, 10], [-5.4, -1, -24]]);
+        r.backArm = [q(lerp(-2 * raise * (1 - back), -6, on)), q(lerp(-1, -3, on))];
+        r.hairLift = on > 0.5 ? 1 : 0;
+        r.cape = Math.round(lerp(-4 * raise * (1 - back), -6, on));
+        if (draw > 0.5 && on < 0.5 && raise < 0.1) r.eyes = 'half';
+        else if (on > 0.5 || (raise > 0.3 && back < 0.5)) strikeFace(r);
       },
     };
   },
@@ -3558,15 +3560,17 @@ export const MOVES = {
   sfskyhop(p) {
     const flip = soft(seg(p, 0.02, 0.4));
     const b = sunBow(p, { raise: [0.36, 0.44], pull: [0.4, 0.48], loose: 0.5, back: [0.72, 1] });
-    const flying = p < 0.4;
+    // (Out of the flip she eases into the shot over a few frames, `land`, rather than snapping.)
+    const land = soft(seg(p, 0.33, 0.47));
+    const [hx, hy] = drawHand(b);
     return {
-      weapon: flying ? 25 : lerp(-20, 40, b.up) - 6 * b.after * (1 - b.rest), arm: flying ? 60 : lerp(70, 64, b.up), pull: b.draw, nock: b.nock, twang: b.twang,
-      tilt: -flip * Math.PI * 2 + 0.25 * b.up * (1 - b.rest) * (flying ? 0 : 1), lift: 4 * bump(p, 0, 0.6),
+      weapon: lerp(25, lerp(-20, 40, b.up) - 6 * b.after * (1 - b.rest), land), arm: lerp(60, lerp(70, 64, b.up), land), pull: b.draw, nock: b.nock, twang: b.twang,
+      tilt: -flip * Math.PI * 2 + 0.25 * b.up * (1 - b.rest) * land, lift: 4 * bump(p, 0, 0.6),
       rig: (r) => {
         if (p < 0.62) tuck(r);
         else { r.squat = q(2 * bump(p, 0.6, 0.9)); danceLegs(r, [1, [2.6, 0, 2], [-2.8, 0, -4]]); }
-        r.backArm = flying ? [-2, -3] : drawHand(b);
-        r.hairLift = flying ? 1 : -1;
+        r.backArm = [q(lerp(-2, hx, land)), q(lerp(-3, hy, land))];
+        r.hairLift = land < 0.5 ? 1 : -1;
         if (b.shot && b.rest < 0.4) strikeFace(r);
       },
     };
@@ -3955,16 +3959,17 @@ export const MOVES = {
   // down and fires, the kick tipping her back; she lands crouched.
   phskyhop(p) {
     const flip = soft(seg(p, 0.02, 0.4));
-    const flying = p < 0.4;
+    // (Out of the flip she eases into the shot over a few frames, `land`, rather than snapping.)
+    const land = soft(seg(p, 0.33, 0.47));
     const x = xbow(p, { raise: [0.36, 0.46], fire: 0.5, back: [0.74, 1] });
     return {
-      weapon: flying ? 60 : lerp(20, 42, x.up) - 14 * x.kick, arm: flying ? 55 : lerp(70, 62, x.up) + 6 * x.kick,
-      tilt: -flip * Math.PI * 2 + (flying ? 0 : 0.24 * x.up * (1 - x.rest) - 0.1 * x.kick), lift: 4 * bump(p, 0, 0.6),
+      weapon: lerp(60, lerp(20, 42, x.up), land) - 14 * x.kick, arm: lerp(55, lerp(70, 62, x.up), land) + 6 * x.kick,
+      tilt: -flip * Math.PI * 2 + (0.24 * x.up * (1 - x.rest) - 0.1 * x.kick) * land, lift: 4 * bump(p, 0, 0.6),
       rig: (r) => {
         if (p < 0.62) tuck(r);
         else { r.squat = q(2.2 * bump(p, 0.6, 0.92)); danceLegs(r, [1, [3, 0, 2], [-3.2, 0, -4]]); }
-        r.backArm = flying ? [-2, -3] : [q(2.5 * x.up), q(-1 * x.up)];
-        r.hairLift = flying ? 1 : -1;
+        r.backArm = [q(lerp(-2, 2.5 * x.up, land)), q(lerp(-3, -1 * x.up, land))];
+        r.hairLift = land < 0.5 ? 1 : -1;
         if (x.kick > 0.3) r.mouth = 'grit';
       },
     };
@@ -4095,14 +4100,15 @@ export const MOVES = {
   sbtwirl(p) {
     const u = soft(seg(p, 0, 0.4));
     const turn = Math.cos(u * Math.PI * 2);
-    const b = sunBow(p, { raise: [0.36, 0.48], pull: [0.44, 0.58], loose: 0.62, back: [0.8, 1] });
+    // (The bow comes up only once she's round, so the spin hands straight on to the draw.)
+    const b = sunBow(p, { raise: [0.4, 0.5], pull: [0.46, 0.58], loose: 0.62, back: [0.8, 1] });
     const spinning = u > 0 && u < 1;
     return {
       weapon: spinning ? -40 : lerp(-40, 0, b.up) - 6 * b.after * (1 - b.rest), arm: spinning ? 70 : lerp(70, 95, b.up), pull: b.draw, nock: b.nock, twang: b.twang,
       turn: spinning ? Math.sign(turn || 1) * Math.max(0.4, Math.abs(turn)) : undefined, lift: 2 * Math.sin(Math.PI * u), tilt: -0.04 * b.after * (1 - b.rest),
       rig: (r) => {
         danceLegs(r, [Math.sin(Math.PI * u), [0.8, -2.4, 14], [-0.8, -1.8, -10]], [b.up * (1 - b.rest), [2.8, 0, 2], [-3, 0, -4]]);
-        r.backArm = spinning ? [q(-4 * Math.sin(Math.PI * u)), q(-3 * Math.sin(Math.PI * u))] : drawHand(b);
+        r.backArm = spinning ? [q(-4 * Math.sin(Math.PI * u) + 2 * u), q(-3 * Math.sin(Math.PI * u) - 3 * u)] : drawHand(b);
         r.squat = q(1.4 * bump(p, 0.82, 1));
         r.hairLift = spinning ? -1 : 0;
         if (spinning) r.mouth = 'o';
