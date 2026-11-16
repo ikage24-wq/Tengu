@@ -186,6 +186,22 @@ function tideAura(ctx, x, y, t, s, k, layer) {
   }
 }
 
+// Moondust (the Moon Moth): wing dust drifting slowly down round her as it builds, more the fuller
+// it runs; full (Full Moon), three moths circle her, passing behind her and in front.
+function mothAura(ctx, x, y, t, s, k, layer) {
+  if (k >= 1) for (let i = 0; i < 3; i++) {
+    const a = t * 1.6 + (i / 3) * Math.PI * 2;
+    const front = Math.sin(a) >= 0;
+    if (front !== (layer === 'front')) continue;
+    fxSprite(ctx, 'celmmmoth', x + Math.cos(a) * 20 * s, y - (30 + 6 * Math.sin(t * 2.4 + i * 2)) * s + Math.sin(a) * 5 * s, { t: t + i * 0.13, flip: Math.sin(a) > 0, scale: s * 0.3 });
+  }
+  if (layer !== 'front' || k <= 0.2) return;
+  for (let i = 0; i < 2 + Math.floor(k * 3); i++) {
+    const u = (t * 0.35 + i / 5) % 1;
+    fxSprite(ctx, 'celmmdustfleck', x + (i - 2) * 9 * s + Math.sin(t * 1.4 + i) * 4 * s, y - (54 - 48 * u) * s, { t: t + i * 0.3, scale: s * 0.5, alpha: Math.min(1, (k - 0.2) * 2) * Math.min(1, u * 5) * (1 - u) });
+  }
+}
+
 // Depth (the Maelstrom): glowing motes of the deep rise round her as it builds, more the deeper it
 // runs; full (the Abyss), a small vortex turns at her feet.
 function depthAura(ctx, x, y, t, s, k, layer) {
@@ -251,9 +267,8 @@ function voltAura(ctx, x, y, t, s, k, layer) {
   }
 }
 
-// Draws a combat aura: `kind` a job's gauge ('ki', 'tails', 'valor', 'momentum', 'shadow', 'rage', 'faith' or
-// 'bond' or 'charge'), `k` how full (0-1).
-const COMBAT = { volt: voltAura, gale: galeAura, bulwark: bulwarkAura, rage: rageAura, faith: faithAura, tide: tideAura, moon: moonAura, depth: depthAura };
+// Draws a combat aura: `kind` a job's gauge (see COMBAT), `k` how full (0-1).
+const COMBAT = { volt: voltAura, gale: galeAura, bulwark: bulwarkAura, rage: rageAura, faith: faithAura, tide: tideAura, moon: moonAura, depth: depthAura, moondust: mothAura };
 export function drawCombatAura(ctx, kind, layer, x, y, time, scale, k, dir = 1) {
   if (k <= 0.02 || !COMBAT[kind]) return;
   ctx.save();

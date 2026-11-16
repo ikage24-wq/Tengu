@@ -42,6 +42,22 @@ function leafAt(x, y, a, len, w, c) {
   const at = (u, s) => [x + d[0] * len * u + n[0] * w * s, y + d[1] * len * u + n[1] * w * s];
   return T([at(0, 0), at(0.35, 0.95), at(0.75, 0.7), at(1, 0), at(0.75, -0.7), at(0.35, -0.95)], c);
 }
+// A tapered band along a centre line, `w0` wide at its start and `w1` at its end, as one polygon.
+function tube(pts, w0, w1) {
+  const l = [];
+  const r = [];
+  pts.forEach(([x, y], i) => {
+    const [px, py] = pts[Math.max(0, i - 1)];
+    const [nx, ny] = pts[Math.min(pts.length - 1, i + 1)];
+    const dx = nx - px;
+    const dy = ny - py;
+    const len = Math.hypot(dx, dy) || 1;
+    const w = (w0 + (w1 - w0) * (i / (pts.length - 1))) / 2;
+    l.push([x - (dy / len) * w, y + (dx / len) * w]);
+    r.push([x + (dy / len) * w, y - (dx / len) * w]);
+  });
+  return [...l, ...r.reverse()];
+}
 // A blade's bright edge on its +x side, from `y0` down to `y1`, set in from `x` by `w`.
 const edgeStrip = (x, y0, y1, c, w = 0.9) => T([[x, y0], [x, y1], [x - w, y1], [x - w, y0 + 1]], c);
 
@@ -562,117 +578,49 @@ function spear(m, t) {
 
 // ---------- Daggers ----------
 //
-// A short grip under a small guard at D. A whittled wooden knife, a copper utility knife, a bronze
-// leaf knife, an iron cross-hilt knife, a steel tanto, a silver stiletto, a curved mithril leaf
-// dagger, a wavy cobalt kris, a crystal shard, a runic dirk and a starsteel crescent dirk.
+// One sample dagger, made from scratch (2026-11-16, for the Moon Moth): every dagger item draws
+// this one design in its own tier's materials until the dagger line is drawn tier by tier. A
+// rogue's knife: a single-edged blade with a clipped point swept a little forward, a deep belly on
+// the edge side, a fuller groove down the spine and a notch at the base of the edge; an S guard
+// (the quillon on the edge side curling up toward the blade, the other down toward the hand); a
+// wrapped grip; and a round pommel cap. From Steel up a gem sits in the guard.
+// The guard sits at D; the blade rises from it, the grip hangs below.
 const D = -3;
 
 function dagger(m, t) {
   const s = [];
   const a = {};
-  const L = [10, 10, 11, 11.5, 12, 13, 13.5, 14, 14.5, 15, 16][t];
+  const L = 14;
   const top = D - L;
-  s.push(...grip(4, t === 0 ? '#efe0bf' : m.grip, t === 0 ? '#c9a878' : m.trimDark, 1.5));
-  const done = (gemAt) => {
-    a.tip = a.tip ?? [0, top];
-    a.head = a.head ?? [0, D - L * 0.55];
-    a.blade = [top, D];
-    if (gemAt) a.gem = gemAt;
-    return { shapes: s, blade: [top, D], reach: [], a };
-  };
-  switch (t) {
-    case 0:
-      s.push(E(0, 4.6, 1.6, 1.4, m.trim));
-      s.push(mir([[0, top], [1.4, top + 0.6], [2.2, top + 2.4], [2.2, D]], m.blade), F(R(-0.8, top + 3, 0.5, L - 4, m.bladeDark)));
-      s.push(R(-3, D, 6, 1.8, m.trim));
-      return done();
-    case 1:
-      // A single-edged utility knife: a straight back, the edge sweeping up to the point.
-      s.push(E(0, 4.8, 1.7, 1.5, m.trim));
-      s.push(T([[-1.6, D], [-1.6, top + 1], [-0.6, top], [2.4, top + 4.4], [2.4, D]], m.blade), edgeStrip(2.4, top + 4.4, D, m.edge, 0.8));
-      s.push(R(-2.6, D, 5.2, 1.8, m.trim), E(2.6, D + 0.9, 1, 1.2, m.trim));
-      return done();
-    case 2:
-      s.push(T([[-2.6, 4.2], [0, 5.6], [2.6, 4.2], [2, 6.2], [0, 6.8], [-2, 6.2]], m.trim));
-      s.push(mir([[0, top], [1.8, top + 3], [2.8, top + 6.4], [1.6, D - 1], [1.8, D]], m.blade), F(R(-0.35, top + 1.6, 0.7, L - 3, m.bladeDark)));
-      s.push(E(0, D + 0.8, 3.4, 1.3, m.trim));
-      return done();
-    case 3:
-      s.push(E(0, 5, 1.9, 1.9, m.trim), F(E(0, 5, 0.8, 0.8, m.trimDark)));
-      s.push(mir([[0, top], [2.2, top + 2.6], [2.2, D]], m.blade), F(R(-0.5, top + 3.4, 1, L - 5, m.bladeDark)), edgeStrip(2.2, top + 2.6, D, m.edge, 0.7));
-      s.push(R(-4.4, D, 8.8, 1.9, m.trim), E(-4.6, D + 0.95, 1.1, 1.1, m.trim), E(4.6, D + 0.95, 1.1, 1.1, m.trim));
-      return done();
-    case 4:
-      // A tanto: a straight blade broken to an angled point, a round guard.
-      s.push(R(-1.6, 4, 3.2, 1.6, m.trim));
-      s.push(T([[-2, D], [-2, top + 1.4], [2.2, top + 4.6], [2.2, D]], m.blade), T([[2.2, top + 4.6], [-2, top + 1.4], [-2, top - 0.6]], m.blade));
-      s.push(T([[-1.6, top + 0.4], [-1.6, top + 1.6], [2, top + 4.6], [2.2, top + 4.2]], m.edge), F(R(-1.4, top + 5.6, 0.6, L - 7, m.bladeDark)));
-      a.tip = [-2, top - 0.6];
-      s.push(E(0, D + 0.6, 3.8, 1.4, m.trim), F(E(0, D + 0.3, 2.6, 0.5, m.edge)));
-      return done();
-    case 5:
-      s.push(T([[0, 3.6], [1.5, 5.2], [0, 7.4], [-1.5, 5.2]], m.trim), ...gem(0, 5.4, 0.8, m.gem));
-      s.push(mir([[0, top], [1.5, top + 3], [1.5, D]], m.blade), F(R(-0.35, top + 3.6, 0.7, L - 5, m.bladeDark)));
-      for (const sd of [-1, 1]) s.push(T([[sd * 1.2, D + 1.4], [sd * 3.6, D + 0.2], [sd * 5.4, D - 2.4], [sd * 5.6, D - 0.2], [sd * 3.6, D + 1.8]], m.trim));
-      s.push(E(0, D + 0.8, 2.2, 1.9, m.trim), ...gem(0, D + 0.8, 1.1, m.gem));
-      return done([0, D + 0.8]);
-    case 6: {
-      // A curved leaf dagger, the point sweeping forward.
-      s.push(leafAt(0, 3.8, -90, 3.6, 1.4, m.trim));
-      const pts = [[-1.6, D], [-2, D - L * 0.5], [-0.8, top + 2], [1.6, top], [2.8, top + 4], [2.6, D - L * 0.4], [1.8, D]];
-      s.push(T(pts, m.blade), T([[1.6, top + 0.4], [2.8, top + 4], [2.6, D - L * 0.4], [1.8, D], [1, D], [1.8, D - L * 0.4], [2, top + 4]], m.edge));
-      s.push(F(leafAt(0, D - 3, 95, 4, 0.8, m.bladeDark)));
-      a.tip = [1.6, top];
-      s.push(leafAt(0.6, D + 0.8, 20, 4.4, 1.3, m.trim), leafAt(-0.6, D + 0.8, 160, 4.4, 1.3, m.trim), ...gem(0, D + 0.8, 1, m.gem));
-      return done([0, D + 0.8]);
-    }
-    case 7: {
-      // A kris: the blade waves side to side up to its point.
-      s.push(T([[0, 3.6], [2.2, 5.6], [0.4, 5], [0, 6.8], [-0.4, 5], [-2.2, 5.6]], m.trim));
-      const right = [];
-      const left = [];
-      for (let i = 0; i <= 6; i++) {
-        const y = D - (L - 2.4) * (i / 6);
-        const w = Math.sin(i * 1.6) * 0.9;
-        right.push([2.2 + w, y]);
-        left.push([-2.2 + w, y]);
-      }
-      s.push(T([...right, [0.4, top], ...left.reverse()], m.blade));
-      s.push(F(T(right.map(([x, y]) => [x - 0.7, y]).concat(right.slice().reverse().map(([x, y]) => [x - 1.3, y])), m.edge)));
-      s.push(T([[-1.4, D + 0.4], [-4, D - 1.4], [-3, D + 1.6]], m.trim), R(-2.4, D, 4.8, 1.8, m.trim), ...gem(0, D + 0.9, 1, m.gem));
-      return done([0, D + 0.9]);
-    }
-    case 8:
-      s.push(T([[-1.2, 3.8], [1.2, 3.8], [0, 7.6]], m.blade));
-      s.push(mir([[0, top], [1.8, top + 3], [2.6, top + 7.4], [1.8, D]], m.blade), F(T([[0, top], [0, D], [-1.8, D], [-2.6, top + 7.4], [-1.8, top + 3]], m.bladeDark)));
-      for (const sd of [-1, 1]) s.push(T([[sd * 1.2, D + 1.2], [sd * 4.4, D - 3], [sd * 4.8, D - 1.2], [sd * 2.4, D + 1.8]], m.blade));
-      s.push(E(0, D + 0.8, 2, 1.8, m.trim), ...gem(0, D + 0.8, 1.15, m.gem));
-      return done([0, D + 0.8]);
-    case 9: {
-      s.push(T([[0, 3.8], [1.8, 5.6], [0, 8], [-1.8, 5.6]], m.trim), ...gem(0, 5.8, 0.7, m.gem));
-      s.push(mir([[0, top], [2.4, top + 3.4], [2.4, D - 2.2], [3.2, D - 1.4], [2.4, D]], m.blade), edgeStrip(2.4, top + 3.4, D - 2.2, m.edge, 0.7));
-      const y0 = top + 3.6;
-      const y1 = D - 2.6;
-      for (let y = y0, i = 0; y < y1 - 1; y += 2.8, i++) s.push(F(R(-0.5, y, 1, 1.8, m.rune)), F(i % 2 ? R(-1.2, y + 0.6, 2.4, 0.5, m.rune) : R(-1.2, y + 0.2, 0.5, 1.2, m.rune)));
-      a.runes = [0, y0, y1];
-      for (const sd of [-1, 1]) s.push(T([[sd * 1.4, D], [sd * 5.6, D + 0.2], [sd * 6.2, D + 3.4], [sd * 4, D + 1.8], [sd * 1.4, D + 2]], m.trim));
-      s.push(E(0, D + 0.9, 2, 1.8, m.trim), ...gem(0, D + 0.9, 1.1, m.gem));
-      return done([0, D + 0.9]);
-    }
-    default: {
-      // A crescent dirk: the blade a crescent moon curving forward, stars in it, a gold star guard.
-      s.push(star(0, 6, 2.4, GOLD), ...gem(0, 6, 0.6, m.gem));
-      const outer = arcPts(-4.6, D - 1, 7.8, L, -12, 78, 10);
-      const inner = arcPts(-6.4, D - 3.4, 6.4, L - 4.4, 76, -8, 10);
-      s.push(T([...outer, ...inner], m.blade));
-      s.push(T(outer.slice(0, 8).concat(outer.slice(0, 8).reverse().map(([x, y]) => [x - 0.9, y + 0.3])), m.edge));
-      s.push(F(star(1, D - L * 0.45, 1, m.rune)), F(star(-0.6, D - L * 0.75, 0.8, m.rune)));
-      a.tip = outer[outer.length - 1];
-      a.head = [0, D - L * 0.5];
-      s.push(star(0, D + 0.8, 4, GOLD, 0.26), ...gem(0, D + 0.8, 1.15, m.gem));
-      return done([0, D + 0.8]);
-    }
+  const wood = t === 0;
+  // The grip, wrapped, and a round pommel cap under it. (A ring pommel was tried: with a dagger in
+  // each hand, the two rings and the guards' hooks read as scissor handles.)
+  s.push(...grip(4.6, wood ? '#efe0bf' : m.grip, wood ? '#c9a878' : m.trimDark, 1.5));
+  s.push(E(0, 5.9, 1.7, 1.55, m.trim), F(E(-0.6, 5.3, 0.55, 0.4, mix(m.trim, WHITE, 0.55))));
+  // The blade: the spine straight up the -x side, clipped to the point, the edge sweeping out into
+  // its belly and in to the notch at the base.
+  const blade = [[-1.7, D], [-1.7, top + 6], [-0.9, top + 3], [1, top], [2.4, top + 3.4], [3, top + 7.4], [2.7, D - 2.4], [1.7, D - 1.4], [2, D]];
+  s.push(T(blade, m.blade));
+  // The bright edge along the belly, the clip lit, the fuller down the spine.
+  s.push(T([[1, top], [2.4, top + 3.4], [3, top + 7.4], [2.7, D - 2.4], [1.9, D - 2.2], [2.1, top + 7.2], [1.6, top + 3.6], [0.8, top + 1.2]], m.edge));
+  s.push(F(T([[-0.9, top + 3], [1, top], [0.6, top + 1], [-0.6, top + 3.6]], WHITE)));
+  s.push(F(T([[-1, D - 1], [-1, top + 6.6], [-0.6, top + 5.4], [-0.3, top + 6.6], [-0.3, D - 1]], m.bladeDark)));
+  // The S guard: a bar, its edge-side quillon a thick hook curling up toward the blade and its back
+  // quillon the same turned round, curling down toward the hand, each tapering to a round tip.
+  const mid = D + 0.9;
+  const hook = [[2.6, mid], [3.9, mid - 0.4], [4.7, mid - 1.4], [4.8, mid - 2.7]];
+  const back = hook.map(([x, y]) => [-x, 2 * mid - y]);
+  s.push(R(-3.4, D, 6.8, 1.8, m.trim), T(tube(hook, 1.8, 1.1), m.trim), T(tube(back, 1.8, 1.1), m.trim));
+  s.push(E(4.75, mid - 2.8, 0.7, 0.7, m.trim), E(-4.75, mid + 2.8, 0.7, 0.7, m.trim));
+  s.push(F(R(-3.2, D + 0.2, 6.2, 0.5, mix(m.trim, WHITE, 0.45))), F(T(tube(hook.slice(0, 3).map(([x, y]) => [x - 0.35, y - 0.25]), 0.5, 0.3), mix(m.trim, WHITE, 0.45))));
+  if (t >= 4) {
+    s.push(...gem(0, D + 0.85, 1.05, m.gem));
+    a.gem = [0, D + 0.85];
   }
+  a.tip = [1, top];
+  a.head = [0.6, D - L * 0.55];
+  a.blade = [top, D];
+  return { shapes: s, blade: [top, D], reach: [], a };
 }
 
 // ---------- Moon and ring pieces (the wands and staves) ----------
@@ -1086,110 +1034,6 @@ function crossbow(m, t) {
   return { shapes: s, blade: a.blade, reach: [], a };
 }
 
-// ---------- Chakrams (the Wind Dancer's; the dagger items) ----------
-//
-// A ring blade held by a bar across its middle (the grip, at the origin), a coral ribbon tied to
-// it that flutters. A wooden hoop, a notched copper ring, a bronze ring with leaf blades, an iron
-// saw ring, a steel pinwheel of hooks, a silver ring of crescent wings, a mithril flower of petals,
-// a cobalt ring of breaking waves, a faceted crystal ring, a runic ring with spikes and a
-// starsteel star.
-const CORAL = '#ff8a7a';
-const CORAL_DK = '#e0605a';
-
-// A band round the origin from radius r0 to r1 (a ring with its hole), as one polygon.
-function band(r0, r1, c, n = 28, cx = 0, cy = 0) {
-  const o = [];
-  const i2 = [];
-  for (let k = 0; k <= n; k++) {
-    const a = (k / n) * Math.PI * 2;
-    o.push([cx + Math.cos(a) * r1, cy + Math.sin(a) * r1]);
-    i2.push([cx + Math.cos(a) * r0, cy + Math.sin(a) * r0]);
-  }
-  return T([...o, ...i2.reverse()], c);
-}
-// `n` blades round the rim at radius r, each `len` out and `w` wide, turned by `rot`, leaning by
-// `lean` (a pinwheel), shaped by `kind`.
-function rimBlades(n, r, len, w, c, { rot = 0, lean = 0, kind = 'tooth' } = {}) {
-  const out = [];
-  for (let k = 0; k < n; k++) {
-    const a = rot + (k / n) * Math.PI * 2;
-    const d = [Math.cos(a), Math.sin(a)];
-    const t = [-d[1], d[0]];
-    const at = (u, s) => [d[0] * (r + len * u) + t[0] * (w * s + lean * u * len), d[1] * (r + len * u) + t[1] * (w * s + lean * u * len)];
-    if (kind === 'leaf') out.push(T([at(-0.2, 0), at(0.35, 1), at(0.75, 0.6), at(1, 0), at(0.75, -0.6), at(0.35, -1)], c));
-    else if (kind === 'hook') out.push(T([at(-0.2, -1), at(0.4, -0.9), at(1, 0.6), at(0.55, 0.2), at(-0.2, 1)], c));
-    else if (kind === 'wing') out.push(T([at(-0.2, -1), at(0.6, -1.2), at(1, -0.2), at(0.5, 0.1), at(-0.2, 1)], c));
-    else out.push(T([at(-0.2, -1), at(1, 0), at(-0.2, 1)], c));
-  }
-  return out;
-}
-
-function chakram(m, t, f = 0) {
-  const s = [];
-  const a = {};
-  // A small ring (MapleStory-sized, not a shield), held by a wrapped grip on its rim so the ring
-  // sits out beyond her hand, never round it (the player: the weapon was blocking her face).
-  const RR = [4.4, 4.6, 4.8, 5, 5.2, 5.4, 5.6, 5.8, 6, 6.2, 6.4][t];
-  const th = [1.6, 1.6, 1.7, 1.7, 1.8, 1.8, 1.8, 1.9, 1.9, 2, 2][t];
-  const k = 0.7;
-  const ring = t === 0 ? m.handle : m.blade;
-  // The blades round the rim (behind the ring).
-  switch (t) {
-    case 1: s.push(...rimBlades(8, RR - 0.3, 1.6 * k, 0.8, ring, { rot: Math.PI / 8 })); break;
-    case 2: s.push(...rimBlades(4, RR - 0.4, 4.6 * k, 1.3, ring, { rot: Math.PI / 4, kind: 'leaf' })); break;
-    case 3: s.push(...rimBlades(12, RR - 0.3, 2 * k, 0.8, ring)); break;
-    case 4: s.push(...rimBlades(3, RR - 0.6, 6 * k, 1.4, ring, { rot: -Math.PI / 2, lean: 0.6, kind: 'hook' })); break;
-    // (Its wings are the ring's own metal with a bright edge, so a rose-gold ring stays rose gold
-    // instead of reading as a yellow spiky sun.)
-    case 5: s.push(...rimBlades(6, RR - 0.4, 4.4 * k, 1.2, ring, { rot: -Math.PI / 2, lean: 0.4, kind: 'wing' }), ...rimBlades(6, RR - 0.4, 2.6 * k, 0.5, m.edge, { rot: -Math.PI / 2, lean: 0.4, kind: 'wing' }).map(F)); break;
-    case 6: s.push(...rimBlades(8, RR - 0.6, 3.6 * k, 1.4, ring, { kind: 'leaf' }), ...rimBlades(8, RR - 0.6, 2.2 * k, 0.6, m.edge, { kind: 'leaf' }).map(F)); break;
-    case 7: s.push(...rimBlades(4, RR - 0.4, 5 * k, 1.5, ring, { rot: -Math.PI / 4, lean: 0.9, kind: 'hook' })); break;
-    case 8: s.push(...rimBlades(4, RR - 0.4, 5.4 * k, 1.1, ring, { rot: -Math.PI / 2 }), ...rimBlades(4, RR - 0.4, 3.4 * k, 0.8, ring, { rot: -Math.PI / 4 })); break;
-    case 9: s.push(...rimBlades(4, RR - 0.4, 5.4 * k, 1.5, m.trim, { rot: -Math.PI / 2 }), ...rimBlades(8, RR - 0.3, 1.8 * k, 0.8, ring, { rot: Math.PI / 8 })); break;
-    case 10: {
-      // Starsteel: eight long points round the rim in the ring's own metal, each with a bright edge
-      // (no filled star behind it, so the hole stays open and a rose-gold ring stays rose gold).
-      s.push(...rimBlades(8, RR - 0.4, 3.6, 1.5, ring, { rot: -Math.PI / 2 }), ...rimBlades(8, RR - 0.4, 2.2, 0.5, m.edge, { rot: -Math.PI / 2 }).map(F), ...rimBlades(4, RR - 0.4, 4.6, 1.2, mix(ring, '#ffffff', 0.25), { rot: -Math.PI / 4 }));
-      break;
-    }
-    default: break;
-  }
-  // The ring, faceted for crystal.
-  if (t === 8) {
-    const oct = (r) => Array.from({ length: 8 }, (_, i) => [Math.cos((i / 8) * Math.PI * 2 + Math.PI / 8) * r, Math.sin((i / 8) * Math.PI * 2 + Math.PI / 8) * r]);
-    s.push(T([...oct(RR), oct(RR)[0], ...oct(RR - th).reverse(), oct(RR - th)[7]], ring), F(T([...oct(RR).slice(4, 8), ...oct(RR - th).slice(4, 8).reverse()], m.bladeDark)));
-  } else {
-    s.push(band(RR - th, RR, ring), F(band(RR - th, RR - th + 0.5, mix(ring, '#000000', 0.18))), F(band(RR - 0.6, RR, m.edge, 28)));
-  }
-  if (t === 9) for (let i = 0; i < 6; i++) {
-    const ang = (i / 6) * Math.PI * 2 + 0.3;
-    s.push(F(R(Math.cos(ang) * (RR - th / 2) - 0.4, Math.sin(ang) * (RR - th / 2) - 0.5, 0.8, 1, m.rune)));
-  }
-  if (t >= 10) for (const ang of [0.8, 2.6, 4.4]) s.push(F(star(Math.cos(ang) * (RR - th / 2), Math.sin(ang) * (RR - th / 2), 0.8, m.rune)));
-  // A gem at the top of the ring from Silver, a coral bead on the plain hoop.
-  if (t >= 5) s.push(...gem(0, -RR + th / 2, 0.9, m.gem));
-  if (t === 0) s.push(E(0, -RR + 0.8, 0.8, 0.7, CORAL));
-  // Everything so far moves up so the ring's bottom sits just above the grip.
-  const cy = RR + 1.2;
-  const lifted = s.map((sh) => ({ ...sh, y: (sh.y ?? 0) - cy }));
-  s.length = 0;
-  s.push(...lifted);
-  // The ribbon, tied to the ring's far edge (so it trails below the ring as it hangs, and streams
-  // behind a throw), its tails fluttering; then the grip on the rim, wrapped.
-  const sw = [0, 0.6, 1, 0.6, 0, -0.6][((f % 6) + 6) % 6];
-  const ty = -cy - RR + 0.4;
-  s.unshift(T([[-0.5, ty], [0.5, ty], [-1.6 + sw, ty - 4.6], [-2.8 + sw, ty - 4]], CORAL), T([[-0.5, ty], [0.5, ty], [2 + sw * 0.6, ty - 3.8], [1 + sw * 0.6, ty - 4.4]], CORAL_DK));
-  // The grip on the rim, wrapped.
-  s.push(R(-0.6, -1.6, 1.2, 1.2, ring), R(-1.1, -0.6, 2.2, 2.4, t === 0 ? '#efe0bf' : m.grip));
-  for (let y = -0.4; y < 1.6; y += 0.9) s.push(F(R(-1.1, y, 2.2, 0.35, t === 0 ? '#c9a878' : m.trimDark)));
-  if (t >= 5) a.gem = [0, -cy - RR + th / 2];
-  a.tip = [0, -cy - RR - 1];
-  a.head = [0, -cy];
-  a.blade = [-cy - RR, -cy + RR];
-  if (m.rune) a.runes = [0, -cy - RR + 1, -cy + RR - 1];
-  return { shapes: s, blade: [-cy - RR, -cy + RR], reach: [], a };
-}
-
 // The player wants them big and chunky (MapleStory's oversized weapons): each design is drawn on
 // a plain grid, then blown up, wider than it is longer, so blades, guards and grips are bold.
 const CHUNK = { sword: [1.5, 1.2], axe: [1.4, 1.15], spear: [1.45, 1.1], dagger: [1.15, 1.15], wand: [1.2, 1.2], staff: [1.25, 1.1], bow: [1.3, 1.1], crossbow: [1.15, 1.15] };
@@ -1206,8 +1050,8 @@ function scaled(d, [sx, sy]) {
   return { shapes: d.shapes.map(sh), blade: d.blade.map((y) => y * sy), reach: d.reach.map(pt), a };
 }
 
-// (The dagger items are drawn as chakrams.)
-const DRAW = { sword, axe, spear, dagger: chakram, wand, staff, bow, crossbow };
+// (The dagger items: one sample dagger for every tier for now, see `dagger`.)
+const DRAW = { sword, axe, spear, dagger, wand, staff, bow, crossbow };
 export const DESIGNS = Object.fromEntries(Object.entries(DRAW).map(([k, f]) => [k, (m, t, frame) => scaled(f(m, t, frame), CHUNK[k] ?? [1, 1])]));
 
 // ---------- The glove ----------

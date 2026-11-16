@@ -65,7 +65,7 @@ export const STORY_QUESTS = {
   }),
   story_1_4: s('story_1_4', 1, {
     name: 'A Path of Your Own', giver: 'mira', minLevel: 5, prereq: 'story_1_2',
-    text: "You're ready for a path of your own! Visit an instructor: Kestrel here, Brann in Ember Crag, Vex in Pastel Harbor, or Elowen in Moonleaf Grove. M opens the world map. You knew that. I know you knew that. Then come home and tell me everything!",
+    text: "You're ready for a path of your own! Visit an instructor: Brann in Ember Crag, Vex in Pastel Harbor, or Elowen in Moonleaf Grove. M opens the world map. You knew that. I know you knew that. Then come home and tell me everything!",
     objectives: [{ type: 'job', tier: 1 }],
     rewards: { exp: 2000, gold: 240, items: [{ id: 'ear_10', qty: 1, variant: 'roll' }] },
     scenes: { done: 'ch1_end' },

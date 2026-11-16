@@ -2847,18 +2847,20 @@ function weaponIdle(type, t, job) {
       return { arm: arm(2, 0.5), angle: front(38), rig: { backArm: [q2(3.4 * k + 0.6 * Math.sin(b.s * 10) * k), q2(-1 * k + 0.6 * Math.cos(b.s * 10) * k)], hx: q2(0.4 * k) } };
     }
     case 'dagger': {
-      // The Wind Dancer's chakram (the dagger items): every fidget keeps the ring at her hip or
-      // out in front, never up by her face, and never down below her feet.
-      const wob = 138 + Math.sin(t * 2) * 5;
+      // The Moon Moth's daggers (the dagger items, real knives again): every fidget keeps the
+      // blade at her hip or out in front of her, never up by her face.
+      const wob = 115 + Math.sin(t * 2) * 4;
       const b = bit([1.3, 2, 1.8]);
-      if (!b) return { arm: [1, -1], angle: wob };
+      if (!b) return { arm: [1, 0], angle: wob };
       const k = env(b.u);
+      // (Her hand stays put through the toss and the twirl, only the dagger moving: the hand is part
+      // of the body's drawing, and a hand drifting through half pixels repainted it every frame.)
       // Tossed up spinning out in front of her and caught.
-      if (b.i === 0) { const air = seg(b.u, 0.1, 0.9); return { arm: [lerp(1, 3, k), -1 - 1 * bump(b.u, 0, 1)], angle: wob + smooth(air) * 720, toss: Math.sin(air * Math.PI) * 14 }; }
-      // Twirled round her hand at her hip, three turns.
-      if (b.i === 1) return { arm: [lerp(1, 3, k), -1], angle: wob + smooth(seg(b.u, 0.15, 0.85)) * 1080 };
-      // A little flourish: the ring swept out to the side and held there a beat, a showgirl's pose.
-      return { arm: [lerp(1, 5, k), lerp(-1, -1.5, k)], angle: lerp(wob, 95, k) + Math.sin(b.s * 5) * 4 * k, rig: { backArm: [q2(-2 * k), q2(-5 * k)] } };
+      if (b.i === 0) { const air = seg(b.u, 0.1, 0.9); return { arm: [1, 0], angle: wob + smooth(air) * 720, toss: Math.sin(air * Math.PI) * 12 }; }
+      // Twirled round her fingers down at her hip, two turns, and back into her grip.
+      if (b.i === 1) return { arm: [1, 0], angle: wob + smooth(seg(b.u, 0.15, 0.85)) * 720 };
+      // Checking the edge: the blade turned up in front of her, a slow look along it.
+      return { arm: [lerp(1, 2, k), lerp(0, -1.5, k)], angle: lerp(wob, 60, k) + Math.sin(b.s * 3) * 5 * k, rig: { backArm: [q2(k), q2(-k)] } };
     }
     case 'gauntlet': {
       const flex = 70 + Math.sin(t * 4) * 5;
@@ -3589,9 +3591,9 @@ function paintHero(ctx, look, gear, x, y, state, anim, mv) {
   const armDx = rig.tx;
   const armDy = bodyY;
 
-  // (A chakram hangs from her hand down by her hip, the ring below it, never up by her face.)
+  // (A dagger rests point-forward and down in her hand, by her hip.)
   // (A greatsword rests back over the shoulder.)
-  const restAngle = { crossbow: CROSSBOW_REST, gauntlet: 70, dagger: 138, sword: -58, axe: -52, spear: -62, staff: -46, wand: 115, bow: BOW_REST }[g.weapon?.type] ?? 25;
+  const restAngle = { crossbow: CROSSBOW_REST, gauntlet: 70, dagger: 115, sword: -58, axe: -52, spear: -62, staff: -46, wand: 115, bow: BOW_REST }[g.weapon?.type] ?? 25;
   // On guard, the weapon points out front and dips with each bounce.
   // A crossbow is held at low ready, a little under the aim, so a shot settles into it instead of
   // the weapon dropping the moment the move ends (research/archery.md 2, 27: hold the finish).
@@ -3599,7 +3601,7 @@ function paintHero(ctx, look, gear, x, y, state, anim, mv) {
   // across her legs (a bow stays low: raised, it would cross her face); and every weapon on guard
   // lives: a slow drift up and down (whole degrees), on top of the dip with each bounce.
   const drift = Math.round((HEFTED.has(g.weapon?.type) ? 4 : 3) * Math.sin((state.time ?? 0) * 1.7));
-  const guard = state.ready && pose === 'idle' ? ({ sword: 53, axe: 53, spear: 53, staff: 53, crossbow: 22, gauntlet: 95, bow: -76, dagger: 105, wand: 80 }[g.weapon?.type] ?? 62) + drift : null;
+  const guard = state.ready && pose === 'idle' ? ({ sword: 53, axe: 53, spear: 53, staff: 53, crossbow: 22, gauntlet: 95, bow: -76, dagger: 110, wand: 80 }[g.weapon?.type] ?? 62) + drift : null;
   let weaponAngle = angles ? angles.weapon : idleW ? idleW.angle : guard != null ? guard + rig.by * 6 : restAngle + rig.frontArm[0] * (HEFTED.has(g.weapon?.type) ? 1 : 4) + (pose === 'jump' ? -15 : 0);
   // Between moves the held weapon eases to where it should be (guard, shoulder, a fidget) instead
   // of jumping there; a greatsword goes the long way, down and round behind her, rather than up
@@ -3716,9 +3718,10 @@ function paintHero(ctx, look, gear, x, y, state, anim, mv) {
     ctx.drawImage(bt.canvas, -(bt.grip[0] + 1) * bs, -(bt.grip[1] + 1) * bs, bt.cw * bs, bt.ch * bs);
     ctx.restore();
   };
-  // Twin chakrams (the dagger items): the second ring rides in the
-  // free hand, gripped on its rim and turned the way that forearm points, drawn behind the body like
-  // that far hand, so it never crosses her face. (Not while she holds a life-skill tool.)
+  // Twin daggers (the Moon Moth's, and any dagger): a second copy of the dagger rides in the free
+  // hand, its blade running on from that forearm (tipped up a little), so a punch out is a stab and
+  // a hanging arm holds it point-down; drawn behind the body like that far hand, so it never
+  // crosses her face. (Not while she holds a life-skill tool.)
   const drawOffhand = () => {
     if (!wpn || toolKind || g.weapon?.type !== 'dagger' || g.weapon.fun || rig.view === 'back' || mv?.backTool || mv?.fan != null) return;
     const [[ex, ey], [wx, wy]] = reach(BACK_SHOULDER, SHOULDER_Y, BACK_SHOULDER - HAND_FORWARD + rig.backArm[0], HAND_Y + rig.backArm[1], UPPER_ARM, FOREARM, 1);
@@ -3729,7 +3732,12 @@ function paintHero(ctx, look, gear, x, y, state, anim, mv) {
     ctx.imageSmoothingEnabled = false;
     ctx.translate(snap(sx(squashX(wx + rig.tx))), snap(sy(squashY(wy + bodyY))));
     if (flip) ctx.scale(-1, 1);
-    ctx.rotate(((fore + 20) * Math.PI) / 180);
+    // (Its blade runs on from the forearm, 180 - fore; but a hand hanging behind her would point it
+    // back across her legs, so there it's turned forward instead, easing over to along the arm
+    // again as the arm swings up behind her, opened like a wing.)
+    const back = Math.max(0, Math.min(1, (-fore - 30) / 60));
+    const along = fore >= 0 ? 180 - fore : 180 + fore + (-2 * fore) * back;
+    ctx.rotate(((along - 12) * Math.PI) / 180);
     ctx.drawImage(wpn.canvas, -(wpn.grip[0] + 1) * ws, -(wpn.grip[1] + 1) * ws, wpn.cw * ws, wpn.ch * ws);
     ctx.restore();
   };

@@ -48,7 +48,7 @@ const WEAPON_LINES = {
   staff: { scale: 0.55, matk: 1, main: 'int', names: ['Moon Staff', 'Witch Staff', 'Crescent Staff', 'Comet Staff', 'Starlight Staff'], themes: { holy: 'Seraphim Staff', demonic: 'Oni Shakujo', bone: 'Gashadokuro Staff', laser: 'Photon Gohei', chainsaw: 'Sawblade Shakujo', cyber: 'Neon Gohei' } },
   bow: { scale: 0.8, main: 'dex', names: ['Shortbow', 'Iron Bow', 'Steel Recurve', 'Mithril Longbow', 'Runic Bow'], themes: { holy: 'Wings of Dawn', demonic: 'Hellstring', bone: 'Ribcage Bow', laser: 'Photon Bow', chainsaw: 'Sawtooth Bow', cyber: 'Neon Arc' } },
   crossbow: { scale: 0.78, main: 'dex', names: ['Wooden Crossbow', 'Iron Crossbow', 'Steel Arbalest', 'Mithril Crossbow', 'Runic Arbalest'], themes: { holy: 'Judgment', demonic: 'Doombolt', bone: 'Marrow Repeater', laser: 'Railgun', chainsaw: 'Sawlauncher', cyber: 'Cyber Repeater' } },
-  dagger: { scale: 0.98, main: 'luk', names: ['Wooden Hoop', 'Iron Chakram', 'Steel Chakram', 'Mithril Chakram', 'Runic Chakram'], themes: { holy: "Angel's Feather", demonic: 'Hellfang', bone: 'Bone Shiv', laser: 'Photon Knife', chainsaw: 'Revblade', cyber: 'Glitchblade' } },
+  dagger: { scale: 0.98, main: 'luk', names: ['Wooden Knife', 'Iron Dagger', 'Steel Dirk', 'Mithril Stiletto', 'Runic Kris'], themes: { holy: "Angel's Feather", demonic: 'Hellfang', bone: 'Bone Shiv', laser: 'Photon Knife', chainsaw: 'Revblade', cyber: 'Glitchblade' } },
   gauntlet: { scale: 0.75, main: 'luk', names: ['Cloth Gloves', 'Iron Gloves', 'Steel Gloves', 'Mithril Gloves', 'Runic Gloves'], themes: { holy: 'Seraph Gauntlet', demonic: 'Hellfist', bone: 'Grave Gauntlet', laser: 'Photon Gauntlet', chainsaw: 'Buzzsaw Gauntlet', cyber: 'Neon Gauntlet' } },
 };
 
@@ -69,7 +69,7 @@ const WEAPON_NOUNS = {
   staff: ['Staff', 'Witch Staff', 'Crescent Staff', 'Comet Staff', 'Starlight Staff'],
   bow: ['Shortbow', 'Bow', 'Recurve', 'Longbow', 'Warbow'],
   crossbow: ['Crossbow', 'Arbalest', 'Repeater', 'Heavy Arbalest', 'Siegebow'],
-  dagger: ['Hoop', 'Chakram', 'Ring Blade', 'Dancing Ring', 'Halo'],
+  dagger: ['Knife', 'Dagger', 'Dirk', 'Stiletto', 'Kris'],
   gauntlet: ['Gloves', 'Mitts', 'Dance Gloves', 'Gale Gloves', 'Zephyr Gloves'],
 };
 // Colors along the ladder (the training weapon first), used for names, trails, and drops.

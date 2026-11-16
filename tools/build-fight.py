@@ -69,6 +69,11 @@ S = {
     'wrock': 'InMotionAudio - Submerge/WATRMvmt_WaterRockMovement04_InMotionAudio_Submerge.wav',
     # The Tidecaller's moon (2026-11-09): bell shimmers, a twinkle, a bright chime and calm rain.
     'shimmer': 'Epic Stock Media - Strange Game Ambient Loops 3/MAGShim_Shimmer Loop Small Bell Metal Taps_ESM_SGA3.wav',
+    # The Moon Moth's moths (2026-11-16): a soft jacket flutter for a wing beat, a book riffled
+    # through for a burst of many wings, and an insect's wings for the swarm's hum.
+    'mmflut': 'Systematic-Sound - Sound Themes - Modern Cloth Foley 01/SFX CLOTH Foley Jacket Synthetic Soft Shell Whoosh Flutter.wav',
+    'mmriffle': 'Sonic Bat - Turning The Page/SBttp_Regular Book Flip Through 001.wav',
+    'mmwingfx': 'Red Libraries - Mutant Insects (FLYING)/RL_Mutant_Insects_Unknown_Wings Sweetner-E_Idle_03.wav',
     'twinkle': 'Cinematic Sound Design - User Interface/Button Arp Twinkle.wav',
     'brightup': 'Epic Stock Media - Anime Game/DSGNStngr_Power Up Bright Positive Successful Light Saturation Crash Shimmer 05_ESM_AG.wav',
     'rain': 'Bolt - Backyard Rain & Thunder - Suburban Rain Recordings/RAIN_Rain at Night Slow Crescendo Calm Suburban_BOLT_BackyardRain_UsiPro.wav',
@@ -214,6 +219,17 @@ B = {
     # pearls and crescents, bells and twinkles over the splashes, a calm rain, the moon's chime.
     'tcpearl': [('watery', 0.0, 0.3, 1.3, -2, 0), ('twinkle', 0.0, 0.35, 1.4, -10, 0)],
     'tchit': [('liquid', 0.0, 0.3, 1.35, 0, 0), ('shimmer', 2.0, 0.3, 1.2, -10, 0)],
+    # The Moon Moth (2026-11-16): her mark (a soft puff of wings and a glint), the cloud of moths she
+    # breaks into, the wings her finisher opens, Wing Flurry's whirl, the swarm in flight, the Full
+    # Moon moth's nip, Midnight Swarm's moon rising and the swarm pouring down.
+    'mmhit': [('mmflut', 0.19, 0.3, 1.5, 0, 0), ('twinkle', 0.0, 0.3, 1.3, -12, 0)],
+    'mmcloud': [('mmriffle', 0.16, 0.6, 1.25, 0, 0), ('mmflut', 3.07, 0.5, 1.2, -4, 0), ('shimmer', 2.0, 0.5, 1.1, -12, 0)],
+    'mmwings': [('mmflut', 0.19, 0.9, 0.85, 0, 0), ('airy', 0.0, 0.6, 0.9, -4, 0), ('light', 0.0, 0.8, 1.0, -9, 60)],
+    'mmflurry': [('mmriffle', 0.16, 0.8, 1.1, -1, 0), ('shimmer', 8.0, 0.6, 1.3, -11, 0)],
+    'mmswarm': [('mmwingfx', 1.0, 1.2, 1.0, -3, 0), ('mmriffle', 0.16, 1.0, 0.9, -2, 0)],
+    'mmnip': [('mmriffle', 0.4, 0.25, 1.6, -5, 0), ('twinkle', 0.0, 0.25, 1.6, -12, 0)],
+    'mmmoon': [('light', 0.0, 1.4, 0.8, -2, 0), ('bells', 0.0, 1.2, 0.85, -9, 100), ('shimmer', 16.0, 1.4, 0.9, -6, 0)],
+    'mmpour': [('mmwingfx', 2.0, 1.5, 0.9, 0, 0), ('mmriffle', 0.16, 1.1, 0.8, -2, 50), ('mmflut', 5.66, 0.9, 0.8, -3, 150)],
     'tcbubblepop': [('bubbles', 0.0, 0.3, 1.25, -2, 0), ('liquid', 0.0, 0.25, 1.5, -8, 0)],
     'tcribbon': [('watery', 0.0, 0.4, 1.0, 0, 0), ('wflow', 9.6, 0.5, 1.2, -6, 0)],
     'tcpillar': [('brightup', 0.0, 1.0, 0.9, -4, 0), ('wflow', 9.6, 0.9, 1.1, -4, 80), ('shimmer', 5.0, 0.8, 1.0, -10, 0)],

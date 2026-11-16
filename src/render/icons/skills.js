@@ -23,6 +23,8 @@ const BG = {
   // The Maelstrom's: glowing aqua down into the midnight deep.
   deepbg: ['#8ff3e8', '#070d33'],
   moonbg: ['#c8f7e4', '#1d4a52'],
+  // The Moon Moth's: pale moonlit lilac down into the night.
+  mothbg: ['#e6dcff', '#24184e'],
 };
 
 const FRAME = { active: '#fff0f6', buff: '#ffd25a', passive: '#d4cdee' };
@@ -578,6 +580,83 @@ function greatwave() {
   return out;
 }
 
+// ---------- Moon Moth (lilac and moon silver, a moth's gold eye spots) ----------
+const MOTHC = '#b9a2ff';
+const MOTHINK = '#2e1f5e';
+const MOTHGOLD = '#ffd36a';
+const MOTHSIL = '#f4f2ff';
+// A moth seen from above with its wings spread, centred at (cx, cy), `r` its half wingspan: the
+// fore wings bigger with gold eye spots, the hind wings a shade deeper, a furry silver body.
+function mothIcon(cx, cy, r, c = MOTHC) {
+  const out = [];
+  for (const side of [-1, 1]) out.push(...solid(oval(cx + side * r * 0.36, cy + r * 0.38, r * 0.36, r * 0.3, side * 35, 16), sh(c), { d: 0.35, ink: MOTHINK, shadow: false }));
+  for (const side of [-1, 1]) {
+    out.push(...solid(oval(cx + side * r * 0.5, cy - r * 0.16, r * 0.54, r * 0.4, side * -28, 18), c, { d: 0.35, ink: MOTHINK, shadow: false }));
+    if (r > 2.4) out.push(S(oval(cx + side * r * 0.58, cy - r * 0.22, r * 0.17, r * 0.17, 0, 12), MOTHGOLD), S(oval(cx + side * r * 0.58, cy - r * 0.22, r * 0.08, r * 0.08, 0, 10), MOTHINK));
+  }
+  out.push(...solid(oval(cx, cy + r * 0.05, r * 0.13, r * 0.42, 0, 14), MOTHSIL, { d: 0.3, ink: MOTHINK, shadow: false }));
+  return out;
+}
+// A dagger laid along (x0, y0) to (x1, y1), point at the far end: a silver blade, a lilac grip.
+function daggerIcon(x0, y0, x1, y1) {
+  const dx = x1 - x0;
+  const dy = y1 - y0;
+  const l = Math.hypot(dx, dy) || 1;
+  const [ux, uy] = [dx / l, dy / l];
+  const [nx, ny] = [-uy, ux];
+  const at = (k, w) => [x0 + dx * k + nx * w, y0 + dy * k + ny * w];
+  const blade = [at(0.36, 0.9), at(0.8, 0.7), at(1, 0), at(0.8, -0.7), at(0.36, -0.9)];
+  return [
+    S(tube([[x0, y0], at(0.34, 0)], 0.5, 0.9), MOTHINK), S(tube([[x0, y0], at(0.32, 0)], 0.3, 0.55), MOTHC),
+    ...solid(blade, MOTHSIL, { d: 0.3, ink: MOTHINK, shadow: false }),
+    S(tube([at(0.34, 1.4), at(0.34, -1.4)], 0.4, 0.5), MOTHGOLD),
+  ];
+}
+// Moth Step: three moths streaming off a dash, a dagger leading the way.
+function mothstep() {
+  const out = [...tile('mothbg', 'active'), ...aura(8, 8, 6.4, '#e6dcff')];
+  out.push(S(tube([[1.6, 11.6], [6, 9.8], [10.8, 7.6]], 0.3, 1.2), mix(MOTHC, cur.deep, 0.4)));
+  out.push(...mothIcon(3.6, 11.4, 2.2), ...mothIcon(6.8, 9.4, 2.7));
+  out.push(...daggerIcon(9.2, 9, 14.2, 3.8), ...spark(12.8, 12.2, 1, MOTHSIL), ...spark(3.2, 3.6, 0.9, MOTHGOLD));
+  return out;
+}
+// Wing Flurry: two daggers crossed, crescents of cuts whirling round them.
+function wingflurry() {
+  const out = [...tile('mothbg', 'active'), ...aura(8, 8, 6.4, '#e6dcff')];
+  for (const [a0, a1] of [[200, 320], [20, 140]]) {
+    const pts = arcPts(8, 8, 6, 5.4, a0, a1, 10);
+    out.push(S(tube(pts, 0.3, 1.2), MOTHINK), S(tube(pts, 0.2, 0.7), MOTHC));
+  }
+  out.push(...daggerIcon(3.4, 12.6, 12.4, 3.6), ...daggerIcon(12.6, 12.6, 3.6, 3.6));
+  out.push(...spark(13.4, 8.4, 1, MOTHSIL), ...spark(2.6, 8, 0.8, MOTHSIL));
+  return out;
+}
+// Moth Swarm: a cloud of moths, big and small, flying out together.
+function mothswarm() {
+  const out = [...tile('mothbg', 'active'), ...aura(8, 8, 6.6, '#e6dcff')];
+  out.push(...mothIcon(4, 4.6, 2.2), ...mothIcon(4.4, 11.4, 2.4), ...mothIcon(9.4, 8.2, 3.8), ...mothIcon(13.2, 4, 1.9), ...mothIcon(13, 12.4, 1.8));
+  out.push(...spark(1.8, 8.2, 0.8, MOTHSIL));
+  return out;
+}
+// Night Eyes: a moth's eye spot, gold round a dark pupil, wide awake.
+function nighteyes() {
+  const out = [...tile('mothbg', 'passive'), ...aura(8, 8, 6, '#e6dcff')];
+  out.push(...solid(oval(8, 8, 5.6, 4.6, 0, 26), MOTHC, { d: 0.4, ink: MOTHINK }));
+  out.push(...solid(oval(8, 8, 3.4, 3.4, 0, 22), MOTHGOLD, { d: 0.35, ink: '#8e5228', shadow: false }));
+  out.push(S(oval(8, 8, 1.7, 1.9, 0, 16), MOTHINK), S(oval(7.2, 7.1, 0.7, 0.7, 0, 10), '#ffffff'));
+  out.push(...spark(13.2, 3.2, 1, MOTHSIL));
+  return out;
+}
+// Midnight Swarm: a full moon with moths across its face.
+function midnightswarm() {
+  const out = [...tile('mothbg', 'active'), ...aura(8, 7, 6.6, '#f4f2ff', 1.2, 5)];
+  out.push(...solid(oval(8.4, 7.4, 5.2, 5.2, 0, 28), MOTHSIL, { d: 0.4, ink: '#5c5690' }));
+  out.push(S(oval(6.6, 6.4, 1.2, 1, 20, 12), '#dedcf2'), S(oval(10.2, 9.2, 1.5, 1.2, 0, 12), '#dedcf2'));
+  out.push(...mothIcon(5.2, 10.6, 2.6), ...mothIcon(11.2, 4.8, 2), ...mothIcon(11.8, 11.8, 1.8));
+  out.push(...spark(2.4, 3, 1, MOTHGOLD));
+  return out;
+}
+
 // ---------- Maelstrom (the deep: midnight water lit by glowing aqua, a magenta accent) ----------
 const DEEPC = '#1f4fa0';
 const DEEPINK = '#070d33';
@@ -811,6 +890,7 @@ const ART = {
   lightningcage, stormbarrier, magnetize, overcast, bedrock, fortress,
   gmsmite, gmhaste, gmblessing,
   bubbleshield, tidepool, riptide, tidalwave, flow, waverider, oceanheart, greatwave,
+  mothstep, wingflurry, mothswarm, nighteyes, midnightswarm,
   tidallance, undertow, hydrocannon, depthcharge, deepmastery, abyssmaelstrom,
   healingrain, springsurge, moonblessing, tidesreturn, moonfall, tidesong, moontide,
 };

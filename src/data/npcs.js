@@ -74,12 +74,14 @@ export const NPCS = {
     greeting: 'Sprout Village is archer country! Keep your distance and your aim true.',
   },
   vex: {
-    id: 'vex', name: 'Vex', title: 'Dancer', role: 'guide',
-    // (Her dancer's armour went with the line, 2026-11-16: a stage outfit, still a performer.)
-    building: 'thief', sign: 'Wind Dance Hall', gear: { weapon: { id: 'dagger_50', variant: 'dark' }, top: { id: 'look_casual_idol_top' }, bottom: { id: 'look_casual_tennis_bottom' }, shoes: { id: 'look_casual_platforms_shoes' }, gloves: { id: 'look_casual_fingerless_gloves' } },
+    // (The Thief Instructor again from 2026-11-16, for the Moon Moth; her dancer's armour went with
+    // the old line, so she keeps her stage outfit, still a performer.)
+    id: 'vex', name: 'Vex', title: 'Thief Instructor', role: 'instructor', family: 'thief',
+    building: 'thief', sign: 'Moth Hall', gear: { weapon: { id: 'dagger_50', variant: 'dark' }, top: { id: 'look_casual_idol_top' }, bottom: { id: 'look_casual_tennis_bottom' }, shoes: { id: 'look_casual_platforms_shoes' }, gloves: { id: 'look_casual_fingerless_gloves' } },
     quests: ['story_4_1', 'story_4_2', 'story_4_3', 'vex_rumor', 'vex_shadows', 'vex_stage', 'vex_miko', 'vex_festival'],
+    showJob: 'moonmoth',
     look: { hairStyle: 'swoop', hairColor: '#3b3650', skinTone: '#c98e66', eyeColor: '#e8a23c', outfitColor: '#5d5285', eyeStyle: 'sleepy', face: 'smug' },
-    greeting: 'Every fight is a dance, and the harbor is my stage. Light feet, big finish. Shall we?',
+    greeting: 'The harbor lamps come on, and out come the moths. Light feet, a blade in each hand, and you\'re gone before they turn round. Shall we?',
   },
   // Master Sencha, the Tea Terraces' self-appointed Grand Tea Master (2026-11-10): a showman in a
   // green kimono and a grey topknot who sells an "Ancient Tea Ceremony" he made up last Tuesday,

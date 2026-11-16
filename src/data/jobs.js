@@ -1,7 +1,8 @@
 // Jobs: a Novice start, two first jobs at level 5 (FIRST_JOB_LEVEL: the player's call, 2026-11-05,
 // so the plain Novice stretch is short), and second-job branches at level 30.
-// HP/MP growth follows the classic split: warriors tanky, mages MP-heavy. (The Archer and Thief lines
-// were wiped 2026-11-16, to be made again: their weapons stay, for Novices.)
+// HP/MP growth follows the classic split: warriors tanky, mages MP-heavy, thieves quick and light.
+// (The Archer and Thief lines were wiped 2026-11-16, to be made again: their weapons stay, for
+// Novices. The new Thief, the Moon Moth, came the same day.)
 //
 // Balance (tools/tune.mjs finds these from the real game, tools/balance.mjs measures it): `power`
 // scales everything a job hits for, `spread` its hits on monsters past the one it's on. Damage
@@ -14,6 +15,7 @@ export const FAMILY_STATS = {
   beginner: { primary: 'str', secondary: 'dex' },
   warrior: { primary: 'str', secondary: 'dex' },
   mage: { primary: 'int', secondary: 'luk' },
+  thief: { primary: 'luk', secondary: 'dex' },
   gm: { primary: 'int', secondary: 'luk' },
 };
 
@@ -43,6 +45,14 @@ export const JOBS = {
     id: 'tidemage', power: 2.31, spread: 1.01, name: 'Tide Mage', family: 'mage', tier: 1, parent: 'novice', level: FIRST_JOB_LEVEL,
     hp: 18, mp: 26, advanceHp: 200, advanceMp: 400, weapons: ['staff'],
     blurb: 'A mage of the sea, with INT and a staff: whips of water, rolling waves and bubbles that pop. Her hits and heals build Tide; at High Tide every attack sends a wave after it, and the party near her mends. Bubble Shield, Tide Pool, and Great Wave: a giant wave that sweeps the screen.',
+  },
+  // The Moon Moth (docs/design/moon-moth.md): the new Thief, a dagger in each hand and a cloud of
+  // moths, with LUK. Quick flicks and spins; her cuts build Moondust, the fuller the more she crits,
+  // and at Full Moon every attack sends a moth off to nip another monster.
+  moonmoth: {
+    id: 'moonmoth', power: 1.8, spread: 1.0, name: 'Moon Moth', family: 'thief', tier: 1, parent: 'novice', level: FIRST_JOB_LEVEL,
+    hp: 22, mp: 16, advanceHp: 280, advanceMp: 220, weapons: ['dagger'],
+    blurb: 'A night thief with a dagger in each hand and a cloud of moths, with LUK. Her cuts build Moondust, and the fuller it runs the more she crits; at Full Moon every attack sends a moth to nip another monster. Moth Step, Wing Flurry, and Midnight Swarm: moths pour down under a full moon.',
   },
   // Warrior branches. Both ask for Brann's trial first (see `trial`).
   // The Thunderguard's tank path (docs/design/stormwall.md): the storm as a fortress.

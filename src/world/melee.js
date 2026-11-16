@@ -181,6 +181,23 @@ const TIDE_POOL = {
   surf: { move: 'tmsurf', dur: 0.62, step: 64, carry: 0.6, finisher: true, strikes: [tide({ at: 0.56, pct: 170, reach: 92, h: 84, targets: 4, knock: 230, launch: 140, burst: 'tmsplashbig', burstAt: 0.45, burstDur: 0.55, big: true, stop: 0.07, shake: 3 })] },
 };
 
+// The Moon Moth (docs/design/moon-moth.md): a dagger in each hand and a cloud of moths. Her own
+// string: a quick flick across the body, a pirouette with both daggers out cutting all round, and
+// both daggers crossed over her chest then thrown wide like wings opening, moths bursting off the
+// cut. Her pool: two stabs, one from each hand; a rising cut that flicks them up; a little flutter
+// up and a diving cross-cut. Every cut that lands leaves her mark (`mmhit`): wing dust and a moth.
+const moth = (st) => ({ school: 'moth', fx: 'mmhit', ...st });
+PATH_COMBOS.moonmoth = [
+  { move: 'mmflick', dur: 0.32, step: 8, strikes: [moth({ at: 0.45, pct: 88, reach: 64, h: 52, knock: 35, arc: [-110, 200], thick: 6 })] },
+  { move: 'mmspin', dur: 0.44, step: 10, strikes: [moth({ at: 0.34, pct: 50, reach: 64, h: 58, around: true, targets: 3, knock: 20, arc: [-120, 330], thick: 6 }), moth({ at: 0.66, pct: 54, reach: 64, h: 58, around: true, targets: 3, knock: 60, arc: [60, -330], thick: 6 })] },
+  { move: 'mmwings', dur: 0.62, step: 12, finisher: true, strikes: [moth({ at: 0.56, pct: 175, reach: 80, h: 70, targets: 3, knock: 220, launch: 120, arc: [-150, 300], thick: 10, burst: 'mmwings', burstAt: 0.3, burstDur: 0.6, big: true, stop: 0.08, shake: 2 })] },
+];
+const MOTH_POOL = {
+  twin: { move: 'mmtwin', dur: 0.36, step: 10, strikes: [moth({ at: 0.3, pct: 44, reach: 62, h: 46, knock: 15, pierce: true }), moth({ at: 0.64, pct: 48, reach: 62, h: 46, knock: 45, pierce: true })] },
+  hook: { move: 'mmhook', dur: 0.42, step: 8, strikes: [moth({ at: 0.46, pct: 98, reach: 66, h: 72, targets: 2, knock: 30, launch: 300, arc: [100, -215], thick: 7 })] },
+  swoop: { move: 'mmswoop', dur: 0.64, step: 30, carry: 0.55, finisher: true, strikes: [moth({ at: 0.62, pct: 168, reach: 76, h: 66, targets: 3, knock: 200, arc: [-160, 320], thick: 10, burst: 'mmcloud', burstAt: 0.35, burstDur: 0.55, big: true, stop: 0.07, shake: 2 })] },
+};
+
 // The Maelstrom (docs/design/maelstrom.md): the deep sea out of her staff. Her own string: a spear
 // of pressurised water through two, a vortex bolt spinning in, and a vortex opened ahead that drags
 // them in and bursts. Her pool: a jet of pressure or two glowing bubbles that go off; two crossing
@@ -327,6 +344,11 @@ export const PATH_VARIANTS = {
     [PATH_COMBOS.maelstrom[1], DEEP_POOL.cross, DEEP_POOL.slash],
     [PATH_COMBOS.maelstrom[2], DEEP_POOL.beam, DEEP_POOL.slam],
   ],
+  moonmoth: [
+    [PATH_COMBOS.moonmoth[0], MOTH_POOL.twin],
+    [PATH_COMBOS.moonmoth[1], MOTH_POOL.hook],
+    [PATH_COMBOS.moonmoth[2], MOTH_POOL.swoop],
+  ],
   tidemage: [
     [PATH_COMBOS.tidemage[0], TIDE_POOL.bubbles, TIDE_POOL.splash],
     [PATH_COMBOS.tidemage[1], TIDE_POOL.twin, TIDE_POOL.geyser],
@@ -456,6 +478,22 @@ const STORM_COMMANDS = {
   dash: { move: 'tgflash', dur: 0.44, step: 70, carry: 0.6, guard: 0.3, strikes: [storm({ at: 0.42, pct: 140, reach: 88, h: 52, targets: 3, pierce: true, knock: 200, burst: 'tgflash', burstAt: -0.7, burstDur: 0.4, big: true, stop: 0.05, shake: 1 })] },
   slam: { move: 'tgslam', dur: 0.6, step: 18, strikes: [storm({ at: 0.56, pct: 170, reach: 92, h: 80, around: true, targets: 4, knock: 220, burst: 'tgclap', burstAt: 0, burstDur: 0.55, big: true, stop: 0.09, shake: 4 })] },
 };
+// The Moon Moth's command moves: up + attack, a rising double cut that follows them up; in the air,
+// two fluttering cuts that hold her up (the second a heavier one); out of a run, she breaks into
+// moths and re-forms past them, turned round (while still moths) to cut what she passed (a
+// backstab on anything facing away), untouchable as moths.
+const MOTH_COMMANDS = {
+  up: { move: 'mmrise', dur: 0.46, step: 8, strikes: [moth({ at: 0.3, pct: 62, reach: 66, h: 90, targets: 3, knock: 20, launch: 320, hop: 300, arc: [80, -175], thick: 7 }), moth({ at: 0.6, pct: 70, reach: 66, h: 110, targets: 3, knock: 30, launch: 420, hop: 260, arc: [60, -150], thick: 8, stop: 0.04 })] },
+  air: [
+    { move: 'mmaircut', dur: 0.34, hang: true, strikes: [moth({ at: 0.45, pct: 88, reach: 66, h: 80, targets: 2, knock: 15, launch: 150, arc: [-115, 205], thick: 7 })] },
+    { move: 'mmaircut', dur: 0.4, hang: true, finisher: true, strikes: [moth({ at: 0.45, pct: 112, reach: 72, h: 86, targets: 3, knock: 140, launch: 120, arc: [-140, 260], thick: 9, burst: 'mmcloud', burstAt: 0.45, burstDur: 0.5, big: true, stop: 0.05, shake: 1 })] },
+  ],
+  dash: { move: 'mmstep', dur: 0.46, step: 96, carry: 0.7, guard: 0.4, moths: [0.12, 0.5], strikes: [
+    { at: 0.08, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, gauge: 0, burst: 'mmcloud', burstAt: 0, burstDur: 0.45 },
+    { at: 0.46, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, gauge: 0, turn: true },
+    moth({ at: 0.62, pct: 135, reach: 120, h: 56, targets: 4, knock: 120, turn: true, backstab: 1.3, burst: 'mmcloud', burstAt: 0, burstDur: 0.45, big: true, stop: 0.05 }),
+  ] },
+};
 // The warrior paths fight in a blade's reach and put their weight into it.
 const warriorPath = (char) => hasVolt(char) || hasGale(char) || hasBulwark(char) || hasRage(char) || hasFaith(char);
 // How long you must have been running for an attack to become a dash attack.
@@ -530,6 +568,40 @@ export function addTide(world, n) {
 export const highTide = (world) => hasTide(world.char) && (world.tide ?? 0) >= TIDE_MAX;
 // How much bigger her waves run with the Tide: up to a third larger when it's full.
 export const tideSwell = (world) => (hasTide(world.char) ? 1 + (world.tide ?? 0) / TIDE_MAX / 3 : 1);
+// Moondust: the Moon Moth's gauge (docs/design/moon-moth.md). Her cuts that land build it, a third
+// again for each extra monster a blow catches; it settles once the fighting stops. The fuller it
+// runs, the more she crits (up to MOONDUST_CRIT more). Full (Full Moon): every basic attack that
+// lands sends a moth off to nip another monster near it, and Midnight Swarm is ready.
+export const MOONDUST_MAX = 100;
+const MOONDUST_HOLD = 5;
+const MOONDUST_DRAIN = 10;
+export const MOONDUST_CRIT = 0.2;
+export const MOTH_NIP = 40; // % of a basic hit: the Full Moon moth's nip
+export const hasMoth = (char) => jobChain(char.job).includes('moonmoth');
+export function addMoondust(world, n) {
+  if (!hasMoth(world.char) || n <= 0) return;
+  world.moondust = Math.min(MOONDUST_MAX, (world.moondust ?? 0) + n);
+  world.moondustAt = world.now;
+}
+export const fullMoon = (world) => hasMoth(world.char) && (world.moondust ?? 0) >= MOONDUST_MAX;
+// Her crits: how much more often she crits for how full the Moondust runs, and the stats a hit is
+// rolled with.
+export const moondustCrit = (world) => (hasMoth(world.char) ? (MOONDUST_CRIT * Math.min(MOONDUST_MAX, world.moondust ?? 0)) / MOONDUST_MAX : 0);
+const critStats = (world, stats) => (moondustCrit(world) > 0 ? { ...stats, critRate: (stats.critRate ?? 0) + moondustCrit(world) } : stats);
+function tickMoondust(world, dt) {
+  if (world.moondust > 0 && world.now - (world.moondustAt ?? 0) > MOONDUST_HOLD) world.moondust = Math.max(0, world.moondust - MOONDUST_DRAIN * dt);
+}
+// Full Moon: a moth flutters off a basic attack that lands and nips the nearest monster the blow
+// didn't catch (else the one it hit), at most one every quarter second.
+function moonNip(world, hit, s) {
+  if (!fullMoon(world) || !hit.length || world.now - (world.nipAt ?? -9) < 0.25) return;
+  const from = hit[0];
+  const near = world.mobs.filter((m) => m.hp > 0 && !hit.includes(m) && Math.abs(m.x - from.x) < 220 && Math.abs(m.y - from.y) < 120).sort((a, b) => Math.abs(a.x - from.x) - Math.abs(b.x - from.x))[0] ?? from;
+  world.nipAt = world.now;
+  const dir = Math.sign(near.x - from.x) || s.dir || 1;
+  world.fx.push({ kind: 'mmnip', x: from.x, y: from.y - from.def.h * 0.6, tx: near.x, ty: near.y - near.def.h * 0.55, mob: near, dir, t: 0, dur: 0.42, seed: Math.random() });
+  shotHit(world, { pct: MOTH_NIP, scale: 100, key: 'procmoth', dir, fromX: from.x, knock: 20, burst: 'mmhit', gauge: 0 }, near, 0.36, 0);
+}
 // Moonsong: the Tidecaller's gauge (the Tide Mage's healer path, docs/design/tidecaller.md). Her
 // hits and her heals build it; it fades once the fighting stops. The fuller it runs, the stronger
 // her heals (up to a third more). Full (Spring Tide), her heals leave a bubble on everyone they
@@ -888,7 +960,7 @@ const STAR_SHOTS = new Set(['star', 'moonstar']);
 // A job's own gauge: which one the character has ('volt', 'gale', 'bulwark', 'rage', 'faith',
 // 'depth', 'moon' or 'tide'), and how full it is (0-1). Finishers need it full and spend it.
 export function gaugeOf(char) {
-  return hasVolt(char) ? 'volt' : hasGale(char) ? 'gale' : hasBulwark(char) ? 'bulwark' : hasRage(char) ? 'rage' : hasFaith(char) ? 'faith' : hasDepth(char) ? 'depth' : hasMoon(char) ? 'moon' : hasTide(char) ? 'tide' : null;
+  return hasVolt(char) ? 'volt' : hasGale(char) ? 'gale' : hasBulwark(char) ? 'bulwark' : hasRage(char) ? 'rage' : hasFaith(char) ? 'faith' : hasDepth(char) ? 'depth' : hasMoon(char) ? 'moon' : hasTide(char) ? 'tide' : hasMoth(char) ? 'moondust' : null;
 }
 export function gaugeFull(world) {
   const g = gaugeOf(world.char);
@@ -898,6 +970,7 @@ export function gaugeFull(world) {
 // What a shot that lands builds on a ranged path's gauge (see world.js).
 export function addAim(world, n, mob = null, el = null) {
   addTide(world, n);
+  addMoondust(world, n);
   addDepth(world, n);
   addMoon(world, n);
   if (mob && n > 0) abyssVortex(world, mob);
@@ -906,6 +979,7 @@ export function addAim(world, n, mob = null, el = null) {
 export function pathOf(world) {
   const { char } = world;
   const w = world.stats.weaponType;
+  if (w === 'dagger' && hasMoth(char)) return 'moonmoth';
   if (MELEE.has(w) && w !== 'none') return hasVolt(char) ? 'warrior' : hasGale(char) ? 'tempest' : hasBulwark(char) ? 'stormwall' : null;
   if (w === 'none') return 'fists';
   if (w === 'staff' && hasDepth(char)) return 'maelstrom';
@@ -942,7 +1016,7 @@ export function basicCombo(world) {
   // Blades, axes, spears, daggers and fists have command variants: in the air, an air combo;
   // Up + attack on the ground, a launcher that follows them up; running, a dash attack.
   if (MELEE.has(world.stats.weaponType)) {
-    const own = { warrior: STORM_COMMANDS, tempest: RED_COMMANDS, stormwall: WALL_COMMANDS }[pathOf(world)] ?? null;
+    const own = { warrior: STORM_COMMANDS, tempest: RED_COMMANDS, stormwall: WALL_COMMANDS, moonmoth: MOTH_COMMANDS }[pathOf(world)] ?? null;
     const air = own?.air ?? AIR;
     const blades = barrageOf(world);
     if (!body.onGround && !body.rope) {
@@ -1118,6 +1192,14 @@ function playStep(world, step, scale, key, school = null, after = 0) {
       step = { ...step, strikes: [...step.strikes, { ...TIDE_SHOT, at: Math.min(0.95, last + 0.1), shot: 'tmwave', pct: 35, range: 260, h: 60, targets: 3, pierce: true, knock: 40, speed: 560, gauge: 0, swell: 0.7, quiet: true }] };
     }
   }
+  // Moth Step: between `moths` (0-1 of the move) she is a cloud of moths flying on ahead (drawn
+  // hidden, render/scene.js), re-forming where the step carries her.
+  if (step.moths) {
+    const [m0, m1] = step.moths;
+    world.vanish = { since: now + m0 * dur, until: now + m1 * dur };
+    const run = Math.min(1, m1 / (step.carry ?? timed[0]?.at ?? 1));
+    world.fx.push({ kind: 'mmflight', x: body.x, y: body.y, tx: body.x + body.facing * (step.step ?? 0) * run, dir: body.facing, t: -m0 * dur, dur: (m1 - m0) * dur + 0.08, seed: Math.random() });
+  }
   step.strikes.forEach((s, n) => {
     if (s.onLand) return;
     // The blade's whoosh starts during the wind-up, so it peaks as the blow lands (audio cue).
@@ -1132,6 +1214,7 @@ export function tickMelee(world, dt) {
   if (world.rage > 0 && world.now - (world.rageAt ?? 0) > RAGE_HOLD && !inForm(world)) world.rage = Math.max(0, world.rage - RAGE_DRAIN * dt);
   if (world.faith > 0 && world.now - (world.faithAt ?? 0) > FAITH_HOLD && !inForm(world)) world.faith = Math.max(0, world.faith - FAITH_DRAIN * dt);
   tickTide(world, dt);
+  tickMoondust(world, dt);
   tickDepth(world, dt);
   tickMoon(world, dt);
   if (world.volt > 0 && world.now - (world.voltAt ?? 0) > VOLT_HOLD) world.volt = Math.max(0, world.volt - VOLT_DRAIN * dt);
@@ -1233,7 +1316,7 @@ function land(world, s) {
   let crits = 0;
   targets.forEach((m, i) => {
     const miss = Math.random() >= hitChance(acc, char.level, m.def);
-    let roll = miss ? null : rollHit(dmgRange, stats, m.def, char.level, Math.random, s.crit ? 1 : 0);
+    let roll = miss ? null : rollHit(dmgRange, critStats(world, stats), m.def, char.level, Math.random, s.crit ? 1 : 0);
     // A backstab hits harder on a monster that isn't facing you.
     const behind = Math.sign(m.dir || 1) === Math.sign(m.x - body.x);
     if (roll && s.backstab && behind) roll = { ...roll, damage: Math.round(roll.damage * s.backstab), crit: true };
@@ -1282,6 +1365,8 @@ function land(world, s) {
   if (targets.length && !s.phantom && s.key !== 'procecho') addGale(world, (s.gauge ?? (s.key.startsWith('basic') ? 5 : 4)) * (1 + 0.3 * (targets.length - 1)));
   if (targets.length) addFaith(world, s.faith ?? (s.key.startsWith('basic') ? 2 : 4));
   if (targets.length && !s.phantom) addTide(world, (s.gauge ?? (s.key.startsWith('basic') ? 3 : 4)) * (1 + 0.3 * (targets.length - 1)));
+  if (targets.length && !s.phantom) addMoondust(world, (s.gauge ?? (s.key.startsWith('basic') ? 3 : 4)) * (1 + 0.3 * (targets.length - 1)));
+  if (s.key.startsWith('basic') && !s.phantom) moonNip(world, targets, s);
   if (targets.length && !s.phantom) addDepth(world, (s.gauge ?? (s.key.startsWith('basic') ? 3 : 4)) * (1 + 0.3 * (targets.length - 1)));
   if (targets.length && hasDepth(char)) targets.forEach((m) => abyssVortex(world, m));
   if (targets.length && !s.phantom) addMoon(world, (s.gauge ?? (s.key.startsWith('basic') ? 3 : 4)) * (1 + 0.3 * (targets.length - 1)));
@@ -1406,7 +1491,7 @@ function shotHit(world, s, m, delay, stack = 0, element = null, rank = 0) {
   const miss = !sure && Math.random() >= hitChance(acc, char.level, m.def);
   const extraCrit = sure ? 1 : 0;
   const range = s.magic ? magicRange(stats, (s.pct * s.scale * tuneOf(s.key)) / 100) : physicalRange(stats, stats.weaponType, (s.pct * s.scale * tuneOf(s.key)) / 100);
-  const roll = miss ? null : rollHit(range, stats, m.def, char.level, Math.random, extraCrit);
+  const roll = miss ? null : rollHit(range, critStats(world, stats), m.def, char.level, Math.random, extraCrit);
   world.pending.push({
     at: world.now + delay, mob: m, miss, damage: roll?.damage ?? 0, crit: roll?.crit ?? false, fromX: s.fromX ?? body.x, stack, knock: s.knock, launch: s.launch, big: s.big, stop: s.stop, shake: s.shake, element,
     via: s.shot ?? (s.rain ? 'rain' : undefined), stun: miss ? undefined : s.stun, burn: miss ? undefined : s.burn, freeze: miss ? undefined : s.freeze, burst: s.burst, dir: s.dir,
@@ -1480,7 +1565,7 @@ function fire(world, strike) {
   };
   // A little snap of the string (or flick of the wrist) as it goes; a heavy shot kicks back.
   // (The Tide Mage's water carries its own splash: no flash off her staff.)
-  if (!hasTide(world.char) && !hasDepth(world.char) && !hasMoon(world.char)) world.fx.push({ kind: 'spark', x: ox, y: oy, t: 0, dur: 0.16, muzzle: true });
+  if (!hasTide(world.char) && !hasDepth(world.char) && !hasMoon(world.char) && !hasMoth(world.char)) world.fx.push({ kind: 'spark', x: ox, y: oy, t: 0, dur: 0.16, muzzle: true });
   // Heavy shots kick the view back (research/archery.md 37).
   if (s.big) world.juice.push({ type: 'kick', x: -s.dir * 2, y: 0 });
   // Shots aimed up or down (`lift`, `drop`) look for monsters above or below you.

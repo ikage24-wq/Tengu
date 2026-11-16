@@ -167,6 +167,8 @@ function weaponStyle(bot) {
   if (bot.char.job === 'tidecaller') return { reach: 220, lift: 100, pose: pick2(['tcpearl', 'tccrescent', 'tcribbon', 'tcchain']), shot: 'tcpearl', ranged: true };
   // The Maelstrom throws spears of the deep.
   if (bot.char.job === 'maelstrom') return { reach: 220, lift: 100, pose: pick2(['msspear', 'msbolt', 'mscross', 'msjet']), shot: 'msspear', ranged: true };
+  // The Moon Moth flicks and spins in close with her two daggers.
+  if (bot.char.job === 'moonmoth') return { reach: 46, lift: 30, pose: pick2(['mmflick', 'mmhook']), shot: null, ranged: false };
   // The Tide Mage sends her water.
   if (bot.char.job === 'tidemage') return { reach: 200, lift: 100, pose: pick2(['tmwhip', 'tmroll', 'tmbubbles', 'tmgeyser']), shot: 'tmwave', ranged: true };
   if (WEAPON_TYPES[type]?.ranged) return { reach: 190, lift: 100, pose: type === 'gauntlet' ? 'throw' : 'draw', shot: type === 'gauntlet' ? 'star' : 'arrow', ranged: true };

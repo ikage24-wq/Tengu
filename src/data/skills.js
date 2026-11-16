@@ -577,6 +577,79 @@ export const SKILLS = {
     },
   }),
 
+  // ---------- Moon Moth (lilac and moon silver: moths, wing dust, a moth's gold eye spots) ----------
+  // The new Thief (docs/design/moon-moth.md; the old line was wiped 2026-11-16): a dagger in each
+  // hand and a cloud of moths. Her cuts that land build Moondust (world/melee.js); the fuller it
+  // runs the more she crits, and full (Full Moon) every basic attack sends a moth off to nip another
+  // monster. The first pass: four skills and her mastery; four more and her paths come later.
+  mothstep: skill({
+    id: 'mothstep', anim: 'mmstep', name: 'Moth Step', job: 'moonmoth', type: 'attack', fx: null, icon: 'mothstep', school: 'moth', maxLevel: 10, movement: true,
+    desc: 'Break into a cloud of moths and re-form past them, turned round to cut whatever you passed through: a backstab on anything facing away. Nothing touches you while you\'re moths.',
+    weapons: ['dagger'],
+    at: (lv, m) => {
+      const k = (a, b) => lerp(a, b, lv, m);
+      return {
+        mp: k(8, 5), pct: k(90, 150), hits: 1, targets: 4,
+        combo: [{ move: 'mmstep', dur: 0.5, step: k(140, 200), carry: 0.7, guard: 0.5, moths: [0.12, 0.5], strikes: [
+          { at: 0.06, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, gauge: 0, burst: 'mmcloud', burstAt: 0, burstDur: 0.5 },
+          // (Still moths, she turns round; she re-forms facing what she passed through and cuts it.)
+          { at: 0.46, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, gauge: 0, turn: true },
+          { at: 0.62, school: 'moth', fx: 'mmhit', pct: k(90, 150), reach: k(160, 220), h: 60, targets: 4, knock: 120, turn: true, backstab: 1.5, burst: 'mmcloud', burstAt: 0, burstDur: 0.5, big: true, stop: 0.05 },
+        ] }],
+      };
+    },
+  }),
+  wingflurry: skill({
+    id: 'wingflurry', anim: 'mmflurry', name: 'Wing Flurry', job: 'moonmoth', type: 'attack', fx: null, icon: 'wingflurry', school: 'moth', maxLevel: 20,
+    desc: 'Cut six times in a blur, both daggers flashing, wing dust whirling off every cut; the last cut throws them back.',
+    weapons: ['dagger'],
+    at: (lv, m) => {
+      const k = (a, b) => lerp(a, b, lv, m);
+      const per = k(34, 58);
+      const cut = (at, i) => ({ at, school: 'moth', fx: 'mmhit', pct: per, reach: 72, h: 58, targets: 3, knock: 8, arc: i % 2 ? [100, -200] : [-110, 200], thick: 6 });
+      return {
+        mp: k(8, 16), pct: per, hits: 6, targets: 3,
+        combo: [{ move: 'mmflurry', dur: 0.84, step: 10, strikes: [
+          { ...cut(0.13, 0), burst: 'mmflurry', burstAt: 0.45, burstDur: 0.6 },
+          ...[0.24, 0.34, 0.44, 0.55].map((at, i) => cut(at, i + 1)),
+          { at: 0.76, school: 'moth', fx: 'mmhit', pct: Math.round(per * 1.8), reach: 76, h: 62, targets: 3, knock: 200, arc: [-150, 300], thick: 9, big: true, stop: 0.06, shake: 2 },
+        ] }],
+      };
+    },
+  }),
+  mothswarm: skill({
+    id: 'mothswarm', anim: 'mmswarm', name: 'Moth Swarm', job: 'moonmoth', type: 'attack', fx: null, icon: 'mothswarm', school: 'moth', maxLevel: 20,
+    desc: 'Draw both daggers in to your chest, then fling your hands forward: a swarm of moths pours out ahead, nibbling through every monster in a line.',
+    weapons: ['dagger'],
+    at: (lv, m) => {
+      const k = (a, b) => lerp(a, b, lv, m);
+      return {
+        mp: k(12, 22), pct: k(150, 250), hits: 1, targets: 6,
+        combo: [{ move: 'mmswarm', dur: 0.72, step: -4, strikes: [{ at: 0.48, school: 'moth', burst: 'mmhit', shot: 'mmswarm', pct: k(150, 250), range: 360, h: 80, targets: 6, pierce: true, knock: 120, speed: 400, big: true, stop: 0.04 }] }],
+      };
+    },
+  }),
+  nighteyes: skill({
+    id: 'nighteyes', name: 'Night Eyes', job: 'moonmoth', type: 'passive', grows: true, fx: null, icon: 'nighteyes',
+    desc: 'You see best by moonlight: your cuts land truer, and they crit more often and harder.',
+    at: (lv, m) => ({ passive: { acc: lerp(3, 25, lv, m), mastery: lerpf(0.1, 0.35, lv, m), critRate: lerpf(0.03, 0.1, lv, m), critDamage: lerpf(0.05, 0.2, lv, m) } }),
+  }),
+  midnightswarm: skill({
+    id: 'midnightswarm', anim: 'mmmidnight', dmg: 2, name: 'Midnight Swarm', job: 'moonmoth', type: 'attack', fx: null, icon: 'midnightswarm', school: 'moth', maxLevel: 10, fullGauge: true,
+    desc: 'Finisher: needs a full Moondust, and spends it. Spring up as a full moon rises behind you, hang there with your daggers crossed while the moths gather, then throw your arms wide: the swarm pours down across the screen through every monster in front of you.',
+    weapons: ['dagger'],
+    at: (lv, m) => {
+      const k = (a, b) => lerp(a, b, lv, m);
+      return {
+        mp: k(26, 44), pct: k(170, 270), hits: 1, targets: 0,
+        combo: [{ move: 'mmmidnight', dur: 1.6, step: 0, finisher: true, guard: 1.4, strikes: [
+          { at: 0.2, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, gauge: 0, burst: 'mmmoon', burstAt: 0, burstDur: 1.4 },
+          { at: 0.62, school: 'moth', fx: 'mmhit', pct: k(170, 270), reach: 520, h: 220, targets: 12, knock: 260, launch: 160, burst: 'mmpour', burstAt: 0.02, burstDur: 0.9, big: true, stop: 0.1, shake: 4 },
+        ] }],
+      };
+    },
+  }),
+
   // ---------- Maelstrom (the Tide Mage's damage path: the deep sea, midnight and glowing aqua) ----------
   // docs/design/maelstrom.md. Her hits build Depth (world/melee.js): the deeper it runs the harder she
   // hits; full (the Abyss), every hit opens a vortex on what it struck. She plays the Tide Mage's

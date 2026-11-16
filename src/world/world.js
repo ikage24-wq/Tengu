@@ -27,7 +27,7 @@ import { createSpawner, tickSpawner, updateMob, hitMob, mobBox, MOB_ATTACK_GAP }
 import { rollLoot, spawnDrops, updateDrops, dropInReach, dropFromHero } from './drops.js';
 import { cast, castBlocker, weaponElement, hurtProcs, blockOnHit, drinkBlood, tickLater } from './combat.js';
 import { tickMelee, faithGuard, addAim, hasRage, hasFaith, hasVolt, overcharged, eyeOfStorm, hasBulwark, barrageRelease, BARRAGE_WALK } from './melee.js';
-import { healAround, hasTide, hasDepth, hasMoon, springDrop, hasGale } from './melee.js';
+import { healAround, hasTide, hasDepth, hasMoon, springDrop, hasGale, hasMoth } from './melee.js';
 import { JOBS, nextJobs } from '../data/jobs.js';
 import { celebrateLevels } from './levelup.js';
 import { DUNGEONS } from '../data/dungeons.js';
@@ -1000,7 +1000,7 @@ export function updateWorld(world, dt, input) {
       if (h.mend) healAround(world, m.x, m.y, h.mend, 220, true, h.el);
       drinkBlood(world, h.damage);
     }
-    if (!hasTide(world.char) && !hasDepth(world.char) && !hasMoon(world.char) && !hasVolt(world.char) && !hasGale(world.char) && !hasBulwark(world.char)) world.fx.push({ kind: 'spark', via: h.via, weapon: world.stats.weaponType, path: hasRage(world.char) ? 'rage' : hasFaith(world.char) ? 'holy' : hasVolt(world.char) ? 'thunder' : null, dir: world.body.facing, x: m.x, y: m.y - (m.air ?? 0) - m.def.h / 2, t: 0, dur: h.big ? 0.32 : 0.25, crit: h.crit || h.big, seed: Math.random() });
+    if (!hasTide(world.char) && !hasDepth(world.char) && !hasMoon(world.char) && !hasVolt(world.char) && !hasGale(world.char) && !hasBulwark(world.char) && !hasMoth(world.char)) world.fx.push({ kind: 'spark', via: h.via, weapon: world.stats.weaponType, path: hasRage(world.char) ? 'rage' : hasFaith(world.char) ? 'holy' : hasVolt(world.char) ? 'thunder' : null, dir: world.body.facing, x: m.x, y: m.y - (m.air ?? 0) - m.def.h / 2, t: 0, dur: h.big ? 0.32 : 0.25, crit: h.crit || h.big, seed: Math.random() });
     world.juice.push({ type: 'hit', x: m.x, y: m.y - m.def.h / 2, crit: h.crit, big: h.big, party: Boolean(h.party), element: h.party ? null : h.element ?? weaponElement(char), dir: Math.sign(m.x - h.fromX) || 1, via: h.via, school: h.school, weapon: h.weapon, mob: m.def.id, boss: Boolean(m.def.boss) });
     // Endgame weapons add an elemental impact on every hit.
     const element = h.party ? null : h.element ?? weaponElement(char);

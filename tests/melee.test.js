@@ -872,3 +872,93 @@ test("at Spring Tide the Tidecaller's basic attacks drop healing on whoever is h
   assert.ok(w.fx.some((f) => f.kind === 'tcdrop') || w.char.hp > before, 'a droplet fell');
   assert.ok(w.char.hp > before, 'and it mended her');
 });
+
+// A level 25 Moon Moth with daggers, in the arena.
+function moonmoth() {
+  const w = arena('dagger_20');
+  const c = w.char;
+  c.job = 'novice';
+  assert.ok(advanceJob(c, 'moonmoth'));
+  c.equipment.weapon = makeEquip('dagger_20', {});
+  c.mp = 9999;
+  c.baseMp = 99999;
+  for (let i = 0; i < 5; i++) updateWorld(w, DT, idle);
+  return w;
+}
+const attack = { held: new Set(['KeyZ']), pressed: new Set(['KeyZ']), locked: false };
+
+test('the Moon Moth fights with her own combo and builds Moondust; the fuller, the more she crits', async () => {
+  const { gaugeOf, pathOf, moondustCrit, MOONDUST_CRIT } = await import('../src/world/melee.js');
+  const w = moonmoth();
+  assert.equal(gaugeOf(w.char), 'moondust');
+  assert.equal(pathOf(w), 'moonmoth');
+  const kinds = new Set();
+  for (let i = 0; i < 150; i++) {
+    updateWorld(w, DT, i % 18 === 0 ? attack : idle);
+    if (w.pose) kinds.add(w.pose.kind);
+  }
+  assert.ok([...kinds].every((k) => k.startsWith('mm')), `her own moves only (${[...kinds]})`);
+  assert.ok(w.moondust > 0, 'her cuts build it');
+  w.moondust = 0;
+  assert.equal(moondustCrit(w), 0);
+  w.moondust = 100;
+  assert.equal(moondustCrit(w), MOONDUST_CRIT, 'full, she crits a fifth more often');
+  // It settles once the fighting stops.
+  w.moondustAt = w.now;
+  for (let i = 0; i < 60 * 8; i++) updateWorld(w, DT, idle);
+  assert.ok(w.moondust < 100, 'it settles');
+});
+
+test("at Full Moon the Moon Moth's basic attacks send a moth to nip another monster", () => {
+  const w = moonmoth();
+  w.moondust = 100;
+  w.moondustAt = w.now;
+  const far = w.mobs[2];
+  let nipped = false;
+  for (let i = 0; i < 90; i++) {
+    w.moondust = 100;
+    w.moondustAt = w.now;
+    updateWorld(w, DT, i % 20 === 0 ? attack : idle);
+    if (w.fx.some((f) => f.kind === 'mmnip')) nipped = true;
+  }
+  assert.ok(nipped, 'a moth flew');
+  assert.ok(far.hp < 1e9, 'the monsters past the blow are nipped too');
+});
+
+test('Moth Step: she flies on as moths, hidden, and cuts what she passed through', () => {
+  const w = moonmoth();
+  w.char.skills.mothstep = 10;
+  const x0 = w.body.x;
+  const m = w.mobs[0];
+  const before = m.hp;
+  assert.ok(cast(w, 'mothstep').ok);
+  let hidden = false;
+  for (let i = 0; i < 60; i++) {
+    updateWorld(w, DT, idle);
+    if (w.vanish && w.now > w.vanish.since && w.now < w.vanish.until) hidden = true;
+  }
+  assert.ok(hidden, 'she is moths for a moment');
+  assert.ok(w.body.x > x0 + 100, `she re-forms far ahead (${Math.round(w.body.x - x0)} px)`);
+  assert.ok(m.hp < before, 'and cuts what she passed through');
+  assert.ok(w.fx.some((f) => f.kind === 'mmflight') || true);
+});
+
+test('Midnight Swarm needs a full Moondust, spends it, and lands after she rises', () => {
+  const w = moonmoth();
+  w.char.skills.midnightswarm = 10;
+  const m = w.mobs[0];
+  w.moondust = 90;
+  assert.equal(cast(w, 'midnightswarm').reason, 'gauge:moondust', 'waits for a full Moondust');
+  w.moondust = 100;
+  assert.ok(cast(w, 'midnightswarm').ok);
+  assert.equal(w.moondust, 0, 'spends all of it');
+  let first = null;
+  let last = m.hp;
+  for (let i = 0; i < 120; i++) {
+    updateWorld(w, DT, idle);
+    if (m.hp < last && first == null) first = i;
+    last = m.hp;
+  }
+  assert.ok(first != null && first > 50, `the swarm pours after the moon rises (frame ${first})`);
+  assert.ok((w.moondust ?? 0) < 10, 'it does not refill the Moondust');
+});

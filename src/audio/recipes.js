@@ -328,6 +328,15 @@ const R = {
   tmfall: { db: -12, vary: 6, max: 2, gap: 90, layers: [whoosh(700, 600, 3000, { focus: 0.3, db: -4 })] },
   tmfallbig: { db: -10, vary: 4, max: 1, layers: [whoosh(900, 500, 2600, { focus: 0.3, db: -3 })] },
   tmhit: { db: -14, vary: 10, max: 3, gap: 40, layers: [whoosh(250, 900, 3600, { focus: 0.1, db: -6 })] },
+  // The Moon Moth's moths.
+  mmhit: { db: -15, vary: 10, max: 3, gap: 40, layers: [whoosh(250, 900, 3600, { focus: 0.1, db: -6 })] },
+  mmcloud: { db: -12, vary: 6, max: 2, gap: 80, layers: [whoosh(600, 700, 3200, { focus: 0.3, db: -4 })] },
+  mmwings: { db: -11, vary: 4, max: 1, layers: [whoosh(900, 500, 2600, { focus: 0.3, db: -4 })] },
+  mmflurry: { db: -12, vary: 4, max: 1, layers: [whoosh(800, 600, 3000, { focus: 0.3, db: -4 })] },
+  mmswarm: { db: -12, vary: 4, max: 2, gap: 90, layers: [whoosh(1000, 500, 2600, { focus: 0.4, db: -4 })] },
+  mmnip: { db: -17, vary: 10, max: 2, gap: 120, layers: [whoosh(250, 1200, 4000, { focus: 0.1, db: -6 })] },
+  mmmoon: { db: -10, max: 1, room: true, layers: [whoosh(1400, 400, 2400, { focus: 0.5, db: -3 })] },
+  mmpour: { db: -9, max: 1, room: true, layers: [whoosh(1500, 300, 2200, { focus: 0.4, db: -3 })] },
   // The Stormwall: recorded (recorded.js); these set each one's level, spread and cap.
   bwhit: { db: -12, vary: 6, max: 3, gap: 50, layers: [whoosh(400, 600, 3200, { focus: 0.3, db: -4 })] },
   bwplate: { db: -12, vary: 6, max: 3, gap: 50, layers: [whoosh(400, 600, 3200, { focus: 0.3, db: -4 })] },

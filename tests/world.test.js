@@ -340,8 +340,8 @@ test("a GM job swap forgets skills from outside the new job's line and gives the
 test('the warrior and the tide mage branch at 30', async () => {
   const { nextJobs, JOBS } = await import('../src/data/jobs.js');
   const { SKILLS } = await import('../src/data/skills.js');
-  assert.deepEqual(nextJobs('novice', 10).map((j) => j.id).sort(), ['tidemage', 'warrior']);
-  for (const first of ['warrior', 'tidemage']) {
+  assert.deepEqual(nextJobs('novice', 10).map((j) => j.id).sort(), ['moonmoth', 'tidemage', 'warrior']);
+  for (const first of ['warrior', 'tidemage', 'moonmoth']) {
     assert.ok(Object.values(SKILLS).some((k) => k.job === first && (k.type === 'blink' || k.movement)), `${first} has a movement skill`);
   }
   assert.deepEqual(nextJobs('warrior', 30).map((j) => j.id).sort(), ['stormwall', 'tempest'], 'warrior has his paths at 30');

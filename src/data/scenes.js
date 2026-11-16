@@ -1787,6 +1787,11 @@ export const JOB_SCENES = {
     { who: 'brann', text: "Welcome to Ember Crag, {name}. Feel that? The air's gone tight around you. That's the storm, and it's yours now. You stand in front, and you let it out on whatever comes.", mood: 'happy' },
     { who: 'brann', text: "Wind it up, let it go, take the hits and send them back as thunder. Now go strike something that deserves it! Not me." },
   ],
+  moonmoth: [
+    { card: 'A New Path', sub: 'Moon Moth' },
+    { who: 'vex', text: "Look at that, {name}. The moths found you before I'd finished talking. They never come to the loud ones. You must be quieter than you look.", mood: 'happy' },
+    { who: 'vex', text: "A blade in each hand, and when it gets crowded, be the moths. Cut, scatter, come back together behind them. And don't go near the lanterns. Trust me." },
+  ],
   tidemage: [
     { card: 'A New Path', sub: 'Tide Mage' },
     { who: 'elowen', text: "The water answers you, {name}. It came up the moment you touched the staff. It usually sulks for a week first. Rude of it, really.", mood: 'happy' },

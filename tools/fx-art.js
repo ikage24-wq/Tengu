@@ -10926,6 +10926,660 @@
   E.bwguardshell = walllit(E.tgguardshell);
   E.bwwave = walllit(E.tgwave);
 
+  // ---------- The Moon Moth (docs/design/moon-moth.md) ----------
+  // Her shapes, hers alone: luna moths (pointed fore wings with a gold eye spot and a dusky leading
+  // edge, round hind wings that sweep back into long trailing tails, a furry silver body, feathered
+  // feelers) and wing dust, a powder of glittering scales that drifts slowly DOWN (every other job's
+  // motes rise). Lilac and moon silver, inked in deep dusk violet. Smooth motion the Tide Mage's
+  // way: each drawing is the same picture at its own moment `k` (0-1), every moth beating its wings
+  // on its own phase as it flies, the tails fluttering after the beat. (The polish pass, 2026-11-16:
+  // real moth shapes, no plain puffs, wings that break up into dust instead of fading.)
+  const MMS = ['#ffffff', '#f1eaff', '#c9b4ff', '#9a7ae8', '#43307e'];
+  const MMSIL = ['#ffffff', '#f7f6ff', '#dedcf2', '#a9a4cc', '#5c5690'];
+  const MMGOLD = ['#ffffff', '#fff3c8', '#ffd36a', '#e5a03c', '#8e5228'];
+  const MMNIGHT = ['#5a4a92', '#4a3c80', '#3a2e6c', '#2e2458', '#221a44'];
+  // An ellipse's outline as points (rotated by `rot`).
+  function mmEll(cx, cy, rx, ry, rot = 0, n = 22) {
+    const pts = [];
+    for (let j = 0; j < n; j++) {
+      const a = (j / n) * TAU;
+      const x = Math.cos(a) * rx;
+      const y = Math.sin(a) * ry;
+      pts.push([cx + x * Math.cos(rot) - y * Math.sin(rot), cy + x * Math.sin(rot) + y * Math.cos(rot)]);
+    }
+    return pts;
+  }
+  // A closed outline from cubic segments [from, c1, c2, to], each sampled `n` times.
+  function mmPath(segs, n = 7) {
+    const pts = [];
+    for (const [p0, p1, p2, p3] of segs) {
+      for (let j = 0; j < n; j++) {
+        const t = j / n;
+        const u = 1 - t;
+        pts.push([u * u * u * p0[0] + 3 * u * u * t * p1[0] + 3 * u * t * t * p2[0] + t * t * t * p3[0], u * u * u * p0[1] + 3 * u * u * t * p1[1] + 3 * u * t * t * p2[1] + t * t * t * p3[1]]);
+      }
+    }
+    return pts;
+  }
+  // A shape shrunk toward its own middle (its lighter inner fill).
+  const mmIn = (pts, k) => {
+    const cx = pts.reduce((a, p) => a + p[0], 0) / pts.length;
+    const cy = pts.reduce((a, p) => a + p[1], 0) / pts.length;
+    return pts.map(([x, y]) => [cx + (x - cx) * k, cy + (y - cy) * k]);
+  };
+  // A luna moth's wings on one side (`s` = 1 or -1) for a body along +x at the origin, `r` its half
+  // wingspan, `o` how open (the beat foreshortens them), `tc` the tails' flutter.
+  function mmWingPts(r, s, o, tc) {
+    const hind = mmPath([
+      [[-0.05 * r, 0.06 * r * s], [0.05 * r, 0.35 * r * s * o], [-0.1 * r, 0.62 * r * s * o], [-0.3 * r, 0.62 * r * s * o]],
+      [[-0.3 * r, 0.62 * r * s * o], [-0.55 * r, 0.62 * r * s * o], [-0.85 * r, (0.5 * r * o + tc) * s], [-1.15 * r, (0.42 * r * o + tc) * s]],
+      [[-1.15 * r, (0.42 * r * o + tc) * s], [-0.9 * r, (0.36 * r * o + tc) * s], [-0.6 * r, 0.22 * r * s * o], [-0.42 * r, 0.18 * r * s * o]],
+      [[-0.42 * r, 0.18 * r * s * o], [-0.3 * r, 0.1 * r * s], [-0.15 * r, 0.06 * r * s], [-0.05 * r, 0.06 * r * s]],
+    ]);
+    const lead = [[0.18 * r, 0.04 * r * s], [0.42 * r, 0.3 * r * s * o], [0.62 * r, 0.7 * r * s * o], [0.62 * r, 0.98 * r * s * o]];
+    const fore = mmPath([
+      lead,
+      [[0.62 * r, 0.98 * r * s * o], [0.6 * r, 1.12 * r * s * o], [0.2 * r, 0.95 * r * s * o], [0, 0.78 * r * s * o]],
+      [[0, 0.78 * r * s * o], [-0.15 * r, 0.6 * r * s * o], [-0.18 * r, 0.2 * r * s * o], [-0.12 * r, 0.05 * r * s]],
+      [[-0.12 * r, 0.05 * r * s], [-0.02 * r, 0.05 * r * s], [0.08 * r, 0.04 * r * s], [0.18 * r, 0.04 * r * s]],
+    ]);
+    return { hind, fore, lead: mmPath([lead], 8).concat([lead[3]]) };
+  }
+  // A gold eye spot: a ring, a dark pupil, a glint.
+  function mmEye(ctx, x, y, r, pal) {
+    if (r < 1.2) return;
+    inked(ctx, mmEll(x, y, r, r * 0.9, 0, 14), MMGOLD[2], MMGOLD[4], Math.max(1.2, r * 0.25));
+    fill(ctx, mmEll(x, y, r * 0.45, r * 0.42, 0, 12), pal[4]);
+    fill(ctx, mmEll(x - r * 0.28, y - r * 0.28, r * 0.2, r * 0.2, 0, 8), '#ffffff');
+  }
+  // One luna moth at (x, y): `r` its half wingspan, its wings beating at `flap` (0-1 round one
+  // beat: wide open at 0 and 1, folded up at 0.5), flying along `a` (radians, 0 = right). `sil`
+  // draws it as a flat dark shape (against the moon).
+  function mmMoth(ctx, x, y, r, flap, a = 0, { alpha = 1, pal = MMS, sil = false } = {}) {
+    if (alpha <= 0 || r <= 0.5) return;
+    const open = 0.2 + 0.8 * Math.abs(Math.cos(flap * Math.PI));
+    const tc = Math.sin((flap - 0.15) * TAU) * 0.07 * r;
+    const ink = Math.max(1.2, Math.min(3, r * 0.1));
+    ctx.save();
+    ctx.globalAlpha *= alpha;
+    ctx.translate(x, y);
+    ctx.rotate(a);
+    for (const s of [-1, 1]) {
+      const w = mmWingPts(r, s, open, tc);
+      if (sil) {
+        fill(ctx, w.hind, MMNIGHT[3]);
+        fill(ctx, w.fore, MMNIGHT[2]);
+        continue;
+      }
+      inked(ctx, w.hind, pal[3], pal[4], ink);
+      fill(ctx, mmIn(w.hind, 0.62), pal[2]);
+      inked(ctx, w.fore, pal[2], pal[4], ink);
+      fill(ctx, mmIn(w.fore, 0.7), pal[1]);
+      // The dusky leading edge.
+      ctx.strokeStyle = pal[3];
+      ctx.lineWidth = Math.max(1, r * 0.07);
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      w.lead.forEach(([px, py], j) => (j ? ctx.lineTo(px, py) : ctx.moveTo(px, py)));
+      ctx.stroke();
+      if (open > 0.45) {
+        mmEye(ctx, 0.3 * r, 0.6 * r * s * open, 0.13 * r * Math.min(1, open * 1.2), pal);
+        mmEye(ctx, -0.27 * r, 0.42 * r * s * open, 0.07 * r * Math.min(1, open * 1.2), pal);
+      }
+    }
+    // The body: a furry silver thorax and a ringed abdomen; the feathered feelers.
+    const B = sil ? [MMNIGHT[1], MMNIGHT[1], MMNIGHT[2], MMNIGHT[3], MMNIGHT[4]] : MMSIL;
+    inked(ctx, mmEll(-0.16 * r, 0, 0.3 * r, 0.11 * r, 0, 16), B[3], sil ? null : pal[4], ink * 0.8);
+    inked(ctx, mmEll(0.12 * r, 0, 0.17 * r, 0.14 * r, 0, 16), B[2], sil ? null : pal[4], ink * 0.8);
+    if (!sil) {
+      fill(ctx, mmEll(0.09 * r, -0.04 * r, 0.1 * r, 0.06 * r, 0, 12), B[1]);
+      for (const dx of [-0.08, -0.2, -0.32]) fill(ctx, mmEll(dx * r, 0, 0.015 * r + 0.4, 0.09 * r, 0, 8), B[3]);
+    }
+    ctx.strokeStyle = sil ? MMNIGHT[3] : pal[4];
+    ctx.lineWidth = Math.max(1, r * 0.04);
+    ctx.lineCap = 'round';
+    for (const s of [-1, 1]) {
+      const fe = mmPath([[[0.3 * r, 0.03 * r * s], [0.45 * r, 0.05 * r * s], [0.55 * r, 0.14 * r * s], [0.62 * r, 0.3 * r * s]]], 6).concat([[0.62 * r, 0.3 * r * s]]);
+      ctx.beginPath();
+      fe.forEach(([px, py], j) => (j ? ctx.lineTo(px, py) : ctx.moveTo(px, py)));
+      ctx.stroke();
+      if (r > 10) for (let j = 2; j < fe.length - 1; j += 2) {
+        const [px, py] = fe[j];
+        ctx.beginPath();
+        ctx.moveTo(px, py);
+        ctx.lineTo(px - 0.05 * r, py + 0.05 * r * s);
+        ctx.moveTo(px, py);
+        ctx.lineTo(px + 0.05 * r, py + 0.02 * r * s);
+        ctx.stroke();
+      }
+    }
+    ctx.restore();
+  }
+  // Wing dust: a fleck of glittering scale (a tiny four-point glint, or a bead).
+  function mmDust(ctx, x, y, r, seed, alpha = 1) {
+    if (alpha <= 0 || r <= 0.4) return;
+    ctx.save();
+    ctx.globalAlpha *= alpha;
+    if (seed % 3 === 0) sparkle(ctx, seed % 2 ? MMSIL : MMS, x, y, r * 1.6, seed * 0.7);
+    else {
+      fill(ctx, mmEll(x, y, r + 1.5, r + 1.5, 0, 10), MMS[4]);
+      fill(ctx, mmEll(x, y, r, r, 0, 10), seed % 2 ? MMSIL[1] : MMS[2]);
+    }
+    ctx.restore();
+  }
+  // A shed of dust at (x, y) over k: `n` flecks thrown out within `spread` on real arcs, then
+  // drifting slowly down, swaying, and winking out.
+  function mmShed(ctx, x, y, k, n, spread, seed, { size = 4, fall = 60, up = 0.7 } = {}) {
+    const R = rng(seed);
+    for (let j = 0; j < n; j++) {
+      const a = R() * TAU;
+      const d = spread * (0.3 + 0.7 * R());
+      const born = R() * 0.3;
+      const u = win(k, born, born + 0.55 + R() * 0.25);
+      if (u <= 0 || u >= 1) continue;
+      const out = 1 - (1 - Math.min(1, u * 2.2)) ** 2;
+      const px = x + Math.cos(a) * d * out + Math.sin(u * 6 + j) * 4;
+      const py = y + Math.sin(a) * d * out * up + fall * u * u;
+      mmDust(ctx, px, py, size * (0.6 + 0.6 * R()) * (1 - u * 0.5), j, 1 - win(u, 0.65, 1));
+    }
+  }
+  // A soft bloom of moonlight: layered translucent discs (lilac to white), `a` its strength.
+  function mmBloom(ctx, x, y, r, a, { sy = 1 } = {}) {
+    if (a <= 0 || r <= 0) return;
+    ctx.save();
+    for (const [k, c, al] of [[1, MMS[3], 0.16], [0.78, MMS[2], 0.22], [0.55, MMS[1], 0.3], [0.3, '#ffffff', 0.45]]) {
+      ctx.globalAlpha = a * al;
+      fill(ctx, mmEll(x, y, r * k, r * k * sy, 0, 28), c);
+    }
+    ctx.restore();
+  }
+  // A crescent cut of lilac light round (cx, cy), radius R, from angle a0 sweeping `sw`, drawn
+  // between `tail` and `head` (0-1 along it), `th` its widest.
+  function mmCut(ctx, cx, cy, R, a0, sw, tail, head, th, alpha = 1) {
+    const N = 22;
+    for (let q = 0; q < N; q++) {
+      const v = q / N;
+      if (v < tail || v > head) continue;
+      const w = th * Math.sin((Math.PI * (v - tail)) / Math.max(0.01, head - tail)) + 2;
+      for (const [rr, lw, c, al] of [[R, w * 1.3, MMS[4], 0.45], [R, w * 0.95, MMS[3], 0.75], [R - 1, w * 0.6, MMS[2], 1], [R - 2, w * 0.3, MMS[1], 1], [R - 2.5, Math.max(1.5, w * 0.12), '#ffffff', 1]]) {
+        ctx.save();
+        ctx.globalAlpha *= al * alpha;
+        ctx.strokeStyle = c;
+        ctx.lineWidth = lw;
+        ctx.beginPath();
+        // (Backwards when it sweeps backwards, or the arc ran the long way round the circle.)
+        ctx.arc(cx, cy, rr, a0 + sw * v, a0 + sw * (v + 1 / N) + 0.01 * Math.sign(sw), sw < 0);
+        ctx.stroke();
+        ctx.restore();
+      }
+    }
+  }
+
+  // A single moth in flight (loops), for the Full Moon nip and her aura.
+  E.mmmoth = {
+    w: 150, h: 120, n: 16, fps: 40, px: 80, py: 60, loop: true,
+    draw(ctx, i) {
+      const ph = i / 16;
+      mmMoth(ctx, 84, 60 + 3 * Math.sin(ph * TAU), 34, ph, -0.12);
+      mmDust(ctx, 22, 70 + 8 * ph, 2.4, i, 1 - ph);
+      mmDust(ctx, 34, 64 + 6 * ((ph + 0.5) % 1), 1.8, i + 1, 1 - ((ph + 0.5) % 1));
+    },
+  };
+
+  // A fleck of dust drifting down (loops; her aura's motes).
+  E.mmdustfleck = {
+    w: 40, h: 60, n: 16, fps: 24, px: 20, py: 30, loop: true,
+    draw(ctx, i) {
+      const ph = i / 16;
+      mmDust(ctx, 20 + 5 * Math.sin(ph * TAU), 30 + 4 * Math.sin(ph * TAU * 2), 4.5, 3, 0.7 + 0.3 * Math.cos(ph * TAU));
+    },
+  };
+
+  // Her mark on a monster: a crescent nick of lilac light across it, a bloom of moonlight, wing dust
+  // bursting off on real arcs and drifting down glittering, a broken ring opening, and a moth
+  // flying up out of the cut, its dust trailing after it.
+  E.mmhit = (() => {
+    const c = 130;
+    const n = 28;
+    return {
+      w: 260, h: 260, n, fps: 48, px: c, py: c,
+      draw(ctx, i) {
+        const k = i / (n - 1);
+        mmBloom(ctx, c, c, 24 + 46 * smooth(win(k, 0, 0.3)), 1 - win(k, 0.12, 0.5));
+        const ring = smooth(win(k, 0.04, 0.62));
+        if (ring > 0 && ring < 1) celRing(ctx, MMS, c, c, 28 + 58 * ring, 10 * (1 - ring) + 2, { broken: ring > 0.4 ? (ring - 0.4) * 1.8 : 0, seed: 7102 });
+        const cut = win(k, 0, 0.3);
+        if (cut < 1) mmCut(ctx, c + 6, c + 26, 50, -2.7, 2.1, smooth(win(cut, 0.35, 1)), smooth(Math.min(1, cut * 2.4)), 14);
+        if (k < 0.3) sparkle(ctx, MMSIL, c + 26, c - 30, 15 * swell(k, 0, 0.3), 0.3);
+        // The dust: thrown out on arcs, then falling and swaying.
+        const R = rng(7103);
+        for (let j = 0; j < 18; j++) {
+          const a = -Math.PI / 2 + (R() - 0.5) * 3.6;
+          const sp = 60 + R() * 60;
+          const born = R() * 0.12;
+          const u = win(k, born, born + 0.7 + R() * 0.2);
+          if (u <= 0 || u >= 1) continue;
+          const out = 1 - (1 - u) ** 2;
+          mmDust(ctx, c + Math.cos(a) * sp * out + Math.sin(u * 7 + j) * 3, c + Math.sin(a) * sp * out * 0.8 + 70 * u * u, (3 + R() * 2.5) * (1 - u * 0.4), j, 1 - win(u, 0.7, 1));
+        }
+        // The moth, out of the cut and away up its side, a ribbon of dust behind it.
+        const u = win(k, 0.08, 1);
+        if (u > 0) {
+          const mx = c + 78 * smooth(u) + 6 * Math.sin(u * 8);
+          const my = c - 14 - 86 * u + 8 * Math.sin(u * 11);
+          for (let j = 1; j <= 4; j++) {
+            const v = Math.max(0, u - j * 0.06);
+            mmDust(ctx, c + 78 * smooth(v) + 6 * Math.sin(v * 8) - 6, c - 8 - 86 * v + 8 * Math.sin(v * 11) + j * 3, 2.6 - j * 0.4, j, (1 - win(u, 0.7, 1)) * (1 - j * 0.18));
+          }
+          mmMoth(ctx, mx, my, 22 * (0.6 + 0.4 * Math.min(1, u * 4)), (k * 5.5) % 1, -0.55, { alpha: 1 - win(u, 0.72, 1) });
+        }
+      },
+    };
+  })();
+
+  // A burst of moths (where she breaks into moths or re-forms, and her blows' clouds): a bloom of
+  // moonlight, then a dozen luna moths burst out from round her body, spiralling off on their own
+  // curves with their wings beating, and wink out into dust that drifts down. No puff: only moths,
+  // light and dust. Its foot sits on the floor at `py`; about 75 px tall in game.
+  E.mmcloud = (() => {
+    const x = 170;
+    const y = 280;
+    const n = 34;
+    const R = rng(7111);
+    const M = Array.from({ length: 14 }, (_, j) => ({ a: -Math.PI / 2 + (R() - 0.5) * 3.2, d: 60 + R() * 100, h: 40 + R() * 110, ph: R(), r: 13 + R() * 11, sp: 0.5 + R() * 0.4, curl: (j % 2 ? 1 : -1) * (0.4 + R() * 0.6) }));
+    return {
+      w: 340, h: 310, n, fps: 40, px: x, py: y,
+      draw(ctx, i) {
+        const k = i / (n - 1);
+        mmBloom(ctx, x, y - 72, 40 + 60 * smooth(win(k, 0, 0.25)), 0.65 * (1 - win(k, 0.08, 0.4)), { sy: 1.15 });
+        mmShed(ctx, x, y - 72, k, 26, 120, 7113, { size: 4.5, fall: 80 });
+        if (k < 0.35) {
+          sparkle(ctx, MMSIL, x - 34, y - 110, 12 * swell(k, 0.02, 0.32), 0.2);
+          sparkle(ctx, MMS, x + 40, y - 50, 9 * swell(k, 0.06, 0.35), 0.8);
+        }
+        for (const m of M) {
+          const u = win(k, 0.02, m.sp);
+          if (u <= 0 || u >= 1) continue;
+          const out = 1 - (1 - u) * (1 - u);
+          const a = m.a + m.curl * out;
+          const px = x + Math.cos(a) * m.d * out;
+          const py = y - 72 - m.h * 0.45 * out + Math.sin(a) * m.d * 0.6 * out;
+          const dx = Math.cos(a + m.curl * 0.5);
+          mmMoth(ctx, px, py, m.r * (0.45 + 0.55 * Math.min(1, u * 4)), (m.ph + k * 6) % 1, dx < 0 ? Math.PI - 0.35 : -0.35, { alpha: 1 - win(u, 0.7, 1) });
+        }
+      },
+    };
+  })();
+
+  // Her flight as moths (loops; drawn moving from where she broke up to where she re-forms): a
+  // stream of moths weaving along together, a glowing ribbon of dust trailing behind them. Its foot
+  // at `py`, the swarm's head at `px`.
+  E.mmflight = (() => {
+    const x = 210;
+    const y = 210;
+    const n = 24;
+    const R = rng(7121);
+    const M = Array.from({ length: 12 }, (_, j) => ({ dx: -j * 15 - R() * 16, dy: -40 - R() * 90, ph: R(), r: 11 + R() * 9, bob: R() * TAU }));
+    return {
+      w: 270, h: 230, n, fps: 40, px: x, py: y, loop: true,
+      draw(ctx, i) {
+        const ph = i / n;
+        // The ribbon: a soft band of light waving back from the swarm, scrolling with the loop.
+        const top = [];
+        const bot = [];
+        for (let j = 0; j <= 16; j++) {
+          const u = j / 16;
+          const cx = x - 30 - u * 190;
+          const cy = y - 85 + Math.sin(u * 7 - ph * TAU) * 16;
+          const w = 22 * (1 - u) + 3;
+          top.push([cx, cy - w]);
+          bot.push([cx, cy + w]);
+        }
+        ctx.save();
+        ctx.globalAlpha = 0.28;
+        fill(ctx, top.concat(bot.reverse()), MMS[2]);
+        ctx.globalAlpha = 0.45;
+        fill(ctx, mmIn(top.concat(bot), 0.5), MMS[1]);
+        ctx.restore();
+        for (let j = 0; j < 12; j++) {
+          const u = (ph + j / 12) % 1;
+          mmDust(ctx, x - 40 - u * 170, y - 85 + Math.sin(u * 7 - ph * TAU + j) * 28, 4 * (1 - u * 0.6), j, 1 - u);
+        }
+        for (const m of M) mmMoth(ctx, x + m.dx, y + m.dy + 8 * Math.sin(ph * TAU + m.bob), m.r, (m.ph + ph * 4) % 1, -0.12 + 0.14 * Math.sin(ph * TAU + m.bob));
+      },
+    };
+  })();
+
+  // Wings (her combo finisher): two great luna-moth wings of lilac light unfold behind where her
+  // daggers open, veined and eye-spotted, their tails trailing; they beat once, then thin away into
+  // a thick shed of glittering dust that drifts down, a few moths flying off them. (Holes eaten in
+  // them were tried: the outline pass inked their edges and they read as burns.) Foot on the floor.
+  E.mmwings = (() => {
+    const x = 210;
+    const y = 330;
+    const n = 36;
+    return {
+      w: 420, h: 350, n, fps: 40, px: x, py: y,
+      draw(ctx, i) {
+        const k = i / (n - 1);
+        const unfold = smooth(win(k, 0, 0.28));
+        const beat = 1 - 0.28 * swell(k, 0.28, 0.46);
+        const dis = win(k, 0.44, 0.86);
+        const cy = y - 125;
+        const r = 150 * unfold + 6;
+        if (dis < 1) {
+          // Drawn on their own layer, so the breaking up can eat holes in them.
+          // (At the drawing's own HD scale, so the layer is as sharp as the rest.)
+          const sc = ctx.getTransform ? Math.abs(ctx.getTransform().a) || 1 : 1;
+          const L = document.createElement('canvas');
+          L.width = Math.ceil(420 * sc);
+          L.height = Math.ceil(350 * sc);
+          const g = L.getContext('2d');
+          g.scale(sc, sc);
+          g.translate(x, cy);
+          g.rotate(-Math.PI / 2);
+          for (const s of [-1, 1]) {
+            const w = mmWingPts(r, s, beat, Math.sin(k * 9) * 6 * unfold);
+            inked(g, w.hind, MMS[3], MMS[4], 4);
+            fill(g, mmIn(w.hind, 0.65), MMS[2]);
+            inked(g, w.fore, MMS[2], MMS[4], 4);
+            fill(g, mmIn(w.fore, 0.74), MMS[1]);
+            // Veins from the root out to the edge.
+            g.strokeStyle = MMS[3];
+            g.lineWidth = 2;
+            g.globalAlpha = 0.6;
+            for (const t of [0.25, 0.45, 0.6, 0.75]) {
+              const [ex, ey] = w.fore[Math.floor(t * w.fore.length)];
+              g.beginPath();
+              g.moveTo(0.05 * r, 0.06 * r * s);
+              g.quadraticCurveTo(ex * 0.5, ey * 0.7, ex * 0.92, ey * 0.92);
+              g.stroke();
+            }
+            g.globalAlpha = 1;
+            g.strokeStyle = MMS[3];
+            g.lineWidth = 5;
+            g.beginPath();
+            w.lead.forEach(([px, py], j) => (j ? g.lineTo(px, py) : g.moveTo(px, py)));
+            g.stroke();
+            if (unfold > 0.5) {
+              mmEye(g, 0.3 * r, 0.6 * r * s * beat, 0.12 * r, MMS);
+              mmEye(g, -0.27 * r, 0.42 * r * s * beat, 0.07 * r, MMS);
+            }
+          }
+          g.setTransform(sc, 0, 0, sc, 0, 0);
+          ctx.save();
+          ctx.globalAlpha *= 0.86 * (1 - smooth(dis));
+          ctx.drawImage(L, 0, 0, 420, 350);
+          ctx.restore();
+        }
+        // Dust shed from the wings as they go, drifting down.
+        if (k > 0.4) {
+          const R = rng(7131);
+          for (let j = 0; j < 64; j++) {
+            const s = j % 2 ? 1 : -1;
+            const sx = x + s * (40 + R() * 140);
+            const sy = cy - 110 + R() * 200;
+            const born = 0.4 + R() * 0.36;
+            const u = win(k, born, born + 0.35);
+            if (u <= 0 || u >= 1) continue;
+            mmDust(ctx, sx + s * 18 * u + Math.sin(u * 6 + j) * 4, sy + 60 * u * u, (3 + R() * 2.5) * (1 - u * 0.4), j, 1 - win(u, 0.65, 1));
+          }
+        }
+        const R = rng(7132);
+        for (let j = 0; j < 6; j++) {
+          const s = j % 2 ? 1 : -1;
+          const u = win(k, 0.46 + R() * 0.12, 1);
+          if (u <= 0 || u >= 1) continue;
+          mmMoth(ctx, x + s * (80 + 90 * u + R() * 30), cy - 50 - 100 * u - R() * 40, 15 + R() * 6, (k * 6 + j * 0.3) % 1, s > 0 ? -0.45 : Math.PI + 0.45, { alpha: 1 - win(u, 0.7, 1) });
+        }
+        mmBloom(ctx, x, cy + 10, 60, swell(k, 0.12, 0.5) * 0.8);
+        if (k > 0.12 && k < 0.5) sparkle(ctx, MMSIL, x, cy - 6, 22 * swell(k, 0.12, 0.5), 0.4);
+      },
+    };
+  })();
+
+  // Wing Flurry's whirl: six crescent cuts of lilac light crossing in front of her one after another,
+  // thick in the middle and white along their edge, dust whirling round in the wind of them; the
+  // last ones break up into moths that flit away. Foot on the floor.
+  E.mmflurry = (() => {
+    const x = 170;
+    const y = 280;
+    const n = 32;
+    const R = rng(7141);
+    // (Each a shallow arc of a big circle, its middle on the flurry: tilted one way then the other,
+    // they cross in an X. Short arcs of one small circle overlapped into a ring.)
+    const C = Array.from({ length: 6 }, (_, j) => ({ at: j * 0.1, tilt: (j % 2 ? 0.85 : -0.85) + (R() - 0.5) * 0.3, R: 150 + R() * 30, mx: (R() - 0.5) * 30, my: -115 + (R() - 0.5) * 40, sw: 1 }));
+    return {
+      w: 350, h: 310, n, fps: 40, px: x, py: y,
+      draw(ctx, i) {
+        const k = i / (n - 1);
+        const R2 = rng(7142);
+        for (let j = 0; j < 30; j++) {
+          const a0 = R2() * TAU;
+          const rr = 40 + R2() * 90;
+          const u = win(k, R2() * 0.35, 1);
+          if (u <= 0 || u >= 1) continue;
+          const a = a0 + u * 5;
+          mmDust(ctx, x + Math.cos(a) * rr, y - 115 + Math.sin(a) * rr * 0.6 + 45 * u * u, 4 * (1 - u * 0.4), j, 1 - win(u, 0.6, 1));
+        }
+        mmBloom(ctx, x, y - 115, 70, swell(k, 0, 0.7) * 0.55, { sy: 0.8 });
+        for (const c of C) {
+          const u = win(k, c.at, c.at + 0.24);
+          if (u <= 0 || u >= 1) continue;
+          const am = -Math.PI / 2 + c.tilt;
+          const half = 0.5;
+          const ccx = x + c.mx - Math.cos(am) * c.R;
+          const ccy = y + c.my - Math.sin(am) * c.R;
+          // (Cut one way, then back the other.)
+          const fwd = c.tilt > 0;
+          mmCut(ctx, ccx, ccy, c.R, fwd ? am - half : am + half, fwd ? 2 * half : -2 * half, smooth(win(u, 0.3, 1)), smooth(Math.min(1, u * 2.4)), 24, 1 - win(u, 0.75, 1));
+        }
+        const R3 = rng(7143);
+        for (let j = 0; j < 4; j++) {
+          const u = win(k, 0.62 + j * 0.04, 1);
+          if (u <= 0 || u >= 1) continue;
+          const s = j % 2 ? 1 : -1;
+          mmMoth(ctx, x + s * (20 + 110 * u) + R3() * 20, y - 120 - 80 * u + R3() * 30, 13 + R3() * 5, (k * 6 + j * 0.25) % 1, s > 0 ? -0.5 : Math.PI + 0.5, { alpha: 1 - win(u, 0.7, 1) });
+        }
+      },
+    };
+  })();
+
+  // Moth Swarm in flight (loops): a thick cloud of moths rolling forward together in a glow of
+  // moonlight, the far ones dimmer and smaller, wings beating out of step, dust streaming back.
+  E.mmswarm = (() => {
+    const x = 220;
+    const y = 135;
+    const n = 24;
+    const R = rng(7151);
+    const M = Array.from({ length: 22 }, () => ({ a: R() * TAU, d: 0.25 + 0.75 * R(), ph: R(), r: 13 + R() * 9, w: R() < 0.5 ? 1 : -1 }));
+    return {
+      w: 360, h: 260, n, fps: 40, px: x, py: y, loop: true,
+      draw(ctx, i) {
+        const ph = i / n;
+        mmBloom(ctx, x - 10, y, 95, 0.55 + 0.1 * Math.sin(ph * TAU), { sy: 0.7 });
+        for (let j = 0; j < 16; j++) {
+          const u = (ph + j / 16) % 1;
+          mmDust(ctx, x - 70 - u * 150, y + Math.sin(u * 8 + j * 1.7) * 42, 4.5 * (1 - u * 0.6), j, 1 - u);
+        }
+        const placed = M.map((m) => {
+          const a = m.a + ph * TAU * m.w;
+          return { m, px: x + Math.cos(a) * 82 * m.d, py: y + Math.sin(a) * 58 * m.d, depth: Math.sin(a) * m.w };
+        }).sort((p, q) => p.depth - q.depth);
+        for (const { m, px, py, depth } of placed) {
+          const near = 0.5 + 0.5 * depth;
+          mmMoth(ctx, px, py, m.r * (0.8 + 0.25 * near), (m.ph + ph * 4) % 1, -0.08 + 0.15 * Math.sin(m.ph * TAU + ph * TAU), { alpha: 0.7 + 0.3 * near });
+        }
+      },
+    };
+  })();
+
+  // Midnight Swarm's moon: a full moon rises up behind her in its halo of lilac light, soft grey
+  // seas on its face lit along its edge, moths circling it lit by it and dark moths crossing its
+  // face as silhouettes; then it fades as the swarm pours. Foot on the floor.
+  E.mmmoon = (() => {
+    const x = 280;
+    const y = 600;
+    const n = 42;
+    const R = rng(7161);
+    const M = Array.from({ length: 9 }, (_, j) => ({ a: (j / 9) * TAU, ph: R(), r: 13 + R() * 8, rr: 155 + R() * 40 }));
+    const S = Array.from({ length: 3 }, (_, j) => ({ at: 0.22 + j * 0.14, dy: -60 + j * 50 + R() * 20, ph: R(), r: 16 + R() * 6 }));
+    return {
+      w: 560, h: 620, n, fps: 26, px: x, py: y,
+      draw(ctx, i) {
+        const k = i / (n - 1);
+        const rise = smooth(win(k, 0, 0.35));
+        const fade = win(k, 0.62, 0.95);
+        const cy = y - 210 - 160 * rise;
+        const a = (1 - fade) * Math.min(1, rise * 1.6);
+        if (a > 0) {
+          mmBloom(ctx, x, cy, 200 + 10 * Math.sin(k * 9), a);
+          ctx.save();
+          ctx.globalAlpha *= a;
+          inked(ctx, mmEll(x, cy, 110, 110, 0, 48), MMSIL[2], MMSIL[3], 4);
+          fill(ctx, mmEll(x - 8, cy - 8, 98, 98, 0, 44), MMSIL[1]);
+          // Its soft seas, each with a lit rim.
+          for (const [dx, dy, r] of [[-38, -18, 26], [26, 14, 34], [-12, 46, 18], [44, -40, 14], [-56, 30, 11]]) {
+            fill(ctx, mmEll(x + dx, cy + dy, r, r * 0.85, 0.3, 18), MMSIL[3]);
+            fill(ctx, mmEll(x + dx + r * 0.12, cy + dy + r * 0.12, r * 0.82, r * 0.7, 0.3, 18), MMSIL[2]);
+          }
+          // Light along its upper edge.
+          ctx.strokeStyle = '#ffffff';
+          ctx.lineWidth = 7;
+          ctx.lineCap = 'round';
+          ctx.beginPath();
+          ctx.arc(x, cy, 100, -2.8, -1.1);
+          ctx.stroke();
+          ctx.restore();
+          for (let j = 0; j < 6; j++) {
+            const tw = swell((k * 3 + j / 6) % 1, 0, 1);
+            const ang = j * 1.05 + 0.4;
+            sparkle(ctx, j % 2 ? MMSIL : MMS, x + Math.cos(ang) * 150, cy + Math.sin(ang) * 140, 8 * tw * a, j);
+          }
+        }
+        // Dark moths crossing its face.
+        for (const s of S) {
+          const u = win(k, s.at, s.at + 0.3);
+          if (u <= 0 || u >= 1 || a <= 0) continue;
+          mmMoth(ctx, x - 160 + 320 * u, cy + s.dy + 14 * Math.sin(u * 7), s.r, (s.ph + k * 8) % 1, -0.1, { sil: true, alpha: a * Math.min(1, swell(u, 0, 1) * 3) });
+        }
+        // The lit ones circling it.
+        for (const m of M) {
+          const u = win(k, 0.18, 0.95);
+          if (u <= 0 || u >= 1) continue;
+          const ang = m.a + u * 2.4;
+          const rr = m.rr * (0.6 + 0.4 * smooth(Math.min(1, u * 3)));
+          mmMoth(ctx, x + Math.cos(ang) * rr, cy + Math.sin(ang) * rr * 0.8, m.r, (m.ph + k * 8) % 1, ang + Math.PI / 2, { alpha: Math.min(1, u * 4) * (1 - win(u, 0.75, 1)) });
+        }
+        if (rise > 0.2) mmShed(ctx, x, cy, win(k, 0.2, 1), 30, 200, 7162, { size: 4.5, fall: 150 });
+      },
+    };
+  })();
+
+  // Midnight Swarm's pour: the swarm comes down out of the night across everything in front of her,
+  // streams of moths diving down and along with lilac streaks behind them, each landing in a burst
+  // of dust, and a low mist of moonlight rolling over the floor after them. Drawn at a third of its
+  // size and grown (`mmpourbig`); foot on the floor at `py`.
+  E.mmpour = (() => {
+    const x = 60;
+    const y = 420;
+    const n = 34;
+    const R = rng(7171);
+    const M = Array.from({ length: 34 }, () => ({ x0: R() * 520, at: R() * 0.42, ph: R(), r: 12 + R() * 9, sp: 0.32 + R() * 0.22, dx: 60 + R() * 90 }));
+    const at = (m, u) => [x + m.x0 + m.dx * u, y - 390 + 340 * smooth(u)];
+    return {
+      w: 700, h: 470, n, fps: 34, px: x, py: y,
+      draw(ctx, i) {
+        const k = i / (n - 1);
+        // The mist rolling along the floor after them.
+        const roll = win(k, 0.25, 1);
+        if (roll > 0 && roll < 1) {
+          const top = [];
+          for (let j = 0; j <= 24; j++) {
+            const u = j / 24;
+            const h = 34 * swell(u, 0, Math.min(1, roll * 1.3)) * (1 - win(roll, 0.6, 1)) * (0.75 + 0.25 * Math.sin(u * 19 + k * 8));
+            top.push([x + u * 620, y - 4 - h]);
+          }
+          ctx.save();
+          ctx.globalAlpha = 0.32;
+          fill(ctx, top.concat([[x + 620, y + 4], [x, y + 4]]), MMS[2]);
+          ctx.globalAlpha = 0.5;
+          fill(ctx, top.map(([px, py]) => [px, (py + y) / 2]).concat([[x + 620, y], [x, y]]), MMS[1]);
+          ctx.restore();
+        }
+        for (const m of M) {
+          const u = win(k, m.at, m.at + m.sp);
+          if (u <= 0) continue;
+          if (u < 1) {
+            const [px, py] = at(m, u);
+            const [qx, qy] = at(m, Math.max(0, u - 0.18));
+            speedLine(ctx, MMS, qx, qy, px - 6, py - 8, 4 * (1 - u * 0.5));
+            mmMoth(ctx, px, py, m.r, (m.ph + k * 7) % 1, Math.atan2(py - qy, px - qx) * 0.6, { alpha: 1 - win(u, 0.86, 1) });
+          }
+          // Where it lands: a burst of dust and a little ring on the floor.
+          const v = win(k, m.at + m.sp * 0.9, m.at + m.sp * 0.9 + 0.22);
+          if (v > 0 && v < 1) {
+            const lx = x + m.x0 + m.dx;
+            ctx.save();
+            ctx.globalAlpha *= 1 - v;
+            ctx.strokeStyle = MMS[2];
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.ellipse(lx, y - 4, 10 + 26 * v, 3 + 6 * v, 0, 0, TAU);
+            ctx.stroke();
+            ctx.restore();
+            for (let j = 0; j < 4; j++) mmDust(ctx, lx + (j - 1.5) * 10 * (0.5 + v), y - 10 - 26 * Math.sin(Math.PI * v) * (0.6 + 0.4 * (j % 2)), 3.4 * (1 - v * 0.5), j, 1 - v);
+          }
+        }
+      },
+    };
+  })();
+  E.mmpourbig = grown(E.mmpour, 2.3);
+
+  // Her crescent slash: the line's cut (`E.slash`'s geometry and swing) in lilac graded to a silver
+  // edge, a faint second crescent of moonlight following inside it, and wing dust shaken off its
+  // edge glittering as it passes; and the spin and thrust streaks in her light.
+  E.mmslash = {
+    w: 260, h: 200, n: 8, fps: 30, px: 130, py: 150, swing: [-Math.PI / 2, 1, 100],
+    draw(ctx, i) {
+      const cx = 130;
+      const cy = 150;
+      const R = 100;
+      const a0 = (-168 * Math.PI) / 180;
+      const a1 = (-12 * Math.PI) / 180;
+      const head = [0.45, 1, 1, 1, 1, 1, 1, 1][i];
+      const tail = [0.1, 0, 0.05, 0.25, 0.45, 0.65, 0.8, 0.92][i];
+      const a = [0.8, 1, 1, 0.85, 0.65, 0.45, 0.25, 0.1][i];
+      const N = 40;
+      for (let q = 0; q < N; q++) {
+        const u = q / N;
+        if (u < tail || u > head) continue;
+        const v = (u - tail) / Math.max(0.01, head - tail);
+        const th = 4 + 24 * Math.pow(v, 1.5);
+        for (const [rr, w, c, al] of [[R - th * 0.5, th * 1.2, MMS[3], 0.36], [R - th * 0.35, th * 0.7, MMS[2], 0.72], [R - 3, 7, MMSIL[1], 0.95], [R - 1.5, 3, '#ffffff', 1], [R - th - 10, 3, MMS[2], 0.4]]) {
+          ctx.save();
+          ctx.globalAlpha *= al * a * (0.45 + 0.55 * v);
+          ctx.strokeStyle = c;
+          ctx.lineWidth = w;
+          ctx.beginPath();
+          ctx.arc(cx, cy, rr, a0 + (a1 - a0) * u, a0 + (a1 - a0) * (u + 1 / N));
+          ctx.stroke();
+          ctx.restore();
+        }
+      }
+      for (let j = 0; j < 9; j++) {
+        const u = Math.max(tail, head - 0.06 - j * 0.1);
+        if (u <= tail + 0.02) continue;
+        const ang = a0 + (a1 - a0) * u;
+        const out = 6 + 7 * ((i + j) % 3) + i * 2.4;
+        mmDust(ctx, cx + Math.cos(ang) * (R + out), cy + Math.sin(ang) * (R + out) + i * 3.5, 3.6 - j * 0.28, j, a);
+      }
+      if (i >= 1 && i <= 3) sparkle(ctx, MMSIL, cx + Math.cos(a1) * R, cy + Math.sin(a1) * R, 10 * (1 - (i - 1) * 0.3), 0.3);
+    },
+  };
+  E.mmspin = asLight(spin(MMS), MMS);
+  E.mmstreak = asLight(streaks(MMS), MMS);
+
   window.FXART = E;
   window.FXHD = { render, RAW };
 })();
