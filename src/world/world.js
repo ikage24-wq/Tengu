@@ -27,7 +27,7 @@ import { createSpawner, tickSpawner, updateMob, hitMob, mobBox, MOB_ATTACK_GAP }
 import { rollLoot, spawnDrops, updateDrops, dropInReach, dropFromHero } from './drops.js';
 import { cast, castBlocker, weaponElement, hurtProcs, blockOnHit, drinkBlood, tickLater } from './combat.js';
 import { tickMelee, faithGuard, addAim, hasRage, hasFaith, hasVolt, overcharged, eyeOfStorm, hasBulwark, barrageRelease, BARRAGE_WALK, THIEF_FEET } from './melee.js';
-import { healAround, hasTide, hasDepth, hasMoon, springDrop, hasGale, hasMoth, hasUmbra, addMark, flutterJump, veilDodge, veilMissed, blinded, lured, addThread, hasSpool } from './melee.js';
+import { healAround, hasTide, hasDepth, hasMoon, springDrop, hasGale, hasMoth, hasUmbra, addMark, flutterJump, veilDodge, veilMissed, blinded, lured, addThread, hasSpool, daybreakHurt, sunLine, stickSmoulder, kindleBite, chorusMend } from './melee.js';
 import { JOBS, nextJobs } from '../data/jobs.js';
 import { celebrateLevels } from './levelup.js';
 import { DUNGEONS } from '../data/dungeons.js';
@@ -738,6 +738,8 @@ export function hurtPlayer(world, rawAtk, fromX) {
   world.invuln = INVULN;
   world.hurtAt = world.now;
   world.juice.push({ type: 'hurt', x: world.body.x, y: world.body.y - world.body.h / 2 });
+  // (A hit halves the Sunfeather's Daybreak.)
+  daybreakHurt(world);
   // Overcharge (a full Charge) or Static Guard, nothing knocks the Thunderguard back.
   // (Nor the Stormwall in the Eye of the Storm.)
   if (!overcharged(world) && !eyeOfStorm(world) && !(char.buffs.staticguard?.until > world.now)) knockBack(world.body, fromX);
@@ -1002,15 +1004,19 @@ export function updateWorld(world, dt, input) {
       if (h.gauge) addAim(world, h.gauge, m, h.el);
       // (Spring Tide: the Tidecaller's basic shots drop healing on the party.)
       if (h.basic) springDrop(world);
+      // (The Songbird's Chorus: her basic shots mend the party round her a little.)
+      if (h.basic) chorusMend(world);
       // The Cleric's heal bombs mend the party round where they burst, carrying their element.
       if (h.mend) healAround(world, m.x, m.y, h.mend, 220, true, h.el);
       // (The Eclipse's Eye of the Night marks what it lands on.)
       if (h.mark) addMark(world, m, h.mark);
       // (The Silkweaver's threads, off her shots.)
       if (h.thread) addThread(world, m, h.thread);
+      // (The Phoenix's Smoulder: a bolt stuck in it, bursting a moment later.)
+      if (h.smoulder) stickSmoulder(world, m, h);
       drinkBlood(world, h.damage);
     }
-    if (!hasTide(world.char) && !hasDepth(world.char) && !hasMoon(world.char) && !hasVolt(world.char) && !hasGale(world.char) && !hasBulwark(world.char) && !hasMoth(world.char) && !hasUmbra(world.char) && !hasSpool(world.char)) world.fx.push({ kind: 'spark', via: h.via, weapon: world.stats.weaponType, path: hasRage(world.char) ? 'rage' : hasFaith(world.char) ? 'holy' : hasVolt(world.char) ? 'thunder' : null, dir: world.body.facing, x: m.x, y: m.y - (m.air ?? 0) - m.def.h / 2, t: 0, dur: h.big ? 0.32 : 0.25, crit: h.crit || h.big, seed: Math.random() });
+    if (!hasTide(world.char) && !hasDepth(world.char) && !hasMoon(world.char) && !hasVolt(world.char) && !hasGale(world.char) && !hasBulwark(world.char) && !hasMoth(world.char) && !hasUmbra(world.char) && !hasSpool(world.char) && !sunLine(world.char)) world.fx.push({ kind: 'spark', via: h.via, weapon: world.stats.weaponType, path: hasRage(world.char) ? 'rage' : hasFaith(world.char) ? 'holy' : hasVolt(world.char) ? 'thunder' : null, dir: world.body.facing, x: m.x, y: m.y - (m.air ?? 0) - m.def.h / 2, t: 0, dur: h.big ? 0.32 : 0.25, crit: h.crit || h.big, seed: Math.random() });
     world.juice.push({ type: 'hit', x: m.x, y: m.y - m.def.h / 2, crit: h.crit, big: h.big, party: Boolean(h.party), element: h.party ? null : h.element ?? weaponElement(char), dir: Math.sign(m.x - h.fromX) || 1, via: h.via, school: h.school, weapon: h.weapon, mob: m.def.id, boss: Boolean(m.def.boss) });
     // Endgame weapons add an elemental impact on every hit.
     const element = h.party ? null : h.element ?? weaponElement(char);
@@ -1039,18 +1045,21 @@ export function updateWorld(world, dt, input) {
     teamLanded(world, m, h);
     // Ice freezes and stuns daze monsters in place (bosses shrug them off twice as fast);
     // venom and bleeding keep biting every second.
-    const hold = h.freeze || h.stun;
+    const hold = h.freeze || h.stun || h.pin || h.sleep;
     if (hold) {
       const secs = m.def.boss ? hold / 2 : hold;
       if (h.freeze && !(m.frozenUntil > world.now)) world.fx.push({ kind: 'freeze', x: m.x, y: m.y, h: m.def.h, w: m.def.w, t: 0, dur: 0.5 });
       if (h.stun && !h.freeze && !(m.frozenUntil > world.now)) world.juice.push({ type: 'stun', x: m.x, y: m.y });
-      if (!(m.frozenUntil > world.now)) m.hold = h.freeze ? 'ice' : 'stun';
+      if (!(m.frozenUntil > world.now)) m.hold = h.freeze ? 'ice' : h.pin ? 'pin' : h.sleep ? 'sleep' : 'stun';
+      if (h.pin) m.pinLook = h.pinLook ?? 'sf';
       m.frozenUntil = Math.max(m.frozenUntil ?? 0, world.now + secs);
     }
     // (Burns bite the same way, in blue flame.)
     const dot = h.poison ?? h.bleed ?? h.burn;
     if (dot) {
-      m.poison = { until: world.now + dot.secs, dmg: Math.max(1, Math.round(h.damage * dot.pct)), tick: m.poison?.tick ?? 1, kind: h.bleed ? 'bleed' : h.burn ? 'burn' : 'poison' };
+      // (The Phoenix's burns bite harder the fuller her Kindling, and burn in her own flames.)
+      const bite = h.burnLook === 'ph' ? kindleBite(world) : 1;
+      m.poison = { until: world.now + dot.secs, dmg: Math.max(1, Math.round(h.damage * dot.pct * bite)), tick: m.poison?.tick ?? 1, kind: h.bleed ? 'bleed' : h.burn ? 'burn' : 'poison', look: h.burnLook };
     }
   }
 
@@ -1067,7 +1076,7 @@ export function updateWorld(world, dt, input) {
     m.hp = Math.max(0, m.hp - m.poison.dmg);
     const bleed = m.poison.kind === 'bleed';
     const burn = m.poison.kind === 'burn';
-    world.fx.push({ kind: burn ? 'foxburn' : 'poisonpuff', bleed, x: m.x, y: m.y, h: m.def.h, t: 0, dur: 0.6, seed: Math.random() });
+    world.fx.push({ kind: burn ? (m.poison.look ? `${m.poison.look}burn` : 'foxburn') : 'poisonpuff', bleed, mob: m, x: m.x, y: m.y, h: m.def.h, t: 0, dur: 0.6, seed: Math.random() });
     if (m.hp <= 0) killMob(world, m);
   }
 

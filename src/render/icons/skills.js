@@ -29,6 +29,12 @@ const BG = {
   eclipsebg: ['#ffe4a0', '#140a2e'],
   // The Silkweaver's: warm pearl down into soft plum.
   silkbg: ['#fff3e2', '#5a3a62'],
+  // The Sunfeather's: morning cream down into a warm sunrise orange.
+  sunbg: ['#fff4d2', '#c8643a'],
+  // The Phoenix's: a hot gold down into deep crimson.
+  firebg: ['#ffc070', '#7a0e14'],
+  // The Songbird's: a sunny yellow up top into a deep sky blue.
+  songbg: ['#fff3b0', '#2a6ab0'],
 };
 
 const FRAME = { active: '#fff0f6', buff: '#ffd25a', passive: '#d4cdee' };
@@ -757,6 +763,251 @@ function totaleclipse() {
   return out;
 }
 
+// ---------- Sunfeather (sunrise gold and peach, warm rose-brown ink) ----------
+const SFGOLD = '#ffd36a';
+const SFCREAM = '#fff3d6';
+const SFPEACH = '#ff9f6a';
+const SFINK = '#8a4436';
+// A feather of light from (x0, y0) to (x1, y1): a soft vane round a white quill.
+function featherIcon(x0, y0, x1, y1, w = 1.2) {
+  const dx = x1 - x0;
+  const dy = y1 - y0;
+  const l = Math.hypot(dx, dy) || 1;
+  const [nx, ny] = [-dy / l, dx / l];
+  const at = (k, o) => [x0 + dx * k + nx * o, y0 + dy * k + ny * o];
+  const vane = [at(0.12, 0), at(0.3, w * 0.75), at(0.62, w), at(0.9, w * 0.45), at(1, 0.1), at(0.7, -w * 0.55), at(0.32, -w * 0.6)];
+  return [S(tube([at(-0.08, 0), at(0.2, 0)], 0.22, 0.28), SFINK), ...solid(vane, SFGOLD, { d: 0.3, ink: SFINK, shadow: false }), S(tube([at(0.14, 0.05), at(0.94, 0.15)], 0.14, 0.14), SFCREAM)];
+}
+// A light arrow from (x0, y0) to (x1, y1), its point at the far end.
+function lightArrowIcon(x0, y0, x1, y1) {
+  const dx = x1 - x0;
+  const dy = y1 - y0;
+  const l = Math.hypot(dx, dy) || 1;
+  const [ux, uy] = [dx / l, dy / l];
+  const [nx, ny] = [-uy, ux];
+  return [
+    S(tube([[x0, y0], [x1 - ux, y1 - uy]], 0.5, 0.7), SFPEACH), S(tube([[x0, y0], [x1 - ux, y1 - uy]], 0.2, 0.35), SFCREAM),
+    ...solid([[x1 + ux * 0.6, y1 + uy * 0.6], [x1 - ux * 1.2 + nx, y1 - uy * 1.2 + ny], [x1 - ux * 1.2 - nx, y1 - uy * 1.2 - ny]], '#ffffff', { d: 0.3, ink: SFINK, shadow: false }),
+    S(tube([[x0 + nx * 0.9, y0 + ny * 0.9], [x0 + ux * 1.4, y0 + uy * 1.4]], 0.2, 0.3), SFGOLD), S(tube([[x0 - nx * 0.9, y0 - ny * 0.9], [x0 + ux * 1.4, y0 + uy * 1.4]], 0.2, 0.3), SFGOLD),
+  ];
+}
+// A sunbird at (x, y), `r` round, facing right (or left, `f` -1).
+function sunbirdIcon(x, y, r, f = 1) {
+  return [
+    ...solid(oval(x, y, r, r * 0.88, 0, 18), '#ffd896', { d: 0.3, ink: SFINK, shadow: false }),
+    S(oval(x + f * r * 0.15, y + r * 0.3, r * 0.58, r * 0.42, 0, 14), '#fffaf0'),
+    S(oval(x - f * r * 0.3, y, r * 0.4, r * 0.24, f * -30, 12), '#ffb870'),
+    ...solid([[x + f * r * 0.85, y - r * 0.2], [x + f * r * 1.35, y - r * 0.05], [x + f * r * 0.85, y + r * 0.1]], '#f4a24a', { d: 0.3, ink: SFINK, shadow: false }),
+    S(oval(x + f * r * 0.5, y - r * 0.25, Math.max(0.3, r * 0.11), Math.max(0.3, r * 0.12), 0, 8), SFINK),
+  ];
+}
+// The sun at (x, y), `r` round, its rays out to `R`.
+const sunIcon = (x, y, r, R = r * 1.5) => [...solid(starPts(x, y, R, r * 1.05, 12, -90), SFGOLD, { d: 0.3, ink: '#c06a2a', shadow: false }), ...solid(oval(x, y, r, r, 0, 20), SFCREAM, { d: 0.3, ink: SFINK, shadow: false }), S(oval(x - r * 0.25, y - r * 0.25, r * 0.4, r * 0.4, 0, 12), '#ffffff')];
+// Sky Hop: a high arc up and back, a light arrow shot down from the top of it.
+function skyhop() {
+  const out = [...tile('sunbg', 'active'), ...aura(8, 8, 6.4, '#fff4d2')];
+  out.push(S(tube(arcPts(9.2, 10, 5, 6.4, 210, 340, 12), 0.25, 0.9), mix(SFPEACH, cur.deep, 0.3)));
+  out.push(...lightArrowIcon(5, 4.4, 12.6, 12.4), ...spark(13, 3, 1, '#ffffff'), ...spark(3, 12.6, 0.8, SFGOLD));
+  return out;
+}
+// Sparrow Volley: three sunbirds flying out in a fan.
+function sparrowvolley() {
+  const out = [...tile('sunbg', 'active'), ...aura(8, 8, 6.4, '#fff4d2')];
+  out.push(...sunbirdIcon(11.4, 4.2, 2.1), ...sunbirdIcon(12.2, 9.2, 2.4), ...sunbirdIcon(6.4, 11.4, 2.2));
+  out.push(...featherIcon(2.2, 6, 5.6, 4.4, 0.9), ...spark(4, 2.6, 0.9, '#ffffff'));
+  return out;
+}
+// Sunbeam Shot: a beam of light shooting across from a little sun at the bow.
+function sunbeamshot() {
+  const out = [...tile('sunbg', 'active'), ...aura(8, 8, 6.4, '#fff4d2')];
+  out.push(S(tube([[3.6, 8.6], [15, 7.4]], 2.2, 1.4), SFPEACH), S(tube([[3.6, 8.6], [15, 7.4]], 1.4, 0.9), SFGOLD), S(tube([[3.6, 8.6], [15, 7.4]], 0.6, 0.4), '#ffffff'));
+  out.push(...sunIcon(3.8, 8.6, 2, 3.2), ...spark(12, 3.4, 1, '#ffffff'));
+  return out;
+}
+// Feather Rain: feathers of light falling at a slant from a burst of light up top.
+function featherrain() {
+  const out = [...tile('sunbg', 'active'), ...aura(8, 8, 6.4, '#fff4d2')];
+  out.push(...sunIcon(11.6, 3.4, 1.6, 2.6));
+  out.push(...featherIcon(4, 4, 6.4, 8.4), ...featherIcon(8.2, 7, 10.6, 11.4), ...featherIcon(3.4, 10, 5.8, 14.2));
+  out.push(...spark(13.2, 12.4, 0.9, '#ffffff'));
+  return out;
+}
+// Golden Hour: a sun pouring soft rays down, a feather drifting in the light.
+function goldenhour() {
+  const out = [...tile('sunbg', 'active'), ...aura(8, 7.4, 6.8, '#fff4d2', 1.2, 5)];
+  for (const x of [4.4, 8, 11.6]) out.push(S(tube([[x + 0.6, 6.8], [x - 0.8, 15]], 0.6, 1.2), mix(SFGOLD, '#ffffff', 0.4)));
+  out.push(...sunIcon(8, 5, 2.8, 4.2), ...featherIcon(10.4, 10.6, 13.4, 13.2, 0.9));
+  return out;
+}
+// Pin Feather: a big gold feather stuck in the ground at a slant, a glint on it.
+function pinfeather() {
+  const out = [...tile('sunbg', 'active'), ...aura(8, 8, 6.4, '#fff4d2')];
+  out.push(S(oval(9.6, 13.2, 3.6, 0.9, 0, 16), mix(SFPEACH, cur.deep, 0.3)));
+  out.push(...featherIcon(6.2, 2.6, 9.8, 13, 1.8), ...spark(4, 5, 1.1, '#ffffff'), ...spark(12.8, 4, 0.8, SFGOLD));
+  return out;
+}
+// Dawn Eyes: the sun coming up over the edge of the world, rays out.
+function dawneyes() {
+  const out = [...tile('sunbg', 'passive'), ...aura(8, 9, 6, '#fff4d2')];
+  out.push(...sunIcon(8, 10.4, 3.2, 5.2), S([[1.6, 10.6], [14.4, 10.6], [14.4, 15], [1.6, 15]], mix(SFPEACH, cur.deep, 0.5)), S(tube([[1.6, 10.6], [14.4, 10.6]], 0.3, 0.3), SFCREAM));
+  out.push(...spark(13, 4, 1, '#ffffff'));
+  return out;
+}
+// Sunrise Volley: a great sun, light arrows raining down past it.
+function sunrisevolley() {
+  const out = [...tile('sunbg', 'active'), ...aura(8, 7, 6.8, '#fff4d2', 1.2, 5)];
+  out.push(...sunIcon(8, 6.4, 3.2, 5.2));
+  out.push(...lightArrowIcon(2.6, 9.4, 4.4, 14.4), ...lightArrowIcon(7.4, 11, 8.8, 15), ...lightArrowIcon(11.8, 9.4, 13.4, 14.2));
+  out.push(...spark(13.6, 2.4, 1.2, '#ffffff'));
+  return out;
+}
+
+// ---------- Phoenix (flame orange, crimson and gold) ----------
+const PHORANGE = '#ff8a3a';
+const PHRED = '#e8452a';
+const PHGOLD = '#ffd36a';
+const PHINK = '#7a1e14';
+// A tongue of flame standing at (x, y), `h` tall.
+const flameIcon = (x, y, h, w = h * 0.55) => [
+  ...solid([[x - w * 0.5, y], [x - w * 0.6, y - h * 0.45], [x - w * 0.1, y - h * 0.75], [x + w * 0.05, y - h], [x + w * 0.45, y - h * 0.6], [x + w * 0.55, y - h * 0.2], [x + w * 0.4, y]], PHRED, { d: 0.3, ink: PHINK, shadow: false }),
+  ...solid([[x - w * 0.28, y], [x - w * 0.3, y - h * 0.35], [x + w * 0.02, y - h * 0.68], [x + w * 0.3, y - h * 0.3], [x + w * 0.24, y]], PHORANGE, { d: 0.3, ink: null, shadow: false }),
+  S([[x - w * 0.12, y], [x - w * 0.1, y - h * 0.28], [x + w * 0.05, y - h * 0.45], [x + w * 0.15, y - h * 0.22], [x + w * 0.1, y]], PHGOLD),
+];
+// A crossbow bolt from (x0, y0) to (x1, y1), point at the far end.
+function boltIcon(x0, y0, x1, y1) {
+  const dx = x1 - x0;
+  const dy = y1 - y0;
+  const l = Math.hypot(dx, dy) || 1;
+  const [ux, uy] = [dx / l, dy / l];
+  const [nx, ny] = [-uy, ux];
+  return [
+    S(tube([[x0, y0], [x1 - ux, y1 - uy]], 0.35, 0.35), '#6a3a2a'),
+    ...solid([[x1 + ux * 0.8, y1 + uy * 0.8], [x1 - ux * 0.9 + nx * 1.1, y1 - uy * 0.9 + ny * 1.1], [x1 - ux * 0.9 - nx * 1.1, y1 - uy * 0.9 - ny * 1.1]], '#fff0d0', { d: 0.3, ink: PHINK, shadow: false }),
+    ...solid([[x0, y0], [x0 + nx * 1.2 - ux * 0.6, y0 + ny * 1.2 - uy * 0.6], [x0 + ux * 1.2, y0 + uy * 1.2]], PHRED, { d: 0.3, ink: PHINK, shadow: false }),
+    ...solid([[x0, y0], [x0 - nx * 1.2 - ux * 0.6, y0 - ny * 1.2 - uy * 0.6], [x0 + ux * 1.2, y0 + uy * 1.2]], PHRED, { d: 0.3, ink: PHINK, shadow: false }),
+  ];
+}
+// Flame Wing: a wing of flame fanned up and back.
+function flamewing() {
+  const out = [...tile('firebg', 'active'), ...aura(8, 8, 6.4, '#ffe39a')];
+  for (const [x, y, h] of [[4.4, 13, 9], [7, 13.4, 11], [9.8, 13.6, 9.4], [12.4, 13.6, 7]]) out.push(...flameIcon(x, y, h));
+  out.push(...spark(13.4, 3, 1, '#ffffff'));
+  return out;
+}
+// Firebrand Bolt: a burning bolt through a line, flame streaming off it.
+function firebrandbolt() {
+  const out = [...tile('firebg', 'active'), ...aura(8, 8, 6.4, '#ffe39a')];
+  out.push(S(tube([[1.6, 10.4], [9, 8.4]], 0.6, 1.6), mix(PHORANGE, cur.deep, 0.2)), S(tube([[2.4, 10.2], [9, 8.4]], 0.3, 0.8), PHGOLD));
+  out.push(...boltIcon(4.4, 9.6, 14, 7), ...spark(12.6, 12.6, 0.9, '#ffffff'));
+  return out;
+}
+// Ember Spread: five bolts fanned out, sparks off them.
+function emberspread() {
+  const out = [...tile('firebg', 'active'), ...aura(8, 8, 6.4, '#ffe39a')];
+  for (const [x1, y1] of [[13.6, 3], [14.4, 6.4], [14.6, 9.6], [14, 12.8]]) out.push(...boltIcon(3, 8.6, x1, y1));
+  out.push(...flameIcon(3.4, 10.6, 4.6), ...spark(8, 2.6, 0.9, '#ffffff'));
+  return out;
+}
+// Smoulder: a bolt stuck in at a slant, its head glowing, a flame curling off it.
+function smoulder() {
+  const out = [...tile('firebg', 'active'), ...aura(8, 9, 6.4, '#ffe39a', 1.1, 5)];
+  out.push(S(oval(9.4, 10.4, 3.6, 3.2, 0, 18), mix(PHORANGE, '#ffffff', 0.25)));
+  out.push(...boltIcon(2.4, 4, 9.6, 10.6), ...flameIcon(10.6, 10.6, 6.4), ...spark(13.2, 3.4, 1, '#ffffff'));
+  return out;
+}
+// Phoenix Mastery: a fire bird's head and a flame crest, proud.
+function phoenixmastery() {
+  const out = [...tile('firebg', 'passive'), ...aura(8, 8.4, 6, '#ffe39a')];
+  out.push(...flameIcon(6.2, 6.4, 4.6), ...flameIcon(8.2, 5.8, 5.4), ...flameIcon(10, 6.6, 4));
+  out.push(...solid(oval(8, 9.6, 4, 3.6, 0, 20), '#ffa040', { d: 0.35, ink: PHINK, shadow: false }), S(oval(8.6, 10.6, 2.4, 1.8, 0, 14), '#ffeaa0'));
+  out.push(...solid([[11.6, 9.2], [13.8, 9.8], [11.6, 10.4]], PHGOLD, { d: 0.3, ink: PHINK, shadow: false }), S(oval(10.2, 8.8, 0.45, 0.55, 0, 8), PHINK), S(oval(10.4, 10.3, 0.7, 0.45, 0, 8), '#ff7a6a'));
+  return out;
+}
+// Rebirth: the phoenix rising, wings of flame spread wide.
+function rebirth() {
+  const out = [...tile('firebg', 'active'), ...aura(8, 7.4, 6.8, '#ffe39a', 1.2, 5)];
+  for (const [x, y, h] of [[3, 10.6, 7], [5, 10, 8.6], [11, 10, 8.6], [13, 10.6, 7]]) out.push(...flameIcon(x, y, h));
+  out.push(...flameIcon(8, 15, 6.4, 4));
+  out.push(...solid(oval(8, 8.4, 2.8, 2.6, 0, 18), '#ffa040', { d: 0.35, ink: PHINK, shadow: false }), S(oval(8.4, 9.2, 1.6, 1.2, 0, 12), '#ffeaa0'), S(oval(8.8, 7.6, 0.4, 0.45, 0, 8), PHINK));
+  out.push(...solid([[10.6, 7.8], [12, 8.2], [10.6, 8.6]], PHGOLD, { d: 0.3, ink: PHINK, shadow: false }), ...spark(13.6, 2.4, 1.2, '#ffffff'));
+  return out;
+}
+
+// ---------- Songbird (sky blue, sunny yellow and white, navy ink) ----------
+const SBYEL = '#ffd84a';
+const SBBLUE = '#5ab4f0';
+const SBINK = '#1e3a6a';
+// A musical note at (x, y) (its head), `r` big; `two`: two heads beamed together.
+function noteIcon(x, y, r, two = false) {
+  const head = (hx) => [...solid(oval(hx, y, r, r * 0.78, -25, 14), SBYEL, { d: 0.3, ink: SBINK, shadow: false }), S(oval(hx - r * 0.3, y - r * 0.25, r * 0.3, r * 0.2, -25, 8), '#ffffff')];
+  const stem = (hx) => S(tube([[hx + r * 0.8, y - r * 0.1], [hx + r * 0.8, y - r * 2.6]], 0.22, 0.22), SBINK);
+  if (two) return [...head(x), ...head(x + r * 2.4), stem(x), stem(x + r * 2.4), S(tube([[x + r * 0.8, y - r * 2.6], [x + r * 3.2, y - r * 2.9]], 0.4, 0.4), SBBLUE)];
+  return [...head(x), stem(x), S(tube([[x + r * 0.8, y - r * 2.6], [x + r * 1.7, y - r * 1.9], [x + r * 1.5, y - r * 1.2]], 0.3, 0.2), SBBLUE)];
+}
+// A bluebird at (x, y), `r` round.
+function bluebirdIcon(x, y, r, f = 1) {
+  return [
+    ...solid(oval(x, y, r, r * 0.88, 0, 18), '#7cc8ff', { d: 0.3, ink: SBINK, shadow: false }),
+    S(oval(x + f * r * 0.15, y + r * 0.3, r * 0.58, r * 0.42, 0, 14), '#ffffff'),
+    S(oval(x - f * r * 0.3, y, r * 0.4, r * 0.24, f * -30, 12), '#4a9ae8'),
+    ...solid([[x + f * r * 0.85, y - r * 0.2], [x + f * r * 1.35, y - r * 0.05], [x + f * r * 0.85, y + r * 0.1]], SBYEL, { d: 0.3, ink: SBINK, shadow: false }),
+    S(oval(x + f * r * 0.5, y - r * 0.25, Math.max(0.3, r * 0.11), Math.max(0.3, r * 0.12), 0, 8), SBINK),
+  ];
+}
+// Stave lines along a gentle wave from (x0, y0) to (x1, y1).
+function staveIcon(x0, y0, x1, y1, w = 2.4) {
+  const out = [];
+  for (let l = 0; l < 3; l++) {
+    const pts = [];
+    for (let j = 0; j <= 8; j++) {
+      const t = j / 8;
+      pts.push([x0 + (x1 - x0) * t, y0 + (y1 - y0) * t + Math.sin(t * 5) * 0.8 + (l - 1) * (w / 2)]);
+    }
+    out.push(S(tube(pts, 0.14, 0.14), l === 1 ? SBYEL : '#ffffff'));
+  }
+  return out;
+}
+// Song Step: a ribbon of stave lines sweeping forward, a note riding it.
+function songstep() {
+  const out = [...tile('songbg', 'active'), ...aura(8, 8, 6.4, '#fff3b0')];
+  out.push(...staveIcon(1.6, 12, 14.4, 7), ...noteIcon(9.6, 6.8, 1.4), ...spark(3.6, 3.6, 1, '#ffffff'));
+  return out;
+}
+// Healing Melody: notes rising round a soft glow, sparkles among them.
+function healingmelody() {
+  const out = [...tile('songbg', 'active'), ...aura(8, 8, 6.6, '#fff3b0', 1.2, 5)];
+  out.push(...noteIcon(4, 11.6, 1.5), ...noteIcon(9.4, 7.4, 1.7, true), ...noteIcon(5.6, 5, 1.2));
+  out.push(...spark(12.8, 12, 1.1, '#ffffff'), ...spark(3, 2.8, 0.8, SBYEL));
+  return out;
+}
+// Lullaby: a sleepy crescent moon, a Z and a note drifting off it.
+function lullaby() {
+  const out = [...tile('songbg', 'active'), ...aura(8, 8, 6.4, '#fff3b0')];
+  out.push(...solid([...arcPts(6.6, 8.8, 4.4, 4.4, 60, 300, 14), ...arcPts(8.4, 8, 3.6, 3.6, 300, 60, 14)], SBYEL, { d: 0.35, ink: SBINK }));
+  out.push(S(tube([[10.4, 3], [13.2, 3], [10.4, 6], [13.2, 6]], 0.35, 0.35), '#ffffff'), ...noteIcon(11.4, 11.6, 1.3));
+  return out;
+}
+// Anthem: crossed banners of stave lines, a big note between them.
+function anthem() {
+  const out = [...tile('songbg', 'active'), ...aura(8, 8, 6.6, '#fff3b0', 1.2, 5)];
+  out.push(...staveIcon(2, 14, 13.6, 2.6, 2), ...staveIcon(2.4, 2.6, 14, 13.6, 2), ...noteIcon(7.2, 10, 2, true));
+  return out;
+}
+// Songbird Mastery: a bluebird singing, a note coming off its beak.
+function songbirdmastery() {
+  const out = [...tile('songbg', 'passive'), ...aura(8, 8.4, 6, '#fff3b0')];
+  out.push(...bluebirdIcon(7, 9.4, 3.6), ...noteIcon(11.6, 6.4, 1.3), ...spark(3.6, 4, 0.9, '#ffffff'));
+  return out;
+}
+// Grand Chorus: three bluebirds singing together round a burst of notes.
+function grandchorus() {
+  const out = [...tile('songbg', 'active'), ...aura(8, 7.4, 6.8, '#fff3b0', 1.2, 5)];
+  out.push(...noteIcon(6.6, 7.4, 1.8, true));
+  out.push(...bluebirdIcon(3.4, 12, 2.2), ...bluebirdIcon(12.6, 12, 2.2, -1), ...bluebirdIcon(8, 13.4, 2));
+  out.push(...spark(13.6, 2.6, 1.2, '#ffffff'), ...spark(2.6, 3.4, 0.9, SBYEL));
+  return out;
+}
+
 // ---------- Silkweaver (pearl silk, gold thread, soft plum) ----------
 const SVPEARL = '#fdf8f0';
 const SVCREAM = '#efe4d6';
@@ -1070,6 +1321,9 @@ const ART = {
   mothstep, wingflurry, mothswarm, nighteyes, midnightswarm, mothveil, dazzledust, moonlure, wingfeint,
   shadowstep, nighteye, umbraledge, corona, umbralmastery, totaleclipse,
   silkswing, bindingthread, reelin, spindle, weavermastery, moonspun,
+  skyhop, sparrowvolley, sunbeamshot, featherrain, goldenhour, pinfeather, dawneyes, sunrisevolley,
+  flamewing, firebrandbolt, emberspread, smoulder, phoenixmastery, rebirth,
+  songstep, healingmelody, lullaby, anthem, songbirdmastery, grandchorus,
   tidallance, undertow, hydrocannon, depthcharge, deepmastery, abyssmaelstrom,
   healingrain, springsurge, moonblessing, tidesreturn, moonfall, tidesong, moontide,
 };

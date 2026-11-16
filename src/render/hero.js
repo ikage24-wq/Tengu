@@ -3798,20 +3798,10 @@ function paintHero(ctx, look, gear, x, y, state, anim, mv) {
     return handsAt();
   }
   if (armBehind) return handsAt();
-  if (!behind && g.weapon?.type === 'bow') {
-    // A bow in front of her (drawn or not: a full-size bow in a flip or a roll too) passes behind
-    // her head wherever it would cross her face (a clip that leaves out the oval of her face), so
-    // the whole bow reads and her eyes and mouth never hide behind a limb.
-    const fx = sx(15.5 + squashX(15.5 + rig.tx) - 15.5 + rig.hx + 1.5);
-    const fy = sy(17 + bodyY * KY + rig.hy);
-    ctx.save();
-    ctx.beginPath();
-    ctx.rect(fx - W * scale * 3, fy - H * scale * 3, W * scale * 6, H * scale * 6);
-    ctx.ellipse(fx, fy, 11 * scale, 9.5 * scale, 0, 0, Math.PI * 2);
-    ctx.clip('evenodd');
-    drawWeapon();
-    ctx.restore();
-  } else if (!behind) drawWeapon();
+  // (A bow or crossbow in front of her is drawn whole, over her head too: the player prefers that.
+  // Cutting it out round her face left a tip lying on her hair as if growing out of it, and
+  // cutting it out round her whole head made it look like it went through her head.)
+  if (!behind) drawWeapon();
   // A dance arm lies over the face and hair, so it takes a soft line in its own colours instead of
   // the heavy ink of a swinging weapon arm.
   drawArm();

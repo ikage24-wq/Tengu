@@ -847,6 +847,298 @@ export const SKILLS = {
     },
   }),
 
+  // ---------- Sunfeather (the new Archer: sunrise gold and peach, light arrows and sunbirds) ----------
+  // docs/design/sunfeather.md. Her shots that land build Daybreak (world/melee.js), more for each
+  // landed in a row; the fuller it runs the faster she shoots; full (Sunrise), every basic shot fans
+  // into three. Her paths play these their own way (`paths`): the Phoenix with her crossbow, in flame;
+  // the Songbird in song.
+  skyhop: skill({
+    id: 'skyhop', anim: 'sfskyhop', name: 'Sky Hop', job: 'sunfeather', type: 'attack', fx: null, icon: 'skyhop', school: 'sun', maxLevel: 10, movement: true,
+    pathNames: { phoenix: 'Flame Hop', songbird: 'Song Hop' },
+    desc: 'Backflip away from them, high and light, and shoot down at them from the top of it.',
+    weapons: ['bow', 'crossbow'],
+    at: (lv, m) => {
+      const k = (a, b) => lerp(a, b, lv, m);
+      const hop = (move, school, shot, burst, more = {}) => [{ move, dur: 0.52, step: -k(90, 130), carry: 0.6, guard: 0.5, swing: true, strikes: [
+        { at: 0.03, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, gauge: 0, hop: 360 },
+        { at: 0.5, school, burst, shot, pct: k(110, 180), range: 320, h: 150, drop: 110, targets: 3, knock: 80, speed: 920, big: true, stop: 0.04, ...more },
+      ] }];
+      return { mp: k(8, 5), pct: k(110, 180), hits: 1, targets: 3, combo: hop('sfskyhop', 'sun', 'sfarrowbig', 'sfhitbig'), paths: { phoenix: hop('phskyhop', 'fire', 'phboltbig', 'phhitbig', { burn: { pct: 0.12, secs: 3 }, burnLook: 'ph' }), songbird: hop('sbskyhop', 'song', 'sbarrowbig', 'sbhitbig') } };
+    },
+  }),
+  sparrowvolley: skill({
+    id: 'sparrowvolley', anim: 'sfvolley', name: 'Sparrow Volley', job: 'sunfeather', type: 'attack', fx: null, icon: 'sparrowvolley', school: 'sun', maxLevel: 20,
+    pathNames: { phoenix: 'Ember Volley', songbird: 'Songbird Volley' },
+    desc: 'Loose five arrows fanned out; they turn into sunbirds on the wing and fly at the five nearest monsters.',
+    weapons: ['bow', 'crossbow'],
+    at: (lv, m) => {
+      const k = (a, b) => lerp(a, b, lv, m);
+      return {
+        mp: k(8, 15), pct: k(70, 115), hits: 1, targets: 5,
+        combo: [{ move: 'sfvolley', dur: 0.48, step: -4, strikes: [{ at: 0.52, school: 'sun', burst: 'sfbird', shot: 'sfbirdshot', fan: 5, pct: k(70, 115), range: 380, h: 120, knock: 40, speed: 560, stop: 0.03 }] }],
+        // (Ember Volley: five little fire birds, setting alight what they reach.)
+        paths: { phoenix: [{ move: 'phvolley', dur: 0.5, step: -6, strikes: [{ at: 0.54, school: 'fire', burst: 'phbird', shot: 'phbirdshot', fan: 5, pct: k(70, 115), range: 380, h: 120, knock: 40, speed: 560, stop: 0.03, burn: { pct: 0.12, secs: 3 }, burnLook: 'ph' }] }],
+          // (Songbird Volley: five bluebirds singing as they fly.)
+          songbird: [{ move: 'sbvolley', dur: 0.48, step: -4, strikes: [{ at: 0.52, school: 'song', burst: 'sbbird', shot: 'sbbirdshot', fan: 5, pct: k(70, 115), range: 380, h: 120, knock: 40, speed: 560, stop: 0.03 }] }] },
+      };
+    },
+  }),
+  sunbeamshot: skill({
+    id: 'sunbeamshot', anim: 'sfbeam', dmg: 1.1, name: 'Sunbeam Shot', job: 'sunfeather', type: 'attack', fx: null, icon: 'sunbeamshot', school: 'sun', maxLevel: 20,
+    pathNames: { phoenix: 'Flare Bolt', songbird: 'Sunsong Beam' },
+    desc: 'A long, slow draw, the arrow glowing brighter and brighter, then a beam of light through everything in line.',
+    weapons: ['bow', 'crossbow'],
+    at: (lv, m) => {
+      const k = (a, b) => lerp(a, b, lv, m);
+      const beam = (move, look, school, more = {}) => [{ move, dur: 0.9, step: -6, strikes: [
+        { at: 0.05, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, gauge: 0, burst: `${look}charge`, burstAt: 0, burstDur: 0.58, follow: true },
+        { at: 0.66, school, burst: `${look}hitbig`, shot: `${look}beamshot`, muzzle: `${look}beamline`, pct: k(200, 330), range: 460, h: 64, targets: 8, pierce: true, knock: 220, speed: 1700, big: true, stop: 0.08, shake: 3, ...more },
+      ] }];
+      return {
+        mp: k(14, 26), pct: k(200, 330), hits: 1, targets: 8,
+        combo: beam('sfbeam', 'sf', 'sun'),
+        paths: { phoenix: beam('phbeam', 'ph', 'fire', { burn: { pct: 0.12, secs: 3 }, burnLook: 'ph' }), songbird: beam('sbbeam', 'sb', 'song') },
+      };
+    },
+  }),
+  featherrain: skill({
+    id: 'featherrain', anim: 'sfrainshot', name: 'Feather Rain', job: 'sunfeather', type: 'attack', fx: null, icon: 'featherrain', school: 'sun', maxLevel: 20,
+    pathNames: { phoenix: 'Cinder Rain', songbird: 'Note Rain' },
+    desc: 'Loose an arrow high into the sky: it bursts, and feathers of light rain down on everything over the ground ahead.',
+    weapons: ['bow', 'crossbow'],
+    at: (lv, m) => {
+      const k = (a, b) => lerp(a, b, lv, m);
+      const rainShot = (move, look, school, more = {}) => [{ move, dur: 0.6, step: 0, strikes: [
+        { at: 0.42, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, gauge: 0, burst: `${look}upshot`, burstAt: 0, burstDur: 0.5 },
+        { at: 0.5, school, rain: 10, rainCap: 3, rainFrom: 30, rainW: 280, span: 0.6, targets: 8, pct: k(45, 75), knock: 20, rainFx: `${look}featherfall`, burst: `${look}hit`, ...more },
+      ] }];
+      return {
+        mp: k(12, 22), pct: k(45, 75), hits: 10, targets: 8,
+        combo: rainShot('sfrainshot', 'sf', 'sun'),
+        paths: { phoenix: rainShot('phrainshot', 'ph', 'fire', { burn: { pct: 0.12, secs: 3 }, burnLook: 'ph' }), songbird: rainShot('sbrainshot', 'sb', 'song') },
+      };
+    },
+  }),
+  goldenhour: skill({
+    id: 'goldenhour', anim: 'sfgolden', name: 'Golden Hour', job: 'sunfeather', type: 'buff', fx: null, icon: 'goldenhour', school: 'sun', maxLevel: 10,
+    pathNames: { phoenix: 'Kindle', songbird: 'Golden Song' },
+    desc: 'Hold your bow up to the light and let the golden hour settle on you: for a while you shoot faster and your shots hit harder.',
+    weapons: ['bow', 'crossbow'],
+    at: (lv, m) => {
+      const k = (a, b) => lerp(a, b, lv, m);
+      const kf = (a, b) => lerpf(a, b, lv, m);
+      const grant = { id: 'goldenhour', duration: k(30, 60), buff: { attackSpeed: kf(0.06, 0.15), watk: k(4, 16) }, range: { w: 0, h: 0 } };
+      // (The Songbird's Golden Song reaches the party round her: `range`.)
+      const glow = (move, burst, range = grant.range) => [{ move, dur: 0.7, step: 0, strikes: [{ at: 0.55, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, gauge: 0, burst, burstAt: 0, burstDur: 0.9, follow: true, grant: { ...grant, range } }] }];
+      return {
+        mp: k(16, 26), pct: 0, hits: 0, targets: 0, duration: k(30, 60), cooldown: 60,
+        combo: glow('sfgolden', 'sfgolden'),
+        paths: { phoenix: glow('phkindle', 'phgolden'), songbird: glow('sbgolden', 'sbgolden', { w: 520, h: 240 }) },
+      };
+    },
+  }),
+  pinfeather: skill({
+    id: 'pinfeather', anim: 'sfpin', name: 'Pin Feather', job: 'sunfeather', type: 'attack', fx: null, icon: 'pinfeather', school: 'sun', maxLevel: 10,
+    pathNames: { phoenix: 'Brand Pin', songbird: 'Hush Pin' },
+    desc: 'A heavy arrow at the first monster in line: it pins it where it stands, a gold feather stuck in it, for a couple of seconds.',
+    weapons: ['bow', 'crossbow'],
+    at: (lv, m) => {
+      const k = (a, b) => lerp(a, b, lv, m);
+      const kf = (a, b) => lerpf(a, b, lv, m);
+      const pin = (move, look, school, more = {}) => [{ move, dur: 0.55, step: -6, strikes: [{ at: 0.56, school, burst: `${look}hitbig`, shot: `${look}pinshot`, pinLook: look, pct: k(110, 180), range: 330, h: 60, knock: 0, pin: kf(1.5, 2.5), speed: 1050, big: true, stop: 0.05, shake: 1, ...more }] }];
+      return {
+        mp: k(8, 14), pct: k(110, 180), hits: 1, targets: 1, cooldown: 6,
+        combo: pin('sfpin', 'sf', 'sun'),
+        // (Hush Pin: the Songbird's arrow sings it to sleep instead.)
+        paths: { phoenix: pin('phpin', 'ph', 'fire', { burn: { pct: 0.12, secs: 3 }, burnLook: 'ph' }), songbird: pin('sbpin', 'sb', 'song', { pin: undefined, sleep: kf(1.8, 3) }) },
+      };
+    },
+  }),
+  dawneyes: skill({
+    id: 'dawneyes', name: 'Dawn Eyes', job: 'sunfeather', type: 'passive', grows: true, fx: null, icon: 'dawneyes',
+    desc: 'You see best in the first light: your shots land truer and steadier, and they crit more often.',
+    at: (lv, m) => ({ passive: { acc: lerp(3, 25, lv, m), mastery: lerpf(0.1, 0.35, lv, m), critRate: lerpf(0.03, 0.1, lv, m), critDamage: lerpf(0.05, 0.15, lv, m) } }),
+  }),
+  sunrisevolley: skill({
+    id: 'sunrisevolley', anim: 'sfsunrise', dmg: 1.4, name: 'Sunrise Volley', job: 'sunfeather', type: 'attack', fx: null, icon: 'sunrisevolley', school: 'sun', maxLevel: 10, fullGauge: true,
+    pathNames: { phoenix: 'Firestorm', songbird: 'Dawn Chorus' },
+    desc: 'Finisher: needs a full Daybreak, and spends it. The sun rises behind you; you loose one great arrow straight up, and it bursts into a storm of light arrows raining down across the screen.',
+    weapons: ['bow', 'crossbow'],
+    at: (lv, m) => {
+      const k = (a, b) => lerp(a, b, lv, m);
+      const storm = (move, look, school, more = {}) => [{ move, dur: 1.4, step: 0, finisher: true, guard: 1.2, strikes: [
+        { at: 0.08, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, gauge: 0, burst: `${look}sun`, burstAt: 0, burstDur: 1.6 },
+        { at: 0.42, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, gauge: 0, burst: `${look}upbig`, burstAt: 0, burstDur: 0.6 },
+        { at: 0.56, school, rain: 16, rainCap: 5, rainFrom: -40, rainW: 560, span: 0.6, targets: 12, pct: k(90, 150), knock: 60, rainFx: `${look}lightfall`, burst: `${look}hitbig`, big: true, stop: 0.05, shake: 3, gauge: 0, ...more },
+      ] }];
+      return {
+        mp: k(26, 44), pct: k(90, 150), hits: 16, targets: 12,
+        combo: storm('sfsunrise', 'sf', 'sun'),
+        paths: { phoenix: storm('phsunrise', 'ph', 'fire', { burn: { pct: 0.12, secs: 3 }, burnLook: 'ph' }), songbird: storm('sbsunrise', 'sb', 'song') },
+      };
+    },
+  }),
+
+  // ---------- Phoenix (the Sunfeather's damage path: flame orange, crimson and gold; crossbow) ----------
+  // docs/design/sunfeather.md. Her bolts set what they hit alight (`burn`, in her flames: `burnLook`)
+  // and build Kindling (world/melee.js); the fuller it runs the harder her burns bite; full (Blaze)
+  // every bolt bursts where it lands. She plays the Sunfeather's skills her own way (their `paths`).
+  flamewing: skill({
+    id: 'flamewing', anim: 'phwing', name: 'Flame Wing', job: 'phoenix', type: 'attack', fx: null, icon: 'flamewing', school: 'fire', maxLevel: 10, movement: true,
+    desc: 'Flame wings flare from your back and carry you forward low over the ground; you land turned round and everything you passed over is burning.',
+    weapons: ['crossbow'],
+    at: (lv, m) => {
+      const k = (a, b) => lerp(a, b, lv, m);
+      return {
+        mp: k(10, 6), pct: k(100, 170), hits: 1, targets: 5,
+        combo: [{ move: 'phwing', dur: 0.48, step: k(150, 200), carry: 0.62, guard: 0.5, strikes: [
+          { at: 0.04, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, gauge: 0, burst: 'phwings', burstAt: 0, burstDur: 0.55, follow: true },
+          { at: 0.5, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, gauge: 0, turn: true },
+          { at: 0.66, school: 'fire', fx: 'phhit', burnLook: 'ph', pct: k(100, 170), reach: k(150, 210), h: 64, targets: 5, knock: 90, turn: true, burn: { pct: 0.12, secs: 3 }, big: true, stop: 0.05 },
+        ] }],
+      };
+    },
+  }),
+  firebrandbolt: skill({
+    id: 'firebrandbolt', anim: 'phbrand', name: 'Firebrand Bolt', job: 'phoenix', type: 'attack', fx: null, icon: 'firebrandbolt', school: 'fire', maxLevel: 20,
+    desc: 'Crank hard and loose a burning bolt through everything in line, setting all of them alight.',
+    weapons: ['crossbow'],
+    at: (lv, m) => {
+      const k = (a, b) => lerp(a, b, lv, m);
+      return {
+        mp: k(12, 22), pct: k(150, 250), hits: 1, targets: 8,
+        combo: [{ move: 'phbrand', dur: 0.62, step: -8, strikes: [{ at: 0.62, school: 'fire', burst: 'phhitbig', burnLook: 'ph', shot: 'phboltbig', pct: k(150, 250), range: 420, h: 60, targets: 8, pierce: true, knock: 160, speed: 1100, burn: { pct: 0.15, secs: 4 }, big: true, stop: 0.06, shake: 2 }] }],
+      };
+    },
+  }),
+  emberspread: skill({
+    id: 'emberspread', anim: 'phember', name: 'Ember Spread', job: 'phoenix', type: 'attack', fx: null, icon: 'emberspread', school: 'fire', maxLevel: 20,
+    desc: 'Five burning bolts fanned out at close range, knocking them back and setting them alight.',
+    weapons: ['crossbow'],
+    at: (lv, m) => {
+      const k = (a, b) => lerp(a, b, lv, m);
+      return {
+        mp: k(12, 22), pct: k(70, 115), hits: 1, targets: 5,
+        combo: [{ move: 'phember', dur: 0.56, step: -16, strikes: [{ at: 0.56, school: 'fire', burst: 'phhit', burnLook: 'ph', shot: 'phbolt', fan: 5, pct: k(70, 115), range: 230, h: 110, knock: 170, speed: 900, burn: { pct: 0.12, secs: 3 }, big: true, stop: 0.05, shake: 2 }] }],
+      };
+    },
+  }),
+  smoulder: skill({
+    id: 'smoulder', anim: 'phsmoulder', dmg: 1.1, name: 'Smoulder', job: 'phoenix', type: 'attack', fx: null, icon: 'smoulder', school: 'fire', maxLevel: 20,
+    desc: 'A slow, careful shot: the bolt sticks in one monster and smoulders, then bursts a moment later, hard, spreading its fire to those beside it.',
+    weapons: ['crossbow'],
+    at: (lv, m) => {
+      const k = (a, b) => lerp(a, b, lv, m);
+      return {
+        mp: k(14, 24), pct: k(260, 420), hits: 2, targets: 1, cooldown: 5,
+        combo: [{ move: 'phsmoulder', dur: 0.62, step: -6, strikes: [{ at: 0.62, school: 'fire', burst: 'phhit', shot: 'phboltbig', pct: k(60, 100), range: 360, h: 60, knock: 20, speed: 1050, smoulder: { pct: k(260, 420), secs: 1.5 }, stop: 0.04 }] }],
+      };
+    },
+  }),
+  phoenixmastery: skill({
+    id: 'phoenixmastery', name: 'Phoenix Mastery', job: 'phoenix', type: 'passive', grows: true, fx: null, icon: 'phoenixmastery',
+    desc: 'The crossbow sits in your hands like part of you: truer, steadier bolts, and harder crits.',
+    at: (lv, m) => ({ passive: { acc: lerp(4, 30, lv, m), mastery: lerpf(0.15, 0.4, lv, m), critRate: lerpf(0.03, 0.08, lv, m), critDamage: lerpf(0.1, 0.3, lv, m) } }),
+  }),
+  rebirth: skill({
+    id: 'rebirth', anim: 'phrebirth', dmg: 1.5, name: 'Rebirth', job: 'phoenix', type: 'attack', fx: null, icon: 'rebirth', school: 'fire', maxLevel: 10, fullGauge: true,
+    desc: 'Finisher: needs a full Kindling, and spends it. Down on one knee, a great bolt into the sky: a phoenix bursts out of it and sweeps down across the screen in flame, burning everything in front of you, then rises.',
+    weapons: ['crossbow'],
+    at: (lv, m) => {
+      const k = (a, b) => lerp(a, b, lv, m);
+      return {
+        mp: k(30, 50), pct: k(260, 420), hits: 1, targets: 12,
+        combo: [{ move: 'phrebirth', dur: 1.5, step: 0, finisher: true, guard: 1.4, strikes: [
+          { at: 0.12, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, gauge: 0, burst: 'phupbig', burstAt: 0, burstDur: 0.7 },
+          { at: 0.36, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, gauge: 0, burst: 'phsweep', burstAt: 0, burstDur: 1.0 },
+          { at: 0.6, school: 'fire', fx: 'phhitbig', burnLook: 'ph', pct: k(260, 420), reach: 520, h: 220, targets: 12, knock: 260, launch: 200, burn: { pct: 0.2, secs: 5 }, big: true, stop: 0.1, shake: 5, gauge: 0 },
+          { at: 0.8, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, gauge: 0, burst: 'phpillar', burstAt: 0, burstDur: 0.8 },
+        ] }],
+      };
+    },
+  }),
+
+  // ---------- Songbird (the Sunfeather's support path: sky blue, sunny yellow and white) ----------
+  // docs/design/sunfeather.md. The party's healer with a bow. Her shots and heals build Melody
+  // (world/melee.js); the fuller it runs the more her heals mend; full (Chorus) every basic shot that
+  // lands mends the party round her. She plays the Sunfeather's skills her own way (their `paths`).
+  songstep: skill({
+    id: 'songstep', anim: 'sbstep', name: 'Song Step', job: 'songbird', type: 'attack', fx: null, icon: 'songstep', school: 'song', maxLevel: 10, movement: true,
+    desc: 'Glide forward on a ribbon of music, light as a bird, and turn to shoot back at whatever you passed. Nothing touches you on the ribbon.',
+    weapons: ['bow'],
+    at: (lv, m) => {
+      const k = (a, b) => lerp(a, b, lv, m);
+      return {
+        mp: k(10, 6), pct: k(100, 170), hits: 1, targets: 3,
+        combo: [{ move: 'sbstep', dur: 0.5, step: k(150, 200), carry: 0.55, guard: 0.5, strikes: [
+          { at: 0.04, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, gauge: 0, burst: 'sbribbon', burstAt: 0, burstDur: 0.6 },
+          { at: 0.68, school: 'song', burst: 'sbhitbig', shot: 'sbarrowbig', turn: true, pct: k(100, 170), range: 320, h: 70, targets: 3, pierce: true, knock: 120, speed: 900, big: true, stop: 0.04 },
+        ] }],
+      };
+    },
+  }),
+  healingmelody: skill({
+    id: 'healingmelody', anim: 'sbmelody', name: 'Healing Melody', job: 'songbird', type: 'buff', fx: null, icon: 'healingmelody', school: 'song', maxLevel: 20, party: true,
+    desc: 'Sing a few bright notes: they drift out round you and mend you and everyone in your party nearby.',
+    weapons: ['bow'],
+    at: (lv, m) => {
+      const k = (a, b) => lerp(a, b, lv, m);
+      const kf = (a, b) => lerpf(a, b, lv, m);
+      return {
+        mp: k(20, 40), pct: 0, hits: 0, targets: 0, cooldown: 4,
+        combo: [{ move: 'sbmelody', dur: 0.7, step: 0, strikes: [{ at: 0.5, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, gauge: 0, heal: kf(0.12, 0.3), healR: 280, burst: 'sbmelody', burstAt: 0, burstDur: 0.9, follow: true }] }],
+      };
+    },
+  }),
+  lullaby: skill({
+    id: 'lullaby', anim: 'sblullaby', name: 'Lullaby', job: 'songbird', type: 'attack', fx: null, icon: 'lullaby', school: 'song', maxLevel: 10,
+    desc: 'A slow, soft arrow trailing a lullaby: every monster it passes through drifts off to sleep for a while.',
+    weapons: ['bow'],
+    at: (lv, m) => {
+      const k = (a, b) => lerp(a, b, lv, m);
+      const kf = (a, b) => lerpf(a, b, lv, m);
+      return {
+        mp: k(12, 20), pct: k(50, 80), hits: 1, targets: 4, cooldown: 10,
+        combo: [{ move: 'sblullaby', dur: 0.6, step: 0, strikes: [{ at: 0.58, school: 'song', burst: 'sbhit', shot: 'sblullabyshot', pct: k(50, 80), range: 360, h: 70, targets: 4, pierce: true, knock: 0, sleep: kf(2, 3.5), speed: 420, stop: 0.03 }] }],
+      };
+    },
+  }),
+  anthem: skill({
+    id: 'anthem', anim: 'sbanthem', name: 'Anthem', job: 'songbird', type: 'buff', fx: null, icon: 'anthem', school: 'song', maxLevel: 10, party: true,
+    desc: 'Raise your bow and sing out: for a while you and your party nearby hit harder and stand steadier.',
+    weapons: ['bow'],
+    at: (lv, m) => {
+      const k = (a, b) => lerp(a, b, lv, m);
+      const kf = (a, b) => lerpf(a, b, lv, m);
+      const grant = { id: 'anthem', duration: k(30, 60), buff: { watk: k(6, 20), dmgCut: kf(0.05, 0.12) }, range: { w: 520, h: 240 } };
+      return {
+        mp: k(20, 34), pct: 0, hits: 0, targets: 0, duration: k(30, 60), cooldown: 60,
+        combo: [{ move: 'sbanthem', dur: 0.8, step: 0, strikes: [{ at: 0.55, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, gauge: 0, burst: 'sbanthem', burstAt: 0, burstDur: 1, follow: true, grant }] }],
+      };
+    },
+  }),
+  songbirdmastery: skill({
+    id: 'songbirdmastery', name: 'Songbird Mastery', job: 'songbird', type: 'passive', grows: true, fx: null, icon: 'songbirdmastery',
+    desc: 'Your bow and your voice keep time together: truer shots, and your heals mend more.',
+    at: (lv, m) => ({ passive: { acc: lerp(4, 30, lv, m), mastery: lerpf(0.15, 0.4, lv, m), healBoost: lerpf(0.05, 0.25, lv, m) } }),
+  }),
+  grandchorus: skill({
+    id: 'grandchorus', anim: 'sbchorus', dmg: 1.3, name: 'Grand Chorus', job: 'songbird', type: 'attack', fx: null, icon: 'grandchorus', school: 'song', maxLevel: 10, fullGauge: true, party: true,
+    desc: 'Finisher: needs a full Melody, and spends it. A flock of songbirds gathers round you and sings: a wave of music mends your whole party, brings back the fallen, and hits every monster in front of you.',
+    weapons: ['bow'],
+    at: (lv, m) => {
+      const k = (a, b) => lerp(a, b, lv, m);
+      const kf = (a, b) => lerpf(a, b, lv, m);
+      return {
+        mp: k(30, 50), pct: k(200, 330), hits: 1, targets: 12,
+        combo: [{ move: 'sbchorus', dur: 1.4, step: 0, finisher: true, guard: 1.3, strikes: [
+          { at: 0.1, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, gauge: 0, burst: 'sbflock', burstAt: 0, burstDur: 1.3 },
+          { at: 0.56, school: 'song', fx: 'sbhitbig', pct: k(200, 330), reach: 480, h: 220, targets: 12, knock: 200, launch: 140, heal: kf(0.25, 0.45), healR: 400, revive: kf(0.3, 0.5), reviveR: 400, burst: 'sbwave', burstAt: 0, burstDur: 0.9, big: true, stop: 0.08, shake: 3, gauge: 0 },
+        ] }],
+      };
+    },
+  }),
+
   // ---------- Silkweaver (the Moon Moth's control path: pearl silk and gold thread) ----------
   // docs/design/silkweaver.md. The controller. Her blows tie threads (`thread`, world/melee.js) that
   // slow what they catch; the third wraps it in a cocoon, helpless, taking more from her blows. Her

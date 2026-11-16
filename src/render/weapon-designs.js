@@ -845,192 +845,169 @@ function staff(m, t, f = 0) {
 
 
 
+// ---------- Bows ----------
+//
+// One sample bow, made from scratch (2026-11-16, for the Sunfeather): every bow item draws this
+// one design in its own tier's materials until the bow line is drawn tier by tier. A hunter's
+// recurve: a chunky riser bulging forward at the grip (a wrapped grip, a collar where each limb
+// sets in), limbs that sweep back toward the string and flick forward again at the tips (two-tone:
+// a dark back, a bright face), and round caps on the tips. From Steel up a gem sits in the riser.
+// Sized so that drawn upright behind her (render/hero.js `bowUp`) its top tip stays hidden behind
+// her head instead of poking up out of her hair, and its foot clears the ground.
+// The frame: the grip at (0, 0), the limbs along y, the belly toward +x, the string at -x.
+const BOW_H = 14;
+// The limb's centre line, `u` 0 at the grip to 1 at a tip: the riser a little forward, the limb
+// sweeping back to its deepest at BOW_DEEP, then the recurve flicking forward to the tip.
+const BOW_DEEP = 0.86;
+function bowX(u) {
+  const a = Math.abs(u);
+  if (a <= 0.2) return 1.6 - 0.6 * (a / 0.2) ** 2;
+  if (a <= BOW_DEEP) return 1 - 4.6 * ((a - 0.2) / (BOW_DEEP - 0.2)) ** 1.5;
+  return -3.6 + 0.9 * ((a - BOW_DEEP) / (1 - BOW_DEEP)) ** 1.6;
+}
+// Its width: the riser swelling smoothly out of the limbs at the grip, the limbs tapering out to
+// the tips.
+const bowW = (u) => {
+  const a = Math.abs(u);
+  return a <= 0.3 ? 3 + 1.8 * (1 - (a / 0.3) ** 2) ** 1.5 : 3 - 1.4 * ((a - 0.3) / 0.7);
+};
+// A band along the limb from u0 to u1: `side` 0 the whole width, -1 a strip `k` of its width down
+// its back (the string side), +1 down its face.
+function limbBand(u0, u1, c, side = 0, k = 0.5, n = 24) {
+  const l = [];
+  const r = [];
+  for (let i = 0; i <= n; i++) {
+    const u = u0 + ((u1 - u0) * i) / n;
+    const x = bowX(u);
+    const w = bowW(u) / 2;
+    const y = u * BOW_H;
+    if (side === 0) {
+      l.push([x - w, y]);
+      r.push([x + w, y]);
+    } else {
+      const edge = x + side * w;
+      l.push([edge - side * w * 2 * k, y]);
+      r.push([edge, y]);
+    }
+  }
+  return T([...l, ...r.reverse()], c);
+}
+
 function bow(m, t) {
   const s = [];
-  const H = [19, 19.5, 20, 20.5, 21, 22, 22.5, 23, 23.5, 24, 25][t];
-  const bulge = [7, 7, 8, 8, 8.5, 9, 9, 9.5, 9.5, 10, 11][t];
-  const thick = [2.4, 2.4, 2.6, 2.8, 2.8, 2.8, 2.8, 3, 3, 3.2, 3.2][t];
-  const curl = t >= 2 ? [0, 0, 2.2, 1.4, 1.2, 2.6, 1.6, 1.6, 1.2, 3, 3.4][t] : 0;
-  const sx = -bulge + thick / 2;
-  const xAt = (u) => sx + bulge * (1 - Math.pow(Math.abs(u), 1.7)) + curl * Math.max(0, Math.abs(u) - 0.78) * 9;
-  const tipX = xAt(1);
-  const limb = (c, w = thick, u0 = -1, u1 = 1) => {
-    const o = [];
-    const i2 = [];
-    for (let i = 0; i <= 20; i++) {
-      const u = u0 + ((u1 - u0) * i) / 20;
-      const k = w * (1 - 0.45 * Math.abs(u));
-      o.push([xAt(u) + k / 2, u * H]);
-      i2.push([xAt(u) - k / 2, u * H]);
-    }
-    return T([...o, ...i2.reverse()], c);
-  };
-  const wood = t <= 1 ? m.handle : m.blade;
-  // The string first (behind), then the limbs.
-  s.push({ ...R(tipX - 0.4, -H, 0.8, H * 2, '#fff6fb'), string: true });
-  s.push(limb(wood));
-  if (t >= 4) s.push(F(limb(m.edge, thick * 0.3, -0.95, -0.1)), F(limb(m.edge, thick * 0.3, 0.1, 0.95)));
-  const tips = (draw) => { for (const sd of [-1, 1]) s.push(...draw(xAt(sd), sd * H, sd)); };
-  const a = { tip: [tipX, -H], head: [1, 0], blade: [-H, H] };
-  switch (t) {
-    case 0:
-      break;
-    case 1:
-      tips((x, y) => [E(x, y, 1.4, 1.4, m.trim)]);
-      break;
-    case 2:
-      tips((x, y, sd) => [T([[x - 0.6, y - sd * 1.6], [x + 2, y + sd * 0.6], [x + 0.4, y + sd * 1.6]], m.trim)]);
-      break;
-    case 3:
-      for (const u of [-0.75, -0.5, 0.5, 0.75]) s.push(R(xAt(u) - thick / 2 - 0.3, u * H - 0.6, thick + 0.6, 1.2, m.trim));
-      break;
-    case 4:
-      s.push(T([[2, -2.6], [4.4, -1.4], [2, -0.6]], m.trim));
-      tips((x, y, sd) => [T([[x - 1.2, y], [x + 1.2, y], [x, y + sd * 2.4]], m.trim)]);
-      break;
-    case 5:
-      // Silver wings sweeping back from the grip, a pink gem.
-      for (const sd of [-1, 1]) s.push(T([[1.6, sd * 3], [5.6, sd * 6], [7, sd * 11], [4.4, sd * 8.6], [1.2, sd * 6.4]], m.trim));
-      tips((x, y) => [E(x, y, 1.2, 1.2, m.trim)]);
-      s.push(...gem(2.2, 0, 1.3, m.gem));
-      a.gem = [2.2, 0];
-      break;
-    case 6:
-      for (const u of [-0.8, -0.55, -0.3, 0.3, 0.55, 0.8]) s.push(leafAt(xAt(u) + 0.6, u * H, u < 0 ? 40 : -40, 3.6, 1.2, '#7fd17a'));
-      tips((x, y, sd) => [leafAt(x, y, sd < 0 ? 120 : 240, 4, 1.4, m.trim)]);
-      s.push(...gem(2.2, 0, 1.2, m.gem));
-      a.gem = [2.2, 0];
-      break;
-    case 7:
-      for (const sd of [-1, 1]) for (const u of [0.35, 0.6]) s.push(T([[xAt(sd * u) + 1, sd * u * H - 1.4], [xAt(sd * u) + 4.4, sd * (u * H + 1.2)], [xAt(sd * u) + 1, sd * u * H + 1.4]], m.trim));
-      s.push(...gem(2.2, 0, 1.3, m.gem));
-      a.gem = [2.2, 0];
-      break;
-    case 8:
-      s.push(F(limb(m.bladeDark, thick * 0.45, -1, 1)));
-      for (const sd of [-1, 1]) s.push(T([[xAt(sd * 0.5) + 1, sd * 0.5 * H - 1], [xAt(sd * 0.5) + 5, sd * (0.5 * H - 3)], [xAt(sd * 0.5) + 1.2, sd * 0.5 * H + 1.4]], m.blade));
-      tips((x, y, sd) => [T([[x - 1, y], [x + 1, y], [x, y + sd * 3]], m.blade)]);
-      s.push(...gem(2.2, 0, 1.3, m.gem));
-      a.gem = [2.2, 0];
-      break;
-    case 9:
-      for (const sd of [-1, 1]) s.push(T([[xAt(sd * 0.45) + 1, sd * 0.45 * H], [xAt(sd * 0.45) + 4.6, sd * (0.45 * H + 2)], [xAt(sd * 0.45) + 1, sd * (0.45 * H + 1.8)]], m.trim));
-      for (const u of [-0.7, -0.45, -0.2, 0.2, 0.45, 0.7]) s.push(F(R(xAt(u) - 0.5, u * H - 0.7, 1, 1.4, m.rune)));
-      a.runes = [xAt(0.5), -H * 0.6, H * 0.6];
-      s.push(...gem(2.2, 0, 1.3, m.gem));
-      a.gem = [2.2, 0];
-      break;
-    default:
-      tips((x, y) => [star(x, y, 3, GOLD)]);
-      for (const u of [-0.55, 0.55]) s.push(F(star(xAt(u), u * H, 1.1, m.rune)));
-      s.push(star(2, 0, 4, GOLD, 0.28), ...gem(2, 0, 1.2, m.gem));
-      a.gem = [2, 0];
-      break;
+  const H = BOW_H;
+  const wood = t === 0;
+  const deep = bowX(BOW_DEEP);
+  const sh = BOW_DEEP * H;
+  // The string first (behind), along the backs of the limbs where the recurves touch it; while she
+  // draws it's drawn live instead (`a.string`, render/hero.js drawString, which sits 1 px back).
+  s.push({ ...R(deep - 1 / 1.3 - 0.4, -sh, 0.8, sh * 2, '#fff6fb'), string: true });
+  // The limbs, the riser through them; a dark back and a bright face on each limb.
+  s.push(limbBand(-1, 1, m.blade));
+  for (const [u0, u1] of [[-0.94, -0.3], [0.3, 0.94]]) {
+    s.push(F(limbBand(u0, u1, m.bladeDark, -1, 0.42)));
+    s.push(F(limbBand(u0 * 0.95, u1 * 0.95, m.edge, 1, 0.34)));
   }
-  // The grip: a wrap where the hand holds.
-  s.push(R(xAt(0) - thick / 2 - 0.3, -2.6, thick + 0.6, 5.2, t === 0 ? '#e6d2a8' : m.grip));
-  for (let y = -2.2; y < 2.6; y += 1.4) s.push(F(R(xAt(0) - thick / 2 - 0.3, y, thick + 0.6, 0.5, m.trimDark)));
-  a.string = { x: tipX, h: H, color: '#fff6fb' };
+  // The riser's swell lit down its front.
+  s.push(F(limbBand(-0.26, 0.26, m.edge, 1, 0.22)));
+  // The wrapped grip where her hand closes, over the back of the riser, two bands across it.
+  s.push(T([[-0.9, -2.2], [1.9, -2.2], [2.1, 2.2], [-0.9, 2.2]], wood ? '#efe0bf' : m.grip));
+  for (const y of [-1.1, 0.6]) s.push(F(R(-0.9, y, 2.9, 0.55, wood ? '#c9a878' : m.trimDark)));
+  // Collars where the limbs set into the riser.
+  for (const sd of [-1, 1]) {
+    const y = sd * 0.34 * H;
+    const x = bowX(0.34);
+    s.push(T([[x - 1.9, y - 0.75], [x + 1.9, y - 0.75], [x + 1.7, y + 0.75], [x - 1.7, y + 0.75]], m.trim));
+    s.push(F(R(x - 1.6, y - 0.6, 3.1, 0.4, mix(m.trim, WHITE, 0.45))));
+  }
+  // Round caps on the tips, a glint on each.
+  const tip = bowX(1);
+  for (const sd of [-1, 1]) {
+    s.push(E(tip, sd * H, 1.35, 1.35, m.trim));
+    s.push(F(E(tip - 0.4, sd * H - 0.45, 0.45, 0.4, mix(m.trim, WHITE, 0.55))));
+  }
+  const a = { tip: [tip, -H], head: [1, 0], blade: [-H, H] };
+  if (t >= 4) {
+    s.push(E(3, 0, 1.55, 1.55, m.trim), ...gem(3, 0, 1.05, m.gem));
+    a.gem = [3, 0];
+  }
+  if (m.rune) a.runes = [bowX(0.55), -H * 0.6, H * 0.6];
+  a.string = { x: deep, h: sh, color: '#fff6fb' };
   return { shapes: s, blade: [-H, H], reach: [], a };
 }
 
-// ---------- Crossbows: gadget crossbows (the Arbalist Engineer's) ----------
+// ---------- Crossbows ----------
 //
-// A compact crossbow with a pistol grip at the hand (the origin), a short stock behind and a rail
-// out in front, so it's held at the hip and never comes up over the face. It grows into a machine:
-// a wooden hand crossbow, a copper one with a crank wheel, bronze with a lever, iron with a scope,
-// steel with a gear at the back, a silver repeater, a mithril one with a leaf-spring prod, a cobalt
-// one with teal coils, a crystal-lens one, a runic one with a drum magazine and a starsteel gold
-// machine with a glowing coil and stars at its tips.
-// A cog of `n` teeth round (x, y), r to the tips.
-function cog(x, y, r, n, c, hole = null) {
-  const pts = [];
-  for (let i = 0; i < n * 2; i++) {
-    const a = (i / (n * 2)) * Math.PI * 2;
-    const rr = i % 2 ? r * 0.72 : r;
-    pts.push([x + Math.cos(a) * rr, y + Math.sin(a) * rr]);
-  }
-  return [T(pts, c), ...(hole ? [F(E(x, y, r * 0.32, r * 0.32, hole))] : [])];
-}
-const TEAL = '#4fe0d0';
-
+// One sample crossbow, made from scratch (2026-11-16, for the Phoenix): every crossbow item draws
+// this one design in its own tier's materials until the crossbow line is drawn tier by tier. A
+// hunting crossbow held at the hip: a wooden tiller with a shoulder stock swooping down behind (a
+// butt plate on its end), a wrapped pistol grip under the hand with a trigger and its guard, a
+// flight groove on top with a bolt loaded (a broadhead, pink fletching) and the string caught on
+// the nut; at the front a recurve prod lashed to the tiller, and a foot stirrup. From Steel up a
+// gem sits in the lashing.
+// The frame: the hand at (0, 0), the tiller along +x (level with the hand), the stock behind.
 function crossbow(m, t) {
   const s = [];
-  // (The rail sits level with the hand, so the whole crossbow stays at her waist.)
   const cy = 1;
-  const S = 6 + t * 0.3;
-  const px = 12 + t * 0.3;
+  const px = 13;
+  const S = 7.4;
   const wood = m.handle;
-  const metal = t <= 1 ? m.handle : m.blade;
-  const a = { tip: [px + 4, cy], head: [px, cy], blade: [-7, 4] };
-  // The stock, short behind the hand, the pistol grip under it, and the rail forward to the prod.
-  s.push(T([[-7, cy - 1.6], [px - 1, cy - 1.6], [px - 1, cy + 2], [2, cy + 2], [1.8, cy + 6.4], [-1.2, cy + 6.4], [-0.6, cy + 2], [-5.4, cy + 2], [-7.4, cy + 3.4]], wood));
-  s.push(F(R(-6, cy + 0.6, px - 6, 0.8, mix(wood, '#000000', 0.2))));
-  // The rail and a bolt (its tip glowing teal once she's an engineer's).
-  s.push(R(-2, cy - 3, px + 3, 1.4, m.bladeDark), R(-1, cy - 3.8, px + 2, 0.8, '#d8d0c0'), T([[px + 5.4, cy - 3.4], [px + 2.6, cy - 5], [px + 2.6, cy - 1.8]], t >= 3 ? TEAL : m.blade));
-  const xAt = (u) => px + 1.6 - (2 + t * 0.15) * Math.pow(Math.abs(u), 1.6);
-  const prod = (c, w = 2.2) => {
-    const o = [];
-    const i2 = [];
-    for (let i = 0; i <= 16; i++) {
-      const u = -1 + i / 8;
-      o.push([xAt(u) + w / 2, cy + u * S]);
-      i2.push([xAt(u) - w / 2, cy + u * S]);
+  const xAt = (u) => px + 1.3 - 2.6 * Math.abs(u) ** 1.5 + 1.1 * Math.max(0, (Math.abs(u) - 0.8) / 0.2) ** 1.6;
+  const nut = [1.8, cy - 2.1];
+  // The string (behind): from each prod tip back to the nut; its lower half runs behind the tiller.
+  for (const sd of [-1, 1]) s.push(T(tube([[xAt(sd), cy + sd * S], nut], 0.75, 0.75), '#fff6fb'));
+  // The tiller and the shoulder stock swooping down behind, one piece of wood, grain along it.
+  s.push(T([[-9.4, cy - 1.3], [px - 1, cy - 1.9], [px - 1, cy + 1.5], [2.4, cy + 1.7], [-2.4, cy + 1.7], [-5, cy + 2.8], [-8.4, cy + 5], [-9.8, cy + 4.6]], wood));
+  s.push(F(T(tube([[-8.6, cy + 0.6], [-4, cy + 0.2], [px - 2, cy - 0.2]], 0.5, 0.4), m.handleDark)));
+  s.push(F(T([[-9, cy - 1.1], [px - 1.4, cy - 1.7], [px - 1.4, cy - 1.1], [-8.8, cy - 0.5]], mix(wood, WHITE, 0.25))));
+  // The butt plate.
+  s.push(T([[-9.2, cy - 1.5], [-10.6, cy - 1.2], [-10.9, cy + 4.6], [-9.6, cy + 5.2]], m.trim));
+  // The pistol grip under the hand, wrapped, a cap at its foot.
+  s.push(T([[-1.3, cy + 1.2], [2.3, cy + 1.2], [1.6, cy + 6.4], [-1.9, cy + 6]], t === 0 ? '#efe0bf' : m.grip));
+  for (let y = cy + 2.2; y < cy + 6; y += 1.2) s.push(F(T([[-1.5, y], [2.1 - (y - cy) * 0.12, y], [2.05 - (y - cy) * 0.12, y + 0.45], [-1.55, y + 0.45]], t === 0 ? '#c9a878' : m.trimDark)));
+  s.push(E(-0.1, cy + 6.3, 2, 0.95, m.trim));
+  // The trigger and its guard.
+  s.push(T(tube([[3, cy + 1.6], [3.3, cy + 2.8], [2.9, cy + 3.7]], 0.9, 0.6), m.trimDark));
+  s.push(T(tube(arcPts(3.6, cy + 1.6, 1.9, 2.6, 0, -180, 10), 0.75, 0.75), m.trim));
+  // The flight groove on top, the bolt in it (a broadhead out past the prod, pink fletching at the
+  // back) and the nut holding the string.
+  s.push(R(-1.6, cy - 2.6, px + 0.4, 0.8, m.bladeDark));
+  s.push(R(-0.6, cy - 3.3, px + 4.8, 0.9, '#e8dcc4'));
+  s.push(T([[px + 6.8, cy - 2.85], [px + 4.2, cy - 4.6], [px + 4.8, cy - 2.85], [px + 4.2, cy - 1.1]], m.blade), F(T([[px + 6.8, cy - 2.85], [px + 4.2, cy - 4.6], [px + 4.6, cy - 3.3]], m.edge)));
+  s.push(T([[-0.4, cy - 3.3], [2.4, cy - 3.3], [0.2, cy - 5.4], [-1.2, cy - 5.2]], '#ff8fb0'), F(T([[0, cy - 3.6], [1.6, cy - 3.6], [0.2, cy - 4.8]], '#ffc4d6')));
+  s.push(E(nut[0], nut[1], 1.15, 1.15, m.trim), F(E(nut[0] - 0.35, nut[1] - 0.4, 0.4, 0.35, mix(m.trim, WHITE, 0.55))));
+  // The prod: a recurve bow across the front, a dark back and a bright face, caps on its tips.
+  const prod = (c, side = 0, k = 0.5) => {
+    const l = [];
+    const r = [];
+    for (let i = 0; i <= 20; i++) {
+      const u = -1 + i / 10;
+      const w = (2.4 - Math.abs(u)) / 2;
+      const x = xAt(u);
+      if (side === 0) {
+        l.push([x - w, cy + u * S]);
+        r.push([x + w, cy + u * S]);
+      } else {
+        const e = x + side * w;
+        l.push([e - side * w * 2 * k, cy + u * S]);
+        r.push([e, cy + u * S]);
+      }
     }
-    return T([...o, ...i2.reverse()], c);
+    return T([...l, ...r.reverse()], c);
   };
-  s.push({ ...R(xAt(1) - 0.8, cy - S + 0.4, 0.7, S * 2 - 0.8, '#fff6fb'), string: true });
-  s.push(prod(metal));
-  s.push(R(px - 2, cy - 2.2, 3, 4.4, m.trim));
-  const tips = (draw) => { for (const sd of [-1, 1]) s.push(...draw(xAt(sd), cy + sd * S, sd)); };
-  // Her gadgets, gathering as it grows.
-  if (t >= 1) s.push(...cog(-3.6, cy + 0.2, 2.2, 6, t <= 1 ? '#c87a3a' : m.trim, m.trimDark));
-  if (t >= 2) s.push(R(3, cy + 1.6, 1, 2.8, m.trimDark), E(3.5, cy + 4.6, 1, 1, m.trim));
-  if (t >= 3) s.push(R(2, cy - 6.2, 7, 2.2, m.trimDark), F(E(9.2, cy - 5.1, 1.2, 1.2, '#bff6ff')), F(E(1.8, cy - 5.1, 0.9, 0.9, m.trim)));
-  if (t >= 4) s.push(...cog(-6.6, cy - 1.6, 1.8, 6, m.trim, m.bladeDark));
-  switch (t) {
-    case 1:
-      tips((x, y) => [E(x, y, 1.1, 1.1, m.trim)]);
-      break;
-    case 5:
-      // A repeater: a box of bolts over the rail.
-      s.push(R(3, cy - 9, 6, 3, m.trim), F(R(3.6, cy - 8.4, 4.8, 1.8, m.blade)));
-      break;
-    case 6:
-      for (const u of [-0.6, 0.6]) s.push(leafAt(xAt(u) + 0.6, cy + u * S, u < 0 ? 30 : -30, 2.8, 1, '#7fd17a'));
-      s.push(...gem(px - 0.6, cy + 0.2, 1, m.gem));
-      a.gem = [px - 0.6, cy + 0.2];
-      break;
-    case 7:
-      // Teal coils round the rail.
-      for (const x of [1, 3.4, 5.8, 8.2]) s.push(R(x, cy - 3.4, 1.2, 2.2, TEAL));
-      s.push(...gem(px - 0.6, cy + 0.2, 1.1, m.gem));
-      a.gem = [px - 0.6, cy + 0.2];
-      break;
-    case 8:
-      s.push(F(prod(m.bladeDark, 1)), F(E(9.2, cy - 5.1, 1.6, 1.6, m.edge)), ...gem(px - 0.6, cy + 0.2, 1.1, m.gem));
-      a.gem = [px - 0.6, cy + 0.2];
-      break;
-    case 9:
-      // A drum magazine under the stock, cut with runes.
-      s.push(E(4.6, cy + 4.2, 3.2, 3.2, m.trim), F(E(4.6, cy + 4.2, 2.2, 2.2, m.blade)));
-      for (let k = 0; k < 4; k++) s.push(F(R(4.6 + Math.cos(k * 1.57) * 1.4 - 0.4, cy + 4.2 + Math.sin(k * 1.57) * 1.4 - 0.4, 0.8, 0.8, m.rune)));
-      a.runes = [4.6, cy + 2.6, cy + 5.8];
-      s.push(...gem(px - 0.6, cy + 0.2, 1.1, m.gem));
-      a.gem = [px - 0.6, cy + 0.2];
-      break;
-    case 10:
-      s.push(E(4.6, cy + 4.2, 3.2, 3.2, GOLD), F(E(4.6, cy + 4.2, 2.2, 2.2, m.blade)));
-      for (const x of [1, 3.4, 5.8, 8.2]) s.push(R(x, cy - 3.4, 1.2, 2.2, TEAL));
-      tips((x, y) => [star(x, y, 2.2, GOLD)]);
-      s.push(star(px - 0.6, cy + 0.2, 2.8, GOLD, 0.28), ...gem(px - 0.6, cy + 0.2, 1, m.gem));
-      a.gem = [px - 0.6, cy + 0.2];
-      break;
-    default:
-      if (t >= 2) tips((x, y, sd) => [T([[x - 0.5, y - sd * 1.2], [x - 2.2, y + sd * 0.6], [x + 0.5, y + sd * 1.2]], m.trim)]);
-      break;
+  s.push(prod(m.blade), F(prod(m.bladeDark, -1, 0.4)), F(prod(m.edge, 1, 0.3)));
+  for (const sd of [-1, 1]) s.push(E(xAt(sd), cy + sd * S, 1.05, 1.05, m.trim));
+  // The lashing that binds the prod to the tiller, cords across it.
+  s.push(T([[px - 2.2, cy - 2.4], [px + 1.4, cy - 2.4], [px + 1.6, cy + 2.2], [px - 2.2, cy + 2.2]], m.trim));
+  for (const x of [px - 1.5, px - 0.2, px + 1]) s.push(F(R(x, cy - 2.2, 0.5, 4.2, m.trimDark)));
+  // The stirrup out in front, for a foot when she spans it.
+  s.push(T(tube(arcPts(px + 1.4, cy + 0.6, 3.1, 1.9, 90, -90, 12), 0.9, 0.9), m.trim));
+  const a = { tip: [px + 6.8, cy - 2.85], head: [px, cy], blade: [-7, 4] };
+  if (t >= 4) {
+    s.push(E(px - 0.4, cy - 0.1, 1.45, 1.45, m.trim), ...gem(px - 0.4, cy - 0.1, 1, m.gem));
+    a.gem = [px - 0.4, cy - 0.1];
   }
-  if (m.rune && !a.runes) a.runes = [-3, cy - 1, cy + 3];
+  if (m.rune) a.runes = [-5, cy - 1, cy + 3];
   return { shapes: s, blade: a.blade, reach: [], a };
 }
 

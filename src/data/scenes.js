@@ -74,6 +74,7 @@ export const QUEST_SCENES = {
   brann_howl: { done: 'brann_howl_done' },
   mage_trial: { accept: 'trial_elowen', done: 'trial_elowen_done' },
   thief_trial: { accept: 'trial_vex', done: 'trial_vex_done' },
+  archer_trial: { accept: 'trial_kestrel', done: 'trial_kestrel_done' },
   kestrel_targets: { done: 'kestrel_targets_done' },
   kestrel_canyon: { done: 'kestrel_canyon_done' },
   kestrel_glade: { done: 'kestrel_glade_done' },
@@ -977,6 +978,14 @@ export const SIDE_SCENES = {
     { who: 'vex', text: "Twenty Lamias at the Hot Spring Pools. They watch eyes, not feet, so keep your eyes down and your feet quiet." },
     { who: 'vex', text: "Get behind them. Always behind. A moth at your back is a moth you never saw.", mood: 'happy' },
   ],
+  trial_kestrel: [
+    { who: 'kestrel', text: "Twenty Comet Couriers. They're quick, they're shiny and they never look where they're going. Keep your distance and your aim true." },
+    { who: 'kestrel', text: "And if one comes at you, hop back. Always hop back. A sunbird doesn't stand there getting pecked.", mood: 'happy' },
+  ],
+  trial_kestrel_done: [
+    { who: 'kestrel', text: "Twenty! And not a scratch on you. I watched the last few from the roof. Lovely arcs.", mood: 'happy' },
+    { who: 'kestrel', text: "So. A sunbird can catch fire and become a Phoenix, with a big heavy crossbow. Or it can sing, and keep everyone around it going: the Songbird. Which one's you?" },
+  ],
   trial_vex_done: [
     { who: 'vex', text: "Twenty, and not one of them turned round in time. Look at you. Not a scratch on the front of you.", mood: 'happy' },
     { who: 'vex', text: "Now the fun part. Two ways from here. When the moon slides over the sun, everything goes dark but a ring of fire: that's the Eclipse. Or go back to where moths begin, and spin: that's the Silkweaver. Pick one." },
@@ -1805,6 +1814,21 @@ export const JOB_SCENES = {
     { card: 'A New Path', sub: 'Eclipse' },
     { who: 'vex', text: "There. Feel the light go out? Your moths came back with gold on their wings. That's the corona, {name}. It's yours now.", mood: 'happy' },
     { who: 'vex', text: "Mark them, get behind them, and when the sky goes dark, finish it. And bow after. Always bow after." },
+  ],
+  songbird: [
+    { card: 'A New Path', sub: 'Songbird' },
+    { who: 'kestrel', text: "Oh! Listen to that. Your string's humming, {name}. Every arrow you loose is going to sing now. The birds already know it, look at them.", mood: 'happy' },
+    { who: 'kestrel', text: "Keep your friends on their feet, sing them back up when they fall, and when the whole flock's with you... let them hear it. I'll be listening." },
+  ],
+  phoenix: [
+    { card: 'A New Path', sub: 'Phoenix' },
+    { who: 'kestrel', text: "Whoa, careful! You'll singe my eyebrows. That's a lot of heat for one little sunbird, {name}. Here, you'll want something heavier than a bow for that.", mood: 'happy' },
+    { who: 'kestrel', text: "Crank it, brace it, let it fly. Everything you hit will burn, and the more it burns the hotter you get. And when you're burning bright enough... well. You'll see what a phoenix is for." },
+  ],
+  sunfeather: [
+    { card: 'A New Path', sub: 'Sunfeather' },
+    { who: 'kestrel', text: "There it is! Did you see the light on the string, {name}? Morning light, that is. The sunbirds will follow it anywhere.", mood: 'happy' },
+    { who: 'kestrel', text: "Keep your distance and keep moving. Shoot, skip, shoot. The more you land in a row, the brighter it gets. Now go and make the sun come up on something." },
   ],
   moonmoth: [
     { card: 'A New Path', sub: 'Moon Moth' },

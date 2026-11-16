@@ -173,6 +173,13 @@ export const QUESTS = {
     objectives: [{ type: 'kill', mob: 'crystalslime', count: 20 }],
     rewards: { exp: 44000, gold: 950, items: [{ id: 'elixir', qty: 5 }] },
   },
+  // Kestrel's trial for a Sunfeather before her level 30 path (the Phoenix or the Songbird).
+  archer_trial: {
+    id: 'archer_trial', name: "The Sunfeather's Trial", giver: 'kestrel', minLevel: 30, family: 'archer',
+    text: "Anyone can hit a scarecrow. Up past the stars the Comet Couriers zip about like they own the sky. Bring down 20 of them, from a good long way off, and I'll show you the two ways a sunbird can grow up.",
+    objectives: [{ type: 'kill', mob: 'cometcourier', count: 20 }],
+    rewards: { exp: 46000, gold: 1000, items: [{ id: 'elixir', qty: 5 }] },
+  },
   // Vex's trial for a Moon Moth before her level 30 path (the Eclipse).
   thief_trial: {
     id: 'thief_trial', name: "The Moon Moth's Trial", giver: 'vex', minLevel: 30, family: 'thief',

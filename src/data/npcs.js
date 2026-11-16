@@ -66,10 +66,11 @@ export const NPCS = {
     greeting: 'Moonleaf Grove welcomes you. Listen: the water under the roots is always moving. A Tide Mage learns to move with it, to strike with it, and to mend with it. Shall we begin?',
   },
   kestrel: {
-    id: 'kestrel', name: 'Kestrel', title: 'Archer', role: 'guide',
-    // (Her archer's armour went with the line, 2026-11-16: an outdoorsy hiker's look with her bow.)
+    // (The Archer Instructor again from 2026-11-16, for the Sunfeather; her archer's armour went with
+    // the old line, so she keeps her outdoorsy hiker's look with her bow.)
+    id: 'kestrel', name: 'Kestrel', title: 'Archer Instructor', role: 'instructor', family: 'archer', showJob: 'sunfeather',
     building: 'archer', sign: 'Archer Lodge', gear: { weapon: { id: 'bow_50' }, top: { id: 'look_casual_flannel_top' }, bottom: { id: 'look_casual_cargo_bottom' }, shoes: { id: 'look_casual_hightops_shoes' }, gloves: { id: 'look_casual_fingerless_gloves' } },
-    quests: ['kestrel_targets', 'kestrel_canyon', 'kestrel_glade', 'kestrel_wings'],
+    quests: ['kestrel_targets', 'kestrel_canyon', 'kestrel_glade', 'kestrel_wings', 'archer_trial'],
     look: { hairStyle: 'ponytail', hairColor: '#9be08f', skinTone: '#fbd9bf', eyeColor: '#2f6b3a', outfitColor: '#8ee3a6', eyeStyle: 'round', face: 'cat' },
     greeting: 'Sprout Village is archer country! Keep your distance and your aim true.',
   },

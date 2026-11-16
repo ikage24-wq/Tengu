@@ -132,6 +132,8 @@ export function roleOf(jobId, family) {
   if (jobId === 'tempest') return 'dps';
   // (The Tidecaller is the party's healer.)
   if (jobId === 'tidecaller') return 'healer';
+  // (And the Songbird, the Sunfeather's support path.)
+  if (jobId === 'songbird') return 'healer';
   if (family === 'warrior') return 'tank';
   return 'dps';
 }

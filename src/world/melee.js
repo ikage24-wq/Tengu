@@ -239,6 +239,55 @@ const SILK_POOL = {
   yank: { move: 'svyank', dur: 0.46, step: 0, finisher: true, strikes: [silk({ at: 0.34, pct: 60, reach: 150, h: 60, targets: 1, knock: 0, pull: 130, thread: 1, burst: 'svlash', burstAt: 0, burstDur: 0.4 }), silk({ at: 0.66, pct: 96, reach: 76, h: 64, targets: 2, knock: 170, arc: [-150, 300], thick: 10, burst: 'svknot', burstAt: 0.4, burstDur: 0.5, big: true, stop: 0.07, shake: 2 })] },
 };
 
+// The Sunfeather (docs/design/sunfeather.md), the new Archer: a bow, morning light and sunbirds.
+// Her own string: a snap shot, a skip forward shooting mid-skip, and a full draw loosing a big
+// sun-arrow through three. Her pool: two quick shots; a hop back shooting as she lands; an arrow
+// that bursts into sunbirds pecking the monsters round where it lands.
+const SUN_SHOT = { school: 'sun', burst: 'sfhit' };
+PATH_COMBOS.sunfeather = [
+  { move: 'sfshot', dur: 0.36, step: 0, strikes: [{ ...SUN_SHOT, at: 0.5, shot: 'sfarrow', pct: 92, range: 300, h: 60, knock: 25, speed: 820 }] },
+  { move: 'sfskip', dur: 0.42, step: 22, carry: 0.4, strikes: [{ ...SUN_SHOT, at: 0.52, shot: 'sfarrow', pct: 98, range: 300, h: 60, knock: 30, speed: 820 }] },
+  { move: 'sfdraw', dur: 0.6, step: -8, finisher: true, strikes: [{ ...SUN_SHOT, at: 0.62, shot: 'sfarrowbig', pct: 175, range: 360, h: 64, targets: 3, pierce: true, speed: 980, knock: 200, burst: 'sfhitbig', big: true, stop: 0.05, shake: 2 }] },
+];
+const SUN_POOL = {
+  double: { move: 'sfdouble', dur: 0.42, strikes: [0.36, 0.68].map((at, i) => ({ ...SUN_SHOT, at, shot: 'sfarrow', pct: 50, range: 290, h: 60, knock: 20, speed: 820, oy: i ? 3 : -3 })) },
+  hop: { move: 'sfhop', dur: 0.44, step: -28, carry: 0.5, strikes: [{ ...SUN_SHOT, at: 0.58, shot: 'sfarrow', pct: 100, range: 300, h: 60, knock: 40, speed: 840 }] },
+  flock: { move: 'sfflock', dur: 0.58, step: -6, finisher: true, strikes: [{ ...SUN_SHOT, at: 0.6, shot: 'sfarrowbig', pct: 150, range: 340, h: 64, knock: 140, speed: 900, blast: 90, blastFx: 'sfbird', burst: 'sfhitbig', big: true, stop: 0.05, shake: 1 }] },
+};
+
+// The Phoenix (docs/design/sunfeather.md), the Sunfeather's damage path, on a heavy crossbow: every
+// bolt trails flame. Her own string: a heavy bolt, a cranked bolt that sets them alight, and down on
+// one knee a huge flaming bolt through the line. Her pool: two bolts; a kick back and a shot; a spread
+// of three burning bolts. (`burn`: they burn a few seconds, world.js; `burnLook` her own flames.)
+const PH_SHOT = { school: 'fire', burst: 'phhit', burnLook: 'ph' };
+const singe = { pct: 0.12, secs: 3 };
+PATH_COMBOS.phoenix = [
+  { move: 'phbolt', dur: 0.42, step: -4, strikes: [{ ...PH_SHOT, at: 0.52, shot: 'phbolt', pct: 100, range: 310, h: 56, knock: 60, speed: 900 }] },
+  { move: 'phcrank', dur: 0.56, step: 0, strikes: [{ ...PH_SHOT, at: 0.66, shot: 'phbolt', pct: 112, range: 310, h: 56, knock: 60, speed: 900, burn: singe }] },
+  { move: 'phheavy', dur: 0.72, step: -12, finisher: true, strikes: [{ ...PH_SHOT, at: 0.66, shot: 'phboltbig', pct: 190, range: 360, h: 60, targets: 3, pierce: true, knock: 240, speed: 1050, burn: { pct: 0.15, secs: 4 }, burst: 'phhitbig', big: true, stop: 0.07, shake: 3 }] },
+];
+const PH_POOL = {
+  twin: { move: 'phtwin', dur: 0.5, step: -4, strikes: [0.38, 0.7].map((at, i) => ({ ...PH_SHOT, at, shot: 'phbolt', pct: 54, range: 300, h: 56, knock: 40, speed: 900, oy: i ? 3 : -3 })) },
+  kick: { move: 'phkick', dur: 0.48, step: -26, carry: 0.4, strikes: [{ ...PH_SHOT, at: 0.6, shot: 'phbolt', pct: 112, range: 310, h: 56, knock: 90, speed: 920, burn: singe }] },
+  spread: { move: 'phspread', dur: 0.62, step: -10, finisher: true, strikes: [{ ...PH_SHOT, at: 0.6, shot: 'phbolt', fan: 3, pct: 80, range: 260, h: 90, knock: 120, speed: 900, burn: singe, big: true, stop: 0.05, shake: 2 }] },
+};
+
+// The Songbird (docs/design/sunfeather.md), the Sunfeather's support path: her arrows carry music.
+// Her own string: an arrow trailing notes, a fan of three, and a big arrow trailing a ribbon that
+// bursts in notes and mends the party a little (`heal` as it's loosed). Her pool: a quick trill of
+// two; a twirl and a shot; an arrow arced high that bursts in a shower of notes over them.
+const SB_SHOT = { school: 'song', burst: 'sbhit' };
+PATH_COMBOS.songbird = [
+  { move: 'sbnote', dur: 0.38, step: 0, strikes: [{ ...SB_SHOT, at: 0.5, shot: 'sbarrow', pct: 92, range: 300, h: 60, knock: 25, speed: 800 }] },
+  { move: 'sbchord', dur: 0.46, step: 0, strikes: [{ ...SB_SHOT, at: 0.54, shot: 'sbarrow', fan: 3, pct: 44, range: 290, h: 90, knock: 30, speed: 800 }] },
+  { move: 'sbcrescendo', dur: 0.62, step: -8, finisher: true, strikes: [{ ...SB_SHOT, at: 0.62, shot: 'sbarrowbig', pct: 165, range: 340, h: 64, targets: 3, pierce: true, knock: 180, speed: 940, heal: 0.03, healR: 240, burst: 'sbhitbig', big: true, stop: 0.05, shake: 2 }] },
+];
+const SB_POOL = {
+  trill: { move: 'sbtrill', dur: 0.42, strikes: [0.36, 0.68].map((at, i) => ({ ...SB_SHOT, at, shot: 'sbarrow', pct: 50, range: 290, h: 60, knock: 20, speed: 800, oy: i ? 3 : -3 })) },
+  twirl: { move: 'sbtwirl', dur: 0.48, step: 6, strikes: [{ ...SB_SHOT, at: 0.62, shot: 'sbarrow', pct: 100, range: 300, h: 60, knock: 40, speed: 820 }] },
+  encore: { move: 'sbencore', dur: 0.6, step: -6, finisher: true, strikes: [{ ...SB_SHOT, at: 0.6, shot: 'sbarrowbig', pct: 140, range: 330, h: 90, knock: 140, speed: 860, blast: 90, blastFx: 'sbnotes', heal: 0.025, healR: 240, burst: 'sbhitbig', big: true, stop: 0.05, shake: 1 }] },
+};
+
 // The Maelstrom (docs/design/maelstrom.md): the deep sea out of her staff. Her own string: a spear
 // of pressurised water through two, a vortex bolt spinning in, and a vortex opened ahead that drags
 // them in and bursts. Her pool: a jet of pressure or two glowing bubbles that go off; two crossing
@@ -385,6 +434,21 @@ export const PATH_VARIANTS = {
     [PATH_COMBOS.maelstrom[1], DEEP_POOL.cross, DEEP_POOL.slash],
     [PATH_COMBOS.maelstrom[2], DEEP_POOL.beam, DEEP_POOL.slam],
   ],
+  songbird: [
+    [PATH_COMBOS.songbird[0], SB_POOL.trill],
+    [PATH_COMBOS.songbird[1], SB_POOL.twirl],
+    [PATH_COMBOS.songbird[2], SB_POOL.encore],
+  ],
+  phoenix: [
+    [PATH_COMBOS.phoenix[0], PH_POOL.twin],
+    [PATH_COMBOS.phoenix[1], PH_POOL.kick],
+    [PATH_COMBOS.phoenix[2], PH_POOL.spread],
+  ],
+  sunfeather: [
+    [PATH_COMBOS.sunfeather[0], SUN_POOL.double],
+    [PATH_COMBOS.sunfeather[1], SUN_POOL.hop],
+    [PATH_COMBOS.sunfeather[2], SUN_POOL.flock],
+  ],
   silkweaver: [
     [PATH_COMBOS.silkweaver[0], SILK_POOL.flick],
     [PATH_COMBOS.silkweaver[1], SILK_POOL.lift],
@@ -442,6 +506,39 @@ export function planCombo(variants, last = null, rng = Math.random) {
 // whatever flies, knocking it higher. In the air: blows that hold you up (`hang`) and come down at
 // them. Running: one out of the run.
 const ARCHER_COMMANDS = {
+  // The Songbird: up + attack, a rising arrow trailing notes; in the air two shots down (the second
+  // a big one); out of a run, she glides forward on a ribbon of music and shoots.
+  songbird: {
+    up: { move: 'sbrise', dur: 0.42, strikes: [{ ...SB_SHOT, at: 0.46, shot: 'sbarrow', pct: 105, range: 260, h: 70, lift: 140, knock: 20, launch: 260, speed: 840 }] },
+    air: [
+      { move: 'sbair', dur: 0.36, hang: true, strikes: [{ ...SB_SHOT, at: 0.46, shot: 'sbarrow', pct: 80, range: 260, h: 70, drop: 120, knock: 30, speed: 840 }] },
+      { move: 'sbair', dur: 0.4, hang: true, finisher: true, strikes: [{ ...SB_SHOT, at: 0.46, shot: 'sbarrowbig', pct: 110, range: 280, h: 80, drop: 140, knock: 90, speed: 880, burst: 'sbhitbig', big: true, stop: 0.04 }] },
+    ],
+    dash: { move: 'sbglide', dur: 0.52, step: 80, carry: 0.55, guard: 0.35, strikes: [
+      { at: 0.04, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, gauge: 0, burst: 'sbribbon', burstAt: 0, burstDur: 0.55 },
+      { ...SB_SHOT, at: 0.66, shot: 'sbarrowbig', pct: 128, range: 320, h: 60, targets: 3, pierce: true, knock: 120, speed: 920, burst: 'sbhitbig', big: true, stop: 0.04 },
+    ] },
+  },
+  // The Phoenix: up + attack, a burning bolt shot up; in the air two bolts shot down (the second a
+  // big one); out of a run, a knee slide into a heavy bolt through the line.
+  phoenix: {
+    up: { move: 'phup', dur: 0.46, strikes: [{ ...PH_SHOT, at: 0.5, shot: 'phbolt', pct: 112, range: 260, h: 70, lift: 140, knock: 20, launch: 280, speed: 900, burn: singe }] },
+    air: [
+      { move: 'phair', dur: 0.4, hang: true, strikes: [{ ...PH_SHOT, at: 0.48, shot: 'phbolt', pct: 84, range: 260, h: 70, drop: 120, knock: 40, speed: 900 }] },
+      { move: 'phair', dur: 0.44, hang: true, finisher: true, strikes: [{ ...PH_SHOT, at: 0.48, shot: 'phboltbig', pct: 118, range: 280, h: 80, drop: 140, knock: 120, speed: 960, burn: singe, burst: 'phhitbig', big: true, stop: 0.04 }] },
+    ],
+    dash: { move: 'phslide', dur: 0.56, step: 80, carry: 0.5, guard: 0.35, strikes: [{ ...PH_SHOT, at: 0.66, shot: 'phboltbig', pct: 136, range: 320, h: 60, targets: 3, pierce: true, knock: 140, speed: 1000, burn: singe, burst: 'phhitbig', big: true, stop: 0.05 }] },
+  },
+  // The Sunfeather: up + attack shoots up through them; in the air she tips forward and shoots down
+  // (the second a big one); out of a run, a forward roll up into a shot through the line.
+  sunfeather: {
+    up: { move: 'sfrise', dur: 0.42, strikes: [{ ...SUN_SHOT, at: 0.46, shot: 'sfarrow', pct: 105, range: 260, h: 70, lift: 140, knock: 20, launch: 260, speed: 860 }] },
+    air: [
+      { move: 'sfairshot', dur: 0.36, hang: true, strikes: [{ ...SUN_SHOT, at: 0.46, shot: 'sfarrow', pct: 80, range: 260, h: 70, drop: 120, knock: 30, speed: 860 }] },
+      { move: 'sfairshot', dur: 0.4, hang: true, finisher: true, strikes: [{ ...SUN_SHOT, at: 0.46, shot: 'sfarrowbig', pct: 112, range: 280, h: 80, drop: 140, knock: 90, speed: 900, burst: 'sfhitbig', big: true, stop: 0.04 }] },
+    ],
+    dash: { move: 'sfroll', dur: 0.5, step: 70, carry: 0.55, guard: 0.35, strikes: [{ ...SUN_SHOT, at: 0.66, shot: 'sfarrowbig', pct: 130, range: 320, h: 60, targets: 3, pierce: true, knock: 120, speed: 950, burst: 'sfhitbig', big: true, stop: 0.04 }] },
+  },
   // The Tidecaller: a spring of moonlit water called up under whatever flies, a shower of drops
   // rained down from a hang in the air (the second a heavy one), and a glide on a ribbon of foam out
   // of a run.
@@ -729,6 +826,110 @@ function detonateMarks(world, s) {
     i++;
   }
 }
+// Daybreak: the Sunfeather's gauge (docs/design/sunfeather.md). Shots that land build it, more for
+// each one landed in a row (within DAYBREAK_ROW s of the last); a hit on her halves it; it fades once
+// the fighting stops. The fuller it runs, the faster she shoots (up to DAYBREAK_PACE). Full
+// (Sunrise): every basic shot that lands fans into three (two small light arrows off it), and Sunrise
+// Volley is ready. (Her paths have their own gauges.)
+// (Anyone on the Sunfeather's line: her shots carry their own marks, no shared spark.)
+export const sunLine = (char) => jobChain(char.job).includes('sunfeather');
+export const DAYBREAK_MAX = 100;
+const DAYBREAK_HOLD = 5;
+const DAYBREAK_DRAIN = 10;
+const DAYBREAK_ROW = 1.5;
+export const DAYBREAK_PACE = 0.15;
+export const hasDaybreak = (char) => {
+  const chain = jobChain(char.job);
+  return chain.includes('sunfeather') && !chain.includes('phoenix') && !chain.includes('songbird');
+};
+export function addDaybreak(world, n) {
+  if (!hasDaybreak(world.char) || n <= 0) return;
+  world.dayRow = world.now - (world.daybreakAt ?? -9) < DAYBREAK_ROW ? (world.dayRow ?? 0) + 1 : 1;
+  world.daybreak = Math.min(DAYBREAK_MAX, (world.daybreak ?? 0) + n * (1 + 0.12 * Math.min(6, world.dayRow - 1)));
+  world.daybreakAt = world.now;
+}
+export const sunrise = (world) => hasDaybreak(world.char) && (world.daybreak ?? 0) >= DAYBREAK_MAX;
+// How much quicker her basic shots come for how full it runs.
+export const daybreakPace = (world) => (hasDaybreak(world.char) ? 1 - (DAYBREAK_PACE * Math.min(DAYBREAK_MAX, world.daybreak ?? 0)) / DAYBREAK_MAX : 1);
+function tickDaybreak(world, dt) {
+  if (world.daybreak > 0 && world.now - (world.daybreakAt ?? 0) > DAYBREAK_HOLD) world.daybreak = Math.max(0, world.daybreak - DAYBREAK_DRAIN * dt);
+}
+// A hit on her halves it and breaks her run of shots.
+export function daybreakHurt(world) {
+  if (!hasDaybreak(world.char) || !(world.daybreak > 0)) return;
+  world.daybreak *= 0.5;
+  world.dayRow = 0;
+}
+
+// Kindling: the Phoenix's gauge. Bolts that land build it, hits on burning monsters half again
+// faster; it fades once the fighting stops. The fuller it runs, the harder her burns bite (up to
+// KINDLE_BITE more). Full (Blaze): every bolt bursts where it lands, catching those beside it, and
+// Rebirth is ready.
+export const KINDLE_MAX = 100;
+const KINDLE_HOLD = 5;
+const KINDLE_DRAIN = 10;
+export const KINDLE_BITE = 0.6;
+export const hasKindling = (char) => jobChain(char.job).includes('phoenix');
+export const burning = (world, m) => Boolean(m && m.poison?.kind === 'burn' && m.poison.until > world.now);
+export function addKindling(world, n, m = null) {
+  if (!hasKindling(world.char) || n <= 0) return;
+  world.kindling = Math.min(KINDLE_MAX, (world.kindling ?? 0) + n * (burning(world, m) ? 1.5 : 1));
+  world.kindlingAt = world.now;
+}
+export const blaze = (world) => hasKindling(world.char) && (world.kindling ?? 0) >= KINDLE_MAX;
+export const kindleBite = (world) => (hasKindling(world.char) ? 1 + (KINDLE_BITE * Math.min(KINDLE_MAX, world.kindling ?? 0)) / KINDLE_MAX : 1);
+function tickKindling(world, dt) {
+  if (world.kindling > 0 && world.now - (world.kindlingAt ?? 0) > KINDLE_HOLD) world.kindling = Math.max(0, world.kindling - KINDLE_DRAIN * dt);
+}
+// Smoulder: a bolt stuck in a monster (`smoulder` on a shot: { pct, secs }) bursts `secs` later, hard,
+// and its fire spreads to those beside it (SMOULDER_SPREAD px).
+export const SMOULDER_SPREAD = 100;
+export function stickSmoulder(world, m, h) {
+  if (!m || m.hp <= 0) return;
+  m.smoulder = { at: world.now + h.smoulder.secs, pct: h.smoulder.pct, scale: h.smoulder.scale ?? 100, key: h.smoulder.key };
+  world.fx.push({ kind: 'phstuck', mob: m, x: m.x, y: m.y, h: m.def.h, dir: Math.sign(m.x - world.body.x) || 1, t: 0, dur: h.smoulder.secs, seed: Math.random() });
+}
+function tickSmoulder(world) {
+  for (const m of world.mobs) {
+    const sm = m.smoulder;
+    if (!sm || world.now < sm.at) continue;
+    m.smoulder = null;
+    if (m.hp <= 0) continue;
+    world.fx.push({ kind: 'phblast', x: m.x, y: m.y, h: m.def.h, mob: m, t: 0, dur: 0.7, seed: Math.random() });
+    world.juice.push({ type: 'shake', mag: 3, dur: 0.25 });
+    const near = world.mobs.filter((o) => o.hp > 0 && Math.abs(o.x - m.x) <= SMOULDER_SPREAD && Math.abs(o.y - m.y) < 80);
+    near.forEach((o, i) => shotHit(world, { pct: o === m ? sm.pct : sm.pct * 0.5, scale: sm.scale, key: sm.key, dir: Math.sign(o.x - m.x) || 1, fromX: m.x, knock: 180, launch: 160, burst: 'phhitbig', burnLook: 'ph', burn: { pct: 0.15, secs: 4 }, big: true, stop: 0.06, gauge: 2 }, o, 0.02 + i * 0.03, i % 3));
+  }
+}
+
+// Melody: the Songbird's gauge. Her shots and her heals build it; it fades once the fighting stops.
+// The fuller it runs, the more her heals mend (up to MELODY_HEAL more). Full (Chorus): every basic
+// shot that lands also mends her and the party round her a little (CHORUS_MEND of max HP, at most
+// every third of a second), and Grand Chorus is ready.
+export const MELODY_MAX = 100;
+const MELODY_HOLD = 5;
+const MELODY_DRAIN = 10;
+export const MELODY_HEAL = 0.33;
+export const CHORUS_MEND = 0.015;
+export const hasMelody = (char) => jobChain(char.job).includes('songbird');
+export function addMelody(world, n) {
+  if (!hasMelody(world.char) || n <= 0) return;
+  world.melody = Math.min(MELODY_MAX, (world.melody ?? 0) + n);
+  world.melodyAt = world.now;
+}
+export const chorus = (world) => hasMelody(world.char) && (world.melody ?? 0) >= MELODY_MAX;
+export const melodyHeal = (world) => (hasMelody(world.char) ? 1 + (MELODY_HEAL * Math.min(MELODY_MAX, world.melody ?? 0)) / MELODY_MAX : 1);
+function tickMelody(world, dt) {
+  if (world.melody > 0 && world.now - (world.melodyAt ?? 0) > MELODY_HOLD) world.melody = Math.max(0, world.melody - MELODY_DRAIN * dt);
+}
+// Chorus: a basic shot of hers that lands mends her and the party round her a little.
+export function chorusMend(world) {
+  if (!chorus(world) || world.now - (world.chorusAt ?? -9) < 0.33) return;
+  world.chorusAt = world.now;
+  healAround(world, world.body.x, world.body.y, CHORUS_MEND, 220, false);
+  world.fx.push({ kind: 'sbmend', x: world.body.x, y: world.body.y, follow: true, t: 0, dur: 0.6, seed: Math.random() });
+}
+
 // Spool: the Silkweaver's gauge (docs/design/silkweaver.md). Her hits build it, hits on threaded or
 // cocooned monsters half again faster; it fades once the fighting stops. The fuller it runs, the
 // longer her cocoons hold (up to half again). Full (Full Spool): every blow she lands ties a thread,
@@ -1290,7 +1491,8 @@ export function healAround(world, x, y, pct, r, gauge = true, el = null) {
   const { char, body, stats } = world;
   // (The Tidecaller's heals mend harder with her Moonsong, and at Spring Tide leave a bubble on
   // everyone they reach.)
-  pct *= moonHeal(world);
+  pct *= moonHeal(world) * melodyHeal(world);
+  if (gauge) addMelody(world, 6);
   const near = Math.abs(body.x - x) <= r && Math.abs(body.y - y) < 160 && !world.dead;
   if (springTide(world)) {
     if (near) {
@@ -1321,7 +1523,7 @@ const STAR_SHOTS = new Set(['star', 'moonstar']);
 // A job's own gauge: which one the character has ('volt', 'gale', 'bulwark', 'rage', 'faith',
 // 'depth', 'moon' or 'tide'), and how full it is (0-1). Finishers need it full and spend it.
 export function gaugeOf(char) {
-  return hasVolt(char) ? 'volt' : hasGale(char) ? 'gale' : hasBulwark(char) ? 'bulwark' : hasRage(char) ? 'rage' : hasFaith(char) ? 'faith' : hasDepth(char) ? 'depth' : hasMoon(char) ? 'moon' : hasTide(char) ? 'tide' : hasUmbra(char) ? 'umbra' : hasSpool(char) ? 'spool' : hasMoth(char) ? 'moondust' : null;
+  return hasVolt(char) ? 'volt' : hasGale(char) ? 'gale' : hasBulwark(char) ? 'bulwark' : hasRage(char) ? 'rage' : hasFaith(char) ? 'faith' : hasDepth(char) ? 'depth' : hasMoon(char) ? 'moon' : hasTide(char) ? 'tide' : hasUmbra(char) ? 'umbra' : hasSpool(char) ? 'spool' : hasMoth(char) ? 'moondust' : hasKindling(char) ? 'kindling' : hasMelody(char) ? 'melody' : hasDaybreak(char) ? 'daybreak' : null;
 }
 export function gaugeFull(world) {
   const g = gaugeOf(world.char);
@@ -1334,6 +1536,9 @@ export function addAim(world, n, mob = null, el = null) {
   addMoondust(world, n);
   addUmbra(world, n);
   addSpool(world, n);
+  addDaybreak(world, n);
+  addKindling(world, n, mob);
+  addMelody(world, n);
   addDepth(world, n);
   addMoon(world, n);
   if (mob && n > 0) abyssVortex(world, mob);
@@ -1344,6 +1549,9 @@ export function pathOf(world) {
   const w = world.stats.weaponType;
   if (w === 'dagger' && hasUmbra(char)) return 'eclipse';
   if (w === 'dagger' && hasSpool(char)) return 'silkweaver';
+  if (w === 'bow' && hasDaybreak(char)) return 'sunfeather';
+  if (w === 'crossbow' && hasKindling(char)) return 'phoenix';
+  if (w === 'bow' && hasMelody(char)) return 'songbird';
   if (w === 'dagger' && hasMoth(char)) return 'moonmoth';
   if (MELEE.has(w) && w !== 'none') return hasVolt(char) ? 'warrior' : hasGale(char) ? 'tempest' : hasBulwark(char) ? 'stormwall' : null;
   if (w === 'none') return 'fists';
@@ -1474,7 +1682,7 @@ function playStep(world, step, scale, key, school = null, after = 0) {
   // Basic swings run a touch quicker than their written timing.
   // Shots need the whole draw and loose, so they hold you a little longer than a cut.
   const ranged = step.strikes.some((s) => s.shot || s.rain);
-  const dur = step.dur * (key.startsWith('basic') ? 0.9 : 1) * (1 - Math.min(0.4, stats.attackSpeed ?? 0) * 0.5) * (key.startsWith('basic') ? galeSpeed(world) : 1);
+  const dur = step.dur * (key.startsWith('basic') ? 0.9 : 1) * (1 - Math.min(0.4, stats.attackSpeed ?? 0) * 0.5) * (key.startsWith('basic') ? galeSpeed(world) * daybreakPace(world) : 1);
   const busy = dur * (step.finisher ? 0.92 : ranged ? 0.86 : CANCEL);
   world.attackTimer = busy;
   world.lockTimer = Math.max(world.lockTimer ?? 0, busy);
@@ -1585,6 +1793,10 @@ export function tickMelee(world, dt) {
   tickMoondust(world, dt);
   tickUmbra(world, dt);
   tickSpool(world, dt);
+  tickDaybreak(world, dt);
+  tickKindling(world, dt);
+  tickMelody(world, dt);
+  tickSmoulder(world);
   tickLure(world);
   tickDepth(world, dt);
   tickMoon(world, dt);
@@ -1726,7 +1938,7 @@ function land(world, s) {
     const knock = s.pull ? -Math.sign(m.x - body.x) * s.pull : s.knock * weight;
     world.pending.push({
       at: now, mob: m, miss, damage: roll?.damage ?? 0, crit: roll?.crit ?? false, fromX: body.x, stack: s.n % 3, knock, launch: s.launch, big: s.big, small: s.around && !s.big,
-      stun: miss ? undefined : s.stun, freeze: miss ? undefined : s.freeze, bleed: miss ? undefined : s.bleed, burn: miss ? undefined : s.burn, school: s.school, via: s.via ?? 'blade', weapon: stats.weaponType, gauge: s.gauge, el: s.el, rxAll: miss ? undefined : s.rxAll,
+      stun: miss ? undefined : s.stun, freeze: miss ? undefined : s.freeze, bleed: miss ? undefined : s.bleed, burn: miss ? undefined : s.burn, burnLook: s.burnLook, school: s.school, via: s.via ?? 'blade', weapon: stats.weaponType, gauge: s.gauge, el: s.el, rxAll: miss ? undefined : s.rxAll,
     });
     if (roll?.crit) crits++;
     // (`mob`: a mark that rides on the monster it hit, knocked back or thrown up, never left behind.)
@@ -1758,7 +1970,8 @@ function land(world, s) {
   if (targets.length) addRage(world, s.rage ?? (s.key.startsWith('basic') ? 3 : 5));
   // Valor builds faster the more monsters a blow catches at once (half again for each extra one).
   // A healing blow mends you and the party around you.
-  if (s.heal) healAround(world, body.x, body.y, s.heal, s.healR ?? 220, true, s.el);
+  // (A finisher's heal, built to build nothing (`gauge: 0`), doesn't refill the gauge it spent.)
+  if (s.heal) healAround(world, body.x, body.y, s.heal, s.healR ?? 220, s.gauge !== 0, s.el);
   // (Charge builds faster the more monsters a blow catches: half again for each extra one.)
   if (targets.length && !s.phantom) addVolt(world, (s.gauge ?? (s.key.startsWith('basic') ? 3 : 4)) * (1 + 0.5 * (targets.length - 1)));
   if (targets.length && hasVolt(char)) targets.forEach((m) => chainBolt(world, m, s));
@@ -1770,6 +1983,7 @@ function land(world, s) {
   if (targets.length && !s.phantom) addTide(world, (s.gauge ?? (s.key.startsWith('basic') ? 3 : 4)) * (1 + 0.3 * (targets.length - 1)));
   if (targets.length && !s.phantom) addMoondust(world, (s.gauge ?? (s.key.startsWith('basic') ? 3 : 4)) * (1 + 0.3 * (targets.length - 1)));
   if (targets.length && !s.phantom) addUmbra(world, (s.gauge ?? (s.key.startsWith('basic') ? 3 : 4)) * (1 + 0.3 * (targets.length - 1) + sly / targets.length));
+  if (targets.length && !s.phantom) addKindling(world, (s.gauge ?? 4) * (1 + 0.3 * (targets.length - 1)), targets[0]);
   if (targets.length && !s.phantom) addSpool(world, (s.gauge ?? (s.key.startsWith('basic') ? 3 : 4)) * (1 + 0.3 * (targets.length - 1) + (0.5 * tied) / targets.length));
   if (s.detonateAll) detonateMarks(world, s);
   if (s.key.startsWith('basic') && !s.phantom) moonNip(world, targets, s);
@@ -1903,7 +2117,8 @@ function shotHit(world, s, m, delay, stack = 0, element = null, rank = 0) {
     at: world.now + delay, mob: m, miss, damage: roll?.damage ?? 0, crit: roll?.crit ?? false, fromX: s.fromX ?? body.x, stack, knock: s.knock, launch: s.launch, big: s.big, stop: s.stop, shake: s.shake, element,
     via: s.shot ?? (s.rain ? 'rain' : undefined), stun: miss ? undefined : s.stun, burn: miss ? undefined : s.burn, freeze: miss ? undefined : s.freeze, burst: s.burst, dir: s.dir,
     gauge: s.gauge ?? (s.key.startsWith('basic') ? 3 : 5), rank, el: s.el, mend: miss ? undefined : s.mend, basic: s.key.startsWith('basic') || undefined, mark: miss ? undefined : s.mark,
-    thread: miss ? undefined : s.thread ?? (fullSpool(world) && !s.phantom ? 1 : undefined),
+    thread: miss ? undefined : s.thread ?? (fullSpool(world) && !s.phantom ? 1 : undefined), pin: miss ? undefined : s.pin, sleep: miss ? undefined : s.sleep, burnLook: s.burnLook, pinLook: s.pinLook,
+    smoulder: miss || !s.smoulder ? undefined : { ...s.smoulder, scale: s.scale ?? 100, key: s.key },
   });
 }
 
@@ -1927,6 +2142,10 @@ function wandTip(world, s) {
 
 // A shot (or a fan of them, or one that pierces a line) leaves the bow or hand.
 function fire(world, strike) {
+  // (Blaze, a full Kindling: every bolt bursts where it lands, catching those beside it.)
+  if (!strike.phantom && !strike.blast && blaze(world)) strike = { ...strike, blast: 70, blastFx: 'phburst' };
+  // (Sunrise, a full Daybreak: every basic shot fans two small light arrows off it.)
+  if (strike.key?.startsWith('basic') && !strike.phantom && sunrise(world)) fire(world, { ...strike, shot: 'sfmini', pct: strike.pct * 0.4, fan: 2, pierce: false, targets: 2, phantom: true, big: false, stop: 0, shake: 0, blast: 0, burst: 'sfhit', gauge: 0, oy: (strike.oy ?? 0) - 4, lag: 0.05 });
   // (A shot that mends as it goes, the Great Wave: you and the party round you, as it breaks.)
   if (strike.heal && !strike.split) healAround(world, world.body.x, world.body.y, strike.heal, strike.healR ?? 220, true);
   let s = strike;
@@ -1973,7 +2192,7 @@ function fire(world, strike) {
   };
   // A little snap of the string (or flick of the wrist) as it goes; a heavy shot kicks back.
   // (The Tide Mage's water carries its own splash: no flash off her staff.)
-  if (!hasTide(world.char) && !hasDepth(world.char) && !hasMoon(world.char) && !hasMoth(world.char) && !hasUmbra(world.char) && !hasSpool(world.char)) world.fx.push({ kind: 'spark', x: ox, y: oy, t: 0, dur: 0.16, muzzle: true });
+  if (!hasTide(world.char) && !hasDepth(world.char) && !hasMoon(world.char) && !hasMoth(world.char) && !hasUmbra(world.char) && !hasSpool(world.char) && !sunLine(world.char)) world.fx.push({ kind: 'spark', x: ox, y: oy, t: 0, dur: 0.16, muzzle: true });
   // Heavy shots kick the view back (research/archery.md 37).
   if (s.big) world.juice.push({ type: 'kick', x: -s.dir * 2, y: 0 });
   // Shots aimed up or down (`lift`, `drop`) look for monsters above or below you.
@@ -2052,11 +2271,12 @@ function rain(world, s) {
   // `around` rains on both sides of you at once.
   const x0 = s.around ? body.x - s.rainW / 2 : s.dir > 0 ? body.x + s.rainFrom : body.x - s.rainFrom - s.rainW;
   const area = world.mobs.filter((m) => m.hp > 0 && m.x >= x0 && m.x <= x0 + s.rainW && Math.abs(m.y - body.y) < 120);
+  // (`rainCap`: no monster takes more than that many; the rest fall on open ground.)
   for (let k = 0; k < s.rain; k++) {
     const delay = 0.12 + (k * s.span) / s.rain;
-    const m = area.length ? area[k % area.length] : null;
+    const m = area.length && !(s.rainCap && k >= s.rainCap * area.length) ? area[k % area.length] : null;
     const x = m ? m.x + ((k * 13) % 17) - 8 : x0 + ((k * 37) % s.rainW);
-    world.fx.push({ kind: 'rain', variant: s.variant ?? 'arrow', school: s.school ?? 'wind', x, y: m ? m.y : body.y, h: m ? m.def.h : 20, t: -delay, dur: 0.45, seed: k });
+    world.fx.push({ kind: s.rainFx ?? 'rain', variant: s.variant ?? 'arrow', school: s.school ?? 'wind', x, y: m ? m.y : body.y, h: m ? m.def.h : 20, dir: s.dir, t: -delay, dur: 0.45, seed: k });
     if (m) shotHit(world, s, m, delay + 0.18, k % 3);
   }
 }

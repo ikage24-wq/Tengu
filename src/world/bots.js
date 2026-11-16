@@ -142,10 +142,11 @@ function rollLevel(pro, rng) {
 // 2026-11-16) to the Eclipse or the Silkweaver. (The Archer line was wiped 2026-11-16.)
 function jobPath(level, rng) {
   if (level < FIRST_JOB_LEVEL) return ['novice'];
-  const first = pick(['warrior', 'tidemage', 'moonmoth'], rng);
+  const first = pick(['warrior', 'tidemage', 'moonmoth', 'sunfeather'], rng);
   if (first === 'warrior' && level >= 30) return [first, pick(['tempest', 'stormwall'], rng)];
   if (first === 'tidemage' && level >= 30) return [first, pick(['maelstrom', 'tidecaller'], rng)];
   if (first === 'moonmoth' && level >= 30) return [first, pick(['eclipse', 'silkweaver'], rng)];
+  if (first === 'sunfeather' && level >= 30) return [first, pick(['phoenix', 'songbird'], rng)];
   return [first];
 }
 

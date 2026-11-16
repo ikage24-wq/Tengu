@@ -1292,3 +1292,232 @@ test('Silk Swing carries her over the monsters and she cuts back at them', async
   assert.equal(w.body.facing, -1, 'turned round');
   assert.ok(w.mobs.some((m) => threadsOf(w, m) >= 1), 'a thread on what she passed');
 });
+
+// ---------- The Sunfeather (docs/design/sunfeather.md) ----------
+// A level 25 Sunfeather with a bow, in the arena.
+function sunfeather() {
+  const w = arena('bow_20');
+  const c = w.char;
+  c.job = 'novice';
+  assert.ok(advanceJob(c, 'sunfeather'));
+  c.equipment.weapon = makeEquip('bow_20', {});
+  c.mp = 99999;
+  c.baseMp = 99999;
+  for (const m of w.mobs) m.x += 60;
+  for (let i = 0; i < 5; i++) updateWorld(w, DT, idle);
+  return w;
+}
+
+test('the Sunfeather shoots her own string and builds Daybreak, faster for shots landed in a row', async () => {
+  const { gaugeOf, pathOf, daybreakPace, DAYBREAK_PACE } = await import('../src/world/melee.js');
+  const w = sunfeather();
+  assert.equal(gaugeOf(w.char), 'daybreak');
+  assert.equal(pathOf(w), 'sunfeather');
+  const kinds = new Set();
+  for (let i = 0; i < 240; i++) {
+    updateWorld(w, DT, i % 16 === 0 ? attack : idle);
+    if (w.pose) kinds.add(w.pose.kind);
+  }
+  assert.ok([...kinds].every((k) => k.startsWith('sf')), `her own moves only (${[...kinds]})`);
+  assert.ok(w.daybreak > 0, 'her shots build it');
+  assert.ok(w.dayRow > 1, 'shots in a row count up');
+  w.daybreak = 100;
+  assert.ok(Math.abs(daybreakPace(w) - (1 - DAYBREAK_PACE)) < 1e-9, 'full, she shoots faster');
+});
+
+test('a hit halves Daybreak; at Sunrise every basic shot fans into three', async () => {
+  const w = sunfeather();
+  w.god = false;
+  w.daybreak = 80;
+  hurtPlayer(w, 10, w.body.x + 20);
+  assert.equal(w.daybreak, 40, 'halved');
+  w.char.hp = w.char.maxHp ?? 999;
+  w.daybreak = 100;
+  w.daybreakAt = w.now;
+  let minis = 0;
+  for (let i = 0; i < 40; i++) {
+    updateWorld(w, DT, i === 0 ? attack : idle);
+    minis = Math.max(minis, w.fx.filter((f) => f.shot === 'sfmini').length);
+    w.daybreak = 100;
+    w.daybreakAt = w.now;
+  }
+  assert.equal(minis, 2, 'two small light arrows fan off it');
+});
+
+test('Pin Feather pins a monster; Feather Rain caps how many feathers one monster takes', async () => {
+  const w = sunfeather();
+  w.char.skills.pinfeather = 10;
+  assert.ok(cast(w, 'pinfeather').ok);
+  run(w, 1);
+  assert.equal(w.mobs[0].hold, 'pin');
+  assert.ok(w.mobs[0].frozenUntil > w.now, 'pinned where it stands');
+  const v = sunfeather();
+  v.mobs = [v.mobs[0]];
+  v.char.skills.featherrain = 20;
+  v.juice.length = 0;
+  assert.ok(cast(v, 'featherrain').ok);
+  let hits = 0;
+  for (let i = 0; i < 90; i++) {
+    updateWorld(v, DT, idle);
+    hits += v.juice.filter((j) => j.type === 'hit' && !j.counted && (j.counted = true)).length;
+  }
+  assert.ok(hits > 0 && hits <= 3, `a lone monster takes at most three (${hits})`);
+});
+
+test('Sunrise Volley needs a full Daybreak and spends it', () => {
+  const w = sunfeather();
+  w.char.skills.sunrisevolley = 10;
+  assert.ok(!cast(w, 'sunrisevolley').ok);
+  w.daybreak = 100;
+  w.daybreakAt = w.now;
+  assert.ok(cast(w, 'sunrisevolley').ok);
+  run(w, 2);
+  assert.ok(!(w.daybreak > 0), 'spent');
+  assert.ok(w.mobs.every((m) => m.hp < 1e9), 'the light rains on all of them');
+});
+
+// ---------- The Phoenix (docs/design/sunfeather.md) ----------
+// A level 40 Phoenix with a crossbow, in the arena (past Kestrel's trial).
+function phoenix() {
+  const w = arena('crossbow_30');
+  const c = w.char;
+  gainExp(c, 4e8);
+  c.job = 'novice';
+  assert.ok(advanceJob(c, 'sunfeather'));
+  assert.ok(!advanceJob(c, 'phoenix'), 'not before the trial');
+  c.quests.archer_trial = { state: 'done', kills: {} };
+  assert.ok(advanceJob(c, 'phoenix'));
+  c.equipment.weapon = makeEquip('crossbow_30', {});
+  c.mp = 99999;
+  c.baseMp = 99999;
+  for (const m of w.mobs) m.x += 60;
+  for (let i = 0; i < 5; i++) updateWorld(w, DT, idle);
+  return w;
+}
+
+test('the Phoenix fires her own string, sets them burning and builds Kindling', async () => {
+  const { gaugeOf, pathOf, burning } = await import('../src/world/melee.js');
+  const w = phoenix();
+  assert.equal(gaugeOf(w.char), 'kindling');
+  assert.equal(pathOf(w), 'phoenix');
+  const kinds = new Set();
+  for (let i = 0; i < 300; i++) {
+    updateWorld(w, DT, i % 18 === 0 ? attack : idle);
+    if (w.pose) kinds.add(w.pose.kind);
+  }
+  assert.ok([...kinds].every((k) => k.startsWith('ph')), `her own moves only (${[...kinds]})`);
+  assert.ok(w.kindling > 0, 'her bolts build it');
+  assert.ok(w.mobs.some((m) => burning(w, m)), 'and set them alight');
+});
+
+test('at Blaze every Phoenix bolt bursts where it lands', () => {
+  const w = phoenix();
+  let burst = false;
+  for (let i = 0; i < 60; i++) {
+    w.kindling = 100;
+    w.kindlingAt = w.now;
+    updateWorld(w, DT, i === 0 ? attack : idle);
+    if (w.fx.some((f) => f.kind === 'phburst')) burst = true;
+  }
+  assert.ok(burst);
+});
+
+test('Smoulder sticks in one monster and bursts a moment later, spreading its fire', async () => {
+  const { burning } = await import('../src/world/melee.js');
+  const w = phoenix();
+  w.char.skills.smoulder = 20;
+  assert.ok(cast(w, 'smoulder').ok);
+  run(w, 0.9);
+  const stuck = w.mobs.find((m) => m.smoulder);
+  assert.ok(stuck, 'the bolt is stuck in it');
+  const before = w.mobs.map((m) => m.hp);
+  run(w, 1.6);
+  assert.ok(!stuck.smoulder, 'it went off');
+  assert.ok(w.mobs.filter((m, i) => m.hp < before[i]).length >= 2, 'catching those beside it');
+  assert.ok(w.mobs.some((m) => burning(w, m)));
+});
+
+test('Rebirth needs a full Kindling and spends it', () => {
+  const w = phoenix();
+  w.char.skills.rebirth = 10;
+  assert.ok(!cast(w, 'rebirth').ok);
+  w.kindling = 100;
+  w.kindlingAt = w.now;
+  assert.ok(cast(w, 'rebirth').ok);
+  run(w, 2);
+  assert.ok(!(w.kindling > 0), 'spent');
+  assert.ok(w.mobs.every((m) => m.hp < 1e9));
+});
+
+// ---------- The Songbird (docs/design/sunfeather.md) ----------
+// A level 40 Songbird with a bow, in the arena (past Kestrel's trial).
+function songbird() {
+  const w = arena('bow_30');
+  const c = w.char;
+  gainExp(c, 4e8);
+  c.job = 'novice';
+  assert.ok(advanceJob(c, 'sunfeather'));
+  c.quests.archer_trial = { state: 'done', kills: {} };
+  assert.ok(advanceJob(c, 'songbird'));
+  c.equipment.weapon = makeEquip('bow_30', {});
+  c.mp = 99999;
+  c.baseMp = 99999;
+  for (const m of w.mobs) m.x += 60;
+  for (let i = 0; i < 5; i++) updateWorld(w, DT, idle);
+  return w;
+}
+
+test('the Songbird shoots her own string and builds Melody; Kestrel offers both paths', async () => {
+  const { gaugeOf, pathOf } = await import('../src/world/melee.js');
+  const { nextJobs } = await import('../src/data/jobs.js');
+  const { roleOf } = await import('../src/data/dungeons.js');
+  assert.deepEqual(nextJobs('sunfeather', 30, { archer_trial: { state: 'done' } }).map((j) => j.id).sort(), ['phoenix', 'songbird']);
+  assert.equal(roleOf('songbird', 'archer'), 'healer');
+  const w = songbird();
+  assert.equal(gaugeOf(w.char), 'melody');
+  assert.equal(pathOf(w), 'songbird');
+  const kinds = new Set();
+  for (let i = 0; i < 240; i++) {
+    updateWorld(w, DT, i % 16 === 0 ? attack : idle);
+    if (w.pose) kinds.add(w.pose.kind);
+  }
+  assert.ok([...kinds].every((k) => k.startsWith('sb')), `her own moves only (${[...kinds]})`);
+  assert.ok(w.melody > 0, 'her shots build it');
+});
+
+test('Healing Melody mends her, and harder the fuller her Melody', () => {
+  const w = songbird();
+  w.god = false;
+  w.char.skills.healingmelody = 20;
+  const max = w.stats.maxHp;
+  w.char.hp = Math.round(max * 0.3);
+  assert.ok(cast(w, 'healingmelody').ok);
+  run(w, 1);
+  const plain = w.char.hp - Math.round(max * 0.3);
+  assert.ok(plain > 0, 'it mends');
+  const v = songbird();
+  v.god = false;
+  v.char.skills.healingmelody = 20;
+  v.char.hp = Math.round(max * 0.3);
+  v.melody = 100;
+  v.melodyAt = v.now;
+  assert.ok(cast(v, 'healingmelody').ok);
+  run(v, 1);
+  assert.ok(v.char.hp - Math.round(max * 0.3) > plain, 'harder with a full Melody');
+});
+
+test('Lullaby puts what it passes through to sleep; Grand Chorus needs a full Melody', () => {
+  const w = songbird();
+  w.char.skills.lullaby = 10;
+  assert.ok(cast(w, 'lullaby').ok);
+  run(w, 1.4);
+  assert.ok(w.mobs.every((m) => m.hold === 'sleep' && m.frozenUntil > w.now), 'all asleep');
+  const v = songbird();
+  v.char.skills.grandchorus = 10;
+  assert.ok(!cast(v, 'grandchorus').ok);
+  v.melody = 100;
+  v.melodyAt = v.now;
+  assert.ok(cast(v, 'grandchorus').ok);
+  run(v, 2);
+  assert.ok(!(v.melody > 0), 'spent');
+});

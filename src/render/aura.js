@@ -202,6 +202,60 @@ function mothAura(ctx, x, y, t, s, k, layer) {
   }
 }
 
+// Melody (the Songbird): notes drifting up round her as it builds, a bluebird circling her from
+// halfway; full (Chorus), a little ring of notes turns behind her head.
+function melodyAura(ctx, x, y, t, s, k, layer) {
+  if (layer === 'back') {
+    if (k >= 1) fxSprite(ctx, 'celsbhalo', x - 4 * s, y - 62 * s, { t, scale: s * 0.55 });
+    return;
+  }
+  if (k > 0.5) {
+    const a = t * 1.6;
+    fxSprite(ctx, 'celsbbirdloop', x + Math.cos(a) * 20 * s, y - (36 + 5 * Math.sin(t * 2.3)) * s + Math.sin(a) * 4 * s, { t, flip: Math.sin(a) > 0, scale: s * 0.3, alpha: Math.min(1, (k - 0.5) * 3) });
+  }
+  if (k <= 0.2) return;
+  for (let i = 0; i < 1 + Math.floor(k * 3); i++) {
+    const u = (t * 0.35 + i / 4) % 1;
+    fxSprite(ctx, 'celsbnotefloat', x + (i - 1.5) * 11 * s + Math.sin(t * 1.4 + i) * 5 * s, y - (10 + 50 * u) * s, { t: t + i * 0.4, scale: s * 0.45, alpha: Math.min(1, (k - 0.2) * 2) * Math.min(1, u * 5) * (1 - u) });
+  }
+}
+
+// Kindling (the Phoenix): embers rising round her as it builds, a little fire bird circling her from
+// halfway; full (Blaze), a flame burns behind her head.
+function kindlingAura(ctx, x, y, t, s, k, layer) {
+  if (layer === 'back') {
+    if (k >= 1) fxSprite(ctx, 'celphhalo', x - 4 * s, y - 58 * s, { t, scale: s * 0.55 });
+    return;
+  }
+  if (k > 0.5) {
+    const a = t * 1.7;
+    fxSprite(ctx, 'celphbirdloop', x + Math.cos(a) * 20 * s, y - (36 + 5 * Math.sin(t * 2.3)) * s + Math.sin(a) * 4 * s, { t, flip: Math.sin(a) > 0, scale: s * 0.3, alpha: Math.min(1, (k - 0.5) * 3) });
+  }
+  if (k <= 0.2) return;
+  for (let i = 0; i < 2 + Math.floor(k * 3); i++) {
+    const u = (t * 0.45 + i / 5) % 1;
+    fxSprite(ctx, 'celphember', x + (i - 2) * 9 * s + Math.sin(t * 1.6 + i) * 4 * s, y - (8 + 50 * u) * s, { t: t + i * 0.3, scale: s * 0.5, alpha: Math.min(1, (k - 0.2) * 2) * Math.min(1, u * 5) * (1 - u) });
+  }
+}
+
+// Daybreak (the Sunfeather): feathers of light drifting down round her as it builds, a sunbird
+// fluttering round her from halfway; full (Sunrise), a small sun glows behind her head.
+function daybreakAura(ctx, x, y, t, s, k, layer) {
+  if (layer === 'back') {
+    if (k >= 1) fxSprite(ctx, 'celsfhalo', x - 4 * s, y - 62 * s, { t, scale: s * 0.55 });
+    return;
+  }
+  if (k > 0.5) {
+    const a = t * 1.6;
+    fxSprite(ctx, 'celsfbirdloop', x + Math.cos(a) * 20 * s, y - (36 + 5 * Math.sin(t * 2.3)) * s + Math.sin(a) * 4 * s, { t, flip: Math.sin(a) > 0, scale: s * 0.3, alpha: Math.min(1, (k - 0.5) * 3) });
+  }
+  if (k <= 0.2) return;
+  for (let i = 0; i < 1 + Math.floor(k * 3); i++) {
+    const u = (t * 0.3 + i / 4) % 1;
+    fxSprite(ctx, 'celsffeather', x + (i - 1.5) * 11 * s + Math.sin(t * 1.3 + i) * 5 * s, y - (58 - 52 * u) * s, { t: t + i * 0.4, scale: s * 0.45, alpha: Math.min(1, (k - 0.2) * 2) * Math.min(1, u * 5) * (1 - u) });
+  }
+}
+
 // Spool (the Silkweaver): a pearl thread winding round her in a slow loop as it builds, a pearl moth
 // circling her from halfway; full (Full Spool), a little pearl moon like a spool glows behind her head.
 function spoolAura(ctx, x, y, t, s, k, layer) {
@@ -301,7 +355,7 @@ function voltAura(ctx, x, y, t, s, k, layer) {
 }
 
 // Draws a combat aura: `kind` a job's gauge (see COMBAT), `k` how full (0-1).
-const COMBAT = { volt: voltAura, gale: galeAura, bulwark: bulwarkAura, rage: rageAura, faith: faithAura, tide: tideAura, moon: moonAura, depth: depthAura, moondust: mothAura, umbra: umbraAura, spool: spoolAura };
+const COMBAT = { volt: voltAura, gale: galeAura, bulwark: bulwarkAura, rage: rageAura, faith: faithAura, tide: tideAura, moon: moonAura, depth: depthAura, moondust: mothAura, umbra: umbraAura, spool: spoolAura, daybreak: daybreakAura, kindling: kindlingAura, melody: melodyAura };
 export function drawCombatAura(ctx, kind, layer, x, y, time, scale, k, dir = 1) {
   if (k <= 0.02 || !COMBAT[kind]) return;
   ctx.save();

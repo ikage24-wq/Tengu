@@ -12763,6 +12763,951 @@
   E.svfeint = silklit(E.mmfeint);
   E.svburst = grown(silklit(E.mmlurepop), 1.7);
 
+  // ---------- The Sunfeather (docs/design/sunfeather.md) ----------
+  // The new Archer: sunrise gold and peach, inked in warm rose-brown, white cores. Her shapes: light
+  // arrows (a gold streak with two little feathers at the tail), sunbirds (round chubby sparrows with
+  // a blush: cute, never realistic), soft feathers of light that drift and turn as they fall, and the
+  // rising sun (a disc with long soft rays). Lets, so her paths can draw the same shapes in their own
+  // colours (SFP the light, SFB the birds).
+  let SFP = ['#ffffff', '#fff3d6', '#ffd36a', '#ff9f6a', '#8a4436'];
+  let SFB = { body: '#ffd896', wing: '#ffb870', belly: '#fffaf0', blush: '#ffa898', beak: '#f4a24a', ink: '#8a4436' };
+  // A soft bloom of her light (layered discs, white at the middle).
+  function sfBloom(ctx, x, y, r, a, { sy = 1 } = {}) {
+    if (a <= 0 || r <= 0) return;
+    ctx.save();
+    for (const [k, c, al] of [[1, SFP[3], 0.14], [0.76, SFP[2], 0.22], [0.52, SFP[1], 0.32], [0.28, '#ffffff', 0.5]]) {
+      ctx.globalAlpha = a * al;
+      fill(ctx, mmEll(x, y, r * k, r * k * sy, 0, 28), c);
+    }
+    ctx.restore();
+  }
+  // A feather of light at (x, y), `len` long, pointing along `ang`: a soft curved vane with a white
+  // core and a quill down the middle.
+  function sfFeather(ctx, x, y, len, ang, { alpha = 1, curl = 0.15 } = {}) {
+    if (alpha <= 0 || len <= 1) return;
+    ctx.save();
+    ctx.globalAlpha *= alpha;
+    ctx.translate(x, y);
+    ctx.rotate(ang);
+    const w = len * 0.24;
+    const vane = mmPath([
+      [[-len * 0.5, 0], [-len * 0.3, -w * 1.1], [len * 0.25, -w * (1 + curl)], [len * 0.5, -w * curl]],
+      [[len * 0.5, -w * curl], [len * 0.35, w * (0.7 - curl)], [-len * 0.2, w * 0.9], [-len * 0.5, 0]],
+    ], 10);
+    inked(ctx, vane, SFP[2], SFP[4], Math.max(1.2, len * 0.05));
+    fill(ctx, mmIn(vane, 0.62), SFP[1]);
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = Math.max(1, len * 0.035);
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(-len * 0.56, w * 0.05);
+    ctx.quadraticCurveTo(0, -w * curl * 0.6, len * 0.46, -w * curl);
+    ctx.stroke();
+    ctx.restore();
+  }
+  // A light arrow at (x, y) pointing along +x (rotated `ang`), `len` long: a tapering streak of light
+  // behind a small white-gold head, two little feathers at its tail. `big` is the sun-arrow.
+  function sfArrow(ctx, x, y, len, ang = 0, { alpha = 1, big = false } = {}) {
+    if (alpha <= 0) return;
+    ctx.save();
+    ctx.globalAlpha *= alpha;
+    ctx.translate(x, y);
+    ctx.rotate(ang);
+    const th = big ? 9 : 6;
+    sfBloom(ctx, 0, 0, th * 3.2, 0.6);
+    for (const [k, c] of [[1.25, SFP[3]], [1, SFP[2]], [0.55, SFP[1]], [0.25, '#ffffff']]) {
+      fill(ctx, [[2, -th * k * 0.5], [-len, -th * k * 0.12], [-len - 4, 0], [-len, th * k * 0.12], [2, th * k * 0.5]], c);
+    }
+    inked(ctx, [[th * 1.6, 0], [0, -th * 0.75], [-th * 0.3, 0], [0, th * 0.75]], '#ffffff', SFP[4], 2);
+    for (const sd of [-1, 1]) sfFeather(ctx, -len * 0.82, sd * th * 0.55, th * 2.2, Math.PI + sd * 0.45, { curl: 0.05 });
+    ctx.restore();
+  }
+  // A sunbird at (x, y), `r` round, flapping at `flap` (0-1 a beat), flying along `ang`: a chubby round
+  // body with a white belly and a blush, a little beak, a dot of an eye, a tuft of tail and a small
+  // wing beating.
+  function sfBird(ctx, x, y, r, flap, ang = 0, { alpha = 1 } = {}) {
+    if (alpha <= 0 || r <= 1) return;
+    ctx.save();
+    ctx.globalAlpha *= alpha;
+    ctx.translate(x, y);
+    const facing = Math.cos(ang) < 0 ? -1 : 1;
+    ctx.scale(facing, 1);
+    ctx.rotate(facing > 0 ? ang * 0.5 : (Math.PI - ang) * -0.5);
+    const B = SFB;
+    // Tail tuft.
+    for (const a of [-0.35, 0, 0.35]) inked(ctx, mmEll(-r * 1.05 + Math.cos(Math.PI + a) * r * 0.2, Math.sin(a) * r * 0.25 - r * 0.1, r * 0.42, r * 0.16, a - 0.2, 12), B.wing, B.ink, Math.max(1, r * 0.1));
+    inked(ctx, mmEll(0, 0, r, r * 0.88, 0, 26), B.body, B.ink, Math.max(1.2, r * 0.12));
+    fill(ctx, mmEll(r * 0.15, r * 0.3, r * 0.62, r * 0.48, 0, 20), B.belly);
+    fill(ctx, mmEll(r * 0.48, r * 0.08, r * 0.17, r * 0.12, 0, 12), B.blush);
+    inked(ctx, [[r * 0.86, -r * 0.18], [r * 1.32, -r * 0.04], [r * 0.86, r * 0.1]], B.beak, B.ink, Math.max(1, r * 0.08));
+    fill(ctx, mmEll(r * 0.52, -r * 0.24, r * 0.09, r * 0.11, 0, 10), B.ink);
+    // The wing, beating.
+    const beat = Math.sin(flap * TAU);
+    inked(ctx, mmEll(-r * 0.32, r * 0.02 - beat * r * 0.3, r * 0.4, r * (0.2 + 0.14 * Math.abs(beat)), -0.55 - beat * 0.5, 16), B.wing, B.ink, Math.max(1, r * 0.1));
+    ctx.restore();
+  }
+  // The sun at (x, y), `r` round, its long soft rays turning with `k` (whole turns loop), `rays` how far
+  // they reach (0-1).
+  function sfSun(ctx, x, y, r, k, rays = 1, { alpha = 1 } = {}) {
+    if (alpha <= 0) return;
+    ctx.save();
+    ctx.globalAlpha *= alpha;
+    sfBloom(ctx, x, y, r * 2.6, 0.7);
+    if (rays > 0) {
+      for (const [len, c, al] of [[2.1, SFP[3], 0.4], [1.75, SFP[2], 0.65], [1.4, SFP[1], 0.9]]) {
+        const pts = [];
+        const N = 24;
+        for (let j = 0; j < N; j++) {
+          const a = (j / N) * TAU + (k * TAU) / 12;
+          const rr = r * (j % 2 ? 1.02 : 1 + (len - 1) * rays * (0.75 + 0.25 * Math.sin(j * 1.7 + k * TAU)));
+          pts.push([x + Math.cos(a) * rr, y + Math.sin(a) * rr]);
+        }
+        ctx.save();
+        ctx.globalAlpha *= al;
+        fill(ctx, pts, c);
+        ctx.restore();
+      }
+    }
+    inked(ctx, mmEll(x, y, r, r, 0, 36), SFP[2], SFP[4], Math.max(2, r * 0.06));
+    fill(ctx, mmEll(x - r * 0.1, y - r * 0.1, r * 0.76, r * 0.76, 0, 32), SFP[1]);
+    fill(ctx, mmEll(x - r * 0.2, y - r * 0.2, r * 0.38, r * 0.38, 0, 24), '#ffffff');
+    ctx.restore();
+  }
+
+  // ----- Her shots (loops; each drawn pointing right, turned along its flight in the game) -----
+  E.sfarrow = { w: 140, h: 60, n: 8, fps: 40, px: 110, py: 30, loop: true, draw(ctx, i) { sfArrow(ctx, 110 + Math.sin((i / 8) * TAU), 30, 70); } };
+  E.sfarrowbig = { w: 200, h: 90, n: 8, fps: 40, px: 160, py: 45, loop: true, draw(ctx, i) { sfArrow(ctx, 160, 45, 110, 0, { big: true }); sparkle(ctx, SFP, 170, 32 + 4 * Math.sin((i / 8) * TAU), 7, i); } };
+  E.sfmini = { w: 100, h: 40, n: 8, fps: 40, px: 80, py: 20, loop: true, draw(ctx) { sfArrow(ctx, 80, 20, 44, 0, { alpha: 0.9 }); } };
+  E.sfbirdshot = {
+    w: 120, h: 90, n: 12, fps: 32, px: 70, py: 45, loop: true,
+    draw(ctx, i) {
+      const ph = i / 12;
+      for (let j = 1; j <= 3; j++) sparkle(ctx, SFP, 40 - j * 12, 46 + 5 * Math.sin(ph * TAU - j), 5 - j, j + ph * 3);
+      sfBird(ctx, 70, 45 + 4 * Math.sin(ph * TAU), 20, ph, 0);
+    },
+  };
+  E.sfpinshot = { w: 220, h: 90, n: 8, fps: 40, px: 170, py: 45, loop: true, draw(ctx, i) { sfArrow(ctx, 170, 45, 120, 0, { big: true }); sfFeather(ctx, 60, 45, 46, Math.PI, { curl: 0.2 + 0.05 * Math.sin((i / 8) * TAU) }); } };
+  E.sfbeamshot = {
+    w: 160, h: 120, n: 8, fps: 40, px: 110, py: 60, loop: true,
+    draw(ctx, i) {
+      sfBloom(ctx, 110, 60, 56, 0.9);
+      sparkle(ctx, SFP, 112, 60, 22 + 4 * Math.sin((i / 8) * TAU), i * 0.5);
+    },
+  };
+
+  // Her mark on a monster: a little sun flash, a few feathers of light puffing out and drifting down
+  // turning, and a sparkle.
+  E.sfhit = (() => {
+    const c = 120;
+    const n = 24;
+    const R = rng(7501);
+    const F = Array.from({ length: 4 }, (_, j) => ({ a: -Math.PI / 2 + (j - 1.5) * 0.9 + (R() - 0.5) * 0.3, d: 36 + R() * 20, len: 18 + R() * 8, spin: (R() - 0.5) * 4 }));
+    return {
+      w: 240, h: 240, n, fps: 48, px: c, py: c,
+      draw(ctx, i) {
+        const k = i / (n - 1);
+        sfBloom(ctx, c, c, 22 + 40 * smooth(win(k, 0, 0.3)), 0.9 * (1 - win(k, 0.1, 0.5)));
+        if (k < 0.3) sparkle(ctx, SFP, c, c, 20 * swell(k, 0, 0.3), 0.4);
+        for (const f of F) {
+          const u = smooth(win(k, 0.02, 1));
+          sfFeather(ctx, c + Math.cos(f.a) * f.d * u, c + Math.sin(f.a) * f.d * u * 0.8 + 40 * u * u, f.len * (1 - 0.3 * u), f.a + f.spin * u, { alpha: 1 - win(k, 0.65, 1) });
+        }
+      },
+    };
+  })();
+  // Her big hit (finishers, Sunbeam, Pin): a sunburst with short rays, a ring of light, more feathers.
+  E.sfhitbig = (() => {
+    const c = 160;
+    const n = 26;
+    const R = rng(7502);
+    const F = Array.from({ length: 6 }, (_, j) => ({ a: (j / 6) * TAU + (R() - 0.5) * 0.4, d: 50 + R() * 30, len: 22 + R() * 10, spin: (R() - 0.5) * 4 }));
+    return {
+      w: 320, h: 320, n, fps: 48, px: c, py: c,
+      draw(ctx, i) {
+        const k = i / (n - 1);
+        const pop = smooth(win(k, 0, 0.2));
+        if (k < 0.5) sfSun(ctx, c, c, 26 * pop * (1 - win(k, 0.25, 0.5)), k * 2, pop, { alpha: 1 - win(k, 0.3, 0.5) });
+        const ring = smooth(win(k, 0.05, 0.6));
+        if (ring > 0 && ring < 1) celRing(ctx, SFP, c, c, 30 + 70 * ring, 8 * (1 - ring) + 2, { broken: ring > 0.45 ? (ring - 0.45) * 1.8 : 0, seed: 7503 });
+        for (const f of F) {
+          const u = smooth(win(k, 0.08, 1));
+          sfFeather(ctx, c + Math.cos(f.a) * f.d * u, c + Math.sin(f.a) * f.d * u * 0.8 + 50 * u * u, f.len * (1 - 0.3 * u), f.a + f.spin * u, { alpha: 1 - win(k, 0.65, 1) });
+        }
+      },
+    };
+  })();
+  // A sunbird (her sunbird shot bursting, Sparrow Volley landing): it swoops in, pecks twice, and
+  // flutters off up and away, a feather left drifting down.
+  E.sfbird = {
+    w: 240, h: 220, n: 26, fps: 40, px: 120, py: 130,
+    draw(ctx, i) {
+      const k = i / 25;
+      const inK = smooth(win(k, 0, 0.25));
+      const out = smooth(win(k, 0.6, 1));
+      const peck = Math.sin(win(k, 0.25, 0.6) * Math.PI * 4) * (1 - out);
+      const bx = 120 - 70 * (1 - inK) + 90 * out + 6 * peck;
+      const by = 100 - 50 * (1 - inK) - 100 * out + 4 * Math.abs(peck);
+      sfBird(ctx, bx, by, 22, (k * 6) % 1, out > 0 ? -0.6 : 0.1, { alpha: 1 - win(k, 0.85, 1) });
+      if (k > 0.3 && k < 0.6 && Math.abs(peck) > 0.6) sparkle(ctx, SFP, 146, 108, 9, k * 9);
+      const u = win(k, 0.55, 1);
+      if (u > 0) sfFeather(ctx, 110 + 20 * Math.sin(u * 6), 110 + 70 * u, 20, Math.sin(u * 5) * 0.8, { alpha: 1 - win(u, 0.7, 1) });
+    },
+  };
+
+  // Sunbeam's charge (follows her; at her bow, chest high): light gathering in a swelling glow, rays
+  // creeping out, sparkles drawn in toward it.
+  E.sfcharge = {
+    w: 260, h: 260, n: 28, fps: 40, px: 100, py: 220,
+    draw(ctx, i) {
+      const k = i / 27;
+      const cx = 130;
+      const cy = 130;
+      const g = smooth(win(k, 0, 1));
+      sfSun(ctx, cx, cy, 6 + 16 * g, k * 3, g * 0.8, { alpha: 0.5 + 0.5 * g });
+      for (let j = 0; j < 5; j++) {
+        const u = (k * 2 + j / 5) % 1;
+        const a = j * 1.3;
+        sparkle(ctx, SFP, cx + Math.cos(a) * 90 * (1 - u), cy + Math.sin(a) * 70 * (1 - u), 6 * u, j);
+      }
+    },
+  };
+  // The beam itself (from her bow out along the line, anchored at the bow): a long ray of light that
+  // flashes out to its full reach, white at the core, then narrows and fades from the back.
+  E.sfbeamline = {
+    w: 1440, h: 160, n: 20, fps: 40, px: 20, py: 80,
+    draw(ctx, i) {
+      const k = i / 19;
+      const out = smooth(win(k, 0, 0.18));
+      const fade = win(k, 0.3, 1);
+      const len = 1400 * out;
+      const th = 46 * (1 - 0.7 * fade);
+      const x0 = 20 + 1200 * smooth(fade) * 0.5;
+      ctx.save();
+      ctx.globalAlpha *= 1 - win(k, 0.7, 1);
+      for (const [kk, c] of [[1, SFP[3]], [0.72, SFP[2]], [0.46, SFP[1]], [0.2, '#ffffff']]) {
+        fill(ctx, [[x0, 80 - th * kk * 0.4], [20 + len, 80 - th * kk * 0.5], [20 + len + 30, 80], [20 + len, 80 + th * kk * 0.5], [x0, 80 + th * kk * 0.4]], c);
+      }
+      ctx.restore();
+      if (k < 0.4) sfSun(ctx, 30, 80, 24 * swell(k, 0, 0.4), k * 4, 1);
+    },
+  };
+  // An arrow loosed up into the sky (Feather Rain): a streak of light shooting straight up from her
+  // bow and bursting into a puff of light and feathers high up. Foot on the floor at her.
+  E.sfupshot = {
+    w: 260, h: 640, n: 22, fps: 40, px: 130, py: 600,
+    draw(ctx, i) {
+      const k = i / 21;
+      const up = smooth(win(k, 0, 0.45));
+      const ay = 480 - 420 * up;
+      if (k < 0.5) sfArrow(ctx, 130, ay, 80, -Math.PI / 2, { alpha: 1 - win(k, 0.4, 0.5) });
+      if (k > 0.4) {
+        const b = win(k, 0.4, 1);
+        sfBloom(ctx, 130, 70, 40 + 50 * b, 0.9 * (1 - b));
+        for (let j = 0; j < 5; j++) sfFeather(ctx, 130 + Math.cos(j * 1.3) * 60 * b, 70 + Math.sin(j * 1.3) * 40 * b + 40 * b * b, 20, j + b * 3, { alpha: 1 - win(b, 0.6, 1) });
+      }
+    },
+  };
+  // A feather of light falling onto a monster (Feather Rain; at the monster's feet): it floats down
+  // turning, lands in a little flash, and fades.
+  E.sffeatherfall = {
+    w: 200, h: 420, n: 22, fps: 40, px: 100, py: 380,
+    draw(ctx, i) {
+      const k = i / 21;
+      const fall = smooth(win(k, 0, 0.45));
+      const fy = 30 + 300 * fall;
+      if (k < 0.5) sfFeather(ctx, 100 + 26 * Math.sin(fall * 5), fy, 62, 0.6 * Math.sin(fall * 7) + Math.PI / 2, { alpha: 1 - win(k, 0.42, 0.5) });
+      if (k > 0.4) {
+        const b = win(k, 0.4, 1);
+        sfBloom(ctx, 100, 330, 30 + 30 * b, 0.9 * (1 - b));
+        if (b < 0.5) sparkle(ctx, SFP, 100, 330, 14 * swell(b, 0, 0.5), 0.2);
+      }
+    },
+  };
+  // A light arrow falling from the sky (Sunrise Volley's storm; at the monster's feet), at a slant,
+  // bursting in a little sun flash.
+  E.sflightfall = {
+    w: 320, h: 480, n: 20, fps: 40, px: 200, py: 440,
+    draw(ctx, i) {
+      const k = i / 19;
+      const fall = smooth(win(k, 0, 0.4));
+      const a = Math.PI / 2 + 0.35;
+      if (k < 0.44) sfArrow(ctx, 60 + 140 * fall, 20 + 370 * fall, 90, a, { big: true, alpha: 1 - win(k, 0.38, 0.44) });
+      if (k > 0.38) {
+        const b = win(k, 0.38, 1);
+        sfBloom(ctx, 200, 390, 40 + 40 * b, 0.9 * (1 - b));
+        if (b < 0.5) sparkle(ctx, SFP, 200, 390, 18 * swell(b, 0, 0.5), 0.3);
+        for (let j = 0; j < 2; j++) sfFeather(ctx, 200 + (j ? 30 : -30) * b, 380 - 30 * b + 40 * b * b, 18, j * 2 + b * 3, { alpha: 1 - win(b, 0.6, 1) });
+      }
+    },
+  };
+  // Golden Hour settling (follows her; foot on the floor): soft rays of gold light slanting down over
+  // her from above, a little sun glowing at the top of them, feathers drifting down through the light.
+  E.sfgolden = {
+    w: 300, h: 420, n: 32, fps: 40, px: 150, py: 400,
+    draw(ctx, i) {
+      const k = i / 31;
+      const a = swell(k, 0, 1);
+      ctx.save();
+      ctx.globalAlpha *= 0.3 * a;
+      for (let j = 0; j < 4; j++) {
+        const x = 70 + j * 50;
+        fill(ctx, [[x + 20, 40], [x + 44, 40], [x + 20, 400], [x - 10, 400]], j % 2 ? SFP[1] : SFP[2]);
+      }
+      ctx.restore();
+      sfSun(ctx, 160, 60, 20 + 6 * a, k * 2, a, { alpha: a });
+      for (let j = 0; j < 4; j++) {
+        const u = win(k, j * 0.12, 0.6 + j * 0.1);
+        if (u <= 0 || u >= 1) continue;
+        sfFeather(ctx, 90 + j * 44 + 16 * Math.sin(u * 6 + j), 100 + 260 * u, 18, Math.sin(u * 5 + j) * 0.9, { alpha: 1 - win(u, 0.7, 1) });
+      }
+    },
+  };
+  // Sunrise Volley's sun (behind her, on the floor): it climbs up over the horizon behind her, huge
+  // and glowing, its rays slowly turning and reaching out; then it fades.
+  E.sfsun = {
+    w: 900, h: 700, n: 40, fps: 30, px: 450, py: 660,
+    draw(ctx, i) {
+      const k = i / 39;
+      const rise = smooth(win(k, 0, 0.4));
+      const a = 1 - win(k, 0.78, 1);
+      sfSun(ctx, 450, 640 - 380 * rise, 130, k * 3, rise, { alpha: a * Math.min(1, k * 5) });
+    },
+  };
+  // The great arrow loosed straight up (Sunrise Volley): a long streak climbing out of sight and a
+  // burst of light high up.
+  E.sfupbig = grown(E.sfupshot, 1.5);
+  // A gold feather stuck in a pinned monster (loops): it wobbles gently, a soft glow round it.
+  E.sfpinned = {
+    w: 140, h: 140, n: 24, fps: 24, px: 70, py: 70, loop: true,
+    draw(ctx, i) {
+      const ph = i / 24;
+      sfBloom(ctx, 70, 70, 34, 0.45 + 0.1 * Math.sin(ph * TAU));
+      sfFeather(ctx, 70, 64, 56, -Math.PI / 2 + 0.35 + 0.08 * Math.sin(ph * TAU), { curl: 0.18 });
+      sparkle(ctx, SFP, 70 + 22 * Math.cos(ph * TAU), 50 + 10 * Math.sin(ph * TAU), 5, ph * 4);
+    },
+  };
+  // A feather of light drifting (loops; her Daybreak aura).
+  E.sffeather = { w: 80, h: 80, n: 24, fps: 24, px: 40, py: 40, loop: true, draw(ctx, i) { const ph = i / 24; sfFeather(ctx, 40 + 6 * Math.sin(ph * TAU), 40, 30, Math.PI / 2 + 0.7 * Math.sin(ph * TAU)); } };
+  // A sunbird fluttering (loops; her aura at Sunrise and the Sunrise fan).
+  E.sfbirdloop = { w: 100, h: 90, n: 12, fps: 32, px: 50, py: 45, loop: true, draw(ctx, i) { sfBird(ctx, 50, 45 + 3 * Math.sin((i / 12) * TAU), 20, i / 12, 0); } };
+  // A small sun behind her head at Sunrise (loops).
+  E.sfhalo = { w: 140, h: 140, n: 24, fps: 24, px: 70, py: 70, loop: true, draw(ctx, i) { sfSun(ctx, 70, 70, 18, i / 24, 0.8 + 0.2 * Math.sin((i / 24) * TAU)); } };
+
+  // ---------- The Phoenix (docs/design/sunfeather.md) ----------
+  // The Sunfeather's damage path, on a crossbow: flame orange and crimson with gold, inked in deep
+  // red-brown. Her shapes: bolts trailing flame, flames as soft teardrops with wavering tips, embers
+  // that RISE (her fire goes up), fire birds, and the phoenix (a round fire bird with great flame
+  // wings and a long flowing tail). Her versions of the Sunfeather's drawings are `firelit`.
+  const PHF = ['#ffffff', '#fff0b0', '#ffb347', '#ff5a2a', '#7a1e14'];
+  const PHB = { body: '#ffa040', wing: '#ff5a2a', belly: '#ffeaa0', blush: '#ff7a6a', beak: '#ffd36a', ink: '#7a1e14' };
+  const firelit = (e) => ({
+    ...e,
+    draw(ctx, i) {
+      const keep = [SFP, SFB];
+      SFP = PHF;
+      SFB = PHB;
+      try {
+        e.draw(ctx, i);
+      } finally {
+        [SFP, SFB] = keep;
+      }
+    },
+  });
+  // A flame at (x, y) (its base), `h` tall and `w` wide, leaning `lean`, its tip wavering with `k`.
+  function phFlame(ctx, x, y, h, w, k = 0, { alpha = 1, lean = 0 } = {}) {
+    if (alpha <= 0 || h <= 1) return;
+    ctx.save();
+    ctx.globalAlpha *= alpha;
+    for (const [s, c] of [[1, PHF[3]], [0.74, PHF[2]], [0.48, PHF[1]], [0.24, '#ffffff']]) {
+      const hh = h * s;
+      const ww = w * s;
+      const tip = [x + lean * hh + Math.sin(k * TAU) * ww * 0.35, y - hh];
+      const pts = mmPath([
+        [[x - ww * 0.5, y - ww * 0.1], [x - ww * 0.62, y - hh * 0.45], [tip[0] - ww * 0.3, tip[1] + hh * 0.35], tip],
+        [tip, [tip[0] + ww * 0.25, tip[1] + hh * 0.38], [x + ww * 0.62, y - hh * 0.45], [x + ww * 0.5, y - ww * 0.1]],
+        [[x + ww * 0.5, y - ww * 0.1], [x + ww * 0.3, y + ww * 0.25], [x - ww * 0.3, y + ww * 0.25], [x - ww * 0.5, y - ww * 0.1]],
+      ], 8);
+      if (s === 1) inked(ctx, pts, c, PHF[4], Math.max(1.2, w * 0.07));
+      else fill(ctx, pts, c);
+    }
+    ctx.restore();
+  }
+  // An ember: a little spark of fire, rising.
+  const phEmber = (ctx, x, y, r, seed, alpha = 1) => {
+    if (alpha <= 0) return;
+    ctx.save();
+    ctx.globalAlpha *= alpha;
+    if (seed % 3 === 0) sparkle(ctx, PHF, x, y, r * 1.6, seed);
+    else {
+      fill(ctx, mmEll(x, y, r + 1, r + 1, 0, 10), PHF[3]);
+      fill(ctx, mmEll(x, y, r * 0.55, r * 0.55, 0, 8), PHF[1]);
+    }
+    ctx.restore();
+  };
+  // A crossbow bolt at (x, y) pointing along +x, `len` long, a tongue of flame streaming off it.
+  function phBolt(ctx, x, y, len, k, { big = false } = {}) {
+    const th = big ? 7 : 5;
+    sfBloomFire(ctx, x - len * 0.2, y, th * 5, 0.55);
+    for (let j = 0; j < 3; j++) {
+      const u = (k + j / 3) % 1;
+      ctx.save();
+      ctx.translate(x - len * 0.55 - u * len * 0.6, y);
+      ctx.rotate(-Math.PI / 2);
+      phFlame(ctx, 0, 0, th * (5 - 3 * u), th * 2.4 * (1 - u * 0.5), k * 3 + j, { alpha: 1 - u });
+      ctx.restore();
+    }
+    inked(ctx, [[x - len * 0.62, y - th * 0.3], [x, y - th * 0.3], [x, y + th * 0.3], [x - len * 0.62, y + th * 0.3]], '#6a3a2a', PHF[4], 2);
+    inked(ctx, [[x + th * 2, y], [x - th * 0.2, y - th * 1.1], [x + th * 0.3, y], [x - th * 0.2, y + th * 1.1]], '#fff0d0', PHF[4], 2);
+    for (const sd of [-1, 1]) inked(ctx, [[x - len * 0.62, y], [x - len * 0.5, y + sd * th * 1.3], [x - len * 0.42, y + sd * th * 1.2], [x - len * 0.5, y]], PHF[3], PHF[4], 1.5);
+  }
+  function sfBloomFire(ctx, x, y, r, a) {
+    const keep = SFP;
+    SFP = PHF;
+    sfBloom(ctx, x, y, r, a);
+    SFP = keep;
+  }
+
+  E.phbolt = { w: 220, h: 80, n: 12, fps: 40, px: 180, py: 40, loop: true, draw(ctx, i) { phBolt(ctx, 180, 40, 90, i / 12); } };
+  E.phboltbig = { w: 300, h: 110, n: 12, fps: 40, px: 250, py: 55, loop: true, draw(ctx, i) { phBolt(ctx, 250, 55, 130, i / 12, { big: true }); } };
+  // A burning monster (each second its burn bites; over it): two tongues of flame licking up and a
+  // few embers rising, then dying down.
+  E.phburn = {
+    w: 160, h: 200, n: 22, fps: 36, px: 80, py: 170,
+    draw(ctx, i) {
+      const k = i / 21;
+      const a = swell(k, 0, 1);
+      phFlame(ctx, 64, 160, 70 * a, 34, k * 2, { lean: -0.1 });
+      phFlame(ctx, 98, 162, 50 * a, 26, k * 2 + 0.4, { lean: 0.15 });
+      for (let j = 0; j < 4; j++) {
+        const u = win(k, j * 0.12, 0.6 + j * 0.1);
+        if (u <= 0 || u >= 1) continue;
+        phEmber(ctx, 60 + j * 14 + 8 * Math.sin(u * 6 + j), 150 - 120 * u, 3.5 * (1 - u * 0.5), j, 1 - win(u, 0.6, 1));
+      }
+    },
+  };
+  // Smoulder's bolt stuck in a monster (loops while it waits; on it): the bolt at a slant, its head
+  // glowing and pulsing hotter, a wisp of flame and embers curling up off it.
+  E.phstuck = {
+    w: 160, h: 160, n: 16, fps: 32, px: 80, py: 80, loop: true,
+    draw(ctx, i) {
+      const ph = i / 16;
+      const pulse = 0.5 + 0.5 * Math.sin(ph * TAU * 2);
+      sfBloomFire(ctx, 74, 84, 30 + 10 * pulse, 0.6 + 0.3 * pulse);
+      ctx.save();
+      ctx.translate(80, 80);
+      ctx.rotate(-0.5);
+      inked(ctx, [[-60, -4], [-6, -4], [-6, 4], [-60, 4]], '#6a3a2a', PHF[4], 2);
+      for (const sd of [-1, 1]) inked(ctx, [[-60, 0], [-50, sd * 10], [-42, sd * 9], [-50, 0]], PHF[3], PHF[4], 1.5);
+      ctx.restore();
+      phFlame(ctx, 76, 86, 26 + 10 * pulse, 16, ph * 3, { lean: 0.1 });
+      phEmber(ctx, 80 + 10 * Math.sin(ph * TAU), 60 - 30 * ph, 3, i, 1 - ph);
+    },
+  };
+  // A smoulder going off (on the monster): a flash, a ring of flame tongues bursting out and fading,
+  // embers flying up.
+  E.phblast = (() => {
+    const c = 170;
+    const n = 26;
+    return {
+      w: 340, h: 340, n, fps: 40, px: c, py: c,
+      draw(ctx, i) {
+        const k = i / (n - 1);
+        sfBloomFire(ctx, c, c, 40 + 90 * smooth(win(k, 0, 0.3)), 0.95 * (1 - win(k, 0.15, 0.6)));
+        const out = smooth(win(k, 0, 0.5));
+        for (let j = 0; j < 8; j++) {
+          const a = (j / 8) * TAU;
+          ctx.save();
+          ctx.translate(c + Math.cos(a) * 60 * out, c + Math.sin(a) * 50 * out);
+          ctx.rotate(a + Math.PI / 2);
+          phFlame(ctx, 0, 0, 50 * (1 - win(k, 0.3, 0.9)), 30, k * 3 + j, { alpha: 1 - win(k, 0.5, 0.95) });
+          ctx.restore();
+        }
+        for (let j = 0; j < 6; j++) {
+          const u = win(k, 0.1 + j * 0.04, 0.9);
+          if (u <= 0 || u >= 1) continue;
+          phEmber(ctx, c + (j - 2.5) * 30 + 10 * Math.sin(u * 6 + j), c - 20 - 120 * u, 4 * (1 - u * 0.5), j, 1 - win(u, 0.6, 1));
+        }
+      },
+    };
+  })();
+  // Blaze's burst where a bolt lands (smaller).
+  E.phburst = grown(E.phblast, 0.6);
+  // Flame Wing (follows her; foot on the floor): two great wings of flame flare out from her back,
+  // beat once and stream behind her as she glides, then gutter out.
+  E.phwings = {
+    w: 360, h: 300, n: 26, fps: 40, px: 200, py: 280,
+    draw(ctx, i) {
+      const k = i / 25;
+      const open = smooth(win(k, 0, 0.25));
+      const fade = win(k, 0.6, 1);
+      const bx = 180;
+      const by = 180;
+      for (const sd of [-1, 1]) {
+        for (let j = 0; j < 5; j++) {
+          const a = -Math.PI / 2 - sd * (0.5 + j * 0.28) * open - 0.25;
+          ctx.save();
+          ctx.translate(bx - 8, by);
+          ctx.rotate(a + Math.PI / 2);
+          phFlame(ctx, 0, 0, (60 + 26 * (4 - j)) * open * (1 - 0.6 * fade), 30, k * 2 + j * 0.2 + (sd > 0 ? 0.5 : 0), { alpha: (1 - fade) * (sd > 0 ? 1 : 0.7) });
+          ctx.restore();
+        }
+      }
+      for (let j = 0; j < 5; j++) {
+        const u = win(k, 0.1 + j * 0.08, 0.9);
+        if (u <= 0 || u >= 1) continue;
+        phEmber(ctx, bx - 40 - 120 * u + 10 * Math.sin(u * 7 + j), by - 30 * j + 40 * Math.sin(u * 4) - 50 * u, 4, j, 1 - win(u, 0.6, 1));
+      }
+    },
+  };
+  // The phoenix (Rebirth): a round fire bird with great flame wings and a long flowing tail sweeps in
+  // from high behind her, dives down across the screen trailing fire, and climbs away. Foot on the
+  // floor at her.
+  function phPhoenix(ctx, x, y, r, flap, ang, alpha = 1) {
+    if (alpha <= 0) return;
+    ctx.save();
+    ctx.globalAlpha *= alpha;
+    sfBloomFire(ctx, x, y, r * 3.4, 0.6);
+    // The tail: flame tongues streaming back along the way it came.
+    for (let j = 0; j < 6; j++) {
+      ctx.save();
+      ctx.translate(x - Math.cos(ang) * r * (1.2 + j * 0.7), y - Math.sin(ang) * r * (1.2 + j * 0.7) + Math.sin(flap * TAU + j) * r * 0.2);
+      ctx.rotate(ang - Math.PI / 2 + Math.PI);
+      phFlame(ctx, 0, 0, r * (2.2 - j * 0.25), r * (1.1 - j * 0.12), flap + j * 0.3);
+      ctx.restore();
+    }
+    // The wings: big flame fans beating.
+    for (const sd of [-1, 1]) {
+      const beat = Math.sin(flap * TAU) * 0.5;
+      for (let j = 0; j < 4; j++) {
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.rotate(ang - Math.PI / 2 * sd - sd * (0.35 + j * 0.25 + beat));
+        phFlame(ctx, 0, -r * 0.4, r * (2.4 - j * 0.35), r * 0.9, flap * 2 + j * 0.25, { alpha: sd > 0 ? 1 : 0.75 });
+        ctx.restore();
+      }
+    }
+    const keep = SFB;
+    SFB = PHB;
+    sfBird(ctx, x, y, r, flap, ang);
+    SFB = keep;
+    ctx.restore();
+  }
+  E.phsweep = {
+    w: 1700, h: 960, n: 40, fps: 40, px: 340, py: 900,
+    draw(ctx, i) {
+      const k = i / 39;
+      const u = smooth(win(k, 0, 0.9));
+      // In from high behind her, down low across the floor ahead, and up away at the far side.
+      const x = 160 + 1340 * u;
+      const y = 260 + 440 * Math.sin(Math.PI * Math.min(1, u * 1.15)) - 60 * u;
+      const ang = Math.atan2(440 * Math.PI * 1.15 * Math.cos(Math.PI * Math.min(1, u * 1.15)) - 60, 1340);
+      const a = Math.min(1, k * 8) * (1 - win(k, 0.85, 1));
+      // A trail of fire along its path.
+      for (let j = 1; j <= 8; j++) {
+        const v = Math.max(0, u - j * 0.035);
+        const tx = 160 + 1340 * v;
+        const ty = 260 + 440 * Math.sin(Math.PI * Math.min(1, v * 1.15)) - 60 * v;
+        phFlame(ctx, tx, ty + 40, 130 - j * 11, 80 - j * 7, k * 3 + j * 0.2, { alpha: a * (1 - j * 0.11) });
+      }
+      phPhoenix(ctx, x, y, 100, k * 5, ang, a);
+    },
+  };
+  // Rebirth's pillar (on the floor where she stands): a column of fire rising up round her, embers
+  // climbing in it, then guttering out from the bottom.
+  E.phpillar = {
+    w: 360, h: 720, n: 30, fps: 40, px: 180, py: 690,
+    draw(ctx, i) {
+      const k = i / 29;
+      const up = smooth(win(k, 0, 0.35));
+      const fade = win(k, 0.55, 1);
+      sfBloomFire(ctx, 180, 520, 160, 0.6 * (1 - fade));
+      for (let j = 0; j < 6; j++) {
+        const x = 110 + j * 28;
+        phFlame(ctx, x, 690, 520 * up * (0.6 + 0.4 * Math.sin(j * 1.7 + 1)) * (1 - fade), 70, k * 2 + j * 0.3, { alpha: 1 - fade, lean: (j - 2.5) * 0.04 });
+      }
+      for (let j = 0; j < 8; j++) {
+        const u = win(k, j * 0.07, 0.7 + j * 0.03);
+        if (u <= 0 || u >= 1) continue;
+        phEmber(ctx, 130 + j * 14 + 16 * Math.sin(u * 6 + j), 640 - 560 * u, 5, j, 1 - win(u, 0.6, 1));
+      }
+    },
+  };
+  // Rising embers round her (loops; her Kindling aura).
+  E.phember = { w: 60, h: 80, n: 20, fps: 24, px: 30, py: 40, loop: true, draw(ctx, i) { const ph = i / 20; phEmber(ctx, 30 + 6 * Math.sin(ph * TAU), 70 - 60 * ph, 4, 1, swell(ph, 0, 1)); } };
+  // A small fire sun behind her head at Blaze (loops).
+  E.phhalo = { w: 140, h: 140, n: 24, fps: 24, px: 70, py: 70, loop: true, draw(ctx, i) { const ph = i / 24; phFlame(ctx, 70, 100, 70 + 8 * Math.sin(ph * TAU), 46, ph * 2); sparkle(ctx, PHF, 70 + 26 * Math.cos(ph * TAU), 50 + 10 * Math.sin(ph * TAU), 6, ph * 4); } };
+  // Her versions of the Sunfeather's drawings, in flame.
+  E.phhit = firelit(E.sfhit);
+  E.phhitbig = firelit(E.sfhitbig);
+  E.phbird = firelit(E.sfbird);
+  E.phbirdshot = firelit(E.sfbirdshot);
+  E.phbirdloop = firelit(E.sfbirdloop);
+  E.phpinshot = firelit(E.sfpinshot);
+  E.phbeamshot = firelit(E.sfbeamshot);
+  E.phbeamline = firelit(E.sfbeamline);
+  E.phcharge = firelit(E.sfcharge);
+  E.phupshot = firelit(E.sfupshot);
+  E.phupbig = grown(E.phupshot, 1.5);
+  E.phfeatherfall = firelit(E.sffeatherfall);
+  E.phlightfall = firelit(E.sflightfall);
+  E.phgolden = firelit(E.sfgolden);
+  E.phsun = firelit(E.sfsun);
+  E.phpinned = firelit(E.sfpinned);
+
+  // ---------- The Songbird (docs/design/sunfeather.md) ----------
+  // The Sunfeather's support path: sky blue and sunny yellow with white, inked in navy. Her shapes:
+  // musical notes (round, cute), ribbons of stave lines flowing, bluebirds; her versions of the
+  // Sunfeather's drawings are `songlit`.
+  const SBP = ['#ffffff', '#fff6c8', '#ffd84a', '#5ab4f0', '#1e3a6a'];
+  const SBB = { body: '#7cc8ff', wing: '#4a9ae8', belly: '#ffffff', blush: '#ffb3c8', beak: '#ffd84a', ink: '#1e3a6a' };
+  const songlit = (e) => ({
+    ...e,
+    draw(ctx, i) {
+      const keep = [SFP, SFB];
+      SFP = SBP;
+      SFB = SBB;
+      try {
+        e.draw(ctx, i);
+      } finally {
+        [SFP, SFB] = keep;
+      }
+    },
+  });
+  // A musical note at (x, y) (its head), `r` big, tilted `ang`: a round head, a stem and a flag
+  // (`two`: two heads beamed together).
+  function sbNote(ctx, x, y, r, ang = 0, { alpha = 1, two = false } = {}) {
+    if (alpha <= 0 || r <= 1) return;
+    ctx.save();
+    ctx.globalAlpha *= alpha;
+    ctx.translate(x, y);
+    ctx.rotate(ang);
+    const head = (hx) => {
+      inked(ctx, mmEll(hx, 0, r, r * 0.78, -0.4, 16), SBP[2], SBP[4], Math.max(1.2, r * 0.22));
+      fill(ctx, mmEll(hx - r * 0.3, -r * 0.25, r * 0.3, r * 0.22, -0.4, 10), '#ffffff');
+    };
+    const stem = (hx) => {
+      ctx.strokeStyle = SBP[4];
+      ctx.lineWidth = Math.max(1.5, r * 0.26);
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(hx + r * 0.85, -r * 0.1);
+      ctx.lineTo(hx + r * 0.85, -r * 2.6);
+      ctx.stroke();
+    };
+    if (two) {
+      head(0);
+      head(r * 2.4);
+      stem(0);
+      stem(r * 2.4);
+      inked(ctx, [[r * 0.85, -r * 2.6], [r * 3.25, -r * 3.0], [r * 3.25, -r * 2.4], [r * 0.85, -r * 2.0]], SBP[3], SBP[4], Math.max(1, r * 0.15));
+    } else {
+      head(0);
+      stem(0);
+      inked(ctx, mmPath([[[r * 0.85, -r * 2.6], [r * 1.7, -r * 2.2], [r * 1.9, -r * 1.5], [r * 1.5, -r * 1.0]], [[r * 1.5, -r * 1.0], [r * 1.5, -r * 1.5], [r * 1.2, -r * 1.9], [r * 0.85, -r * 2.0]]], 6), SBP[3], SBP[4], Math.max(1, r * 0.15));
+    }
+    ctx.restore();
+  }
+  // A ribbon of stave lines from (x0, y0) along a wave to (x1, y1), `w` wide, drawn `a`..`b` of the way.
+  function sbRibbon(ctx, x0, y0, x1, y1, w, ph, { a = 0, b = 1, alpha = 1, amp = 18 } = {}) {
+    if (alpha <= 0 || b <= a) return;
+    ctx.save();
+    ctx.globalAlpha *= alpha;
+    ctx.lineCap = 'round';
+    for (let line = 0; line < 5; line++) {
+      const off = (line - 2) * (w / 4);
+      const pts = [];
+      for (let j = 0; j <= 30; j++) {
+        const t = a + ((b - a) * j) / 30;
+        const x = x0 + (x1 - x0) * t;
+        const y = y0 + (y1 - y0) * t + Math.sin(t * 6 + ph * TAU) * amp + off;
+        pts.push([x, y]);
+      }
+      for (const [lw, c] of [[3.6, SBP[4]], [2, line === 2 ? SBP[2] : SBP[3]], [0.8, '#ffffff']]) {
+        ctx.strokeStyle = c;
+        ctx.lineWidth = lw;
+        ctx.beginPath();
+        pts.forEach(([px, py], j) => (j ? ctx.lineTo(px, py) : ctx.moveTo(px, py)));
+        ctx.stroke();
+      }
+    }
+    ctx.restore();
+  }
+  function sbBloom(ctx, x, y, r, a, o) {
+    const keep = SFP;
+    SFP = SBP;
+    sfBloom(ctx, x, y, r, a, o);
+    SFP = keep;
+  }
+
+  // Her arrows in flight (loops): a light arrow in her colours, two little notes bobbing after it.
+  E.sbarrow = {
+    w: 180, h: 80, n: 12, fps: 40, px: 140, py: 40, loop: true,
+    draw(ctx, i) {
+      const ph = i / 12;
+      sbNote(ctx, 30, 46 + 6 * Math.sin(ph * TAU), 6, -0.2, { alpha: 0.8 });
+      sbNote(ctx, 58, 40 + 6 * Math.sin(ph * TAU + 2), 7, 0.15);
+      const keep = SFP;
+      SFP = SBP;
+      sfArrow(ctx, 140, 40, 70);
+      SFP = keep;
+    },
+  };
+  E.sbarrowbig = {
+    w: 260, h: 110, n: 12, fps: 40, px: 210, py: 55, loop: true,
+    draw(ctx, i) {
+      const ph = i / 12;
+      sbRibbon(ctx, 10, 60, 120, 55, 14, ph, { amp: 6, alpha: 0.8 });
+      sbNote(ctx, 60, 30 + 6 * Math.sin(ph * TAU), 8, 0.1, { two: true });
+      const keep = SFP;
+      SFP = SBP;
+      sfArrow(ctx, 210, 55, 110, 0, { big: true });
+      SFP = keep;
+    },
+  };
+  E.sblullabyshot = {
+    w: 200, h: 100, n: 16, fps: 30, px: 150, py: 50, loop: true,
+    draw(ctx, i) {
+      const ph = i / 16;
+      for (let j = 0; j < 3; j++) sbNote(ctx, 40 + j * 30, 56 + 8 * Math.sin(ph * TAU + j), 6, Math.sin(ph * TAU + j) * 0.3, { alpha: 0.5 + 0.2 * j });
+      const keep = SFP;
+      SFP = SBP;
+      sfArrow(ctx, 150, 50, 60, 0, { alpha: 0.85 });
+      SFP = keep;
+      mmCrescent(ctx, 160, 26, 10, 0.5, 1, SBP[2]);
+    },
+  };
+  // Her mark: a soft flash and three notes popping out and floating up, wobbling.
+  E.sbhit = (() => {
+    const c = 120;
+    const n = 24;
+    return {
+      w: 240, h: 240, n, fps: 48, px: c, py: c,
+      draw(ctx, i) {
+        const k = i / (n - 1);
+        sbBloom(ctx, c, c, 22 + 36 * smooth(win(k, 0, 0.3)), 0.85 * (1 - win(k, 0.1, 0.5)));
+        if (k < 0.3) sparkle(ctx, SBP, c, c, 18 * swell(k, 0, 0.3), 0.4);
+        for (let j = 0; j < 3; j++) {
+          const u = smooth(win(k, 0.04 + j * 0.06, 1));
+          const a = -Math.PI / 2 + (j - 1) * 0.8;
+          sbNote(ctx, c + Math.cos(a) * 40 * u + 6 * Math.sin(u * 8 + j), c + Math.sin(a) * 50 * u - 20 * u, 9 * (1 - 0.3 * u), 0.3 * Math.sin(u * 6 + j), { alpha: 1 - win(k, 0.65, 1), two: j === 1 });
+        }
+      },
+    };
+  })();
+  // Her big hit: a ring of light, a burst of notes all round, sparkles.
+  E.sbhitbig = (() => {
+    const c = 160;
+    const n = 26;
+    return {
+      w: 320, h: 320, n, fps: 48, px: c, py: c,
+      draw(ctx, i) {
+        const k = i / (n - 1);
+        sbBloom(ctx, c, c, 30 + 60 * smooth(win(k, 0, 0.3)), 0.9 * (1 - win(k, 0.1, 0.55)));
+        const ring = smooth(win(k, 0.05, 0.6));
+        if (ring > 0 && ring < 1) celRing(ctx, SBP, c, c, 30 + 70 * ring, 8 * (1 - ring) + 2, { broken: ring > 0.45 ? (ring - 0.45) * 1.8 : 0, seed: 7603 });
+        for (let j = 0; j < 5; j++) {
+          const u = smooth(win(k, 0.05, 1));
+          const a = (j / 5) * TAU - Math.PI / 2;
+          sbNote(ctx, c + Math.cos(a) * 80 * u, c + Math.sin(a) * 60 * u - 30 * u, 11 * (1 - 0.3 * u), 0.3 * Math.sin(u * 6 + j), { alpha: 1 - win(k, 0.65, 1), two: j % 2 === 0 });
+        }
+        if (k < 0.3) sparkle(ctx, SBP, c + 30, c - 30, 22 * swell(k, 0, 0.3), 0.3);
+      },
+    };
+  })();
+  // Encore's shower of notes on a monster: notes tumbling down onto it from above.
+  E.sbnotes = {
+    w: 220, h: 300, n: 24, fps: 40, px: 110, py: 260,
+    draw(ctx, i) {
+      const k = i / 23;
+      for (let j = 0; j < 4; j++) {
+        const u = win(k, j * 0.08, 0.6 + j * 0.08);
+        if (u <= 0 || u >= 1) continue;
+        sbNote(ctx, 60 + j * 34 + 10 * Math.sin(u * 5 + j), 40 + 200 * u, 10, 0.5 * Math.sin(u * 7 + j), { alpha: 1 - win(u, 0.75, 1), two: j % 2 === 1 });
+      }
+      if (k > 0.4) sbBloom(ctx, 110, 240, 50, 0.6 * swell(k, 0.4, 1));
+    },
+  };
+  // A little mend (Chorus; follows her): a few notes and sparkles rising round her.
+  E.sbmend = {
+    w: 200, h: 240, n: 22, fps: 40, px: 100, py: 220,
+    draw(ctx, i) {
+      const k = i / 21;
+      for (let j = 0; j < 3; j++) {
+        const u = win(k, j * 0.12, 0.7 + j * 0.1);
+        if (u <= 0 || u >= 1) continue;
+        sbNote(ctx, 60 + j * 40, 200 - 150 * u, 8, 0.3 * Math.sin(u * 6 + j), { alpha: 1 - win(u, 0.6, 1) });
+        sparkle(ctx, SBP, 70 + j * 40, 170 - 120 * u, 5, j + u * 3);
+      }
+    },
+  };
+  // Healing Melody (follows her; foot on the floor): a ring of notes spiralling up round her on a soft
+  // glow, sparkles drifting up through them.
+  E.sbmelody = {
+    w: 320, h: 360, n: 32, fps: 40, px: 160, py: 330,
+    draw(ctx, i) {
+      const k = i / 31;
+      sbBloom(ctx, 160, 220, 120, 0.5 * swell(k, 0, 1), { sy: 1.1 });
+      for (let j = 0; j < 6; j++) {
+        const u = win(k, j * 0.05, 0.7 + j * 0.05);
+        if (u <= 0 || u >= 1) continue;
+        const a = (j / 6) * TAU + u * TAU * 0.8;
+        const depth = Math.sin(a);
+        sbNote(ctx, 160 + Math.cos(a) * 90, 300 - 230 * u + depth * 16, 10 + 2 * depth, 0.2 * Math.sin(u * 5 + j), { alpha: (1 - win(u, 0.7, 1)) * (0.7 + 0.3 * depth), two: j % 3 === 0 });
+      }
+      for (let j = 0; j < 4; j++) {
+        const u = win(k, 0.2 + j * 0.1, 0.9);
+        if (u <= 0 || u >= 1) continue;
+        sparkle(ctx, SBP, 110 + j * 34, 280 - 200 * u, 7 * (1 - u * 0.5), j + u * 4);
+      }
+    },
+  };
+  // Anthem (follows her): ribbons of stave lines sweeping up round her like banners, notes riding them.
+  E.sbanthem = {
+    w: 420, h: 420, n: 32, fps: 40, px: 210, py: 390,
+    draw(ctx, i) {
+      const k = i / 31;
+      const grow = smooth(win(k, 0, 0.5));
+      const fade = win(k, 0.7, 1);
+      sbBloom(ctx, 210, 230, 130, 0.45 * swell(k, 0, 1));
+      sbRibbon(ctx, 40, 360, 380, 60, 26, k, { b: grow, alpha: 1 - fade, amp: 30 });
+      sbRibbon(ctx, 380, 360, 40, 90, 22, k + 0.5, { b: grow * 0.9, alpha: (1 - fade) * 0.8, amp: 24 });
+      for (let j = 0; j < 4; j++) {
+        const u = win(k, 0.2 + j * 0.1, 0.95);
+        if (u <= 0 || u >= 1) continue;
+        sbNote(ctx, 80 + j * 80, 320 - 220 * u, 12, 0.3 * Math.sin(u * 5 + j), { alpha: 1 - win(u, 0.7, 1), two: j % 2 === 0 });
+      }
+    },
+  };
+  // Asleep (loops, over a monster): a little Zz and a note drifting up, swaying.
+  E.sbsleep = {
+    w: 120, h: 120, n: 32, fps: 24, px: 60, py: 100, loop: true,
+    draw(ctx, i) {
+      const ph = i / 32;
+      for (let j = 0; j < 2; j++) {
+        const u = (ph + j * 0.5) % 1;
+        const x = 50 + 20 * u + 6 * Math.sin(u * 6);
+        const y = 96 - 80 * u;
+        const a = Math.min(1, u * 5) * (1 - win(u, 0.7, 1));
+        ctx.save();
+        ctx.globalAlpha *= a;
+        ctx.strokeStyle = SBP[4];
+        ctx.lineWidth = 6;
+        ctx.lineJoin = 'round';
+        const z = 8 + 6 * j;
+        const zpath = () => {
+          ctx.beginPath();
+          ctx.moveTo(x - z, y - z);
+          ctx.lineTo(x + z, y - z);
+          ctx.lineTo(x - z, y + z);
+          ctx.lineTo(x + z, y + z);
+        };
+        zpath();
+        ctx.stroke();
+        ctx.strokeStyle = SBP[2];
+        ctx.lineWidth = 3;
+        zpath();
+        ctx.stroke();
+        ctx.restore();
+      }
+      sbNote(ctx, 30, 70 - 20 * Math.sin(ph * TAU), 7, 0.3 * Math.sin(ph * TAU), { alpha: 0.85 });
+    },
+  };
+  // Her ribbon (her glide and Song Step; at her start, on the floor): a ribbon of stave lines unrolling
+  // ahead along the ground the way she glides, notes skipping along it, then fading.
+  E.sbribbon = {
+    w: 700, h: 220, n: 26, fps: 40, px: 40, py: 200,
+    draw(ctx, i) {
+      const k = i / 25;
+      const out = smooth(win(k, 0, 0.5));
+      const fade = win(k, 0.55, 1);
+      sbRibbon(ctx, 20, 150, 660, 140, 22, k, { a: smooth(fade) * 0.9, b: out, alpha: 1 - fade * 0.8, amp: 14 });
+      for (let j = 0; j < 3; j++) {
+        const u = win(k, j * 0.1, 0.6 + j * 0.1);
+        if (u <= 0 || u >= 1) continue;
+        sbNote(ctx, 80 + 520 * u, 110 - 20 * Math.sin(u * 8 + j), 9, 0.3, { alpha: 1 - win(u, 0.7, 1) });
+      }
+    },
+  };
+  // Grand Chorus's flock (on the floor at her): six bluebirds circle in round her, singing, rising,
+  // then scatter up and away.
+  E.sbflock = {
+    w: 600, h: 500, n: 40, fps: 30, px: 300, py: 460,
+    draw(ctx, i) {
+      const k = i / 39;
+      const gather = smooth(win(k, 0, 0.45));
+      const go = smooth(win(k, 0.5, 1));
+      sbBloom(ctx, 300, 300, 160, 0.5 * swell(k, 0, 0.9));
+      const keep = SFB;
+      SFB = SBB;
+      for (let j = 0; j < 6; j++) {
+        const a = (j / 6) * TAU + k * TAU * 0.6;
+        const rr = 240 - 140 * gather + 200 * go;
+        const x = 300 + Math.cos(a) * rr;
+        const y = 320 + Math.sin(a) * rr * 0.35 - 160 * go - 40 * gather;
+        sfBird(ctx, x, y, 22, (k * 8 + j * 0.3) % 1, a + Math.PI / 2, { alpha: Math.min(1, k * 6) * (1 - win(k, 0.85, 1)) });
+        if (gather > 0.6 && (j + Math.floor(k * 10)) % 3 === 0) sbNote(ctx, x + 20, y - 30, 7, 0.2, { alpha: 1 - go });
+      }
+      SFB = keep;
+    },
+  };
+  // Grand Chorus's wave (at her, on the floor): a great wave of music sweeping out ahead, ribbons of
+  // stave lines and notes riding it out to its reach, light rising off it.
+  E.sbwave = {
+    w: 1500, h: 520, n: 30, fps: 40, px: 60, py: 480,
+    draw(ctx, i) {
+      const k = i / 29;
+      const out = smooth(win(k, 0, 0.6));
+      const fade = win(k, 0.6, 1);
+      sbBloom(ctx, 60 + 1300 * out, 330, 200, 0.6 * (1 - fade), { sy: 0.8 });
+      for (let j = 0; j < 3; j++) sbRibbon(ctx, 30, 420 - j * 90, 1440, 380 - j * 120, 26, k + j * 0.3, { a: smooth(fade) * 0.95, b: out, alpha: (1 - fade * 0.7) * (1 - j * 0.15), amp: 26 });
+      for (let j = 0; j < 8; j++) {
+        const u = win(k, j * 0.04, 0.7 + j * 0.03);
+        if (u <= 0 || u >= 1) continue;
+        sbNote(ctx, 80 + 1300 * u, 360 - j * 30 - 40 * Math.sin(u * 6 + j), 14, 0.3 * Math.sin(u * 6 + j), { alpha: 1 - win(u, 0.75, 1), two: j % 2 === 0 });
+      }
+    },
+  };
+  // A note falling onto a monster (Note Rain): it tumbles down and lands in a little flash.
+  E.sbfeatherfall = {
+    w: 200, h: 420, n: 22, fps: 40, px: 100, py: 380,
+    draw(ctx, i) {
+      const k = i / 21;
+      const fall = smooth(win(k, 0, 0.45));
+      if (k < 0.5) sbNote(ctx, 100 + 20 * Math.sin(fall * 5), 40 + 290 * fall, 16, 0.6 * Math.sin(fall * 7), { alpha: 1 - win(k, 0.42, 0.5), two: true });
+      if (k > 0.4) {
+        const b = win(k, 0.4, 1);
+        sbBloom(ctx, 100, 330, 30 + 30 * b, 0.9 * (1 - b));
+        if (b < 0.5) sparkle(ctx, SBP, 100, 330, 14 * swell(b, 0, 0.5), 0.2);
+      }
+    },
+  };
+  // A note drifting (loops; her Melody aura), and a little ring of notes at Chorus.
+  E.sbnotefloat = { w: 70, h: 80, n: 24, fps: 24, px: 35, py: 40, loop: true, draw(ctx, i) { const ph = i / 24; sbNote(ctx, 30 + 5 * Math.sin(ph * TAU), 50, 8, 0.3 * Math.sin(ph * TAU)); } };
+  E.sbhalo = {
+    w: 140, h: 140, n: 24, fps: 24, px: 70, py: 70, loop: true,
+    draw(ctx, i) {
+      const ph = i / 24;
+      sbBloom(ctx, 70, 70, 44, 0.6);
+      for (let j = 0; j < 3; j++) {
+        const a = (ph + j / 3) * TAU;
+        sbNote(ctx, 70 + Math.cos(a) * 30, 74 + Math.sin(a) * 12, 7, 0.2 * Math.sin(a), { alpha: 0.75 + 0.25 * Math.sin(a) });
+      }
+    },
+  };
+  // Her versions of the Sunfeather's drawings, in sky blue and sunny yellow.
+  E.sbbird = songlit(E.sfbird);
+  E.sbbirdshot = songlit(E.sfbirdshot);
+  E.sbbirdloop = songlit(E.sfbirdloop);
+  E.sbpinshot = songlit(E.sfpinshot);
+  E.sbbeamshot = songlit(E.sfbeamshot);
+  E.sbbeamline = songlit(E.sfbeamline);
+  E.sbcharge = songlit(E.sfcharge);
+  E.sbupshot = songlit(E.sfupshot);
+  E.sbupbig = grown(E.sbupshot, 1.5);
+  E.sblightfall = songlit(E.sflightfall);
+  E.sbgolden = songlit(E.sfgolden);
+  E.sbsun = songlit(E.sfsun);
+
   window.FXART = E;
   window.FXHD = { render, RAW };
 })();

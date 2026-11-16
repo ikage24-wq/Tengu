@@ -174,6 +174,12 @@ function weaponStyle(bot) {
   // The Moon Moth flicks and spins in close with her two daggers.
   if (bot.char.job === 'moonmoth') return { reach: 46, lift: 30, pose: pick2(['mmflick', 'mmhook']), shot: null, ranged: false };
   // The Tide Mage sends her water.
+  // The Songbird shoots arrows trailing notes.
+  if (bot.char.job === 'songbird') return { reach: 210, lift: 100, pose: pick2(['sbnote', 'sbtrill', 'sbtwirl']), shot: 'sbarrow', ranged: true };
+  // The Phoenix fires burning bolts from her crossbow.
+  if (bot.char.job === 'phoenix') return { reach: 220, lift: 100, pose: pick2(['phbolt', 'phtwin', 'phkick']), shot: 'phbolt', ranged: true };
+  // The Sunfeather skips and shoots light arrows.
+  if (bot.char.job === 'sunfeather') return { reach: 210, lift: 100, pose: pick2(['sfshot', 'sfskip', 'sfdouble', 'sfhop']), shot: 'sfarrow', ranged: true };
   if (bot.char.job === 'tidemage') return { reach: 200, lift: 100, pose: pick2(['tmwhip', 'tmroll', 'tmbubbles', 'tmgeyser']), shot: 'tmwave', ranged: true };
   if (WEAPON_TYPES[type]?.ranged) return { reach: 190, lift: 100, pose: type === 'gauntlet' ? 'throw' : 'draw', shot: type === 'gauntlet' ? 'star' : 'arrow', ranged: true };
   return { reach: 42, lift: 30, pose: type === 'spear' ? 'thrust' : pick2(['slash', 'slash2']), shot: null, ranged: false };

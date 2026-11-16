@@ -20,6 +20,7 @@ import { weaponTrail, weaponHit, thrustStreak } from './blade-fx.js';
 import { wornGear } from '../core/character.js';
 import { drawTideShot } from './tide-fx.js';
 import { drawMothShot } from './moth-fx.js';
+import { drawSunShot } from './sun-fx.js';
 import { drawStormShot } from './storm-fx.js';
 
 // (Moved here from the Thief's effects when her line was wiped, 2026-11-16: a Novice's gloves still throw stars.)
@@ -132,7 +133,7 @@ function drawShot(ctx, f, cam) {
   const dir = Math.sign(f.tx - f.x) || 1;
   const c = f.element ? ELEMENTS[f.element].glow : SHOT_COLORS[f.shot] ?? '#ffffff';
   ctx.save();
-  if (drawStrikeShot(ctx, f, x, y, dir, f.t) || ((f.shot?.startsWith('tm') || f.shot?.startsWith('ms') || f.shot?.startsWith('tc')) && drawTideShot(ctx, f, x, y, dir, cam)) || ((f.shot?.startsWith('mm') || f.shot?.startsWith('ec') || f.shot?.startsWith('sv')) && drawMothShot(ctx, f, x, y, dir)) || ((f.shot?.startsWith('tg') || f.shot?.startsWith('tp') || f.shot?.startsWith('bw')) && drawStormShot(ctx, f, x, y, dir))) {
+  if (drawStrikeShot(ctx, f, x, y, dir, f.t) || ((f.shot?.startsWith('tm') || f.shot?.startsWith('ms') || f.shot?.startsWith('tc')) && drawTideShot(ctx, f, x, y, dir, cam)) || ((f.shot?.startsWith('mm') || f.shot?.startsWith('ec') || f.shot?.startsWith('sv')) && drawMothShot(ctx, f, x, y, dir)) || drawSunShot(ctx, f, x, y, dir) || ((f.shot?.startsWith('tg') || f.shot?.startsWith('tp') || f.shot?.startsWith('bw')) && drawStormShot(ctx, f, x, y, dir))) {
     ctx.restore();
     return;
   }
@@ -907,7 +908,7 @@ let hero = null;
 // Effects that lie on the ground under everyone (the dancers' finisher stages: Grand Finale's spotlight and rose,
 // Golden Carousel's track, Sky Waltz's tornado, which stand round her and must not cover her face):
 // drawn behind the heroes and monsters (drawGroundFx), so they never wash over a face.
-const GROUND_FX = new Set(['shock', 'mmmoon', 'svpearlmoon', 'svmoon', 'ecnewmoon', 'ectotal', 'ecportal', 'ecdiamond', 'ecring', 'ecringbig', 'bwroll', 'bwcage', 'bwboltdown', 'bwcagebig', 'bwclapbig', 'bwboltbig', 'bwsquallfx', 'tgring', 'tgcyclone', 'tgboltbig', 'tgclap', 'tgclapbig', 'tpboltbig', 'tpclapbig', 'tpwhirlfx', 'tmwhirl', 'tmpool', 'mspool', 'tcpool', 'tcrain', 'tcmoontide', 'wdfinale', 'bdcarousel', 'skytornado', 'sddownburst', 'sdcloudnine', 'aeballista', 'consecrate', 'verdict',
+const GROUND_FX = new Set(['shock', 'sfsun', 'phsun', 'phpillar', 'mmmoon', 'svpearlmoon', 'svmoon', 'ecnewmoon', 'ectotal', 'ecportal', 'ecdiamond', 'ecring', 'ecringbig', 'bwroll', 'bwcage', 'bwboltdown', 'bwcagebig', 'bwclapbig', 'bwboltbig', 'bwsquallfx', 'tgring', 'tgcyclone', 'tgboltbig', 'tgclap', 'tgclapbig', 'tpboltbig', 'tpclapbig', 'tpwhirlfx', 'tmwhirl', 'tmpool', 'mspool', 'tcpool', 'tcrain', 'tcmoontide', 'wdfinale', 'bdcarousel', 'skytornado', 'sddownburst', 'sdcloudnine', 'aeballista', 'consecrate', 'verdict',
   // (the first jobs' skills as the paths play them: data/skills.js `paths`)
   'siballad', 'siharmony', 'asmoonfall', 'asveil']);
 export function drawEffects(ctx, world, cam, time) {

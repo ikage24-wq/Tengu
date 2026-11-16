@@ -73,6 +73,12 @@ const NAMED = new Set(['pillar', 'aegis', 'consecrate', 'verdict', 'bloodmoon', 
   'mmveil', 'mmdodge', 'mmdazzle', 'mmlure', 'mmlurepop', 'mmfeint', 'ecveil', 'ecdodge', 'ecdazzle', 'eclure', 'eclurepop', 'ecfeint',
   // The Silkweaver (her thread and her swarm in flight are shots).
   'svhit', 'svwrapup', 'svpop', 'svknot', 'svlash', 'svzipline', 'svswing', 'svwhirl', 'svreel', 'svmoon', 'svburst', 'svcloud', 'svflurry', 'svflutter', 'svpearlmoon', 'svpour', 'svveil', 'svdodge', 'svdazzle', 'svlure', 'svlurepop', 'svfeint',
+  // The Sunfeather (her arrows and sunbirds in flight are shots).
+  'sfhit', 'sfhitbig', 'sfbird', 'sfcharge', 'sfupshot', 'sfupbig', 'sffeatherfall', 'sflightfall', 'sfgolden', 'sfsun',
+  // The Phoenix (her bolts and fire birds in flight are shots).
+  'phhit', 'phhitbig', 'phbird', 'phburn', 'phstuck', 'phblast', 'phburst', 'phwings', 'phsweep', 'phpillar', 'phcharge', 'phupshot', 'phupbig', 'phfeatherfall', 'phlightfall', 'phgolden', 'phsun',
+  // The Songbird (her arrows and bluebirds in flight are shots).
+  'sbhit', 'sbhitbig', 'sbbird', 'sbnotes', 'sbmend', 'sbmelody', 'sbanthem', 'sbribbon', 'sbflock', 'sbwave', 'sbcharge', 'sbupshot', 'sbupbig', 'sbfeatherfall', 'sblightfall', 'sbgolden', 'sbsun',
   // The Moon Moth (the swarm in flight is a shot: audio/sfx.js SHOTS).
   'mmflutter', 'ecflutter', 'mmhit', 'mmcloud', 'mmwings', 'mmflurry', 'mmnip', 'mmmoon', 'mmpour',
   // The Tide Mage.

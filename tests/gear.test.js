@@ -161,7 +161,8 @@ test('a gauntlet is a small glove: one look per tier, recoloured by variants, no
 test('bows keep their string for the draw', () => {
   for (let t = 0; t <= 10; t++) {
     const a = weaponShapes('bow', t).anchors;
-    assert.ok(a.string && a.string.h > 15, `bow tier ${t} has its string`);
+    // (The sample bow is a compact recurve, short enough to tuck behind her head when drawn upright.)
+    assert.ok(a.string && a.string.h > 10, `bow tier ${t} has its string`);
     assert.ok(weaponShapes('bow', t, 0, null, null, true).shapes.length < weaponShapes('bow', t).shapes.length, 'the string can be left out to draw it live');
   }
 });

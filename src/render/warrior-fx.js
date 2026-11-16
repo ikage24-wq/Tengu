@@ -10,6 +10,7 @@
 import { fxSprite } from './fx-sprites.js';
 import { drawTideFx } from './tide-fx.js';
 import { drawMothFx } from './moth-fx.js';
+import { drawSunFx } from './sun-fx.js';
 import { drawStormFx } from './storm-fx.js';
 import { rockBurst } from './blade-fx.js';
 
@@ -106,6 +107,7 @@ export function drawWarriorFx(ctx, f, x, y, p, cam, time) {
   if ((f.kind.startsWith('tm') || f.kind.startsWith('ms') || f.kind.startsWith('tc')) && drawTideFx(ctx, f, x, y, p)) return true;
   // The Moon Moth's moths (render/moth-fx.js).
   if ((f.kind.startsWith('mm') || f.kind.startsWith('ec') || f.kind.startsWith('sv')) && drawMothFx(ctx, f, x, y, p)) return true;
+  if (/^(sf|ph|sb)/.test(f.kind) && drawSunFx(ctx, f, x, y, p)) return true;
   // The Thunderguard's lightning (render/storm-fx.js).
   if ((f.kind.startsWith('tg') || f.kind.startsWith('tp') || f.kind.startsWith('bw')) && drawStormFx(ctx, f, x, y, p, cam)) return true;
   switch (f.kind) {

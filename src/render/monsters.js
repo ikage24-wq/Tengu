@@ -489,6 +489,10 @@ function drawMonsterNow(ctx, m, x, y, time, now = time) {
     const cw = Math.min(ch * 1.35, Math.max(ch * 0.8, (s.w * 1.1) / 40));
     fxSprite(ctx, 'celsvcocoon', x, y - (s.h * sy) / 2, { t: time + m.uid, sx: cw, sy: ch, alpha: Math.min(1, (m.frozenUntil - now) / 0.3, (now - (m.cocoonAt ?? now - 1)) / 0.28) });
   }
+  // A Pin Feather: a gold feather of light stuck in it, pinning it where it stands, fading as it frees.
+  else if (frozen && m.hold === 'pin') fxSprite(ctx, `cel${m.pinLook ?? 'sf'}pinned`, x, y - (s.h * sy) * 0.55, { t: time + m.uid, scale: Math.min(1.4, Math.max(0.6, (s.h * sy) / 50)), alpha: Math.min(1, (m.frozenUntil - now) / 0.25) });
+  // A Lullaby: asleep on its feet, little notes and a Zz drifting up off it.
+  else if (frozen && m.hold === 'sleep') fxSprite(ctx, 'celsbsleep', x, y - s.h * sy - 6, { t: time + m.uid, scale: Math.min(1, Math.max(0.5, s.w / 50)), alpha: Math.min(1, (m.frozenUntil - now) / 0.25) });
   // A Wing Feint: it stands turned away, watching one of her moths flutter off behind it.
   else if (frozen && m.hold === 'feint') {
     const away = (m.dir || 1) < 0 ? -1 : 1;

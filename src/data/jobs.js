@@ -16,6 +16,7 @@ export const FAMILY_STATS = {
   warrior: { primary: 'str', secondary: 'dex' },
   mage: { primary: 'int', secondary: 'luk' },
   thief: { primary: 'luk', secondary: 'dex' },
+  archer: { primary: 'dex', secondary: 'str' },
   gm: { primary: 'int', secondary: 'luk' },
 };
 
@@ -53,6 +54,27 @@ export const JOBS = {
     id: 'moonmoth', power: 1.86, spread: 1.62, name: 'Moon Moth', family: 'thief', tier: 1, parent: 'novice', level: FIRST_JOB_LEVEL,
     hp: 22, mp: 16, advanceHp: 280, advanceMp: 220, weapons: ['dagger'],
     blurb: 'A night thief with a dagger in each hand and a cloud of moths, with LUK. Her cuts build Moondust, and the fuller it runs the more she crits; at Full Moon every attack sends a moth to nip another monster. Moth Step, Wing Flurry, and Midnight Swarm: moths pour down under a full moon.',
+  },
+  // The new Archer (docs/design/sunfeather.md, 2026-11-16, made from scratch after the old line was
+  // wiped): a dawn archer with a bow, morning light and sunbirds. Kestrel teaches her.
+  sunfeather: {
+    id: 'sunfeather', power: 1.8, spread: 1.25, name: 'Sunfeather', family: 'archer', tier: 1, parent: 'novice', level: FIRST_JOB_LEVEL,
+    hp: 22, mp: 17, advanceHp: 260, advanceMp: 240, weapons: ['bow'],
+    blurb: 'A dawn archer with a bow, with DEX: her arrows are streaks of morning light that burst into little sunbirds, and she skips about keeping her distance. Shots landed in a row build Daybreak, and the fuller it runs the faster she shoots; at Sunrise every shot fans into three. Sky Hop, Sparrow Volley, Sunbeam Shot, and Sunrise Volley: the sun comes up and rains light on everything.',
+  },
+  // The Sunfeather's damage path (docs/design/sunfeather.md): a heavy crossbow, every bolt in flame.
+  // Asks for Kestrel's trial first.
+  phoenix: {
+    id: 'phoenix', power: 4.6, spread: 1.6, name: 'Phoenix', family: 'archer', tier: 2, parent: 'sunfeather', level: 30, trial: 'archer_trial',
+    hp: 24, mp: 20, advanceHp: 340, advanceMp: 300, weapons: ['crossbow'],
+    blurb: 'The Sunfeather who caught fire: a heavy crossbow cranked and fired from one knee, every bolt trailing flame, and what it hits burns. Her bolts build Kindling, and the fuller it runs the harder her burns bite; at Blaze every bolt bursts where it lands. Flame Wing, Firebrand Bolt, Smoulder, and Rebirth: a phoenix sweeps down across the screen in fire.',
+  },
+  // The Sunfeather's support path (docs/design/sunfeather.md): her arrows carry music, songbirds
+  // mend her party. Asks for Kestrel's trial first.
+  songbird: {
+    id: 'songbird', power: 5.3, spread: 1.45, name: 'Songbird', family: 'archer', tier: 2, parent: 'sunfeather', level: 30, trial: 'archer_trial',
+    hp: 24, mp: 30, advanceHp: 300, advanceMp: 460, weapons: ['bow'],
+    blurb: 'The Sunfeather who sings: the party\'s healer with a bow. Her arrows trail music and songbirds follow her; her shots and heals build Melody, and the fuller it runs the more her heals mend. Full (Chorus), every shot she lands mends the party round her. Healing Melody, Lullaby, Anthem, and Grand Chorus: the whole party mended and the fallen brought back.',
   },
   // Warrior branches. Both ask for Brann's trial first (see `trial`).
   // The Thunderguard's tank path (docs/design/stormwall.md): the storm as a fortress.
