@@ -191,13 +191,13 @@ for (const [slot, name, color] of [['top', 'Starting Top', '#ffc2d6'], ['bottom'
 }
 
 // ---------- Job gear ----------
-// Every job has its own set every 5 levels, from 5 to 100, in each armor slot: warriors in heavy
-// plate, archers in elven leaf and silk, mages in grand robes and towering hats, dancers in showgirl
-// tailcoats, ruffles and plumes. The level-5 sets are starters a Novice can wear before choosing.
+// Every job family has its own set every 5 levels, from 5 to 100, in each armor slot: warriors in
+// heavy plate, mages in grand robes and towering hats. (The archers' and the dancers' sets went with
+// their lines, 2026-11-16.) The level-5 sets are starters a Novice can wear before choosing.
 // Earrings suit everyone and come in their own ladder.
 
 export const GEAR_LEVELS = Array.from({ length: 20 }, (_, i) => (i + 1) * 5);
-export const GEAR_FAMILIES = ['warrior', 'archer', 'mage', 'thief'];
+export const GEAR_FAMILIES = ['warrior', 'mage'];
 export const JOB_SLOTS = ['hat', 'top', 'bottom', 'shoes', 'gloves', 'cape'];
 
 const byTier = (list) => (t) => list[Math.min(list.length - 1, Math.floor(t / (20 / list.length)))];
@@ -209,13 +209,6 @@ export const JOB_SETS = {
     colors: ['#b89a74', '#9aa3b0', '#aeb7c4', '#cfd7e3', '#e6ecf6', '#8ea6d6', '#f4f1e8', '#b4614f', '#6f7480', '#d9b45a',
       '#3fa37a', '#9e2236', '#3a3448', '#c8cfd8', '#4a5a7a', '#e0552e', '#2b2233', '#f2d27a', '#5b2a8a', '#fff8e6'],
   },
-  archer: {
-    names: ['Fledgling', 'Woodland', 'Greenleaf', 'Ranger', 'Sylvan', 'Thornweave', 'Silverleaf', 'Windrunner', 'Starweave', 'Dawnsong',
-      'Elderwood', 'Moonshadow', 'Sunfeather', 'Aurora', 'Celestine', 'Wildheart', 'Evergreen', 'Starsinger', 'Lightbloom', 'Worldtree'],
-    nouns: { hat: byTier(['Hood', 'Circlet', 'Circlet', 'Diadem']), top: byTier(['Vest', 'Tunic', 'Tunic', 'Raiment']), bottom: byTier(['Breeches', 'Leggings', 'Leggings', 'Legwraps']), shoes: byTier(['Shoes', 'Boots', 'Boots', 'Striders']), gloves: byTier(['Bracers', 'Bracers', 'Armguards', 'Armguards']), cape: byTier(['Cloak', 'Mantle', 'Mantle', 'Wings']) },
-    colors: ['#9bbf7a', '#6fa86a', '#5fbf84', '#4f8f5f', '#7fd1a8', '#8a6a9a', '#cfe3d8', '#7fc4e8', '#6f7fd8', '#ffb07a',
-      '#7a5a3a', '#4a5f8a', '#ffcf5a', '#7fe0c8', '#e8f4ff', '#c85a6a', '#2f7f5a', '#9a8aff', '#ffd6ea', '#e8ffe0'],
-  },
   mage: {
     names: ['Apprentice', 'Initiate', 'Scholar', 'Mystic', 'Arcanist', 'Sorcerer', 'Enchanter', 'Magister', 'Sage', 'Archon',
       'Astral', 'Starweaver', 'Moonsage', 'Sunspire', 'Highmage', 'Seraphic', 'Ethereal', 'Cosmic', 'Eclipse', 'Eternity'],
@@ -223,21 +216,12 @@ export const JOB_SETS = {
     colors: ['#8fa8e8', '#7f8fe0', '#5f6fc8', '#8a6ad8', '#4f5fb8', '#6a3fa8', '#c86ab8', '#3f4f9a', '#4f8a8a', '#f4ead2',
       '#2f3f7a', '#5a2f8a', '#9ab8e8', '#e8a23c', '#7a2f5a', '#ffffff', '#8fe8ff', '#1f1f4a', '#2a1a2a', '#b48cff'],
   },
-  // The dancers (the Wind Dancer and her paths): a showgirl from street performer to the star of
-  // the grand stage, in bright stage colours.
-  thief: {
-    names: ['Busker', 'Street Dancer', 'Juggler', 'Tumbler', 'Fire Spinner', 'Troupe', 'Acrobat', 'Ring Dancer', 'Carnival', 'Ringleader',
-      'Headliner', 'Spotlight', 'Encore', 'Marquee', 'Showstopper', 'Starlight', 'Grand Stage', 'Limelight', 'Curtain Call', 'Prima Stella'],
-    nouns: { hat: byTier(['Ribbon', 'Top Hat', 'Tiara', 'Crown']), top: byTier(['Bodice', 'Jacket', 'Tailcoat', 'Tailcoat']), bottom: byTier(['Skirt', 'Ruffles', 'Ruffles', 'Showskirt']), shoes: byTier(['Slippers', 'Boots', 'Stage Boots', 'Stage Boots']), gloves: byTier(['Ribbons', 'Gloves', 'Opera Gloves', 'Opera Gloves']), cape: byTier(['Sash', 'Tails', 'Bustle', 'Plumes']) },
-    colors: ['#e8907a', '#f2a0b4', '#6fbcc4', '#f0b85a', '#b48ce0', '#d8485e', '#3f8fd0', '#8a4fc8', '#2fa88a', '#e8607a',
-      '#c8324a', '#2f4a9a', '#6a2f8a', '#1f7a6a', '#b0305a', '#ff7a6a', '#5a3fc8', '#e0a838', '#2a2468', '#ff5a8a'],
-  },
 };
 
 // How much defense a whole set gives at a level, split over the slots; each job leans its own way.
 const setDefense = (level) => 10 + level * 3.2;
 const SLOT_SHARE = { hat: 0.18, top: 0.3, bottom: 0.2, shoes: 0.1, gloves: 0.1, cape: 0.12 };
-const FAMILY_DEF = { warrior: 1.35, archer: 1, mage: 0.65, thief: 0.9 };
+const FAMILY_DEF = { warrior: 1.35, mage: 0.65 };
 function jobGearStats(family, slot, L) {
   const share = SLOT_SHARE[slot];
   const d = setDefense(L) * share;
@@ -250,24 +234,12 @@ function jobGearStats(family, slot, L) {
     if (slot === 'bottom') Object.assign(s, { hp: L });
     if (slot === 'gloves') Object.assign(s, { watk: 1 + main(14), str: main(20) });
     if (slot === 'shoes') Object.assign(s, { speed: 1 + main(25) });
-  } else if (family === 'archer') {
-    if (slot === 'top' || slot === 'hat') Object.assign(s, { dex: main(12) });
-    if (slot === 'gloves') Object.assign(s, { watk: 1 + main(14), acc: 2 + main(5) });
-    if (slot === 'shoes') Object.assign(s, { speed: 2 + main(12) });
-    if (slot === 'cape') Object.assign(s, { eva: 1 + main(8) });
-    if (slot === 'bottom') Object.assign(s, { acc: 1 + main(8) });
   } else if (family === 'mage') {
     if (slot === 'top') Object.assign(s, { int: main(10), mp: Math.round(L * 2), mdef: Math.round(4 + L * 0.9) });
     if (slot === 'hat') Object.assign(s, { int: main(12), mp: Math.round(L * 1.5), mdef: Math.round(2 + L * 0.6) });
     if (slot === 'bottom') Object.assign(s, { mp: L, mdef: Math.round(L * 0.4) });
     if (slot === 'gloves') Object.assign(s, { matk: 1 + main(8) });
     if (slot === 'shoes') Object.assign(s, { speed: 1 + main(20), mp: Math.round(L * 0.5) });
-  } else {
-    if (slot === 'top' || slot === 'hat') Object.assign(s, { luk: main(12) });
-    if (slot === 'top' || slot === 'bottom') Object.assign(s, { eva: 1 + main(5) });
-    if (slot === 'gloves') Object.assign(s, { watk: 1 + main(14), acc: 1 + main(6) });
-    if (slot === 'shoes') Object.assign(s, { speed: 3 + main(10), jump: main(25) });
-    if (slot === 'cape') Object.assign(s, { eva: 2 + main(6) });
   }
   for (const k of Object.keys(s)) if (!s[k]) delete s[k];
   return s;

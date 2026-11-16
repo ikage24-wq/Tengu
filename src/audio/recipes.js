@@ -306,63 +306,15 @@ const R = {
       { seq: 'r:400 C7:800', inst: 'glockenspiel', db: -8 },
     ],
   },
-  // Combo full (the Acrobat Archer's Showtime): a circus drum roll into a bright brass hit.
-  showtime: {
-    db: -10, max: 1, room: true, duck: [-5, 900], layers: [
-      { seq: 'C4:50 C4:50 C4:50 C4:50 C4:50 C4:50', inst: 'timpani', db: -6 },
-      { seq: 'r:300 C5+E5+G5+C6:700', inst: 'brass_section', attack: 0.01, db: -4 },
-      { seq: 'r:300 C7:80 G7:500', inst: 'glockenspiel', db: -8 },
-    ],
-  },
-  // The Phantom Trickster, a stage magic act: an arrow landing (a soft pop and a twinkle), a puff
-  // of her smoke (a poof with a little chime), and Grand Illusion (a mysterious rising run into a
-  // big magic flourish as the copies loose).
-  pthit: { db: -18, vary: 8, max: 3, gap: 50, layers: [{ rec: 'teleIn', rate: 1.8, len: 200, db: -6 }, sparkle('A7:40', { db: -12 })] },
-  ptsmoke: { db: -13, vary: 6, max: 2, gap: 80, layers: [{ rec: 'teleOut', rate: 1.2, len: 500 }, whoosh(300, 300, 1400, { db: -8 }), sparkle('E7:60 B7:120', { db: -12 })] },
-  ptillusion: { db: -8, max: 1, room: true, duck: [-6, 2200], layers: [{ rec: 'teleOut', rate: 0.9, len: 700 }, { seq: 'D5:120 F5:120 A5:120 C#6:120 D6:120 F6:120 A6:500', inst: 'celesta', db: -4 }, { seq: 'r:1200 D4+A4+D5+F5:1400', inst: 'brass_section', attack: 0.02, db: -4 }, sparkle('r:1200 D7:0 A7:80 D8:160', { db: -8 })] },
-  // The Acrobat Archer: an arrow landing (a bright pluck and a sparkle), Firework Arrow (a pop and a
-  // crackle of sparks), her springboard going (a springy boing), and Grand Somersault's ring of gold
-  // at the top of her leap (a cymbal swell into a fanfare).
-  achit: { db: -18, vary: 8, max: 3, gap: 50, layers: [{ seq: 'E6:90', inst: 'pizzicato_strings', db: -4 }, sparkle('B7:40', { db: -12 })] },
-  acfirework: { db: -11, vary: 6, max: 2, gap: 80, layers: [thump(180, 120, { db: -4 }), { rec: 'fireImpact', rate: 1.6, len: 300, db: -8 }, sparkle('C7:30 E7:60 G7:90 C8:120 G7:150', { db: -8 })] },
   // Team moves (world/teamwork.js): a catch clinks two notes together (a high five), a revive
   // rises on warm strings, a Group Finisher lands on the whole band.
   teamcatch: { db: -12, vary: 4, max: 2, gap: 60, layers: [{ seq: 'G5+B5:40 D6+G6:160', synth: 'pluck', cut: 6000, ring: 0.2, tail: 200 }, sparkle('r:30 G7:60 D8:120', { db: -8 })] },
   teamrevive: { db: -10, max: 1, room: true, layers: [{ seq: 'C5:140 E5:140 G5:140 C6:600', inst: 'celesta', db: -2 }, { seq: 'C4+G4+E5:900', inst: 'string_ensemble_1', attack: 0.15, db: -6 }, sparkle('r:420 C7:40 G7:300', { db: -8 })] },
   teamburst: { db: -7, max: 1, duck: [-8, 1400], layers: [{ rec: 'punchHeavy', rate: 0.8, db: -2 }, thump(55, 600, { slide: -1.4, db: -2 }), { seq: 'C4+G4+C5+E5:1200', inst: 'brass_section', attack: 0.02, db: -4 }, sparkle('C7:30 E7:30 G7:30 C8:400', { db: -6 })] },
-  trapsnap: { db: -11, vary: 6, max: 2, layers: [{ wave: 'sine', f0: 160, slide: 2.2, env: { a: 5, s: 140, d: 120 }, db: -4 }, { rec: 'wood', rate: 1.4, db: -8 }] },
-  acburst: { db: -8, max: 1, room: true, duck: [-6, 1400], layers: [whoosh(600, 200, 3000, { focus: 0.6, db: -6 }), { seq: 'r:200 G4+C5+E5+G5:1000', inst: 'brass_section', attack: 0.02, db: -4 }, sparkle('r:200 C7:0 E7:60 G7:120 C8:180', { db: -8 })] },
-  falconcall: { db: -11, max: 1, room: true, layers: [{ rec: 'windWhoosh', len: 1200 }, { seq: 'D4:200 A4:200 D5:800', inst: 'french_horn', db: -6 }] },
-  falconloose: {
-    db: -9, max: 1, duck: [-7, 1100], layers: [
-      { rec: 'windWhoosh', rate: 1.3, len: 900 },
-      thump(90, 380, { slide: -2, db: -4 }),
-      { seq: 'D5:50 F#5:50 A5:50 D6:50 F#6:600', inst: 'orchestral_harp', db: -6 },
-      { seq: 'r:80 D4+A4+D5:900', inst: 'brass_section', db: -8 },
-    ],
-  },
   // The Thief: Shadow topping out (a hush, a low bell, a breath of strings: Phantom), night
   // falling for her dagger finisher, the full moon rising for her star finisher, and the giant
   // crescent moon's cut.
-  phantom: {
-    db: -11, max: 1, room: true, duck: [-5, 900], layers: [
-      { rec: 'teleOut', len: 900, db: -4 },
-      { seq: 'A3+E4:900', inst: 'string_ensemble_1', attack: 0.15, db: -8 },
-      { seq: 'r:120 E6:700', inst: 'celesta', db: -6 },
-    ],
-  },
-  nightfall: { db: -11, max: 1, room: true, layers: [{ rec: 'darkRiser', len: 1400 }, { rec: 'teleOut', db: -6 }, { seq: 'A2+E3:1200', inst: 'string_ensemble_1', attack: 0.3, db: -8 }] },
   fullmoon: { db: -11, max: 1, room: true, layers: [{ rec: 'windWhoosh', len: 900 }, { seq: 'A5:60 C6:60 E6:60 A6:700', inst: 'celesta', db: -4 }, { seq: 'A3+E4+A4:1100', inst: 'choir_aahs', attack: 0.2, db: -8 }] },
-  crescentcut: {
-    db: -8, max: 1, duck: [-8, 1200], layers: [
-      { rec: 'bladeSwingHeavy', rate: 0.8 },
-      { rec: 'darkImpact', len: 1400, db: -4 },
-      thump(70, 460, { slide: -1.5 }),
-      { seq: 'A3+E4+A4+C5:900', inst: 'string_ensemble_1', attack: 0.02, db: -8 },
-    ],
-  },
-  aeboom: { db: -12, vary: 6, max: 3, gap: 60, layers: [{ rec: 'rockHit', rate: 1.5, len: 300, db: -4 }, thump(140, 160, { db: -6 }), { rec: 'clang', rate: 1.8, len: 300, db: -10 }] },
-  aesteam: { db: -16, vary: 6, max: 2, gap: 120, layers: [whoosh(500, 1800, 5200, { focus: 0.2, db: -4 })] },
   // The Tide Mage: recorded water (recorded.js); these set each one's level, spread and cap.
   tmswish: { db: -15, vary: 8, max: 3, gap: 40, layers: [whoosh(400, 900, 3600, { focus: 0.3, db: -4 })] },
   tmlash: { db: -12, vary: 6, max: 2, gap: 60, layers: [whoosh(300, 1200, 4200, { focus: 0.2, db: -4 })] },
@@ -477,68 +429,9 @@ const R = {
   msblackwave: { db: -10, vary: 6, max: 1, gap: 0, layers: [whoosh(900, 400, 2600, { focus: 0.3, db: -4 })] },
   tmshieldfx: { db: -11, vary: 4, max: 1, layers: [whoosh(800, 900, 3600, { focus: 0.3, db: -4 })] },
   tmpool: { db: -12, vary: 4, max: 1, layers: [whoosh(1000, 500, 2400, { focus: 0.4, db: -4 })] },
-  aeballista: { db: -9, max: 1, room: true, duck: [-6, 1600], layers: [{ rec: 'clang', rate: 0.7, len: 500, db: -4 }, { rec: 'clang', rate: 0.9, len: 400, db: -6, at: 300 }, thump(60, 700, { slide: -1.4, at: 1000 }), whoosh(1200, 1400, 4800, { focus: 0.3, db: -6, at: 1050 })] },
-  overdrive: { db: -11, max: 1, room: true, duck: [-5, 800], layers: [{ seq: 'E6:80 A6:600', inst: 'pan_flute', db: -4 }, whoosh(800, 1500, 5200, { focus: 0.2, db: -8 }), { rec: 'clang', rate: 1.4, len: 300, db: -10 }] },
   bellbonk: { db: -11, vary: 5, max: 2, layers: [{ rec: 'metal', rate: 1.3, len: 300 }, { rec: 'bell', rate: 1.4, len: 1200 }, sparkle('E7:40 B6:40 E7:300', { db: -10 })] },
-  // The Thief's paths. The Blade Dancer: Ricochet topping out (rings whirring up and a bright
-  // chime: Carousel). The Sky Dancer's follow hers.
-  carouselfull: { db: -10, max: 1, duck: [-5, 800], layers: [whoosh(500, 300, 2400, { focus: 0.6, db: -4 }), sparkle('C7:0 E7:70 G7:140 C8:210', { db: -10 }), { seq: 'r:120 C5+G5:600', inst: 'orchestral_harp', attack: 0.02, db: -8 }] },
-  // A ring ricocheting (a bright metal ping and a sparkle), and Golden Carousel (rings whirring
-  // round her faster and faster on a harp run, then flung out with a crash of chimes).
-  bdbounce: { db: -16, vary: 8, max: 3, layers: [{ rec: 'clang', rate: 1.6, db: -6 }, sparkle('E7:0 B7:40', { db: -12 })] },
-  bdcarousel: {
-    db: -8, max: 1, duck: [-6, 1400], layers: [
-      whoosh(300, 1200, 2800, { focus: 0.7, db: -4 }),
-      { seq: 'C5:90 E5:90 G5:90 C6:90 E6:90 G6:90 C7:600', inst: 'orchestral_harp', db: -6 },
-      { seq: 'r:1000 C5+G5+C6+E6:900', inst: 'orchestral_harp', attack: 0.02, db: -6 },
-      sparkle('r:1000 C8:0 G7:60 E7:120 C7:180', { db: -10 }),
-    ],
-  },
-  // The Sky Dancer: Tailwind topping out (a rush of wind and a rising flute run), Updraft's rising
-  // whirl, and Sky Waltz (the tornado spinning up on a harp and flute, and the slam).
-  tailwindfull: { db: -11, max: 1, room: true, duck: [-5, 900], layers: [{ rec: 'windWhoosh', len: 1200 }, { seq: 'C6:50 D6:50 E6:50 G6:50 A6:50 C7:700', inst: 'flute', db: -4 }, sparkle('r:300 E7:0 G7:60', { db: -12 })] },
-  skyupdraft: { db: -14, vary: 6, max: 2, layers: [whoosh(200, 500, 2600, { focus: 0.5, db: -4 }), { seq: 'G5:60 C6:200', inst: 'flute', db: -10 }] },
-  skytornado: {
-    db: -8, max: 1, duck: [-6, 1500], layers: [
-      { rec: 'windWhoosh', len: 1600 },
-      { seq: 'C5:100 E5:100 G5:100 C6:100 E6:100 G6:100', inst: 'orchestral_harp', db: -6 },
-      thump(60, 520, { slide: -1.5, at: 1100 }),
-      { seq: 'r:1100 C4+G4+C5+E5:900', inst: 'flute', attack: 0.02, db: -6 },
-    ],
-  },
-
-  // The archer paths' gauges topping out: Gale (a rush of wind, a rising flute and harp) and the
-  // Sniper's lock (a sharp metal click, a high glint).
-  galeFull: {
-    db: -11, max: 1, room: true, duck: [-5, 900], layers: [
-      { rec: 'windWhoosh', len: 1400 },
-      { seq: 'G5:60 A5:60 C6:60 D6:60 G6:600', inst: 'flute', db: -3 },
-      { seq: 'r:120 G4:60 C5:60 D5:60 G5:700', inst: 'orchestral_harp', db: -6 },
-    ],
-  },
-  deadeye: {
-    db: -11, max: 1, duck: [-5, 600], layers: [
-      { rec: 'metalClick', rate: 0.9 },
-      { rec: 'unsheathe', rate: 1.3, len: 500, at: 40, db: -6 },
-      { seq: 'r:50 A7:500', synth: 'bell', tail: 1200, db: -6 },
-      { seq: 'r:60 A4+E5:500', inst: 'string_ensemble_1', attack: 0.02, db: -10 },
-    ],
-  },
   // A sight closing on its mark: a soft rising beep and a click as it locks.
   lockOn: { db: -18, gap: 40, max: 3, layers: [{ wave: 'sine', f0: 1400, slide: 1.2, env: { a: 300, s: 600, d: 120 }, db: -6 }, { rec: 'metalClick', at: 900, rate: 1.4 }] },
-  // The archer paths' shots and bursts.
-  cycloneShot: { db: -9, gap: 120, max: 1, layers: [{ rec: 'windWhoosh', len: 1100 }, { rec: 'bowLongbow', rate: 0.85, db: -2 }] },
-  boltKick: { db: -11, gap: 120, max: 1, layers: [{ rec: 'crossbowShoot', rate: 0.8 }, thump(80, 180, { db: -2 }), { rec: 'metalClick', at: 260, rate: 0.8, db: -8 }] },
-  heartshock: {
-    db: -7, max: 1, duck: [-8, 900], layers: [
-      { rec: 'crossbowShoot', rate: 0.7 },
-      { rec: 'heavyArrowPass', rate: 0.8, at: 20 },
-      { rec: 'thunder', len: 1400, db: -6, at: 30 },
-      thump(55, 600, { slide: -1.5, db: -2 }),
-    ],
-  },
-  blast: { db: -9, gap: 120, vary: 4, max: 2, duck: [-4, 400], layers: [{ rec: 'fireImpact', len: 900 }, { rec: 'rockHit', len: 600, db: -4 }, thump(70, 300, { db: -3 })] },
-  stormburst: { db: -8, max: 1, duck: [-6, 800], layers: [{ rec: 'windWhoosh', len: 1300, rate: 0.8 }, { rec: 'punchHeavy', rate: 0.75, db: -2 }, thump(60, 500, { slide: -1.5, db: -2 })] },
   link: { db: -13, max: 1, layers: [{ seq: 'E6:40 B6:140', synth: 'pluck', cut: 6000, ring: 0.2, tail: 200 }, sparkle('r:40 E7:120', { db: -8 })] },
   // A ding for each tier of the hit counter: the same bell every time, a little higher per tier (sfx.js).
   tier: { db: -17, max: 1, layers: [{ seq: 'D7+A7:350', synth: 'bell', tail: 1300 }] },

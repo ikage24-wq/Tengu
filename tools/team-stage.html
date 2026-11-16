@@ -50,7 +50,7 @@ let n = 11;
 const rng = () => (n = (n * 1664525 + 1013904223) % 4294967296) / 4294967296;
 const bots = { list: [], memory: new Set(), names: new Set(), rng, replies: [], spawnIn: 9999, waveIn: 9999, newsIn: 9999 };
 w.bots = bots;
-const pals = [['Mochi', ['warrior', 'berserker']], ['Rin', ['thief', 'shinobi']]].map(([name, jobs], i) => {
+const pals = [['Mochi', ['warrior', 'berserker']], ['Rin', ['tidemage', 'maelstrom']]].map(([name, jobs], i) => {
   const char = makeBotCharacter(rng, { name, level, jobs });
   const p = { id: `p${i}`, name, char, level, style: {}, map: w.map.id, x: 400 + i * 160, facing: -1, state: 'idle', session: 1e9, stay: 1e9, nextLine: 1e9, appear: 0 };
   bots.list.push(p);

@@ -123,7 +123,7 @@ test('skills fit the fight: area skills on a pack, the finisher saved for a boss
 
 test('your target (or your ping) is the one they focus', () => {
   const rng = seeded(4);
-  const { world } = heroAt(rng, 30, ['archer'], 'woods');
+  const { world } = heroAt(rng, 30, ['tidemage'], 'woods');
   const [a, b] = world.mobs;
   world.youHit = { mob: a, at: world.now };
   assert.equal(focusOf(world), a);
@@ -136,7 +136,7 @@ test('your target (or your ping) is the one they focus', () => {
 
 test('bots step out of a heavy wind-up and out of a marked patch', () => {
   const rng = seeded(11);
-  const { world } = heroAt(rng, 11, ['archer']);
+  const { world } = heroAt(rng, 11, ['tidemage']);
   assert.equal(startRun(world), null);
   const dps = partyMembers(world.bots).find((b) => world.dungeon.roles[b.id] === 'dps');
   updateBots(world.bots, world, 1 / 60);
@@ -167,7 +167,7 @@ test('the tank holds aggro, and turns the boss away from the group', () => {
   const rng = seeded(13);
   Math.random = rng;
   try {
-    const { world } = heroAt(rng, 11, ['archer']);
+    const { world } = heroAt(rng, 11, ['tidemage']);
     assert.equal(startRun(world), null);
     const tank = partyMembers(world.bots).find((b) => world.dungeon.roles[b.id] === 'tank');
     world.god = true;
@@ -209,7 +209,7 @@ test('the healer keeps you up, and says so', () => {
   const rng = seeded(21);
   Math.random = rng;
   try {
-    const { world, lines } = heroAt(rng, 11, ['archer']);
+    const { world, lines } = heroAt(rng, 11, ['tidemage']);
     assert.equal(startRun(world), null);
     const healer = partyMembers(world.bots).find((b) => world.dungeon.roles[b.id] === 'healer');
     assert.ok(healer);
@@ -231,7 +231,7 @@ test('the healer keeps you up, and says so', () => {
 
 test('callouts go through the chat gate, never repeat, and never turn into chatter', () => {
   const rng = seeded(5);
-  const { world, lines } = heroAt(rng, 11, ['archer']);
+  const { world, lines } = heroAt(rng, 11, ['tidemage']);
   assert.equal(startRun(world), null);
   const [a, b] = partyMembers(world.bots);
   const said = [];

@@ -10,7 +10,8 @@ import { countItem, removeItem, addItem, TAB_SIZE } from './inventory.js';
 import { makeEquip } from './items.js';
 import { addLifeExp, lifeLevel, charExpFor } from './life.js';
 
-// The recipes a category shows: gear only for your own job's family (a Novice has none yet).
+// The recipes a category shows: gear only for your own job's family (a Novice's are the weapons the
+// Archer and the Thief left behind, data/crafting.js FAMILY_WEAPONS).
 export function recipesIn(char, cat) {
   const family = JOBS[char.job]?.family;
   return RECIPES.filter((r) => r.cat === cat && (!r.family || r.family === family || family === 'gm')).sort((a, b) => a.level - b.level || a.id.localeCompare(b.id));

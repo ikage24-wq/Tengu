@@ -22,13 +22,11 @@ import { settings } from '../core/settings.js';
 import { addItem, countItem, removeItem } from '../core/inventory.js';
 import { recordKill } from '../core/quests.js';
 import { avoid, mobHitChance, damageTaken } from '../core/formulas.js';
-import { createBody, stepBody, knockBack, groundAt, blockWalls } from './physics.js';
-import { startAgility, tickAgility } from './agility.js';
+import { createBody, stepBody, knockBack, groundAt } from './physics.js';
 import { createSpawner, tickSpawner, updateMob, hitMob, mobBox, MOB_ATTACK_GAP } from './mobs.js';
 import { rollLoot, spawnDrops, updateDrops, dropInReach, dropFromHero } from './drops.js';
 import { cast, castBlocker, weaponElement, hurtProcs, blockOnHit, drinkBlood, tickLater } from './combat.js';
-import { ventGuard } from './engineer.js';
-import { tickMelee, faithGuard, addAim, hasRage, hasFaith, hasShadow, hasKi, hasMomentum, hasVolt, overcharged, eyeOfStorm, hasBulwark, loseMomentum, barrageRelease, BARRAGE_WALK, skyFlight } from './melee.js';
+import { tickMelee, faithGuard, addAim, hasRage, hasFaith, hasVolt, overcharged, eyeOfStorm, hasBulwark, barrageRelease, BARRAGE_WALK } from './melee.js';
 import { healAround, hasTide, hasDepth, hasMoon, springDrop, hasGale } from './melee.js';
 import { JOBS, nextJobs } from '../data/jobs.js';
 import { celebrateLevels } from './levelup.js';
@@ -729,7 +727,7 @@ export function hurtPlayer(world, rawAtk, fromX) {
   if (world.god || blockOnHit(world, fromX)) return;
   const char = world.char;
   const s = world.stats;
-  let dmg = absorb(world, world.body, char.buffs, Math.round(damageTaken(rawAtk, s.wdef) * (s.guard ?? 1) * (1 - cutOf(char.buffs, world.now)) * (1 - faithGuard(world, fromX)) * (1 - ventGuard(world, fromX))));
+  let dmg = absorb(world, world.body, char.buffs, Math.round(damageTaken(rawAtk, s.wdef) * (s.guard ?? 1) * (1 - cutOf(char.buffs, world.now)) * (1 - faithGuard(world, fromX))));
   if (s.manaShield > 0) {
     const toMp = Math.min(char.mp, Math.floor(dmg * s.manaShield));
     char.mp -= toMp;
@@ -740,11 +738,9 @@ export function hurtPlayer(world, rawAtk, fromX) {
   world.invuln = INVULN;
   world.hurtAt = world.now;
   world.juice.push({ type: 'hurt', x: world.body.x, y: world.body.y - world.body.h / 2 });
-  // Overcharge (a full Charge) or Static Guard, nothing knocks the Thunderguard back; a hit breaks
-  // an Archer's Momentum.
+  // Overcharge (a full Charge) or Static Guard, nothing knocks the Thunderguard back.
   // (Nor the Stormwall in the Eye of the Storm.)
   if (!overcharged(world) && !eyeOfStorm(world) && !(char.buffs.staticguard?.until > world.now)) knockBack(world.body, fromX);
-  loseMomentum(world);
   if (char.hp <= 0 && !world.dead) {
     world.dead = true;
     dismount(world, { quiet: true, hop: false });
@@ -914,17 +910,12 @@ export function updateWorld(world, dt, input) {
   if (world.riding && (attackKeys.some((k) => pressed.has(k) || held.has(k)) || Object.entries(char.hotkeys).some(([code, b]) => b?.skill && pressed.has(code)))) dismount(world, { hop: false });
   const bodyIntent = rooted ? { ...intent, left: false, right: false, jump: false } : intent;
   const wasX = world.body.x;
-  // A Thief's flash jump and shadow dash, an Archer's air leap (world/agility.js); riding, the
-  // mount's own trick instead.
+  // Riding: the mount's own trick.
   const ride = rideStep(world, bodyIntent, pressed, dt);
-  if (!ride) startAgility(world, intent, pressed);
   if (!(pressed.has('ArrowUp') && interact(world))) {
-    // (The Sky Dancer on full Tailwind hovers where she is unless Up or Down flies her.)
-    const hover = !world.body.onGround && world.body.vy >= 0 && skyFlight(world) && !intent.up && !intent.down;
-    stepBody(world.body, world.map, bodyIntent, dt, { ...world.stats, wade: WADE, ...(streaming ? { speed: world.stats.speed * BARRAGE_WALK } : null), ...(hover ? { float: true } : null), ...(ride ?? null), rider: true });
+    stepBody(world.body, world.map, bodyIntent, dt, { ...world.stats, wade: WADE, ...(streaming ? { speed: world.stats.speed * BARRAGE_WALK } : null), ...(ride ?? null), rider: true });
   }
   rideAfter(world);
-  if (!ride) tickAgility(world, dt, blockWalls);
   world.stillTime = Math.abs(world.body.x - wasX) < 0.01 && world.body.onGround ? world.stillTime + dt : 0;
   // What the controls ask for (attacks read Up for a launcher), and how long you've been running
   // (an attack after a short run becomes a dash attack).
@@ -1009,7 +1000,7 @@ export function updateWorld(world, dt, input) {
       if (h.mend) healAround(world, m.x, m.y, h.mend, 220, true, h.el);
       drinkBlood(world, h.damage);
     }
-    if (!h.ownSpark && !hasTide(world.char) && !hasDepth(world.char) && !hasMoon(world.char) && !hasVolt(world.char) && !hasGale(world.char) && !hasBulwark(world.char)) world.fx.push({ kind: 'spark', via: h.via, weapon: world.stats.weaponType, path: hasRage(world.char) ? 'rage' : hasFaith(world.char) ? 'holy' : hasKi(world.char) ? 'rosegold' : hasShadow(world.char) ? 'shadow' : hasMomentum(world.char) ? 'hawk' : hasVolt(world.char) ? 'thunder' : null, dir: world.body.facing, x: m.x, y: m.y - (m.air ?? 0) - m.def.h / 2, t: 0, dur: h.big ? 0.32 : 0.25, crit: h.crit || h.big, seed: Math.random() });
+    if (!hasTide(world.char) && !hasDepth(world.char) && !hasMoon(world.char) && !hasVolt(world.char) && !hasGale(world.char) && !hasBulwark(world.char)) world.fx.push({ kind: 'spark', via: h.via, weapon: world.stats.weaponType, path: hasRage(world.char) ? 'rage' : hasFaith(world.char) ? 'holy' : hasVolt(world.char) ? 'thunder' : null, dir: world.body.facing, x: m.x, y: m.y - (m.air ?? 0) - m.def.h / 2, t: 0, dur: h.big ? 0.32 : 0.25, crit: h.crit || h.big, seed: Math.random() });
     world.juice.push({ type: 'hit', x: m.x, y: m.y - m.def.h / 2, crit: h.crit, big: h.big, party: Boolean(h.party), element: h.party ? null : h.element ?? weaponElement(char), dir: Math.sign(m.x - h.fromX) || 1, via: h.via, school: h.school, weapon: h.weapon, mob: m.def.id, boss: Boolean(m.def.boss) });
     // Endgame weapons add an elemental impact on every hit.
     const element = h.party ? null : h.element ?? weaponElement(char);
@@ -1038,14 +1029,12 @@ export function updateWorld(world, dt, input) {
     teamLanded(world, m, h);
     // Ice freezes and stuns daze monsters in place (bosses shrug them off twice as fast);
     // venom and bleeding keep biting every second.
-    const hold = h.freeze || h.stun || h.snare;
+    const hold = h.freeze || h.stun;
     if (hold) {
       const secs = m.def.boss ? hold / 2 : hold;
       if (h.freeze && !(m.frozenUntil > world.now)) world.fx.push({ kind: 'freeze', x: m.x, y: m.y, h: m.def.h, w: m.def.w, t: 0, dur: 0.5 });
       if (h.stun && !h.freeze && !(m.frozenUntil > world.now)) world.juice.push({ type: 'stun', x: m.x, y: m.y });
-      if (!(m.frozenUntil > world.now)) m.hold = h.freeze ? 'ice' : h.stun ? 'stun' : 'snare';
-      // (The Acrobat Archer's snare is a ribbon tied in a bow.)
-      if (h.snare) m.holdLook = JOBS[world.char.job]?.family === 'archer' ? 'ribbon' : null;
+      if (!(m.frozenUntil > world.now)) m.hold = h.freeze ? 'ice' : 'stun';
       m.frozenUntil = Math.max(m.frozenUntil ?? 0, world.now + secs);
     }
     // (Burns bite the same way, in blue flame.)

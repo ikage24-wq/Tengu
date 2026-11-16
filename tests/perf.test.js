@@ -26,7 +26,7 @@ test('towns, fields, dungeons and rooms: scenery is painted once, people come ro
 
 test("every job's skills and effects don't repaint the scene", () => {
   const rows = checkSkills(undefined, 240, 240);
-  assert.ok(rows.length >= 9, 'every job with skills (the Mage line was wiped 2026-11-08)');
+  assert.ok(rows.length >= 6, 'every job with skills (the Archer and Thief lines were wiped 2026-11-16)');
   assert.equal(show(rows), '');
 });
 
@@ -36,7 +36,7 @@ test('windows (the bag, the shop and the rest) are painted once, previews loop',
 
 test('walking alone: once warmed up, your own walk is drawn from frames already painted', () => {
   const ctx = fakeCanvas().getContext('2d');
-  const w = createWorld(balanceChar('archer', 40));
+  const w = createWorld(balanceChar('tidemage', 40));
   w.log = () => {};
   w.god = true;
   loadMap(w, 'woods', 'west');

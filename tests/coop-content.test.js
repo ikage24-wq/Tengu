@@ -30,7 +30,7 @@ function seeded(n) {
 const CLOCK = () => new Date(2026, 10, 3, 15, 0).getTime();
 
 // You (a level `level` Archer) on `mapId`, with `n` bot party members beside you.
-function field(mapId, { level = 8, n = 1, seed = 7, jobs = ['archer'] } = {}) {
+function field(mapId, { level = 8, n = 1, seed = 7, jobs = ['tidemage'] } = {}) {
   const rng = seeded(seed);
   const char = makeBotCharacter(rng, { name: 'Tester', pro: false, level, jobs });
   char.mapId = mapId;
@@ -40,7 +40,7 @@ function field(mapId, { level = 8, n = 1, seed = 7, jobs = ['archer'] } = {}) {
   world.bots = createBots(world, rng, { clock: () => new Date(2026, 10, 3, 15, 0) });
   loadMap(world, mapId, MAPS[mapId].portals[0].id);
   for (let i = 0; i < n; i++) {
-    const bot = recruitBot(world.bots, world, { level, jobs: [i % 2 ? 'warrior' : 'thief'] });
+    const bot = recruitBot(world.bots, world, { level, jobs: [i % 2 ? 'warrior' : 'tidemage'] });
     joinParty(world.bots, bot, world);
   }
   return world;
@@ -284,7 +284,7 @@ test('solo still wins against a guarded boss, just slower', () => {
 // A run of Rootwood Hollow with a bot party, jumped to a boss room.
 function hollowAt(room, { hard = false } = {}) {
   const rng = seeded(5);
-  const char = makeBotCharacter(rng, { name: 'Tester', pro: false, level: 12, jobs: ['archer'] });
+  const char = makeBotCharacter(rng, { name: 'Tester', pro: false, level: 12, jobs: ['tidemage'] });
   char.mapId = 'hollow_gate';
   const world = createWorld(char);
   world.log = () => {};
@@ -352,7 +352,7 @@ test('Hard mode: the Myconid Queen adds tethered twins that must fall together',
 
 test('Hard mode needs a party of two or more and pays more tokens, with its own crown', () => {
   const rng = seeded(9);
-  const char = makeBotCharacter(rng, { name: 'Tester', pro: false, level: 12, jobs: ['archer'] });
+  const char = makeBotCharacter(rng, { name: 'Tester', pro: false, level: 12, jobs: ['tidemage'] });
   char.mapId = 'hollow_gate';
   char.dungeons = { hollow: { clears: 1, hardClears: 0, best: 'A', bestTime: 700, day: null } };
   const world = createWorld(char);

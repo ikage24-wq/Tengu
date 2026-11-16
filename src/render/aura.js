@@ -95,16 +95,6 @@ const JOBS = {
     back: (ctx, x, y, t, s, k) => fxSprite(ctx, 'celembers', x, y, { t: t * 0.5, scale: s * 0.45, alpha: k * 0.45 }),
     front: () => {},
   },
-  // Phantom Trickster: a faint drift of silver sparkles and cards round her.
-  beastmaster: {
-    back: (ctx, x, y, t, s, k) => fxSprite(ctx, 'celptaura', x, y - 22 * s, { t: t * 0.6, scale: s * 0.35, alpha: k * 0.35 }),
-    front: () => {},
-  },
-  // Stormcaller: faint arcs of lightning crackling round her feet.
-  stormcaller: {
-    back: (ctx, x, y, t, s, k) => fxSprite(ctx, 'celringstorm', x, y, { frame: 2, scale: s * 0.4, sy: 0.32, alpha: k * 0.5 }),
-    front: () => {},
-  },
   // The Game Master: a faint ring and a few stars in every color.
   gamemaster: {
     back: (ctx, x, y, t, s, k) => {
@@ -181,32 +171,6 @@ function faithAura(ctx, x, y, t, s, k, layer) {
     return;
   }
   if (k > 0.4) fxSprite(ctx, 'celmotes', x, y, { t, scale: s * 0.6, alpha: Math.min(1, (k - 0.4) * 2.5) });
-}
-
-// Illusion (the Phantom Trickster; internally Bond): silver sparkles drift up round her as it
-// builds (her copies are drawn by render/scene.js); full, two cards turn round her and her badge, a
-// top hat with a card, shines over her head.
-function bondAura(ctx, x, y, t, s, k, layer) {
-  if (layer === 'back') return;
-  if (k > 0.2 && k < 1) fxSprite(ctx, 'celptaura', x, y - 22 * s, { frame: Math.floor(t * 6) % 8, scale: s * 0.4, alpha: Math.min(0.6, (k - 0.2) * 1.5) });
-  if (k >= 1) {
-    fxSprite(ctx, 'celptaura', x, y - 22 * s, { t, scale: s * 0.55 });
-    fxSprite(ctx, 'celembphantom', x, y - 62 * s, { frame: 1, scale: s * 0.28, alpha: 0.75 + 0.25 * Math.sin(t * 6) });
-  }
-}
-
-// Pressure (the Arbalist Engineer; internally Charge): little puffs of steam escape at her feet as
-// it builds, more and quicker the fuller it is; full (Overdrive), steam pours off her in bursts and
-// her badge, a brass cog with a crossbow, turns over her head.
-function chargeAura(ctx, x, y, t, s, k, layer) {
-  if (layer === 'back') {
-    if (k > 0.2) for (let i = 0; i < (k >= 1 ? 3 : 1 + Math.floor(k * 2)); i++) {
-      const u = (t * (0.8 + k) + i / 3) % 1;
-      fxSprite(ctx, 'celaesteam', x + (i - 1) * 9 * s, y - 2 * s, { p: u, scale: s * (0.075 + 0.05 * k), alpha: Math.min(1, (k - 0.2) * 2) * (1 - u * 0.5) });
-    }
-    return;
-  }
-  if (k >= 1) fxSprite(ctx, 'celembgear', x, y - 62 * s, { frame: 1, scale: s * 0.3, rot: t * 1.5, alpha: 0.75 + 0.25 * Math.sin(t * 6) });
 }
 
 // Tide (the Tide Mage): a whirlpool turns flat round her feet as it builds, wider and faster the
@@ -287,67 +251,9 @@ function voltAura(ctx, x, y, t, s, k, layer) {
   }
 }
 
-// Combo (the Acrobat Archer; internally Momentum): a mint ribbon swirling flat round her feet as it
-// builds, faster the fuller it is; full (Showtime), gold stars and the ribbon twirl round her and her
-// badge, a gold star with a ribbon and an arrow, shines over her head.
-function momentumAura(ctx, x, y, t, s, k, layer) {
-  if (layer === 'back') {
-    if (k > 0.15 && k < 1) fxSprite(ctx, 'celacaura', x, y, { frame: Math.floor(t * (4 + 8 * k)) % 8, scale: s * (0.4 + 0.25 * k), alpha: Math.min(0.8, (k - 0.15) * 2) });
-    return;
-  }
-  if (k >= 1) {
-    fxSprite(ctx, 'celacaura', x, y - 22 * s, { t: t * 1.4, scale: s * 0.6 });
-    fxSprite(ctx, 'celembacro', x, y - 62 * s, { frame: 1, scale: s * 0.3, alpha: 0.75 + 0.25 * Math.sin(t * 6) });
-  }
-}
-
-// Encore (the Wind Dancer; internally the Thief's Shadow): a ring of coral and cream ribbons
-// swirls flat round her feet as it builds, spinning faster the fuller it is; full (Standing
-// Ovation), the ribbons whirl on and on and her badge, a chakram tied with a bow, shines over her
-// head.
-function shadowAura(ctx, x, y, t, s, k, layer) {
-  if (layer === 'back') {
-    if (k > 0.15 && k < 1) fxSprite(ctx, 'celwdswirl', x, y, { frame: 4, scale: s * (0.28 + 0.19 * k), sy: 0.3, alpha: Math.min(1, (k - 0.15) * 2), rot: t * (0.5 + k) });
-    if (k >= 1) fxSprite(ctx, 'celwdswirl', x, y, { t: (t * 0.6) % 0.3, scale: s * 0.5, sy: 0.3 });
-    return;
-  }
-  if (k >= 1) fxSprite(ctx, 'celembdancer', x, y - 62 * s, { frame: 1, scale: s * 0.32, alpha: 0.75 + 0.25 * Math.sin(t * 6) });
-}
-
-
-
-
-// Ricochet (the Blade Dancer; internally Ki): a small ring skims round her feet as it builds,
-// faster the fuller it is; full (Carousel), two rings orbit her waist, passing in front of her and
-// behind, and her badge, two linked rings, shines over her head.
-function kiAura(ctx, x, y, t, s, k, layer) {
-  const full = k >= 1;
-  const n = full ? 2 : k > 0.15 ? 1 : 0;
-  for (let i = 0; i < n; i++) {
-    const a = t * (full ? 5 : 2 + 2 * k) + i * Math.PI;
-    if (Math.sin(a) > 0 !== (layer === 'front')) continue;
-    const rx = (full ? 26 : 16) * s;
-    const ry = (full ? 7 : 4) * s;
-    fxSprite(ctx, 'celbdring', x + Math.cos(a) * rx, y - (full ? 20 : 3) * s + Math.sin(a) * ry, { t: t + i * 0.1, flip: Math.sin(a) > 0, scale: s * (full ? 0.7 : 0.45), alpha: full ? 1 : Math.min(1, (k - 0.15) * 2) });
-  }
-  if (full && layer === 'front') fxSprite(ctx, 'celembblade', x, y - 62 * s, { frame: 1, scale: s * 0.3, alpha: 0.75 + 0.25 * Math.sin(t * 6) });
-}
-
-// Tailwind (the Sky Dancer; internally Tails): a whirlwind of wind rings gathers under her feet as
-// it builds, turning faster the fuller it is; full, it grows into the whirlwind she rides through
-// the air, and her badge, a wing over a cloud, shines over her head.
-function tailsAura(ctx, x, y, t, s, k, layer) {
-  if (layer === 'back') {
-    if (k > 0.15 && k < 1) fxSprite(ctx, 'celskywhirl', x, y + 4 * s, { t: t * (0.6 + 0.8 * k), scale: s * (0.22 + 0.16 * k), alpha: Math.min(1, (k - 0.15) * 2) });
-    if (k >= 1) fxSprite(ctx, 'celskywhirl', x, y + 6 * s, { t: t * 1.6, scale: s * 0.46 });
-    return;
-  }
-  if (k >= 1) fxSprite(ctx, 'celembsky', x, y - 62 * s, { frame: 1, scale: s * 0.3, alpha: 0.75 + 0.25 * Math.sin(t * 6) });
-}
-
 // Draws a combat aura: `kind` a job's gauge ('ki', 'tails', 'valor', 'momentum', 'shadow', 'rage', 'faith' or
 // 'bond' or 'charge'), `k` how full (0-1).
-const COMBAT = { ki: kiAura, tails: tailsAura, volt: voltAura, gale: galeAura, bulwark: bulwarkAura, momentum: momentumAura, shadow: shadowAura, rage: rageAura, faith: faithAura, bond: bondAura, charge: chargeAura, tide: tideAura, moon: moonAura, depth: depthAura };
+const COMBAT = { volt: voltAura, gale: galeAura, bulwark: bulwarkAura, rage: rageAura, faith: faithAura, tide: tideAura, moon: moonAura, depth: depthAura };
 export function drawCombatAura(ctx, kind, layer, x, y, time, scale, k, dir = 1) {
   if (k <= 0.02 || !COMBAT[kind]) return;
   ctx.save();

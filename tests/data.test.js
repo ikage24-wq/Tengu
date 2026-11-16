@@ -275,8 +275,8 @@ test('every hunted monster has a common drop, an uncommon one and a rare signatu
     assert.ok(m.drops.some((d) => d.chance >= 0.3), `${m.id}: a common drop`);
     assert.ok(m.drops.some((d) => d.chance > 0.02 && d.chance < 0.3), `${m.id}: an uncommon drop`);
     // The prize is gear, Rare or better, and a slot prize is the hero's own job's piece.
-    const prize = rollLoot({ ...m, drops: [{ ...rare[0], chance: 1 }] }, Math.random, (d) => d.family === 'archer' || !d.family).find((l) => l.inst);
+    const prize = rollLoot({ ...m, drops: [{ ...rare[0], chance: 1 }] }, Math.random, (d) => d.family === 'mage' || !d.family).find((l) => l.inst);
     assert.ok(prize && ITEMS[prize.inst.id].type === 'equip' && prize.inst.rarity >= 1, `${m.id}: the prize is Rare gear`);
-    if (rare[0].gear && rare[0].gear !== 'earring') assert.equal(ITEMS[prize.inst.id].family, 'archer', `${m.id}: for your own job`);
+    if (rare[0].gear && rare[0].gear !== 'earring') assert.equal(ITEMS[prize.inst.id].family, 'mage', `${m.id}: for your own job`);
   }
 });

@@ -273,12 +273,12 @@ export const SWEETHEART_IDS = Object.keys(SWEETHEARTS);
 // their own they bring into the hut, the job they fight as when they come adventuring, and what
 // they cook you some mornings.
 export const AT_HOME = {
-  poppy: { x: 910, piece: 'bake_cake', job: 'thief', dish: ['dish_shortcake', 'dish_scones', 'dish_cherrytart'] },
-  lark: { x: 300, piece: 'sea_net', job: 'archer', dish: ['dish_moontea', 'dish_minttea', 'dish_kelpsoup'] },
+  poppy: { x: 910, piece: 'bake_cake', job: 'tidemage', dish: ['dish_shortcake', 'dish_scones', 'dish_cherrytart'] },
+  lark: { x: 300, piece: 'sea_net', job: 'tidemage', dish: ['dish_moontea', 'dish_minttea', 'dish_kelpsoup'] },
   rowan: { x: 640, piece: 'star_lamp', job: 'warrior', dish: ['dish_onigiri', 'dish_stew', 'dish_grilled'] },
-  yuzu: { x: 860, piece: 'bake_stool', job: 'thief', dish: ['dish_koimochi', 'dish_foxfiretea', 'dish_onigiri'] },
-  celeste: { x: 1010, piece: 'star_globe', job: 'mage', dish: ['dish_moontea', 'dish_nebula', 'dish_clovertea'] },
-  marlowe: { x: 250, piece: 'trophy_plaque', job: 'archer', dish: ['dish_lanternskewer', 'dish_tunasteak', 'dish_twinnoodles'] },
+  yuzu: { x: 860, piece: 'bake_stool', job: 'warrior', dish: ['dish_koimochi', 'dish_foxfiretea', 'dish_onigiri'] },
+  celeste: { x: 1010, piece: 'star_globe', job: 'tidemage', dish: ['dish_moontea', 'dish_nebula', 'dish_clovertea'] },
+  marlowe: { x: 250, piece: 'trophy_plaque', job: 'warrior', dish: ['dish_lanternskewer', 'dish_tunasteak', 'dish_twinnoodles'] },
 };
 
 // The two special gifts (crafted at a bench, data/crafting.js): a bouquet to start romance, a

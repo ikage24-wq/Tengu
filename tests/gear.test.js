@@ -225,9 +225,9 @@ test('a boss drops a set piece for your own job, one you are missing first', asy
   const { makeEquip } = await import('../src/core/items.js');
   const c = createCharacter('Drop', {});
   assert.equal(setDropFor(c, 'sylvana', 1), null, 'a Novice gets none');
-  c.job = 'archer';
-  for (const slot of ['hat', 'top', 'gloves']) c.inventory.equip.push(makeEquip(setPieceId('sylvana', 'archer', slot)));
-  assert.equal(setDropFor(c, 'sylvana', 1), setPieceId('sylvana', 'archer', 'cape'));
+  c.job = 'warrior';
+  for (const slot of ['hat', 'top', 'gloves']) c.inventory.equip.push(makeEquip(setPieceId('sylvana', 'warrior', slot)));
+  assert.equal(setDropFor(c, 'sylvana', 1), setPieceId('sylvana', 'warrior', 'cape'));
   assert.equal(setDropFor(c, 'snailbun', 1), null, 'only set bosses');
 });
 

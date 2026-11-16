@@ -10,7 +10,6 @@
 //     the group regroups at its entrance.
 
 import { faithGuard, pathSchool, cloudBolt } from './melee.js';
-import { ventGuard } from './engineer.js';
 import { hurtProcs, blockOnHit } from './combat.js';
 import { DUNGEONS, GROUP, ROLES, roleOf, PROVOKE, TANK_THREAT } from '../data/dungeons.js';
 import { JOBS } from '../data/jobs.js';
@@ -146,7 +145,7 @@ function recruit(world, def, role) {
   const level = Math.floor(between(lo, hi + 1, rng));
   // (A healer comes as a Tidecaller past level 30, the party's healer; before, while no first job
   // heals, a sturdy Warrior fills the seat.)
-  const jobs = role === 'tank' ? ['warrior'] : role === 'healer' ? (level >= 30 ? ['tidemage', 'tidecaller'] : ['warrior']) : [pick(['archer', 'thief'], rng)];
+  const jobs = role === 'tank' ? ['warrior'] : role === 'healer' ? (level >= 30 ? ['tidemage', 'tidecaller'] : ['warrior']) : level >= 30 ? pick([['warrior', 'tempest'], ['tidemage', 'maelstrom']], rng) : [pick(['warrior', 'tidemage'], rng)];
   const bot = recruitBot(world.bots, world, { level, jobs });
   joinParty(world.bots, bot, world);
   const ranged = bot.ai.weapon.ranged;
@@ -704,7 +703,7 @@ export function hurtMember(world, g, raw, fromX, { knock = false, pierce = false
   if (world.god || blockOnHit(world, fromX)) return 0;
   const char = world.char;
   const s = world.stats;
-  let dmg = absorb(world, body, char.buffs, Math.round((pierce ? raw : damageTaken(raw, s.wdef)) * (s.guard ?? 1) * (1 - cutOf(char.buffs, world.now)) * (1 - faithGuard(world, fromX)) * (1 - ventGuard(world, fromX))));
+  let dmg = absorb(world, body, char.buffs, Math.round((pierce ? raw : damageTaken(raw, s.wdef)) * (s.guard ?? 1) * (1 - cutOf(char.buffs, world.now)) * (1 - faithGuard(world, fromX))));
   if (s.manaShield > 0) {
     const toMp = Math.min(char.mp, Math.floor(dmg * s.manaShield));
     char.mp -= toMp;

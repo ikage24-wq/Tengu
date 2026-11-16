@@ -25,14 +25,14 @@ const CLOCK = () => new Date(2026, 10, 3, 15, 0);
 
 function field(mapId, { level = 30, members = 2, seed = 5 } = {}) {
   const rng = seeded(seed);
-  const char = makeBotCharacter(rng, { name: 'Tester', pro: false, level, jobs: ['archer'] });
+  const char = makeBotCharacter(rng, { name: 'Tester', pro: false, level, jobs: ['tidemage'] });
   char.mapId = mapId;
   const world = createWorld(char);
   world.log = () => {};
   world.clock = () => CLOCK().getTime();
   world.bots = createBots(world, rng, { clock: CLOCK });
   loadMap(world, mapId, MAPS[mapId].portals[0].id);
-  for (let i = 0; i < members; i++) joinParty(world.bots, recruitBot(world.bots, world, { level, jobs: [i ? 'warrior' : 'thief'] }), world);
+  for (let i = 0; i < members; i++) joinParty(world.bots, recruitBot(world.bots, world, { level, jobs: ['warrior'] }), world);
   return world;
 }
 const step = (world) => {

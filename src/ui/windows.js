@@ -12,9 +12,9 @@ import { COLORS, windowFrame, button, text, box, bar, hover, clicked, tooltip, w
 const STAT_COLORS = { str: '#ff7a6b', dex: '#3fc48a', int: '#5aa8ff', luk: '#f0b53a' };
 const STAT_ABOUT = {
   str: 'Strength: attack for Warriors, their paths and Novices, and some defense.',
-  dex: 'Dexterity: attack for Acrobat Archers and their paths, accuracy for everyone, a little avoid.',
+  dex: 'Dexterity: attack with a bow or crossbow, accuracy for everyone, a little avoid.',
   int: 'Intelligence: magic and MP for Mages and their paths, and magic defense.',
-  luk: 'Luck: attack for Wind Dancers and their paths, avoid, and a softer fall when you faint.',
+  luk: 'Luck: attack with a dagger or gauntlet, avoid, and a softer fall when you faint.',
 };
 const GREEN = '#2f9f58';
 

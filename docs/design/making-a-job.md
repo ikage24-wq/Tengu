@@ -1,9 +1,9 @@
 # Making a job
 
-The recipe for every new job or path. The player approved how the Warrior and its paths
-(Paladin, Berserker), the Acrobat Archer and its paths (Phantom Trickster, Arbalist Engineer) and
-the Wind Dancer and its paths (Blade Dancer, Sky Dancer) turned out and wants every future job made
-the same way. Read this whole page before starting a job, follow it in order, and update it when something
+The recipe for every new job or path. The player approved how the Thunderguard and its paths
+(Stormwall, Tempest) and the Tide Mage and its paths (Tidecaller, Maelstrom) turned out and wants
+every future job made the same way. (The examples below that name the Archer and Thief lines are
+history: both lines were wiped on 2026-11-16.) Read this whole page before starting a job, follow it in order, and update it when something
 new is learned.
 
 ## 1. Research and plan

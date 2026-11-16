@@ -165,14 +165,6 @@ export const QUESTS = {
     objectives: [{ type: 'kill', mob: 'rockgolem', count: 20 }],
     rewards: { exp: 48000, gold: 1100, items: [{ id: 'elixir', qty: 5 }] },
   },
-  // Kestrel's trial for an Acrobat Archer before either level 30 path (the Phantom Trickster, the
-  // Arbalist Engineer).
-  archer_trial: {
-    id: 'archer_trial', name: "The Acrobat Archer's Trial", giver: 'kestrel', minLevel: 30, family: 'archer',
-    text: "Anyone can hit a slime. A real archer hits what flies. Go to the Crystal Cave and shoot down 15 Wraiths. They drift, they dodge, they vanish, they're very annoying. Then come back and I'll show you the Phantom Trickster's way and the Arbalist Engineer's way.",
-    objectives: [{ type: 'kill', mob: 'shade', count: 15 }],
-    rewards: { exp: 41000, gold: 880, items: [{ id: 'elixir', qty: 5 }] },
-  },
   // Elowen's trial for a Tide Mage before her level 30 path (the Maelstrom; the support path is
   // still to come).
   mage_trial: {
@@ -180,13 +172,6 @@ export const QUESTS = {
     text: "The water you've called so far is the friendly kind, the kind that sits on top. There is more under it. Go to the Crystal Cave and break 20 Gem Mimics: hard little things, so hit them with everything the sea has. Then come back, and I'll show you the deep.",
     objectives: [{ type: 'kill', mob: 'crystalslime', count: 20 }],
     rewards: { exp: 44000, gold: 950, items: [{ id: 'elixir', qty: 5 }] },
-  },
-  // Vex's trial for a Wind Dancer before either level 30 path (the Blade Dancer, the Sky Dancer).
-  thief_trial: {
-    id: 'thief_trial', name: "The Wind Dancer's Trial", giver: 'vex', minLevel: 30, family: 'thief',
-    text: "Pretty steps are nothing if you can't keep them up under pressure. The Dullahans in the Twilight Ruins ride at night, all armour and slow turns. Dance rings round 20 of them and bring them down. If you trip, trip with style. Then come back and I'll show you the Blade Dancer's way and the Sky Dancer's way.",
-    objectives: [{ type: 'kill', mob: 'boneknight', count: 20 }],
-    rewards: { exp: 29000, gold: 750, items: [{ id: 'elixir', qty: 5 }] },
   },
   crystal_heart: {
     id: 'crystal_heart', name: 'Heart of Crystal', giver: 'rook', minLevel: 35, prereq: 'restless_ruins',
@@ -655,19 +640,19 @@ export const QUESTS = {
     rewards: { exp: 12000, gold: 350, items: [{ id: 'warrior_cape_15', qty: 1, forJob: true, variant: 'roll' }] },
   },
   kestrel_canyon: {
-    id: 'kestrel_canyon', name: 'The Arrow That Never Landed', giver: 'kestrel', minLevel: 12, prereq: 'kestrel_targets', family: 'archer',
+    id: 'kestrel_canyon', name: 'The Arrow That Never Landed', giver: 'kestrel', minLevel: 12, prereq: 'kestrel_targets',
     text: "Fine, you heard the story. Everyone has. There's a song. It rhymes 'Kestrel' with 'never fell'. I shot it from the very top of Windy Canyon and it never came down. Climb up there and tell me what the wind does. Mind the Manticore Cubs nesting on the ledges: calm 15 of them.",
     objectives: [{ type: 'visit', map: 'canyon', above: 310, place: 'the very top of Windy Canyon' }, { type: 'kill', mob: 'scorpip', count: 15 }],
     rewards: { exp: 5600, gold: 180, items: [{ id: 'warrior_gloves_10', qty: 1, forJob: true, variant: 'roll' }] },
   },
   kestrel_glade: {
-    id: 'kestrel_glade', name: 'Fairy Treasure', giver: 'kestrel', minLevel: 21, prereq: 'kestrel_canyon', family: 'archer',
+    id: 'kestrel_glade', name: 'Fairy Treasure', giver: 'kestrel', minLevel: 21, prereq: 'kestrel_canyon',
     text: "The wind up there blows east, all the way to the Whispering Glade. And the Blossom Fairies there steal anything shiny or clever, which explains my arrow AND my lunchbox. Go to the top of the Glade where they keep their hoard, and calm 15 of them so you can look. Please.",
     objectives: [{ type: 'visit', map: 'glade', above: 500, place: 'the fairies\' hoard at the top of the Glade' }, { type: 'kill', mob: 'blossomfairy', count: 15 }],
     rewards: { exp: 13500, gold: 360, items: [{ id: 'mana_elixir', qty: 5 }] },
   },
   kestrel_wings: {
-    id: 'kestrel_wings', name: 'Wings in the Dark', giver: 'kestrel', minLevel: 22, prereq: 'kestrel_glade', family: 'archer',
+    id: 'kestrel_wings', name: 'Wings in the Dark', giver: 'kestrel', minLevel: 22, prereq: 'kestrel_glade',
     text: "Its fletching's in tatters, but the shaft is straight as the day I made it. Imp Wings make the best feathers there are. Shoot down 15 Imps in the Twilight Ruins and bring me 7 of their wings. Only about half of them drop one. Where do the other wings go? Nobody knows. Science can't explain it. This time, it lands.",
     objectives: [{ type: 'kill', mob: 'gloombat', count: 15 }, { type: 'collect', item: 'bat_wing', count: 7 }],
     rewards: { exp: 29000, gold: 780, items: [{ id: 'warrior_cape_20', qty: 1, forJob: true, variant: 'roll' }] },
@@ -685,7 +670,7 @@ export const QUESTS = {
   // stage on the harbor for its first dance festival, then lost to the Kitsune Miko's light
   // fingers. On opening night it goes home to Tora, who knew all along.
   vex_shadows: {
-    id: 'vex_shadows', name: 'Shadow Run', giver: 'vex', minLevel: 15, family: 'thief',
+    id: 'vex_shadows', name: 'Shadow Run', giver: 'vex', minLevel: 15,
     text: "A dancer's legs carry the whole show. Run to the top of Windy Canyon, cross to Ember Crag and say hi to Tora for me. Quick feet now. Training-montage pace. I'll hum.",
     objectives: [
       { type: 'visit', map: 'canyon', above: 330, place: 'the top of Windy Canyon' },
@@ -725,19 +710,19 @@ export const QUESTS = {
     rewards: { exp: 9000, gold: 300, items: [{ id: 'ear_25', qty: 1, variant: 'roll' }] },
   },
   vex_stage: {
-    id: 'vex_stage', name: 'Quick Feet, Quiet Hands', giver: 'vex', minLevel: 18, prereq: 'vex_shadows', family: 'thief',
+    id: 'vex_stage', name: 'Quick Feet, Quiet Hands', giver: 'vex', minLevel: 18, prereq: 'vex_shadows',
     text: "The hammer's for a good cause, and that's all I'm saying. A good cause also needs boards. Heartwood, from the Puddle Kids' puddles in the Whispering Glade: bring me 8. Don't tell anyone what it's for. You don't know what it's for. Nobody knows anything. Act natural.",
     objectives: [{ type: 'collect', item: 'moss_stone', count: 8 }],
     rewards: { exp: 14600, gold: 380, items: [{ id: 'warrior_gloves_20', qty: 1, forJob: true, variant: 'roll' }] },
   },
   vex_miko: {
-    id: 'vex_miko', name: 'Miko Mischief', giver: 'vex', minLevel: 26, prereq: 'vex_stage', family: 'thief',
+    id: 'vex_miko', name: 'Miko Mischief', giver: 'vex', minLevel: 26, prereq: 'vex_stage',
     text: "Someone stole a hammer I stole. From ME. The audacity. Kitsune Miko, on the Fox Shrine Path: little fox ears, sticky fingers, no respect for professionals. Teach 25 of them some manners and get it back, before Tora counts her tools.",
     objectives: [{ type: 'kill', mob: 'kitsunemiko', count: 25 }],
     rewards: { exp: 31000, gold: 830, items: [{ id: 'warrior_shoes_25', qty: 1, forJob: true, variant: 'roll' }] },
   },
   vex_festival: {
-    id: 'vex_festival', name: 'Opening Night', giver: 'vex', minLevel: 27, prereq: 'vex_miko', family: 'thief',
+    id: 'vex_festival', name: 'Opening Night', giver: 'vex', minLevel: 27, prereq: 'vex_miko',
     text: "Stage built, hammer found, conscience... loud. Take it back to Tora in Ember Crag, wrapped nicely. Say it fell into a pond for a year. Then come straight back: the show starts tonight, and I want you in the front row.",
     gives: [{ id: 'parcel' }],
     objectives: [{ type: 'deliver', npc: 'tora', item: 'parcel', say: "My good hammer! Polished, even. That rascal. Tell her I'll be at her show, front row, and she's buying the snacks." }],

@@ -66,12 +66,14 @@ test('every job has an Artisan line at Lv 10 to 50: every armor slot and every w
         assert.ok(def && def.family === family && def.reqLevel === L && def.design === 'job', `${family} ${slot} ${L}`);
         assert.ok(RECIPE_BY_ID[`craft_${def.id}`], `${def.id} has a recipe`);
       }
-      for (const type of FAMILY_WEAPONS[family]) assert.ok(ITEMS[artisanWeaponId(type, L)]?.weaponType === type, `${type} ${L}`);
     }
   }
-  // A warrior sees warrior gear; a Novice sees none yet.
+  for (const L of ARTISAN_LEVELS) {
+    for (const type of Object.values(FAMILY_WEAPONS).flat()) assert.ok(ITEMS[artisanWeaponId(type, L)]?.weaponType === type, `${type} ${L}`);
+  }
+  // A warrior sees warrior gear; a Novice sees the weapons the Archer and the Thief left behind.
   const c = createCharacter('Hana', {});
-  assert.equal(recipesIn(c, 'gear').length, 0);
+  assert.deepEqual([...new Set(recipesIn(c, 'gear').map((r) => ITEMS[r.makes].weaponType))].sort(), ['bow', 'crossbow', 'dagger', 'gauntlet']);
   c.job = 'warrior';
   assert.ok(recipesIn(c, 'gear').every((r) => r.family === 'warrior'));
   assert.ok(recipesIn(c, 'tool').length >= 16);
@@ -96,10 +98,10 @@ test('a Fine Artisan piece is a little better than the shop and drop piece of it
     }
   }
   // Better qualities are better again; never dropped, never on bots.
-  const id = artisanId('archer', 'top', 30);
+  const id = artisanId('mage', 'top', 30);
   const [f, s, m] = [0, 1, 2].map((q) => makeCrafted(id, q));
   assert.ok(f.stats.wdef <= s.stats.wdef && s.stats.wdef < m.stats.wdef);
-  assert.ok((m.stats.dex ?? 0) > (f.stats.dex ?? 0), 'Masterwork adds to the main stat');
+  assert.ok((m.stats.int ?? 0) > (f.stats.int ?? 0), 'Masterwork adds to the main stat');
   assert.equal(m.quality, 2);
   for (const def of Object.values(MOBS)) {
     for (let i = 0; i < 20; i++) for (const l of rollLoot(def)) if (l.kind === 'item') assert.ok(!ITEMS[l.id ?? l.inst?.id]?.crafted, 'crafted gear never drops');

@@ -286,10 +286,6 @@ B = {
     'gather': [('arcup', 0.5, 0.9, 1.0, 0, 0), ('powerup', 4.34, 0.7, 1.0, -6, 0)],
     # Gathering holy light: a bright tonal spell and a shimmering flow of energy.
     'gatherHoly': [('light', 0.0, 0.9, 1.0, 0, 0), ('astonish', 3.0, 0.9, 1.0, -8, 0)],
-    # Nightfall: a dark braam swelling (raised a little, so it's grand rather than grim).
-    'nightfall': [('braam', 0.4, 1.4, 1.15, 0, 0)],
-    # Stormburst: a rush of wind, a heavy blow and a trailer boom underneath.
-    'stormburst': [('windrush', 0.05, 0.9, 0.8, 0, 0), ('body', 1.16, 0.3, 0.75, -2, 0), ('boom', 0.27, 1.2, 1.0, -6, 0)],
     # ----- Movement (step 4) -----
     # Jumping: a quick swish of clothes, three takes so it never repeats.
     'jump1': [('cloth29', 0.0, 0.28, 1.25, 0, 0)],

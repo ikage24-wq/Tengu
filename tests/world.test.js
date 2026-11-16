@@ -295,19 +295,22 @@ test('the Game Master stays locked without the passphrase, and its tools work on
 test('skills never go on cooldown: a spell is free again a beat after its motion ends', async () => {
   const { setJob, setLevel, gmCommand } = await import('../src/world/gm.js');
   const w = newWorld();
-  setJob(w.char, 'thief');
+  setJob(w.char, 'warrior');
   setLevel(w.char, 40);
-  w.char.equipment.weapon = makeEquip('dagger_20', {});
-  w.char.skills.pirouette = 10;
+  w.char.equipment.weapon = makeEquip('sword_20', {});
+  w.char.skills.thunderrush = 10;
   w.char.baseMp = 5000;
   gmCommand(w, 'heal', []);
   updateWorld(w, DT, idle);
-  assert.equal(cast(w, 'pirouette').ok, true);
-  assert.equal(cast(w, 'pirouette').reason, 'busy', 'not while she spins away');
-  for (let i = 0; i < 28; i++) updateWorld(w, DT, idle);
-  assert.equal(cast(w, 'pirouette').reason, 'busy', 'a beat of recovery after the motion, so it cannot be mashed');
-  for (let i = 0; i < 30; i++) updateWorld(w, DT, idle);
-  assert.equal(cast(w, 'pirouette').ok, true, 'usable again right after that beat: no cooldown');
+  assert.equal(cast(w, 'thunderrush').ok, true);
+  assert.equal(cast(w, 'thunderrush').reason, 'busy', 'not while he rushes in');
+  // (Free again within a couple of seconds - its motion and a beat - never a cooldown.)
+  let frames = 0;
+  while (cast(w, 'thunderrush').reason === 'busy' && frames < 240) {
+    updateWorld(w, DT, idle);
+    frames++;
+  }
+  assert.ok(frames > 6 && frames < 120, `a beat of recovery after the motion, then free again (${frames} frames)`);
 });
 
 test("a GM job swap forgets skills from outside the new job's line and gives their SP back", async () => {
@@ -315,18 +318,18 @@ test("a GM job swap forgets skills from outside the new job's line and gives the
   const { SKILLS } = await import('../src/data/skills.js');
   const w = newWorld();
   const c = w.char;
-  setJob(c, 'shinobi');
-  const thiefSkill = Object.values(SKILLS).find((s) => s.job === 'thief' && s.type !== 'passive').id;
-  const shinobiSkill = Object.values(SKILLS).find((s) => s.job === 'shinobi' && s.type !== 'passive').id;
-  c.skills[thiefSkill] = 3;
-  c.skills[shinobiSkill] = 2;
-  c.hotkeys = { KeyQ: { skill: thiefSkill }, KeyW: { skill: shinobiSkill }, KeyE: { item: 'potion_red' } };
+  setJob(c, 'stormwall');
+  const warriorSkill = Object.values(SKILLS).find((s) => s.job === 'warrior' && s.type !== 'passive').id;
+  const wallSkill = Object.values(SKILLS).find((s) => s.job === 'stormwall' && s.type !== 'passive').id;
+  c.skills[warriorSkill] = 3;
+  c.skills[wallSkill] = 2;
+  c.hotkeys = { KeyQ: { skill: warriorSkill }, KeyW: { skill: wallSkill }, KeyE: { item: 'potion_red' } };
   const sp = c.sp;
-  setJob(c, 'kitsune');
-  assert.equal(c.skills[thiefSkill], 3, 'the shared Thief skills stay');
-  assert.equal(c.skills[shinobiSkill], undefined, "the Shinobi's own skills are gone");
+  setJob(c, 'tempest');
+  assert.equal(c.skills[warriorSkill], 3, "the shared Thunderguard skills stay");
+  assert.equal(c.skills[wallSkill], undefined, "the Stormwall's own skills are gone");
   assert.equal(c.sp, sp + 2);
-  assert.deepEqual(c.hotkeys, { KeyQ: { skill: thiefSkill }, KeyE: { item: 'potion_red' } });
+  assert.deepEqual(c.hotkeys, { KeyQ: { skill: warriorSkill }, KeyE: { item: 'potion_red' } });
   setJob(c, 'gamemaster');
   const spAsGm = c.sp;
   setJob(c, 'warrior');
@@ -334,16 +337,15 @@ test("a GM job swap forgets skills from outside the new job's line and gives the
   assert.ok(Object.keys(c.skills).every((id) => ['novice', 'warrior'].includes(SKILLS[id].job)));
 });
 
-test('the warrior, the archer and the thief branch at 30', async () => {
+test('the warrior and the tide mage branch at 30', async () => {
   const { nextJobs, JOBS } = await import('../src/data/jobs.js');
   const { SKILLS } = await import('../src/data/skills.js');
-  assert.deepEqual(nextJobs('novice', 10).map((j) => j.id).sort(), ['archer', 'thief', 'tidemage', 'warrior']);
-  for (const first of ['warrior', 'archer', 'thief', 'tidemage']) {
+  assert.deepEqual(nextJobs('novice', 10).map((j) => j.id).sort(), ['tidemage', 'warrior']);
+  for (const first of ['warrior', 'tidemage']) {
     assert.ok(Object.values(SKILLS).some((k) => k.job === first && (k.type === 'blink' || k.movement)), `${first} has a movement skill`);
   }
   assert.deepEqual(nextJobs('warrior', 30).map((j) => j.id).sort(), ['stormwall', 'tempest'], 'warrior has his paths at 30');
-  assert.deepEqual(nextJobs('archer', 30).map((j) => j.id).sort(), ['beastmaster', 'stormcaller'], 'archer has two paths at 30');
-  assert.deepEqual(nextJobs('thief', 30).map((j) => j.id).sort(), ['kitsune', 'shinobi'], 'thief has two paths at 30');
+  assert.deepEqual(nextJobs('tidemage', 30).map((j) => j.id).sort(), ['maelstrom', 'tidecaller'], 'the tide mage has her paths at 30');
 });
 
 test('Thunder Rush flashes forward and hits the monsters it passes through', () => {
@@ -392,23 +394,22 @@ test('old saves move to the renamed jobs and get SP back for removed skills', as
     assert.equal(r.hotkeys.KeyQ, null);
     assert.ok(!r.quests.mage_trial && !r.quests.spiritmage_trial, `${was}: the old trial is gone`);
   }
-  // The Ranger and Sniper were remade as the Beastmaster and the Stormcaller; a job that exists
-  // today stays, even if an old retired job once had its id (the Beastmaster).
-  for (const [was, now] of [['ranger', 'beastmaster'], ['sniper', 'stormcaller'], ['beastmaster', 'beastmaster']]) {
+  // The whole Archer and Thief lines were wiped (2026-11-16), their old jobs before them too: their
+  // characters play as Novices, their skills' points come back, and their trials are gone.
+  for (const [was, now] of [['ranger', 'novice'], ['sniper', 'novice'], ['beastmaster', 'novice'], ['archer', 'novice'], ['stormcaller', 'novice']]) {
     const r = { job: was, sp: 0, skills: { galevolley: 10, twinshot: 5 }, hotkeys: {} };
     updateRetiredJobs(r);
     assert.equal(r.job, now, was);
     assert.equal(r.sp, 15, `${was}: the old skills' points come back`);
   }
-  // The Assassin and the Night Lord were removed: they become the Shinobi and the Kitsune (the
-  // new paths for the same weapons), with their old skills' points given back.
-  for (const [was, now] of [['assassin', 'shinobi'], ['nightlord', 'kitsune']]) {
-    const r = { job: was, sp: 0, skills: { ribbonlash: 10, crowcombo: 7, galaxyfall: 3 }, hotkeys: { KeyQ: { skill: 'crowcombo' } } };
+  for (const [was, now] of [['assassin', 'novice'], ['nightlord', 'novice'], ['thief', 'novice'], ['shinobi', 'novice'], ['kitsune', 'novice']]) {
+    const r = { job: was, sp: 0, skills: { ribbonlash: 10, crowcombo: 7, galaxyfall: 3 }, hotkeys: { KeyQ: { skill: 'crowcombo' } }, quests: { thief_trial: { state: 'done' } } };
     updateRetiredJobs(r);
     assert.equal(r.job, now, was);
-    assert.equal(r.sp, 10, `${was}: the old skills' points come back`);
-    assert.deepEqual(r.skills, { ribbonlash: 10 });
+    assert.equal(r.sp, 20, `${was}: the old skills' points come back`);
+    assert.deepEqual(r.skills, {});
     assert.equal(r.hotkeys.KeyQ, null);
+    assert.ok(!r.quests.thief_trial, `${was}: the old trial is gone`);
   }
 });
 

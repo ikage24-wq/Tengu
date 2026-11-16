@@ -72,7 +72,7 @@ test('chat is about what is real for the speaker, and never repeats', async () =
   quiet(world);
   const bots = createBots(world, seeded(5), { clock: EVENING });
   // A hunter out on Mossy Woods.
-  const char = makeBotCharacter(seeded(6), { name: 'Hunter', level: 20, jobs: ['archer'] });
+  const char = makeBotCharacter(seeded(6), { name: 'Hunter', level: 20, jobs: ['tidemage'] });
   const bot = { name: 'Hunter', char, level: 20, map: 'woods', style: makeStyle(seeded(7)), title: 'Veteran' };
   const here = new Set(MAPS.woods.spawns.map((sp) => MOBS[sp.mob].name.toLowerCase()));
   const elsewhere = Object.values(MOBS).map((d) => d.name.toLowerCase()).filter((n) => !here.has(n) && ![...here].some((h) => h.includes(n) || n.includes(h)));
@@ -275,7 +275,7 @@ test('other players really fight: their job\'s own string of moves, back to back
   const { tickHunter, botSkills } = await import('../src/world/party.js');
   const { spawnMob } = await import('../src/world/mobs.js');
   const { createBody } = await import('../src/world/physics.js');
-  for (const job of [['warrior', 'stormwall'], ['thief', 'shinobi'], ['archer', 'beastmaster']]) {
+  for (const job of [['warrior', 'stormwall'], ['warrior', 'tempest'], ['tidemage', 'maelstrom']]) {
     const world = createWorld(createCharacter('Me', {}));
     quiet(world);
     world.god = true;
@@ -755,7 +755,7 @@ test('a dungeon group looking for your role takes you in', async () => {
   const { advanceJob } = await import('../src/core/character.js');
   const { world, bots, lines } = eventTown(431);
   world.char.level = 15;
-  advanceJob(world.char, 'archer');
+  advanceJob(world.char, 'tidemage');
   // Players of other jobs about.
   for (const b of bots.list.filter((x) => x.map === world.map.id).slice(0, 6)) {
     b.char = makeBotCharacter(seeded(b.name.length), { name: b.name, level: 14, jobs: ['warrior'] });

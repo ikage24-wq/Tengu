@@ -137,14 +137,13 @@ function rollLevel(pro, rng) {
   return Math.floor(between(40, MAX_LEVEL, rng));
 }
 
-// The job path a character of this level would be on. Warriors, archers and thieves advance to a
-// level 30 path; the Tide Mage (the new Mage, 2026-11-09) to the Maelstrom or the Tidecaller.
+// The job path a character of this level would be on. Warriors advance to a level 30 path; the Tide
+// Mage (the new Mage, 2026-11-09) to the Maelstrom or the Tidecaller. (The Archer and Thief lines
+// were wiped 2026-11-16, to be made again.)
 function jobPath(level, rng) {
   if (level < FIRST_JOB_LEVEL) return ['novice'];
-  const first = pick(['warrior', 'archer', 'thief', 'tidemage'], rng);
+  const first = pick(['warrior', 'tidemage'], rng);
   if (first === 'warrior' && level >= 30) return [first, pick(['tempest', 'stormwall'], rng)];
-  if (first === 'archer' && level >= 30) return [first, pick(['beastmaster', 'stormcaller'], rng)];
-  if (first === 'thief' && level >= 30) return [first, pick(['shinobi', 'kitsune'], rng)];
   if (first === 'tidemage' && level >= 30) return [first, pick(['maelstrom', 'tidecaller'], rng)];
   return [first];
 }

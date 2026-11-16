@@ -11,7 +11,7 @@ import { drawSkinTag } from './cosmetics.js';
 import { awayNow } from '../world/nightmarket.js';
 import { wornGear } from '../core/character.js';
 import { drawCombatAura, heartbeat } from './aura.js';
-import { gaugeOf, phantom, inForm, hasFaith, thiefSchool, hasGale } from '../world/melee.js';
+import { gaugeOf, inForm, hasFaith, hasGale } from '../world/melee.js';
 import { moveAt, MOVES, streamHover } from './moves.js';
 import { wheelShape, wheelWisps } from '../world/foxwheel.js';
 import { settings } from '../core/settings.js';
@@ -37,7 +37,6 @@ import { drawMount } from './mounts.js';
 import { drawWaterBack, drawWaterFront } from './water.js';
 import { drawFurniture } from './furniture.js';
 import { rideMotion } from '../world/mount.js';
-import { copiesOf, copyAt } from '../world/phantom.js';
 import { drawStreet, drawTownsfolk, npcRoutine, drawParty, drawFallen, animFor } from './town.js';
 import { botsIn, bodiedIn } from '../world/bots.js';
 import { partyMembers } from '../world/party.js';
@@ -637,12 +636,7 @@ function drawWorldLayers(ctx, world, cam, time, b, zoom = 1) {
   drawBuffEffects(ctx, buffs, 'back', hx, hy, time, world.now, b.facing);
   const gear = wornGear(world.char);
   drawBuffClones(ctx, buffs, look, gear, hx, hy, heroState, time);
-  // Phantom (a Thief's full Shadow): her shadow copy stands just behind her, and plays each move a
-  // beat after she does.
-  if (!world.dead && phantom(world)) drawPhantom(ctx, world, look, gear, hx, hy, heroState);
-  // The Phantom Trickster's see-through copies behind her, and Grand Illusion's ring of them.
-  if (!world.dead) drawCopies(ctx, world, look, gear, cam, heroState, time);
-  // A Thief darting leaves violet afterimages of herself along the way, fading fast.
+  // A dash with a dagger or gloves leaves violet afterimages along the way, fading fast.
   drawAfterimages(ctx, world, look, gear, cam, heroState, time);
   // A warrior path's form: a glow round the hero that breathes with the heartbeat, and in Demon Form
   // a blood-red shadow of him just behind him that strikes again a beat after each swing.
@@ -788,7 +782,7 @@ function drawWorldLayers(ctx, world, cam, time, b, zoom = 1) {
 // The Thief's darting moves (Shadow Step, her dashes and flash cuts, a blink, the finisher's
 // blinks) leave afterimages: a copy of her every few pixels she covers, tinted violet, fading out
 // over a quarter second (the speed reads as shadow, not as a smear).
-const GHOST_MOVES = new Set(['dashstab', 'backstab', 'assassinate', 'flashcut', 'shadowrun', 'flashjump']);
+const GHOST_MOVES = new Set(['dashstab', 'flashcut']);
 const GHOST_LIFE = 0.24;
 // The Blade Dancer's afterimages are rose gold, the Sky Dancer's sky blue.
 const GHOST_TINT = { shadow: '#6a4ec8', rosegold: '#d26d6a', fox: '#3a6ee0', aerial: '#4e9fe6' };
@@ -799,7 +793,7 @@ function drawAfterimages(ctx, world, look, gear, cam, state, time) {
   const b = world.body;
   const w = world.stats?.weaponType;
   const last = g.at(-1);
-  if ((w === 'dagger' || w === 'gauntlet') && GHOST_MOVES.has(world.pose?.kind) && (!last || Math.abs(last.x - b.x) > 7 || Math.abs(last.y - b.y) > 7)) g.push({ x: b.x, y: b.y, at: time, state, tint: GHOST_TINT[thiefSchool(world.char)] });
+  if ((w === 'dagger' || w === 'gauntlet') && GHOST_MOVES.has(world.pose?.kind) && (!last || Math.abs(last.x - b.x) > 7 || Math.abs(last.y - b.y) > 7)) g.push({ x: b.x, y: b.y, at: time, state, tint: GHOST_TINT.shadow });
   // Endless Fox-Fire blurs with speed: copies of the poses she just threw from linger in blue fox
   // fire on top of her, more often, longer and brighter the further the barrage has built, so flat
   // out her arms are a smear of hands and stars. They drift back off her a little as they fade.
@@ -878,14 +872,9 @@ function drawLeafWheel(ctx, world, run, hx, hy, time, layer) {
 }
 
 // Buffs that copy you: Shadow Partner's dark clone just behind, and Mirage's golden decoys.
-// The Phantom Trickster's copies (world/phantom.js): plum see-through copies of her standing just
-// behind her, each doing what she does and bobbing on its own; and through Grand
-// Illusion, a ring of them round the screen, each drawing and loosing at the monster nearest it.
-const COPY_TINT = '#9a4a9a';
 // (The copies, the phantom, the shadow and the clones all move with you, so they step on your
 // stride, `feel.anim`: on a clock of their own their feet skated whenever you walked.)
-// Copies of you in your own pose this frame (the Beastmaster's copies and illusions, Shadow
-// Partner, Mirage): the tinted pose is drawn once a frame, for each tint and facing, and stamped
+// Copies of you in your own pose this frame (Shadow Partner, Mirage): the tinted pose is drawn once a frame, for each tint and facing, and stamped
 // at every copy's place with its own fade. Drawing the whole hero again for each copy, each one
 // tinted on its own, cost Stampede a whole fast-screen frame.
 const copyMemo = { time: null, byKey: new Map(), canvases: new Map() };
@@ -941,42 +930,7 @@ function stampCopy(ctx, x, y, alpha, img) {
   ctx.restore();
 }
 
-function drawCopies(ctx, world, look, gear, cam, state, time) {
-  const n = copiesOf(world);
-  for (let k = n - 1; k >= 0; k--) {
-    if (world.copyGone?.[k] > world.now) continue;
-    const c = copyAt(world, k);
-    const x = snap(c.x - cam.x);
-    const y = snap(c.y - cam.y);
-    const flicker = 0.85 + 0.15 * Math.sin(time * 7 + k * 2);
-    stampCopy(ctx, x, y, state.alpha * 0.62 * flicker, copyImage(ctx, look, gear, { ...state, job: 'beastmaster' }, COPY_TINT, 0.4, time, feel.anim));
-  }
-  const I = world.illusion;
-  if (!I) return;
-  for (const sp of I.spots) {
-    if (world.now < sp.at) continue;
-    const x = snap(sp.x - cam.x);
-    const y = snap(sp.y - cam.y);
-    const age = world.now - sp.at;
-    const shoot = Math.max(0, world.now - (I.shoot - 0.5));
-    const fade = Math.min(1, age * 4) * Math.min(1, Math.max(0, I.until - world.now) * 3);
-    const pose = { pose: 'ptflourish', progress: Math.min(1, shoot / 0.52), dur: 0.52, from: null, blend: 1 };
-    stampCopy(ctx, x, y, 0.78 * fade, copyImage(ctx, look, gear, { ...state, ...pose, facing: sp.dir, job: 'beastmaster' }, COPY_TINT, 0.4, time, null));
-  }
-}
 
-function drawPhantom(ctx, world, look, gear, x, y, state) {
-  const ph = world.phantom;
-  const live = ph && world.now >= ph.since && world.now < ph.until;
-  const pose = live ? { pose: ph.kind, progress: (world.now - ph.since) / ph.dur, dur: ph.dur, from: null, blend: 1 } : {};
-  const px = x - state.facing * (live ? 10 : 16);
-  // A smoky see-through copy (the Thief's realistic look): violet smoke curling up off it, the copy
-  // itself thin and flickering a little like smoke in a draught.
-  const t = state.time ?? 0;
-  const flicker = 0.9 + 0.1 * Math.sin(t * 9) * Math.sin(t * 3.7);
-  fxSprite(ctx, 'celshadowaura', px, y + 4, { t: t * 0.8, scale: 0.42, alpha: 0.75 * state.alpha });
-  drawTinted(ctx, px, y, '#2e2266', 0.78, (c) => drawHero(c, look, gear, px, y, { ...state, ...pose, job: null, alpha: state.alpha * 0.5 * flicker }, live ? null : feel.anim));
-}
 
 // The two forms' looks: the glow round the hero, and the tint of the shadow (Demon Form only).
 const FORM_LOOKS = {

@@ -26,7 +26,6 @@ export const RECORDED = {
   stun: { trim: -0.3 },
   stomp: { trim: 0.3 },
   landHard: { trim: 7.5 },
-  crescentcut: { trim: 5.8 },
   // Elements: casts, hits and bursts.
   cast: { trim: 4.5 },
   castFire: { trim: -2.9 },
@@ -57,7 +56,6 @@ export const RECORDED = {
   gust: { trim: -9.2 },
   // Big moments.
   boom: { trim: 2.8 },
-  blast: { trim: 2 },
   quake: { trim: -0.4 },
   meteor: { trim: -3.1 },
   roar: { trim: 1.8 },
@@ -69,8 +67,6 @@ export const RECORDED = {
   powerup: { trim: 1.6 },
   buff: { trim: -0.5 },
   partyBuff: { trim: 1 },
-  acfirework: { trim: 8 },
-  acburst: { trim: 6.2 },
   poof: { trim: 3.3 },
   // Jingles.
   levelup: { trim: 4.5 },
@@ -126,21 +122,7 @@ export const RECORDED = {
   berserk: { trim: -0.6, music: true },
   // The title show's bell bonk.
   bellbonk: { trim: 1.9, music: true },
-  // Acrobat Archer.
-  achit: { trim: -2.1, music: true },
-  trapsnap: { trim: 8 },
-  showtime: { trim: -0.4, music: true },
-  // Phantom Trickster.
-  pthit: { trim: -4, music: true },
-  ptsmoke: { trim: 1, music: true },
-  ptillusion: { trim: -0.7, music: true },
-  phantom: { trim: 3, music: true },
-  galeFull: { trim: -9.2, music: true },
-  // Arbalist Engineer.
-  aeboom: { trim: -3.7 },
-  aesteam: { trim: 4.7 },
-  aeballista: { trim: -2 },
-  overdrive: { trim: 8, music: true },
+  // Locking on, and the steel cast.
   lockOn: { trim: 8 },
   castSteel: { trim: -1.8 },
   // Tide Mage.
@@ -257,14 +239,6 @@ export const RECORDED = {
   msshellfx: { trim: 0 },
   mspool: { trim: 0 },
   msblackwave: { trim: 0 },
-  // Blade Dancer.
-  bdbounce: { trim: 4.1, music: true },
-  bdcarousel: { trim: -4.6, music: true },
-  carouselfull: { trim: 2.3, music: true },
-  // Sky Dancer.
-  skyupdraft: { trim: -3.3, music: true },
-  skytornado: { trim: 0.2, music: true },
-  tailwindfull: { trim: -9.1, music: true },
   // Team moves.
   teamcatch: { trim: -2.1, music: true },
   teamrevive: { trim: -1.4, music: true },
@@ -332,8 +306,6 @@ const FIGHT_TRIM = {
 };
 for (const [name, trim] of Object.entries(FIGHT_TRIM)) RECORDED[name] = { trim };
 RECORDED.gatherHoly = { trim: -3.5, music: true };
-RECORDED.nightfall = { trim: -0.1, music: true };
-RECORDED.stormburst = { trim: -1.8 };
 
 // Movement (tools/build-fight.py, step 4, 2026-11-08): jumping, landing, climbing, mounts, furniture,
 // the kettle, the cloud, the turtle and the bunny; trims set by ear-matched levels against the old

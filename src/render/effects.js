@@ -9,7 +9,6 @@ import { ELEMENTS } from './elements.js';
 import { drawSpell, SCHOOL_COLORS } from './spells.js';
 import { drawStrike, drawStrikeShot } from './strikes.js';
 import { fxSprite } from './fx-sprites.js';
-import { shuriken } from './thief-fx.js';
 import { FX_SHEETS } from './fx-sheets.js';
 import { debris, groundRing, groundWave, hitMark, pathTint } from './warrior-fx.js';
 import { drawBuffCast } from './buffs.js';
@@ -21,6 +20,51 @@ import { weaponTrail, weaponHit, thrustStreak } from './blade-fx.js';
 import { wornGear } from '../core/character.js';
 import { drawTideShot } from './tide-fx.js';
 import { drawStormShot } from './storm-fx.js';
+
+// (Moved here from the Thief's effects when her line was wiped, 2026-11-16: a Novice's gloves still throw stars.)
+// A four-point throwing star around the origin: plum-outlined steel blades, each with a lit half,
+// and a hole in the middle. Without an outline it's a flat silhouette (for afterimages).
+function shuriken(ctx, r, body, lit, ink) {
+  const pt = (k, d, off = 0) => {
+    const a = (k * Math.PI) / 2 - Math.PI / 2 + off;
+    return [Math.cos(a) * d, Math.sin(a) * d];
+  };
+  ctx.beginPath();
+  for (let k = 0; k < 4; k++) {
+    const p = [pt(k, r), pt(k, r * 0.5, 0.4), pt(k, r * 0.3, Math.PI / 4)];
+    p.forEach(([px, py], i) => (k || i ? ctx.lineTo(px, py) : ctx.moveTo(px, py)));
+  }
+  ctx.closePath();
+  if (ink) {
+    ctx.strokeStyle = ink;
+    ctx.lineWidth = 2.4;
+    ctx.lineJoin = 'round';
+    ctx.stroke();
+  }
+  ctx.fillStyle = body;
+  ctx.fill();
+  if (!ink) return;
+  // The lit half of each blade.
+  ctx.fillStyle = lit;
+  for (let k = 0; k < 4; k++) {
+    const [tx, ty] = pt(k, r - 0.8);
+    const [ix, iy] = pt(k, r * 0.3, -Math.PI / 4);
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.lineTo(tx, ty);
+    ctx.lineTo(ix, iy);
+    ctx.closePath();
+    ctx.fill();
+  }
+  ctx.fillStyle = '#8a92a3';
+  ctx.beginPath();
+  ctx.arc(0, 0, r * 0.3, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = ink;
+  ctx.beginPath();
+  ctx.arc(0, 0, r * 0.14, 0, Math.PI * 2);
+  ctx.fill();
+}
 
 
 const SHOT_COLORS = {
@@ -92,36 +136,6 @@ function drawShot(ctx, f, cam) {
     return;
   }
   switch (f.shot) {
-    case 'aebolt': case 'aebig': case 'aebertha': {
-      // The Arbalist Engineer's: a brass bolt streaking teal, a heavy bolt in teal rings, and Big
-      // Bertha's enormous one.
-      const a = Math.atan2(f.ty - f.y, f.tx - f.x);
-      const left = Math.cos(a) < 0;
-      fxSprite(ctx, f.shot === 'aebolt' ? 'celaebolt' : 'celaebig', x, y, { t: f.t, flip: left, rot: left ? a + Math.PI : a, scale: f.shot === 'aebolt' ? 0.7 : f.shot === 'aebig' ? 0.75 : 1.3, alpha: f.split ? 0.85 : 1 });
-      break;
-    }
-    case 'aewindup':
-      // Wind-Up Bomb toddling along to them, rocking on its little feet.
-      fxSprite(ctx, 'celaewindup', x, y + 6 - 2 * Math.abs(Math.sin(f.t * 20)), { t: f.t, flip: f.tx < f.x, scale: 1.1 });
-      break;
-    case 'skygust': case 'skygustbig': {
-      // The Sky Dancer's gust: a crescent of wind with a feather riding it, turned along its flight;
-      // on full Tailwind (and her finishers) a great one.
-      const big = f.shot === 'skygustbig';
-      const a = Math.atan2(f.ty - f.y, f.tx - f.x);
-      const left = Math.cos(a) < 0;
-      fxSprite(ctx, 'celskygust', x, y, { t: f.t, flip: left, rot: left ? a + Math.PI : a, scale: big ? 1.45 : 0.95 });
-      break;
-    }
-    case 'ring': case 'ringbig': {
-      // The Blade Dancer's ring: spinning, its rose smear curling behind it the way it flies (home
-      // to her hand too); a twin ring a little smaller and lighter.
-      const big = f.shot === 'ringbig';
-      const a = Math.atan2(f.ty - f.y, f.tx - f.x);
-      const left = Math.cos(a) < 0;
-      fxSprite(ctx, 'celbdring', x, y, { t: f.t, flip: left, rot: left ? a + Math.PI : a, scale: (big ? 1.3 : 0.92) * (f.twin ? 0.85 : 1), alpha: f.twin ? 0.85 : 1 });
-      break;
-    }
     case 'arrow': case 'pierce': {
       // Pointed along its flight, with a fading streak behind and fletching at the tail.
       ctx.translate(x, y);
@@ -150,81 +164,7 @@ function drawShot(ctx, f, cam) {
       ctx.fillRect(-15, 1, 4, 2);
       break;
     }
-    case 'kunai': {
-      // A Shinobi's kunai: a dark steel blade pointed along its flight, a cord-wrapped grip and a
-      // ring at its end, a faint streak behind and a red tassel snapping in the wind.
-      ctx.translate(x, y);
-      ctx.rotate(Math.atan2(f.ty - f.y, f.tx - f.x));
-      if (f.phantom) ctx.globalAlpha = 0.6;
-      const a0 = ctx.globalAlpha;
-      ctx.globalAlpha = a0 * 0.35;
-      ctx.fillStyle = '#ffffff';
-      ctx.fillRect(-28, -0.6, 18, 1.2);
-      ctx.globalAlpha = a0;
-      ctx.fillStyle = f.phantom ? '#2a2234' : '#5a5868';
-      ctx.beginPath();
-      ctx.moveTo(9, 0);
-      ctx.lineTo(1, -2.6);
-      ctx.lineTo(-1, 0);
-      ctx.lineTo(1, 2.6);
-      ctx.closePath();
-      ctx.fill();
-      ctx.fillStyle = '#c8c6d8';
-      ctx.beginPath();
-      ctx.moveTo(9, 0);
-      ctx.lineTo(1, -2.6);
-      ctx.lineTo(0, 0);
-      ctx.closePath();
-      ctx.fill();
-      ctx.fillStyle = '#1c1820';
-      ctx.fillRect(-6, -0.9, 6, 1.8);
-      ctx.strokeStyle = '#3a3440';
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.arc(-7.6, 0, 1.6, 0, Math.PI * 2);
-      ctx.stroke();
-      ctx.strokeStyle = '#d8283a';
-      ctx.lineWidth = 1.2;
-      ctx.beginPath();
-      ctx.moveTo(-9, 0);
-      ctx.quadraticCurveTo(-13, Math.sin(f.t * 40) * 2.5, -16, Math.sin(f.t * 40 + 1) * 3);
-      ctx.stroke();
-      break;
-    }
-    case 'star': case 'moonstar': {
-      // A Thief's stars trail violet streaks; a big moon star is drawn large; the Phantom's copies
-      // are violet shadows of a star.
-      if (f.shadow) {
-        const big = f.shot === 'moonstar';
-        fxSprite(ctx, 'celshadowtrail', x - dir * (big ? 26 : 18), y, { t: f.t, flip: dir < 0, scale: big ? 0.8 : 0.5 });
-        if (big) fxSprite(ctx, 'celsmoke', x - dir * 40, y + 12, { t: f.t % 0.38, flip: dir < 0, scale: 0.35 });
-        ctx.translate(x, y);
-        ctx.rotate(f.t * (big ? 16 : 20));
-        if (f.phantom) ctx.globalAlpha = 0.65;
-        const body = f.phantom ? '#8a6ae8' : big ? '#d2cff0' : f.starColor ?? '#b9c0cc';
-        const r = big ? 12 : 7;
-        // The Thief's own star is real steel (her realistic look): blurred by its spin (two faint
-        // copies trailing the turn), a fine dark edge instead of an outline, and a glint flicking
-        // off the blades as it turns.
-        const a0 = ctx.globalAlpha;
-        for (const [k, al] of [[0.26, 0.22], [0.13, 0.4]]) {
-          ctx.save();
-          ctx.rotate(-k);
-          ctx.globalAlpha = a0 * al;
-          shuriken(ctx, r, body, body, null);
-          ctx.restore();
-        }
-        shuriken(ctx, r, body, f.phantom ? '#c9b4ff' : mix(body, '#ffffff', 0.6), f.phantom ? '#5a44b0' : mix(body, '#2a2440', 0.55));
-        const glint = Math.max(0, Math.sin(f.t * 31));
-        if (glint > 0.6) {
-          ctx.rotate(-f.t * (big ? 16 : 20));
-          ctx.globalAlpha = a0 * (glint - 0.6) * 2.5;
-          ctx.fillStyle = '#ffffff';
-          ctx.fillRect(-r * 0.9, -0.5, r * 1.8, 1);
-          ctx.fillRect(-0.5, -r * 0.9, 1, r * 1.8);
-        }
-        break;
-      }
+    case 'star': {
       // A spinning shuriken with a faint trail of its own afterimage.
       const trail = f.element ? c : '#dfe6ff';
       ctx.globalAlpha = 0.35;
@@ -674,11 +614,6 @@ function drawFx(ctx, f, cam, time) {
       const by = (from0 ? f.y + from0[1] : b.y + b.h / 2) - cam.y;
       const reach = Math.max(24, Math.abs(end - start));
       const sx0 = start - cam.x;
-      // The Wind Dancer's thrust sends a little crescent gust instead of a streak of steel.
-      if (f.school === 'coral') {
-        fxSprite(ctx, 'celwdgust', sx0 + (dir * reach) * 0.45, by + 2, { p, flip: dir < 0, scale: 0.5 });
-        break;
-      }
       fxSprite(ctx, pathTint(f.school, 'celstreak', 'celstreakgold', 'celstreakred'), sx0 + (dir * reach) / 2, by + 2, { p, flip: dir < 0, sx: reach / 100, sy: 0.7 });
       fxSprite(ctx, pathTint(f.school, 'celhit', 'celholyhit', 'celhitred'), sx0 + dir * reach, by + 2, { p, scale: 0.6 });
       break;
@@ -880,15 +815,13 @@ function drawFx(ctx, f, cam, time) {
         else if (f.path === 'rage') {
           fxSprite(ctx, 'celhitred', x, y, { p, scale: 0.95 });
           fxSprite(ctx, 'celclaw', x, y, { p, scale: 0.55, flip: (f.dir ?? 1) < 0 });
-        } else if (f.path === 'rosegold') fxSprite(ctx, 'celbdhit', x, y, { p, scale: 0.75, rot: ((f.seed ?? 0.5) - 0.5) * 0.8 });
-        else if (f.path === 'ink') fxSprite(ctx, 'celinkhit', x, y, { p, scale: 0.8, flip: (f.dir ?? 1) < 0, rot: ((f.seed ?? 0.5) - 0.5) * 0.8 });
-        else fxSprite(ctx, 'celcrit', x, y, { p, scale: 0.75 });
+        } else fxSprite(ctx, 'celcrit', x, y, { p, scale: 0.75 });
         break;
       }
       // (A Paladin's and a Berserker's blade hits draw their own star and claws as holy and rage
       // hits, so the cut itself adds nothing here.)
       if (f.via === 'blade') {
-        if (!f.path || f.path === 'steel' || f.path === 'shadow' || f.path === 'ink' || f.path === 'coral' || f.path === 'rosegold') hitMark(ctx, f.path ?? 'steel', x, y, p, { seed: f.seed ?? 0.5, dir: f.dir ?? 1 });
+        if (!f.path || f.path === 'steel') hitMark(ctx, f.path ?? 'steel', x, y, p, { seed: f.seed ?? 0.5, dir: f.dir ?? 1 });
         weaponHit(ctx, f, x, y, p);
       }
       else fxSprite(ctx, pathTint(f.path, 'celhit', 'celholyhit', 'celhitred'), x, y, { p, scale: 0.65 });
@@ -974,7 +907,7 @@ let hero = null;
 // drawn behind the heroes and monsters (drawGroundFx), so they never wash over a face.
 const GROUND_FX = new Set(['shock', 'bwroll', 'bwcage', 'bwboltdown', 'bwcagebig', 'bwclapbig', 'bwboltbig', 'bwsquallfx', 'tgring', 'tgcyclone', 'tgboltbig', 'tgclap', 'tgclapbig', 'tpboltbig', 'tpclapbig', 'tpwhirlfx', 'tmwhirl', 'tmpool', 'mspool', 'tcpool', 'tcrain', 'tcmoontide', 'wdfinale', 'bdcarousel', 'skytornado', 'sddownburst', 'sdcloudnine', 'aeballista', 'consecrate', 'verdict',
   // (the first jobs' skills as the paths play them: data/skills.js `paths`)
-  'bdrevue', 'skycloudburst', 'siballad', 'siharmony', 'asmoonfall', 'asveil']);
+  'siballad', 'siharmony', 'asmoonfall', 'asveil']);
 export function drawEffects(ctx, world, cam, time) {
   hero = world.char ? { look: world.char.appearance, gear: wornGear(world.char) } : null;
   for (const f of world.fx) if (!GROUND_FX.has(f.kind)) drawFx(ctx, f, cam, time);
@@ -1036,29 +969,12 @@ function bornAt(f) {
 
 // A blade's cut: the swipe (Tengu's own art, fx-sprites.js) laid along the blade's own path through
 // the move (sampled from the hero's pose, `bladePath`), sized to the reach: steel blue, the
-// Paladin's gold (and any heavy blow's but the Warrior's), the Berserker's rose red, or the Wind
-// Dancer's coral ribbon. A cut all around (a whirl) is
-// the spin slash instead.
+// Paladin's gold (and any heavy blow's but the Warrior's) or the Berserker's rose red. A cut all
+// around (a whirl) is the spin slash instead.
 function bladeCut(ctx, f, cam, p) {
   // The skill's school, else the path's own colour (a Berserker's basic blows are red too).
   const school = f.snd ?? f.path;
-  const name = school === 'ink' ? 'celslashink' : school === 'shadow' ? 'celslashshadow' : school === 'coral' ? 'celslashcoral' : school === 'rage' ? 'celslashred' : school === 'thunder' ? 'celslashstorm' : school === 'redstorm' ? 'celslashcrimson' : school === 'indigo' ? 'celslashindigo' : school === 'holy' || (f.big && school !== 'steel') ? 'celslashgold' : 'celslash';
-  if (school === 'rosegold') {
-    // The Blade Dancer's cuts come from her ring spinning round her: its ring-cut, seen flat.
-    fxSprite(ctx, 'celbdhit', f.x - cam.x, f.y - cam.y + 2, { p, scale: (f.r ?? 60) / 36, sy: f.flat ? 0.42 : 0.8, flip: (f.dir || 1) < 0 });
-    return;
-  }
-  if (f.flat && school === 'coral') {
-    // The Wind Dancer's whirl: her own swirl of coral and cream ribbons round her, seen flat.
-    // (Flattened round her waist and kept to her reach, so its ribbons pass round her, not over her face.)
-    fxSprite(ctx, 'celwdswirl', f.x - cam.x, f.y - cam.y + 4, { p, scale: (f.r ?? 60) / 88, sy: 0.38, alpha: 0.9, flip: (f.dir || 1) < 0 });
-    return;
-  }
-  if (f.flat && (school === 'ink' || school === 'shadow')) {
-    // A thief's whirl: a ring of her own cut (brushed ink, or violet moonlight) swept round her.
-    fxSprite(ctx, school === 'ink' ? 'celringink' : 'celringshadow', f.x - cam.x, f.y - cam.y + 2, { p, scale: (f.r ?? 60) / 34, sy: 0.42 });
-    return;
-  }
+  const name = school === 'rage' ? 'celslashred' : school === 'thunder' ? 'celslashstorm' : school === 'redstorm' ? 'celslashcrimson' : school === 'indigo' ? 'celslashindigo' : school === 'holy' || (f.big && school !== 'steel') ? 'celslashgold' : 'celslash';
   if (f.flat) {
     // A whirl: the spin slash sweeping right round the body, seen flat.
     fxSprite(ctx, school === 'rage' ? 'celspinred' : school === 'holy' ? 'celspingold' : school === 'thunder' ? 'celspinstorm' : school === 'redstorm' ? 'celspincrimson' : school === 'indigo' ? 'celspinindigo' : 'celspin', f.x - cam.x, f.y - cam.y + 2, { p, scale: (f.r ?? 60) / 40, sy: 0.42, flip: (f.dir || 1) < 0 });

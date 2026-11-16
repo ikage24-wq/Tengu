@@ -66,16 +66,18 @@ export const NPCS = {
     greeting: 'Moonleaf Grove welcomes you. Listen: the water under the roots is always moving. A Tide Mage learns to move with it, to strike with it, and to mend with it. Shall we begin?',
   },
   kestrel: {
-    id: 'kestrel', name: 'Kestrel', title: 'Acrobat Archer Instructor', role: 'instructor', family: 'archer',
-    building: 'archer', sign: 'Archer Lodge', gear: { weapon: { id: 'bow_50' }, ...outfit('archer', 50) },
-    quests: ['kestrel_targets', 'kestrel_canyon', 'kestrel_glade', 'kestrel_wings', 'archer_trial'], showJob: 'beastmaster',
+    id: 'kestrel', name: 'Kestrel', title: 'Archer', role: 'guide',
+    // (Her archer's armour went with the line, 2026-11-16: an outdoorsy hiker's look with her bow.)
+    building: 'archer', sign: 'Archer Lodge', gear: { weapon: { id: 'bow_50' }, top: { id: 'look_casual_flannel_top' }, bottom: { id: 'look_casual_cargo_bottom' }, shoes: { id: 'look_casual_hightops_shoes' }, gloves: { id: 'look_casual_fingerless_gloves' } },
+    quests: ['kestrel_targets', 'kestrel_canyon', 'kestrel_glade', 'kestrel_wings'],
     look: { hairStyle: 'ponytail', hairColor: '#9be08f', skinTone: '#fbd9bf', eyeColor: '#2f6b3a', outfitColor: '#8ee3a6', eyeStyle: 'round', face: 'cat' },
     greeting: 'Sprout Village is archer country! Keep your distance and your aim true.',
   },
   vex: {
-    id: 'vex', name: 'Vex', title: 'Wind Dancer Instructor', role: 'instructor', family: 'thief',
-    building: 'thief', sign: 'Wind Dance Hall', gear: { weapon: { id: 'dagger_50', variant: 'dark' }, ...outfit('thief', 50) },
-    quests: ['story_4_1', 'story_4_2', 'story_4_3', 'vex_rumor', 'vex_shadows', 'vex_stage', 'vex_miko', 'vex_festival', 'thief_trial'], showJob: 'shinobi',
+    id: 'vex', name: 'Vex', title: 'Dancer', role: 'guide',
+    // (Her dancer's armour went with the line, 2026-11-16: a stage outfit, still a performer.)
+    building: 'thief', sign: 'Wind Dance Hall', gear: { weapon: { id: 'dagger_50', variant: 'dark' }, top: { id: 'look_casual_idol_top' }, bottom: { id: 'look_casual_tennis_bottom' }, shoes: { id: 'look_casual_platforms_shoes' }, gloves: { id: 'look_casual_fingerless_gloves' } },
+    quests: ['story_4_1', 'story_4_2', 'story_4_3', 'vex_rumor', 'vex_shadows', 'vex_stage', 'vex_miko', 'vex_festival'],
     look: { hairStyle: 'swoop', hairColor: '#3b3650', skinTone: '#c98e66', eyeColor: '#e8a23c', outfitColor: '#5d5285', eyeStyle: 'sleepy', face: 'smug' },
     greeting: 'Every fight is a dance, and the harbor is my stage. Light feet, big finish. Shall we?',
   },

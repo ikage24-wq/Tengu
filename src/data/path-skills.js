@@ -4,10 +4,10 @@
 // per path": a path's version is not its first job's).
 //
 // The data lives with each skill: its `at()` may return `paths`, keyed by job id (paladin,
-// berserker, beastmaster, stormcaller, shinobi, kitsune, cleric, sorcerer, ...):
+// stormwall, tempest, tidecaller, maelstrom, ...):
 //   paths: { paladin: [ ...combo steps ] }           an array is the path's own combo (moves,
 //                                                     timing, effects), in place of `combo`;
-//   paths: { beastmaster: { anim: 'pthattrap', look: 'hat' } }   an object is laid over the
+//   paths: { maelstrom: { anim: 'mshield', look: 'abyss' } }     an object is laid over the
 //                                                     skill's params (a skill that isn't a combo:
 //                                                     its move `anim`, a trap's `look`, ...).
 // The skill's numbers stay its own: a path's version should keep the same hits (pct, reach,

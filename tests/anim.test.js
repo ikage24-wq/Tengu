@@ -255,27 +255,3 @@ test('the Warrior line never passes a blade across the face mid-move, and each m
   }
 });
 
-// The Arbalist Engineer: each shot pushes the crossbow out to arm's length (her body and knees
-// read round it) and never up at her face, and her moves are different figures, not one crouch.
-test('the Arbalist Engineer aims out at arm\'s length, below her face, in figures of her own', async () => {
-  const { moveAt } = await import('../src/render/moves.js');
-  const kinds = ['aesnap', 'aedouble', 'aebrace', 'aerecoil', 'aeduck', 'aetriple', 'aeslide', 'aedeploy', 'aebertha'];
-  const shapes = new Set();
-  for (const kind of kinds) {
-    let reach = 0;
-    const sig = [];
-    for (let i = 0; i <= 40; i++) {
-      const mv = moveAt(kind, i / 40, 0.6, { weapon: 'crossbow' });
-      const r = { frontLeg: [0.8, 0, 0], backLeg: [-0.8, 0, 0], backArm: [0, 0], cape: 0 };
-      mv.rig?.(r);
-      assert.ok(mv.arm <= 104, `${kind} raises the crossbow to her face at ${i / 40}`);
-      reach = Math.max(reach, mv.arm);
-      if (i % 8 === 0) sig.push(`${Math.round(mv.arm / 12)},${Math.round(r.backLeg[2] / 30)},${Math.round((r.squat ?? 0) / 2)},${Math.round((mv.lunge ?? 0) / 4)}`);
-    }
-    // (Deploying, she sets it aside; ducking, she fires up out of a crouch with it tucked in.)
-    if (kind !== 'aedeploy' && kind !== 'aeduck') assert.ok(reach >= 60, `${kind} never pushes the crossbow out (${Math.round(reach)})`);
-    const key = sig.join('|');
-    assert.ok(!shapes.has(key), `${kind} moves just like another`);
-    shapes.add(key);
-  }
-});

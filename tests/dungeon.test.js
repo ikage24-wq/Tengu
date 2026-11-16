@@ -31,13 +31,14 @@ function heroAt(rng, level, jobs, gate = 'hollow_gate') {
 
 test('warriors tank, everyone else deals damage', () => {
   assert.equal(roleOf('warrior', 'warrior'), 'tank');
-  for (const [job, fam] of [['archer', 'archer'], ['thief', 'thief']]) assert.equal(roleOf(job, fam), 'dps');
+  for (const [job, fam] of [['tidemage', 'mage'], ['maelstrom', 'mage'], ['tempest', 'warrior']]) assert.equal(roleOf(job, fam), 'dps');
+  assert.equal(roleOf('tidecaller', 'mage'), 'healer');
   assert.equal(roleOf('novice', 'beginner'), null);
 });
 
 test('the group finder fills a 1 tank / 1 healer / 2 DPS group around you', () => {
   const rng = seeded(3);
-  const world = heroAt(rng, 11, ['archer']);
+  const world = heroAt(rng, 11, ['tidemage']);
   const plan = planGroup(world);
   assert.deepEqual(plan.slots.map((s) => s.role), ['tank', 'healer', 'dps', 'dps']);
   assert.equal(plan.slots.filter((s) => s.who === 'you').length, 1);
@@ -70,8 +71,8 @@ test('friends online at the gate always come along, even sharing your role', () 
   const rng = seeded(9);
   for (const [mine, theirs, want] of [
     ['warrior', ['warrior'], ['tank', 'tank', 'healer', 'dps']],
-    ['archer', ['thief'], ['tank', 'healer', 'dps', 'dps']],
-    ['warrior', ['warrior', 'warrior', 'warrior', 'archer'], ['tank', 'tank', 'tank', 'tank']],
+    ['tidemage', ['maelstrom'], ['tank', 'healer', 'dps', 'dps']],
+    ['warrior', ['warrior', 'warrior', 'warrior', 'tidemage'], ['tank', 'tank', 'tank', 'tank']],
   ]) {
     const world = heroAt(rng, 20, [mine]);
     const friends = theirs.map((job, i) => ({ id: `f${i}`, name: `Friend${i}`, job, level: 20 }));
@@ -95,7 +96,7 @@ test('every dungeon room is laid out and every monster in it exists', () => {
 
 test("a tank's hits make several times the threat", () => {
   const rng = seeded(9);
-  const world = heroAt(rng, 11, ['archer']);
+  const world = heroAt(rng, 11, ['tidemage']);
   startRun(world);
   const tank = partyMembers(world.bots).find((b) => world.dungeon.roles[b.id] === 'tank');
   const m = world.mobs[0];
@@ -209,7 +210,7 @@ test('a group clears Rootwood Hollow from the first room to the last', () => {
   const rng = seeded(14);
   Math.random = rng;
   try {
-    const world = heroAt(rng, 11, ['archer']);
+    const world = heroAt(rng, 11, ['tidemage']);
     assert.equal(startRun(world), null);
     const seen = new Set();
     let done = false;
@@ -239,7 +240,7 @@ test('a group clears Moonlit Manor: lanterns, the portrait puzzle, the Armours, 
   const rng = seeded(17);
   Math.random = rng;
   try {
-    const world = heroAt(rng, 18, ['archer'], 'manor_gate');
+    const world = heroAt(rng, 18, ['tidemage'], 'manor_gate');
     assert.equal(startRun(world, 'manor'), null);
     assert.equal(world.map.id, 'manor1');
     const seen = new Set();
@@ -266,7 +267,7 @@ test("the gallery portraits lock in only on the crest's picture", async () => {
   const { turnPortrait, CREST } = await import('../src/world/manor.js');
   const { loadMap } = await import('../src/world/world.js');
   const rng = seeded(23);
-  const world = heroAt(rng, 18, ['archer'], 'manor_gate');
+  const world = heroAt(rng, 18, ['tidemage'], 'manor_gate');
   assert.equal(startRun(world, 'manor'), null);
   loadMap(world, 'manor2', 'west');
   const room = world.dungeon.room;
@@ -285,7 +286,7 @@ test('a group dives the Sunken Aquarium Palace: corals, currents, the clam vault
   const rng = seeded(29);
   Math.random = rng;
   try {
-    const world = heroAt(rng, 23, ['archer'], 'tidepool_pier');
+    const world = heroAt(rng, 23, ['tidemage'], 'tidepool_pier');
     assert.equal(startRun(world, 'aquarium'), null);
     assert.equal(world.map.id, 'aquarium1');
     const seen = new Set();
@@ -312,7 +313,7 @@ test('the vault clams open only in the bell\u2019s order, and a wrong one shuts 
   const { openClam } = await import('../src/world/aquarium.js');
   const { loadMap } = await import('../src/world/world.js');
   const rng = seeded(31);
-  const world = heroAt(rng, 23, ['archer'], 'tidepool_pier');
+  const world = heroAt(rng, 23, ['tidemage'], 'tidepool_pier');
   assert.equal(startRun(world, 'aquarium'), null);
   loadMap(world, 'aquarium3', 'west');
   const room = world.dungeon.room;
@@ -335,7 +336,7 @@ test('a group goes round the Clockwork Carnival: music boxes, springs and balloo
   const rng = seeded(42);
   Math.random = rng;
   try {
-    const world = heroAt(rng, 28, ['archer'], 'carnival_gate');
+    const world = heroAt(rng, 28, ['tidemage'], 'carnival_gate');
     assert.equal(startRun(world, 'carnival'), null);
     assert.equal(world.map.id, 'carnival1');
     const seen = new Set();
@@ -363,7 +364,7 @@ test('a group climbs the Star Observatory: lamps, the constellation, low gravity
   const rng = seeded(41);
   Math.random = rng;
   try {
-    const world = heroAt(rng, 33, ['archer'], 'observatory_steps');
+    const world = heroAt(rng, 33, ['tidemage'], 'observatory_steps');
     assert.equal(startRun(world, 'observatory'), null);
     assert.equal(world.map.id, 'observatory1');
     const seen = new Set();
@@ -391,7 +392,7 @@ test('the constellation lamps flip their neighbours, and the hall is always solv
   const { loadMap } = await import('../src/world/world.js');
   for (const seed of [43, 47, 53, 59]) {
     const rng = seeded(seed);
-    const world = heroAt(rng, 33, ['archer'], 'observatory_steps');
+    const world = heroAt(rng, 33, ['tidemage'], 'observatory_steps');
     const random = Math.random;
     Math.random = rng;
     try {
@@ -417,7 +418,7 @@ test('a group climbs the Candy Volcano: the valley, the mine, the recipe, the fo
   const rng = seeded(67);
   Math.random = rng;
   try {
-    const world = heroAt(rng, 38, ['archer'], 'sugar_trail');
+    const world = heroAt(rng, 38, ['tidemage'], 'sugar_trail');
     assert.equal(startRun(world, 'volcano'), null);
     assert.equal(world.map.id, DUNGEONS.volcano.rooms[0]);
     const seen = new Set();
@@ -444,7 +445,7 @@ test('the candy kitchen recipe takes exactly what it asks, and one too many spoi
   const { addCandy } = await import('../src/world/volcano.js');
   const { loadMap } = await import('../src/world/world.js');
   const rng = seeded(61);
-  const world = heroAt(rng, 38, ['archer'], 'sugar_trail');
+  const world = heroAt(rng, 38, ['tidemage'], 'sugar_trail');
   assert.equal(startRun(world, 'volcano'), null);
   loadMap(world, 'volcano3', 'west');
   const room = world.dungeon.room;
@@ -463,7 +464,7 @@ test('a group plays the Dream Theatre: the lobby, the ship, the forest, the ball
   const rng = seeded(71);
   Math.random = rng;
   try {
-    const world = heroAt(rng, 43, ['archer'], 'theatre_row');
+    const world = heroAt(rng, 43, ['tidemage'], 'theatre_row');
     assert.equal(startRun(world, 'theatre'), null);
     assert.equal(world.map.id, DUNGEONS.theatre.rooms[0]);
     const seen = new Set();
@@ -490,7 +491,7 @@ test('the forest cue lamps take their sequence in order, and a wrong cue starts 
   const { pressCue, cueShowing } = await import('../src/world/theatre.js');
   const { loadMap } = await import('../src/world/world.js');
   const rng = seeded(73);
-  const world = heroAt(rng, 43, ['archer'], 'theatre_row');
+  const world = heroAt(rng, 43, ['tidemage'], 'theatre_row');
   assert.equal(startRun(world, 'theatre'), null);
   loadMap(world, 'theatre3', 'west');
   const room = world.dungeon.room;
@@ -515,7 +516,7 @@ test("a group crosses the Sky Whale's Back: the docks, the market, the lungs, th
   const rng = seeded(79);
   Math.random = rng;
   try {
-    const world = heroAt(rng, 48, ['archer'], 'cloudcatch_pier');
+    const world = heroAt(rng, 48, ['tidemage'], 'cloudcatch_pier');
     assert.equal(startRun(world, 'skywhale'), null);
     assert.equal(world.map.id, DUNGEONS.skywhale.rooms[0]);
     const seen = new Set();
@@ -542,7 +543,7 @@ test('the lung gardens: the air-blooms open only on the breath out', async () =>
   const { tendBloom, breathOf } = await import('../src/world/skywhale.js');
   const { loadMap } = await import('../src/world/world.js');
   const rng = seeded(83);
-  const world = heroAt(rng, 48, ['archer'], 'cloudcatch_pier');
+  const world = heroAt(rng, 48, ['tidemage'], 'cloudcatch_pier');
   assert.equal(startRun(world, 'skywhale'), null);
   loadMap(world, 'skywhale3', 'west');
   const room = world.dungeon.room;
@@ -599,7 +600,7 @@ test('the group finder brings only real jobs, and helpers use only their own rea
     assert.ok(SKILLS[id], `${id} is a real skill`);
     assert.equal(SKILLS[id].job, job);
   }
-  for (const [seed, level, jobs] of [[3, 11, ['archer']], [8, 12, ['thief']], [34, 40, ['warrior', 'stormwall']]]) {
+  for (const [seed, level, jobs] of [[3, 11, ['tidemage']], [8, 12, ['warrior']], [34, 40, ['warrior', 'stormwall']]]) {
     const rng = seeded(seed);
     const world = heroAt(rng, level, jobs);
     assert.equal(startRun(world), null);
@@ -634,7 +635,7 @@ test('the Tidecaller is the party healer: the finder brings her in, and her move
   assert.equal(roleOf('tidecaller', 'mage'), 'healer');
   assert.equal(roleOf('maelstrom', 'mage'), 'dps');
   const rng = seeded(21);
-  const world = heroAt(rng, 32, ['archer'], 'observatory_steps');
+  const world = heroAt(rng, 32, ['tidemage'], 'observatory_steps');
   assert.equal(startRun(world, 'observatory'), null);
   const healer = partyMembers(world.bots).find((b) => world.dungeon.roles[b.id] === 'healer');
   assert.equal(healer.char.job, 'tidecaller');

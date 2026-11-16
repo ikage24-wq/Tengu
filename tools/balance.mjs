@@ -24,7 +24,7 @@ import { MOBS } from '../src/data/mobs.js';
 import { roleOf } from '../src/data/dungeons.js';
 import { GEAR_LEVELS } from '../src/data/items.js';
 
-export const WEAPON = { warrior: 'sword', paladin: 'sword', berserker: 'axe', tempest: 'sword', stormwall: 'sword', archer: 'bow', beastmaster: 'bow', stormcaller: 'crossbow', thief: 'dagger', shinobi: 'dagger', kitsune: 'gauntlet', tidemage: 'staff', maelstrom: 'staff', tidecaller: 'staff' };
+export const WEAPON = { warrior: 'sword', paladin: 'sword', berserker: 'axe', tempest: 'sword', stormwall: 'sword', tidemage: 'staff', maelstrom: 'staff', tidecaller: 'staff' };
 export const BALANCE_JOBS = Object.keys(WEAPON);
 const DT = 1 / 60;
 // How hard the monsters in the survival test hit (their attack times this, plus 3 a level).
@@ -135,14 +135,10 @@ export function makeRun(job, level, { n = 1, main = null, fight = false, mpFree 
     w, c, dummies, t: 0, died: false, diedAt: null, last: null, casts: {},
     damage: () => dummies.reduce((a, m) => a + (1e9 - Math.max(0, m.hp)), 0),
     tick: () => seeded(() => {
-      // Keep facing the targets, in reach (a step back or a dash can't carry them off). (The Endless
-      // Blade Dance blinks her through them and back: she turns to face them herself.)
-      const blinking = w.barrage?.kind === 'shinobi' && Math.abs(w.body.x - dummies[0].x) < 120;
-      if (!blinking) {
-        if (w.body.x > dummies[0].x - 20) w.body.x = dummies[0].x - 40;
-        if (w.body.x < dummies[0].x - 170) w.body.x = dummies[0].x - 120;
-        w.body.facing = 1;
-      }
+      // Keep facing the targets, in reach (a step back or a dash can't carry them off).
+      if (w.body.x > dummies[0].x - 20) w.body.x = dummies[0].x - 40;
+      if (w.body.x < dummies[0].x - 170) w.body.x = dummies[0].x - 120;
+      w.body.facing = 1;
       if (!fight) {
         for (const m of dummies) {
           m.x = Math.max(m.x, x0 + 40);

@@ -709,11 +709,6 @@ const ICONS = {
     ctx.fillRect(s * 0.19, -s * 0.22, s * 0.11, s * 0.68);
   },
 
-  // A top hat (the Phantom Trickster's Illusion).
-  tophat(ctx, s) {
-    ctx.fillRect(-s * 0.48, s * 0.18, s * 0.96, s * 0.14);
-    ctx.fillRect(-s * 0.28, -s * 0.42, s * 0.56, s * 0.62);
-  },
 
   // A music note, two beamed together.
   note(ctx, s) {
@@ -753,46 +748,6 @@ const ICONS = {
     roundRect(ctx, -s * 0.34, -s * 0.42, s * 0.68, s * 0.3, s * 0.08);
     ctx.fill();
     ctx.restore();
-  },
-  cog(ctx, s) {
-    ctx.beginPath();
-    for (let i = 0; i < 32; i++) {
-      const a = (i / 32) * Math.PI * 2;
-      const r = Math.floor(i / 2) % 2 === 0 ? s * 0.5 : s * 0.38;
-      if (i) ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r);
-      else ctx.moveTo(Math.cos(a) * r, Math.sin(a) * r);
-    }
-    ctx.closePath();
-    ctx.moveTo(s * 0.16, 0);
-    ctx.arc(0, 0, s * 0.16, 0, Math.PI * 2, true);
-    ctx.fill('evenodd');
-  },
-  // A chakram: a ring with blade points round it (the Blade Dancer's Ricochet).
-  chakram(ctx, s) {
-    ctx.beginPath();
-    for (let k = 0; k < 6; k++) {
-      const a = (k / 6) * Math.PI * 2;
-      ctx.moveTo(Math.cos(a - 0.2) * s * 0.3, Math.sin(a - 0.2) * s * 0.3);
-      ctx.lineTo(Math.cos(a + 0.15) * s * 0.5, Math.sin(a + 0.15) * s * 0.5);
-      ctx.lineTo(Math.cos(a + 0.3) * s * 0.3, Math.sin(a + 0.3) * s * 0.3);
-    }
-    ctx.fill();
-    ctx.beginPath();
-    ctx.arc(0, 0, s * 0.36, 0, Math.PI * 2);
-    ctx.arc(0, 0, s * 0.2, 0, Math.PI * 2, true);
-    ctx.fill();
-  },
-  // A wing, three feathers swept up and back (the Sky Dancer's Tailwind).
-  wing(ctx, s) {
-    for (const [len, a, w] of [[0.9, -0.9, 0.2], [0.78, -0.45, 0.18], [0.62, -0.05, 0.16]]) {
-      ctx.save();
-      ctx.translate(-s * 0.28, s * 0.3);
-      ctx.rotate(a);
-      ctx.beginPath();
-      ctx.ellipse(s * len * 0.5, 0, s * len * 0.5, s * w, 0, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.restore();
-    }
   },
   // A crescent moon (the Thief's Shadow).
   moon(ctx, s) {

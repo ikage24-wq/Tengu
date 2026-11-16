@@ -28,15 +28,13 @@ function sparkle(ctx, x, y, r, color) {
 
 // A silly subtitle under the logo, rolled fresh on every page load.
 const oneOf = (list) => list[Math.floor(Math.random() * list.length)];
-const JOB_NAMES = ['Paladin', 'Berserker', 'Phantom Trickster', 'Arbalist Engineer', 'Blade Dancer', 'Sky Dancer', 'Cleric', 'Sorcerer'];
+const JOB_NAMES = ['Thunderguard', 'Stormwall', 'Tempest', 'Tide Mage', 'Tidecaller', 'Maelstrom'];
 const QUOTE_MAKERS = [
   () => `${oneOf(JOB_NAMES)}s are perfectly balanced. Probably.`,
   () => `${oneOf(['Mira', 'Marlo', 'Lulu', 'The Crystal King'])} says hi!`,
   () => oneOf([
     'Bring friends. Share the loot. Or don\'t.',
-    'Pick a card. Any card.',
     'Paladins hit like a pillow, on purpose.',
-    'Engineers: please stop blowing up the bots.',
     'Smug face sold separately.',
     'New hair. Same bad decisions.',
     'Big round glasses: now in the Cash Shop.',

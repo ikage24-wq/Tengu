@@ -120,7 +120,7 @@ const COLOUR = {
 // A spell's cast, by school: each element's own recorded charge-up.
 const CAST = { fire: 'castFire', ice: 'castIce', lightning: 'castZap', holy: 'castHoly', poison: 'castPoison', shadow: 'castDark', rage: 'castDark', wind: 'castWind', steel: 'castSteel' };
 // Projectiles leaving the hand or the bow, by kind.
-const SHOTS = { bwwave: 'bwwave', tpwave: 'tpwave', tgwave: 'tgwave', tcpearl: 'tcpearl', tcshell: 'tcshell', tccrescent: 'tccrescent', tccrescentbig: 'tccrescent', tcbubble: 'tmbubble', tcsilverwave: 'tcsilverwave', tcsilvertide: 'tcsilverwave', msspear: 'msspear', msspearbig: 'msspear', msbolt: 'msbolt', msglow: 'msbolt', msblackwave: 'msblackwave', msblacktide: 'msblackwave', tmwave: 'tmwave', tmwavebig: 'tmwavebig', tmgreat: 'tmwavebig', tmbubble: 'tmbubble', ptarrow: 'arrow', ptbig: 'arrowHeavy', ptcard: 'star', ptdove: 'gust', acarrow: 'arrow', acbig: 'arrowHeavy', skygust: 'gust', skygustbig: 'gust', kunai: 'arrow', hawkarrow: 'arrow', hawkbig: 'arrowHeavy', falcon: 'arrowHeavy', featherwake: 'gust', wisp: 'gust', windarrow: 'arrow', galearrow: 'arrowHeavy', cyclone: 'cycloneShot', heavybolt: 'crossbow', blastbolt: 'crossbowHeavy', frostbolt: 'crossbowHeavy', ballista: 'boltKick', heartbolt: 'heartshock', arrow: 'arrow', rapid: 'arrow', draw: 'arrowHeavy', bigarrow: 'arrowHeavy', star: 'star', bigstar: 'star', fire: 'fire', bomb: 'fire', holy: 'holyChime', feather: 'gust', pebble: 'star', bolt: 'zap', stormbolt: 'crossbow', thunderbolt: 'crossbowHeavy', megabolt: 'crossbowHeavy' };
+const SHOTS = { bwwave: 'bwwave', tpwave: 'tpwave', tgwave: 'tgwave', tcpearl: 'tcpearl', tcshell: 'tcshell', tccrescent: 'tccrescent', tccrescentbig: 'tccrescent', tcbubble: 'tmbubble', tcsilverwave: 'tcsilverwave', tcsilvertide: 'tcsilverwave', msspear: 'msspear', msspearbig: 'msspear', msbolt: 'msbolt', msglow: 'msbolt', msblackwave: 'msblackwave', msblacktide: 'msblackwave', tmwave: 'tmwave', tmwavebig: 'tmwavebig', tmgreat: 'tmwavebig', tmbubble: 'tmbubble', wisp: 'gust', arrow: 'arrow', draw: 'arrowHeavy', bigarrow: 'arrowHeavy', star: 'star', bigstar: 'star', fire: 'fire', bomb: 'fire', holy: 'holyChime', feather: 'gust', pebble: 'star', bolt: 'zap' };
 // Spells and skill effects landing, by kind.
 const SPELLS = {
   burst: 'zapHit', beam: 'zapHit',
@@ -130,12 +130,11 @@ const SPELLS = {
   judgment: 'holyBurst', holy: 'holyBurst',
   quake: 'quake', hammer: 'quake', stampede: 'quake',
   vortex: 'gust', rain: 'arrowHeavy', xslash: 'bladestorm', bladestorm: 'bladestorm',
-  feathers: 'gust', moonslash: 'bladestorm', smokepuff: 'gust', healbloom: 'holyBurst',
-  galeblast: 'stormburst',
+  feathers: 'gust', healbloom: 'holyBurst',
 };
-const ARROWS = new Set(['ptarrow', 'ptbig', 'acarrow', 'acbig', 'hawkarrow', 'hawkbig', 'arrow', 'rapid', 'draw', 'bigarrow', 'rain', 'windarrow', 'galearrow', 'cyclone', 'heavybolt', 'blastbolt', 'frostbolt', 'aebolt', 'aebig', 'aebertha']);
-// Crossbow shots that kick harder than a plain bolt (the archer paths' own have their own sound).
-const HEAVY_BOLTS = new Set(['bigarrow', 'blastbolt', 'frostbolt', 'aebig', 'aebertha']);
+const ARROWS = new Set(['arrow', 'draw', 'bigarrow', 'rain']);
+// Crossbow shots that kick harder than a plain bolt.
+const HEAVY_BOLTS = new Set(['bigarrow']);
 // Heavy bolts that land with a thud of their own.
 const HEAVY_HITS = new Set(['ballista', 'heartbolt', 'galearrow', 'blastbolt']);
 // Each melee weapon's swing [light, heavy], and the cut its blows land with.
@@ -214,7 +213,7 @@ const SOUNDS = {
   stomp: ({ big, pan }) => voice(big ? 'landHard' : 'stomp', { pan }),
   dot: ({ pan }) => voice('dot', { pan }),
   shot({ kind, weapon, pan }) {
-    if (weapon === 'crossbow' && ARROWS.has(kind) && kind !== 'heavybolt') return voice(HEAVY_BOLTS.has(kind) ? 'crossbowHeavy' : 'crossbow', { pan });
+    if (weapon === 'crossbow' && ARROWS.has(kind)) return voice(HEAVY_BOLTS.has(kind) ? 'crossbowHeavy' : 'crossbow', { pan });
     voice(SHOTS[kind] ?? 'zap', { pan, rate: kind === 'bigstar' ? 0.85 : 1 });
   },
   cast({ school = 'arcane', big, pan }) {

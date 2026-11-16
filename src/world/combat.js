@@ -10,8 +10,7 @@ import { mobBox } from './mobs.js';
 import { ITEMS } from '../data/items.js';
 import { MOVE_MIN, basicMove, defaultMove } from '../render/moves.js';
 import { healMembers, buffMembers, reviveTarget, reviveMember, provoke } from './dungeon.js';
-import { mirrorDodge, smokeBomb } from './phantom.js';
-import { hasCombo, hasPathCombo, basicCombo, skillCombo, addRage, addAim, RAGE_MAX, outgoing, gaugeOf, gaugeFull, AFTER, pathSchool, schoolFor, SCHOOL_TEXT, bulwarkWave, inForm, formSkill, healAround, setTrap } from './melee.js';
+import { hasCombo, hasPathCombo, basicCombo, skillCombo, addRage, addAim, RAGE_MAX, outgoing, gaugeOf, gaugeFull, AFTER, pathSchool, schoolFor, SCHOOL_TEXT, bulwarkWave, inForm, formSkill, healAround } from './melee.js';
 
 // The element of the player's weapon (endgame weapons only); attack effects take it on.
 export function weaponElement(char) {
@@ -146,18 +145,6 @@ export function procOf(char, skillId) {
 }
 
 
-// Light Feet (Wind Dancer): a hit that lands on her may set her dancing: untouchable for a moment,
-// and harder to hit for a few seconds (not while it's already up). `rng` for tests.
-export function danceOnHit(world, rng = Math.random) {
-  const p = procOf(world.char, 'lightfeet');
-  if (!p || world.dead || (world.char.buffs.lightfeet?.until ?? 0) > world.now || rng() >= p.chance) return;
-  applyBuff(world, 'lightfeet', p);
-  world.invuln = Math.max(world.invuln, p.secs);
-  const { body } = world;
-  world.numbers.push({ x: body.x, y: body.y - body.h - 6, text: 'LIGHT FEET', color: '#ffb3a6', t: 0 });
-  world.fx.push({ kind: 'wdswirl', x: body.x, y: body.y, t: 0, dur: 0.4 });
-}
-
 // Divine Aegis (Paladin): a hit that leaves you under `low` of your max HP makes you raise your
 // blade, guarding and mending you and the party around you (not while it's already up).
 export function rallyOnHit(world) {
@@ -170,8 +157,8 @@ export function rallyOnHit(world) {
 }
 
 // Before a hit lands, it may not land at all. Divine Aegis (Paladin): a shield of light flashes
-// up and blocks it, then a holy shockwave answers it (twice as often while the Aegis is up). Mirror Dodge (Phantom Trickster):
-// one of her copies takes it instead and pops in smoke (world/phantom.js). True if the hit is gone. `rng` for tests.
+// up and blocks it, then a holy shockwave answers it (twice as often while the Aegis is up). True if
+// the hit is gone. `rng` for tests.
 export function blockOnHit(world, fromX = null, rng = Math.random) {
   const { body } = world;
   if (world.dead) return false;
@@ -184,11 +171,6 @@ export function blockOnHit(world, fromX = null, rng = Math.random) {
     world.numbers.push({ x: body.x, y: body.y - body.h - 6, text: 'BLOCK', color: SCHOOL_TEXT.holy, t: 0 });
     world.juice.push({ type: 'shake', mag: 1.5, dur: 0.15 });
     bulwarkWave(world, p);
-    return true;
-  }
-  if (mirrorDodge(world, fromX, rng)) {
-    world.invuln = Math.max(world.invuln, 0.5);
-    world.numbers.push({ x: body.x, y: body.y - body.h - 6, text: 'MISS', color: '#e6b8f2', t: 0 });
     return true;
   }
   return false;
@@ -233,7 +215,6 @@ export function drinkBlood(world, dmg) {
 
 // Everything that answers a hit you take.
 export function hurtProcs(world, dmg) {
-  danceOnHit(world);
   rallyOnHit(world);
 }
 
@@ -339,7 +320,7 @@ export function cast(world, skillId, rng = Math.random) {
   else if (s?.id === 'snacktime') world.fx.push({ kind: 'ptshowfx', x: body.x, y: body.y, t: 0, dur: 1.6 });
   // (Overclock spins a great brass gear up behind her.)
   else if (s?.id === 'overclock') world.fx.push({ kind: 'aeclockfx', x: body.x, y: body.y, t: 0, dur: 1.4 });
-  else if (s?.school && s.school !== 'coral' && (lock || type === 'buff')) world.fx.push({ kind: 'powerup', school: schoolFor(char, s.school), x: body.x, y: body.y, t: 0, dur: Math.max(0.5, lock + 0.15), big: lock >= 1 });
+  else if (s?.school && (lock || type === 'buff')) world.fx.push({ kind: 'powerup', school: schoolFor(char, s.school), x: body.x, y: body.y, t: 0, dur: Math.max(0.5, lock + 0.15), big: lock >= 1 });
 
   let area = params.range;
   if (type === 'blink') {
@@ -358,18 +339,8 @@ export function cast(world, skillId, rng = Math.random) {
     area = { w: Math.abs(body.x - from) + 40, h: 64, back: true };
   }
 
-  // Tricks of their own: the Acrobat Archer's Springboard, the Phantom Trickster's Smoke Bomb.
   // (A skill with a move of its own lands on that move's moment, `landAt`, not on the press.)
   const onMove = (run) => (s?.landAt ? (world.later ??= []).push({ at: now + poseDur * s.landAt, run }) : run());
-  if (params.trap) {
-    const x = body.x + body.facing * 70;
-    onMove(() => setTrap(world, x, params));
-    return { ok: true };
-  }
-  if (params.smoke) {
-    onMove(() => smokeBomb(world, params));
-    return { ok: true };
-  }
 
   if (type === 'buff') {
     onMove(() => {

@@ -149,7 +149,9 @@ jobs.)
 - [x] **Phase 4: Chapters 4–7.** Story done with Phase 1 (the crystal mines dungeon is left to the
   dungeon redesign). Was: Tamamo, Lilith and Selene trials, the crystal mines dungeon,
   and the Prismaris finale; the 2nd job is part of chapter 4.
-- [x] **Phase 5: Archer and Thief 2nd jobs.** (The Archer was remade 2026-11-02 as the Acrobat
+- [x] **Phase 5: Archer and Thief 2nd jobs.** (Both lines were wiped on 2026-11-16, at the player's
+  request: their characters play on as Novices; Kestrel and Vex stay as guides, without trials.)
+  (The Archer was remade 2026-11-02 as the Acrobat
   Archer: docs/design/acrobat-archer.md; the Beastmaster was replaced by the Phantom Trickster:
   docs/design/phantom-trickster.md.) Archer done: Kestrel's trial at 30 (shoot down 15
   Wraiths), then Ranger (bow, Gale gauge: Gale Volley, Cyclone Arrow, Tailwind, mastery, Storm

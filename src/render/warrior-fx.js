@@ -8,14 +8,12 @@
 // the hero's feet otherwise. Returns false for kinds it doesn't draw.
 
 import { fxSprite } from './fx-sprites.js';
-import { drawArbalistFx } from './arbalist-fx.js';
 import { drawTideFx } from './tide-fx.js';
 import { drawStormFx } from './storm-fx.js';
 import { rockBurst } from './blade-fx.js';
-import { dancerHit, cloudRing, springTrail } from './dancer-fx.js';
 
-const SCHOOLS = new Set(['holy', 'rage', 'ice', 'wind', 'shadow', 'hawk', 'storm', 'ink', 'fox', 'spirit']);
-const tint = (school) => (SCHOOLS.has(school) ? school : school === 'gold' ? 'holy' : school === 'focus' ? 'ice' : '');
+const SCHOOLS = new Set(['holy', 'rage', 'ice', 'storm']);
+const tint = (school) => (SCHOOLS.has(school) ? school : school === 'gold' ? 'holy' : '');
 // The schools drawn as real light, fire and motion (no outlined cartoon dust): the Warrior's steel,
 // the Paladin's light, the Berserker's fire.
 const REAL = new Set(['steel', 'holy', 'rage']);
@@ -24,13 +22,13 @@ export const ringOf = (school) => `celring${tint(school)}`;
 export const pillarSprite = (school) => `celpillar${tint(school)}`;
 // A Warrior effect in a path's own colour: steel for the Warrior, gold for the Paladin, blood red
 // for the Berserker (they share the Warrior's skills).
-export const pathTint = (school, steel, gold, red) => (school === 'holy' || school === 'hawk' ? gold : school === 'rage' ? red : steel);
+export const pathTint = (school, steel, gold, red) => (school === 'holy' ? gold : school === 'rage' ? red : steel);
 // The emblem rising in a path's pillar.
-const EMBLEMS = { phantom: 'celembphantom', acro: 'celembacro', brass: 'celembgear', aerial: 'celembsky', rosegold: 'celembblade', coral: 'celembdancer', holy: 'celembholy', rage: 'celembrage', steel: 'celembsteel', hawk: 'celembhawk', wind: 'celembwind', storm: 'celembstorm', shadow: 'celembshadow', ink: 'celembink', fox: 'celembfox' };
+const EMBLEMS = { holy: 'celembholy', rage: 'celembrage', steel: 'celembsteel', storm: 'celembstorm' };
 
 // Pixel art keeps its pixel size: effects that play large have big versions drawn large (`*big`
 // strips), so scales stay near 1.
-const BIG = new Set(['celshockred', 'celringstorm', 'celring', 'celringholy', 'celringrage', 'celringwind', 'celringhawk', 'celringshadow', 'celringmint', 'celringink', 'celringfox']);
+const BIG = new Set(['celshockred', 'celringstorm', 'celring', 'celringholy', 'celringrage', 'celringmint']);
 
 
 // A ring of force racing out flat along the ground to radius `r`.
@@ -57,43 +55,6 @@ export function lightPillar(ctx, name, x, y, p, h = 100) {
 export function pillarOf(ctx, school, x, y, p, { h = 90 } = {}) {
   if (school === 'rage') {
     rageFlare(ctx, x, y, p, h);
-    return;
-  }
-  // The Phantom Trickster's: no pillar, a puff of stage smoke with her badge rising out of it.
-  if (school === 'phantom') {
-    fxSprite(ctx, 'celptsmoke', x, y + 4, { p, scale: 0.4 });
-    if (p > 0.15) fxSprite(ctx, EMBLEMS.phantom, x, y - 50 - 14 * Math.min(1, p * 2), { p: (p - 0.15) / 0.85, scale: 0.5 });
-    return;
-  }
-  // The Acrobat Archer's: no pillar, a firework going off over her with her badge rising.
-  if (school === 'acro') {
-    fxSprite(ctx, 'celacfirework', x, y - 40, { p, scale: 0.4 });
-    if (p > 0.15) fxSprite(ctx, EMBLEMS.acro, x, y - 50 - 14 * Math.min(1, p * 2), { p: (p - 0.15) / 0.85, scale: 0.5 });
-    return;
-  }
-  // The Arbalist Engineer's: no pillar, a burst of steam with her badge turning in it.
-  if (school === 'brass') {
-    fxSprite(ctx, 'celaesteam', x, y + 4, { p, scale: 0.45 });
-    if (p > 0.15) fxSprite(ctx, EMBLEMS.brass, x, y - 44 - 14 * Math.min(1, p * 2), { p: (p - 0.15) / 0.85, scale: 0.5, rot: p * 2 });
-    return;
-  }
-  // The Sky Dancer's: no pillar, a whirlwind rising under her with her badge over it.
-  if (school === 'aerial') {
-    fxSprite(ctx, 'celskywhirl', x, y + 4, { t: p * 1.2, scale: 0.6, alpha: p < 0.8 ? 1 : (1 - p) / 0.2 });
-    if (p > 0.15) fxSprite(ctx, EMBLEMS.aerial, x, y - 50 - 14 * Math.min(1, p * 2), { p: (p - 0.15) / 0.85, scale: 0.5 });
-    return;
-  }
-  // The Blade Dancer's: no pillar, a ricochet flash and a ring popping out, her badge rising.
-  if (school === 'rosegold') {
-    fxSprite(ctx, 'celbdbounce', x, y - 26, { p, scale: 0.8 });
-    if (p > 0.15) fxSprite(ctx, EMBLEMS.rosegold, x, y - 50 - 14 * Math.min(1, p * 2), { p: (p - 0.15) / 0.85, scale: 0.5 });
-    return;
-  }
-  // The Wind Dancer's: no pillar, her swirl of ribbons with her badge rising out of it.
-  if (school === 'coral') {
-    fxSprite(ctx, 'celwdswirl', x, y - 26, { p, scale: 0.56 });
-
-    if (p > 0.15) fxSprite(ctx, EMBLEMS.coral, x, y - 50 - 14 * Math.min(1, p * 2), { p: (p - 0.15) / 0.85, scale: 0.5 });
     return;
   }
   groundRing(ctx, ringOf(school), x, y, Math.min(1, p * 1.3), 40);
@@ -124,7 +85,7 @@ export function debris(ctx, x, y, p, w, school = null) {
 }
 
 // A hit landing on a monster in a path's colour: the Warrior's cross of blades, the Paladin's
-// star of light, the Berserker's claw marks, the Thief's violet X, a burst for anyone else.
+// star of light, the Berserker's claw marks, a burst for anyone else.
 export function hitMark(ctx, school, x, y, p, { big = false, seed = 0.5, dir = 1 } = {}) {
   const k = big ? 1.15 : 0.85;
   // (The Paladin's star is drawn smaller than the others' marks: its rays reach far, and full size
@@ -133,14 +94,6 @@ export function hitMark(ctx, school, x, y, p, { big = false, seed = 0.5, dir = 1
   // (The Berserker's claw marks a size smaller and each torn at its own angle, the all-class pass:
   // the same big red X on every blow read as spam.)
   else if (school === 'rage') fxSprite(ctx, 'celclaw', x, y, { p, scale: k * 0.62, rot: (seed - 0.5) * 0.9, flip: dir < 0 });
-  else if (school === 'shadow') fxSprite(ctx, 'celshadowhit', x, y, { p, scale: k, rot: (seed - 0.5) * 0.6 });
-  else if (school === 'ink') fxSprite(ctx, 'celinkhit', x, y, { p, scale: k * 0.85, rot: (seed - 0.5) * 1.2, flip: dir < 0 });
-  else if (school === 'brass') fxSprite(ctx, 'celaehit', x, y, { p, scale: k * 0.6 });
-  else if (school === 'phantom') fxSprite(ctx, 'celpthit', x, y, { p, scale: k * 0.55, rot: (seed - 0.5) * 0.4 });
-  else if (school === 'acro') dancerHit(ctx, school, x, y, p, { big, seed, dir, scale: k * 0.5 });
-  else if (school === 'aerial') dancerHit(ctx, school, x, y, p, { big, seed, dir, scale: k * 0.6 });
-  else if (school === 'rosegold') dancerHit(ctx, school, x, y, p, { big, seed, dir, scale: k * 0.7 });
-  else if (school === 'coral') dancerHit(ctx, school, x, y, p, { big, seed, dir, scale: k * 0.7 });
   else fxSprite(ctx, 'celcross', x, y, { p, scale: k, rot: (seed - 0.5) * 0.8 });
 }
 
@@ -149,52 +102,16 @@ export function drawWarriorFx(ctx, f, x, y, p, cam, time) {
   const flip = dir < 0;
   const seed = f.seed ?? 0.5;
   const box = f.box ? { x: f.box.x - cam.x, y: f.box.y - cam.y, w: f.box.w, h: f.box.h } : null;
-  if ((f.kind === 'aehit' || f.kind === 'aesteam' || f.kind === 'aeclockfx') && drawArbalistFx(ctx, f, x, y, p)) return true;
   if ((f.kind.startsWith('tm') || f.kind.startsWith('ms') || f.kind.startsWith('tc')) && drawTideFx(ctx, f, x, y, p)) return true;
   // The Thunderguard's lightning (render/storm-fx.js).
   if ((f.kind.startsWith('tg') || f.kind.startsWith('tp') || f.kind.startsWith('bw')) && drawStormFx(ctx, f, x, y, p, cam)) return true;
   switch (f.kind) {
     // The Wind Dancer's (coral and cream): her mark on each monster hit, the swirl of ribbons, the
     // crescent gust down the line, and Grand Finale's spotlight and rose of ribbons.
-    case 'wdhit':
-      return dancerHit(ctx, 'coral', x, y - (f.h ?? 40) * 0.55, p, { big: f.big || f.crit, seed, dir, scale: 0.6 });
-    // Her swirl and her gusts are drawn as far as the blow reaches (`f.r`, its reach): the swirl
-    // round her out to it (a wide one flattened round her waist), the gust racing down the line to
-    // its end.
-    case 'wdswirl': {
-      const r = f.r ?? 70;
-      if (r > 110) return fxSprite(ctx, 'celwdswirlbig', x, y - 44, { p, scale: r / 184, sy: 0.42 }) || true;
-      return fxSprite(ctx, 'celwdswirl', x, y - 26, { p, scale: r / 74, sy: r > 80 ? 0.7 : 1 }) || true;
-    }
-    case 'wdgust':
-      return fxSprite(ctx, 'celwdgustfar', x - dir * 10, y - 28, { p, flip, scale: ((f.r ?? 130) * 0.8) / 150 }) || true;
-    // A puff of wind off her palms (each blow with gloves): a smaller crescent gust out to the blow's reach.
-    case 'wdpuff':
-      return fxSprite(ctx, 'celwdgustfar', x - dir * 10, y - 26, { p, flip, scale: ((f.r ?? 95) * 0.8) / 150 }) || true;
-    case 'wdfinale':
-      return fxSprite(ctx, 'celwdfinale', x, y + 4, { p }) || true;
     case 'shock':
       // A finisher's shockwave racing out to the edge of its reach (world/melee.js), capped so it
       // never draws a thin line right across the screen (the player found those ugly).
       return fxSprite(ctx, f.name, x, y + 2, { p, scale: Math.min(f.r, 150) / 99 }) || true;
-    case 'aehit':
-      return fxSprite(ctx, 'celaehit', x, y - (f.h ?? 40) * 0.55, { p, scale: f.big || f.crit ? 0.7 : 0.5 }) || true;
-    case 'aeboom':
-      // (as wide as the blast: a sticky bolt's 50-80 px, a bomblet's ~30)
-      return fxSprite(ctx, 'celaeboom', x, y + 2, { p, scale: f.small ? 0.4 : 0.85 }) || true;
-    case 'aesteam':
-      // (Steam Vent's blast, `big`, is as wide as it reaches; a muzzle puff, `small`, still reads.)
-      return fxSprite(ctx, 'celaesteam', x, y + 2, { p, scale: f.big ? 1.15 : f.small ? 0.18 : 0.4, flip }) || true;
-    case 'aestick': {
-      // A sticky bolt stuck in the monster, its teal light blinking faster as it's about to burst.
-      const m = f.mob;
-      const sx = (m ? m.x - cam.x : x) - 4;
-      const sy = (m ? m.y - (m.air ?? 0) - m.def.h / 2 - cam.y : y - 20);
-      return fxSprite(ctx, 'celaebolt', sx, sy, { frame: 0, scale: 0.32, rot: 0.6, alpha: 0.6 + 0.4 * Math.sin(p * p * 40) }) || true;
-    }
-    case 'aeballista':
-      // (Behind her and set well back, so the whole machine shows and she stands at its crank.)
-      return fxSprite(ctx, 'celaeballista', x - dir * 34, y + 4, { p, scale: 0.85, flip }) || true;
     case 'rxjump': {
       if (f.t < 0) return true;
       const tx = f.tx - cam.x;
@@ -226,119 +143,6 @@ export function drawWarriorFx(ctx, f, x, y, p, cam, time) {
     }
     // On a monster, her cloud; as a blow's burst all round her (`f.r`), clouds bursting at both edges
     // of its reach, clear of her face (the wind ring out to its reach comes from world/melee.js).
-    case 'skyhit':
-      if (f.r) {
-        const cx = x - dir * f.r * 0.3;
-        for (const s of [-1, 1]) fxSprite(ctx, 'celskyhit', cx + s * f.r * 0.72, y - 22, { p, scale: 0.75, flip: s < 0 });
-        return true;
-      }
-      return dancerHit(ctx, 'aerial', x, y - (f.h ?? 40) * 0.55, p, { big: f.big || f.crit, seed, dir, scale: 0.5 });
-    case 'skyupdraft':
-      fxSprite(ctx, 'celskywhirlbig', x, y + 4, { t: p * 0.9, scale: (f.r ?? 80) / 127, alpha: p < 0.7 ? 1 : (1 - p) / 0.3 });
-      return fxSprite(ctx, 'celskyhit', x, y - 40, { p, scale: 0.8 }) || true;
-    case 'sddownburst':
-      // Downburst: the ring slapping down where she lands and the wind bursting out both ways.
-      return fxSprite(ctx, 'celsddownburst', x, y + 4, { p, scale: 0.62 }) || true;
-    case 'sdgalefx':
-      // Gale Step: the streak of wind she rode, from where she set off, pointing the way she went.
-      return fxSprite(ctx, 'celsdgalefx', x, y - 30, { p, scale: 0.6, flip: f.dir < 0 }) || true;
-    case 'sdcloudnine':
-      // (Her sprite on the floor behind her, and a ring of puffy clouds circling her in front.)
-      fxSprite(ctx, 'celsdcloudnine', x, y + 6, { p: Math.min(1, p * 1.6), scale: 0.75 });
-      return true;
-    case 'sdcloudring':
-      cloudRing(ctx, x, y, p);
-      return true;
-    case 'achspring':
-      springTrail(ctx, x, y, dir, f.d ?? 120, p);
-      return true;
-    case 'skytornado':
-      return fxSprite(ctx, 'celskytornado', x, y + 6, { p, scale: 0.8 }) || true;
-    case 'bdhoopla':
-      // Hoopla: the ring dropping over the monster and spinning down tight round it.
-      return fxSprite(ctx, 'celbdhoopla', x, y + 4, { p, scale: 0.6 }) || true;
-    case 'bdjuggle':
-      return fxSprite(ctx, 'celbdjuggle', x, y + 4, { p, scale: 0.6 }) || true;
-    case 'bdshow':
-      return fxSprite(ctx, 'celbdshow', x, y + 4, { p, scale: 0.65 }) || true;
-    case 'bdhit':
-      return dancerHit(ctx, 'rosegold', x, y - (f.h ?? 40) * 0.55, p, { big: f.big || f.crit, seed, dir, scale: 0.55 });
-    case 'bdbounce':
-      return fxSprite(ctx, 'celbdbounce', x, y - (f.h ?? 40) * 0.55, { p, scale: 0.6, flip, rot: (seed - 0.5) * 0.5 }) || true;
-    case 'bdcarousel':
-      return fxSprite(ctx, 'celbdcarousel', x, y + 4, { p }) || true;
-    // Ribbon Lash on a Blade Dancer: two rose-gold rings whip once round her waist out to the
-    // blow's reach (eased out and in, flattened round her, behind her on the far side), then spark.
-    case 'bdorbit': {
-      const r = (f.r ?? 76) * 0.8;
-      const go = p * p * (3 - 2 * p);
-      const fade = Math.min(1, p * 6, (1 - p) * 5);
-      for (let i = 0; i < 2; i++) {
-        const a = -Math.PI / 2 + i * Math.PI + dir * go * Math.PI * 2.2;
-        const rx = r * Math.min(1, 0.35 + p * 2);
-        fxSprite(ctx, 'celbdring', x + Math.cos(a) * rx, y - 20 + Math.sin(a) * rx * 0.22, { t: f.t + i * 0.1, flip: Math.sin(a) * dir > 0, scale: 0.62, alpha: fade * (Math.sin(a) < 0 ? 0.75 : 1) });
-      }
-      if (p > 0.7) fxSprite(ctx, 'celbdbounce', x + dir * r * 0.9, y - 22, { p: (p - 0.7) / 0.3, scale: 0.5, flip });
-      return true;
-    }
-    // Gust Line on a Blade Dancer: a ring flung skimming down the line to the end of its reach,
-    // slowing as it goes, and a ricochet spark where it turns.
-    case 'bdskim': {
-      const r = f.r ?? 210;
-      const go = 1 - (1 - Math.min(1, p / 0.75)) ** 2;
-      const fade = Math.min(1, p * 8, (1 - p) * 4);
-      fxSprite(ctx, 'celbdring', x + dir * r * 0.8 * go, y - 24, { t: f.t, flip, scale: 0.9, alpha: fade });
-      if (p > 0.6) fxSprite(ctx, 'celbdbounce', x + dir * r * 0.8, y - 26, { p: (p - 0.6) / 0.4, scale: 0.7, flip });
-      return true;
-    }
-    // Gust Line on a Sky Dancer: a crescent of wind racing down the line, growing as it goes, and
-    // a cloud bursting where it ends.
-    case 'skyline': {
-      const r = f.r ?? 210;
-      const go = 1 - (1 - Math.min(1, p / 0.7)) ** 2;
-      const fade = Math.min(1, p * 8, (1 - p) * 4);
-      fxSprite(ctx, 'celskygust', x + dir * r * 0.8 * go, y - 26, { t: f.t, flip, scale: 0.9 + 0.5 * go, alpha: fade });
-      if (p > 0.55) fxSprite(ctx, 'celskyhit', x + dir * r * 0.8, y - 26, { p: (p - 0.55) / 0.45, scale: 0.6, flip });
-      return true;
-    }
-    // ---- The first jobs' skills as each path plays them (data/skills.js `paths`), in the path's
-    // own art: ----
-    // Grand Finale as the Blade Dancer's ring revue: rose-gold rings cascading round her in three
-    // tiers, whirling faster and wider out to the blow's reach (behind her on the far side,
-    // flattened round her), sparking as they cut; at the big blow (~0.6 of it) they all fly out to
-    // the edge and spark there.
-    case 'bdrevue': {
-      const R = 190;
-      const fly = Math.max(0, (p - 0.58) / 0.42);
-      const fade = Math.min(1, p * 6, (1 - p) * 5);
-      const spin = p * p * 7 * Math.PI;
-      for (let i = 0; i < 6; i++) {
-        const tier = i % 3;
-        const a = spin * dir + (i * Math.PI) / 3 + tier * 0.6;
-        const rx = Math.min(1, 0.25 + p * 2) * (R * (0.45 + 0.18 * tier)) * (1 + 0.6 * (1 - (1 - fly) ** 2));
-        const yy = y - 18 - tier * 22 - 8 * Math.sin(p * 9 + i);
-        fxSprite(ctx, 'celbdring', x + Math.cos(a) * rx, yy + Math.sin(a) * rx * 0.2, { t: f.t + i * 0.07, flip: Math.sin(a) * dir > 0, scale: 0.8 + 0.2 * tier, alpha: fade * (fly > 0 ? 1 - fly : 1) * (Math.sin(a) < 0 ? 0.7 : 1) });
-        if (p > 0.2 && p < 0.58 && ((p * 30 + i) | 0) % 6 === 0) fxSprite(ctx, 'celbdbounce', x + Math.cos(a) * rx, yy, { p: (p * 30) % 1, scale: 0.45, flip });
-      }
-      if (fly > 0) for (const s of [-1, 1]) fxSprite(ctx, 'celbdbounce', x + s * R, y - 40, { p: fly, scale: 1.1, flip: s < 0 });
-      return true;
-    }
-    // Grand Finale as the Sky Dancer's cloudburst: a whirl of wind rising off the ground under her,
-    // clouds gathering round it in a ring out to the blow's reach, turning faster as she climbs; at
-    // her heel drop (~0.6 of it) the whirl breaks and the clouds burst outward.
-    case 'skycloudburst': {
-      const R = 190;
-      const burst = Math.max(0, (p - 0.58) / 0.42);
-      const fade = Math.min(1, p * 5, (1 - p) * 4);
-      fxSprite(ctx, 'celskywhirlbig', x, y + 4, { t: f.t * 0.8, scale: 0.78, alpha: 0.9 * fade * (1 - burst) });
-      for (let i = 0; i < 8; i++) {
-        const a = p * p * 6 * Math.PI * dir + (i * Math.PI) / 4;
-        const rx = R * (0.55 + 0.3 * Math.min(1, p * 2)) * (1 + 0.35 * burst);
-        const yy = y - 40 - 40 * Math.min(1, p * 1.6) * (1 - burst) - 14 * (i % 2);
-        fxSprite(ctx, 'celskyhit', x + Math.cos(a) * rx, yy + Math.sin(a) * rx * 0.18, { p: burst > 0 ? 0.4 + 0.6 * burst : 0.25 + 0.1 * Math.sin(f.t * 6 + i), scale: 0.7, flip: Math.cos(a) < 0, alpha: fade * (Math.sin(a) < 0 ? 0.7 : 1) });
-      }
-      return true;
-    }
     case 'powerup': {
       // Power bursting out as a skill begins: a pillar of the path's light with its emblem, and a
       // ring of fire for rage.
@@ -350,37 +154,9 @@ export function drawWarriorFx(ctx, f, x, y, p, cam, time) {
       // A dash: speed streaks along the path, dust kicked up behind, a burst where it ends.
       const tx = f.tx - cam.x;
       const len = Math.abs(tx - x);
-      // The paths' own (their Pirouette): the Blade Dancer skims a rose-gold ring along her path and
-      // it sparks where she stops; the Sky Dancer rides a crescent of wind with a cloud at each end.
-      if (f.school === 'rosegold' || f.school === 'aerial') {
-        const go = 1 - (1 - Math.min(1, p / 0.7)) ** 2;
-        const mx = x + (tx - x) * go;
-        const fade = Math.min(1, p * 8, (1 - p) * 4);
-        if (f.school === 'rosegold') {
-          fxSprite(ctx, 'celbdring', mx, y - 22, { t: f.t, flip, scale: 0.8, alpha: fade });
-          if (p > 0.6) fxSprite(ctx, 'celbdbounce', tx, y - 24, { p: (p - 0.6) / 0.4, scale: 0.6, flip });
-        } else {
-          fxSprite(ctx, 'celskygust', mx, y - 24, { t: f.t, flip, scale: 0.9 + 0.4 * go, alpha: fade });
-          fxSprite(ctx, 'celskyhit', x, y - 20, { p, scale: 0.5, flip: !flip });
-          if (p > 0.55) fxSprite(ctx, 'celskyhit', tx, y - 22, { p: (p - 0.55) / 0.45, scale: 0.5, flip });
-        }
-        return true;
-      }
-      if (f.school === 'ink' || f.school === 'fox') {
-        const ink = f.school === 'ink';
-        fxSprite(ctx, ink ? 'celstreakshadow' : 'celfoxtrail', (x + tx) / 2, y - 18, { p, t: p, flip, sx: ink ? len / 100 : undefined, scale: ink ? 1 : len / 160 });
-        fxSprite(ctx, ink ? 'celsmokebomb' : 'celfoxhit', x, y, { p, flip: !flip, scale: ink ? 0.5 : 0.5 });
-        fxSprite(ctx, ink ? 'celsmokebomb' : 'celfoxhit', tx, y, { p: Math.min(1, p * 1.2), scale: ink ? 0.4 : 0.45 });
-        return true;
-      }
-      fxSprite(ctx, f.school === 'rage' ? 'celstreakred' : f.school === 'holy' ? 'celstreakgold' : f.school === 'shadow' ? 'celstreakshadow' : 'celstreak', (x + tx) / 2, y - 18, { p, flip, sx: len / 100 });
-      if (f.school === 'shadow') fxSprite(ctx, 'celsmoke', x, y, { p, flip: !flip, scale: 0.8 });
-      else if (REAL.has(f.school)) fxSprite(ctx, 'celquake', x, y + 8, { p, flip: !flip, scale: 0.4 });
+      fxSprite(ctx, f.school === 'rage' ? 'celstreakred' : f.school === 'holy' ? 'celstreakgold' : 'celstreak', (x + tx) / 2, y - 18, { p, flip, sx: len / 100 });
+      if (REAL.has(f.school)) fxSprite(ctx, 'celquake', x, y + 8, { p, flip: !flip, scale: 0.4 });
       else fxSprite(ctx, 'celdust', x, y, { p, flip: !flip, scale: 0.8 });
-      if (f.school === 'shadow') {
-        fxSprite(ctx, 'celsmoke', tx, y, { p: Math.min(1, p * 1.2), scale: 0.6 });
-        return true;
-      }
       fxSprite(ctx, f.school === 'rage' ? 'celhitred' : f.school === 'holy' ? 'celholyhit' : 'celhit', tx + dir * 10, y - 22, { p, scale: 0.8 });
       return true;
     }
@@ -494,7 +270,6 @@ export function drawWarriorFx(ctx, f, x, y, p, cam, time) {
     case 'gather': {
       // Power gathering at the weapon hand before a big blow: lines of the path's light rushing
       // in to a swelling diamond.
-      if (f.school === 'focus') return false;
       const name = f.school === 'holy' ? 'celchargegold' : f.school === 'rage' ? 'celchargered' : 'celcharge';
       fxSprite(ctx, name, x + dir * 12, y - 20, { t: time, scale: f.big ? 0.9 : 0.7, alpha: p < 0.15 ? p / 0.15 : 1 });
       return true;

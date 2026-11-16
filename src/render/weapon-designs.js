@@ -1206,7 +1206,7 @@ function scaled(d, [sx, sy]) {
   return { shapes: d.shapes.map(sh), blade: d.blade.map((y) => y * sy), reach: d.reach.map(pt), a };
 }
 
-// (The dagger items are the Wind Dancer's chakrams now: docs/design/wind-dancer.md.)
+// (The dagger items are drawn as chakrams.)
 const DRAW = { sword, axe, spear, dagger: chakram, wand, staff, bow, crossbow };
 export const DESIGNS = Object.fromEntries(Object.entries(DRAW).map(([k, f]) => [k, (m, t, frame) => scaled(f(m, t, frame), CHUNK[k] ?? [1, 1])]));
 

@@ -94,7 +94,7 @@ export function checkMaps(ids = Object.keys(MAPS), warm = 300, frames = 300) {
   const out = [];
   for (const id of ids) steady(11, () => {
     const need = MAPS[id].dungeon ? DUNGEONS[MAPS[id].dungeon].minLevel ?? 1 : 1;
-    const w = createWorld(balanceChar('archer', Math.max(40, need + 2)));
+    const w = createWorld(balanceChar('tidemage', Math.max(40, need + 2)));
     // (A garden festival, forced on or off for the check: PERF_FESTIVAL='{"eve":1,"hour":20}' or 'null'.)
     if (process.env.PERF_FESTIVAL) w.forceFestival = JSON.parse(process.env.PERF_FESTIVAL);
     w.log = () => {};
@@ -206,7 +206,7 @@ export function checkWindows(warm = 120, frames = 240) {
   const out = [];
   const names = Object.keys(createUiState().windows);
   for (const name of names) steady(17, () => {
-    const w = createWorld(balanceChar('archer', 40));
+    const w = createWorld(balanceChar('tidemage', 40));
     w.log = () => {};
     w.god = true;
     // (Midday whatever the real clock says: the light and the night creatures follow the hour.)

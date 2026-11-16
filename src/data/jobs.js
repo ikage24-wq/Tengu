@@ -1,6 +1,7 @@
-// Jobs: a Novice start, four first jobs at level 5 (FIRST_JOB_LEVEL: the player's call, 2026-11-05,
+// Jobs: a Novice start, two first jobs at level 5 (FIRST_JOB_LEVEL: the player's call, 2026-11-05,
 // so the plain Novice stretch is short), and second-job branches at level 30.
-// HP/MP growth follows the classic split: warriors tanky, mages MP-heavy, archers and thieves between.
+// HP/MP growth follows the classic split: warriors tanky, mages MP-heavy. (The Archer and Thief lines
+// were wiped 2026-11-16, to be made again: their weapons stay, for Novices.)
 //
 // Balance (tools/tune.mjs finds these from the real game, tools/balance.mjs measures it): `power`
 // scales everything a job hits for, `spread` its hits on monsters past the one it's on. Damage
@@ -13,8 +14,6 @@ export const FAMILY_STATS = {
   beginner: { primary: 'str', secondary: 'dex' },
   warrior: { primary: 'str', secondary: 'dex' },
   mage: { primary: 'int', secondary: 'luk' },
-  archer: { primary: 'dex', secondary: 'str' },
-  thief: { primary: 'luk', secondary: 'dex' },
   gm: { primary: 'int', secondary: 'luk' },
 };
 
@@ -37,11 +36,6 @@ export const JOBS = {
     hp: 28, mp: 12, advanceHp: 350, advanceMp: 150, weapons: ['sword', 'axe', 'spear'],
     blurb: 'A warrior who fights inside a storm of his own: sudden explosive strikes with sword, axe or spear, and the tank of the party. His blows and the hits he takes build Charge; full (Overcharge), lightning jumps from every blow and a static shell shocks whatever hits him. Thunder Rush, Storm Cleave, Thunderclap, Static Guard, and Thunderfall: he falls riding a giant bolt. Raises STR.',
   },
-  archer: {
-    id: 'archer', power: 1.48, spread: 0.98, name: 'Acrobat Archer', family: 'archer', tier: 1, parent: 'novice', level: FIRST_JOB_LEVEL,
-    hp: 22, mp: 17, advanceHp: 250, advanceMp: 250, weapons: ['bow', 'crossbow'],
-    blurb: 'A show-off who shoots mid-trick with DEX: skips, flips, splits and rolls, a short trick bow loosed from the top of each. Her hits in a row build Combo, and her flips keep it going; full (Showtime), every shot splits into three. Handspring, Springboard, and Grand Somersault: a huge leap raining golden arrows down.',
-  },
   // The Tide Mage (docs/design/tide-mage.md): water from the head of her staff, with INT. Whips of
   // water, rolling waves and bubbles that pop; her hits and her heals build Tide, and at High Tide
   // every attack sends a little wave after it and the party round her mends.
@@ -50,12 +44,6 @@ export const JOBS = {
     hp: 18, mp: 26, advanceHp: 200, advanceMp: 400, weapons: ['staff'],
     blurb: 'A mage of the sea, with INT and a staff: whips of water, rolling waves and bubbles that pop. Her hits and heals build Tide; at High Tide every attack sends a wave after it, and the party near her mends. Bubble Shield, Tide Pool, and Great Wave: a giant wave that sweeps the screen.',
   },
-  thief: {
-    id: 'thief', power: 0.74, spread: 1.19, name: 'Wind Dancer', family: 'thief', tier: 1, parent: 'novice', level: FIRST_JOB_LEVEL,
-    hp: 22, mp: 17, advanceHp: 250, advanceMp: 250, weapons: ['dagger', 'gauntlet'],
-    blurb: 'A travelling dancer who fights like it\'s a show, with LUK: twin chakrams up close, or wind from her gloved hands. Her hits build Encore; full, every attack strikes twice.',
-  },
-
   // Warrior branches. Both ask for Brann's trial first (see `trial`).
   // The Thunderguard's tank path (docs/design/stormwall.md): the storm as a fortress.
   stormwall: {
@@ -68,31 +56,6 @@ export const JOBS = {
     id: 'tempest', power: 2.45, spread: 2.01, name: 'Tempest', family: 'warrior', tier: 2, parent: 'warrior', level: 30, trial: 'warrior_trial',
     hp: 26, mp: 14, advanceHp: 400, advanceMp: 200, weapons: ['sword', 'axe', 'spear'],
     blurb: 'The Thunderguard who let the storm loose: speed itself, red lightning. Short wind-ups and flash-steps; his hits build Velocity, and the fuller it runs the faster he swings, red afterimages of him striking again behind every blow. Full (Lightspeed), every finisher blinks him through the pack. Flash Step, Thousand Cuts, Crimson Arc, and Red Thunder: he blinks from monster to monster across the screen. Deals damage in a group.',
-  },
-
-  // Archer branches. Both ask for Kestrel's trial first.
-  beastmaster: {
-    id: 'beastmaster', power: 2.61, spread: 1.69, name: 'Phantom Trickster', family: 'archer', tier: 2, parent: 'archer', level: 30, trial: 'archer_trial',
-    hp: 26, mp: 17, advanceHp: 340, advanceMp: 260, weapons: ['bow'],
-    blurb: 'A stage magician with a bow: every shot dressed up as a trick. Her hits build Illusion, and see-through copies of her appear behind her and shoot beside her. Arrows that vanish and strike again, doves, cards, a smoke bomb, and Grand Illusion: a ring of copies all loosing at once.',
-  },
-  stormcaller: {
-    id: 'stormcaller', power: 2.33, spread: 0.82, name: 'Arbalist Engineer', family: 'archer', tier: 2, parent: 'archer', level: 30, trial: 'archer_trial',
-    hp: 24, mp: 18, advanceHp: 300, advanceMp: 280, weapons: ['crossbow'],
-    blurb: 'An inventor with a crossbow of her own making. Her bolts build steam Pressure; full, every shot fires two. Sticky and cluster bolts, a steam vent, a little turret that fires on its own, and Big Bertha: a giant ballista bolt through everything.',
-  },
-
-  // The dancer's paths (the Thief's branches, ids kept). Both ask for Vex's trial first; each keeps
-  // to one of her two weapons: the Blade Dancer to chakrams, the Sky Dancer to gloves.
-  shinobi: {
-    id: 'shinobi', power: 2.47, spread: 2.06, name: 'Blade Dancer', family: 'thief', tier: 2, parent: 'thief', level: 30, trial: 'thief_trial',
-    hp: 24, mp: 17, advanceHp: 320, advanceMp: 260, weapons: ['dagger'],
-    blurb: 'A ring-throwing showgirl with chakrams. Her rings ricochet from monster to monster and fly home to her hand, building Ricochet; full, two rose-gold rings orbit her and cut whatever comes close. Rebound, Twin Rings, and Golden Carousel: a carousel of rings flung out through everything.',
-  },
-  kitsune: {
-    id: 'kitsune', power: 2.77, spread: 2.24, name: 'Sky Dancer', family: 'thief', tier: 2, parent: 'thief', level: 30, trial: 'thief_trial',
-    hp: 23, mp: 18, advanceHp: 300, advanceMp: 280, weapons: ['gauntlet'],
-    blurb: 'A dancer who never lands, with gloves of wind. Every blow lifts her higher over the monsters and throws a crescent of wind down at them; her hits in the air build Tailwind, and full, she flies freely and her gusts are twice as big. Updraft, Zephyr, and Sky Waltz: a giant tornado that lifts them all and slams them down.',
   },
 
   // The Tide Mage's healer path (docs/design/tidecaller.md), the party's healer. Asks for Elowen's
@@ -121,18 +84,19 @@ export const JOBS = {
 
 // Jobs renamed or retired since older saves were made, and what they became (a job not listed here
 // that no longer exists starts over as a Novice: core/save.js).
-// Older warrior, archer, and thief advanced jobs are retired; those characters return to their first job.
-// The archer's Ranger and Sniper were remade as the Beastmaster and the Stormcaller (now the Phantom
-// Trickster and the Arbalist Engineer, ids kept). The test
+// Older warrior advanced jobs are retired; those characters return to their first job. The test
 // warrior (Swordsman, test) was tried and taken out.
 export const RETIRED_JOBS = {
+  // (The whole Archer and Thief lines, wiped 2026-11-16 to be made again from scratch: their
+  // characters play as Novices, keeping their level and items, until the new jobs are there.)
+  archer: 'novice', beastmaster: 'novice', stormcaller: 'novice', thief: 'novice', shinobi: 'novice', kitsune: 'novice',
   // (The whole Mage line, wiped 2026-11-08 to be made again from scratch: its characters play as
   // Novices, keeping their level and items, until the new mage jobs are there to pick.)
   mage: 'novice', sorcerer: 'novice', cleric: 'novice', spiritmage: 'novice', onmyoji: 'novice', shrinemaiden: 'novice',
   // (The old Warrior's paths, retired 2026-11-09 when the Thunderguard's own were made: the tank
   // plays on as the Stormwall, the damage path as the Tempest; their skill points come back.)
   paladin: 'stormwall', berserker: 'tempest',
-  testwarrior: 'warrior', blademaster: 'warrior', lancer: 'warrior', guardian: 'warrior', swordsaint: 'warrior', dragonknight: 'warrior', ranger: 'beastmaster', sniper: 'stormcaller', marksman: 'archer', hunter: 'archer', windwalker: 'archer', deadeye: 'archer', assassin: 'shinobi', nightlord: 'kitsune', duelist: 'thief', shadow: 'thief', trickster: 'thief', bladedancer: 'thief', nightstalker: 'thief', phantomthief: 'thief',
+  testwarrior: 'warrior', blademaster: 'warrior', lancer: 'warrior', guardian: 'warrior', swordsaint: 'warrior', dragonknight: 'warrior', ranger: 'novice', sniper: 'novice', marksman: 'novice', hunter: 'novice', windwalker: 'novice', deadeye: 'novice', assassin: 'novice', nightlord: 'novice', duelist: 'novice', shadow: 'novice', trickster: 'novice', bladedancer: 'novice', nightstalker: 'novice', phantomthief: 'novice',
 };
 
 // Jobs a character can advance into right now, given their current job and level. Some ask for a

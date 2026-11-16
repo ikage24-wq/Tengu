@@ -189,8 +189,6 @@ S['blink'] = [[('confetti', 0.1, 0.4, 0, 0)]]
 S['dash'] = [[('debris', 0.3, 0.6, 0, 0)]]
 S['roar'] = [[('roar', 0.2, 2.0, 0, 0)]]
 # The Acrobat's fireworks.
-S['acfirework'] = [[('whistles', 4.0, 1.3, 0, 0)]]
-S['acburst'] = [[('fireworks', peak('fireworks', 4.1, 4.8), 1.2, 0, 0)]]
 # Jingles: short, bright, and each its own.
 S['levelup'] = [[('powerup', 0.05, 1.2, 0, 0), ('entry', 0.0, 0.5, -6, 0)]]
 S['questAccept'] = [[('plucks', 0.0, 0.6, 0, 0)]]
@@ -271,7 +269,6 @@ S['castZap'] = [[('arcs', 0.6, 0.9, 0, 0), ('elec', 0.02, 0.5, -8, 0)]]
 S['boom'] = [[('explode', 0.0, 1.4, 0, 0)]]
 S['quake'] = [[('nuke', 0.0, 2.6, 0, 0)]]
 S['meteor'] = [[('bigboom', 0.0, 2.2, 0, 120), ('fire', 0.15, 0.6, -4, 0)]]
-S['blast'] = [[('cinehit', 0.1, 1.6, 0, 0)]]
 S['stomp'] = [[('stone', 0.0, 0.45, 0, 0), ('body', peak('body', 3.20, 3.49), 0.25, -4, 0)]]
 S['landHard'] = [[('stone2', 0.0, 0.5, 0, 0)]]
 S['roar'] = [[('growl', 0.05, 2.1, 0, 0)]]
@@ -279,7 +276,6 @@ S['portal'] = [[('vortex', 0.0, 1.8, 0, 0)]]
 S['dash'] = [[('scifi', 0.18, 0.75, 0, 0)]]
 S['gust'] = [[('airy', 0.5, 1.4, 0, 0)]]
 S['castWind'] = [[('airy', 0.5, 0.9, 0, 0)]]
-S['crescentcut'] = [[('energy', 0.07, 0.85, 0, 0)]]
 # Buffs.
 S['powerup'] = [[('pwr', 0.27, 1.9, 0, 0)]]
 # buff and partyBuff: tools/build-fight.py (2026-11-08)
@@ -391,30 +387,11 @@ S['astroplanet'] = [[('scifi', 0.18, 0.4, 0, 0), ('glassbrk', 0.08, 0.3, -12, 0)
 S['astrobig'] = [[('passlow', 0.55, 0.9, 0, 0), ('stone', 0.0, 0.3, -6, 0)]]
 S['astromoon'] = [[('synthwhoosh', 2.55, 0.25, 0, 0)]]
 # Acrobat Archer.
-S['achit'] = [[('smack', peak('smack', 0.03, 0.62), 0.15, 0, 0)]]
-S['trapsnap'] = [[('leversmall', 0.0, 0.25, 0, 0), ('drops', 0.04, 0.3, -6, 0)]]
-S['showtime'] = [[('confetti', 0.1, 0.4, 0, 0), ('whistles', 4.0, 1.0, -6, 100)]]
-# Phantom Trickster.
-S['pthit'] = [[('zapshort', 0.0, 0.2, 0, 0)]]
-S['ptsmoke'] = [[('debris', 0.3, 0.6, 0, 0), ('vortex', 0.0, 0.6, -8, 0)]]
-S['ptillusion'] = [[('vortex', 0.0, 1.4, 0, 0), ('bassdown', 0.38, 1.4, -6, 0)]]
-S['phantom'] = [[('vortex', 0.0, 1.2, 0, 0)]]
-S['galeFull'] = [[('airy', 0.5, 1.4, 0, 0)]]
 # Arbalist Engineer.
-S['aeboom'] = [[('cannon', 0.0, 0.6, 0, 0), ('stone', 0.0, 0.3, -6, 0)]]
-S['aesteam'] = [[('steam', 0.0, 0.9, 0, 0)]]
-S['aeballista'] = [[('lever', 0.24, 0.5, 0, 0), ('machine', 0.0, 0.4, -2, 300), ('cannon', 0.0, 1.6, 0, 1000)]]
-S['overdrive'] = [[('gearspin', 0.0, 1.2, 0, 0), ('steam', 2.4, 0.9, -6, 200)]]
 S['lockOn'] = [[('gearclick', 0.0, 0.05, 0, 0)]]
 S['castSteel'] = [[('blade', 0.0, 0.36, 0, 0), ('leversmall', 0.0, 0.2, -6, 100)]]
 # Blade Dancer.
-S['bdbounce'] = [[('ricochet', 0.0, 0.4, 0, 0)]]
-S['bdcarousel'] = [[('energy', 0.07, 0.85, 0, 0), ('airy', 0.5, 1.0, -4, 0)]]
-S['carouselfull'] = [[('energy', 0.07, 0.85, 0, 0), ('powerup', 0.05, 1.0, -6, 0)]]
 # Sky Dancer.
-S['skyupdraft'] = [[('airy', 0.5, 0.7, 0, 0)]]
-S['skytornado'] = [[('storm', 40.0, 2.0, 0, 0), ('airy', 0.5, 1.6, -3, 0)]]
-S['tailwindfull'] = [[('airy', 0.5, 1.3, 0, 0)]]
 # Team moves.
 S['teamcatch'] = [[('syringe', 0.0, 0.2, 0, 0), ('body', peak('body', 1.16, 1.46), 0.2, -10, 0)]]
 S['teamrevive'] = [[('astonish', 3.0, 1.3, 0, 0), ('light', 0.0, 1.0, -4, 0)]]

@@ -1,4 +1,4 @@
-// Job gear: the warrior, archer, mage, and thief sets (one every 5 levels, tiers 0 to 19) and
+// Job gear: the warrior and mage sets (one every 5 levels, tiers 0 to 19) and
 // the earring ladder. Each job has its own module that draws every slot for any tier; this file
 // builds the palette a piece is painted in and hands the drawing to the right module.
 //
@@ -26,9 +26,7 @@ import { darker, lighter } from './kit.js';
 import { variantsFor } from '../../data/items.js';
 import { SETS } from '../../data/sets.js';
 import warrior from './warrior.js';
-import archer from './archer.js';
 import mage from './mage.js';
-import thief from './dancer.js';
 import casual from './casual.js';
 import fun from './fun.js';
 import gacha from './gacha.js';
@@ -39,7 +37,7 @@ import starter from './starter.js';
 // The four job families, plus the Cash Shop's casual, funny, full-outfit and accessory lines and the creator's
 // starter outfits (where `t` picks a
 // design from data/outfits-*.js instead of a tier).
-export const JOB_GEAR = { warrior, archer, mage, thief, casual, fun, gacha, costume, acc, starter };
+export const JOB_GEAR = { warrior, mage, casual, fun, gacha, costume, acc, starter };
 // Looks, not job gear: no job auras, white trim, no glow. `starter` is the creator's outfits.
 export const LOOK_FAMILIES = new Set(['casual', 'fun', 'gacha', 'costume', 'acc', 'starter']);
 
@@ -48,9 +46,7 @@ const TRIMS = ['#d9a45a', '#e6ecf6', '#ffd66b', '#f4f8ff', '#fff1a8'];
 // Each job's gems and glows as its sets climb.
 const ACCENTS = {
   warrior: ['#ff6b5c', '#ff6b5c', '#ffb03b', '#ff3b2b', '#ffd23b'],
-  archer: ['#7fe08f', '#7fe0c8', '#9fe8ff', '#ffe36b', '#b8ffd6'],
   mage: ['#8fd3ff', '#b48cff', '#ff8fe0', '#ffe36b', '#e8f0ff'],
-  thief: ['#ff6b8a', '#b46bff', '#6bffd2', '#ff3b5c', '#c9a6ff'],
 };
 
 // The palette for a piece. `color` is the item's (or its variant's) main color, `accent` the

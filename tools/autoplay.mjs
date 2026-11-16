@@ -10,8 +10,8 @@
 // level, sells junk and old gear), menus and dialogue. Its second job comes at the trainer as soon
 // as its level-30 trial is done.
 //
-// Usage: node tools/autoplay.mjs [first job] [second job]     e.g. node tools/autoplay.mjs thief kitsune
-//        DUNGEON=manor node tools/autoplay.mjs archer         one dungeon only, with a trace
+// Usage: node tools/autoplay.mjs [first job] [second job]     e.g. node tools/autoplay.mjs tidemage maelstrom
+//        DUNGEON=manor node tools/autoplay.mjs warrior        one dungeon only, with a trace
 const S = new URL('../src/', import.meta.url).href;
 const { createWorld, updateWorld, loadMap } = await import(S + 'world/world.js');
 const { createCharacter, gainExp, advanceJob, autoAssignAp } = await import(S + 'core/character.js');
@@ -34,9 +34,9 @@ const { DUNGEONS } = await import(S + 'data/dungeons.js');
 const { sellJunk } = await import(S + 'ui/shop.js');
 const { GEAR_LEVELS } = await import(S + 'data/items.js');
 
-const JOB1 = process.argv[2] ?? 'archer';
-const JOB2 = process.argv[3] ?? 'beastmaster';
-const WEAPON = { warrior: 'sword', archer: 'bow', thief: 'dagger', mage: 'wand' };
+const JOB1 = process.argv[2] ?? 'warrior';
+const JOB2 = process.argv[3] ?? 'stormwall';
+const WEAPON = { warrior: 'sword', tidemage: 'staff' };
 let seed = 11;
 Math.random = () => ((seed = (seed * 1664525 + 1013904223) % 4294967296) / 4294967296);
 const DT = 1 / 60;

@@ -163,19 +163,12 @@ export const PLAYSTYLES = {
 
 function weaponStyle(bot) {
   const type = bot.stats.weaponType;
-  // Archers shoot their own way: an Archer's gold arrows, a Beastmaster's wild arrows, a Stormcaller's
-  // heavy bolts.
-  if (bot.char.job === 'beastmaster') return { reach: 200, lift: 100, pose: pick2(['ptflourish', 'ptswirl', 'ptcard', 'ptlean']), shot: 'ptarrow', ranged: true };
-  if (bot.char.job === 'stormcaller') return { reach: 220, lift: 100, pose: pick2(['aesnap', 'aedouble', 'aebrace']), shot: 'aebolt', ranged: true };
-  if (bot.char.job === 'archer') return { reach: 200, lift: 100, pose: pick2(['acskip', 'acflip', 'acroll', 'acspin']), shot: 'acarrow', ranged: true };
   // The Tidecaller flicks pearls and crescents of moonlit water.
   if (bot.char.job === 'tidecaller') return { reach: 220, lift: 100, pose: pick2(['tcpearl', 'tccrescent', 'tcribbon', 'tcchain']), shot: 'tcpearl', ranged: true };
   // The Maelstrom throws spears of the deep.
   if (bot.char.job === 'maelstrom') return { reach: 220, lift: 100, pose: pick2(['msspear', 'msbolt', 'mscross', 'msjet']), shot: 'msspear', ranged: true };
   // The Tide Mage sends her water.
   if (bot.char.job === 'tidemage') return { reach: 200, lift: 100, pose: pick2(['tmwhip', 'tmroll', 'tmbubbles', 'tmgeyser']), shot: 'tmwave', ranged: true };
-  // The Sky Dancer throws her gusts of wind.
-  if (bot.char.job === 'kitsune') return { reach: 190, lift: 100, pose: pick2(['sdpalm', 'sdscissor', 'sdflutter']), shot: 'skygust', ranged: true };
   if (WEAPON_TYPES[type]?.ranged) return { reach: 190, lift: 100, pose: type === 'gauntlet' ? 'throw' : 'draw', shot: type === 'gauntlet' ? 'star' : 'arrow', ranged: true };
   return { reach: 42, lift: 30, pose: type === 'spear' ? 'thrust' : pick2(['slash', 'slash2']), shot: null, ranged: false };
 }
@@ -539,20 +532,13 @@ function poolOf(bot) {
   return (COMBOS[bot.stats.weaponType] ?? COMBOS.none).map((s) => [s]);
 }
 
-// Their job's attack skills at a level that fits theirs: [{ id, steps, full, tune }]. Skills that
-// work their own way are played by SPECIALS below.
+// Their job's attack skills at a level that fits theirs: [{ id, steps, full, tune }].
 export function botSkills(char) {
   const chain = jobChain(char.job);
   const out = [];
   for (const s of Object.values(SKILLS)) {
     if (!chain.includes(s.job)) continue;
     const lv = Math.max(1, Math.min(s.maxLevel, Math.round(s.maxLevel * Math.min(1, (char.level - 8) / 40))));
-    if (SPECIALS[s.id]) {
-      const params = s.at(lv, s.maxLevel);
-      const sp = SPECIALS[s.id];
-      out.push({ id: s.id, steps: [{ move: params.paths?.[char.job]?.[0]?.move ?? sp.move, dur: sp.dur, strikes: [], special: s.id, params }], full: Boolean(s.fullGauge), tune: s.dmg ?? 1, rank: chain.indexOf(s.job), heal: sp.heal });
-      continue;
-    }
     if (s.type !== 'attack') continue;
     // (Each path plays a skill its own way: a Paladin's Shield Rush for the Shoulder Charge.)
     const at = s.at(lv, s.maxLevel);
@@ -618,14 +604,6 @@ function fight(bot, m, world, intent, rng) {
   const step = nextMove(bot, world, m, rng);
   if (step.air && body.onGround && !bot.hop) return;
   beginStep(bot, world, step);
-  if (step.special) {
-    SPECIALS[step.special].play(bot, world, m, rng, step.params, step.tune * (f.boost ?? 1));
-    f.boost = null;
-    f.readyAt = world.now + step.dur + (AFTER[step.kind] ?? AFTER.skill);
-    f.lastAt = f.readyAt;
-    bot.attack = { pose: step.move, t: 0, dur: step.dur, fighting: true };
-    return;
-  }
   if (f.boost && step.kind === 'finisher') {
     step.tune = (step.tune ?? 1) * f.boost;
     f.boost = null;
@@ -711,36 +689,6 @@ function fair(bot, world, mob) {
   return bot.party || helping(bot, world) || mob.def.boss || Math.abs(mob.x - you.x) >= 170 || Math.abs(mob.y - you.y) >= 90;
 }
 
-const SPECIALS = {
-  // Grand Somersault: a huge leap, a ring of gold bursting at the top, and golden arrows raining on
-  // every monster round her.
-  cometarrow: {
-    move: 'acsomersault', dur: 1.9,
-    play: (bot, world, m, rng, P, tune) => {
-      const S = P.combo[0].strikes.find((s) => s.rain);
-      const b = bot.body;
-      world.fx.push({ kind: 'acburst', x: b.x, y: b.y, t: -1.1, dur: 0.8 });
-      const range = physicalRange(bot.stats, bot.stats.weaponType, S.pct * tune);
-      world.mobs.filter((o) => o.hp > 0 && fair(bot, world, o) && Math.abs(o.x - b.x) < S.rainW / 2 && Math.abs(o.y - b.y) < 120)
-        .forEach((o, i) => {
-          world.fx.push({ kind: 'rain', variant: 'acarrow', school: 'acro', x: o.x, y: o.y, h: o.def.h, t: -1.2 - i * 0.05, dur: 0.45, seed: i });
-          land(bot, world, o, 1.4 + i * 0.05, range, { stack: i, knock: 60, launch: 140, big: !i, burst: 'achit', via: 'shot' }, rng);
-        });
-    },
-  },
-  // Grand Illusion: she vanishes in smoke and every monster round her takes a copy's arrow.
-  stampede: {
-    move: 'ptillusion', dur: 2.4,
-    play: (bot, world, m, rng, P, tune) => {
-      const G = P.combo[0].strikes[0].grand;
-      const b = bot.body;
-      world.fx.push({ kind: 'ptillusion', x: b.x, y: b.y, t: 0, dur: G.hide + 0.4 });
-      const range = physicalRange(bot.stats, bot.stats.weaponType, G.pct * tune);
-      world.mobs.filter((o) => o.hp > 0 && fair(bot, world, o) && Math.abs(o.x - b.x) < G.r + 80 && Math.abs(o.y - b.y) < 160)
-        .forEach((o, i) => land(bot, world, o, G.at + 0.2 + i * 0.03, range, { stack: i, knock: 200, launch: 160, stun: 0.3, big: !i, burst: 'pthit', via: 'shot' }, rng));
-    },
-  },
-};
 
 // ---------- Raids: a queen's moves ----------
 // Her moves are drawn on the ground a moment before they land (world/story.js). Most players see

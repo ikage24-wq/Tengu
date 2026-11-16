@@ -72,7 +72,6 @@ export const QUEST_SCENES = {
   brann_ruins: { done: 'brann_ruins_done' },
   brann_forge: { done: 'brann_forge_done' },
   brann_howl: { done: 'brann_howl_done' },
-  archer_trial: { accept: 'trial_kestrel', done: 'trial_kestrel_done' },
   mage_trial: { accept: 'trial_elowen', done: 'trial_elowen_done' },
   kestrel_targets: { done: 'kestrel_targets_done' },
   kestrel_canyon: { done: 'kestrel_canyon_done' },
@@ -82,7 +81,6 @@ export const QUEST_SCENES = {
   elowen_wisps: { done: 'elowen_wisps_done' },
   elowen_foxfire: { done: 'elowen_foxfire_done' },
   elowen_lid: { done: 'elowen_lid_done' },
-  thief_trial: { accept: 'trial_vex', done: 'trial_vex_done' },
   vex_shadows: { done: 'vex_shadows_done' },
   vex_stage: { done: 'vex_stage_done' },
   vex_miko: { done: 'vex_miko_done' },
@@ -904,15 +902,6 @@ export const SIDE_SCENES = {
     { who: 'clover', text: "All right, all right! It lands! We'll stop laughing. I'll have to write a second verse.", mood: 'happy' },
     { who: 'kestrel', text: "Keep your aim true and the wind will bring it home, {name}. Come see me at level 30. Your trial's waiting.", mood: 'happy' },
   ],
-  trial_kestrel: [
-    { who: 'kestrel', text: "Wraiths drift. They dodge. They vanish. A real archer hits them anyway. And any arrow that goes straight up and doesn't come down, we never speak of." },
-    { who: 'kestrel', text: 'Fifteen. In the Crystal Cave. Breathe out before every shot.' },
-  ],
-  trial_kestrel_done: [
-    { who: 'kestrel', text: "...Hm. Clean shots. Not bad at all. And every arrow came back down. I checked.", mood: 'happy' },
-    { who: 'kestrel', text: "The Phantom Trickster makes her arrows vanish and her own copies shoot beside her. The Arbalist Engineer builds her own crossbow and blows things up with it. Which are you?" },
-    { who: 'kestrel', text: "Choose fast. Clover is already writing a song for each.", mood: 'happy' },
-  ],
   // ----- Elowen's teapot -----
   elowen_dance_done: [
     { who: 'elowen', text: "Seven tufts of down, stitched and charmed. The Owlets dance again. One of them is doing the worm. On a branch. I did not teach it that.", mood: 'happy' },
@@ -990,15 +979,6 @@ export const SIDE_SCENES = {
   trial_elowen_done: [
     { who: 'elowen', text: "Twenty. And your staff is still dripping. Good. The surface water is yours now.", mood: 'happy' },
     { who: 'elowen', text: "Under it is the deep: the pressure, the currents, the things that glow where the sun never reaches. The Maelstrom calls it up. Shall we go down?" },
-  ],
-  trial_vex: [
-    { who: 'vex', text: "The Dullahans ride the Ruins at night. Twenty of them. All that armour turns slow: spin round them and they'll never land a blow." },
-    { who: 'vex', text: "They can't see you anyway. No heads. Rude to mention it.", mood: 'happy' },
-    { who: 'vex', text: "Never stand still. That's the only rule of the dance. Also, don't steal their helmets. They need those. For... where their heads were." },
-  ],
-  trial_vex_done: [
-    { who: 'vex', text: "Twenty, and not a scratch on you. I'd almost think you were me. Almost. You'd need better hair.", mood: 'happy' },
-    { who: 'vex', text: 'The Blade Dancer throws her rings and catches them on a turn. The Sky Dancer rides the wind and never touches the ground. Pick your stage.' },
   ],
 };
 
@@ -1806,16 +1786,6 @@ export const JOB_SCENES = {
     { card: 'A New Path', sub: 'Thunderguard' },
     { who: 'brann', text: "Welcome to Ember Crag, {name}. Feel that? The air's gone tight around you. That's the storm, and it's yours now. You stand in front, and you let it out on whatever comes.", mood: 'happy' },
     { who: 'brann', text: "Wind it up, let it go, take the hits and send them back as thunder. Now go strike something that deserves it! Not me." },
-  ],
-  archer: [
-    { card: 'A New Path', sub: 'Acrobat Archer' },
-    { who: 'kestrel', text: 'From today you are an Acrobat Archer, {name}. Flip, tumble, and keep your aim true the whole way round.' },
-    { who: 'kestrel', text: "...And keep your bowstring dry. Nobody tells you that part. Also, arrows come back down. Usually.", mood: 'happy' },
-  ],
-  thief: [
-    { card: 'A New Path', sub: 'Wind Dancer' },
-    { who: 'vex', text: "Every fight is a show, {name}, and from today you're the star of it. Second star. After me. Light feet, big finish.", mood: 'happy' },
-    { who: 'vex', text: 'Chakrams if you like it close, gloves if you like the wind. Either way: never stop moving.' },
   ],
   tidemage: [
     { card: 'A New Path', sub: 'Tide Mage' },

@@ -46,9 +46,10 @@ These hold for all jobs, current and future. Keep them when adding or reworking 
 
 ## Making a job (every new job or path, the standard the player approved)
 
-Build every future job the way the Warrior and its paths (Paladin, Berserker), the Acrobat Archer
-and its paths (Phantom Trickster, Arbalist Engineer) and the Wind Dancer and its paths (Blade
-Dancer, Sky Dancer) were built; the player signed off on that result and wants all jobs made like it. The full
+Build every future job the way the Thunderguard and its paths (Stormwall, Tempest) and the Tide
+Mage and its paths (Tidecaller, Maelstrom) were built; the player signed off on that result and wants
+all jobs made like it (the Tide Mage is the model). (The Archer and Thief lines, once examples here,
+were wiped on 2026-11-16.) The full
 step-by-step recipe is `docs/design/making-a-job.md`: read it before starting any job. In short:
 
 - **Research first.** Read the art research (below) and look at real references for the job
@@ -61,11 +62,8 @@ step-by-step recipe is `docs/design/making-a-job.md`: read it before starting an
 - **Its own animation:** moves drawn for its weapon (a bow really draws, a crossbow kneels and
   cranks), with weight that matches each blow.
 - **Its own colour and shape language**, bold enough to read on every map, so a hit says whose it
-  is (the Warrior's steel-blue cross, the Acrobat Archer's gold arrows, mint ribbons and confetti,
-  the Phantom Trickster's plum smoke, cards and doves, the Arbalist Engineer's brass cogs, teal bolts
-  and steam, the Wind Dancer's coral ribbons, crescent gusts and spinning rings, the Blade Dancer's
-  rose-gold rings that ricochet and spark, the Sky Dancer's sky-blue wind crescents, clouds and
-  whirlwinds, the Paladin's gold star, the Berserker's rose claws). Colour and shapes live in the
+  is (the Thunderguard's lightning, the Stormwall's indigo storm, the Tempest's crimson storm, the
+  Tide Mage's water, the Tidecaller's moonlight, the Maelstrom's deep-sea dark). Colour and shapes live in the
   effects, never in a restyled weapon (see "A job never replaces the weapon").
 - **Effects in Tengu's own art** (`tools/fx-art.js`, HD with a soft glow; see the effects rule
   below): swipes or shots, a hit mark, a buff pillar with its emblem, a gauge aura, and a picture
@@ -116,7 +114,8 @@ turn, never a squeeze, and jumping, landing and getting hit show in the pose alo
 `render/hero.js` enforces it and `tests/anim.test.js` checks every move against it.
 
 **The quality bar (the player's standing rules, 2026-11-01 and 2026-11-02, for everything).** The
-remade Wind Dancer is the bar the player approved. Every character, summon, NPC, monster, move,
+Tide Mage is the bar the player approved (it took over from the remade Wind Dancer, wiped with the
+Thief line on 2026-11-16). Every character, summon, NPC, monster, move,
 effect, UI piece and map is held to it:
 - **Its own idea, never generic.** Every move is drawn for what the thing *is*: a dancer dances
   (piqué, pirouette, arabesque, fouetté, a bow), a knight fights like a knight. Name each move for

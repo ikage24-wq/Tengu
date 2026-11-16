@@ -167,7 +167,7 @@ if (typeof process !== 'undefined' && import.meta.url === (await import('node:ur
   if (nums.length > 1) rows.push(hunt(words[0] ?? 'warrior', nums[1], words[1] ?? mapFor(nums[1]), { secs }));
   else {
     for (const level of [12, 17, 22, 27, 32, 37, 42, 47]) {
-      const jobs = level < 30 ? ['warrior', 'archer'] : ['berserker', 'beastmaster'];
+      const jobs = level < 30 ? ['warrior', 'tidemage'] : ['tempest', 'maelstrom'];
       for (const job of jobs) rows.push(hunt(job, level, mapFor(level), { secs }));
     }
   }

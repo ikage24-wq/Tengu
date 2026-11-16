@@ -1,8 +1,8 @@
 // Live gear effects, drawn over the hero each frame: fine pieces (tier 7 and up) catch the light
 // with little glints, tier 12 and up shed motes in their glow color, all four pieces of a gear set
 // wear its theme (setAura), and a full matching set of
-// tier 15 or more wears its job's signature: embers off a warrior's shoulders, leaves drifting
-// around an archer, runes circling a mage's hat, shadow wisps trailing a thief. Gilded pieces
+// tier 15 or more wears its job's signature: embers off a warrior's shoulders, runes circling a
+// mage's hat. Gilded pieces
 // sparkle gold. Everything is a function of time, so nothing is stored per hero.
 
 import { settings } from '../../core/settings.js';
@@ -140,22 +140,6 @@ function signature(ctx, family, pal, at, s, dir, t, n) {
       const y = at.chest[1] - 4 * s - life * 22 * s;
       dot(ctx, x, y, (1 - life) * 1.1 * s + 0.3 * s, life < 0.5 ? '#ffd23b' : glow, 0.85 * (1 - life));
     }
-  } else if (family === 'archer') {
-    // Leaves drifting down around them, turning as they fall.
-    for (let i = 0; i < n; i++) {
-      const life = frac(t * 0.22 + i / n);
-      const x = at.chest[0] + Math.sin(t * 0.9 + i * 2.3) * at.w * 2.2;
-      const y = at.head[1] - 6 * s + life * 40 * s;
-      ctx.globalAlpha = 0.8 * Math.sin(life * Math.PI);
-      ctx.fillStyle = i % 2 ? glow : '#9be08f';
-      ctx.save();
-      ctx.translate(x, y);
-      ctx.rotate(t * 2 + i);
-      ctx.beginPath();
-      ctx.ellipse(0, 0, 1.6 * s, 0.7 * s, 0, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.restore();
-    }
   } else if (family === 'mage') {
     // Runes and stars circling the hat, the near side brighter.
     for (let i = 0; i < n; i++) {
@@ -165,14 +149,6 @@ function signature(ctx, family, pal, at, s, dir, t, n) {
       const near = Math.sin(a) > 0;
       if (i % 2) glint(ctx, x, y, 1.5 * s, near ? '#ffffff' : glow, near ? 0.95 : 0.5);
       else dot(ctx, x, y, 0.9 * s, glow, near ? 0.9 : 0.45);
-    }
-  } else {
-    // Shadow wisps trailing behind, low to the ground.
-    for (let i = 0; i < n; i++) {
-      const life = frac(t * 0.8 + i / n);
-      const x = at.back[0] - dir * (4 + life * 18) * s;
-      const y = at.hips[1] + Math.sin(t * 4 + i * 1.7) * 3 * s - life * 6 * s;
-      dot(ctx, x, y, (1.6 - life) * s, i % 3 ? '#2a1f3a' : glow, 0.55 * (1 - life));
     }
   }
 }

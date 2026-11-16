@@ -34,10 +34,8 @@ import { pickTargets, weaponElement, procOf, frenzyOnCrit, transform, applyBuff 
 import { moveAt } from '../render/moves.js';
 import { strikePose } from '../render/hero.js';
 import { wornGear } from '../core/character.js';
-import { tickPhantom, copiesShoot, vanishAgain, doveBurst, grandIllusion } from './phantom.js';
 import { launchWisp } from './foxwheel.js';
 import { GRAVITY, groundAt } from './physics.js';
-import { tickEngineer, stickyBurst, clusterBurst, overclocked, deployTurret } from './engineer.js';
 import { provoke, healMembers, groupOf, isUp, hpOf, maxHpOf, giveBuff, reviveMember } from './dungeon.js';
 
 // The longest freeze a blow gets; anything heavier turns the rest into slow motion.
@@ -62,19 +60,14 @@ const HAND_Y = 15;
 // and a Berserker's rage in red.
 const BLADE = '#8fb8ff';
 const HEAVY = '#ffb347';
-const TINTS = { holy: ['#ffe9a0', '#ffd24f'], rage: ['#c0102e', '#ff4a1f'], coral: ['#ffc2b4', '#ff7a6a'] };
+const TINTS = { holy: ['#ffe9a0', '#ffd24f'], rage: ['#c0102e', '#ff4a1f'] };
 
 // The colour a warrior path's own skills come in: the Warrior's steel, the Paladin's holy gold,
 // the Berserker's demonic crimson. The Warrior's skills the paths inherit (Blade Rush, Whirlwind,
 // War Cry, Iron Guard, Shoulder Charge) take the path's colour, never the Warrior's blue.
-// (The Wind Dancer's blows default to her coral, never the Warrior's steel.)
-export const pathSchool = (char) => (hasFaith(char) ? 'holy' : hasRage(char) ? 'rage' : hasShadow(char) ? 'coral' : hasVolt(char) ? 'thunder' : hasGale(char) ? 'redstorm' : hasBulwark(char) ? 'indigo' : 'steel');
-// The Archer's skills the same way: gold and mint for the Acrobat Archer, plum for the Phantom
-// Trickster, brass for the Arbalist Engineer.
-// And the Thief's violet shadow skills: the Blade Dancer's rose gold, the Sky Dancer's sky blue.
-export const thiefSchool = (char) => (hasKi(char) ? 'rosegold' : hasTails(char) ? 'aerial' : hasShadow(char) ? 'coral' : 'shadow');
+export const pathSchool = (char) => (hasFaith(char) ? 'holy' : hasRage(char) ? 'rage' : hasVolt(char) ? 'thunder' : hasGale(char) ? 'redstorm' : hasBulwark(char) ? 'indigo' : 'steel');
 // (The Thunderguard's skills, played by the Tempest, come in his red.)
-export const schoolFor = (char, school) => (school === 'steel' || (school === 'thunder' && (hasGale(char) || hasBulwark(char))) ? pathSchool(char) : school === 'hawk' ? archerLook(char).school : school === 'shadow' || school === 'coral' ? thiefSchool(char) : school);
+export const schoolFor = (char, school) => (school === 'steel' || (school === 'thunder' && (hasGale(char) || hasBulwark(char))) ? pathSchool(char) : school);
 // The colour a pop-up word comes in, by its school.
 export const SCHOOL_TEXT = { steel: '#bfe0ff', holy: '#ffe9a0', rage: '#ff6a5a', thunder: '#fff3b0', redstorm: '#ffc2c8', indigo: '#ffe9a8' };
 
@@ -143,129 +136,8 @@ export const PATH_COMBOS = {
     { move: 'tgspin', dur: 0.48, step: 14, strikes: [{ at: 0.56, pct: 100, reach: 78, h: 64, around: true, targets: 4, knock: 90, launch: 100, arc: [100, -215], thick: 10, fx: 'tghit', burst: 'tgring', burstAt: 0, burstDur: 0.45, stop: 0.05 }] },
     { move: 'tgstrike', dur: 0.62, step: 24, finisher: true, strikes: [{ at: 0.56, pct: 210, reach: 96, h: 80, targets: 4, knock: 250, arc: [-105, 190], thick: 15, fx: 'tghit', burst: 'tgbolt', burstAt: 0.62, burstDur: 0.6, big: true, stop: 0.1, shake: 5 }] },
   ],
-  // The Acrobat Archer (the Archer remade; docs/design/acrobat-archer.md), shooting mid-trick: a
-  // skip shot loosed as she lands, a back handspring with an arrow off the top of it and another as
-  // she lands, and a split leap loosing a big arrow from mid-air.
-  archer: [
-    { move: 'acskip', dur: 0.42, step: 18, strikes: [{ at: 0.5, shot: 'acarrow', pct: 92, range: 300, h: 60, knock: 25, speed: 860 }] },
-    { move: 'acflip', dur: 0.56, step: -14, carry: 0.6, strikes: [{ at: 0.38, shot: 'acarrow', pct: 56, range: 300, h: 60, knock: 25, speed: 860, oy: -4 }, { at: 0.62, shot: 'acarrow', pct: 60, range: 300, h: 60, knock: 25, speed: 860 }] },
-    { move: 'acsplit', dur: 0.6, step: 26, carry: 0.6, finisher: true, strikes: [{ at: 0.5, shot: 'acbig', pct: 180, range: 340, h: 64, targets: 3, pierce: true, speed: 920, knock: 220, big: true, stop: 0.06, shake: 2 }] },
-  ],
-  // The Thief, by weapon. Her back flips come in the middle of a string, never at its end (the
-  // player's call): she flips out, and the next blow darts straight back in (`owed`, playStep),
-  // so holding attack flows on and on. With a dagger: a stab, a slash that rides up into a
-  // backflip, then a planted X-cut. With a gauntlet: a star, a backflip whipping two stars down
-  // from the top of it, then a heaving throw of the moon star through the line.
-  // The Wind Dancer (the Thief remade; docs/design/wind-dancer.md): four quick blows, each a dance
-  // figure of her own (render/moves.js `wd*`), landing in about a fifth of a second. With chakrams:
-  // a piqué cut, a pirouette, an arabesque that cuts twice, and a fouetté that flings a gust down
-  // the line. With gloves: a port de bras push, a rond de bras, a relevé that lifts them, and a
-  // pirouette that opens into a burst of ribbons.
-  thiefdagger: [
-    { move: 'wdpique', dur: 0.27, step: 14, strikes: [{ at: 0.42, pct: 85, reach: 68, h: 56, knock: 30, arc: [170, -140], thick: 6, fx: 'wdhit' }] },
-    { move: 'wdspin', dur: 0.32, step: 12, strikes: [{ at: 0.5, pct: 90, reach: 70, h: 58, around: true, targets: 3, knock: 40, arc: [-90, 360], thick: 6, fx: 'wdhit' }] },
-    { move: 'wdarabesque', dur: 0.45, step: 16, strikes: [{ at: 0.25, pct: 60, reach: 72, h: 54, targets: 2, knock: 20, pierce: true, fx: 'wdhit' }, { at: 0.5, pct: 70, reach: 72, h: 58, targets: 2, knock: 60, arc: [-60, 260], thick: 6, fx: 'wdhit' }] },
-    { move: 'wdfouette', dur: 0.54, step: 16, finisher: true, strikes: [{ at: 0.4, pct: 170, reach: 130, h: 66, targets: 4, pierce: true, knock: 200, launch: 140, fx: 'wdhit', burst: 'wdgust', burstAt: 0.25, burstDur: 0.4, big: true, stop: 0.08, shake: 3 }] },
-  ],
-  thiefstar: [
-    { move: 'wdpalm', dur: 0.29, step: 12, strikes: [{ at: 0.42, pct: 85, reach: 100, h: 56, targets: 2, pierce: true, knock: 60, fx: 'wdhit', burst: 'wdpuff', burstAt: 0.2, burstDur: 0.3 }] },
-    { move: 'wdrond', dur: 0.34, step: 10, strikes: [{ at: 0.5, pct: 90, reach: 92, h: 66, targets: 2, pierce: true, knock: 70, fx: 'wdhit', burst: 'wdpuff', burstAt: 0.2, burstDur: 0.3 }] },
-    { move: 'wdrise', dur: 0.4, step: 6, strikes: [{ at: 0.42, pct: 110, reach: 90, h: 110, targets: 3, knock: 20, launch: 300, fx: 'wdhit', burst: 'wdpuff', burstAt: 0.2, burstDur: 0.3 }] },
-    { move: 'wdflourish', dur: 0.45, step: 8, finisher: true, strikes: [{ at: 0.5, pct: 170, reach: 96, h: 90, around: true, targets: 5, knock: 220, launch: 200, fx: 'wdhit', burst: 'wdswirl', burstAt: 0, burstDur: 0.45, big: true, stop: 0.08, shake: 3 }] },
-  ],
-  // The Thief's paths. The Blade Dancer (docs/design/blade-dancer.md): every blow a throw or a
-  // catch of her ring (`bounce`: it ricochets on to that many more monsters, then flies home to her
-  // hand). A backhand flick that bounces once, a cross toss of two rings, a turning catch that cuts
-  // all round her as it comes home, and a sidearm hurl that ricochets through four.
-  shinobi: [
-    { move: 'bdflick', dur: 0.38, step: 10, strikes: [{ at: 0.36, shot: 'ring', bounce: 1, pct: 85, range: 270, h: 60, knock: 30, speed: 850 }] },
-    { move: 'bdcross', dur: 0.41, step: 8, strikes: [{ at: 0.3, shot: 'ring', bounce: 0, pct: 60, range: 250, h: 60, knock: 20, speed: 870, oy: -3 }, { at: 0.5, shot: 'ring', bounce: 0, pct: 65, range: 250, h: 60, knock: 30, speed: 870, oy: 3 }] },
-    { move: 'bdcatch', dur: 0.45, step: 12, strikes: [{ at: 0.5, pct: 95, reach: 68, h: 60, around: true, targets: 3, knock: 50, arc: [-90, 360], thick: 6, fx: 'bdhit' }] },
-    { move: 'bdhurl', dur: 0.56, step: 18, finisher: true, strikes: [{ at: 0.46, shot: 'ringbig', bounce: 3, pct: 165, range: 320, h: 64, knock: 200, speed: 920, big: true, stop: 0.07, shake: 2 }] },
-  ],
-  // The Sky Dancer (docs/design/sky-dancer.md): she dances on the air, every blow lifting her
-  // (skyLift) and throwing a crescent of wind down at them from her palms or her feet. A palm push,
-  // a scissor kick, an aerial spin that blows a ring of wind round her, and a crescent kick that
-  // hurls a great gust through the line.
-  kitsune: [
-    { move: 'sdpalm', dur: 0.36, step: 10, strikes: [{ at: 0.4, shot: 'skygust', pct: 90, range: 260, h: 200, drop: 70, knock: 30, speed: 800 }] },
-    { move: 'sdscissor', dur: 0.41, step: 12, strikes: [{ at: 0.45, shot: 'skygust', pct: 95, range: 260, h: 200, drop: 70, knock: 30, speed: 800 }] },
-    { move: 'sdspin', dur: 0.45, step: 8, strikes: [{ at: 0.5, pct: 100, reach: 90, h: 120, around: true, targets: 4, knock: 60, fx: 'skyhit', burst: 'skyhit' }] },
-    { move: 'sdcrescent', dur: 0.56, step: 16, finisher: true, strikes: [{ at: 0.48, shot: 'skygustbig', pct: 170, range: 300, h: 220, drop: 80, targets: 4, pierce: true, knock: 200, speed: 870, big: true, stop: 0.07, shake: 2 }] },
-  ],
-  // The Arbalist Engineer (the Stormcaller remade; docs/design/arbalist.md), her crossbow at the hip:
-  // a snap shot, a double shot with a lever pumped between, a brace-and-crank heavy bolt through two,
-  // and a recoil blast that kicks her back as a heavy bolt tears through the line.
-  stormcaller: [
-    { move: 'aesnap', dur: 0.36, step: 12, strikes: [{ at: 0.3, shot: 'aebolt', pct: 90, range: 320, h: 60, knock: 30, speed: 1000 }] },
-    { move: 'aedouble', dur: 0.46, step: 8, strikes: [{ at: 0.28, shot: 'aebolt', pct: 55, range: 320, h: 60, knock: 30, speed: 1000, oy: -2 }, { at: 0.6, shot: 'aebolt', pct: 60, range: 320, h: 60, knock: 30, speed: 1000, oy: 2 }] },
-    { move: 'aebrace', dur: 0.54, step: 16, strikes: [{ at: 0.55, shot: 'aebolt', pct: 120, range: 320, h: 60, knock: 30, speed: 1000, targets: 2, pierce: true, knock: 90 }] },
-    { move: 'aerecoil', dur: 0.6, step: 8, finisher: true, strikes: [{ at: 0.48, shot: 'aebig', pct: 185, range: 360, h: 64, targets: 3, pierce: true, speed: 1050, knock: 220, big: true, stop: 0.07, shake: 3, muzzle: 'aesteam' }] },
-  ],
-  // The Phantom Trickster (the Beastmaster replaced; docs/design/phantom-trickster.md), every shot
-  // dressed up as a trick: a magician's flourish before the draw, a cape swirl coming round to loose
-  // two, and a "ta-da" reveal loosing a big arrow, ending in a little bow.
-  beastmaster: [
-    { move: 'ptflourish', dur: 0.48, step: 14, strikes: [{ at: 0.52, shot: 'ptarrow', pct: 95, range: 300, h: 60, knock: 25, speed: 860 }] },
-    { move: 'ptswirl', dur: 0.58, step: 16, carry: 0.5, strikes: [{ at: 0.38, shot: 'ptarrow', pct: 56, range: 300, h: 60, knock: 25, speed: 860, oy: -3 }, { at: 0.66, shot: 'ptarrow', pct: 60, range: 300, h: 60, knock: 25, speed: 860, oy: 3 }] },
-    { move: 'ptreveal', dur: 0.64, step: 22, carry: 0.6, finisher: true, strikes: [{ at: 0.54, shot: 'ptbig', pct: 185, range: 340, h: 64, targets: 3, pierce: true, speed: 900, knock: 220, big: true, stop: 0.06, shake: 2 }] },
-  ],
 };
 
-// The arrows each archer path looses, its pool of shots and the Archer's skills (Vault) alike:
-// the Archer's gold hawk arrows, the Beastmaster's green wild arrows.
-const ARCHER_LOOK = {
-  archer: { arrow: 'acarrow', big: 'acbig', rain: 'acarrow', muzzle: null, school: 'acro' },
-  beastmaster: { arrow: 'ptarrow', big: 'ptbig', rain: 'ptarrow', muzzle: null, school: 'phantom' },
-  stormcaller: { arrow: 'aebolt', big: 'aebig', rain: 'aebolt', muzzle: 'aesteam', school: 'brass' },
-};
-export const archerLook = (char) => ARCHER_LOOK[hasBond(char) ? 'beastmaster' : hasCharge(char) ? 'stormcaller' : 'archer'];
-// One of the Archer's gold shots as the path's own.
-const pathShot = (char, shot) => {
-  const L = archerLook(char);
-  return shot === 'hawkarrow' ? L.arrow : shot === 'hawkbig' ? L.big : shot === 'feathers' ? L.muzzle : shot;
-};
-// An archer path's shots besides its own combo's (its pool, PATH_VARIANTS), loosed as its arrows.
-function shotsOf(L) {
-  const arrowAt = (at, pct, f = {}) => ({ at, shot: L.arrow, pct, range: 300, h: 60, knock: 25, speed: 840, ...f });
-  return {
-    kick: { move: 'pointblank', dur: 0.52, step: 6, strikes: [
-      { at: 0.3, pct: 60, reach: 52, h: 56, knock: 160, stop: 0.05, shake: 1 },
-      arrowAt(0.62, 110, { knock: 180, speed: 900, big: true, stop: 0.05 }),
-    ] },
-    twirl: { move: 'spinshot', dur: 0.48, step: 6, strikes: [arrowAt(0.32, 55, { knock: 20 }), arrowAt(0.72, 60, { knock: 30 })] },
-    slide: { move: 'slideshot', dur: 0.5, step: 30, carry: 0.6, strikes: [arrowAt(0.35, 55), arrowAt(0.62, 60, { knock: 60 })] },
-    burst: { move: 'rapid', dur: 0.5, strikes: [0.17, 0.5, 0.83].map((at, i) => arrowAt(at, 45, { knock: 20, oy: (i - 1) * 4 })) },
-    hop: { move: 'hopshot', dur: 0.56, step: -24, carry: 0.5, strikes: [arrowAt(0.5, 70, { fan: 2, range: 290, h: 150, drop: 30, knock: 60 })] },
-    overdraw: { move: 'galeshot', dur: 0.72, step: -10, finisher: true, strikes: [{ at: 0.62, shot: L.big, pct: 220, range: 360, h: 64, targets: 4, pierce: true, speed: 950, knock: 260, launch: 140, big: true, stop: 0.08, shake: 3, muzzle: L.muzzle }] },
-    triple: { move: 'tripleshot', dur: 0.56, strikes: [arrowAt(0.55, 50, { fan: 3, h: 110, knock: 40 })] },
-    lob: { move: 'lobshot', dur: 0.5, strikes: [arrowAt(0.5, 100, { speed: 380, lob: 70, knock: 60, stop: 0.04 })] },
-    flipfan: { move: 'leapshot', dur: 0.6, step: -30, carry: 0.6, strikes: [arrowAt(0.56, 50, { fan: 3, h: 110, knock: 40, speed: 880 })] },
-    skyrain: { move: 'skyshot', dur: 0.7, finisher: true, strikes: [{ at: 0.55, rain: 6, pct: 70, rainFrom: 50, rainW: 240, span: 0.5, knock: 20, variant: L.rain, school: L.school }] },
-  };
-}
-// The Acrobat Archer's own pool: a forward roll into a kneeling shot, a pirouette into a fan of three,
-// and a front flip loosing a big arrow from the top of it.
-const ACRO_SHOTS = {
-  roll: { move: 'acroll', dur: 0.54, step: 38, carry: 0.42, strikes: [{ at: 0.6, shot: 'acarrow', pct: 100, range: 300, h: 60, knock: 25, speed: 860, knock: 60 }] },
-  spin: { move: 'acspin', dur: 0.56, step: 12, strikes: [{ at: 0.6, shot: 'acarrow', pct: 46, range: 300, h: 60, knock: 25, speed: 860, fan: 3, h: 110, knock: 40 }] },
-  front: { move: 'acfront', dur: 0.58, step: 32, carry: 0.7, finisher: true, strikes: [{ at: 0.5, shot: 'acbig', pct: 185, range: 340, h: 64, targets: 3, pierce: true, speed: 920, knock: 220, big: true, stop: 0.06, shake: 2 }] },
-};
-// The Phantom Trickster's own pool: a card flicked then a quick shot, a lazy lean firing two from
-// the hip, and a curtsy rising into a big arrow.
-const PT_SHOTS = {
-  card: { move: 'ptcard', dur: 0.46, step: 16, strikes: [{ at: 0.5, shot: 'ptarrow', pct: 98, range: 300, h: 60, knock: 25, speed: 860 }] },
-  lean: { move: 'ptlean', dur: 0.54, step: -16, carry: 0.84, strikes: [{ at: 0.36, shot: 'ptarrow', pct: 54, range: 300, h: 60, knock: 25, speed: 860, knock: 20 }, { at: 0.62, shot: 'ptarrow', pct: 58, range: 300, h: 60, knock: 25, speed: 860 }] },
-  curtsy: { move: 'ptcurtsy', dur: 0.6, step: 20, carry: 0.6, finisher: true, strikes: [{ at: 0.6, shot: 'ptbig', pct: 190, range: 340, h: 64, targets: 3, pierce: true, speed: 900, knock: 220, big: true, stop: 0.06, shake: 2 }] },
-};
-// The Arbalist Engineer's own pool: a gunslinger twirl and a shot, a duck-and-fire, a triple crank
-// that rattles out three bolts, and a sliding shot.
-const AE_SHOTS = {
-  twirl: { move: 'aetwirl', dur: 0.42, step: 10, strikes: [{ at: 0.42, shot: 'aebolt', pct: 92, range: 320, h: 60, knock: 30, speed: 1000 }] },
-  duck: { move: 'aeduck', dur: 0.42, step: 14, strikes: [{ at: 0.4, shot: 'aebolt', pct: 105, range: 320, h: 60, knock: 30, speed: 1000, knock: 60 }] },
-  triple: { move: 'aetriple', dur: 0.54, step: -10, carry: 0.8, strikes: [{ at: 0.3, shot: 'aebolt', pct: 42, range: 320, h: 60, knock: 30, speed: 1000 }, { at: 0.5, shot: 'aebolt', pct: 42, range: 320, h: 60, knock: 30, speed: 1000, oy: -2 }, { at: 0.7, shot: 'aebolt', pct: 46, range: 320, h: 60, knock: 30, speed: 1000, oy: 2 }] },
-  slide: { move: 'aeslide', dur: 0.54, step: 40, carry: 0.4, finisher: true, strikes: [{ at: 0.45, shot: 'aebig', pct: 175, range: 360, h: 64, targets: 3, pierce: true, speed: 1050, knock: 220, big: true, stop: 0.07, shake: 3, muzzle: 'aesteam' }] },
-};
 
 // A path's combo with a choice of swings at each step, so holding attack doesn't play the same
 // string over and over: each time the combo starts, one swing is drawn for every step, and never
@@ -476,89 +348,6 @@ export const PATH_VARIANTS = {
     [PATH_COMBOS.warrior[2], STORM_POOL.drive, STORM_POOL.rise],
     [PATH_COMBOS.warrior[3], STORM_POOL.clap, STORM_POOL.rising],
   ],
-  // The Archer, nimble and showy, her gold hawk arrows in every shot. Openers: her snap shot, a
-  // stomping kick then a shot point-blank, or a twirl that looses two. Second: her double shot,
-  // three arrows in a burst, a hop back loosing two down at them, or a backflip fan of three.
-  // Finisher: her full draw, an overdraw that tears through the line, or a volley up that rains
-  // back down on them.
-  // The Thief with a dagger, light and acrobatic. Openers: her stab, a blur of stabs, or a flash cut
-  // that darts through. Second: her slash, a spinning roundhouse kick, or a spinning backhand.
-  // Second: a slash up into a backflip, a plain slash, a spinning roundhouse kick, or a spinning
-  // backhand. Finisher, always planted in reach so the next string flows on: the X-cut, a vaulting
-  // front flip that cuts down out of the air, or a whirl that cuts all round her.
-  // The Wind Dancer with chakrams. Openers: her piqué cut, or a gliding chassé cut. Second: the
-  // pirouette, or a fan kick the ring follows round. Third: the arabesque, or a grand jeté that cuts
-  // down as she lands. Finish: the fouetté, or chaînés turns into a bow.
-  thiefdagger: [
-    [PATH_COMBOS.thiefdagger[0],
-      { move: 'wdchasse', dur: 0.29, step: 32, carry: 0.5, strikes: [{ at: 0.4, pct: 85, reach: 70, h: 50, targets: 2, knock: 30, pierce: true, fx: 'wdhit' }] }],
-    [PATH_COMBOS.thiefdagger[1],
-      { move: 'wdfankick', dur: 0.36, step: 12, strikes: [{ at: 0.45, pct: 90, reach: 64, h: 76, targets: 2, knock: 40, launch: 140, arc: [150, -160], thick: 6, fx: 'wdhit' }] }],
-    [PATH_COMBOS.thiefdagger[2],
-      { move: 'wdjete', dur: 0.45, step: 38, carry: 0.6, strikes: [{ at: 0.52, pct: 130, reach: 70, h: 64, targets: 3, knock: 70, arc: [-30, 200], thick: 7, fx: 'wdhit' }] }],
-    [PATH_COMBOS.thiefdagger[3],
-      { move: 'wdchaine', dur: 0.54, step: 48, carry: 0.7, finisher: true, strikes: [{ at: 0.3, pct: 70, reach: 70, h: 60, around: true, targets: 4, knock: 40, fx: 'wdhit' }, { at: 0.55, pct: 120, reach: 76, h: 64, around: true, targets: 4, knock: 210, launch: 160, fx: 'wdhit', burst: 'wdswirl', burstAt: 0, burstDur: 0.45, big: true, stop: 0.08, shake: 3 }] }],
-  ],
-  // The Wind Dancer with gloves: a push or a gliding chassé; a rond de bras or a fan kick; a relevé or
-  // a grand jeté; the opening pirouette or a lunge that drives a gust down the line.
-  thiefstar: [
-    [PATH_COMBOS.thiefstar[0],
-      { move: 'wdchasse', dur: 0.29, step: 28, carry: 0.5, strikes: [{ at: 0.4, pct: 85, reach: 100, h: 56, targets: 2, pierce: true, knock: 60, fx: 'wdhit', burst: 'wdpuff', burstAt: 0.2, burstDur: 0.3 }] }],
-    [PATH_COMBOS.thiefstar[1],
-      { move: 'wdfankick', dur: 0.36, step: 12, strikes: [{ at: 0.45, pct: 90, reach: 90, h: 76, targets: 2, pierce: true, knock: 50, launch: 120, fx: 'wdhit', burst: 'wdpuff', burstAt: 0.2, burstDur: 0.3 }] }],
-    [PATH_COMBOS.thiefstar[2],
-      { move: 'wdjete', dur: 0.45, step: 34, carry: 0.6, strikes: [{ at: 0.52, pct: 120, reach: 100, h: 70, targets: 3, pierce: true, knock: 80, fx: 'wdhit', burst: 'wdpuff', burstAt: 0.2, burstDur: 0.3 }] }],
-    [PATH_COMBOS.thiefstar[3],
-      { move: 'wdlunge', dur: 0.5, step: 14, carry: 0.4, finisher: true, strikes: [{ at: 0.46, pct: 170, reach: 140, h: 66, targets: 4, pierce: true, knock: 220, fx: 'wdhit', burst: 'wdgust', burstAt: 0.2, burstDur: 0.4, big: true, stop: 0.08, shake: 3 }] }],
-  ],
-  // The Blade Dancer. Openers: her flick, or a ring skimmed low along the ground. Second: the cross
-  // toss, or the lasso swung faster and faster that bounces twice. Third: the turning catch, or an
-  // underhand lob that arcs over and throws them up. Finisher: the sidearm hurl, or a double spin
-  // that cuts round her and lets the ring fly out of the second turn.
-  shinobi: [
-    [PATH_COMBOS.shinobi[0],
-      { move: 'bdskip', dur: 0.38, step: 14, strikes: [{ at: 0.42, shot: 'ring', bounce: 1, pct: 85, range: 270, h: 60, knock: 40, speed: 900, oy: 6 }] }],
-    [PATH_COMBOS.shinobi[1],
-      { move: 'bdlasso', dur: 0.5, step: 10, strikes: [{ at: 0.56, shot: 'ring', bounce: 2, pct: 90, range: 280, h: 60, knock: 40, speed: 920 }] }],
-    [PATH_COMBOS.shinobi[2],
-      { move: 'bdlob', dur: 0.45, step: 8, strikes: [{ at: 0.34, shot: 'ring', lob: 40, bounce: 1, pct: 100, range: 260, h: 90, knock: 20, launch: 200, speed: 720 }] }],
-    [PATH_COMBOS.shinobi[3],
-      { move: 'bdspinhurl', dur: 0.56, step: 16, finisher: true, strikes: [{ at: 0.28, pct: 70, reach: 64, h: 58, around: true, targets: 3, knock: 40, arc: [-90, 360], thick: 6, fx: 'bdhit' }, { at: 0.47, shot: 'ringbig', bounce: 3, pct: 160, range: 320, h: 64, knock: 200, speed: 920, big: true, stop: 0.07, shake: 2 }] }],
-  ],
-  // The Sky Dancer. Openers: the palm push or a twirl that unfurls into one. Second: the scissor
-  // kick or a flutter of both palms that beats out two gusts. Third: the aerial spin or an axe heel
-  // chopped down on them. Finisher: the crescent kick or a sweeping kick that turns her once round.
-  kitsune: [
-    [PATH_COMBOS.kitsune[0],
-      { move: 'sdtwirl', dur: 0.41, step: 10, strikes: [{ at: 0.48, shot: 'skygust', pct: 95, range: 260, h: 200, drop: 70, knock: 30, speed: 800 }] }],
-    [PATH_COMBOS.kitsune[1],
-      { move: 'sdflutter', dur: 0.5, step: 8, strikes: [{ at: 0.3, shot: 'skygust', pct: 55, range: 260, h: 200, drop: 70, knock: 30, speed: 800 }, { at: 0.6, shot: 'skygust', pct: 60, range: 260, h: 200, drop: 70, knock: 30, speed: 800, oy: 4 }] }],
-    [PATH_COMBOS.kitsune[2],
-      { move: 'sdheel', dur: 0.5, step: 12, strikes: [{ at: 0.54, shot: 'skygust', pct: 110, range: 200, h: 220, drop: 110, targets: 2, pierce: true, knock: 40, launch: -200, speed: 870 }] }],
-    [PATH_COMBOS.kitsune[3],
-      { move: 'sdsweep', dur: 0.54, step: 12, finisher: true, strikes: [{ at: 0.4, pct: 90, reach: 100, h: 130, around: true, targets: 5, knock: 160, fx: 'skyhit', burst: 'skyhit' }, { at: 0.55, shot: 'skygustbig', pct: 130, range: 300, h: 220, drop: 80, targets: 3, pierce: true, knock: 180, speed: 870, big: true, stop: 0.06, shake: 2 }] }],
-  ],
-  archer: [
-    [PATH_COMBOS.archer[0], ACRO_SHOTS.roll],
-    [PATH_COMBOS.archer[1], ACRO_SHOTS.spin],
-    [PATH_COMBOS.archer[2], ACRO_SHOTS.front],
-  ],
-  // The Phantom Trickster. Openers: the flourish or a card flick. Second: the cape swirl or a lazy
-  // lean. Finisher: the "ta-da" or a curtsy.
-  beastmaster: [
-    [PATH_COMBOS.beastmaster[0], PT_SHOTS.card],
-    [PATH_COMBOS.beastmaster[1], PT_SHOTS.lean],
-    [PATH_COMBOS.beastmaster[2], PT_SHOTS.curtsy],
-  ],
-  // The Arbalist Engineer. Openers: the snap shot or a twirl shot. Second: the double shot or a
-  // duck-and-fire. Third: the brace and crank or the triple crank. Finisher: the recoil blast or a
-  // sliding shot.
-  stormcaller: [
-    [PATH_COMBOS.stormcaller[0], AE_SHOTS.twirl],
-    [PATH_COMBOS.stormcaller[1], AE_SHOTS.duck],
-    [PATH_COMBOS.stormcaller[2], AE_SHOTS.triple],
-    [PATH_COMBOS.stormcaller[3], AE_SHOTS.slide],
-  ],
 };
 
 // Picks one swing for each step of a combo with choices, never the same string as `last`. The
@@ -576,9 +365,9 @@ export function planCombo(variants, last = null, rng = Math.random) {
   return plan;
 }
 
-// The archer paths' command shots. Up + attack: a shot up at whatever flies, knocking it higher.
-// In the air: shots that hold you up (`hang`) and loose down at them. Running: the Beastmaster
-// slides in under them loosing two arrows.
+// The ranged paths' command moves (the Tide Mage's line). Up + attack: something thrown up under
+// whatever flies, knocking it higher. In the air: blows that hold you up (`hang`) and come down at
+// them. Running: one out of the run.
 const ARCHER_COMMANDS = {
   // The Tidecaller: a spring of moonlit water called up under whatever flies, a shower of drops
   // rained down from a hang in the air (the second a heavy one), and a glide on a ribbon of foam out
@@ -611,78 +400,7 @@ const ARCHER_COMMANDS = {
     ],
     dash: { move: 'tmsurf', dur: 0.5, step: 84, carry: 0.6, strikes: [tide({ at: 0.5, pct: 120, reach: 86, h: 72, targets: 3, knock: 160, burst: 'tmsplash', burstAt: 0.5, burstDur: 0.45, big: true, stop: 0.04 })] },
   },
-  // The Sky Dancer: a rising spiral that throws them up, and a glide out of a run with both palms
-  // out. (In the air she has no separate air string: her whole string is danced in the air.)
-  kitsune: {
-    up: { move: 'sdrise', dur: 0.45, strikes: [{ at: 0.4, pct: 110, reach: 80, h: 200, targets: 4, knock: 20, launch: 420, fx: 'skyhit', burst: 'skyupdraft', big: true, stop: 0.04 }] },
-    air: [],
-    dash: { move: 'sdglide', dur: 0.45, step: 84, carry: 0.5, strikes: [{ at: 0.42, shot: 'skygust', pct: 120, range: 280, h: 120, targets: 3, pierce: true, knock: 140, speed: 940, big: true, stop: 0.04 }] },
-  },
-  // The Thief with a gauntlet: a star flung up at whatever flies, stars thrown down from a hang in
-  // the air, and a star thrown out of a run.
-  // The Wind Dancer with gloves: a gust swept up at whatever flies, gusts pushed down from a hang
-  // in the air, and a cartwheel of wind out of a run.
-  thiefstar: {
-    up: { move: 'wdrise', dur: 0.4, step: 6, strikes: [{ at: 0.42, pct: 100, reach: 90, h: 190, targets: 3, knock: 20, launch: 360, fx: 'wdhit', big: true, stop: 0.04 }] },
-    air: [
-      { move: 'wdairspin', dur: 0.31, hang: true, strikes: [{ at: 0.45, pct: 75, reach: 100, h: 170, targets: 3, knock: 30, fx: 'wdhit' }] },
-      { move: 'wdairsplit', dur: 0.36, hang: true, finisher: true, strikes: [{ at: 0.45, pct: 95, reach: 110, h: 190, targets: 4, knock: 120, fx: 'wdhit', burst: 'wdswirl', burstAt: 0, burstDur: 0.4, big: true, stop: 0.05, shake: 1 }] },
-    ],
-    dash: { move: 'wdchaine', dur: 0.45, step: 58, carry: 0.6, strikes: [{ at: 0.45, pct: 95, reach: 90, h: 70, targets: 3, around: true, knock: 90, fx: 'wdhit' }] },
-  },
-  // The Acrobat Archer: a backbend shot up at fliers, legs kicked out shooting down from a hang in
-  // the air (the second a big one), a dive roll out of a run coming up shooting, and Down + attack:
-  // the same kick-out shot at whatever is below.
-  archer: {
-    down: { move: 'acair', dur: 0.48, strikes: [{ at: 0.42, shot: 'acarrow', pct: 95, range: 300, h: 60, knock: 25, speed: 860, fan: 2, range: 280, h: 220, drop: 120, knock: 40 }] },
-    up: { move: 'acup', dur: 0.46, strikes: [{ at: 0.5, shot: 'acarrow', pct: 105, range: 300, h: 60, knock: 25, speed: 860, fan: 2, range: 280, h: 190, lift: 50, knock: 20, launch: 360, big: true, stop: 0.05 }] },
-    air: [
-      { move: 'acair', dur: 0.42, hang: true, strikes: [{ at: 0.42, shot: 'acarrow', pct: 75, range: 300, h: 60, knock: 25, speed: 860, fan: 2, range: 280, h: 170, drop: 50, knock: 30 }] },
-      { move: 'acair', dur: 0.46, hang: true, finisher: true, strikes: [{ at: 0.42, shot: 'acbig', fan: 2, pct: 95, range: 280, h: 190, drop: 60, knock: 120, speed: 920, big: true, stop: 0.05, shake: 1 }] },
-    ],
-    dash: { move: 'acdive', dur: 0.56, step: 56, carry: 0.45, strikes: [{ at: 0.58, shot: 'acarrow', pct: 100, range: 300, h: 60, knock: 25, speed: 860, targets: 2, pierce: true, knock: 90 }] },
-  },
-  // The Phantom Trickster: a hand on her hip shooting up at fliers, floating with her cape billowing
-  // to shoot down (the second a big one), and a smoke-step glide out of a run.
-  beastmaster: {
-    down: { move: 'ptair', dur: 0.46, strikes: [{ at: 0.4, shot: 'ptarrow', pct: 95, range: 300, h: 60, knock: 25, speed: 860, fan: 2, range: 280, h: 220, drop: 120, knock: 40 }] },
-    up: { move: 'ptup', dur: 0.46, strikes: [{ at: 0.46, shot: 'ptarrow', pct: 105, range: 300, h: 60, knock: 25, speed: 860, fan: 2, range: 280, h: 190, lift: 50, knock: 20, launch: 360, big: true, stop: 0.05 }] },
-    air: [
-      { move: 'ptair', dur: 0.42, hang: true, strikes: [{ at: 0.4, shot: 'ptarrow', pct: 75, range: 300, h: 60, knock: 25, speed: 860, fan: 2, range: 280, h: 170, drop: 50, knock: 30 }] },
-      { move: 'ptair', dur: 0.46, hang: true, finisher: true, strikes: [{ at: 0.4, shot: 'ptbig', fan: 2, pct: 95, range: 280, h: 190, drop: 60, knock: 120, speed: 900, big: true, stop: 0.05, shake: 1 }] },
-    ],
-    dash: { move: 'ptdash', dur: 0.54, step: 62, carry: 0.5, guard: 0.4, strikes: [{ at: 0.58, shot: 'ptarrow', pct: 100, range: 300, h: 60, knock: 25, speed: 860, targets: 2, pierce: true, knock: 90 }] },
-  },
-  // The Arbalist Engineer: a bolt fired up and out at fliers, down at whatever is below, two down
-  // from a hang in the air (the second a heavy one), and a roll out of a run that comes up firing.
-  stormcaller: {
-    down: { move: 'aeair', dur: 0.44, strikes: [{ at: 0.3, shot: 'aebolt', pct: 95, range: 320, h: 60, knock: 30, speed: 1000, fan: 2, range: 280, h: 220, drop: 120, knock: 40 }] },
-    up: { move: 'aeup', dur: 0.4, strikes: [{ at: 0.36, shot: 'aebolt', pct: 105, range: 320, h: 60, knock: 30, speed: 1000, fan: 2, range: 280, h: 190, lift: 50, knock: 20, launch: 360, big: true, stop: 0.05 }] },
-    air: [
-      { move: 'aeair', dur: 0.4, hang: true, strikes: [{ at: 0.32, shot: 'aebolt', pct: 75, range: 320, h: 60, knock: 30, speed: 1000, fan: 2, range: 280, h: 170, drop: 50 }] },
-      { move: 'aeair', dur: 0.44, hang: true, finisher: true, strikes: [{ at: 0.32, shot: 'aebig', fan: 2, pct: 95, range: 280, h: 190, drop: 60, knock: 120, speed: 1050, big: true, stop: 0.05, shake: 1 }] },
-    ],
-    dash: { move: 'aeroll', dur: 0.5, step: 50, carry: 0.45, strikes: [{ at: 0.52, shot: 'aebolt', pct: 105, range: 320, h: 60, knock: 30, speed: 1000, knock: 90, stop: 0.04 }] },
-  },
 };
-// The archers' air leap (world/agility.js): jump again in mid-air and she springs up and back in a
-// backflip, loosing two shots down at them from the top of it.
-for (const [path, arrow, big] of [['stormcaller', 'aebolt', 'aesteam']]) {
-  ARCHER_COMMANDS[path].leap = { move: 'leapshot', dur: 0.5, strikes: [{ at: 0.55, shot: arrow, fan: 2, pct: 80, range: 280, h: 180, drop: 50, knock: 50, speed: 900, muzzle: big }] };
-}
-// (The Acrobat Archer's leap is her own back handspring in the air, an arrow off the top and one
-// as she comes round.)
-// (The Phantom Trickster's is a cape swirl in mid-air, two arrows off it.)
-ARCHER_COMMANDS.beastmaster.leap = { move: 'ptswirl', dur: 0.64, strikes: [{ at: 0.38, shot: 'ptarrow', pct: 70, range: 300, h: 60, knock: 25, speed: 860, range: 280, h: 180, drop: 50, knock: 50 }, { at: 0.66, shot: 'ptarrow', pct: 60, range: 300, h: 60, knock: 25, speed: 860, range: 280, h: 160, drop: 40 }] };
-ARCHER_COMMANDS.archer.leap = { move: 'acflip', dur: 0.6, strikes: [{ at: 0.38, shot: 'acarrow', pct: 70, range: 300, h: 60, knock: 25, speed: 860, fan: 2, range: 280, h: 180, drop: 50, knock: 50 }, { at: 0.62, shot: 'acarrow', pct: 60, range: 300, h: 60, knock: 25, speed: 860, range: 280, h: 160, drop: 40 }] };
-export function airLeap(world) {
-  const leap = ARCHER_COMMANDS[pathOf(world)]?.leap;
-  if (!leap) return;
-  const b = world.body;
-  b.vy = Math.min(b.vy, -380);
-  b.vx = -b.facing * 210;
-  playStep(world, leap, 100, 'basicleap');
-}
 
 // The command variants of a melee basic combo (any blade, axe, spear, dagger or bare hands).
 const MELEE = new Set(['sword', 'axe', 'spear', 'dagger', 'none']);
@@ -740,37 +458,6 @@ const STORM_COMMANDS = {
 };
 // The warrior paths fight in a blade's reach and put their weight into it.
 const warriorPath = (char) => hasVolt(char) || hasGale(char) || hasBulwark(char) || hasRage(char) || hasFaith(char);
-// The Thief's own dagger commands: a quick flipping launcher, three fast air stabs then a diving
-// stab, and a dash that slips through the line stabbing as it goes.
-const DAGGER_COMMANDS = {
-  up: { move: 'rising', dur: 0.42, step: 6, strikes: [{ at: 0.38, pct: 105, reach: 64, h: 84, targets: 3, knock: 20, launch: 460, hop: 420, arc: [80, -175], thick: 6, big: true, stop: 0.05 }] },
-  air: [
-    { move: 'airslash', dur: 0.28, hang: true, strikes: [{ at: 0.45, pct: 80, reach: 60, h: 80, targets: 2, knock: 10, launch: 140, arc: [-115, 205], thick: 5 }] },
-    { move: 'airslash2', dur: 0.28, hang: true, strikes: [{ at: 0.45, pct: 80, reach: 60, h: 80, targets: 2, knock: 10, launch: 150, arc: [100, -215], thick: 5 }] },
-    { move: 'meteor', dur: 0.44, dive: 820, finisher: true, strikes: [{ onLand: true, pct: 170, reach: 70, h: 64, around: true, targets: 4, knock: 180, big: true, stop: 0.07, shake: 3 }] },
-  ],
-  dash: { move: 'dashstab', dur: 0.4, step: 60, carry: 0.6, strikes: [{ at: 0.32, pct: 90, reach: 80, h: 50, targets: 3, pierce: true, knock: 60 }, { at: 0.55, pct: 110, reach: 80, h: 50, targets: 3, pierce: true, knock: 180, big: true, stop: 0.04 }] },
-};
-// The Wind Dancer's chakram commands (her own figures): a relevé that lifts them, a turning cut and
-// a split that cuts down in the air, and chaînés through the line out of a run.
-const DANCER_COMMANDS = {
-  up: { move: 'wdrise', dur: 0.4, step: 0, strikes: [{ at: 0.4, pct: 105, reach: 70, h: 90, targets: 3, knock: 20, launch: 440, hop: 380, arc: [80, -175], thick: 6, fx: 'wdhit', big: true, stop: 0.05 }] },
-  air: [
-    { move: 'wdairspin', dur: 0.31, hang: true, strikes: [{ at: 0.45, pct: 85, reach: 66, h: 80, around: true, targets: 3, knock: 10, launch: 140, fx: 'wdhit' }] },
-    { move: 'wdairsplit', dur: 0.36, hang: true, finisher: true, strikes: [{ at: 0.45, pct: 120, reach: 70, h: 84, targets: 3, knock: 140, launch: 120, arc: [-30, 200], thick: 6, fx: 'wdhit', big: true, stop: 0.05, shake: 1 }] },
-  ],
-  dash: { move: 'wdchaine', dur: 0.45, step: 68, carry: 0.6, strikes: [{ at: 0.3, pct: 90, reach: 70, h: 64, targets: 3, around: true, knock: 60, fx: 'wdhit' }, { at: 0.6, pct: 110, reach: 70, h: 64, targets: 3, around: true, knock: 180, fx: 'wdhit', big: true, stop: 0.04 }] },
-};
-// The Blade Dancer's commands (her own figures): an underhand lob that throws them up, rings flicked
-// down from the air (the second, two at once), and a sliding throw out of a run that bounces twice.
-const BLADE_COMMANDS = {
-  up: { move: 'bdlob', dur: 0.45, step: 8, strikes: [{ at: 0.34, shot: 'ring', bounce: 1, pct: 110, range: 220, h: 200, lift: 80, knock: 20, launch: 420, hop: 360, speed: 780, big: true, stop: 0.04 }] },
-  air: [
-    { move: 'bdairflick', dur: 0.32, hang: true, strikes: [{ at: 0.42, shot: 'ring', bounce: 1, pct: 85, range: 240, h: 170, drop: 60, knock: 20, speed: 900 }] },
-    { move: 'bdairtwin', dur: 0.38, hang: true, finisher: true, strikes: [{ at: 0.4, shot: 'ring', fan: 2, bounce: 1, pct: 80, range: 250, h: 190, drop: 80, knock: 80, speed: 920, big: true, stop: 0.04, shake: 1 }] },
-  ],
-  dash: { move: 'bdslide', dur: 0.45, step: 72, carry: 0.45, strikes: [{ at: 0.42, shot: 'ring', bounce: 2, pct: 120, range: 270, h: 60, knock: 120, speed: 960, big: true, stop: 0.04 }] },
-};
 // How long you must have been running for an attack to become a dash attack.
 const DASH_AFTER = 0.3;
 // How slowly you sink while an air cut hangs you up (px/s).
@@ -827,34 +514,6 @@ export function faithGuard(world, fromX = null) {
   addFaith(world, FAITH_ON_HURT);
   return cut;
 }
-// Illusion (the Phantom Trickster's gauge; internally Bond): her shots that land build it, and so do
-// her copies' and her tricks' (a little); it fades once the fighting stops. Half full, a see-through
-// copy of her stands behind her and shoots with her; full (wild), two, shooting with every arrow,
-// and Grand Illusion is ready (world/phantom.js).
-export const BOND_MAX = 100;
-const BOND_HOLD = 5;
-const BOND_DRAIN = 10;
-export const hasBond = (char) => jobChain(char.job).includes('beastmaster');
-export function addBond(world, n) {
-  if (!hasBond(world.char) || n <= 0) return;
-  world.bond = Math.min(BOND_MAX, (world.bond ?? 0) + n);
-  world.bondAt = world.now;
-}
-export const wild = (world) => hasBond(world.char) && (world.bond ?? 0) >= BOND_MAX;
-// Charge: the Stormcaller's gauge. Her bolts that land build it, and so does every monster her
-// lightning jumps to; it fades once the fighting stops. Full (Supercharged), every bolt chains to
-// one more monster, and the finisher spends it.
-export const CHARGE_MAX = 100;
-const CHARGE_HOLD = 5;
-const CHARGE_DRAIN = 12;
-export const hasCharge = (char) => jobChain(char.job).includes('stormcaller');
-export function addCharge(world, n) {
-  if (!hasCharge(world.char) || n <= 0) return;
-  world.charge = Math.min(CHARGE_MAX, (world.charge ?? 0) + n);
-  world.chargeAt = world.now;
-}
-// Full Pressure (Overdrive): her crossbow vents steam and every shot fires a second bolt.
-export const overdrive = (world) => hasCharge(world.char) && (world.charge ?? 0) >= CHARGE_MAX;
 // Tide: the Tide Mage's gauge. Her water that lands builds it, and so do her heals and shields; it
 // ebbs once the fighting stops. The fuller it runs, the bigger her waves; full (High Tide), every
 // basic attack sends a little wave rolling after it, and she and the party near her slowly mend.
@@ -1081,143 +740,6 @@ function staticShell(world, fromX) {
   world.fx.push({ kind: 'tgchain', x: world.body.x, y: world.body.y - world.body.h * 0.55, tx: m.x, ty: m.y - m.def.h * 0.55, t: 0, dur: 0.3, seed: Math.random() });
   shotHit(world, { pct: SHELL_PCT, scale: 100, key: 'procshell', dir: Math.sign(m.x - world.body.x) || 1, knock: 60, stun: 0.3, burst: 'tgspark', gauge: 0, quiet: true }, m, 0.03, 0);
 }
-// Combo (the Acrobat Archer's gauge; internally Momentum). Shots that land build it, more for each
-// one landed in a row (`streak`, kept while they land within MOMENTUM_ROW seconds of each other);
-// her flips, rolls and handsprings keep it from fading (`flipAt`), taking a hit knocks half of it
-// away, and it fades once the fighting stops. Full (SHOWTIME), every shot she looses splits into
-// three arrows, and Grand Somersault is ready.
-export const MOMENTUM_MAX = 100;
-const MOMENTUM_HOLD = 4;
-const MOMENTUM_DRAIN = 14;
-const MOMENTUM_ROW = 1.6;
-export const MOMENTUM_LOSS = 0.5;
-export const hasMomentum = (char) => char.job === 'archer';
-export function addMomentum(world, n) {
-  if (!hasMomentum(world.char) || n <= 0) return;
-  world.streak = world.now - (world.momentumAt ?? -9) <= MOMENTUM_ROW ? (world.streak ?? 0) + 1 : 0;
-  world.momentum = Math.min(MOMENTUM_MAX, (world.momentum ?? 0) + n * (1 + 0.1 * Math.min(10, world.streak)));
-  world.momentumAt = world.now;
-}
-export const showtime = (world) => hasMomentum(world.char) && (world.momentum ?? 0) >= MOMENTUM_MAX;
-// Her tricks: while she's in one, her Combo doesn't fade.
-const FLIPS = new Set(['acflip', 'acsplit', 'acroll', 'acspin', 'acfront', 'acdive', 'achandspring', 'acsomersault']);
-// Getting hit breaks an Archer's rhythm: half her Momentum and the streak are gone.
-export function loseMomentum(world) {
-  if (!hasMomentum(world.char) || !world.momentum) return;
-  world.momentum *= 1 - MOMENTUM_LOSS;
-  world.streak = 0;
-}
-// Shadow: the Thief's gauge (first job, both weapons). Hits that land in quick chains build it,
-// each one more while the chain lasts (`chain`, kept while hits land within SHADOW_CHAIN seconds of
-// each other); it fades fast once the fighting stops. Full (Phantom), a shadow copy of the thief
-// repeats every attack a beat later, at PHANTOM_POWER of its strength.
-export const SHADOW_MAX = 100;
-const SHADOW_HOLD = 3;
-const SHADOW_DRAIN = 16;
-const SHADOW_CHAIN = 0.9;
-export const PHANTOM_POWER = 0.5;
-const PHANTOM_LAG = 0.1;
-export const hasShadow = (char) => char.job === 'thief';
-export function addShadow(world, n) {
-  if (!hasShadow(world.char) || n <= 0) return;
-  const before = world.shadow ?? 0;
-  world.chain = world.now - (world.shadowAt ?? -9) <= SHADOW_CHAIN ? (world.chain ?? 0) + 1 : 0;
-  world.shadow = Math.min(SHADOW_MAX, (world.shadow ?? 0) + n * (1 + 0.12 * Math.min(10, world.chain)));
-  world.shadowAt = world.now;
-  if (before < SHADOW_MAX && world.shadow >= SHADOW_MAX) spotlight(world);
-}
-export const phantom = (world) => hasShadow(world.char) && (world.shadow ?? 0) >= SHADOW_MAX;
-// Spotlight (the Wind Dancer): her Encore just filled, so she strikes a pose. Everything around her
-// is dazzled a moment, and she and the party round her move faster and dodge more.
-function spotlight(world) {
-  const p = procOf(world.char, 'spotlight');
-  if (!p || world.dead) return;
-  applyBuff(world, 'spotlight', p);
-  const { body } = world;
-  world.numbers.push({ x: body.x, y: body.y - body.h - 10, text: 'ENCORE!', color: '#ff8a7a', t: 0, big: true });
-  world.strikes.push(procStrike(world, { at: 0, dir: body.facing, move: null, dur: 0 }, 'procspotlight', 0.05, {
-    pct: p.pct, reach: p.range.w / 2, h: p.range.h, around: true, targets: 8, knock: 40, stun: p.stun, fx: 'wdhit', burst: 'wdswirl', burstAt: 0, burstDur: 0.45, school: 'coral', stop: 0.04, shake: 2,
-  }));
-}
-// Ricochet (the Blade Dancer's gauge; internally Ki, the Shinobi's it replaced): every ring that
-// lands builds it and every bounce more; it fades once the fighting stops. Full (Carousel), two
-// rose-gold rings orbit her and cut whatever comes close, on their own (CAROUSEL_*), and Golden
-// Carousel is ready.
-export const KI_MAX = 100;
-const KI_HOLD = 5;
-const KI_DRAIN = 12;
-export const CAROUSEL_PCT = 45;
-const CAROUSEL_EVERY = 0.3;
-const CAROUSEL_REACH = { x: 46, y: 50 };
-export const hasKi = (char) => jobChain(char.job).includes('shinobi');
-export function addKi(world, n) {
-  if (!hasKi(world.char) || n <= 0) return;
-  world.ki = Math.min(KI_MAX, (world.ki ?? 0) + n);
-  world.kiAt = world.now;
-}
-export const carousel = (world) => hasKi(world.char) && (world.ki ?? 0) >= KI_MAX;
-// The orbiting rings cut what's close, a few monsters a beat (CAROUSEL_EVERY).
-function tickCarousel(world) {
-  if (!carousel(world) || world.dead || world.now < (world.carouselAt ?? 0)) return;
-  world.carouselAt = world.now + CAROUSEL_EVERY;
-  const { body } = world;
-  world.mobs
-    .filter((m) => m.hp > 0 && Math.abs(m.x - body.x) <= CAROUSEL_REACH.x + m.def.w / 2 && Math.abs(ringMid(m) - (body.y - 20)) <= CAROUSEL_REACH.y)
-    .slice(0, 3)
-    .forEach((m, k) => shotHit(world, { pct: CAROUSEL_PCT, scale: 100, key: 'proccarousel', dir: Math.sign(m.x - body.x) || 1, knock: 30, burst: 'bdhit', gauge: 0 }, m, 0.02 * k, k));
-}
-// Tailwind (the Sky Dancer's gauge; internally Tails, the Kitsune's it replaced): her hits build
-// it, three times as fast while she's up in the air; it fades once the fighting stops. Full, a
-// whirlwind under her feet lets her fly freely (Up and Down move her through the air, SKY_FLY) and
-// her gusts are twice as big; Sky Waltz is ready.
-export const TAILS_MAX = 100;
-const TAILS_HOLD = 5;
-const TAILS_DRAIN = 10;
-export const hasTails = (char) => jobChain(char.job).includes('kitsune');
-export function addTails(world, n) {
-  if (!hasTails(world.char) || n <= 0) return;
-  world.tails = Math.min(TAILS_MAX, (world.tails ?? 0) + n * (world.body.onGround ? 0.5 : 1.5));
-  world.tailsAt = world.now;
-}
-export const skyFlight = (world) => hasTails(world.char) && (world.tails ?? 0) >= TAILS_MAX;
-// Every blow lifts her: each one springs her back up to her cruising height (SKY_CRUISE over where
-// she took off, a little higher with each blow up to SKY_CEIL), and she hangs there through the
-// move, sinking only slowly (SKY_SINK). Stopped, she drifts down softly (SKY_DRIFT) for
-// SKY_DRIFT_FOR seconds after her last blow.
-const SKY_CRUISE = 50;
-const SKY_CLIMB = 4;
-const SKY_CEIL = 90;
-const SKY_SINK = 14;
-const SKY_DRIFT = 70;
-const SKY_DRIFT_FOR = 3;
-const SKY_FLY = 170;
-function skyLift(world, dur) {
-  const b = world.body;
-  if (b.rope || world.dead) return;
-  if (b.onGround) {
-    world.skyFloor = b.y;
-    world.skyHeight = SKY_CRUISE;
-    b.onGround = false;
-  } else world.skyHeight = Math.min(SKY_CEIL, (world.skyHeight ?? SKY_CRUISE) + SKY_CLIMB);
-  // (Rising just high enough to reach that height: v = sqrt(2gh).)
-  const rise = Math.max(8, Math.min(SKY_CEIL, b.y - ((world.skyFloor ?? b.y) - world.skyHeight)));
-  b.vy = Math.min(b.vy, -Math.sqrt(2 * GRAVITY * rise));
-  b.passAbove = world.skyFloor ?? b.y;
-  world.hangUntil = Math.max(world.hangUntil ?? 0, world.now + dur + 0.5);
-  world.skyAt = world.now;
-}
-// Every tick: the soft drift down, and free flight on full Tailwind.
-function tickSky(world) {
-  if (!hasTails(world.char)) return;
-  const b = world.body;
-  if (b.onGround || b.rope || world.dead) return;
-  if (skyFlight(world)) {
-    b.vy = world.intent?.up ? -SKY_FLY : world.intent?.down ? SKY_FLY : Math.min(b.vy, 0) * 0.8;
-    return;
-  }
-  if (world.now < (world.hangUntil ?? 0)) b.vy = Math.min(b.vy, SKY_SINK);
-  else if (world.now - (world.skyAt ?? -99) < SKY_DRIFT_FOR) b.vy = Math.min(b.vy, SKY_DRIFT);
-}
 // The endless barrage (the Beastmaster's passive, data/skills.js): while attack is held her basic
 // attack goes on and on, faster the longer it's held, building through stages of its own; she can
 // walk slowly through it (world.js), and in the air she hangs a moment, then keeps going as she
@@ -1363,25 +885,18 @@ export function healAround(world, x, y, pct, r, gauge = true, el = null) {
 }
 // The thrown stars a gauntlet uses up (one each from the set in your bag).
 const STAR_SHOTS = new Set(['star', 'moonstar']);
-// A job's own gauge: which one the character has ('grace', 'spirit', 'ki', 'tails', 'valor', 'momentum',
-// 'shadow', 'rage', 'faith', 'bond' or 'charge'), and how full it is (0-1). Finishers need it full
-// and spend it.
+// A job's own gauge: which one the character has ('volt', 'gale', 'bulwark', 'rage', 'faith',
+// 'depth', 'moon' or 'tide'), and how full it is (0-1). Finishers need it full and spend it.
 export function gaugeOf(char) {
-  return hasKi(char) ? 'ki' : hasTails(char) ? 'tails' : hasVolt(char) ? 'volt' : hasGale(char) ? 'gale' : hasBulwark(char) ? 'bulwark' : hasMomentum(char) ? 'momentum' : hasShadow(char) ? 'shadow' : hasRage(char) ? 'rage' : hasFaith(char) ? 'faith' : hasBond(char) ? 'bond' : hasCharge(char) ? 'charge' : hasDepth(char) ? 'depth' : hasMoon(char) ? 'moon' : hasTide(char) ? 'tide' : null;
+  return hasVolt(char) ? 'volt' : hasGale(char) ? 'gale' : hasBulwark(char) ? 'bulwark' : hasRage(char) ? 'rage' : hasFaith(char) ? 'faith' : hasDepth(char) ? 'depth' : hasMoon(char) ? 'moon' : hasTide(char) ? 'tide' : null;
 }
 export function gaugeFull(world) {
   const g = gaugeOf(world.char);
   return Boolean(g) && (world[g] ?? 0) >= 100;
 }
 
-// What a shot that lands builds on an archer path's gauge (see world.js).
+// What a shot that lands builds on a ranged path's gauge (see world.js).
 export function addAim(world, n, mob = null, el = null) {
-  addTails(world, n);
-  addMomentum(world, n);
-  addShadow(world, n);
-  addKi(world, n);
-  addBond(world, n);
-  addCharge(world, n);
   addTide(world, n);
   addDepth(world, n);
   addMoon(world, n);
@@ -1391,14 +906,8 @@ export function addAim(world, n, mob = null, el = null) {
 export function pathOf(world) {
   const { char } = world;
   const w = world.stats.weaponType;
-  if (w === 'dagger' && hasKi(char)) return 'shinobi';
-  if (w === 'gauntlet' && hasTails(char)) return 'kitsune';
-  if (hasShadow(char) && (w === 'dagger' || w === 'gauntlet')) return w === 'dagger' ? 'thiefdagger' : 'thiefstar';
   if (MELEE.has(w) && w !== 'none') return hasVolt(char) ? 'warrior' : hasGale(char) ? 'tempest' : hasBulwark(char) ? 'stormwall' : null;
-  if ((w === 'bow' || w === 'crossbow') && hasMomentum(char)) return 'archer';
   if (w === 'none') return 'fists';
-  if (w === 'bow' && hasBond(char)) return 'beastmaster';
-  if (w === 'crossbow' && hasCharge(char)) return 'stormcaller';
   if (w === 'staff' && hasDepth(char)) return 'maelstrom';
   if (w === 'staff' && hasMoon(char)) return 'tidecaller';
   if (w === 'staff' && hasTide(char)) return 'tidemage';
@@ -1433,7 +942,7 @@ export function basicCombo(world) {
   // Blades, axes, spears, daggers and fists have command variants: in the air, an air combo;
   // Up + attack on the ground, a launcher that follows them up; running, a dash attack.
   if (MELEE.has(world.stats.weaponType)) {
-    const own = { warrior: STORM_COMMANDS, tempest: RED_COMMANDS, stormwall: WALL_COMMANDS, thiefdagger: DANCER_COMMANDS, shinobi: BLADE_COMMANDS }[pathOf(world)] ?? null;
+    const own = { warrior: STORM_COMMANDS, tempest: RED_COMMANDS, stormwall: WALL_COMMANDS }[pathOf(world)] ?? null;
     const air = own?.air ?? AIR;
     const blades = barrageOf(world);
     if (!body.onGround && !body.rope) {
@@ -1560,25 +1069,17 @@ function playStep(world, step, scale, key, school = null, after = 0) {
   }
   world.owed = ownStep && dx <= -15 ? -dx : 0;
   const first = (step.carry ?? step.strikes[0].at) * dur;
-  // (The Sky Dancer dances her steps in the air: her lunge carries her through it, a leaf on the wind.)
-  if (dx) world.lunge = { v: (body.facing * dx) / Math.max(0.05, first), until: now + first, air: hasTails(world.char) };
+  if (dx) world.lunge = { v: (body.facing * dx) / Math.max(0.05, first), until: now + first };
   if (step.guard) world.invuln = Math.max(world.invuln, step.guard);
   // A dash leaves speed lines and a shock cone along its path.
   // Shield Rush's wall of light, carried before her as she marches.
   if (step.wall) world.fx.push({ kind: 'shieldwall', follow: true, ahead: 22, x: body.x + body.facing * 22, y: body.y, dir: body.facing, t: 0, dur: dur * 0.82 });
   // A blink (Backstab) leaves a puff of smoke where she melts away and another where she steps out.
   if (step.blink) for (const [at, dx] of [[0.11, 0], [0.4, step.step]]) world.fx.push({ kind: 'blinksmoke', x: body.x + body.facing * dx, y: body.y, dir: body.facing, t: -at * dur, dur: 0.7 });
-  // A stage vanish (the Phantom Trickster's): gone in a puff of her plum smoke at `from` and back out
-  // of another where she lands at `to` (fractions of the move); unseen in between.
-  if (step.vanish) {
-    const [from, to] = step.vanish;
-    world.vanish = { since: now + from * dur, until: now + to * dur };
-    for (const [at, dx] of [[from - 0.04, 0], [to - 0.06, step.step]]) world.fx.push({ kind: 'ptsmoke', x: body.x + body.facing * dx, y: body.y, dir: body.facing, t: -at * dur, dur: 0.6 });
-  }
   if (step.trail) world.fx.push({ kind: 'chargetrail', school: school ?? pathSchool(world.char), x: body.x, y: body.y, tx: body.x + body.facing * step.step, dir: body.facing, t: 0, dur: 0.5 });
   // Warrior paths put their weight into big moves: a stomp that kicks up dust as the move starts,
   // and power gathering at the weapon until the first blow lands.
-  const heavy = hasVolt(world.char) || hasGale(world.char) || hasBulwark(world.char) || hasShadow(world.char) || hasRage(world.char) || hasFaith(world.char);
+  const heavy = hasVolt(world.char) || hasGale(world.char) || hasBulwark(world.char) || hasRage(world.char) || hasFaith(world.char);
   if (heavy && body.onGround && (step.finisher || step.strikes.some((st) => st.big))) {
     world.juice.push({ type: 'stomp', school: school ?? pathSchool(world.char), x: body.x, y: body.y, dir: body.facing, big: !key.startsWith('basic') });
     const lead = (step.strikes.find((st) => !st.onLand)?.at ?? 0.4) * dur;
@@ -1602,24 +1103,10 @@ function playStep(world, step, scale, key, school = null, after = 0) {
     world.fx.push({ kind: 'chargeglow', school: school ?? 'focus', x: body.x + body.facing * 16, y: body.y - HAND_Y - 2, dir: body.facing, t: 0, dur: lead });
   }
   world.hangUntil = step.hang ? now + dur + 0.15 : 0;
-  // The Sky Dancer: every blow lifts her.
-  if (hasTails(world.char)) skyLift(world, dur);
   if (step.dive) {
     // (`diveAt`: she rises first and only turns over into the dive that far through the move.)
     if (!step.diveAt) body.vy = step.dive;
     world.dive = { strike: { ...step.strikes.find((st) => st.onLand), n: 0, of: 1, dir: body.facing, scale, key, school, finisher: step.finisher, move: step.move, dur, at: 1 }, from: step.diveAt ? now + step.diveAt * dur : 0, speed: step.dive, until: now + (step.diveAt ?? 0) * dur + 1.2 };
-  }
-  // Phantom (full Shadow): a shadow copy of the thief repeats every blow and throw a beat later,
-  // lighter (finishers are hers alone).
-  const copies = phantom(world) ? [[PHANTOM_LAG, PHANTOM_POWER, 'shadow']] : [];
-  if (copies.length && (!step.finisher || key.startsWith('basic'))) {
-    world.phantom = { kind: step.move, since: now + copies[0][0], dur, until: now + copies.at(-1)[0] + dur, clones: copies.length > 1 };
-    for (const [lag, power, look] of copies) {
-      step.strikes.forEach((s, n) => {
-        if (s.onLand || (!s.pct && !s.rain)) return;
-        world.strikes.push({ ...s, n, of: step.strikes.length, due: now + s.at * dur + (s.delay ?? 0) + lag, dir: body.facing, scale: scale * power, key, school: look, finisher: false, move: step.move, dur, phantom: true, quiet: true, stop: 0, shake: 0, big: false, gauge: 0, hop: 0, flipback: 0, burst: undefined, muzzle: undefined, fx: undefined });
-      });
-    }
   }
   // High Tide (full Tide): every basic attack sends a little wave rolling after it. And her waves
   // run bigger the fuller the Tide (`swell`, drawn and hit alike).
@@ -1644,8 +1131,6 @@ export function tickMelee(world, dt) {
   const b = world.body;
   if (world.rage > 0 && world.now - (world.rageAt ?? 0) > RAGE_HOLD && !inForm(world)) world.rage = Math.max(0, world.rage - RAGE_DRAIN * dt);
   if (world.faith > 0 && world.now - (world.faithAt ?? 0) > FAITH_HOLD && !inForm(world)) world.faith = Math.max(0, world.faith - FAITH_DRAIN * dt);
-  if (world.bond > 0 && world.now - (world.bondAt ?? 0) > BOND_HOLD) world.bond = Math.max(0, world.bond - BOND_DRAIN * dt);
-  if (world.charge > 0 && world.now - (world.chargeAt ?? 0) > CHARGE_HOLD) world.charge = Math.max(0, world.charge - CHARGE_DRAIN * dt);
   tickTide(world, dt);
   tickDepth(world, dt);
   tickMoon(world, dt);
@@ -1653,16 +1138,6 @@ export function tickMelee(world, dt) {
   if (world.gale > 0 && world.now - (world.galeAt ?? 0) > GALE_HOLD) world.gale = Math.max(0, world.gale - GALE_DRAIN * dt);
   if (world.bulwark > 0 && world.now - (world.bulwarkAt ?? 0) > BULWARK_HOLD) world.bulwark = Math.max(0, world.bulwark - BULWARK_DRAIN * dt);
   tickEye(world, dt);
-  if (world.ki > 0 && world.now - (world.kiAt ?? 0) > KI_HOLD) world.ki = Math.max(0, world.ki - KI_DRAIN * dt);
-  tickCarousel(world);
-  tickSky(world);
-  if (world.tails > 0 && world.now - (world.tailsAt ?? 0) > TAILS_HOLD) world.tails = Math.max(0, world.tails - TAILS_DRAIN * dt);
-  if (world.shadow > 0 && world.now - (world.shadowAt ?? 0) > SHADOW_HOLD) world.shadow = Math.max(0, world.shadow - SHADOW_DRAIN * dt);
-  if (world.momentum > 0 && FLIPS.has(world.pose?.kind)) world.flipAt = world.now;
-  if (world.momentum > 0 && world.now - Math.max(world.momentumAt ?? 0, world.flipAt ?? 0) > MOMENTUM_HOLD) world.momentum = Math.max(0, world.momentum - MOMENTUM_DRAIN * dt);
-  tickTraps(world);
-  tickEngineer(world);
-  tickPhantom(world);
   if (world.dead) {
     world.strikes.length = 0;
     world.lunge = null;
@@ -1716,10 +1191,6 @@ function land(world, s) {
   // A proc's extra cuts land where they were aimed, but never turn you round: you may already be
   // swinging the other way.
   if (!s.keepFacing) body.facing = s.dir;
-  // The Archer's gold shots go as the path's own arrows, and her basic shots set off her procs as
-  // they leave the bow, hit or miss (Blast and Snare Arrow change the shot itself).
-  if (s.shot && !s.key.startsWith('basic')) s = { ...s, shot: pathShot(char, s.shot), muzzle: s.muzzle && pathShot(char, s.muzzle) };
-  if ((s.rain || s.shot) && s.key.startsWith('basic') && !s.phantom) s = shotProcs(world, s);
   if (s.rain) return rain(world, s);
   if (s.shot) return fire(world, s);
   // A form reaches farther: every cut grows by FORM_REACH (once, not again for its echo).
@@ -1744,24 +1215,12 @@ function land(world, s) {
     world.fx.push({ kind: 'pierce', school: s.school ? schoolFor(char, s.school) : pathSchool(char), x: body.x, y: body.y, dir: s.dir, box: { x, y: cy - 10, w: s.reach, h: 20 }, t: 0, dur: s.big ? 0.35 : 0.25, move: s.move, at: s.at, moveDur: s.dur, hit: s.hit, fin: s.finisher });
   }
   if (s.arc) {
-    world.fx.push({ kind: 'arc', weapon: world.stats.weaponType, snd: s.school ? schoolFor(char, s.school) : undefined, path: hasRage(char) ? 'rage' : hasFaith(char) ? 'holy' : hasVolt(char) ? 'thunder' : hasGale(char) ? 'redstorm' : hasBulwark(char) ? 'indigo' : hasKi(char) ? 'rosegold' : hasShadow(char) ? 'coral' : null, x: body.x + s.dir * (s.around ? 0 : 10), y: cy - 2, bx: body.x, by: body.y, move: s.move, at: s.at, moveDur: s.dur, hit: s.hit, fin: s.finisher, dir: s.dir, r: s.around ? s.reach * 0.8 : s.reach * 0.52, start: s.arc[0], sweep: s.arc[1], thick: s.thick ?? 7, big: s.big, flat: s.around, color: TINTS[s.school]?.[s.big ? 1 : 0] ?? (hasShadow(char) ? TINTS.coral[s.big ? 1 : 0] : s.big ? HEAVY : BLADE), element: s.key.startsWith('basic') ? weaponElement(char) : null, t: 0, dur: s.big ? 0.32 : 0.24 });
+    world.fx.push({ kind: 'arc', weapon: world.stats.weaponType, snd: s.school ? schoolFor(char, s.school) : undefined, path: hasRage(char) ? 'rage' : hasFaith(char) ? 'holy' : hasVolt(char) ? 'thunder' : hasGale(char) ? 'redstorm' : hasBulwark(char) ? 'indigo' : null, x: body.x + s.dir * (s.around ? 0 : 10), y: cy - 2, bx: body.x, by: body.y, move: s.move, at: s.at, moveDur: s.dur, hit: s.hit, fin: s.finisher, dir: s.dir, r: s.around ? s.reach * 0.8 : s.reach * 0.52, start: s.arc[0], sweep: s.arc[1], thick: s.thick ?? 7, big: s.big, flat: s.around, color: TINTS[s.school]?.[s.big ? 1 : 0] ?? (s.big ? HEAVY : BLADE), element: s.key.startsWith('basic') ? weaponElement(char) : null, t: 0, dur: s.big ? 0.32 : 0.24 });
   }
-  // A finisher's big blow all round her races a shockwave out along the ground to the edge of its
-  // reach, in her path's colour, so the whole area it hits shows (the dancers').
-  // The dancers mark every wide blow all round them this way, big or with a burst, from 90 px out
-  // (an aerial spin's ring of wind, a flourish's, Spotlight's dazzle).
-  const dancer = hasKi(char) || hasTails(char) || hasShadow(char);
-  const shock = s.around && !s.arc && ((s.big && (s.reach ?? 0) >= 150) || (dancer && (s.big || s.burst) && (s.reach ?? 0) >= 90)) && (hasKi(char) ? 'celshockrose' : hasTails(char) ? 'celshocksky' : hasShadow(char) ? 'celshockcoral' : char.job === 'mage' ? 'celshockstar' : null);
-  if (shock) world.fx.push({ kind: 'shock', name: shock, x: body.x, y: body.y, r: s.reach, t: 0, dur: 0.42 });
 
   if (s.crack) {
     world.fx.push({ kind: 'crack', school: s.school ? schoolFor(char, s.school) : pathSchool(char), x: body.x + s.dir * s.reach * 0.55, y: body.y, w: s.around ? s.reach * 2 : s.reach * 1.4, t: 0, dur: 0.7, seed: Math.random() });
     world.juice.push({ type: 'slam', school: s.school ? schoolFor(char, s.school) : pathSchool(char), x: body.x + s.dir * s.reach * 0.5, y: body.y, range: s.reach });
-  }
-  // A storm sky over the whole view (Storm Volley): a green wash, wind tearing across, arrows.
-  if (s.sky) {
-    world.fx.push({ kind: 'stormsky', x: body.x, y: body.y, t: 0, dur: s.sky });
-    world.fx.push({ kind: 'rain', variant: 'windarrow', school: 'wind', box: { x: body.x - 320, y: body.y - 330, w: 640, h: 330 }, x: body.x, y: body.y, t: 0, dur: s.sky });
   }
   if (s.burst) {
     // (`floor`: on the ground she took off from, for the Sky Dancer's tornado while she's up in the air.)
@@ -1771,10 +1230,6 @@ function land(world, s) {
   if (s.grant) grantSpell(world, s.grant);
   // Tide's Return and Moon Tide bring the fallen round her back up.
   if (s.revive) reviveAround(world, s.revive, s.reviveR ?? 320);
-  // Deploy Turret: she sets the turret down as the strike lands (world/engineer.js).
-  if (s.turret) deployTurret(world, s.turret);
-  // The Phantom Trickster's Grand Illusion (world/phantom.js).
-  if (s.grand) grandIllusion(world, s);
   let crits = 0;
   targets.forEach((m, i) => {
     const miss = Math.random() >= hitChance(acc, char.level, m.def);
@@ -1818,9 +1273,6 @@ function land(world, s) {
   // Valor builds faster the more monsters a blow catches at once (half again for each extra one).
   // A healing blow mends you and the party around you.
   if (s.heal) healAround(world, body.x, body.y, s.heal, s.healR ?? 220, true, s.el);
-  if (targets.length && !s.phantom) addShadow(world, (s.gauge ?? (s.key.startsWith('basic') ? 3 : 4)));
-  if (targets.length && !s.phantom) addKi(world, (s.gauge ?? (s.key.startsWith('basic') ? 3 : 4)));
-  if (targets.length && !s.phantom) addTails(world, s.gauge ?? 4, targets[0]);
   // (Charge builds faster the more monsters a blow catches: half again for each extra one.)
   if (targets.length && !s.phantom) addVolt(world, (s.gauge ?? (s.key.startsWith('basic') ? 3 : 4)) * (1 + 0.5 * (targets.length - 1)));
   if (targets.length && hasVolt(char)) targets.forEach((m) => chainBolt(world, m, s));
@@ -1918,116 +1370,19 @@ function formEcho(world, s) {
   if (!(world.formSwing && world.now < world.formSwing.until)) world.formSwing = { kind: s.move, since: world.now + 0.13 - s.at * s.dur, dur: s.dur, until: world.now + 0.13 + (1 - s.at) * s.dur };
 }
 
-// The Wind Dancer's two passives in each dancer's own look: ribbons and a crescent gust for the Wind
-// Dancer herself, two rose-gold rings orbiting and one skimming down the line for the Blade
-// Dancer, clouds bursting and a sky-blue crescent of wind for the Sky Dancer.
-const DANCER_PROCS = {
-  coral: { hit: 'wdhit', lash: 'wdswirl', gust: 'wdgust' },
-  rosegold: { hit: 'bdhit', lash: 'bdorbit', gust: 'bdskim' },
-  aerial: { hit: 'skyhit', lash: 'skyhit', gust: 'skyline' },
-};
-const dancerLook = (char) => {
-  const school = thiefSchool(char);
-  return { school, ...(DANCER_PROCS[school] ?? DANCER_PROCS.coral) };
-};
 
-// Ribbon Lash: two lashes a beat after the blow, all round her.
-function lashStrikes(world, s, p) {
-  const L = dancerLook(world.char);
-  const lash = (delay, burst) => procStrike(world, s, 'procribbonlash', delay, { pct: p.pct, reach: 76, h: 70, around: true, targets: p.targets, knock: 30, fx: L.hit, school: L.school, ...(burst ? { burst: L.lash, burstAt: 0, burstDur: 0.4 } : {}) });
-  world.strikes.push(lash(0.1, true), lash(0.24, false));
-}
 
 // After a basic swing lands (on `count` monsters, maybe none). `rng` for tests.
 function bladeProcs(world, s, count, rng = Math.random) {
   const { char } = world;
-  const lash = procOf(char, 'ribbonlash');
-  if (lash && rng() < lash.chance) lashStrikes(world, s, lash);
   for (const [id, strikes] of [['aegissmite', smiteStrikes], ['ravage', ravageStrikes]]) {
     const p = procOf(char, id);
     if (p && rng() < p.chance) strikes(world, s, p);
   }
   // Only the ground combo's own finisher flows on (not a dive, a slam, or a dash).
   if (!s.finisher || !/^basic\d$/.test(s.key)) return;
-  // Gust Line: the string's last blow flings a gust down the line.
-  const gust = procOf(char, 'gustline');
-  if (gust) {
-    const L = dancerLook(char);
-    world.strikes.push(procStrike(world, s, 'procgustline', 0.12, { pct: gust.pct, reach: 210, h: 70, targets: gust.targets, pierce: true, knock: 160, fx: L.hit, burst: L.gust, burstAt: 0.15, burstDur: 0.45, school: L.school, stop: 0.04, shake: 1 }));
-  }
   const judgment = procOf(char, 'judgment');
   if (judgment && (world.faith ?? 0) >= FAITH_MAX) judgmentRain(world, s, judgment);
-}
-
-// ---------- Archer procs ----------
-// The Archer's tricks set themselves off from her basic shots, hit or miss (see data/skills.js):
-// any shot may become a Blast Arrow (it bursts on impact) or a Snare Arrow (a net holds its target).
-// The Phantom Trickster's may vanish, burst into doves or throw cards (world/phantom.js).
-// Returns the shot to loose. `rng` for tests.
-// Blast Arrow's burst (and a sprung trap's) in each archer path's own look: the Archer's fireworks,
-// the Phantom Trickster's puff of smoke, the Arbalist Engineer's brass-and-teal blast.
-const BLASTS = { archer: 'acfirework', beastmaster: 'ptsmoke', stormcaller: 'aeboom' };
-function shotProcs(world, s, rng = Math.random) {
-  const { char, body } = world;
-  const blast = procOf(char, 'blastarrow');
-  if (blast && s.shot && rng() < blast.chance) s = { ...s, blast: blast.r, blastFx: BLASTS[pathOf(world)] ?? 'blast', burst: BLASTS[pathOf(world)] ?? 'blast', pct: (s.pct * blast.pct) / 100, big: true, stop: Math.max(s.stop ?? 0, 0.05), shake: Math.max(s.shake ?? 0, 1) };
-  const snare = procOf(char, 'snarearrow');
-  if (snare && s.shot && rng() < snare.chance) s = { ...s, snare: snare.secs };
-  // The Phantom Trickster's: a shot may vanish and strike again from behind (Vanishing Arrow), burst
-  // into doves that fly on to the monsters round it (Dove Arrow), or throw a fan of cards (Card Trick).
-  const vanish = procOf(char, 'wildhunt');
-  if (vanish && s.shot && rng() < vanish.chance) s = { ...s, vanish };
-  const doves = procOf(char, 'wolfpounce');
-  if (doves && s.shot && rng() < doves.chance) s = { ...s, doves };
-  const cards = procOf(char, 'hawkstrike');
-  if (cards && s.shot && rng() < cards.chance) s = { ...s, cards };
-  void body;
-  // The Arbalist Engineer's: a bolt may stick and burst a moment later (Sticky Bolt), and her
-  // string's last bolt may split into bomblets where it lands (Cluster Bolt).
-  const sticky = procOf(char, 'stickybolt');
-  if (sticky && s.shot && rng() < sticky.chance) s = { ...s, sticky };
-  const cluster = procOf(char, 'clusterbolt');
-  if (cluster && s.finisher && /^basic\d$/.test(s.key) && rng() < cluster.chance) s = { ...s, cluster };
-  return s;
-}
-
-// A hit of the Phantom Trickster's tricks (world/phantom.js): it lands like one of her shots, `at`
-// seconds from now, from `x`, never sets off another, and builds Illusion a little.
-export function phantomHit(world, m, f, at = 0) {
-  shotHit(world, { pct: f.pct, scale: 100, key: f.key ?? 'proctrick', dir: Math.sign(m.x - f.x) || 1, fromX: f.x, knock: f.knock ?? 40, launch: f.launch ?? 0, big: f.big, stop: f.stop, shake: f.shake, burst: f.burst ?? 'pthit', stun: f.stun, gauge: f.gauge ?? 1, chained: true }, m, at);
-}
-
-// A hit of the Arbalist Engineer's gadgets (world/engineer.js): it lands like one of her shots, `at`
-// seconds from now, from `x` (knocking monsters away from there), and never sets off another.
-export function gadgetHit(world, m, f, at = 0, element = null) {
-  shotHit(world, { pct: f.pct, scale: 100, key: f.key ?? 'procgadget', dir: Math.sign(m.x - f.x) || 1, fromX: f.x, knock: f.knock ?? 40, launch: f.launch ?? 0, big: f.big, stop: f.stop, shake: f.shake, burst: f.burst ?? 'aehit', stun: f.stun, gauge: f.gauge ?? 3, chained: true }, m, at, f.stack ?? 0, element);
-}
-
-// Spring Trap (the Acrobat Archer's Springboard): a trap set on the ground ahead, armed until a monster steps on it or it rusts away
-// (`life`), at most TRAPS at once (the oldest goes).
-const TRAPS = 3;
-export function setTrap(world, x, p) {
-  const traps = (world.traps ??= []);
-  const y = world.body.y;
-  if (traps.length >= TRAPS) traps.shift().fx.dur = 0;
-  // (Each archer path's own: the Acrobat's springboard, the Trickster's top hat, the Engineer's spring
-  // mine; `look` comes with the skill's path version, data/path-skills.js.)
-  const fx = { kind: 'trap', x, y, t: 0, dur: p.life, look: p.look ?? (world.char.job === 'archer' ? 'spring' : null) };
-  world.fx.push(fx);
-  traps.push({ x, y, until: world.now + p.life, pct: p.pct, fx });
-}
-// Every tick: a monster that steps on an armed trap is snapped and flung up.
-function tickTraps(world) {
-  if (!world.traps?.length) return;
-  world.traps = world.traps.filter((t) => {
-    if (world.now >= t.until) return false;
-    const m = world.mobs.find((o) => o.hp > 0 && !(o.air > 4) && Math.abs(o.x - t.x) < 18 + o.def.w / 3 && Math.abs(o.y - t.y) < 30);
-    if (!m) return true;
-    t.fx.dur = t.fx.t;
-    world.fx.push({ kind: 'trapsnap', x: t.x, y: t.y, t: 0, dur: 0.5, look: t.fx.look });
-    shotHit(world, { pct: t.pct, scale: 100, key: 'proctrap', dir: Math.sign(m.x - world.body.x) || 1, knock: 30, launch: 460, big: true, stop: 0.07, shake: 2, burst: BLASTS[pathOf(world)] ?? 'blast', gauge: 3 }, m, 0);
-    return false;
-  });
 }
 
 // A proc's own move, a beat after the blow that set it off (on the ground, and still standing).
@@ -2052,27 +1407,11 @@ function shotHit(world, s, m, delay, stack = 0, element = null, rank = 0) {
   const extraCrit = sure ? 1 : 0;
   const range = s.magic ? magicRange(stats, (s.pct * s.scale * tuneOf(s.key)) / 100) : physicalRange(stats, stats.weaponType, (s.pct * s.scale * tuneOf(s.key)) / 100);
   const roll = miss ? null : rollHit(range, stats, m.def, char.level, Math.random, extraCrit);
-  // (Snare Arrow: a monster held in her net takes more.)
-  const held = m.hold === 'snare' && m.frozenUntil > world.now ? procOf(char, 'snarearrow')?.bonus ?? 0 : 0;
-  const spark = hasTails(char) ? 'skyhit' : hasKi(char) ? 'bdhit' : hasShadow(char) ? 'shadowhit' : hasMomentum(char) ? 'achit' : hasBond(char) ? 'pthit' : hasCharge(char) ? 'aehit' : undefined;
   world.pending.push({
-    at: world.now + delay, mob: m, miss, damage: Math.round((roll?.damage ?? 0) * (1 + held)), crit: roll?.crit ?? false, fromX: s.fromX ?? body.x, stack, knock: s.knock, launch: s.launch, big: s.big, stop: s.stop, shake: s.shake, element,
-    via: s.shot ?? (s.rain ? 'rain' : undefined), stun: miss ? undefined : s.stun, burn: miss ? undefined : s.burn, freeze: miss ? undefined : s.freeze, snare: miss ? undefined : s.snare, burst: s.burst ?? spark, dir: s.dir,
+    at: world.now + delay, mob: m, miss, damage: roll?.damage ?? 0, crit: roll?.crit ?? false, fromX: s.fromX ?? body.x, stack, knock: s.knock, launch: s.launch, big: s.big, stop: s.stop, shake: s.shake, element,
+    via: s.shot ?? (s.rain ? 'rain' : undefined), stun: miss ? undefined : s.stun, burn: miss ? undefined : s.burn, freeze: miss ? undefined : s.freeze, burst: s.burst, dir: s.dir,
     gauge: s.gauge ?? (s.key.startsWith('basic') ? 3 : 5), rank, el: s.el, mend: miss ? undefined : s.mend, basic: s.key.startsWith('basic') || undefined,
-    // The archer paths' hits bring their own sprite burst, so the plain spark is left off.
-    ownSpark: Boolean(spark),
   });
-  // The Arbalist Engineer's gadgets: a sticky bolt bursts a moment after it lands, and a cluster
-  // bolt splits into bomblets. Only the first monster a piercing bolt reaches sets these off.
-  // The Phantom Trickster's: a vanishing arrow strikes again from behind, a dove arrow sends doves on.
-  if (!miss && rank === 0 && s.shot && !s.chained && hasBond(char)) {
-    if (s.vanish) vanishAgain(world, m, delay, s.vanish);
-    if (s.doves) doveBurst(world, m, delay, s.doves);
-  }
-  if (!miss && rank === 0 && s.shot && !s.chained && hasCharge(char)) {
-    if (s.sticky) stickyBurst(world, m, delay, s.sticky);
-    if (s.cluster) clusterBurst(world, m, delay, s.cluster);
-  }
 }
 
 // A support skill's buff as it lands: on her, and on the party in `range` (applyBuff does both for
@@ -2097,27 +1436,10 @@ function wandTip(world, s) {
 function fire(world, strike) {
   // (A shot that mends as it goes, the Great Wave: you and the party round you, as it breaks.)
   if (strike.heal && !strike.split) healAround(world, world.body.x, world.body.y, strike.heal, strike.healR ?? 220, true);
-  // Overclock: her next few bolts go out heavy.
-  let s = hasCharge(world.char) ? overclocked(world, strike) : strike;
-  // Overdrive (full Pressure): a second bolt after every shot, and a puff of steam off the machine.
-  if (overdrive(world) && s.shot && !s.split && !s.free) {
-    fire(world, { ...s, split: true, lag: (s.lag ?? 0) + 0.08, oy: (s.oy ?? 0) + 4, pct: s.pct * 0.6, big: false, stop: 0, shake: 0, gauge: 1, muzzle: undefined });
-    world.fx.push({ kind: 'aesteam', small: true, x: world.body.x - world.body.facing * 6, y: world.body.y - 8, t: 0, dur: 0.5 });
-  }
+  let s = strike;
   const { body } = world;
   // A gauntlet throws its own stars (their look and element).
   const star = STAR_SHOTS.has(s.shot) && !s.phantom && !s.free ? thrownStars(world.char) : null;
-  // Showtime (full Combo): every shot she looses splits into three arrows, a little above and below.
-  if (showtime(world) && s.shot && !s.split && !s.free && !s.rain) {
-    for (const k of [-1, 1]) fire(world, { ...s, split: true, oy: (s.oy ?? 0) + k * 6, drop: (s.drop ?? 0) + (k > 0 ? 24 : 0), lift: (s.lift ?? 0) + (k < 0 ? 24 : 0), h: Math.max(s.h ?? 60, 110), pct: s.pct * 0.5, big: false, stop: 0, shake: 0, gauge: 1, muzzle: undefined });
-  }
-  // The Phantom Trickster's copies loose with her (world/phantom.js), and Card Trick throws a fan of
-  // three cards through the line.
-  if (hasBond(world.char) && s.shot) copiesShoot(world, s, fire);
-  if (s.cards && !s.split && !s.copy) fire(world, { ...s, cards: null, split: true, shot: 'ptcard', fan: 3, h: 110, pierce: true, targets: 3, pct: s.cards.pct, lag: (s.lag ?? 0) + 0.05, big: false, stop: 0, shake: 0, gauge: 1, muzzle: undefined, speed: 760 });
-  // The Sky Dancer's gusts: twice as big on full Tailwind; Updraft may throw them up in a rising
-  // whirl, and in the air Zephyr may send a second gust after the first.
-  if (hasTails(world.char) && SKY_SHOTS.has(s.shot)) s = skyProcs(world, s);
   // Shots leave from the bow hand (chest high), lifted with the pose (a backflip is mid-air).
   // (A copy's arrow leaves from where the copy stands.)
   let ox = (s.from?.x ?? body.x) + s.dir * 10;
@@ -2153,28 +1475,18 @@ function fire(world, strike) {
   // monster is now, and a piercing one keeps its line through it out to `reach`.
   const fly = (tx, ty, mob = null, reach = 0) => {
     const travel = Math.max(0.06, Math.hypot(tx - ox, ty - oy) / speed);
-    world.fx.push({ kind: 'projectile', weapon: world.stats.weaponType, shot: s.shot, swell: s.swell, floorY: s.shot?.startsWith('tmwave') || s.shot === 'tmgreat' || s.shot === 'msblackwave' || s.shot === 'msblacktide' || s.shot === 'tcsilverwave' || s.shot === 'tcsilvertide' ? body.y : undefined, school: s.school, element, starColor: star?.color, bend: s.lob ? -s.lob * s.dir : s.bend, shadow: hasShadow(world.char), fox: hasTails(world.char), illusion: s.illusion, phantom: s.phantom, x: ox, y: oy, tx, ty, mob, reach, t: -lag, dur: travel });
-    // A gale shot leaves a band of wind hanging along the path it tore through.
-    if (s.shot === 'galearrow' || s.shot === 'cyclone') world.fx.push({ kind: 'windtrail', x: ox, y: oy, tx, ty, big: s.shot === 'cyclone', t: -lag, dur: 0.75 });
+    world.fx.push({ kind: 'projectile', weapon: world.stats.weaponType, shot: s.shot, swell: s.swell, floorY: s.shot?.startsWith('tmwave') || s.shot === 'tmgreat' || s.shot === 'msblackwave' || s.shot === 'msblacktide' || s.shot === 'tcsilverwave' || s.shot === 'tcsilvertide' ? body.y : undefined, school: s.school, element, starColor: star?.color, bend: s.lob ? -s.lob * s.dir : s.bend, illusion: s.illusion, phantom: s.phantom, x: ox, y: oy, tx, ty, mob, reach, t: -lag, dur: travel });
     return travel + lag;
   };
   // A little snap of the string (or flick of the wrist) as it goes; a heavy shot kicks back.
-  // (The archer paths use effect sprites: a gust of leaves or sparks off the bolt.)
-  // (The Arbalist's steam puffs off the crossbow's tip, low and ahead, clear of her face.)
-  if (hasCharge(world.char)) world.fx.push({ kind: 'aesteam', small: true, x: ox + s.dir * 14, y: oy + 12, dir: s.dir, t: 0, dur: 0.3 });
   // (The Tide Mage's water carries its own splash: no flash off her staff.)
-  else if (!hasBond(world.char) && !hasTide(world.char) && !hasDepth(world.char) && !hasMoon(world.char)) world.fx.push({ kind: 'spark', x: ox, y: oy, t: 0, dur: 0.16, muzzle: true });
+  if (!hasTide(world.char) && !hasDepth(world.char) && !hasMoon(world.char)) world.fx.push({ kind: 'spark', x: ox, y: oy, t: 0, dur: 0.16, muzzle: true });
   // Heavy shots kick the view back (research/archery.md 37).
   if (s.big) world.juice.push({ type: 'kick', x: -s.dir * 2, y: 0 });
   // Shots aimed up or down (`lift`, `drop`) look for monsters above or below you.
   if (s.lift || s.drop) box.dy = (s.drop ?? 0) - (s.lift ?? 0);
   // A finisher shot that finds a mark opens a Link too (see land).
   if (s.finisher && pickTargets(world.mobs, body, box, 1).length) world.finisherAt = { at: world.now, key: s.key };
-  // The Blade Dancer's ring flies its own way: out, bouncing on, and home (ringThrow).
-  if (s.bounce != null) {
-    for (let i = 0; i < (s.fan ?? 1); i++) ringThrow(world, { ...s, lag: lag + i * 0.07, pick: (s.pick ?? 0) + i }, ox, oy, speed, box, element);
-    return;
-  }
   if (s.pierce) {
     const line = pickTargets(world.mobs, body, box, s.targets ?? 1);
     // It flies at the first monster in its line (up or down to it, from the air or onto a slope)
@@ -2237,67 +1549,9 @@ function fire(world, strike) {
   }
 }
 
-// The Blade Dancer's ring: it flies at a monster in its line (the `pick`-th nearest, for a fan or the
-// Carousel's flight of rings), ricochets on to the nearest monster it hasn't hit, `bounce` times
-// (each a little lighter, a spark where it bounces), then flies home to her hand. Rebound may give
-// it more bounces; Twin Rings may send a second after it at the next monster along.
-const RING_JUMP = { x: 170, y: 90 };
-const RING_FALLOFF = 0.85;
-const ringMid = (m) => m.y - (m.air ?? 0) - m.def.h / 2;
-function ringThrow(world, s, ox, oy, speed, box, element) {
-  const { body, char } = world;
-  const rebound = !s.twin && procOf(char, 'rebound');
-  const bounces = (s.bounce ?? 0) + (rebound && Math.random() < rebound.chance ? rebound.extra : 0);
-  const leg = (x, y, tx, ty, at, mob, home = false) => {
-    const d = Math.max(0.05, Math.hypot(tx - x, ty - y) / speed);
-    world.fx.push({ kind: 'projectile', weapon: 'dagger', shot: s.shot, school: 'rosegold', bend: s.lob && x === ox ? -s.lob * s.dir : 0, x, y, tx, ty, mob, home, twin: Boolean(s.twin), t: -at, dur: d });
-    return at + d;
-  };
-  const pool = pickTargets(world.mobs, body, s.around ? { ...box, around: true } : box, (s.pick ?? 0) + 1);
-  let m = pool[s.pick ?? 0] ?? pool.at(-1);
-  if (!m) {
-    // Nothing to aim at: out to its full reach and back.
-    const tx = ox + s.dir * s.range;
-    const ty = oy + (s.drop ? 40 : s.lift ? -60 : 0);
-    leg(tx, ty, ox, oy, leg(ox, oy, tx, ty, s.lag ?? 0), null, true);
-    return;
-  }
-  const hit = new Set();
-  let at = s.lag ?? 0;
-  let x = ox;
-  let y = oy;
-  for (let j = 0; m; j++) {
-    const mx = m.x;
-    const my = ringMid(m);
-    at = leg(x, y, mx, my, at, m);
-    const pct = s.pct * RING_FALLOFF ** j;
-    shotHit(world, j ? { ...s, pct, fromX: x, dir: Math.sign(mx - x) || s.dir, burst: 'bdbounce', knock: 50, launch: 0, big: false, stop: 0.02, shake: 0, gauge: s.gauge === 0 ? 0 : 4 } : { ...s, burst: s.burst ?? 'bdhit' }, m, at, j % 3, element, j);
-    hit.add(m);
-    x = mx;
-    y = my;
-    if (j >= bounces) break;
-    m = world.mobs
-      .filter((o) => !hit.has(o) && o.hp > 0 && Math.abs(o.x - x) <= RING_JUMP.x && Math.abs(ringMid(o) - y) <= RING_JUMP.y)
-      .sort((a, b) => Math.abs(a.x - x) - Math.abs(b.x - x))[0];
-  }
-  leg(x, y, body.x + s.dir * 10, body.y - HAND_Y, at, null, true);
-  // Twin Rings: a second ring a beat behind, at the next monster along if there is one.
-  const twin = !s.twin && procOf(char, 'twinrings');
-  if (twin && Math.random() < twin.chance) ringThrow(world, { ...s, twin: true, pct: (s.pct * twin.pct) / 100, lag: (s.lag ?? 0) + 0.1, pick: (s.pick ?? 0) + 1, big: false, stop: 0, shake: 0 }, ox, oy + 4, speed, box, element);
-}
 
 // How far a level piercing shot may tip toward a monster above or below its line (radians).
 const PIERCE_TIP = 0.28;
-const SKY_SHOTS = new Set(['skygust', 'skygustbig']);
-function skyProcs(world, s) {
-  const { char } = world;
-  if (skyFlight(world) && !s.tailwind) s = { ...s, tailwind: true, shot: 'skygustbig', pct: s.pct * 1.5, targets: Math.max(s.targets ?? 1, 3), pierce: true, big: true };
-  const up = procOf(char, 'updraft');
-  if (up && !s.zephyr && Math.random() < up.chance) s = { ...s, launch: Math.max(s.launch ?? 0, up.launch), burst: 'skyupdraft', pct: (s.pct * up.pct) / 100 };
-  const z = procOf(char, 'zephyr');
-  if (z && !s.zephyr && !world.body.onGround && Math.random() < z.chance) fire(world, { ...s, zephyr: true, lag: (s.lag ?? 0) + 0.12, oy: (s.oy ?? 0) + 5, pct: (s.pct * z.pct) / 100, big: false, stop: 0, shake: 0 });
-  return s;
-}
 
 // Arrows rain down on the monsters in an area ahead, one after another.
 function rain(world, s) {
@@ -2312,8 +1566,6 @@ function rain(world, s) {
     world.fx.push({ kind: 'rain', variant: s.variant ?? 'arrow', school: s.school ?? 'wind', x, y: m ? m.y : body.y, h: m ? m.def.h : 20, t: -delay, dur: 0.45, seed: k });
     if (m) shotHit(world, s, m, delay + 0.18, k % 3);
   }
-  // Grand Somersault's arrows land as a ring of gold racing out to the edge of the rain.
-  if (s.around && s.school === 'acro') world.fx.push({ kind: 'shock', name: 'celshockmint', x: body.x, y: body.y, r: s.rainW / 2, t: -0.3, dur: 0.6 });
 }
 
 // The command moves a character of this job would play (up + attack, in the air, on the run), for
@@ -2322,7 +1574,7 @@ export function commandsOf(char, weaponType) {
   const path = pathOf({ char, stats: { weaponType } });
   if (ARCHER_COMMANDS[path]) return ARCHER_COMMANDS[path];
   if (!MELEE.has(weaponType)) return null;
-  const own = { warrior: STORM_COMMANDS, tempest: RED_COMMANDS, stormwall: WALL_COMMANDS, thiefdagger: DANCER_COMMANDS, shinobi: BLADE_COMMANDS }[path] ?? null;
+  const own = { warrior: STORM_COMMANDS, tempest: RED_COMMANDS, stormwall: WALL_COMMANDS }[path] ?? null;
   const dash = own?.dash ?? DASH;
   return { up: own?.up ?? LAUNCHER, air: own?.air ?? AIR, dash };
 }
@@ -2335,7 +1587,7 @@ export function commandsOf(char, weaponType) {
 export function botProcs(char, weaponType, s, finisher, count, rng = Math.random) {
   const world = { now: 0, strikes: [], char, stats: { weaponType }, faith: 0, body: { x: 0, facing: 1 } };
   const key = finisher ? 'basic2' : 'basic0';
-  if (s.shot) return { shot: shotProcs(world, { ...s, key, finisher }, rng) };
+  if (s.shot) return { shot: { ...s, key, finisher } };
   bladeProcs(world, { ...s, dir: 1, scale: 100, key, finisher }, count, rng);
   return { strikes: world.strikes, step: world.queuedStep?.step ?? null };
 }

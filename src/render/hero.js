@@ -734,16 +734,6 @@ function mouthShapes(kind, sk) {
 function faceExtras(extra) {
   const out = [];
   for (const e of extra) {
-    if (e === 'kitsune') {
-      // Kitsune shrine make-up: a sweep of vermilion flicking up from each eye's outer corner,
-      // and a small vermilion mark between the brows.
-      for (const side of [-1, 1]) {
-        const ox = FACE_X + (EYE_DX + 1.9) * side;
-        out.push(F(T([[ox - 0.5 * side, EYE_Y - 0.4], [ox + 1.5 * side, EYE_Y - 2.2], [ox + 0.9 * side, EYE_Y - 0.6], [ox, EYE_Y + 0.5]], '#e8463a')));
-      }
-      out.push(F(E(FACE_X, 13.2, 0.55, 0.85, '#e8463a')), F(E(FACE_X, 13.6, 0.3, 0.3, '#ff9a8a')));
-      continue;
-    }
     if (e === 'oniglow') {
       // A burning eye: a flare of gold light at the near eye's outer corner, and a streak of it
       // trailing back.
@@ -3726,7 +3716,7 @@ function paintHero(ctx, look, gear, x, y, state, anim, mv) {
     ctx.drawImage(bt.canvas, -(bt.grip[0] + 1) * bs, -(bt.grip[1] + 1) * bs, bt.cw * bs, bt.ch * bs);
     ctx.restore();
   };
-  // Twin chakrams (the dancers' dagger, docs/design/wind-dancer.md): the second ring rides in the
+  // Twin chakrams (the dagger items): the second ring rides in the
   // free hand, gripped on its rim and turned the way that forearm points, drawn behind the body like
   // that far hand, so it never crosses her face. (Not while she holds a life-skill tool.)
   const drawOffhand = () => {

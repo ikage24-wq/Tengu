@@ -15,7 +15,7 @@ import { roleOf } from '../src/data/dungeons.js';
 
 const TARGET = { tank: 0.88, healer: 0.88 };
 // The damage jobs that fight up close (the rest shoot, cast or throw from range).
-const MELEE = new Set(['thief', 'berserker', 'kitsune']);
+const MELEE = new Set(['tempest']);
 const DPS = { 1: { melee: 1.06, ranged: 0.94 }, 2: { melee: 1.08, ranged: 0.96 } };
 const LEAN = 0.05;
 const STAGES = { 1: [20, 28], 2: [40, 45, 50] };

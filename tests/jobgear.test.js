@@ -38,13 +38,11 @@ test('every job has its own set every 5 levels in every armor slot, and earrings
   assert.equal(new Set(GEAR_LEVELS.map((L) => ITEMS[`warrior_hat_${L}`].name)).size, 20, 'every set has its own name');
 });
 
-test('jobs lean their own way: warriors tank, mages bring magic, archers and thieves are quick', () => {
+test('jobs lean their own way: warriors tank, mages bring magic', () => {
   const at = (f, s) => ITEMS[`${f}_${s}_50`].stats;
   assert.ok(at('warrior', 'top').wdef > at('mage', 'top').wdef);
   assert.ok(at('warrior', 'top').hp > 0);
   assert.ok(at('mage', 'top').int > 0 && at('mage', 'gloves').matk > 0);
-  assert.ok(at('thief', 'shoes').speed > at('warrior', 'shoes').speed);
-  assert.ok(at('archer', 'gloves').acc > 0);
 });
 
 test('only the right job wears a set, and a Novice can wear the starter sets', () => {
@@ -64,7 +62,7 @@ test('colors are a look only: a name and a recolor, never stats', () => {
   // Things without variants never get one.
   assert.equal(makeEquip('hoodie', { variant: 'dark' }).variant, undefined);
   assert.equal(variantsFor(ITEMS.red_potion), null);
-  assert.equal(variantsFor(ITEMS.thief_cape_5), VARIANTS);
+  assert.equal(variantsFor(ITEMS.mage_cape_5), VARIANTS);
   // Drops are the same piece every time (no random stat rolls).
   assert.deepEqual(makeEquip('sword_40', { rng: seeded(1) }).stats, makeEquip('sword_40', { rng: seeded(2) }).stats);
 });
@@ -87,14 +85,29 @@ test('shops sell gear for your own job at their levels, and a Novice sees every 
   assert.ok(!warrior.includes('wand_20'), 'no weapons the job cannot use');
   const novice = shopStock(NPCS.pip, hero('novice', 3));
   for (const f of GEAR_FAMILIES) assert.ok(novice.includes(`${f}_top_5`), f);
-  for (const n of Object.values(NPCS)) for (const id of shopStock(n, hero('thief', 30))) assert.ok(ITEMS[id], `${n.id} ${id}`);
+  for (const n of Object.values(NPCS)) for (const id of shopStock(n, hero('tidemage', 30))) assert.ok(ITEMS[id], `${n.id} ${id}`);
 });
 
 test('quest gear rewards fit the hero who earns them', () => {
   const r = { id: 'warrior_gloves_15', qty: 1, forJob: true };
-  assert.equal(rewardId(hero('archer', 15), r), 'archer_gloves_15');
-  assert.equal(rewardId(hero('thief', 15), r), 'thief_gloves_15');
-  assert.equal(jobGearId('thief', 'earring', 33), 'ear_30');
+  assert.equal(rewardId(hero('tidemage', 15), r), 'mage_gloves_15');
+  assert.equal(rewardId(hero('warrior', 15), r), 'warrior_gloves_15');
+  assert.equal(jobGearId('mage', 'earring', 33), 'ear_30');
+});
+
+test("the Archer's and the Thief's armour in an old save sells itself back", () => {
+  const char = {
+    gold: 0, cash: 0, hotkeys: {}, outfit: { top: { uid: 4, id: 'cash_thief_top_20' } },
+    equipment: { top: { uid: 1, id: 'archer_top_30' }, weapon: { uid: 2, id: 'bow_20' } },
+    inventory: { equip: [{ uid: 3, id: 'thief_gloves_50' }, { uid: 5, id: 'set_sylvana_archer_cape' }], use: [], etc: [], cash: [] },
+  };
+  dropRetiredItems(char);
+  assert.equal(char.equipment.top, null);
+  assert.equal(char.equipment.weapon.id, 'bow_20', 'the weapons stay');
+  assert.deepEqual(char.inventory.equip, []);
+  const shop = (id) => Math.floor(ITEMS[id].price * 0.1);
+  assert.equal(char.gold, shop('warrior_top_30') + shop('warrior_gloves_50') + shop('set_sylvana_warrior_cape'));
+  assert.equal(char.cash, ITEMS.cash_warrior_top_20.cash);
 });
 
 test('old weapon tiers become the new weapon of the same level', () => {
@@ -106,7 +119,7 @@ test('old weapon tiers become the new weapon of the same level', () => {
 
 test('drops lean toward your own job and come in colors', () => {
   const rng = seeded(9);
-  const fits = (d) => !d.family || d.family === 'thief';
+  const fits = (d) => !d.family || d.family === 'mage';
   let own = 0;
   let other = 0;
   let colored = 0;
@@ -114,7 +127,7 @@ test('drops lean toward your own job and come in colors', () => {
     for (const l of rollLoot(MOBS.crystalking, rng, fits)) {
       if (!l.inst) continue;
       const def = ITEMS[l.inst.id];
-      if (def.family === 'thief') own++;
+      if (def.family === 'mage') own++;
       else if (def.family) other++;
       if (l.inst.variant) colored++;
     }

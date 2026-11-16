@@ -32,9 +32,6 @@ export function packAt(world, m, r = 120) {
   return n;
 }
 
-// Area skills among the paths' own specials (played by party.js SPECIALS).
-const AREA_SPECIALS = new Set(['cometarrow', 'stampede']);
-
 // What a skill is good for, read from its own strikes: how many it reaches, whether it launches,
 // and how hard it hits in all.
 export function shapeOf(sk) {
@@ -48,7 +45,6 @@ export function shapeOf(sk) {
       power += k.pct ?? 0;
     }
   }
-  if (AREA_SPECIALS.has(sk.id)) targets = 6;
   return { targets, aoe: targets >= 3, launch, power: power * (sk.tune ?? 1) };
 }
 

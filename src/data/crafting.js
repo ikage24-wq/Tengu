@@ -72,16 +72,18 @@ export const ARTISAN = [
   { level: 40, tier: 4, name: 'Moonweave', forged: 'Moonforged', color: '#9fe6e0', accent: '#ffe36b', craft: 39 },
   { level: 50, tier: 4, name: 'Starforged', forged: 'Starforged', color: '#ffe6a8', accent: '#b48cff', craft: 47 },
 ];
-// The weapons each gear family crafts (data/jobs.js: the jobs' own weapons).
+// The weapons each gear family crafts (data/jobs.js: the jobs' own weapons). The Archer's and the
+// Thief's weapons stayed when their lines were wiped (2026-11-16): they are a Novice's now, to use
+// and to craft.
 export const FAMILY_WEAPONS = {
   warrior: ['sword', 'axe', 'spear'],
-  archer: ['bow', 'crossbow'],
   mage: ['wand', 'staff'],
-  thief: ['dagger', 'gauntlet'],
+  beginner: ['bow', 'crossbow', 'dagger', 'gauntlet'],
 };
-const FAMILIES = Object.keys(FAMILY_WEAPONS);
+// The families with armour of their own.
+const FAMILIES = ['warrior', 'mage'];
 const SLOTS = ['hat', 'top', 'bottom', 'shoes', 'gloves', 'cape'];
-const MAIN = { warrior: 'str', archer: 'dex', mage: 'int', thief: 'luk' };
+const MAIN = { warrior: 'str', mage: 'int' };
 export const familyMain = (family) => MAIN[family] ?? 'str';
 
 // Accessories: a ring, an earring and a charm per region tier.
@@ -154,8 +156,8 @@ function scaled(needs, k) {
 for (const a of ARTISAN) {
   const m = TIER_MATS[a.tier];
   const k = a.level === 50 ? 1.5 : 1;
-  for (const family of FAMILIES) {
-    for (const slot of SLOTS) {
+  for (const family of Object.keys(FAMILY_WEAPONS)) {
+    for (const slot of FAMILIES.includes(family) ? SLOTS : []) {
       let [fibre, ore, wood, d, n] = ARMOR_NEEDS[slot];
       // Warriors wear plate: the metal and the cloth trade places.
       if (family === 'warrior' && slot !== 'cape' && slot !== 'bottom') [fibre, ore] = [Math.max(1, ore), fibre];
@@ -256,8 +258,8 @@ export function craftedItemDefs(ITEMS, JOB_SETS, GEAR_LEVELS) {
   };
   for (const a of ARTISAN) {
     const t = GEAR_LEVELS.indexOf(a.level);
-    for (const family of FAMILIES) {
-      for (const slot of SLOTS) {
+    for (const family of Object.keys(FAMILY_WEAPONS)) {
+      for (const slot of FAMILIES.includes(family) ? SLOTS : []) {
         const base = ITEMS[`${family}_${slot}_${a.level}`];
         out.push({
           id: artisanId(family, slot, a.level), name: `${a.name} ${JOB_SETS[family].nouns[slot](t)}`,

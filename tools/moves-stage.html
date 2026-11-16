@@ -4,7 +4,7 @@
 <script type="module">
 // Dev tool: a job among a line of training dummies, driven key by key from outside, drawn with the
 // game's own renderer, with a caption. For demo videos (tools/record-moves.cjs):
-// ?job=shinobi&level=45&learn=inkdance&weapon=dagger_45, then window.step(dt, held, pressed) and window.caption(text).
+// ?job=tempest&level=45&learn=thunderrush&weapon=sword_45, then window.step(dt, held, pressed) and window.caption(text).
 import { balanceChar } from './balance.mjs';
 import { createWorld, updateWorld, loadMap } from '../src/world/world.js';
 import { spawnMob } from '../src/world/mobs.js';
@@ -29,7 +29,7 @@ canvas.width = VW * SCALE;
 canvas.height = VH * SCALE;
 preloadFxSprites();
 
-const job = q.get('job') ?? 'thief';
+const job = q.get('job') ?? 'warrior';
 const level = Number(q.get('level') ?? (JOBS[job].tier === 1 ? 25 : 45));
 const c = balanceChar(job, level);
 c.mp = c.baseMp = 99999;

@@ -76,6 +76,9 @@ export function loadWorld(file) {
   w.wardrobe ??= [];
   w.storage ??= createInventory();
   for (const tab of Object.keys(createInventory())) w.storage[tab] ??= [];
+  // (Nothing removed from the game stays in the chest or the wardrobe.)
+  for (const tab of Object.keys(w.storage)) w.storage[tab] = w.storage[tab].filter((e) => e && ITEMS[e.id]);
+  w.wardrobe = w.wardrobe.filter((id) => ITEMS[id]);
   w.playSeconds ??= 0;
   worlds.set(file, w);
   return w;
@@ -261,9 +264,22 @@ export function repairSave(char) {
   return char;
 }
 
+// The Archer's and the Thief's armour went with their lines (2026-11-16). A piece still worn or in
+// a bag sells itself back for what a shop pays for gear of its kind (the Thunderguard's twin piece
+// costs the same), and a Cash costume of it gives its Cash back.
+const WIPED_FAMILY = /(^|_)(archer|thief)_/;
+function refundWipedGear(char, inst) {
+  if (!inst?.id || ITEMS[inst.id] || !WIPED_FAMILY.test(inst.id)) return;
+  const twin = ITEMS[inst.id.replace(WIPED_FAMILY, '$1warrior_')];
+  if (!twin) return;
+  if (twin.cash) char.cash = (char.cash ?? 0) + twin.cash;
+  else char.gold = (char.gold ?? 0) + Math.max(1, Math.floor((twin.price || 0) * 0.1)) * (inst.qty ?? 1);
+}
+
 // Items removed from the game since the save was made (like the old weapon lines) are dropped,
 // so an old save never refers to something that no longer exists.
 export function dropRetiredItems(char) {
+  for (const inst of [...Object.values(char.equipment), ...Object.values(char.outfit ?? {}), ...Object.values(char.inventory).flat()]) refundWipedGear(char, inst);
   // Renamed items (the old weapon tiers) become their replacements first.
   const rename = (e) => e && RENAMED_ITEMS[e.id] && (e.id = RENAMED_ITEMS[e.id]);
   Object.values(char.equipment).forEach(rename);
@@ -295,6 +311,9 @@ export function updateRetiredJobs(char) {
   if (char.quests) {
     delete char.quests.spiritmage_trial;
     if (!char.oldMageTrialCleared) delete char.quests.mage_trial;
+    // (The Archer's and the Thief's trials went with their lines, 2026-11-16.)
+    delete char.quests.archer_trial;
+    delete char.quests.thief_trial;
   }
   char.oldMageTrialCleared = true;
   for (const [id, lv] of Object.entries(char.skills ?? {})) {

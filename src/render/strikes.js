@@ -7,10 +7,8 @@
 // by the skill's school. (x, y) is a monster's feet for per-target effects, the player's otherwise.
 
 import { SCHOOL_COLORS } from './spells.js';
-import { drawArcheryShot, drawArchery, windRainPiece, hawkRainPiece } from './archery.js';
 import { fxSprite } from './fx-sprites.js';
 import { drawWarriorFx } from './warrior-fx.js';
-import { drawThiefFx, moonRainPiece } from './thief-fx.js';
 import { drawHealFx } from './heal-fx.js';
 import { drawLifeFx } from './life-fx.js';
 import { drawTeamFx } from './team-fx.js';
@@ -242,7 +240,7 @@ export function drawStrikeShot(ctx, f, x, y, dir, time) {
       return true;
     }
     default:
-      return drawArcheryShot(ctx, f, x, y, dir, time);
+      return false;
   }
 }
 
@@ -252,7 +250,6 @@ export function drawStrike(ctx, f, x, y, p, cam, time) {
   if (f.t < 0) return true;
   // The warrior paths' effects and skill power-ups come from effect sprites (warrior-fx.js).
   if (drawWarriorFx(ctx, f, x, y, p, cam, time)) return true;
-  if (drawThiefFx(ctx, f, x, y, p, cam, time)) return true;
   if (drawHealFx(ctx, f, x, y, p)) return true;
   if (drawLifeFx(ctx, f, x, y, p)) return true;
   if (drawTeamFx(ctx, f, x, y, p)) return true;
@@ -428,7 +425,7 @@ export function drawStrike(ctx, f, x, y, p, cam, time) {
         // Extra falling pieces across the whole screen, not just on targets.
         for (let i = 0; i < 26; i++) {
           const u = (p * 1.6 + rand(i)) % 1;
-          const px = rand(i * 3.7) * 640 + 120 * (1 - u) * (f.variant === 'arrow' || f.variant === 'windarrow' || f.variant === 'hawkarrow' || f.variant === 'acarrow' || f.variant === 'ptarrow' || f.variant === 'aebolt' || f.variant === 'moonstar' || f.variant === 'stmeteor' || f.variant === 'mgrock' || f.variant === 'pmbomb' || f.variant === 'pmshard' || f.variant === 'pmzap' || f.variant === 'qnorb' || f.variant === 'qncrown' || f.variant === 'qndecree' || f.variant === 'mdbomb' || f.variant === 'mdmist' || f.variant === 'mdzap' || f.variant === 'mdpill' || f.variant === 'mdpack' || f.variant === 'mdpulse' || f.variant === 'soslam' || f.variant === 'clspear' || f.variant === 'sinote' || f.variant === 'asplanet' ? -1 : 0.3);
+          const px = rand(i * 3.7) * 640 + 120 * (1 - u) * (f.variant === 'arrow' || f.variant === 'stmeteor' || f.variant === 'mgrock' || f.variant === 'pmbomb' || f.variant === 'pmshard' || f.variant === 'pmzap' || f.variant === 'qnorb' || f.variant === 'qncrown' || f.variant === 'qndecree' || f.variant === 'mdbomb' || f.variant === 'mdmist' || f.variant === 'mdzap' || f.variant === 'mdpill' || f.variant === 'mdpack' || f.variant === 'mdpulse' || f.variant === 'soslam' || f.variant === 'clspear' || f.variant === 'sinote' || f.variant === 'asplanet' ? -1 : 0.3);
           const py = -20 + u * 340;
           ctx.globalAlpha = a * 0.8;
           rainPiece(ctx, f.variant, px, py, 0.7, time + i, c);
@@ -440,12 +437,12 @@ export function drawStrike(ctx, f, x, y, p, cam, time) {
       const cy = y - (f.h ?? 24) / 2;
       if (p < hit) {
         const k = p / hit;
-        const px = x + (f.variant === 'arrow' || f.variant === 'windarrow' || f.variant === 'hawkarrow' || f.variant === 'ptarrow' || f.variant === 'aebolt' || f.variant === 'moonstar' || f.variant === 'stmeteor' || f.variant === 'mgrock' || f.variant === 'pmbomb' || f.variant === 'pmshard' || f.variant === 'pmzap' || f.variant === 'qnorb' || f.variant === 'qncrown' || f.variant === 'qndecree' || f.variant === 'mdbomb' || f.variant === 'mdmist' || f.variant === 'mdzap' || f.variant === 'mdpill' || f.variant === 'mdpack' || f.variant === 'mdpulse' || f.variant === 'soslam' || f.variant === 'clspear' || f.variant === 'sinote' || f.variant === 'asplanet' ? -80 : 30) * (1 - k);
+        const px = x + (f.variant === 'arrow' || f.variant === 'stmeteor' || f.variant === 'mgrock' || f.variant === 'pmbomb' || f.variant === 'pmshard' || f.variant === 'pmzap' || f.variant === 'qnorb' || f.variant === 'qncrown' || f.variant === 'qndecree' || f.variant === 'mdbomb' || f.variant === 'mdmist' || f.variant === 'mdzap' || f.variant === 'mdpill' || f.variant === 'mdpack' || f.variant === 'mdpulse' || f.variant === 'soslam' || f.variant === 'clspear' || f.variant === 'sinote' || f.variant === 'asplanet' ? -80 : 30) * (1 - k);
         const py = cy - 220 * (1 - k * k);
         rainPiece(ctx, f.variant, px, py, 1.4, time, c);
       } else {
-        // A gold arrow's landing is the Archer's own hit burst (drawn with the hit).
-        if (f.variant === 'hawkarrow' || f.variant === 'acarrow' || f.variant === 'ptarrow' || f.variant === 'aebolt' || f.variant === 'moonstar' || f.variant === 'stmeteor' || f.variant === 'mgrock' || f.variant === 'pmbomb' || f.variant === 'pmshard' || f.variant === 'pmzap' || f.variant === 'qnorb' || f.variant === 'qncrown' || f.variant === 'qndecree' || f.variant === 'mdbomb' || f.variant === 'mdmist' || f.variant === 'mdzap' || f.variant === 'mdpill' || f.variant === 'mdpack' || f.variant === 'mdpulse' || f.variant === 'soslam' || f.variant === 'clspear' || f.variant === 'sinote' || f.variant === 'asplanet') return true;
+        // Some pieces' landings are their own hit bursts (drawn with the hit).
+        if (f.variant === 'stmeteor' || f.variant === 'mgrock' || f.variant === 'pmbomb' || f.variant === 'pmshard' || f.variant === 'pmzap' || f.variant === 'qnorb' || f.variant === 'qncrown' || f.variant === 'qndecree' || f.variant === 'mdbomb' || f.variant === 'mdmist' || f.variant === 'mdzap' || f.variant === 'mdpill' || f.variant === 'mdpack' || f.variant === 'mdpulse' || f.variant === 'soslam' || f.variant === 'clspear' || f.variant === 'sinote' || f.variant === 'asplanet') return true;
         const k = (p - hit) / (1 - hit);
         ctx.globalAlpha = 1 - k;
         glow(ctx, x, cy, 28 * (1 - k) + 6, c.light, 1 - k);
@@ -641,43 +638,6 @@ export function drawStrike(ctx, f, x, y, p, cam, time) {
       sparkle(ctx, x, cy, 12 * (1 - k) + 2, '#ffffff');
       return true;
     }
-    case 'stampede': {
-      if (box) {
-        // A pack of spirit wolves runs across the whole screen in waves.
-        const a = Math.sin(Math.PI * Math.min(1, p * 1.05));
-        ctx.globalAlpha = 0.25 * a;
-        ctx.fillStyle = '#1f3a2a';
-        wash(ctx);
-        const dir = f.dir || 1;
-        const ground = f.y - cam.y;
-        for (let i = 0; i < 9; i++) {
-          const lane = i % 3;
-          const start = -80 - rand(i * 3.1) * 260;
-          const px = start + p * 1000;
-          const wx = dir > 0 ? px : 640 - px;
-          const wy = ground - 8 - lane * 18 + Math.abs(Math.sin(time * 14 + i)) * -6;
-          ctx.globalAlpha = a * (0.95 - lane * 0.2);
-          wolf(ctx, wx, wy, 1.1 - lane * 0.15, dir, time * 14 + i, c);
-        }
-        return true;
-      }
-      const hit = 0.3 + rand(f.seed) * 0.3;
-      if (p < hit) return true;
-      const k = (p - hit) / (1 - hit);
-      const cy = y - (f.h ?? 24) / 2;
-      ctx.globalAlpha = 1 - k;
-      ctx.lineCap = 'round';
-      for (let i = -1; i <= 1; i++) {
-        ctx.strokeStyle = c.light;
-        ctx.lineWidth = 3;
-        ctx.beginPath();
-        ctx.moveTo(x - 12 + i * 6, cy - 12);
-        ctx.lineTo(x + 10 + i * 6, cy + 12);
-        ctx.stroke();
-      }
-      glow(ctx, x, cy, 20, c.main, 1 - k);
-      return true;
-    }
     case 'bladestorm': {
       if (box) {
         // Time stops: the screen goes dark and dozens of slash lines cut across it, with petals.
@@ -713,7 +673,7 @@ export function drawStrike(ctx, f, x, y, p, cam, time) {
       return drawStrike(ctx, { ...f, kind: 'xslash', t: 1 }, x, y, (p - hit) / (1 - hit), cam, time);
     }
     default:
-      return drawArchery(ctx, f, x, y, p, cam, time);
+      return false;
   }
 }
 
@@ -738,26 +698,6 @@ function rainPiece(ctx, variant, x, y, s, time, c) {
     case 'arrow':
       arrow(ctx, x, y, Math.atan2(2.6, 1), 22 * s, c);
       break;
-    case 'windarrow':
-      windRainPiece(ctx, x, y, s, time);
-      break;
-    case 'hawkarrow':
-      hawkRainPiece(ctx, x, y, s, time);
-      break;
-    case 'moonstar':
-      moonRainPiece(ctx, x, y, s, time);
-      break;
-    case 'acarrow':
-      // Grand Somersault's arrows: gold arrows with mint ribbons, falling steeply.
-      fxSprite(ctx, 'celacarrow', x, y, { t: time, rot: Math.atan2(2.6, 1), scale: 0.4 * s });
-      break;
-    case 'ptarrow':
-      // Levitation's arrows (the Phantom Trickster's): plum arrows trailing smoke, falling steeply.
-      fxSprite(ctx, 'celptarrow', x, y, { t: time, rot: Math.atan2(2.6, 1), scale: 0.4 * s });
-      break;
-    case 'aebolt':
-      // Bolt Mortar's hail (the Arbalist Engineer's): brass bolts streaking teal, falling steeply.
-      fxSprite(ctx, 'celaebolt', x, y, { t: time, rot: Math.atan2(2.6, 1), scale: 0.4 * s });
     case 'star':
       glow(ctx, x, y, 10 * s, c.main, 0.6);
       star(ctx, x, y, 8 * s, time * 12, c.deep, c.light);

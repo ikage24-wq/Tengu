@@ -19,7 +19,7 @@ function seeded(n) {
 }
 function run(opts = {}) {
   const rng = seeded(5);
-  const char = makeBotCharacter(rng, { name: 'Tester', pro: false, level: 12, jobs: ['archer'] });
+  const char = makeBotCharacter(rng, { name: 'Tester', pro: false, level: 12, jobs: ['tidemage'] });
   char.mapId = 'hollow_gate';
   const w = createWorld(char);
   w.bots = createBots(w, rng, { clock: () => new Date(2026, 9, 28, 20, 0) });
