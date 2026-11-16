@@ -52,17 +52,23 @@ LOOPS = {
     'quietroom': ('Systematic Sound - General Ambience Series - Quiet Rooms 01/AMBRoom_Quiet Room Flat C Livingroom 02_SYSO_SYSO0013.wav', 30, 40, 0),
     # Rain on a window, steady (Moonlit Manor).
     'rainwindow': ('Jake Fielding - Interior Wind Rain and Storms/RAINInt_Heavy Rain on Window,  Constant _JF_INT Storm.wav', 1, 26, 0),
+    # (2026-11-16, the bigger library.) A winter wind gusting over a mountain ridge (the snowy
+    # places: Frozen Peak, Mochitsuki Mountain, Cloud Glide). An ambisonic recording: its first
+    # (all-round) channel, as stereo.
+    'winterridge': ('Sonic Bat - Ambisonics - Wintertime Woods/SBAww_Mountain Ridge 001.wav', 205, 40, 0, 'omni'),
 }
 FADE = 3.0  # seconds cross-faded at the loop point
 RATE = 44100
 
 
 def build(name):
-    rel, start, length, gain = LOOPS[name]
+    rel, start, length, gain, *how = LOOPS[name]
     src = SRC + rel
-    # A stretch long enough for the loop and its fade, as 16-bit stereo.
+    # A stretch long enough for the loop and its fade, as 16-bit stereo. (An ambisonic recording,
+    # 'omni': only its first, all-round channel, on both sides.)
+    fold = ['-af', f'pan=stereo|c0=c0|c1=c0,volume={gain}dB'] if how and how[0] == 'omni' else ['-ac', '2', '-af', f'volume={gain}dB']
     subprocess.run([FF, '-y', '-loglevel', 'error', '-ss', str(start), '-t', str(length + FADE), '-i', src,
-                    '-ac', '2', '-ar', str(RATE), '-af', f'volume={gain}dB', '-sample_fmt', 's16', TMP], check=True)
+                    *fold, '-ar', str(RATE), '-sample_fmt', 's16', TMP], check=True)
     with wave.open(TMP, 'rb') as w:
         data = array.array('h', w.readframes(w.getnframes()))
     n = int(length * RATE) * 2

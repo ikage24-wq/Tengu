@@ -293,7 +293,8 @@ export function startRace(world, rec, stageId, rank = 'beginner', opts = {}) {
   if (!stage || !RACE_RANKS[rank] || !open || world.race || world.dungeon || world.trial || world.scene || !rec || rec.stage === 'egg') return false;
   const map = MAPS[stage.map];
   const course = map.race;
-  const hour = raceHour();
+  // (`opts.hour`: a fixed hour's field and luck, for a test that must not change with the clock.)
+  const hour = opts.hour ?? raceHour();
   const wobble = seededRandom(hashStr(`${stageId}|${rank}|${hour}|pace`));
   const me = opts.me ?? 0;
   // (Racing a friend's ghost: their Mochi in the next lane, the hour's rivals in the rest.)

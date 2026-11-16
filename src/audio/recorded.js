@@ -36,7 +36,7 @@ export const RECORDED = {
   iceHit: { trim: -9.1 },
   iceBurst: { trim: -5.6 },
   ice: { trim: -6.9 },
-  freeze: { trim: 3.7 },
+  freeze: { trim: 4.1 },
   crack: { trim: 1.6 },
   castZap: { trim: 6 },
   zap: { trim: -4.5 },
@@ -82,15 +82,15 @@ export const RECORDED = {
   bossDefeated: { trim: 5.1 },
   death: { trim: -4.8 },
   // Menus and pickups.
-  click: { trim: 0.6 },
+  click: { trim: -9.4 },
   cursor: { trim: 8 },
-  open: { trim: 8 },
+  open: { trim: -4.3 },
   close: { trim: 8 },
   cancel: { trim: -3.1 },
-  denied: { trim: -10.5 },
+  denied: { trim: -2 },
   openBag: { trim: 0.8 },
   openPaper: { trim: -2.7 },
-  skillUp: { trim: 3.2 },
+  skillUp: { trim: 0.5 },
   coin: { trim: 0.7 },
   pickup: { trim: 8 },
   buy: { trim: 8 },
@@ -110,7 +110,7 @@ export const RECORDED = {
   drip: { trim: 7.9 },
   waveWash: { trim: 6.4 },
   woodCreak: { trim: 4.9 },
-  townBell: { trim: 2.8 },
+  townBell: { trim: 0.6 },
   // ----- The jobs' skills: `music` keeps the recipe's notes over the recording -----
   // Warrior.
   // Paladin.
@@ -416,6 +416,16 @@ Object.assign(RECORDED, {
   cartCreak: { trim: 0 },
   cartStuck: { trim: 0 },
   mochiPlop: { trim: 0 },
+  // (Footsteps at last, 2026-11-16, from the bigger library: tools/build-fight.py, four takes each;
+  // menus, bells and ice above have their new recordings too.)
+  stepGrass: { takes: 4, trim: 2 },
+  stepWood: { takes: 4, trim: 1 },
+  stepSnow: { takes: 4, trim: -3 },
+  stepSand: { takes: 4, trim: -3 },
+  stepCloud: { takes: 4, trim: 2 },
+  mochiStep: { takes: 4, trim: 0 },
+  bellRingers: { trim: 0 },
+  iceCreak: { trim: 0 },
   kingFanfare: { trim: 0 },
 });
 

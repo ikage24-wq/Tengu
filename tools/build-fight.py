@@ -112,6 +112,25 @@ S = {
     'rockfall': 'BluezoneCorp - Alien Tripod/Bluezone_BC0292_alien_tripod_debris_rock_collapse_earthquake_rumble_large_005.wav',
     'ski': 'Wavemotion - Ski Ride/SPRTWntr-EXT_Skiing On Soft Snow 01_WM_SKIRIDE.wav',
     'doorcreak': 'Rogue Waves - Creaking Door/DOORCreak_Wooden Door, Opening and Closing 09_RogueWaves_CreakingDoor.wav',
+    # The bigger library (2026-11-16, the 2020 and 2023 bundles): real footsteps at last - dry grass,
+    # a wooden floor, light snow, a soft paw - cute menu sounds, bells and ice.
+    'grass14': 'PMSFX - STEPS Dry Grass & Shrubs/PM_SDGS_14 Footstep Step Dry Grass Shrubs Pine Needles Meadow .wav',
+    'grass113': 'PMSFX - STEPS Dry Grass & Shrubs/PM_SDGS_113 Footstep Step Dry Grass Shrubs Pine Needles Meadow .wav',
+    'grass186': 'PMSFX - STEPS Dry Grass & Shrubs/PM_SDGS_186 Footstep Step Dry Grass Shrubs Pine Needles Meadow .wav',
+    'grassryk': 'RYK-Sounds - Footstep/grass 3 single step 3.wav',
+    'woodfloor': 'RYK-Sounds - Footstep/wooden floor 1 loop.wav',
+    'snowlight': 'Bluezone - Snow Footsteps/Bluezone_BC0264_snow_footsteps_walk_light_008.wav',
+    'snowstep': 'RYK-Sounds - Footstep/snow 7 single step 2.wav',
+    'paws': 'TheWorkRoom Audio Post - Animal Footsteps Foley - Paws Without Claws/ANF024.wav',
+    'plop': 'SmartSoundFX - Cartoon & Infotainment/PLOP Mouth Drip Dry.wav',
+    'boing': 'SmartSoundFX - Cartoon & Infotainment/BOING Bowl.wav',
+    'balafon': 'Scoba Sounds – Scoba Ui Essentials/BALAFON - NOTIF OCT UP.wav',
+    'uierror': 'Scoba Sounds – Scoba Ui Essentials/ERROR 13.wav',
+    'farbells': 'Ivo Vicic - Church Bells/25 Church Bells, Far Distance, Rural Soundscape Distant, Hills Ridge, Spring 02.wav',
+    'bellmen': 'Ivo Vicic - Bellmen - Folk Custom/22 BELLMEN_Kukuljanski Bell ringers.wav',
+    'icecrack': 'BluezoneCorp - Ice Cracking/Bluezone_BC0278_ice_crack_break_078.wav',
+    'icecracks': 'BluezoneCorp - Ice Cracking/Bluezone_BC0278_ice_crack_break_002.wav',
+    'iceimpact': 'David Dumais Audio - Ice & Frost Magic 1/Magic_Spells_Impact_Ice13.wav',
 }
 
 # name: [(source, start s, length s, pitch x, gain dB, delay ms), ...]
@@ -400,6 +419,29 @@ B = {
     'cartCreak': [('gatecreak', 11.55, 0.6, 0.9, 0, 0)],
     'cartStuck': [('spear', 0.0, 0.3, 0.7, 0, 0), ('doorcreak', 4.64, 0.7, 0.85, -3, 120)],
     'mochiPlop': [('woodsq', 0.0, 0.3, 0.75, 0, 0), ('pats', 0.0, 0.3, 0.85, -6, 0)],
+    # Footsteps (2026-11-16, the bigger library; four takes each, one picked each step): dry grass,
+    # a wooden floor, light snow, sand (the snow, finer), a cloud's soft pad (a paw, lower), and a
+    # Mochi's own little paws.
+    # (Takes picked to be about as loud as each other once levelled: a spiky one stood out.)
+    **{f'stepGrass{i + 1}': [(src, st, 0.28, 1.0, 0, 0)] for i, (src, st) in enumerate([('grass14', 0.03), ('grass113', 0.25), ('grass186', 0.0), ('grassryk', 0.03)])},
+    **{f'stepWood{i + 1}': [('woodfloor', st, 0.32, 1.0, 0, 0)] for i, st in enumerate([0.05, 0.51, 1.03, 1.53])},
+    **{f'stepSnow{i + 1}': [(src, st, 0.28, 1.0, 0, 0)] for i, (src, st) in enumerate([('snowlight', 0.07), ('snowlight', 0.37), ('snowlight', 0.65), ('snowstep', 0.05)])},
+    **{f'stepSand{i + 1}': [(src, st, 0.28, 1.25, 0, 0)] for i, (src, st) in enumerate([('snowlight', 0.07), ('snowlight', 0.37), ('snowlight', 0.65), ('snowstep', 0.05)])},
+    **{f'stepCloud{i + 1}': [('paws', st, 0.26, 0.85, 0, 0)] for i, st in enumerate([2.11, 3.31, 4.27, 5.81])},
+    **{f'mochiStep{i + 1}': [('paws', st, 0.22, 1.3, 0, 0)] for i, st in enumerate([2.57, 6.09, 6.55, 10.65])},
+    # Menus (2026-11-16): a cartoon plop for a click, a little boing as a window pops open, a soft
+    # error, a balafon's rising notes for a skill going up.
+    'click': [('plop', 0.0, 0.16, 1.05, 0, 0)],
+    'open': [('boing', 0.04, 0.34, 1.25, 0, 0)],
+    'denied': [('uierror', 0.03, 0.36, 1.0, 0, 0)],
+    'skillUp': [('balafon', 0.2, 0.9, 1.0, 0, 0)],
+    # Bells and ice (2026-11-16): a town's bells far off over the hills; folk bell-ringers coming
+    # through the carnival; a frozen monster's ice cracking under a frosty chime; ice creaking far
+    # off in the snow.
+    'townBell': [('farbells', 10.5, 4.4, 1.0, 0, 0)],
+    'bellRingers': [('bellmen', 6.8, 4.2, 1.0, 0, 0, 0.6)],
+    'freeze': [('icecrack', 0.4, 0.45, 1.0, 0, 0), ('iceimpact', 0.1, 0.8, 1.0, -6, 0)],
+    'iceCreak': [('icecracks', 0.9, 0.8, 0.9, 0, 0)],
     'tanaStars': [('twinkle', 0.0, 1.8, 0.95, -2, 0), ('handbell', 0.28, 1.6, 1.6, -6, 200), ('handbell', 0.28, 1.6, 2.0, -8, 520)],
 }
 

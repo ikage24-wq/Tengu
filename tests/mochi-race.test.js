@@ -409,7 +409,9 @@ test('Tanabata Hurdles: a weak flyer trips on the tall hurdles, a strong one sai
     const rec = mochi(90 + fly, 900);
     rec.stats.fly.points = fly;
     const w = racer(rec);
-    assert.ok(startRace(w, rec, 'hurdles'));
+    // (One hour's field and luck, the same whenever it runs: by the clock, at some hours the weak
+    // one's luck had it fall at the second hurdle.)
+    assert.ok(startRace(w, rec, 'hurdles', 'beginner', { hour: 498526 }));
     const R = w.race;
     const outcomes = [];
     let last = null;

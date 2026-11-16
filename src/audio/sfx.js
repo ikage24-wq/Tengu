@@ -111,7 +111,7 @@ function voice(name, o = {}) {
 // and play tests, which can rebuild exactly what was heard).
 export const log = [];
 
-const STEPS = { grass: 'stepGrass', stone: 'stepStone', wood: 'stepWood', sand: 'stepSand', cloud: 'stepCloud', crystal: 'stepCrystal' };
+const STEPS = { grass: 'stepGrass', stone: 'stepStone', wood: 'stepWood', sand: 'stepSand', cloud: 'stepCloud', crystal: 'stepCrystal', snow: 'stepSnow' };
 // What each element or school adds to a blow (weapon themes, star elements, spell schools).
 const COLOUR = {
   holy: 'holyHit', rage: 'rageHit', fire: 'fireHit', demonic: 'fireHit', ice: 'iceHit', lightning: 'zapHit', storm: 'zapHit', laser: 'zapHit', cyber: 'zapHit',

@@ -33,6 +33,9 @@ const R = {
   stepStone: { db: -25, vary: 8, max: 2, layers: [{ rec: 'stepStone' }] },
   stepWood: { db: -24, vary: 8, max: 2, layers: [{ rec: 'stepWood' }] },
   stepSand: { db: -25, vary: 10, max: 2, layers: [{ rec: 'stepSnow', rate: 1.15 }] },
+  // (Snow underfoot - Frozen Peak, the garden on a snowy day - and a Mochi's own little paws.)
+  stepSnow: { db: -25, vary: 8, max: 2, layers: [{ rec: 'stepSnow' }] },
+  mochiStep: { db: -31, vary: 8, max: 2, gap: 70, layers: [{ rec: 'stepCarpet', rate: 1.3 }] },
   stepCloud: { db: -27, vary: 8, max: 2, layers: [{ rec: 'stepCarpet', rate: 0.9 }] },
   stepCrystal: { db: -24, vary: 6, max: 2, layers: [{ rec: 'stepStone' }, { rec: 'glass', rate: 1.6, len: 120, db: -16 }] },
   climb: { db: -24, vary: 8, max: 1, layers: [{ rec: 'leather', rate: 0.9, len: 140 }] },
@@ -639,6 +642,9 @@ const R = {
   // Towns: far-off chatter (muffled voices), and the town bell now and then.
   chatter: { db: -33, vary: 18, max: 2, gap: 400, layers: [{ wave: 'tri', arp: [520, 610, 560, 650, 580, 540], arpStep: 75, vib: [6, 3], env: { a: 10, s: 400, d: 80 }, lpf: [1700] }] },
   townBell: { db: -26, vary: 2, max: 1, gap: 8000, room: true, layers: [{ rec: 'bell', rate: 0.75 }] },
+  // Folk bell-ringers clanging through the carnival far off; ice creaking far off in the snow.
+  bellRingers: { db: -30, vary: 2, max: 1, gap: 20000, layers: [{ rec: 'bell', rate: 0.9 }] },
+  iceCreak: { db: -30, vary: 6, max: 1, gap: 6000, layers: [{ rec: 'iceImpact', rate: 0.8, len: 500 }] },
   // ---------- Weight under blows (sfx.js) ----------
   // What a blow lands on: stone cracks, crystal rings, bone and armour clank, wood knocks,
   // slime squelches, a spirit whooshes through.

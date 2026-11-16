@@ -198,6 +198,7 @@ function climbMap() {
 // cliff, snow-mochi snowmen, a cocoa stall and a giant snow mochi at the landing; light snowfall.)
 function glideMap() {
   return courseMap('mrace_glide', 'Cloud Glide', {
+    amb: 'snow',
     width: 2300, height: 680, sky: 'winter', groundY: 580, ground: 'snowpeak', skyline: 'course:snow',
     look: { aerial: 0.55, clouds: false, groundArt: 'snow', edges: 'snow', festival: true, launchArt: 'snow', bar: 'snow', flakes: true, calm: true, snowfall: true, kicks: ['#ffffff', '#eef4ff', '#dce8fb'], petals: ['#ffffff', '#eef4ff', '#dce8fb', '#ffe8f0'] },
     terrain: [[0, 140], [700, 140], [700, 580], [2300, 580]],

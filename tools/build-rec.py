@@ -180,7 +180,7 @@ S['meteor'] = [[('boomC', 0.25, 2.0, 0, 120), ('fire', 0.15, 0.6, -4, 0)]]
 S['fireBurst'] = [[('fire', 0.15, 1.3, 0, 0), ('boomA', 0.25, 1.0, -10, 0)]]
 S['iceBurst'] = [[('crushed', 0.25, 1.1, 0, 0), ('freeze', 0.08, 0.8, -4, 0)]]
 S['holyBurst'] = [[('chord', peak('chord', 0.25, 1.48), 1.2, 0, 0), ('light', 0.0, 1.0, -6, 0)]]
-S['freeze'] = [[('crushed', 0.25, 1.0, 0, 0)]]
+# S['freeze']: tools/build-fight.py now (2026-11-16, the bigger library).
 S['crack'] = [[('snap', 0.5, 0.8, 0, 0)]]
 S['gust'] = [[('storm', 60.0, 1.2, 0, 0), ('wind', 0.05, 0.8, -3, 0)]]
 S['heal'] = [[('astonish', 3.0, 1.4, 0, 0), ('light', 0.0, 0.8, -8, 0)]]
@@ -205,14 +205,14 @@ S['phase'] = [[('horn', 0.12, 3.0, 0, 0)]]
 S['coin'] = [[('ting', 0.1, 0.4, 0, 0)]]
 S['pickup'] = [[('pop', 0.0, 0.15, 0, 0)]]
 S['buy'] = [[('coinflip', 0.0, 0.5, 0, 0), ('ting', 0.1, 0.4, -6, 80)]]
-S['click'] = [[('uiclick', 0.0, 0.15, 0, 0)]]
-S['open'] = [[('perc', 0.0, 0.3, 0, 0)]]
+# S['click']: tools/build-fight.py now (2026-11-16, the bigger library).
+# S['open']: tools/build-fight.py now (2026-11-16, the bigger library).
 S['openBag'] = [[('bag', 0.05, 0.4, 0, 0)]]
 S['openPaper'] = [[('page', 0.0, 0.3, 0, 0)]]
-S['denied'] = [[('deny', 0.0, 0.35, 0, 0)]]
-S['skillUp'] = [[('kalimba', 0.0, 0.45, 0, 0)]]
+# S['denied']: tools/build-fight.py now (2026-11-16, the bigger library).
+# S['skillUp']: tools/build-fight.py now (2026-11-16, the bigger library).
 # The world.
-S['townBell'] = [[('bells', 1.6, 4.4, 0, 0)]]
+# S['townBell']: tools/build-fight.py now (2026-11-16, the bigger library).
 S['waveWash'] = [[('waves', 2.0, 4.0, 0, 0)]]
 S['birdTrill'] = [[('birds', 0.04, 0.75, 0, 0)]]
 
@@ -296,10 +296,10 @@ S['pickup'] = [[('syringe', 0.0, 0.2, 0, 0)]]
 S['cursor'] = [[('oscursor', 0.0, 0.08, 0, 0)]]
 S['close'] = [[('handpop', 0.0, 0.22, 0, 0)]]
 S['cancel'] = [[('handpop', 0.0, 0.22, 0, 0)]]
-S['click'] = [[('click33', 0.0, 0.14, 0, 0)]]
-S['open'] = [[('window', 0.0, 0.6, 0, 0)]]
+# S['click']: tools/build-fight.py now (2026-11-16, the bigger library).
+# S['open']: tools/build-fight.py now (2026-11-16, the bigger library).
 S['questAccept'] = [[('confirm', 0.0, 0.6, 0, 0)]]
-S['skillUp'] = [[('feedback', 0.0, 0.5, 0, 0)]]
+# S['skillUp']: tools/build-fight.py now (2026-11-16, the bigger library).
 # The world around you.
 S['hawkCry'] = [[('kite', 0.18, 1.75, 0, 0)]]
 S['owl'] = [[('owls', 0.05, 0.95, 0, 0)]]

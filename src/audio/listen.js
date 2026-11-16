@@ -18,11 +18,14 @@ import { SKILLS } from '../data/skills.js';
 import { isQueen } from '../world/story.js';
 import { introLen, COUNTDOWN, CREST_AHEAD, JUMP_PHASE, FALL, ROLL_BEAT } from '../world/mochi-race.js';
 import { CART_BEAT } from '../data/mochi-race.js';
+import { SKY } from '../world/garden-weather.js';
 
 const memo = new WeakMap();
 
 // What each kind of map is underfoot.
-const GROUND = { town: 'stone', meadow: 'grass', harbor: 'wood', forest: 'grass', ruins: 'stone', cave: 'crystal', sky: 'cloud', crag: 'sand', grove: 'grass', hollow: 'wood', manor: 'wood', aquarium: 'sand', carnival: 'wood', observatory: 'stone', candy: 'grass', shrine: 'stone', tea: 'grass', ridge: 'stone', springs: 'stone', snow: 'cloud' };
+const GROUND = { town: 'stone', meadow: 'grass', harbor: 'wood', forest: 'grass', ruins: 'stone', cave: 'crystal', sky: 'cloud', crag: 'sand', grove: 'grass', hollow: 'wood', manor: 'wood', aquarium: 'sand', carnival: 'wood', observatory: 'stone', candy: 'grass', shrine: 'stone', tea: 'grass', ridge: 'stone', springs: 'stone', snow: 'snow' };
+// What's underfoot: the map's own ground, and the garden's snow on a snowy day.
+const groundOf = (world) => (world.map.garden && !world.map.indoor && (SKY.now?.snow ?? 0) > 0.35 ? 'snow' : GROUND[world.map.theme] ?? 'grass');
 // The manor's boss rooms play its boss waltz.
 const MANOR_BOSS_ROOMS = new Set(['manor3', 'manor5', 'manor6']);
 const AQUA_BOSS_ROOMS = new Set(['aquarium4', 'aquarium5', 'aquarium6']);
@@ -207,6 +210,31 @@ function hearTanabata(R, f, t) {
   } else if (!f.starred && R.t > 1.4) {
     f.starred = true;
     sfx('tanaStars');
+  }
+}
+
+// The garden's Mochi pattering about (2026-11-16): a soft little paw step for each one near you as it
+// walks, smaller and quicker for a baby, softer the further off, from where it is; in the snow on a
+// snowy day; never while it's flying, swimming or carried.
+function hearPaws(world, m) {
+  const life = world.gardenLife;
+  if (!life?.mochi || !world.map.garden || world.map.indoor) return;
+  const you = world.body;
+  m.paws ??= new WeakMap();
+  const snow = (SKY.now?.snow ?? 0) > 0.35;
+  for (const e of life.mochi) {
+    const a = e.m;
+    if (!m.paws.has(a)) m.paws.set(a, a.dist);
+    const was = m.paws.get(a);
+    const far = Math.abs(e.x - you.x);
+    const baby = a.size === 'baby';
+    if (a.mode !== 'run' || far > 160 || e.held || e.ride) {
+      m.paws.set(a, a.dist);
+      continue;
+    }
+    if (a.dist - was < (baby ? 7 : 10)) continue;
+    m.paws.set(a, a.dist);
+    sfx(snow ? 'stepSnow' : 'mochiStep', { pan: Math.max(-0.6, Math.min(0.6, (e.x - you.x) / 220)), db: -(far / 160) * 8 - (snow ? 8 : 0), rate: baby ? 1.25 : 1 });
   }
 }
 
@@ -465,6 +493,7 @@ function hearLake(world, R, f) {
 export function hearWorld(world, cam) {
   const m = memo.get(world) ?? memo.set(world, {}).get(world);
   hearFestival(world, m);
+  hearPaws(world, m);
   const char = world.char;
   const b = world.body;
   const pan = (x) => Math.max(-0.7, Math.min(0.7, (x - (cam?.x ?? b.x - 320) - 320) / 400));
@@ -632,7 +661,7 @@ export function hearWorld(world, cam) {
       const stride = Math.abs(b.vx) > 90 ? 26 : 20;
       if (m.walked > stride) {
         m.walked = 0;
-        sfx('step', { ground: GROUND[world.map.theme] ?? 'grass', run: Math.abs(b.vx) > 90 });
+        sfx('step', { ground: groundOf(world), run: Math.abs(b.vx) > 90 });
       }
     } else m.walked = 0;
     if (b.rope && m.map === world.map.id) {

@@ -26,12 +26,19 @@ const PLACES = {
   // Mochitsuki Mountain (2026-11-16): a winter wind over the peak, the festival murmuring, and a
   // temple bell far off now and then - never the town's birds.
   mountain: {
-    bed: { lp: 700, hp: 140, db: -36, lfo: 0.06, depth: 0.5 }, rec: 'softwind', recDb: -21,
+    bed: { lp: 700, hp: 140, db: -36, lfo: 0.06, depth: 0.5 }, rec: 'winterridge', recDb: -27,
     day: [['chatter', 4, 9], ['mtTing', 16, 30]],
     night: [['chatter', 5, 11], ['mtTing', 16, 30]],
   },
   // Tanabata Hurdles' star night (2026-11-16): always night there, whatever the clock says -
   // crickets in the bamboo, a quiet wood, the festival crowd murmuring, a glass wind chime.
+  // The snowy places (2026-11-16, the bigger library): Frozen Peak and Cloud Glide - a winter wind
+  // gusting over the ridge, ice creaking far off now and then; no birds, no crickets.
+  snow: {
+    bed: { lp: 700, hp: 140, db: -36, lfo: 0.06, depth: 0.5 }, rec: 'winterridge', recDb: -25,
+    day: [['iceCreak', 14, 32]],
+    night: [['iceCreak', 12, 28]],
+  },
   tanabata: {
     bed: { lp: 520, hp: 90, db: -40, lfo: 0.05, depth: 0.3 }, rec: 'nightwood', recDb: -22,
     day: [['cricket', 0.4, 1.3], ['chatter', 4, 9], ['furin', 6, 13]],
@@ -115,8 +122,8 @@ const PLACES = {
   // The Clockwork Carnival: a far-off fairground at night, chimes and the creak of the rides.
   carnival: {
     bed: { lp: 420, hp: 60, db: -31, lfo: 0.1, depth: 0.4 }, rec: 'fairground', recDb: -40.5,
-    day: [['windChime', 3, 8], ['woodCreak', 6, 12]],
-    night: [['windChime', 3, 8], ['woodCreak', 6, 12]],
+    day: [['windChime', 3, 8], ['woodCreak', 6, 12], ['bellRingers', 40, 80]],
+    night: [['windChime', 3, 8], ['woodCreak', 6, 12], ['bellRingers', 40, 80]],
   },
   // The Star Observatory: a high, still night, wind round the tower, a far chime.
   observatory: {
