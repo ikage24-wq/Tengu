@@ -127,7 +127,7 @@ function itemShapes(def, variant = null) {
     if (def.cover?.fun) return [...fitShapes(JOB_GEAR[def.cover.fun].cover(def.cover.t).shapes), ...CASH_BADGE];
     // A look whose worn piece is too small or spread out to read in a cell has a drawing of its own.
     if (def.skin && ITEM_ART[def.skin]) return [...ITEM_ART[def.skin](), ...CASH_BADGE];
-    const look = def.cover ? weaponIcon('sword', def.cover.theme ? 21 : def.cover.tier, def.cover.theme ?? null, def.cover.theme ? null : variant) : itemShapes(ITEMS[def.skin], variant);
+    const look = def.cover ? weaponIcon('sword', def.cover.theme ? 21 : def.cover.tier, def.cover.theme ?? null, def.cover.theme ? null : variant, !def.cover.theme) : itemShapes(ITEMS[def.skin], variant);
     return [...look, ...CASH_BADGE];
   }
   const c = variant ? variantsFor(def)?.[variant]?.main ?? def.color : def.color;
@@ -139,8 +139,8 @@ function itemShapes(def, variant = null) {
   }
   if (def.design === 'job' || def.design === 'jewel') return fitShapes(wornShapes(def, variant));
   // Bench-made trinkets with no worn look (rings, charms) are drawn like the drops (icons/craft.js).
-  if (def.type === 'equip' && !def.design && ITEM_ART[def.id]) return ITEM_ART[def.id]();
-  const designed = def.type === 'equip' ? designShapes(def, c, l, d) : null;
+  if (gearLike(def) && !def.design && ITEM_ART[def.id]) return ITEM_ART[def.id]();
+  const designed = gearLike(def) ? designShapes(def, c, l, d) : null;
   if (designed) return designed;
   // Everyday clothes and basic gear (Lulu's jackets and dresses, the starter and cotton-to-leather
   // sets) are drawn from how they look worn, like job gear, so no two share a stock shape.
@@ -148,7 +148,7 @@ function itemShapes(def, variant = null) {
     const worn = fitShapes(wornShapes(def, variant));
     if (worn.length) return worn;
   }
-  if (def.type === 'equip') {
+  if (gearLike(def)) {
     switch (def.slot) {
       case 'hat': return [E(8, 9, 7, 5, c), R(1, 10, 14, 3, d), P(5, 6, l)];
       case 'top': return [R(4, 4, 8, 10, c), R(1, 4, 3, 6, c), R(12, 4, 3, 6, c), R(6, 4, 4, 2, l)];
@@ -178,8 +178,11 @@ function itemShapes(def, variant = null) {
   return [E(8, 9, 5, 5, c), E(6, 7, 2, 2, l), P(10, 12, d)];
 }
 
+// Gear, or a retired piece that's only a look now (data/items.js): drawn the same way, so a costume
+// of one, or an empty slot's ghost, still shows the piece.
+const gearLike = (def) => def?.type === 'equip' || Boolean(def?.retiredGear);
 const WORN_SLOTS = new Set(['top', 'bottom', 'shoes', 'gloves', 'cape', 'earring']);
-const wornIcon = (def) => def.type === 'equip' && def.design && WORN_SLOTS.has(def.slot) && !ITEM_ART[def.id] && !designShapes(def, def.color, def.color, def.color);
+const wornIcon = (def) => gearLike(def) && def.design && WORN_SLOTS.has(def.slot) && !ITEM_ART[def.id] && !designShapes(def, def.color, def.color, def.color);
 
 // Worn-shape icons rasterize at twice the detail so small parts survive the shrink; hand-drawn
 // drops and tonics at three times, with a crisp inked outline.
@@ -189,7 +192,7 @@ export function itemIcon(id, variant = null) {
   const fine = look.design === 'job' || look.design === 'jewel' || wornIcon(look);
   const art = def.type !== 'cash' ? ITEM_ART[id] : def.skin && ITEM_ART[def.skin];
   const detail = art ? { res: id.startsWith('fish_') ? 4 : 3, soft: 'cel', crisp: true } : fine || def.mochiSweet ? { res: def.mochiSweet ? 4 : 2, soft: 'cel' } : {};
-  const gear = look.type === 'equip';
+  const gear = gearLike(look);
   return sprite(`icon|${id}|${variant}`, () => ({ w: 16, h: 16, shapes: gear ? itemShapes(def, variant).map(lifted) : itemShapes(def, variant), ...detail }));
 }
 

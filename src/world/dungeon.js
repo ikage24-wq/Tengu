@@ -13,7 +13,7 @@ import { gaugeGuard, pathSchool, cloudBolt, veilDodge, veilMissed, blinded, lure
 import { hurtProcs } from './combat.js';
 import { DUNGEONS, GROUP, ROLES, roleOf, PROVOKE, TANK_THREAT } from '../data/dungeons.js';
 import { JOBS } from '../data/jobs.js';
-import { ITEMS, JOB_SLOTS, GEAR_FAMILIES, jobGearId } from '../data/items.js';
+import { ITEMS, GEAR_FAMILIES } from '../data/items.js';
 import { computeStats } from '../core/stats.js';
 import { gainExp } from '../core/character.js';
 import { addItem } from '../core/inventory.js';
@@ -517,10 +517,8 @@ function clearRewards(world) {
     if (addItem(char.inventory, inst)) world.log(`Received ${itemName(inst)}!`, '#ffd66b');
     else world.log(`Your bag is full, so the ${itemName(inst)} is left behind...`, '#ffb3c6');
   };
-  const family = JOBS[char.job].family;
-  const slot = pick(JOB_SLOTS);
-  const id = GEAR_FAMILIES.includes(family) ? jobGearId(family, slot, reward.gearLevel) : `ear_${reward.gearLevel}`;
-  if (ITEMS[id]) give(makeEquip(id, { rarity: run.hard ? 2 : Math.random() < 0.3 ? 2 : 1, variant: 'roll' }));
+  // (A piece of job gear came with every clear until the gear was retired, 2026-11-16; new gear
+  // will bring its own.)
   // A piece of the dungeon's own set: sure on Hard or the day's first clear, half the time otherwise.
   if (def.set && (run.hard || daily || Math.random() < 0.5)) {
     const piece = setPieceFor(char, def.set);

@@ -83,7 +83,7 @@ export const STORY_QUESTS = {
     name: 'Heart of the Hollow', giver: 'bramble', minLevel: 12, prereq: 'story_2_1',
     text: "Gather a group and go down into Rootwood Hollow. One tank, one healer, two fighters. Gnarlroot isn't wicked, he's frightened. Calm him, and the canyon will rest again. And nobody. Charges. In.",
     objectives: [{ type: 'kill', mob: 'gnarlroot', count: 1 }],
-    rewards: { exp: 12000, gold: 900, items: [{ id: 'warrior_gloves_10', qty: 1, forJob: true, variant: 'roll' }] },
+    rewards: { exp: 12000, gold: 900, items: [] },
     scenes: { done: 'ch2_end' },
   }),
   story_root: s('story_root', 3, {
@@ -114,7 +114,7 @@ export const STORY_QUESTS = {
     name: 'The Last Waltz', giver: 'elowen', minLevel: 16, prereq: 'story_invite',
     text: "A party that never ends. The guests never go home. And somebody has to tell the hostess, gently. That somebody is you, with a group of four: Mr. Pumpkins will let you into Moonlit Manor. Dance with her, if you must. Bring me back anything strange.",
     objectives: [{ type: 'kill', mob: 'marigold', count: 1 }],
-    rewards: { exp: 20000, gold: 600, items: [{ id: 'warrior_top_15', qty: 1, forJob: true, variant: 'roll' }, { id: 'elixir', qty: 3 }] },
+    rewards: { exp: 20000, gold: 600, items: [{ id: 'elixir', qty: 3 }] },
     scenes: { done: 'party_clocks' },
   }),
 
@@ -131,7 +131,7 @@ export const STORY_QUESTS = {
     text: "It's Sylvana, the Dryad Queen. Her bower is at the far end of the glade, past the waterfall. She won't listen to words right now; she's at the throwing-the-whole-forest stage of feelings. Show her your heart, stand your ground, and duck.",
     objectives: [{ type: 'kill', mob: 'sylvana', count: 1 }],
     trial: 'bower',
-    rewards: { exp: 39000, gold: 1200, items: [{ id: 'warrior_hat_20', qty: 1, forJob: true, variant: 'roll' }, { id: 'elixir', qty: 3 }] },
+    rewards: { exp: 39000, gold: 1200, items: [{ id: 'elixir', qty: 3 }] },
     scenes: { accept: 'ch3_trial', win: 'ch3_win', done: 'ch3_end' },
   }),
 
@@ -149,7 +149,7 @@ export const STORY_QUESTS = {
     name: 'The Drowned Queen', giver: 'marina', minLevel: 22, prereq: 'story_tide',
     text: "Right. We're going down. Four of you, one bubble charm, deep breaths. Wake Queen Coralie in the Sunken Aquarium Palace, and ask her what she remembers. ...I said deep breaths, not dramatic gasps.",
     objectives: [{ type: 'kill', mob: 'coralie', count: 1 }],
-    rewards: { exp: 26000, gold: 700, items: [{ id: 'warrior_gloves_20', qty: 1, forJob: true, variant: 'roll' }, { id: 'elixir', qty: 3 }] },
+    rewards: { exp: 26000, gold: 700, items: [{ id: 'elixir', qty: 3 }] },
     scenes: { done: 'coralie_done' },
   }),
 
@@ -179,7 +179,7 @@ export const STORY_QUESTS = {
     name: 'Wound Too Tight', giver: 'tock', minLevel: 27, prereq: 'story_fair',
     text: "Her Majesty Queen Gearheart was wound up the night of the festival and she hasn't stopped since, sir! Nobody can! Take three friends into the Clockwork Carnival and wind her down. Gently, sir. She's very old porcelain.",
     objectives: [{ type: 'kill', mob: 'gearheart', count: 1 }],
-    rewards: { exp: 42000, gold: 900, items: [{ id: 'warrior_shoes_25', qty: 1, forJob: true, variant: 'roll' }, { id: 'elixir', qty: 4 }] },
+    rewards: { exp: 42000, gold: 900, items: [{ id: 'elixir', qty: 4 }] },
     scenes: { done: 'gearheart_done' },
   }),
   story_4_3: s('story_4_3', 6, {
@@ -187,7 +187,7 @@ export const STORY_QUESTS = {
     text: "The prayer woke her. Tamamo, the Nine-Tailed Empress, waits in her sanctum at the end of the path. Nine tails, nine tricks, no manners. Don't trust what you see. On principle, don't trust me either.",
     objectives: [{ type: 'kill', mob: 'tamamo', count: 1 }],
     trial: 'sanctum',
-    rewards: { exp: 78000, gold: 1700, items: [{ id: 'warrior_cape_25', qty: 1, forJob: true, variant: 'roll' }, { id: 'elixir', qty: 5 }] },
+    rewards: { exp: 78000, gold: 1700, items: [{ id: 'elixir', qty: 5 }] },
     scenes: { accept: 'ch4_trial', win: 'ch4_win', done: 'ch4_end' },
   }),
 
@@ -206,7 +206,7 @@ export const STORY_QUESTS = {
     name: 'The Star Keeper', giver: 'nim', minLevel: 31, prereq: 'story_charts',
     text: "Please set the sky going again. Climb the Star Observatory with three friends (Professor Lumen will let you in) and free Astraea. And if she has any notes about that night... could you bring them? I'll wait here and worry. I'm very good at it.",
     objectives: [{ type: 'kill', mob: 'astraea', count: 1 }],
-    rewards: { exp: 60000, gold: 1200, items: [{ id: 'warrior_top_30', qty: 1, forJob: true, variant: 'roll' }, { id: 'elixir', qty: 5 }] },
+    rewards: { exp: 60000, gold: 1200, items: [{ id: 'elixir', qty: 5 }] },
     scenes: { done: 'falling_done' },
   }),
 
@@ -222,7 +222,7 @@ export const STORY_QUESTS = {
     name: 'Frost on the Mountain', giver: 'nim', minLevel: 34, prereq: 'story_5_1',
     text: "The cold is coming down from Frozen Peak... or going up to it? I made a chart. The arrows go both ways. The Yuki-onna are carrying the warmth away in icy gems. Bring me 12? I want to know where they're taking it.",
     objectives: [{ type: 'visit', map: 'peak' }, { type: 'collect', item: 'snow_gem', count: 12 }],
-    rewards: { exp: 79000, gold: 1600, items: [{ id: 'warrior_shoes_35', qty: 1, forJob: true, variant: 'roll' }] },
+    rewards: { exp: 79000, gold: 1600, items: [] },
     scenes: { done: 'ch5_gems' },
   }),
   story_dessert: s('story_dessert', 8, {
@@ -236,7 +236,7 @@ export const STORY_QUESTS = {
     name: 'Just Desserts', giver: 'praline', minLevel: 36, prereq: 'story_dessert',
     text: "The meringue is chilled, plated and very, very large. Take three friends into the Candy Volcano, get it to Queen Bonbon, and cool her down. Gently. She's sensitive about her baking. And ask her where she thinks the warmth went. A queen notices these things.",
     objectives: [{ type: 'kill', mob: 'bonbon', count: 1 }],
-    rewards: { exp: 70000, gold: 1400, items: [{ id: 'warrior_bottom_35', qty: 1, forJob: true, variant: 'roll' }, { id: 'elixir', qty: 6 }] },
+    rewards: { exp: 70000, gold: 1400, items: [{ id: 'elixir', qty: 6 }] },
     scenes: { done: 'bonbon_done' },
   }),
   story_5_3: s('story_5_3', 8, {
@@ -244,7 +244,7 @@ export const STORY_QUESTS = {
     text: "The gems glow with rose light... it's Lilith! She's taking the springs' warmth down to her grotto behind the waterfall in Serpent Springs. In my books, this is where the hero says something brave. I-I'll just say please. Please bring the warmth home.",
     objectives: [{ type: 'kill', mob: 'lilith', count: 1 }],
     trial: 'grotto',
-    rewards: { exp: 120000, gold: 2200, items: [{ id: 'warrior_top_35', qty: 1, forJob: true, variant: 'roll' }, { id: 'elixir', qty: 8 }] },
+    rewards: { exp: 120000, gold: 2200, items: [{ id: 'elixir', qty: 8 }] },
     scenes: { accept: 'ch5_trial', win: 'ch5_win', done: 'ch5_end' },
   }),
 
@@ -267,21 +267,21 @@ export const STORY_QUESTS = {
     name: 'A Better Ending', giver: 'encore', minLevel: 42, prereq: 'story_encore',
     text: "Take three friends into the Dream Theatre, darling. Survive his muse, survive his director, and give the Phantom Playwright's story a better ending. And if he drops his script, bring it to me. I want to see my part.",
     objectives: [{ type: 'kill', mob: 'playwright', count: 1 }],
-    rewards: { exp: 90000, gold: 1600, items: [{ id: 'warrior_shoes_40', qty: 1, forJob: true, variant: 'roll' }, { id: 'elixir', qty: 8 }] },
+    rewards: { exp: 90000, gold: 1600, items: [{ id: 'elixir', qty: 8 }] },
     scenes: { done: 'playwright_done' },
   }),
   story_6_2: s('story_6_2', 9, {
     name: 'Where Stars Fall', giver: 'elowen', minLevel: 44, prereq: 'story_playwright',
     text: "Above the garden lies Starfall Heights, where the moon comes close. Gather 10 Stardust there; Selene, the Moon Valkyrie, will only meet someone who carries the stars. She's very formal. Don't call her 'Moony'. I did, once.",
     objectives: [{ type: 'visit', map: 'starfall' }, { type: 'collect', item: 'stardust', count: 10 }],
-    rewards: { exp: 130000, gold: 2000, items: [{ id: 'warrior_gloves_45', qty: 1, forJob: true, variant: 'roll' }] },
+    rewards: { exp: 130000, gold: 2000, items: [] },
     scenes: { done: 'ch6_stars' },
   }),
   story_whale: s('story_whale', 10, {
     name: 'The Sinking Whale', giver: 'nimbus', minLevel: 45, prereq: 'story_6_2',
     text: "The Moon Terrace floats too high to walk to, but my old girl can fly you up. If she weren't asleep. And sinking. And covered in pirates. Take three friends over the Sky Whale's back from tail to brow, see off the captain and the barnacles, and wake her gently. She's grumpy before breakfast. Same as me.",
     objectives: [{ type: 'kill', mob: 'whaledream', count: 1 }],
-    rewards: { exp: 120000, gold: 2000, items: [{ id: 'warrior_hat_45', qty: 1, forJob: true, variant: 'roll' }, { id: 'elixir', qty: 10 }] },
+    rewards: { exp: 120000, gold: 2000, items: [{ id: 'elixir', qty: 10 }] },
     scenes: { accept: 'whale_open', done: 'whale_done' },
   }),
   story_6_3: s('story_6_3', 10, {
@@ -289,7 +289,7 @@ export const STORY_QUESTS = {
     text: "Selene guards Hayate's sleep on the Moon Terrace at the far end of Starfall Heights. She will test you, she won't hold back, and she won't give a tragic speech either. She thinks those are tacky. Show her the island is worth waking for.",
     objectives: [{ type: 'kill', mob: 'selene', count: 1 }],
     trial: 'terrace',
-    rewards: { exp: 300000, gold: 3000, items: [{ id: 'warrior_cape_45', qty: 1, forJob: true, variant: 'gilded' }, { id: 'elixir', qty: 10 }] },
+    rewards: { exp: 300000, gold: 3000, items: [{ id: 'elixir', qty: 10 }] },
     scenes: { accept: 'ch6_trial', win: 'ch6_win', done: 'ch6_end' },
   }),
 
@@ -305,7 +305,7 @@ export const STORY_QUESTS = {
     name: 'Heart of Crystal', giver: 'mira', minLevel: 49, prereq: 'story_7_1',
     text: "Prismaris, the Crystal King, sits on his throne deep in the Crystal Cave. Bring the light home. I'll have a pot of tea waiting. And biscuits. Don't tell Elowen whose recipe.",
     objectives: [{ type: 'kill', mob: 'crystalking', count: 1 }],
-    rewards: { exp: 400000, gold: 2700, items: [{ id: 'warrior_hat_50', qty: 1, forJob: true, variant: 'gilded' }, { id: 'elixir', qty: 20 }] },
+    rewards: { exp: 400000, gold: 2700, items: [{ id: 'elixir', qty: 20 }] },
     scenes: { done: 'ch7_end' },
   }),
   story_wind: s('story_wind', 10, {

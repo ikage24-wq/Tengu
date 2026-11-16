@@ -65,7 +65,7 @@ export function counterOf(id) {
   if (def.type === 'equip') return def.slot === 'weapon' ? 'weapon' : 'armour';
   return FISH_BY_ID[id] ? 'fish' : 'material';
 }
-const tradable = (def) => def && def.price > 0 && !def.quest && !def.keep && !def.unique && !def.starter && def.type !== 'cash' && def.type !== 'use'
+const tradable = (def) => def && def.price > 0 && !def.retiredGear && !def.quest && !def.keep && !def.unique && !def.starter && def.type !== 'cash' && def.type !== 'use'
   && !(def.type === 'equip' && (def.reqLevel == null || def.design === 'cash'))
   && !(def.type === 'etc' && FISH_BY_ID[def.id] && (FISH_BY_ID[def.id].legend || FISH_BY_ID[def.id].boss))
   && !(def.type === 'etc' && !FISH_BY_ID[def.id] && DROP_LEVEL[def.id] == null && !FIND_TIER[def.id]);

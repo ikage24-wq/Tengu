@@ -32,7 +32,7 @@ const { JOBS } = await import(S + 'data/jobs.js');
 const { SKILLS } = await import(S + 'data/skills.js');
 const { DUNGEONS } = await import(S + 'data/dungeons.js');
 const { sellJunk } = await import(S + 'ui/shop.js');
-const { GEAR_LEVELS } = await import(S + 'data/items.js');
+const { bestWeaponId } = await import(S + 'data/items.js');
 
 const JOB1 = process.argv[2] ?? 'warrior';
 const JOB2 = process.argv[3] ?? 'stormwall';
@@ -63,18 +63,16 @@ const skillKind = (id) => {
   if (!s || s.job === 'novice' || s.type === 'passive' || s.type === 'revive' || s.type === 'blink' || s.movement) return null;
   return s.type === 'buff' ? 'buff' : s.fullGauge ? 'finisher' : s.type === 'heal' ? null : 'attack';
 };
-// Gear and skills as a player keeps them up: her job's gear at the best level she can wear, every
-// skill of her line learned.
+// Gear and skills as a player keeps them up: the plain weapon of her job's type (the weapons and
+// armour were retired, 2026-11-16, to make way for new ones), every skill of her line learned.
 function kit() {
   const fam = JOBS[c.job].family;
   if (fam === 'beginner') return;
-  const gl = Math.max(...GEAR_LEVELS.filter((l) => l <= c.level));
-  if (c.kitLevel !== gl) {
-    c.kitLevel = gl;
+  const best = bestWeaponId(WEAPON[JOB1], c.level);
+  if (c.equipment.weapon?.id !== best) {
     try {
-      c.equipment.weapon = makeEquip(`${WEAPON[JOBS[JOB1].family === fam ? JOB1 : JOB1]}_${gl}`, { variance: 0 });
-      for (const slot of ['hat', 'top', 'bottom', 'shoes', 'gloves', 'cape']) c.equipment[slot] = makeEquip(`${fam}_${slot}_${gl}`, { variance: 0 });
-    } catch (e) { err(`gear at ${gl}`, e); }
+      c.equipment.weapon = makeEquip(best, { variance: 0 });
+    } catch (e) { err('ladder weapon', e); }
   }
   const chain = [];
   for (let j = JOBS[c.job]; j; j = JOBS[j.parent]) chain.push(j.id);

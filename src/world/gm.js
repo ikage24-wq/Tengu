@@ -90,7 +90,8 @@ export function setJob(char, jobId) {
 }
 
 export function giveItem(char, id, qty = 1) {
-  if (!ITEMS[id]) return false;
+  // (Nothing that's only a look: a retired piece of gear, data/items.js, or a Cash outfit's look.)
+  if (!ITEMS[id] || ITEMS[id].type === 'look') return false;
   return addItem(char.inventory, id, Math.max(1, Math.min(999, qty)));
 }
 
@@ -159,7 +160,7 @@ export function gmCommand(world, cmd, args) {
       return `Level set to ${char.level}.`;
     case 'give': {
       const id = args[0];
-      if (!giveItem(char, id, n(1, 1))) return ITEMS[id] ? 'Your bag is full.' : `No item "${id}". Try the admin menu (F9).`;
+      if (!giveItem(char, id, n(1, 1))) return ITEMS[id]?.type === 'look' ? `"${id}" is only a look now.` : ITEMS[id] ? 'Your bag is full.' : `No item "${id}". Try the admin menu (F9).`;
       return `Gave ${n(1, 1)} x ${ITEMS[id].name}.`;
     }
     case 'gold':

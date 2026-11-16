@@ -40,13 +40,13 @@ export const QUESTS = {
     id: 'first_steps', name: 'First Steps', giver: 'mira', minLevel: 1,
     text: "Kuro found you a weapon, I see! An adventurer needs sturdy clothes too, so take these Cotton Shorts and some tonics, put them on from your bag, then head east to Petal Meadow.",
     objectives: [],
-    rewards: { exp: 10, gold: 19, items: [{ id: 'bottom_0', qty: 1 }, { id: 'red_potion', qty: 10 }] },
+    rewards: { exp: 10, gold: 19, items: [{ id: 'red_potion', qty: 10 }] },
   },
   fluffy: {
     id: 'fluffy', name: 'Fluffy Business', giver: 'mira', minLevel: 1, prereq: 'first_steps',
     text: 'The Blossom Kits in Petal Meadow shed the softest fluff. Could you bring me 8 Fox Fluff?',
     objectives: [{ type: 'collect', item: 'fluff', count: 8 }],
-    rewards: { exp: 220, gold: 42, items: [{ id: 'hat_0', qty: 1 }] },
+    rewards: { exp: 220, gold: 42, items: [] },
   },
   // Your island (data/home.js): Captain Rook hands you the deed to a little cove he can't use.
   island_deed: {
@@ -100,7 +100,7 @@ export const QUESTS = {
     id: 'sprout_sweep', name: 'Sprout Sweep', giver: 'mira', minLevel: 5, prereq: 'fluffy',
     text: 'Turnip Tots are hopping all over Clover Hills, past the meadow, headbutting anything that stands still. Defeat 10 of them!',
     objectives: [{ type: 'kill', mob: 'sproutling', count: 10 }],
-    rewards: { exp: 440, gold: 40, items: [{ id: 'shoes_0', qty: 1 }, { id: 'top_0', qty: 1 }] },
+    rewards: { exp: 440, gold: 40, items: [] },
   },
   // Bramble's story: the Hollow Warden who checks everyone's gear, roles and "aggro" before he
   // lets them in, because ten years ago he was the young warden who charged Gnarlroot alone
@@ -115,7 +115,7 @@ export const QUESTS = {
     id: 'hollow_heart', name: 'Nobody Charges In', giver: 'bramble', minLevel: 10, prereq: 'bramble_check',
     text: "Rule 12: proof or it didn't happen. The Hollow's full of acorns, and the Rootlings hoard them. Take a group of four down, one tank, one healer, two fighters. Not three fighters. Not 'two fighters and a bard'. Bring me 5 Hollow Acorns so I know you went all the way down.",
     objectives: [{ type: 'collect', item: 'hollow_acorn', count: 5 }],
-    rewards: { exp: 9000, gold: 600, items: [{ id: 'warrior_cape_15', qty: 1, forJob: true, variant: 'roll' }] },
+    rewards: { exp: 9000, gold: 600, items: [] },
   },
   bramble_wipe: {
     id: 'bramble_wipe', name: 'The Great Wipe', giver: 'bramble', minLevel: 12, prereq: 'hollow_heart',
@@ -124,13 +124,13 @@ export const QUESTS = {
       { type: 'kill', mob: 'scorpip', count: 15 },
       { type: 'talk', npc: 'brann', say: "The Great Wipe? I was the tank that day. A young warden ran right past me into the Hollow, yelling his own name. 'BRAAAAMBLE!' The canyon shook for a month. Tell him I still hear it at night." },
     ],
-    rewards: { exp: 6000, gold: 200, items: [{ id: 'warrior_shoes_15', qty: 1, forJob: true, variant: 'roll' }] },
+    rewards: { exp: 6000, gold: 200, items: [] },
   },
   bramble_charge: {
     id: 'bramble_charge', name: 'One Last Charge', giver: 'bramble', minLevel: 14, prereq: 'bramble_wipe',
     text: "Fine. It was me. I've been thinking. Ten years of rules and I can't remember the last time a fight was fun. Go to Mossy Woods and charge into the Moss Tortoises, 20 of them. Loud. Then come back, and bring a healer. Out of habit.",
     objectives: [{ type: 'kill', mob: 'mosstort', count: 20 }],
-    rewards: { exp: 9600, gold: 280, items: [{ id: 'warrior_hat_15', qty: 1, forJob: true, variant: 'roll' }, { id: 'hollow_acorn', qty: 5 }] },
+    rewards: { exp: 9600, gold: 280, items: [{ id: 'hollow_acorn', qty: 5 }] },
   },
 
   mush_menace: {
@@ -143,7 +143,7 @@ export const QUESTS = {
     id: 'leaf_samples', name: 'Feather Samples', giver: 'rook', minLevel: 12, prereq: 'mush_menace',
     text: 'Our fletcher needs 15 Mossy Down feathers from the Moss Owlets in Mossy Woods.',
     objectives: [{ type: 'collect', item: 'owl_down', count: 15 }],
-    rewards: { exp: 10000, gold: 330, items: [{ id: 'warrior_gloves_15', qty: 1, forJob: true }] },
+    rewards: { exp: 10000, gold: 330, items: [] },
   },
   tusk_trader: {
     id: 'tusk_trader', name: 'Scute Trader', giver: 'marlo', minLevel: 15, prereq: 'marlo_scales',
@@ -191,7 +191,7 @@ export const QUESTS = {
     id: 'crystal_heart', name: 'Heart of Crystal', giver: 'rook', minLevel: 35, prereq: 'restless_ruins',
     text: 'Deep in the Crystal Cave sits Prismaris, the Crystal King. Defeat it and bring peace to the coast.',
     objectives: [{ type: 'kill', mob: 'crystalking', count: 1 }],
-    rewards: { exp: 120000, gold: 1800, items: [{ id: 'warrior_cape_40', qty: 1, forJob: true, variant: 'gilded' }, { id: 'elixir', qty: 10 }] },
+    rewards: { exp: 120000, gold: 1800, items: [{ id: 'elixir', qty: 10 }] },
   },
 
   // ---------- Side quests: every town's people, every field ----------
@@ -306,7 +306,7 @@ export const QUESTS = {
     id: 'canyon_stingers', name: 'Stinging Remarks', giver: 'rook', minLevel: 11, prereq: 'canyon_eggs',
     text: "The Manticore Cubs up there are worse. Bring me 12 of their stingers so the herbalist can brew an antidote for the crew.",
     objectives: [{ type: 'collect', item: 'stinger', count: 12 }],
-    rewards: { exp: 10000, gold: 320, items: [{ id: 'warrior_shoes_10', qty: 1, forJob: true, variant: 'roll' }] },
+    rewards: { exp: 10000, gold: 320, items: [] },
   },
   canyon_lookout: {
     id: 'canyon_lookout', name: 'The Lookout', giver: 'rook', minLevel: 12, prereq: 'canyon_stingers',
@@ -380,7 +380,7 @@ export const QUESTS = {
     id: 'rook_harpies', name: 'Harpy Havoc', giver: 'rook', minLevel: 40, prereq: 'crystal_heart',
     text: "The Sky Harpies have started raiding our gulls' nests, all the way from the Sky Garden! Ground 30 of them.",
     objectives: [{ type: 'kill', mob: 'windbird', count: 30 }],
-    rewards: { exp: 120000, gold: 1800, items: [{ id: 'warrior_hat_40', qty: 1, forJob: true, variant: 'roll' }] },
+    rewards: { exp: 120000, gold: 1800, items: [] },
   },
   daily_harbor: {
     id: 'daily_harbor', name: 'Daily: Tortoise Traffic', giver: 'rook', minLevel: 14, daily: true,
@@ -404,19 +404,19 @@ export const QUESTS = {
     id: 'tora_bellows', name: 'Wings for the Old Girl', giver: 'tora', minLevel: 21, prereq: 'tora_handles',
     text: "Bellows need leather that breathes. Imp wings, from the Twilight Ruins: thin as paper, tough as boots, slightly judgy. Bring me 10. Yes, the Imps are using them. They'll walk. Builds character.",
     objectives: [{ type: 'collect', item: 'bat_wing', count: 10 }],
-    rewards: { exp: 21000, gold: 550, items: [{ id: 'warrior_cape_20', qty: 1, forJob: true, variant: 'roll' }] },
+    rewards: { exp: 21000, gold: 550, items: [] },
   },
   tora_draught: {
     id: 'tora_draught', name: 'Follow the Lean', giver: 'tora', minLevel: 25, prereq: 'tora_bellows',
     text: "Every flame on Forge Row is leaning toward the Crystal Cave like it heard gossip. Go and see where my heat is going. Climb to the high crystal ledges where the air moves, and clear 20 Gem Mimics on the way. They look like treasure. They are not treasure. They bite.",
     objectives: [{ type: 'visit', map: 'cave', above: 450, place: 'the high crystal ledges of the Glowcap Terraces' }, { type: 'kill', mob: 'crystalslime', count: 20 }],
-    rewards: { exp: 25000, gold: 660, items: [{ id: 'warrior_hat_25', qty: 1, forJob: true, variant: 'roll' }] },
+    rewards: { exp: 25000, gold: 660, items: [] },
   },
   tora_cores: {
     id: 'tora_cores', name: 'Hot Iron', giver: 'tora', minLevel: 30, prereq: 'tora_draught',
     text: "Geode Cores burn hotter than any coal and hold their heat like a grudge: nothing can slurp it out of them. 10 from the Crystal Golems. They'll say they need them. Everybody says that. Her first fire makes you a proper pair of gloves, made for your trade.",
     objectives: [{ type: 'collect', item: 'rock_core', count: 10 }],
-    rewards: { exp: 44000, gold: 990, items: [{ id: 'warrior_gloves_30', qty: 1, forJob: true, variant: 'roll' }] },
+    rewards: { exp: 44000, gold: 990, items: [] },
   },
   // Master Sencha's Ancient Tea Ceremony (the Tanuki Tea Terraces, levels 24-28): he sells a
   // "forty-seven step" ceremony he invented last Tuesday, and the leaves, the kettles and the
@@ -433,19 +433,19 @@ export const QUESTS = {
     id: 'tea_kettles', name: 'Kettle Discipline', giver: 'sencha', minLevel: 25, prereq: 'tea_leaves',
     text: "Bad news: my kettles have grown legs. And opinions. A kettle should whistle, not sulk on the Kettle Steps. Calm 15 Kettle Tanuki and bring me 5 of their lids. A kettle without a lid is a kettle that listens.",
     objectives: [{ type: 'kill', mob: 'kettletanuki', count: 15 }, { type: 'collect', item: 'kettle_lid', count: 5 }],
-    rewards: { exp: 28000, gold: 520, items: [{ id: 'warrior_shoes_25', qty: 1, forJob: true, variant: 'roll' }] },
+    rewards: { exp: 28000, gold: 520, items: [] },
   },
   tea_lanterns: {
     id: 'tea_lanterns', name: 'Notes in the Mist', giver: 'sencha', minLevel: 26, prereq: 'tea_kettles',
     text: "The lanterns in the Mist Hollow are covered in writing. Graffiti! On my lanterns! Go down there and bring me 8 sheets of Lantern Paper so I can see who's been, ahem, expressing themselves. Not because I'm worried. Grand Tea Masters don't worry. They steep.",
     objectives: [{ type: 'visit', map: 'tea', place: 'the Mist Hollow' }, { type: 'collect', item: 'lantern_paper', count: 8 }],
-    rewards: { exp: 30000, gold: 560, items: [{ id: 'warrior_gloves_25', qty: 1, forJob: true, variant: 'roll' }] },
+    rewards: { exp: 30000, gold: 560, items: [] },
   },
   tea_grandkettle: {
     id: 'tea_grandkettle', name: 'One Pot for Everyone', giver: 'sencha', minLevel: 28, prereq: 'tea_lanterns',
     text: "The Grand Kettle. My old master. He's been asleep in the teapot hut since I, um, took over the business. Hunt the terraces until he wakes, and he will, grumpy, then calm him down. Only he knows how to brew a pot big enough for everyone. Even interns.",
     objectives: [{ type: 'kill', mob: 'grandkettle', count: 1 }],
-    rewards: { exp: 60000, gold: 900, items: [{ id: 'warrior_cape_25', qty: 1, forJob: true, variant: 'roll' }, { id: 'elixir', qty: 3 }] },
+    rewards: { exp: 60000, gold: 900, items: [{ id: 'elixir', qty: 3 }] },
   },
   daily_tea: {
     id: 'daily_tea', name: 'Daily: Tea Break', giver: 'sencha', minLevel: 24, daily: true, prereq: 'tea_grandkettle',
@@ -488,7 +488,7 @@ export const QUESTS = {
     id: 'lumen_home', name: 'Send It Home', giver: 'lumen', minLevel: 33, prereq: 'lumen_chips',
     text: "The Star Sling is done. Possibly. It hums, which is either very good or very bad. Carry it up to the top of Howling Rock, where it fell, point it at the gap in the sky, and let go. Then come back and tell me everything. Everything. I'll be up here pretending I'm not worried.",
     objectives: [{ type: 'visit', map: 'ridge', above: 520, place: 'the top of Howling Rock, with the Star Sling' }],
-    rewards: { exp: 62000, gold: 900, items: [{ id: 'mochi_egg', qty: 1 }, { id: 'warrior_shoes_30', qty: 1, forJob: true, variant: 'roll' }] },
+    rewards: { exp: 62000, gold: 900, items: [{ id: 'mochi_egg', qty: 1 }] },
   },
 
   // Yuzu's story (Moonleaf Grove, by the Moon Tree): she borrows Professor Lumen's star maps because
@@ -522,7 +522,7 @@ export const QUESTS = {
       { type: 'talk', npc: 'elowen', say: "She took my teacups and gave them back washed. Twice. Tell her the kettle's always on. Don't tell her I said so. She'll get smug." },
       { type: 'talk', npc: 'celeste', say: "Mm... Yuzu? She tucks a blanket on me when I fall asleep under the stars. I pretend I'm still asleep. ...I'm always awake. Tell her thank you." },
     ],
-    rewards: { exp: 80000, gold: 1000, items: [{ id: 'mochi_egg', qty: 1 }, { id: 'warrior_cape_35', qty: 1, forJob: true, variant: 'roll' }] },
+    rewards: { exp: 80000, gold: 1000, items: [{ id: 'mochi_egg', qty: 1 }] },
   },
 
   // Rowan's story (Ember Crag, by the arena): every Crag knight stands one night's watch on the
@@ -556,7 +556,7 @@ export const QUESTS = {
     id: 'rowan_watch', name: "The Knight's Watch", giver: 'rowan', minLevel: 41, prereq: 'rowan_courage',
     text: "Plume on. Rope on. Daisies in the helmet, for luck. I'm ready. I'm not ready. Will you stand the watch with me? Climb all the way to the Starlit Terrace, the very top of the Sky Garden, and I'll be right behind you. Right behind. Holding your cape. Is that all right?",
     objectives: [{ type: 'visit', map: 'sky', above: 360, place: 'the Starlit Terrace at the top of the Sky Garden, with Rowan' }],
-    rewards: { exp: 115000, gold: 1100, items: [{ id: 'mochi_egg', qty: 1 }, { id: 'warrior_hat_40', qty: 1, forJob: true, variant: 'roll' }] },
+    rewards: { exp: 115000, gold: 1100, items: [{ id: 'mochi_egg', qty: 1 }] },
   },
 
   // Celeste's story (Moonleaf Grove, by her house): she keeps dreaming things that then happen. A
@@ -587,7 +587,7 @@ export const QUESTS = {
     id: 'celeste_dreamer', name: 'Whoever Is Dreaming', giver: 'celeste', minLevel: 44, prereq: 'celeste_silk',
     text: "The net's done. It has to hang somewhere high, where the dreams drift past: the very top of Starfall Heights. Hang it, then come back and sit with me while I sleep. Not in a strange way. In a stargazer way. I'll tell you who's dreaming us. I think I already know.",
     objectives: [{ type: 'visit', map: 'starfall', above: 400, place: 'the top of Starfall Heights, to hang the dream net' }],
-    rewards: { exp: 145000, gold: 1200, items: [{ id: 'mochi_egg', qty: 1 }, { id: 'warrior_gloves_45', qty: 1, forJob: true, variant: 'roll' }] },
+    rewards: { exp: 145000, gold: 1200, items: [{ id: 'mochi_egg', qty: 1 }] },
   },
 
   // Skipper Nimbus's story (Cloudcatch Pier): the Sky Whale is awake and flying again, and her old
@@ -617,7 +617,7 @@ export const QUESTS = {
     id: 'nimbus_voyage', name: 'The Last Voyage', giver: 'nimbus', minLevel: 49, prereq: 'nimbus_lantern',
     text: "The lantern's ready. Take it up to the very top of Starfall Heights, where she passes closest, and hold it up so she sees it. Then come back and tell me she took it. I'll be here. Packing. Probably. Hat on the hook, and all that.",
     objectives: [{ type: 'visit', map: 'starfall', above: 400, place: 'the top of Starfall Heights, holding up the star lantern' }],
-    rewards: { exp: 200000, gold: 1500, items: [{ id: 'mochi_egg', qty: 1 }, { id: 'warrior_bottom_45', qty: 1, forJob: true, variant: 'roll' }] },
+    rewards: { exp: 200000, gold: 1500, items: [{ id: 'mochi_egg', qty: 1 }] },
   },
 
   // Moonleaf Grove.
@@ -651,13 +651,13 @@ export const QUESTS = {
     id: 'brann_stand', name: 'Stand Your Ground', giver: 'brann', minLevel: 15, family: 'warrior',
     text: "A warrior holds the line. That's it. That's the whole class. The Moss Tortoises in Mossy Woods hit like falling logs: face 25 of them and don't take a step back. Sideways is fine. I checked the rules.",
     objectives: [{ type: 'kill', mob: 'mosstort', count: 25 }],
-    rewards: { exp: 12000, gold: 350, items: [{ id: 'warrior_cape_15', qty: 1, forJob: true, variant: 'roll' }] },
+    rewards: { exp: 12000, gold: 350, items: [] },
   },
   kestrel_canyon: {
     id: 'kestrel_canyon', name: 'The Arrow That Never Landed', giver: 'kestrel', minLevel: 12, prereq: 'kestrel_targets',
     text: "Fine, you heard the story. Everyone has. There's a song. It rhymes 'Kestrel' with 'never fell'. I shot it from the very top of Windy Canyon and it never came down. Climb up there and tell me what the wind does. Mind the Manticore Cubs nesting on the ledges: calm 15 of them.",
     objectives: [{ type: 'visit', map: 'canyon', above: 310, place: 'the very top of Windy Canyon' }, { type: 'kill', mob: 'scorpip', count: 15 }],
-    rewards: { exp: 5600, gold: 180, items: [{ id: 'warrior_gloves_10', qty: 1, forJob: true, variant: 'roll' }] },
+    rewards: { exp: 5600, gold: 180, items: [] },
   },
   kestrel_glade: {
     id: 'kestrel_glade', name: 'Fairy Treasure', giver: 'kestrel', minLevel: 21, prereq: 'kestrel_canyon',
@@ -669,7 +669,7 @@ export const QUESTS = {
     id: 'kestrel_wings', name: 'Wings in the Dark', giver: 'kestrel', minLevel: 22, prereq: 'kestrel_glade',
     text: "Its fletching's in tatters, but the shaft is straight as the day I made it. Imp Wings make the best feathers there are. Shoot down 15 Imps in the Twilight Ruins and bring me 7 of their wings. Only about half of them drop one. Where do the other wings go? Nobody knows. Science can't explain it. This time, it lands.",
     objectives: [{ type: 'kill', mob: 'gloombat', count: 15 }, { type: 'collect', item: 'bat_wing', count: 7 }],
-    rewards: { exp: 29000, gold: 780, items: [{ id: 'warrior_cape_20', qty: 1, forJob: true, variant: 'roll' }] },
+    rewards: { exp: 29000, gold: 780, items: [] },
   },
   // Elowen's story: the teapot she and Mira broke as apprentices, each keeping
   // half (Mira the pot, Elowen the lid; data/scenes.js letter_open). The real quarrel was never
@@ -678,7 +678,7 @@ export const QUESTS = {
     id: 'elowen_dance', name: 'Dance of the Owlets', giver: 'elowen', minLevel: 15, family: 'mage',
     text: "The Moss Owlets of Mossy Woods glide along the branches like they're dancing, but they've forgotten the steps. Now they just wobble, like uncles at a wedding. Calm 15 of them, and bring me 7 of their soft down to stitch into charms. Festival charms. Not that I'm going.",
     objectives: [{ type: 'kill', mob: 'mossowlet', count: 15 }, { type: 'collect', item: 'owl_down', count: 7 }],
-    rewards: { exp: 9700, gold: 320, items: [{ id: 'warrior_cape_15', qty: 1, forJob: true, variant: 'roll' }] },
+    rewards: { exp: 9700, gold: 320, items: [] },
   },
   // Vex's story (her Wind Dancers'): Tora's good hammer, which Vex "borrowed" to build a secret
   // stage on the harbor for its first dance festival, then lost to the Kitsune Miko's light
@@ -690,7 +690,7 @@ export const QUESTS = {
       { type: 'visit', map: 'canyon', above: 330, place: 'the top of Windy Canyon' },
       { type: 'talk', npc: 'tora', say: "Vex sent you? Ha. Tell that rascal I want my good hammer back. She thinks I didn't notice. I notice EVERYTHING. ...Have you seen my glasses?" },
     ],
-    rewards: { exp: 8000, gold: 410, items: [{ id: 'warrior_cape_15', qty: 1, forJob: true, variant: 'roll' }] },
+    rewards: { exp: 8000, gold: 410, items: [] },
   },
 
   // ---------- The far regions ----------
@@ -708,13 +708,13 @@ export const QUESTS = {
     id: 'elowen_wisps', name: 'Kettle Lights', giver: 'elowen', minLevel: 20, prereq: 'elowen_dance', family: 'mage',
     text: "Our teacher's teapot only sang when the lid and the pot were warmed in wisp-light together. Yes, a magic teapot. Every mage has one, it's in the handbook. If I'm ever to give the lid back, it should be ready. Bring me 8 Wisp Flames from the Will-o'-Wisps in the Twilight Ruins, next door.",
     objectives: [{ type: 'collect', item: 'wisp_flame', count: 8 }],
-    rewards: { exp: 16000, gold: 410, items: [{ id: 'warrior_gloves_20', qty: 1, forJob: true, variant: 'roll' }] },
+    rewards: { exp: 16000, gold: 410, items: [] },
   },
   elowen_foxfire: {
     id: 'elowen_foxfire', name: 'A Fox-Fire Offering', giver: 'elowen', minLevel: 24, prereq: 'elowen_wisps', family: 'mage',
     text: "Past the Twilight Ruins, the Fox Shrine Path climbs to a little shrine on the top terrace. The foxes there grant courage, they say. Bring 10 of the little bells the Nekomata wear to hang at the shrine, and leave a prayer there for me. A long one. Use big words. I'll need it.",
     objectives: [{ type: 'collect', item: 'nekomata_bell', count: 10 }, { type: 'visit', map: 'shrine', above: 530, place: 'the shrine on the top terrace' }],
-    rewards: { exp: 24000, gold: 620, items: [{ id: 'white_potion', qty: 20 }, { id: 'warrior_hat_25', qty: 1, forJob: true, variant: 'roll' }] },
+    rewards: { exp: 24000, gold: 620, items: [{ id: 'white_potion', qty: 20 }] },
   },
   elowen_lid: {
     id: 'elowen_lid', name: 'The Lid, Returned', giver: 'elowen', minLevel: 25, prereq: 'elowen_foxfire', family: 'mage',
@@ -727,13 +727,13 @@ export const QUESTS = {
     id: 'vex_stage', name: 'Quick Feet, Quiet Hands', giver: 'vex', minLevel: 18, prereq: 'vex_shadows',
     text: "The hammer's for a good cause, and that's all I'm saying. A good cause also needs boards. Heartwood, from the Puddle Kids' puddles in the Whispering Glade: bring me 8. Don't tell anyone what it's for. You don't know what it's for. Nobody knows anything. Act natural.",
     objectives: [{ type: 'collect', item: 'moss_stone', count: 8 }],
-    rewards: { exp: 14600, gold: 380, items: [{ id: 'warrior_gloves_20', qty: 1, forJob: true, variant: 'roll' }] },
+    rewards: { exp: 14600, gold: 380, items: [] },
   },
   vex_miko: {
     id: 'vex_miko', name: 'Miko Mischief', giver: 'vex', minLevel: 26, prereq: 'vex_stage',
     text: "Someone stole a hammer I stole. From ME. The audacity. Kitsune Miko, on the Fox Shrine Path: little fox ears, sticky fingers, no respect for professionals. Teach 25 of them some manners and get it back, before Tora counts her tools.",
     objectives: [{ type: 'kill', mob: 'kitsunemiko', count: 25 }],
-    rewards: { exp: 31000, gold: 830, items: [{ id: 'warrior_shoes_25', qty: 1, forJob: true, variant: 'roll' }] },
+    rewards: { exp: 31000, gold: 830, items: [] },
   },
   vex_festival: {
     id: 'vex_festival', name: 'Opening Night', giver: 'vex', minLevel: 27, prereq: 'vex_miko',
@@ -752,19 +752,19 @@ export const QUESTS = {
     id: 'brann_forge', name: "The Smith's Secret", giver: 'tora', minLevel: 24, prereq: 'brann_ruins', family: 'warrior',
     text: "Shh! Don't tell him. That shield? I've got it. I was the scared recruit he held that gatehouse for. I went back for it years later, and it's been in pieces under my bench ever since, next to my feelings. Bring me 10 Bone Shards from the Dullahans for rivets, and I'll make it whole.",
     objectives: [{ type: 'collect', item: 'bone_shard', count: 10 }],
-    rewards: { exp: 23000, gold: 600, items: [{ id: 'warrior_shoes_25', qty: 1, forJob: true, variant: 'roll' }] },
+    rewards: { exp: 23000, gold: 600, items: [] },
   },
   brann_howl: {
     id: 'brann_howl', name: 'Howl at the Moon', giver: 'brann', minLevel: 28, prereq: 'brann_forge', family: 'warrior',
     text: "Tora told me. I can't hold it yet. Not after that night. I'd need a training montage first, and we don't have the budget. You carry it. Climb the howling rock on Moonlit Ridge with it raised, and calm 25 of Lupina's pack under it. If it still holds, maybe I can too.",
     objectives: [{ type: 'visit', map: 'ridge', above: 510, place: 'the top of the howling rock' }, { type: 'kill', mob: 'lupina', count: 25 }],
-    rewards: { exp: 34000, gold: 900, items: [{ id: 'warrior_bottom_30', qty: 1, forJob: true, variant: 'roll' }] },
+    rewards: { exp: 34000, gold: 900, items: [] },
   },
   marlo_key: {
     id: 'marlo_key', name: 'The Brass Key', giver: 'marlo', minLevel: 23, prereq: 'tusk_trader',
     text: "Grandma's bathhouse key went missing on the Fox Shrine Path the night we fled. Nekomata hoard anything that jingles, so it's in one of their bell piles. I'd bet my cart on it. Not the jar. Never the jar. Bring me 8 Nekomata Bells and let's see.",
     objectives: [{ type: 'collect', item: 'nekomata_bell', count: 8 }],
-    rewards: { exp: 18000, gold: 480, items: [{ id: 'warrior_bottom_25', qty: 1, forJob: true, variant: 'roll' }] },
+    rewards: { exp: 18000, gold: 480, items: [] },
   },
   marlo_spa: {
     id: 'marlo_spa', name: 'Spa Day', giver: 'marlo', minLevel: 31, prereq: 'marlo_key',
@@ -782,7 +782,7 @@ export const QUESTS = {
     id: 'rook_stars', name: 'Wishing on Stars', giver: 'rook', minLevel: 45,
     text: "My old crew swears that at Starfall Heights, over the Sky Garden, you can catch a falling star. Calm 15 Star Seraphs up there and bring back 6 Stardust. A sailor never stops wishing!",
     objectives: [{ type: 'kill', mob: 'starspirit', count: 15 }, { type: 'collect', item: 'stardust', count: 6 }],
-    rewards: { exp: 140000, gold: 2000, items: [{ id: 'warrior_top_45', qty: 1, forJob: true, variant: 'gilded' }, { id: 'elixir', qty: 15 }] },
+    rewards: { exp: 140000, gold: 2000, items: [{ id: 'elixir', qty: 15 }] },
   },
 };
 

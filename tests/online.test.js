@@ -17,7 +17,7 @@ function hero(name) {
   Object.assign(char, { job: 'warrior', level: 30 });
   char.base.str = 160;
   char.base.dex = 70;
-  char.equipment.weapon = makeEquip('sword_30');
+  char.equipment.weapon = makeEquip('sword_0');
   const world = createWorld(char);
   loadMap(world, 'woods', 'start');
   world.god = true;

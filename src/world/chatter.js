@@ -74,7 +74,8 @@ const SLOTS = {
   mob: (c) => (c.mobsHere?.length ? pick(c.mobsHere) : null),
   map: (c) => c.next ?? null,
   price: () => price(pick([20, 50, 80, 120, 250, 400])),
-  set: () => pick(Object.values(SETS)).name,
+  // (None while there are no gear sets: a line that needs one isn't said.)
+  set: () => (Object.keys(SETS).length ? pick(Object.values(SETS)).name : null),
 };
 
 // Templates by mood. Every one is about something real for the speaker (their own weapon, the map

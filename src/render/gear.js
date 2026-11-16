@@ -12,9 +12,11 @@ import { R, E, T, F, shade, shadowTone } from './pixel.js';
 import { GOLD, SILVER, INK, FIGURE, torsoPts, robePts, dressPts, band, side, MID, collar, tieBow, button, limb, reach, mirrorX } from './figure.js';
 import { JOB_GEAR } from './jobgear/index.js';
 import { setModule, SET_DESIGNS } from './jobgear/sets.js';
+import { LADDER_GEAR } from './jobgear/ladder.js';
 
-// The module that draws a piece: a gear set's own design over its job's, or the job's.
-const gearOf = (piece) => (piece.set ? setModule(piece.set, piece.family, JOB_GEAR[piece.family]) : JOB_GEAR[piece.family]);
+// The module that draws a piece: the Island Journey armour's tier (render/jobgear/ladder.js), a
+// gear set's own design over its job's, or the job's.
+const gearOf = (piece) => (piece.ladder ? LADDER_GEAR[piece.ladder][piece.family] : piece.set ? setModule(piece.set, piece.family, JOB_GEAR[piece.family]) : JOB_GEAR[piece.family]);
 import { finish, hang, hsl, polyOf } from './jobgear/kit.js';
 
 // A limb aimed further than it reaches doesn't lock dead straight: past its full length it eases
@@ -81,6 +83,8 @@ const done = (shapes, piece) => finish(shapes.filter(Boolean), matFor(piece));
 // Hanging cloth is drawn at rest and bent as a chain (kit.js `hang`) from its root.
 const STILL = (m) => ({ ...m, sway: 0, hair: 0 });
 const HANGS = new Set(['warrior', 'mage', 'starter', 'costume']);
+// (The Island Journey armour's cloth hangs too.)
+const hangs = (piece) => Boolean(piece.ladder) || HANGS.has(piece.family);
 const lowest = (shapes) => Math.max(...shapes.filter(Boolean).map((s) => (s.t === 'r' ? s.y + s.h : s.t === 'e' ? s.y + s.ry : Math.max(...s.pts.map((q) => q[1] + s.y)))));
 
 // Standing still, nothing swaying.
@@ -169,8 +173,7 @@ export function hipShapes(look) {
 
 export function skirtShapes(design, c, piece = null, m = MOTION) {
   if (piece?.family) {
-    const fam = piece.family;
-    if (!HANGS.has(fam)) {
+    if (!hangs(piece)) {
       const out = gearOf(piece).skirt(piece.tier, piece.pal, m);
       return out ? done(out, piece) : null;
     }
@@ -484,9 +487,8 @@ export function earringShapes(design, c, piece = null) {
 export function capeShapes(design, c, sway, flap, piece = null, m = null) {
   const mo = m ?? { ...MOTION, sway, flap };
   if (piece?.family) {
-    const fam = piece.family;
     // (A set's own cape moves by itself.)
-    if (!HANGS.has(fam) || SET_DESIGNS[piece.set]?.cape) return done(gearOf(piece).cape(piece.tier, piece.pal, mo), piece);
+    if (!hangs(piece) || SET_DESIGNS[piece.set]?.cape) return done(gearOf(piece).cape(piece.tier, piece.pal, mo), piece);
     const out = gearOf(piece).cape(piece.tier, piece.pal, STILL(mo)).filter(Boolean);
     return done(hang(out, 26, lowest(out), mo), piece);
   }

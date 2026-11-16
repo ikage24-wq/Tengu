@@ -150,12 +150,14 @@ test('max puts every point a skill can take in at once, stopping when SP runs ou
 
 test('equipping checks level', () => {
   const c = fresh();
-  addItem(c.inventory, makeEquip('top_0'));
-  addItem(c.inventory, makeEquip('top_2'));
-  assert.equal(equipFromBag(c, 1), false, 'a leather vest needs level 20');
+  // (Earrings: the armour was retired, 2026-11-16, to make way for new gear.)
+  const mp = stats(c).maxMp;
+  addItem(c.inventory, makeEquip('earring_0'));
+  addItem(c.inventory, makeEquip('ear_20'));
+  assert.equal(equipFromBag(c, 1), false, 'silver hoops need level 20');
   assert.equal(equipFromBag(c, 0), true);
-  assert.equal(c.equipment.top.id, 'top_0');
-  assert.ok(stats(c).wdef >= 5);
+  assert.equal(c.equipment.earring.id, 'earring_0');
+  assert.ok(stats(c).maxMp > mp);
 });
 
 test('inventory stacks consumables and removes them', () => {
@@ -238,7 +240,7 @@ test('Sell junk sells monster drops, but keeps what quests and known recipes nee
 });
 
 test('a first job comes with its first weapon, straight into your hands', () => {
-  for (const [job, weapon] of [['warrior', 'sword_5'], ['tidemage', 'staff_5']]) {
+  for (const [job, weapon] of [['warrior', 'sword_0'], ['tidemage', 'staff_0']]) {
     const c = fresh();
     gainExp(c, 2000);
     const held = c.equipment.weapon;

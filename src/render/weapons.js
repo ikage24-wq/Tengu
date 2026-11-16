@@ -15,12 +15,14 @@ import { R, E, P, T, F, mix } from './pixel.js';
 import { lookFor, pack, GOLD, WHITE } from './weapon-kit.js';
 import { FORMS } from './weapon-forms.js';
 import { liveFor } from './weapon-fx.js';
-import { DESIGNS, gloveShapes } from './weapon-designs.js';
+import { DESIGNS, gloveShapes, isLadderDesign } from './weapon-designs.js';
 import { finish } from './jobgear/kit.js';
 
-export function weaponFrames(type, tier = 0, theme = null) {
+export function weaponFrames(type, tier = 0, theme = null, legacy = false) {
   if (!FORMS[type]) return 1;
   if (theme) return 6;
+  // (The ladder's designs are one picture; their motion is all in the live effect.)
+  if (!legacy && isLadderDesign(type, tier)) return 1;
   return tier >= 9 ? 6 : tier >= 5 ? 4 : 1;
 }
 
@@ -29,19 +31,34 @@ const GLOVE = { shapes: [], blade: [-2, 0], reach: [], a: { tip: [0, -2], head: 
 
 // `variant` (dark, white, crimson, azure, gilded, or null) recolors a progression weapon.
 // `unstrung` leaves a bow's string out, for drawing it pulled back live.
-export function weaponShapes(type, tier = 0, frame = 0, theme = null, variant = null, unstrung = false) {
+export function weaponShapes(type, tier = 0, frame = 0, theme = null, variant = null, unstrung = false, legacy = false) {
   const form = FORMS[type];
   if (!form) return null;
-  const key = `${type}|${tier}|${theme}|${variant}|${frame}|${unstrung}`;
+  const key = `${type}|${tier}|${theme}|${variant}|${frame}|${unstrung}|${legacy}`;
   let def = built.get(key);
   if (!def) {
-    const look = lookFor(type, tier, theme, variant);
+    // (`legacy`: a retired Cash weapon cover, keeping its tier's old design over the ladder's.)
+    const base = lookFor(type, tier, theme, variant);
+    const look = legacy ? { ...base, legacy: true } : base;
     // Levels 1-50 have their own designs (weapon-designs.js); a gauntlet is a glove on the hand
     // (drawn with the hand), so nothing is held.
     const own = !theme && tier <= 10 && DESIGNS[type];
     const { shapes, blade, reach, a } = type === 'gauntlet' ? GLOVE : own ? own(look, tier, frame) : form(look, frame);
     // (A glove carries no shimmer of its own: on so small a thing it reads as a smudge over the hand.)
-    def = pack(finish(unstrung ? shapes.filter((sh) => !sh.string) : shapes, materialsOf(look)), { blade, reach, anchors: a, live: type === 'gauntlet' ? null : liveFor(look, a) });
+    const all = unstrung ? shapes.filter((sh) => !sh.string) : shapes;
+    const mats = materialsOf(look);
+    // Moving parts (a shape tagged `part`, its pivot and motion in `a.parts`: the legendary tier's
+    // wings): each its own picture, the same size and frame as the weapon's, drawn over its still
+    // body and turned about its pivot every frame (render/hero.js).
+    const names = [...new Set(all.map((sh) => sh.part).filter(Boolean))];
+    const body = finish(all.filter((sh) => !sh.part), mats);
+    const partShapes = names.map((n) => finish(all.filter((sh) => sh.part === n), mats));
+    def = pack([...body, ...partShapes.flat()], { blade, reach, anchors: a, live: type === 'gauntlet' ? null : liveFor(look, a) });
+    if (names.length) {
+      const shift = (list) => list.map((sh) => ({ ...sh, x: sh.x + def.grip[0], y: sh.y + def.grip[1] }));
+      def.shapes = shift(body);
+      def.parts = names.map((n, i) => ({ name: n, shapes: shift(partShapes[i]), ...(a?.parts?.[n] ?? {}) }));
+    }
     built.set(key, def);
   }
   return def;
@@ -325,9 +342,10 @@ function designIcon(type, tier, look) {
   return finish(polys.map(fit), materialsOf(look));
 }
 
-export function weaponIcon(type, tier = 0, theme = null, variant = null) {
+export function weaponIcon(type, tier = 0, theme = null, variant = null, legacy = false) {
   if (!ICONS[type]) return null;
-  const look = lookFor(type, tier, theme, variant);
+  const base = lookFor(type, tier, theme, variant);
+  const look = legacy ? { ...base, legacy: true } : base;
   if (type === 'gauntlet' || (!theme && tier <= 10 && DESIGNS[type])) return designIcon(type, tier, look);
   return [...ICONS[type](iconColors(look)), ...(theme ? ICON_MARKS[theme]() : tierMark(type, look))];
 }

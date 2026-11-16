@@ -6,18 +6,23 @@
 <script type="module">
 // Dev tool: a job family's gear sets on the hero, tier by tier, standing and mid-walk, facing
 // right and left: ?family=thief&tiers=0,6,12,19&job=thief&weapon=dagger_45
+// A ladder tier's sets, one job after another: ?ladder=5&families=warrior,mage,thief,archer
 await import('/src/data/cash.js');
 const { setHd, nextFrame } = await import('/src/render/pixel.js');
 const { drawHero } = await import('/src/render/hero.js');
-const { GEAR_LEVELS } = await import('/src/data/items.js');
+const { GEAR_LEVELS, armourId } = await import('/src/data/items.js');
 const q = new URLSearchParams(location.search);
 const family = q.get('family') ?? 'thief';
 const job = q.get('job') ?? 'thief';
-const tiers = (q.get('tiers') ?? '0,6,12,19').split(',').map(Number);
+const ladder = q.get('ladder') ? Number(q.get('ladder')) : null;
+const families = (q.get('families') ?? 'warrior,mage,thief,archer').split(',');
+const JOBS_OF = { warrior: 'warrior', mage: 'tidemage', thief: 'moonmoth', archer: 'sunfeather' };
+const WEAPON_OF = Object.fromEntries(Object.entries({ warrior: 'sword', mage: 'staff', thief: 'dagger', archer: 'bow' }).map(([f, w]) => [f, `${w}_${ladder === 5 ? 0 : ladder}`]));
+const tiers = ladder ? families.map((_, i) => i) : (q.get('tiers') ?? '0,6,12,19').split(',').map(Number);
 const LOOK = { hairStyle: 'fluffybob', hairColor: '#ffb38a', skinTone: '#fbe2cf', eyeColor: '#4fae8f', eyeStyle: 'sparkle', outfitColor: '#ffffff', face: 'smile' };
-const K = 4;
-const CW = Number(q.get('cw') ?? 200);
-const RH = 280;
+const K = Number(q.get('k') ?? 4);
+const CW = Number(q.get('cw') ?? 50 * K);
+const RH = 70 * K;
 const poses = [{ pose: 'idle', facing: 1 }, { pose: 'walk', facing: 1, time: 0.18 }, { pose: 'idle', facing: -1 }].slice(0, Number(q.get('poses') ?? 3));
 const c = document.getElementById('c');
 c.width = 20 + poses.length * CW * tiers.length;
@@ -26,22 +31,25 @@ const ctx = c.getContext('2d');
 ctx.fillStyle = '#f6f0ff';
 ctx.fillRect(0, 0, c.width, c.height);
 tiers.forEach((t, i) => {
-  const L = GEAR_LEVELS[t];
-  const gear = Object.fromEntries(['hat', 'top', 'bottom', 'shoes', 'gloves', 'cape'].map((s) => [s, { id: `${family}_${s}_${L}` }]));
+  const L = ladder ?? GEAR_LEVELS[t];
+  const fam = ladder ? families[t] : family;
+  const slots = (q.get('slots') ?? 'hat,top,bottom,shoes,gloves,cape').split(',').filter(Boolean);
+  const gear = Object.fromEntries(slots.map((s) => [s, { id: ladder ? armourId(L, fam, s) : `${family}_${s}_${L}` }]));
   if (q.get('weapon')) gear.weapon = { id: q.get('weapon') };
+  else if (ladder && q.get('weapon') !== '') gear.weapon = { id: WEAPON_OF[fam] };
   poses.forEach((ps, j) => {
-    const x = 20 + (i * poses.length + j) * CW + CW / 2 - 14;
+    const x = 20 + (i * poses.length + j) * CW + CW / 2 - 3.5 * K;
     ctx.save();
-    ctx.translate(x - 60, RH - 40);
+    ctx.translate(x + 3.5 * K, RH - 10 * K);
     ctx.scale(K, K);
     setHd(true, K);
     nextFrame();
-    drawHero(ctx, LOOK, gear, 0, 0, { pose: ps.pose, facing: ps.facing, time: ps.time ?? 0.5, job, ready: false, moving: ps.pose === 'walk' }, null);
+    drawHero(ctx, LOOK, gear, 0, 0, { pose: ps.pose, facing: ps.facing, time: ps.time ?? 0.5, job: ladder ? JOBS_OF[fam] : job, ready: false, moving: ps.pose === 'walk' }, null);
     ctx.restore();
   });
   ctx.fillStyle = '#4a3560';
   ctx.font = 'bold 15px Segoe UI, sans-serif';
-  ctx.fillText(`Lv ${L}`, 30 + i * poses.length * CW, 24);
+  ctx.fillText(ladder ? `${fam} Lv ${L}` : `Lv ${L}`, 30 + i * poses.length * CW, 24);
 });
 document.title = 'done';
 </script>

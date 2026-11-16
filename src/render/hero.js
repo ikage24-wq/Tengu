@@ -27,6 +27,7 @@ import {
   topShapes, sleeveColor, longSleeves, legLook, hipShapes, skirtShapes, legShapes, hatShapes, hatBackShapes, faceShapes, hatTucks, hatHidesBangs, shoulderShapes, topOverShapes, capeShapes, capeFrontShapes, handShapes, earringShapes, limb, reach, THIGH, SHIN, HIP_Y, ANKLE_Y, legJoints, drape,
 } from './gear.js';
 import { weaponShapes, weaponFrames } from './weapons.js';
+import { drawWeaponAura, auraFor, partMotion } from './weapon-fx.js';
 import { toolShapes } from './tools.js';
 import { drawElementAura, ELEMENTS } from './elements.js';
 import { walkPhase, walkBob, strideAt } from './animator.js';
@@ -213,7 +214,7 @@ function resolveGear(look, gear) {
   const dressed = !own || Boolean(gear.top);
   const under = own ? basics : starter;
   const w = gear?.weapon ? ITEMS[gear.weapon.id] : null;
-  let weapon = w ? { type: w.weaponType, color: (gear.weapon.variant && variantsFor(w)?.[gear.weapon.variant]?.main) || w.color, tier: w.tier, theme: w.theme ?? null, element: w.element ?? null, rarity: gear.weapon.rarity ?? 0, variant: gear.weapon.variant ?? null } : null;
+  let weapon = w ? { type: w.weaponType, color: (gear.weapon.variant && variantsFor(w)?.[gear.weapon.variant]?.main) || w.color, tier: w.tier, theme: w.theme ?? null, element: w.element ?? null, rarity: gear.weapon.rarity ?? 0, variant: gear.weapon.variant ?? null, legacy: Boolean(gear.weapon.legacy) } : null;
   // A weapon cover reskins the weapon as an endgame design or a top material (looks only).
   const cover = gear?.weapon?.cover;
   if (weapon && cover?.fun) {
@@ -222,7 +223,8 @@ function resolveGear(look, gear) {
   } else if (weapon && cover) {
     const v = cover.theme ? null : gear.weapon.coverVariant ?? null;
     const color = cover.theme ? ITEMS[`sword_${cover.theme}`].color : (v && VARIANTS[v]?.main) || ITEMS[`sword_${cover.tier * 5}`].color;
-    weapon = { ...weapon, tier: cover.theme ? 21 : cover.tier, theme: cover.theme ?? null, element: cover.theme ?? null, color, variant: v };
+    // (A material cover keeps that tier's old design, though the ladder has taken its level.)
+    weapon = { ...weapon, tier: cover.theme ? 21 : cover.tier, theme: cover.theme ?? null, element: cover.theme ?? null, color, variant: v, legacy: !cover.theme };
   }
   return {
     top: piece('top', under),
@@ -2455,28 +2457,34 @@ function solveRig(state, anim, mv = null) {
     }
   } else if (state.ready && (state.wtype === 'dagger' || state.wtype === 'gauntlet')) {
     // The Thief's stance: light on her feet, low and loose, a quick small bounce on the balls of her
-    // feet with the back heel up, weight forward, the free hand up and ready.
+    // feet with the back heel up, weight forward, both arms straight (the player's call, 2026-11-16:
+    // a hand held up bent the elbow out like a wing), riding the bounce. The bounce eases down and
+    // up through half-pixel steps (a hard two-step toggle read as a glitch, 2026-11-16), and the
+    // back heel eases with it.
     const beat = t * 8.5;
-    const down = Math.sin(beat) > 0;
-    r.squat = down ? 2 : 1;
-    r.by = down ? 1 : 0;
+    const k = (1 - Math.cos(beat)) / 2;
+    r.squat = 1 + Math.round(k * 2) / 4;
+    r.by = q(k * 0.5);
     r.frontLeg = [3, 0, 6];
-    r.backLeg = [-3.2, down ? 0 : -1, -12];
-    r.frontArm = [2, q(-1 + (down ? 0.5 : 0))];
-    r.backArm = [2.5, q(-3.5 + (down ? 0.5 : 0))];
+    r.backLeg = [-3.2, q(k - 1), -12];
+    r.frontArm = [2, q(r.by - 0.4)];
+    r.backArm = [-0.4, r.by];
     r.hair = Math.round((r.hair + Math.sin(beat - 1.2) * 1) * 2) / 2;
     r.tx = 2;
   } else if (state.ready) {
-    // Fighting stance after a fight: feet wide, a springy bounce in the knees on a quick beat,
-    // fists up, and the hair whipping a moment behind each bounce.
+    // Fighting stance after a fight: feet wide, a springy bounce in the knees on a quick beat, both
+    // arms straight (each hand at the arm's full reach, so no elbow juts out; the player's call,
+    // 2026-11-16), and the hair whipping a moment behind each bounce. The bounce eases down and up
+    // through half-pixel steps, a pixel and a half at most (a hard two-step toggle, the hips
+    // dropping two pixels at once, read as a glitch: the player's call, 2026-11-16).
     const beat = t * 6.5;
-    const down = Math.sin(beat) > 0.2;
-    r.squat = down ? 1 : 0;
-    r.by = down ? 1 : 0;
+    const k = (1 - Math.cos(beat)) / 2;
+    r.squat = Math.round(k * 2) / 4;
+    r.by = q(k * 0.5);
     r.frontLeg = [2, 0, 4];
     r.backLeg = [-2.2, 0, -6];
-    r.frontArm = [1, q(-1.5 + (down ? 0.5 : 0))];
-    r.backArm = [1.5, q(-2 + (down ? 0.5 : 0))];
+    r.frontArm = [1, r.by];
+    r.backArm = [-0.4, r.by];
     r.hair = Math.round((r.hair + Math.sin(beat - 1.2) * 1.2) * 2) / 2;
     r.tx = 1;
   } else {
@@ -2560,18 +2568,42 @@ function funWeapon(fun) {
   return funWeapons.get(key);
 }
 
-function weaponSprite(w, time, unstrung = false) {
+// A weapon's moving parts on layer `z` ('back', behind its body, or 'front'), each turned about
+// its pivot by its motion, with its aura. (`at`: where the weapon's picture is drawn.)
+export function drawWeaponParts(ctx, wpn, z, at, ws, aura, time) {
+  if (!wpn.parts) return;
+  for (const p of wpn.parts) {
+    if ((p.z ?? 'back') !== z || !p.canvas?.width) continue;
+    const m = partMotion(p, time, wpn.anchors);
+    const [px, py] = [p.pivot[0] * ws, p.pivot[1] * ws];
+    ctx.save();
+    ctx.translate(px + m.dx * ws, py + m.dy * ws);
+    ctx.rotate(m.angle);
+    ctx.translate(-px, -py);
+    if (aura) drawWeaponAura(ctx, p.canvas, ...at, ws, aura, time, 'back');
+    ctx.drawImage(p.canvas, ...at);
+    if (aura) drawWeaponAura(ctx, p.canvas, ...at, ws, aura, time, 'front');
+    ctx.restore();
+  }
+}
+
+// (Exported for the art tools' weapon close-ups.)
+export function weaponSprite(w, time, unstrung = false) {
   if (w.fun) {
     const def = funWeapon(w.fun);
     const s = sprite(`funweapon|${w.fun.fun}|${w.fun.t}`, () => ({ w: def.w, h: def.h, shapes: def.shapes }));
     return { ...s, ...logical(s), grip: def.grip, blade: def.blade, live: null };
   }
-  const frames = weaponFrames(w.type, w.tier, w.theme);
+  const legacy = Boolean(w.legacy);
+  const frames = weaponFrames(w.type, w.tier, w.theme, legacy);
   const frame = frames > 1 ? Math.floor(time * 9) % frames : 0;
-  const def = weaponShapes(w.type, w.tier, frame, w.theme, w.variant, unstrung);
+  const def = weaponShapes(w.type, w.tier, frame, w.theme, w.variant, unstrung, legacy);
   if (!def) return null;
-  const s = sprite(`weapon|${w.type}|${w.tier}|${w.theme}|${w.variant}|${frame}|${unstrung}`, () => ({ w: def.w, h: def.h, shapes: def.shapes, res: RES, soft: 'cel', crisp: true }));
-  return { ...s, ...logical(s), grip: def.grip, blade: def.blade, live: def.live, anchors: def.anchors };
+  const key = `weapon|${w.type}|${w.tier}|${w.theme}|${w.variant}|${frame}|${unstrung}${legacy ? '|old' : ''}`;
+  const s = sprite(key, () => ({ w: def.w, h: def.h, shapes: def.shapes, res: RES, soft: 'cel', crisp: true }));
+  // Its moving parts, each a picture the size of the weapon's (see weapons.js).
+  const parts = def.parts?.map((p) => ({ ...p, canvas: sprite(`${key}|${p.name}`, () => ({ w: def.w, h: def.h, shapes: p.shapes, res: RES, soft: 'cel', crisp: true })).canvas }));
+  return { ...s, ...logical(s), grip: def.grip, blade: def.blade, live: def.live, anchors: def.anchors, parts };
 }
 
 // A life-skill tool held instead of the weapon (render/tools.js), drawn like a weapon.
@@ -3688,8 +3720,17 @@ function paintHero(ctx, look, gear, x, y, state, anim, mv) {
     }
     const el = g.weapon.element;
     if (el) elementGlow(ctx, wpn, el, time, ws);
+    // The legendary tier's Nexus aura (its bloom behind the weapon, its core over it) and its
+    // moving parts (wings beating, a crystal floating), each turned about its pivot.
+    const aura = settings.weaponEffects && !g.weapon.legacy ? auraFor(wpn.anchors) : null;
+    const at = [-(wpn.grip[0] + 1) * ws, -(wpn.grip[1] + 1) * ws, wpn.cw * ws, wpn.ch * ws];
+    const parts = (z) => drawWeaponParts(ctx, wpn, z, at, ws, aura, time);
+    if (aura) drawWeaponAura(ctx, wpn.canvas, ...at, ws, aura, time, 'back');
+    parts('back');
     if (g.weapon.rarity) weaponGlow(ctx, wpn, g.weapon.rarity, time, ws, paint);
-    else paint(-(wpn.grip[0] + 1) * ws, -(wpn.grip[1] + 1) * ws, wpn.cw * ws, wpn.ch * ws);
+    else paint(...at);
+    if (aura) drawWeaponAura(ctx, wpn.canvas, ...at, ws, aura, time, 'front');
+    parts('front');
     if (drawn && wpn.anchors?.string) drawString(ctx, wpn.anchors.string, mv.pull ?? 0, mv.nock ?? mv.pull > 0.05, ws, mv.twang ?? 0, mv.spares ?? 0);
     if (settings.weaponEffects) {
       if (el && wpn.blade) drawElementAura(ctx, el, (wpn.blade[0] - wpn.grip[1]) * ws, (wpn.blade[1] - wpn.grip[1]) * ws, time, ws);

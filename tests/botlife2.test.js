@@ -77,7 +77,7 @@ test('time in a party is remembered, and someone you know comes over to say hi i
   assert.ok(lines.some((l) => l.startsWith(`${other.name}:`) && /Me/.test(l)), `a hello by name (${lines.filter((l) => l.startsWith(other.name)).join(' / ')})`);
 });
 
-test('goals come from the real game: a set piece and who drops it, a level and its map, a craft and its material', () => {
+test('goals come from the real game: a level and its map, a craft and its material (no set pieces while there are no sets)', () => {
   const rng = seeded(21);
   const kinds = new Set();
   for (let i = 0; i < 200; i++) {
@@ -101,10 +101,12 @@ test('goals come from the real game: a set piece and who drops it, a level and i
     if (g.kind === 'set') assert.ok(line.includes(g.from) || line.includes(g.setName) || line.includes(ITEMS[g.item].name), line);
     if (g.kind === 'level') assert.ok(line.includes(g.mapName) || line.includes(String(g.to)), line);
   }
-  for (const k of ['set', 'level', 'craft']) assert.ok(kinds.has(k), `${k} goals (${[...kinds]})`);
+  // (The gear sets were retired with the armour, 2026-11-16: nobody farms one.)
+  for (const k of ['level', 'craft']) assert.ok(kinds.has(k), `${k} goals (${[...kinds]})`);
+  assert.ok(!kinds.has('set'), 'no set goals');
 });
 
-test('a goal moves along as they play, completes, and they move on to the next (a set piece goes on)', () => {
+test('a goal moves along as they play, completes, and they move on to the next (an old set goal ends without a piece)', () => {
   const world = createWorld(createCharacter('Me', {}));
   const lines = quiet(world);
   const bots = createBots(world, seeded(31), { clock: EVENING });
@@ -119,7 +121,8 @@ test('a goal moves along as they play, completes, and they move on to the next (
     updateBots(bots, world, 0.5);
   }
   assert.notEqual(s.goal, first, 'done and on to a new one');
-  assert.equal(bot.char.equipment.hat?.id, first.item, 'the piece went on');
+  // (Its set was retired, 2026-11-16: the piece is only a look, so nothing goes on.)
+  assert.notEqual(bot.char.equipment.hat?.id, first.item, 'no retired piece goes on');
   assert.ok(s.done.some((d) => d.what === first.item));
   // A level goal levels them for real.
   const c = makeBotCharacter(seeded(3), { name: 'Lv', level: 12 });

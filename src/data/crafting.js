@@ -137,41 +137,13 @@ export const TONICS = [
 export const RECIPES = [];
 const recipe = (r) => RECIPES.push({ qty: 1, quality: false, ...r });
 
-// The Artisan gear: armor pieces for each family, then its weapons.
-const ARMOR_NEEDS = {
-  // [fibre, ore, wood, drop index, drops]
-  hat: [2, 1, 0, 0, 2], top: [4, 1, 0, 1, 2], bottom: [3, 0, 0, 0, 2],
-  shoes: [2, 0, 1, 2, 2], gloves: [2, 1, 0, 2, 1], cape: [4, 0, 0, 1, 2],
-};
-const SLOT_STEP = { hat: 0, top: 1, bottom: 0, shoes: 0, gloves: 1, cape: 1 };
+// The Artisan gear's ids (retired, see below).
 export const artisanId = (family, slot, level) => `artisan_${family}_${slot}_${level}`;
 export const artisanWeaponId = (type, level) => `artisan_${type}_${level}`;
 
-function scaled(needs, k) {
-  const out = {};
-  for (const [id, n] of Object.entries(needs)) if (n > 0) out[id] = (out[id] ?? 0) + Math.max(1, Math.round(n * k));
-  return out;
-}
 
-for (const a of ARTISAN) {
-  const m = TIER_MATS[a.tier];
-  const k = a.level === 50 ? 1.5 : 1;
-  for (const family of Object.keys(FAMILY_WEAPONS)) {
-    for (const slot of FAMILIES.includes(family) ? SLOTS : []) {
-      let [fibre, ore, wood, d, n] = ARMOR_NEEDS[slot];
-      // Warriors wear plate: the metal and the cloth trade places.
-      if (family === 'warrior' && slot !== 'cape' && slot !== 'bottom') [fibre, ore] = [Math.max(1, ore), fibre];
-      const needs = scaled({ [m.fibre]: fibre, [m.ore]: ore, [m.wood]: wood, [m.drops[d]]: n }, k);
-      if (a.level === 50) Object.assign(needs, { starstone: 1, stardust: 2 });
-      recipe({ id: `craft_${artisanId(family, slot, a.level)}`, cat: 'gear', tier: a.tier, level: a.craft + SLOT_STEP[slot], needs, makes: artisanId(family, slot, a.level), family, quality: true });
-    }
-    for (const type of FAMILY_WEAPONS[family]) {
-      const needs = scaled({ [m.ore]: 3, [m.wood]: 2, [m.drops[0]]: 1, ...(a.tier >= 3 ? { [m.gem]: 1 } : {}) }, k);
-      if (a.level === 50) Object.assign(needs, { starstone: 1, stardust: 2 });
-      recipe({ id: `craft_${artisanWeaponId(type, a.level)}`, cat: 'gear', tier: a.tier, level: a.craft + 2, needs, makes: artisanWeaponId(type, a.level), family, quality: true });
-    }
-  }
-}
+// (The Artisan gear, a line of armour and weapons for every job at Lv 10 to 50, was retired with
+// the rest of the gear, 2026-11-16: its recipes went; its pieces stay as looks, data/items.js.)
 
 // Accessories.
 export const ringId = (t) => `ring_${METAL_NAMES[t].toLowerCase()}`;
@@ -232,7 +204,6 @@ recipe({ id: 'craft_promise_bouquet', cat: 'gift', tier: 1, level: 4, needs: { c
 recipe({ id: 'craft_seashell_ring', cat: 'gift', tier: 2, level: 14, needs: { silver_ore: 2, rose_quartz: 1, shell: 3 }, makes: 'seashell_ring' });
 
 export const CATEGORIES = [
-  { key: 'gear', name: 'Gear' },
   { key: 'accessory', name: 'Trinkets' },
   { key: 'tool', name: 'Tools' },
   { key: 'potion', name: 'Tonics' },

@@ -22,7 +22,7 @@ import { JOBS } from '../src/data/jobs.js';
 import { SKILLS, skillAt } from '../src/data/skills.js';
 import { MOBS } from '../src/data/mobs.js';
 import { roleOf } from '../src/data/dungeons.js';
-import { GEAR_LEVELS, ITEMS } from '../src/data/items.js';
+import { bestWeaponId } from '../src/data/items.js';
 
 export const WEAPON = { warrior: 'sword', paladin: 'sword', berserker: 'axe', tempest: 'sword', stormwall: 'sword', tidemage: 'staff', maelstrom: 'staff', tidecaller: 'staff', moonmoth: 'dagger', eclipse: 'dagger', silkweaver: 'dagger', sunfeather: 'bow', phoenix: 'crossbow', songbird: 'bow' };
 // (Only jobs that still exist: the old Paladin and Berserker are kept above for old notes.)
@@ -47,11 +47,9 @@ export function balanceChar(job, level) {
   while (c.level < level) up();
   autoAssignAp(c);
   for (const [id, s] of Object.entries(SKILLS)) if (chain.includes(s.job)) c.skills[id] = s.maxLevel;
-  const gl = Math.max(...GEAR_LEVELS.filter((l) => l <= level));
-  const family = JOBS[job].family;
-  c.equipment.weapon = makeEquip(`${WEAPON[job]}_${gl}`, { variance: 0 });
-  // (A family with no armour set yet, the thief's, plays in what it has: nothing.)
-  for (const slot of ['hat', 'top', 'bottom', 'shoes', 'gloves', 'cape']) if (ITEMS[`${family}_${slot}_${gl}`]) c.equipment[slot] = makeEquip(`${family}_${slot}_${gl}`, { variance: 0 });
+  // (The weapons and armour were retired, 2026-11-16, to make way for new ones: every job plays
+  // with the best new ladder weapon its level allows and no armour, as the game has them now.)
+  c.equipment.weapon = makeEquip(bestWeaponId(WEAPON[job], level), { variance: 0 });
   const s = computeStats(c);
   c.hp = s.maxHp;
   c.mp = s.maxMp;

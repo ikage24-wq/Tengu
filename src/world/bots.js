@@ -185,7 +185,8 @@ let bySlot = null;
 function itemsIn(slot) {
   if (!bySlot) {
     bySlot = new Map();
-    for (const d of Object.values(ITEMS)) if (d.slot) (bySlot.get(d.slot) ?? bySlot.set(d.slot, []).get(d.slot)).push(d);
+    // (Gear only: the retired gear is a look now, data/items.js.)
+    for (const d of Object.values(ITEMS)) if (d.slot && d.type === 'equip') (bySlot.get(d.slot) ?? bySlot.set(d.slot, []).get(d.slot)).push(d);
   }
   return bySlot.get(slot) ?? [];
 }
@@ -1062,7 +1063,7 @@ function news(bots, world, dt) {
     },
     () => (who.level >= 20 ? `${who.name} passed ${pick(queens, rng)}'s trial!` : null),
     () => (who.level >= 25 ? `${who.name} polished their gear to +10!` : null),
-    () => (who.level >= 20 ? `${who.name} completed the ${pick(Object.values(SETS), rng).name} set!` : null),
+    () => (who.level >= 20 && Object.keys(SETS).length ? `${who.name} completed the ${pick(Object.values(SETS), rng).name} set!` : null),
     () => `${who.name} mastered the ${pick(Object.values(MOBS).filter((m) => !m.boss), rng).name} card!`,
   ];
   let line = null;

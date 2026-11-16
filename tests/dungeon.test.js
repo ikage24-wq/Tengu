@@ -634,10 +634,14 @@ test('every dungeon monster and boss draws every frame as flat shapes', async ()
 test('the Tidecaller is the party healer: the finder brings her in, and her moves heal', () => {
   assert.equal(roleOf('tidecaller', 'mage'), 'healer');
   assert.equal(roleOf('maelstrom', 'mage'), 'dps');
-  const rng = seeded(21);
-  const world = heroAt(rng, 32, ['tidemage'], 'observatory_steps');
-  assert.equal(startRun(world, 'observatory'), null);
-  const healer = partyMembers(world.bots).find((b) => world.dungeon.roles[b.id] === 'healer');
+  // (The finder brings either healer, the Tidecaller or the Songbird: find a party it brings her to.)
+  let rng, world, healer;
+  for (let s = 21; s < 80 && healer?.char.job !== 'tidecaller'; s++) {
+    rng = seeded(s);
+    world = heroAt(rng, 32, ['tidemage'], 'observatory_steps');
+    assert.equal(startRun(world, 'observatory'), null);
+    healer = partyMembers(world.bots).find((b) => world.dungeon.roles[b.id] === 'healer');
+  }
   assert.equal(healer.char.job, 'tidecaller');
   // Hurt, she heals you with her own spring of water.
   world.char.hp = Math.round(world.stats.maxHp * 0.3);

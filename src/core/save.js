@@ -8,7 +8,7 @@ import { settleStall } from '../world/stall.js';
 import { wakeAtInn } from '../world/inn.js';
 import { setNextUid, makeEquip } from './items.js';
 import { createInventory } from './inventory.js';
-import { ITEMS, RENAMED_ITEMS } from '../data/items.js';
+import { ITEMS, RENAMED_ITEMS, plainWeaponId } from '../data/items.js';
 import { STARTING_CASH } from '../data/cash.js';
 import { JOBS, RETIRED_JOBS } from '../data/jobs.js';
 import { SKILLS } from '../data/skills.js';
@@ -276,6 +276,25 @@ function refundWipedGear(char, inst) {
   else char.gold = (char.gold ?? 0) + Math.max(1, Math.floor((twin.price || 0) * 0.1)) * (inst.qty ?? 1);
 }
 
+// Every weapon (but the plain one of each type) and every piece of armour was retired, 2026-11-16,
+// to make way for new gear (data/items.js). A piece still worn or in a bag sells itself back for
+// what a shop pays for it (a tenth of its price), and a retired weapon in your hand is swapped for
+// the plain one of its type, so you can still fight.
+export const retiredRefund = (inst) => Math.max(1, Math.floor((ITEMS[inst.id]?.price || 0) * 0.1)) * (inst.qty ?? 1);
+function sellRetiredGear(char) {
+  const retired = (inst) => Boolean(inst && ITEMS[inst.id]?.retiredGear);
+  const held = char.equipment.weapon;
+  for (const [slot, inst] of Object.entries(char.equipment)) {
+    if (!retired(inst)) continue;
+    char.gold = (char.gold ?? 0) + retiredRefund(inst);
+    char.equipment[slot] = slot === 'weapon' ? makeEquip(plainWeaponId(ITEMS[held.id].weaponType)) : null;
+  }
+  for (const tab of Object.keys(char.inventory)) {
+    for (const inst of char.inventory[tab].filter(retired)) char.gold = (char.gold ?? 0) + retiredRefund(inst);
+    char.inventory[tab] = char.inventory[tab].filter((e) => !retired(e));
+  }
+}
+
 // Items removed from the game since the save was made (like the old weapon lines) are dropped,
 // so an old save never refers to something that no longer exists.
 export function dropRetiredItems(char) {
@@ -285,6 +304,7 @@ export function dropRetiredItems(char) {
   Object.values(char.equipment).forEach(rename);
   for (const tab of Object.keys(char.inventory)) char.inventory[tab].forEach(rename);
   for (const b of Object.values(char.hotkeys ?? {})) if (b?.item && RENAMED_ITEMS[b.item]) b.item = RENAMED_ITEMS[b.item];
+  sellRetiredGear(char);
   for (const [slot, inst] of Object.entries(char.equipment)) if (inst && !ITEMS[inst.id]) char.equipment[slot] = null;
   for (const [slot, inst] of Object.entries(char.outfit ?? {})) if (inst && !ITEMS[inst.id]) char.outfit[slot] = null;
   // An outfit piece that moved slot (glasses went from the hat slot to the face slot) moves with it,

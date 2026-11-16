@@ -63,7 +63,7 @@ export function itemTooltip(char, id, inst = null) {
       lines.push({ text: `${STAT_NAMES[k] ?? k} +${v}${diff > 0 ? `  (+${diff})` : ''}`, color: diff > 0 ? '#3f9f5f' : COLORS.ink });
     }
     // A set piece: the set, how much of it you're wearing, and what each step gives.
-    if (def.set) {
+    if (def.set && SETS[def.set]) {
       const set = SETS[def.set];
       const worn = char ? setsWorn(char.equipment)[def.set] ?? 0 : 0;
       lines.push({ text: `${set.name} set (${worn}/4 worn)`, bold: true, color: set.color === '#ffffff' ? COLORS.ink : darkened(set.color) });

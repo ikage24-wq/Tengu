@@ -2,7 +2,7 @@
 // Gear is the same piece wherever it comes from (no random stat rolls); rarity and polishing make
 // it stronger.
 
-import { SETS, SET_SLOTS, setPieceId } from './sets.js';
+import { RETIRED_SETS, SET_SLOTS, setPieceId } from './sets.js';
 import { GACHA_LOOKS, SHINY_VARIANTS } from './outfits-gacha.js';
 import { FISH, RARITY_NAMES } from './fishing.js';
 import { DISHES, FEASTS } from './cooking.js';
@@ -41,14 +41,14 @@ export const ELEMENT_NAMES = {
 // stat its wielders want, and its names (five tiers, then the endgame themes). Wands and staves
 // are star wands and witch's staves with moons and stars.
 const WEAPON_LINES = {
-  sword: { scale: 1.0, main: 'str', names: ['Wooden Sword', 'Iron Sword', 'Steel Longsword', 'Mithril Blade', 'Runeblade'], themes: { holy: "Seraph's Grace", demonic: 'Hellbringer', bone: 'Ossuary Edge', laser: 'Photon Saber', chainsaw: 'Ripper', cyber: 'Neon Katana' } },
-  axe: { scale: 0.95, main: 'str', names: ['Stone Hatchet', 'Iron Axe', 'Steel Battleaxe', 'Mithril Cleaver', 'Runic Greataxe'], themes: { holy: 'Dawnbreaker', demonic: 'Abyssal Reaver', bone: 'Gravedigger', laser: 'Plasma Cleaver', chainsaw: 'Buzzkill', cyber: 'Glitch Axe' } },
-  spear: { scale: 0.85, main: 'str', names: ['Bamboo Spear', 'Iron Spear', 'Steel Pike', 'Mithril Lance', 'Runic Glaive'], themes: { holy: "Archangel's Lance", demonic: 'Infernal Trident', bone: 'Spine Lance', laser: 'Ion Lance', chainsaw: 'Shredder Pike', cyber: 'Synapse Spear' } },
+  sword: { scale: 1.0, main: 'str', names: ['Sprout Sword', 'Iron Sword', 'Steel Longsword', 'Mithril Blade', 'Runeblade'], themes: { holy: "Seraph's Grace", demonic: 'Hellbringer', bone: 'Ossuary Edge', laser: 'Photon Saber', chainsaw: 'Ripper', cyber: 'Neon Katana' } },
+  axe: { scale: 0.95, main: 'str', names: ['Sprout Hatchet', 'Iron Axe', 'Steel Battleaxe', 'Mithril Cleaver', 'Runic Greataxe'], themes: { holy: 'Dawnbreaker', demonic: 'Abyssal Reaver', bone: 'Gravedigger', laser: 'Plasma Cleaver', chainsaw: 'Buzzkill', cyber: 'Glitch Axe' } },
+  spear: { scale: 0.85, main: 'str', names: ['Sprout Spear', 'Iron Spear', 'Steel Pike', 'Mithril Lance', 'Runic Glaive'], themes: { holy: "Archangel's Lance", demonic: 'Infernal Trident', bone: 'Spine Lance', laser: 'Ion Lance', chainsaw: 'Shredder Pike', cyber: 'Synapse Spear' } },
   wand: { scale: 0.5, matk: 0.9, main: 'int', names: ['Twig Wand', 'Star Wand', 'Moon Wand', 'Comet Wand', 'Starlight Wand'], themes: { holy: "Amaterasu's Bells", demonic: 'Oni Bells', bone: 'Yurei Bells', laser: 'Photon Suzu', chainsaw: 'Buzzsaw Suzu', cyber: 'Holo Suzu' } },
-  staff: { scale: 0.55, matk: 1, main: 'int', names: ['Moon Staff', 'Witch Staff', 'Crescent Staff', 'Comet Staff', 'Starlight Staff'], themes: { holy: 'Seraphim Staff', demonic: 'Oni Shakujo', bone: 'Gashadokuro Staff', laser: 'Photon Gohei', chainsaw: 'Sawblade Shakujo', cyber: 'Neon Gohei' } },
-  bow: { scale: 0.8, main: 'dex', names: ['Shortbow', 'Iron Bow', 'Steel Recurve', 'Mithril Longbow', 'Runic Bow'], themes: { holy: 'Wings of Dawn', demonic: 'Hellstring', bone: 'Ribcage Bow', laser: 'Photon Bow', chainsaw: 'Sawtooth Bow', cyber: 'Neon Arc' } },
-  crossbow: { scale: 0.78, main: 'dex', names: ['Wooden Crossbow', 'Iron Crossbow', 'Steel Arbalest', 'Mithril Crossbow', 'Runic Arbalest'], themes: { holy: 'Judgment', demonic: 'Doombolt', bone: 'Marrow Repeater', laser: 'Railgun', chainsaw: 'Sawlauncher', cyber: 'Cyber Repeater' } },
-  dagger: { scale: 0.98, main: 'luk', names: ['Wooden Knife', 'Iron Dagger', 'Steel Dirk', 'Mithril Stiletto', 'Runic Kris'], themes: { holy: "Angel's Feather", demonic: 'Hellfang', bone: 'Bone Shiv', laser: 'Photon Knife', chainsaw: 'Revblade', cyber: 'Glitchblade' } },
+  staff: { scale: 0.55, matk: 1, main: 'int', names: ['Sprout Staff', 'Witch Staff', 'Crescent Staff', 'Comet Staff', 'Starlight Staff'], themes: { holy: 'Seraphim Staff', demonic: 'Oni Shakujo', bone: 'Gashadokuro Staff', laser: 'Photon Gohei', chainsaw: 'Sawblade Shakujo', cyber: 'Neon Gohei' } },
+  bow: { scale: 0.8, main: 'dex', names: ['Sprout Bow', 'Iron Bow', 'Steel Recurve', 'Mithril Longbow', 'Runic Bow'], themes: { holy: 'Wings of Dawn', demonic: 'Hellstring', bone: 'Ribcage Bow', laser: 'Photon Bow', chainsaw: 'Sawtooth Bow', cyber: 'Neon Arc' } },
+  crossbow: { scale: 0.78, main: 'dex', names: ['Sprout Crossbow', 'Iron Crossbow', 'Steel Arbalest', 'Mithril Crossbow', 'Runic Arbalest'], themes: { holy: 'Judgment', demonic: 'Doombolt', bone: 'Marrow Repeater', laser: 'Railgun', chainsaw: 'Sawlauncher', cyber: 'Cyber Repeater' } },
+  dagger: { scale: 0.98, main: 'luk', names: ['Sprout Knife', 'Iron Dagger', 'Steel Dirk', 'Mithril Stiletto', 'Runic Kris'], themes: { holy: "Angel's Feather", demonic: 'Hellfang', bone: 'Bone Shiv', laser: 'Photon Knife', chainsaw: 'Revblade', cyber: 'Glitchblade' } },
   gauntlet: { scale: 0.75, main: 'luk', names: ['Cloth Gloves', 'Iron Gloves', 'Steel Gloves', 'Mithril Gloves', 'Runic Gloves'], themes: { holy: 'Seraph Gauntlet', demonic: 'Hellfist', bone: 'Grave Gauntlet', laser: 'Photon Gauntlet', chainsaw: 'Buzzsaw Gauntlet', cyber: 'Neon Gauntlet' } },
 };
 
@@ -221,7 +221,7 @@ export const JOB_SETS = {
 // How much defense a whole set gives at a level, split over the slots; each job leans its own way.
 const setDefense = (level) => 10 + level * 3.2;
 const SLOT_SHARE = { hat: 0.18, top: 0.3, bottom: 0.2, shoes: 0.1, gloves: 0.1, cape: 0.12 };
-const FAMILY_DEF = { warrior: 1.35, mage: 0.65 };
+const FAMILY_DEF = { warrior: 1.35, mage: 0.65, thief: 0.95, archer: 0.9 };
 function jobGearStats(family, slot, L) {
   const share = SLOT_SHARE[slot];
   const d = setDefense(L) * share;
@@ -240,6 +240,20 @@ function jobGearStats(family, slot, L) {
     if (slot === 'bottom') Object.assign(s, { mp: L, mdef: Math.round(L * 0.4) });
     if (slot === 'gloves') Object.assign(s, { matk: 1 + main(8) });
     if (slot === 'shoes') Object.assign(s, { speed: 1 + main(20), mp: Math.round(L * 0.5) });
+  } else if (family === 'thief') {
+    // Quick and lucky: LUK and a little speed.
+    if (slot === 'top') Object.assign(s, { luk: main(10), hp: Math.round(L * 1.4) });
+    if (slot === 'hat') Object.assign(s, { luk: main(14), hp: Math.round(L * 0.8) });
+    if (slot === 'bottom') Object.assign(s, { hp: Math.round(L * 0.7), dex: main(20) });
+    if (slot === 'gloves') Object.assign(s, { watk: 1 + main(14), luk: main(20) });
+    if (slot === 'shoes') Object.assign(s, { speed: 2 + main(20) });
+  } else if (family === 'archer') {
+    // Steady and sure: DEX.
+    if (slot === 'top') Object.assign(s, { dex: main(10), hp: Math.round(L * 1.4) });
+    if (slot === 'hat') Object.assign(s, { dex: main(14), hp: Math.round(L * 0.8) });
+    if (slot === 'bottom') Object.assign(s, { hp: Math.round(L * 0.7), str: main(20) });
+    if (slot === 'gloves') Object.assign(s, { watk: 1 + main(14), dex: main(20) });
+    if (slot === 'shoes') Object.assign(s, { speed: 1 + main(25) });
   }
   for (const k of Object.keys(s)) if (!s[k]) delete s[k];
   return s;
@@ -265,7 +279,8 @@ for (const family of GEAR_FAMILIES) {
 
 // Gear sets (data/sets.js): a set's pieces wear its own designs over the job gear's, in the set's
 // colours (render/jobgear/sets.js), and hit a quarter harder than plain gear of their level.
-for (const [key, set] of Object.entries(SETS)) {
+// (All retired with the rest of the armour, 2026-11-16: see the end of this file.)
+for (const [key, set] of Object.entries(RETIRED_SETS)) {
   const t = GEAR_LEVELS.indexOf(set.level);
   for (const family of GEAR_FAMILIES) {
     for (const slot of SET_SLOTS) {
@@ -330,6 +345,10 @@ export const GEMS = {
 };
 // Which variants an item can come in (none for consumables, legacy gear, and outfits).
 export function variantsFor(def) {
+  // (Retired gear, a look now, keeps the colours it came in as gear: see the end of this file.)
+  if (def?.retiredGear) return def.legacy || def.endgame ? null : def.slot === 'weapon' || def.design === 'job' ? VARIANTS : null;
+  // (The ladder's weapons come in their theme's own colours only.)
+  if (def?.ladder) return null;
   // Cash outfits come in the colors of the look they wear; endgame weapon covers don't.
   if (def?.type === 'cash') return def.cover ? (def.cover.tier ? VARIANTS : null) : variantsFor(ITEMS[def.skin]);
   // Casual and funny looks come in the gear colors unless they have one look only.
@@ -556,6 +575,73 @@ for (const [id, name, price, color, desc] of CRAFT_MATERIALS) if (!ITEMS[id]) ad
 // (The Mochi Garden's own pieces are the garden's: never sold, traded or thrown away, `keep`.)
 for (const f of FURNITURE) add({ id: f.id, name: f.name, type: 'etc', furniture: true, price: f.price ? Math.round(f.price / 4) : 10, ...(f.builtin ? { keep: true } : {}), color: FURN_SETS[f.set].color, desc: `${f.desc} (${f.builtin ? "Your garden's own" : FURN_SETS[f.set].name}; place it in Decorate mode ${f.where === 'garden' ? 'in your Mochi Garden' : 'on your island'}.)` });
 for (const def of craftedItemDefs(ITEMS, JOB_SETS, GEAR_LEVELS)) if (!ITEMS[def.id]) add(def);
+
+// ---------- Retired gear (2026-11-16) ----------
+// Every weapon and every piece of armour was taken out of the game to make way for new ones (the
+// player's ask). Only the plain weapon of each type (`${type}_0`) is still gear, so every job can
+// fight until the new ones come. The rest stay only as looks (type 'look', `retiredGear`): no
+// stats, never sold, dropped, crafted or given as a reward, so a Cash costume or weapon cover that
+// wears one, and the NPCs dressed in them, look as they did; a piece in an old save sells itself
+// back for gold (core/save.js). Earrings, rings, charms, the starting outfit and the one-of-a-kind
+// outfits stay gear.
+const ARMOUR_SLOTS = new Set(['hat', 'top', 'bottom', 'shoes', 'gloves', 'cape']);
+export const isPlainWeapon = (def) => def?.slot === 'weapon' && def.tier === 0 && !def.crafted && !def.theme;
+export const plainWeaponId = (type) => `${type}_0`;
+// The new ladder's weapons (docs/design/island-journey-gear.md): the seven job weapons get one
+// every tier, its theme shared with that tier's armour. Lv 5 is the starter (`${type}_0`, the
+// Sprout weapons); the others take their level's id back from the retired ladder.
+export const LADDER_TYPES = ['sword', 'axe', 'spear', 'staff', 'dagger', 'bow', 'crossbow'];
+export const LADDER_TIERS = { 10: 'Rootwood', 20: 'Tidepearl', 30: 'Starglass', 40: 'Dreamsilk', 50: 'Regalia' };
+const LADDER_NOUNS = { sword: 'Sword', axe: 'Axe', spear: 'Spear', staff: 'Staff', dagger: 'Knife', bow: 'Bow', crossbow: 'Crossbow' };
+// (A tier whose weapon is a kind of its own: the Tidepearl spear is a trident, the Mochi Queen's
+// staff a scepter.)
+const LADDER_NOUN_AT = { 20: { spear: 'Trident' }, 50: { staff: 'Scepter' } };
+// The best ladder weapon of a type that a level can wear (the plain starter below the first tier).
+export function bestWeaponId(type, level) {
+  const L = LADDER_TYPES.includes(type) ? Math.max(0, ...Object.keys(LADDER_TIERS).map(Number).filter((l) => l <= level)) : 0;
+  return `${type}_${L}`;
+}
+const ladderIds = new Set(Object.keys(LADDER_TIERS).flatMap((L) => LADDER_TYPES.map((type) => `${type}_${L}`)));
+for (const [L, theme] of Object.entries(LADDER_TIERS)) {
+  for (const type of LADDER_TYPES) Object.assign(ITEMS[`${type}_${L}`], { name: `${theme} ${LADDER_NOUN_AT[L]?.[type] ?? LADDER_NOUNS[type]}`, ladder: theme.toLowerCase() });
+}
+for (const def of Object.values(ITEMS)) {
+  if (def.type !== 'equip') continue;
+  if (def.slot === 'weapon' ? isPlainWeapon(def) || ladderIds.has(def.id) : !ARMOUR_SLOTS.has(def.slot) || def.unique || def.starterOutfit) continue;
+  def.type = 'look';
+  def.retiredGear = true;
+  delete def.stats;
+}
+
+// The ladder's armour (docs/design/island-journey-gear.md): every tier a set for each of the four
+// jobs in its theme, drawn by render/jobgear/ladder.js (`ladder`); each job's own pieces, in the
+// theme's colours only. The Lv 5 Sprout sets are starters a Novice can wear too, so they can dress
+// for the job they're aiming at.
+export const ARMOUR_FAMILIES = ['warrior', 'mage', 'thief', 'archer'];
+export const ARMOUR_TIERS = { 5: 'Sprout', 10: 'Rootwood', 20: 'Tidepearl', 30: 'Starglass', 40: 'Dreamsilk', 50: 'Regalia' };
+const ARMOUR_NOUNS = {
+  warrior: { hat: 'Helm', top: 'Breastplate', bottom: 'Tassets', shoes: 'Boots', gloves: 'Bracers', cape: 'Cloak' },
+  mage: { hat: 'Hat', top: 'Robe', bottom: 'Underskirt', shoes: 'Slippers', gloves: 'Mitts', cape: 'Shawl' },
+  thief: { hat: 'Headband', top: 'Wrap', bottom: 'Leggings', shoes: 'Footwraps', gloves: 'Handwraps', cape: 'Scarf' },
+  archer: { hat: 'Cap', top: 'Jerkin', bottom: 'Breeches', shoes: 'Boots', gloves: 'Bracers', cape: 'Capelet' },
+};
+// A tier's piece for a job and slot: `sprout_warrior_hat`.
+export const armourId = (level, family, slot) => `${ARMOUR_TIERS[level].toLowerCase()}_${family}_${slot}`;
+// (Their colour is only a swatch: the pieces wear their theme's own.)
+const ARMOUR_SWATCH = { warrior: '#ecc994', mage: '#f8edd6', thief: '#a5d98c', archer: '#b58058' };
+for (const [L, theme] of Object.entries(ARMOUR_TIERS)) {
+  const level = Number(L);
+  for (const family of ARMOUR_FAMILIES) {
+    for (const slot of JOB_SLOTS) {
+      add({
+        id: armourId(level, family, slot), name: `${theme} ${ARMOUR_NOUNS[family][slot]}`,
+        type: 'equip', slot, design: 'job', family, tier: GEAR_LEVELS.indexOf(level), reqLevel: level, ladder: theme.toLowerCase(),
+        starter: level === 5, stats: jobGearStats(family, slot, level),
+        price: gearPrice((60 + 0.9 * level * level + 25 * level) * (slot === 'top' ? 1.3 : 1), level), color: ARMOUR_SWATCH[family],
+      });
+    }
+  }
+}
 
 // The capsule machines' tickets (data/outfits-gacha.js): earned by playing, one turn of the crank.
 add({ id: 'gacha_ticket', name: 'Capsule Ticket', type: 'etc', price: 0, color: '#7fd17a', desc: "One turn of a town's capsule machine. Earned from daily quests, bosses, and clearing dungeons." });

@@ -35,8 +35,8 @@ test('the cash catalog covers every outfit slot with real looks', () => {
 
 test('an outfit covers the look of your gear but never its stats', () => {
   const char = createCharacter('Me', {});
-  char.equipment.hat = makeEquip('warrior_hat_5');
-  char.equipment.weapon = makeEquip('sword_10');
+  char.equipment.hat = makeEquip('kitty_ears');
+  char.equipment.weapon = makeEquip('sword_0');
   const before = computeStats(char);
   addItem(char.inventory, makeCash('cash_mage_hat_100', 'dark'));
   addItem(char.inventory, makeCash('cover_holy'));
@@ -45,10 +45,10 @@ test('an outfit covers the look of your gear but never its stats', () => {
   wearOutfit(char, 0);
   const worn = wornGear(char);
   assert.deepEqual(worn.hat, { id: 'mage_hat_100', variant: 'dark' });
-  assert.equal(worn.weapon.id, 'sword_10', 'the weapon you hold stays');
+  assert.equal(worn.weapon.id, 'sword_0', 'the weapon you hold stays');
   assert.deepEqual(worn.weapon.cover, { theme: 'holy' });
   assert.deepEqual(computeStats(char), before);
-  assert.equal(char.equipment.hat.id, 'warrior_hat_5');
+  assert.equal(char.equipment.hat.id, 'kitty_ears');
   assert.equal(itemName(char.outfit.hat), `Dark ${ITEMS.cash_mage_hat_100.name}`);
   // Swapping puts the old piece back, and taking one off returns it to the Cash tab.
   addItem(char.inventory, makeCash('cash_bunny_hood'));
@@ -56,7 +56,7 @@ test('an outfit covers the look of your gear but never its stats', () => {
   assert.equal(char.outfit.hat.id, 'cash_bunny_hood');
   assert.equal(char.inventory.cash[0].id, 'cash_mage_hat_100');
   assert.ok(removeOutfit(char, 'hat'));
-  assert.equal(wornGear(char).hat.id, 'warrior_hat_5');
+  assert.equal(wornGear(char).hat.id, 'kitty_ears');
   // Trying things on doesn't change what you wear.
   assert.equal(wornGear(char, { top: { id: 'cash_sundress' } }).top.id, 'sundress');
   assert.equal(char.outfit.top, undefined);

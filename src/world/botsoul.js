@@ -226,6 +226,8 @@ function finishGoal(bot, bots, world, rng) {
   const c = bot.char;
   let line = null;
   let show = false;
+  // (A set goal from before the sets were retired, 2026-11-16, ends without a piece to wear.)
+  if (g.kind === 'set' && ITEMS[g.item]?.type !== 'equip') g.kind = 'gone';
   if (g.kind === 'set') {
     c.equipment[g.slot] = makeEquip(g.item, { rng, rarity: 1, variant: 'roll' });
     bot.stats = computeStats(c);

@@ -39,6 +39,8 @@ export function setsWorn(equipment) {
 export function setBonus(equipment) {
   const out = {};
   for (const [set, n] of Object.entries(setsWorn(equipment))) {
+    // (A retired set gives nothing: data/sets.js.)
+    if (!SETS[set]) continue;
     for (const [at, bonus] of Object.entries(SETS[set].bonus)) {
       if (n < Number(at)) continue;
       for (const [k, v] of Object.entries(bonus)) out[k] = (out[k] ?? 0) + v;

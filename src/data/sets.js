@@ -8,7 +8,13 @@ export const SET_SLOTS = ['hat', 'top', 'gloves', 'cape'];
 
 const all = (n) => ({ str: n, dex: n, int: n, luk: n });
 
-export const SETS = {
+// The live sets: none since every set was retired with the rest of the armour (2026-11-16, to make
+// way for new gear). The system (drops, bonuses, tooltips) stays ready for new ones.
+export const SETS = {};
+
+// The retired sets: kept only so pieces of them in old saves sell themselves back
+// (core/save.js), and so their looks still draw (render/jobgear/sets.js).
+export const RETIRED_SETS = {
   // Rootwood Hollow's own set, from clearing it (data/dungeons.js).
   rootwood: {
     name: 'Rootwood', level: 15, color: '#b98e78', accent: '#a6dca2',

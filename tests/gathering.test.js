@@ -78,7 +78,7 @@ test('walking off stops gathering with nothing', () => {
 test("ore at Tora's makes a polish likelier to take, and is used up", () => {
   const c = createCharacter('Smith', {});
   c.gold = 1e6;
-  const inst = makeEquip(Object.keys(ITEMS).find((id) => ITEMS[id].slot && ITEMS[id].slot !== 'weapon' && (ITEMS[id].reqLevel ?? 0) <= 20), {});
+  const inst = makeEquip(Object.keys(ITEMS).find((id) => ITEMS[id].type === 'equip' && ITEMS[id].slot && ITEMS[id].slot !== 'weapon' && (ITEMS[id].reqLevel ?? 0) <= 20), {});
   inst.polish = 6;
   assert.equal(oreFor(inst)?.id, 'copper_ore');
   assert.ok(boostedChance(inst, 'copper_ore') > polishChance(inst));

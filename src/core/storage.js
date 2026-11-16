@@ -50,4 +50,14 @@ function move(from, to, tab, i) {
 }
 
 export const storeItem = (char, world, tab, i) => move(char.inventory, world.storage, tab, i);
-export const takeItem = (char, world, tab, i) => move(world.storage, char.inventory, tab, i);
+// (A retired piece of gear left in the chest from before, data/items.js, sells itself back to the
+// hero who takes it, for what a shop pays, instead of landing in the bag as a look.)
+export function takeItem(char, world, tab, i) {
+  const entry = world.storage[tab]?.[i];
+  if (entry && ITEMS[entry.id]?.retiredGear) {
+    world.storage[tab].splice(i, 1);
+    char.gold = (char.gold ?? 0) + Math.max(1, Math.floor((ITEMS[entry.id].price || 0) * 0.1)) * (entry.qty ?? 1);
+    return true;
+  }
+  return move(world.storage, char.inventory, tab, i);
+}

@@ -147,7 +147,8 @@ test('a quest runs from accept to rewards', () => {
   assert.equal(acceptQuest(c, 'first_steps'), true);
   assert.equal(questState(c, 'first_steps'), 'ready', 'no objectives means ready at once');
   const r = completeQuest(c, 'first_steps');
-  assert.ok(r && c.inventory.equip.some((e) => e.id === 'bottom_0'));
+  // (Its cotton shorts were retired with the rest of the armour, 2026-11-16: tonics only now.)
+  assert.ok(r && c.inventory.use.some((e) => e.id === 'red_potion'));
   assert.equal(questState(c, 'fluffy'), 'available');
   acceptQuest(c, 'fluffy');
   addItem(c.inventory, 'fluff', 8);
@@ -263,17 +264,20 @@ test("in a town, the shops, the stove and the job's instructor are a short walk 
   }
 });
 
-// Every monster you can hunt has its own loot table in three tiers (data/mobs.js).
-test('every hunted monster has a common drop, an uncommon one and a rare signature prize', async () => {
+// Every monster you can hunt has its own loot table in three tiers (data/mobs.js). (Most had an
+// armour piece as their rare prize: that went with the retired armour, 2026-11-16, and the new gear
+// will bring new prizes. Until then a monster has at most one, an earring.)
+test('every hunted monster has a common drop, an uncommon one, and at most one rare signature prize', async () => {
   const { rollLoot } = await import('../src/world/drops.js');
   const { MAPS } = await import('../src/data/maps.js');
   const hunted = new Set(Object.values(MAPS).flatMap((m) => (m.spawns ?? []).map((sp) => sp.mob)));
   for (const m of Object.values(MOBS)) {
     if (m.boss || !hunted.has(m.id)) continue;
     const rare = m.drops.filter((d) => d.chance <= 0.02);
-    assert.equal(rare.length, 1, `${m.id}: one rare prize`);
+    assert.ok(rare.length <= 1, `${m.id}: at most one rare prize`);
     assert.ok(m.drops.some((d) => d.chance >= 0.3), `${m.id}: a common drop`);
     assert.ok(m.drops.some((d) => d.chance > 0.02 && d.chance < 0.3), `${m.id}: an uncommon drop`);
+    if (!rare.length) continue;
     // The prize is gear, Rare or better, and a slot prize is the hero's own job's piece.
     const prize = rollLoot({ ...m, drops: [{ ...rare[0], chance: 1 }] }, Math.random, (d) => d.family === 'mage' || !d.family).find((l) => l.inst);
     assert.ok(prize && ITEMS[prize.inst.id].type === 'equip' && prize.inst.rarity >= 1, `${m.id}: the prize is Rare gear`);

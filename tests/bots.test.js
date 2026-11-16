@@ -3,6 +3,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
 import { createBots, updateBots, botsIn, makeBotCharacter, buyFromShop } from '../src/world/bots.js';
+import { ITEMS } from '../src/data/items.js';
 import { speak, makeStyle } from '../src/world/chatter.js';
 import { createWorld } from '../src/world/world.js';
 import { createCharacter } from '../src/core/character.js';
@@ -200,7 +201,7 @@ test('players nearby say hi back, answer a question, and cheer when you level up
   assert.ok(lines.some((l) => /gr|gz|congrats|ding|woo|level/i.test(l)), `cheers for the level (${lines.join(' | ')})`);
 });
 
-test('in town, players chat with each other and wear sets (no titles or rug shops)', () => {
+test('in town, players chat with each other and wear only real gear (no titles or rug shops)', () => {
   const world = createWorld(createCharacter('Me', {}));
   quiet(world);
   loadMap(world, 'harbor', 'start');
@@ -217,7 +218,8 @@ test('in town, players chat with each other and wear sets (no titles or rug shop
   assert.ok(!bots.list.some((b) => b.shop), 'no rug shops');
   const rng = seeded(9);
   const chars = Array.from({ length: 60 }, (_, i) => makeBotCharacter(rng, { name: `s${i}`, level: 40 }));
-  assert.ok(chars.some((c) => Object.values(c.equipment).some((e) => e?.id.startsWith('set_'))), 'some wear set pieces');
+  // (The gear sets were retired with the armour, 2026-11-16: no set pieces, and nothing retired worn.)
+  assert.ok(chars.every((c) => Object.values(c.equipment).every((e) => !e || ITEMS[e.id].type === 'equip')), 'all real gear');
   assert.ok(!bots.list.some((b) => b.title), 'no titles');
 });
 
@@ -739,7 +741,7 @@ test('a lucky drop: the players around react', async () => {
   const { luckyDrop } = await import('../src/world/social.js');
   const { makeEquip } = await import('../src/core/items.js');
   const { world, bots, lines } = eventTown(422);
-  luckyDrop(bots, world, makeEquip('sword_10', { rarity: 3 }));
+  luckyDrop(bots, world, makeEquip('sword_0', { rarity: 3 }));
   // (The town's chat log is paced, so in a busy square a reaction may only be said over their
   // heads: either counts.)
   const said = new Set();
@@ -849,10 +851,11 @@ test('players on a field work its ready life spots, leave them ready for you, an
   const kinds = new Set();
   const phases = new Set();
   let resting = 0;
-  // (Seed 14: across seeds 11-17 several spots get worked; seed 11 sends this run's players off
+  // (Seed 15: across seeds 11-17 several spots get worked; seed 11 sends this run's players off
   // elsewhere since the early levels got quicker, and 12 since the mages' skills got heavier;
-  // 14 since the monsters spread evenly along their ledges, which sent 13's players elsewhere.)
-  const { world, bots } = lifeField('meadow1', 14, 600, {
+  // 14 since the monsters spread evenly along their ledges, which sent 13's players elsewhere;
+  // 15 since the retired gear left the players' gear rolls shorter, 2026-11-16: 12-19 work but 14.)
+  const { world, bots } = lifeField('meadow1', 15, 600, {
     night: true,
     each: (w, bs) => {
       for (const b of bs.list) {

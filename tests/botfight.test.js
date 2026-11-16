@@ -41,6 +41,8 @@ test('a party member fights with their real skills and finisher, at a human pace
   const { world } = heroAt(rng, 40, ['warrior', 'stormwall']);
   loadMap(world, 'woods', 'start');
   const bot = member(world, 38, ['warrior', 'stormwall']);
+  // (An average player: personalities vary how often one reaches for a skill.)
+  bot.ai = { ...bot.ai, special: 0.15 };
   // Their kit: the moves of their own skills and finisher.
   bot.stats = computeStats(bot.char);
   const skills = botSkills(bot.char);

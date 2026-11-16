@@ -39,7 +39,8 @@ const setCraft = (char, level) => ((char.life ??= {}).crafting = { level, exp: 0
 
 test('every recipe is real: its materials and result are items, its level fits its tier', () => {
   assert.deepEqual(CRAFT_TIER_LEVEL, TIER_LEVEL, 'the catalogue keeps the same tier levels as the life core');
-  assert.ok(RECIPES.length > 100);
+  // (Fewer since the Artisan gear's recipes were retired with the rest of the gear, 2026-11-16.)
+  assert.ok(RECIPES.length > 60);
   assert.equal(new Set(RECIPES.map((r) => r.id)).size, RECIPES.length, 'recipe ids are unique');
   for (const r of RECIPES) {
     assert.ok(ITEMS[r.makes], `${r.id} makes ${r.makes}`);
@@ -55,53 +56,23 @@ test('every recipe is real: its materials and result are items, its level fits i
     assert.ok(RECIPES.some((r) => r.needs[id]), `${id} is used in a recipe`);
   }
   // Every category has something to make from the first tier.
-  for (const cat of ['gear', 'accessory', 'tool', 'potion', 'stone']) assert.ok(RECIPES.some((r) => r.cat === cat && r.tier === 1), cat);
+  for (const cat of ['accessory', 'tool', 'potion', 'stone']) assert.ok(RECIPES.some((r) => r.cat === cat && r.tier === 1), cat);
 });
 
-test('every job has an Artisan line at Lv 10 to 50: every armor slot and every weapon it uses', () => {
-  for (const family of GEAR_FAMILIES) {
-    for (const L of ARTISAN_LEVELS) {
-      for (const slot of JOB_SLOTS) {
-        const def = ITEMS[artisanId(family, slot, L)];
-        assert.ok(def && def.family === family && def.reqLevel === L && def.design === 'job', `${family} ${slot} ${L}`);
-        assert.ok(RECIPE_BY_ID[`craft_${def.id}`], `${def.id} has a recipe`);
-      }
-    }
-  }
-  for (const L of ARTISAN_LEVELS) {
-    for (const type of Object.values(FAMILY_WEAPONS).flat()) assert.ok(ITEMS[artisanWeaponId(type, L)]?.weaponType === type, `${type} ${L}`);
-  }
-  // A warrior sees warrior gear; a Novice sees the weapons the Archer and the Thief left behind.
+test('the Artisan gear is retired: no gear recipes, and its pieces are only looks', () => {
+  // (Retired with the rest of the weapons and armour, 2026-11-16, to make way for new gear.)
+  assert.ok(!RECIPES.some((r) => r.cat === 'gear'));
+  for (const family of GEAR_FAMILIES) for (const L of ARTISAN_LEVELS) for (const slot of JOB_SLOTS) assert.ok(ITEMS[artisanId(family, slot, L)].retiredGear, `${family} ${slot} ${L}`);
+  for (const L of ARTISAN_LEVELS) for (const type of Object.values(FAMILY_WEAPONS).flat()) assert.ok(ITEMS[artisanWeaponId(type, L)].retiredGear, `${type} ${L}`);
   const c = createCharacter('Hana', {});
-  assert.deepEqual([...new Set(recipesIn(c, 'gear').map((r) => ITEMS[r.makes].weaponType))].sort(), ['bow', 'crossbow', 'dagger', 'gauntlet']);
-  c.job = 'warrior';
-  assert.ok(recipesIn(c, 'gear').every((r) => r.family === 'warrior'));
+  assert.deepEqual(recipesIn(c, 'gear'), []);
   assert.ok(recipesIn(c, 'tool').length >= 16);
 });
 
-test('a Fine Artisan piece is a little better than the shop and drop piece of its level', () => {
+test('better qualities are better again, and bench-made pieces never drop', () => {
   const total = (stats) => Object.values(stats).reduce((a, b) => a + b, 0);
-  for (const family of GEAR_FAMILIES) {
-    for (const L of ARTISAN_LEVELS) {
-      for (const slot of JOB_SLOTS) {
-        const shop = makeEquip(`${family}_${slot}_${L}`);
-        const fine = makeCrafted(artisanId(family, slot, L), 0);
-        for (const [k, v] of Object.entries(shop.stats)) assert.ok((fine.stats[k] ?? 0) >= v, `${fine.id} ${k}`);
-        assert.ok(total(fine.stats) > total(shop.stats), `${fine.id} beats the shop piece`);
-        assert.ok(total(fine.stats) < total(shop.stats) * 1.3, `${fine.id} only a little better`);
-      }
-      for (const type of FAMILY_WEAPONS[family]) {
-        const shop = makeEquip(`${type}_${L}`);
-        const fine = makeCrafted(artisanWeaponId(type, L), 0);
-        assert.ok(fine.stats.watk > shop.stats.watk, `${fine.id} hits harder`);
-      }
-    }
-  }
-  // Better qualities are better again; never dropped, never on bots.
-  const id = artisanId('mage', 'top', 30);
-  const [f, s, m] = [0, 1, 2].map((q) => makeCrafted(id, q));
-  assert.ok(f.stats.wdef <= s.stats.wdef && s.stats.wdef < m.stats.wdef);
-  assert.ok((m.stats.int ?? 0) > (f.stats.int ?? 0), 'Masterwork adds to the main stat');
+  const [f, s, m] = [0, 1, 2].map((q) => makeCrafted('ring_silver', q));
+  assert.ok(total(f.stats) <= total(s.stats) && total(s.stats) < total(m.stats));
   assert.equal(m.quality, 2);
   for (const def of Object.values(MOBS)) {
     for (let i = 0; i < 20; i++) for (const l of rollLoot(def)) if (l.kind === 'item') assert.ok(!ITEMS[l.id ?? l.inst?.id]?.crafted, 'crafted gear never drops');
@@ -110,7 +81,7 @@ test('a Fine Artisan piece is a little better than the shop and drop piece of it
 
 test('quality odds rise with the Crafting level', () => {
   const c = createCharacter('Hana', {});
-  const r = RECIPE_BY_ID[`craft_${artisanId('mage', 'hat', 20)}`];
+  const r = RECIPE_BY_ID.craft_ring_iron;
   let last = null;
   for (let lv = r.level; lv <= 50; lv++) {
     setCraft(c, lv);
@@ -132,7 +103,7 @@ test('quality odds rise with the Crafting level', () => {
 test('crafting uses the materials, makes the piece, and gives Crafting and character EXP', () => {
   const w = worldAt();
   const c = w.char;
-  const r = RECIPE_BY_ID[`craft_${artisanId('warrior', 'top', 20)}`];
+  const r = RECIPE_BY_ID.craft_ring_iron;
   giveNeeds(c, r);
   assert.equal(craftBlocker(c, r), 'level', 'needs the Crafting level');
   assert.equal(craft(w, r).ok, false);
@@ -216,13 +187,13 @@ test('tools: every kind in four tiers, equipped into lifeTools, better each tier
 test("polishing stones help at Tora's forge, for gear up to their level", () => {
   const c = createCharacter('Hana', {});
   c.gold = 1e7;
-  const inst = makeEquip('warrior_top_20');
+  const inst = makeEquip('ear_20');
   assert.ok(boostedChance(inst, 'polish_copper') > polishChance(inst));
   addItem(c.inventory, 'polish_copper', 1);
   const r = polish(c, inst, () => 0, 'polish_copper');
   assert.ok(r.ok);
   assert.equal(countItem(c.inventory, 'polish_copper'), 0, 'one stone a try');
-  const high = makeEquip('warrior_top_40');
+  const high = makeEquip('ear_40');
   addItem(c.inventory, 'polish_copper', 1);
   assert.equal(polish(c, high, () => 0, 'polish_copper').why, 'ore', "a copper stone is too soft for Lv 40 gear");
   addItem(c.inventory, 'polish_silver', 1);

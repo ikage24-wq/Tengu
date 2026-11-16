@@ -279,8 +279,11 @@ test('the Game Master stays locked without the passphrase, and its tools work on
   assert.ok(w.char.skills.gmsmite, 'GM skills come with the job');
   gmCommand(w, 'level', ['37']);
   assert.equal(w.char.level, 37);
+  gmCommand(w, 'give', ['kitty_ears', '1']);
+  assert.ok(w.char.inventory.equip.some((e) => e.id === 'kitty_ears'));
+  // (A retired piece is only a look now, 2026-11-16: it can't be given.)
   gmCommand(w, 'give', ['hat_5', '1']);
-  assert.ok(w.char.inventory.equip.some((e) => e.id === 'hat_5'));
+  assert.ok(!w.char.inventory.equip.some((e) => e.id === 'hat_5'));
   gmCommand(w, 'tp', ['sky']);
   assert.equal(w.map.id, 'sky');
   gmCommand(w, 'god', []);
@@ -297,7 +300,7 @@ test('skills never go on cooldown: a spell is free again a beat after its motion
   const w = newWorld();
   setJob(w.char, 'warrior');
   setLevel(w.char, 40);
-  w.char.equipment.weapon = makeEquip('sword_20', {});
+  w.char.equipment.weapon = makeEquip('sword_0', {});
   w.char.skills.thunderrush = 10;
   w.char.baseMp = 5000;
   gmCommand(w, 'heal', []);
@@ -445,12 +448,12 @@ test('bag items dropped in the world land in front of you and only come back wit
   assert.equal(countItem(w.char.inventory, 'red_potion'), before + 5);
 
   // Equipment drops whole; Cash items can't be dropped.
-  addItem(w.char.inventory, makeEquip('hat_0'));
+  addItem(w.char.inventory, makeEquip('kitty_ears'));
   const n = w.char.inventory.equip.length;
   assert.ok(dropItem(w, 'equip', n - 1));
   assert.equal(w.char.inventory.equip.length, n - 1);
-  assert.equal(w.drops.at(-1).inst.id, 'hat_0');
-  w.char.inventory.cash.push(makeEquip('hat_0'));
+  assert.equal(w.drops.at(-1).inst.id, 'kitty_ears');
+  w.char.inventory.cash.push(makeEquip('kitty_ears'));
   assert.equal(dropItem(w, 'cash', 0), false);
 });
 

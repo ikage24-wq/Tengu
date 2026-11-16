@@ -4,7 +4,7 @@
 import { MAX_LEVEL, expToNext } from './exp.js';
 import { JOBS, FAMILY_STATS, jobChain, nextJobs } from '../data/jobs.js';
 import { SKILLS } from '../data/skills.js';
-import { ITEMS } from '../data/items.js';
+import { ITEMS, plainWeaponId } from '../data/items.js';
 import { STARTING_CASH, CASH_PER_LEVEL } from '../data/cash.js';
 import { computeStats } from './stats.js';
 import { createInventory, addItem, removeItem } from './inventory.js';
@@ -247,14 +247,15 @@ export function equipBlocker(char, inst) {
 }
 
 // Equips the bag item at `index`, swapping out whatever was in that slot.
-// A first job comes with its first weapon: the instructor hands over the level-5 weapon of the
-// job's own kind and it goes straight into your hands (what you held goes to your bag; with the bag
+// A first job comes with its first weapon: the instructor hands over the plain weapon of the job's
+// own kind (the only weapons left since the gear was retired, 2026-11-16) and it goes straight into
+// your hands (what you held goes to your bag; with the bag
 // full, you keep holding the old one and the new one goes to the bag instead). Returns its id.
 export function giveStarterWeapon(char, jobId) {
   const job = JOBS[jobId];
   if (job?.tier !== 1) return null;
-  const id = `${job.weapons[0]}_5`;
-  if (!ITEMS[id]) return null;
+  const id = plainWeaponId(job.weapons[0]);
+  if (ITEMS[id]?.type !== 'equip') return null;
   const inst = makeEquip(id);
   const held = char.equipment.weapon;
   if (held && !addItem(char.inventory, held)) {

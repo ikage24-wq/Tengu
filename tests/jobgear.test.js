@@ -20,51 +20,45 @@ function hero(job, level) {
   return char;
 }
 
-test('every job has its own set every 5 levels in every armor slot, and earrings for everyone', () => {
+test('the job sets are retired: every piece a look with no stats, and earrings for everyone stay', () => {
+  // (Every piece of armour was retired, 2026-11-16, to make way for new gear: the job sets stay only
+  // as looks, for the Cash costumes and the NPCs dressed in them.)
   for (const family of GEAR_FAMILIES) {
     for (const slot of JOB_SLOTS) {
-      let last = -1;
       for (const L of GEAR_LEVELS) {
         const def = ITEMS[`${family}_${slot}_${L}`];
-        assert.ok(def, `${family} ${slot} ${L}`);
-        assert.equal(def.family, family);
-        assert.equal(def.reqLevel, L);
-        assert.ok(def.stats.wdef > last, `${def.id} defends better than the set below`);
-        last = def.stats.wdef;
+        assert.ok(def?.retiredGear, `${family} ${slot} ${L}`);
+        assert.equal(def.type, 'look');
+        assert.equal(def.stats, undefined);
       }
     }
   }
-  for (const L of GEAR_LEVELS) assert.equal(ITEMS[`ear_${L}`].family, null);
-  assert.equal(new Set(GEAR_LEVELS.map((L) => ITEMS[`warrior_hat_${L}`].name)).size, 20, 'every set has its own name');
+  for (const L of GEAR_LEVELS) {
+    assert.equal(ITEMS[`ear_${L}`].type, 'equip');
+    assert.equal(ITEMS[`ear_${L}`].family, null);
+  }
 });
 
-test('jobs lean their own way: warriors tank, mages bring magic', () => {
-  const at = (f, s) => ITEMS[`${f}_${s}_50`].stats;
-  assert.ok(at('warrior', 'top').wdef > at('mage', 'top').wdef);
-  assert.ok(at('warrior', 'top').hp > 0);
-  assert.ok(at('mage', 'top').int > 0 && at('mage', 'gloves').matk > 0);
-});
 
-test('only the right job wears a set, and a Novice can wear the starter sets', () => {
+test('a retired piece is never worn, by any job', () => {
   const warrior = hero('warrior', 30);
-  assert.equal(equipBlocker(warrior, { id: 'warrior_top_30' }), null);
-  assert.match(equipBlocker(warrior, { id: 'mage_top_30' }), /Mages only/);
-  assert.match(equipBlocker(warrior, { id: 'warrior_top_35' }), /level 35/);
-  const novice = hero('novice', 6);
-  assert.equal(equipBlocker(novice, { id: 'mage_hat_5' }), null);
-  assert.match(equipBlocker(novice, { id: 'mage_hat_10' }), /level 10|only/);
+  assert.equal(equipBlocker(warrior, { id: 'warrior_top_30' }), 'not equipment');
+  assert.equal(equipBlocker(warrior, { id: 'sword_25' }), 'not equipment');
+  assert.equal(equipBlocker(warrior, { id: 'sword_30' }), null, 'the ladder weapon of its level is');
+  assert.equal(equipBlocker(warrior, { id: 'sword_0' }), null, 'the plain weapon still is');
+  assert.equal(equipBlocker(hero('novice', 6), { id: 'mage_hat_5' }), 'not equipment');
 });
 
 test('colors are a look only: a name and a recolor, never stats', () => {
-  const dark = makeEquip('warrior_top_50', { variant: 'dark' });
-  assert.deepEqual(dark.stats, makeEquip('warrior_top_50').stats, 'no extra stats');
-  assert.equal(itemName(dark), `Dark ${ITEMS.warrior_top_50.name}`);
+  const ruby = makeEquip('ear_30', { variant: 'ruby' });
+  assert.deepEqual(ruby.stats, makeEquip('ear_30').stats, 'no extra stats');
+  assert.equal(itemName(ruby), `Ruby ${ITEMS.ear_30.name}`);
   // Things without variants never get one.
   assert.equal(makeEquip('hoodie', { variant: 'dark' }).variant, undefined);
   assert.equal(variantsFor(ITEMS.red_potion), null);
   assert.equal(variantsFor(ITEMS.mage_cape_5), VARIANTS);
   // Drops are the same piece every time (no random stat rolls).
-  assert.deepEqual(makeEquip('sword_40', { rng: seeded(1) }).stats, makeEquip('sword_40', { rng: seeded(2) }).stats);
+  assert.deepEqual(makeEquip('sword_0', { rng: seeded(1) }).stats, makeEquip('sword_0', { rng: seeded(2) }).stats);
 });
 
 test('variant rolls favor the common colors and sometimes give none', () => {
@@ -78,14 +72,18 @@ test('variant rolls favor the common colors and sometimes give none', () => {
   assert.ok(counts.dark > counts.gilded * 2);
 });
 
-test('shops sell gear for your own job at their levels, and a Novice sees every starter set', () => {
-  const warrior = shopStock(NPCS.tora, hero('warrior', 20));
-  assert.ok(warrior.includes('warrior_hat_25'));
-  assert.ok(!warrior.some((id) => id.startsWith('mage_')));
-  assert.ok(!warrior.includes('wand_20'), 'no weapons the job cannot use');
+test('shops sell no armour, only the new ladder weapons a job can use', () => {
   const novice = shopStock(NPCS.pip, hero('novice', 3));
-  for (const f of GEAR_FAMILIES) assert.ok(novice.includes(`${f}_top_5`), f);
-  for (const n of Object.values(NPCS)) for (const id of shopStock(n, hero('tidemage', 30))) assert.ok(ITEMS[id], `${n.id} ${id}`);
+  for (const type of ['sword', 'axe', 'spear', 'wand', 'staff', 'bow', 'crossbow', 'dagger', 'gauntlet']) assert.ok(novice.includes(`${type}_0`), type);
+  const warrior = shopStock(NPCS.pip, hero('warrior', 20));
+  assert.ok(warrior.includes('sword_0') && !warrior.includes('wand_0'), 'no weapons the job cannot use');
+  for (const n of Object.values(NPCS)) {
+    for (const id of shopStock(n, hero('tidemage', 30))) {
+      assert.ok(ITEMS[id], `${n.id} ${id}`);
+      assert.ok(!ITEMS[id].retiredGear, `${n.id} sells no retired ${id}`);
+      if (ITEMS[id].type === 'equip' && ITEMS[id].slot === 'weapon') assert.ok(id.endsWith('_0') || ITEMS[id].ladder, `${n.id} ${id} is a starter or a ladder weapon`);
+    }
+  }
 });
 
 test('quest gear rewards fit the hero who earns them', () => {
@@ -98,42 +96,45 @@ test('quest gear rewards fit the hero who earns them', () => {
 test("the Archer's and the Thief's armour in an old save sells itself back", () => {
   const char = {
     gold: 0, cash: 0, hotkeys: {}, outfit: { top: { uid: 4, id: 'cash_thief_top_20' } },
-    equipment: { top: { uid: 1, id: 'archer_top_30' }, weapon: { uid: 2, id: 'bow_20' } },
+    equipment: { top: { uid: 1, id: 'archer_top_30' }, weapon: { uid: 2, id: 'bow_0' } },
     inventory: { equip: [{ uid: 3, id: 'thief_gloves_50' }, { uid: 5, id: 'set_sylvana_archer_cape' }], use: [], etc: [], cash: [] },
   };
   dropRetiredItems(char);
   assert.equal(char.equipment.top, null);
-  assert.equal(char.equipment.weapon.id, 'bow_20', 'the weapons stay');
+  assert.equal(char.equipment.weapon.id, 'bow_0', 'the weapons stay');
   assert.deepEqual(char.inventory.equip, []);
   const shop = (id) => Math.floor(ITEMS[id].price * 0.1);
   assert.equal(char.gold, shop('warrior_top_30') + shop('warrior_gloves_50') + shop('set_sylvana_warrior_cape'));
   assert.equal(char.cash, ITEMS.cash_warrior_top_20.cash);
 });
 
-test('old weapon tiers become the new weapon of the same level', () => {
-  const char = { equipment: { weapon: { uid: 1, id: 'sword_2' } }, inventory: { equip: [{ uid: 2, id: 'bow_4' }], use: [], etc: [] }, hotkeys: {} };
+test('old weapon tiers become the weapon of the same level, which sells back for the plain one', () => {
+  const char = { gold: 0, equipment: { weapon: { uid: 1, id: 'sword_25' } }, inventory: { equip: [{ uid: 2, id: 'bow_1' }, { uid: 3, id: 'bow_0' }, { uid: 4, id: 'sword_3' }], use: [], etc: [] }, hotkeys: {} };
   dropRetiredItems(char);
-  assert.equal(char.equipment.weapon.id, 'sword_20');
-  assert.equal(char.inventory.equip[0].id, 'bow_40');
+  // (The old tiers 1-4 were renamed to levels 10-40, since retired, 2026-11-16; levels 10 and 30
+  // are the new ladder's Rootwood and Starglass now, so an old level-10 bow is a Rootwood Bow and
+  // an old level-30 sword a Starglass Sword. Level 25 has no ladder weapon: it sells back.)
+  assert.equal(char.equipment.weapon.id, 'sword_0');
+  assert.deepEqual(char.inventory.equip.map((e) => e.id), ['bow_10', 'bow_0', 'sword_30']);
+  assert.equal(ITEMS.bow_10.name, 'Rootwood Bow');
+  assert.equal(ITEMS.sword_30.name, 'Starglass Sword');
+  assert.equal(char.gold, Math.floor(ITEMS.sword_25.price * 0.1));
 });
 
-test('drops lean toward your own job and come in colors', () => {
+test('monsters drop no weapons and none of the retired armour: the new ladder armour, earrings and one-of-a-kind outfits', () => {
   const rng = seeded(9);
   const fits = (d) => !d.family || d.family === 'mage';
-  let own = 0;
-  let other = 0;
-  let colored = 0;
+  let gear = 0;
   for (let i = 0; i < 400; i++) {
     for (const l of rollLoot(MOBS.crystalking, rng, fits)) {
       if (!l.inst) continue;
       const def = ITEMS[l.inst.id];
-      if (def.family === 'mage') own++;
-      else if (def.family) other++;
-      if (l.inst.variant) colored++;
+      gear++;
+      assert.equal(def.type, 'equip', def.id);
+      assert.ok(def.slot === 'earring' || def.unique || (def.ladder && def.slot !== 'weapon'), `${def.id} is ladder armour, an earring or a one-of-a-kind outfit`);
     }
   }
-  assert.ok(own > other / 2, `own ${own} vs other ${other}`);
-  assert.ok(colored > 0);
+  assert.ok(gear > 0, 'a boss still drops some');
 });
 
 test('generated players wear their own job gear', () => {

@@ -17,7 +17,7 @@ const DT = 1 / 60;
 const idle = { held: new Set(), pressed: new Set(), locked: false };
 
 // A level 25 warrior in Mossy Woods with a row of very sturdy boars in front.
-function arena(weapon = 'sword_20') {
+function arena(weapon = 'sword_0') {
   const c = createCharacter('W', {});
   gainExp(c, 4e6);
   advanceJob(c, 'warrior');
@@ -160,7 +160,7 @@ test('up + attack launches monsters into the air, and down + attack slams the gr
 });
 
 test('Thunderfall needs a full Charge, spends it, and lands its bolt, its clap and the bolts after', () => {
-  const w = arena('axe_20');
+  const w = arena('axe_0');
   w.char.skills.thunderfall = 10;
   w.char.mp = 999;
   const m = w.mobs[0];
@@ -215,7 +215,7 @@ test('only the first and last blows of a flurry stop the world', () => {
 });
 
 test('no freeze runs past MAX_STOP: the heaviest blows add slow motion instead', () => {
-  const w = arena('axe_20');
+  const w = arena('axe_0');
   w.char.skills.thunderfall = 10;
   w.char.mp = 999;
   w.volt = 100;
@@ -260,7 +260,7 @@ test('once a blow lands, moving cuts the follow-through short and skills can cut
 });
 
 // A Novice with a bow in Mossy Woods, sturdy boars a little way off.
-function range(weapon = 'bow_20') {
+function range(weapon = 'bow_0') {
   const w = arena(weapon);
   w.mobs.forEach((m, i) => (m.x = 420 + i * 30));
   return w;
@@ -290,7 +290,7 @@ test('the finishing arrow pierces the whole line', () => {
 });
 
 test("skills can't be spammed back to back, even by moving, but basic attacks still flow into them", () => {
-  const w = arena('sword_20');
+  const w = arena('sword_0');
   w.char.job = 'warrior';
   w.char.skills.thunderrush = 10;
   w.char.mp = 9999;
@@ -310,7 +310,7 @@ test("skills can't be spammed back to back, even by moving, but basic attacks st
 });
 
 test('the same no-spam rule holds for every job, spells and thief skills included', () => {
-  for (const [job, weapon, skill] of [['warrior', 'sword_20', 'thunderrush']]) {
+  for (const [job, weapon, skill] of [['warrior', 'sword_0', 'thunderrush']]) {
     const w = arena(weapon);
     w.char.job = job;
     w.char.skills[skill] = 10;
@@ -349,7 +349,7 @@ test('one press of a skill key casts it once, even held a moment or pressed mid-
 // ---------- The warrior's level 30 paths ----------
 
 // The arena's warrior, raised to 30 and advanced to `job` (Brann's trial done first).
-function advanced(job, weapon = 'sword_20') {
+function advanced(job, weapon = 'sword_0') {
   const w = arena(weapon);
   w.char.quests.warrior_trial = { state: 'done', kills: {} };
   assert.ok(advanceJob(w.char, job), `advanced to ${job}`);
@@ -488,7 +488,7 @@ test('a skill started right after a finisher connects is a Link, and hits harder
 });
 
 test("each warrior path's finisher needs its gauge full, spends it, and lands its big blow", () => {
-  for (const [job, weapon, skill, gauge] of [['stormwall', 'sword_20', 'fortress', 'bulwark'], ['tempest', 'sword_20', 'redthunder', 'gale']]) {
+  for (const [job, weapon, skill, gauge] of [['stormwall', 'sword_0', 'fortress', 'bulwark'], ['tempest', 'sword_0', 'redthunder', 'gale']]) {
     const w = advanced(job, weapon);
     w.char.skills[skill] = 10;
     w[gauge] = 80;
@@ -519,7 +519,7 @@ const shots = (w) => w.fx.filter((f) => f.kind === 'projectile' && f.t < 0.02).l
 
 test('an arrow flies at the monster it hits, and follows it as it moves', () => {
   // A shot heads for where its monster is now.
-  const v = arena('bow_20');
+  const v = arena('bow_0');
   updateWorld(v, DT, press('KeyZ'));
   let arrow = null;
   for (let i = 0; i < 60 && !arrow; i++) {
@@ -638,7 +638,7 @@ test('the proc skills free their old hotkeys, and a real skill keeps its key', a
 
 
 function mage() {
-  const w = arena('wand_20');
+  const w = arena('wand_0');
   w.char.job = 'mage';
   w.char.base.int = 200;
   w.char.mp = 9999;
@@ -656,7 +656,7 @@ test('no job can mash out its attacks: every skill plays its motion and a beat, 
   Math.random = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
   try {
   const families = { warrior: ['warrior'], stormwall: ['warrior', 'stormwall'], tempest: ['warrior', 'tempest'] };
-  const weapons = { warrior: 'sword_20', stormwall: 'sword_20', tempest: 'sword_20' };
+  const weapons = { warrior: 'sword_0', stormwall: 'sword_0', tempest: 'sword_0' };
   for (const [label, fam] of Object.entries(families)) {
     const job = label;
     const weapon = weapons[label];
@@ -751,7 +751,7 @@ test('attacking out of a run is still a dash attack', () => {
 // The same for a held attack skill, every kind of job: you stay planted and keep casting it (the
 // key repeats once held), turning with the direction, never walking off between casts.
 test('holding an attack skill and a direction keeps casting it, planted, for every job', () => {
-  for (const [job, weapon, skill] of [['warrior', 'sword_20', 'thunderrush']]) {
+  for (const [job, weapon, skill] of [['warrior', 'sword_0', 'thunderrush']]) {
     const casts = (dir) => {
       const w = arena(weapon);
       w.char.job = job;
@@ -825,7 +825,7 @@ test("no second job plays another job's move when casting any skill it can cast"
 
 // A level 40 Tidecaller with a staff, in the arena.
 function tidecaller() {
-  const w = arena('staff_50');
+  const w = arena('staff_0');
   const c = w.char;
   gainExp(c, 4e8);
   c.job = 'novice';
@@ -875,11 +875,11 @@ test("at Spring Tide the Tidecaller's basic attacks drop healing on whoever is h
 
 // A level 25 Moon Moth with daggers, in the arena.
 function moonmoth() {
-  const w = arena('dagger_20');
+  const w = arena('dagger_0');
   const c = w.char;
   c.job = 'novice';
   assert.ok(advanceJob(c, 'moonmoth'));
-  c.equipment.weapon = makeEquip('dagger_20', {});
+  c.equipment.weapon = makeEquip('dagger_0', {});
   c.mp = 9999;
   c.baseMp = 99999;
   for (let i = 0; i < 5; i++) updateWorld(w, DT, idle);
@@ -970,7 +970,7 @@ function eclipse() {
   gainExp(c, 4e8);
   c.quests.thief_trial = { state: 'done', kills: {} };
   assert.ok(advanceJob(c, 'eclipse'));
-  c.equipment.weapon = makeEquip('dagger_30', {});
+  c.equipment.weapon = makeEquip('dagger_0', {});
   c.mp = 9999;
   c.baseMp = 99999;
   for (let i = 0; i < 5; i++) updateWorld(w, DT, idle);
@@ -1086,7 +1086,7 @@ test('a thief flutter-jumps once in the air (Jump again), springing on with a li
   assert.ok(w.body.vy >= again, 'only once in the air');
   for (let i = 0; i < 120; i++) updateWorld(w, DT, idle);
   assert.ok(w.body.onGround && !w.flutterUsed, 'landing gives it back');
-  const v = arena('sword_20');
+  const v = arena('sword_0');
   jump(v);
   assert.ok(!v.flutterUsed, 'a warrior has no flutter jump');
 });
@@ -1189,7 +1189,7 @@ test("her paths play the second four in their own look", async () => {
 // ---------- The Silkweaver (docs/design/silkweaver.md) ----------
 // A level 40 Silkweaver with daggers, in the arena (past Vex's trial).
 function silkweaver() {
-  const w = arena('dagger_30');
+  const w = arena('dagger_0');
   const c = w.char;
   gainExp(c, 4e8);
   c.job = 'novice';
@@ -1197,7 +1197,7 @@ function silkweaver() {
   assert.ok(!advanceJob(c, 'silkweaver'), 'not before the trial');
   c.quests.thief_trial = { state: 'done', kills: {} };
   assert.ok(advanceJob(c, 'silkweaver'));
-  c.equipment.weapon = makeEquip('dagger_30', {});
+  c.equipment.weapon = makeEquip('dagger_0', {});
   c.mp = 99999;
   c.baseMp = 99999;
   for (let i = 0; i < 5; i++) updateWorld(w, DT, idle);
@@ -1296,11 +1296,11 @@ test('Silk Swing carries her over the monsters and she cuts back at them', async
 // ---------- The Sunfeather (docs/design/sunfeather.md) ----------
 // A level 25 Sunfeather with a bow, in the arena.
 function sunfeather() {
-  const w = arena('bow_20');
+  const w = arena('bow_0');
   const c = w.char;
   c.job = 'novice';
   assert.ok(advanceJob(c, 'sunfeather'));
-  c.equipment.weapon = makeEquip('bow_20', {});
+  c.equipment.weapon = makeEquip('bow_0', {});
   c.mp = 99999;
   c.baseMp = 99999;
   for (const m of w.mobs) m.x += 60;
@@ -1379,7 +1379,7 @@ test('Sunrise Volley needs a full Daybreak and spends it', () => {
 // ---------- The Phoenix (docs/design/sunfeather.md) ----------
 // A level 40 Phoenix with a crossbow, in the arena (past Kestrel's trial).
 function phoenix() {
-  const w = arena('crossbow_30');
+  const w = arena('crossbow_0');
   const c = w.char;
   gainExp(c, 4e8);
   c.job = 'novice';
@@ -1387,7 +1387,7 @@ function phoenix() {
   assert.ok(!advanceJob(c, 'phoenix'), 'not before the trial');
   c.quests.archer_trial = { state: 'done', kills: {} };
   assert.ok(advanceJob(c, 'phoenix'));
-  c.equipment.weapon = makeEquip('crossbow_30', {});
+  c.equipment.weapon = makeEquip('crossbow_0', {});
   c.mp = 99999;
   c.baseMp = 99999;
   for (const m of w.mobs) m.x += 60;
@@ -1452,14 +1452,14 @@ test('Rebirth needs a full Kindling and spends it', () => {
 // ---------- The Songbird (docs/design/sunfeather.md) ----------
 // A level 40 Songbird with a bow, in the arena (past Kestrel's trial).
 function songbird() {
-  const w = arena('bow_30');
+  const w = arena('bow_0');
   const c = w.char;
   gainExp(c, 4e8);
   c.job = 'novice';
   assert.ok(advanceJob(c, 'sunfeather'));
   c.quests.archer_trial = { state: 'done', kills: {} };
   assert.ok(advanceJob(c, 'songbird'));
-  c.equipment.weapon = makeEquip('bow_30', {});
+  c.equipment.weapon = makeEquip('bow_0', {});
   c.mp = 99999;
   c.baseMp = 99999;
   for (const m of w.mobs) m.x += 60;

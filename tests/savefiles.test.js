@@ -113,10 +113,10 @@ test('the storage chest: stash on one hero, take it out on another; nothing spli
     const w = createWorldFile(0, 'Popcorn Atoll');
     const a = hero('Ann', 0, 0);
     addItem(a.inventory, 'red_potion', 30);
-    addItem(a.inventory, makeEquip('sword_5'));
+    addItem(a.inventory, makeEquip('sword_0'));
     const potions = a.inventory.use.findIndex((e) => e.id === 'red_potion');
     assert.ok(storeItem(a, w, 'use', potions));
-    assert.ok(storeItem(a, w, 'equip', a.inventory.equip.findIndex((e) => e.id === 'sword_5')));
+    assert.ok(storeItem(a, w, 'equip', a.inventory.equip.findIndex((e) => e.id === 'sword_0')));
     saveGame(a);
     const b = loadGame(1, 0) ?? (saveGame(hero('Bo', 0, 1)), loadGame(1, 0));
     const bw = loadWorld(0);
@@ -125,7 +125,7 @@ test('the storage chest: stash on one hero, take it out on another; nothing spli
     assert.equal(countItem(b.inventory, 'red_potion'), 30 + countItem(createCharacter('x', {}).inventory, 'red_potion'));
     assert.equal(countItem(bw.storage, 'red_potion'), 0);
     // A full bag takes nothing.
-    while (b.inventory.equip.length < TAB_SIZE) b.inventory.equip.push(makeEquip('sword_5'));
+    while (b.inventory.equip.length < TAB_SIZE) b.inventory.equip.push(makeEquip('sword_0'));
     assert.ok(!takeItem(b, bw, 'equip', 0));
     assert.equal(bw.storage.equip.length, 1);
   });

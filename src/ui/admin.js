@@ -13,8 +13,9 @@ const W = 380;
 const H = 236;
 const TABS = ['Player', 'Jobs', 'Items', 'Teleport', 'Monsters'];
 const ITEM_GROUPS = [
-  ['Weapon', (d) => d.slot === 'weapon'], ['Hat', (d) => d.slot === 'hat'], ['Top', (d) => d.slot === 'top'], ['Bottom', (d) => d.slot === 'bottom'],
-  ['Shoes', (d) => d.slot === 'shoes'], ['Gloves', (d) => d.slot === 'gloves'], ['Cape', (d) => d.slot === 'cape'], ['Earring', (d) => d.slot === 'earring'],
+  // (Gear only: a retired piece is a look now, data/items.js.)
+  ['Weapon', (d) => d.type === 'equip' && d.slot === 'weapon'], ['Hat', (d) => d.type === 'equip' && d.slot === 'hat'], ['Top', (d) => d.type === 'equip' && d.slot === 'top'], ['Bottom', (d) => d.type === 'equip' && d.slot === 'bottom'],
+  ['Shoes', (d) => d.type === 'equip' && d.slot === 'shoes'], ['Gloves', (d) => d.type === 'equip' && d.slot === 'gloves'], ['Cape', (d) => d.type === 'equip' && d.slot === 'cape'], ['Earring', (d) => d.type === 'equip' && d.slot === 'earring'],
   ['Use', (d) => d.type === 'use' || d.type === 'scroll'], ['Etc', (d) => d.type === 'etc'],
 ];
 const PER_PAGE = 24;

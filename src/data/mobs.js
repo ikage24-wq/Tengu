@@ -53,7 +53,7 @@ export const MOBS = {
   }),
   harvmouse: mob({
     id: 'harvmouse', name: 'Harvest Mouse', level: 9, hp: 148, atk: 27, def: 7, acc: 24, eva: 6, exp: 72, gold: [2, 7],
-    speed: 36, w: 26, h: 22, art: 'harvmouse', drops: [{ id: 'woven_nest', chance: 0.45 }, { id: 'oak_log', chance: 0.08 }, { gear: 'shoes', chance: 0.01 }],
+    speed: 36, w: 26, h: 22, art: 'harvmouse', drops: [{ id: 'woven_nest', chance: 0.45 }, { id: 'oak_log', chance: 0.08 }],
   }),
   // Clover Hills' area boss (world/nest.js, render/mobs/farm.js): the Pumpkin Goblins' grumpy
   // old farmer chief bursts out of the big barn once enough of the hills has been hunted, and
@@ -70,7 +70,7 @@ export const MOBS = {
   }),
   pumpgob: mob({
     id: 'pumpgob', name: 'Pumpkin Goblin', level: 6, hp: 88, atk: 18, def: 5, acc: 18, eva: 3, exp: 40, gold: [2, 5],
-    speed: 32, w: 22, h: 34, art: 'pumpgob', drops: [{ id: 'pumpkin_seed', chance: 0.5 }, { id: 'clover', chance: 0.08 }, { gear: 'hat', chance: 0.01 }],
+    speed: 32, w: 22, h: 34, art: 'pumpgob', drops: [{ id: 'pumpkin_seed', chance: 0.5 }, { id: 'clover', chance: 0.08 }],
   }),
   lambkin: mob({
     id: 'lambkin', name: 'Lambkin', level: 8, hp: 130, atk: 24, def: 7, acc: 21, eva: 4, exp: 56, gold: [2, 6],
@@ -79,7 +79,7 @@ export const MOBS = {
   // Windy Canyon, on the road up to Ember Crag.
   pebblet: mob({
     id: 'pebblet', name: 'Basilisk Hatchling', level: 9, hp: 150, atk: 28, def: 9, acc: 24, eva: 3, exp: 72, gold: [2, 7],
-    speed: 36, w: 28, h: 32, art: 'pebblet', drops: [{ id: 'pebble', chance: 0.5 }, { id: 'copper_ore', chance: 0.08 }, { gear: 'gloves', chance: 0.01 }],
+    speed: 36, w: 28, h: 32, art: 'pebblet', drops: [{ id: 'pebble', chance: 0.5 }, { id: 'copper_ore', chance: 0.08 }],
   }),
   scorpip: mob({
     id: 'scorpip', name: 'Manticore Cub', level: 12, hp: 250, atk: 37, def: 10, acc: 30, eva: 5, exp: 190, gold: [3, 9],
@@ -93,19 +93,19 @@ export const MOBS = {
   // tail that pads along the treetops (render/mobs/redpandarig.js).
   redpanda: mob({
     id: 'redpanda', name: 'Red Panda', level: 18, hp: 620, atk: 58, def: 18, acc: 42, eva: 6, exp: 420, gold: [6, 15],
-    speed: 32, w: 32, h: 28, art: 'redpanda', drops: [{ id: 'panda_fluff', chance: 0.45 }, { id: 'maple_log', chance: 0.08 }, { gear: 'bottom', chance: 0.01 }],
+    speed: 32, w: 32, h: 28, art: 'redpanda', drops: [{ id: 'panda_fluff', chance: 0.45 }, { id: 'maple_log', chance: 0.08 }],
   }),
   // Mossy Woods' branches (new 2026-11-12, built from scratch): a round little owlet with mossy ear
   // tufts that glides along the branches on spread wings (render/mobs/mossowletrig.js).
   mossowlet: mob({
     id: 'mossowlet', name: 'Moss Owlet', level: 11, hp: 220, atk: 33, def: 8, acc: 29, eva: 7, exp: 168, gold: [3, 8],
-    speed: 38, w: 24, h: 28, art: 'mossowlet', drops: [{ id: 'owl_down', chance: 0.5 }, { id: 'silkmoss', chance: 0.08 }, { gear: 'hat', chance: 0.01 }],
+    speed: 38, w: 24, h: 28, art: 'mossowlet', drops: [{ id: 'owl_down', chance: 0.5 }, { id: 'silkmoss', chance: 0.08 }],
   }),
   // Mossy Woods' forest floor (new 2026-11-12, built from scratch): a slow old tortoise with a little
   // moss garden growing on its shell (render/mobs/mosstortrig.js). Tough and slow.
   mosstort: mob({
     id: 'mosstort', name: 'Moss Tortoise', level: 14, hp: 380, atk: 40, def: 17, acc: 33, eva: 3, exp: 240, gold: [4, 10],
-    speed: 22, w: 34, h: 30, art: 'mosstort', drops: [{ id: 'moss_scute', chance: 0.45 }, { id: 'silkmoss', chance: 0.08 }, { gear: 'gloves', chance: 0.01 }],
+    speed: 22, w: 34, h: 30, art: 'mosstort', drops: [{ id: 'moss_scute', chance: 0.45 }, { id: 'silkmoss', chance: 0.08 }],
   }),
   boarlet: mob({
     id: 'boarlet', name: 'Warg', level: 14, hp: 330, atk: 43, def: 12, acc: 34, eva: 5, exp: 240, gold: [4, 10],
@@ -115,14 +115,14 @@ export const MOBS = {
   }),
   mossgolem: mob({
     id: 'mossgolem', name: 'Treant', level: 18, hp: 620, atk: 58, def: 20, acc: 40, eva: 4, exp: 420, gold: [6, 15],
-    speed: 22, w: 34, h: 58, art: 'mossgolem', drops: [{ id: 'moss_stone', chance: 0.45 }, { id: 'maple_log', chance: 0.08 }, { gear: 'bottom', chance: 0.01 }],
+    speed: 22, w: 34, h: 58, art: 'mossgolem', drops: [{ id: 'moss_stone', chance: 0.45 }, { id: 'maple_log', chance: 0.08 }],
   }),
   // Whispering Glade's tanukis in disguise (2026-11-13): little folk who are really tanukis, and go up
   // in a puff of smoke leaving a leaf when beaten (`leafPoof`). A rain-sprite in a yellow raincoat
   // with a lily-pad umbrella on the floor, and a flower fairy in the air (render/mobs/gladekidsrig.js).
   puddlekid: mob({
     id: 'puddlekid', name: 'Puddle Kid', level: 18, hp: 620, atk: 58, def: 20, acc: 40, eva: 4, exp: 420, gold: [6, 15],
-    speed: 30, w: 26, h: 38, art: 'puddlekid', leafPoof: true, drops: [{ id: 'moss_stone', chance: 0.45 }, { id: 'maple_log', chance: 0.08 }, { gear: 'bottom', chance: 0.01 }],
+    speed: 30, w: 26, h: 38, art: 'puddlekid', leafPoof: true, drops: [{ id: 'moss_stone', chance: 0.45 }, { id: 'maple_log', chance: 0.08 }],
   }),
   blossomfairy: mob({
     id: 'blossomfairy', name: 'Blossom Fairy', level: 21, hp: 700, atk: 64, def: 14, acc: 48, eva: 12, exp: 500, gold: [7, 17],
@@ -130,15 +130,15 @@ export const MOBS = {
   }),
   wisp: mob({
     id: 'wisp', name: "Will-o'-Wisp", level: 20, hp: 660, atk: 62, def: 18, acc: 46, eva: 7, exp: 480, gold: [7, 16],
-    speed: 40, w: 22, h: 39, art: 'wisp', fly: true, drops: [{ id: 'wisp_flame', chance: 0.45 }, { id: 'amethyst', chance: 0.08 }, { gear: 'shoes', chance: 0.01 }],
+    speed: 40, w: 22, h: 39, art: 'wisp', fly: true, drops: [{ id: 'wisp_flame', chance: 0.45 }, { id: 'amethyst', chance: 0.08 }],
   }),
   gloombat: mob({
     id: 'gloombat', name: 'Imp', level: 22, hp: 740, atk: 67, def: 15, acc: 50, eva: 8, exp: 540, gold: [7, 18],
-    speed: 86, gait: 'dart', w: 32, h: 30, art: 'gloombat', fly: true, drops: [{ id: 'bat_wing', chance: 0.45 }, { id: 'silver_ore', chance: 0.08 }, { gear: 'cape', chance: 0.01 }],
+    speed: 86, gait: 'dart', w: 32, h: 30, art: 'gloombat', fly: true, drops: [{ id: 'bat_wing', chance: 0.45 }, { id: 'silver_ore', chance: 0.08 }],
   }),
   boneknight: mob({
     id: 'boneknight', name: 'Dullahan', level: 24, hp: 1120, atk: 78, def: 30, acc: 54, eva: 6, exp: 700, gold: [9, 21],
-    speed: 34, w: 34, h: 50, art: 'boneknight', drops: [{ id: 'bone_shard', chance: 0.5 }, { id: 'silver_ore', chance: 0.08 }, { gear: 'hat', chance: 0.01 }],
+    speed: 34, w: 34, h: 50, art: 'boneknight', drops: [{ id: 'bone_shard', chance: 0.5 }, { id: 'silver_ore', chance: 0.08 }],
   }),
   crystalslime: mob({
     id: 'crystalslime', name: 'Gem Mimic', level: 27, hp: 1320, atk: 88, def: 28, acc: 58, eva: 8, exp: 800, gold: [10, 23],
@@ -146,11 +146,11 @@ export const MOBS = {
   }),
   rockgolem: mob({
     id: 'rockgolem', name: 'Crystal Golem', level: 32, hp: 2450, atk: 112, def: 45, acc: 66, eva: 6, exp: 1280, gold: [13, 30],
-    speed: 20, w: 46, h: 60, art: 'rockgolem', drops: [{ id: 'rock_core', chance: 0.45 }, { id: 'silver_ore', chance: 0.08 }, { gear: 'top', chance: 0.01 }],
+    speed: 20, w: 46, h: 60, art: 'rockgolem', drops: [{ id: 'rock_core', chance: 0.45 }, { id: 'silver_ore', chance: 0.08 }],
   }),
   shade: mob({
     id: 'shade', name: 'Wraith', level: 35, hp: 2650, atk: 126, def: 35, acc: 72, eva: 12, exp: 1440, gold: [14, 33],
-    speed: 56, w: 26, h: 40, art: 'shade', fly: true, drops: [{ id: 'shade_cloth', chance: 0.45 }, { id: 'starstone', chance: 0.08 }, { gear: 'cape', chance: 0.01 }],
+    speed: 56, w: 26, h: 40, art: 'shade', fly: true, drops: [{ id: 'shade_cloth', chance: 0.45 }, { id: 'starstone', chance: 0.08 }],
   }),
   cloudsheep: mob({
     id: 'cloudsheep', name: 'Pegasus Foal', level: 38, hp: 3250, atk: 136, def: 40, acc: 76, eva: 11, exp: 1720, gold: [15, 38],
@@ -158,7 +158,7 @@ export const MOBS = {
   }),
   windbird: mob({
     id: 'windbird', name: 'Sky Harpy', level: 43, hp: 4250, atk: 160, def: 45, acc: 84, eva: 15, exp: 2240, gold: [18, 43],
-    speed: 96, w: 36, h: 30, art: 'windbird', fly: true, drops: [{ id: 'feather', chance: 0.45 }, { id: 'skywood_log', chance: 0.08 }, { gear: 'shoes', chance: 0.01 }],
+    speed: 96, w: 36, h: 30, art: 'windbird', fly: true, drops: [{ id: 'feather', chance: 0.45 }, { id: 'skywood_log', chance: 0.08 }],
   }),
   starspirit: mob({
     id: 'starspirit', name: 'Star Seraph', level: 48, hp: 5650, atk: 186, def: 55, acc: 92, eva: 16, exp: 2880, gold: [20, 50],
@@ -184,11 +184,11 @@ export const MOBS = {
   // steps, the lanterns down in the misty hollow (and out at night).
   tanukipicker: mob({
     id: 'tanukipicker', name: 'Tanuki Picker', level: 24, hp: 900, atk: 78, def: 18, acc: 55, eva: 12, exp: 640, gold: [9, 20],
-    speed: 54, w: 26, h: 34, art: 'tanukipicker', drops: [{ id: 'tea_leaf', chance: 0.45 }, { id: 'cedar_log', chance: 0.08 }, { gear: 'hat', chance: 0.01 }],
+    speed: 54, w: 26, h: 34, art: 'tanukipicker', drops: [{ id: 'tea_leaf', chance: 0.45 }, { id: 'cedar_log', chance: 0.08 }],
   }),
   kettletanuki: mob({
     id: 'kettletanuki', name: 'Kettle Tanuki', level: 26, hp: 1150, atk: 82, def: 26, acc: 56, eva: 6, exp: 740, gold: [10, 22],
-    speed: 34, w: 34, h: 30, art: 'kettletanuki', drops: [{ id: 'kettle_lid', chance: 0.45 }, { id: 'tea_leaf', chance: 0.12 }, { gear: 'shoes', chance: 0.01 }],
+    speed: 34, w: 34, h: 30, art: 'kettletanuki', drops: [{ id: 'kettle_lid', chance: 0.45 }, { id: 'tea_leaf', chance: 0.12 }],
   }),
   lantertanuki: mob({
     id: 'lantertanuki', name: 'Lantern Tanuki', level: 28, hp: 1220, atk: 92, def: 22, acc: 60, eva: 12, exp: 840, gold: [11, 24],
@@ -196,11 +196,11 @@ export const MOBS = {
   }),
   lupina: mob({
     id: 'lupina', name: 'Lupina', level: 29, hp: 1500, atk: 96, def: 28, acc: 62, eva: 10, exp: 900, gold: [11, 25],
-    speed: 50, gait: 'stalk', w: 24, h: 50, art: 'lupina', drops: [{ id: 'moon_fang', chance: 0.45 }, { id: 'lotus_fiber', chance: 0.08 }, { gear: 'gloves', chance: 0.01 }],
+    speed: 50, gait: 'stalk', w: 24, h: 50, art: 'lupina', drops: [{ id: 'moon_fang', chance: 0.45 }, { id: 'lotus_fiber', chance: 0.08 }],
   }),
   lamia: mob({
     id: 'lamia', name: 'Lamia', level: 33, hp: 2500, atk: 116, def: 40, acc: 68, eva: 8, exp: 1320, gold: [13, 31],
-    speed: 36, w: 28, h: 50, art: 'lamia', drops: [{ id: 'lamia_scale', chance: 0.5 }, { id: 'sapphire', chance: 0.08 }, { gear: 'bottom', chance: 0.01 }],
+    speed: 36, w: 28, h: 50, art: 'lamia', drops: [{ id: 'lamia_scale', chance: 0.5 }, { id: 'sapphire', chance: 0.08 }],
   }),
   yukionna: mob({
     id: 'yukionna', name: 'Yuki-onna', level: 36, hp: 2800, atk: 128, def: 36, acc: 74, eva: 12, exp: 1520, gold: [14, 34],
@@ -212,17 +212,17 @@ export const MOBS = {
   // spit from `range` away). Bosses add their own moves (`mech`, see world/dungeon.js).
   rootling: mob({
     id: 'rootling', name: 'Root Imp', level: 10, hp: 300, atk: 36, def: 8, acc: 30, eva: 3, exp: 130, gold: [3, 7],
-    speed: 58, gait: 'dart', w: 22, h: 30, art: 'rootling', drops: [{ id: 'oak_log', chance: 0.4 }, { id: 'hollow_acorn', chance: 0.12 }, { gear: 'shoes', chance: 0.01 }],
+    speed: 58, gait: 'dart', w: 22, h: 30, art: 'rootling', drops: [{ id: 'oak_log', chance: 0.4 }, { id: 'hollow_acorn', chance: 0.12 }],
     fight: { every: 1.5, reach: 28, windup: 0.35 },
   }),
   sporecap: mob({
     id: 'sporecap', name: 'Myconid Shaman', level: 10, hp: 240, atk: 30, def: 5, acc: 30, eva: 2, exp: 120, gold: [3, 7],
-    speed: 28, w: 22, h: 34, art: 'sporecap', drops: [{ id: 'mushcap', chance: 0.4 }, { id: 'hollow_acorn', chance: 0.08 }, { gear: 'hat', chance: 0.01 }],
+    speed: 28, w: 22, h: 34, art: 'sporecap', drops: [{ id: 'mushcap', chance: 0.4 }, { id: 'hollow_acorn', chance: 0.08 }],
     fight: { every: 2.2, reach: 26, windup: 0.5, range: 170 },
   }),
   thornback: mob({
     id: 'thornback', name: 'Bramble Bear', level: 12, hp: 900, atk: 52, def: 14, acc: 34, eva: 3, exp: 420, gold: [5, 13],
-    speed: 36, w: 46, h: 34, art: 'thornback', drops: [{ id: 'hollow_acorn', chance: 0.4 }, { id: 'bramble_claw', chance: 0.4 }, { id: 'silkmoss', chance: 0.08 }, { gear: 'gloves', chance: 0.01 }],
+    speed: 36, w: 46, h: 34, art: 'thornback', drops: [{ id: 'hollow_acorn', chance: 0.4 }, { id: 'bramble_claw', chance: 0.4 }, { id: 'silkmoss', chance: 0.08 }],
     fight: { every: 1.8, reach: 32, windup: 0.45 },
   }),
   sporeling: mob({
@@ -259,12 +259,12 @@ export const MOBS = {
   // ---------- Moonlit Manor (levels 15-20, docs/design/moonlit-manor.md) ----------
   porcelaindoll: mob({
     id: 'porcelaindoll', name: 'Porcelain Doll', level: 15, hp: 640, atk: 58, def: 18, acc: 46, eva: 4, exp: 240, gold: [5, 11],
-    speed: 34, w: 24, h: 36, art: 'porcelaindoll', drops: [{ id: 'porcelain_shard', chance: 0.4 }, { id: 'moonlit_ribbon', chance: 0.08 }, { gear: 'top', chance: 0.01 }],
+    speed: 34, w: 24, h: 36, art: 'porcelaindoll', drops: [{ id: 'porcelain_shard', chance: 0.4 }, { id: 'moonlit_ribbon', chance: 0.08 }],
     fight: { every: 1.9, reach: 38, windup: 0.45 },
   }),
   ghostmaid: mob({
     id: 'ghostmaid', name: 'Ghost Maid', level: 15, hp: 520, atk: 52, def: 10, acc: 48, eva: 8, exp: 220, gold: [5, 10],
-    speed: 52, w: 26, h: 32, art: 'ghostmaid', drops: [{ id: 'shade_cloth', chance: 0.3 }, { id: 'moonlit_ribbon', chance: 0.06 }, { gear: 'cape', chance: 0.01 }],
+    speed: 52, w: 26, h: 32, art: 'ghostmaid', drops: [{ id: 'shade_cloth', chance: 0.3 }, { id: 'moonlit_ribbon', chance: 0.06 }],
     fight: { every: 1.5, reach: 34, windup: 0.3 },
   }),
   candlebride: mob({
@@ -284,12 +284,12 @@ export const MOBS = {
   }),
   armourknight: mob({
     id: 'armourknight', name: 'Armour Knight', level: 18, hp: 1200, atk: 70, def: 26, acc: 52, eva: 3, exp: 420, gold: [8, 16],
-    speed: 34, w: 28, h: 36, art: 'armourknight', drops: [{ id: 'bone_shard', chance: 0.3 }, { id: 'moonlit_ribbon', chance: 0.1 }, { gear: 'top', chance: 0.01 }],
+    speed: 34, w: 28, h: 36, art: 'armourknight', drops: [{ id: 'bone_shard', chance: 0.3 }, { id: 'moonlit_ribbon', chance: 0.1 }],
     fight: { every: 2.1, reach: 44, windup: 0.55 },
   }),
   teahatter: mob({
     id: 'teahatter', name: 'Tea Party Hatter', level: 17, hp: 820, atk: 64, def: 14, acc: 50, eva: 6, exp: 320, gold: [7, 14],
-    speed: 44, w: 28, h: 36, art: 'teahatter', drops: [{ id: 'moonlit_ribbon', chance: 0.1 }, { id: 'orange_potion', chance: 0.3 }, { gear: 'hat', chance: 0.01 }],
+    speed: 44, w: 28, h: 36, art: 'teahatter', drops: [{ id: 'moonlit_ribbon', chance: 0.1 }, { id: 'orange_potion', chance: 0.3 }],
     fight: { every: 1.9, reach: 32, windup: 0.4, range: 120 },
   }),
   waltzrondo: mob({
@@ -326,12 +326,12 @@ export const MOBS = {
   }),
   seahorseknight: mob({
     id: 'seahorseknight', name: 'Seahorse Squire', level: 21, hp: 1500, atk: 84, def: 30, acc: 62, eva: 4, exp: 540, gold: [9, 19],
-    speed: 40, w: 26, h: 42, art: 'seahorseknight', drops: [{ id: 'sea_glass', chance: 0.4 }, { id: 'tide_pearl', chance: 0.08 }, { gear: 'gloves', chance: 0.01 }],
+    speed: 40, w: 26, h: 42, art: 'seahorseknight', drops: [{ id: 'sea_glass', chance: 0.4 }, { id: 'tide_pearl', chance: 0.08 }],
     fight: { every: 2.1, reach: 46, windup: 0.5 },
   }),
   anglerlamp: mob({
     id: 'anglerlamp', name: 'Lantern Angler', level: 22, hp: 1200, atk: 92, def: 18, acc: 64, eva: 8, exp: 560, gold: [9, 20],
-    speed: 48, w: 34, h: 30, art: 'anglerlamp', drops: [{ id: 'wisp_flame', chance: 0.35 }, { id: 'tide_pearl', chance: 0.08 }, { gear: 'hat', chance: 0.01 }],
+    speed: 48, w: 34, h: 30, art: 'anglerlamp', drops: [{ id: 'wisp_flame', chance: 0.35 }, { id: 'tide_pearl', chance: 0.08 }],
     fight: { every: 2, reach: 36, windup: 0.55 },
   }),
   pearldiver: mob({
@@ -341,7 +341,7 @@ export const MOBS = {
   }),
   stardancer: mob({
     id: 'stardancer', name: 'Star Twirler', level: 20, hp: 1000, atk: 78, def: 18, acc: 60, eva: 10, exp: 440, gold: [8, 17],
-    speed: 50, w: 26, h: 32, art: 'stardancer', drops: [{ id: 'sea_glass', chance: 0.3 }, { id: 'tide_pearl', chance: 0.06 }, { gear: 'shoes', chance: 0.01 }],
+    speed: 50, w: 26, h: 32, art: 'stardancer', drops: [{ id: 'sea_glass', chance: 0.3 }, { id: 'tide_pearl', chance: 0.06 }],
     fight: { every: 1.7, reach: 38, windup: 0.35 },
   }),
   octoscholar: mob({
@@ -378,32 +378,32 @@ export const MOBS = {
   // ---------- Clockwork Carnival (levels 25-30, docs/design/clockwork-carnival.md) ----------
   musicballerina: mob({
     id: 'musicballerina', name: 'Music Box Ballerina', level: 25, hp: 1500, atk: 98, def: 22, acc: 74, eva: 10, exp: 700, gold: [11, 23],
-    speed: 34, w: 26, h: 38, art: 'musicballerina', drops: [{ id: 'music_cylinder', chance: 0.35 }, { id: 'golden_ticket', chance: 0.06 }, { gear: 'shoes', chance: 0.01 }],
+    speed: 34, w: 26, h: 38, art: 'musicballerina', drops: [{ id: 'music_cylinder', chance: 0.35 }, { id: 'golden_ticket', chance: 0.06 }],
     fight: { every: 1.9, reach: 40, windup: 0.4 },
   }),
   tindrummer: mob({
     id: 'tindrummer', name: 'Tin Drummer', level: 26, hp: 1800, atk: 104, def: 30, acc: 76, eva: 5, exp: 800, gold: [12, 24],
-    speed: 38, w: 26, h: 34, art: 'tindrummer', drops: [{ id: 'tin_spring', chance: 0.4 }, { id: 'golden_ticket', chance: 0.08 }, { gear: 'gloves', chance: 0.01 }],
+    speed: 38, w: 26, h: 34, art: 'tindrummer', drops: [{ id: 'tin_spring', chance: 0.4 }, { id: 'golden_ticket', chance: 0.08 }],
     fight: { every: 2.1, reach: 36, windup: 0.5, range: 140 },
   }),
   jackbox: mob({
     id: 'jackbox', name: 'Jack-in-the-Box', level: 26, hp: 1650, atk: 108, def: 24, acc: 76, eva: 8, exp: 780, gold: [12, 24],
-    speed: 46, w: 26, h: 44, art: 'jackbox', drops: [{ id: 'tin_spring', chance: 0.4 }, { id: 'golden_ticket', chance: 0.08 }, { gear: 'cape', chance: 0.01 }],
+    speed: 46, w: 26, h: 44, art: 'jackbox', drops: [{ id: 'tin_spring', chance: 0.4 }, { id: 'golden_ticket', chance: 0.08 }],
     fight: { every: 2, reach: 48, windup: 0.5 },
   }),
   marionette: mob({
     id: 'marionette', name: 'Marionette Dancer', level: 27, hp: 1600, atk: 110, def: 22, acc: 78, eva: 12, exp: 820, gold: [12, 25],
-    speed: 44, w: 28, h: 34, art: 'marionette', drops: [{ id: 'music_cylinder', chance: 0.3 }, { id: 'golden_ticket', chance: 0.08 }, { gear: 'bottom', chance: 0.01 }],
+    speed: 44, w: 28, h: 34, art: 'marionette', drops: [{ id: 'music_cylinder', chance: 0.3 }, { id: 'golden_ticket', chance: 0.08 }],
     fight: { every: 1.7, reach: 40, windup: 0.35 },
   }),
   teddystrong: mob({
     id: 'teddystrong', name: 'Teddy Strongbear', level: 28, hp: 2600, atk: 122, def: 36, acc: 78, eva: 3, exp: 1050, gold: [14, 28],
-    speed: 30, w: 36, h: 38, art: 'teddystrong', drops: [{ id: 'tin_spring', chance: 0.5 }, { id: 'golden_ticket', chance: 0.12 }, { gear: 'top', chance: 0.01 }],
+    speed: 30, w: 36, h: 38, art: 'teddystrong', drops: [{ id: 'tin_spring', chance: 0.5 }, { id: 'golden_ticket', chance: 0.12 }],
     fight: { every: 2.4, reach: 52, windup: 0.7 },
   }),
   balloonseller: mob({
     id: 'balloonseller', name: 'Balloon Seller', level: 25, hp: 1400, atk: 96, def: 18, acc: 74, eva: 12, exp: 680, gold: [11, 22],
-    speed: 40, w: 28, h: 36, art: 'balloonseller', drops: [{ id: 'golden_ticket', chance: 0.08 }, { id: 'white_potion', chance: 0.3 }, { gear: 'hat', chance: 0.01 }],
+    speed: 40, w: 28, h: 36, art: 'balloonseller', drops: [{ id: 'golden_ticket', chance: 0.08 }, { id: 'white_potion', chance: 0.3 }],
     fight: { every: 2.2, reach: 30, windup: 0.45, range: 160 },
   }),
   leonie: mob({
@@ -429,7 +429,7 @@ export const MOBS = {
   // ---------- Star Observatory (levels 30-35, docs/design/star-observatory.md) ----------
   cometcourier: mob({
     id: 'cometcourier', name: 'Comet Courier', level: 30, hp: 2300, atk: 124, def: 30, acc: 90, eva: 14, exp: 1150, gold: [15, 30],
-    speed: 56, w: 26, h: 30, art: 'cometcourier', drops: [{ id: 'stardust', chance: 0.35 }, { id: 'astral_shard', chance: 0.06 }, { gear: 'shoes', chance: 0.01 }],
+    speed: 56, w: 26, h: 30, art: 'cometcourier', drops: [{ id: 'stardust', chance: 0.35 }, { id: 'astral_shard', chance: 0.06 }],
     fight: { every: 1.8, reach: 42, windup: 0.4 },
   }),
   nebulawitch: mob({
@@ -439,17 +439,17 @@ export const MOBS = {
   }),
   starcarto: mob({
     id: 'starcarto', name: 'Telescope Crab', level: 31, hp: 2400, atk: 128, def: 30, acc: 92, eva: 10, exp: 1220, gold: [16, 31],
-    speed: 40, w: 32, h: 30, art: 'starcarto', drops: [{ id: 'astral_shard', chance: 0.08 }, { id: 'white_potion', chance: 0.3 }, { id: 'encore_rose', chance: 0.06 }, { gear: 'gloves', chance: 0.01 }],
+    speed: 40, w: 32, h: 30, art: 'starcarto', drops: [{ id: 'astral_shard', chance: 0.08 }, { id: 'white_potion', chance: 0.3 }, { id: 'encore_rose', chance: 0.06 }],
     fight: { every: 2.1, reach: 30, windup: 0.45, range: 150 },
   }),
   mothlibrarian: mob({
     id: 'mothlibrarian', name: 'Moth Librarian', level: 32, hp: 2500, atk: 134, def: 28, acc: 94, eva: 12, exp: 1300, gold: [16, 32],
-    speed: 44, w: 28, h: 34, art: 'mothlibrarian', drops: [{ id: 'moth_scale', chance: 0.4 }, { id: 'astral_shard', chance: 0.08 }, { gear: 'cape', chance: 0.01 }],
+    speed: 44, w: 28, h: 34, art: 'mothlibrarian', drops: [{ id: 'moth_scale', chance: 0.4 }, { id: 'astral_shard', chance: 0.08 }],
     fight: { every: 1.9, reach: 38, windup: 0.4 },
   }),
   meteorgolem: mob({
     id: 'meteorgolem', name: 'Meteor Golem', level: 33, hp: 3800, atk: 150, def: 46, acc: 94, eva: 4, exp: 1600, gold: [18, 35],
-    speed: 30, w: 32, h: 34, art: 'meteorgolem', drops: [{ id: 'meteorite', chance: 0.45 }, { id: 'astral_shard', chance: 0.12 }, { gear: 'top', chance: 0.01 }],
+    speed: 30, w: 32, h: 34, art: 'meteorgolem', drops: [{ id: 'meteorite', chance: 0.45 }, { id: 'astral_shard', chance: 0.12 }],
     fight: { every: 2.4, reach: 46, windup: 0.65 },
   }),
   geminighosts: mob({
@@ -486,32 +486,32 @@ export const MOBS = {
   // ---------- Candy Volcano (levels 35-40, docs/design/candy-volcano.md) ----------
   gummybear: mob({
     id: 'gummybear', name: 'Gummy Bear Brawler', level: 35, hp: 3600, atk: 160, def: 40, acc: 110, eva: 10, exp: 1700, gold: [20, 38],
-    speed: 48, w: 24, h: 34, art: 'gummybear', drops: [{ id: 'taffy_twist', chance: 0.4 }, { id: 'sugar_gem', chance: 0.06 }, { gear: 'gloves', chance: 0.01 }],
+    speed: 48, w: 24, h: 34, art: 'gummybear', drops: [{ id: 'taffy_twist', chance: 0.4 }, { id: 'sugar_gem', chance: 0.06 }],
     fight: { every: 1.7, reach: 40, windup: 0.35 },
   }),
   cottoncandy: mob({
     id: 'cottoncandy', name: 'Cotton Candy Sheep', level: 35, hp: 3000, atk: 156, def: 30, acc: 112, eva: 16, exp: 1650, gold: [20, 37],
-    speed: 42, w: 30, h: 30, art: 'cottoncandy', drops: [{ id: 'taffy_twist', chance: 0.35 }, { id: 'sugar_gem', chance: 0.06 }, { gear: 'cape', chance: 0.01 }],
+    speed: 42, w: 30, h: 30, art: 'cottoncandy', drops: [{ id: 'taffy_twist', chance: 0.35 }, { id: 'sugar_gem', chance: 0.06 }],
     fight: { every: 2.2, reach: 30, windup: 0.5, range: 160 },
   }),
   lollipopwitch: mob({
     id: 'lollipopwitch', name: 'Lollipop Witch', level: 36, hp: 3200, atk: 166, def: 32, acc: 114, eva: 12, exp: 1750, gold: [20, 38],
-    speed: 36, w: 24, h: 36, art: 'lollipopwitch', drops: [{ id: 'sugar_gem', chance: 0.08 }, { id: 'mana_elixir', chance: 0.3 }, { gear: 'hat', chance: 0.01 }],
+    speed: 36, w: 24, h: 36, art: 'lollipopwitch', drops: [{ id: 'sugar_gem', chance: 0.08 }, { id: 'mana_elixir', chance: 0.3 }],
     fight: { every: 2.3, reach: 30, windup: 0.55, range: 170 },
   }),
   peppermint: mob({
     id: 'peppermint', name: 'Peppermint Spinner', level: 37, hp: 3400, atk: 170, def: 34, acc: 116, eva: 16, exp: 1850, gold: [21, 40],
-    speed: 52, w: 28, h: 30, art: 'peppermint', drops: [{ id: 'sugar_gem', chance: 0.08 }, { id: 'taffy_twist', chance: 0.3 }, { gear: 'shoes', chance: 0.01 }],
+    speed: 52, w: 28, h: 30, art: 'peppermint', drops: [{ id: 'sugar_gem', chance: 0.08 }, { id: 'taffy_twist', chance: 0.3 }],
     fight: { every: 1.8, reach: 44, windup: 0.35 },
   }),
   chocoknight: mob({
     id: 'chocoknight', name: 'Chocolate Knight', level: 38, hp: 5200, atk: 184, def: 56, acc: 116, eva: 4, exp: 2300, gold: [24, 45],
-    speed: 32, w: 26, h: 36, art: 'chocoknight', drops: [{ id: 'cocoa_bean', chance: 0.45 }, { id: 'sugar_gem', chance: 0.12 }, { gear: 'top', chance: 0.01 }],
+    speed: 32, w: 26, h: 36, art: 'chocoknight', drops: [{ id: 'cocoa_bean', chance: 0.45 }, { id: 'sugar_gem', chance: 0.12 }],
     fight: { every: 2.3, reach: 50, windup: 0.6 },
   }),
   jellyninja: mob({
     id: 'jellyninja', name: 'Jelly Bean Ninja', level: 37, hp: 3100, atk: 172, def: 30, acc: 120, eva: 20, exp: 1800, gold: [21, 39],
-    speed: 60, w: 24, h: 34, art: 'jellyninja', drops: [{ id: 'sugar_gem', chance: 0.08 }, { id: 'white_potion', chance: 0.3 }, { gear: 'bottom', chance: 0.01 }],
+    speed: 60, w: 24, h: 34, art: 'jellyninja', drops: [{ id: 'sugar_gem', chance: 0.08 }, { id: 'white_potion', chance: 0.3 }],
     fight: { every: 2, reach: 30, windup: 0.4, range: 150 },
   }),
   toffee: mob({
@@ -535,17 +535,17 @@ export const MOBS = {
   // ---------- Dream Theatre (levels 40-45, docs/design/dream-theatre.md) ----------
   understudy: mob({
     id: 'understudy', name: 'Understudy Ghost', level: 40, hp: 4200, atk: 190, def: 40, acc: 126, eva: 16, exp: 2400, gold: [24, 44],
-    speed: 46, w: 26, h: 34, art: 'understudy', drops: [{ id: 'script_page', chance: 0.4 }, { id: 'encore_rose', chance: 0.06 }, { gear: 'cape', chance: 0.01 }],
+    speed: 46, w: 26, h: 34, art: 'understudy', drops: [{ id: 'script_page', chance: 0.4 }, { id: 'encore_rose', chance: 0.06 }],
     fight: { every: 1.9, reach: 42, windup: 0.4 },
   }),
   chorusgirl: mob({
     id: 'chorusgirl', name: 'Chorus Flamingo', level: 41, hp: 4400, atk: 196, def: 40, acc: 128, eva: 18, exp: 2500, gold: [25, 45],
-    speed: 54, w: 24, h: 42, art: 'chorusgirl', drops: [{ id: 'sequin', chance: 0.4 }, { id: 'encore_rose', chance: 0.06 }, { gear: 'shoes', chance: 0.01 }],
+    speed: 54, w: 24, h: 42, art: 'chorusgirl', drops: [{ id: 'sequin', chance: 0.4 }, { id: 'encore_rose', chance: 0.06 }],
     fight: { every: 1.7, reach: 44, windup: 0.35 },
   }),
   stagehand: mob({
     id: 'stagehand', name: 'Stagehand Mole', level: 40, hp: 4000, atk: 192, def: 46, acc: 124, eva: 14, exp: 2350, gold: [24, 43],
-    speed: 58, w: 26, h: 34, art: 'stagehand', drops: [{ id: 'script_page', chance: 0.3 }, { id: 'white_potion', chance: 0.3 }, { id: 'encore_rose', chance: 0.06 }, { gear: 'gloves', chance: 0.01 }],
+    speed: 58, w: 26, h: 34, art: 'stagehand', drops: [{ id: 'script_page', chance: 0.3 }, { id: 'white_potion', chance: 0.3 }, { id: 'encore_rose', chance: 0.06 }],
     fight: { every: 1.8, reach: 38, windup: 0.35 },
   }),
   primadonna: mob({
@@ -555,7 +555,7 @@ export const MOBS = {
   }),
   paperdragon: mob({
     id: 'paperdragon', name: 'Paper Dragon', level: 43, hp: 6400, atk: 212, def: 52, acc: 130, eva: 10, exp: 3100, gold: [28, 50],
-    speed: 50, w: 44, h: 36, art: 'paperdragon', drops: [{ id: 'script_page', chance: 0.4 }, { id: 'encore_rose', chance: 0.12 }, { gear: 'hat', chance: 0.01 }],
+    speed: 50, w: 44, h: 36, art: 'paperdragon', drops: [{ id: 'script_page', chance: 0.4 }, { id: 'encore_rose', chance: 0.12 }],
     fight: { every: 2.1, reach: 54, windup: 0.5 },
   }),
   prompter: mob({
@@ -584,22 +584,22 @@ export const MOBS = {
   // ---------- Sky Whale's Back (levels 45-50, docs/design/sky-whale.md) ----------
   kiterider: mob({
     id: 'kiterider', name: 'Kite Rider', level: 45, hp: 5200, atk: 220, def: 46, acc: 140, eva: 20, exp: 3300, gold: [28, 50],
-    speed: 60, w: 28, h: 30, art: 'kiterider', drops: [{ id: 'sky_silk', chance: 0.4 }, { id: 'sky_scale', chance: 0.06 }, { gear: 'cape', chance: 0.01 }],
+    speed: 60, w: 28, h: 30, art: 'kiterider', drops: [{ id: 'sky_silk', chance: 0.4 }, { id: 'sky_scale', chance: 0.06 }],
     fight: { every: 1.8, reach: 44, windup: 0.35 },
   }),
   shepherdess: mob({
     id: 'shepherdess', name: 'Cloud Shepherd', level: 45, hp: 5400, atk: 216, def: 46, acc: 138, eva: 14, exp: 3300, gold: [28, 50],
-    speed: 44, w: 26, h: 34, art: 'shepherdess', drops: [{ id: 'sky_silk', chance: 0.45 }, { id: 'sky_scale', chance: 0.06 }, { gear: 'top', chance: 0.01 }],
+    speed: 44, w: 26, h: 34, art: 'shepherdess', drops: [{ id: 'sky_silk', chance: 0.45 }, { id: 'sky_scale', chance: 0.06 }],
     fight: { every: 1.9, reach: 46, windup: 0.4 },
   }),
   gunner: mob({
     id: 'gunner', name: 'Sky Pirate Gunner', level: 46, hp: 5000, atk: 226, def: 44, acc: 144, eva: 14, exp: 3400, gold: [29, 53],
-    speed: 46, w: 26, h: 34, art: 'gunner', drops: [{ id: 'sky_scale', chance: 0.08 }, { id: 'white_potion', chance: 0.3 }, { id: 'encore_rose', chance: 0.06 }, { gear: 'gloves', chance: 0.01 }],
+    speed: 46, w: 26, h: 34, art: 'gunner', drops: [{ id: 'sky_scale', chance: 0.08 }, { id: 'white_potion', chance: 0.3 }, { id: 'encore_rose', chance: 0.06 }],
     fight: { every: 2.3, reach: 30, windup: 0.55, range: 190 },
   }),
   barnacleknight: mob({
     id: 'barnacleknight', name: 'Barnacle Knight', level: 48, hp: 8200, atk: 240, def: 66, acc: 144, eva: 6, exp: 4200, gold: [31, 56],
-    speed: 32, w: 30, h: 36, art: 'barnacleknight', drops: [{ id: 'barnacle_shell', chance: 0.45 }, { id: 'sky_scale', chance: 0.12 }, { gear: 'hat', chance: 0.01 }],
+    speed: 32, w: 30, h: 36, art: 'barnacleknight', drops: [{ id: 'barnacle_shell', chance: 0.45 }, { id: 'sky_scale', chance: 0.12 }],
     fight: { every: 2.3, reach: 56, windup: 0.6 },
   }),
   harpist: mob({
@@ -609,7 +609,7 @@ export const MOBS = {
   }),
   monk: mob({
     id: 'monk', name: 'Feather Monk', level: 47, hp: 6000, atk: 230, def: 52, acc: 148, eva: 18, exp: 3800, gold: [30, 54],
-    speed: 52, w: 26, h: 34, art: 'monk', drops: [{ id: 'sky_silk', chance: 0.4 }, { id: 'sky_scale', chance: 0.1 }, { gear: 'bottom', chance: 0.01 }],
+    speed: 52, w: 26, h: 34, art: 'monk', drops: [{ id: 'sky_silk', chance: 0.4 }, { id: 'sky_scale', chance: 0.1 }],
     fight: { every: 1.7, reach: 46, windup: 0.35 },
   }),
   gale: mob({

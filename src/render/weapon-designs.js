@@ -12,6 +12,12 @@
 // gauntlet itself draws nothing in the hand.
 
 import { R, E, T, F, mix } from './pixel.js';
+import { SPROUT_DESIGNS } from './weapon-sprout.js';
+import { ROOTWOOD_DESIGNS } from './weapon-rootwood.js';
+import { TIDEPEARL_DESIGNS } from './weapon-tidepearl.js';
+import { STARGLASS_DESIGNS } from './weapon-starglass.js';
+import { DREAMSILK_DESIGNS } from './weapon-dreamsilk.js';
+import { REGALIA_DESIGNS } from './weapon-regalia.js';
 
 const WHITE = '#ffffff';
 const GOLD = '#ffd66b';
@@ -1023,13 +1029,21 @@ function scaled(d, [sx, sy]) {
   };
   const pt = ([x, y]) => [x * sx, y * sy];
   const a = {};
-  for (const [k, v] of Object.entries(d.a)) a[k] = k === 'string' ? { ...v, x: v.x * sx, h: v.h * sy } : k === 'blade' ? v.map((y) => y * sy) : k === 'runes' ? [v[0] * sx, v[1] * sy, v[2] * sy] : pt(v);
+  // (A word, like the ladder's `fx`, passes through as it is.)
+  for (const [k, v] of Object.entries(d.a)) a[k] = typeof v === 'string' ? v : k === 'string' ? { ...v, x: v.x * sx, h: v.h * sy } : k === 'blade' ? v.map((y) => y * sy) : k === 'runes' ? [v[0] * sx, v[1] * sy, v[2] * sy] : k === 'stars' ? v.map((p) => p && pt(p)) : k === 'parts' ? Object.fromEntries(Object.entries(v).map(([n, p]) => [n, { ...p, pivot: pt(p.pivot) }])) : pt(v);
   return { shapes: d.shapes.map(sh), blade: d.blade.map((y) => y * sy), reach: d.reach.map(pt), a };
 }
 
 // (The dagger items: one sample dagger for every tier for now, see `dagger`.)
 const DRAW = { sword, axe, spear, dagger, wand, staff, bow, crossbow };
-export const DESIGNS = Object.fromEntries(Object.entries(DRAW).map(([k, f]) => [k, (m, t, frame) => scaled(f(m, t, frame), CHUNK[k] ?? [1, 1])]));
+// The Island Journey ladder (docs/design/island-journey-gear.md) for the seven job weapons, by
+// tier: the Lv 5 starters (tier 0) are the Sprout weapons, the Lv 10 ones (tier 2) the Rootwood
+// ones, the Lv 20 ones (tier 4) the Tidepearl ones, the Lv 30 ones (tier 6) the Starglass ones, the Lv 40 ones (tier 8) the Dreamsilk ones, the Lv 50 ones (tier 10) the Regalia (the Mochi Queen's). The wand and the gloves keep their plain starters; other tiers are the retired designs,
+// still drawn for the Cash covers and the NPCs who carry them.
+const LADDER = { 0: SPROUT_DESIGNS, 2: ROOTWOOD_DESIGNS, 4: TIDEPEARL_DESIGNS, 6: STARGLASS_DESIGNS, 8: DREAMSILK_DESIGNS, 10: REGALIA_DESIGNS };
+// (A retired Cash weapon cover keeps the old design of its tier: its look carries `legacy`.)
+export const isLadderDesign = (type, tier) => Boolean(LADDER[tier]?.[type]);
+export const DESIGNS = Object.fromEntries(Object.entries(DRAW).map(([k, f]) => [k, (m, t, frame) => scaled(LADDER[t]?.[k] && !m?.legacy ? LADDER[t][k](m) : f(m, t, frame), CHUNK[k] ?? [1, 1])]));
 
 // ---------- The glove ----------
 //

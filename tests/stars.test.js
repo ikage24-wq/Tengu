@@ -17,7 +17,7 @@ const run = (w, seconds) => {
   for (let i = 0; i < seconds * 60; i++) updateWorld(w, DT, idle);
 };
 
-function thief(level = 25, weapon = 'gauntlet_20') {
+function thief(level = 25, weapon = 'gauntlet_0') {
   const c = createCharacter('T', {});
   gainExp(c, 4e6);
   c.level = level;
@@ -35,12 +35,14 @@ test('a gauntlet throws its own stars, better the higher its level, and they add
   assert.equal(gauntletStars(0).key, 'pebble');
   assert.equal(gauntletStars(20).key, 'mint');
   assert.equal(gauntletStars(85).key, 'starlight');
-  const c = thief(25, 'gauntlet_20');
-  assert.equal(thrownStars(c).key, 'mint');
+  // (The plain gauntlet is the only one left since the weapons were retired, 2026-11-16: it throws
+  // the first stars.)
+  const c = thief(25, 'gauntlet_0');
+  assert.equal(thrownStars(c).key, 'pebble');
   const withStars = computeStats(c).watk;
-  const plain = ITEMS.gauntlet_20.stats.watk;
-  assert.ok(withStars >= plain + 19, 'the stars add their attack');
-  c.equipment.weapon = makeEquip('dagger_20', {});
+  const plain = ITEMS.gauntlet_0.stats.watk;
+  assert.ok(withStars >= plain + 15, 'the stars add their attack');
+  c.equipment.weapon = makeEquip('dagger_0', {});
   assert.equal(thrownStars(c), null, 'only a gauntlet throws stars');
 });
 

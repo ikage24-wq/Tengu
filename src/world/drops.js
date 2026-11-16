@@ -23,8 +23,9 @@ function potionFor(level, rng) {
 // and half the time it's something for the hero's own job (`fits`), so drops stay useful.
 function gearFor(level, rng, fits = null) {
   // (Never above the level cap: the gear past 50 is only kept for old saves. Bench-made pieces
-  // never drop: they're crafted, data/crafting.js.)
-  const near = Object.values(ITEMS).filter((d) => d.type === 'equip' && !d.legacy && !d.crafted && d.reqLevel <= Math.min(level + 5, MAX_LEVEL) && d.reqLevel >= level - 15);
+  // never drop: they're crafted, data/crafting.js. No weapons since the gear was retired,
+  // 2026-11-16: the plain ones are bought at Pip's. A keepsake of yours alone never drops.)
+  const near = Object.values(ITEMS).filter((d) => d.type === 'equip' && !d.legacy && !d.crafted && !d.untradable && d.slot !== 'weapon' && d.reqLevel <= Math.min(level + 5, MAX_LEVEL) && d.reqLevel >= level - 15);
   // One-of-a-kind outfits and endgame weapons are the rare part of the pool.
   const special = near.filter((d) => d.unique || d.endgame);
   let pool = special.length && rng() < 0.15 ? special : near.filter((d) => !d.unique && !d.endgame);
@@ -37,7 +38,9 @@ function gearFor(level, rng, fits = null) {
 // hero's own job's when `fits` knows it.
 function signatureGear(slot, level, rng, fits = null) {
   const L = Math.min(level, MAX_LEVEL);
-  const ids = slot === 'earring' ? [jobGearId(null, slot, L)] : GEAR_FAMILIES.map((f) => jobGearId(f, slot, L));
+  // (Only what's still gear: the armour was retired, 2026-11-16, so it's earrings now.)
+  const ids = (slot === 'earring' ? [jobGearId(null, slot, L)] : GEAR_FAMILIES.map((f) => jobGearId(f, slot, L))).filter((id) => ITEMS[id]?.type === 'equip');
+  if (!ids.length) return null;
   const own = fits ? ids.filter((id) => fits(ITEMS[id])) : [];
   const pool = own.length ? own : ids;
   return pool[Math.floor(rng() * pool.length)];
@@ -53,6 +56,7 @@ export function rollLoot(def, rng = Math.random, fits = null) {
     // A signature prize by slot (`gear`): the hero's own job's piece for it at the monster's level
     // (or, with no hero to fit, any job's). Like all signature gear it is Rare or better.
     const id = d.gear ? signatureGear(d.gear, def.level, rng, fits) : d.id;
+    if (!id) continue;
     // Equipment on a monster's own list (like a boss's signature weapon) drops as rolled gear.
     if (ITEMS[id].type === 'equip') loot.push({ kind: 'item', inst: makeEquip(id, { rng, rarity: Math.max(1, rollRarity(rng)), variant: 'roll' }) });
     else loot.push({ kind: 'item', id: d.id, qty: d.qty ?? 1 });

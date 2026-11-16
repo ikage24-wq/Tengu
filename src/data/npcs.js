@@ -5,11 +5,11 @@
 
 import { SWEETHEARTS } from './sweethearts.js';
 import { COSTUME_LOOKS } from './outfits-costume.js';
-import { ITEMS, GEAR_FAMILIES, JOB_SLOTS, jobGearId } from './items.js';
+import { ITEMS, GEAR_FAMILIES, JOB_SLOTS, jobGearId, ARMOUR_FAMILIES, armourId } from './items.js';
 import { JOBS } from './jobs.js';
 
-const armor = (t) => ['hat', 'top', 'bottom', 'shoes', 'gloves', 'cape', 'earring'].map((s) => `${s}_${t}`);
-// Weapons of the given types from level `from` to `to`. Higher ones and the endgame designs only drop.
+// Weapons of the given types from level `from` to `to`. (Since the gear was retired, 2026-11-16,
+// only the plain level-0 weapon of each type is still gear: shops sell `arms(0, 0, ...)`.)
 const arms = (from, to, ...types) => types.flatMap((w) => Array.from({ length: (to - from) / 5 + 1 }, (_, i) => `${w}_${from + i * 5}`));
 // An outfit from one job's set at a level, for NPCs to show off.
 const outfit = (family, level, variant = null) => Object.fromEntries(JOB_SLOTS.map((s) => [s, { id: jobGearId(family, s, level), variant }]));
@@ -37,9 +37,7 @@ export const NPCS = {
     building: 'goods', sign: "Pip's Goods",
     look: { hairStyle: 'pixie', hairColor: '#f5c95c', skinTone: '#fbd9bf', eyeColor: '#7a4a2b', outfitColor: '#ffd66b', eyeStyle: 'round', face: 'grin' },
     greeting: 'Tonics, starter gear, and homeward scrolls. Take a look!',
-    shop: ['fishing_rod', 'red_potion', 'orange_potion', 'blue_potion', 'return_scroll', ...arms(0, 10, 'sword', 'axe', 'spear', 'wand', 'staff', 'bow', 'crossbow', 'dagger', 'gauntlet'), ...armor(0), 'ear_5', 'ear_10'],
-    // Job gear for your own job (a Novice sees every job's starter set), by level.
-    stockLevels: [5, 10],
+    shop: ['fishing_rod', 'red_potion', 'orange_potion', 'blue_potion', 'return_scroll', ...arms(0, 0, 'sword', 'axe', 'spear', 'wand', 'staff', 'bow', 'crossbow', 'dagger', 'gauntlet'), ...ARMOUR_FAMILIES.flatMap((f) => JOB_SLOTS.map((s) => armourId(5, f, s))), 'earring_0', 'ear_5', 'ear_10'],
     quests: ['snail_trouble', 'pip_parcel', 'pip_souvenirs', 'pip_lunch'],
   },
   lulu: {
@@ -53,14 +51,14 @@ export const NPCS = {
   },
   brann: {
     id: 'brann', name: 'Brann', title: 'Warrior Instructor', role: 'instructor', family: 'warrior',
-    building: 'warrior', sign: 'Warrior Hall', gear: { weapon: { id: 'sword_50', variant: 'crimson' }, ...outfit('warrior', 50) },
+    building: 'warrior', sign: 'Warrior Hall', gear: { weapon: { id: 'sword_50', variant: 'crimson', legacy: true }, ...outfit('warrior', 50) },
     quests: ['brann_stand', 'brann_ruins', 'brann_howl', 'warrior_trial', 'daily_crag'], showJob: 'stormwall',
     look: { hairStyle: 'cloud', hairColor: '#7a5238', skinTone: '#e7b48f', eyeColor: '#3b3650', outfitColor: '#ff9b7a', eyeStyle: 'round', face: 'cool' },
     greeting: 'Welcome to Ember Crag! Strong arms, steady heart. Warriors stand in front so others can shine.',
   },
   elowen: {
     id: 'elowen', name: 'Elowen', title: 'Mage Instructor', role: 'instructor', family: 'mage',
-    building: 'mage', sign: 'Mage Tower', gear: { weapon: { id: 'staff_50' }, ...outfit('mage', 50) },
+    building: 'mage', sign: 'Mage Tower', gear: { weapon: { id: 'staff_50', legacy: true }, ...outfit('mage', 50) },
     look: { hairStyle: 'hime', hairColor: '#e9ebfa', skinTone: '#fff0e6', eyeColor: '#9b6cff', outfitColor: '#b8a6ff', eyeStyle: 'sleepy', face: 'smug' },
     quests: ['story_invite', 'story_waltz', 'story_3_1', 'story_3_2', 'story_6_1', 'story_6_2', 'story_6_3', 'elowen_dance', 'elowen_wisps', 'elowen_foxfire', 'elowen_lid', 'mage_trial'], showJob: 'maelstrom',
     greeting: 'Moonleaf Grove welcomes you. Listen: the water under the roots is always moving. A Tide Mage learns to move with it, to strike with it, and to mend with it. Shall we begin?',
@@ -69,7 +67,7 @@ export const NPCS = {
     // (The Archer Instructor again from 2026-11-16, for the Sunfeather; her archer's armour went with
     // the old line, so she keeps her outdoorsy hiker's look with her bow.)
     id: 'kestrel', name: 'Kestrel', title: 'Archer Instructor', role: 'instructor', family: 'archer', showJob: 'sunfeather',
-    building: 'archer', sign: 'Archer Lodge', gear: { weapon: { id: 'bow_50' }, top: { id: 'look_casual_flannel_top' }, bottom: { id: 'look_casual_cargo_bottom' }, shoes: { id: 'look_casual_hightops_shoes' }, gloves: { id: 'look_casual_fingerless_gloves' } },
+    building: 'archer', sign: 'Archer Lodge', gear: { weapon: { id: 'bow_50', legacy: true }, top: { id: 'look_casual_flannel_top' }, bottom: { id: 'look_casual_cargo_bottom' }, shoes: { id: 'look_casual_hightops_shoes' }, gloves: { id: 'look_casual_fingerless_gloves' } },
     quests: ['kestrel_targets', 'kestrel_canyon', 'kestrel_glade', 'kestrel_wings', 'archer_trial'],
     look: { hairStyle: 'ponytail', hairColor: '#9be08f', skinTone: '#fbd9bf', eyeColor: '#2f6b3a', outfitColor: '#8ee3a6', eyeStyle: 'round', face: 'cat' },
     greeting: 'Sprout Village is archer country! Keep your distance and your aim true.',
@@ -78,7 +76,7 @@ export const NPCS = {
     // (The Thief Instructor again from 2026-11-16, for the Moon Moth; her dancer's armour went with
     // the old line, so she keeps her stage outfit, still a performer.)
     id: 'vex', name: 'Vex', title: 'Thief Instructor', role: 'instructor', family: 'thief',
-    building: 'thief', sign: 'Moth Hall', gear: { weapon: { id: 'dagger_50', variant: 'dark' }, top: { id: 'look_casual_idol_top' }, bottom: { id: 'look_casual_tennis_bottom' }, shoes: { id: 'look_casual_platforms_shoes' }, gloves: { id: 'look_casual_fingerless_gloves' } },
+    building: 'thief', sign: 'Moth Hall', gear: { weapon: { id: 'dagger_50', variant: 'dark', legacy: true }, top: { id: 'look_casual_idol_top' }, bottom: { id: 'look_casual_tennis_bottom' }, shoes: { id: 'look_casual_platforms_shoes' }, gloves: { id: 'look_casual_fingerless_gloves' } },
     quests: ['story_4_1', 'story_4_2', 'story_4_3', 'vex_rumor', 'vex_shadows', 'vex_stage', 'vex_miko', 'vex_festival', 'thief_trial'],
     showJob: 'moonmoth',
     look: { hairStyle: 'swoop', hairColor: '#3b3650', skinTone: '#c98e66', eyeColor: '#e8a23c', outfitColor: '#5d5285', eyeStyle: 'sleepy', face: 'smug' },
@@ -101,18 +99,16 @@ export const NPCS = {
     polish: true,
     building: 'forge', sign: "Tora's Forge", gear: { weapon: { id: 'axe_25' }, gloves: { id: 'warrior_gloves_25' } },
     look: { hairStyle: 'wolf', hairColor: '#ff8a5c', skinTone: '#e7b48f', eyeColor: '#c0462f', outfitColor: '#7a5238', outfit: 'overalls', eyeStyle: 'round', face: 'grin' },
-    greeting: 'Fresh off the anvil! Blades, axes, spears, and armor that can take a hit.',
-    shop: ['red_potion', 'orange_potion', 'white_potion', 'blue_potion', 'return_scroll', ...arms(10, 30, 'sword', 'axe', 'spear'), 'ear_15', 'ear_20', 'ear_25'],
-    stockLevels: [10, 30],
+    greeting: "Rootwood from the Hollow! Blades, axes and spears grown, not forged. Bring me anything you wear and I'll polish it too.",
+    shop: ['red_potion', 'orange_potion', 'white_potion', 'blue_potion', 'return_scroll', 'sword_10', 'axe_10', 'spear_10', ...JOB_SLOTS.map((s) => armourId(10, 'warrior', s)), 'sword_20', 'axe_20', 'spear_20', ...JOB_SLOTS.map((s) => armourId(20, 'warrior', s)), 'sword_30', 'axe_30', 'spear_30', ...JOB_SLOTS.map((s) => armourId(30, 'warrior', s)), 'sword_40', 'axe_40', 'spear_40', ...JOB_SLOTS.map((s) => armourId(40, 'warrior', s)), 'sword_50', 'axe_50', 'spear_50', ...JOB_SLOTS.map((s) => armourId(50, 'warrior', s)), 'ear_15', 'ear_20', 'ear_25'],
   },
   nim: {
     id: 'nim', name: 'Nim', title: 'Spell Shop', role: 'shop',
     quests: ['story_charts', 'story_astraea', 'story_5_1', 'story_5_2', 'story_5_3', 'nim_chimes', 'nim_candles', 'nim_cape', 'nim_stardust'],
     building: 'magic', sign: "Nim's Spells",
     look: { hairStyle: 'hime', hairColor: '#b9a7ff', skinTone: '#fff0e6', eyeColor: '#5aa8ff', outfitColor: '#c9b8ff', outfit: 'sweater', eyeStyle: 'star', face: 'shy' },
-    greeting: 'W-welcome... wands, staves, moonberry tonics, and charmed earrings. Mind the floating candles.',
-    shop: ['blue_potion', 'mana_elixir', 'red_potion', 'orange_potion', 'return_scroll', ...arms(25, 50, 'wand', 'staff'), 'ear_30', 'ear_35', 'ear_40', 'ear_45', 'ear_50'],
-    stockLevels: [30, 50],
+    greeting: 'W-welcome... moonberry tonics, charmed earrings, and a Rootwood staff, if the amber likes you. Mind the floating candles.',
+    shop: ['blue_potion', 'mana_elixir', 'red_potion', 'orange_potion', 'return_scroll', 'staff_10', ...JOB_SLOTS.map((s) => armourId(10, 'mage', s)), 'staff_20', ...JOB_SLOTS.map((s) => armourId(20, 'mage', s)), 'staff_30', ...JOB_SLOTS.map((s) => armourId(30, 'mage', s)), 'staff_40', ...JOB_SLOTS.map((s) => armourId(40, 'mage', s)), 'staff_50', ...JOB_SLOTS.map((s) => armourId(50, 'mage', s)), 'ear_30', 'ear_35', 'ear_40', 'ear_45', 'ear_50'],
   },
   rook: {
     id: 'rook', name: 'Captain Rook', title: 'Harbor Captain', role: 'guide',
@@ -281,13 +277,14 @@ export const NPCS = {
     storage: 'Storage is free. I KNOW. Shocking. Your other heroes can take it out too.',
     building: 'cart', sign: "Marlo's Wares",
     look: { hairStyle: 'fluffybob', hairColor: '#ffb38a', skinTone: '#fbd9bf', eyeColor: '#1f7a6b', outfitColor: '#ffd66b', eyeStyle: 'sparkle', face: 'sassy' },
-    greeting: 'Finest goods on the coast. Bows, blades, armor, and tonics!',
+    greeting: 'Finest goods on the coast. Rootwood bows and knives, tonics, trinkets and the comfiest clothes!',
     shop: ['fishing_rod', 
       'red_potion', 'orange_potion', 'white_potion', 'blue_potion', 'mana_elixir', 'return_scroll',
-      ...arms(15, 40, 'bow', 'crossbow', 'dagger', 'gauntlet'),
+      'bow_10', 'crossbow_10', 'dagger_10', ...['thief', 'archer'].flatMap((f) => JOB_SLOTS.map((s) => armourId(10, f, s))), 'bow_20', 'crossbow_20', 'dagger_20', ...['thief', 'archer'].flatMap((f) => JOB_SLOTS.map((s) => armourId(20, f, s))),
+      'bow_30', 'crossbow_30', 'dagger_30', ...['thief', 'archer'].flatMap((f) => JOB_SLOTS.map((s) => armourId(30, f, s))), 'bow_40', 'crossbow_40', 'dagger_40', ...['thief', 'archer'].flatMap((f) => JOB_SLOTS.map((s) => armourId(40, f, s))),
+      'bow_50', 'crossbow_50', 'dagger_50', ...['thief', 'archer'].flatMap((f) => JOB_SLOTS.map((s) => armourId(50, f, s))),
       'hoodie', 'kitty_ears', 'sailor_top',
     ],
-    stockLevels: [15, 40],
     quests: ['marlo_scales', 'tusk_trader', 'marlo_key', 'marlo_spa'],
   },
 };

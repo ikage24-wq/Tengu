@@ -5,7 +5,7 @@
 import { QUESTS } from '../data/quests.js';
 import { NPCS } from '../data/npcs.js';
 import { MOBS } from '../data/mobs.js';
-import { ITEMS, JOB_SLOTS, GEAR_FAMILIES, jobGearId } from '../data/items.js';
+import { ITEMS } from '../data/items.js';
 import { MAPS } from '../data/maps.js';
 import { JOBS } from '../data/jobs.js';
 import { createCharacter, wornGear } from '../core/character.js';
@@ -113,7 +113,6 @@ export function installKits3(t) {
     const odd = [];
     for (const n of shops) {
       const stock = new Set([...(n.shop ?? []), ...(n.secretShop ?? [])]);
-      if (n.stockLevels) for (let L = n.stockLevels[0]; L <= n.stockLevels[1]; L += 5) for (const f of GEAR_FAMILIES) for (const s of JOB_SLOTS) stock.add(jobGearId(f, s, L));
       for (const id of stock) {
         const def = ITEMS[id];
         if (!def) {
