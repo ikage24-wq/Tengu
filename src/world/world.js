@@ -26,8 +26,8 @@ import { createBody, stepBody, knockBack, groundAt } from './physics.js';
 import { createSpawner, tickSpawner, updateMob, hitMob, mobBox, MOB_ATTACK_GAP } from './mobs.js';
 import { rollLoot, spawnDrops, updateDrops, dropInReach, dropFromHero } from './drops.js';
 import { cast, castBlocker, weaponElement, hurtProcs, blockOnHit, drinkBlood, tickLater } from './combat.js';
-import { tickMelee, faithGuard, addAim, hasRage, hasFaith, hasVolt, overcharged, eyeOfStorm, hasBulwark, barrageRelease, BARRAGE_WALK } from './melee.js';
-import { healAround, hasTide, hasDepth, hasMoon, springDrop, hasGale, hasMoth } from './melee.js';
+import { tickMelee, faithGuard, addAim, hasRage, hasFaith, hasVolt, overcharged, eyeOfStorm, hasBulwark, barrageRelease, BARRAGE_WALK, THIEF_FEET } from './melee.js';
+import { healAround, hasTide, hasDepth, hasMoon, springDrop, hasGale, hasMoth, hasUmbra, addMark, flutterJump } from './melee.js';
 import { JOBS, nextJobs } from '../data/jobs.js';
 import { celebrateLevels } from './levelup.js';
 import { DUNGEONS } from '../data/dungeons.js';
@@ -910,11 +910,17 @@ export function updateWorld(world, dt, input) {
   if (world.riding && (attackKeys.some((k) => pressed.has(k) || held.has(k)) || Object.entries(char.hotkeys).some(([code, b]) => b?.skill && pressed.has(code)))) dismount(world, { hop: false });
   const bodyIntent = rooted ? { ...intent, left: false, right: false, jump: false } : intent;
   const wasX = world.body.x;
+  // (In the air already before this step: a fresh Jump there is a thief's flutter jump.)
+  const aloft = !world.body.onGround && !world.body.rope;
   // Riding: the mount's own trick.
   const ride = rideStep(world, bodyIntent, pressed, dt);
   if (!(pressed.has('ArrowUp') && interact(world))) {
-    stepBody(world.body, world.map, bodyIntent, dt, { ...world.stats, wade: WADE, ...(streaming ? { speed: world.stats.speed * BARRAGE_WALK } : null), ...(ride ?? null), rider: true });
+    // (A thief is light on her feet: she runs THIEF_FEET faster. Yours only: the crowd's thieves walk
+    // with their groups.)
+    const feet = JOBS[char.job]?.family === 'thief' ? THIEF_FEET : 1;
+    stepBody(world.body, world.map, bodyIntent, dt, { ...world.stats, speed: world.stats.speed * feet, wade: WADE, ...(streaming ? { speed: world.stats.speed * BARRAGE_WALK * feet } : null), ...(ride ?? null), rider: true });
   }
+  if (aloft && !world.riding && !rooted && (pressed.has('Space') || pressed.has('AltLeft') || pressed.has('AltRight'))) flutterJump(world, intent);
   rideAfter(world);
   world.stillTime = Math.abs(world.body.x - wasX) < 0.01 && world.body.onGround ? world.stillTime + dt : 0;
   // What the controls ask for (attacks read Up for a launcher), and how long you've been running
@@ -998,9 +1004,11 @@ export function updateWorld(world, dt, input) {
       if (h.basic) springDrop(world);
       // The Cleric's heal bombs mend the party round where they burst, carrying their element.
       if (h.mend) healAround(world, m.x, m.y, h.mend, 220, true, h.el);
+      // (The Eclipse's Eye of the Night marks what it lands on.)
+      if (h.mark) addMark(world, m, h.mark);
       drinkBlood(world, h.damage);
     }
-    if (!hasTide(world.char) && !hasDepth(world.char) && !hasMoon(world.char) && !hasVolt(world.char) && !hasGale(world.char) && !hasBulwark(world.char) && !hasMoth(world.char)) world.fx.push({ kind: 'spark', via: h.via, weapon: world.stats.weaponType, path: hasRage(world.char) ? 'rage' : hasFaith(world.char) ? 'holy' : hasVolt(world.char) ? 'thunder' : null, dir: world.body.facing, x: m.x, y: m.y - (m.air ?? 0) - m.def.h / 2, t: 0, dur: h.big ? 0.32 : 0.25, crit: h.crit || h.big, seed: Math.random() });
+    if (!hasTide(world.char) && !hasDepth(world.char) && !hasMoon(world.char) && !hasVolt(world.char) && !hasGale(world.char) && !hasBulwark(world.char) && !hasMoth(world.char) && !hasUmbra(world.char)) world.fx.push({ kind: 'spark', via: h.via, weapon: world.stats.weaponType, path: hasRage(world.char) ? 'rage' : hasFaith(world.char) ? 'holy' : hasVolt(world.char) ? 'thunder' : null, dir: world.body.facing, x: m.x, y: m.y - (m.air ?? 0) - m.def.h / 2, t: 0, dur: h.big ? 0.32 : 0.25, crit: h.crit || h.big, seed: Math.random() });
     world.juice.push({ type: 'hit', x: m.x, y: m.y - m.def.h / 2, crit: h.crit, big: h.big, party: Boolean(h.party), element: h.party ? null : h.element ?? weaponElement(char), dir: Math.sign(m.x - h.fromX) || 1, via: h.via, school: h.school, weapon: h.weapon, mob: m.def.id, boss: Boolean(m.def.boss) });
     // Endgame weapons add an elemental impact on every hit.
     const element = h.party ? null : h.element ?? weaponElement(char);

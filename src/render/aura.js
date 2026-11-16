@@ -202,6 +202,24 @@ function mothAura(ctx, x, y, t, s, k, layer) {
   }
 }
 
+// Umbra (the Eclipse): gold flecks sinking round her as it builds, a dark moth with gold crescents
+// circling her from halfway; full (Totality), a small eclipse burns behind her head.
+function umbraAura(ctx, x, y, t, s, k, layer) {
+  if (layer === 'back') {
+    if (k >= 1) fxSprite(ctx, 'celechalo', x - 4 * s, y - 62 * s, { t, scale: s * 0.55 });
+    return;
+  }
+  if (k > 0.5) {
+    const a = t * 1.7;
+    fxSprite(ctx, 'celecmoth', x + Math.cos(a) * 18 * s, y - (32 + 5 * Math.sin(t * 2.2)) * s + Math.sin(a) * 4 * s, { t, flip: Math.sin(a) > 0, scale: s * 0.28, alpha: Math.min(1, (k - 0.5) * 3) });
+  }
+  if (k <= 0.2) return;
+  for (let i = 0; i < 2 + Math.floor(k * 3); i++) {
+    const u = (t * 0.35 + i / 5) % 1;
+    fxSprite(ctx, 'celecdust', x + (i - 2) * 9 * s + Math.sin(t * 1.4 + i) * 4 * s, y - (54 - 48 * u) * s, { t: t + i * 0.3, scale: s * 0.5, alpha: Math.min(1, (k - 0.2) * 2) * Math.min(1, u * 5) * (1 - u) });
+  }
+}
+
 // Depth (the Maelstrom): glowing motes of the deep rise round her as it builds, more the deeper it
 // runs; full (the Abyss), a small vortex turns at her feet.
 function depthAura(ctx, x, y, t, s, k, layer) {
@@ -268,7 +286,7 @@ function voltAura(ctx, x, y, t, s, k, layer) {
 }
 
 // Draws a combat aura: `kind` a job's gauge (see COMBAT), `k` how full (0-1).
-const COMBAT = { volt: voltAura, gale: galeAura, bulwark: bulwarkAura, rage: rageAura, faith: faithAura, tide: tideAura, moon: moonAura, depth: depthAura, moondust: mothAura };
+const COMBAT = { volt: voltAura, gale: galeAura, bulwark: bulwarkAura, rage: rageAura, faith: faithAura, tide: tideAura, moon: moonAura, depth: depthAura, moondust: mothAura, umbra: umbraAura };
 export function drawCombatAura(ctx, kind, layer, x, y, time, scale, k, dir = 1) {
   if (k <= 0.02 || !COMBAT[kind]) return;
   ctx.save();

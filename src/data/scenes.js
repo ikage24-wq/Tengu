@@ -73,6 +73,7 @@ export const QUEST_SCENES = {
   brann_forge: { done: 'brann_forge_done' },
   brann_howl: { done: 'brann_howl_done' },
   mage_trial: { accept: 'trial_elowen', done: 'trial_elowen_done' },
+  thief_trial: { accept: 'trial_vex', done: 'trial_vex_done' },
   kestrel_targets: { done: 'kestrel_targets_done' },
   kestrel_canyon: { done: 'kestrel_canyon_done' },
   kestrel_glade: { done: 'kestrel_glade_done' },
@@ -972,6 +973,14 @@ export const SIDE_SCENES = {
     { together: [{ emote: 'tora', kind: 'heart', dur: 1.8 }, { emote: 'player', kind: 'heart', dur: 1.8 }, { jump: 'vex', height: 14 }] },
     { who: 'vex', text: "Light feet, big finish, {name}. Come find me at level 30 for your trial. Tonight, though? We dance.", mood: 'happy' },
   ],
+  trial_vex: [
+    { who: 'vex', text: "Twenty Lamias at the Hot Spring Pools. They watch eyes, not feet, so keep your eyes down and your feet quiet." },
+    { who: 'vex', text: "Get behind them. Always behind. A moth at your back is a moth you never saw.", mood: 'happy' },
+  ],
+  trial_vex_done: [
+    { who: 'vex', text: "Twenty, and not one of them turned round in time. Look at you. Not a scratch on the front of you.", mood: 'happy' },
+    { who: 'vex', text: "Now the fun part. When the moon slides over the sun, everything goes dark but a ring of fire. That's the Eclipse. Want it?" },
+  ],
   trial_elowen: [
     { who: 'elowen', text: "Twenty Gem Mimics in the Crystal Cave. They look like treasure. They are not treasure. They bite." },
     { who: 'elowen', text: "Hit them with all the sea you've got. Hard things teach you how hard the water can be.", mood: 'happy' },
@@ -1786,6 +1795,11 @@ export const JOB_SCENES = {
     { card: 'A New Path', sub: 'Thunderguard' },
     { who: 'brann', text: "Welcome to Ember Crag, {name}. Feel that? The air's gone tight around you. That's the storm, and it's yours now. You stand in front, and you let it out on whatever comes.", mood: 'happy' },
     { who: 'brann', text: "Wind it up, let it go, take the hits and send them back as thunder. Now go strike something that deserves it! Not me." },
+  ],
+  eclipse: [
+    { card: 'A New Path', sub: 'Eclipse' },
+    { who: 'vex', text: "There. Feel the light go out? Your moths came back with gold on their wings. That's the corona, {name}. It's yours now.", mood: 'happy' },
+    { who: 'vex', text: "Mark them, get behind them, and when the sky goes dark, finish it. And bow after. Always bow after." },
   ],
   moonmoth: [
     { card: 'A New Path', sub: 'Moon Moth' },

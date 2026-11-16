@@ -35,7 +35,7 @@ import { moveAt } from '../render/moves.js';
 import { strikePose } from '../render/hero.js';
 import { wornGear } from '../core/character.js';
 import { launchWisp } from './foxwheel.js';
-import { GRAVITY, groundAt } from './physics.js';
+import { GRAVITY, groundAt, JUMP_SPEED } from './physics.js';
 import { provoke, healMembers, groupOf, isUp, hpOf, maxHpOf, giveBuff, reviveMember } from './dungeon.js';
 
 // The longest freeze a blow gets; anything heavier turns the rest into slow motion.
@@ -187,15 +187,36 @@ const TIDE_POOL = {
 // cut. Her pool: two stabs, one from each hand; a rising cut that flicks them up; a little flutter
 // up and a diving cross-cut. Every cut that lands leaves her mark (`mmhit`): wing dust and a moth.
 const moth = (st) => ({ school: 'moth', fx: 'mmhit', ...st });
+// (A stab from the off hand a beat after the front dagger's cut: no smear, her mark only.)
+const off = (st) => moth({ reach: 62, h: 50, knock: 25, ...st });
+// (Quick, with a hit from each dagger every step: the player's call, 2026-11-16, "kinda slow to
+// be a thief". The same damage as one slower hit, split between the two.)
 PATH_COMBOS.moonmoth = [
-  { move: 'mmflick', dur: 0.32, step: 8, strikes: [moth({ at: 0.45, pct: 88, reach: 64, h: 52, knock: 35, arc: [-110, 200], thick: 6 })] },
-  { move: 'mmspin', dur: 0.44, step: 10, strikes: [moth({ at: 0.34, pct: 50, reach: 64, h: 58, around: true, targets: 3, knock: 20, arc: [-120, 330], thick: 6 }), moth({ at: 0.66, pct: 54, reach: 64, h: 58, around: true, targets: 3, knock: 60, arc: [60, -330], thick: 6 })] },
-  { move: 'mmwings', dur: 0.62, step: 12, finisher: true, strikes: [moth({ at: 0.56, pct: 175, reach: 80, h: 70, targets: 3, knock: 220, launch: 120, arc: [-150, 300], thick: 10, burst: 'mmwings', burstAt: 0.3, burstDur: 0.6, big: true, stop: 0.08, shake: 2 })] },
+  { move: 'mmflick', dur: 0.24, step: 8, strikes: [moth({ at: 0.45, pct: 48, reach: 64, h: 52, knock: 20, arc: [-110, 200], thick: 6 }), off({ at: 0.63, pct: 44, knock: 35 })] },
+  { move: 'mmspin', dur: 0.32, step: 10, strikes: [moth({ at: 0.34, pct: 50, reach: 64, h: 58, around: true, targets: 3, knock: 20, arc: [-120, 330], thick: 6 }), moth({ at: 0.66, pct: 54, reach: 64, h: 58, around: true, targets: 3, knock: 60, arc: [60, -330], thick: 6 })] },
+  { move: 'mmwings', dur: 0.44, step: 12, finisher: true, strikes: [moth({ at: 0.53, pct: 80, reach: 80, h: 70, targets: 3, knock: 60, arc: [-150, 300], thick: 10 }), moth({ at: 0.6, pct: 98, reach: 80, h: 70, targets: 3, knock: 220, launch: 120, burst: 'mmwings', burstAt: 0.3, burstDur: 0.6, big: true, stop: 0.08, shake: 2 })] },
 ];
 const MOTH_POOL = {
-  twin: { move: 'mmtwin', dur: 0.36, step: 10, strikes: [moth({ at: 0.3, pct: 44, reach: 62, h: 46, knock: 15, pierce: true }), moth({ at: 0.64, pct: 48, reach: 62, h: 46, knock: 45, pierce: true })] },
-  hook: { move: 'mmhook', dur: 0.42, step: 8, strikes: [moth({ at: 0.46, pct: 98, reach: 66, h: 72, targets: 2, knock: 30, launch: 300, arc: [100, -215], thick: 7 })] },
-  swoop: { move: 'mmswoop', dur: 0.64, step: 30, carry: 0.55, finisher: true, strikes: [moth({ at: 0.62, pct: 168, reach: 76, h: 66, targets: 3, knock: 200, arc: [-160, 320], thick: 10, burst: 'mmcloud', burstAt: 0.35, burstDur: 0.55, big: true, stop: 0.07, shake: 2 })] },
+  twin: { move: 'mmtwin', dur: 0.26, step: 10, strikes: [moth({ at: 0.3, pct: 44, reach: 62, h: 46, knock: 15, pierce: true }), moth({ at: 0.64, pct: 48, reach: 62, h: 46, knock: 45, pierce: true })] },
+  hook: { move: 'mmhook', dur: 0.3, step: 8, strikes: [moth({ at: 0.46, pct: 54, reach: 66, h: 72, targets: 2, knock: 30, launch: 300, arc: [100, -215], thick: 7 }), off({ at: 0.68, pct: 46, h: 72, targets: 2, knock: 20, launch: 160 })] },
+  swoop: { move: 'mmswoop', dur: 0.46, step: 30, carry: 0.55, finisher: true, strikes: [moth({ at: 0.6, pct: 78, reach: 76, h: 66, targets: 3, knock: 80, arc: [-160, 320], thick: 10 }), moth({ at: 0.66, pct: 92, reach: 76, h: 66, targets: 3, knock: 200, burst: 'mmcloud', burstAt: 0.35, burstDur: 0.55, big: true, stop: 0.07, shake: 2 })] },
+};
+
+// The Eclipse (docs/design/eclipse.md), the Moon Moth's damage path: eclipse violet and corona
+// gold. Her own string: a low reverse-grip stab, both daggers raked across, and both driven into one
+// point as a gold eye spot opens on it (a mark). Her pool: a feint one way and a cut the other; a
+// rising rake that lifts them; a spin throwing a ring of corona round her (marking all it hits).
+const ecl = (st) => ({ school: 'eclipse', fx: 'echit', ...st });
+const eoff = (st) => ecl({ reach: 62, h: 50, knock: 25, ...st });
+PATH_COMBOS.eclipse = [
+  { move: 'ecjab', dur: 0.22, step: 10, strikes: [ecl({ at: 0.44, pct: 50, reach: 62, h: 46, knock: 20, pierce: true }), eoff({ at: 0.66, pct: 46, knock: 30 })] },
+  { move: 'ecslice', dur: 0.3, step: 8, strikes: [ecl({ at: 0.3, pct: 52, reach: 66, h: 52, targets: 2, knock: 15, arc: [-100, 190], thick: 6 }), ecl({ at: 0.62, pct: 56, reach: 66, h: 52, targets: 2, knock: 50, arc: [100, -200], thick: 6 })] },
+  { move: 'ecpierce', dur: 0.42, step: 14, finisher: true, strikes: [ecl({ at: 0.53, pct: 85, reach: 70, h: 56, targets: 2, knock: 40, pierce: true }), ecl({ at: 0.58, pct: 100, reach: 70, h: 56, targets: 2, knock: 200, mark: 1, burst: 'eceyeopen', burstAt: 0.75, burstDur: 0.55, big: true, stop: 0.09, shake: 2 })] },
+];
+const ECL_POOL = {
+  feint: { move: 'ecfeint', dur: 0.28, step: 10, strikes: [ecl({ at: 0.6, pct: 52, reach: 64, h: 50, knock: 25, arc: [-110, 200], thick: 7 }), eoff({ at: 0.78, pct: 48, knock: 40 })] },
+  rake: { move: 'ecrake', dur: 0.32, step: 8, strikes: [ecl({ at: 0.44, pct: 50, reach: 66, h: 72, targets: 2, knock: 20, launch: 220, arc: [100, -215], thick: 8 }), ecl({ at: 0.5, pct: 52, reach: 66, h: 72, targets: 2, knock: 30, launch: 300 })] },
+  turn: { move: 'ecturn', dur: 0.44, step: 8, finisher: true, strikes: [ecl({ at: 0.4, pct: 70, reach: 76, h: 66, around: true, targets: 4, knock: 40, arc: [-140, 330], thick: 10 }), ecl({ at: 0.6, pct: 82, reach: 76, h: 66, around: true, targets: 4, knock: 180, mark: 1, burst: 'ecring', burstAt: 0, burstDur: 0.5, big: true, stop: 0.07, shake: 2 })] },
 };
 
 // The Maelstrom (docs/design/maelstrom.md): the deep sea out of her staff. Her own string: a spear
@@ -344,6 +365,11 @@ export const PATH_VARIANTS = {
     [PATH_COMBOS.maelstrom[1], DEEP_POOL.cross, DEEP_POOL.slash],
     [PATH_COMBOS.maelstrom[2], DEEP_POOL.beam, DEEP_POOL.slam],
   ],
+  eclipse: [
+    [PATH_COMBOS.eclipse[0], ECL_POOL.feint],
+    [PATH_COMBOS.eclipse[1], ECL_POOL.rake],
+    [PATH_COMBOS.eclipse[2], ECL_POOL.turn],
+  ],
   moonmoth: [
     [PATH_COMBOS.moonmoth[0], MOTH_POOL.twin],
     [PATH_COMBOS.moonmoth[1], MOTH_POOL.hook],
@@ -483,17 +509,34 @@ const STORM_COMMANDS = {
 // moths and re-forms past them, turned round (while still moths) to cut what she passed (a
 // backstab on anything facing away), untouchable as moths.
 const MOTH_COMMANDS = {
-  up: { move: 'mmrise', dur: 0.46, step: 8, strikes: [moth({ at: 0.3, pct: 62, reach: 66, h: 90, targets: 3, knock: 20, launch: 320, hop: 300, arc: [80, -175], thick: 7 }), moth({ at: 0.6, pct: 70, reach: 66, h: 110, targets: 3, knock: 30, launch: 420, hop: 260, arc: [60, -150], thick: 8, stop: 0.04 })] },
+  up: { move: 'mmrise', dur: 0.36, step: 8, strikes: [moth({ at: 0.3, pct: 62, reach: 66, h: 90, targets: 3, knock: 20, launch: 320, hop: 300, arc: [80, -175], thick: 7 }), moth({ at: 0.6, pct: 70, reach: 66, h: 110, targets: 3, knock: 30, launch: 420, hop: 260, arc: [60, -150], thick: 8, stop: 0.04 })] },
   air: [
-    { move: 'mmaircut', dur: 0.34, hang: true, strikes: [moth({ at: 0.45, pct: 88, reach: 66, h: 80, targets: 2, knock: 15, launch: 150, arc: [-115, 205], thick: 7 })] },
-    { move: 'mmaircut', dur: 0.4, hang: true, finisher: true, strikes: [moth({ at: 0.45, pct: 112, reach: 72, h: 86, targets: 3, knock: 140, launch: 120, arc: [-140, 260], thick: 9, burst: 'mmcloud', burstAt: 0.45, burstDur: 0.5, big: true, stop: 0.05, shake: 1 })] },
+    { move: 'mmaircut', dur: 0.26, hang: true, strikes: [moth({ at: 0.45, pct: 48, reach: 66, h: 80, targets: 2, knock: 15, launch: 150, arc: [-115, 205], thick: 7 }), off({ at: 0.63, pct: 44, h: 80, targets: 2, knock: 15, launch: 120 })] },
+    { move: 'mmaircut', dur: 0.3, hang: true, finisher: true, strikes: [moth({ at: 0.45, pct: 58, reach: 72, h: 86, targets: 3, knock: 60, launch: 100, arc: [-140, 260], thick: 9 }), off({ at: 0.63, pct: 60, reach: 72, h: 86, targets: 3, knock: 140, launch: 120, burst: 'mmcloud', burstAt: 0.45, burstDur: 0.5, big: true, stop: 0.05, shake: 1 })] },
   ],
-  dash: { move: 'mmstep', dur: 0.46, step: 96, carry: 0.7, guard: 0.4, moths: [0.12, 0.5], strikes: [
+  dash: { move: 'mmstep', dur: 0.36, step: 96, carry: 0.7, guard: 0.4, moths: [0.12, 0.5], strikes: [
     { at: 0.08, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, gauge: 0, burst: 'mmcloud', burstAt: 0, burstDur: 0.45 },
     { at: 0.46, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, gauge: 0, turn: true },
     moth({ at: 0.62, pct: 135, reach: 120, h: 56, targets: 4, knock: 120, turn: true, backstab: 1.3, burst: 'mmcloud', burstAt: 0, burstDur: 0.45, big: true, stop: 0.05 }),
   ] },
 };
+
+// The Eclipse's command moves: up + attack, a rising cut through a ring of gold; in the air, two
+// dark cuts that hold her up; out of a run, she sinks into a disc of shadow, slips past the line
+// hidden and comes out turned round, stabbing what she passed (a backstab).
+const ECL_COMMANDS = {
+  up: { move: 'ecrise', dur: 0.36, step: 8, strikes: [ecl({ at: 0.32, pct: 62, reach: 66, h: 90, targets: 3, knock: 20, launch: 320, hop: 300, arc: [80, -175], thick: 7 }), ecl({ at: 0.6, pct: 72, reach: 66, h: 110, targets: 3, knock: 30, launch: 420, hop: 260, arc: [60, -150], thick: 8, burst: 'ecring', burstAt: 0.3, burstDur: 0.4, stop: 0.04 })] },
+  air: [
+    { move: 'ecaircut', dur: 0.26, hang: true, strikes: [ecl({ at: 0.45, pct: 48, reach: 66, h: 80, targets: 2, knock: 15, launch: 150, arc: [-115, 205], thick: 7 }), ecl({ at: 0.5, pct: 44, reach: 66, h: 80, targets: 2, knock: 15, launch: 120 })] },
+    { move: 'ecaircut', dur: 0.3, hang: true, finisher: true, strikes: [ecl({ at: 0.45, pct: 56, reach: 72, h: 86, targets: 3, knock: 60, launch: 100, arc: [-140, 260], thick: 9 }), ecl({ at: 0.5, pct: 60, reach: 72, h: 86, targets: 3, knock: 140, launch: 120, mark: 1, big: true, stop: 0.05, shake: 1 })] },
+  ],
+  dash: { move: 'ecslip', dur: 0.36, step: 100, carry: 0.7, guard: 0.4, hide: [0.12, 0.46], strikes: [
+    { at: 0.08, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, gauge: 0, burst: 'ecportal', burstAt: 0, burstDur: 0.45 },
+    { at: 0.44, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, gauge: 0, turn: true },
+    ecl({ at: 0.6, pct: 140, reach: 120, h: 56, targets: 4, knock: 120, turn: true, backstab: 1.3, burst: 'ecportal', burstAt: 0, burstDur: 0.45, big: true, stop: 0.05 }),
+  ] },
+};
+
 // The warrior paths fight in a blade's reach and put their weight into it.
 const warriorPath = (char) => hasVolt(char) || hasGale(char) || hasBulwark(char) || hasRage(char) || hasFaith(char);
 // How long you must have been running for an attack to become a dash attack.
@@ -577,7 +620,7 @@ const MOONDUST_HOLD = 5;
 const MOONDUST_DRAIN = 10;
 export const MOONDUST_CRIT = 0.2;
 export const MOTH_NIP = 40; // % of a basic hit: the Full Moon moth's nip
-export const hasMoth = (char) => jobChain(char.job).includes('moonmoth');
+export const hasMoth = (char) => jobChain(char.job).includes('moonmoth') && !hasUmbra(char);
 export function addMoondust(world, n) {
   if (!hasMoth(world.char) || n <= 0) return;
   world.moondust = Math.min(MOONDUST_MAX, (world.moondust ?? 0) + n);
@@ -585,11 +628,98 @@ export function addMoondust(world, n) {
 }
 export const fullMoon = (world) => hasMoth(world.char) && (world.moondust ?? 0) >= MOONDUST_MAX;
 // Her crits: how much more often she crits for how full the Moondust runs, and the stats a hit is
-// rolled with.
+// rolled with (the Eclipse's Umbra makes them land harder instead).
 export const moondustCrit = (world) => (hasMoth(world.char) ? (MOONDUST_CRIT * Math.min(MOONDUST_MAX, world.moondust ?? 0)) / MOONDUST_MAX : 0);
-const critStats = (world, stats) => (moondustCrit(world) > 0 ? { ...stats, critRate: (stats.critRate ?? 0) + moondustCrit(world) } : stats);
+function critStats(world, stats) {
+  const rate = moondustCrit(world);
+  const harder = umbraCritDamage(world);
+  return rate || harder ? { ...stats, critRate: (stats.critRate ?? 0) + rate, critDamage: (stats.critDamage ?? 0) + harder } : stats;
+}
+// Umbra: the Eclipse's gauge (docs/design/eclipse.md). Her hits build it, backstabs and hits on
+// marked monsters twice as fast; it fades once the fighting stops. The fuller it runs, the harder
+// her crits land (up to UMBRA_CRITDMG more). Full (Totality): every blow she lands is a crit, and
+// Total Eclipse is ready.
+export const UMBRA_MAX = 100;
+const UMBRA_HOLD = 5;
+const UMBRA_DRAIN = 9;
+export const UMBRA_CRITDMG = 0.4;
+export const hasUmbra = (char) => jobChain(char.job).includes('eclipse');
+export function addUmbra(world, n) {
+  if (!hasUmbra(world.char) || n <= 0) return;
+  world.umbra = Math.min(UMBRA_MAX, (world.umbra ?? 0) + n);
+  world.umbraAt = world.now;
+}
+export const totality = (world) => hasUmbra(world.char) && (world.umbra ?? 0) >= UMBRA_MAX;
+export const umbraCritDamage = (world) => (hasUmbra(world.char) ? (UMBRA_CRITDMG * Math.min(UMBRA_MAX, world.umbra ?? 0)) / UMBRA_MAX : 0);
+function tickUmbra(world, dt) {
+  if (world.umbra > 0 && world.now - (world.umbraAt ?? 0) > UMBRA_HOLD) world.umbra = Math.max(0, world.umbra - UMBRA_DRAIN * dt);
+}
+// Her marks: a gold eye spot on a monster (up to MARK_MAX, for MARK_SECS since the last one), drawn
+// riding on it (`ecmark`). Umbral Edge spends them, Total Eclipse sets them all off.
+export const MARK_MAX = 3;
+const MARK_SECS = 8;
+export const marksOf = (world, m) => (m && m.markUntil > world.now ? m.marks ?? 0 : 0);
+export function addMark(world, m, n = 1) {
+  if (!m || m.hp <= 0 || !n) return;
+  m.marks = Math.min(MARK_MAX, marksOf(world, m) + n);
+  m.markUntil = world.now + MARK_SECS;
+  // (One drawing per monster, kept alive as long as the marks are.)
+  if (m.markFx && m.markFx.t < m.markFx.dur && world.fx.includes(m.markFx)) m.markFx.dur = m.markFx.t + MARK_SECS + 0.3;
+  else {
+    m.markFx = { kind: 'ecmark', mob: m, x: m.x, y: m.y, h: m.def.h, t: 0, dur: MARK_SECS + 0.3 };
+    world.fx.push(m.markFx);
+  }
+}
+export function clearMarks(m) {
+  if (!m) return;
+  m.marks = 0;
+  m.markUntil = 0;
+}
+// Total Eclipse's last blow: every mark on the monsters round her goes off, `pct` of a hit for each.
+function detonateMarks(world, s) {
+  const { body } = world;
+  let i = 0;
+  for (const m of world.mobs) {
+    const n = marksOf(world, m);
+    if (!n || m.hp <= 0 || Math.abs(m.x - body.x) > s.reach || Math.abs(m.y - body.y) > s.h) continue;
+    clearMarks(m);
+    world.fx.push({ kind: 'ecpop', school: 'eclipse', x: m.x, y: m.y, h: m.def.h, mob: m, n, dir: s.dir, t: -i * 0.04, dur: 0.6, seed: Math.random() });
+    shotHit(world, { pct: s.detonateAll * n, scale: s.scale ?? 100, key: s.key, dir: Math.sign(m.x - body.x) || s.dir, knock: 160, launch: 140, big: true, gauge: 0 }, m, 0.05 + i * 0.04, i);
+    i++;
+  }
+}
+// Shadow Step: out of a disc of shadow behind the nearest monster ahead (within `behind` px),
+// turned to face its back. The blow then lands on it from behind.
+function shadowBehind(world, s) {
+  const { body } = world;
+  const m = world.mobs.filter((k) => k.hp > 0 && (k.x - body.x) * s.dir > 0 && Math.abs(k.x - body.x) <= s.behind && Math.abs(k.y - body.y) < 80).sort((a, b) => Math.abs(a.x - body.x) - Math.abs(b.x - body.x))[0];
+  if (!m) return s;
+  world.fx.push({ kind: 'ecportal', school: 'eclipse', x: body.x, y: body.y, dir: s.dir, t: 0, dur: 0.45 });
+  const half = (m.def.w ?? 30) / 2;
+  body.x = Math.max(body.w / 2, Math.min(world.map.width - body.w / 2, m.x + s.dir * (half + 12)));
+  body.facing = -s.dir;
+  // (Its blow lands on that one monster, the one she stepped behind.)
+  return { ...s, dir: -s.dir, only: m };
+}
 function tickMoondust(world, dt) {
   if (world.moondust > 0 && world.now - (world.moondustAt ?? 0) > MOONDUST_HOLD) world.moondust = Math.max(0, world.moondust - MOONDUST_DRAIN * dt);
+}
+// The thieves' flutter jump (the player's call, 2026-11-16: quick feet): Jump pressed again in the
+// air springs her on the way she holds (or faces) with a little hop up, in a burst of her moths. Once
+// each time she leaves the floor; a landing or a rope gives it back. (Mostly forward: a tall second
+// jump reached the ledges the maps' ropes and climbs are there for.)
+export const FLUTTER = { up: 0.2, on: 340 };
+export function flutterJump(world, intent) {
+  const { body, char } = world;
+  if (JOBS[char.job]?.family !== 'thief' || world.flutterUsed || body.onGround || body.rope || world.dead) return false;
+  world.flutterUsed = true;
+  const dir = intent.left ? -1 : intent.right ? 1 : body.facing;
+  body.facing = dir;
+  body.vy = -JUMP_SPEED * FLUTTER.up;
+  body.vx = dir * FLUTTER.on;
+  world.fx.push({ kind: hasUmbra(char) ? 'ecflutter' : 'mmflutter', x: body.x, y: body.y, dir, t: 0, dur: 0.45, seed: Math.random() });
+  world.juice.push({ type: 'flutter', x: body.x, y: body.y });
+  return true;
 }
 // Full Moon: a moth flutters off a basic attack that lands and nips the nearest monster the blow
 // didn't catch (else the one it hit), at most one every quarter second.
@@ -819,6 +949,8 @@ function staticShell(world, fromX) {
 // (No path fights this way now: the Beastmaster's Wild Hunt went with Snow wolf. The engine stays for
 // a path that wants it.)
 export const BARRAGE_WALK = 0.35;
+// How much faster a thief runs (the player's call, 2026-11-16: quick feet).
+export const THIEF_FEET = 1.1;
 const BARRAGE_HANG = 0.6;
 const BARRAGE_FINISH_AFTER = 0.6;
 // How far it has built (`heat`): 0 to 1 over the ramp, then on to 1.6 over FRENZY more seconds,
@@ -960,7 +1092,7 @@ const STAR_SHOTS = new Set(['star', 'moonstar']);
 // A job's own gauge: which one the character has ('volt', 'gale', 'bulwark', 'rage', 'faith',
 // 'depth', 'moon' or 'tide'), and how full it is (0-1). Finishers need it full and spend it.
 export function gaugeOf(char) {
-  return hasVolt(char) ? 'volt' : hasGale(char) ? 'gale' : hasBulwark(char) ? 'bulwark' : hasRage(char) ? 'rage' : hasFaith(char) ? 'faith' : hasDepth(char) ? 'depth' : hasMoon(char) ? 'moon' : hasTide(char) ? 'tide' : hasMoth(char) ? 'moondust' : null;
+  return hasVolt(char) ? 'volt' : hasGale(char) ? 'gale' : hasBulwark(char) ? 'bulwark' : hasRage(char) ? 'rage' : hasFaith(char) ? 'faith' : hasDepth(char) ? 'depth' : hasMoon(char) ? 'moon' : hasTide(char) ? 'tide' : hasUmbra(char) ? 'umbra' : hasMoth(char) ? 'moondust' : null;
 }
 export function gaugeFull(world) {
   const g = gaugeOf(world.char);
@@ -971,6 +1103,7 @@ export function gaugeFull(world) {
 export function addAim(world, n, mob = null, el = null) {
   addTide(world, n);
   addMoondust(world, n);
+  addUmbra(world, n);
   addDepth(world, n);
   addMoon(world, n);
   if (mob && n > 0) abyssVortex(world, mob);
@@ -979,6 +1112,7 @@ export function addAim(world, n, mob = null, el = null) {
 export function pathOf(world) {
   const { char } = world;
   const w = world.stats.weaponType;
+  if (w === 'dagger' && hasUmbra(char)) return 'eclipse';
   if (w === 'dagger' && hasMoth(char)) return 'moonmoth';
   if (MELEE.has(w) && w !== 'none') return hasVolt(char) ? 'warrior' : hasGale(char) ? 'tempest' : hasBulwark(char) ? 'stormwall' : null;
   if (w === 'none') return 'fists';
@@ -1016,7 +1150,7 @@ export function basicCombo(world) {
   // Blades, axes, spears, daggers and fists have command variants: in the air, an air combo;
   // Up + attack on the ground, a launcher that follows them up; running, a dash attack.
   if (MELEE.has(world.stats.weaponType)) {
-    const own = { warrior: STORM_COMMANDS, tempest: RED_COMMANDS, stormwall: WALL_COMMANDS, moonmoth: MOTH_COMMANDS }[pathOf(world)] ?? null;
+    const own = { warrior: STORM_COMMANDS, tempest: RED_COMMANDS, stormwall: WALL_COMMANDS, moonmoth: MOTH_COMMANDS, eclipse: ECL_COMMANDS }[pathOf(world)] ?? null;
     const air = own?.air ?? AIR;
     const blades = barrageOf(world);
     if (!body.onGround && !body.rope) {
@@ -1194,11 +1328,12 @@ function playStep(world, step, scale, key, school = null, after = 0) {
   }
   // Moth Step: between `moths` (0-1 of the move) she is a cloud of moths flying on ahead (drawn
   // hidden, render/scene.js), re-forming where the step carries her.
+  if (step.hide) world.vanish = { since: now + step.hide[0] * dur, until: now + step.hide[1] * dur };
   if (step.moths) {
     const [m0, m1] = step.moths;
     world.vanish = { since: now + m0 * dur, until: now + m1 * dur };
     const run = Math.min(1, m1 / (step.carry ?? timed[0]?.at ?? 1));
-    world.fx.push({ kind: 'mmflight', x: body.x, y: body.y, tx: body.x + body.facing * (step.step ?? 0) * run, dir: body.facing, t: -m0 * dur, dur: (m1 - m0) * dur + 0.08, seed: Math.random() });
+    world.fx.push({ kind: step.flight ?? 'mmflight', x: body.x, y: body.y, tx: body.x + body.facing * (step.step ?? 0) * run, dir: body.facing, t: -m0 * dur, dur: (m1 - m0) * dur + 0.08, seed: Math.random() });
   }
   step.strikes.forEach((s, n) => {
     if (s.onLand) return;
@@ -1211,10 +1346,12 @@ function playStep(world, step, scale, key, school = null, after = 0) {
 // Every tick: the step-in, and strikes landing.
 export function tickMelee(world, dt) {
   const b = world.body;
+  if (b.onGround || b.rope) world.flutterUsed = false;
   if (world.rage > 0 && world.now - (world.rageAt ?? 0) > RAGE_HOLD && !inForm(world)) world.rage = Math.max(0, world.rage - RAGE_DRAIN * dt);
   if (world.faith > 0 && world.now - (world.faithAt ?? 0) > FAITH_HOLD && !inForm(world)) world.faith = Math.max(0, world.faith - FAITH_DRAIN * dt);
   tickTide(world, dt);
   tickMoondust(world, dt);
+  tickUmbra(world, dt);
   tickDepth(world, dt);
   tickMoon(world, dt);
   if (world.volt > 0 && world.now - (world.voltAt ?? 0) > VOLT_HOLD) world.volt = Math.max(0, world.volt - VOLT_DRAIN * dt);
@@ -1276,10 +1413,11 @@ function land(world, s) {
   if (!s.keepFacing) body.facing = s.dir;
   if (s.rain) return rain(world, s);
   if (s.shot) return fire(world, s);
+  if (s.behind) s = shadowBehind(world, s);
   // A form reaches farther: every cut grows by FORM_REACH (once, not again for its echo).
   if (inForm(world) && !s.formGrown) s = { ...s, reach: s.reach * FORM_REACH, h: s.h * FORM_HEIGHT, formGrown: true };
   const range = s.around ? { w: s.reach * 2, h: s.h, around: true } : { w: s.reach, h: s.h };
-  const targets = pickTargets(world.mobs, body, range, s.targets ?? 1);
+  const targets = s.only ? (s.only.hp > 0 ? [s.only] : []) : pickTargets(world.mobs, body, range, s.targets ?? 1);
   const acc = accuracy(JOBS[char.job].family, stats, char.level);
   const weight = weightOf(world);
   // A finisher hits harder the fewer it catches: double on one, half again on two (its whole
@@ -1314,12 +1452,24 @@ function land(world, s) {
   // Tide's Return and Moon Tide bring the fallen round her back up.
   if (s.revive) reviveAround(world, s.revive, s.reviveR ?? 320);
   let crits = 0;
+  let sly = 0;
   targets.forEach((m, i) => {
     const miss = Math.random() >= hitChance(acc, char.level, m.def);
-    let roll = miss ? null : rollHit(dmgRange, critStats(world, stats), m.def, char.level, Math.random, s.crit ? 1 : 0);
+    // (At Totality every blow is a crit.)
+    let roll = miss ? null : rollHit(dmgRange, critStats(world, stats), m.def, char.level, Math.random, s.crit || totality(world) ? 1 : 0);
     // A backstab hits harder on a monster that isn't facing you.
     const behind = Math.sign(m.dir || 1) === Math.sign(m.x - body.x);
     if (roll && s.backstab && behind) roll = { ...roll, damage: Math.round(roll.damage * s.backstab), crit: true };
+    // (The Eclipse: a backstab or a marked monster builds Umbra twice as fast; Umbral Edge spends
+    // the marks for a much harder blow.)
+    const marked = marksOf(world, m);
+    if (!miss && ((s.backstab && behind) || marked)) sly++;
+    if (roll && s.consume && marked) {
+      roll = { ...roll, damage: Math.round(roll.damage * (1 + s.consume * marked)), crit: true };
+      clearMarks(m);
+      world.fx.push({ kind: 'ecpop', school: 'eclipse', x: m.x, y: m.y, h: m.def.h, mob: m, n: marked, dir: s.dir, t: 0, dur: 0.6, seed: Math.random() });
+    }
+    if (!miss && s.mark) addMark(world, m, s.mark);
     const knock = s.pull ? -Math.sign(m.x - body.x) * s.pull : s.knock * weight;
     world.pending.push({
       at: now, mob: m, miss, damage: roll?.damage ?? 0, crit: roll?.crit ?? false, fromX: body.x, stack: s.n % 3, knock, launch: s.launch, big: s.big, small: s.around && !s.big,
@@ -1366,6 +1516,8 @@ function land(world, s) {
   if (targets.length) addFaith(world, s.faith ?? (s.key.startsWith('basic') ? 2 : 4));
   if (targets.length && !s.phantom) addTide(world, (s.gauge ?? (s.key.startsWith('basic') ? 3 : 4)) * (1 + 0.3 * (targets.length - 1)));
   if (targets.length && !s.phantom) addMoondust(world, (s.gauge ?? (s.key.startsWith('basic') ? 3 : 4)) * (1 + 0.3 * (targets.length - 1)));
+  if (targets.length && !s.phantom) addUmbra(world, (s.gauge ?? (s.key.startsWith('basic') ? 3 : 4)) * (1 + 0.3 * (targets.length - 1) + sly / targets.length));
+  if (s.detonateAll) detonateMarks(world, s);
   if (s.key.startsWith('basic') && !s.phantom) moonNip(world, targets, s);
   if (targets.length && !s.phantom) addDepth(world, (s.gauge ?? (s.key.startsWith('basic') ? 3 : 4)) * (1 + 0.3 * (targets.length - 1)));
   if (targets.length && hasDepth(char)) targets.forEach((m) => abyssVortex(world, m));
@@ -1489,13 +1641,13 @@ function shotHit(world, s, m, delay, stack = 0, element = null, rank = 0) {
   const acc = accuracy(JOBS[char.job].family, stats, char.level);
   const sure = s.crit;
   const miss = !sure && Math.random() >= hitChance(acc, char.level, m.def);
-  const extraCrit = sure ? 1 : 0;
+  const extraCrit = sure || totality(world) ? 1 : 0;
   const range = s.magic ? magicRange(stats, (s.pct * s.scale * tuneOf(s.key)) / 100) : physicalRange(stats, stats.weaponType, (s.pct * s.scale * tuneOf(s.key)) / 100);
   const roll = miss ? null : rollHit(range, critStats(world, stats), m.def, char.level, Math.random, extraCrit);
   world.pending.push({
     at: world.now + delay, mob: m, miss, damage: roll?.damage ?? 0, crit: roll?.crit ?? false, fromX: s.fromX ?? body.x, stack, knock: s.knock, launch: s.launch, big: s.big, stop: s.stop, shake: s.shake, element,
     via: s.shot ?? (s.rain ? 'rain' : undefined), stun: miss ? undefined : s.stun, burn: miss ? undefined : s.burn, freeze: miss ? undefined : s.freeze, burst: s.burst, dir: s.dir,
-    gauge: s.gauge ?? (s.key.startsWith('basic') ? 3 : 5), rank, el: s.el, mend: miss ? undefined : s.mend, basic: s.key.startsWith('basic') || undefined,
+    gauge: s.gauge ?? (s.key.startsWith('basic') ? 3 : 5), rank, el: s.el, mend: miss ? undefined : s.mend, basic: s.key.startsWith('basic') || undefined, mark: miss ? undefined : s.mark,
   });
 }
 
@@ -1565,7 +1717,7 @@ function fire(world, strike) {
   };
   // A little snap of the string (or flick of the wrist) as it goes; a heavy shot kicks back.
   // (The Tide Mage's water carries its own splash: no flash off her staff.)
-  if (!hasTide(world.char) && !hasDepth(world.char) && !hasMoon(world.char) && !hasMoth(world.char)) world.fx.push({ kind: 'spark', x: ox, y: oy, t: 0, dur: 0.16, muzzle: true });
+  if (!hasTide(world.char) && !hasDepth(world.char) && !hasMoon(world.char) && !hasMoth(world.char) && !hasUmbra(world.char)) world.fx.push({ kind: 'spark', x: ox, y: oy, t: 0, dur: 0.16, muzzle: true });
   // Heavy shots kick the view back (research/archery.md 37).
   if (s.big) world.juice.push({ type: 'kick', x: -s.dir * 2, y: 0 });
   // Shots aimed up or down (`lift`, `drop`) look for monsters above or below you.

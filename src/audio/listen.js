@@ -67,8 +67,10 @@ const MOUNT_JUMP = { bun: 'bunHop', crane: 'craneFlap', nimbus: 'nimbusPuff', ke
 const MOUNT_STEP = { bun: 'bunHop', crane: 'craneFlap', nimbus: 'nimbusPuff', kettle: 'kettleRattle', turtle: 'turtleStep', gecko: 'geckoPatter' };
 const MOUNT_STRIDE = { bun: 60, crane: 34, nimbus: 90, kettle: 40, turtle: 30, gecko: 16 };
 const NAMED = new Set(['pillar', 'aegis', 'consecrate', 'verdict', 'bloodmoon', 'eclipse', 'rageburst', 'crack', 'roar', 'hook', 'fullmoon',
+  // The Eclipse (her swarm and eyes in flight are shots).
+  'echit', 'eceyeopen', 'ecring', 'ecringbig', 'ecportal', 'ecedge', 'ecpop', 'eccloud', 'ecflurry', 'ecnewmoon', 'ecpour', 'ectotal', 'ecdiamond',
   // The Moon Moth (the swarm in flight is a shot: audio/sfx.js SHOTS).
-  'mmhit', 'mmcloud', 'mmwings', 'mmflurry', 'mmnip', 'mmmoon', 'mmpour',
+  'mmflutter', 'ecflutter', 'mmhit', 'mmcloud', 'mmwings', 'mmflurry', 'mmnip', 'mmmoon', 'mmpour',
   // The Tide Mage.
   'tmlash', 'tmsplash', 'tmsplashbig', 'tmgeyser', 'tmwhirl', 'tmfall', 'tmfallbig', 'tmhit', 'tmshieldfx', 'tmpool',
   // The Stormwall.

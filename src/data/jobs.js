@@ -50,7 +50,7 @@ export const JOBS = {
   // moths, with LUK. Quick flicks and spins; her cuts build Moondust, the fuller the more she crits,
   // and at Full Moon every attack sends a moth off to nip another monster.
   moonmoth: {
-    id: 'moonmoth', power: 1.8, spread: 1.0, name: 'Moon Moth', family: 'thief', tier: 1, parent: 'novice', level: FIRST_JOB_LEVEL,
+    id: 'moonmoth', power: 1.86, spread: 1.62, name: 'Moon Moth', family: 'thief', tier: 1, parent: 'novice', level: FIRST_JOB_LEVEL,
     hp: 22, mp: 16, advanceHp: 280, advanceMp: 220, weapons: ['dagger'],
     blurb: 'A night thief with a dagger in each hand and a cloud of moths, with LUK. Her cuts build Moondust, and the fuller it runs the more she crits; at Full Moon every attack sends a moth to nip another monster. Moth Step, Wing Flurry, and Midnight Swarm: moths pour down under a full moon.',
   },
@@ -66,6 +66,13 @@ export const JOBS = {
     id: 'tempest', power: 2.45, spread: 2.01, name: 'Tempest', family: 'warrior', tier: 2, parent: 'warrior', level: 30, trial: 'warrior_trial',
     hp: 26, mp: 14, advanceHp: 400, advanceMp: 200, weapons: ['sword', 'axe', 'spear'],
     blurb: 'The Thunderguard who let the storm loose: speed itself, red lightning. Short wind-ups and flash-steps; his hits build Velocity, and the fuller it runs the faster he swings, red afterimages of him striking again behind every blow. Full (Lightspeed), every finisher blinks him through the pack. Flash Step, Thousand Cuts, Crimson Arc, and Red Thunder: he blinks from monster to monster across the screen. Deals damage in a group.',
+  },
+
+  // The Moon Moth's damage path (docs/design/eclipse.md): the boss-killer. Asks for Vex's trial first.
+  eclipse: {
+    id: 'eclipse', power: 3.21, spread: 1.94, name: 'Eclipse', family: 'thief', tier: 2, parent: 'moonmoth', level: 30, trial: 'thief_trial',
+    hp: 26, mp: 20, advanceHp: 380, advanceMp: 300, weapons: ['dagger'],
+    blurb: 'The Moon Moth who learned to put out the light: the boss-killer, in eclipse violet and corona gold. She marks a monster with a gold eye spot, gets behind it and ends it. Her hits build Umbra, and the fuller it runs the harder her crits land; at Totality every blow crits. Shadow Step, Umbral Edge, Corona, and Total Eclipse: the sky goes dark and every mark goes off.',
   },
 
   // The Tide Mage's healer path (docs/design/tidecaller.md), the party's healer. Asks for Elowen's

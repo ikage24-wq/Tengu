@@ -105,7 +105,7 @@ export function drawWarriorFx(ctx, f, x, y, p, cam, time) {
   const box = f.box ? { x: f.box.x - cam.x, y: f.box.y - cam.y, w: f.box.w, h: f.box.h } : null;
   if ((f.kind.startsWith('tm') || f.kind.startsWith('ms') || f.kind.startsWith('tc')) && drawTideFx(ctx, f, x, y, p)) return true;
   // The Moon Moth's moths (render/moth-fx.js).
-  if (f.kind.startsWith('mm') && drawMothFx(ctx, f, x, y, p)) return true;
+  if ((f.kind.startsWith('mm') || f.kind.startsWith('ec')) && drawMothFx(ctx, f, x, y, p)) return true;
   // The Thunderguard's lightning (render/storm-fx.js).
   if ((f.kind.startsWith('tg') || f.kind.startsWith('tp') || f.kind.startsWith('bw')) && drawStormFx(ctx, f, x, y, p, cam)) return true;
   switch (f.kind) {

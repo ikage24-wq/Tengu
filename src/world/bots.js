@@ -139,12 +139,13 @@ function rollLevel(pro, rng) {
 
 // The job path a character of this level would be on. Warriors advance to a level 30 path; the Tide
 // Mage (the new Mage, 2026-11-09) to the Maelstrom or the Tidecaller; the Moon Moth (the new Thief,
-// 2026-11-16) has no paths yet and stays one. (The Archer line was wiped 2026-11-16.)
+// 2026-11-16) to the Eclipse. (The Archer line was wiped 2026-11-16.)
 function jobPath(level, rng) {
   if (level < FIRST_JOB_LEVEL) return ['novice'];
   const first = pick(['warrior', 'tidemage', 'moonmoth'], rng);
   if (first === 'warrior' && level >= 30) return [first, pick(['tempest', 'stormwall'], rng)];
   if (first === 'tidemage' && level >= 30) return [first, pick(['maelstrom', 'tidecaller'], rng)];
+  if (first === 'moonmoth' && level >= 30) return [first, 'eclipse'];
   return [first];
 }
 

@@ -563,6 +563,8 @@ const GAUGES = {
     tip: 'Your hits build it; it drains once the fighting stops. The deeper it runs, the harder you hit. Full (the Abyss), every hit opens a little vortex on what it struck that shreds it three times more, and Maelstrom is ready.' },
   moon: { color: '#2f9a8a', hot: '#fff3c0', icon: 'drop', name: 'Moonsong', full: 'SPRING TIDE', notch: () => null, edge: 'rgba(255,243,192,', ink: '#1d4a52',
     tip: 'Your hits and your heals build it; it fades once the fighting stops. The fuller it runs, the stronger you heal. Full (Spring Tide), your heals leave a bubble on everyone they reach, every basic attack that lands drops healing on whoever in the party is hurt most, and Moon Tide is ready.' },
+  umbra: { color: '#4a2f9a', hot: '#ffd36a', icon: 'moon', name: 'Umbra', full: 'TOTALITY', notch: () => null, edge: 'rgba(255,211,106,', ink: '#120a2a',
+    tip: 'Your hits build it, backstabs and hits on marked monsters twice as fast; it fades once the fighting stops. The fuller it runs, the harder your crits land. Full (Totality), every blow you land is a crit, and Total Eclipse is ready.' },
   moondust: { color: '#8f72e0', hot: '#ffd36a', icon: 'moon', name: 'Moondust', full: 'FULL MOON', notch: () => null, edge: 'rgba(201,180,255,', ink: '#43307e',
     tip: 'Your cuts that land build it, faster the more monsters one blow catches; it settles once the fighting stops. The fuller it runs, the more often you crit. Full (Full Moon), every basic attack that lands sends a moth to nip another monster nearby, and Midnight Swarm is ready.' },
   tide: { color: '#1787bb', hot: '#9ff0ff', icon: 'drop', name: 'Tide', full: 'HIGH TIDE', notch: () => null, edge: 'rgba(70,196,228,', ink: '#0c4a80',

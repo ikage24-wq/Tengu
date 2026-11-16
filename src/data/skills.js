@@ -577,55 +577,73 @@ export const SKILLS = {
     },
   }),
 
-  // ---------- Moon Moth (lilac and moon silver: moths, wing dust, a moth's gold eye spots) ----------
+  // ---------- Moon Moth (lilac and moon silver: spirit moths, sparkles, little gold crescents) ----------
   // The new Thief (docs/design/moon-moth.md; the old line was wiped 2026-11-16): a dagger in each
   // hand and a cloud of moths. Her cuts that land build Moondust (world/melee.js); the fuller it
   // runs the more she crits, and full (Full Moon) every basic attack sends a moth off to nip another
   // monster. The first pass: four skills and her mastery; four more and her paths come later.
   mothstep: skill({
     id: 'mothstep', anim: 'mmstep', name: 'Moth Step', job: 'moonmoth', type: 'attack', fx: null, icon: 'mothstep', school: 'moth', maxLevel: 10, movement: true,
+    pathNames: { eclipse: 'Umbra Step' },
     desc: 'Break into a cloud of moths and re-form past them, turned round to cut whatever you passed through: a backstab on anything facing away. Nothing touches you while you\'re moths.',
     weapons: ['dagger'],
     at: (lv, m) => {
       const k = (a, b) => lerp(a, b, lv, m);
       return {
         mp: k(8, 5), pct: k(90, 150), hits: 1, targets: 4,
-        combo: [{ move: 'mmstep', dur: 0.5, step: k(140, 200), carry: 0.7, guard: 0.5, moths: [0.12, 0.5], strikes: [
+        combo: [{ move: 'mmstep', dur: 0.38, step: k(140, 200), carry: 0.7, guard: 0.5, moths: [0.12, 0.5], strikes: [
           { at: 0.06, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, gauge: 0, burst: 'mmcloud', burstAt: 0, burstDur: 0.5 },
           // (Still moths, she turns round; she re-forms facing what she passed through and cuts it.)
           { at: 0.46, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, gauge: 0, turn: true },
           { at: 0.62, school: 'moth', fx: 'mmhit', pct: k(90, 150), reach: k(160, 220), h: 60, targets: 4, knock: 120, turn: true, backstab: 1.5, burst: 'mmcloud', burstAt: 0, burstDur: 0.5, big: true, stop: 0.05 },
         ] }],
+        // Umbra Step: she sinks into dark moths, flies on as them, and comes out of
+        // them crouched low, both daggers cutting back.
+        paths: { eclipse: [{ move: 'ecumbrastep', dur: 0.38, step: k(140, 200), carry: 0.7, guard: 0.5, moths: [0.12, 0.5], flight: 'ecflight', strikes: [
+          { at: 0.06, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, gauge: 0, burst: 'eccloud', burstAt: 0, burstDur: 0.5 },
+          { at: 0.46, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, gauge: 0, turn: true },
+          { at: 0.62, school: 'eclipse', fx: 'echit', pct: k(90, 150), reach: k(160, 220), h: 60, targets: 4, knock: 120, turn: true, backstab: 1.5, burst: 'eccloud', burstAt: 0, burstDur: 0.5, big: true, stop: 0.05 },
+        ] }] },
       };
     },
   }),
   wingflurry: skill({
     id: 'wingflurry', anim: 'mmflurry', name: 'Wing Flurry', job: 'moonmoth', type: 'attack', fx: null, icon: 'wingflurry', school: 'moth', maxLevel: 20,
+    pathNames: { eclipse: 'Black Flurry' },
     desc: 'Cut six times in a blur, both daggers flashing, wing dust whirling off every cut; the last cut throws them back.',
     weapons: ['dagger'],
     at: (lv, m) => {
       const k = (a, b) => lerp(a, b, lv, m);
       const per = k(34, 58);
-      const cut = (at, i) => ({ at, school: 'moth', fx: 'mmhit', pct: per, reach: 72, h: 58, targets: 3, knock: 8, arc: i % 2 ? [100, -200] : [-110, 200], thick: 6 });
+      // (The Eclipse's Black Flurry: the same six cuts in her own move, dark crescents edged in gold.)
+      const flurry = (move, school, fx, burst) => {
+        const cut = (at, i) => ({ at, school, fx, pct: per, reach: 72, h: 58, targets: 3, knock: 8, arc: i % 2 ? [100, -200] : [-110, 200], thick: 6 });
+        return [{ move, dur: 0.6, step: 10, strikes: [
+          { ...cut(0.13, 0), burst, burstAt: 0.45, burstDur: 0.6 },
+          ...[0.24, 0.34, 0.44, 0.55].map((at, i) => cut(at, i + 1)),
+          { at: 0.76, school, fx, pct: Math.round(per * 1.8), reach: 76, h: 62, targets: 3, knock: 200, arc: [-150, 300], thick: 9, big: true, stop: 0.06, shake: 2 },
+        ] }];
+      };
       return {
         mp: k(8, 16), pct: per, hits: 6, targets: 3,
-        combo: [{ move: 'mmflurry', dur: 0.84, step: 10, strikes: [
-          { ...cut(0.13, 0), burst: 'mmflurry', burstAt: 0.45, burstDur: 0.6 },
-          ...[0.24, 0.34, 0.44, 0.55].map((at, i) => cut(at, i + 1)),
-          { at: 0.76, school: 'moth', fx: 'mmhit', pct: Math.round(per * 1.8), reach: 76, h: 62, targets: 3, knock: 200, arc: [-150, 300], thick: 9, big: true, stop: 0.06, shake: 2 },
-        ] }],
+        combo: flurry('mmflurry', 'moth', 'mmhit', 'mmflurry'),
+        paths: { eclipse: flurry('ecflurry', 'eclipse', 'echit', 'ecflurry') },
       };
     },
   }),
   mothswarm: skill({
     id: 'mothswarm', anim: 'mmswarm', name: 'Moth Swarm', job: 'moonmoth', type: 'attack', fx: null, icon: 'mothswarm', school: 'moth', maxLevel: 20,
+    pathNames: { eclipse: 'Shadow Swarm' },
     desc: 'Draw both daggers in to your chest, then fling your hands forward: a swarm of moths pours out ahead, nibbling through every monster in a line.',
     weapons: ['dagger'],
     at: (lv, m) => {
       const k = (a, b) => lerp(a, b, lv, m);
       return {
         mp: k(12, 22), pct: k(150, 250), hits: 1, targets: 6,
-        combo: [{ move: 'mmswarm', dur: 0.72, step: -4, strikes: [{ at: 0.48, school: 'moth', burst: 'mmhit', shot: 'mmswarm', pct: k(150, 250), range: 360, h: 80, targets: 6, pierce: true, knock: 120, speed: 400, big: true, stop: 0.04 }] }],
+        combo: [{ move: 'mmswarm', dur: 0.5, step: -4, strikes: [{ at: 0.48, school: 'moth', burst: 'mmhit', shot: 'mmswarm', pct: k(150, 250), range: 360, h: 80, targets: 6, pierce: true, knock: 120, speed: 400, big: true, stop: 0.04 }] }],
+        // Shadow Swarm: she cups her hands at her chest and opens them like a book; the dark moths
+        // pour out, their gold crescents lit.
+        paths: { eclipse: [{ move: 'ecswarmcast', dur: 0.5, step: -4, strikes: [{ at: 0.48, school: 'eclipse', burst: 'echit', shot: 'ecswarm', pct: k(150, 250), range: 360, h: 80, targets: 6, pierce: true, knock: 120, speed: 400, big: true, stop: 0.04 }] }] },
       };
     },
   }),
@@ -636,15 +654,105 @@ export const SKILLS = {
   }),
   midnightswarm: skill({
     id: 'midnightswarm', anim: 'mmmidnight', dmg: 2, name: 'Midnight Swarm', job: 'moonmoth', type: 'attack', fx: null, icon: 'midnightswarm', school: 'moth', maxLevel: 10, fullGauge: true,
+    pathNames: { eclipse: 'New Moon' },
     desc: 'Finisher: needs a full Moondust, and spends it. Spring up as a full moon rises behind you, hang there with your daggers crossed while the moths gather, then throw your arms wide: the swarm pours down across the screen through every monster in front of you.',
     weapons: ['dagger'],
     at: (lv, m) => {
       const k = (a, b) => lerp(a, b, lv, m);
       return {
         mp: k(26, 44), pct: k(170, 270), hits: 1, targets: 0,
-        combo: [{ move: 'mmmidnight', dur: 1.6, step: 0, finisher: true, guard: 1.4, strikes: [
+        combo: [{ move: 'mmmidnight', dur: 1.35, step: 0, finisher: true, guard: 1.2, strikes: [
           { at: 0.2, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, gauge: 0, burst: 'mmmoon', burstAt: 0, burstDur: 1.4 },
           { at: 0.62, school: 'moth', fx: 'mmhit', pct: k(170, 270), reach: 520, h: 220, targets: 12, knock: 260, launch: 160, burst: 'mmpour', burstAt: 0.02, burstDur: 0.9, big: true, stop: 0.1, shake: 4 },
+        ] }],
+        // New Moon (the Eclipse's): she sinks to one knee and rises slowly as a dark moon in its
+        // corona climbs behind her, then sweeps both arms down and the dark swarm pours.
+        paths: { eclipse: [{ move: 'ecnewmoon', dur: 1.35, step: 0, finisher: true, guard: 1.2, strikes: [
+          { at: 0.2, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, gauge: 0, burst: 'ecnewmoon', burstAt: 0, burstDur: 1.4 },
+          { at: 0.62, school: 'eclipse', fx: 'echit', pct: k(170, 270), reach: 520, h: 220, targets: 12, knock: 260, launch: 160, burst: 'ecpour', burstAt: 0.02, burstDur: 0.9, big: true, stop: 0.1, shake: 4 },
+        ] }] },
+      };
+    },
+  }),
+
+  // ---------- Eclipse (the Moon Moth's damage path: eclipse violet and corona gold) ----------
+  // docs/design/eclipse.md. The boss-killer. Her hits build Umbra (world/melee.js): the fuller it runs
+  // the harder her crits land; full (Totality), every blow crits and Total Eclipse is ready. Some
+  // blows leave marks (little eclipses) on monsters (`mark`), Umbral Edge spends them (`consume`) and
+  // Total Eclipse sets them all off (`detonateAll`). She plays the Moon Moth's skills her own way
+  // (their `paths`), and these are hers.
+  shadowstep: skill({
+    id: 'shadowstep', anim: 'ecstep', name: 'Shadow Step', job: 'eclipse', type: 'attack', fx: null, icon: 'shadowstep', school: 'eclipse', maxLevel: 10, movement: true,
+    desc: 'Step into a disc of shadow and out of one behind the nearest monster ahead, already stabbing its back. Nothing touches you in between.',
+    weapons: ['dagger'],
+    at: (lv, m) => {
+      const k = (a, b) => lerp(a, b, lv, m);
+      return {
+        mp: k(10, 6), pct: k(140, 240), hits: 1, targets: 1,
+        combo: [{ move: 'ecstep', dur: 0.36, step: 0, guard: 0.5, hide: [0.14, 0.42], strikes: [
+          { at: 0.08, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, gauge: 0, burst: 'ecportal', burstAt: 0, burstDur: 0.45 },
+          { at: 0.44, school: 'eclipse', fx: 'echit', pct: k(140, 240), reach: 64, h: 60, targets: 1, knock: 140, behind: k(170, 230), backstab: 1.5, burst: 'ecportal', burstAt: 0, burstDur: 0.45, big: true, stop: 0.07, shake: 2 },
+        ] }],
+      };
+    },
+  }),
+  nighteye: skill({
+    id: 'nighteye', anim: 'eceyecast', name: 'Eye of the Night', job: 'eclipse', type: 'attack', fx: null, icon: 'nighteye', school: 'eclipse', maxLevel: 20,
+    desc: 'Flick your fingers open and three little eclipses fly at the nearest monsters: a little damage, and a mark on each that stays a while.',
+    weapons: ['dagger'],
+    at: (lv, m) => {
+      const k = (a, b) => lerp(a, b, lv, m);
+      return {
+        mp: k(8, 14), pct: k(60, 100), hits: 1, targets: 3,
+        combo: [{ move: 'eceyecast', dur: 0.4, step: 0, strikes: [{ at: 0.42, school: 'eclipse', burst: 'echit', shot: 'eceye', fan: 3, pct: k(60, 100), range: 340, h: 100, knock: 30, speed: 560, mark: 1, stop: 0.03 }] }],
+      };
+    },
+  }),
+  umbraledge: skill({
+    id: 'umbraledge', anim: 'ecedge', dmg: 1.2, name: 'Umbral Edge', job: 'eclipse', type: 'attack', fx: null, icon: 'umbraledge', school: 'eclipse', maxLevel: 20,
+    desc: 'Two slow, deep stabs into one monster. Every mark on it makes the second far harder (and spends the marks).',
+    weapons: ['dagger'],
+    at: (lv, m) => {
+      const k = (a, b) => lerp(a, b, lv, m);
+      return {
+        mp: k(14, 24), pct: k(200, 330), hits: 2, targets: 1, cooldown: 4,
+        combo: [{ move: 'ecedge', dur: 0.6, step: 6, strikes: [
+          { at: 0.32, school: 'eclipse', fx: 'echit', pct: k(80, 130), reach: 66, h: 56, targets: 1, knock: 10, pierce: true },
+          { at: 0.7, school: 'eclipse', fx: 'echit', pct: k(200, 330), reach: 70, h: 60, targets: 1, knock: 220, pierce: true, consume: 0.6, burst: 'ecedge', burstAt: 0.6, burstDur: 0.6, big: true, stop: 0.12, shake: 3 },
+        ] }],
+      };
+    },
+  }),
+  corona: skill({
+    id: 'corona', anim: 'eccorona', name: 'Corona', job: 'eclipse', type: 'attack', fx: null, icon: 'corona', school: 'eclipse', maxLevel: 20,
+    desc: 'Spin once with both daggers out and a ring of gold fire flares all round you, burning and marking everything in it.',
+    weapons: ['dagger'],
+    at: (lv, m) => {
+      const k = (a, b) => lerp(a, b, lv, m);
+      return {
+        mp: k(14, 26), pct: k(130, 220), hits: 1, targets: 8,
+        combo: [{ move: 'eccorona', dur: 0.5, step: 0, strikes: [{ at: 0.5, school: 'eclipse', fx: 'echit', pct: k(130, 220), reach: 150, h: 110, around: true, targets: 8, knock: 160, launch: 120, mark: 1, burst: 'ecringbig', burstAt: 0, burstDur: 0.65, big: true, stop: 0.07, shake: 3 }] }],
+      };
+    },
+  }),
+  umbralmastery: skill({
+    id: 'umbralmastery', name: 'Umbral Mastery', job: 'eclipse', type: 'passive', grows: true, fx: null, icon: 'umbralmastery',
+    desc: 'The dark is where you work best: truer, steadier cuts, and your crits land much harder.',
+    at: (lv, m) => ({ passive: { acc: lerp(4, 30, lv, m), mastery: lerpf(0.15, 0.4, lv, m), critDamage: lerpf(0.1, 0.35, lv, m), critRate: lerpf(0.02, 0.06, lv, m) } }),
+  }),
+  totaleclipse: skill({
+    id: 'totaleclipse', anim: 'ectotal', dmg: 1.6, name: 'Total Eclipse', job: 'eclipse', type: 'attack', fx: null, icon: 'totaleclipse', school: 'eclipse', maxLevel: 10, fullGauge: true,
+    desc: 'Finisher: needs a full Umbra, and spends it. The moon slides over the sun and the screen goes dark but for the corona; you vanish and strike from monster to monster, marking each, then the diamond ring flashes on the rim and every mark on the screen goes off at once.',
+    weapons: ['dagger'],
+    at: (lv, m) => {
+      const k = (a, b) => lerp(a, b, lv, m);
+      const flick = (at) => ({ at, school: 'eclipse', fx: 'echit', pct: k(60, 100), reach: 300, h: 160, around: true, targets: 8, knock: 30, mark: 1, gauge: 0, stop: 0.03 });
+      return {
+        mp: k(30, 50), pct: k(240, 400), hits: 4, targets: 12,
+        combo: [{ move: 'ectotal', dur: 1.5, step: 0, finisher: true, guard: 1.4, hide: [0.26, 0.66], strikes: [
+          { at: 0.12, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, gauge: 0, burst: 'ectotal', burstAt: 0, burstDur: 1.6 },
+          flick(0.32), flick(0.44), flick(0.56),
+          { at: 0.76, school: 'eclipse', fx: 'echit', pct: k(240, 400), reach: 400, h: 200, around: true, targets: 12, knock: 300, launch: 300, detonateAll: k(60, 100), burst: 'ecdiamond', burstAt: 0, burstDur: 0.7, big: true, stop: 0.14, shake: 6, gauge: 0 },
         ] }],
       };
     },

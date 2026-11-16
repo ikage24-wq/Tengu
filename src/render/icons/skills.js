@@ -25,6 +25,8 @@ const BG = {
   moonbg: ['#c8f7e4', '#1d4a52'],
   // The Moon Moth's: pale moonlit lilac down into the night.
   mothbg: ['#e6dcff', '#24184e'],
+  // The Eclipse's: a gold dawn edge down into the dark of totality.
+  eclipsebg: ['#ffe4a0', '#140a2e'],
 };
 
 const FRAME = { active: '#fff0f6', buff: '#ffd25a', passive: '#d4cdee' };
@@ -580,21 +582,22 @@ function greatwave() {
   return out;
 }
 
-// ---------- Moon Moth (lilac and moon silver, a moth's gold eye spots) ----------
+// ---------- Moon Moth (lilac and moon silver, little gold crescents) ----------
 const MOTHC = '#b9a2ff';
 const MOTHINK = '#2e1f5e';
 const MOTHGOLD = '#ffd36a';
 const MOTHSIL = '#f4f2ff';
-// A moth seen from above with its wings spread, centred at (cx, cy), `r` its half wingspan: the
-// fore wings bigger with gold eye spots, the hind wings a shade deeper, a furry silver body.
+// A spirit moth seen from above with its wings spread, centred at (cx, cy), `r` its half wingspan:
+// round fore wings glowing pale at the middle, the hind wings a shade deeper, a small round body.
+// (No eye spots: they read as gross, 2026-11-16.)
 function mothIcon(cx, cy, r, c = MOTHC) {
   const out = [];
   for (const side of [-1, 1]) out.push(...solid(oval(cx + side * r * 0.36, cy + r * 0.38, r * 0.36, r * 0.3, side * 35, 16), sh(c), { d: 0.35, ink: MOTHINK, shadow: false }));
   for (const side of [-1, 1]) {
     out.push(...solid(oval(cx + side * r * 0.5, cy - r * 0.16, r * 0.54, r * 0.4, side * -28, 18), c, { d: 0.35, ink: MOTHINK, shadow: false }));
-    if (r > 2.4) out.push(S(oval(cx + side * r * 0.58, cy - r * 0.22, r * 0.17, r * 0.17, 0, 12), MOTHGOLD), S(oval(cx + side * r * 0.58, cy - r * 0.22, r * 0.08, r * 0.08, 0, 10), MOTHINK));
+    if (r > 2.4) out.push(S(oval(cx + side * r * 0.5, cy - r * 0.18, r * 0.26, r * 0.18, side * -28, 12), mix(c, '#ffffff', 0.6)));
   }
-  out.push(...solid(oval(cx, cy + r * 0.05, r * 0.13, r * 0.42, 0, 14), MOTHSIL, { d: 0.3, ink: MOTHINK, shadow: false }));
+  out.push(...solid(oval(cx, cy + r * 0.08, r * 0.15, r * 0.32, 0, 14), MOTHSIL, { d: 0.3, ink: MOTHINK, shadow: false }));
   return out;
 }
 // A dagger laid along (x0, y0) to (x1, y1), point at the far end: a silver blade, a lilac grip.
@@ -638,13 +641,12 @@ function mothswarm() {
   out.push(...spark(1.8, 8.2, 0.8, MOTHSIL));
   return out;
 }
-// Night Eyes: a moth's eye spot, gold round a dark pupil, wide awake.
+// Night Eyes: a gold crescent moon, a little moth resting on its tip. (A gold eye spot till
+// 2026-11-16: it read as gross.)
 function nighteyes() {
   const out = [...tile('mothbg', 'passive'), ...aura(8, 8, 6, '#e6dcff')];
-  out.push(...solid(oval(8, 8, 5.6, 4.6, 0, 26), MOTHC, { d: 0.4, ink: MOTHINK }));
-  out.push(...solid(oval(8, 8, 3.4, 3.4, 0, 22), MOTHGOLD, { d: 0.35, ink: '#8e5228', shadow: false }));
-  out.push(S(oval(8, 8, 1.7, 1.9, 0, 16), MOTHINK), S(oval(7.2, 7.1, 0.7, 0.7, 0, 10), '#ffffff'));
-  out.push(...spark(13.2, 3.2, 1, MOTHSIL));
+  out.push(...solid([...arcPts(7.2, 8.6, 5.4, 5.4, 60, 300, 16), ...arcPts(9.2, 7.6, 4.3, 4.3, 300, 60, 16)], MOTHGOLD, { d: 0.35, ink: '#8e5228' }));
+  out.push(...mothIcon(10.8, 6.4, 3.6, '#9a7ae8'), ...spark(3.4, 3.2, 1, MOTHSIL));
   return out;
 }
 // Midnight Swarm: a full moon with moths across its face.
@@ -654,6 +656,64 @@ function midnightswarm() {
   out.push(S(oval(6.6, 6.4, 1.2, 1, 20, 12), '#dedcf2'), S(oval(10.2, 9.2, 1.5, 1.2, 0, 12), '#dedcf2'));
   out.push(...mothIcon(5.2, 10.6, 2.6), ...mothIcon(11.2, 4.8, 2), ...mothIcon(11.8, 11.8, 1.8));
   out.push(...spark(2.4, 3, 1, MOTHGOLD));
+  return out;
+}
+
+// ---------- Eclipse (eclipse violet and corona gold) ----------
+const ECDARK = '#24164e';
+const ECINK = '#0e0820';
+const ECGOLDC = '#ffd36a';
+// The eclipse: a ring of gold corona rays round a dark disc.
+function eclipseIcon(cx, cy, r) {
+  return [
+    ...solid(starPts(cx, cy, r * 1.55, r * 1.05, 12, -90), ECGOLDC, { d: 0.3, ink: '#8e5a14', shadow: false }),
+    ...solid(oval(cx, cy, r, r, 0, 22), ECDARK, { d: 0.35, ink: ECINK, shadow: false }),
+    S(oval(cx + r * 0.12, cy + r * 0.12, r * 0.72, r * 0.72, 0, 18), ECINK),
+  ];
+}
+// Her sign, a little eclipse: a gold sun with the dark moon over it, `dx` how far the moon has still
+// to slide (0 = all the way over, a ring of fire). (Gold eyeballs till 2026-11-16.)
+const signIcon = (x, y, r, dx = 0) => [...solid(oval(x, y, r, r, 0, 18), ECGOLDC, { d: 0.3, ink: '#8e5a14', shadow: false }), S(oval(x + dx * r, y, r * 0.66, r * 0.66, 0, 16), ECINK)];
+// Shadow Step: a dark disc of shadow on the floor, a dagger stabbing out of the far side of it.
+function shadowstep() {
+  const out = [...tile('eclipsebg', 'active'), ...aura(8, 8, 6.4, '#ffe4a0')];
+  out.push(...solid(oval(6.4, 12, 5, 1.8, 0, 22), ECDARK, { d: 0.3, ink: ECINK, shadow: false }), S(tube(arcPts(6.4, 12, 4.8, 1.6, 190, 350, 8), 0.3, 0.5), ECGOLDC));
+  out.push(...daggerIcon(7.6, 10.2, 13.6, 4.2), ...spark(3, 4, 1, ECGOLDC));
+  return out;
+}
+// Eye of the Night: her little eclipse flying, a gold streak behind it.
+function nighteye() {
+  const out = [...tile('eclipsebg', 'active'), ...aura(8, 8, 6.4, '#ffe4a0')];
+  out.push(S(tube([[1.4, 13.2], [8, 8.4]], 0.2, 1.3), mix(ECGOLDC, cur.deep, 0.35)), S(tube([[3.4, 12.2], [8, 8.6]], 0.1, 0.6), '#fff3c8'));
+  out.push(...eclipseIcon(10.2, 6.4, 3), ...spark(4, 4.4, 1, ECGOLDC));
+  return out;
+}
+// Umbral Edge: one dagger driven deep, a dark crescent behind it, gold flaring at the point.
+function umbraledge() {
+  const out = [...tile('eclipsebg', 'active'), ...aura(8, 8, 6.4, '#ffe4a0')];
+  const pts = arcPts(11, 8, 6.4, 6.4, 150, 250, 10);
+  out.push(S(tube(pts, 0.3, 1.6), ECINK), S(tube(pts, 0.2, 1.1), ECDARK), S(tube(pts.slice(2, 8), 0.15, 0.4), ECGOLDC));
+  out.push(...daggerIcon(2.6, 13.4, 11.4, 4.6), ...spark(12.2, 3.8, 1.5, ECGOLDC));
+  return out;
+}
+// Corona: a ring of gold fire round a dark middle.
+function corona() {
+  const out = [...tile('eclipsebg', 'active'), ...aura(8, 8, 6.8, '#ffe4a0')];
+  out.push(...solid(starPts(8, 8, 7, 5.2, 14, -90), ECGOLDC, { d: 0.3, ink: '#8e5a14', shadow: false }), S(oval(8, 8, 4.6, 4.6, 0, 22), '#fff3c8'), S(oval(8, 8, 3.6, 3.6, 0, 20), ECDARK));
+  out.push(...spark(13.6, 2.6, 1, '#ffffff'));
+  return out;
+}
+// Umbral Mastery: the dark moon sliding over a gold sun, the eclipse on its way.
+function umbralmastery() {
+  const out = [...tile('eclipsebg', 'passive'), ...aura(8, 8, 6, '#ffe4a0')];
+  out.push(...solid(starPts(8, 8.2, 6.6, 4.6, 12, -90), ECGOLDC, { d: 0.3, ink: '#8e5a14', shadow: false }));
+  out.push(...signIcon(8, 8.2, 3.8, 0.36), ...spark(13.4, 3, 1, '#ffffff'));
+  return out;
+}
+// Total Eclipse: the eclipse itself, the diamond ring flashing on its rim.
+function totaleclipse() {
+  const out = [...tile('eclipsebg', 'active'), ...aura(8, 8, 6.8, '#ffe4a0', 1.2, 5)];
+  out.push(...eclipseIcon(8, 8.4, 4.2), ...spark(4.6, 4.8, 1.6, '#ffffff'), ...spark(13.4, 13, 0.9, ECGOLDC));
   return out;
 }
 
@@ -891,6 +951,7 @@ const ART = {
   gmsmite, gmhaste, gmblessing,
   bubbleshield, tidepool, riptide, tidalwave, flow, waverider, oceanheart, greatwave,
   mothstep, wingflurry, mothswarm, nighteyes, midnightswarm,
+  shadowstep, nighteye, umbraledge, corona, umbralmastery, totaleclipse,
   tidallance, undertow, hydrocannon, depthcharge, deepmastery, abyssmaelstrom,
   healingrain, springsurge, moonblessing, tidesreturn, moonfall, tidesong, moontide,
 };

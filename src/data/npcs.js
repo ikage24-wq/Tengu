@@ -78,7 +78,7 @@ export const NPCS = {
     // the old line, so she keeps her stage outfit, still a performer.)
     id: 'vex', name: 'Vex', title: 'Thief Instructor', role: 'instructor', family: 'thief',
     building: 'thief', sign: 'Moth Hall', gear: { weapon: { id: 'dagger_50', variant: 'dark' }, top: { id: 'look_casual_idol_top' }, bottom: { id: 'look_casual_tennis_bottom' }, shoes: { id: 'look_casual_platforms_shoes' }, gloves: { id: 'look_casual_fingerless_gloves' } },
-    quests: ['story_4_1', 'story_4_2', 'story_4_3', 'vex_rumor', 'vex_shadows', 'vex_stage', 'vex_miko', 'vex_festival'],
+    quests: ['story_4_1', 'story_4_2', 'story_4_3', 'vex_rumor', 'vex_shadows', 'vex_stage', 'vex_miko', 'vex_festival', 'thief_trial'],
     showJob: 'moonmoth',
     look: { hairStyle: 'swoop', hairColor: '#3b3650', skinTone: '#c98e66', eyeColor: '#e8a23c', outfitColor: '#5d5285', eyeStyle: 'sleepy', face: 'smug' },
     greeting: 'The harbor lamps come on, and out come the moths. Light feet, a blade in each hand, and you\'re gone before they turn round. Shall we?',

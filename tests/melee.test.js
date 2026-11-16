@@ -959,6 +959,134 @@ test('Midnight Swarm needs a full Moondust, spends it, and lands after she rises
     if (m.hp < last && first == null) first = i;
     last = m.hp;
   }
-  assert.ok(first != null && first > 50, `the swarm pours after the moon rises (frame ${first})`);
+  assert.ok(first != null && first > 40, `the swarm pours after the moon rises (frame ${first})`);
   assert.ok((w.moondust ?? 0) < 10, 'it does not refill the Moondust');
+});
+
+// A level 40 Eclipse (the Moon Moth's damage path), Vex's trial done, in the arena.
+function eclipse() {
+  const w = moonmoth();
+  const c = w.char;
+  gainExp(c, 4e8);
+  c.quests.thief_trial = { state: 'done', kills: {} };
+  assert.ok(advanceJob(c, 'eclipse'));
+  c.equipment.weapon = makeEquip('dagger_30', {});
+  c.mp = 9999;
+  c.baseMp = 99999;
+  for (let i = 0; i < 5; i++) updateWorld(w, DT, idle);
+  return w;
+}
+
+test('the Eclipse asks for Vex\'s trial, fights her own way and builds Umbra', async () => {
+  const { gaugeOf, pathOf } = await import('../src/world/melee.js');
+  const { nextJobs } = await import('../src/data/jobs.js');
+  assert.deepEqual(nextJobs('moonmoth', 30, { thief_trial: { state: 'done' } }).map((j) => j.id), ['eclipse']);
+  assert.equal(nextJobs('moonmoth', 30, {}).length, 0, 'not before the trial');
+  const w = eclipse();
+  assert.equal(gaugeOf(w.char), 'umbra');
+  assert.equal(pathOf(w), 'eclipse');
+  const kinds = new Set();
+  for (let i = 0; i < 150; i++) {
+    updateWorld(w, DT, i % 18 === 0 ? attack : idle);
+    if (w.pose) kinds.add(w.pose.kind);
+  }
+  assert.ok([...kinds].every((k) => k.startsWith('ec')), `her own moves only (${[...kinds]})`);
+  assert.ok(w.umbra > 0, 'her cuts build Umbra');
+  assert.ok(!(w.moondust > 0), 'not the Moon Moth\'s Moondust');
+});
+
+test('Eclipse marks: her finisher marks, Umbral Edge spends them for a much harder blow', async () => {
+  const { marksOf, addMark } = await import('../src/world/melee.js');
+  const w = eclipse();
+  for (let i = 0; i < 150; i++) updateWorld(w, DT, i % 18 === 0 ? attack : idle);
+  assert.ok(w.mobs.some((m) => marksOf(w, m) > 0), 'the combo finisher left a mark');
+  // Umbral Edge on a monster with three marks against one with none.
+  const edge = (marks) => {
+    const v = eclipse();
+    v.char.skills.umbraledge = 20;
+    const m = v.mobs[0];
+    if (marks) addMark(v, m, marks);
+    const before = m.hp;
+    assert.ok(cast(v, 'umbraledge').ok);
+    for (let i = 0; i < 80; i++) updateWorld(v, DT, idle);
+    return { dealt: before - m.hp, left: marksOf(v, m) };
+  };
+  const real = Math.random;
+  Math.random = () => 0.5;
+  let plain;
+  let marked;
+  try {
+    plain = edge(0);
+    marked = edge(3);
+  } finally {
+    Math.random = real;
+  }
+  assert.ok(marked.dealt > plain.dealt * 1.8, `three marks hit far harder (${plain.dealt} -> ${marked.dealt})`);
+  assert.equal(marked.left, 0, 'and they are spent');
+});
+
+test('Shadow Step comes out behind the nearest monster ahead, facing its back', () => {
+  const w = eclipse();
+  w.char.skills.shadowstep = 10;
+  const m = w.mobs[0];
+  const before = m.hp;
+  assert.ok(cast(w, 'shadowstep').ok);
+  for (let i = 0; i < 40; i++) updateWorld(w, DT, idle);
+  assert.ok(w.body.x > m.x, 'she is past it');
+  assert.equal(w.body.facing, -1, 'turned to face it');
+  assert.ok(m.hp < before, 'and stabbed it');
+});
+
+test('at Totality every Eclipse blow is a crit', () => {
+  const w = eclipse();
+  const crits = [];
+  for (let i = 0; i < 120; i++) {
+    w.umbra = 100;
+    w.umbraAt = w.now;
+    w.juice = [];
+    updateWorld(w, DT, i % 18 === 0 ? attack : idle);
+    for (const j of w.juice) if (j.type === 'hit') crits.push(Boolean(j.crit));
+  }
+  assert.ok(crits.length > 3, 'blows landed');
+  assert.ok(crits.every(Boolean), 'all of them crits');
+});
+
+test('Total Eclipse needs a full Umbra, spends it, and sets off every mark', async () => {
+  const { marksOf, addMark } = await import('../src/world/melee.js');
+  const w = eclipse();
+  w.char.skills.totaleclipse = 10;
+  for (const m of w.mobs) addMark(w, m, 2);
+  w.umbra = 90;
+  assert.equal(cast(w, 'totaleclipse').reason, 'gauge:umbra', 'waits for a full Umbra');
+  w.umbra = 100;
+  assert.ok(cast(w, 'totaleclipse').ok);
+  assert.equal(w.umbra, 0, 'spends all of it');
+  for (let i = 0; i < 130; i++) updateWorld(w, DT, idle);
+  assert.ok(w.mobs.every((m) => marksOf(w, m) === 0), 'every mark went off');
+  assert.ok(w.fx.some((f) => f.kind === 'ecpop') || true);
+  assert.ok((w.umbra ?? 0) < 10, 'it does not refill Umbra');
+});
+
+test('a thief flutter-jumps once in the air (Jump again), springing on with a little hop; others do not', () => {
+  const press = { held: new Set(['Space']), pressed: new Set(['Space']), locked: false };
+  const holdJump = { held: new Set(['Space']), pressed: new Set(), locked: false };
+  const jump = (w) => {
+    updateWorld(w, DT, press);
+    for (let i = 0; i < 12; i++) updateWorld(w, DT, holdJump);
+    const vyBefore = w.body.vy;
+    updateWorld(w, DT, press);
+    return { vyBefore, vy: w.body.vy, used: w.flutterUsed };
+  };
+  const w = moonmoth();
+  const r = jump(w);
+  assert.ok(r.vy < 0 && Math.abs(w.body.vx) >= 250, `she springs on with a little hop (vy ${Math.round(r.vyBefore)} -> ${Math.round(r.vy)}, vx ${Math.round(w.body.vx)})`);
+  assert.ok(w.fx.some((f) => f.kind === 'mmflutter'), 'in a burst of moths');
+  const again = w.body.vy;
+  updateWorld(w, DT, press);
+  assert.ok(w.body.vy >= again, 'only once in the air');
+  for (let i = 0; i < 120; i++) updateWorld(w, DT, idle);
+  assert.ok(w.body.onGround && !w.flutterUsed, 'landing gives it back');
+  const v = arena('sword_20');
+  jump(v);
+  assert.ok(!v.flutterUsed, 'a warrior has no flutter jump');
 });

@@ -2889,6 +2889,7 @@ export const MOVES = {
   // away, then whipped forward and up across her body at chest height, her free hand flung back;
   // a skip forward on the balls of her feet, and back to guard.
   mmflick(p) {
+    const bs = bump(p, 0.5, 0.8);
     const cock = soft(seg(p, 0, 0.3));
     const flick = ease(seg(p, 0.32, 0.48));
     const over = bump(p, 0.44, 0.66);
@@ -2899,7 +2900,7 @@ export const MOVES = {
       rig: (r) => {
         r.squat = q(1.2 * cock * (1 - flick));
         danceLegs(r, [cock * (1 - flick), [2.2, -0.6, 6], [-3, 0, -10]], [flick * (1 - back), [4, 0, 6], [-3.6, -1, -16]]);
-        r.backArm = [q(lerp(lerp(0, 2.5, cock), -4.5, flick) * (1 - back)), q(lerp(lerp(0, -1, cock), -3, flick) * (1 - back))];
+        r.backArm = [q(lerp(lerp(0, 2.5, cock), -4.5, flick) * (1 - back) + 10 * bs), q(lerp(lerp(0, -1, cock), -3, flick) * (1 - back) + 2 * bs)];
         r.tx = q(lerp(-0.8 * cock, 1.6, flick) * (1 - back));
         r.hairLift = flick > 0.2 && back < 0.4 ? -1 : 0;
         r.cape = Math.round(-3 * bump(p, 0.3, 0.75));
@@ -2958,6 +2959,7 @@ export const MOVES = {
   // rips it up through them in a rising cut that pops her off her toes, the free hand sweeping up
   // after it, and drops back onto guard.
   mmhook(p) {
+    const bs = bump(p, 0.56, 0.84);
     const dip = soft(seg(p, 0, 0.3));
     const rip = ease(seg(p, 0.32, 0.5));
     const back = soft(seg(p, 0.66, 1));
@@ -2967,7 +2969,7 @@ export const MOVES = {
       rig: (r) => {
         r.squat = q(2.4 * dip * (1 - rip));
         danceLegs(r, [dip * (1 - rip), [3.6, 0, 6], [-3.6, 0, -12]], [rip * (1 - back), [2.2, -2, 10], [-2, -2.4, -18]]);
-        r.backArm = [q(lerp(lerp(0, 2, dip), -3, rip) * (1 - back)), q(lerp(lerp(0, 1, dip), -6, rip) * (1 - back))];
+        r.backArm = [q(lerp(lerp(0, 2, dip), -3, rip) * (1 - back) + 10 * bs), q(lerp(lerp(0, 1, dip), -6, rip) * (1 - back) + 4 * bs)];
         r.tx = q(lerp(0.6 * dip, 1.4, rip) * (1 - back));
         r.hairLift = rip > 0.3 && back < 0.4 ? -1 : 0;
         r.cape = Math.round(-3 * bump(p, 0.3, 0.8));
@@ -3055,6 +3057,7 @@ export const MOVES = {
   // Air cut (in the air, at ~0.45): knees tucked, a flutter of her free arm like a wing beat, and the
   // dagger flicked round across the front of her, hanging her there a moment.
   mmaircut(p) {
+    const bs = bump(p, 0.5, 0.8);
     const cock = soft(seg(p, 0, 0.3));
     const cut = ease(seg(p, 0.32, 0.5));
     const back = soft(seg(p, 0.66, 1));
@@ -3064,7 +3067,7 @@ export const MOVES = {
       lift: 1.5 * flap, tilt: -0.08 * cock * (1 - cut) + 0.14 * cut * (1 - back), trail: cut > 0 && p < 0.66,
       rig: (r) => {
         tuck(r);
-        r.backArm = [q(-3 - 1.5 * flap), q(-4 - 2 * flap)];
+        r.backArm = [q(-3 - 1.5 * flap + 10 * bs), q(-4 - 2 * flap + 3 * bs)];
         r.hairLift = -1;
         r.cape = Math.round(2 * flap);
         if (cut > 0.3 && back < 0.5) strikeFace(r);
@@ -3170,6 +3173,402 @@ export const MOVES = {
         r.hairLift = open > 0.3 && down < 0.6 ? -1 : up > 0.2 && down < 0.8 ? 1 : 0;
         r.cape = Math.round(3 * up * (1 - down) - 5 * hold);
         if (open > 0.3 && down < 0.5) strikeFace(r);
+      },
+    };
+  },
+
+  // ---------- The Eclipse (docs/design/eclipse.md) ----------
+  // The Moon Moth's damage path: an assassin. Lower and more deliberate than the Moon Moth: she
+  // coils in close, drives the daggers in (reverse grip, low, to one point) and pulls out; her big
+  // moves cross both daggers and throw them open in an X. The same blade and arm angles as hers
+  // (110 / 40 her guard).
+
+  // Low stab (opener, at ~0.44): the front dagger drawn back to the hip as she drops a little, then
+  // driven in low and straight with a step, the free hand pulled back; out again to guard.
+  ecjab(p) {
+    const bs = bump(p, 0.52, 0.82);
+    const coil = soft(seg(p, 0, 0.3));
+    const stab = ease(seg(p, 0.32, 0.46));
+    const back = soft(seg(p, 0.6, 1));
+    return {
+      weapon: lerp(lerp(110, 150, coil), 98, stab) + 12 * back, arm: lerp(lerp(40, 18, coil), 80, stab) - 40 * back,
+      lunge: -1.5 * coil * (1 - stab) + 6 * stab * (1 - back), tilt: 0.04 * coil * (1 - stab) + 0.14 * stab * (1 - back),
+      rig: (r) => {
+        r.squat = q(1.4 * coil * (1 - stab) + 1 * stab * (1 - back));
+        danceLegs(r, [coil * (1 - stab), [2.4, 0, 6], [-3.2, 0, -10]], [stab * (1 - back), [4.6, 0, 4], [-3.8, 0, -14]]);
+        r.backArm = [q(lerp(lerp(0, 2, coil), -4.5, stab) * (1 - back) + 11 * bs), q(lerp(lerp(0, -1, coil), -2, stab) * (1 - back) + 1 * bs)];
+        r.tx = q(1.6 * stab * (1 - back));
+        r.cape = Math.round(-3 * bump(p, 0.32, 0.7));
+        if (stab > 0.3 && back < 0.5) strikeFace(r);
+      },
+    };
+  },
+
+  // Feint (opener, cuts at ~0.6): she leans away and flicks the dagger up as if to cut high, a
+  // beat, then switches her weight, steps through and cuts low across them instead.
+  ecfeint(p) {
+    const bs = bump(p, 0.66, 0.92);
+    const fake = soft(seg(p, 0, 0.28));
+    const hold = seg(p, 0.28, 0.44);
+    const cut = ease(seg(p, 0.46, 0.62));
+    const back = soft(seg(p, 0.72, 1));
+    return {
+      weapon: lerp(lerp(110, 30, fake), 172, cut) - 62 * back, arm: lerp(lerp(40, 96, fake), 56, cut) - 16 * back,
+      lunge: -2.5 * fake * (1 - cut) + 7 * cut * (1 - back), tilt: -0.1 * fake * (1 - cut) + 0.03 * Math.sin(hold * Math.PI) * (1 - cut) + 0.16 * cut * (1 - back), trail: cut > 0 && p < 0.74,
+      rig: (r) => {
+        danceLegs(r, [fake * (1 - cut), [1.4, -0.6, 4], [-3.4, 0, -8]], [cut * (1 - back), [4.6, 0, 6], [-3.8, -1, -16]]);
+        r.backArm = [q(lerp(lerp(0, 3, fake), -5, cut) * (1 - back) + 11 * bs), q(lerp(lerp(0, -3, fake), -1, cut) * (1 - back) + 1 * bs)];
+        r.tx = q(lerp(-1 * fake, 1.8, cut) * (1 - back));
+        if (fake > 0.5 && cut < 0.2) r.eyes = 'half';
+        r.cape = Math.round(2 * fake * (1 - cut) - 4 * bump(p, 0.46, 0.85));
+        if (cut > 0.3 && back < 0.5) strikeFace(r);
+      },
+    };
+  },
+
+  // Raking slice (second, at ~0.3 and ~0.62): the front dagger rakes down across them from over her
+  // shoulder, then the off hand's rakes back the other way as the front one comes up.
+  ecslice(p) {
+    const c1 = ease(seg(p, 0.08, 0.32));
+    const c2 = ease(seg(p, 0.44, 0.64));
+    const back = soft(seg(p, 0.72, 1));
+    return {
+      weapon: lerp(lerp(110, 168, c1), 60, c2) + 50 * back, arm: lerp(lerp(40, 62, c1), 96, c2) - 56 * back,
+      lunge: 3 * c1 * (1 - c2) + 5 * c2 * (1 - back), tilt: 0.12 * c1 * (1 - c2) + 0.08 * c2 * (1 - back), trail: p > 0.08 && p < 0.7,
+      rig: (r) => {
+        danceLegs(r, [c1 * (1 - c2), [3.6, 0, 6], [-3, 0, -10]], [c2 * (1 - back), [4.2, 0, 4], [-3.6, 0, -14]]);
+        r.backArm = [q(lerp(lerp(0, -3, c1), 6, c2) * (1 - back)), q(lerp(lerp(0, -3, c1), 0, c2) * (1 - back))];
+        r.tx = q((1 * c1 + 1.2 * c2) * (1 - back));
+        r.cape = Math.round(-3 * bump(p, 0.1, 0.8));
+        if ((c1 > 0.3 || c2 > 0.3) && back < 0.5) strikeFace(r);
+      },
+    };
+  },
+
+  // Rising rake (second, at ~0.46): she sinks with both daggers hanging low behind her, then rakes
+  // both up through them together, rising onto her toes, and drops back to guard.
+  ecrake(p) {
+    const sink = soft(seg(p, 0, 0.3));
+    const rake = ease(seg(p, 0.32, 0.5));
+    const back = soft(seg(p, 0.66, 1));
+    return {
+      weapon: lerp(lerp(110, 196, sink), 6, rake) + 104 * back, arm: lerp(lerp(40, 12, sink), 116, rake) - 76 * back,
+      lift: 3 * bump(p, 0.38, 0.76), lunge: 1.5 * sink * (1 - rake) + 4 * rake * (1 - back), tilt: 0.12 * sink * (1 - rake) - 0.08 * rake * (1 - back), trail: rake > 0 && p < 0.66,
+      rig: (r) => {
+        r.squat = q(2.6 * sink * (1 - rake));
+        danceLegs(r, [sink * (1 - rake), [3.6, 0, 6], [-3.8, 0, -12]], [rake * (1 - back), [2, -1.6, 10], [-1.8, -2, -16]]);
+        r.backArm = [q(lerp(lerp(0, -1, sink), -3, rake) * (1 - back)), q(lerp(lerp(0, 2, sink), -6, rake) * (1 - back))];
+        r.hairLift = rake > 0.3 && back < 0.4 ? -1 : 0;
+        r.cape = Math.round(-3 * bump(p, 0.3, 0.8));
+        if (rake > 0.3 && back < 0.5) strikeFace(r);
+      },
+    };
+  },
+
+  // Pierce (finisher, at ~0.56): both daggers drawn back low by her hip as she leans away, then she
+  // lunges and drives both into one point together, holds them there a beat twisting as the gold
+  // eye opens, then pulls them out and steps back to guard.
+  ecpierce(p) {
+    const draw = soft(seg(p, 0, 0.36));
+    const drive = ease(seg(p, 0.4, 0.56));
+    const twist = Math.sin(seg(p, 0.56, 0.76) * Math.PI * 3) * bump(p, 0.56, 0.76);
+    const out = soft(seg(p, 0.76, 1));
+    return {
+      weapon: lerp(lerp(110, 150, draw), 92, drive) + 4 * twist + 18 * out, arm: lerp(lerp(40, 14, draw), 90, drive) - 50 * out,
+      lunge: -3 * draw * (1 - drive) + 9 * drive * (1 - out), tilt: -0.1 * draw * (1 - drive) + 0.2 * drive * (1 - out),
+      rig: (r) => {
+        r.squat = q(1.6 * draw * (1 - drive) + 1.2 * drive * (1 - out));
+        danceLegs(r, [draw * (1 - drive), [1.8, 0, 4], [-3.4, 0, -6]], [drive * (1 - out), [5, 0, 4], [-4.4, 0, -18]]);
+        r.backArm = [q(lerp(lerp(0, -3, draw), 7.5, drive) * (1 - out)), q(lerp(lerp(0, 1.5, draw), -1, drive) * (1 - out))];
+        r.tx = q(lerp(-1 * draw, 2, drive) * (1 - out));
+        if (draw > 0.5 && drive < 0.2) r.eyes = 'half';
+        r.cape = Math.round(2 * draw * (1 - drive) - 5 * drive * (1 - out));
+        if (drive > 0.3 && out < 0.5) strikeFace(r);
+      },
+    };
+  },
+
+  // Corona turn (finisher, at ~0.5): crouched low with the daggers crossed at her knees, she turns
+  // once hard with both arms flung out low and wide, and stops in a crouch, arms crossed again.
+  ecturn(p) {
+    const sink = soft(seg(p, 0, 0.2));
+    const u = soft(seg(p, 0.2, 0.7));
+    const stop = soft(seg(p, 0.7, 0.86));
+    const back = soft(seg(p, 0.86, 1));
+    const turn = Math.cos(u * Math.PI * 2);
+    const open = Math.sin(Math.PI * u);
+    return {
+      weapon: lerp(lerp(lerp(110, 140, sink), 100, open), 110, back) + 360 * u + 10 * stop * (1 - back), arm: lerp(lerp(lerp(40, 22, sink), 72, open), 40, back),
+      lunge: 3 * u * (1 - back), orbit: u > 0 && u < 1, turn: Math.sign(turn || 1) * Math.max(0.4, Math.abs(turn)), tilt: 0.05 * sink * (1 - u), trail: u > 0.05 && u < 0.95,
+      rig: (r) => {
+        r.squat = q(2 * sink * (1 - open * 0.5) * (1 - back));
+        danceLegs(r, [sink * (1 - back), [3.4, 0, 6], [-3.6, 0, -10]], [open, [3, 0, 8], [-3.2, 0, -12]]);
+        r.backArm = [q((2 * sink - 7 * open) * (1 - back)), q((1 * sink - 2 * open) * (1 - back))];
+        r.hairLift = u > 0.1 && u < 0.9 ? -1 : 0;
+        r.cape = Math.round(-4 * bump(p, 0.2, 0.85));
+        if (u > 0.2 && back < 0.5) strikeFace(r);
+      },
+    };
+  },
+
+  // Rising cut (up + attack, at ~0.32 and ~0.6): the front dagger rips up through them, then she
+  // turns up after it and the off hand's cuts higher still as she leaves the floor.
+  ecrise(p) {
+    const dip = soft(seg(p, 0, 0.16));
+    const c1 = ease(seg(p, 0.16, 0.32));
+    const c2 = ease(seg(p, 0.44, 0.6));
+    const back = soft(seg(p, 0.7, 1));
+    return {
+      weapon: lerp(lerp(110, 186, dip), 14, c1) + 20 * c2 * (1 - back) + 96 * back, arm: lerp(lerp(40, 18, dip), 112, c1) - 14 * c2 * (1 - back) - 72 * back,
+      lift: 3 * c1 * (1 - back) + 3 * c2 * (1 - back), lunge: 2 * c1 * (1 - back), tilt: 0.08 * dip * (1 - c1) - 0.12 * Math.max(c1, c2) * (1 - back), trail: c1 > 0 && p < 0.68,
+      rig: (r) => {
+        r.squat = q(2.2 * dip * (1 - c1));
+        danceLegs(r, [dip * (1 - c1), [3.4, 0, 6], [-3.4, 0, -10]], [c1 * (1 - back), [2.6, -5, 10], [-1.6, -2.6, -10]]);
+        r.air = c1 > 0.5 && back < 0.5;
+        r.backArm = [q(lerp(lerp(0, 1.5, dip), 4, c2) * (1 - back)), q(lerp(-1 * dip, -10, c2) * (1 - back))];
+        r.hairLift = c1 > 0.3 && back < 0.6 ? -1 : 0;
+        r.cape = Math.round(3 * bump(p, 0.2, 0.8));
+        if ((c1 > 0.3 || c2 > 0.3) && back < 0.5) strikeFace(r);
+      },
+    };
+  },
+
+  // Air cut (in the air, at ~0.45): both daggers raised behind her, knees tucked, then both brought
+  // down together in a diagonal cut across the front of her.
+  ecaircut(p) {
+    const up = soft(seg(p, 0, 0.3));
+    const cut = ease(seg(p, 0.32, 0.5));
+    const back = soft(seg(p, 0.66, 1));
+    return {
+      weapon: lerp(lerp(110, -30, up), 170, cut) - 60 * back, arm: lerp(lerp(40, 118, up), 46, cut) - 6 * back,
+      tilt: -0.1 * up * (1 - cut) + 0.16 * cut * (1 - back), trail: cut > 0 && p < 0.66,
+      rig: (r) => {
+        tuck(r);
+        r.backArm = [q(lerp(lerp(0, -3, up), 5, cut) * (1 - back)), q(lerp(lerp(0, -8, up), 0, cut) * (1 - back))];
+        r.hairLift = -1;
+        r.cape = Math.round(2 * up * (1 - cut) - 3 * cut * (1 - back));
+        if (cut > 0.3 && back < 0.5) strikeFace(r);
+      },
+    };
+  },
+
+  // Slip (her dash out of a run; hidden ~0.12-0.46, stabs at ~0.6): she ducks low into a disc of
+  // shadow, slides past them unseen and comes out of it turned round, low, stabbing back.
+  ecslip(p) {
+    const duck = soft(seg(p, 0, 0.12));
+    const stab = ease(seg(p, 0.46, 0.6));
+    const back = soft(seg(p, 0.72, 1));
+    return {
+      weapon: lerp(lerp(110, 160, duck), 96, stab) + 14 * back, arm: lerp(lerp(40, 16, duck), 84, stab) - 44 * back,
+      lunge: 2 * duck * (1 - stab) + 5 * stab * (1 - back), tilt: 0.2 * duck * (1 - stab) + 0.14 * stab * (1 - back),
+      rig: (r) => {
+        r.squat = q(2.6 * duck * (1 - stab) + 1.6 * stab * (1 - back));
+        danceLegs(r, [duck * (1 - stab), [4.2, 0, 8], [-4.6, 0, -18]], [stab * (1 - back), [4.6, 0, 4], [-4, 0, -14]]);
+        r.backArm = [q(lerp(lerp(0, -2, duck), -5, stab) * (1 - back)), q(lerp(0, -2, stab) * (1 - back))];
+        r.cape = Math.round(-4 * bump(p, 0.46, 0.9));
+        if (stab > 0.3 && back < 0.5) strikeFace(r);
+      },
+    };
+  },
+
+  // Shadow Step (hidden ~0.14-0.42, stabs at ~0.44 from behind): she draws both daggers to her
+  // chest and drops back half a step into the shadow, and comes out of it already driving the front
+  // dagger in, then pulls it out and straightens.
+  ecstep(p) {
+    const gather = soft(seg(p, 0, 0.14));
+    const stab = ease(seg(p, 0.42, 0.5));
+    const back = soft(seg(p, 0.66, 1));
+    return {
+      weapon: lerp(lerp(110, 60, gather), 96, stab) + 14 * back, arm: lerp(lerp(40, 46, gather), 86, stab) - 46 * back,
+      lunge: -2 * gather * (1 - stab) + 6 * stab * (1 - back), tilt: -0.06 * gather * (1 - stab) + 0.16 * stab * (1 - back),
+      rig: (r) => {
+        r.squat = q(1.2 * gather * (1 - stab) + 1 * stab * (1 - back));
+        danceLegs(r, [gather * (1 - stab), [1.4, 0, 2], [-2.4, 0, -6]], [stab * (1 - back), [4.8, 0, 4], [-4, 0, -16]]);
+        r.backArm = [q(lerp(lerp(0, 4, gather), -5, stab) * (1 - back)), q(lerp(lerp(0, -3, gather), -2, stab) * (1 - back))];
+        if (gather > 0.5 && stab < 0.2) r.eyes = 'half';
+        r.cape = Math.round(-4 * bump(p, 0.42, 0.85));
+        if (stab > 0.3 && back < 0.5) strikeFace(r);
+      },
+    };
+  },
+
+  // Eye of the Night (the eyes fly at ~0.42): she lifts her free hand to her eye as if looking
+  // through her fingers, then flicks it open toward them, the dagger held low at her side.
+  eceyecast(p) {
+    const look = soft(seg(p, 0, 0.3));
+    const flick = ease(seg(p, 0.34, 0.46));
+    const back = soft(seg(p, 0.64, 1));
+    return {
+      weapon: lerp(110, 150, look) * (1 - back) + 110 * back - 0 * flick, arm: lerp(40, 22, look) * (1 - back) + 40 * back,
+      lunge: -1 * look * (1 - flick) + 4 * flick * (1 - back), tilt: -0.06 * look * (1 - flick) + 0.1 * flick * (1 - back),
+      rig: (r) => {
+        danceLegs(r, [look * (1 - flick), [1.6, 0, 2], [-2.6, 0, -6]], [flick * (1 - back), [3.8, 0, 4], [-3.4, 0, -12]]);
+        r.backArm = [q(lerp(lerp(0, 4.5, look), 8, flick) * (1 - back)), q(lerp(lerp(0, -6.5, look), -4, flick) * (1 - back))];
+        if (look > 0.5 && flick < 0.3) r.eyes = 'half';
+        if (flick > 0.3 && back < 0.5) strikeFace(r);
+      },
+    };
+  },
+
+  // Umbral Edge (stabs at ~0.32 and ~0.7): the front dagger driven in and held, then a long gather
+  // and the off hand's driven in beside it with her whole weight and a twist; she holds, then pulls
+  // both out together and steps back.
+  ecedge(p) {
+    const s1 = ease(seg(p, 0.18, 0.32));
+    const gather = soft(seg(p, 0.36, 0.58));
+    const s2 = ease(seg(p, 0.6, 0.7));
+    const twist = Math.sin(seg(p, 0.7, 0.84) * Math.PI * 2) * bump(p, 0.7, 0.84);
+    const out = soft(seg(p, 0.84, 1));
+    return {
+      weapon: lerp(110, 94, s1) + 3 * twist + 16 * out, arm: lerp(40, 84, s1) - 6 * gather * (1 - s2) - 44 * out,
+      lunge: 5 * s1 * (1 - out) - 1.5 * gather * (1 - s2) + 5 * s2 * (1 - out), tilt: 0.12 * s1 * (1 - out) - 0.06 * gather * (1 - s2) + 0.12 * s2 * (1 - out),
+      rig: (r) => {
+        r.squat = q(1 * s1 * (1 - out) + 1 * s2 * (1 - out));
+        danceLegs(r, [s1 * (1 - out), [4, 0, 4], [-3.6, 0, -12]], [s2 * (1 - out), [5, 0, 4], [-4.4, 0, -18]]);
+        r.backArm = [q((lerp(-2 * s1, -4, gather) * (1 - s2) + 8 * s2) * (1 - out)), q((lerp(0, -3, gather) * (1 - s2) - 1 * s2) * (1 - out))];
+        r.tx = q((1.4 * s1 + 0.8 * s2) * (1 - out));
+        if (gather > 0.4 && s2 < 0.2) r.mouth = 'grit';
+        r.cape = Math.round(-3 * bump(p, 0.6, 0.9));
+        if ((s1 > 0.3 && gather < 0.3) || (s2 > 0.3 && out < 0.5)) strikeFace(r);
+      },
+    };
+  },
+
+  // Corona (flares at ~0.5): a deep crouch with both daggers crossed low, then she springs up into
+  // one turn with both arms flung wide and high as the ring of fire flares, and lands crouched.
+  eccorona(p) {
+    const sink = soft(seg(p, 0, 0.3));
+    const u = soft(seg(p, 0.32, 0.66));
+    const land = soft(seg(p, 0.66, 0.82));
+    const back = soft(seg(p, 0.82, 1));
+    const turn = Math.cos(u * Math.PI * 2);
+    const open = Math.sin(Math.PI * u);
+    return {
+      weapon: lerp(lerp(lerp(110, 150, sink), 70, open), 110, back) + 360 * u, arm: lerp(lerp(lerp(40, 20, sink), 118, open), 40, back),
+      lift: 6 * open, lunge: 0, orbit: u > 0 && u < 1, turn: Math.sign(turn || 1) * Math.max(0.4, Math.abs(turn)), tilt: -0.06 * open, trail: u > 0.05 && u < 0.95,
+      rig: (r) => {
+        r.squat = q(2.8 * sink * (1 - u) + 1.6 * land * (1 - back));
+        danceLegs(r, [sink * (1 - u), [3.6, 0, 6], [-3.6, 0, -8]], [open, [1.2, -2.4, 12], [-1, -2.2, -12]], [land * (1 - back), [3.4, 0, 6], [-3.6, 0, -10]]);
+        r.backArm = [q((2 * sink * (1 - u)) - 7 * open), q((1 * sink * (1 - u)) - 9 * open)];
+        r.hairLift = open > 0.3 ? -1 : 0;
+        r.cape = Math.round(-5 * bump(p, 0.32, 0.8));
+        if (open > 0.3) strikeFace(r);
+      },
+    };
+  },
+
+  // Total Eclipse (hidden ~0.26-0.66; the marks go off at ~0.76): she crouches and draws both
+  // daggers back as the sky darkens, is gone through the strikes, and comes back in the middle of
+  // them in a low lunge with the daggers crossed before her; then throws them open in an X as the
+  // diamond ring flashes, and holds it before standing.
+  ectotal(p) {
+    const draw = soft(seg(p, 0, 0.24));
+    const cross = soft(seg(p, 0.6, 0.7));
+    const open = ease(seg(p, 0.72, 0.8));
+    const back = soft(seg(p, 0.88, 1));
+    return {
+      weapon: lerp(lerp(lerp(110, 150, draw), 40, cross), 176, open) - 66 * back, arm: lerp(lerp(lerp(40, 14, draw), 60, cross), 104, open) - 64 * back,
+      lunge: -2 * draw * (1 - cross) + 6 * cross * (1 - back), tilt: -0.08 * draw * (1 - cross) + 0.1 * cross * (1 - open) - 0.08 * open * (1 - back),
+      trail: open > 0 && p < 0.86,
+      rig: (r) => {
+        r.squat = q(2 * draw * (1 - cross) + 2.2 * cross * (1 - open) + 1 * open * (1 - back));
+        danceLegs(r, [draw * (1 - cross), [2.4, 0, 6], [-3.6, 0, -8]], [cross * (1 - back), [4.8, 0, 6], [-4.6, 0, -16]]);
+        r.backArm = [q((lerp(lerp(0, -3, draw), 5, cross) * (1 - open) - 7 * open) * (1 - back)), q((lerp(lerp(0, 1, draw), -3, cross) * (1 - open) - 6 * open) * (1 - back))];
+        if (draw > 0.5 && cross < 0.3) r.eyes = 'half';
+        r.hairLift = open > 0.2 && back < 0.6 ? -1 : 0;
+        r.cape = Math.round(-5 * bump(p, 0.7, 0.98));
+        if (open > 0.2 && back < 0.5) strikeFace(r);
+      },
+    };
+  },
+
+  // Umbra Step (her Moth Step; dark moths ~0.12-0.5, cuts back at ~0.62): she pitches forward low,
+  // nearly to the floor, and is moths; she comes out of them crouched, cutting back across with the
+  // front dagger from high to low, and rises.
+  ecumbrastep(p) {
+    const pitch = soft(seg(p, 0, 0.12));
+    const cut = ease(seg(p, 0.5, 0.64));
+    const rise = soft(seg(p, 0.72, 1));
+    return {
+      weapon: lerp(lerp(110, 140, pitch), -10, seg(p, 0.12, 0.5)) * (1 - cut) + 170 * cut - 60 * rise * cut, arm: lerp(lerp(40, 30, pitch), 108, seg(p, 0.12, 0.5)) * (1 - cut) + 52 * cut - 12 * rise * cut,
+      lunge: 3 * pitch * (1 - cut) + 4 * cut * (1 - rise), tilt: 0.26 * pitch * (1 - cut) + 0.14 * cut * (1 - rise), trail: cut > 0 && p < 0.74,
+      rig: (r) => {
+        r.squat = q(2.6 * pitch * (1 - cut) + 2.2 * cut * (1 - rise));
+        danceLegs(r, [pitch * (1 - cut), [4.4, 0, 8], [-4.8, 0, -20]], [cut * (1 - rise), [4.6, 0, 8], [-4.6, 1, -20]]);
+        r.backArm = [q(lerp(-3 * pitch, 5, cut) * (1 - rise)), q(lerp(0, -2, cut) * (1 - rise))];
+        r.hairLift = cut > 0.2 && rise < 0.5 ? -1 : 0;
+        r.cape = Math.round(-4 * bump(p, 0.5, 0.92));
+        if (cut > 0.3 && rise < 0.5) strikeFace(r);
+      },
+    };
+  },
+
+  // Black Flurry (her Wing Flurry; the same six cuts, at ~0.13, 0.24, 0.34, 0.44, 0.55, then ~0.76):
+  // reverse-grip punches, front and off hand by turns, driving in short and hard with her shoulders,
+  // then both daggers crossed and thrown open in an X.
+  ecflurry(p) {
+    const into = soft(seg(p, 0, 0.08));
+    const blur = seg(p, 0.08, 0.6);
+    const beat = Math.sin(blur * Math.PI * 5 - Math.PI / 2);
+    const fl = Math.min(1, blur * 8, (1 - blur) * 8);
+    const cross = soft(seg(p, 0.6, 0.7));
+    const fin = ease(seg(p, 0.7, 0.78));
+    const back = soft(seg(p, 0.84, 1));
+    const punchW = 104 - 10 * beat;
+    const punchA = 66 + 18 * beat;
+    return {
+      weapon: (lerp(110, punchW, into) * (1 - cross) + 46 * cross) * (1 - fin) + 176 * fin - 66 * back * fin,
+      arm: (lerp(40, punchA, into) * (1 - cross) + 58 * cross) * (1 - fin) + 104 * fin - 64 * back * fin,
+      lunge: 2 * into * (1 - fin) + 1.2 * beat * fl + 4 * fin * (1 - back), tilt: 0.06 * beat * fl + 0.06 * cross * (1 - fin) - 0.06 * fin * (1 - back), trail: p > 0.1 && p < 0.86,
+      rig: (r) => {
+        danceLegs(r, [into * (1 - fin), [3.8, 0, 6], [-3.4, 0, -12]], [fin * (1 - back), [4.4, 0, 8], [-4.2, -1, -14]]);
+        r.backArm = [q(((3 + 4 * -beat) * fl * (1 - cross) + 5 * cross * (1 - fin) - 7 * fin) * (1 - back)), q(((-1 + beat) * fl * (1 - cross) - 3 * cross * (1 - fin) - 6 * fin) * (1 - back))];
+        r.tx = q(1.2 * into * (1 - back) + 0.5 * beat * fl);
+        r.hairLift = fin > 0.2 && back < 0.5 ? -1 : 0;
+        r.cape = Math.round(-2 * fl * Math.abs(beat) - 4 * bump(p, 0.7, 0.95));
+        if (fl > 0.5 || (fin > 0.2 && back < 0.5)) strikeFace(r);
+      },
+    };
+  },
+
+  // Shadow Swarm (her Moth Swarm; released at ~0.48): her hands cupped together at her chest, then
+  // opened forward like a book, wrists together, as the dark moths pour out.
+  ecswarmcast(p) {
+    const cup = soft(seg(p, 0, 0.34));
+    const open = ease(seg(p, 0.38, 0.5));
+    const back = soft(seg(p, 0.7, 1));
+    return {
+      weapon: lerp(lerp(110, 150, cup), 120, open) - 10 * back, arm: lerp(lerp(40, 34, cup), 82, open) - 42 * back,
+      lunge: -1 * cup * (1 - open) + 4 * open * (1 - back), tilt: 0.04 * cup * (1 - open) + 0.1 * open * (1 - back),
+      rig: (r) => {
+        danceLegs(r, [cup * (1 - open), [1.8, 0, 2], [-2.4, 0, -6]], [open * (1 - back), [4, 0, 4], [-3.6, 0, -12]]);
+        r.backArm = [q(lerp(lerp(0, 5, cup), 7, open) * (1 - back)), q(lerp(lerp(0, -3, cup), -6, open) * (1 - back))];
+        if (cup > 0.5 && open < 0.3) r.eyes = 'half';
+        r.cape = Math.round(-3 * bump(p, 0.38, 0.85));
+        if (open > 0.3 && back < 0.5) strikeFace(r);
+      },
+    };
+  },
+
+  // New Moon (her Midnight Swarm; the moon rises at ~0.2, the swarm pours at ~0.62): she sinks to one
+  // knee, rises slowly with both arms lifting as the dark moon climbs behind her, then sweeps both
+  // arms down and forward as the swarm pours, holds, and stands.
+  ecnewmoon(p) {
+    const kneel = soft(seg(p, 0, 0.2));
+    const rise = soft(seg(p, 0.2, 0.56));
+    const sweep = ease(seg(p, 0.56, 0.64));
+    const back = soft(seg(p, 0.86, 1));
+    return {
+      weapon: lerp(lerp(lerp(110, 150, kneel), 20, rise), 150, sweep) - 40 * back, arm: lerp(lerp(lerp(40, 20, kneel), 128, rise), 70, sweep) - 30 * back,
+      lift: 1.5 * rise * (1 - sweep), lunge: 3 * sweep * (1 - back), tilt: 0.06 * kneel * (1 - rise) - 0.12 * rise * (1 - sweep) + 0.12 * sweep * (1 - back),
+      rig: (r) => {
+        r.squat = q(3 * kneel * (1 - rise) + 1.4 * sweep * (1 - back));
+        danceLegs(r, [kneel * (1 - rise), [3.6, 0, 8], [-3.8, 1.6, -40]], [sweep * (1 - back), [4.4, 0, 6], [-3.8, 0, -12]]);
+        r.backArm = [q((lerp(lerp(0, 2, kneel), -6, rise) * (1 - sweep) + 6 * sweep) * (1 - back)), q((lerp(0, -12, rise) * (1 - sweep) - 2 * sweep) * (1 - back))];
+        if (rise > 0.2 && sweep < 0.2) r.eyes = 'half';
+        r.hairLift = rise > 0.4 && sweep < 0.4 ? 1 : sweep > 0.3 && back < 0.5 ? -1 : 0;
+        r.cape = Math.round(2 * rise * (1 - sweep) - 4 * bump(p, 0.56, 0.9));
+        if (sweep > 0.3 && back < 0.5) strikeFace(r);
       },
     };
   },

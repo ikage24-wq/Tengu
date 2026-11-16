@@ -10927,15 +10927,23 @@
   E.bwwave = walllit(E.tgwave);
 
   // ---------- The Moon Moth (docs/design/moon-moth.md) ----------
-  // Her shapes, hers alone: luna moths (pointed fore wings with a gold eye spot and a dusky leading
-  // edge, round hind wings that sweep back into long trailing tails, a furry silver body, feathered
-  // feelers) and wing dust, a powder of glittering scales that drifts slowly DOWN (every other job's
-  // motes rise). Lilac and moon silver, inked in deep dusk violet. Smooth motion the Tide Mage's
+  // Her shapes, hers alone: spirit moths (round petal wings glowing pale at the root, a little gold
+  // crescent moon on each, a small round body, curled feelers with bead tips) and a light sprinkle of
+  // sparkles that drifts slowly DOWN (every other job's motes rise). Lilac and moon silver, inked in deep dusk violet. Smooth motion the Tide Mage's
   // way: each drawing is the same picture at its own moment `k` (0-1), every moth beating its wings
   // on its own phase as it flies, the tails fluttering after the beat. (The polish pass, 2026-11-16:
-  // real moth shapes, no plain puffs, wings that break up into dust instead of fading.)
-  const MMS = ['#ffffff', '#f1eaff', '#c9b4ff', '#9a7ae8', '#43307e'];
-  const MMSIL = ['#ffffff', '#f7f6ff', '#dedcf2', '#a9a4cc', '#5c5690'];
+  // no plain puffs, wings that break up into sparkles instead of fading. The 'less gross' pass the
+  // same day: realistic moths, crowded swarms, speck dust and eye spots read as gross, so the moths
+  // are cute spirits now, a few at a time, and the dust is mostly sparkles.)
+  // (Lets, so the Eclipse can draw the same moths in her colours: see `eclit` below. MMOTH, MBODY,
+  // MBLOOM and MDUST, when set, take over the moths' wings, their bodies, the blooms and the dust.)
+  let MMS = ['#ffffff', '#f1eaff', '#c9b4ff', '#9a7ae8', '#43307e'];
+  let MMSIL = ['#ffffff', '#f7f6ff', '#dedcf2', '#a9a4cc', '#5c5690'];
+  let MMOTH = null;
+  let MBODY = null;
+  let MBLOOM = null;
+  let MDUST = null;
+  let MMARK = null;
   const MMGOLD = ['#ffffff', '#fff3c8', '#ffd36a', '#e5a03c', '#8e5228'];
   const MMNIGHT = ['#5a4a92', '#4a3c80', '#3a2e6c', '#2e2458', '#221a44'];
   // An ellipse's outline as points (rotated by `rot`).
@@ -10967,39 +10975,44 @@
     const cy = pts.reduce((a, p) => a + p[1], 0) / pts.length;
     return pts.map(([x, y]) => [cx + (x - cx) * k, cy + (y - cy) * k]);
   };
-  // A luna moth's wings on one side (`s` = 1 or -1) for a body along +x at the origin, `r` its half
-  // wingspan, `o` how open (the beat foreshortens them), `tc` the tails' flutter.
+  // A spirit moth's wings on one side (`s` = 1 or -1) for a body along +x at the origin, `r` its
+  // half wingspan, `o` how open (the beat foreshortens them), `tc` the tail's soft sway. Petal-soft
+  // round shapes: a big rounded fore wing leaning forward, a small round hind wing that ends in a
+  // short rounded tail.
   function mmWingPts(r, s, o, tc) {
-    const hind = mmPath([
-      [[-0.05 * r, 0.06 * r * s], [0.05 * r, 0.35 * r * s * o], [-0.1 * r, 0.62 * r * s * o], [-0.3 * r, 0.62 * r * s * o]],
-      [[-0.3 * r, 0.62 * r * s * o], [-0.55 * r, 0.62 * r * s * o], [-0.85 * r, (0.5 * r * o + tc) * s], [-1.15 * r, (0.42 * r * o + tc) * s]],
-      [[-1.15 * r, (0.42 * r * o + tc) * s], [-0.9 * r, (0.36 * r * o + tc) * s], [-0.6 * r, 0.22 * r * s * o], [-0.42 * r, 0.18 * r * s * o]],
-      [[-0.42 * r, 0.18 * r * s * o], [-0.3 * r, 0.1 * r * s], [-0.15 * r, 0.06 * r * s], [-0.05 * r, 0.06 * r * s]],
-    ]);
-    const lead = [[0.18 * r, 0.04 * r * s], [0.42 * r, 0.3 * r * s * o], [0.62 * r, 0.7 * r * s * o], [0.62 * r, 0.98 * r * s * o]];
+    const Y = (v) => v * r * s * o;
+    const T = (v) => (v * r * o + tc) * s;
     const fore = mmPath([
-      lead,
-      [[0.62 * r, 0.98 * r * s * o], [0.6 * r, 1.12 * r * s * o], [0.2 * r, 0.95 * r * s * o], [0, 0.78 * r * s * o]],
-      [[0, 0.78 * r * s * o], [-0.15 * r, 0.6 * r * s * o], [-0.18 * r, 0.2 * r * s * o], [-0.12 * r, 0.05 * r * s]],
-      [[-0.12 * r, 0.05 * r * s], [-0.02 * r, 0.05 * r * s], [0.08 * r, 0.04 * r * s], [0.18 * r, 0.04 * r * s]],
+      [[0.1 * r, 0.05 * r * s], [0.34 * r, Y(0.22)], [0.56 * r, Y(0.6)], [0.44 * r, Y(0.88)]],
+      [[0.44 * r, Y(0.88)], [0.34 * r, Y(1.08)], [0.02 * r, Y(1.04)], [-0.12 * r, Y(0.8)]],
+      [[-0.12 * r, Y(0.8)], [-0.24 * r, Y(0.58)], [-0.16 * r, Y(0.22)], [-0.06 * r, 0.06 * r * s]],
+      [[-0.06 * r, 0.06 * r * s], [-0.02 * r, 0.05 * r * s], [0.05 * r, 0.05 * r * s], [0.1 * r, 0.05 * r * s]],
     ]);
-    return { hind, fore, lead: mmPath([lead], 8).concat([lead[3]]) };
+    const hind = mmPath([
+      [[-0.04 * r, 0.06 * r * s], [0, Y(0.32)], [-0.12 * r, Y(0.62)], [-0.34 * r, Y(0.62)]],
+      [[-0.34 * r, Y(0.62)], [-0.5 * r, Y(0.62)], [-0.6 * r, T(0.6)], [-0.72 * r, T(0.52)]],
+      [[-0.72 * r, T(0.52)], [-0.8 * r, T(0.46)], [-0.74 * r, T(0.36)], [-0.62 * r, T(0.36)]],
+      [[-0.62 * r, T(0.36)], [-0.48 * r, Y(0.34)], [-0.3 * r, Y(0.2)], [-0.04 * r, 0.06 * r * s]],
+    ]);
+    return { hind, fore };
   }
-  // A gold eye spot: a ring, a dark pupil, a glint.
-  function mmEye(ctx, x, y, r, pal) {
-    if (r < 1.2) return;
-    inked(ctx, mmEll(x, y, r, r * 0.9, 0, 14), MMGOLD[2], MMGOLD[4], Math.max(1.2, r * 0.25));
-    fill(ctx, mmEll(x, y, r * 0.45, r * 0.42, 0, 12), pal[4]);
-    fill(ctx, mmEll(x - r * 0.28, y - r * 0.28, r * 0.2, r * 0.2, 0, 8), '#ffffff');
+  // A little crescent moon at (x, y), `R` tall, its back facing angle `rot`, squashed by `sy`.
+  function mmCrescent(ctx, x, y, R, rot, sy, c) {
+    const pts = [];
+    for (let j = 0; j <= 12; j++) pts.push([Math.cos(-Math.PI / 2 + (Math.PI * j) / 12) * R, Math.sin(-Math.PI / 2 + (Math.PI * j) / 12) * R]);
+    for (let j = 12; j >= 0; j--) pts.push([Math.cos(-Math.PI / 2 + (Math.PI * j) / 12) * R * 0.35, Math.sin(-Math.PI / 2 + (Math.PI * j) / 12) * R * 0.92]);
+    fill(ctx, pts.map(([px, py]) => [x + px * Math.cos(rot) - py * Math.sin(rot), y + (px * Math.sin(rot) + py * Math.cos(rot)) * sy]), c);
   }
-  // One luna moth at (x, y): `r` its half wingspan, its wings beating at `flap` (0-1 round one
-  // beat: wide open at 0 and 1, folded up at 0.5), flying along `a` (radians, 0 = right). `sil`
-  // draws it as a flat dark shape (against the moon).
-  function mmMoth(ctx, x, y, r, flap, a = 0, { alpha = 1, pal = MMS, sil = false } = {}) {
+  // One spirit moth at (x, y): `r` its half wingspan, its wings beating at `flap` (0-1 round one
+  // beat: wide open at 0 and 1, folded up at 0.5), flying along `a` (radians, 0 = right). Soft and
+  // round on purpose (the 'less gross' pass, 2026-11-16): petal wings glowing pale at the middle,
+  // a little crescent moon on each fore wing, a small round body, curled feelers with bead tips. No
+  // eye spots, no segments, no feathery bits. `sil` draws it as a flat dark shape (against the moon).
+  function mmMoth(ctx, x, y, r, flap, a = 0, { alpha = 1, pal = MMOTH ?? MMS, sil = false } = {}) {
     if (alpha <= 0 || r <= 0.5) return;
-    const open = 0.2 + 0.8 * Math.abs(Math.cos(flap * Math.PI));
-    const tc = Math.sin((flap - 0.15) * TAU) * 0.07 * r;
-    const ink = Math.max(1.2, Math.min(3, r * 0.1));
+    const open = 0.22 + 0.78 * Math.abs(Math.cos(flap * Math.PI));
+    const tc = Math.sin((flap - 0.15) * TAU) * 0.06 * r;
+    const ink = Math.max(1.2, Math.min(2.6, r * 0.085));
     ctx.save();
     ctx.globalAlpha *= alpha;
     ctx.translate(x, y);
@@ -11012,46 +11025,32 @@
         continue;
       }
       inked(ctx, w.hind, pal[3], pal[4], ink);
-      fill(ctx, mmIn(w.hind, 0.62), pal[2]);
+      fill(ctx, mmIn(w.hind, 0.66), pal[2]);
       inked(ctx, w.fore, pal[2], pal[4], ink);
-      fill(ctx, mmIn(w.fore, 0.7), pal[1]);
-      // The dusky leading edge.
-      ctx.strokeStyle = pal[3];
-      ctx.lineWidth = Math.max(1, r * 0.07);
-      ctx.lineCap = 'round';
-      ctx.beginPath();
-      w.lead.forEach(([px, py], j) => (j ? ctx.lineTo(px, py) : ctx.moveTo(px, py)));
-      ctx.stroke();
-      if (open > 0.45) {
-        mmEye(ctx, 0.3 * r, 0.6 * r * s * open, 0.13 * r * Math.min(1, open * 1.2), pal);
-        mmEye(ctx, -0.27 * r, 0.42 * r * s * open, 0.07 * r * Math.min(1, open * 1.2), pal);
-      }
+      fill(ctx, mmIn(w.fore, 0.74), pal[1]);
+      // The glow at the wing's root, the palest part.
+      ctx.save();
+      ctx.globalAlpha *= MBODY ? 0.35 : 0.5;
+      fill(ctx, mmEll(0.02 * r, 0.3 * r * s * open, 0.16 * r, 0.2 * r * open, 0.5 * s, 14), MBODY ? MBODY[1] : '#ffffff');
+      ctx.restore();
+      if (r >= 17 && open > 0.5) mmCrescent(ctx, 0.2 * r, 0.62 * r * s * open, 0.13 * r, s > 0 ? 0.6 : -0.6, Math.min(1, open * 1.2), MMARK ?? MMGOLD[2]);
     }
-    // The body: a furry silver thorax and a ringed abdomen; the feathered feelers.
-    const B = sil ? [MMNIGHT[1], MMNIGHT[1], MMNIGHT[2], MMNIGHT[3], MMNIGHT[4]] : MMSIL;
-    inked(ctx, mmEll(-0.16 * r, 0, 0.3 * r, 0.11 * r, 0, 16), B[3], sil ? null : pal[4], ink * 0.8);
-    inked(ctx, mmEll(0.12 * r, 0, 0.17 * r, 0.14 * r, 0, 16), B[2], sil ? null : pal[4], ink * 0.8);
-    if (!sil) {
-      fill(ctx, mmEll(0.09 * r, -0.04 * r, 0.1 * r, 0.06 * r, 0, 12), B[1]);
-      for (const dx of [-0.08, -0.2, -0.32]) fill(ctx, mmEll(dx * r, 0, 0.015 * r + 0.4, 0.09 * r, 0, 8), B[3]);
-    }
+    // The body: a small round fluffy body and head.
+    const B = sil ? [MMNIGHT[1], MMNIGHT[1], MMNIGHT[2], MMNIGHT[3], MMNIGHT[4]] : MBODY ?? MMSIL;
+    inked(ctx, mmEll(-0.1 * r, 0, 0.21 * r, 0.12 * r, 0, 18), B[2], sil ? null : pal[4], ink * 0.8);
+    inked(ctx, mmEll(0.12 * r, 0, 0.13 * r, 0.125 * r, 0, 18), B[1], sil ? null : pal[4], ink * 0.8);
+    if (!sil) fill(ctx, mmEll(0.09 * r, -0.04 * r, 0.06 * r, 0.04 * r, 0, 10), B[0]);
+    // Curled feelers with a bead on each tip.
     ctx.strokeStyle = sil ? MMNIGHT[3] : pal[4];
-    ctx.lineWidth = Math.max(1, r * 0.04);
+    ctx.lineWidth = Math.max(1, r * 0.045);
     ctx.lineCap = 'round';
     for (const s of [-1, 1]) {
-      const fe = mmPath([[[0.3 * r, 0.03 * r * s], [0.45 * r, 0.05 * r * s], [0.55 * r, 0.14 * r * s], [0.62 * r, 0.3 * r * s]]], 6).concat([[0.62 * r, 0.3 * r * s]]);
+      const fe = mmPath([[[0.2 * r, 0.05 * r * s], [0.34 * r, 0.04 * r * s], [0.46 * r, 0.12 * r * s], [0.42 * r, 0.22 * r * s]]], 8).concat([[0.42 * r, 0.22 * r * s]]);
       ctx.beginPath();
       fe.forEach(([px, py], j) => (j ? ctx.lineTo(px, py) : ctx.moveTo(px, py)));
       ctx.stroke();
-      if (r > 10) for (let j = 2; j < fe.length - 1; j += 2) {
-        const [px, py] = fe[j];
-        ctx.beginPath();
-        ctx.moveTo(px, py);
-        ctx.lineTo(px - 0.05 * r, py + 0.05 * r * s);
-        ctx.moveTo(px, py);
-        ctx.lineTo(px + 0.05 * r, py + 0.02 * r * s);
-        ctx.stroke();
-      }
+      const br = Math.max(1, 0.045 * r);
+      inked(ctx, mmEll(0.42 * r, 0.22 * r * s, br, br, 0, 10), sil ? MMNIGHT[3] : B[1], sil ? null : pal[4], Math.max(1, ink * 0.6));
     }
     ctx.restore();
   }
@@ -11060,10 +11059,14 @@
     if (alpha <= 0 || r <= 0.4) return;
     ctx.save();
     ctx.globalAlpha *= alpha;
-    if (seed % 3 === 0) sparkle(ctx, seed % 2 ? MMSIL : MMS, x, y, r * 1.6, seed * 0.7);
+    const D1 = MDUST ?? MMSIL;
+    const D2 = MDUST ?? MMS;
+    if (seed % 3 !== 1) sparkle(ctx, seed % 2 ? D1 : D2, x, y, r * 1.6, seed * 0.7);
     else {
-      fill(ctx, mmEll(x, y, r + 1.5, r + 1.5, 0, 10), MMS[4]);
-      fill(ctx, mmEll(x, y, r, r, 0, 10), seed % 2 ? MMSIL[1] : MMS[2]);
+      ctx.globalAlpha *= 0.55;
+      fill(ctx, mmEll(x, y, r + 1.2, r + 1.2, 0, 12), D2[2]);
+      ctx.globalAlpha /= 0.55;
+      fill(ctx, mmEll(x, y, r * 0.6, r * 0.6, 0, 10), D1[0]);
     }
     ctx.restore();
   }
@@ -11071,7 +11074,7 @@
   // drifting slowly down, swaying, and winking out.
   function mmShed(ctx, x, y, k, n, spread, seed, { size = 4, fall = 60, up = 0.7 } = {}) {
     const R = rng(seed);
-    for (let j = 0; j < n; j++) {
+    for (let j = 0; j < Math.ceil(n * 0.45); j++) {
       const a = R() * TAU;
       const d = spread * (0.3 + 0.7 * R());
       const born = R() * 0.3;
@@ -11087,7 +11090,8 @@
   function mmBloom(ctx, x, y, r, a, { sy = 1 } = {}) {
     if (a <= 0 || r <= 0) return;
     ctx.save();
-    for (const [k, c, al] of [[1, MMS[3], 0.16], [0.78, MMS[2], 0.22], [0.55, MMS[1], 0.3], [0.3, '#ffffff', 0.45]]) {
+    const P = MBLOOM ?? MMS;
+    for (const [k, c, al] of [[1, P[3], 0.16], [0.78, P[2], 0.22], [0.55, P[1], 0.3], [0.3, '#ffffff', 0.45]]) {
       ctx.globalAlpha = a * al;
       fill(ctx, mmEll(x, y, r * k, r * k * sy, 0, 28), c);
     }
@@ -11153,7 +11157,7 @@
         if (k < 0.3) sparkle(ctx, MMSIL, c + 26, c - 30, 15 * swell(k, 0, 0.3), 0.3);
         // The dust: thrown out on arcs, then falling and swaying.
         const R = rng(7103);
-        for (let j = 0; j < 18; j++) {
+        for (let j = 0; j < 9; j++) {
           const a = -Math.PI / 2 + (R() - 0.5) * 3.6;
           const sp = 60 + R() * 60;
           const born = R() * 0.12;
@@ -11178,7 +11182,7 @@
   })();
 
   // A burst of moths (where she breaks into moths or re-forms, and her blows' clouds): a bloom of
-  // moonlight, then a dozen luna moths burst out from round her body, spiralling off on their own
+  // moonlight, then a handful of spirit moths burst out from round her body, spiralling off on their own
   // curves with their wings beating, and wink out into dust that drifts down. No puff: only moths,
   // light and dust. Its foot sits on the floor at `py`; about 75 px tall in game.
   E.mmcloud = (() => {
@@ -11186,7 +11190,7 @@
     const y = 280;
     const n = 34;
     const R = rng(7111);
-    const M = Array.from({ length: 14 }, (_, j) => ({ a: -Math.PI / 2 + (R() - 0.5) * 3.2, d: 60 + R() * 100, h: 40 + R() * 110, ph: R(), r: 13 + R() * 11, sp: 0.5 + R() * 0.4, curl: (j % 2 ? 1 : -1) * (0.4 + R() * 0.6) }));
+    const M = Array.from({ length: 8 }, (_, j) => ({ a: -Math.PI / 2 + (R() - 0.5) * 3.2, d: 60 + R() * 100, h: 40 + R() * 110, ph: R(), r: 15 + R() * 10, sp: 0.5 + R() * 0.4, curl: (j % 2 ? 1 : -1) * (0.4 + R() * 0.6) }));
     return {
       w: 340, h: 310, n, fps: 40, px: x, py: y,
       draw(ctx, i) {
@@ -11219,7 +11223,7 @@
     const y = 210;
     const n = 24;
     const R = rng(7121);
-    const M = Array.from({ length: 12 }, (_, j) => ({ dx: -j * 15 - R() * 16, dy: -40 - R() * 90, ph: R(), r: 11 + R() * 9, bob: R() * TAU }));
+    const M = Array.from({ length: 7 }, (_, j) => ({ dx: -j * 24 - R() * 16, dy: -40 - R() * 90, ph: R(), r: 13 + R() * 8, bob: R() * TAU }));
     return {
       w: 270, h: 230, n, fps: 40, px: x, py: y, loop: true,
       draw(ctx, i) {
@@ -11241,7 +11245,7 @@
         ctx.globalAlpha = 0.45;
         fill(ctx, mmIn(top.concat(bot), 0.5), MMS[1]);
         ctx.restore();
-        for (let j = 0; j < 12; j++) {
+        for (let j = 0; j < 6; j++) {
           const u = (ph + j / 12) % 1;
           mmDust(ctx, x - 40 - u * 170, y - 85 + Math.sin(u * 7 - ph * TAU + j) * 28, 4 * (1 - u * 0.6), j, 1 - u);
         }
@@ -11250,9 +11254,9 @@
     };
   })();
 
-  // Wings (her combo finisher): two great luna-moth wings of lilac light unfold behind where her
-  // daggers open, veined and eye-spotted, their tails trailing; they beat once, then thin away into
-  // a thick shed of glittering dust that drifts down, a few moths flying off them. (Holes eaten in
+  // Wings (her combo finisher): two great spirit-moth wings of lilac light unfold behind where her
+  // daggers open, glowing pale at the root, a crescent moon on each; they beat once, then thin away
+  // into a light shed of sparkles that drifts down, a few moths flying off them. (Holes eaten in
   // them were tried: the outline pass inked their edges and they read as burns.) Foot on the floor.
   E.mmwings = (() => {
     const x = 210;
@@ -11284,27 +11288,11 @@
             fill(g, mmIn(w.hind, 0.65), MMS[2]);
             inked(g, w.fore, MMS[2], MMS[4], 4);
             fill(g, mmIn(w.fore, 0.74), MMS[1]);
-            // Veins from the root out to the edge.
-            g.strokeStyle = MMS[3];
-            g.lineWidth = 2;
-            g.globalAlpha = 0.6;
-            for (const t of [0.25, 0.45, 0.6, 0.75]) {
-              const [ex, ey] = w.fore[Math.floor(t * w.fore.length)];
-              g.beginPath();
-              g.moveTo(0.05 * r, 0.06 * r * s);
-              g.quadraticCurveTo(ex * 0.5, ey * 0.7, ex * 0.92, ey * 0.92);
-              g.stroke();
-            }
+            // The pale glow at the root, and a crescent moon on the fore wing.
+            g.globalAlpha = 0.5;
+            fill(g, mmEll(0.02 * r, 0.32 * r * s * beat, 0.17 * r, 0.22 * r * beat, 0.5 * s, 18), '#ffffff');
             g.globalAlpha = 1;
-            g.strokeStyle = MMS[3];
-            g.lineWidth = 5;
-            g.beginPath();
-            w.lead.forEach(([px, py], j) => (j ? g.lineTo(px, py) : g.moveTo(px, py)));
-            g.stroke();
-            if (unfold > 0.5) {
-              mmEye(g, 0.3 * r, 0.6 * r * s * beat, 0.12 * r, MMS);
-              mmEye(g, -0.27 * r, 0.42 * r * s * beat, 0.07 * r, MMS);
-            }
+            if (unfold > 0.5) mmCrescent(g, 0.2 * r, 0.62 * r * s * beat, 0.13 * r, s > 0 ? 0.6 : -0.6, beat, MMARK ?? MMGOLD[2]);
           }
           g.setTransform(sc, 0, 0, sc, 0, 0);
           ctx.save();
@@ -11315,7 +11303,7 @@
         // Dust shed from the wings as they go, drifting down.
         if (k > 0.4) {
           const R = rng(7131);
-          for (let j = 0; j < 64; j++) {
+          for (let j = 0; j < 24; j++) {
             const s = j % 2 ? 1 : -1;
             const sx = x + s * (40 + R() * 140);
             const sy = cy - 110 + R() * 200;
@@ -11326,7 +11314,7 @@
           }
         }
         const R = rng(7132);
-        for (let j = 0; j < 6; j++) {
+        for (let j = 0; j < 4; j++) {
           const s = j % 2 ? 1 : -1;
           const u = win(k, 0.46 + R() * 0.12, 1);
           if (u <= 0 || u >= 1) continue;
@@ -11354,7 +11342,7 @@
       draw(ctx, i) {
         const k = i / (n - 1);
         const R2 = rng(7142);
-        for (let j = 0; j < 30; j++) {
+        for (let j = 0; j < 14; j++) {
           const a0 = R2() * TAU;
           const rr = 40 + R2() * 90;
           const u = win(k, R2() * 0.35, 1);
@@ -11392,14 +11380,14 @@
     const y = 135;
     const n = 24;
     const R = rng(7151);
-    const M = Array.from({ length: 22 }, () => ({ a: R() * TAU, d: 0.25 + 0.75 * R(), ph: R(), r: 13 + R() * 9, w: R() < 0.5 ? 1 : -1 }));
+    const M = Array.from({ length: 7 }, (_, j) => ({ a: (j / 7) * TAU + R() * 0.4, d: 0.55 + 0.45 * R(), ph: R(), r: 16 + R() * 7, w: 1 }));
     return {
       w: 360, h: 260, n, fps: 40, px: x, py: y, loop: true,
       draw(ctx, i) {
         const ph = i / n;
         mmBloom(ctx, x - 10, y, 95, 0.55 + 0.1 * Math.sin(ph * TAU), { sy: 0.7 });
-        for (let j = 0; j < 16; j++) {
-          const u = (ph + j / 16) % 1;
+        for (let j = 0; j < 7; j++) {
+          const u = (ph + j / 7) % 1;
           mmDust(ctx, x - 70 - u * 150, y + Math.sin(u * 8 + j * 1.7) * 42, 4.5 * (1 - u * 0.6), j, 1 - u);
         }
         const placed = M.map((m) => {
@@ -11422,7 +11410,7 @@
     const y = 600;
     const n = 42;
     const R = rng(7161);
-    const M = Array.from({ length: 9 }, (_, j) => ({ a: (j / 9) * TAU, ph: R(), r: 13 + R() * 8, rr: 155 + R() * 40 }));
+    const M = Array.from({ length: 6 }, (_, j) => ({ a: (j / 6) * TAU, ph: R(), r: 15 + R() * 8, rr: 155 + R() * 40 }));
     const S = Array.from({ length: 3 }, (_, j) => ({ at: 0.22 + j * 0.14, dy: -60 + j * 50 + R() * 20, ph: R(), r: 16 + R() * 6 }));
     return {
       w: 560, h: 620, n, fps: 26, px: x, py: y,
@@ -11485,7 +11473,7 @@
     const y = 420;
     const n = 34;
     const R = rng(7171);
-    const M = Array.from({ length: 34 }, () => ({ x0: R() * 520, at: R() * 0.42, ph: R(), r: 12 + R() * 9, sp: 0.32 + R() * 0.22, dx: 60 + R() * 90 }));
+    const M = Array.from({ length: 15 }, () => ({ x0: R() * 520, at: R() * 0.42, ph: R(), r: 14 + R() * 9, sp: 0.32 + R() * 0.22, dx: 60 + R() * 90 }));
     const at = (m, u) => [x + m.x0 + m.dx * u, y - 390 + 340 * smooth(u)];
     return {
       w: 700, h: 470, n, fps: 34, px: x, py: y,
@@ -11567,7 +11555,7 @@
           ctx.restore();
         }
       }
-      for (let j = 0; j < 9; j++) {
+      for (let j = 0; j < 6; j++) {
         const u = Math.max(tail, head - 0.06 - j * 0.1);
         if (u <= tail + 0.02) continue;
         const ang = a0 + (a1 - a0) * u;
@@ -11579,6 +11567,475 @@
   };
   E.mmspin = asLight(spin(MMS), MMS);
   E.mmstreak = asLight(streaks(MMS), MMS);
+
+  // ---------- The Eclipse (docs/design/eclipse.md) ----------
+  // The Moon Moth's damage path: eclipse violet, nearly black, with the gold of the corona. Her
+  // shapes: the eclipse (a dark disc in a flaring gold corona, the diamond ring flashing on its
+  // rim), her sign (a little eclipse) for marks, dark moths with gold crescents, gold-edged dark crescents. Her versions of
+  // the Moon Moth's effects draw the same moths and cuts in her colours (`eclit`); the rest is hers.
+  const ECV = ['#fff4c8', '#ffd36a', '#4a2f9a', '#2a1a5c', '#120a2a'];
+  const ECGOLD = ['#ffffff', '#fff1c0', '#ffd36a', '#e09a36', '#7a4a14'];
+  const ECMOTH = ['#ffffff', '#6a52b8', '#3a2878', '#281a58', '#120a2a'];
+  const ECBODY = ['#ffffff', '#b8a8e8', '#6a58a8', '#3e3070', '#1a1238'];
+  const eclit = (e) => ({
+    ...e,
+    draw(ctx, i) {
+      const keep = [MMS, MMSIL, MMOTH, MBODY, MBLOOM, MDUST, MMARK];
+      MMS = ECV;
+      MMSIL = ECGOLD;
+      MMOTH = ECMOTH;
+      MBODY = ECBODY;
+      MBLOOM = ECGOLD;
+      MDUST = ECGOLD;
+      MMARK = ECGOLD[2];
+      try {
+        e.draw(ctx, i);
+      } finally {
+        [MMS, MMSIL, MMOTH, MBODY, MBLOOM, MDUST, MMARK] = keep;
+      }
+    },
+  });
+  // The eclipse at (x, y): a dark disc `r` across in its corona, `flare` (0-1) how far the corona
+  // reaches, `k` turning its rays (whole turns loop), `rim` the diamond ring's flash (0-1) at angle
+  // `ra`.
+  function ecEclipse(ctx, x, y, r, flare, k, { rim = 0, ra = -2.2, alpha = 1 } = {}) {
+    if (alpha <= 0) return;
+    ctx.save();
+    ctx.globalAlpha *= alpha;
+    if (flare > 0) {
+      // The corona: a gold bloom, then soft layered rays of gold, longer and shorter, slowly turning
+      // and breathing. (Bright enough to blaze on a pale map.)
+      mmBloomGold(ctx, x, y, r * 2.4, flare * 0.9);
+      for (const [len, c, al] of [[2.3, ECGOLD[3], 0.45], [1.9, ECGOLD[2], 0.65], [1.5, ECGOLD[1], 0.85], [1.22, '#ffffff', 0.95]]) {
+        const pts = [];
+        const N = 36;
+        for (let j = 0; j < N; j++) {
+          const a = (j / N) * TAU + k * TAU * 0.08;
+          const ray = 1 + (len - 1) * flare * (0.55 + 0.45 * Math.sin(j * 2.7 + k * TAU) * Math.sin(j * 1.3 - k * TAU * 2)) ** 2;
+          const rr = r * (j % 2 ? 1.02 + (ray - 1) * 0.35 : ray);
+          pts.push([x + Math.cos(a) * rr, y + Math.sin(a) * rr]);
+        }
+        ctx.save();
+        ctx.globalAlpha *= al;
+        fill(ctx, pts, c);
+        ctx.restore();
+      }
+    }
+    inked(ctx, mmEll(x, y, r, r, 0, 40), ECV[3], ECV[4], 4);
+    fill(ctx, mmEll(x + r * 0.1, y + r * 0.1, r * 0.82, r * 0.82, 0, 36), ECV[4]);
+    ctx.strokeStyle = ECGOLD[1];
+    ctx.lineWidth = Math.max(2, r * 0.05);
+    ctx.beginPath();
+    ctx.arc(x, y, r * 0.98, 0, TAU);
+    ctx.stroke();
+    if (rim > 0) {
+      const bx = x + Math.cos(ra) * r;
+      const by = y + Math.sin(ra) * r;
+      mmBloomGold(ctx, bx, by, r * 0.7 * rim, rim);
+      sparkle(ctx, ECGOLD, bx, by, r * 0.45 * rim, 0.2);
+    }
+    ctx.restore();
+  }
+  function mmBloomGold(ctx, x, y, r, a) {
+    const keep = MBLOOM;
+    MBLOOM = ECGOLD;
+    mmBloom(ctx, x, y, r, a);
+    MBLOOM = keep;
+  }
+  // Her sign, a little eclipse (her marks, Eye of the Night in flight, the mark opening and going
+  // off): a gold sun with the dark moon slid `cover` (0-1) of the way across it from the right;
+  // as it covers, a ring of short gold corona rays grows round it, turning with `turn` (whole turns
+  // loop), and the diamond ring glints `rim` (0-1) on its edge at angle `ra`. (These were gold
+  // eyeballs till the 'less gross' pass, 2026-11-16: no pupils, no lids, no blinking.)
+  function ecSign(ctx, x, y, r, cover, { glow = 0, alpha = 1, rim = 0, ra = -2.2, turn = 0, moon = 0.84, rays = 1 } = {}) {
+    if (alpha <= 0 || r < 1) return;
+    ctx.save();
+    ctx.globalAlpha *= alpha;
+    if (glow > 0) mmBloomGold(ctx, x, y, r * 2.2, glow);
+    const c = smooth(Math.max(0, Math.min(1, cover)));
+    const fl = smooth(win(c, 0.55, 1));
+    if (fl > 0) {
+      for (const [len, col, al] of [[1.66, ECGOLD[3], 0.5], [1.44, ECGOLD[2], 0.8], [1.24, ECGOLD[1], 1]]) {
+        const pts = [];
+        const N = 24;
+        for (let j = 0; j < N; j++) {
+          const an = (j / N) * TAU + (turn * TAU) / 12;
+          const rr = r * (j % 2 ? 1.04 : 1 + (len - 1) * fl * rays);
+          pts.push([x + Math.cos(an) * rr, y + Math.sin(an) * rr]);
+        }
+        ctx.save();
+        ctx.globalAlpha *= al;
+        fill(ctx, pts, col);
+        ctx.restore();
+      }
+    }
+    inked(ctx, mmEll(x, y, r, r, 0, 30), ECGOLD[2], ECGOLD[4], Math.max(1.5, r * 0.1));
+    fill(ctx, mmEll(x - r * 0.1, y - r * 0.1, r * 0.74, r * 0.74, 0, 26), ECGOLD[1]);
+    // The moon (seen only against the sun), leaving a thin ring of fire once it is all the way over.
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(x, y, r * 0.97, 0, TAU);
+    ctx.clip();
+    fill(ctx, mmEll(x + (1 - c) * r * 1.95, y, r * moon, r * moon, 0, 30), ECV[4]);
+    ctx.restore();
+    if (rim > 0) {
+      const bx = x + Math.cos(ra) * r * 0.92;
+      const by = y + Math.sin(ra) * r * 0.92;
+      mmBloomGold(ctx, bx, by, r * 0.6 * rim, rim);
+      sparkle(ctx, ECGOLD, bx, by, r * 0.6 * rim, 0.2);
+    }
+    ctx.restore();
+  }
+
+  // Her versions of the Moon Moth's effects: the same moths, light and dust in her colours.
+  E.eccloud = eclit(E.mmcloud);
+  E.ecflight = eclit(E.mmflight);
+  E.ecflurry = eclit(E.mmflurry);
+  E.ecswarm = eclit(E.mmswarm);
+  E.ecpour = eclit(E.mmpour);
+  E.ecpourbig = grown(E.ecpour, 2.3);
+  E.ecmoth = eclit(E.mmmoth);
+  E.ecdust = eclit(E.mmdustfleck);
+  E.ecslash = eclit(E.mmslash);
+  E.ecspin = asLight(spin(ECV), ECV);
+  E.ecstreak = asLight(streaks(ECV), ECV);
+
+  // Her mark on a monster: her little eclipse pops up where the dagger went in, a dark crescent
+  // nick across it edged in gold, four short corona rays flashing out, a thin gold ring and a few
+  // gold sparkles falling.
+  E.echit = eclit((() => {
+    const c = 130;
+    const n = 26;
+    return {
+      w: 260, h: 260, n, fps: 48, px: c, py: c,
+      draw(ctx, i) {
+        const k = i / (n - 1);
+        mmBloom(ctx, c, c, 20 + 40 * smooth(win(k, 0, 0.3)), 0.8 * (1 - win(k, 0.1, 0.45)));
+        const flash = swell(k, 0, 0.3);
+        if (flash > 0.01) for (let j = 0; j < 4; j++) {
+          const a = j * (TAU / 4) + 0.6;
+          speedLine(ctx, ECGOLD, c + Math.cos(a) * 18, c + Math.sin(a) * 18, c + Math.cos(a) * (30 + 46 * flash), c + Math.sin(a) * (30 + 46 * flash), 6 * flash);
+        }
+        const ring = smooth(win(k, 0.04, 0.6));
+        if (ring > 0 && ring < 1) celRing(ctx, ECGOLD, c, c, 34 + 46 * ring, 6 * (1 - ring) + 2, { broken: ring > 0.4 ? (ring - 0.4) * 1.7 : 0, seed: 7202 });
+        const cut = win(k, 0, 0.3);
+        if (cut < 1) mmCut(ctx, c + 4, c + 26, 48, -2.7, 2.1, smooth(win(cut, 0.35, 1)), smooth(Math.min(1, cut * 2.4)), 14);
+        const sw = swell(k, 0.04, 0.5);
+        ecSign(ctx, c, c, 12 * (0.55 + 0.45 * sw), 1, { glow: 0.5 * sw, alpha: Math.min(1, sw * 3), rim: swell(k, 0.2, 0.5), turn: k });
+        const R = rng(7203);
+        for (let j = 0; j < 8; j++) {
+          const a = -Math.PI / 2 + (R() - 0.5) * 3.6;
+          const sp = 50 + R() * 60;
+          const born = R() * 0.12;
+          const u = win(k, born, born + 0.7 + R() * 0.2);
+          if (u <= 0 || u >= 1) continue;
+          const out = 1 - (1 - u) ** 2;
+          mmDust(ctx, c + Math.cos(a) * sp * out + Math.sin(u * 7 + j) * 3, c + Math.sin(a) * sp * out * 0.8 + 70 * u * u, (3 + R() * 2.5) * (1 - u * 0.4), j, 1 - win(u, 0.7, 1));
+        }
+      },
+    };
+  })());
+
+  // A mark (loops; drawn over a marked monster, one to three of them): her little eclipse floating in
+  // a soft glow, a small dark moon in a broad gold sun with long corona rays slowly turning (at game
+  // size a big dark middle in a thin ring read as a pair of eyes peering), the diamond ring glinting
+  // once round, two gold sparkles circling it.
+  E.ecmarkeye = {
+    w: 90, h: 90, n: 24, fps: 24, px: 45, py: 45, loop: true,
+    draw(ctx, i) {
+      const ph = i / 24;
+      ecSign(ctx, 45, 45 + 2 * Math.sin(ph * TAU), 13, 1, { glow: 0.45 + 0.15 * Math.sin(ph * TAU * 2), turn: ph, rim: swell(ph, 0.7, 0.95), moon: 0.52, rays: 1.9 });
+      for (let j = 0; j < 2; j++) {
+        const a = ph * TAU + j * Math.PI;
+        sparkle(ctx, ECGOLD, 45 + Math.cos(a) * 30, 45 + Math.sin(a) * 12, 4, a);
+      }
+    },
+  };
+
+  // The eclipse on her Pierce: where both daggers went in, the dark moon slides across a great gold
+  // sun, the corona flares out round it and the diamond ring flashes; then it shrinks down small into
+  // the mark it leaves.
+  E.eceyeopen = {
+    w: 300, h: 300, n: 28, fps: 44, px: 150, py: 150,
+    draw(ctx, i) {
+      const k = i / 27;
+      const grow = smooth(win(k, 0, 0.12));
+      const size = (22 + 18 * grow) - 22 * smooth(win(k, 0.6, 1));
+      ecEclipse(ctx, 150, 150, size * 0.9, swell(k, 0.18, 0.75), k, { alpha: 0.5 * swell(k, 0.15, 0.75) });
+      ecSign(ctx, 150, 150, size, win(k, 0, 0.3), { glow: 0.8 * swell(k, 0, 0.8), alpha: 1 - win(k, 0.9, 1), rim: swell(k, 0.26, 0.5), ra: -0.8, turn: k * 2 });
+      mmShedGold(ctx, 150, 150, win(k, 0.1, 1), 16, 90, 7211);
+    },
+  };
+  function mmShedGold(ctx, x, y, k, n, spread, seed) {
+    const keep = MDUST;
+    MDUST = ECGOLD;
+    mmShed(ctx, x, y, k, n, spread, seed, { size: 4, fall: 60 });
+    MDUST = keep;
+  }
+
+  // The ring of corona round her (her Corona turn; grown for Corona itself): she is the dark moon,
+  // the ring of gold fire flares out round her body, its flames licking outward and turning, then
+  // it thins away into gold flecks. Centred on her body at (px, py).
+  E.ecring = {
+    w: 320, h: 320, n: 28, fps: 44, px: 160, py: 160,
+    draw(ctx, i) {
+      const k = i / 27;
+      const grow = smooth(win(k, 0, 0.35));
+      const fade = win(k, 0.45, 0.9);
+      const r = 34 + 70 * grow;
+      if (fade < 1) {
+        ctx.save();
+        ctx.globalAlpha *= 1 - fade;
+        mmBloomGold(ctx, 160, 160, r * 1.3, 0.14 * (1 - fade));
+        // Flames round the ring, each a tongue licking outward, turning as it spreads; a bright
+        // band along the ring itself. (She is the dark moon inside it.)
+        for (const [lenK, c, al] of [[1, ECGOLD[3], 0.55], [0.75, ECGOLD[2], 0.8], [0.5, ECGOLD[1], 0.95], [0.25, '#ffffff', 1]]) {
+          const pts = [];
+          const N = 48;
+          for (let j = 0; j < N; j++) {
+            const a = (j / N) * TAU + k * 1.4;
+            const tongue = j % 2 ? 0 : (6 + 14 * (0.5 + 0.5 * Math.sin(j * 2.3 + k * 16))) * (1 - fade * 0.6);
+            pts.push([160 + Math.cos(a) * (r + tongue * lenK + 6 * lenK), 160 + Math.sin(a) * (r + tongue * lenK + 6 * lenK)]);
+          }
+          for (let j = N; j >= 0; j--) {
+            const a = (j / N) * TAU + k * 1.4;
+            pts.push([160 + Math.cos(a) * (r - 6 * lenK), 160 + Math.sin(a) * (r - 6 * lenK)]);
+          }
+          ctx.save();
+          ctx.globalAlpha *= al;
+          fill(ctx, pts, c);
+          ctx.restore();
+        }
+        ctx.restore();
+      }
+      mmShedGold(ctx, 160, 160, win(k, 0.35, 1), 22, 120, 7221);
+    },
+  };
+  E.ecringbig = grown(E.ecring, 1.9);
+  E.ecringhuge = grown(E.ecring, 3.6);
+
+  // A disc of shadow on the floor (where she steps into the dark and out of it): it opens out flat,
+  // rimmed in gold, a few dark moths and wisps rising out of it, and closes again. Foot at `py`.
+  E.ecportal = eclit({
+    w: 240, h: 220, n: 24, fps: 40, px: 120, py: 190,
+    draw(ctx, i) {
+      const k = i / 23;
+      const open = swell(k, 0, 1);
+      if (open > 0.02) {
+        inked(ctx, mmEll(120, 190, 80 * open, 22 * open, 0, 36), ECV[3], ECV[4], 4);
+        fill(ctx, mmEll(120, 192, 66 * open, 16 * open, 0, 32), ECV[4]);
+        ctx.strokeStyle = ECGOLD[2];
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.ellipse(120, 190, 78 * open, 21 * open, 0, Math.PI * 1.05, Math.PI * 1.95);
+        ctx.stroke();
+      }
+      // Soft curls of shadow rising out of it and thinning, gold flecks among them.
+      const R = rng(7231);
+      for (let j = 0; j < 6; j++) {
+        const u = win(k, R() * 0.4, 0.6 + R() * 0.4);
+        if (u <= 0 || u >= 1) continue;
+        const wx = 120 + (R() - 0.5) * 110 + Math.sin(u * 5 + j) * 10;
+        ctx.save();
+        ctx.globalAlpha *= 0.55 * (1 - u);
+        fill(ctx, mmEll(wx, 186 - 70 * u, 9 + 10 * u, 7 + 8 * u, 0, 14), ECMOTH[2]);
+        ctx.restore();
+        mmDust(ctx, wx + 8, 180 - 90 * u, 3, j, 1 - u);
+      }
+      for (let j = 0; j < 3; j++) {
+        const u = win(k, 0.15 + j * 0.12, 0.85 + j * 0.05);
+        if (u <= 0 || u >= 1) continue;
+        mmMoth(ctx, 90 + j * 30 + 20 * Math.sin(u * 6 + j), 180 - 130 * u, 12 + j * 2, (k * 6 + j * 0.3) % 1, -Math.PI / 2 + 0.3 * Math.sin(u * 5), { alpha: 1 - win(u, 0.7, 1) });
+      }
+    },
+  });
+
+  // Umbral Edge's last stab: a tall dark crescent with a gold edge splits the air where it goes in,
+  // corona rays burst from the point, a ring of dark moths spirals out and gold flecks fall.
+  E.ecedge = eclit({
+    w: 300, h: 320, n: 30, fps: 44, px: 150, py: 170,
+    draw(ctx, i) {
+      const k = i / 29;
+      mmBloom(ctx, 150, 170, 60 * smooth(win(k, 0, 0.2)), 0.9 * (1 - win(k, 0.15, 0.6)));
+      const slit = win(k, 0, 0.35);
+      if (slit < 1) mmCut(ctx, 230, 170, 120, Math.PI - 0.9, 1.8, smooth(win(slit, 0.4, 1)), smooth(Math.min(1, slit * 2.6)), 28);
+      const burst = swell(k, 0.02, 0.4);
+      if (burst > 0.01) for (let j = 0; j < 8; j++) {
+        const a = j * (TAU / 8) + 0.2;
+        speedLine(ctx, ECGOLD, 150 + Math.cos(a) * 20, 170 + Math.sin(a) * 20, 150 + Math.cos(a) * (40 + 80 * burst), 170 + Math.sin(a) * (40 + 80 * burst), 7 * burst);
+      }
+      for (let j = 0; j < 5; j++) {
+        const u = win(k, 0.1 + j * 0.02, 0.85);
+        if (u <= 0 || u >= 1) continue;
+        const a = (j / 7) * TAU + u * 2.4;
+        mmMoth(ctx, 150 + Math.cos(a) * 110 * u, 170 + Math.sin(a) * 90 * u, 13, (k * 6 + j * 0.2) % 1, a + Math.PI / 2, { alpha: 1 - win(u, 0.7, 1) });
+      }
+      mmShed(ctx, 150, 170, win(k, 0.1, 1), 22, 110, 7241, { size: 4.5, fall: 70 });
+    },
+  });
+
+  // A mark going off: her little eclipse swells and its diamond ring flashes, then it bursts into long
+  // gold corona rays shooting out, a gold ring opening. Centred on the monster.
+  E.ecpop = eclit({
+    w: 260, h: 260, n: 24, fps: 48, px: 130, py: 130,
+    draw(ctx, i) {
+      const k = i / 23;
+      ecSign(ctx, 130, 130, 16 + 10 * smooth(win(k, 0, 0.15)), 1, { glow: 0.8 * (1 - win(k, 0.1, 0.4)), alpha: 1 - win(k, 0.15, 0.25), rim: swell(k, 0, 0.2), turn: k });
+      mmBloom(ctx, 130, 130, 30 + 60 * smooth(win(k, 0.12, 0.4)), swell(k, 0.12, 0.6));
+      const ring = smooth(win(k, 0.15, 0.7));
+      if (ring > 0 && ring < 1) celRing(ctx, ECGOLD, 130, 130, 20 + 80 * ring, 9 * (1 - ring) + 2, { broken: ring > 0.5 ? (ring - 0.5) * 1.6 : 0, seed: 7251 });
+      // Long corona rays shooting out (rays, not beads: a ring of dots read as a seed pod).
+      for (let j = 0; j < 8; j++) {
+        const a = (j / 8) * TAU + 0.2;
+        const u = win(k, 0.14, 0.62);
+        if (u <= 0 || u >= 1) continue;
+        const e = 1 - (1 - u) ** 2;
+        const d0 = 26 + 70 * e;
+        const d1 = 34 + (j % 2 ? 70 : 100) * e;
+        speedLine(ctx, ECGOLD, 130 + Math.cos(a) * d0, 130 + Math.sin(a) * d0, 130 + Math.cos(a) * d1, 130 + Math.sin(a) * d1, 7 * (1 - u));
+      }
+    },
+  });
+
+  // Eye of the Night in flight (loops): her little eclipse, its corona turning, flying with a short
+  // gold streak behind it and two sparkles trailing.
+  E.eceye = {
+    w: 140, h: 80, n: 16, fps: 40, px: 100, py: 40, loop: true,
+    draw(ctx, i) {
+      const ph = i / 16;
+      speedLine(ctx, ECGOLD, 20, 40 + 2 * Math.sin(ph * TAU), 86, 40, 7);
+      for (let j = 0; j < 2; j++) mmShedGold(ctx, 50 - j * 20, 40 + 8 * Math.sin(ph * TAU + j), (ph + j * 0.5) % 1, 1, 6, 7260 + j);
+      ecSign(ctx, 100, 40, 14, 1, { glow: 0.5 + 0.2 * Math.sin(ph * TAU), turn: ph, rim: 0.4 + 0.3 * Math.sin(ph * TAU) });
+    },
+  };
+
+  // New Moon (her Midnight Swarm): a dark moon rises behind her in its gold corona, dark moths with
+  // gold crescents circling it, gold sparkles winking round it; then it fades as the dark swarm pours.
+  E.ecnewmoon = eclit((() => {
+    const x = 280;
+    const y = 600;
+    const n = 42;
+    const R = rng(7271);
+    const M = Array.from({ length: 6 }, (_, j) => ({ a: (j / 6) * TAU, ph: R(), r: 15 + R() * 8, rr: 165 + R() * 40 }));
+    return {
+      w: 560, h: 620, n, fps: 26, px: x, py: y,
+      draw(ctx, i) {
+        const k = i / (n - 1);
+        const rise = smooth(win(k, 0, 0.35));
+        const fade = win(k, 0.62, 0.95);
+        const cy = y - 210 - 160 * rise;
+        const a = (1 - fade) * Math.min(1, rise * 1.6);
+        if (a > 0) {
+          ecEclipse(ctx, x, cy, 100, 0.4 + 0.6 * rise, k, { alpha: a, rim: swell(k, 0.5, 0.66), ra: -2.3 });
+          for (let j = 0; j < 6; j++) {
+            const tw = swell((k * 3 + j / 6) % 1, 0, 1);
+            const ang = j * 1.05 + 0.4;
+            sparkle(ctx, ECGOLD, x + Math.cos(ang) * 165, cy + Math.sin(ang) * 150, 8 * tw * a, j);
+          }
+        }
+        for (const m of M) {
+          const u = win(k, 0.18, 0.95);
+          if (u <= 0 || u >= 1) continue;
+          const ang = m.a + u * 2.4;
+          const rr = m.rr * (0.6 + 0.4 * smooth(Math.min(1, u * 3)));
+          mmMoth(ctx, x + Math.cos(ang) * rr, cy + Math.sin(ang) * rr * 0.8, m.r, (m.ph + k * 8) % 1, ang + Math.PI / 2, { alpha: Math.min(1, u * 4) * (1 - win(u, 0.75, 1)) });
+        }
+        if (rise > 0.2) mmShed(ctx, x, cy, win(k, 0.2, 1), 30, 200, 7272, { size: 4.5, fall: 150 });
+      },
+    };
+  })());
+
+  // Total Eclipse: high over her the moon slides across the sun until only the corona is left
+  // blazing round a black disc; it holds there, the corona breathing, then the diamond ring flashes
+  // on its rim and it all fades. (The screen darkening is drawn in the game, under everyone.) Foot on
+  // the floor at `py`; grown for the screen it fills.
+  E.ectotal = eclit({
+    w: 520, h: 520, n: 44, fps: 26, px: 260, py: 500,
+    draw(ctx, i) {
+      const k = i / 43;
+      const cx = 260;
+      const cy = 170;
+      const R0 = 92;
+      const cover = smooth(win(k, 0, 0.3));
+      const fade = win(k, 0.78, 1);
+      const a = (1 - fade) * Math.min(1, k * 6);
+      if (a <= 0) return;
+      ctx.save();
+      ctx.globalAlpha *= a;
+      // The sun, until the moon has covered it.
+      if (cover < 1) {
+        mmBloomGold(ctx, cx, cy, R0 * 1.8, 1 - cover);
+        inked(ctx, mmEll(cx, cy, R0, R0, 0, 40), ECGOLD[1], ECGOLD[3], 4);
+        fill(ctx, mmEll(cx - 10, cy - 10, R0 * 0.8, R0 * 0.8, 0, 36), '#ffffff');
+      }
+      ctx.restore();
+      // The moon sliding over it; at totality the corona flares out round it.
+      const mx = cx - (1 - cover) * R0 * 2.1;
+      ecEclipse(ctx, mx, cy, R0 + 2, cover * (0.85 + 0.15 * Math.sin(k * 14)), k, { alpha: a, rim: swell(k, 0.66, 0.84), ra: -0.6 });
+      // Gold sparkles and dark moths drifting about it.
+      for (let j = 0; j < 8; j++) {
+        const tw = swell((k * 2.5 + j / 8) % 1, 0, 1);
+        const ang = j * 0.8 + 0.3;
+        sparkle(ctx, ECGOLD, cx + Math.cos(ang) * 190, cy + Math.sin(ang) * 130, 9 * tw * a * cover, j);
+      }
+      const R = rng(7281);
+      for (let j = 0; j < 5; j++) {
+        const u = win(k, 0.2 + R() * 0.2, 0.9);
+        if (u <= 0 || u >= 1) continue;
+        const ang = R() * TAU + u * 2;
+        mmMoth(ctx, cx + Math.cos(ang) * (150 + 40 * R()), cy + Math.sin(ang) * 110, 12 + R() * 6, (k * 7 + j * 0.2) % 1, ang + Math.PI / 2, { alpha: a * Math.min(1, u * 4) * (1 - win(u, 0.75, 1)) });
+      }
+      mmShed(ctx, cx, cy, win(k, 0.3, 1), 30, 230, 7282, { size: 4.5, fall: 200 });
+    },
+  });
+  E.ectotalbig = grown(E.ectotal, 1.5);
+
+  // The diamond ring's flash on the floor (Total Eclipse's last blow): a blaze of gold at its middle,
+  // a ring of gold light racing out flat across the floor to the blow's reach, gold sparks thrown up
+  // all along it and falling. Foot at `py`; grown to the reach.
+  E.ecdiamond = eclit({
+    w: 640, h: 260, n: 30, fps: 40, px: 320, py: 220,
+    draw(ctx, i) {
+      const k = i / 29;
+      mmBloom(ctx, 320, 200, 70 + 60 * smooth(win(k, 0, 0.2)), 1 - win(k, 0.1, 0.5), { sy: 0.6 });
+      if (k < 0.35) sparkle(ctx, ECGOLD, 320, 150, 40 * swell(k, 0, 0.35), 0.4);
+      const ring = smooth(win(k, 0, 0.7));
+      if (ring > 0 && ring < 1) {
+        ctx.save();
+        ctx.globalAlpha *= 1 - win(k, 0.5, 0.8);
+        for (const [w, c] of [[14, ECGOLD[3]], [9, ECGOLD[2]], [4, ECGOLD[1]], [2, '#ffffff']]) {
+          ctx.strokeStyle = c;
+          ctx.lineWidth = w * (1 - ring * 0.5);
+          ctx.beginPath();
+          ctx.ellipse(320, 220, 30 + 280 * ring, 8 + 34 * ring, 0, 0, TAU);
+          ctx.stroke();
+        }
+        ctx.restore();
+      }
+      const R = rng(7291);
+      for (let j = 0; j < 26; j++) {
+        const a = R() * TAU;
+        const born = R() * 0.4;
+        const u = win(k, born, born + 0.5);
+        if (u <= 0 || u >= 1) continue;
+        const rr = (30 + 280 * smooth(win(born, 0, 0.7)));
+        const sx = 320 + Math.cos(a) * rr;
+        const sy = 220 + Math.sin(a) * rr * 0.12;
+        mmDust(ctx, sx, sy - 60 * Math.sin(Math.PI * u), 4 * (1 - u * 0.4), j, 1 - win(u, 0.7, 1));
+      }
+    },
+  });
+  E.ecdiamondbig = grown(E.ecdiamond, 2.7);
+
+  // Her full Umbra (loops; her aura at Totality): a small eclipse floating behind her head, its
+  // corona breathing and turning.
+  E.echalo = {
+    w: 120, h: 120, n: 24, fps: 24, px: 60, py: 60, loop: true,
+    draw(ctx, i) {
+      const ph = i / 24;
+      ecEclipse(ctx, 60, 60, 22, 0.7 + 0.3 * Math.sin(ph * TAU), ph);
+    },
+  };
 
   window.FXART = E;
   window.FXHD = { render, RAW };

@@ -219,10 +219,29 @@ B = {
     # pearls and crescents, bells and twinkles over the splashes, a calm rain, the moon's chime.
     'tcpearl': [('watery', 0.0, 0.3, 1.3, -2, 0), ('twinkle', 0.0, 0.35, 1.4, -10, 0)],
     'tchit': [('liquid', 0.0, 0.3, 1.35, 0, 0), ('shimmer', 2.0, 0.3, 1.2, -10, 0)],
+    # The Eclipse (2026-11-16): blade hits with a twinkle, a dark braam and a bell as the eye
+    # opens, fire for her corona, the moths darkened, a gong and the braam for Total Eclipse.
+    'echit': [('blade', 0.0, 0.22, 0.85, 0, 0), ('twinkle', 0.0, 0.3, 0.9, -12, 20)],
+    'eceyeopen': [('braam', 0.0, 0.9, 1.25, -2, 0), ('tbell', 1.6, 0.9, 0.9, -6, 60)],
+    'ecring': [('firewhoosh', 0.2, 0.8, 1.1, 0, 0), ('shimmer', 2.0, 0.6, 1.1, -10, 40)],
+    'ecringbig': [('firewhoosh', 0.2, 1.1, 0.9, 0, 0), ('flare', 0.0, 0.6, 0.9, -4, 40), ('shimmer', 8.0, 0.8, 1.0, -9, 80)],
+    'ecportal': [('braam', 0.0, 0.6, 1.5, -3, 0), ('mmriffle', 0.16, 0.4, 0.8, -8, 60)],
+    'ecedge': [('blade', 0.0, 0.32, 0.7, 0, 0), ('boom', 0.0, 0.6, 1.2, -4, 30), ('tbell', 15.24, 0.8, 1.1, -8, 60)],
+    'ecpop': [('flare', 0.0, 0.5, 1.2, -1, 0), ('twinkle', 0.0, 0.4, 1.3, -10, 30)],
+    'eccloud': [('mmriffle', 0.16, 0.6, 1.0, 0, 0), ('braam', 0.0, 0.6, 1.6, -8, 0)],
+    'ecflurry': [('mmriffle', 0.16, 0.8, 0.95, -1, 0), ('blade', 0.0, 0.25, 0.9, -6, 380)],
+    'ecswarm': [('mmwingfx', 1.0, 1.2, 0.85, -3, 0), ('mmriffle', 0.16, 1.0, 0.8, -2, 0)],
+    'eceye': [('twinkle', 0.0, 0.5, 0.8, 0, 0), ('airy', 0.0, 0.35, 1.4, -8, 0)],
+    'ecnewmoon': [('braam', 0.0, 1.6, 0.9, -2, 0), ('farbells', 10.5, 1.4, 0.8, -8, 200)],
+    'ecpour': [('mmwingfx', 2.0, 1.5, 0.75, 0, 0), ('mmriffle', 0.16, 1.1, 0.7, -2, 50), ('boom', 0.0, 0.8, 0.9, -6, 300)],
+    'ectotal': [('braam', 0.0, 2.0, 0.8, 0, 0), ('gong', 0.08, 2.2, 0.75, -6, 400), ('astral', 0.0, 2.0, 0.9, -10, 200)],
+    'ecdiamond': [('flare', 0.0, 0.6, 0.85, 0, 0), ('boom', 0.0, 1.0, 0.9, -3, 20), ('brightup', 0.0, 1.0, 1.2, -8, 0)],
     # The Moon Moth (2026-11-16): her mark (a soft puff of wings and a glint), the cloud of moths she
     # breaks into, the wings her finisher opens, Wing Flurry's whirl, the swarm in flight, the Full
     # Moon moth's nip, Midnight Swarm's moon rising and the swarm pouring down.
     'mmhit': [('mmflut', 0.19, 0.3, 1.5, 0, 0), ('twinkle', 0.0, 0.3, 1.3, -12, 0)],
+    'mmflutter': [('mmflut', 0.19, 0.32, 1.35, 0, 0), ('airy', 0.0, 0.28, 1.5, -8, 0)],
+    'ecflutter': [('mmflut', 3.07, 0.32, 1.15, 0, 0), ('braam', 0.0, 0.3, 1.9, -10, 0)],
     'mmcloud': [('mmriffle', 0.16, 0.6, 1.25, 0, 0), ('mmflut', 3.07, 0.5, 1.2, -4, 0), ('shimmer', 2.0, 0.5, 1.1, -12, 0)],
     'mmwings': [('mmflut', 0.19, 0.9, 0.85, 0, 0), ('airy', 0.0, 0.6, 0.9, -4, 0), ('light', 0.0, 0.8, 1.0, -9, 60)],
     'mmflurry': [('mmriffle', 0.16, 0.8, 1.1, -1, 0), ('shimmer', 8.0, 0.6, 1.3, -11, 0)],

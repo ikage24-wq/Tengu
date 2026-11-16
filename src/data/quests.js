@@ -173,6 +173,13 @@ export const QUESTS = {
     objectives: [{ type: 'kill', mob: 'crystalslime', count: 20 }],
     rewards: { exp: 44000, gold: 950, items: [{ id: 'elixir', qty: 5 }] },
   },
+  // Vex's trial for a Moon Moth before her level 30 path (the Eclipse).
+  thief_trial: {
+    id: 'thief_trial', name: "The Moon Moth's Trial", giver: 'vex', minLevel: 30, family: 'thief',
+    text: "Moths fly in the dark, sweetie, but the dark has eyes too. Up at the Hot Spring Pools the Lamias watch for anything that moves. Take out 20 of them without letting them see you coming. Then come back, and I'll show you what happens when the moon puts out the sun.",
+    objectives: [{ type: 'kill', mob: 'lamia', count: 20 }],
+    rewards: { exp: 46000, gold: 1000, items: [{ id: 'elixir', qty: 5 }] },
+  },
   crystal_heart: {
     id: 'crystal_heart', name: 'Heart of Crystal', giver: 'rook', minLevel: 35, prereq: 'restless_ruins',
     text: 'Deep in the Crystal Cave sits Prismaris, the Crystal King. Defeat it and bring peace to the coast.',

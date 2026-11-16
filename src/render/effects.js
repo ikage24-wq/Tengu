@@ -132,7 +132,7 @@ function drawShot(ctx, f, cam) {
   const dir = Math.sign(f.tx - f.x) || 1;
   const c = f.element ? ELEMENTS[f.element].glow : SHOT_COLORS[f.shot] ?? '#ffffff';
   ctx.save();
-  if (drawStrikeShot(ctx, f, x, y, dir, f.t) || ((f.shot?.startsWith('tm') || f.shot?.startsWith('ms') || f.shot?.startsWith('tc')) && drawTideShot(ctx, f, x, y, dir, cam)) || (f.shot?.startsWith('mm') && drawMothShot(ctx, f, x, y, dir)) || ((f.shot?.startsWith('tg') || f.shot?.startsWith('tp') || f.shot?.startsWith('bw')) && drawStormShot(ctx, f, x, y, dir))) {
+  if (drawStrikeShot(ctx, f, x, y, dir, f.t) || ((f.shot?.startsWith('tm') || f.shot?.startsWith('ms') || f.shot?.startsWith('tc')) && drawTideShot(ctx, f, x, y, dir, cam)) || ((f.shot?.startsWith('mm') || f.shot?.startsWith('ec')) && drawMothShot(ctx, f, x, y, dir)) || ((f.shot?.startsWith('tg') || f.shot?.startsWith('tp') || f.shot?.startsWith('bw')) && drawStormShot(ctx, f, x, y, dir))) {
     ctx.restore();
     return;
   }
@@ -616,8 +616,8 @@ function drawFx(ctx, f, cam, time) {
       const reach = Math.max(24, Math.abs(end - start));
       const sx0 = start - cam.x;
       // (The Moon Moth's in her lilac, her own mark already on the monster.)
-      fxSprite(ctx, f.school === 'moth' ? 'celmmstreak' : pathTint(f.school, 'celstreak', 'celstreakgold', 'celstreakred'), sx0 + (dir * reach) / 2, by + 2, { p, flip: dir < 0, sx: reach / 100, sy: 0.7 });
-      if (f.school !== 'moth') fxSprite(ctx, pathTint(f.school, 'celhit', 'celholyhit', 'celhitred'), sx0 + dir * reach, by + 2, { p, scale: 0.6 });
+      fxSprite(ctx, f.school === 'moth' ? 'celmmstreak' : f.school === 'eclipse' ? 'celecstreak' : pathTint(f.school, 'celstreak', 'celstreakgold', 'celstreakred'), sx0 + (dir * reach) / 2, by + 2, { p, flip: dir < 0, sx: reach / 100, sy: 0.7 });
+      if (f.school !== 'moth' && f.school !== 'eclipse') fxSprite(ctx, pathTint(f.school, 'celhit', 'celholyhit', 'celhitred'), sx0 + dir * reach, by + 2, { p, scale: 0.6 });
       break;
     }
     case 'blaze': case 'fire': case 'holy': case 'heal': {
@@ -907,7 +907,7 @@ let hero = null;
 // Effects that lie on the ground under everyone (the dancers' finisher stages: Grand Finale's spotlight and rose,
 // Golden Carousel's track, Sky Waltz's tornado, which stand round her and must not cover her face):
 // drawn behind the heroes and monsters (drawGroundFx), so they never wash over a face.
-const GROUND_FX = new Set(['shock', 'mmmoon', 'bwroll', 'bwcage', 'bwboltdown', 'bwcagebig', 'bwclapbig', 'bwboltbig', 'bwsquallfx', 'tgring', 'tgcyclone', 'tgboltbig', 'tgclap', 'tgclapbig', 'tpboltbig', 'tpclapbig', 'tpwhirlfx', 'tmwhirl', 'tmpool', 'mspool', 'tcpool', 'tcrain', 'tcmoontide', 'wdfinale', 'bdcarousel', 'skytornado', 'sddownburst', 'sdcloudnine', 'aeballista', 'consecrate', 'verdict',
+const GROUND_FX = new Set(['shock', 'mmmoon', 'ecnewmoon', 'ectotal', 'ecportal', 'ecdiamond', 'ecring', 'ecringbig', 'bwroll', 'bwcage', 'bwboltdown', 'bwcagebig', 'bwclapbig', 'bwboltbig', 'bwsquallfx', 'tgring', 'tgcyclone', 'tgboltbig', 'tgclap', 'tgclapbig', 'tpboltbig', 'tpclapbig', 'tpwhirlfx', 'tmwhirl', 'tmpool', 'mspool', 'tcpool', 'tcrain', 'tcmoontide', 'wdfinale', 'bdcarousel', 'skytornado', 'sddownburst', 'sdcloudnine', 'aeballista', 'consecrate', 'verdict',
   // (the first jobs' skills as the paths play them: data/skills.js `paths`)
   'siballad', 'siharmony', 'asmoonfall', 'asveil']);
 export function drawEffects(ctx, world, cam, time) {
@@ -976,10 +976,10 @@ function bornAt(f) {
 function bladeCut(ctx, f, cam, p) {
   // The skill's school, else the path's own colour (a Berserker's basic blows are red too).
   const school = f.snd ?? f.path;
-  const name = school === 'moth' ? 'celmmslash' : school === 'rage' ? 'celslashred' : school === 'thunder' ? 'celslashstorm' : school === 'redstorm' ? 'celslashcrimson' : school === 'indigo' ? 'celslashindigo' : school === 'holy' || (f.big && school !== 'steel') ? 'celslashgold' : 'celslash';
+  const name = school === 'moth' ? 'celmmslash' : school === 'eclipse' ? 'celecslash' : school === 'rage' ? 'celslashred' : school === 'thunder' ? 'celslashstorm' : school === 'redstorm' ? 'celslashcrimson' : school === 'indigo' ? 'celslashindigo' : school === 'holy' || (f.big && school !== 'steel') ? 'celslashgold' : 'celslash';
   if (f.flat) {
     // A whirl: the spin slash sweeping right round the body, seen flat.
-    fxSprite(ctx, school === 'moth' ? 'celmmspin' : school === 'rage' ? 'celspinred' : school === 'holy' ? 'celspingold' : school === 'thunder' ? 'celspinstorm' : school === 'redstorm' ? 'celspincrimson' : school === 'indigo' ? 'celspinindigo' : 'celspin', f.x - cam.x, f.y - cam.y + 2, { p, scale: (f.r ?? 60) / 40, sy: 0.42, flip: (f.dir || 1) < 0 });
+    fxSprite(ctx, school === 'moth' ? 'celmmspin' : school === 'eclipse' ? 'celecspin' : school === 'rage' ? 'celspinred' : school === 'holy' ? 'celspingold' : school === 'thunder' ? 'celspinstorm' : school === 'redstorm' ? 'celspincrimson' : school === 'indigo' ? 'celspinindigo' : 'celspin', f.x - cam.x, f.y - cam.y + 2, { p, scale: (f.r ?? 60) / 40, sy: 0.42, flip: (f.dir || 1) < 0 });
     return;
   }
   const path = bladePath(f);

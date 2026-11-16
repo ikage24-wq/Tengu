@@ -22,10 +22,11 @@ import { JOBS } from '../src/data/jobs.js';
 import { SKILLS, skillAt } from '../src/data/skills.js';
 import { MOBS } from '../src/data/mobs.js';
 import { roleOf } from '../src/data/dungeons.js';
-import { GEAR_LEVELS } from '../src/data/items.js';
+import { GEAR_LEVELS, ITEMS } from '../src/data/items.js';
 
-export const WEAPON = { warrior: 'sword', paladin: 'sword', berserker: 'axe', tempest: 'sword', stormwall: 'sword', tidemage: 'staff', maelstrom: 'staff', tidecaller: 'staff' };
-export const BALANCE_JOBS = Object.keys(WEAPON);
+export const WEAPON = { warrior: 'sword', paladin: 'sword', berserker: 'axe', tempest: 'sword', stormwall: 'sword', tidemage: 'staff', maelstrom: 'staff', tidecaller: 'staff', moonmoth: 'dagger', eclipse: 'dagger' };
+// (Only jobs that still exist: the old Paladin and Berserker are kept above for old notes.)
+export const BALANCE_JOBS = Object.keys(WEAPON).filter((j) => JOBS[j]);
 const DT = 1 / 60;
 // How hard the monsters in the survival test hit (their attack times this, plus 3 a level).
 // (25 once; with today's HP every job fell in a second, so 6: the tanks last minutes, the rest seconds.)
@@ -49,7 +50,8 @@ export function balanceChar(job, level) {
   const gl = Math.max(...GEAR_LEVELS.filter((l) => l <= level));
   const family = JOBS[job].family;
   c.equipment.weapon = makeEquip(`${WEAPON[job]}_${gl}`, { variance: 0 });
-  for (const slot of ['hat', 'top', 'bottom', 'shoes', 'gloves', 'cape']) c.equipment[slot] = makeEquip(`${family}_${slot}_${gl}`, { variance: 0 });
+  // (A family with no armour set yet, the thief's, plays in what it has: nothing.)
+  for (const slot of ['hat', 'top', 'bottom', 'shoes', 'gloves', 'cape']) if (ITEMS[`${family}_${slot}_${gl}`]) c.equipment[slot] = makeEquip(`${family}_${slot}_${gl}`, { variance: 0 });
   const s = computeStats(c);
   c.hp = s.maxHp;
   c.mp = s.maxMp;

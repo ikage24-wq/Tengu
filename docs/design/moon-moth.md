@@ -16,9 +16,10 @@ down on everything.
   the same dagger). The dagger items are real knives again (they were chakrams for the Wind Dancer).
 - **Colour:** lilac and moon silver, inked in deep dusk violet, with the warm gold of a moth's eye
   spot as the accent.
-- **Shapes, hers alone:** luna moths (pointed fore wings with a gold eye spot and a dusky leading
-  edge, round hind wings sweeping back into long trailing tails, a furry silver body, feathered
-  feelers), wing dust that glitters and drifts slowly down (never up, like the other jobs' motes),
+- **Shapes, hers alone:** spirit moths (round petal wings glowing pale at the root with a little
+  gold crescent moon on each, short soft tails, a small round body, curled feelers with bead tips;
+  cute, never realistic: real moth anatomy, eye spots, crowded swarms and speck dust read as gross,
+  2026-11-16, so a few moths at a time), a light sprinkle of sparkles that drifts slowly down (never up, like the other jobs' motes),
   blooms of moonlight, and lilac crescents where her daggers cut (the shared crescent slash in her
   colours). No plain puffs: her bursts are moths, light and dust, and her great wings crumble into
   dust rather than fading (polish pass, 2026-11-16).
@@ -38,6 +39,15 @@ Three steps, each drawn from a pool so holding attack never plays the same strin
 Command moves: up + attack, a rising double cut that follows them up (`mmrise`); in the air, two
 fluttering cuts that hold her up (`mmaircut`); out of a run, she breaks into moths and cuts through
 the line (`mmstep`, the same move as Moth Step).
+
+## Quick (2026-11-16, the player: "kinda slow to be a thief")
+
+Both thieves were sped up: basic steps of about 0.22-0.32 s and finishers of about 0.44 s, every
+step a hit from each dagger (the same damage split between the two), skills about a third quicker
+and the finishers a little shorter. Quick feet: she runs 10% faster (the player only, `THIEF_FEET`;
+the crowd's thieves walk with their groups), and her **flutter jump**: Jump again in the air springs
+her on the way she holds with a tiny hop, in a burst of moths, once per jump (mostly forward: a
+taller second jump reached ledges the maps' ropes are for).
 
 ## Moondust (her gauge)
 
@@ -60,8 +70,10 @@ full, three moths circle her.
 - **Midnight Swarm** (finisher): on a full Moondust, she springs up as a full moon rises behind her,
   throws her arms wide, and the swarm pours down across the screen through every monster.
 
-Later (next pass): four more skills (a dodge buff, a powder cloud that blinds, a lure, a feint), her
-armour set, and the two level-30 paths with Vex's trial.
+Her level-30 paths, after Vex's trial (Lamias at the Hot Spring Pools): the **Eclipse**, the
+boss-killer (docs/design/eclipse.md, built 2026-11-16), and the **Silkweaver**, the controller (to
+make). Still to make: four more Moon Moth skills (a dodge buff, a blinding powder, a lure, a feint)
+and a thief armour set (there is none yet, so thieves fight in plain gear).
 
 ## Where things live
 

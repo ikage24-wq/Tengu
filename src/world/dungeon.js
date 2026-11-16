@@ -145,7 +145,7 @@ function recruit(world, def, role) {
   const level = Math.floor(between(lo, hi + 1, rng));
   // (A healer comes as a Tidecaller past level 30, the party's healer; before, while no first job
   // heals, a sturdy Warrior fills the seat.)
-  const jobs = role === 'tank' ? ['warrior'] : role === 'healer' ? (level >= 30 ? ['tidemage', 'tidecaller'] : ['warrior']) : level >= 30 ? pick([['warrior', 'tempest'], ['tidemage', 'maelstrom'], ['moonmoth']], rng) : [pick(['warrior', 'tidemage', 'moonmoth'], rng)];
+  const jobs = role === 'tank' ? ['warrior'] : role === 'healer' ? (level >= 30 ? ['tidemage', 'tidecaller'] : ['warrior']) : level >= 30 ? pick([['warrior', 'tempest'], ['tidemage', 'maelstrom'], ['moonmoth', 'eclipse']], rng) : [pick(['warrior', 'tidemage', 'moonmoth'], rng)];
   const bot = recruitBot(world.bots, world, { level, jobs });
   joinParty(world.bots, bot, world);
   const ranged = bot.ai.weapon.ranged;
