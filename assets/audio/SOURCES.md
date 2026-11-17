@@ -133,3 +133,12 @@ A temple bell's ding for each count and far off now and then (Ivo Vicic - Church
 ## The bigger library: footsteps, menus, bells, ice, winter (tools/build-fight.py, tools/build-amb.py, 2026-11-16)
 
 Footsteps at last, four takes each: dry grass (PMSFX - STEPS Dry Grass & Shrubs, and RYK-Sounds - Footstep, grass), a wooden floor (RYK-Sounds - Footstep), light snow, and sand as the snow made finer (Bluezone - Snow Footsteps, and RYK-Sounds - Footstep, snow), a cloud's soft pad and the garden Mochi's own little paws (TheWorkRoom Audio Post - Animal Footsteps Foley - Paws Without Claws). Menus: a cartoon plop for a click and a little boing as a window pops open (SmartSoundFX - Cartoon & Infotainment), a soft error (Scoba Sounds - Scoba Ui Essentials, Error 13), a balafon's rising notes for a skill going up (Scoba Ui Essentials, Balafon Notif). Bells: a town's bells far off over the hills (Ivo Vicic - Church Bells, Far Distance), folk bell-ringers coming through the carnival (Ivo Vicic - Bellmen - Folk Custom). Ice: a frozen monster's ice cracking (BluezoneCorp - Ice Cracking) under a frosty chime (David Dumais Audio - Ice & Frost Magic 1), ice creaking far off in the snow (BluezoneCorp - Ice Cracking). Winter: a wind gusting over a mountain ridge (Sonic Bat - Ambisonics - Wintertime Woods, Mountain Ridge, its all-round channel) for Frozen Peak, Cloud Glide and Mochitsuki Mountain.
+
+## The prologue (tools/build-prologue-audio.py, 2026-11-18)
+
+Cut from the Sonniss GDC bundles (royalty free inside the game): Nikko Barrera-Amaya - Office hits
+(the phone buzz), UberDuo - Inhale (the yawn), Mechanical Wave - Farm Animals (a snort slowed into
+the Queen's snore), 344 Audio - Antique Books (pages), Rescopic Sound - Distinct Whooshes (the breeze),
+Cinematic Sound Design - User Interface (the twinkle), Sonic Bat - Fireworks Ambience (fireworks far
+off), BluezoneCorp - Steampunk Mechanical Sounds (the faint alarm bell), Sonic Bat - Music Boxes (the
+three music-box phrases).

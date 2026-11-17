@@ -79,6 +79,8 @@ export const MAPS = {
     // Street lamps that glow at night (world/daytime.js).
     lamps: [{ x: 139, y: 372 }, { x: 271, y: 372 }, { x: 320, y: 440 }, { x: 960, y: 440 }, { x: 1450, y: 440 }, { x: 1600, y: 416 }, { x: 2000, y: 416 }, { x: 2270, y: 440 }, { x: 2620, y: 290 }, { x: 2960, y: 440 }],
     deco: [
+      // An empty Mochi cushion on every doorstep: the Mochi blew away on festival night.
+      ['mochicushion', 372, 0], ['mochicushion', 1140, 1], ['mochicushion', 1298, 2], ['mochicushion', 2112, 3], ['mochicushion', 2428, 0], ['mochicushion', 2516, 2],
       ['archerbanner', 2540], ['watchtower', 2620], ['archerbanner', 2700],
       // The archery range: a rack of practice bows at the shooting line, targets down the lane.
       ['bowrack', 2740], ['fence', 2825], ['archtarget', 2880, 0], ['archtarget', 2940, 1], ['archtarget', 3000, 2], ['haystack', 3050, 1],
@@ -899,6 +901,8 @@ Object.assign(MAPS, {
 });
 // The road down to Coinbridge leaves Sprout Village's Gate Lane, past the farmhouse.
 MAPS.sprout.portals.push({ id: 'coin', x: 470, y: 480, to: 'coinbridge', toPortal: 'west', label: 'Coinbridge' });
+// The path up the hill at the village's west end, to the Mochi palace and the Queen's Bedchamber.
+MAPS.sprout.portals.push({ id: 'palace', x: 84, y: 480, to: 'royal_bed', toPortal: 'door', label: "Queen's Palace", style: 'mochi' });
 // The lane to the Mochi Market and your own Mochi Garden beyond it (world/market.js), at the far
 // end of the Pond Garden.
 MAPS.sprout.portals.push({ id: 'garden', x: 2336, y: 480, to: 'mochi_market', toPortal: 'sprout', label: 'Mochi Market', style: 'mochi' });
@@ -908,21 +912,30 @@ MAPS.sprout.portals.push({ id: 'garden', x: 2336, y: 480, to: 'mochi_market', to
 // the hill above Sprout Village, where she woke up a queen.
 Object.assign(MAPS, {
   pr_flat: {
-    id: 'pr_flat', name: 'Somewhere Far Away', theme: 'harbor', isTown: true, private: true, indoor: true, set: true, town: 'sprout', music: 'town-night',
+    id: 'pr_flat', name: 'Somewhere Far Away', theme: 'harbor', isTown: true, private: true, indoor: true, set: true, town: 'sprout', quiet: true, amb: 'flat',
     width: 640, height: 372, groundY: 344,
-    look: { ceiling: true, floor: 'painted', sky: ['#1c2140', '#262b52', '#343a6a'], material: 'parquet', light: 'night', propKeep: 1 },
+    look: { ceiling: true, floor: 'painted', sky: ['#1c2140', '#262b52', '#343a6a'], material: 'parquet', light: 'harbor', propKeep: 1 },
     cottages: [], terrain: [[0, 344], [640, 344]], platforms: [], ropes: [],
     townPieces: [['pr_flat', 320]],
     portals: [{ id: 'start', x: 320, y: 344, hidden: true }],
     npcs: [], spawns: [], deco: [], lamps: [],
   },
-  royal_bed: {
-    id: 'royal_bed', name: "The Queen's Bedchamber", theme: 'meadow', isTown: true, private: true, indoor: true, set: true, town: 'sprout', music: 'town',
+  pr_sea: {
+    id: 'pr_sea', name: 'The Open Sea', theme: 'harbor', isTown: true, private: true, indoor: true, set: true, town: 'sprout', quiet: true, amb: 'nightsea',
     width: 640, height: 372, groundY: 344,
-    look: { ceiling: true, floor: 'painted', sky: ['#ffe8f4', '#fff2f8', '#fff8fc'], material: 'parquet', propKeep: 1 },
+    look: { ceiling: false, floor: 'painted', sky: ['#141838', '#262a58', '#33306a'], material: 'planks', light: 'harbor', propKeep: 1 },
+    cottages: [], terrain: [[0, 344], [640, 344]], platforms: [], ropes: [],
+    townPieces: [['pr_sea', 320]],
+    portals: [{ id: 'start', x: 320, y: 344, hidden: true }],
+    npcs: [], spawns: [], deco: [], lamps: [],
+  },
+  royal_bed: {
+    id: 'royal_bed', name: "The Queen's Bedchamber", theme: 'meadow', isTown: true, private: true, indoor: true, set: true, town: 'sprout', music: 'town', amb: 'palace',
+    width: 640, height: 372, groundY: 344,
+    look: { ceiling: true, floor: 'painted', sky: ['#ffe8f4', '#fff2f8', '#fff8fc'], material: 'parquet', light: 'throne', propKeep: 1 },
     cottages: [], terrain: [[0, 344], [640, 344]], platforms: [], ropes: [],
     townPieces: [['pr_bedchamber', 320]],
-    portals: [{ id: 'start', x: 320, y: 344, hidden: true }],
+    portals: [{ id: 'door', x: 608, y: 344, to: 'sprout', toPortal: 'palace', label: 'Sprout Village', door: true }, { id: 'start', x: 320, y: 344, hidden: true }],
     npcs: [], spawns: [], deco: [], lamps: [{ x: 186, y: 180, c: '#ffd27a' }, { x: 466, y: 180, c: '#ffd27a' }],
   },
 });

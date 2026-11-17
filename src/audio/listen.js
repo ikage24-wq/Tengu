@@ -39,6 +39,9 @@ const TOWN_SONG = { sprout: 'town', harbor: 'harbor', crag: 'crag', grove: 'grov
 
 export function songFor(map, world = null) {
   if (!map) return 'title';
+  // A cutscene can set its own music, or none (world/cast.js `music`), and a set can be hushed.
+  if (world?.cine && 'music' in world.cine) return world.cine.music;
+  if (map.quiet) return null;
   if (map.id === 'bossroom' || map.id === 'hollow6') return 'boss';
   if (map.dungeon === 'manor') return MANOR_BOSS_ROOMS.has(map.id) ? 'manorboss' : 'manor';
   if (map.dungeon === 'aquarium') return AQUA_BOSS_ROOMS.has(map.id) ? 'aquaboss' : 'aquarium';
@@ -558,6 +561,8 @@ export function hearWorld(world, cam) {
     } else if (j.type === 'kill') sfx('poof', { boss: j.boss, pan: pan(j.x), ally: Boolean(j.ally || j.party) && !j.boss, mob: j.mob });
     else if (j.type === 'hurt') sfx('hurt', { pan: pan(j.x) });
     else if (j.type === 'mochiVoice') sfx('mochiVoice', { style: j.style, pitch: j.pitch, mood: j.mood, pan: pan(j.x) });
+    // A cutscene's own sound (world/cast.js `sound`).
+    else if (j.type === 'scene') sfx(j.name, { pan: j.x == null ? 0 : pan(j.x) });
     else if (j.type === 'stomp') sfx('stomp', { big: j.big, pan: pan(j.x) });
     else if (j.type === 'loot') sfx('drop', { rare: true, pan: pan(j.x) });
     else if (j.type === 'stun') sfx('stun', { pan: pan(j.x) });
@@ -713,7 +718,8 @@ export function hearWorld(world, cam) {
     m.beatAt = world.now;
     sfx('heartbeat');
   }
-  updateAmbience(world.map, m.fightK);
+  // (A cutscene can change the place's sound: festival night in the bedchamber. world/cast.js `amb`.)
+  updateAmbience(world.cine?.amb ? { ...world.map, amb: world.cine.amb } : world.map, m.fightK);
 }
 
 // Each summon: what it says when it starts a move, and now and then when it's idle.

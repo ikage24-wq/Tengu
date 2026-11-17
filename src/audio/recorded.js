@@ -7,6 +7,18 @@
 // tuned layers) over the recording, so a job's moves keep their musical colour.
 
 export const RECORDED = {
+  // The prologue's (tools/build-prologue-audio.py).
+  phoneBuzz: { trim: 0 },
+  yawn: { trim: 0 },
+  snore: { trim: 0 },
+  pageFlutter: { trim: 0 },
+  breeze: { trim: 0 },
+  twinkle: { trim: 0 },
+  fireworkFar: { trim: 0 },
+  alarmFaint: { trim: 0 },
+  musicBoxA: { trim: 0 },
+  musicBoxB: { trim: 0 },
+  musicBoxC: { trim: 0 },
   // Swings and blows.
   swing: { trim: -1.2 },
   swingHeavy: { trim: -1.9 },

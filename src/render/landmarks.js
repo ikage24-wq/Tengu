@@ -958,6 +958,20 @@ function lighthouseArt() {
   });
 }
 
+// An empty Mochi cushion on a doorstep (Sprout Village, since the Mochi blew away on festival night):
+// a plump round cushion with a little sprout stitched on it, a dent where a Mochi used to sit, and an
+// empty bowl beside it.
+const CUSHION = ['#ffc8dc', '#bfe3a8', '#ffe3a0', '#c9b8ff'];
+function cushionArt(seed) {
+  const c = CUSHION[seed % CUSHION.length];
+  return art(`mochicushion|${seed % CUSHION.length}`, 30, 14, () => [
+    E(12, 9, 10, 4.6, shade(c, -14)), E(12, 8, 10, 4.4, c), F(E(10, 6.6, 5, 1.6, mix(c, '#ffffff', 0.5))),
+    F(E(12, 8.2, 5, 1.8, shade(c, -8))),
+    F(R(11.6, 5.4, 0.8, 2, '#5f9a6a')), F(E(10.6, 5.2, 1.2, 0.7, '#7fcf9a')), F(E(13.2, 5, 1.2, 0.7, '#7fcf9a')),
+    E(25, 11, 3.6, 1.6, '#c8b8a8'), E(25, 10.2, 3.6, 1.2, '#e8dcd0'), F(E(25, 10.2, 2.6, 0.7, '#b8a898')),
+  ]);
+}
+
 function cratesArt(frame) {
   const tail = [-1, 0, 1][frame];
   return art(`crates|${frame}`, 72, 52, () => {
@@ -3320,6 +3334,12 @@ const hash01 = (n) => {
 };
 
 const KINDS = {
+  mochicushion: {
+    w: 30, h: 14,
+    draw(ctx, x, y, time, seed) {
+      place(ctx, cushionArt(seed), x, y);
+    },
+  },
   // (Mossy Woods' giant trees: all three crowns at one height, 480 up, so the bridges run level;
   // the seed varies each tree's face and blossoms.)
   woodtree: { w: 300, h: 640, draw: (ctx, x, y, time, seed) => drawWoodTree(ctx, x, y, time, seed) },

@@ -20,7 +20,10 @@
 //                                  `tilt`), then wobbles almost straight (`rest`)
 //   { sprout: 'hayate' }           the gold sprout comes up out of her hair
 //   { slump: id, to, dur }         she leans forward (radians) over the table, from the hips
-//   { flag: name, as }             a set's own moving parts take a cue (the phone buzzes)
+//   { flag: name, as }             a set's own moving parts take a cue (the phone buzzes; the
+//                                  time it was given is kept as `<name>At`, for a falling star)
+//   { blow: id | [ids], to, dur }  they are blown away like dandelion fluff: up and off to `to`,
+//                                  bobbing and tumbling, fading as they go (then gone)
 //   { play: id | [ids], as, hold } a Mochi plays one of its own moves (render/mochi-anim.js: sniff,
 //                                  hungry, chestbeat, count, cheer, bow, talk...; `hold` loops it)
 //   { dress: id, wear }            a Mochi's clothes change (data/mochi-wardrobe.js slots; null
@@ -28,6 +31,9 @@
 //   { duck: id, by, dur }          they duck down out of sight behind the covers (peek brings them up)
 //   { toss: id, to, dur, height }  a thing flies in an arc to a place or an actor, spinning
 //   { mood: id, as }               Hayate's face (shock, sad, excited...; null: asleep again)
+//   { sound: name, at }            a sound plays (audio/recipes.js; at an actor, panned to them)
+//   { music: key | null }          the scene's own music (a track or song key), or none
+//   { amb: place | null }          the scene's own place sound (audio/ambience.js), or the map's
 //
 // A Mochi of the cast who speaks gestures as it talks and is heard in its own voice
 // (world/mochi-voice.js), and squeaks when an emote pops over it.
@@ -43,7 +49,7 @@ import { easedPace } from './pace.js';
 import { SCENES } from '../data/story.js';
 
 const ease = (u) => (u <= 0 ? 0 : u >= 1 ? 1 : u < 0.5 ? 4 * u * u * u : 1 - (-2 * u + 2) ** 3 / 2);
-const HEIGHT = { hayate: 46, mochi: 30, crown: 10, beard: 8 };
+const HEIGHT = { hayate: 46, mochi: 30, crown: 10, beard: 8, hero: 46, gust: 10 };
 
 export const castOf = (world, id) => (typeof id === 'string' ? world.cine?.cast?.find((a) => a.id === id) ?? null : null);
 
@@ -75,6 +81,7 @@ export function enterSet(world, id) {
 
 export function leaveSet(world) {
   const c = world.cine;
+  world.map.castOn = false;
   if (!c?.home) return;
   delete world.map.cine;
   world.map = c.home.map;
@@ -93,10 +100,13 @@ export function leaveSet(world) {
 
 function addCast(world, step) {
   const c = world.cine;
+  // (The room's own people step aside while the scene's cast plays them: render/prologue.js.)
+  world.map.castOn = true;
   c.cast = c.cast.filter((a) => a.id !== step.cast);
   const kind = step.kind ?? 'mochi';
   const a = {
-    id: step.cast, kind, x: step.x ?? 320, y: step.y ?? world.map.groundY ?? 344, facing: step.facing ?? 1,
+    // (`x: 'escort'`: where the little Mochi you've brought home is standing: world/escort.js.)
+    id: step.cast, kind, x: step.x === 'escort' ? world.escort?.x ?? 320 : step.x ?? 320, y: step.y === 'escort' ? world.escort?.y ?? world.map.groundY : step.y ?? world.map.groundY ?? 344, facing: step.facing ?? 1,
     alpha: step.hidden ? 0 : 1, lift: 0, sink: step.sink ?? 0, tilt: 0, h: step.h ?? HEIGHT[kind] ?? 30,
     name: step.name ?? null, color: step.color ?? null, behind: Boolean(step.behind), clipY: step.clipY ?? null, pose: step.pose ?? 'idle',
     seat: step.seat ?? null, human: Boolean(step.human), crown: step.crown ?? false, sprout: step.sprout ?? false, sproutT: step.sprout ? 1 : 0, awake: Boolean(step.awake),
@@ -133,9 +143,52 @@ export function castStep(world, step) {
     addCast(world, step);
     return () => true;
   }
-  if (step.flag) {
-    c.flags = { ...c.flags, [step.flag]: step.as ?? true };
+  if (step.sound) {
+    const at = step.at ? castAt(world, step.at) ?? (typeof step.at === 'object' ? step.at : null) : null;
+    world.juice.push({ type: 'scene', name: step.sound, x: at?.x ?? null });
     return () => true;
+  }
+  if (step.music !== undefined) {
+    c.music = step.music;
+    return () => true;
+  }
+  if (step.amb !== undefined) {
+    c.amb = step.amb;
+    return () => true;
+  }
+  if (step.flag) {
+    c.flags = { ...c.flags, [step.flag]: step.as ?? true, [`${step.flag}At`]: performance.now() / 1000 };
+    return () => true;
+  }
+  if (step.blow) {
+    const who = [step.blow].flat().map((id) => castOf(world, id)).filter(Boolean);
+    const to = step.to ?? { x: 60, y: 140 };
+    const dur = step.dur ?? 2.4;
+    const from = who.map((a) => ({ a, x: a.x, y: a.y - (a.lift ?? 0), k: Math.random() * 6 }));
+    for (const a of who) {
+      a.behind = false;
+      a.clipY = null;
+      a.sink = 0;
+      if (a.m) a.m.action = { name: 'flaps', t0: null, hold: dur };
+    }
+    let t = 0;
+    return (dt, skip) => {
+      t = skip ? dur : t + dt;
+      for (const f of from) {
+        const u = Math.min(1, Math.max(0, (t - f.k * 0.06) / dur));
+        const e = u * u * (3 - 2 * u);
+        f.a.x = f.x + (to.x - f.x) * e + Math.sin(u * 9 + f.k) * 10 * Math.sin(u * Math.PI);
+        f.a.y = f.y + (to.y - f.y) * e;
+        f.a.lift = Math.sin(u * Math.PI) * 30;
+        f.a.tilt = Math.sin(u * 7 + f.k) * 0.35;
+        f.a.alpha = 1 - Math.max(0, (u - 0.6) / 0.4);
+      }
+      if (t >= dur + 0.4) {
+        world.cine.cast = world.cine.cast.filter((a) => !who.includes(a));
+        return true;
+      }
+      return false;
+    };
   }
   if (step.play) {
     for (const id of [step.play].flat()) {
@@ -143,6 +196,7 @@ export function castStep(world, step) {
       if (a?.m) {
         a.pose = 'idle';
         a.m.action = { name: step.as, t0: null, ...(step.hold ? { hold: step.hold } : {}) };
+        if (step.as === 'cheer') voice(world, a, 'happy');
       }
     }
     return () => true;

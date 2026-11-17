@@ -15,26 +15,29 @@ import { MOBS } from '../data/mobs.js';
 import { questState } from '../core/quests.js';
 import { spawnMob } from './mobs.js';
 import { startCine, skipScene, endScene, isStaging } from './director.js';
+import { escortOnMap } from './escort.js';
 
 // ---------- Scenes ----------
 
 // `vars` fill in a line's {job} (and {name} is always the hero).
-// A scene with steps that play only once some quests are done (`when`: an id or a list of them)
-// is played as its own copy holding just the steps this hero has earned.
+// A scene with steps that play only once some quests are done (`when`: an id or a list of them),
+// or only on one map (`onMap`: where the scene starts), is played as its own copy holding just the
+// steps this hero has earned.
 const done = (char, when) => [when].flat().every((q) => char.quests?.[q]?.state === 'done');
-function sceneFor(char, id) {
+function sceneFor(char, id, mapId = null) {
   const steps = SCENES[id];
-  const keep = (st) => !st.when || done(char, st.when);
-  if (!steps.some((st) => st.when || st.together?.some((x) => x.when))) return id;
+  const keep = (st) => (!st.when || done(char, st.when)) && (!st.onMap || st.onMap === mapId);
+  const picky = (st) => st.when || st.onMap;
+  if (!steps.some((st) => picky(st) || st.together?.some(picky))) return id;
   const out = steps.filter(keep).map((st) => (st.together ? { ...st, together: st.together.filter(keep) } : st)).filter((st) => !st.together || st.together.length);
-  const key = `${id}~${out.length}~${steps.map((st, i) => (keep(st) ? 1 : 0) + (st.together ? st.together.map((x) => (keep(x) ? 1 : 0)).join('') : '')).join('')}`;
+  const key = `${id}~${mapId}~${out.length}~${steps.map((st, i) => (keep(st) ? 1 : 0) + (st.together ? st.together.map((x) => (keep(x) ? 1 : 0)).join('') : '')).join('')}`;
   SCENES[key] ??= out;
   return key;
 }
 
 export function playScene(world, id, vars = {}) {
   if (!id || !SCENES[id]) return;
-  id = sceneFor(world.char, id);
+  id = sceneFor(world.char, id, world.map?.id ?? null);
   world.scene = { id, i: 0, t: 0, vars: { name: world.char.name, ...vars } };
   // The hero stops where they stand: no sliding on, no swing frozen halfway through.
   if (world.body) world.body.vx = 0;
@@ -136,6 +139,14 @@ function spread(map, n) {
 // Puts the queen in her arena if the hero has her trial to do.
 export function onStoryMap(world) {
   world.zones = [];
+  // The little Mochi you're bringing home, if it's here (world/escort.js).
+  escortOnMap(world);
+  // The Queen's Bedchamber, the first time you come to say hello (`story_1_queen`).
+  const hello = world.char.quests?.story_1_queen;
+  if (world.map.id === 'royal_bed' && hello?.state === 'active' && !hello.saw) {
+    hello.saw = true;
+    playScene(world, 'queen_visit');
+  }
   const t = TRIALS[world.map.trial];
   if (!t) return;
   if (questState(world.char, t.quest) !== 'active') return;

@@ -35,6 +35,7 @@ export const QUESTS = {
     text: "You're ready! The boat at the end of the dock goes to Sprout Village. Find Mira there, she'll look after you. Good luck out there!",
     objectives: [],
     rewards: { exp: 20, gold: 30, items: [] },
+    scenes: { done: 'isle_farewell' },
   },
   first_steps: {
     id: 'first_steps', name: 'First Steps', giver: 'mira', minLevel: 1,

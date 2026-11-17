@@ -18,6 +18,7 @@ import { settings } from '../core/settings.js';
 import { NPCS } from '../data/npcs.js';
 import { drawSceneBack, drawSceneFront, fireflyLights } from './scenery.js';
 import { drawCast } from './cast.js';
+import { drawEscort } from './escort.js';
 import { drawHero, setLight, rimLightOf } from './hero.js';
 import { gameHour, isNight } from '../world/daytime.js';
 import { drawMonster } from './monsters.js';
@@ -568,6 +569,8 @@ function drawWorldLayers(ctx, world, cam, time, b, zoom = 1) {
   drawNpcs(ctx, world, cam, time);
   // A cutscene's own cast: Hayate, the Mochi, a crown on its way (render/cast.js).
   drawCast(ctx, world, cam, time);
+  // The little Mochi you're bringing home (render/escort.js).
+  drawEscort(ctx, world, cam, time);
   lap('people');
   drawWarnings(ctx, world, cam, time);
   drawGroundFx(ctx, world, cam, time);

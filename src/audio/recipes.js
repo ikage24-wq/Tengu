@@ -702,6 +702,21 @@ for (const style of ['Chirp', 'Coo', 'Squeak', 'Trill', 'Peep', 'Hum', 'Purr', '
   R[`mochi${style}`] = { db: -21, gap: 140, vary: 3, max: 2, layers: [{ wave: 'sine', f0: N.C5 * 2, overtones: [2, 0.2], env: { a: 3, s: 25, d: 60 }, lpf: [4000] }] };
 }
 
+// The prologue's sounds (tools/build-prologue-audio.py; data/story.js `prologue`'s `sound` steps):
+// each is its recording, at this level (the layers are only a stand-in until it has loaded).
+Object.assign(R, {
+  phoneBuzz: { db: -15, max: 1, gap: 200, layers: [whoosh(300, 500, 400, { focus: 0.3 })] },
+  yawn: { db: -17, max: 1, gap: 200, layers: [whoosh(300, 500, 400, { focus: 0.3 })] },
+  snore: { db: -13, max: 1, gap: 200, layers: [whoosh(300, 500, 400, { focus: 0.3 })] },
+  pageFlutter: { db: -19, max: 1, gap: 200, layers: [whoosh(300, 500, 400, { focus: 0.3 })] },
+  breeze: { db: -16, max: 1, gap: 200, layers: [whoosh(300, 500, 400, { focus: 0.3 })] },
+  twinkle: { db: -18, max: 1, gap: 200, layers: [sparkle('C7:60 E7:60 G7:200')] },
+  fireworkFar: { db: -24, max: 1, gap: 200, layers: [whoosh(300, 500, 400, { focus: 0.3 })] },
+  alarmFaint: { db: -27, max: 1, gap: 200, room: true, layers: [whoosh(300, 500, 400, { focus: 0.3 })] },
+  musicBoxA: { db: -17, max: 1, gap: 200, room: true, layers: [sparkle('C7:60 E7:60 G7:200')] },
+  musicBoxB: { db: -17, max: 1, gap: 200, room: true, layers: [sparkle('C7:60 E7:60 G7:200')] },
+  musicBoxC: { db: -17, max: 1, gap: 200, room: true, layers: [sparkle('C7:60 E7:60 G7:200')] },
+});
 export const RECIPES = R;
 // A recorded effect that keeps its recipe's notes (recorded.js `music`) plays them from this
 // notes-only version alongside the recording, so each job keeps its musical colour.

@@ -16,6 +16,7 @@ import { actorAt as stageActor } from '../world/director.js';
 import { castOf } from '../world/cast.js';
 import { drawMochiAnim } from '../render/mochi-anim.js';
 import { MOCHI_SIZE } from '../render/wagashi.js';
+import { babbleAlong } from '../audio/babble.js';
 import { drawHero } from '../render/hero.js';
 import { drawMonster } from '../render/monsters.js';
 import { COLORS, THEMES, text, wrap, box, softShadow, roundRect, sparkle, font } from './kit.js';
@@ -249,6 +250,8 @@ function drawEmote(ctx, e, x, y, real) {
 // they're all there.
 function drawSay(ctx, world, say, x, y, real) {
   const words = fillScene(world, say.text);
+  // (A bubble on a person babbles too; one on a thing - a phone's screen - doesn't.)
+  if (typeof say.who === 'string') babble(world, `say|${world.scene?.i}`, say.who, null, words, Math.floor(say.t * 55));
   const W = Math.min(180, Math.max(60, words.length * 4.2 + 20));
   ctx.font = font(8, false);
   const lines = Math.max(1, Math.ceil(ctx.measureText(words).width / (W - 16)));
@@ -551,6 +554,47 @@ function lineAtTop(world, step, cam) {
   return low;
 }
 
+// ---------- Talking babble ----------
+// Everyone babbles along as their words type out (audio/babble.js), each in a voice of their own:
+// a Mochi high and quick (its own voice's style and pitch), Hayate soft and slow (and drifting down
+// when she mumbles in her sleep), bosses low, everyone else somewhere between, by who they are.
+// The line's mood colours it: up when happy or startled, down when sad.
+const hashStr = (str) => [...str].reduce((h, ch) => (h * 31 + ch.charCodeAt(0)) >>> 0, 7);
+const MOCHI_WAVE = { chirp: 'triangle', coo: 'sine', squeak: 'square', trill: 'triangle', peep: 'triangle', hum: 'sine', purr: 'sawtooth', boop: 'sine' };
+function voiceFor(world, who, mood) {
+  const cast = castOf(world, who);
+  let v;
+  if (cast?.kind === 'mochi') {
+    const g = cast.m.genes;
+    v = { pitch: 560 * (g.voice?.pitch ?? 1) * (cast.m.size === 'grown' ? 0.82 : 1), wave: MOCHI_WAVE[g.voice?.style] ?? 'triangle', formant: 1.25, every: 2, len: 0.05, soft: 3 };
+  } else if (who === 'hayate') {
+    v = mood === 'sleepy' ? { pitch: 300, wave: 'sine', formant: 1.05, every: 2, len: 0.1, soft: 6, droop: 0.14 } : { pitch: 360, wave: 'triangle', formant: 1.1, every: 3, len: 0.06, soft: 3 };
+  } else if (who === 'player') {
+    const h = hashStr(world.char.name ?? 'you');
+    v = { pitch: 330 + (h % 90), wave: 'triangle', formant: 1.05, every: 3 };
+  } else if (MOBS[who]) {
+    const h = hashStr(who);
+    v = { pitch: 190 + (h % 80), wave: 'sawtooth', formant: 0.85, every: 3, soft: 6 };
+  } else {
+    const h = hashStr(who ?? 'someone');
+    v = { pitch: 300 + (h % 160), wave: ['triangle', 'sine', 'square'][h % 3], formant: 1 + (h % 20) / 100, every: 3, soft: h % 3 === 2 ? 7 : 2 };
+  }
+  const k = { happy: 1.06, surprised: 1.12, sad: 0.92, angry: 0.9 }[mood] ?? 1;
+  return { ...v, pitch: v.pitch * k, droop: v.droop ?? (mood === 'sad' ? 0.08 : 0) };
+}
+// Babbles whatever of `words` has typed since last frame (a whole line shown at once, on a press,
+// is skipped rather than blurted out). `key` keeps each line or bubble's own count.
+function babble(world, key, who, mood, words, chars) {
+  const sc = world.scene;
+  if (!sc || !who) return;
+  if (sc.babble?.key !== key) sc.babble = { key, at: 0, state: {} };
+  const b = sc.babble;
+  const to = Math.min(chars, words.length);
+  if (to - b.at > 6) b.at = to;
+  if (to > b.at) babbleAlong(voiceFor(world, who, mood), words, b.at, to, b.state);
+  b.at = Math.max(b.at, to);
+}
+
 // One line: the dialogue box along the bottom (or the top, clear of the actors), with the speaker's
 // face in a framed window at its left end (the player's call, 2026-11-17: a face portrait, not the
 // whole body). The box rises into place when a line follows staging; a new speaker's face slides in
@@ -640,6 +684,7 @@ function drawLine(ctx, world, step, t, atTop = false) {
     text(ctx, name, tx + 4, y + 4, { size: 10, bold: true, color: '#ffffff', outline: shadeInk(color) });
   }
   const chars = Math.floor(t * TYPE * (step.mood === 'sleepy' ? 0.45 : 1));
+  if (!narration) babble(world, `line|${world.scene?.i}`, who, step.mood, step.text, chars);
   if (step.mood === 'sleepy') drawSleepy(ctx, step.text, tx, y + 26, tw, chars, t);
   else wrap(ctx, step.text, tx, y + 26, tw, { size: 9, chars, lineHeight: 12.5, color: narration ? '#f4ecff' : COLORS.ink });
   if (chars >= step.text.length) {

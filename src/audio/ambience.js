@@ -156,6 +156,25 @@ const PLACES = {
     day: [['woodCreak', 9, 20], ['windChime', 20, 40]],
     night: [['woodCreak', 10, 22]],
   },
+  // The prologue (data/story.js): her flat at 2 a.m., rain on the window and nothing else; the
+  // Queen's Bedchamber, hushed; festival night, the crowd and the fireworks far off over the village;
+  // the open sea at night, swells lapping at a little boat.
+  flat: {
+    bed: { lp: 300, hp: 60, db: -44, lfo: 0.03, depth: 0.2 }, rec: 'rainwindow', recDb: -20,
+    day: [], night: [],
+  },
+  palace: {
+    bed: { lp: 260, hp: 50, db: -44, lfo: 0.03, depth: 0.2 }, rec: 'quietroom', recDb: -16,
+    day: [['windChime', 14, 28]], night: [['windChime', 14, 28]],
+  },
+  festival: {
+    bed: { lp: 360, hp: 60, db: -40, lfo: 0.05, depth: 0.3 }, rec: 'fairground', recDb: -34,
+    day: [['fireworkFar', 3, 7]], night: [['fireworkFar', 3, 7]],
+  },
+  nightsea: {
+    bed: { lp: 500, hp: 60, db: -38, lfo: 0.08, depth: 0.6 }, rec: 'shore', recDb: -16,
+    day: [], night: [],
+  },
   // Moonlit Manor: a hushed old house, floorboards creaking, a far-off chime somewhere upstairs.
   manor: {
     bed: { lp: 320, hp: 50, db: -31, lfo: 0.04, depth: 0.5 }, rec: 'rainwindow', recDb: -36,

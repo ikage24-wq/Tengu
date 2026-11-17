@@ -12,6 +12,8 @@
 //                 onigiri, her phone), her futon with a round white plush on the pillow, the
 //                 calendar with every day crossed out, the clock, a photo of a beach she never went
 //                 to, the closet.
+//   pr_sea        The open sea at night, the moon's path on the water, Windbag Island far off on
+//                 the horizon, and your little boat bobbing in the middle of it (render/cast.js).
 //   royal_bed     The Queen's Bedchamber, on the hill above Sprout Village, in the morning: a tall
 //                 arched window over the village and its windmill, the Mochi's own little door and
 //                 their cushions, the throne-bed under its crown canopy (a tall cloud-topped throne
@@ -35,6 +37,9 @@ import { R, E, T, F, mix } from './pixel.js';
 import { ramp, planks, hash } from './propkit.js';
 import { art, place } from './scenery.js';
 import { cornice, wainscot, skirting, floorShade, contact, frame, plant, shelf, candle, door, curtains, glow, flame } from './sweetrooms.js';
+import { drawHayate } from './hayate.js';
+import { drawMochiAnim } from './mochi-anim.js';
+import { rollMochi } from '../data/mochi-genes.js';
 
 const TAU = Math.PI * 2;
 const WHITE = '#ffffff';
@@ -528,20 +533,220 @@ export function drawFlatCues(ctx, ox, oy, time, cues = {}) {
   }
 }
 
+// ---------- Festival night in the bedchamber ----------
+
+// The bedchamber's window at night (the scene's 'night' cue): a deep sky full of stars over the
+// village, the Falling Star Festival's lanterns strung across its roofs, swaying, and (the 'star'
+// cue) a star falling across it - with a ring of sound under it, for those who notice.
+export function bedchamberNightWindow(ctx, ox, oy, time, cues = {}) {
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(ox + 66, oy + 104, 40, Math.PI, 0);
+  ctx.rect(ox + 26, oy + 104, 80, 124);
+  ctx.clip();
+  const g = ctx.createLinearGradient(0, oy + 64, 0, oy + 228);
+  g.addColorStop(0, '#141838');
+  g.addColorStop(0.7, '#2a2a5a');
+  g.addColorStop(1, '#4a3a6a');
+  ctx.fillStyle = g;
+  ctx.fillRect(ox + 26, oy + 60, 80, 170);
+  for (let i = 0; i < 26; i++) {
+    const tw = 0.5 + 0.5 * Math.sin(time * 2 + i * 2.3);
+    ctx.fillStyle = `rgba(255,255,240,${0.4 + tw * 0.6})`;
+    ctx.fillRect(ox + 28 + hash(i * 3.7) * 76, oy + 68 + hash(i * 5.3) * 110, 1, 1);
+  }
+  // The roofs and the windmill, dark against it, their windows lit for the festival.
+  ctx.fillStyle = '#231f3e';
+  ctx.beginPath();
+  ctx.moveTo(ox + 26, oy + 228);
+  for (const [x, y] of [[26, 212], [40, 206], [52, 212], [64, 204], [78, 212], [92, 206], [106, 212], [106, 228]]) ctx.lineTo(ox + x, oy + y);
+  ctx.fill();
+  ctx.fillRect(ox + 86, oy + 194, 6, 18);
+  for (let i = 0; i < 7; i++) {
+    ctx.fillStyle = i % 2 ? '#ffd27a' : '#ffb36a';
+    ctx.fillRect(ox + 30 + i * 11, oy + 216 + (i % 2) * 3, 2, 2);
+  }
+  // The lanterns, two strings of them, swaying.
+  const cols = ['#ff8fb0', '#ffd27a', '#8fd8ff', '#c9a6ff'];
+  for (const [y0, n] of [[176, 7], [192, 6]]) {
+    for (let i = 0; i < n; i++) {
+      const x = ox + 30 + i * (76 / (n - 1));
+      const sag = Math.sin((i / (n - 1)) * Math.PI) * 6 + Math.sin(time * 1.4 + i) * 0.8;
+      glow(ctx, x, oy + y0 + sag, 7, cols[i % 4], 0.6);
+      ctx.fillStyle = cols[i % 4];
+      ctx.fillRect(x - 1.2, oy + y0 + sag - 1.6, 2.4, 3.2);
+    }
+  }
+  // The falling star.
+  if (cues.star && cues.starAt != null) {
+    const u = (performance.now() / 1000 - cues.starAt) / 1.4;
+    if (u >= 0 && u < 1) {
+      const sx = ox + 100 - u * 80;
+      const sy = oy + 76 + u * 70;
+      ctx.strokeStyle = 'rgba(255,248,220,0.8)';
+      ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      ctx.moveTo(sx, sy);
+      ctx.lineTo(sx + 16, sy - 14);
+      ctx.stroke();
+      glow(ctx, sx, sy, 9, '#fff3c0', 0.9);
+    }
+  }
+  ctx.restore();
+}
+
+// Night falls over the whole room (drawn over everyone in it: render/cast.js): a deep blue hush,
+// the candles still warm, the window's glow lying on the floor.
+export function bedchamberNight(ctx, ox, oy, w, h, time) {
+  ctx.save();
+  ctx.globalCompositeOperation = 'multiply';
+  ctx.fillStyle = '#5c5c9c';
+  ctx.fillRect(0, 0, w, h);
+  ctx.restore();
+  ctx.save();
+  ctx.globalCompositeOperation = 'lighter';
+  for (const [i, sx] of [186, 466].entries()) glow(ctx, ox + sx, oy + 180, 70, '#ffb04a', 0.16 + 0.03 * Math.sin(time * 9 + i));
+  glow(ctx, ox + 70, oy + 170, 70, '#6a7ad8', 0.12);
+  ctx.restore();
+}
+
+// ---------- The sea at night ----------
+
+// Out on the open sea at night: a deep sky, a big moon and its path across the water, Windbag
+// Island a far dark shape on the horizon with one light on it, and the sea itself, its swells
+// rolling (seaLife). Your little boat bobs on it (render/cast.js).
+export function seaArt() {
+  return art('pr-sea', 640, 480, () => {
+    const out = [R(0, 0, 640, 480, '#141838')];
+    out.push(F(R(0, 120, 640, 80, '#1c2248')), F(R(0, 180, 640, 60, '#262a58')), F(R(0, 230, 640, 40, '#33306a')));
+    for (let i = 0; i < 80; i++) out.push(F(R(hash(i * 1.7) * 640, hash(i * 3.1) * 230, i % 9 ? 1 : 2, i % 9 ? 1 : 2, i % 5 ? '#e8ecff' : '#fff3c0')));
+    // The moon.
+    out.push(E(180, 96, 30, 30, '#fff6dc'), F(E(172, 88, 8, 6, '#f2e8c8')), F(E(192, 104, 6, 5, '#f2e8c8')), F(E(184, 84, 3, 3, '#f2e8c8')));
+    // The island on the horizon, and its one lit window.
+    out.push(F(T([[470, 262], [500, 248], [530, 236], [552, 240], [576, 252], [612, 262]], '#1c1a38')), F(R(540, 226, 3, 12, '#1c1a38')), F(R(548, 246, 2, 2, '#ffd27a')));
+    // The sea.
+    out.push(R(0, 262, 640, 218, '#1e2a5a'), F(R(0, 262, 640, 2, '#3a4a8a')));
+    for (let i = 0; i < 9; i++) out.push(F(R(0, 274 + i * 20, 640, 10, i % 2 ? '#22306a' : '#1a2650')));
+    return out;
+  }, false);
+}
+// The sea's life: the moon's path shimmering across the water, the swells rolling by.
+export function seaLife(ctx, ox, oy, time) {
+  glow(ctx, ox + 180, oy + 96, 90, '#fff3c0', 0.18);
+  for (let i = 0; i < 18; i++) {
+    const y = oy + 268 + i * 6;
+    const w = 6 + i * 2.2;
+    const x = ox + 180 + Math.sin(time * 1.6 + i * 1.3) * (3 + i * 0.6) - w / 2;
+    ctx.fillStyle = `rgba(255,243,200,${0.55 - i * 0.025})`;
+    ctx.fillRect(x, y, w, 1.2);
+  }
+  ctx.strokeStyle = 'rgba(150,170,240,0.35)';
+  ctx.lineWidth = 1;
+  for (let r = 0; r < 7; r++) {
+    const y = oy + 284 + r * 26;
+    ctx.beginPath();
+    for (let x = -20; x <= 660; x += 10) {
+      const yy = y + Math.sin((x + time * (18 + r * 4)) * 0.035 + r) * (1.5 + r * 0.4);
+      if (x === -20) ctx.moveTo(ox + x, yy);
+      else ctx.lineTo(ox + x, yy);
+    }
+    ctx.stroke();
+  }
+}
+
+// Your little boat, in two parts so you can sit in it: the mast and sail behind you, the hull in
+// front of you. (x, y) is where your feet would be, sitting in it; it rocks on the swell (`rock`,
+// radians) and its sail fills and glows once the gust has found it (`full`, 0 to 1).
+export function drawBoatBack(ctx, x, y, rock, full, time) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(rock);
+  ctx.fillStyle = '#6a4a32';
+  ctx.fillRect(-9, -70, 2.4, 58);
+  // The sail: flat and slack, or bellied out by the gust.
+  const belly = full * 10 + Math.sin(time * 3) * full * 1.2;
+  ctx.fillStyle = full > 0.5 ? '#fffaf0' : '#e8e2d4';
+  ctx.beginPath();
+  ctx.moveTo(-7, -68);
+  ctx.quadraticCurveTo(10 + belly, -44, -7, -20);
+  ctx.lineTo(24 + belly * 0.6, -20);
+  ctx.quadraticCurveTo(14 + belly, -40, -7, -68);
+  ctx.fill();
+  ctx.strokeStyle = '#8a7a64';
+  ctx.lineWidth = 0.8;
+  ctx.stroke();
+  if (full > 0) glow(ctx, 6 + belly, -42, 26, '#cfe8ff', 0.35 * full);
+  ctx.fillStyle = '#6a4a32';
+  ctx.fillRect(-9, -21, 36, 1.8);
+  // The far side of the hull, inside.
+  ctx.fillStyle = '#5a3a26';
+  ctx.beginPath();
+  ctx.moveTo(-40, -16);
+  ctx.lineTo(34, -16);
+  ctx.lineTo(30, -12);
+  ctx.lineTo(-36, -12);
+  ctx.fill();
+  ctx.restore();
+}
+export function drawBoatFront(ctx, x, y, rock, time) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(rock);
+  ctx.fillStyle = '#8a5a3a';
+  ctx.strokeStyle = '#3a2418';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(-42, -15);
+  ctx.lineTo(36, -15);
+  ctx.quadraticCurveTo(32, -2, 24, 2);
+  ctx.lineTo(-32, 2);
+  ctx.quadraticCurveTo(-40, -4, -42, -15);
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = '#a8704a';
+  ctx.fillRect(-41, -15, 77, 2.2);
+  ctx.fillStyle = '#6a4228';
+  for (const yy of [-9, -4]) ctx.fillRect(-36, yy, 66, 0.8);
+  ctx.restore();
+  // Foam lapping at the waterline.
+  ctx.fillStyle = 'rgba(220,232,255,0.55)';
+  for (let i = 0; i < 6; i++) {
+    const fx = x - 40 + i * 15 + Math.sin(time * 2 + i) * 2;
+    ctx.fillRect(fx, y + 2 + Math.sin(time * 3 + i * 2) * 0.8, 7, 1);
+  }
+}
+
 // ---------- Drawing ----------
 
 // Draws a prologue room (a town piece `pr_*` at the room's centre); returns false for anything else.
 export function drawProloguePiece(ctx, map, kind, wx, extra, cam, width, time) {
-  if (kind !== 'pr_flat' && kind !== 'pr_bedchamber') return false;
+  if (kind !== 'pr_flat' && kind !== 'pr_bedchamber' && kind !== 'pr_sea') return false;
   const x = wx - cam.x;
   const ox = x - 320;
   const oy = -cam.y;
   if (kind === 'pr_flat') {
     place(ctx, flatArt(), x, 480 - cam.y);
     flatLife(ctx, ox, oy, time, map.cine?.flags);
+  } else if (kind === 'pr_sea') {
+    place(ctx, seaArt(), x, 480 - cam.y);
+    seaLife(ctx, ox, oy, time);
   } else {
     place(ctx, bedchamberArt(), x, 480 - cam.y);
-    bedchamberLife(ctx, ox, oy, time);
+    const cues = map.cine?.flags ?? {};
+    if (cues.night) {
+      // (At night only the candles: no sun through the window.)
+      bedchamberNightWindow(ctx, ox, oy, time, cues);
+      for (const [i, sx] of [186, 466].entries()) flame(ctx, ox + sx, oy + 181, time, i * 1.7);
+    } else bedchamberLife(ctx, ox, oy, time);
+    // Visiting her (not in a scene): the Queen asleep in her bed, and the Royal Snore Translator, who
+    // got stuck in the curtains on festival night and never blew away, keeping watch at his lectern.
+    if (!map.cine && !map.castOn) {
+      drawHayate(ctx, ox + QUEEN_BED.x, oy + QUEEN_BED.y, time, { s: 1 });
+      drawBedCovers(ctx, ox, oy);
+      TRANSLATOR.genes ??= Object.assign(rollMochi(33), { wear: { dress: 'scholarrobe', hat: 'scholarcap', eyes: 'specs', over: 'eartrumpet' } });
+      drawMochiAnim(ctx, TRANSLATOR, ox + 548, oy + 302, time);
+    }
   }
   return true;
 }
+const TRANSLATOR = { genes: null, dir: -1, speed: 0, dist: 0, size: 'grown', runPoints: 300, easy: true, idleBits: ['lookaround'] };

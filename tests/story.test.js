@@ -38,7 +38,7 @@ test('the story chains from Mira at level 1 to the Crystal King, every step real
   // emotes and bursts.
   const STAGING = ['cam', 'walk', 'face', 'jump', 'emote', 'say', 'wait', 'fade', 'flash', 'shake', 'fx', 'spawn', 'leave', 'act', 'mood', 'free', 'spot', 'ride', 'trip', 'place', 'wind', 'night', 'perform', 'expr', 'together',
     // A scene's own cast and sets (world/cast.js).
-    'set', 'cast', 'show', 'hide', 'peek', 'pose', 'carry', 'crown', 'sprout', 'slump', 'flag', 'play', 'dress', 'duck', 'toss'];
+    'set', 'cast', 'show', 'hide', 'peek', 'pose', 'carry', 'crown', 'sprout', 'slump', 'flag', 'play', 'dress', 'duck', 'toss', 'blow', 'sound', 'music', 'amb'];
   const EMOTES = ['!', '?', 'heart', 'note', 'sweat', 'anger', 'zzz', 'sparkle', 'idea'];
   const BURSTS = ['sparkle', 'hearts', 'petals', 'leaves', 'wind', 'confetti', 'spores', 'dust', 'rubble', 'notes', 'china', 'bubbles', 'ink', 'gears', 'pages', 'starfall', 'sparks', 'caramel', 'crumbs', 'shout', 'feathers', 'coins', 'shells', 'clouds'];
   // People, and monsters (a boss acts in its own entrance); only people step in and out.
@@ -46,13 +46,14 @@ test('the story chains from Mira at level 1 to the Crystal King, every step real
   let cast = new Set();
   const actor = (who) => who === 'player' || Boolean(NPCS[who]) || Boolean(MOBS[who]) || cast.has(who) || (typeof who === 'object' && Number.isFinite(who?.x) && Number.isFinite(who?.y));
   const check = (st) => {
+    if (st.onMap) assert.ok(MAPS[st.onMap], `onMap names a real map: ${st.onMap}`);
     if (st.cast) {
-      assert.ok(['hayate', 'mochi', 'crown', 'beard'].includes(st.kind ?? 'mochi'), `a known kind of cast: ${st.kind}`);
+      assert.ok(['hayate', 'mochi', 'crown', 'beard', 'hero', 'gust'].includes(st.kind ?? 'mochi'), `a known kind of cast: ${st.kind}`);
       cast.add(st.cast);
     }
     if (st.set) assert.ok(MAPS[st.set]?.set, `a scene's set is a set: ${st.set}`);
-    for (const k of ['show', 'hide', 'peek', 'slump', 'sprout', 'crown', 'carry', 'dress', 'duck', 'toss']) if (st[k] !== undefined) assert.ok(cast.has(st[k]), `${k} names someone the scene cast: ${st[k]}`);
-    for (const w of [st.pose ?? [], st.play ?? []].flat()) assert.ok(cast.has(w), `pose and play name someone the scene cast: ${w}`);
+    if (!st.cast) for (const k of ['show', 'hide', 'peek', 'slump', 'sprout', 'crown', 'carry', 'dress', 'duck', 'toss']) if (st[k] !== undefined) assert.ok(cast.has(st[k]), `${k} names someone the scene cast: ${st[k]}`);
+    for (const w of [st.pose ?? [], st.play ?? [], st.blow ?? []].flat()) assert.ok(cast.has(w), `pose, play and blow name someone the scene cast: ${w}`);
     if (st.card || (typeof st.text === 'string' && st.say === undefined)) return;
     const kind = STAGING.find((k) => st[k] !== undefined);
     assert.ok(kind, `a staging step of a known kind: ${JSON.stringify(st)}`);

@@ -9,7 +9,10 @@
 import { drawHayate } from './hayate.js';
 import { HEAD_POSE } from './gacha.js';
 import { drawMochiAnim, drawSpectator, SPECTATOR_BEATS } from './mochi-anim.js';
-import { drawBedCovers, drawKotatsuCovers, drawCrown, drawFlatCues } from './prologue.js';
+import { drawBedCovers, drawKotatsuCovers, drawCrown, drawFlatCues, bedchamberNight, drawBoatBack, drawBoatFront } from './prologue.js';
+import { drawHero } from './hero.js';
+import { wornGear } from '../core/character.js';
+import { glow } from './sweetrooms.js';
 import { fakeBeardShapes } from './jobgear/wardrobe.js';
 import { art, place } from './scenery.js';
 import { MOCHI_SIZE } from './wagashi.js';
@@ -94,6 +97,12 @@ export function drawCast(ctx, world, cam, time) {
     withAlpha(ctx, a.alpha, () => {
       if (a.kind === 'hayate') drawHayateActor(ctx, a, x, y, cam, time, speaking === a.id);
       else if (a.kind === 'mochi') {
+        if (a.tilt) {
+          // (Tumbling as it's blown away: turned about its middle.)
+          ctx.translate(x, y - 12);
+          ctx.rotate(a.tilt);
+          ctx.translate(-x, -(y - 12));
+        }
         if (a.clipY != null) {
           ctx.save();
           ctx.beginPath();
@@ -103,6 +112,8 @@ export function drawCast(ctx, world, cam, time) {
           ctx.restore();
         } else drawMochi(ctx, world, a, x, y, time);
       } else if (a.kind === 'crown') drawCrown(ctx, x, y, a.tilt ?? 0);
+      else if (a.kind === 'hero') drawYou(ctx, world, a, x, y, time, c.flags);
+      else if (a.kind === 'gust') drawGust(ctx, x, y, time);
       else if (a.kind === 'beard') drawBeard(ctx, x, y, a.tilt ?? 0);
     });
   };
@@ -115,4 +126,41 @@ export function drawCast(ctx, world, cam, time) {
     drawFlatCues(ctx, -cam.x, -cam.y, time, c.flags);
   }
   for (const a of c.cast) if (!a.behind && a.kind !== 'hayate') one(a);
+  // Festival night falls over the bedchamber and everyone in it.
+  if (world.map.id === 'royal_bed' && c.flags?.night) bedchamberNight(ctx, -cam.x, -cam.y, 2000, 2000, time);
+}
+
+// You, asleep in your little boat out at sea, rocking on the swell: the mast and sail, you, then the
+// hull in front of you. (The sail fills once the gust finds you: the scene's 'sail' cue.)
+function drawYou(ctx, world, a, x, y, time, flags = {}) {
+  const rock = Math.sin(time * 0.9) * 0.04;
+  const bob = Math.sin(time * 1.2) * 1.5;
+  const full = flags.sail ? Math.min(1, (performance.now() / 1000 - (flags.sailAt ?? 0)) / 0.8) : 0;
+  drawBoatBack(ctx, x, y + bob, rock, full, time);
+  const look = { ...world.char.appearance, face: a.face ?? 'sleepy' };
+  ctx.save();
+  ctx.translate(x, y + bob);
+  ctx.rotate(rock);
+  drawHero(ctx, look, wornGear(world.char), 0, -1, { pose: 'idle', time, seed: 1, scale: 1, job: world.char.job, facing: a.facing ?? 1 });
+  ctx.restore();
+  drawBoatFront(ctx, x, y + bob, rock, time);
+}
+
+// The gust that went looking for someone: a little swirl of wind and sparkles.
+function drawGust(ctx, x, y, time) {
+  glow(ctx, x, y, 18, '#cfe8ff', 0.5);
+  ctx.strokeStyle = 'rgba(230,242,255,0.85)';
+  ctx.lineWidth = 1.2;
+  for (let k = 0; k < 3; k++) {
+    const r = 4 + k * 3;
+    const a0 = time * 5 + k * 2;
+    ctx.beginPath();
+    ctx.arc(x, y, r, a0, a0 + 2.2);
+    ctx.stroke();
+  }
+  for (let k = 0; k < 5; k++) {
+    const a = time * 3 + k * 1.3;
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(x - 12 - k * 5 + Math.sin(a) * 2, y + Math.cos(a * 1.3) * 4, 1.4, 1.4);
+  }
 }

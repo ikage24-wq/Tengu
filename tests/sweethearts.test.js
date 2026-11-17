@@ -247,7 +247,8 @@ test('indoors is indoors: rooms keep none of the outdoors (critters, drift, stre
   const rooms = Object.values(MAPS).filter((m) => m.indoor);
   assert.ok(rooms.length >= 7, 'the hut and the six rooms');
   for (const m of rooms) {
-    assert.ok(m.look?.ceiling, `${m.id} has a ceiling (so no weather or night sky)`);
+    // (A cutscene's set paints its whole picture, sky and all: the open sea at night has no ceiling.)
+    if (!m.set) assert.ok(m.look?.ceiling, `${m.id} has a ceiling (so no weather or night sky)`);
     assert.equal(m.look?.floor, 'painted', `${m.id} walks on its own painted floor`);
     const t = roomLook(m, { ...(THEMES?.[m.theme] ?? {}), ...m.look });
     assert.deepEqual(t.critters, [], m.id);

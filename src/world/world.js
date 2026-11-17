@@ -1,6 +1,7 @@
 // The running game: one character in one map. Owns physics, monsters, loot, combat, and events.
 // Rendering and UI read this state; they never change it except through the action functions below.
 
+import { escortInteract, updateEscort } from './escort.js';
 import { awayNow } from './nightmarket.js';
 import { tickStall } from './stall.js';
 import { tickBounties, eliteSlain } from './bounties.js';
@@ -525,6 +526,8 @@ function interact(world) {
     world.log('You cast off in your skiff, back toward Pastel Harbor.', '#9fe8ff');
     return true;
   }
+  // The little Mochi hiding in the meadow (world/escort.js): Up beside it and it follows you.
+  if (escortInteract(world)) return true;
   // A mount hiding on this map (its `finds`: data/mounts.js): Up beside it and it's yours.
   const find = (world.map.finds ?? []).find((f) => f.mount && !ownsMount(world.char, f.mount) && Math.abs(f.x - b.x) < 30 && Math.abs(f.y - b.y) < 8);
   if (find) {
@@ -1083,6 +1086,7 @@ export function updateWorld(world, dt, input) {
   // In a dungeon they fight the whole group (see dungeon.js); elsewhere they hurt you on touch.
   const pbox = playerBox(world.body);
   tickTutorial(world);
+  updateEscort(world, dt);
   tickMochi(world, dt, { collect: (d) => collectDrop(world, d), useItem: (id) => useItem(world, id) });
   if (world.dungeon) tickDungeon(world, dt);
   // Two-person boss mechanics and party quests (world/coop.js).
