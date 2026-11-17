@@ -188,7 +188,8 @@ export function routeInput(state, world, input, dt) {
       state.death = true;
     } else if (e.type === 'admin') {
       state.windows.admin.open = isGm(world.char);
-    } else if (e.type === 'map') {
+    } else if (e.type === 'map' && !e.set) {
+      // (A cutscene cutting to one of its sets is no visit: world/cast.js.)
       noteVisits(world);
       checkArrival(world);
       state.banner = 2.5;

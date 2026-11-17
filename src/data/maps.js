@@ -903,6 +903,30 @@ MAPS.sprout.portals.push({ id: 'coin', x: 470, y: 480, to: 'coinbridge', toPorta
 // end of the Pond Garden.
 MAPS.sprout.portals.push({ id: 'garden', x: 2336, y: 480, to: 'mochi_market', toPortal: 'sprout', label: 'Mochi Market', style: 'mochi' });
 
+// The prologue's two rooms (render/prologue.js), off every road: a story scene cuts to them
+// (world/cast.js sets). Hayate's flat in the human world at 2 a.m., and the Queen's Bedchamber on
+// the hill above Sprout Village, where she woke up a queen.
+Object.assign(MAPS, {
+  pr_flat: {
+    id: 'pr_flat', name: 'Somewhere Far Away', theme: 'harbor', isTown: true, private: true, indoor: true, set: true, town: 'sprout', music: 'town-night',
+    width: 640, height: 372, groundY: 344,
+    look: { ceiling: true, floor: 'painted', sky: ['#1c2140', '#262b52', '#343a6a'], material: 'parquet', light: 'night', propKeep: 1 },
+    cottages: [], terrain: [[0, 344], [640, 344]], platforms: [], ropes: [],
+    townPieces: [['pr_flat', 320]],
+    portals: [{ id: 'start', x: 320, y: 344, hidden: true }],
+    npcs: [], spawns: [], deco: [], lamps: [],
+  },
+  royal_bed: {
+    id: 'royal_bed', name: "The Queen's Bedchamber", theme: 'meadow', isTown: true, private: true, indoor: true, set: true, town: 'sprout', music: 'town',
+    width: 640, height: 372, groundY: 344,
+    look: { ceiling: true, floor: 'painted', sky: ['#ffe8f4', '#fff2f8', '#fff8fc'], material: 'parquet', propKeep: 1 },
+    cottages: [], terrain: [[0, 344], [640, 344]], platforms: [], ropes: [],
+    townPieces: [['pr_bedchamber', 320]],
+    portals: [{ id: 'start', x: 320, y: 344, hidden: true }],
+    npcs: [], spawns: [], deco: [], lamps: [{ x: 186, y: 180, c: '#ffd27a' }, { x: 466, y: 180, c: '#ffd27a' }],
+  },
+});
+
 // Towns in world-map order, for fast travel.
 export const TOWNS = ['sprout', 'harbor', 'crag', 'grove'];
 

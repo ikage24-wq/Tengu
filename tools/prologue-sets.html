@@ -1,0 +1,50 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>prologue sets</title>
+<style>body { margin: 0; background: #222; } canvas { display: block; }</style>
+<canvas id="c"></canvas>
+<script type="module">
+// Dev tool: the prologue's rooms (render/prologue.js) as the camera sees them, with Hayate sat in
+// them: ?room=bed or ?room=flat, &k=2 (zoom), &t=1.5 (seconds), &mochi=0 (no Mochi in the bedchamber).
+await import('/src/data/cash.js');
+const { setHd, nextFrame } = await import('/src/render/pixel.js');
+const P = await import('/src/render/prologue.js');
+const { drawHayate } = await import('/src/render/hayate.js');
+const { drawItemIcon } = await import('/src/render/icons.js');
+const { drawSpectator } = await import('/src/render/mochi-anim.js');
+const { rollMochi } = await import('/src/data/mochi-genes.js');
+const q = new URLSearchParams(location.search);
+const room = q.get('room') ?? 'bed';
+const K = Number(q.get('k') ?? 2);
+const t = Number(q.get('t') ?? 1.5);
+const c = document.getElementById('c');
+c.width = 640 * K;
+c.height = 360 * K;
+const ctx = c.getContext('2d');
+ctx.scale(K, K);
+setHd(true, K);
+nextFrame();
+const cam = { x: 0, y: 12 };
+P.drawProloguePiece(ctx, {}, room === 'bed' ? 'pr_bedchamber' : 'pr_flat', 320, null, cam, 640, t);
+if (room === 'bed') {
+  if (q.get('prop') === '1') {
+    // The crown as the cutscene carries it, pinned to her head (render/cast.js), to line up with the
+    // crown she wears.
+    const { drawCast } = await import('/src/render/cast.js');
+    const a = { id: 'hayate', kind: 'hayate', x: P.QUEEN_BED.x, y: P.QUEEN_BED.y, alpha: 1, lift: 0, sink: 0, tilt: 0, crown: 'prop', crownTilt: 0, sprout: true, sproutT: 1 };
+    drawCast(ctx, { cine: { cast: [a], flags: {} }, map: { id: 'royal_bed' }, scene: null }, cam, t);
+  } else {
+    drawHayate(ctx, P.QUEEN_BED.x, P.QUEEN_BED.y - cam.y, t, { s: 1, crown: q.get('crowned') === '1', sprout: q.get('crowned') === '1' });
+    P.drawBedCovers(ctx, 0, -cam.y);
+  }
+  if (q.get('crown') !== '0') P.drawCrown(ctx, P.CROWN_CUSHION.x, P.CROWN_CUSHION.y - cam.y);
+  if (q.get('mochi') !== '0') {
+    const spots = [[372, 1, 0], [404, -1, 2], [470, -1, 4], [520, -1, 1], [180, 1, 3]];
+    spots.forEach(([x, f, beat], i) => drawSpectator(ctx, rollMochi(11 + i * 7), x, 344 - cam.y, beat, f));
+  }
+} else {
+  drawHayate(ctx, P.FLAT_SEAT.x, P.FLAT_SEAT.y - cam.y, t, { s: 1, human: true });
+  P.drawKotatsuCovers(ctx, 0, -cam.y);
+}
+document.title = 'done';
+</script>

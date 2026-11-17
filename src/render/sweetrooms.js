@@ -40,44 +40,44 @@ const heart = (cx, cy, s, c) => [E(cx - s * 0.5, cy, s * 0.55, s * 0.55, c), E(c
 // ---------- Pieces every room uses ----------
 
 // The ceiling line: a moulding along the top of the wall, lit on top, shaded under.
-const cornice = (c, y = 40, h = 12) => {
+export const cornice = (c, y = 40, h = 12) => {
   const r = ramp(c, 0.8);
   return [R(0, y, 640, h, r.base), F(R(0, y, 640, 1.6, r.hi)), F(R(0, y + h - 3, 640, 3, r.sh)), F(R(0, y + h, 640, 3, mix(r.sh, r.base, 0.5)))];
 };
 // Panelling up to a rail, and the skirting board where the wall meets the floor.
-const wainscot = (c, top, rail) => {
+export const wainscot = (c, top, rail) => {
   const r = ramp(c, 0.7);
   const out = [R(0, top, 640, 300 - top, r.base), R(0, top - 4, 640, 5, rail), F(R(0, top - 4, 640, 1.2, mix(rail, WHITE, 0.4)))];
   for (let x = 8; x < 640; x += 46) out.push(F(R(x, top + 8, 36, 300 - top - 22, mix(r.base, r.hi, 0.35))), F(R(x, top + 8, 36, 1, r.sh)), F(R(x + 35, top + 8, 1, 300 - top - 22, r.sh)));
   return out;
 };
-const skirting = (c) => {
+export const skirting = (c) => {
   const r = ramp(c, 0.8);
   return [R(0, 290, 640, 11, r.base), F(R(0, 290, 640, 1.4, r.hi)), F(R(0, 298, 640, 3, r.sh))];
 };
 // Where the floor meets the wall it sits in shade, lighter toward you.
-const floorShade = (c) => [F(R(0, 301, 640, 6, mix(c, '#3a2a4a', 0.28))), F(R(0, 307, 640, 5, mix(c, '#3a2a4a', 0.12)))];
+export const floorShade = (c) => [F(R(0, 301, 640, 6, mix(c, '#3a2a4a', 0.28))), F(R(0, 307, 640, 5, mix(c, '#3a2a4a', 0.12)))];
 // The soft shadow under a piece of furniture where it stands on the floor.
-const contact = (x, w, floorC) => F(E(x, 301, w / 2, 4, mix(floorC, '#3a2a4a', 0.35)));
+export const contact = (x, w, floorC) => F(E(x, 301, w / 2, 4, mix(floorC, '#3a2a4a', 0.35)));
 
 // A framed picture: the frame (lit top edge), its mount, and what's painted in it.
-function frame(x, y, w, h, fc, bg, inner = []) {
+export function frame(x, y, w, h, fc, bg, inner = []) {
   const r = ramp(fc, 0.8);
   return [R(x - 4, y - 4, w + 8, h + 8, r.base), F(R(x - 4, y - 4, w + 8, 1.4, r.hi)), F(R(x - 4, y + h + 2, w + 8, 2, r.sh)), R(x, y, w, h, bg), ...inner];
 }
 // A plant in a pot, its leaves in clusters.
-function plant(x, y, pot, leaf, s = 1, seed = 0) {
+export function plant(x, y, pot, leaf, s = 1, seed = 0) {
   const pr = ramp(pot, 0.8);
   return [...foliage(x, y - 22 * s, 13 * s, 12 * s, ramp(leaf, 0.9), seed), T([[x - 9 * s, y - 14 * s], [x + 9 * s, y - 14 * s], [x + 7 * s, y], [x - 7 * s, y]], pr.base), R(x - 10 * s, y - 16 * s, 20 * s, 4 * s, pr.hi), F(T([[x + 3 * s, y - 13 * s], [x + 9 * s, y - 13 * s], [x + 7 * s, y], [x + 2 * s, y]], pr.sh))];
 }
 // A wall shelf on two brackets.
-function shelf(x, y, w, c) {
+export function shelf(x, y, w, c) {
   const r = ramp(c, 0.8);
   return [R(x, y, w, 5, r.base), F(R(x, y, w, 1.2, r.hi)), F(R(x, y + 4, w, 1.4, r.sh)), T([[x + 8, y + 5], [x + 13, y + 5], [x + 13, y + 15]], r.sh), T([[x + w - 13, y + 5], [x + w - 8, y + 5], [x + w - 13, y + 15]], r.sh)];
 }
 // A row of books standing on a shelf at `y` (their feet), different heights, one leaning, a few
 // lying flat.
-function books(x, y, w, colours, seed = 0) {
+export function books(x, y, w, colours, seed = 0) {
   const out = [];
   let bx = x;
   let i = 0;
@@ -99,12 +99,12 @@ function books(x, y, w, colours, seed = 0) {
   return out;
 }
 // A candle (its flame is drawn alive: FLAMES).
-const candle = (x, y, c = '#fff8e8', h = 12) => [R(x - 2.5, y - h, 5, h, c), F(R(x - 2.5, y - h, 1.4, h, WHITE)), E(x, y, 5, 2, mix(c, GOLD, 0.6)), F(R(x - 0.4, y - h - 3, 0.8, 3, '#5a4a4a'))];
+export const candle = (x, y, c = '#fff8e8', h = 12) => [R(x - 2.5, y - h, 5, h, c), F(R(x - 2.5, y - h, 1.4, h, WHITE)), E(x, y, 5, 2, mix(c, GOLD, 0.6)), F(R(x - 0.4, y - h - 3, 0.8, 3, '#5a4a4a'))];
 // A rug on the floor where you walk, round and soft, with its border.
-const rug = (cx, c, trim) => [E(cx, 340, 124, 16, mix(c, '#5a4a6a', 0.25)), E(cx, 339, 120, 14, c), E(cx, 339, 100, 10, trim), E(cx, 339, 92, 8, c)];
+export const rug = (cx, c, trim) => [E(cx, 340, 124, 16, mix(c, '#5a4a6a', 0.25)), E(cx, 339, 120, 14, c), E(cx, 339, 100, 10, trim), E(cx, 339, 92, 8, c)];
 
 // A room's door out, in the house's own style, with its mat.
-function door(x, w, h, c, trim, kind) {
+export function door(x, w, h, c, trim, kind) {
   const top = 300 - h;
   const l = x - w / 2;
   const dark = mix(c, '#3a2a3a', 0.4);
@@ -119,7 +119,7 @@ function door(x, w, h, c, trim, kind) {
   return out;
 }
 // Curtains either side of a window, tied back, with a frill along the top.
-function curtains(x, y, w, h, c) {
+export function curtains(x, y, w, h, c) {
   const r = ramp(c, 0.7);
   const out = [];
   for (const [side, cx] of [[-1, x - 6], [1, x + w + 6]]) {
@@ -516,7 +516,7 @@ export const ROOM = {
 
 // ---------- Alive ----------
 
-function glow(ctx, x, y, r, color, alpha) {
+export function glow(ctx, x, y, r, color, alpha) {
   if (alpha <= 0.01) return;
   ctx.save();
   ctx.globalAlpha = Math.min(1, alpha);
@@ -527,7 +527,7 @@ function glow(ctx, x, y, r, color, alpha) {
   ctx.fillRect(x - r, y - r, r * 2, r * 2);
   ctx.restore();
 }
-function steam(ctx, x, y, time, seed, n = 3, rise = 26) {
+export function steam(ctx, x, y, time, seed, n = 3, rise = 26) {
   ctx.save();
   for (let i = 0; i < n; i++) {
     const k = (time * 0.32 + i / n + seed) % 1;
@@ -540,7 +540,7 @@ function steam(ctx, x, y, time, seed, n = 3, rise = 26) {
   ctx.restore();
 }
 // A candle flame: a teardrop that leans and flickers, with its glow.
-function flame(ctx, x, y, time, seed, s = 1) {
+export function flame(ctx, x, y, time, seed, s = 1) {
   const f = 0.85 + 0.15 * Math.sin(time * 11 + seed * 3.1) * Math.sin(time * 7.3 + seed);
   const lean = Math.sin(time * 2.1 + seed) * 0.8;
   glow(ctx, x, y - 3 * s, 22 * s, '#ffcf70', 0.28 * f);

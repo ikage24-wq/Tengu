@@ -29,6 +29,7 @@ import { stopAmbience } from './audio/ambience.js';
 import { preloadFxSprites } from './render/fx-sprites.js';
 import { tickNet, leaveRoom, othersHere } from './net/online.js';
 import { ISLAND_LESSONS } from './world/tutorial.js';
+import { playScene } from './world/story.js';
 import { createTouch, touchFrame } from './ui/touch.js';
 import { targetAt, walkTo, steer } from './world/clicks.js';
 
@@ -93,6 +94,11 @@ function startGame(char) {
   camera = createCamera();
   screen = 'game';
   autosave = AUTOSAVE_EVERY;
+  // A new hero's very first moments: the prologue, Five More Minutes (data/story.js), once.
+  if (char.prologue) {
+    delete char.prologue;
+    playScene(world, 'prologue');
+  }
   if (char.tutorial && char.tutorial.step === 0) world.log('Welcome to Dawnlight Isle!', '#ffe36b');
   else if (!char.quests.first_steps && (!char.tutorial || char.tutorial.step === ISLAND_LESSONS) && world.map.npcs?.some((n) => n.id === 'mira')) world.log('Welcome! Walk up to Mira and press Up to talk.', '#ffe36b');
 }
@@ -127,6 +133,8 @@ function newCharacter(name, look, slot = 0, tutorial = true, file = 0) {
     char.tutorial = { step: 0 };
   } else char.tutorial = { step: ISLAND_LESSONS };
   addItem(char.inventory, 'red_potion', 3);
+  // (Their story starts with the prologue the first time they step into the world: startGame.)
+  char.prologue = true;
   char.hotkeys.Digit1 = { item: 'red_potion' };
   char.hotkeys.Digit2 = { item: 'blue_potion' };
   return char;

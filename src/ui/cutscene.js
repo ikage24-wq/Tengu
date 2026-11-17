@@ -12,8 +12,10 @@ import { MOBS } from '../data/mobs.js';
 import { SCENES } from '../data/story.js';
 import { wornGear } from '../core/character.js';
 import { sceneStep, advanceScene, fillScene, isStaging } from '../world/story.js';
-import { mobActor } from '../world/director.js';
-import { groundAt } from '../world/physics.js';
+import { actorAt as stageActor } from '../world/director.js';
+import { castOf } from '../world/cast.js';
+import { drawMochiAnim } from '../render/mochi-anim.js';
+import { MOCHI_SIZE } from '../render/wagashi.js';
 import { drawHero } from '../render/hero.js';
 import { drawMonster } from '../render/monsters.js';
 import { COLORS, THEMES, text, wrap, box, softShadow, roundRect, sparkle, font } from './kit.js';
@@ -65,23 +67,30 @@ export function drawScene(ui, world, cam) {
     c.shownAt ??= real;
     // What the staging puts in the world: bursts, emotes, a speech bubble; then the fade and flash.
     if (cam) {
+      // (Pushed in for a close shot, the world is drawn `z` times larger: the bursts grow with it;
+      // emotes and bubbles stay their own size, over the same heads.)
+      const z = cam.zoom ?? 1;
+      ctx.save();
+      ctx.scale(z, z);
       for (const p of c.bursts) drawBurst(ctx, p, p.x - cam.x, p.y - cam.y, real);
+      ctx.restore();
       for (const e of c.emotes) {
         const a = actorAt(world, e.who);
-        if (a) drawEmote(ctx, e, a.x - cam.x, a.y - cam.y - a.h - 6, real);
+        if (a) drawEmote(ctx, e, (a.x - cam.x) * z, (a.y - cam.y - a.h) * z - 6, real);
       }
       if (c.say) {
         const a = actorAt(world, c.say.who);
-        if (a) drawSay(ctx, world, c.say, a.x - cam.x, a.y - cam.y - a.h - 8, real);
+        if (a) drawSay(ctx, world, c.say, (a.x - cam.x) * z, (a.y - cam.y - a.h) * z - 8, real);
       }
     }
     if (c.spot && cam) {
       // The spotlight: dark all round, a soft ring of light on whoever it follows.
       const a = actorAt(world, c.spot.who);
       if (a) {
-        const sx = a.x - cam.x;
-        const sy = a.y - cam.y - a.h * 0.5;
-        const r = c.spot.r + a.h * 0.4;
+        const z = cam.zoom ?? 1;
+        const sx = (a.x - cam.x) * z;
+        const sy = (a.y - cam.y - a.h * 0.5) * z;
+        const r = (c.spot.r + a.h * 0.4) * z;
         const g = ctx.createRadialGradient(sx, sy, r * 0.7, sx, sy, r * 1.15);
         g.addColorStop(0, 'rgba(14,8,28,0)');
         g.addColorStop(1, `rgba(14,8,28,${0.78 * c.spot.a})`);
@@ -115,7 +124,13 @@ export function drawScene(ui, world, cam) {
   else if (!isStaging(step)) drawLine(ctx, world, filled, sc.t, lineAtTop(world, step, cam));
   // Where you are in the scene, and how to skip it.
   const n = SCENES[sc.id].length;
-  for (let k = 0; k < n; k++) {
+  if (n > 40) {
+    // (A long scene, the prologue: a thin bar filling as it goes.)
+    ctx.fillStyle = 'rgba(255,255,255,0.22)';
+    ctx.fillRect(240, 17, 160, 2);
+    ctx.fillStyle = '#ffb8dc';
+    ctx.fillRect(240, 17, 160 * Math.min(1, (sc.i + 1) / n), 2);
+  } else for (let k = 0; k < n; k++) {
     ctx.fillStyle = k <= sc.i ? '#ffb8dc' : 'rgba(255,255,255,0.25)';
     ctx.beginPath();
     ctx.arc(320 - (n - 1) * 5 + k * 10, 18, k === sc.i ? 2.6 : 1.8, 0, Math.PI * 2);
@@ -126,15 +141,9 @@ export function drawScene(ui, world, cam) {
 
 const hexA = (hex, a) => `rgba(${parseInt(hex.slice(1, 3), 16)},${parseInt(hex.slice(3, 5), 16)},${parseInt(hex.slice(5, 7), 16)},${a})`;
 
-// Where an actor's feet are and how tall they stand (the hero, an NPC on the map, or a monster in
-// the scene, lifted while they hop).
-function actorAt(world, who) {
-  if (who === 'player') return { x: world.body.x, y: world.body.y, h: 52 };
-  const n = world.map.npcs.find((q) => q.id === who);
-  if (n) return { x: n.x, y: groundAt(world.map, n.x) - (n.cine?.lift ?? 0), h: 52 };
-  const m = mobActor(world, who);
-  return m ? { x: m.x, y: m.y - (m.cine.lift ?? 0), h: m.def.h } : null;
-}
+// Where an actor's feet are and how tall they stand (the hero, an NPC on the map, a monster in the
+// scene or one of the scene's own cast, lifted while they hop): world/director.js.
+const actorAt = stageActor;
 
 const easeOutBack = (u) => 1 + 2.7 * (u - 1) ** 3 + 1.7 * (u - 1) ** 2;
 
@@ -528,68 +537,160 @@ function lineAtTop(world, step, cam) {
   const sc = world.scene;
   if (sc.boxFor === sc.i) return sc.boxTop;
   const top = 360 - BAR - 86 - 8;
-  const cast = [step.who, 'player', ...(world.mobs ?? []).filter((m) => m.cine && m.hp > 0).map((m) => m.def.id)];
+  const cast = [step.who, 'player', ...(world.mobs ?? []).filter((m) => m.cine && m.hp > 0).map((m) => m.def.id), ...(world.cine?.cast ?? []).filter((a) => a.alpha > 0.5).map((a) => a.id)];
   const low = Boolean(cam) && cast.some((who) => {
     const a = who && actorAt(world, who);
     if (!a) return false;
-    const x = a.x - cam.x;
-    const feet = a.y - cam.y;
-    return x > 70 && x < 570 && feet > top + 4 && feet - a.h < top + 86;
+    const z = cam.zoom ?? 1;
+    const x = (a.x - cam.x) * z;
+    const feet = (a.y - cam.y) * z;
+    return x > 70 && x < 570 && feet > top + 4 && feet - a.h * z < top + 86;
   });
   sc.boxFor = sc.i;
   sc.boxTop = low;
   return low;
 }
 
-// One line: the dialogue box along the bottom (or the top, clear of the actors), the speaker drawn
-// big on the left.
+// One line: the dialogue box along the bottom (or the top, clear of the actors), with the speaker's
+// face in a framed window at its left end (the player's call, 2026-11-17: a face portrait, not the
+// whole body). The box rises into place when a line follows staging; a new speaker's face slides in
+// and the same speaker's gives a little nod on each new line.
+const PORTRAIT = 70;
+const hexMix = (a, b, k) => {
+  const p = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
+  const [x, y] = [p(a), p(b)];
+  return `#${x.map((v, i) => Math.round(v + (y[i] - v) * k).toString(16).padStart(2, '0')).join('')}`;
+};
+const easeOutCubic = (u) => 1 - (1 - Math.min(1, Math.max(0, u))) ** 3;
 function drawLine(ctx, world, step, t, atTop = false) {
   const who = step.who;
   const npc = who && NPCS[who];
   const mob = who && MOBS[who];
   const narration = !who;
-  const name = who === 'player' ? world.char.name : npc ? npc.name : mob ? mob.name.split(',')[0] : who === 'hayate' ? 'Hayate' : '';
-  const color = COLORS_OF[who] ?? (who === 'player' ? '#ff8fc1' : THEMES.pink.main);
+  const cast = castOf(world, who);
+  const name = who === 'player' ? world.char.name : npc ? npc.name : mob ? mob.name.split(',')[0] : cast?.name ?? (who === 'hayate' ? 'Hayate' : '');
+  const color = cast?.color ?? COLORS_OF[who] ?? (who === 'player' ? '#ff8fc1' : THEMES.pink.main);
+  // What came before: another line (the box stays put), or staging and cards (it rises in).
+  const sc = world.scene;
+  const prev = sc ? SCENES[sc.id]?.[sc.i - 1] : null;
+  const after = prev && !prev.card && !isStaging(prev) ? prev : null;
+  const rise = after ? 1 : easeOutCubic(t / 0.22);
+  const newFace = !after || after.who !== who;
   const W = 470;
   const H = 86;
   const x = (640 - W) / 2;
-  const y = atTop ? BAR + 12 : 360 - BAR - H - 8;
+  const y = (atTop ? BAR + 12 : 360 - BAR - H - 8) + (1 - rise) * (atTop ? -10 : 10);
+  ctx.save();
+  ctx.globalAlpha *= rise;
   softShadow(ctx, x, y, W, H, 12, 4);
-  box(ctx, x, y, W, H, { fill: narration ? 'rgba(46,32,72,0.92)' : 'rgba(255,250,246,0.97)', edge: narration ? '#c9b6ff' : color, r: 14, width: 2.5 });
+  if (narration) box(ctx, x, y, W, H, { fill: 'rgba(46,32,72,0.92)', edge: '#c9b6ff', r: 14, width: 2.5 });
+  else {
+    box(ctx, x, y, W, H, { fill: 'rgba(255,250,246,0.97)', edge: color, r: 14, width: 2.5 });
+    // A wash of the speaker's colour rising from the bottom of the box.
+    ctx.save();
+    roundRect(ctx, x + 2, y + 2, W - 4, H - 4, 12);
+    ctx.clip();
+    const g = ctx.createLinearGradient(0, y, 0, y + H);
+    g.addColorStop(0, 'rgba(255,255,255,0)');
+    g.addColorStop(1, hexMix(color, '#ffffff', 0.82));
+    ctx.fillStyle = g;
+    ctx.fillRect(x, y + H * 0.35, W, H);
+    ctx.restore();
+  }
   roundRect(ctx, x + 3, y + 3, W - 6, H - 6, 11);
   ctx.strokeStyle = narration ? 'rgba(201,182,255,0.4)' : '#ffffff';
   ctx.lineWidth = 1.5;
   ctx.stroke();
-  // The speaker stands in the box's left end, peeking out over its top.
+  // The speaker's face, in its window.
   if (!narration) {
+    const px = x + 9;
+    const py = y + 8;
+    const slide = newFace ? easeOutCubic(t / 0.2) : 1;
     ctx.save();
-    // Along the bottom they peek out over the box; at the top they stay inside it.
-    // (Clipped short of the words, so a long staff or blade never crosses them.)
-    if (atTop) roundRect(ctx, x + 3, y + 3, 113, H - 6, 11);
-    else roundRect(ctx, x - 30, y - 70, 146, H + 70 - 3, 10);
+    roundRect(ctx, px, py, PORTRAIT, PORTRAIT, 12);
     ctx.clip();
-    drawSpeaker(ctx, world, step, x + 60, y + H - 6, t, atTop ? H - 14 : 130);
+    const bg = ctx.createLinearGradient(0, py, 0, py + PORTRAIT);
+    bg.addColorStop(0, hexMix(color, '#ffffff', 0.86));
+    bg.addColorStop(1, hexMix(color, '#ffffff', 0.62));
+    ctx.fillStyle = bg;
+    ctx.fillRect(px, py, PORTRAIT, PORTRAIT);
+    const halo = ctx.createRadialGradient(px + PORTRAIT / 2, py + PORTRAIT * 0.42, 4, px + PORTRAIT / 2, py + PORTRAIT * 0.42, PORTRAIT * 0.55);
+    halo.addColorStop(0, 'rgba(255,255,255,0.85)');
+    halo.addColorStop(1, 'rgba(255,255,255,0)');
+    ctx.fillStyle = halo;
+    ctx.fillRect(px, py, PORTRAIT, PORTRAIT);
+    ctx.globalAlpha *= slide;
+    drawSpeaker(ctx, world, step, px + PORTRAIT / 2 - (1 - slide) * 14, py + PORTRAIT * 0.46, t, !newFace);
     ctx.restore();
+    roundRect(ctx, px, py, PORTRAIT, PORTRAIT, 12);
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 2.5;
+    ctx.stroke();
+    roundRect(ctx, px + 2, py + 2, PORTRAIT - 4, PORTRAIT - 4, 10);
+    ctx.strokeStyle = 'rgba(255,255,255,0.9)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
   }
-  const tx = narration ? x + 24 : x + 122;
-  const tw = narration ? W - 48 : W - 140;
+  const tx = narration ? x + 24 : x + 94;
+  const tw = narration ? W - 48 : W - 124;
   if (name) {
     ctx.font = font(10, true);
     const nw = ctx.measureText(name).width;
     box(ctx, tx - 6, y - 9, nw + 20, 18, { fill: color, edge: '#ffffff', r: 9, width: 2 });
     text(ctx, name, tx + 4, y + 4, { size: 10, bold: true, color: '#ffffff', outline: shadeInk(color) });
   }
-  const chars = Math.floor(t * TYPE);
-  wrap(ctx, step.text, tx, y + 26, tw, { size: 9, chars, lineHeight: 12.5, color: narration ? '#f4ecff' : COLORS.ink });
+  const chars = Math.floor(t * TYPE * (step.mood === 'sleepy' ? 0.45 : 1));
+  if (step.mood === 'sleepy') drawSleepy(ctx, step.text, tx, y + 26, tw, chars, t);
+  else wrap(ctx, step.text, tx, y + 26, tw, { size: 9, chars, lineHeight: 12.5, color: narration ? '#f4ecff' : COLORS.ink });
   if (chars >= step.text.length) {
-    const bob = Math.sin(t * 6) * 1.5;
+    // The "go on" mark: a little chevron bobbing in the corner, fading in once the line is done.
+    const done = Math.min(1, (t - step.text.length / (TYPE * (step.mood === 'sleepy' ? 0.45 : 1))) / 0.25);
+    const bob = Math.sin(t * 5) * 1.6;
+    ctx.globalAlpha *= Math.max(0, done);
     ctx.fillStyle = narration ? '#ffe36b' : color;
     ctx.beginPath();
-    ctx.moveTo(x + W - 22, y + H - 16 + bob);
+    ctx.moveTo(x + W - 24, y + H - 17 + bob);
     ctx.lineTo(x + W - 14, y + H - 12 + bob);
-    ctx.lineTo(x + W - 22, y + H - 8 + bob);
+    ctx.lineTo(x + W - 24, y + H - 7 + bob);
+    ctx.lineTo(x + W - 21, y + H - 12 + bob);
     ctx.fill();
   }
+  ctx.restore();
+}
+
+// A line mumbled in her sleep: it types out slowly, each letter drifting on its own slow wave,
+// fading toward the end of the line as she trails off, with little z's floating up from the end.
+function drawSleepy(ctx, words, x, y, w, chars, t) {
+  ctx.save();
+  ctx.font = font(9, false);
+  let cx = x;
+  let cy = y;
+  const shown = words.slice(0, chars);
+  for (let i = 0; i < shown.length; i++) {
+    const ch = shown[i];
+    const cw = ctx.measureText(ch).width;
+    if (ch === ' ') {
+      // (A word that won't fit goes down a line.)
+      const next = words.slice(i + 1).split(' ')[0];
+      if (cx + cw + ctx.measureText(next).width > x + w) {
+        cx = x;
+        cy += 12.5;
+        continue;
+      }
+    }
+    const wave = Math.sin(t * 2.2 - i * 0.45) * 1.3;
+    const fade = 1 - 0.55 * (i / Math.max(1, words.length));
+    ctx.globalAlpha = fade;
+    text(ctx, ch, cx, cy + wave, { size: 9, color: '#5a4a8a' });
+    cx += cw;
+  }
+  ctx.globalAlpha = 1;
+  for (let k = 0; k < 3; k++) {
+    const u = (t * 0.5 + k / 3) % 1;
+    ctx.globalAlpha = Math.sin(u * Math.PI) * 0.8;
+    text(ctx, 'z', cx + 6 + u * 10 + k * 3, cy - u * 14, { size: 7 + k * 1.5, bold: true, color: '#9fb8ff', outline: '#ffffff' });
+  }
+  ctx.restore();
 }
 
 const shadeInk = (c) => {
@@ -598,40 +699,64 @@ const shadeInk = (c) => {
   return `#${f(n >> 16)}${f((n >> 8) & 255)}${f(n & 255)}`;
 };
 
-// Whoever speaks, acting their line: heroes and NPCs at twice their size with the line's face and a
-// little bounce on each new line; queens as themselves; Hayate as a sleepy princess, or awake.
-function drawSpeaker(ctx, world, step, x, y, t, room = 130) {
+// Whoever speaks, acting their line, their face filling the portrait window centred on (x, y):
+// heroes and NPCs with the line's face, queens and monsters their upper half, Hayate as the scene
+// has her, a Mochi of the cast. They breathe, bob as they talk, and nod on a new line of their own.
+const FACE_S = 2.15;
+// Where a speaking monster's face is: `at`, a share of its height above its feet (else 0.74); `fit`,
+// how much of its height the window shows (else 0.55); `dx`, a nudge sideways for a face that isn't
+// over its feet. (The queens are drawn small and tall, so the window closes right in on them.)
+const QUEEN_FACE = { at: 0.86, fit: 0.3 };
+const FACE_AT = {
+  gnarlroot: { at: 0.32, fit: 0.5 }, sylvana: QUEEN_FACE, tamamo: QUEEN_FACE, lilith: QUEEN_FACE, selene: QUEEN_FACE,
+  crystalking: { at: 0.7, fit: 0.62, dx: -10 }, mothercapper: { at: 0.42 }, tuskar: { at: 0.46, dx: -42 }, moraymurri: { at: 0.68, dx: -24 }, morayena: { at: 0.66, dx: -26 },
+  gearheart: { at: 0.66 }, astraea: { at: 0.62, dx: -22 }, bonbon: { at: 0.5 }, persona: { at: 0.6 }, directrice: { at: 0.66, dx: -6 },
+  matriarch: { at: 0.4, dx: -16 }, whaledream: { at: 0.5, dx: -14 },
+};
+// How far above the feet a figure's face sits, per unit of its scale (the hero base: a little under
+// the top of the head, so the brow is in the middle of the window with the shoulders under it).
+const FACE_UP = 24.5;
+function drawSpeaker(ctx, world, step, x, y, t, nod = false) {
   const who = step.who;
-  const pop = t < 0.25 ? Math.sin((t / 0.25) * Math.PI) * 3 : 0;
-  ctx.save();
-  const g = ctx.createRadialGradient(x, y - 30, 4, x, y - 30, 60);
-  g.addColorStop(0, 'rgba(255,240,250,0.85)');
-  g.addColorStop(1, 'rgba(255,240,250,0)');
-  ctx.fillStyle = g;
-  ctx.fillRect(x - 70, y - 100, 140, 100);
   const talking = t * TYPE < step.text.length;
   const face = FACES[step.mood];
+  const lift = (nod && t < 0.3 ? Math.sin((t / 0.3) * Math.PI) * 1.6 : 0) + (talking ? Math.abs(Math.sin(t * 9)) * 0.7 : 0) + Math.sin((world.now + t) * 1.7) * 0.4;
+  const feet = y + FACE_UP * FACE_S - lift;
+  ctx.save();
   if (who === 'player') {
     const look = face ? { ...world.char.appearance, face } : world.char.appearance;
-    drawHero(ctx, look, wornGear(world.char), x, y - pop, { pose: step.mood === 'happy' ? 'cheer' : 'idle', progress: Math.min(1, t), dur: 1, time: world.now + t, seed: 1, scale: 2, job: world.char.job, talking, facing: 1 });
+    drawHero(ctx, look, wornGear(world.char), x, feet, { pose: 'idle', time: world.now + t, seed: 1, scale: FACE_S, job: world.char.job, talking, facing: 1 });
   } else if (NPCS[who]) {
     const npc = NPCS[who];
     const look = face ? { ...npc.look, face } : npc.look;
-    drawHero(ctx, look, npc.gear ?? null, x, y - pop, { pose: 'idle', time: world.now + t, seed: 3, scale: 2, job: npc.showJob, talking, facing: 1 });
+    drawHero(ctx, look, npc.gear ?? null, x, feet, { pose: 'idle', time: world.now + t, seed: 3, scale: FACE_S, job: npc.showJob, talking, facing: 1 });
   } else if (MOBS[who]) {
     const def = MOBS[who];
     const m = { def, x: 0, y: 0, hp: def.hp, dir: 1, state: 'idle', flash: 0, stagger: 0, phase: t, age: 9, dying: 0, uid: 9000 + who.length, aggroUntil: step.mood === 'angry' ? Infinity : 0, attackAt: -9, gloatAt: step.mood === 'happy' ? world.now + t : -9 };
-    // (Scaled to the room it has: a boss in a box at the top fits inside it, head and all.)
-    const k = Math.min(1.1, room / def.h);
-    ctx.translate(x, y - pop);
+    // (Its face fills the window, whatever its size: FACE_AT is how high up its body the face is,
+    // for the few whose face isn't up near the top - a tree's is in its trunk.)
+    const f = FACE_AT[who] ?? {};
+    const k = Math.min(2.6, (PORTRAIT * 0.95) / (def.h * (f.fit ?? 0.55)));
+    ctx.translate(x + (f.dx ?? 0), y - lift + def.h * k * (f.at ?? 0.74));
     ctx.scale(k, k);
     drawMonster(ctx, m, 0, 0, world.now + t, world.now + t);
+  } else if (castOf(world, who)?.kind === 'mochi') {
+    // One of the scene's Mochi, the same size in the window as anyone, gesturing as it talks.
+    const a = castOf(world, who);
+    const k = FACE_S / MOCHI_SIZE[a.m.size ?? 'baby'];
+    a.portrait ??= { genes: a.m.genes, size: a.m.size, speed: 0, dist: 0, dir: 1, noIdle: true };
+    a.portrait.genes = a.m.genes;
+    if (talking && !a.portrait.action) a.portrait.action = { name: 'talk', t0: null };
+    ctx.translate(x, feet);
+    ctx.scale(k, k);
+    drawMochiAnim(ctx, a.portrait, 0, 0, world.now + t);
   } else if (who === 'hayate') {
-    // Hayate herself, the sleepy princess (render/hayate.js): asleep and nodding, or (her happy
-    // lines) awake.
-    // (Scaled to the room it has: her cloud of hair and crown stand taller than anyone, so in a box
-    // at the top she shrinks to fit, crown and all.)
-    drawHayate(ctx, x, y - pop, world.now + t, { s: Math.min(2, room / 50), awake: step.mood === 'happy', talking });
+    // Hayate herself (render/hayate.js), as the scene has her: still in her hoodie in the prologue,
+    // crowned or not yet; startled or sad on such a line, awake on a happy one, else asleep.
+    const a = castOf(world, 'hayate');
+    const state = a ? { human: a.human, crown: Boolean(a.crown), sprout: a.sprout } : {};
+    const own = step.mood && step.mood !== 'happy' && step.mood !== 'sleepy' ? FACES[step.mood] ?? null : null;
+    drawHayate(ctx, x, feet + 4, world.now + t, { s: FACE_S, awake: step.mood === 'happy', talking, face: own, ...state });
   }
   ctx.restore();
 }

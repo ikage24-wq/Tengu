@@ -68,6 +68,10 @@ export const TOPS = {
   seraph: { name: 'Seraph Vestment', tier: 'elite' },
   archmage: { name: 'Archmage Mantle', tier: 'elite' },
   valkyrie: { name: 'Valkyrie Cuirass', tier: 'elite' },
+  // The palace livery, the story's own (render/jobgear/wardrobe.js): never sold.
+  pagetabard: { name: 'Page Tabard', tier: 'story' },
+  chefcoat: { name: 'Palace Chef Whites', tier: 'story' },
+  guardcoat: { name: 'Palace Guard Coat', tier: 'story' },
 };
 // ---------- Bottoms ----------
 export const BOTTOMS = {
@@ -111,6 +115,10 @@ export const BOTTOMS = {
   glacier: { name: 'Glacier Skirt', tier: 'elite' },
   runegreaves: { name: 'Rune Greaves', tier: 'elite' },
   faeskirt: { name: 'Faewing Skirt', tier: 'elite' },
+  // The palace livery, the story's own (render/jobgear/wardrobe.js): never sold.
+  pagebreeches: { name: 'Page Breeches', tier: 'story' },
+  chefpants: { name: 'Checked Kitchen Trousers', tier: 'story' },
+  guardtrousers: { name: 'Guard Trousers', tier: 'story' },
 };
 // ---------- Dresses (one piece, top and bottom together) ----------
 export const DRESSES = {
@@ -142,6 +150,10 @@ export const DRESSES = {
   abyss: { name: 'Abyss Gown', tier: 'elite' },
   celestial: { name: 'Celestial Gown', tier: 'elite' },
   demonqueen: { name: 'Demon Queen Gown', tier: 'elite' },
+  // The palace livery, the story's own (render/jobgear/wardrobe.js): never sold.
+  palacemaid: { name: 'Palace Maid Dress', tier: 'story' },
+  scholarrobe: { name: 'Snore Scholar Robe', tier: 'story' },
+  elderrobe: { name: 'Elder Robe', tier: 'story' },
 };
 // ---------- Hats (and anything else worn on the head) ----------
 export const HATS = {
@@ -156,6 +168,13 @@ export const HATS = {
   crown: { name: 'Gold Crown', tier: 'elite' },
   halo: { name: 'Halo Ring', tier: 'elite' },
   dragonhorns: { name: 'Dragon Horns', tier: 'elite' },
+  // The palace livery, the story's own (render/jobgear/wardrobe.js): never sold.
+  pagecap: { name: 'Page Pillbox', tier: 'story' },
+  maidcap: { name: 'Maid Cap', tier: 'story' },
+  toque: { name: 'Chef Toque', tier: 'story' },
+  guardhelm: { name: 'Plumed Shako', tier: 'story' },
+  scholarcap: { name: 'Mortarboard', tier: 'story' },
+  elderhat: { name: 'Elder Cap', tier: 'story' },
 };
 // ---------- Over the eyes ----------
 export const EYEWEAR = {
@@ -167,6 +186,8 @@ export const EYEWEAR = {
   eyepatch: { name: 'Star Eyepatch', tier: 'end' },
   starshades: { name: 'Starlight Shades', tier: 'elite' },
   oracle: { name: 'Oracle Eye', tier: 'elite' },
+  // Ume the maid's (the story's own: never sold).
+  bigspecs: { name: 'Big Round Glasses', tier: 'story' },
 };
 // ---------- On the face ----------
 export const FACEWEAR = {
@@ -178,6 +199,8 @@ export const FACEWEAR = {
   lacemask: { name: 'Lace Masquerade', tier: 'end' },
   oni: { name: 'Oni Mask', tier: 'elite' },
   starmark: { name: 'Starlight Markings', tier: 'elite' },
+  // (The story's elders wear this one; it is never for sale: its tier is none of the shop's.)
+  fakebeard: { name: 'Fake Beard', tier: 'story' },
 };
 // ---------- Shoes (worn instead of whatever the clothes came with) ----------
 export const SHOES = {
@@ -205,6 +228,8 @@ export const OVER = {
   tome: { name: 'Spell Tome', tier: 'end' },
   wings: { name: 'Aurora Wings', tier: 'elite' },
   starbanner: { name: 'Star Banner', tier: 'elite' },
+  // The palace livery, the story's own (render/jobgear/wardrobe.js): never sold.
+  eartrumpet: { name: 'Ear Trumpet', tier: 'story' },
 };
 // ---------- On the paws ----------
 export const HANDWEAR = {
@@ -212,6 +237,8 @@ export const HANDWEAR = {
   mittens: { name: 'Mittens', tier: 'mid' },
   gloves: { name: 'Long Gloves', tier: 'end' },
   gauntlets: { name: 'Gilded Gauntlets', tier: 'elite' },
+  // The palace livery, the story's own (render/jobgear/wardrobe.js): never sold.
+  ovenmitts: { name: 'Oven Mitts', tier: 'story' },
 };
 // ---------- A worn set ----------
 // The nine slots, in the order they are read and drawn. A dress fills the top and the bottom at

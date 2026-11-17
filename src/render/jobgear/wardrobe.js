@@ -2392,6 +2392,41 @@ export const WARDROBE_SHOES = {
   },
 };
 
+// The fake beard, on its own (a Mochi elder's, and the one that falls off in the prologue:
+// render/cast.js), in body coordinates.
+export function fakeBeardShapes() {
+  // (Every part edged in a line of its own, drawn a touch larger underneath, so white beard reads
+  // against white dough.)
+  const edged = (pts, fill, line, w = 0.5) => [
+    ...[[w, 0], [-w, 0], [0, w], [0, -w]].map(([dx, dy]) => F(T(pts.map(([x, y]) => [x + dx, y + dy]), line))),
+    F(T(pts, fill)),
+  ];
+  const k = 0.6;
+  // (It hangs from under the nose, along the jaw, so the cheeks and their blush still show.)
+  const beard = [[9.8, 22.6], [8.3, 24.2], [8.9, 25.8], [8.1, 27.2], [9.5, 28.6], [10.5 + k * 0.5, 30.2], [12.3 + k, 30.4], [13.7 + k, 31.8], [15.8 + k, 32.4], [17.8 + k, 31.4], [19.4 + k, 30.4], [21.0 + k, 30.0], [22.0 + k, 28.4], [23.2, 27.0], [22.4, 25.6], [23.0, 24.0], [21.2, 22.6], [18.4, 23.4], [15.5, 23.8], [12.6, 23.4]];
+  const dy = 1.6;
+  const tache = [[15.5, 19.8], [18.6, 20.0], [21.4, 20.8], [23.6, 20.6], [25.0, 19.4], [24.6, 18.4], [23.8, 18.6], [24.1, 19.4], [23.2, 19.9], [21.4, 22.1], [18.2, 22.4], [15.5, 21.4], [12.8, 22.4], [9.6, 22.1], [7.8, 19.9], [6.9, 19.4], [7.2, 18.6], [6.4, 18.4], [6.0, 19.4], [7.4, 20.6], [9.6, 20.8], [12.4, 20.0]].map(([x, y]) => [x, y + dy]);
+  return [
+    // The strings, up over the ears.
+    F(T([[9.6, 22.8], [5.0, 16.4], [5.5, 16.1], [10.1, 22.5]], '#6a5a72')),
+    F(T([[21.4, 22.8], [25.9, 16.4], [26.4, 16.7], [21.9, 23.1]], '#6a5a72')),
+    F(E(5.2, 16.2, 0.7, 0.7, '#6a5a72')), F(E(26.1, 16.5, 0.7, 0.7, '#6a5a72')),
+    // The beard: wavy down both sides to a point, hanging a little to one side.
+    ...edged(beard, '#f5f0e8', '#a8988a'),
+    F(T([[9.5, 28.6], [10.5 + k * 0.5, 30.2], [12.3 + k, 30.4], [13.7 + k, 31.8], [15.8 + k, 32.4], [17.8 + k, 31.4], [19.4 + k, 30.4], [21.0 + k, 30.0], [22.0 + k, 28.4], [15.6, 29.6]], '#e0d6c8')),
+    // Its curls.
+    ...[[11.0, 25.6], [14.2, 26.4], [17.6, 26.0], [20.4, 26.6], [12.0, 28.4], [16.0, 28.8], [19.4, 28.6], [15.9, 31.0]].map(([x, y]) => F(T([[x - 1.3, y + 0.2], [x - 0.6, y - 0.9], [x + 0.6, y - 0.9], [x + 1.3, y + 0.2], [x + 0.6, y - 0.3], [x - 0.6, y - 0.3]], '#cdbfae'))),
+    // A dark gap for the mouth, then the moustache over it, curled right up at both ends.
+    F(E(15.5, 24.6, 1.4, 0.7, '#6a4a52')),
+    ...edged(tache, '#fdfbf8', '#a8988a'),
+    F(T([[12.4, 23.0], [15.5, 22.4], [18.6, 23.0], [18.2, 23.6], [15.5, 22.9], [12.8, 23.6]], '#e2d9ce')),
+    // The price tag, on its thread.
+    F(T([[23.3, 26.4], [24.6, 27.6], [24.3, 27.8], [23.1, 26.6]], '#6a5a72')),
+    ...edged([[24.2, 27.4], [27.0, 27.0], [27.4, 29.0], [24.6, 29.4]], '#fff3c0', '#a8884a', 0.35),
+    F(E(24.9, 28.2, 0.35, 0.35, '#6a5a72')), F(R(25.6, 28.0, 1.2, 0.35, '#c87a5a')),
+  ];
+}
+
 // ---------- Over the eyes, and on the face ----------
 // Both sit on the face itself, drawn over it and under the hat. The face in body coordinates: the
 // eyes are at (11.2, 18.2) and (19.8, 18.2), each about 2 across and 2.5 tall, the cheeks at x 9.4
@@ -2490,6 +2525,10 @@ export const WARDROBE_EYES = {
   },
 };
 export const WARDROBE_FACE = {
+  // The elders' beard (the player's call, 2026-11-17: "an obvious fake beard and mustache"): a big
+  // cloud of white beard hooked over the ears on two strings, sitting a little crooked, a curly
+  // handlebar moustache on top, and the price tag still hanging off it.
+  fakebeard: { face: () => fakeBeardShapes() },
   // A plaster across the nose, stuck on a little crooked.
   plaster: {
     face: () => [F(T([[12.6, 20.5], [18.4, 19.7], [18.6, 21.3], [12.8, 22.1]], '#c9a173')),
@@ -2634,4 +2673,246 @@ export function wardrobeOutfit(key, fallback) {
   BUILT.set(key, out);
   return out;
 }
+// ---------- The palace's livery (the story's own: data/mochi-wardrobe.js tier 'story') ----------
+// What the Queen's household wears in the cutscenes (the player's call, 2026-11-17: "new outfits
+// for them"), all in the bedchamber's lilac, white and gold, each job told by its silhouette and
+// its signature at the waist and hem: the page's tabard and pillbox cap, the maid's lilac dress and
+// frilled apron, the cook's puffed toque, double-breasted whites and oven mitts, the guard's plumed
+// shako and frogged coat, the Royal Snore Translator's starry robe, mortarboard and brass ear
+// trumpet, and the Elder's ivory robe, lilac stole and chain of office. Never sold.
+const LIL = '#b9a8ef';
+const LIL_D = '#9482dc';
+const LIL_L = '#d4c8fb';
+const PLUM = '#6a52a8';
+const SNOW = '#fbf8ff';
+const SNOW_D = '#e4ddf2';
+// The Mochi's mark, small and gold: a stem and two round leaves.
+const markSprout = (x, y, s = 1, c = GOLDEN) => [F(limb(x, y, x + 0.2 * s, y - 1.6 * s, 0.32 * s, 0.24 * s, c)),
+  F(E(x - 0.9 * s, y - 1.9 * s, 0.95 * s, 0.6 * s, c)), F(E(x + 1.05 * s, y - 2.05 * s, 0.95 * s, 0.6 * s, c)),
+  F(E(x + 0.8 * s, y - 2.25 * s, 0.4 * s, 0.22 * s, shade(c, 30)))];
+// A little letter z, for the Snore Translator's embroidery.
+const zed = (x, y, s, c) => [F(R(x, y, s, s * 0.22, c)), F(limb(x + s * 0.95, y + s * 0.15, x + s * 0.05, y + s * 0.85, s * 0.2, s * 0.2, c)), F(R(x, y + s * 0.8, s, s * 0.22, c))];
+// A long robe from the shoulders to the floor (the dress outline, its hem swinging a beat behind).
+const robe = (c, m, k = 0.22) => {
+  const s = (m?.sway ?? 0) * 0.5;
+  return DRESSP.map(([x, y]) => (y > 36 ? [x + s * (y - 36) * k, y] : [x, y]));
+};
+const sw = (m, k = 0.5) => (m?.sway ?? 0) * k;
+
+Object.assign(WARDROBE_TOPS, {
+  // The page: a lilac tabard edged in gold over a white shirt with puffed sleeves, belted, the
+  // sprout worked at the waist.
+  pagetabard: {
+    top: () => [...cloth(SNOW, 35.4),
+      T([[11.4, 26.6], [19.8, 26.6], [20.4, 36.4], [10.8, 36.4]], LIL),
+      F(T([[11.4, 26.6], [13, 26.6], [12.6, 36.4], [10.8, 36.4]], LIL_L)),
+      ...braid(10.9, 35.6, 9.4, 0.7), F(limb(11.4, 26.8, 10.9, 36.2, 0.4, 0.4, GOLDEN)), F(limb(19.8, 26.8, 20.3, 36.2, 0.4, 0.4, '#c8a450')),
+      F(R(9, 32.6, 13.4, 1, PLUM)), F(R(9, 32.6, 13.4, 0.3, shade(PLUM, 24))), F(R(14.8, 32.4, 1.8, 1.4, GOLDEN)), F(R(15.3, 32.8, 0.8, 0.6, PLUM)),
+      ...markSprout(15.7, 35.4, 0.8)],
+    sleeve: () => SNOW,
+    shoulder: (p, side) => [E(0, 1.1, 3.5, 3.1, side > 0 ? SNOW : SNOW_D), F(E(-0.7, 0.4, 1.5, 1, '#ffffff')), F(E(0, 3.4, 2.6, 0.7, LIL))],
+  },
+  // The cook: double-breasted whites with two rows of gold buttons, and a lilac-checked apron tied
+  // over them.
+  chefcoat: {
+    top: () => [...cloth('#ffffff', 35.4, { dark: SNOW_D, lite: '#ffffff' }),
+      F(T([[15.8, 26.4], [20.6, 26.6], [21, 35], [15.6, 35]], '#f2eefa')),
+      ...dots([[13.4, 30.4], [13.4, 32.4], [17.8, 30.4], [17.8, 32.4]], 0.45, GOLDEN),
+      T([[10.2, 33], [21, 33], [21.8, 40.6], [9.6, 40.6]], '#ffffff'),
+      ...[0, 1, 2, 3, 4, 5].flatMap((i) => [0, 1, 2].map((j) => ((i + j) % 2 ? null : F(R(10.4 + i * 1.8, 34 + j * 2.2, 1.8, 2.2, LIL_L))))).filter(Boolean),
+      F(T([[10.2, 33], [11.8, 33], [11.2, 40.6], [9.6, 40.6]], '#f4f0fc')),
+      F(R(9.4, 32.6, 12.6, 0.9, LIL_D)), F(limb(9.8, 33, 6.8, 37, 0.7, 0.5, LIL_D)), F(limb(9.6, 33.2, 7.8, 38, 0.6, 0.45, LIL)),
+      F(R(9.6, 40, 12.2, 0.6, LIL_D))],
+    sleeve: () => '#ffffff',
+    shoulder: (p, side) => [E(0, 1.1, 3.2, 2.8, side > 0 ? '#ffffff' : SNOW_D)],
+  },
+  // The guard: a lilac coat with gold frogging and epaulettes, a white crossbelt, a gold belt with
+  // the sprout on its buckle.
+  guardcoat: {
+    long: true,
+    top: () => [...cloth(LIL_D, 36, { dark: PLUM, lite: LIL }),
+      ...[29.6, 31.2].flatMap((y) => [F(R(12.4, y, 6.6, 0.5, GOLDEN)), F(E(12.4, y + 0.25, 0.5, 0.5, GOLDEN)), F(E(19, y + 0.25, 0.5, 0.5, GOLDEN))]),
+      F(limb(11, 27, 20.4, 34.6, 1.2, 1.2, SNOW)), F(limb(11, 26.6, 20.4, 34.2, 0.3, 0.3, '#ffffff')),
+      ...braid(9, 33.2, 13.4, 1.2), F(E(15.7, 33.8, 1.2, 1, GOLDEN)), ...markSprout(15.7, 34.4, 0.45, PLUM),
+      F(T([[9, 35], [22.4, 35], [22.8, 37.4], [8.6, 37.4]], LIL_D)), ...braid(8.6, 36.8, 14.2, 0.6)],
+    sleeve: () => LIL_D,
+    shoulder: (p, side) => [E(0, 1.1, 3.3, 2.9, side > 0 ? LIL_D : PLUM), F(E(0, -0.3, 3.4, 1.3, GOLDEN)), F(E(-0.6, -0.6, 1.4, 0.5, '#fff0b0')),
+      ...[-2.4, -1.2, 0, 1.2, 2.4].map((x) => F(R(x - 0.2, 0.6, 0.4, 1.3, '#c8a450')))],
+  },
+});
+
+Object.assign(WARDROBE_BOTTOMS, {
+  // The page's puffed lilac breeches, banded at the knee, white stockings and buckled shoes.
+  pagebreeches: {
+    legs: legsFull(SNOW),
+    shoe: (p, k, tint) => [k.sole(tint('#3a2c4a')), k.poly([[-2.8, -1.2], [2.9, -1.2], [3.1, 1.7], [-2.9, 1.7]], tint(PLUM)), k.poly([[-0.6, -1.2], [0.8, -1.2], [0.8, 0], [-0.6, 0]], tint(GOLDEN))],
+    skirt: () => [T([[9, 34], [22.2, 34], [23, 37.4], [21.6, 39.2], [9.6, 39.2], [8.2, 37.4]], LIL),
+      F(T([[9, 34], [11.4, 34], [10.6, 39.2], [9.6, 39.2], [8.2, 37.4]], LIL_L)),
+      F(limb(15.6, 35.2, 15.6, 39, 0.35, 0.35, LIL_D)),
+      ...braid(9.4, 38.4, 5.8, 0.8), ...braid(16.2, 38.4, 5.8, 0.8)],
+  },
+  // The cook's checked trousers.
+  chefpants: {
+    legs: legsFull(SNOW_D),
+    shoe: shoeIn('#ffffff', '#c8c0d8'),
+    skirt: () => [T([[9.2, 34.2], [22, 34.2], [21.6, 39.8], [9.6, 39.8]], SNOW_D),
+      ...[0, 1, 2, 3, 4, 5, 6].flatMap((i) => [F(R(9.6 + i * 1.8, 34.4, 0.5, 5.2, LIL_L))]),
+      F(R(9.2, 36.6, 12.8, 0.5, LIL_L)), F(R(9.2, 34.2, 12.8, 0.9, LIL_D))],
+  },
+  // The guard's white trousers with a gold stripe, and tall black boots.
+  guardtrousers: {
+    legs: legsFull(SNOW),
+    shoe: (p, k, tint) => [k.sole(tint('#1d1a26')), k.shaft(4.2, tint('#2e2a38'), 3), k.poly([[-2.8, -1.4], [2.9, -1.4], [3.1, 1.8], [-2.9, 1.8]], tint('#2e2a38')), k.poly([[-2.8, -1.4], [2.9, -1.4], [2.9, -0.8], [-2.8, -0.8]], tint('#4a4458'))],
+    skirt: () => [T([[9.2, 34.2], [22, 34.2], [21.6, 39.8], [9.6, 39.8]], SNOW),
+      F(T([[9.2, 34.2], [11.4, 34.2], [11, 39.8], [9.6, 39.8]], '#ffffff')),
+      F(R(9.8, 35, 0.6, 4.8, GOLDEN)), F(R(20.8, 35, 0.6, 4.8, '#c8a450')),
+      F(limb(15.6, 35.6, 15.6, 39.6, 0.3, 0.3, SNOW_D))],
+  },
+});
+
+Object.assign(WARDROBE_DRESSES, {
+  // The maid: a lilac dress, a white frilled apron with the sprout on its pocket, a white collar
+  // and the apron's bow behind.
+  palacemaid: {
+    long: true,
+    top: (p, m) => {
+      const s = sw(m);
+      return [T(robe(LIL, m), LIL),
+        F(T([[10.4, 26.8], [13.2, 26.6], [10 + s * 1.8, 44], [7.4 + s * 1.8, 44]], LIL_L)),
+        ...folds(m, LIL_D, LIL_L, { top: 36, len: 7.6, spread: 3.4, xs: [11.4, 14.6, 17.8, 21] }),
+        F(T([[12.4, 29.2], [18.8, 29.2], [19, 33.6], [12.2, 33.6]], '#ffffff')),
+        F(T([[10.4, 33.4], [20.8, 33.4], [22.4 + s * 1.5, 41.2], [8.8 + s * 1.5, 41.2]], '#ffffff')),
+        F(T([[10.4, 33.4], [12.4, 33.4], [11 + s * 1.5, 41.2], [8.9 + s * 1.5, 41.2]], '#f2eefa')),
+        ...lace(8.8 + s * 1.5, 22.4 + s * 1.5, 41, '#ffffff', 1.6),
+        F(T([[14.4 + s * 0.6, 36.4], [17.4 + s * 0.6, 36.4], [17.2 + s * 0.7, 38.8], [14.6 + s * 0.7, 38.8]], '#f2eefa')), ...markSprout(15.9 + s * 0.7, 38.4, 0.55),
+        F(R(9.6, 33, 12.4, 1.1, '#ffffff')),
+        T([[12.2, 25.9], [19, 25.9], [18.4, 28.6], [15.6, 29.6], [12.8, 28.6]], '#ffffff'),
+        F(limb(9.8, 33.5, 6.6 + s, 38.6, 0.9, 0.6, '#ffffff')), F(limb(9.6, 33.9, 7.8 + s, 39.6, 0.8, 0.55, SNOW_D)),
+        ...lace(6 + s * 1.8, 25.4 + s * 1.8, 44, LIL_D, 1.6)];
+    },
+    sleeve: () => LIL,
+    shoulder: (p, side) => [E(0, 1.1, 3.4, 3, side > 0 ? LIL : LIL_D), F(E(-0.6, 0.4, 1.4, 0.9, LIL_L))],
+    legs: legsFull(SNOW),
+    shoe: shoeIn(PLUM, '#3a2c4a'),
+  },
+  // The Royal Snore Translator: a long robe of night-lilac, gold down its front and round its hem,
+  // little gold z's and crescent moons sewn all over, a cord at the waist with a tassel.
+  scholarrobe: {
+    long: true,
+    top: (p, m) => {
+      const s = sw(m);
+      return [T(robe('#5a4a9a', m), '#5a4a9a'),
+        F(T([[10.4, 26.8], [13.2, 26.6], [10 + s * 1.8, 44], [7.4 + s * 1.8, 44]], '#6f5fb0')),
+        ...folds(m, '#463a80', '#6f5fb0', { top: 36, len: 7.6, spread: 3.4, xs: [11.4, 18.4, 21] }),
+        F(T([[15, 26.4], [16.4, 26.4], [16.4 + s * 1.2, 44], [15 + s * 1.2, 44]], GOLDEN)),
+        ...braid(6.2 + s * 1.8, 42.8, 19.2, 1.1),
+        ...zed(11.2, 30.6, 1.6, GOLDEN), ...zed(18.6 + s * 0.3, 37.4, 1.4, GOLDEN), ...zed(11.4 + s * 0.6, 39.4, 1.3, '#c8a450'),
+        F(E(19.6, 31.4, 0.9, 0.9, GOLDEN)), F(E(20.1, 31.1, 0.75, 0.75, '#5a4a9a')),
+        F(E(10.8 + s * 0.4, 36, 0.8, 0.8, GOLDEN)), F(E(11.2 + s * 0.4, 35.7, 0.65, 0.65, '#5a4a9a')),
+        F(R(9.4, 33.4, 12.6, 0.8, GOLDEN)), F(limb(10.4, 34, 9.6 + s, 38.4, 0.4, 0.4, GOLDEN)), F(E(9.6 + s, 38.8, 0.8, 1, GOLDEN))];
+    },
+    sleeve: () => '#5a4a9a',
+    shoulder: (p, side) => [E(0, 1.1, 3.3, 2.9, side > 0 ? '#5a4a9a' : '#463a80'), ...braid(-3.1, 3, 6.2, 0.5)],
+    legs: legsFull('#5a4a9a'),
+    shoe: shoeIn(PLUM, '#2e2a38'),
+  },
+  // The Elder: an ivory robe to the floor, a lilac stole down its front stitched with gold, and the
+  // gold chain of office with the sprout hanging on it.
+  elderrobe: {
+    long: true,
+    top: (p, m) => {
+      const s = sw(m);
+      return [T(robe('#f2e8d4', m), '#f2e8d4'),
+        F(T([[10.4, 26.8], [13.2, 26.6], [10 + s * 1.8, 44], [7.4 + s * 1.8, 44]], '#fbf4e6')),
+        ...folds(m, '#d8cab0', '#fbf4e6', { top: 36, len: 7.6, spread: 3.4, xs: [11.4, 20.6] }),
+        T([[12.6, 26.4], [14.6, 26.4], [14.4 + s * 1.1, 44], [12 + s * 1.1, 44]], LIL_D),
+        T([[16.8, 26.4], [18.8, 26.4], [19.4 + s * 1.3, 44], [17 + s * 1.3, 44]], LIL_D),
+        ...[31, 34, 37, 40].flatMap((y) => [star(13.4 + s * (y - 36) * 0.06, y, 0.7, GOLDEN), star(18 + s * (y - 36) * 0.08, y, 0.7, GOLDEN)]),
+        ...braid(12 + s * 1.1, 43, 2.4, 0.7), ...braid(17 + s * 1.3, 43, 2.4, 0.7),
+        F(limb(11.6, 27, 15.7, 31.6, 0.45, 0.45, GOLDEN)), F(limb(19.8, 27, 15.7, 31.6, 0.45, 0.45, '#c8a450')),
+        E(15.7, 32.6, 1.7, 1.7, GOLDEN), F(E(15.7, 32.6, 1.15, 1.15, '#fff0b0')), ...markSprout(15.7, 33.5, 0.5, '#c8a450')];
+    },
+    sleeve: () => '#f2e8d4',
+    shoulder: (p, side) => [E(0, 1.2, 3.6, 3.1, side > 0 ? '#f2e8d4' : '#e2d6bc'), F(E(0, 0.2, 3.2, 1.3, LIL_D))],
+    legs: legsFull('#f2e8d4'),
+    shoe: shoeIn(LIL_D, PLUM),
+  },
+});
+
+// Ume the maid's big round glasses (the player's call, 2026-11-17: big, round, black-rimmed, no
+// shine): wide black rims that nearly meet over the nose with a soft grey line inside each, and
+// clear lenses, so her eyes show plainly through them.
+const RIM = '#231f2b';
+Object.assign(WARDROBE_EYES, {
+  bigspecs: {
+    face: () => [F(R(3.6, 17.2, 3.6, 0.5, RIM)), F(R(24, 17.2, 3.6, 0.5, RIM)),
+      F(limb(14.9, 17.6, 16.1, 17.6, 0.55, 0.55, RIM)),
+      ...[EL - 0.2, ER + 0.2].flatMap((x) => [ring(x, EY, 4.2, 4.2, 0.62, RIM), ring(x, EY, 3.62, 3.62, 0.18, '#5a5468'),
+      ])],
+  },
+});
+
+Object.assign(WARDROBE_ACC, {
+  // The page's lilac pillbox, perched on the slant, with a gold band and a white feather.
+  pagecap: {
+    hat: () => [T([[10.6, 3.2], [20.8, 1.6], [20.2, -3.2], [10.4, -1.8]], LIL),
+      E(15.4, -2.5, 5, 1.3, LIL_L), F(T([[10.6, 3.2], [12.6, 2.9], [12.3, -2.1], [10.4, -1.8]], LIL_L)),
+      F(T([[10.6, 3.2], [20.8, 1.6], [20.7, 0.4], [10.5, 2]], GOLDEN)),
+      T([[19.4, -2.4], [21.6, -6.8], [23.6, -9.4], [22.4, -5.6], [20.4, -2]], '#ffffff'), F(limb(20, -2.2, 23.2, -8.8, 0.25, 0.15, SNOW_D))],
+  },
+  // The maid's white frilled cap, a band of lace across the top of the head with a lilac ribbon.
+  maidcap: {
+    hat: () => [F(T([...arc(15.3, 7.6, 10.4, 7.4, 28, 152), ...arc(15.3, 7.8, 8.6, 5.6, 150, 30)], LIL)),
+      ...arc(15.3, 7, 10.8, 7.8, 30, 150, 9).map(([x, y]) => E(x, y, 1.5, 1.2, '#ffffff')),
+      ...arc(15.3, 7, 10.8, 7.8, 30, 150, 9).map(([x, y]) => F(E(x - 0.3, y - 0.3, 0.7, 0.5, '#ffffff'))),
+      T([[23.6, 7.4], [26.6, 5.6], [26.8, 9.2]], LIL_D), T([[23.6, 7.4], [25.4, 10.6], [23, 10.4]], LIL), F(E(23.6, 7.6, 0.8, 0.8, LIL_L))],
+  },
+  // The cook's toque: a tall puffed crown on a pleated band, soft as the mochi he makes.
+  toque: {
+    hat: () => [T([[9.6, 4.8], [21.4, 4.8], [21.2, 0.6], [9.8, 0.6]], '#ffffff'),
+      ...[11.4, 13.4, 15.4, 17.4, 19.4].map((x) => F(R(x, 1, 0.35, 3.6, SNOW_D))),
+      E(11.2, -1.8, 4.2, 3.4, '#ffffff'), E(20, -1.8, 4.2, 3.4, '#ffffff'), E(15.6, -4.2, 6.2, 5, '#ffffff'),
+      F(E(13.8, -6, 2.6, 1.6, '#ffffff')), F(E(18.4, -2.2, 2.2, 1.2, SNOW_D)), F(E(21.4, -0.6, 1.8, 1, SNOW_D))],
+  },
+  // The guard's shako: tall, lilac, a gold band and the sprout plate on its front, a black peak, and
+  // a gold cup on top for the Mochi's own sprout to come up through like a plume.
+  guardhelm: {
+    hat: () => [T([[10.4, 4.2], [21, 4.2], [20.2, -6.6], [11.2, -6.6]], LIL_D),
+      F(T([[10.4, 4.2], [12.6, 4.2], [12.8, -6.6], [11.2, -6.6]], LIL)), E(15.7, -6.6, 4.5, 1.1, PLUM),
+      F(T([[10.4, 4.2], [21, 4.2], [20.9, 2.4], [10.5, 2.4]], GOLDEN)), F(R(10.6, -5.6, 9.6, 0.6, GOLDEN)),
+      E(15.8, -1.6, 2.2, 2.4, GOLDEN), F(E(15.8, -1.6, 1.6, 1.8, '#fff0b0')), ...markSprout(15.8, -0.4, 0.55, '#c8a450'),
+      T([[18.4, 3.6], [24.6, 5.2], [24.2, 6.4], [18.4, 5]], '#2e2a38'), F(T([[18.4, 3.6], [24.6, 5.2], [24.5, 5.6], [18.4, 4.1]], '#4a4458')),
+      T([[13.8, -6.8], [17.6, -6.8], [17, -8.4], [14.4, -8.4]], GOLDEN), F(T([[13.8, -6.8], [14.8, -6.8], [15, -8.4], [14.4, -8.4]], '#fff0b0'))],
+  },
+  // The Translator's mortarboard, with its gold tassel.
+  scholarcap: {
+    hat: () => [T([[11, 4.2], [20.6, 4.2], [20.2, 0.2], [11.4, 0.2]], '#3a3060'),
+      T([[8.4, 0.6], [21.6, 0.6], [23.4, -1.2], [10.2, -1.2]], '#3a3060'), F(T([[8.4, 0.6], [21.6, 0.6], [21.8, 0.2], [8.8, 0.2]], '#544a80')),
+      F(E(16, -0.3, 0.8, 0.45, GOLDEN)), F(limb(16, -0.3, 22.6, 0.6, 0.25, 0.25, GOLDEN)), F(limb(22.6, 0.6, 22.8, 4.6, 0.25, 0.25, GOLDEN)),
+      T([[22.2, 4.4], [23.4, 4.4], [23.8, 6.6], [21.8, 6.6]], GOLDEN)],
+  },
+  // The Elder's soft velvet cap, with a gold band and a sprout pinned to it.
+  elderhat: {
+    hat: () => [E(15.6, 2, 9.2, 4, LIL_D), F(E(13.6, 0.6, 5, 2, LIL)),
+      T([[7, 4.6], [24.2, 4.6], [23.8, 2.8], [7.4, 2.8]], GOLDEN), F(T([[7, 4.6], [24.2, 4.6], [24.1, 4.1], [7.1, 4.1]], '#c8a450')),
+      ...markSprout(21.4, 3, 0.8, '#fff0b0')],
+  },
+  // The Translator's brass ear trumpet, hanging at his hip on a cord, ready to hand.
+  eartrumpet: {
+    back: (p, m) => {
+      const s = sw(m, 0.4);
+      return [E(4.6 + s, 36.6, 1.9, 2.8, GOLDEN), F(E(4.4 + s, 36.6, 1.2, 2, '#a87a2a')),
+        T([[5 + s, 35], [10.2, 34.6], [10.2, 35.6], [5 + s, 38.2]], GOLDEN), F(T([[5 + s, 35], [10.2, 34.6], [10.2, 35], [5 + s, 35.8]], '#fff0b0')),
+        F(limb(10.2, 35, 11.6, 33.4, 0.5, 0.4, '#c8a450'))];
+    },
+    front: () => [F(limb(10.6, 33.6, 17.6, 27, 0.35, 0.35, PLUM))],
+  },
+  // The cook's oven mitts, pink and quilted.
+  ovenmitts: {
+    hand: (p, hx, hy) => [E(hx, hy + 0.3, 2.5, 2.5, '#f29ab0'), E(hx + 1.9, hy - 0.4, 0.9, 1.2, '#f29ab0'),
+      F(limb(hx - 1.6, hy - 0.6, hx + 1.4, hy + 1.8, 0.2, 0.2, '#d87890')), F(limb(hx + 1.4, hy - 0.6, hx - 1.4, hy + 1.8, 0.2, 0.2, '#d87890')),
+      F(E(hx - 0.6, hy - 0.4, 0.9, 0.7, '#ffc0d0')), F(E(hx, hy - 1.9, 2, 0.8, '#ffffff'))],
+  },
+});
+
 export const WARDROBE_IDS = Object.fromEntries(SLOTS.map((slot) => [slot, Object.keys(SETS[slot])]));

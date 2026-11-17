@@ -164,22 +164,34 @@ const WAKE_FACE = [[0.07, 'sleepy'], [0.2, 'shock'], [0.52, 'excited'], [1, 'smi
 // `awake` once she has woken, `talking` while her words type out. `wake` is how long ago she woke,
 // in seconds: given, she plays her waking out (her head comes up, she draws herself to her full
 // height and raises a hand over the road) instead of simply being awake.
-export function drawHayate(ctx, x, y, t, { s = 2, awake = false, talking = false, wake = null } = {}) {
+// `human`: the prologue's Hayate, still in the human world (render/prologue.js) - the same girl in a
+// comfy hoodie, with no crown and no sprout yet.
+// `crown: false` before she is crowned, `sprout: false` before the Mochi mark comes up on her head.
+const HUMAN_GEAR = { top: { id: 'hoodie' } };
+let bare = null;
+// `face`: a face of her own for the moment (shock, sad, excited: a cutscene's), over her sleepy one.
+export function drawHayate(ctx, x, y, t, { s = 2, awake = false, talking = false, wake = null, human = false, crown = true, sprout = true, face: own = null } = {}) {
+  if (human) {
+    crown = false;
+    sprout = false;
+  }
+  if (!crown && !human) bare ??= Object.fromEntries(Object.entries(hayateGear()).filter(([slot]) => slot !== 'hat'));
   // Waking: her own move, eased away afterwards so she settles into standing without a jump.
   const waking = wake != null && wake < WAKE_SECS ? Math.max(0, wake) / WAKE_SECS : null;
   const settling = wake != null && wake >= WAKE_SECS && wake < WAKE_SECS + SETTLE ? (wake - WAKE_SECS) / SETTLE : null;
   // She breathes slowly; asleep, she nods off now and then and catches herself.
   const breath = 0.5 + 0.5 * Math.sin(t * 1.3);
-  const nod = awake || waking != null ? 0 : Math.max(0, Math.sin(t * 0.7)) ** 6 * 1.2 * s;
+  const nod = awake || own || waking != null ? 0 : Math.max(0, Math.sin(t * 0.7)) ** 6 * 1.2 * s;
   const held = waking ?? (settling != null ? 1 : null);
   const dy = y - breath * 0.6 * s + nod * 0.3;
-  const face = waking != null ? WAKE_FACE.find(([u]) => waking < u)[1] : awake ? 'smile' : 'sleepy';
+  const face = own ?? (waking != null ? WAKE_FACE.find(([u]) => waking < u)[1] : awake ? 'smile' : 'sleepy');
   const move = waking != null
     ? { pose: 'queenwake', progress: waking, dur: WAKE_SECS }
     : settling != null
       ? { pose: 'idle', from: { kind: 'queenwake', progress: 1, dur: WAKE_SECS }, blend: settling }
       : { pose: 'idle' };
-  drawHero(ctx, { ...HAYATE_LOOK, face }, hayateGear(), x, dy, { ...move, time: t, seed: 7, scale: s, talking, facing: 1 });
+  drawHero(ctx, { ...HAYATE_LOOK, face }, human ? HUMAN_GEAR : crown ? hayateGear() : bare, x, dy, { ...move, time: t, seed: 7, scale: s, talking, facing: 1 });
+  if (!sprout) return;
   // Her gold sprout, growing up out of the cloud of her hair. (Measured on her: the top of her hair
   // is 83 of these units above her feet at the stem's column, so the stem is rooted a little inside
   // it and comes up past the crown. Rooted any higher and it floats clear of her head.) It rides

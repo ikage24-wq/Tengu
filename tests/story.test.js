@@ -36,21 +36,32 @@ test('the story chains from Mira at level 1 to the Crystal King, every step real
   for (const id of ids) assert.ok(ids.filter((o) => QUESTS[o].prereq === id).length <= 1, `${id} branches`);
   // Every step is a card, a line, or staging (world/director.js) that names real people and known
   // emotes and bursts.
-  const STAGING = ['cam', 'walk', 'face', 'jump', 'emote', 'say', 'wait', 'fade', 'flash', 'shake', 'fx', 'spawn', 'leave', 'act', 'mood', 'free', 'spot', 'ride', 'trip', 'place', 'wind', 'night', 'perform', 'expr', 'together'];
+  const STAGING = ['cam', 'walk', 'face', 'jump', 'emote', 'say', 'wait', 'fade', 'flash', 'shake', 'fx', 'spawn', 'leave', 'act', 'mood', 'free', 'spot', 'ride', 'trip', 'place', 'wind', 'night', 'perform', 'expr', 'together',
+    // A scene's own cast and sets (world/cast.js).
+    'set', 'cast', 'show', 'hide', 'peek', 'pose', 'carry', 'crown', 'sprout', 'slump', 'flag', 'play', 'dress', 'duck', 'toss'];
   const EMOTES = ['!', '?', 'heart', 'note', 'sweat', 'anger', 'zzz', 'sparkle', 'idea'];
   const BURSTS = ['sparkle', 'hearts', 'petals', 'leaves', 'wind', 'confetti', 'spores', 'dust', 'rubble', 'notes', 'china', 'bubbles', 'ink', 'gears', 'pages', 'starfall', 'sparks', 'caramel', 'crumbs', 'shout', 'feathers', 'coins', 'shells', 'clouds'];
   // People, and monsters (a boss acts in its own entrance); only people step in and out.
-  const actor = (who) => who === 'player' || Boolean(NPCS[who]) || Boolean(MOBS[who]);
+  // (And whoever the scene casts for itself, from the step that casts them on: world/cast.js.)
+  let cast = new Set();
+  const actor = (who) => who === 'player' || Boolean(NPCS[who]) || Boolean(MOBS[who]) || cast.has(who) || (typeof who === 'object' && Number.isFinite(who?.x) && Number.isFinite(who?.y));
   const check = (st) => {
+    if (st.cast) {
+      assert.ok(['hayate', 'mochi', 'crown', 'beard'].includes(st.kind ?? 'mochi'), `a known kind of cast: ${st.kind}`);
+      cast.add(st.cast);
+    }
+    if (st.set) assert.ok(MAPS[st.set]?.set, `a scene's set is a set: ${st.set}`);
+    for (const k of ['show', 'hide', 'peek', 'slump', 'sprout', 'crown', 'carry', 'dress', 'duck', 'toss']) if (st[k] !== undefined) assert.ok(cast.has(st[k]), `${k} names someone the scene cast: ${st[k]}`);
+    for (const w of [st.pose ?? [], st.play ?? []].flat()) assert.ok(cast.has(w), `pose and play name someone the scene cast: ${w}`);
     if (st.card || (typeof st.text === 'string' && st.say === undefined)) return;
     const kind = STAGING.find((k) => st[k] !== undefined);
     assert.ok(kind, `a staging step of a known kind: ${JSON.stringify(st)}`);
     if (kind === 'together') return st.together.forEach(check);
-    for (const k of ['act', 'mood', 'free']) if (st[k] !== undefined) assert.ok(MOBS[st[k]], `${k} names a real monster: ${st[k]}`);
+    for (const k of ['act', 'mood', 'free']) if (st[k] !== undefined) assert.ok(MOBS[st[k]] || (k === 'mood' && cast.has(st[k])), `${k} names a real monster: ${st[k]}`);
     for (const k of ['walk', 'face', 'jump', 'emote', 'say', 'away', 'trip', 'place']) if (st[k] !== undefined) assert.ok(actor(st[k]), `${k} names a real actor: ${st[k]}`);
     if (st.fx && typeof st.at === 'object') assert.ok(Number.isFinite(st.at.x) && Number.isFinite(st.at.y), 'a burst at a real place');
     else if (st.fx && st.at !== undefined) assert.ok(actor(st.at), `a burst on a real actor: ${st.at}`);
-    for (const k of ['spawn', 'leave']) if (st[k] !== undefined) assert.ok(st[k] === 'player' || NPCS[st[k]], `${k} names a real person: ${st[k]}`);
+    for (const k of ['spawn', 'leave']) if (st[k] !== undefined) assert.ok(st[k] === 'player' || NPCS[st[k]] || cast.has(st[k]), `${k} names a real person: ${st[k]}`);
     if (st.spot) assert.ok(actor(st.spot), `spot follows a real actor: ${st.spot}`);
     if (Array.isArray(st.cam)) for (const w of st.cam) assert.ok(actor(w), `cam frames a real actor: ${w}`);
     if (typeof st.to === 'string') assert.ok(actor(st.to), `to a real person: ${st.to}`);
@@ -59,7 +70,10 @@ test('the story chains from Mira at level 1 to the Crystal King, every step real
     if (st.say !== undefined) assert.equal(typeof st.text, 'string', 'a bubble has words');
     if (st.ride) assert.ok(MOUNTS[st.ride], `rides a real mount: ${st.ride}`);
   };
-  for (const sc of Object.values(SCENES)) for (const st of sc) check(st);
+  for (const sc of Object.values(SCENES)) {
+    cast = new Set();
+    for (const st of sc) check(st);
+  }
 });
 
 test('the story is optional: every region is open, only its arenas wait for it', () => {
@@ -129,7 +143,8 @@ test('important side quests and every job advancement have scenes, naming real s
   }
   for (const j of Object.values(JOBS).filter((j) => j.tier === 1)) assert.ok(JOB_SCENES[j.id], `${j.id} has a scene`);
   for (const [id, sc] of Object.entries(SCENES)) {
-    for (const st of sc) if (st.who && st.who !== 'player' && st.who !== 'hayate') assert.ok(NPCS[st.who] || MOBS[st.who], `${id}: who is ${st.who}?`);
+    const cast = new Set(sc.filter((st) => st.cast).map((st) => st.cast));
+    for (const st of sc) if (st.who && st.who !== 'player' && st.who !== 'hayate') assert.ok(NPCS[st.who] || MOBS[st.who] || cast.has(st.who), `${id}: who is ${st.who}?`);
   }
   // {name} and {job} fill in.
   const w = createWorld(createCharacter('Hana', {}));

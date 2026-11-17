@@ -72,6 +72,8 @@ import { groundAt } from './physics.js';
 import { seat } from './mount.js';
 import { indoors } from './daytime.js';
 import { MOVE_MIN } from '../render/moves.js';
+import { castStep, castAt, tickCast, leaveSet } from './cast.js';
+import { easedPace } from './pace.js';
 
 const WALK = 72;
 const easeInOut = (u) => (u < 0.5 ? 4 * u * u * u : 1 - (-2 * u + 2) ** 3 / 2);
@@ -81,7 +83,7 @@ const easeInOut = (u) => (u < 0.5 ? 4 * u * u * u : 1 - (-2 * u + 2) ** 3 / 2);
 export const isStaging = (step) => Boolean(step) && !step.card && (step.text === undefined || step.say !== undefined);
 
 export function startCine(world) {
-  world.cine = { step: -1, run: null, bg: [], cam: null, view: null, fade: { a: 0 }, flash: null, shake: null, emotes: [], bursts: [], say: null, go: false, fast: false, moved: new Map(), spawned: [] };
+  world.cine = { step: -1, run: null, bg: [], cam: null, view: null, zoom: 1, cast: [], flags: {}, fade: { a: 0 }, flash: null, shake: null, emotes: [], bursts: [], say: null, go: false, fast: false, moved: new Map(), spawned: [] };
 }
 
 // A monster on the map taking part in a scene, by its id (the first one still standing).
@@ -93,9 +95,12 @@ export function mobActor(world, who) {
 }
 
 // Where an actor stands (feet), or null if they aren't here.
-function actorAt(world, who) {
+export function actorAt(world, who) {
   // (A place rather than a person: a burst out at sea, a glow at the top of a tower.)
   if (who && typeof who === 'object') return { x: who.x, y: who.y, h: 0 };
+  // (One of the scene's own cast: world/cast.js.)
+  const k = castAt(world, who);
+  if (k) return k;
   if (who === 'player') return { x: world.body.x, y: world.body.y, h: 52 };
   const n = world.map.npcs.find((q) => q.id === who);
   if (n) return { x: n.x, y: groundAt(world.map, n.x) - (n.cine?.lift ?? 0), h: 52 };
@@ -149,15 +154,22 @@ function runner(world, step) {
     const parts = step.together.map((s) => runner(world, s));
     return (dt, skip) => parts.map((p) => p(dt, skip)).every(Boolean);
   }
+  // The scene's own cast and sets (world/cast.js), and ordinary steps aimed at its cast.
+  const own = castStep(world, step);
+  if (own) return own;
   if (step.cam !== undefined) {
     const to = camPoint(world, step.cam, step.up ?? 0);
     if (!to) return () => true;
     const from = c.cam ?? c.view ?? to;
     const dur = step.dur ?? 1.4;
+    // (`zoom`: the camera pushes in (or pulls out) as it moves, the two eased together.)
+    const z0 = c.zoom ?? 1;
+    const z1 = step.zoom ?? z0;
     let t = 0;
     return (dt, skip) => {
       t = skip ? dur : t + dt;
       const u = dur <= 0 ? 1 : easeInOut(Math.min(1, t / dur));
+      c.zoom = z0 + (z1 - z0) * u;
       c.cam = { x: from.x + (to.x - from.x) * u, y: from.y + (to.y - from.y) * u };
       return t >= dur;
     };
@@ -182,10 +194,14 @@ function runner(world, step) {
     const speed = step.speed ?? WALK;
     const n = who === 'player' ? null : npcOf(world, who);
     const m = who === 'player' || n ? null : mobActor(world, who);
+    // (They ease into their stride and out of it: up to speed over a quarter of a second, and slowing
+    // to a stop just as they arrive.)
+    let v = 0;
     return (dt, skip) => {
       const x = who === 'player' ? world.body.x : n ? n.x : m.x;
       const dir = Math.sign(target - x);
-      const nx = skip || Math.abs(target - x) <= speed * dt ? target : x + dir * speed * dt;
+      v = easedPace(v, speed, Math.abs(target - x), dt);
+      const nx = skip || Math.abs(target - x) <= Math.max(0.5, v * dt) ? target : x + dir * v * dt;
       const done = nx === target;
       if (who === 'player') {
         const b = world.body;
@@ -571,6 +587,7 @@ export function tickCine(world, dt, { skip = false } = {}) {
   }
   // The scene's own clock, for its monsters' moves (the world's is paused).
   c.clock = (c.clock ?? 0) + dt;
+  tickCast(world);
   // A monster that had only just appeared when the scene froze the world finishes appearing.
   for (const m of world.mobs ?? []) if (m.age < 0.3) m.age = Math.min(0.3, m.age + dt);
   for (const e of c.emotes) e.t += dt;
@@ -623,6 +640,8 @@ export function endScene(world) {
   const c = world.cine;
   if (!c) return;
   for (const r of c.bg) r(1, true);
+  // (A scene that ended somewhere off the map comes back to it: world/cast.js.)
+  leaveSet(world);
   for (const [n, x] of c.moved) {
     n.x = x;
     delete n.cine;

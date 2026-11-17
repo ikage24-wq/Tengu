@@ -34,6 +34,7 @@ import { drawFriendFishing } from './fishing.js';
 import { drawQuayBack, drawQuayFront } from './quay.js';
 import { drawLagoonGround, drawLagoonPiece, drawLagoonOverhead, drawVoyage, drawVoyageDeck } from './lagoon.js';
 import { drawCoinPiece } from './coinbridge.js';
+import { drawProloguePiece } from './prologue.js';
 
 const hash = (n) => {
   const s = Math.sin(n * 127.1 + 311.7) * 43758.5453;
@@ -585,6 +586,8 @@ export function drawStreet(ctx, map, cam, width, time, hero = {}) {
   for (const [kind, wx, extra] of map.townPieces ?? []) {
     // Lantern Lagoon's own buildings, and the harbor's quay for the Sea Biscuit (render/lagoon.js).
     if (drawLagoonPiece(ctx, map, kind, wx, extra, cam, width, time)) continue;
+    // The prologue's rooms: Hayate's flat and the Queen's Bedchamber (render/prologue.js).
+    if (drawProloguePiece(ctx, map, kind, wx, extra, cam, width, time)) continue;
     // Coinbridge's canals, bridges and buildings (render/coinbridge.js).
     if (drawCoinPiece(ctx, map, kind, wx, extra, cam, width, time)) continue;
     // Your island's own pieces (render/island.js).

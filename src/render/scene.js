@@ -17,6 +17,7 @@ import { wheelShape, wheelWisps } from '../world/foxwheel.js';
 import { settings } from '../core/settings.js';
 import { NPCS } from '../data/npcs.js';
 import { drawSceneBack, drawSceneFront, fireflyLights } from './scenery.js';
+import { drawCast } from './cast.js';
 import { drawHero, setLight, rimLightOf } from './hero.js';
 import { gameHour, isNight } from '../world/daytime.js';
 import { drawMonster } from './monsters.js';
@@ -90,8 +91,14 @@ export function updateCamera(cam, world, dt) {
     if (cine.cam) {
       const sh = cine.shake ? cine.shake.amp * (cine.shake.left / cine.shake.dur) : 0;
       const t = performance.now() / 1000;
-      cam.x = Math.max(0, Math.min(map.width - VIEW_W, cine.cam.x - VIEW_W / 2 + Math.sin(t * 61) * sh));
-      cam.y = Math.max(0, Math.min(map.height - VIEW_H + BAR_ROOM, cine.cam.y - VIEW_H * 0.55 + Math.cos(t * 53) * sh * 0.6));
+      // (`cine.zoom`: the scene's camera pushed in for a close shot; the view is that much smaller,
+      // centred on the same point, and drawWorld scales it up to fill the screen.)
+      const z = Math.max(1, cine.zoom ?? 1);
+      const vw = VIEW_W / z;
+      const vh = VIEW_H / z;
+      cam.zoom = z;
+      cam.x = Math.max(0, Math.min(map.width - vw, cine.cam.x - vw / 2 + Math.sin(t * 61) * sh));
+      cam.y = Math.max(0, Math.min(map.height - vh + BAR_ROOM / z, cine.cam.y - vh * 0.55 + Math.cos(t * 53) * sh * 0.6));
       return;
     }
     cine.view = { x: cam.x + VIEW_W / 2, y: cam.y + VIEW_H * 0.55 };
@@ -511,11 +518,11 @@ export function drawWorld(ctx, world, viewCam, time) {
   // spikes along a lip, outlines) was drawn half in two pixels and flickered as it slid across them
   // while you walked. On the pixel grid the whole scene steps together, crisp, every frame.
   // (In the Mochi Show's close shots, on the zoomed screen's pixels: render/show.js.)
-  const zs = world.show || world.sumo ? (viewCam.zoom ?? 1) : 1;
+  const zs = world.show || world.sumo || world.cine ? (viewCam.zoom ?? 1) : 1;
   const cam = { x: snap((viewCam.x + ox) * zs) / zs, y: snap((viewCam.y + oy) * zs) / zs };
   // A race's closer camera (updateCamera): the whole scene drawn larger. (Anything a race draws in
   // screen space finds the unzoomed screen in `world.race.screenT`.)
-  const zoom = (world.race || world.show || world.sumo) && (viewCam.zoom ?? 1) !== 1 ? viewCam.zoom : 1;
+  const zoom = (world.race || world.show || world.sumo || world.cine) && (viewCam.zoom ?? 1) !== 1 ? viewCam.zoom : 1;
   if (world.race) world.race.screenT = ctx.getTransform();
   if (world.show) world.show.zoom = zoom;
   if (world.sumo) world.sumo.zoom = zoom;
@@ -559,6 +566,8 @@ function drawWorldLayers(ctx, world, cam, time, b, zoom = 1) {
   }
   drawTownsfolk(ctx, world.map, cam, VIEW_W, time, botsIn(world.bots, world.map.id), world.hoverBot, world.body);
   drawNpcs(ctx, world, cam, time);
+  // A cutscene's own cast: Hayate, the Mochi, a crown on its way (render/cast.js).
+  drawCast(ctx, world, cam, time);
   lap('people');
   drawWarnings(ctx, world, cam, time);
   drawGroundFx(ctx, world, cam, time);
