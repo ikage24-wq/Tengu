@@ -1518,7 +1518,8 @@ Object.assign(MAPS, {
   },
 
   // The Moonlit Rooftop: the slate roof under a moon far too big, chimneys to stand on, a
-  // weathervane at the top, and a long party table laid for a hundred. Lady Marigold is waiting.
+  // weathervane at the top. Lady Marigold is waiting, and at a little tea table by the far chimney
+  // her one guest, Elder Sakura, who got lost in her ballroom on festival night (render/manor.js).
   manor6: {
     id: 'manor6', name: 'The Moonlit Rooftop', theme: 'manor', town: 'harbor', dungeon: 'manor', ownLight: true,
     width: 1600, height: 420, groundY: G,
@@ -1539,6 +1540,7 @@ Object.assign(MAPS, {
     ],
     objects: [],
     npcs: [],
+    teaParty: { x: 1420 },
     spawns: [{ mob: 'marigold', x: 800, y: G }],
   },
 });

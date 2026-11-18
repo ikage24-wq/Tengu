@@ -40,6 +40,7 @@ import { cornice, wainscot, skirting, floorShade, contact, frame, plant, shelf, 
 import { drawHayate } from './hayate.js';
 import { drawMochiAnim } from './mochi-anim.js';
 import { rollMochi } from '../data/mochi-genes.js';
+import { SAKURA } from '../data/scenes.js';
 
 const TAU = Math.PI * 2;
 const WHITE = '#ffffff';
@@ -750,9 +751,15 @@ export function drawProloguePiece(ctx, map, kind, wx, extra, cam, width, time) {
         YOMOGI.genes ??= Object.assign(rollMochi(41, { dough: '#d8efc0', hairColor: 'yomogi' }), { wear: { dress: 'elderrobe', hat: 'elderhat', eyes: 'monocle', face: 'fakebeard' } });
         drawMochiAnim(ctx, YOMOGI, ox + 610, oy + 302, time + 1.3);
       }
+      // ...and Elder Sakura, home from Lady Marigold's party (Chapter 4).
+      if (map.elders?.sakura) {
+        SAKURA_HOME.genes ??= Object.assign(rollMochi(SAKURA.seed, SAKURA.genes), { wear: { ...SAKURA.wear } });
+        drawMochiAnim(ctx, SAKURA_HOME, ox + 668, oy + 302, time + 2.6);
+      }
     }
   }
   return true;
 }
 const TRANSLATOR = { genes: null, dir: -1, speed: 0, dist: 0, size: 'grown', runPoints: 300, easy: true, idleBits: ['lookaround'] };
 const YOMOGI = { genes: null, dir: -1, speed: 0, dist: 0, size: 'grown', runPoints: 300, easy: true, idleBits: ['lookaround'] };
+const SAKURA_HOME = { genes: null, dir: -1, speed: 0, dist: 0, size: 'grown', runPoints: 300, easy: true, idleBits: ['lookaround'] };

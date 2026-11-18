@@ -337,53 +337,110 @@ function velvet(world, m, up, dt) {
   return m.slamming > world.now;
 }
 
+// Lady Marigold's waltz (reworked 2026-11-18, Chapter 4). Everything she does lands on the beat of
+// her music, three to the bar (Apparitions Ball, 190 a minute: a bar every 0.947 s). Her marks go down
+// a bar or two ahead and land on the ONE, or one on each beat for her Three Steps, so you dodge in
+// time with the music. Every four bars she dances the next move:
+//   Petal Twirl   a ring of petals round her, landing on the ONE
+//   Three Steps   three stamps marching through someone, one on each beat: ONE, two, three
+//   Tea for Two   a teacup falling on everyone
+// At two thirds she calls "May I cut in?": three Pumpkin Butlers waltz in and she floats out of reach
+// (cups still falling) until they're gone, then sinks down dizzy. At a third, the Last Waltz: her steps
+// come for two people at once, and every twelve bars the moonlight sweeps the roof (up on a chimney, or
+// jump). The beat keeps to the music (audio/listen.js puts where the song is on `world.music`) and to
+// the clock when there's no sound.
+export const WALTZ = { bar: (60 / 190) * 3, offset: 0.02, key: 'marigold' };
+const MOVES = ['twirl', 'steps', 'cups', 'steps'];
+
+// The next ONE that's at least `bars` bars away.
+const oneAfter = (s, now, bars) => s.t0 + (Math.ceil((now - s.t0) / WALTZ.bar - 0.05) + bars - 1) * WALTZ.bar;
+
 function marigold(world, m, up, dt) {
   const room = world.dungeon.room;
-  const s = (m.mech ??= { phase: 1, cups: 4, sweep: 0 });
+  const now = world.now;
+  const bar = WALTZ.bar;
+  const beat = bar / 3;
+  const s = (m.mech ??= { phase: 1, t0: now, plan: now + bar * 2, move: 0, moon: 0 });
+  // Keep in step with the music: ease the clock's ONE toward the song's.
+  const mu = world.music;
+  if (mu?.key === WALTZ.key && Number.isFinite(mu.pos)) {
+    const one = mu.at - (((mu.pos - WALTZ.offset) % bar) + bar) % bar;
+    let d = (((one - s.t0) % bar) + bar) % bar;
+    if (d > bar / 2) d -= bar;
+    s.t0 += Math.abs(d) > 0.25 ? d : d * Math.min(1, dt * 4);
+  }
+  m.beat = { t0: s.t0, bar };
   const frac = m.hp / m.def.hp;
   const pending = world.dungeon.zones.some((z) => !z.hit);
-  // Phase 2: the guests arrive, and she floats above them out of reach until they're gone.
+  // "May I cut in?": the butlers waltz in, and she floats up out of reach until they're gone.
   if (s.phase === 1 && frac <= 0.66) {
     s.phase = 2;
     s.aloft = true;
-    adds(world, m, 'candlebride', [m.x - 260, m.x + 260], null);
-    adds(world, m, 'armourknight', [m.x - 120, m.x + 120], null);
-    callout(world, 'The Guests Arrive!', 'She floats out of reach: clear her guests!');
+    adds(world, m, 'pumpkinbutler', [m.x - 240, m.x + 240, m.x - 120], null);
+    callout(world, 'May I cut in?', 'Her Pumpkin Butlers waltz in. She floats out of reach till they sit down!');
     radio(world, 'guests');
   }
   if (s.aloft && !room.adds.some((a) => a.hp > 0)) {
     s.aloft = false;
-    m.vulnUntil = world.now + 6;
-    callout(world, 'Her guests are gone!', 'Lady Marigold sinks down, dizzy: strike now!');
+    m.vulnUntil = now + 6;
+    s.plan = Math.max(s.plan, now + 6);
+    callout(world, 'The butlers bow out!', 'Lady Marigold sinks down, dizzy: strike now!');
   }
   if (s.phase === 2 && !s.aloft && frac <= 0.33) {
     s.phase = 3;
-    s.sweep = 2;
-    callout(world, 'The Last Waltz!', 'Moonlight sweeps the roof: up on a chimney, or jump!');
+    s.moon = 2;
+    callout(world, 'The Last Waltz!', 'Moonlight sweeps the roof on the beat: up on a chimney, or jump!');
     radio(world, 'lastwaltz');
   }
-  s.cups -= dt;
-  if (s.cups <= 0 && up.length) {
-    s.cups = s.phase === 3 ? 11 : 8;
-    const spots = up.map((g) => g.body).concat(s.phase >= 2 ? [{ x: m.x + (Math.random() - 0.5) * 500, y: world.map.groundY }] : []);
-    for (const b of spots) addZone(world, { kind: 'circle', x: b.x, y: b.y === world.map.groundY ? b.y : floorY(world, b), w: 58, warn: 1.5, damage: 150, from: m, cups: true });
-    callout(world, 'Tea for Two!', 'Teacups falling: step off the marks');
+  // Her next move, planned just after a ONE to land two bars on.
+  if (now >= s.plan && up.length && !(m.vulnUntil > now)) {
+    s.plan = oneAfter(s, now, 4) + 0.05;
+    const land = oneAfter(s, now, 2);
+    const kind = s.aloft ? 'cups' : MOVES[s.move++ % MOVES.length];
+    if (kind === 'twirl') {
+      addZone(world, { kind: 'circle', x: m.x, y: world.map.groundY, w: 190, warn: land - now, damage: 170, from: m, petals: true });
+      m.twirlAt = land;
+      s.busyUntil = land + 0.5;
+      callout(world, 'Petal Twirl!', 'ONE, two, three... out of her ring on the ONE!');
+    } else if (kind === 'steps') {
+      const targets = [...up].sort(() => Math.random() - 0.5).slice(0, s.phase === 3 ? 2 : 1);
+      for (const g of targets) {
+        const dir = Math.sign(g.body.x - m.x) || 1;
+        const y = floorY(world, g.body);
+        for (let k = 0; k < 3; k++) {
+          addZone(world, { kind: 'circle', x: g.body.x + dir * (k - 1) * 70, y, w: 66, warn: land + k * beat - now, damage: 130, from: m, steps: true, count: k + 1 });
+        }
+      }
+      m.stepsAt = land;
+      s.busyUntil = land + bar;
+      callout(world, 'Three Steps!', 'She stamps ONE, two, three: step into the mark she just left!');
+    } else {
+      const spots = up.map((g) => g.body).concat(s.phase >= 2 ? [{ x: m.x + (Math.random() - 0.5) * 500, y: world.map.groundY }] : []);
+      for (const b of spots) addZone(world, { kind: 'circle', x: b.x, y: b.y === world.map.groundY ? b.y : floorY(world, b), w: 58, warn: land - now, damage: 150, from: m, cups: true });
+      m.cupsAt = land;
+      callout(world, 'Tea for Two!', 'Teacups falling on the ONE: step off the marks');
+    }
   }
+  // The Last Waltz: the moonlight sweeps the whole roof on a ONE every twelve bars.
   if (s.phase === 3) {
-    s.sweep -= dt;
-    if (s.sweep <= 0) {
-      if (pending) s.sweep = 1;
+    s.moon -= dt;
+    if (s.moon <= 0) {
+      if (pending) s.moon = beat;
       else {
-        s.sweep = 12;
-        addZone(world, { kind: 'floor', x: 0, w: world.map.width, warn: 2, damage: 220, from: m, moon: true });
-        m.slamming = world.now + 2;
+        const land = oneAfter(s, now, 2);
+        s.moon = 12 * bar;
+        addZone(world, { kind: 'floor', x: 0, w: world.map.width, warn: land - now, damage: 220, from: m, moon: true });
+        m.slamming = land + 0.4;
       }
     }
   }
-  return s.aloft || m.slamming > world.now;
+  return s.aloft || m.slamming > now || s.busyUntil > now;
 }
 
 // A manor boss down.
 export function manorKilled(world, m) {
-  if (m.def.mech === 'marigold') playScene(world, 'manor_freed');
+  if (m.def.mech !== 'marigold') return;
+  // Elder Sakura, her one guest since festival night, goes home to the palace (render/prologue.js).
+  world.char.elders = { ...(world.char.elders ?? {}), sakura: true };
+  playScene(world, 'manor_freed');
 }

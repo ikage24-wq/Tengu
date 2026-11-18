@@ -9,6 +9,9 @@ import { R, E, T, F, sprite, blit, mix } from './pixel.js';
 import { art, place } from './scenery.js';
 import { trolleyArt } from './mobs/manorboss.js';
 import { CREST, doorOpen } from '../world/manor.js';
+import { drawMochiAnim } from './mochi-anim.js';
+import { rollMochi } from '../data/mochi-genes.js';
+import { SAKURA } from '../data/scenes.js';
 
 const TAU = Math.PI * 2;
 const GOLD = '#ffd36b';
@@ -216,6 +219,50 @@ function doorArt(open) {
   });
 }
 
+// ---------- Elder Sakura's tea table ----------
+// A little round table on the roof, laid for two: a lace cloth, a cake stand, the teapot and two
+// cups. Lady Marigold's one guest stands beside it, dozing on her feet, until she's freed (then
+// she's at the palace: render/prologue.js).
+
+function teaTableArt() {
+  return art('mn-teatable', 60, 44, () => {
+    const out = [T([[10, 20], [50, 20], [55, 42], [5, 42]], '#fff6fa')];
+    for (let i = 0; i <= 10; i++) out.push(E(5 + i * 5, 42, 2.8, 2, '#fff6fa'));
+    out.push(E(30, 20, 25, 5, '#ffffff'), F(E(30, 19, 21, 3, '#fff0f6')), F(R(9, 26, 42, 1.4, '#ffd6e6')));
+    // The cake stand: two plates of little cakes.
+    out.push(R(37, 8, 2, 12, '#e0c8f0'), E(38, 16, 8, 1.6, '#f4ecff'), E(38, 9, 6, 1.4, '#f4ecff'));
+    for (const [x, y, c] of [[33, 14, '#ffb3c8'], [38, 14, '#ffe08a'], [43, 14, '#b8e8c8'], [35.6, 7.2, '#ffb3c8'], [40.4, 7.2, '#c8b4f0']]) out.push(E(x, y, 2, 1.6, c), F(E(x - 0.5, y - 0.6, 0.8, 0.5, '#ffffff')));
+    out.push(E(38, 4.4, 1.2, 1.2, '#ff4a6a'));
+    // The teapot and two cups.
+    out.push(E(18, 15, 6, 4.6, '#f4f0ff'), E(18, 10.6, 3, 1.2, '#e8e0f8'), E(18, 9.4, 1, 1, GOLD), T([[23, 15], [27, 11], [27.6, 12], [24, 16.4]], '#f4f0ff'), F(E(16, 15, 1.4, 1.4, '#ff9ab8')));
+    out.push(E(8.6, 18, 2.6, 1.6, '#ffffff'), F(E(8.6, 17.4, 1.8, 0.7, '#c8864a')), E(28, 18.6, 2.6, 1.6, '#ffffff'), F(E(28, 18, 1.8, 0.7, '#c8864a')));
+    return out;
+  });
+}
+const SAKURA_MOCHI = { genes: null, dir: -1, speed: 0, dist: 0, size: 'grown', runPoints: 300, easy: true, idleBits: ['lookaround'] };
+function drawTeaParty(ctx, world, cam, time) {
+  const t = world.map.teaParty;
+  const x = t.x - cam.x;
+  const y = world.map.groundY - cam.y;
+  if (x < -80 || x > 720) return;
+  shadow(ctx, x, y, 26);
+  place(ctx, teaTableArt(), x, y);
+  // Steam off the teapot.
+  for (let k = 0; k < 2; k++) {
+    const u = (time * 0.5 + k / 2) % 1;
+    ctx.save();
+    ctx.globalAlpha = (1 - u) * 0.4;
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.arc(x - 3 + u * 4, y - 36 - u * 12, 1.6 + u * 2, 0, TAU);
+    ctx.fill();
+    ctx.restore();
+  }
+  if (world.char?.elders?.sakura || world.map.castOn) return;
+  SAKURA_MOCHI.genes ??= Object.assign(rollMochi(SAKURA.seed, SAKURA.genes), { wear: { ...SAKURA.wear } });
+  drawMochiAnim(ctx, SAKURA_MOCHI, x + 40, y, time + 2.1);
+}
+
 // ---------- Fountains ----------
 
 function fountainArt() {
@@ -290,6 +337,7 @@ export function drawManorBack(ctx, world, cam, time) {
   const map = world.map;
   if (map.dungeon !== 'manor') return;
   for (const f of room.fountains ?? []) drawFountain(ctx, f, f.x - cam.x, f.y - cam.y, time);
+  if (map.teaParty) drawTeaParty(ctx, world, cam, time);
   if (map.crest && room.crest) drawCrest(ctx, map.crest.x - cam.x, map.crest.y - cam.y, room.crest, time);
   for (const d of map.doors ?? []) {
     const x = d.x - cam.x;
@@ -372,6 +420,24 @@ export function drawManorFront(ctx, world, cam, time) {
     }
     ctx.restore();
   }
+  // Lady Marigold's Three Steps: each mark shows its beat (1, 2, 3), and swells as its beat comes.
+  for (const z of run.zones) {
+    if (!z.steps || z.hit) continue;
+    const x = z.x - cam.x;
+    const y = z.y - cam.y;
+    const left = z.warn - (z.t ?? 0);
+    const near = Math.max(0, 1 - left / 0.35);
+    ctx.save();
+    ctx.globalAlpha = 0.75 + near * 0.25;
+    ctx.fillStyle = near > 0 ? '#ff8a2a' : '#fff6e0';
+    ctx.strokeStyle = '#5a3e86';
+    ctx.lineWidth = 2.4;
+    ctx.font = `bold ${Math.round(11 + near * 5)}px sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.strokeText(String(z.count), x, y - 16);
+    ctx.fillText(String(z.count), x, y - 16);
+    ctx.restore();
+  }
   for (const m of world.mobs) {
     if (m.hp <= 0) continue;
     const x = m.x - cam.x;
@@ -390,10 +456,10 @@ export function drawManorFront(ctx, world, cam, time) {
     }
     // The hostess floating out of reach above her guests: a bubble of moonlight.
     if (m.def.mech === 'marigold' && m.mech?.aloft) {
-      glow(ctx, x, y - m.def.h * 0.55, m.def.h * 0.7, '#fff6d8', 0.35 + 0.1 * Math.sin(time * 2));
+      glow(ctx, x, y - 140, 84, '#fff6d8', 0.35 + 0.1 * Math.sin(time * 2));
       for (let k = 0; k < 5; k++) {
         const a = time * 1.2 + (k / 5) * TAU;
-        sparkle(ctx, x + Math.cos(a) * 46, y - m.def.h * 0.55 + Math.sin(a) * 60, 2.4, '#ffe9a0');
+        sparkle(ctx, x + Math.cos(a) * 52, y - 140 + Math.sin(a) * 70, 2.4, '#ffe9a0');
       }
     }
   }

@@ -20,7 +20,7 @@
 import { E, T, F, R, stroke } from './kit.js';
 import { ramp, crescent, shine } from './meadow.js';
 import { makeRig, stateBlend, smooth, clamp, lerp, inPart, TAU } from './rig.js';
-import { D2R, fr, ov, arcP, taper, pairOf, faceSprite, hold, stepPhase, pawStep, put, shift, MOODS, moodOf, faceShapes, dot, puff } from './rigkit.js';
+import { D2R, fr, ov, arcP, taper, pairOf, faceSprite, hold, stepPhase, pawStep, put, shift, MOODS, moodOf, faceShapes, dot, puff, sparkle } from './rigkit.js';
 
 const sm = (key, w, h, shapes) => faceSprite(key, w, h, shapes);
 
@@ -625,4 +625,136 @@ export const teapotRig = makeRig({
 export function teapotStill(pose, f, mood) {
   const fm = MOODS.has(mood) ? mood : 'idle';
   return { w: 34, h: 42, res: 3, shapes: shift([...put(thSaucer(), [13, 4.6], 0, 0), ...put(thPot(), [14, 20], 0, -1.4), ...put(faceShapes(fm, TH_FACE), [14, 20], 0, -1.4), ...put(thHat(), [8, 15], -0.6, -18.8)], 16, 41) };
+}
+
+// =====================================================================================
+// Pumpkin Butler (added 2026-11-18): Lady Marigold's staff, who cut in on the dance
+// =====================================================================================
+// A round pumpkin for a head (painted face, a curly stem and a leaf), a black tailcoat with tails
+// that swing from the back of the waist, an orange bow tie, white gloves, short stubby legs. He
+// carries a silver tray with a cloche. Waltzes along; bows; lifts the cloche to offer a cupcake;
+// polishes the tray. Bonks with the tray.
+const PUMP = ramp('#ff9a3a', { step: 9, turn: 8 });
+const COAT = ramp('#3a3048', { step: 8, turn: 8, lift: 14 });
+const SILVER = ramp('#dfe6f2', { step: 8, turn: 8, lift: 3 });
+const GOLDB = ramp('#ffd36b', { step: 10, turn: 8 });
+const pb = pairOf('pb');
+// The pumpkin. Box 30 x 24; the neck at (15, 23).
+const pbHead = () => [
+  E(8.6, 13.4, 7.4, 8.6, PUMP.base), E(21.4, 13.4, 7.4, 8.6, PUMP.base), E(15, 13, 9.4, 9.6, PUMP.base),
+  F(taper([[11, 5.6], [10, 13], [11, 21]], 0.7, 0.7, PUMP.sh)), F(taper([[19, 5.6], [20, 13], [19, 21]], 0.7, 0.7, PUMP.sh)),
+  crescent(15, 13, 13.6, 9.4, PUMP.sh, { k: 0.18, a0: 100, a1: 220 }),
+  shine(15, 12, 13.6, 9.4, '#ffffff', 0, 0.6),
+  taper([[15, 5], [16.4, 0.8]], 2.4, 1.8, '#8a5a3a'),
+  T([[16.4, 2.4], [23, 0.6], [25.4, 3.6], [20, 5.4]], '#7cc46a'), F(taper([[17, 3], [23.4, 2]], 0.5, 0.3, '#5a9a4a')),
+  ...stroke([[14.6, 3], [12.4, 1.4], [10.6, 2.4], [11.4, 4]], 0.7, '#7cc46a'),
+];
+// The coat: round, a white shirt front, an orange bow tie, gold buttons. Box 24 x 22; the hip at (12, 21).
+const pbCoat = () => [
+  E(12, 11, 10.6, 10, COAT.base),
+  F(T([[12, 2], [17.4, 3.4], [14, 18], [10, 18], [6.6, 3.4]], '#ffffff')),
+  F(T([[12, 4.4], [8.4, 2.4], [8.4, 6.4]], PUMP.base)), F(T([[12, 4.4], [15.6, 2.4], [15.6, 6.4]], PUMP.base)), F(E(12, 4.4, 1.2, 1.2, PUMP.sh)),
+  F(E(12, 10, 0.8, 0.8, GOLDB.base)), F(E(12, 13.6, 0.8, 0.8, GOLDB.base)),
+  crescent(12, 11, 10.6, 10, COAT.sh, { k: 0.2, a0: 100, a1: 220 }),
+];
+// The coat tails, from the back of the waist. Box 12 x 16; hung at (9, 1).
+const pbTails = () => [T([[9, 0.6], [11, 1], [10, 9.6], [8.4, 13], [7, 10.4], [5.4, 13], [4, 9], [5.6, 2]], COAT.base), F(taper([[7.4, 3], [6.8, 10]], 0.6, 0.4, COAT.hi))];
+// A stubby leg in black trousers. Box 8 x 10; the hip at (4, 1), the ankle 7 below.
+const pbLeg = (far) => () => [taper([[4, 1], [4, 8]], 6.4, 5.6, far ? COAT.sh : '#4a4058')];
+const pbShoe = (far) => () => [E(3.6, 2, 3.4, 1.8, far ? '#1e1a26' : '#2a2434'), F(E(4.6, 1.4, 1, 0.5, '#6a6080'))];
+// An arm: black sleeve, white glove. Box 16 x 8; the shoulder at (3, 4), the hand 10 along.
+const pbArm = (far) => () => [taper([[3, 4], [10, 4]], 4.6, 4, far ? COAT.sh : COAT.base), E(12, 4, 3, 2.8, far ? '#e8e4f0' : '#ffffff'), F(R(9, 1.6, 1.2, 4.8, '#ffffff'))];
+// The tray, and its cloche (which lifts). Tray box 28 x 6, held at (14, 4.6); cloche box 18 x 12, sits at (9, 11).
+const pbTray = () => [E(14, 3, 13, 2.2, SILVER.base), F(E(14, 2.4, 11, 1.2, '#ffffff')), F(E(14, 4.2, 12, 0.7, SILVER.sh))];
+const pbCloche = () => [E(9, 10, 8.4, 1.4, SILVER.base), T(arcP(9, 10, 7.6, 8, 180, 360, 14), SILVER.base), E(9, 2.2, 1.4, 1.2, GOLDB.base), shine(9, 7, 7.6, 7, '#ffffff', 0, 0.6), F(taper([[4, 7], [5.4, 3.4]], 0.7, 0.4, '#ffffff'))];
+const pbCake = () => [T([[3.6, 9.8], [10.4, 9.8], [9.4, 6], [4.6, 6]], '#ffb3c8'), E(7, 5.4, 3.4, 2, '#fff8ec'), E(7, 3.4, 1.2, 1.2, '#ff4a6a')];
+const PB_HEAD = pb('head', 30, 24, pbHead);
+const PB_COAT = pb('coat', 24, 22, pbCoat);
+const PB_TAILS = pb('tails', 12, 16, pbTails);
+const PB_LEG = [false, true].map((f) => pb(`leg${f ? 1 : 0}`, 8, 10, pbLeg(f)));
+const PB_SHOE = [false, true].map((f) => pb(`shoe${f ? 1 : 0}`, 8, 4, pbShoe(f)));
+const PB_ARM = [false, true].map((f) => pb(`arm${f ? 1 : 0}`, 16, 8, pbArm(f)));
+const PB_TRAY = pb('tray', 28, 6, pbTray);
+const PB_CLOCHE = pb('cloche', 18, 12, pbCloche);
+const PB_CAKE = pb('cake', 14, 11, pbCake);
+const PB_FACE = { eyes: [[16.8, 13, 1.8, 2.4, -1], [22.2, 12.6, 1.5, 2.1, 1]], mouth: [19.6, 17.6, 2], blush: [[14.6, 15.8, 1.6], [24, 15.2, 1.2]], iris: '#6a4a2a', lid: 0, k: 1.3 };
+const pbFace = (mood) => sm(`pb|face|${mood}`, 30, 24, () => faceShapes(mood, PB_FACE));
+const pbPass = (bare) => {
+  const i = bare ? 1 : 0;
+  const tag = bare ? 'b' : '';
+  const leg = (near) => ({ name: `leg${near ? 'N' : 'F'}${tag}`, parent: 'hip', s: PB_LEG[near ? 0 : 1][i], pivot: [4, 1], at: () => [near ? 3 : -3, 0], rot: (S) => (near ? S.legN : S.legF) * D2R });
+  const shoe = (near) => ({ name: `shoe${near ? 'N' : 'F'}${tag}`, parent: `leg${near ? 'N' : 'F'}${tag}`, s: PB_SHOE[near ? 0 : 1][i], pivot: [2.6, 1.2], at: () => [0, 7.4], rot: (S) => (-(near ? S.legN : S.legF) - S.lean) * D2R });
+  return [
+    { name: `tails${tag}`, parent: 'hip', s: PB_TAILS[i], pivot: [9, 1], at: () => [-6, -3], rot: (S) => clamp(S.tails, -10, 50) * D2R },
+    { name: `armF${tag}`, parent: 'hip', s: PB_ARM[1][i], pivot: [3, 4], at: () => [-4, -15], rot: (S) => (120 + S.armF) * D2R },
+    leg(false), shoe(false), leg(true), shoe(true),
+    { name: `coat${tag}`, parent: 'hip', s: PB_COAT[i], pivot: [12, 21], at: () => [0, 1] },
+    { name: `head${tag}`, parent: 'neck', s: PB_HEAD[i], pivot: [15, 23] },
+    { name: `tray${tag}`, parent: 'hand', s: PB_TRAY[i], pivot: [14, 4.6], at: () => [2, -1], rot: (S) => (S.tray - (S.armN - 30) - S.lean) * D2R },
+    { name: `cake${tag}`, parent: `tray${tag}`, s: PB_CAKE[i], pivot: [7, 10.4], at: () => [3, -1.6], alpha: (a) => a.pbOffer ?? 0 },
+    { name: `cloche${tag}`, parent: `tray${tag}`, s: PB_CLOCHE[i], pivot: [9, 11], at: (S) => [3, -1.4 - S.lid], rot: (S) => -S.lid * 2 * D2R },
+    { name: `armN${tag}`, parent: 'hip', s: PB_ARM[0][i], pivot: [3, 4], at: () => [4, -14], rot: (S) => (S.armN - 30) * D2R },
+  ];
+};
+export const butlerRig = makeRig({
+  w: 40,
+  h: 56,
+  soft: true,
+  stride: 12,
+  recover: 0.6,
+  springs: { x: [240, 20], lift: [200, 15], lean: [160, 12], head: [140, 10], legN: [200, 15], legF: [200, 15], armN: [160, 12], armF: [140, 11], tray: [160, 12], lid: [140, 11], tails: [60, 6] },
+  fast: ['x', 'armN', 'tray', 'legN', 'legF'],
+  kick: { lean: -200, head: -260, tails: 300, lid: 6 },
+  turnKick: { tails: 260 },
+  pose(m, a) {
+    a.uidOff = (m.uid % 11) * 0.97;
+    const t = a.t + a.uidOff;
+    const u = stepPhase(m, a, 'pb', 12);
+    const p = u * TAU;
+    const lu = t % 12;
+    const bow = hold(lu, 1, 1.5, 2.4, 2.9);
+    const offer = hold(lu, 5, 5.5, 7.4, 7.9);
+    const polish = hold(lu, 9, 9.3, 10.6, 11);
+    const still = 1 - a.walkW;
+    a.pbOffer = offer * still;
+    a.pbPolish = polish * still;
+    const br = Math.sin(t * 1.8);
+    const idle = {
+      x: 0, lift: br * 0.3 - bow * 1, lean: bow * 22, head: bow * 10 + offer * -6, legN: 0, legF: 0,
+      armN: 70 - offer * 30 + polish * Math.sin(t * 12) * 6, armF: bow * -20, tray: polish * Math.sin(t * 10) * 6, lid: offer * 9,
+    };
+    // A waltz walk: little gliding steps, a dip in each.
+    const walk = { x: 0, lift: Math.abs(Math.sin(p)) * 1.2, lean: 6, head: Math.sin(p) * 3, legN: Math.sin(p) * 22, legF: -Math.sin(p) * 22, armN: 70, armF: 0, tray: Math.sin(p) * 4, lid: 0 };
+    // The bonk: the tray swung up overhead, then down.
+    const antic = { x: -2, lift: 0, lean: -10, head: -6, legN: 8, legF: -6, armN: -130, armF: 0, tray: -60, lid: 0 };
+    const strike = { x: 5, lift: 0.6, lean: 16, head: 6, legN: 18, legF: -14, armN: 20, armF: 0, tray: 70, lid: 3 };
+    return stateBlend(a, idle, walk, antic, strike);
+  },
+  follow: (S, a) => ({ tails: 4 - S.lean * 0.9 + a.walkW * 16 }),
+  parts: [
+    { name: 'hip', parent: null, at: (S) => [S.x, -10.4 - S.lift], rot: (S) => S.lean * D2R },
+    { name: 'neck', parent: 'hip', at: () => [1, -19], rot: (S) => S.head * D2R },
+    { name: 'hand', parent: 'armN', at: () => [10, 0] },
+    ...pbPass(false),
+    ...pbPass(true),
+    { name: 'face', parent: 'neck', s: (a) => pbFace(moodOf(a, a.pbOffer > 0.5 ? 'happy' : null)), pivot: [15, 23] },
+  ],
+  fx(ctx, m, a, S, mat) {
+    if (a.pbPolish > 0.4) inPart(ctx, mat, 'tray', () => sparkle(ctx, a, 6, -2, 2.6 + Math.sin(a.now * 9), a.pbPolish));
+  },
+});
+export function butlerStill(pose, f, mood) {
+  const fm = MOODS.has(mood) ? mood : 'idle';
+  const hy = -10.4;
+  return {
+    w: 40,
+    h: 52,
+    res: 3,
+    shapes: shift([
+      ...put(pbTails(), [9, 1], -6, hy - 3, 4), ...put(pbArm(true)(), [3, 4], -4, hy - 15, 120),
+      ...put(pbLeg(true)(), [4, 1], -3, hy), ...put(pbShoe(true)(), [2.6, 1.2], -3, hy + 7.4), ...put(pbLeg(false)(), [4, 1], 3, hy), ...put(pbShoe(false)(), [2.6, 1.2], 3, hy + 7.4),
+      ...put(pbCoat(), [12, 21], 0, hy + 1), ...put(pbHead(), [15, 23], 1, hy - 19), ...put(faceShapes(fm, PB_FACE), [15, 23], 1, hy - 19),
+      ...put(pbTray(), [14, 4.6], 13.7, hy - 8.6), ...put(pbCloche(), [9, 11], 16.7, hy - 10), ...put(pbArm(false)(), [3, 4], 4, hy - 14, 40),
+    ], 20, 50),
+  };
 }

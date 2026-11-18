@@ -1135,6 +1135,11 @@ export const HOLLOW_RADIO = {
 
 
 // ---------- Moonlit Manor ----------
+// Elder Sakura: Lady Marigold's one guest since festival night (Chapter 4). Her look, shared by her
+// scenes, the roof (render/manor.js) and the palace (render/prologue.js).
+export const SAKURA = { seed: 57, genes: { dough: '#ffe4ec', hairColor: 'sakura' }, wear: { dress: 'elderrobe', hat: 'elderhat', face: 'fakebeard' } };
+const SAKURA_CAST = { kind: 'mochi', seed: SAKURA.seed, size: 'grown', name: 'Elder Sakura', color: '#e86f8f', genes: SAKURA.genes, wear: SAKURA.wear, idles: ['lookaround'] };
+
 export const MANOR_SCENES = {
   manor_results: [
     { card: 'Moonlit Manor', sub: 'Rank {grade}  ·  {time}' },
@@ -1178,36 +1183,62 @@ export const MANOR_SCENES = {
     { wait: 0.6 },
     { cam: 'player', dur: 0.7 },
   ],
-  // Lady Marigold, staged: the camera glides along her long table of sleepy guests to the hostess
-  // under the huge moon; petals drift off her as she sways, sad; she holds out her hand for a last
-  // waltz and sweeps a storm of petals.
+  // Lady Marigold, staged (rewritten 2026-11-18, Chapter 4): the roof under a moon far too big, and
+  // at a little tea table her one guest since festival night, Elder Sakura, dozing on her feet.
   manor_marigold: [
+    { cast: 'sakura', x: 1460, facing: -1, ...SAKURA_CAST },
     { together: [{ cam: 'marigold', up: 30, dur: 2.2 }, { walk: 'player', to: 'marigold', gap: 170, speed: 100 }, { mood: 'marigold', as: 'happy' }] },
-    { who: null, text: 'The roof, under a moon far too big. A table is laid for a hundred, every chair taken by a guest who looks very, very tired.' },
+    { who: null, text: 'The roof, under a moon far too big. A table laid for two. One tiny guest, asleep on her feet.' },
     { together: [{ face: 'marigold', to: 'player' }, { jump: 'marigold', height: 12 }, { emote: 'marigold', kind: 'heart', dur: 1.6 }, { fx: 'petals', at: 'marigold', top: true }] },
-    { who: 'marigold', text: 'Oh! More guests! How wonderful. Nobody ever stays, you know. So I make sure they do.' },
-    { together: [{ cam: ['player', 'marigold'], up: 20, dur: 0.9 }, { face: 'player', to: 'marigold' }] },
-    { who: 'player', text: "They want to go home, Lady Marigold. And I think you're lonely, not cruel." },
-    { together: [{ mood: 'marigold', as: 'sad' }, { act: 'marigold', move: 'sway', dur: 2.4, amp: 0.06, speed: 2.4 }, { fx: 'petals', at: 'marigold', top: true, n: 8 }] },
-    { who: 'marigold', text: "...Then dance with me. One last waltz. If you can keep up, I'll... think about it.", mood: 'sad' },
-    { together: [{ walk: 'marigold', to: 'player', gap: 90, speed: 50 }, { fx: 'notes', at: 'marigold', top: true }, { emote: 'player', kind: 'heart', dur: 1.2 }] },
+    { who: 'marigold', text: 'GUESTS! Sakura, look! More guests!' },
+    { together: [{ cam: 'sakura', up: 16, dur: 1 }, { emote: 'sakura', kind: 'zzz', dur: 1.4 }] },
+    { who: 'sakura', text: "...that's nice, dear. May I go home now?" },
+    { who: 'marigold', text: "Home? The party's only just started!" },
+    { who: 'sakura', text: 'It started on festival night.' },
+    { together: [{ cam: ['player', 'marigold'], up: 20, dur: 0.9 }, { mood: 'marigold', as: 'sad' }, { act: 'marigold', move: 'sway', dur: 2.4, amp: 0.06, speed: 2.4 }, { fx: 'petals', at: 'marigold', top: true, n: 8 }] },
+    { who: 'marigold', text: 'A hundred years of parties. Nobody ever came. Then she did.', mood: 'sad' },
+    { who: 'player', text: 'She wants to go home, Lady Marigold.' },
+    { who: 'marigold', text: "...Then dance with me. Keep up with my waltz, and I'll think about it.", mood: 'sad' },
+    { together: [{ mood: 'marigold', as: 'happy' }, { walk: 'marigold', to: 'player', gap: 90, speed: 50 }, { fx: 'notes', at: 'marigold', top: true }, { emote: 'player', kind: 'sweat', dur: 1.2 }] },
+    { who: 'marigold', text: 'One, two, THREE!', mood: 'happy' },
     { act: 'marigold', move: 'attack', dur: 1, async: true },
     { wait: 0.35 },
     { together: [{ flash: '#fff2c8' }, { fx: 'petals', at: 'marigold', n: 36 }, { shake: 2, dur: 0.4 }, { walk: 'player', away: 'marigold', by: 30, speed: 150 }] },
     { wait: 0.6 },
     { cam: 'player', dur: 0.7 },
   ],
-  // She's freed at the end, not slain.
+  // She's freed at the end, not slain; she asks a favour; Elder Sakura goes home; and next morning
+  // the island finds her invitations on its doors.
   manor_freed: [
+    { cast: 'sakura', x: 1460, facing: -1, ...SAKURA_CAST },
     { together: [{ free: 'marigold', as: 'sad' }, { cam: ['marigold', 'player'], dur: 1.2 }, { walk: 'player', to: 'marigold', gap: 80, speed: 70 }] },
     { together: [{ face: 'player', to: 'marigold' }, { face: 'marigold', to: 'player' }] },
-    { who: 'marigold', text: '...You kept up. All of you. Nobody has danced with me like that in a hundred years.', mood: 'sad' },
-    { together: [{ act: 'marigold', move: 'sway', amp: 0.12, speed: 3, dur: 2.2 }, { fx: 'petals', at: 'marigold', top: true }, { emote: 'player', kind: 'heart', dur: 1.4 }] },
-    { who: null, text: 'One last turn across the floor. One by one, the guests at the long table stand, stretch, and drift away down the hill toward home.' },
-    { mood: 'marigold', as: 'happy' },
-    { who: 'marigold', text: 'Go on, then. All of you. Thank you for coming to my party. Truly.', mood: 'happy' },
+    { who: 'marigold', text: '...You kept up. Every single step.', mood: 'sad' },
+    { together: [{ walk: 'sakura', to: 'marigold', gap: 60, speed: 50 }, { jump: 'sakura', height: 14 }, { emote: 'sakura', kind: 'heart' }] },
+    { who: 'sakura', text: 'Best party I was ever stuck at. Truly.' },
+    { together: [{ act: 'marigold', move: 'sway', amp: 0.08, speed: 2, dur: 2 }, { fx: 'petals', at: 'marigold', top: true, n: 6 }] },
+    { who: 'marigold', text: '...Could you... come again next year?', mood: 'sad' },
+    { who: 'sakura', text: 'Send an invitation. A proper one. Everybody loves an invitation.' },
+    { together: [{ mood: 'marigold', as: 'happy' }, { jump: 'marigold', height: 16 }, { emote: 'marigold', kind: 'heart', dur: 1.6 }, { fx: 'notes', at: 'marigold', top: true }] },
+    { who: 'marigold', text: "I'll write a hundred! A THOUSAND! Oh, I need more ink.", mood: 'happy' },
     { together: [{ act: 'marigold', move: 'fade', dur: 2.6 }, { fx: 'petals', at: 'marigold' }] },
-    { who: null, text: 'The moon dims to its usual size. Lady Marigold fades with a smile, in a drift of petals.' },
+    { who: null, text: 'Lady Marigold waltzes off into the moonlight, humming, to find some ink.' },
+    { hide: 'sakura', dur: 0.4 },
+    { set: 'royal_bed' },
+    { cast: 'hayate', kind: 'hayate', x: 300, y: 283, seat: 'bed', crown: true, sprout: true, name: 'Hayate', color: '#5aa8c8' },
+    { cast: 'translator', kind: 'mochi', seed: 33, size: 'grown', x: 548, y: 302, facing: -1, name: 'Royal Snore Translator', color: '#b98ad8', idles: ['lookaround'], wear: { dress: 'scholarrobe', hat: 'scholarcap', eyes: 'specs', over: 'eartrumpet' } },
+    { cast: 'sakura', x: 720, y: 302, facing: -1, ...SAKURA_CAST },
+    { cam: 'hayate', up: 12, dur: 1.2, zoom: 1.5 },
+    { walk: 'sakura', to: 668, speed: 30 },
+    { together: [{ emote: 'translator', kind: '!' }, { play: 'translator', as: 'wow' }] },
+    { who: 'translator', text: 'Elder Sakura! Where have you BEEN?', mood: 'surprised' },
+    { who: 'sakura', text: 'At a party. It went on a bit.' },
+    { emote: 'hayate', kind: 'zzz', dur: 1.6 },
+    { who: 'hayate', text: '...mmn... was there... cake...', mood: 'sleepy' },
+    { who: 'sakura', text: 'So. Much. Cake.' },
+    { set: null },
+    { who: null, text: 'Next morning, a sleepy hand-written invitation is tucked into every door on the island.' },
+    { who: null, text: 'Everybody says yes.' },
   ],
 };
 
@@ -1218,7 +1249,7 @@ export const MANOR_RADIO = {
   'enter:manor3': ["The ballroom! Those two suits of armour have been dancing since before I was born. Don't get between them."],
   'enter:manor4': ['Books flying about again. Catch the three lost ones. And hold on to something when the pages blow!'],
   'enter:manor5': ["The long hall. Madame Velvet's trolley... when it starts rolling, you RUN. Levers open the doors!"],
-  'enter:manor6': ["The roof. She's up there. Be gentle with her... she's only lonely."],
+  'enter:manor6': ["The roof. She's up there, with poor Elder Sakura. Be gentle... she's only lonely."],
   'clear:manor1': ['Ooh, lovely lanterns. Go on in. Wipe your feet.'],
   'clear:manor2': ['The portraits are smiling! First time in a century, I reckon.'],
   'clear:manor3': ['The music stopped! Good. That waltz has been stuck in my head for sixty years.'],
@@ -1228,8 +1259,8 @@ export const MANOR_RADIO = {
   chase: ['RUN! Levers, levers, LEVERS!', "That's the trolley! Don't let it catch you!"],
   alone: ['Oh no, the other one is dancing alone now. Faster, and cross about it!'],
   bell: ["She's rung for the maids! They'll go for whoever's healing!"],
-  guests: ["Her guests are crowding the roof! She won't come down till they're gone!"],
-  lastwaltz: ['The Last Waltz! Get up on a chimney when the moonlight sweeps!'],
+  guests: ["My butlers are cutting in! Sorry! She won't come down till they've sat down!"],
+  lastwaltz: ['The Last Waltz! Up on a chimney when the moonlight sweeps! On the ONE!'],
 };
 
 

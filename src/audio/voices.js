@@ -18,7 +18,7 @@ const FAMILIES = {
   Bird: ['mossowlet', 'windbird', 'gloombat', 'chorusgirl', 'prompter'],
   Buzz: ['bumble', 'queenbee', 'sporeling', 'mothlibrarian'],
   Sprite: ['petalsprite', 'wisp', 'starspirit', 'sylph', 'lanternghost', 'stardancer', 'cometcourier', 'musicballerina'],
-  Goblin: ['brownie', 'macgoblin', 'pumpgob', 'rootling', 'sporecap', 'jellyninja', 'jackbox', 'teahatter'],
+  Goblin: ['brownie', 'macgoblin', 'pumpgob', 'rootling', 'sporecap', 'jellyninja', 'jackbox', 'teahatter', 'pumpkinbutler'],
   Plant: ['sproutling', 'leafling', 'mossgolem', 'sapling', 'mothercapper', 'gnarlroot', 'topiarydryad', 'sylvana'],
   Stone: ['boneknight', 'crystalslime', 'rockgolem', 'armourknight', 'waltzrondo', 'waltzminuet', 'tindrummer', 'gearheart', 'meteorgolem', 'chocoknight', 'crystalking', 'gretel'],
   Ghost: ['shade', 'porcelaindoll', 'ghostmaid', 'candlebride', 'marionette', 'geminighosts', 'understudy', 'yukionna', 'marionetta', 'persona', 'playwright', 'folio'],

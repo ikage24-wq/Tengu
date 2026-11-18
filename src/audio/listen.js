@@ -9,7 +9,7 @@
 // sfx.js). The music follows the map.
 
 import { sfx } from './sfx.js';
-import { updateMusic, setFight, setMuffle } from './music.js';
+import { updateMusic, setFight, setMuffle, musicNow } from './music.js';
 import { updateAmbience, dayPart } from './ambience.js';
 import { prepareSongs } from './bank.js';
 import { getMap } from '../data/maps.js';
@@ -27,8 +27,8 @@ const memo = new WeakMap();
 const GROUND = { town: 'stone', meadow: 'grass', harbor: 'wood', forest: 'grass', ruins: 'stone', cave: 'crystal', sky: 'cloud', crag: 'sand', grove: 'grass', hollow: 'wood', manor: 'wood', aquarium: 'sand', carnival: 'wood', observatory: 'stone', candy: 'grass', shrine: 'stone', tea: 'grass', ridge: 'stone', springs: 'stone', snow: 'snow' };
 // What's underfoot: the map's own ground, and the garden's snow on a snowy day.
 const groundOf = (world) => (world.map.garden && !world.map.indoor && (SKY.now?.snow ?? 0) > 0.35 ? 'snow' : GROUND[world.map.theme] ?? 'grass');
-// The manor's boss rooms play its boss waltz.
-const MANOR_BOSS_ROOMS = new Set(['manor3', 'manor5', 'manor6']);
+// The manor's boss rooms play its boss music; the roof, Lady Marigold's waltz.
+const MANOR_BOSS_ROOMS = new Set(['manor3', 'manor5']);
 const AQUA_BOSS_ROOMS = new Set(['aquarium4', 'aquarium5', 'aquarium6']);
 const CARNIVAL_BOSS_ROOMS = new Set(['carnival4', 'carnival5', 'carnival6']);
 const OBS_BOSS_ROOMS = new Set(['observatory4', 'observatory5', 'observatory6']);
@@ -45,6 +45,7 @@ export function songFor(map, world = null) {
   if (world?.cine && 'music' in world.cine) return world.cine.music;
   if (map.quiet) return null;
   if (map.id === 'bossroom' || map.id === 'hollow6') return 'boss';
+  if (map.id === 'manor6') return 'marigold';
   if (map.dungeon === 'manor') return MANOR_BOSS_ROOMS.has(map.id) ? 'manorboss' : 'manor';
   if (map.dungeon === 'aquarium') return AQUA_BOSS_ROOMS.has(map.id) ? 'aquaboss' : 'aquarium';
   if (map.dungeon === 'carnival') return CARNIVAL_BOSS_ROOMS.has(map.id) ? 'carnivalboss' : 'carnival';
@@ -733,6 +734,9 @@ export function hearWorld(world, cam) {
   m.fightK = (m.fightK ?? 0) + ((fighting ? 1 : 0) - (m.fightK ?? 0)) * 0.04;
   const song = songFor(world.map, world);
   updateMusic(song);
+  // (Where the song is, on the world, for a fight that keeps time with it: world/manor.js.)
+  const mu = musicNow();
+  world.music = mu && { ...mu, at: world.now };
   setFight(song === 'boss' || song === 'queen' ? 0 : fighting ? 1 : 0);
   // Low HP muffles the music under a heartbeat.
   const low = !world.dead && char.hp > 0 && char.hp < (world.stats?.maxHp ?? 1) * 0.25;

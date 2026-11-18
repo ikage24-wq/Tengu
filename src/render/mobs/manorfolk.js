@@ -10,11 +10,12 @@
 //   armourknight   Armour Knight: a small empty suit of armour, its helm too big, eyes glowing
 //                  inside; clanks along and slashes.
 //   teahatter      Tea Party Hatter: a round teapot in a top hat on a saucer (manorrigs.js, 2026-11-18)
+//   pumpkinbutler  Pumpkin Butler: Lady Marigold's staff, who cut in on her waltz (manorrigs.js, 2026-11-18)
 // Every design faces right, its lowest point on the bottom edge. Attacks are four frames:
 // wind-up (the tell), strike, impact, recover.
 
 import { E, T, F, R, mix, ramp, crescent, shine, smear, chain, wave, breath, sway, TAU, D2R, O, arcPts, limb, spin, strand, star, cuteFace, blob, bubbles } from './critter.js';
-import { swanRig, swanStill, wispRig, wispStill, dollRig, dollStill, maidRig, maidStill, teapotRig, teapotStill } from './manorrigs.js';
+import { swanRig, swanStill, wispRig, wispStill, dollRig, dollStill, maidRig, maidStill, teapotRig, teapotStill, butlerRig, butlerStill } from './manorrigs.js';
 
 const frames = (pose) => (pose === 'walk' ? 8 : pose === 'attack' ? 4 : 6);
 const phase = (pose, f) => f / frames(pose);
@@ -123,6 +124,7 @@ export const ART = {
   lanternghost: { pad: 8, walk: 8, idle: 6, attack: 4, stride: 20, atkMs: [60, 220, 170], draw: wispStill, rig: wispRig },
   armourknight: { pad: 6, walk: 8, idle: 6, attack: 4, stride: 18, atkMs: [80, 260, 200], draw: armour },
   teahatter: { pad: 6, walk: 8, idle: 6, attack: 4, stride: 22, atkMs: [70, 240, 180], draw: teapotStill, rig: teapotRig },
+  pumpkinbutler: { pad: 6, walk: 8, idle: 6, attack: 4, stride: 12, atkMs: [70, 240, 180], draw: butlerStill, rig: butlerRig },
 };
 
 export const INFO = {
@@ -133,4 +135,5 @@ export const INFO = {
   lanternghost: { name: 'Lantern Wisp', w: 26, h: 34 },
   armourknight: { name: 'Armour Knight', w: 28, h: 36 },
   teahatter: { name: 'Tea Party Hatter', w: 28, h: 36 },
+  pumpkinbutler: { name: 'Pumpkin Butler', w: 28, h: 40 },
 };

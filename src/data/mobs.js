@@ -296,6 +296,12 @@ export const MOBS = {
     speed: 44, w: 28, h: 36, art: 'teahatter', drops: [{ id: 'moonlit_ribbon', chance: 0.1 }, { id: 'orange_potion', chance: 0.3 }],
     fight: { every: 1.9, reach: 32, windup: 0.4, range: 120 },
   }),
+  // Lady Marigold's butlers, who cut in on her waltz (world/manor.js).
+  pumpkinbutler: mob({
+    id: 'pumpkinbutler', name: 'Pumpkin Butler', level: 19, hp: 1400, atk: 72, def: 22, acc: 54, eva: 4, exp: 460, gold: [8, 16],
+    speed: 40, w: 28, h: 40, art: 'pumpkinbutler', drops: [{ id: 'moonlit_ribbon', chance: 0.12 }],
+    fight: { every: 2, reach: 40, windup: 0.5 },
+  }),
   waltzrondo: mob({
     id: 'waltzrondo', name: 'Dame Rondo, the Leading Armour', level: 17, hp: 15000, atk: 112, def: 24, acc: 54, eva: 3, exp: 5200, gold: [170, 250],
     speed: 40, w: 60, h: 104, art: 'waltzrondo', boss: true,

@@ -50,6 +50,9 @@ export const TRACKS = {
   boss: EPIC,
   queen: T('ancient-evil', 'Ancient Evil Awakens', JJ),
   manorboss: LAIR,
+  // Lady Marigold's waltz on the roof: three to the bar, 190 a minute, 40 bars that loop whole; her
+  // moves land on its beat (world/manor.js WALTZ).
+  marigold: T('apparitions-ball', 'Apparitions Ball', 'Bobjt'),
   aquaboss: BATTLE,
   carnivalboss: BATTLE,
   observatoryboss: EPIC,

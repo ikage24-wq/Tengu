@@ -91,6 +91,9 @@ function start(key, hard) {
   startFight(cur);
 }
 
+// The song playing now and how far into it (seconds), or null: Lady Marigold keeps time with it.
+export const musicNow = () => (cur ? { key: cur.key, pos: songPos(cur.v, now()) } : null);
+
 // What's playing, for tools and play tests: the song, and the fight layer's level (null until it's
 // made).
 export const musicState = () => ({ key: cur?.key ?? null, fight: cur?.fight ? cur.fight.gain.gain.value : null, fightK, muffled });
