@@ -11,6 +11,7 @@ import { CANYON_KINDS } from './canyon.js';
 import { HOLLOWGATE_KINDS } from './hollowgate.js';
 import { MANORHILL_KINDS } from './manorhill.js';
 import { AQUA_KINDS } from './aquapalace.js';
+import { FAIR_KINDS } from './fairground.js';
 import { HOLLOWROOM_KINDS, ROOTROOM_KINDS } from './hollowrooms.js';
 
 const INK = '#3a2d4f';
@@ -3346,6 +3347,7 @@ const KINDS = {
   // (Manor Hill's gates, the pumpkin coach, lamp posts, rose hedges, topiaries: render/manorhill.js.)
   ...MANORHILL_KINDS,
   ...AQUA_KINDS,
+  ...FAIR_KINDS,
   // (Rootwood Hollow's rooms: the trunk's inner walls, stumps: render/hollowrooms.js.)
   ...HOLLOWROOM_KINDS,
   ...ROOTROOM_KINDS,

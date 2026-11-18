@@ -1773,18 +1773,19 @@ const FAIR_IN = { skyline: 'bigtop', material: 'carnival', critters: [], drift: 
 
 Object.assign(MAPS, {
   // The Carnival Gates: past the last torii of the Fox Shrine Path, a striped arch strung with
-  // lights where Tock, a runaway tin soldier, finds groups.
+  // lights where Tock, a runaway tin soldier, finds groups. (Remade 2026-11-18, Chapter 6, like the
+  // rooms inside: render/fairground.js. The whole fair lit up beyond, a ticket booth to climb.)
   carnival_gate: {
     id: 'carnival_gate', name: 'Carnival Gates', theme: 'carnival', town: 'grove', world: { x: 400, y: 104 }, music: 'carnival',
     width: 1200, height: 420, groundY: G,
-    look: { sky: ['#2a2a6a', '#7a4aa8', '#ff9ab8'], far: '#4a3a8a', mid: '#6a4aa8', midTrim: '#ffd36b', ...FAIR_OUT },
+    look: { sky: ['#2a2a6a', '#7a4aa8', '#ff9ab8'], far: '#4a3a8a', mid: '#6a4aa8', midTrim: '#ffd36b', ...FAIR_OUT, painted: 'fairgate', islands: 'booth', props: [], ledgeProp: null },
     platforms: [{ x: 420, y: G - 80, w: 140 }],
     ropes: [],
-    deco: [['signpost', 160]],
+    deco: [['signpost', 160], ['popcorncart', 270], ['balloonstand', 700, 1], ['fairarch', 1060]],
     portals: [
       { id: 'start', x: 640, y: G, hidden: true },
       { id: 'west', x: 50, y: G, to: 'shrine', toPortal: 'carnival' },
-      { id: 'door', x: 1110, y: G, to: 'carnival1', toPortal: 'start', label: 'Clockwork Carnival', dungeon: 'carnival' },
+      { id: 'door', x: 1060, y: G, to: 'carnival1', toPortal: 'start', label: 'Clockwork Carnival', dungeon: 'carnival' },
     ],
     npcs: [{ id: 'tock', x: 860 }],
     spawns: [],
@@ -1797,8 +1798,8 @@ Object.assign(MAPS, {
     ...lay({
       width: 2600, ground: 600,
       ledges: [
-        { x: 900, y: 520, w: 90, style: 'planks', drift: { dx: 240, period: 6 } }, { x: 1400, y: 500, w: 90, style: 'planks', drift: { dx: 260, period: 7 } },
-        { x: 1150, y: 440, w: 300 }, { x: 300, y: 500, w: 360 }, { x: 1900, y: 500, w: 420 }, { x: 2420, y: 400, w: 110 },
+        { x: 900, y: 520, w: 90, style: 'pony', drift: { dx: 150, period: 6 } }, { x: 1460, y: 520, w: 90, style: 'pony', drift: { dx: 220, period: 7 } },
+        { x: 1150, y: 440, w: 300, style: 'carousel' }, { x: 300, y: 500, w: 360 }, { x: 1900, y: 500, w: 420 }, { x: 2420, y: 400, w: 110, style: 'trestle' },
       ],
       zones: [
         { name: 'The Ticket Stalls', color: '#ff9ab8', mobs: [] },
@@ -1806,7 +1807,8 @@ Object.assign(MAPS, {
         { name: 'The Prize Booths', color: '#7fd8ff', from: 1800, mobs: [] },
       ],
     }),
-    look: { sky: ['#2a2a6a', '#7a4aa8', '#ff9ab8'], far: '#4a3a8a', mid: '#6a4aa8', midTrim: '#ffd36b', ...FAIR_OUT, skyline: 'midway' },
+    look: { sky: ['#2a2a6a', '#7a4aa8', '#ff9ab8'], far: '#4a3a8a', mid: '#6a4aa8', midTrim: '#ffd36b', ...FAIR_OUT, skyline: 'midway', painted: 'midway', islands: 'booth', props: [], ledgeProp: null },
+    deco: [['popcorncart', 760], ['balloonstand', 1850, 2]],
     task: { kind: 'light', object: 'windbox', label: 'Wind the music boxes' },
     portals: [
       { id: 'out', x: 50, y: 600, to: 'carnival_gate', toPortal: 'door', label: 'Leave' },
@@ -1867,10 +1869,10 @@ Object.assign(MAPS, {
     width: 2600, height: 420, groundY: G,
     platforms: [
       { x: 160, y: 300, w: 180 }, { x: 560, y: 300, w: 220 }, { x: 1000, y: 300, w: 200 }, { x: 1420, y: 300, w: 220 },
-      { x: 1860, y: 300, w: 200 }, { x: 2280, y: 300, w: 180 }, { x: 1180, y: 220, w: 120 },
+      { x: 1860, y: 300, w: 200 }, { x: 2280, y: 300, w: 180 }, { x: 1214, y: 220, w: 110 },
     ],
-    ropes: [{ x: 1240, top: 220, bottom: G }],
-    look: { sky: ['#1e2a5a', '#5a3a8a', '#ff8a8a'], far: '#3a3070', mid: '#5a4a90', midTrim: '#ff7aa8', ...FAIR_OUT, skyline: 'coaster' },
+    ropes: [{ x: 1268, top: 220, bottom: G }],
+    look: { sky: ['#1e2a5a', '#5a3a8a', '#ff8a8a'], far: '#3a3070', mid: '#5a4a90', midTrim: '#ff7aa8', ...FAIR_OUT, skyline: 'coaster', painted: 'coasteryard', islands: 'trestle', props: [], ledgeProp: null },
     coaster: { every: 9, speed: 520, damage: 180 },
     portals: [
       { id: 'west', x: 40, y: G, to: 'carnival2', toPortal: 'east' },
@@ -1932,7 +1934,8 @@ Object.assign(MAPS, {
     platforms: [{ x: 240, y: 300, w: 90 }, { x: 560, y: 300, w: 90 }, { x: 1050, y: 300, w: 90 }, { x: 1370, y: 300, w: 90 }, { x: 800, y: 220, w: 100 }],
     // The wheel's spoke ladder, up to a car at its hub (the room's secret).
     ropes: [{ x: 850, top: 220, bottom: G }],
-    look: { sky: ['#1a1a4a', '#4a2a7a', '#c86aa8'], far: '#2e2a66', mid: '#4a3a86', midTrim: '#ffd36b', ...FAIR_OUT, skyline: 'ferris' },
+    look: { sky: ['#1a1a4a', '#4a2a7a', '#c86aa8'], far: '#2e2a66', mid: '#4a3a86', midTrim: '#ffd36b', ...FAIR_OUT, skyline: 'ferris', painted: 'ferriswheel', islands: 'gondola', props: [], ledgeProp: null },
+    deco: [['popcorncart', 180], ['balloonstand', 1520, 3]],
     portals: [
       { id: 'west', x: 40, y: G, to: 'carnival5', toPortal: 'east' },
       { id: 'out', x: 1660, y: G, to: 'carnival_gate', toPortal: 'start', label: 'Exit', sealed: true },
@@ -3105,7 +3108,8 @@ const INTERIORS = {
   // grotto is a cave.
   aquarium3: { ...SEA_HALL, islands: 'tank', ledgeProp: null }, aquarium6: { ...SEA_HALL, islands: 'tank', ledgeProp: null }, aquarium4: { ceiling: true, props: ['rock', 'crystal', 'rock'], ledgeProp: 'crystal' },
   // The carnival's buildings: the funhouse, the big top's ring, the toy workshop.
-  carnival2: { islands: 'gallery', material: 'parquet', ceiling: 'beams', trim: '#ff9ab8', ceilingTint: { band: '#a0507a', lamp: '#ffe2a0' }, props: ['poster', 'lantern', 'barrel'], ledgeProp: null, edges: null },
+  // (The Funhouse's floors are crooked candy slabs on striped stilts: render/fairground.js, 2026-11-18.)
+  carnival2: { islands: 'funfloor', material: 'parquet', ceiling: 'beams', trim: '#ff9ab8', ceilingTint: { band: '#a0507a', lamp: '#ffe2a0' }, props: ['poster', 'lantern'], ledgeProp: null, edges: null, propKeep: 0.66 },
   carnival4: { islands: 'catwalk', material: 'sawdust', ceiling: 'tent', metal: '#c06a8a', props: ['barrel', 'poster', 'crate', 'lantern'], ledgeProp: null, edges: null },
   carnival5: { islands: 'catwalk', material: 'parquet', ceiling: 'beams', metal: '#8a7aa8', props: ['crate', 'barrel', 'books', 'lantern'], ledgeProp: null, edges: null },
   // The observatory's halls: galleries on brass chains.

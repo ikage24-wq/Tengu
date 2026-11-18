@@ -18,6 +18,7 @@ import { drawPaintedCanyon, drawCanyonLife, drawCanyonFront } from './canyon.js'
 import { drawPaintedHollowGate } from './hollowgate.js';
 import { drawPaintedManorHill, drawManorHillLife, drawPaintedManorGarden, drawPaintedManorRoof } from './manorhill.js';
 import { drawPaintedAquaGate, drawPaintedAquaKelp, drawPaintedAquaHall, drawPaintedAquaAbyss, drawPaintedTidePier } from './aquapalace.js';
+import { drawPaintedFairGate, drawPaintedMidway, drawPaintedCoasterYard, drawPaintedFerrisWheel } from './fairground.js';
 import { drawPaintedHollowTrunk, drawVine, drawPaintedRootRoom, drawRootRope } from './hollowrooms.js';
 import { drawFarRoom, drawFarWhaleRoom, drawMidRoom } from './rooms.js';
 import { levelRange } from '../world/routes.js';
@@ -5197,6 +5198,8 @@ function ledgeReach(map, p, style) {
   let down = 40;
   // (A Hollow shelf that `hang`s from a root reaches up to what's above it, too.)
   if (style === 'gallery' || style === 'catwalk' || p.hang) up = p.y + 40;
+  // (A carousel pony's pole and canopy, up over its ride.)
+  if (style === 'pony') up = 130;
   else if (style && style !== 'earth') down = Math.max(40, Math.max(groundAt(map, p.x), groundAt(map, p.x + p.w / 2), groundAt(map, p.x + p.w)) - p.y + 20);
   r = { style, up, down };
   reachKept.set(p, r);
@@ -5207,7 +5210,9 @@ function drawLedges(ctx, t, theme, map, cam, width, height, time) {
   for (const [pi, p] of map.platforms.entries()) {
     const x = p.x + (p.drift ? driftOffset(p, map.clock ?? 0) : 0) - cam.x;
     const y = p.y - cam.y;
-    if (x + p.w < -20 || x > width + 20) continue;
+    // (A drifting ledge across its whole ride: a carousel pony's canopy spans it.)
+    const left = p.x - cam.x - (p.drift ? 30 : 0);
+    if (left + p.w + (p.drift?.dx ?? 0) + (p.drift ? 60 : 0) < -20 || left > width + 20) continue;
     const reach = theme === 'hollow' && !t.islands ? { up: 0, down: 40 } : ledgeReach(map, p, p.style ?? zoneLook(map, p.y, p.x + p.w / 2)?.islands ?? t.islands);
     if (y - reach.up > height + 30 || y + reach.down < 0) continue;
     // A ledge that's part of something already drawn (a tree's bough) shows nothing of its own.
@@ -6035,6 +6040,10 @@ export function drawSceneBack(ctx, map, cam, width, height, time, nearPortalId, 
     else if (t.painted === 'aquahall') drawPaintedAquaHall(g, t, cam, width, height, time, layerY, air, map);
     else if (t.painted === 'aquaabyss') drawPaintedAquaAbyss(g, t, cam, width, height, time, layerY, air, map);
     else if (t.painted === 'tidepier') drawPaintedTidePier(g, t, cam, width, height, time, layerY, air, map);
+    else if (t.painted === 'fairgate') drawPaintedFairGate(g, t, cam, width, height, time, layerY, air, map);
+    else if (t.painted === 'midway') drawPaintedMidway(g, t, cam, width, height, time, layerY, air, map);
+    else if (t.painted === 'coasteryard') drawPaintedCoasterYard(g, t, cam, width, height, time, layerY, air, map);
+    else if (t.painted === 'ferriswheel') drawPaintedFerrisWheel(g, t, cam, width, height, time, layerY, air, map);
     else if (t.painted === 'hollowtrunk') drawPaintedHollowTrunk(g, t, cam, width, height, time, layerY, air, map);
     else if (t.painted === 'rootroom') drawPaintedRootRoom(g, t, cam, width, height, time, layerY, air, map);
     else {
