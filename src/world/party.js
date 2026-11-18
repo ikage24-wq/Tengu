@@ -1030,6 +1030,8 @@ export function updateParty(bots, world, dt) {
     bot.ai ??= makeAI(bot, rng);
     bot.brain ??= { think: 0, goal: null, target: null, settled: false, still: 0, habitIn: 6, healIn: 6 };
     const br = bot.brain;
+    // (While a scene plays on a set - the Queen's bedchamber - they wait where they are.)
+    if (world.cine?.home) return;
     // Died out in the field and gone back to town for a bit: then they walk back in to you.
     if (bot.away) {
       if (world.now < bot.away && !world.dungeon) return;

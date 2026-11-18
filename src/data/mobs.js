@@ -377,6 +377,13 @@ export const MOBS = {
     drops: [{ id: 'tide_pearl', chance: 1, qty: 3 }, { id: 'mana_elixir', chance: 1, qty: 5 }],
     fight: { every: 2.1, reach: 80, windup: 0.55 }, mech: 'abyssia',
   }),
+  // Queen Coralie's Keepsake Bubble: it drifts after someone and keeps them till it's popped
+  // (world/aquarium.js); it never strikes.
+  keepsake: mob({
+    id: 'keepsake', name: 'Keepsake Bubble', level: 25, hp: 900, atk: 1, def: 6, acc: 60, eva: 0, exp: 0, gold: [0, 0],
+    speed: 30, w: 36, h: 44, art: 'keepsake', drops: [],
+    fight: { every: 999, reach: 0, windup: 0.5 },
+  }),
   coralie: mob({
     id: 'coralie', name: 'Queen Coralie, the Drowned Queen', level: 25, hp: 62000, atk: 160, def: 36, acc: 76, eva: 5, exp: 24000, gold: [440, 650],
     speed: 30, w: 64, h: 124, art: 'coralie', boss: true,

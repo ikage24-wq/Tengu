@@ -574,15 +574,17 @@ function drawWorldLayers(ctx, world, cam, time, b, zoom = 1) {
   lap('people');
   drawWarnings(ctx, world, cam, time);
   drawGroundFx(ctx, world, cam, time);
-  if (world.dungeon) drawDungeonBack(ctx, world, cam, time);
-  if (world.dungeon) drawHollowBack(ctx, world, cam, time);
-  if (world.dungeon) drawManorBack(ctx, world, cam, time);
-  if (world.dungeon) drawAquaBack(ctx, world, cam, time);
-  if (world.dungeon) drawCarnivalBack(ctx, world, cam, time);
-  if (world.dungeon) drawObsBack(ctx, world, cam, time);
-  if (world.dungeon) drawVolcanoBack(ctx, world, cam, time);
-  if (world.dungeon) drawTheatreBack(ctx, world, cam, time);
-  if (world.dungeon) drawWhaleBack(ctx, world, cam, time);
+  // (Not while a scene has stepped over to a set, like the Queen's bedchamber: world/cast.js.)
+  const inRun = world.dungeon && !world.cine?.home;
+  if (inRun) drawDungeonBack(ctx, world, cam, time);
+  if (inRun) drawHollowBack(ctx, world, cam, time);
+  if (inRun) drawManorBack(ctx, world, cam, time);
+  if (inRun) drawAquaBack(ctx, world, cam, time);
+  if (inRun) drawCarnivalBack(ctx, world, cam, time);
+  if (inRun) drawObsBack(ctx, world, cam, time);
+  if (inRun) drawVolcanoBack(ctx, world, cam, time);
+  if (inRun) drawTheatreBack(ctx, world, cam, time);
+  if (inRun) drawWhaleBack(ctx, world, cam, time);
   // Two-person boss mechanics and a defend quest's calm stone (render/coop.js).
   drawCoopBack(ctx, world, cam, time);
   // Fishing spots by the water.
@@ -745,7 +747,7 @@ function drawWorldLayers(ctx, world, cam, time, b, zoom = 1) {
   lap('light');
   drawSceneFront(ctx, world.map, cam, viewW, viewH, time);
   lap('front');
-  if (world.dungeon) {
+  if (inRun) {
     drawHollowFront(ctx, world, cam, time);
     drawManorFront(ctx, world, cam, time);
     drawAquaFront(ctx, world, cam, time);
@@ -760,7 +762,7 @@ function drawWorldLayers(ctx, world, cam, time, b, zoom = 1) {
   const drawFx = (g) => {
     drawTeamOverlay(g, world, cam, time);
     drawEffects(g, world, cam, time);
-    if (world.dungeon) drawDungeonFront(g, world, cam, time);
+    if (inRun) drawDungeonFront(g, world, cam, time);
     drawCoopFront(g, world, cam, time);
     drawZonesFront(g, world, cam, time);
     drawParticles(g, feel.fx, cam, time);

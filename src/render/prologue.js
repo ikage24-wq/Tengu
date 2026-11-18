@@ -40,7 +40,7 @@ import { cornice, wainscot, skirting, floorShade, contact, frame, plant, shelf, 
 import { drawHayate } from './hayate.js';
 import { drawMochiAnim } from './mochi-anim.js';
 import { rollMochi } from '../data/mochi-genes.js';
-import { SAKURA } from '../data/scenes.js';
+import { SAKURA, WARABI } from '../data/scenes.js';
 
 const TAU = Math.PI * 2;
 const WHITE = '#ffffff';
@@ -754,7 +754,12 @@ export function drawProloguePiece(ctx, map, kind, wx, extra, cam, width, time) {
       // ...and Elder Sakura, home from Lady Marigold's party (Chapter 4).
       if (map.elders?.sakura) {
         SAKURA_HOME.genes ??= Object.assign(rollMochi(SAKURA.seed, SAKURA.genes), { wear: { ...SAKURA.wear } });
-        drawMochiAnim(ctx, SAKURA_HOME, ox + 668, oy + 302, time + 2.6);
+        drawMochiAnim(ctx, SAKURA_HOME, ox + 452, oy + 302, time + 2.6);
+      }
+      // ...and Elder Warabi, out of Queen Coralie's tank (Chapter 5), by the little door she came in at.
+      if (map.elders?.warabi) {
+        WARABI_HOME.genes ??= Object.assign(rollMochi(WARABI.seed, WARABI.genes), { wear: { ...WARABI.wear } });
+        drawMochiAnim(ctx, WARABI_HOME, ox + 188, oy + 302, time + 3.4);
       }
     }
   }
@@ -763,3 +768,4 @@ export function drawProloguePiece(ctx, map, kind, wx, extra, cam, width, time) {
 const TRANSLATOR = { genes: null, dir: -1, speed: 0, dist: 0, size: 'grown', runPoints: 300, easy: true, idleBits: ['lookaround'] };
 const YOMOGI = { genes: null, dir: -1, speed: 0, dist: 0, size: 'grown', runPoints: 300, easy: true, idleBits: ['lookaround'] };
 const SAKURA_HOME = { genes: null, dir: -1, speed: 0, dist: 0, size: 'grown', runPoints: 300, easy: true, idleBits: ['lookaround'] };
+const WARABI_HOME = { genes: null, dir: 1, speed: 0, dist: 0, size: 'grown', runPoints: 300, easy: true, idleBits: ['lookaround'] };

@@ -145,7 +145,12 @@ function pilot(world) {
   const danger = run.zones.find((z) => !z.hit && z.kind !== 'floor' && (z.kind === 'circle' ? Math.abs(b.x - z.x) < z.w / 2 + 8 : b.x >= z.x - 8 && b.x <= z.x + z.w + 8));
   if (run.zones.some((z) => !z.hit && z.kind === 'floor' && z.warn - z.t < 0.3) && b.onGround) held.add('Space');
   const room = run.room;
-  if (danger) {
+  // (Queen Coralie hugs her treasures till the fish are out: let them out mid-fight, as a player must.)
+  const tankLeft = room.objects.find((o) => !o.done && o.kind === 'fishtank');
+  if (tankLeft && !danger) {
+    goTo(tankLeft.x, tankLeft.y);
+    if (Math.abs(tankLeft.x - b.x) < 8 && Math.abs(tankLeft.y - b.y) < 4 && !world.channel && b.onGround && Math.abs(b.vx) < 1) pressed.add('ArrowUp');
+  } else if (danger) {
     const lo = danger.kind === 'circle' ? danger.x - danger.w / 2 - 20 : danger.x - 20;
     const hi = danger.kind === 'circle' ? danger.x + danger.w / 2 + 20 : danger.x + danger.w + 20;
     go(Math.abs(b.x - lo) < Math.abs(b.x - hi) && lo > 30 ? lo : hi);

@@ -18,12 +18,13 @@
 //                      the end.
 
 import { addZone, adds, callout, hurtMember } from './dungeon.js';
+import { killMob } from './world.js';
 import { navOf, surfaceBelow } from './nav.js';
 import { playScene } from './story.js';
 import { radio } from './hollow.js';
 
 export const AQUA_MECHS = new Set(['moray', 'abyssia', 'coralie']);
-export const AQUA_CHANNEL = { coral: 1, clam: 0.6 };
+export const AQUA_CHANNEL = { coral: 1, clam: 0.6, fishtank: 1.8 };
 
 const pick = (list) => list[Math.floor(Math.random() * list.length)];
 const floorY = (world, body) => {
@@ -44,7 +45,6 @@ export function aquaSetup(world, room) {
     clams.forEach((o) => (o.label = order.indexOf(o.id) + 1));
   }
   room.currents = (map.currents ?? []).map((c, i) => ({ ...c, t: 3 + i * 4, on: false, since: 0 }));
-  room.whirl = null;
 }
 
 // The bell's order, for the callout as you walk in.
@@ -95,14 +95,30 @@ export function tickAqua(world, dt, group, up) {
       b.x = Math.max(c.x1, Math.min(c.x2, b.x + c.dir * 110 * dt));
     }
   }
-  // Queen Coralie's whirlpool drags everyone toward her.
-  const w = room.whirl;
-  if (w && world.now < w.until) {
-    for (const g of up) {
-      const b = g.body;
-      const d = w.x - b.x;
-      if (Math.abs(d) > 8 && !b.rope) b.x += Math.sign(d) * Math.min(Math.abs(d), 70 * dt);
+  // Queen Coralie's Keepsake Bubbles: one that reaches someone keeps them, floating inside it, till
+  // it's popped (hit it, from inside or out); one that's held anyone long enough lets go by itself.
+  for (const b of world.mobs) {
+    if (b.def.id !== 'keepsake' || b.hp <= 0) continue;
+    b.atkT = 99;
+    if (b.heldId == null) {
+      const g = up.find((o) => Math.abs(o.body.x - b.x) < 16 && Math.abs(o.body.y - b.y) < 34 && !world.mobs.some((q) => q !== b && q.heldId === o.id && q.hp > 0));
+      if (g) {
+        b.heldId = g.id;
+        b.heldAt = world.now;
+        if (g.id === 'you') callout(world, 'Kept in a bubble!', 'Hit it to pop your way out');
+      }
+      continue;
     }
+    const g = up.find((o) => o.id === b.heldId);
+    if (!g || world.now - b.heldAt > 7) {
+      killMob(world, b);
+      continue;
+    }
+    b.frozenUntil = world.now + 0.2;
+    g.body.x = b.x;
+    g.body.y = b.y - 22;
+    g.body.vx = 0;
+    g.body.vy = 0;
   }
 }
 
@@ -111,6 +127,8 @@ export function tickAqua(world, dt, group, up) {
 // A share of a hit that reaches an aquarium boss: a moray hiding in her burrow can't be reached.
 export function aquaHitMul(world, m) {
   if (m.def.mech === 'moray' && m.burrowed) return 0;
+  // Queen Coralie can't be touched while she hugs her treasures.
+  if (m.def.mech === 'coralie' && m.mech?.hugging) return 0;
   return 1;
 }
 
@@ -233,18 +251,40 @@ function abyssia(world, m, up, dt) {
   return false;
 }
 
+// Queen Coralie (reworked 2026-11-18, Chapter 5). She keeps everything she loves in glass tanks so
+// nothing can leave, and she'd like to keep you too:
+//   Keepsake Bubble  she blows a bubble that drifts after someone; if it reaches them it keeps them
+//                    till it's popped (tickAqua)
+//   Tidal Strike     water spouts under everyone's feet
+//   at 66%           she hugs her treasures: four little fish tanks appear on the floor, and she can't
+//                    be hurt till the fish in every one of them are let out (open them like the clams)
+//   at 33%           the Great Wave sweeps the floor every twelve seconds
+// At the end she opens the last and biggest tank herself: Elder Warabi's (aquarium_freed).
+const FISHTANKS = [180, 470, 1130, 1420];
 function coralie(world, m, up, dt) {
   const room = world.dungeon.room;
-  const s = (m.mech ??= { phase: 1, strike: 4, whirl: 6, wave: 4 });
+  const s = (m.mech ??= { phase: 1, strike: 4, bubble: 6, wave: 4 });
   const frac = m.hp / m.def.hp;
   const pending = world.dungeon.zones.some((z) => !z.hit && z.kind === 'floor');
   if (s.phase === 1 && frac <= 0.66) {
     s.phase = 2;
-    s.whirl = 1;
-    callout(world, 'The Whirlpool!', 'The water drags you to her: fight it, and mind the eye');
-    radio(world, 'whirl');
+    s.hugging = true;
+    for (const x of FISHTANKS) room.objects.push({ y: world.map.groundY, kind: 'fishtank', x, id: room.objects.length, done: false, progress: 0 });
+    callout(world, 'She hugs her treasures!', 'Let the fish out of her four little tanks to reach her');
+    radio(world, 'tanks');
   }
-  if (s.phase === 2 && frac <= 0.33) {
+  // (Hugging her treasures she stays curled on her throne: only her bubbles and the water's spouts
+  // come for you, so the tanks can be opened.)
+  if (s.hugging) {
+    m.state = 'idle';
+    m.x += Math.sign(800 - m.x) * Math.min(Math.abs(800 - m.x), 60 * dt);
+  }
+  if (s.hugging && room.objects.filter((o) => o.kind === 'fishtank').every((o) => o.done)) {
+    s.hugging = false;
+    m.vulnUntil = world.now + 5;
+    callout(world, 'The fish swim free!', "Queen Coralie can't keep hold: strike now!");
+  }
+  if (s.phase === 2 && !s.hugging && frac <= 0.33) {
     s.phase = 3;
     s.wave = 2;
     callout(world, 'The Great Wave!', 'A wave rolls over the whole floor: jump it, or get up high');
@@ -254,15 +294,18 @@ function coralie(world, m, up, dt) {
   if (s.strike <= 0 && up.length) {
     s.strike = 7;
     for (const g of up) addZone(world, { kind: 'circle', x: g.body.x, y: floorY(world, g.body), w: 60, warn: 1.5, damage: 160, from: m, tide: true });
+    m.tideAt = world.now;
     callout(world, 'Tidal Strike!', 'Water spouts under your feet: move');
   }
-  if (s.phase >= 2) {
-    s.whirl -= dt;
-    if (s.whirl <= 0) {
-      s.whirl = 15;
-      room.whirl = { x: m.x, until: world.now + 5 };
-      addZone(world, { kind: 'circle', x: m.x, y: world.map.groundY, w: 120, warn: 4.4, damage: 230, from: m, whirl: true });
-    }
+  s.bubble -= dt;
+  if (s.bubble <= 0 && up.length) {
+    s.bubble = s.phase === 3 ? 7 : 9;
+    const free = up.filter((g) => !world.mobs.some((q) => q.heldId === g.id && q.hp > 0));
+    const pool = free.filter((g) => g.role !== 'tank');
+    const g = pick(pool.length ? pool : free.length ? free : up);
+    adds(world, m, 'keepsake', [m.x + (g.body.x > m.x ? 50 : -50)], g.id);
+    m.bubbleAt = world.now;
+    callout(world, 'Keepsake Bubble!', "It drifts after someone: pop it, or it'll keep them");
   }
   if (s.phase === 3) {
     s.wave -= dt;
@@ -275,10 +318,15 @@ function coralie(world, m, up, dt) {
       }
     }
   }
-  return m.slamming > world.now;
+  return m.slamming > world.now || Boolean(s.hugging);
 }
 
 // An aquarium boss down.
 export function aquaKilled(world, m) {
-  if (m.def.mech === 'coralie') playScene(world, 'aquarium_freed');
+  if (m.def.mech !== 'coralie') return;
+  // Her bubbles pop, and Elder Warabi goes home to the palace (render/prologue.js).
+  for (const b of world.mobs) if (b.def.id === 'keepsake' && b.hp > 0) killMob(world, b);
+  world.char.elders = { ...(world.char.elders ?? {}), warabi: true };
+  world.map.elders = world.char.elders;
+  playScene(world, 'aquarium_freed');
 }

@@ -673,6 +673,7 @@ export function drawPaintedAquaHall(ctx, t, cam, width, height, time, layerY, ai
     }
     bubbles(ctx, cx - 60, ty + th - 6, th - 10, 5, time, 3, 0.7);
     bubbles(ctx, cx + 70, ty + th - 6, th - 10, 5, time, 7, 0.7);
+    // (Elder Warabi, kept in it, is drawn with the room's things: render/aquarium.js.)
     ctx.restore();
     ctx.strokeStyle = AQ.brass;
     ctx.lineWidth = 6;

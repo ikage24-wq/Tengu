@@ -357,7 +357,7 @@ export function portalSealed(world, portal) {
 
 const CHANNEL = { glowcap: 1, cage: 1.5, ...MANOR_CHANNEL, ...AQUA_CHANNEL, ...CARNIVAL_CHANNEL, ...OBS_CHANNEL, ...VOLCANO_CHANNEL, ...THEATRE_CHANNEL, ...WHALE_CHANNEL };
 // What the log says when someone finishes one (the cages and portraits have their own).
-const DONE_LINE = { glowcap: ['lit a glowcap', '#ffe9a0'], lantern: ['lit a garden lantern', '#ffe9a0'], book: ['caught a lost book', '#c9b6ff'], lever: ['pulled a door lever', '#ffd66b'], coral: ['lit a lantern coral', '#9fe8ff'], clam: ['opened a giant clam', '#ffe6f2'], windbox: ['wound a music box', '#ffd36b'], prize: ['popped a prize balloon', '#ff9ab8'], starlamp: ['lit the last star lamp', '#fff3a6'], starlamp1: ['lit a star lamp', '#fff3a6'], crystal: ['gathered a sugar crystal', '#ff9ad8'], dispenser: ['finished the recipe', '#ffd36b'], ticket: ['found a lost ticket', '#ffd0e4'], cue: ['hit the last cue', '#ffe08a'], mooring: ['tied down a mooring', '#c8a070'], airbloom: ['tended an air-bloom', '#9fe8ff'] };
+const DONE_LINE = { glowcap: ['lit a glowcap', '#ffe9a0'], lantern: ['lit a garden lantern', '#ffe9a0'], book: ['caught a lost book', '#c9b6ff'], lever: ['pulled a door lever', '#ffd66b'], coral: ['lit a lantern coral', '#9fe8ff'], clam: ['opened a giant clam', '#ffe6f2'], fishtank: ['let the fish out of a tank', '#9fe6f6'], windbox: ['wound a music box', '#ffd36b'], prize: ['popped a prize balloon', '#ff9ab8'], starlamp: ['lit the last star lamp', '#fff3a6'], starlamp1: ['lit a star lamp', '#fff3a6'], crystal: ['gathered a sugar crystal', '#ff9ad8'], dispenser: ['finished the recipe', '#ffd36b'], ticket: ['found a lost ticket', '#ffd0e4'], cue: ['hit the last cue', '#ffe08a'], mooring: ['tied down a mooring', '#c8a070'], airbloom: ['tended an air-bloom', '#9fe8ff'] };
 
 function objectNear(world, body, reach = 26) {
   const room = world.dungeon?.room;
@@ -394,6 +394,8 @@ function finish(world, o, who) {
   }
   // A clam opens only in the bell's order.
   if (o.kind === 'clam' && !openClam(world, o)) return;
+  // Queen Coralie's fish tanks: when they were let out (render/aquarium.js swirls them away).
+  if (o.kind === 'fishtank') o.openAt = world.now;
   // A portrait turns to its next picture, and only locks in once it shows the crest's.
   if (o.kind === 'portrait' && !turnPortrait(world, o)) {
     o.progress = 0;
@@ -441,7 +443,8 @@ function tickChannels(world, dt, group) {
     const br = g.bot?.brain;
     if (!br?.task || g.bot.down) continue;
     const o = br.task;
-    if (o.done || run.combat || Math.abs(o.x - g.body.x) > 20 || Math.abs(o.y - g.body.y) > 6 || !g.body.onGround) {
+    // (Mid-fight they only work things a fight needs worked, like Queen Coralie's fish tanks.)
+    if (o.done || (run.combat && o.kind !== 'fishtank') || Math.abs(o.x - g.body.x) > 20 || Math.abs(o.y - g.body.y) > 6 || !g.body.onGround) {
       br.taskT = 0;
       continue;
     }
@@ -1755,6 +1758,17 @@ function thinkRole(bot, world, rng) {
       br.target = target ?? null;
       if (target) br.goal = spot(target, sideOf(target));
       return;
+    }
+    // (Queen Coralie hugging her treasures: the damage dealers let the fish out of her tanks.)
+    if (role === 'dps') {
+      const busyTanks = new Set(group.filter((g) => g.bot && g.bot !== bot).map((g) => g.bot.brain?.task));
+      const fishtank = nearest(run.room.objects.filter((o) => o.kind === 'fishtank' && !o.done && !busyTanks.has(o) && world.channel?.obj !== o), body);
+      if (fishtank) {
+        br.task = fishtank;
+        br.target = null;
+        br.goal = goalAt(world, fishtank.x, fishtank.y, 'fight');
+        return;
+      }
     }
     // Damage: saplings and adds first, then whatever the tank is fighting.
     const menders = fights.filter((m) => m.def.fight?.mender);

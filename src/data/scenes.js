@@ -1026,7 +1026,7 @@ export const HOLLOW_SCENES = {
     { cast: 'hayate', kind: 'hayate', x: 300, y: 283, seat: 'bed', crown: true, sprout: true, name: 'Hayate', color: '#5aa8c8' },
     { cast: 'translator', kind: 'mochi', seed: 33, size: 'grown', x: 548, y: 302, facing: -1, name: 'Royal Snore Translator', color: '#b98ad8', idles: ['lookaround'], wear: { dress: 'scholarrobe', hat: 'scholarcap', eyes: 'specs', over: 'eartrumpet' } },
     { cast: 'yomogi', x: 660, y: 302, facing: -1, kind: 'mochi', seed: 41, size: 'grown', name: 'Elder Yomogi', color: '#6fa36a', genes: { dough: '#d8efc0', hairColor: 'yomogi' }, wear: { dress: 'elderrobe', hat: 'elderhat', eyes: 'monocle', face: 'fakebeard' }, idles: ['lookaround'] },
-    { cam: 'hayate', up: 12, dur: 1.2, zoom: 1.5 },
+    { cam: ['hayate', 'translator'], up: 12, dur: 1.2, zoom: 1.25 },
     { walk: 'yomogi', to: 610, speed: 30 },
     { together: [{ emote: 'translator', kind: '!' }, { play: 'translator', as: 'wow' }] },
     { who: 'translator', text: 'Elder Yomogi! Where have you BEEN?', mood: 'surprised' },
@@ -1227,9 +1227,9 @@ export const MANOR_SCENES = {
     { set: 'royal_bed' },
     { cast: 'hayate', kind: 'hayate', x: 300, y: 283, seat: 'bed', crown: true, sprout: true, name: 'Hayate', color: '#5aa8c8' },
     { cast: 'translator', kind: 'mochi', seed: 33, size: 'grown', x: 548, y: 302, facing: -1, name: 'Royal Snore Translator', color: '#b98ad8', idles: ['lookaround'], wear: { dress: 'scholarrobe', hat: 'scholarcap', eyes: 'specs', over: 'eartrumpet' } },
-    { cast: 'sakura', x: 720, y: 302, facing: -1, ...SAKURA_CAST },
-    { cam: 'hayate', up: 12, dur: 1.2, zoom: 1.5 },
-    { walk: 'sakura', to: 668, speed: 30 },
+    { cast: 'sakura', x: 660, y: 302, facing: -1, ...SAKURA_CAST },
+    { cam: ['hayate', 'translator'], up: 12, dur: 1.2, zoom: 1.25 },
+    { walk: 'sakura', to: 452, speed: 50 },
     { together: [{ emote: 'translator', kind: '!' }, { play: 'translator', as: 'wow' }] },
     { who: 'translator', text: 'Elder Sakura! Where have you BEEN?', mood: 'surprised' },
     { who: 'sakura', text: 'At a party. It went on a bit.' },
@@ -1265,6 +1265,11 @@ export const MANOR_RADIO = {
 
 
 // ---------- Sunken Aquarium Palace ----------
+// Elder Warabi: kept in Queen Coralie's biggest tank since festival night (Chapter 5). Her look,
+// shared by her scenes, the throne room (render/aquapalace.js) and the palace (render/prologue.js).
+export const WARABI = { seed: 63, genes: { dough: '#f0d8a0', hairColor: 'kinako' }, wear: { dress: 'elderrobe', hat: 'elderhat', face: 'fakebeard' } };
+const WARABI_CAST = { kind: 'mochi', seed: WARABI.seed, size: 'grown', name: 'Elder Warabi', color: '#c8a060', genes: WARABI.genes, wear: WARABI.wear, idles: ['lookaround'] };
+
 export const AQUA_SCENES = {
   aquarium_results: [
     { card: 'Sunken Aquarium Palace', sub: 'Rank {grade}  ·  {time}' },
@@ -1306,35 +1311,60 @@ export const AQUA_SCENES = {
     { together: [{ fade: 'in', dur: 0.8 }, { walk: 'player', away: 'abyssia', by: 30, speed: 150 }, { emote: 'player', kind: 'sweat', dur: 1.2 }] },
     { cam: 'player', dur: 0.7 },
   ],
-  // Queen Coralie, staged: she sleeps on her coral throne, bubbles drifting up off her; she wakes
-  // slow and sad, looks at you a long moment, then rises and drives her trident down in a burst
-  // of the sea.
+  // Queen Coralie, staged (rewritten 2026-11-18, Chapter 5): her throne room full of tanks, and in
+  // the biggest, behind the throne, Elder Warabi, kept since festival night.
   aquarium_coralie: [
-    { together: [{ mood: 'coralie', as: 'blink' }, { emote: 'coralie', kind: 'zzz', dur: 7 }, { cam: 'coralie', up: 40, dur: 1.8 }, { walk: 'player', to: 'coralie', gap: 170, speed: 90 }] },
-    { together: [{ fx: 'bubbles', at: 'coralie', top: true, n: 10 }, { act: 'coralie', move: 'sway', dur: 2.2, amp: 0.04, speed: 2 }] },
-    { who: null, text: 'The throne room. A queen sits on a throne of coral, eyes closed, crown askew, the sea swirling slowly around her.' },
-    { together: [{ mood: 'coralie', as: 'sad' }, { emote: 'coralie', kind: '?', dur: 1.2, hold: true }, { face: 'coralie', to: 'player' }] },
-    { who: 'coralie', text: '...Who disturbs the drowned court? My people are cold. My palace is dark. I have been asleep so long.', mood: 'sad' },
+    { cast: 'warabi', x: 740, y: 340, hidden: true, ...WARABI_CAST },
+    { together: [{ cam: 'coralie', up: 40, dur: 1.8 }, { walk: 'player', to: 'coralie', gap: 170, speed: 90 }, { mood: 'coralie', as: 'happy' }] },
+    { who: null, text: 'The throne room. Tanks everywhere. In the biggest one, behind the throne, a little Mochi elder waves.' },
+    { who: 'warabi', text: "Hello! Don't mind me. I'm being kept." },
+    { together: [{ face: 'coralie', to: 'player' }, { jump: 'coralie', height: 14 }, { fx: 'bubbles', at: 'coralie', top: true, n: 12 }] },
+    { who: 'coralie', text: 'Visitors! Look! My fish, my pearls, my elder. All safe in glass. Nobody ever leaves!', mood: 'happy' },
     { together: [{ cam: ['player', 'coralie'], up: 20, dur: 0.9 }, { face: 'player', to: 'coralie' }] },
-    { who: 'player', text: "We're here to wake you, your majesty. The wards can still be saved." },
-    { together: [{ mood: 'coralie', as: 'angry' }, { jump: 'coralie', height: 18 }, { fx: 'bubbles', at: 'coralie', n: 20 }] },
-    { who: 'coralie', text: 'Then prove you are stronger than the tide that took us!', mood: 'angry' },
+    { who: 'player', text: 'Let them go, your majesty.' },
+    { who: 'coralie', text: 'If I let them go, they swim away. Everyone swims away.', mood: 'sad' },
+    { together: [{ mood: 'coralie', as: 'happy' }, { emote: 'coralie', kind: 'idea', dur: 1.2 }] },
+    { who: 'coralie', text: "...Oh! I'll keep YOU too!", mood: 'happy' },
     { act: 'coralie', move: 'attack', dur: 1, async: true },
     { wait: 0.32 },
-    { together: [{ flash: '#bff0ff' }, { shake: 5, dur: 0.5 }, { fx: 'bubbles', at: 'coralie', n: 36 }, { fx: 'sparkle', at: 'coralie', n: 12 }, { jump: 'player', height: 18 }, { emote: 'player', kind: '!' }] },
+    { together: [{ flash: '#bff0ff' }, { shake: 4, dur: 0.4 }, { fx: 'bubbles', at: 'coralie', n: 36 }, { fx: 'sparkle', at: 'coralie', n: 12 }, { jump: 'player', height: 18 }, { emote: 'player', kind: '!' }] },
     { wait: 0.5 },
     { cam: 'player', dur: 0.7 },
   ],
+  // She opens the last tank herself; Elder Warabi goes home; the tide turns.
   aquarium_freed: [
     { together: [{ free: 'coralie', as: 'sad' }, { cam: ['coralie', 'player'], dur: 1.2 }, { walk: 'player', to: 'coralie', gap: 80, speed: 70 }] },
     { together: [{ face: 'player', to: 'coralie' }, { face: 'coralie', to: 'player' }] },
-    { who: 'coralie', text: '...The water is warm again. I remember. I remember the sun on the waves.', mood: 'sad' },
-    { together: [{ fx: 'bubbles', at: 'coralie', top: true }, { act: 'coralie', move: 'float', height: 10, dur: 2 }] },
-    { who: null, text: 'One by one, the bubble wards flicker back on. The palace lights up from the throne to the coral gate.' },
-    { mood: 'coralie', as: 'happy' },
-    { who: 'coralie', text: "Thank you, surface-friends. Come back and visit us. We'll leave the gate open.", mood: 'happy' },
+    { who: 'coralie', text: "...They'd stay. If they wanted to. Wouldn't they?", mood: 'sad' },
+    { who: 'player', text: "They'd visit. That's better." },
+    { together: [{ walk: 'coralie', to: 860, speed: 50 }, { fx: 'bubbles', at: 'coralie', top: true, n: 8 }] },
+    { who: null, text: 'Queen Coralie swims to the biggest tank, and opens it herself.' },
+    { cast: 'warabi', x: 790, y: 380, facing: -1, ...WARABI_CAST },
+    { together: [{ fx: 'bubbles', at: { x: 800, y: 300 }, n: 30 }, { flash: '#e8fcff' }] },
+    { together: [{ jump: 'warabi', height: 14 }, { emote: 'warabi', kind: 'heart' }] },
+    { who: 'warabi', text: 'Ahh. Room to wiggle.' },
+    { who: 'warabi', text: "We'll come back, dear. Friends come back. That's the whole trick." },
+    { together: [{ mood: 'coralie', as: 'happy' }, { jump: 'coralie', height: 12 }, { emote: 'coralie', kind: 'heart', dur: 1.6 }] },
+    { who: 'coralie', text: "...Then I'll leave the gate open.", mood: 'happy' },
+    { who: null, text: 'One by one, the fish swim out of every tank in the palace, and on up into the open sea.' },
+    { together: [{ walk: 'warabi', to: 'player', gap: 16, speed: 40 }, { fx: 'bubbles', at: 'warabi', top: true }] },
+    { hide: 'warabi', dur: 0.4 },
+    { set: 'royal_bed' },
+    { cast: 'hayate', kind: 'hayate', x: 300, y: 283, seat: 'bed', crown: true, sprout: true, name: 'Hayate', color: '#5aa8c8' },
+    { cast: 'translator', kind: 'mochi', seed: 33, size: 'grown', x: 548, y: 302, facing: -1, name: 'Royal Snore Translator', color: '#b98ad8', idles: ['lookaround'], wear: { dress: 'scholarrobe', hat: 'scholarcap', eyes: 'specs', over: 'eartrumpet' } },
+    { cast: 'warabi', x: 146, y: 302, facing: 1, ...WARABI_CAST },
+    { cam: ['hayate', 'translator'], up: 12, dur: 1.2, zoom: 1.25 },
+    { together: [{ walk: 'warabi', to: 188, speed: 30 }, { fx: 'bubbles', at: 'warabi', top: true, n: 10 }] },
+    { together: [{ emote: 'translator', kind: '!' }, { play: 'translator', as: 'wow' }] },
+    { who: 'translator', text: "Elder Warabi! You're... damp.", mood: 'surprised' },
+    { who: 'warabi', text: 'I was in a fish tank. Long story. Wet story.' },
+    { emote: 'hayate', kind: 'zzz', dur: 1.6 },
+    { who: 'hayate', text: '...mmn... fishies...', mood: 'sleepy' },
+    { who: 'translator', text: 'Her Majesty says: "fishies".' },
+    { set: null },
+    { together: [{ cam: 'coralie', up: 40, dur: 1.2 }, { mood: 'coralie', as: 'happy' }, { emote: 'coralie', kind: 'heart', dur: 1.6 }] },
+    { who: null, text: 'Down in the palace, Queen Coralie swims up after her fish. She wants to see the sun.' },
     { together: [{ act: 'coralie', move: 'swimup', height: 220, dur: 3.2 }, { fx: 'bubbles', at: 'coralie' }, { emote: 'player', kind: 'sparkle', dur: 1.4 }] },
-    { who: null, text: 'Queen Coralie swims up toward the light, trailing bubbles, and is gone.' },
   ],
 };
 
@@ -1345,7 +1375,7 @@ export const AQUA_RADIO = {
   'enter:aquarium3': ['The pearl vault! Listen to the bell: the clams open only in its order.'],
   'enter:aquarium4': ["The morays' grotto. Two of them, and the holes in the walls go deep..."],
   'enter:aquarium5': ['The abyss. The tide surges up that shaft: when it rushes in, climb!'],
-  'enter:aquarium6': ["The throne room. The queen's been asleep a hundred years. Wake her gently, if you can."],
+  'enter:aquarium6': ["The throne room. Is that someone in the big tank? Be gentle with the queen..."],
   'clear:aquarium1': ['The corals are lit! I can see you. Down you go.'],
   'clear:aquarium2': ['Out of the kelp! You lot swim like fish.'],
   'clear:aquarium3': ['The vault is open! Pearls everywhere... focus!'],
@@ -1355,7 +1385,7 @@ export const AQUA_RADIO = {
   flood: ['The tide! Get up on a ledge!', 'Here it comes, climb!'],
   moraymad: ["The other sister's angry now! Watch her!"],
   anglers: ['Lights in the dark: anglers! Bring them down!'],
-  whirl: ['A whirlpool! Swim against it!'],
+  tanks: ["She's hugging her tanks! Let the fish out, one tank at a time!"],
   wave: ['The Great Wave! Jump, or get up high!'],
 };
 

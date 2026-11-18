@@ -6,8 +6,12 @@
 
 import { R, E, T, F, mix } from './pixel.js';
 import { art, place } from './scenery.js';
+import { drawMochiAnim } from './mochi-anim.js';
+import { rollMochi } from '../data/mochi-genes.js';
+import { WARABI } from '../data/scenes.js';
 
 const TAU = Math.PI * 2;
+const WARABI_MOCHI = { genes: null, dir: 1, speed: 0, dist: 0, size: 'grown', runPoints: 300, easy: true, idleBits: ['lookaround'] };
 
 function glow(ctx, x, y, r, color, alpha) {
   ctx.save();
@@ -154,6 +158,20 @@ export function drawAquaBack(ctx, world, cam, time) {
   const room = run.room;
   const map = world.map;
   if (map.dungeon !== 'aquarium') return;
+  // Elder Warabi in Queen Coralie's biggest tank (the throne room's backdrop draws the tank), till
+  // the queen lets her out.
+  if (map.id === 'aquarium6' && !world.char?.elders?.warabi) {
+    const x = 800 - cam.x;
+    const fl = map.groundY - cam.y - 40;
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(x - 120, fl - 200, 240, 200);
+    ctx.clip();
+    WARABI_MOCHI.genes ??= Object.assign(rollMochi(WARABI.seed, WARABI.genes), { wear: { ...WARABI.wear } });
+    drawMochiAnim(ctx, WARABI_MOCHI, x - 62, fl - 4, time + 1.7);
+    for (let k = 0; k < 3; k++) ring(ctx, x - 56 + Math.sin(time * 2 + k) * 3, fl - 40 - ((time * 18 + k * 20) % 60), 1.4 + k * 0.4, '#e8fcff');
+    ctx.restore();
+  }
   if (map.bell && room.bell) drawBell(ctx, map.bell.x - cam.x, map.bell.y - cam.y - 40, room, time);
   // Currents: streaks racing along the floor while one runs, a faint shimmer while it builds.
   for (const c of room.currents ?? []) {
@@ -200,10 +218,63 @@ export function drawAquaFront(ctx, world, cam, time) {
   }
 }
 
+// Queen Coralie's little fish tanks: a glass tank on a stand, fish inside nosing at the glass; once
+// opened, the lid stands up and the fish are gone, swirling away up through the water.
+function fishtankArt(open) {
+  return art(`aq-fishtank|${open}`, 44, 46, () => [
+    R(6, 34, 32, 12, '#a87a2a'), F(R(6, 34, 32, 2, '#ffd36b')), R(10, 40, 4, 6, '#8a5a2a'), R(30, 40, 4, 6, '#8a5a2a'),
+    R(4, 10, 36, 24, '#6ad0ec'), F(R(4, 10, 36, 5, '#9fe6f6')), F(E(22, 31, 15, 2.4, '#ffe0b8')),
+    F(T([[16, 31], [14, 22], [18, 26]], '#5fb87a')), F(T([[28, 31], [30, 20], [26, 25]], '#5fb87a')),
+    ...(open ? [R(2, 0, 3, 12, '#ffd36b'), F(R(2, 0, 3, 3, '#fff0b0'))] : [R(2, 7, 40, 4, '#ffd36b'), F(R(2, 7, 40, 1.4, '#fff0b0')), E(22, 6, 3, 2, '#ffd36b')]),
+    R(3, 10, 2, 24, '#ffd36b'), R(39, 10, 2, 24, '#ffd36b'),
+  ]);
+}
+function drawFishtank(ctx, x, y, o, time, now) {
+  place(ctx, fishtankArt(Boolean(o.done)), x, y);
+  const FC = ['#ffb03a', '#ff7aa8', '#ffe36b'];
+  ctx.save();
+  if (!o.done) {
+    ctx.beginPath();
+    ctx.rect(x - 17, y - 36, 34, 22);
+    ctx.clip();
+    for (let k = 0; k < 3; k++) {
+      const u = (time * (0.3 + k * 0.1) + k * 0.37 + o.id * 0.21) % 2;
+      const dir = u < 1 ? 1 : -1;
+      const fx = x - 14 + (u < 1 ? u : 2 - u) * 28;
+      const fy = y - 30 + k * 6;
+      ctx.fillStyle = FC[k];
+      ctx.beginPath();
+      ctx.ellipse(fx, fy, 3, 1.8, 0, 0, TAU);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(fx - dir * 2.4, fy);
+      ctx.lineTo(fx - dir * 5, fy - 1.8);
+      ctx.lineTo(fx - dir * 5, fy + 1.8);
+      ctx.fill();
+    }
+  } else {
+    // The fish swirling away up through the water, a while after they're let out.
+    const since = now - (o.openAt ?? now - 9);
+    for (let k = 0; k < 3 && since < 3; k++) {
+      const u = since / 3;
+      ctx.globalAlpha = 1 - u;
+      ctx.fillStyle = FC[k];
+      const fx = x + Math.sin(since * 4 + k * 2) * (8 + since * 10);
+      const fy = y - 30 - since * (40 + k * 12);
+      ctx.beginPath();
+      ctx.ellipse(fx, fy, 3, 1.8, 0, 0, TAU);
+      ctx.fill();
+    }
+    glow(ctx, x, y - 22, 24, '#9fe6f6', 0.3 + 0.1 * Math.sin(time * 3));
+  }
+  ctx.restore();
+}
+
 export function drawAquaObject(ctx, o, x, y, time, now) {
   if (o.kind === 'coral') drawCoral(ctx, x, y, o.done, time, o.id);
   else if (o.kind === 'clam') drawClam(ctx, x, y, o, time, now);
+  else if (o.kind === 'fishtank') drawFishtank(ctx, x, y, o, time, now);
   else return false;
   return true;
 }
-export const AQUA_HINT = { coral: '▲ Light', clam: '▲ Open' };
+export const AQUA_HINT = { coral: '▲ Light', clam: '▲ Open', fishtank: '▲ Let the fish out' };

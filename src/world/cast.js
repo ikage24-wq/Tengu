@@ -68,6 +68,8 @@ export function enterSet(world, id) {
   world.map = getMap(id);
   world.mobs = [];
   world.drops = [];
+  // (The fight's last numbers, held still under the scene, don't follow it onto the set.)
+  if (world.numbers) world.numbers.length = 0;
   // The hero waits off stage while the scene is somewhere they aren't.
   world.body = createBody(-400, world.map.groundY ?? 344);
   c.cast = [];
