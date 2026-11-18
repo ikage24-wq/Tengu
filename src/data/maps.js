@@ -1330,8 +1330,8 @@ Object.assign(MAPS, {
     },
     deco: [
       ['signpost', 180, 0, 780],
-      ['partylamp', 236, 1, 780], ['partylamp', 520, 2, 703], ['partylamp', 780, 3, 650], ['partylamp', 1010, 4, 607], ['partylamp', 1250, 5, 540],
-      ['rosehedge', 290, 1, 690], ['rosehedge', 366, 2, 690],
+      ['partylamp', 236, 1, 780], ['partylamp', 520, 2, 703], ['partylamp', 740, 3, 650], ['partylamp', 1010, 4, 607], ['partylamp', 1250, 5, 540],
+      ['rosehedge', 300, 1, 690],
       ['topiary', 600, 0, 560], ['topiary', 690, 0, 560],
       ['pumpkincoach', 840, 0, 650],
       ['topiary', 1015, 0, 452],
@@ -1345,7 +1345,7 @@ Object.assign(MAPS, {
     ],
     npcs: [{ id: 'pumpkins', x: 1300 }],
     spawns: [],
-    nodes: [{ x: 330, y: 690, kind: 'herb' }, { x: 610, y: 560, kind: 'night' }, { x: 1120, y: 452, kind: 'fiber' }],
+    nodes: [{ x: 382, y: 690, kind: 'herb' }, { x: 610, y: 560, kind: 'night' }, { x: 1120, y: 452, kind: 'fiber' }],
   },
 
   // The Moonlit Garden: hedges and topiaries climbing in terraces to the front steps. The fountains
@@ -1372,10 +1372,10 @@ Object.assign(MAPS, {
       material: 'manorhill', islands: 'terrace', ropes: 'vine', clouds: false, stars: true, faceAt: 0.12, props: [],
     },
     deco: [
-      ['rosehedge', 300, 1, 760], ['partylamp', 360, 1, 760], ['rosehedge', 470, 2, 760],
+      ['rosehedge', 300, 1, 760], ['partylamp', 360, 1, 760],
       ['partylamp', 560, 2, 640], ['topiary', 700, 0, 640], ['topiary', 860, 0, 640], ['partylamp', 1010, 3, 640],
       ['partylamp', 1080, 4, 520], ['topiary', 1180, 0, 520], ['rosehedge', 1400, 3, 520], ['partylamp', 1530, 5, 520],
-      ['partylamp', 1600, 6, 400], ['topiary', 1700, 0, 400], ['rosehedge', 1770, 4, 400], ['topiary', 1960, 0, 400], ['partylamp', 2060, 7, 400],
+      ['partylamp', 1600, 6, 400], ['topiary', 1700, 0, 400], ['rosehedge', 1830, 4, 400], ['topiary', 1960, 0, 400], ['partylamp', 2060, 7, 400],
     ],
     task: { kind: 'light', object: 'lantern', label: 'Light the garden lanterns' },
     fountains: [{ x: 200, y: 760, every: 6 }, { x: 960, y: 640, every: 7 }, { x: 1500, y: 520, every: 6.5 }],
@@ -1569,7 +1569,7 @@ Object.assign(MAPS, {
     id: 'tidepool_pier', name: 'Tidepool Pier', theme: 'harbor', town: 'harbor', world: { x: 236, y: 214 }, music: 'aquarium',
     width: 1200, height: 420, groundY: G,
     look: { painted: 'tidepier', sky: ['#5a8ad8', '#9ac8e8', '#ffd8c0'], far: '#6a9ad0', mid: '#ffffff', midTrim: '#8fd3ff', skyline: 'sea', light: 'dusk', critters: ['gull'] },
-    platforms: [{ x: 420, y: G - 80, w: 140 }],
+    platforms: [{ x: 420, y: G - 80, w: 140, style: 'planks', posts: true }],
     ropes: [],
     deco: [['signpost', 160], ['shellpile', 300, 0], ['divingbell', 1000]],
     portals: [
@@ -3091,14 +3091,16 @@ for (const m of Object.values(MAPS)) settleSpots(m, SPOTS[m.id]);
 // indoor things on its floor instead of grass and flowers. Rooms that are outdoors (the manor's
 // garden and rooftop, the reef, the midway, the stage acts painted as outdoor sets) stay as they are.
 const GALLERY_PROPS = { props: ['candle', 'books', 'column', 'candle', 'orb'], ledgeProp: 'candle' };
-const SEA_HALL = { islands: 'gallery', material: 'marble', ceiling: 'manor', trim: '#bfeeff', ceilingTint: { band: '#2e5a86', trim: '#bfeeff', swag: '#4fb8c0', lamp: '#d8fbff' }, props: ['column', 'crystal', 'orb', 'crystal'], ledgeProp: 'crystal', edges: null };
+const SEA_HALL = { islands: 'gallery', material: 'marble', ceiling: 'manor', trim: '#bfeeff', ceilingTint: { band: '#2e5a86', trim: '#bfeeff', swag: '#4fb8c0', lamp: '#d8fbff' }, props: ['crystal', 'orb', 'crystal'], ledgeProp: 'crystal', edges: null, propKeep: 0.64 };
+// (The manor's halls: candles, books and crystal balls, kept sparse; no empty stub pedestals.)
+const MANOR_HALL_PROPS = { props: ['candle', 'books', 'orb', 'candle'], ledgeProp: 'candle', propKeep: 0.66 };
 const THEATRE_HALL = { islands: 'gallery', material: 'parquet', ceiling: 'curtain', trim: '#ffd36b', props: ['column', 'lamp', 'poster', 'candle'], ledgeProp: 'candle', edges: null };
 const INTERIORS = {
   // (Rootwood Hollow's rooms draw their own root ceiling as scenery, not the cave's stone one.)
   // The manor's halls: galleries on gilded chains.
   // (The gallery, ballroom and hallway's ledges are marble balconies on columns, 2026-11-18.)
-  manor2: { islands: 'balcony', ...GALLERY_PROPS }, manor3: { islands: 'balcony', ...GALLERY_PROPS },
-  manor4: { islands: 'gallery', ...GALLERY_PROPS, props: ['books', 'books', 'candle', 'column'] }, manor5: { islands: 'balcony', ...GALLERY_PROPS },
+  manor2: { islands: 'balcony', ...MANOR_HALL_PROPS }, manor3: { islands: 'balcony', ...MANOR_HALL_PROPS },
+  manor4: { islands: 'gallery', ...MANOR_HALL_PROPS, props: ['books', 'books', 'candle'] }, manor5: { islands: 'balcony', ...MANOR_HALL_PROPS },
   // The palace's inner halls in sea-glass marble, their ledges Queen Coralie's display tanks; the
   // grotto is a cave.
   aquarium3: { ...SEA_HALL, islands: 'tank', ledgeProp: null }, aquarium6: { ...SEA_HALL, islands: 'tank', ledgeProp: null }, aquarium4: { ceiling: true, props: ['rock', 'crystal', 'rock'], ledgeProp: 'crystal' },

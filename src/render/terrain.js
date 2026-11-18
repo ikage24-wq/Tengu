@@ -6,7 +6,7 @@
 // scrolls with the world.
 
 import { shade, mix, gfx } from './pixel.js';
-import { surfacesOf } from '../world/physics.js';
+import { surfacesOf, groundAt } from '../world/physics.js';
 import { drawRockShelf } from './canyon.js';
 import { drawLimb, drawRootShelf } from './hollowrooms.js';
 import { drawTerrace, drawChimney, drawBalcony } from './manorhill.js';
@@ -2379,6 +2379,31 @@ export function drawIsland(ctx, theme, p, cam, time, pi, look = null, map = null
           ctx.stroke();
           ctx.restore();
         }
+      }
+      // (On dry land, `posts`: a raised deck on two stout posts down to the floor under it.)
+      if (p.posts && map) {
+        for (const wx of [p.x + 12, p.x + w - 12]) {
+          const px = Math.round(wx - cam.x);
+          const bottom = Math.round(groundAt(map, wx) - cam.y);
+          ctx.fillStyle = '#8a6a52';
+          ctx.fillRect(px - 4, y + 4, 8, bottom - y - 4);
+          ctx.fillStyle = '#a8866a';
+          ctx.fillRect(px - 4, y + 4, 2.5, bottom - y - 4);
+          ctx.fillStyle = '#6a4e3c';
+          ctx.fillRect(px - 5, bottom - 4, 10, 4);
+          // A cross-brace between them.
+        }
+        ctx.strokeStyle = '#7a5a44';
+        ctx.lineWidth = 3;
+        const x1 = Math.round(p.x + 12 - cam.x);
+        const x2 = Math.round(p.x + w - 12 - cam.x);
+        const b1 = Math.round(groundAt(map, p.x + 12) - cam.y);
+        ctx.beginPath();
+        ctx.moveTo(x1, y + 10);
+        ctx.lineTo(x2, b1 - 10);
+        ctx.moveTo(x2, y + 10);
+        ctx.lineTo(x1, b1 - 10);
+        ctx.stroke();
       }
       drawPlanks(ctx, m, x, y, w, time, pi, look?.edges);
     }

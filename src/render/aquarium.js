@@ -113,8 +113,18 @@ function bellArt(rung) {
 }
 // The tide bell over the vault, swinging; the marks it rang hang beside it, each lighting up as
 // its clam opens.
-function drawBell(ctx, x, y, room, time) {
+function drawBell(ctx, x, y, room, time, top = y - 400) {
   const swing = Math.sin(time * 1.6);
+  // Its chain, from the ceiling down to its hook.
+  ctx.save();
+  ctx.strokeStyle = '#c8902a';
+  ctx.lineWidth = 1.4;
+  for (let cy = top; cy < y - 72; cy += 6) {
+    ctx.beginPath();
+    ctx.ellipse(x, cy + 3, (cy / 6) % 2 < 1 ? 1.6 : 0.8, 3, 0, 0, TAU);
+    ctx.stroke();
+  }
+  ctx.restore();
   ctx.save();
   ctx.translate(x, y - 70);
   ctx.rotate(swing * 0.12);
@@ -172,7 +182,7 @@ export function drawAquaBack(ctx, world, cam, time) {
     for (let k = 0; k < 3; k++) ring(ctx, x - 56 + Math.sin(time * 2 + k) * 3, fl - 40 - ((time * 18 + k * 20) % 60), 1.4 + k * 0.4, '#e8fcff');
     ctx.restore();
   }
-  if (map.bell && room.bell) drawBell(ctx, map.bell.x - cam.x, map.bell.y - cam.y - 40, room, time);
+  if (map.bell && room.bell) drawBell(ctx, map.bell.x - cam.x, map.bell.y - cam.y - 40, room, time, 24 - cam.y);
   // Currents: streaks racing along the floor while one runs, a faint shimmer while it builds.
   for (const c of room.currents ?? []) {
     const y = c.y - cam.y;

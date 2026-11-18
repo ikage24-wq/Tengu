@@ -5185,11 +5185,31 @@ function drawDeco(ctx, map, cam, width, time, pass, air = '#ffffff') {
 }
 
 
+// How far a ledge's picture reaches past its walking line: a gallery's chains and a catwalk's rods
+// go up to whatever is above it; a terrace's wall, a balcony's columns, a sea shelf's coral trunk or
+// a tank's stand go down to the floor under it. (Culling by the line alone made those pop out of
+// view while they still showed on screen: 2026-11-18.)
+const reachKept = new WeakMap();
+function ledgeReach(map, p, style) {
+  let r = reachKept.get(p);
+  if (r && r.style === style) return r;
+  let up = 0;
+  let down = 40;
+  // (A Hollow shelf that `hang`s from a root reaches up to what's above it, too.)
+  if (style === 'gallery' || style === 'catwalk' || p.hang) up = p.y + 40;
+  else if (style && style !== 'earth') down = Math.max(40, Math.max(groundAt(map, p.x), groundAt(map, p.x + p.w / 2), groundAt(map, p.x + p.w)) - p.y + 20);
+  r = { style, up, down };
+  reachKept.set(p, r);
+  return r;
+}
+
 function drawLedges(ctx, t, theme, map, cam, width, height, time) {
   for (const [pi, p] of map.platforms.entries()) {
     const x = p.x + (p.drift ? driftOffset(p, map.clock ?? 0) : 0) - cam.x;
     const y = p.y - cam.y;
-    if (x + p.w < -20 || x > width + 20 || y > height + 30 || y < -40) continue;
+    if (x + p.w < -20 || x > width + 20) continue;
+    const reach = theme === 'hollow' && !t.islands ? { up: 0, down: 40 } : ledgeReach(map, p, p.style ?? zoneLook(map, p.y, p.x + p.w / 2)?.islands ?? t.islands);
+    if (y - reach.up > height + 30 || y + reach.down < 0) continue;
     // A ledge that's part of something already drawn (a tree's bough) shows nothing of its own.
     if (p.bare) continue;
     // (A remade Hollow room says how its ledges look, `look.islands`; the old ones are thick roots.)
@@ -5606,6 +5626,11 @@ function drawProps(ctx, t, map, cam, width, time) {
       const sy = s.yAt(wx);
       // Leave room around houses and landmarks standing on a ledge.
       if (!s.ground && (map.deco ?? []).some(([, dx, , dy]) => dy === sy && Math.abs(dx - wx) < 46)) continue;
+      // ...and on the ground (as wide as the piece, near enough), and around the room's things to
+      // work and its fountains, so nothing is cluttered in front of them.
+      if (s.ground && (map.deco ?? []).some(([kind, dx, , dy]) => (dy == null || Math.abs(dy - sy) < 4) && Math.abs(dx - wx) < Math.min(90, (LANDMARKS[kind]?.w ?? 60) * 0.32 + 14))) continue;
+      if ((map.objects ?? []).some((o) => Math.abs(o.x - wx) < 30 && Math.abs((o.y ?? sy) - sy) < 12)) continue;
+      if ((map.fountains ?? []).some((f) => Math.abs(f.x - wx) < 34 && Math.abs(f.y - sy) < 12)) continue;
       if (map.ropes.some((r) => Math.abs(r.x - wx) < 16 && r.top <= sy + 1 && r.bottom >= sy - 1)) continue;
       // Nothing stands on a steep slope.
       if (Math.abs(s.yAt(wx + 6) - s.yAt(wx - 6)) > 5) continue;
