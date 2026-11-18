@@ -269,8 +269,8 @@ How to get there without making it a grind (the game's own rule against chores):
 4. [x] Chapter 3: Gnarlroot reworked, Elder Yomogi, the palace's first elder (2026-11-18, commit 95ce963).
 5. [x] Chapter 4: Marigold's waltz, Elder Sakura (2026-11-18: Manor Hill, the rooms and every manor
    monster remade, b99b95f; then her waltz on the beat of Apparitions Ball, the Pumpkin Butlers, Sakura
-   at her tea table and home at the palace, the invitations). Left: a text pass on An Invitation, The
-   Last Waltz and Stopped Clocks.
+   at her tea table and home at the palace, the invitations, 1310e19; and An Invitation, The Last Waltz
+   and Stopped Clocks reworded for Sakura and the dinging star).
 6. [ ] Chapter 5: Coralie's tanks, Elder Warabi, Sylvana's clue.
 7. [ ] Chapter 6: Gearheart's carnival games, Elder Kuri, Tamamo's clue.
 8. [ ] Chapter 7: Astraea's constellations, Elder Goma, the twist.
