@@ -10,6 +10,7 @@ import { surfacesOf } from '../world/physics.js';
 import { drawRockShelf } from './canyon.js';
 import { drawLimb, drawRootShelf } from './hollowrooms.js';
 import { drawTerrace, drawChimney, drawBalcony } from './manorhill.js';
+import { drawCoralShelf, drawKelpRock, drawAbyssLedge, drawTank } from './aquapalace.js';
 
 const INK = '#3a2d4f';
 const edge = (c) => mix(shade(c, -38), INK, 0.35);
@@ -90,6 +91,10 @@ export const MATERIALS = {
   manorgarden: { lip: '#8ee08a', body: '#9a84c8', deep: '#6a5498', stone: '#c4b4e6', style: 'flagstone', blades: true, drip: 'vine', joint: '#8ee08a' },
   // The Sunken Aquarium Palace: pale sea sand over pink coral stone.
   reef: { lip: '#fff0d6', body: '#e8b8c8', deep: '#c08aa8', stone: '#ffd8e2', style: 'slab', blades: false, drip: 'weed' },
+  // The sea floor round the palace (2026-11-18): pale sand over warm sandstone, weed trailing.
+  seasand: { lip: '#fff0d6', body: '#e8c8a0', deep: '#c8a07a', stone: '#f4dcb8', style: 'loam', blades: false, drip: 'weed' },
+  // The abyss: dark silt over basalt.
+  abyssfloor: { lip: '#5a6aa0', body: '#2e3458', deep: '#1e2240', stone: '#4a5280', style: 'rock', blades: false, drip: 'weed', glow: '#7ff6ff' },
   // The Moray Grotto under the palace: dark sea rock, weed hanging off it, glowing faintly.
   searock: { lip: '#9fe6d6', body: '#3e6a7a', deep: '#284a5a', stone: '#5a8a96', style: 'rock', blades: false, drip: 'weed', glow: '#9ff0e0' },
   // The Clockwork Carnival: painted boards over a sawdust-and-brick base.
@@ -2385,6 +2390,10 @@ export function drawIsland(ctx, theme, p, cam, time, pi, look = null, map = null
     else if (style === 'terrace') drawTerrace(ctx, x, y, w, time, pi, map, cam);
     else if (style === 'chimney') drawChimney(ctx, x, y, w, time, pi, map, cam);
     else if (style === 'balcony') drawBalcony(ctx, x, y, w, time, pi, map, cam);
+    else if (style === 'coral') drawCoralShelf(ctx, x, y, w, time, pi, map, cam);
+    else if (style === 'kelprock') drawKelpRock(ctx, x, y, w, time, pi, map, cam);
+    else if (style === 'abyss') drawAbyssLedge(ctx, x, y, w, time, pi, map, cam);
+    else if (style === 'tank') drawTank(ctx, x, y, w, time, pi, map, cam);
     else if (style === 'leaf') drawLeafPad(ctx, x, y, w, time, pi);
     else if (style === 'stone') drawStone(ctx, theme, m, x, y, w, p.thick ?? 26, cam, time, pi, look?.edges);
     return;

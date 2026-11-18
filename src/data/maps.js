@@ -1562,14 +1562,16 @@ MAPS.harbor.portals.push({ id: 'pier', x: 2180, y: 480, to: 'tidepool_pier', toP
 
 Object.assign(MAPS, {
   // Tidepool Pier: a little pier off the east end of Pastel Harbor, over water glowing from below,
-  // where Marina the diver keeps her bubble charm and finds groups.
+  // where Marina the diver keeps her bubble charm and finds groups. (Remade 2026-11-18: the palace's
+  // domes glow up through the sea behind, and a diving bell hangs from a crane at the pier's end to
+  // take you down: render/aquapalace.js.)
   tidepool_pier: {
     id: 'tidepool_pier', name: 'Tidepool Pier', theme: 'harbor', town: 'harbor', world: { x: 236, y: 214 }, music: 'aquarium',
     width: 1200, height: 420, groundY: G,
-    look: { sky: ['#5a8ad8', '#9ac8e8', '#ffd8c0'], far: '#6a9ad0', mid: '#ffffff', midTrim: '#8fd3ff', skyline: 'sea', light: 'dusk', critters: ['gull'] },
+    look: { painted: 'tidepier', sky: ['#5a8ad8', '#9ac8e8', '#ffd8c0'], far: '#6a9ad0', mid: '#ffffff', midTrim: '#8fd3ff', skyline: 'sea', light: 'dusk', critters: ['gull'] },
     platforms: [{ x: 420, y: G - 80, w: 140 }],
     ropes: [],
-    deco: [['signpost', 160]],
+    deco: [['signpost', 160], ['shellpile', 300, 0], ['divingbell', 1000]],
     portals: [
       { id: 'start', x: 640, y: G, hidden: true },
       { id: 'west', x: 50, y: G, to: 'harbor', toPortal: 'pier' },
@@ -1580,7 +1582,9 @@ Object.assign(MAPS, {
   },
 
   // The Coral Gate: down the palace's outer wall, floor by floor, from the surface gate to the sea
-  // floor. Bubble lifts carry you back up; three lantern corals to light on the way down.
+  // floor. Bubble lifts carry you back up; three lantern corals to light on the way down. (Remade
+  // 2026-11-18: every floor a coral shelf on coral trunks rooted below; the palace wall behind with
+  // its towers, shell domes and lit portholes, the light from the surface slanting down.)
   aquarium1: {
     id: 'aquarium1', name: 'The Coral Gate', theme: 'aquarium', town: 'harbor', dungeon: 'aquarium',
     ...lay({
@@ -1596,7 +1600,11 @@ Object.assign(MAPS, {
         { name: 'The Surface Gate', color: '#9fe8ff', from: 520, mobs: [], look: { sky: ['#3a8ab0', '#6ab8d0', '#bfe6f0'] } },
       ],
     }),
-    look: { sky: ['#1a4a6e', '#2a6a8a', '#4a9ab0'], far: '#1e5a7a', mid: '#2a7a8a', midTrim: '#ff9ab8', ...SEA_LOOK },
+    look: { painted: 'aquagate', sky: ['#1a4a6e', '#2a6a8a', '#4a9ab0'], far: '#1e5a7a', mid: '#2a7a8a', midTrim: '#ff9ab8', ...SEA_LOOK, material: 'seasand', islands: 'coral', props: [] },
+    deco: [
+      ['kelpclump', 200, 0, 1100], ['coralclump', 380, 0, 1100], ['shellpile', 700, 0, 1100], ['coralclump', 820, 1, 1100], ['kelpclump', 1300, 2, 1100], ['coralclump', 1460, 2, 1100],
+      ['coralclump', 640, 2, 840], ['shellpile', 1400, 0, 960], ['kelpclump', 1060, 1, 700], ['shellpile', 200, 0, 560], ['coralclump', 1300, 1, 420],
+    ],
     task: { kind: 'light', object: 'coral', label: 'Light the lantern corals' },
     updrafts: [{ x: 1500, w: 56, top: 280, bottom: 420, kind: 'bubbles' }, { x: 920, w: 56, top: 560, bottom: 1100, kind: 'bubbles' }],
     portals: [
@@ -1617,7 +1625,8 @@ Object.assign(MAPS, {
 
   // The Kelp Gardens: a long swim through the palace gardens, the sea floor below and a path along
   // the kelp tops above. Currents sweep a floor at a time; a bubble lift at the far end leads up to
-  // a hidden grotto.
+  // a hidden grotto. (Remade 2026-11-18: the upper path is sea rocks crowned with kelp, standing on
+  // boulder pillars; a kelp forest sways behind under the garden's glass dome.)
   aquarium2: {
     id: 'aquarium2', name: 'The Kelp Gardens', theme: 'aquarium', town: 'harbor', dungeon: 'aquarium',
     ...lay({
@@ -1628,7 +1637,11 @@ Object.assign(MAPS, {
         { name: 'The Seagrass Meadow', color: '#9fe8d8', from: 1400, mobs: [] },
       ],
     }),
-    look: { sky: ['#0e3a4a', '#1a5a5a', '#3a8a7a'], far: '#1a4a4a', mid: '#2a6a5a', midTrim: '#7fd8a8', ...SEA_LOOK },
+    look: { painted: 'aquakelp', sky: ['#0e3a4a', '#1a5a5a', '#3a8a7a'], far: '#1a4a4a', mid: '#2a6a5a', midTrim: '#7fd8a8', ...SEA_LOOK, material: 'seasand', islands: 'kelprock', props: [] },
+    deco: [
+      ['kelpclump', 150, 0, 700], ['coralclump', 440, 0, 700], ['shellpile', 700, 0, 700], ['kelpclump', 880, 1, 700], ['coralclump', 1300, 1, 700],
+      ['kelpclump', 1620, 2, 700], ['shellpile', 1900, 0, 700], ['coralclump', 2120, 2, 700], ['kelpclump', 2460, 0, 700],
+    ],
     currents: [{ x1: 120, x2: 1350, y: 700, dir: 1, every: 7, last: 4 }, { x1: 1500, x2: 2600, y: 560, dir: -1, every: 8, last: 4 }],
     updrafts: [{ x: 2700, w: 56, top: 420, bottom: 700, kind: 'bubbles' }],
     portals: [
@@ -1647,7 +1660,9 @@ Object.assign(MAPS, {
   },
 
   // The Pearl Vault: three floors of giant clams. The tide bell rings an order as you come in (a
-  // new one each run); open the four clams in it. A wrong one snaps them all shut.
+  // new one each run); open the four clams in it. A wrong one snaps them all shut. (Remade
+  // 2026-11-18: the galleries are Queen Coralie's display tanks on sea-glass stands; the walls are
+  // shelves of little tanks and pearls between arched windows on the deep.)
   aquarium3: {
     id: 'aquarium3', name: 'The Pearl Vault', theme: 'aquarium', town: 'harbor', dungeon: 'aquarium',
     ...lay({
@@ -1658,7 +1673,7 @@ Object.assign(MAPS, {
         { name: 'The Pearl Galleries', color: '#bfeeff', from: 620, mobs: [] },
       ],
     }),
-    look: { sky: ['#1a2a5a', '#2a4a7a', '#6a8ac0'], far: '#22346a', mid: '#3a5a8a', midTrim: '#ffe6f2', ...SEA_LOOK },
+    look: { painted: 'aquahall', hall: 'vault', sky: ['#1a2a5a', '#2a4a7a', '#6a8ac0'], far: '#22346a', mid: '#3a5a8a', midTrim: '#ffe6f2', ...SEA_LOOK },
     task: { kind: 'light', object: 'clam', label: 'Open the clams in the bell\'s order' },
     bell: { x: 650, y: 420 },
     portals: [
@@ -1696,7 +1711,8 @@ Object.assign(MAPS, {
   },
 
   // The Ink Abyss: a deep shaft of ledges, the tide surging up it now and then. Lady Abyssia waits
-  // at the bottom in her ink.
+  // at the bottom in her ink. (Remade 2026-11-18: basalt ledges on basalt columns, glowing with
+  // anemones; far back in the dark a great sleepy whale drifts by, and jellies rise glowing.)
   aquarium5: {
     id: 'aquarium5', name: 'The Ink Abyss', theme: 'aquarium', town: 'harbor', dungeon: 'aquarium',
     ...lay({
@@ -1710,7 +1726,7 @@ Object.assign(MAPS, {
         { name: 'The Shaft', color: '#5ae0c8', from: 780, mobs: [] },
       ],
     }),
-    look: { sky: ['#0a0e2a', '#14183e', '#2a2a5a'], far: '#121836', mid: '#1e244a', midTrim: '#5ae0c8', ...SEA_LOOK },
+    look: { painted: 'aquaabyss', sky: ['#0a0e2a', '#14183e', '#2a2a5a'], far: '#121836', mid: '#1e244a', midTrim: '#5ae0c8', ...SEA_LOOK, material: 'abyssfloor', islands: 'abyss', props: [] },
     flood: { every: 24, warn: 3, last: 6, damage: 70, color: 'sea', name: 'The Tide Surges!' },
     portals: [
       { id: 'west', x: 40, y: 900, to: 'aquarium4', toPortal: 'east' },
@@ -1722,14 +1738,16 @@ Object.assign(MAPS, {
   },
 
   // The Throne of Tides: the great throne room on the sea floor, two sea-glass pillars to stand on,
-  // the coral throne at the back. Queen Coralie sleeps on it.
+  // the coral throne at the back. Queen Coralie sleeps on it. (Remade 2026-11-18: the ledges are
+  // display tanks on stands, the walls lined with tanks, and behind the throne the biggest tank of
+  // all.)
   aquarium6: {
     id: 'aquarium6', name: 'The Throne of Tides', theme: 'aquarium', town: 'harbor', dungeon: 'aquarium',
     width: 1600, height: 420, groundY: G,
     platforms: [{ x: 300, y: 300, w: 90 }, { x: 1210, y: 300, w: 90 }, { x: 560, y: 300, w: 90 }, { x: 950, y: 300, w: 90 }, { x: 760, y: 220, w: 80 }],
     // The throne's banner rope, up to a ledge over the throne (the room's secret).
     ropes: [{ x: 800, top: 220, bottom: G }],
-    look: { sky: ['#0e2a4e', '#1e4a7a', '#5a9ad0'], far: '#183a66', mid: '#2a5a8a', midTrim: '#ff9ab8', ...SEA_LOOK },
+    look: { painted: 'aquahall', hall: 'throne', sky: ['#0e2a4e', '#1e4a7a', '#5a9ad0'], far: '#183a66', mid: '#2a5a8a', midTrim: '#ff9ab8', ...SEA_LOOK },
     portals: [
       { id: 'west', x: 40, y: G, to: 'aquarium5', toPortal: 'east' },
       { id: 'out', x: 1560, y: G, to: 'tidepool_pier', toPortal: 'start', label: 'Exit', sealed: true },
@@ -3081,8 +3099,9 @@ const INTERIORS = {
   // (The gallery, ballroom and hallway's ledges are marble balconies on columns, 2026-11-18.)
   manor2: { islands: 'balcony', ...GALLERY_PROPS }, manor3: { islands: 'balcony', ...GALLERY_PROPS },
   manor4: { islands: 'gallery', ...GALLERY_PROPS, props: ['books', 'books', 'candle', 'column'] }, manor5: { islands: 'balcony', ...GALLERY_PROPS },
-  // The palace's inner halls in sea-glass marble; the grotto is a cave.
-  aquarium3: SEA_HALL, aquarium6: SEA_HALL, aquarium4: { ceiling: true, props: ['rock', 'crystal', 'rock'], ledgeProp: 'crystal' },
+  // The palace's inner halls in sea-glass marble, their ledges Queen Coralie's display tanks; the
+  // grotto is a cave.
+  aquarium3: { ...SEA_HALL, islands: 'tank', ledgeProp: null }, aquarium6: { ...SEA_HALL, islands: 'tank', ledgeProp: null }, aquarium4: { ceiling: true, props: ['rock', 'crystal', 'rock'], ledgeProp: 'crystal' },
   // The carnival's buildings: the funhouse, the big top's ring, the toy workshop.
   carnival2: { islands: 'gallery', material: 'parquet', ceiling: 'beams', trim: '#ff9ab8', ceilingTint: { band: '#a0507a', lamp: '#ffe2a0' }, props: ['poster', 'lantern', 'barrel'], ledgeProp: null, edges: null },
   carnival4: { islands: 'catwalk', material: 'sawdust', ceiling: 'tent', metal: '#c06a8a', props: ['barrel', 'poster', 'crate', 'lantern'], ledgeProp: null, edges: null },

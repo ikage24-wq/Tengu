@@ -169,6 +169,7 @@ function moray(world, m, up, dt) {
       s.spit = 3.2;
       const g = pick(up.filter((o) => o.role !== 'tank').length ? up.filter((o) => o.role !== 'tank') : up);
       addZone(world, { kind: 'circle', x: g.body.x, y: floorY(world, g.body), w: 56, warn: 1.3, damage: 120, from: m, bubble: true });
+      m.spitAt = world.now;
     }
     return true;
   }
@@ -207,6 +208,7 @@ function abyssia(world, m, up, dt) {
     s.ink = frac < 0.5 ? 6 : 8;
     for (const g of [...up].sort(() => Math.random() - 0.5).slice(0, frac < 0.5 ? 4 : 3)) addZone(world, { kind: 'circle', x: g.body.x, y: floorY(world, g.body), w: 70, warn: 1.6, damage: 150, from: m, ink: true });
     callout(world, 'Ink!', 'Step out of the dark clouds');
+    m.inkAt = world.now;
   }
   if (s.arms <= 0) {
     if (pending) s.arms = 1;
@@ -218,12 +220,14 @@ function abyssia(world, m, up, dt) {
       const w = map.width / 2 / n;
       for (let i = 0; i < n; i++) addZone(world, { kind: 'thorns', x: (left ? 0 : map.width / 2) + i * w, w, warn: 1.8, damage: 190, from: m, tentacle: true });
       callout(world, 'Tentacles!', left ? 'They slam the left side: go right!' : 'They slam the right side: go left!');
+      m.armsAt = world.now;
     }
   }
   if (s.phase === 1 && frac <= 0.5) {
     s.phase = 2;
     adds(world, m, 'anglerlamp', [m.x - 220, m.x + 220], null);
     callout(world, 'Lady Abyssia calls the deep!', 'Anglers in the dark: bring them down');
+    m.callAt = world.now;
     radio(world, 'anglers');
   }
   return false;

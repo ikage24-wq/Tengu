@@ -17,6 +17,7 @@ import { drawPortalGate, drawPortalSwirl } from './portals.js';
 import { drawPaintedCanyon, drawCanyonLife, drawCanyonFront } from './canyon.js';
 import { drawPaintedHollowGate } from './hollowgate.js';
 import { drawPaintedManorHill, drawManorHillLife, drawPaintedManorGarden, drawPaintedManorRoof } from './manorhill.js';
+import { drawPaintedAquaGate, drawPaintedAquaKelp, drawPaintedAquaHall, drawPaintedAquaAbyss, drawPaintedTidePier } from './aquapalace.js';
 import { drawPaintedHollowTrunk, drawVine, drawPaintedRootRoom, drawRootRope } from './hollowrooms.js';
 import { drawFarRoom, drawFarWhaleRoom, drawMidRoom } from './rooms.js';
 import { levelRange } from '../world/routes.js';
@@ -5086,7 +5087,7 @@ const BUILDINGS = {
 // washed toward the sky like the backdrop, so the ledge reads as passing in front of it.
 // Waterfalls pour off a ledge, and cloud pillars, the watchtower and Mossy Woods' giant trees
 // (whose branches are its ledges) hold one up, on purpose.
-const MEETS_LEDGE = new Set(['woodtree', 'gladecliff', 'waterfall', 'cloudpillar', 'watchtower', 'canyonwall', 'canyonspire', 'canyonarch', 'canyoncave', 'canyonstub', 'canyonwalllow', 'greattree', 'rootarch', 'trunkwall', 'hollowstump', 'rootwall', 'rootceiling', 'rootpillar', 'greatcap', 'manorgates', 'pumpkincoach', 'partylamp', 'rosehedge', 'topiary']);
+const MEETS_LEDGE = new Set(['woodtree', 'gladecliff', 'waterfall', 'cloudpillar', 'watchtower', 'canyonwall', 'canyonspire', 'canyonarch', 'canyoncave', 'canyonstub', 'canyonwalllow', 'greattree', 'rootarch', 'trunkwall', 'hollowstump', 'rootwall', 'rootceiling', 'rootpillar', 'greatcap', 'manorgates', 'pumpkincoach', 'partylamp', 'rosehedge', 'topiary', 'coralclump', 'shellpile', 'kelpclump', 'divingbell']);
 const decoSize = (kind, seed) => {
   const b = BUILDINGS[kind];
   if (b) {
@@ -6004,6 +6005,11 @@ export function drawSceneBack(ctx, map, cam, width, height, time, nearPortalId, 
     else if (t.painted === 'manorhill') drawPaintedManorHill(g, t, cam, width, height, time, layerY, air, map);
     else if (t.painted === 'manorgarden') drawPaintedManorGarden(g, t, cam, width, height, time, layerY, air, map);
     else if (t.painted === 'manorroof') drawPaintedManorRoof(g, t, cam, width, height, time, layerY, air, map);
+    else if (t.painted === 'aquagate') drawPaintedAquaGate(g, t, cam, width, height, time, layerY, air, map);
+    else if (t.painted === 'aquakelp') drawPaintedAquaKelp(g, t, cam, width, height, time, layerY, air, map);
+    else if (t.painted === 'aquahall') drawPaintedAquaHall(g, t, cam, width, height, time, layerY, air, map);
+    else if (t.painted === 'aquaabyss') drawPaintedAquaAbyss(g, t, cam, width, height, time, layerY, air, map);
+    else if (t.painted === 'tidepier') drawPaintedTidePier(g, t, cam, width, height, time, layerY, air, map);
     else if (t.painted === 'hollowtrunk') drawPaintedHollowTrunk(g, t, cam, width, height, time, layerY, air, map);
     else if (t.painted === 'rootroom') drawPaintedRootRoom(g, t, cam, width, height, time, layerY, air, map);
     else {
@@ -6018,7 +6024,7 @@ export function drawSceneBack(ctx, map, cam, width, height, time, nearPortalId, 
       veil = null;
     }
     // (A painted backdrop lays its own haze at each plane's foot.)
-    if (t.painted !== 'forest' && t.painted !== 'meadow' && t.painted !== 'canyon' && t.painted !== 'hollowgate' && t.painted !== 'hollowtrunk' && t.painted !== 'rootroom' && t.painted !== 'manorhill' && t.painted !== 'manorgarden' && t.painted !== 'manorroof') drawHaze(g, t, width, map.groundY - cam.y);
+    if (t.painted !== 'forest' && t.painted !== 'meadow' && t.painted !== 'canyon' && t.painted !== 'hollowgate' && t.painted !== 'hollowtrunk' && t.painted !== 'rootroom' && t.painted !== 'manorhill' && t.painted !== 'manorgarden' && t.painted !== 'manorroof' && !['aquagate', 'aquakelp', 'aquahall', 'aquaabyss'].includes(t.painted)) drawHaze(g, t, width, map.groundY - cam.y);
   };
   backdrop(ctx);
   drawDrift(ctx, t, cam, width, height, time, 'back');
