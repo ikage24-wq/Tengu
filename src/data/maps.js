@@ -1738,7 +1738,7 @@ Object.assign(MAPS, {
   },
 
   // The Throne of Tides: the great throne room on the sea floor, two sea-glass pillars to stand on,
-  // the coral throne at the back. Queen Coralie sleeps on it. (Remade 2026-11-18: the ledges are
+  // the coral throne at the back. Queen Coralie holds court on it, among her tanks. (Remade 2026-11-18: the ledges are
   // display tanks on stands, the walls lined with tanks, and behind the throne the biggest tank of
   // all.)
   aquarium6: {

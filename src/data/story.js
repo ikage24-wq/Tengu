@@ -149,7 +149,7 @@ export const STORY_QUESTS = {
   }),
   story_3_2: s('story_3_2', 5, {
     name: 'The Dryad Queen', giver: 'elowen', minLevel: 20, prereq: 'story_3_1',
-    text: "It's Sylvana, the Dryad Queen. Her bower is at the far end of the glade, past the waterfall. She won't listen to words right now; she's at the throwing-the-whole-forest stage of feelings. Show her your heart, stand your ground, and duck.",
+    text: "It's Sylvana, the Dryad Queen. Her bower is at the far end of the glade, past the waterfall. She won't listen to words right now; she's at the throwing-the-whole-forest stage of feelings. Show her your heart, stand your ground, and duck. Then ask her about festival night.",
     objectives: [{ type: 'kill', mob: 'sylvana', count: 1 }],
     trial: 'bower',
     rewards: { exp: 39000, gold: 1200, items: [{ id: 'elixir', qty: 3 }] },
@@ -160,7 +160,7 @@ export const STORY_QUESTS = {
     name: 'The Still Tide', giver: 'marina', minLevel: 21, prereq: 'story_3_2',
     text: "The sea's stopped turning. No tide in, no tide out, and the palace down there has gone dark. Ask the folk who know the water: Granny Kelp at the lighthouse, and Captain Rook. If they say it's stuck too, it's not just me being dramatic. I'm never dramatic. I'm a diver.",
     objectives: [
-      { type: 'talk', npc: 'kelp', say: "The tide? It stopped the night of the festival, dearie. I was up watching for falling stars. Not one fell, and the sea went flat as a plate. Old Lumen stopped waving too. Don't tell him I noticed." },
+      { type: 'talk', npc: 'kelp', say: "The tide? It stopped the night of the festival, dearie. I was up watching the lights. One star fell, a funny one. It went ding. Then the sea went flat as a plate. Old Lumen stopped waving too. Don't tell him I noticed." },
       { type: 'talk', npc: 'rook', say: "The tide? Stuck at half for weeks, kid. My tea won't even slosh. You know how unsettling it is when your tea won't slosh?" },
     ],
     rewards: { exp: 9000, gold: 300, items: [{ id: 'orange_potion', qty: 20 }] },
@@ -168,7 +168,7 @@ export const STORY_QUESTS = {
   }),
   story_coralie: s('story_coralie', 5, {
     name: 'The Drowned Queen', giver: 'marina', minLevel: 22, prereq: 'story_tide',
-    text: "Right. We're going down. Four of you, one bubble charm, deep breaths. Wake Queen Coralie in the Sunken Aquarium Palace, and ask her what she remembers. ...I said deep breaths, not dramatic gasps.",
+    text: "Right. We're going down. Four of you, one bubble charm, deep breaths. Queen Coralie's shut herself in the Sunken Aquarium Palace with her tanks, and the fish say there's someone in the biggest one. Find out who, and bring them up. ...I said deep breaths, not dramatic gasps.",
     objectives: [{ type: 'kill', mob: 'coralie', count: 1 }],
     rewards: { exp: 26000, gold: 700, items: [{ id: 'elixir', qty: 3 }] },
     scenes: { done: 'coralie_done' },
@@ -781,18 +781,18 @@ export const SCENES = {
     { who: 'marina', text: "Psst! You! You look like you can hold your breath. Can you? How long? I can do four minutes. I'm doing it right now.", mood: 'happy' },
     { together: [{ emote: 'player', kind: '?', dur: 1.2 }, { wait: 0.4 }] },
     { who: 'marina', text: "...No I'm not. I'm talking. Anyway!", mood: 'surprised' },
-    { who: 'marina', text: "The sea's stopped turning. No tide in, no tide out. The palace down there has been dark for weeks, and the Drowned Queen won't wake.", mood: 'sad' },
+    { who: 'marina', text: "The sea's stopped turning. No tide in, no tide out. The palace down there has been dark for weeks, and the Drowned Queen has shut every gate.", mood: 'sad' },
   ],
   tide_done: [
-    { who: 'player', text: "Granny Kelp says the sea went flat the night of the festival. And Rook says his tea won't even slosh." },
+    { who: 'player', text: "Granny Kelp says the sea went flat the night of the festival, right after a star fell. It went ding. And Rook says his tea won't even slosh." },
     { together: [{ emote: 'marina', kind: '!', dur: 1.4 }, { fx: 'bubbles', at: 'marina', n: 10 }] },
-    { who: 'marina', text: "The festival? The night the stars didn't fall? That's the night the palace's bubble wards started failing!", mood: 'surprised' },
-    { who: 'marina', text: "Everything's stuck on that one night. The stars, the sea, Rook's tea. Somebody pressed pause on the whole island.", mood: 'sad' },
+    { who: 'marina', text: "The festival? That's the night the palace shut its gates! I watched the windows go dark, one by one.", mood: 'surprised' },
+    { who: 'marina', text: "Everything's stuck on that one night. The sea, the palace, Rook's tea. Somebody pressed pause on the whole island.", mood: 'sad' },
   ],
   coralie_done: [
-    { who: 'player', text: "Queen Coralie's awake. Before she fell asleep, she said, the sky went still like a painting, and the tide forgot which way to go." },
+    { who: 'player', text: "Queen Coralie let them all go. The fish, her pearls, and Elder Warabi, who's home at the palace drying off." },
     { together: [{ emote: 'marina', kind: '!', dur: 1.2 }, { wait: 0.4 }] },
-    { who: 'marina', text: 'A painting. Stars stuck in a painting. And the sea copying it, because it didn\'t know what else to do.', mood: 'sad' },
+    { who: 'marina', text: "She opened the tanks herself? ...That must be the hardest thing she's ever done.", mood: 'sad' },
     { together: [{ face: 'marina', to: -1 }, { fx: 'bubbles', at: { x: 700, y: 352 }, n: 18 }, { wait: 0.6 }] },
     { together: [{ fx: 'bubbles', at: { x: 560, y: 352 }, n: 18 }, { fx: 'sparkle', at: { x: 640, y: 344 }, n: 10 }] },
     { who: null, text: 'Out past the pier, for the first time in weeks, a small wave rolls in. Then another. Then one rolls back out.' },
@@ -832,12 +832,12 @@ export const SCENES = {
   // ----- Chapter 3 -----
   ch3_open: [
     { card: 'Chapter 5', sub: 'Whispers in the Glade' },
-    { who: 'elowen', text: 'Gnarlroot missed his lullaby, and now someone in the woods is weeping. Can you hear it? Loud, isn\'t it. Very... theatrical.' },
-    { who: 'elowen', text: 'The wind wall around the Whispering Glade has thinned. Go quickly, and go gently. Perhaps bring a hanky.' },
+    { who: 'elowen', text: 'A tree who takes all day to say thank you, a party that never ends... and now someone in the woods is weeping. Can you hear it? Loud, isn\'t it. Very... theatrical.' },
+    { who: 'elowen', text: 'It\'s coming from the Whispering Glade, past Mossy Woods. Go quickly, and go gently. Perhaps bring a hanky.' },
   ],
   ch3_crying: [
     { who: 'elowen', text: 'The fairies said a name: Sylvana. The Dryad Queen.', mood: 'sad' },
-    { who: 'elowen', text: "Her trees can't talk to each other without the wind. She's been alone in her bower for weeks, writing long, sad poems. The fairies have had to listen to all of them.", mood: 'sad' },
+    { who: 'elowen', text: "She's been alone in her bower since festival night, writing long, sad poems. The fairies have had to listen to all of them.", mood: 'sad' },
     { who: 'elowen', text: 'Odd little fairies, mind. When one of them vanished, all it left behind was a leaf.', mood: 'surprised' },
   ],
   ch3_trial: [
@@ -846,13 +846,18 @@ export const SCENES = {
   ],
   ch3_win: [
     { who: 'sylvana', text: '...you stayed. Even when I threw the whole forest at you, you stayed.', mood: 'sad' },
-    { who: 'sylvana', text: "I was so lonely. Without Hayate's wind my trees can't whisper. I thought everyone had forgotten us." },
-    { who: 'player', text: "We'll wake her. I promise." },
+    { who: 'sylvana', text: 'On festival night, a great wind came through my glade. Not howling. Crying. Like someone very sleepy, and very, very alone.', mood: 'sad' },
+    { who: 'sylvana', text: "It went right through my trees, and they've wept ever since. So have I. Sad is catching." },
+    { who: 'player', text: "I'll find out whose wind it was. I promise." },
     { who: 'sylvana', text: "Then take my blessing. And visit! I'll be waiting for a rematch. I'm going to practise my throwing.", mood: 'happy' },
   ],
   ch3_end: [
     { who: 'elowen', text: 'Sylvana is smiling again, and the glade sings on its own. She also sent me forty pages of happy poems. Forty.', mood: 'happy' },
-    { who: 'elowen', text: "But she's the first, not the last. A diver called Marina at Tidepool Pier, past Pastel Harbor, sent word: the sea has gone still. Do take her a towel." },
+    { who: 'player', text: 'She said the wind cried, on festival night. Like someone sleepy, and alone.' },
+    { together: [{ emote: 'elowen', kind: '!', dur: 1.2 }, { wait: 0.4 }] },
+    { who: 'elowen', text: "Sleepy. There's only one wind on this island that yawns.", mood: 'surprised' },
+    { who: 'elowen', text: "Our Queen, sad? She sleeps through thunder. ...It's going on the chart. I've run out of string.", mood: 'sad' },
+    { who: 'elowen', text: "Meanwhile, a diver called Marina at Tidepool Pier, past Pastel Harbor, sent word: the sea has gone still. Do take her a towel." },
   ],
   // ----- Chapter 4 -----
   ch4_open: [

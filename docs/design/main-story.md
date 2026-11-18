@@ -271,7 +271,7 @@ How to get there without making it a grind (the game's own rule against chores):
    monster remade, b99b95f; then her waltz on the beat of Apparitions Ball, the Pumpkin Butlers, Sakura
    at her tea table and home at the palace, the invitations, 1310e19; and An Invitation, The Last Waltz
    and Stopped Clocks reworded for Sakura and the dinging star).
-6. [ ] Chapter 5: Coralie's tanks, Elder Warabi, Sylvana's clue.
+6. [x] Chapter 5: Coralie's tanks, Elder Warabi, Sylvana's clue.
 7. [ ] Chapter 6: Gearheart's carnival games, Elder Kuri, Tamamo's clue.
 8. [ ] Chapter 7: Astraea's constellations, Elder Goma, the twist.
 9. [ ] Chapter 8: Bonbon's cake, Elder Ichigo, Lilith's clue, the sleepwalk.
