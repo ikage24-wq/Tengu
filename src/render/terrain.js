@@ -9,6 +9,7 @@ import { shade, mix, gfx } from './pixel.js';
 import { surfacesOf } from '../world/physics.js';
 import { drawRockShelf } from './canyon.js';
 import { drawLimb, drawRootShelf } from './hollowrooms.js';
+import { drawTerrace, drawChimney, drawBalcony } from './manorhill.js';
 
 const INK = '#3a2d4f';
 const edge = (c) => mix(shade(c, -38), INK, 0.35);
@@ -83,6 +84,9 @@ export const MATERIALS = {
   sand: { lip: '#fff6dc', body: '#f6dcae', deep: '#e0b886', stone: '#fff0d0', style: 'sand', blades: false, drip: null },
   // Moonlit Manor: violet brick and moonlit stone inside; clipped lawn over garden flagstones out.
   manor: { lip: '#e6d6ff', body: '#7a5aa8', deep: '#54407e', stone: '#a88ad8', style: 'brick', blades: false, drip: 'vine' },
+  // Manor Hill's hillside: a lawn over dark plum earth, so the lilac stone of the terraces stands
+  // out against it (2026-11-18).
+  manorhill: { lip: '#94d890', body: '#6e5478', deep: '#4c3a5a', stone: '#8e7a9e', style: 'loam', blades: true, drip: 'vine' },
   manorgarden: { lip: '#8ee08a', body: '#9a84c8', deep: '#6a5498', stone: '#c4b4e6', style: 'flagstone', blades: true, drip: 'vine', joint: '#8ee08a' },
   // The Sunken Aquarium Palace: pale sea sand over pink coral stone.
   reef: { lip: '#fff0d6', body: '#e8b8c8', deep: '#c08aa8', stone: '#ffd8e2', style: 'slab', blades: false, drip: 'weed' },
@@ -2378,6 +2382,9 @@ export function drawIsland(ctx, theme, p, cam, time, pi, look = null, map = null
     else if (style === 'shelf') drawRockShelf(ctx, x, y, w, time, pi, p.root, cam.x, map?.night ?? 0);
     else if (style === 'limb') drawLimb(ctx, x, y, w, time, pi, p.root, cam.x);
     else if (style === 'rootshelf') drawRootShelf(ctx, x, y, w, time, pi, p, cam, map);
+    else if (style === 'terrace') drawTerrace(ctx, x, y, w, time, pi, map, cam);
+    else if (style === 'chimney') drawChimney(ctx, x, y, w, time, pi, map, cam);
+    else if (style === 'balcony') drawBalcony(ctx, x, y, w, time, pi, map, cam);
     else if (style === 'leaf') drawLeafPad(ctx, x, y, w, time, pi);
     else if (style === 'stone') drawStone(ctx, theme, m, x, y, w, p.thick ?? 26, cam, time, pi, look?.edges);
     return;

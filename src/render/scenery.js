@@ -16,6 +16,7 @@ import { drawPaintedForest, drawPaintedForestFront, drawWoodlandLife, drawMossyA
 import { drawPortalGate, drawPortalSwirl } from './portals.js';
 import { drawPaintedCanyon, drawCanyonLife, drawCanyonFront } from './canyon.js';
 import { drawPaintedHollowGate } from './hollowgate.js';
+import { drawPaintedManorHill, drawManorHillLife, drawPaintedManorGarden, drawPaintedManorRoof } from './manorhill.js';
 import { drawPaintedHollowTrunk, drawVine, drawPaintedRootRoom, drawRootRope } from './hollowrooms.js';
 import { drawFarRoom, drawFarWhaleRoom, drawMidRoom } from './rooms.js';
 import { levelRange } from '../world/routes.js';
@@ -5085,7 +5086,7 @@ const BUILDINGS = {
 // washed toward the sky like the backdrop, so the ledge reads as passing in front of it.
 // Waterfalls pour off a ledge, and cloud pillars, the watchtower and Mossy Woods' giant trees
 // (whose branches are its ledges) hold one up, on purpose.
-const MEETS_LEDGE = new Set(['woodtree', 'gladecliff', 'waterfall', 'cloudpillar', 'watchtower', 'canyonwall', 'canyonspire', 'canyonarch', 'canyoncave', 'canyonstub', 'canyonwalllow', 'greattree', 'rootarch', 'trunkwall', 'hollowstump', 'rootwall', 'rootceiling', 'rootpillar', 'greatcap']);
+const MEETS_LEDGE = new Set(['woodtree', 'gladecliff', 'waterfall', 'cloudpillar', 'watchtower', 'canyonwall', 'canyonspire', 'canyonarch', 'canyoncave', 'canyonstub', 'canyonwalllow', 'greattree', 'rootarch', 'trunkwall', 'hollowstump', 'rootwall', 'rootceiling', 'rootpillar', 'greatcap', 'manorgates', 'pumpkincoach', 'partylamp', 'rosehedge', 'topiary']);
 const decoSize = (kind, seed) => {
   const b = BUILDINGS[kind];
   if (b) {
@@ -5661,6 +5662,7 @@ function drawCritters(ctx, t, map, cam, width, height, time) {
   else if (t.painted === 'forest') drawWoodlandLife(ctx, map, cam, width, height, time);
   if (t.painted === 'meadow') drawMeadowLife(ctx, map, cam, width, height, time, groundAt);
   if (t.painted === 'canyon') drawCanyonLife(ctx, map, cam, width, height, time, groundAt);
+  if (t.painted === 'manorhill' || t.painted === 'manorgarden') drawManorHillLife(ctx, map, cam, width, height, time);
   // (Not in the Mochi places, the Garden, the stadium and its courses: their life is the Mochi.)
   if (t.painted === 'town' && !(map.garden || map.mochiRace || map.mochiTown)) {
     drawVillageLife(ctx, map, cam, width, height, time, groundAt);
@@ -5999,6 +6001,9 @@ export function drawSceneBack(ctx, map, cam, width, height, time, nearPortalId, 
     else if (t.painted === 'meadow') drawPaintedMeadow(g, t, cam, width, height, time, layerY, air);
     else if (t.painted === 'canyon') drawPaintedCanyon(g, t, cam, width, height, time, layerY, air);
     else if (t.painted === 'hollowgate') drawPaintedHollowGate(g, t, cam, width, height, time, layerY, air);
+    else if (t.painted === 'manorhill') drawPaintedManorHill(g, t, cam, width, height, time, layerY, air, map);
+    else if (t.painted === 'manorgarden') drawPaintedManorGarden(g, t, cam, width, height, time, layerY, air, map);
+    else if (t.painted === 'manorroof') drawPaintedManorRoof(g, t, cam, width, height, time, layerY, air, map);
     else if (t.painted === 'hollowtrunk') drawPaintedHollowTrunk(g, t, cam, width, height, time, layerY, air, map);
     else if (t.painted === 'rootroom') drawPaintedRootRoom(g, t, cam, width, height, time, layerY, air, map);
     else {
@@ -6013,7 +6018,7 @@ export function drawSceneBack(ctx, map, cam, width, height, time, nearPortalId, 
       veil = null;
     }
     // (A painted backdrop lays its own haze at each plane's foot.)
-    if (t.painted !== 'forest' && t.painted !== 'meadow' && t.painted !== 'canyon' && t.painted !== 'hollowgate' && t.painted !== 'hollowtrunk' && t.painted !== 'rootroom') drawHaze(g, t, width, map.groundY - cam.y);
+    if (t.painted !== 'forest' && t.painted !== 'meadow' && t.painted !== 'canyon' && t.painted !== 'hollowgate' && t.painted !== 'hollowtrunk' && t.painted !== 'rootroom' && t.painted !== 'manorhill' && t.painted !== 'manorgarden' && t.painted !== 'manorroof') drawHaze(g, t, width, map.groundY - cam.y);
   };
   backdrop(ctx);
   drawDrift(ctx, t, cam, width, height, time, 'back');

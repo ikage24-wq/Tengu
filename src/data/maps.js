@@ -1303,26 +1303,56 @@ MAPS.woods.portals.push({ id: 'manor', x: 250, y: 520, to: 'manor_gate', toPorta
 Object.assign(MAPS, {
   // Manor Hill: the garden path up from the treetops of Mossy Woods to the manor's iron gates, where
   // old Mr. Pumpkins keeps the gate and finds groups. The manor looms on the hill behind.
+  // Manor Hill (remade 2026-11-18, Chapter 4): the road up to Lady Marigold's manor, where the party
+  // has gone on for a hundred years with no guests. The road climbs the hill in two slopes to the
+  // gates at the top (Mr. Pumpkins, the door into the garden); stone terraces stand over the road on
+  // ivy-covered retaining walls; lamp posts strung with paper lanterns; the pumpkin coach waits at
+  // the turn. (render/manorhill.js)
   manor_gate: {
     id: 'manor_gate', name: 'Manor Hill', theme: 'manor', town: 'harbor', world: { x: 262, y: 150 }, music: 'manor',
-    width: 1300, height: 420, groundY: G,
-    look: { sky: ['#3a3270', '#7a62b0', '#e0a8c8'], far: '#5a4a8a', mid: '#7a6aa8', midTrim: '#c9a6ff', ...MANOR_OUT },
-    terrain: [[0, G], [340, G], [420, G - 30], [1300, G - 30]],
-    platforms: [{ x: 520, y: G - 110, w: 160 }],
-    ropes: [],
-    deco: [['signpost', 180]],
-    portals: [
-      { id: 'start', x: 760, y: G - 30, hidden: true },
-      { id: 'south', x: 60, y: G, to: 'woods', toPortal: 'manor' },
-      { id: 'door', x: 1180, y: G - 30, to: 'manor1', toPortal: 'start', label: 'Moonlit Manor', dungeon: 'manor' },
+    ...lay({
+      width: 1500, ground: 780, by: 'x',
+      terrain: [[0, 780], [260, 780], [700, 650], [900, 650], [1180, 540], [1500, 540]],
+      ledges: [
+        { x: 990, y: 452, w: 170 },
+        { x: 560, y: 560, w: 170 },
+        { x: 250, y: 690, w: 160 },
+      ],
+      zones: [
+        { name: 'The Hill Road', color: '#c9a6ff', mobs: [] },
+        { name: 'The Carriage Turn', color: '#ffb36b', from: 700, mobs: [] },
+        { name: 'The Gates', color: '#ffd88a', from: 1180, mobs: [] },
+      ],
+    }),
+    look: {
+      painted: 'manorhill', sky: ['#2e2860', '#6a54a8', '#e8a8c8'], far: '#5a4a8a', mid: '#6e5aa0', midTrim: '#c9a6ff', ...MANOR_OUT,
+      material: 'manorhill', islands: 'terrace', ropes: 'vine', clouds: false, stars: true, faceAt: 0.24, props: [],
+    },
+    deco: [
+      ['signpost', 180, 0, 780],
+      ['partylamp', 236, 1, 780], ['partylamp', 520, 2, 703], ['partylamp', 780, 3, 650], ['partylamp', 1010, 4, 607], ['partylamp', 1250, 5, 540],
+      ['rosehedge', 290, 1, 690], ['rosehedge', 366, 2, 690],
+      ['topiary', 600, 0, 560], ['topiary', 690, 0, 560],
+      ['pumpkincoach', 840, 0, 650],
+      ['topiary', 1015, 0, 452],
+      ['rosehedge', 1340, 3, 540],
+      ['manorgates', 1410, 0, 540],
     ],
-    npcs: [{ id: 'pumpkins', x: 960 }],
+    portals: [
+      { id: 'start', x: 1200, y: 540, hidden: true },
+      { id: 'south', x: 60, y: 780, to: 'woods', toPortal: 'manor' },
+      { id: 'door', x: 1410, y: 540, to: 'manor1', toPortal: 'start', label: 'Moonlit Manor', dungeon: 'manor', mouth: 46, labelAt: 150 },
+    ],
+    npcs: [{ id: 'pumpkins', x: 1300 }],
     spawns: [],
+    nodes: [{ x: 330, y: 690, kind: 'herb' }, { x: 610, y: 560, kind: 'night' }, { x: 1120, y: 452, kind: 'fiber' }],
   },
 
   // The Moonlit Garden: hedges and topiaries climbing in terraces to the front steps. The fountains
   // spout on a beat and throw you up a terrace (the first one, by the gate, up to a hidden ledge).
-  // Light the three garden lanterns; the front door waits at the top.
+  // Light the three garden lanterns; the front door waits at the top. (Remade 2026-11-18: stone
+  // terraces on retaining walls like a giant garden staircase, party lights strung across them, the
+  // manor facade lit up behind with one figure waltzing alone past its windows: render/manorhill.js.)
   manor1: {
     id: 'manor1', name: 'The Moonlit Garden', theme: 'manor', town: 'harbor', dungeon: 'manor', ownLight: true,
     ...lay({
@@ -1337,7 +1367,16 @@ Object.assign(MAPS, {
         { name: 'The Front Steps', color: '#c9a6ff', from: 1560, mobs: [] },
       ],
     }),
-    look: { sky: ['#2a2458', '#5a4a96', '#c890c8'], far: '#4a3a7a', mid: '#5a7a6a', midTrim: '#9ad8a0', ...MANOR_OUT },
+    look: {
+      painted: 'manorgarden', sky: ['#2a2458', '#5a4a96', '#c890c8'], far: '#4a3a7a', mid: '#5a7a6a', midTrim: '#9ad8a0', ...MANOR_OUT,
+      material: 'manorhill', islands: 'terrace', ropes: 'vine', clouds: false, stars: true, faceAt: 0.12, props: [],
+    },
+    deco: [
+      ['rosehedge', 300, 1, 760], ['partylamp', 360, 1, 760], ['rosehedge', 470, 2, 760],
+      ['partylamp', 560, 2, 640], ['topiary', 700, 0, 640], ['topiary', 860, 0, 640], ['partylamp', 1010, 3, 640],
+      ['partylamp', 1080, 4, 520], ['topiary', 1180, 0, 520], ['rosehedge', 1400, 3, 520], ['partylamp', 1530, 5, 520],
+      ['partylamp', 1600, 6, 400], ['topiary', 1700, 0, 400], ['rosehedge', 1770, 4, 400], ['topiary', 1960, 0, 400], ['partylamp', 2060, 7, 400],
+    ],
     task: { kind: 'light', object: 'lantern', label: 'Light the garden lanterns' },
     fountains: [{ x: 200, y: 760, every: 6 }, { x: 960, y: 640, every: 7 }, { x: 1500, y: 520, every: 6.5 }],
     portals: [
@@ -1489,10 +1528,11 @@ Object.assign(MAPS, {
     ],
     // The weathervane's pole, up to the little platform at its foot (the room's secret).
     ropes: [{ x: 800, top: 220, bottom: G }],
-    look: { sky: ['#1a1e4e', '#3a3a86', '#a890d8'], far: '#2e2e66', mid: '#4a4a86', midTrim: '#ffd36b', ...MANOR_OUT, material: 'slate', face: null, bigMoon: true,
-      // On the roof: weathered boards laid across the slates to walk on (no floating dishes), cats
-      // and the odd lantern up here instead of the hall's candles.
-      islands: 'planks', props: ['cat', 'pebble', 'lantern', 'pebble'], ledgeProp: null },
+    look: { painted: 'manorroof', sky: ['#1a1e4e', '#3a3a86', '#a890d8'], far: '#2e2e66', mid: '#4a4a86', midTrim: '#ffd36b', ...MANOR_OUT, material: 'slate', face: null, bigMoon: true,
+      // On the roof (remade 2026-11-18): every ledge is the cap of a brick chimney standing up out of
+      // the slates (the tall one carries the weathervane); behind, the manor's other roofs under the
+      // big moon and the party's sky lanterns rising; cats up here instead of the hall's candles.
+      islands: 'chimney', clouds: false, props: ['cat', 'lantern'], ledgeProp: null },
     portals: [
       { id: 'west', x: 40, y: G, to: 'manor5', toPortal: 'east' },
       { id: 'out', x: 1560, y: G, to: 'manor_gate', toPortal: 'start', label: 'Exit', sealed: true },
@@ -3036,8 +3076,9 @@ const THEATRE_HALL = { islands: 'gallery', material: 'parquet', ceiling: 'curtai
 const INTERIORS = {
   // (Rootwood Hollow's rooms draw their own root ceiling as scenery, not the cave's stone one.)
   // The manor's halls: galleries on gilded chains.
-  manor2: { islands: 'gallery', ...GALLERY_PROPS }, manor3: { islands: 'gallery', ...GALLERY_PROPS },
-  manor4: { islands: 'gallery', ...GALLERY_PROPS, props: ['books', 'books', 'candle', 'column'] }, manor5: { islands: 'gallery', ...GALLERY_PROPS },
+  // (The gallery, ballroom and hallway's ledges are marble balconies on columns, 2026-11-18.)
+  manor2: { islands: 'balcony', ...GALLERY_PROPS }, manor3: { islands: 'balcony', ...GALLERY_PROPS },
+  manor4: { islands: 'gallery', ...GALLERY_PROPS, props: ['books', 'books', 'candle', 'column'] }, manor5: { islands: 'balcony', ...GALLERY_PROPS },
   // The palace's inner halls in sea-glass marble; the grotto is a cave.
   aquarium3: SEA_HALL, aquarium6: SEA_HALL, aquarium4: { ceiling: true, props: ['rock', 'crystal', 'rock'], ledgeProp: 'crystal' },
   // The carnival's buildings: the funhouse, the big top's ring, the toy workshop.

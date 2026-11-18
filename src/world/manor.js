@@ -315,6 +315,7 @@ function velvet(world, m, up, dt) {
       addZone(world, { kind: 'circle', x: g.body.x, y: floorY(world, g.body), w: 64, warn: 1.6, damage: 140, from: m, tea: true });
     }
     callout(world, 'Tea is served!', 'Scalding: step out of the steam');
+    m.teaAt = world.now;
   }
   if (s.plates <= 0) {
     if (pending) s.plates = 1;
@@ -329,6 +330,7 @@ function velvet(world, m, up, dt) {
     s.bells.shift();
     const healer = up.find((g) => g.role === 'healer') ?? pick(up);
     adds(world, m, 'ghostmaid', [m.x - 160, m.x + 160], healer?.id);
+    m.callAt = world.now;
     callout(world, 'Madame Velvet rings the bell!', 'The maids come running for the healer: catch them!');
     radio(world, 'bell');
   }
