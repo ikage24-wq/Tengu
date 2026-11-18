@@ -12,6 +12,7 @@ import { drawLimb, drawRootShelf } from './hollowrooms.js';
 import { drawTerrace, drawChimney, drawBalcony } from './manorhill.js';
 import { drawCoralShelf, drawKelpRock, drawAbyssLedge, drawTank } from './aquapalace.js';
 import { drawBooth, drawTrestle, drawGondola, drawPony, drawCarousel, drawFunFloor } from './fairground.js';
+import { drawStarBalcony, drawGantry, drawPlanet } from './starlight.js';
 
 const INK = '#3a2d4f';
 const edge = (c) => mix(shade(c, -38), INK, 0.35);
@@ -2427,6 +2428,10 @@ export function drawIsland(ctx, theme, p, cam, time, pi, look = null, map = null
     else if (style === 'pony') drawPony(ctx, x, y, w, time, pi, p, map, cam);
     else if (style === 'carousel') drawCarousel(ctx, x, y, w, time, pi, map, cam);
     else if (style === 'funfloor') drawFunFloor(ctx, x, y, w, time, pi, map, cam);
+    // The Star Observatory's (render/starlight.js).
+    else if (style === 'starbalcony') drawStarBalcony(ctx, x, y, w, time, pi, map, cam);
+    else if (style === 'gantry') drawGantry(ctx, x, y, w, time, pi, map, cam);
+    else if (style === 'planet') drawPlanet(ctx, x, y, w, time, pi, p, map, cam);
     else if (style === 'leaf') drawLeafPad(ctx, x, y, w, time, pi);
     else if (style === 'stone') drawStone(ctx, theme, m, x, y, w, p.thick ?? 26, cam, time, pi, look?.edges);
     return;

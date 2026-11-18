@@ -19,6 +19,7 @@ import { drawPaintedHollowGate } from './hollowgate.js';
 import { drawPaintedManorHill, drawManorHillLife, drawPaintedManorGarden, drawPaintedManorRoof } from './manorhill.js';
 import { drawPaintedAquaGate, drawPaintedAquaKelp, drawPaintedAquaHall, drawPaintedAquaAbyss, drawPaintedTidePier } from './aquapalace.js';
 import { drawPaintedFairGate, drawPaintedMidway, drawPaintedCoasterYard, drawPaintedFerrisWheel } from './fairground.js';
+import { drawPaintedStarGate, drawPaintedStarStair, drawPaintedStarCrown } from './starlight.js';
 import { drawPaintedHollowTrunk, drawVine, drawPaintedRootRoom, drawRootRope } from './hollowrooms.js';
 import { drawFarRoom, drawFarWhaleRoom, drawMidRoom } from './rooms.js';
 import { levelRange } from '../world/routes.js';
@@ -5200,6 +5201,7 @@ function ledgeReach(map, p, style) {
   if (style === 'gallery' || style === 'catwalk' || p.hang) up = p.y + 40;
   // (A carousel pony's pole and canopy, up over its ride.)
   if (style === 'pony') up = 130;
+  if (style === 'planet') up = p.y;
   else if (style && style !== 'earth') down = Math.max(40, Math.max(groundAt(map, p.x), groundAt(map, p.x + p.w / 2), groundAt(map, p.x + p.w)) - p.y + 20);
   r = { style, up, down };
   reachKept.set(p, r);
@@ -6044,6 +6046,9 @@ export function drawSceneBack(ctx, map, cam, width, height, time, nearPortalId, 
     else if (t.painted === 'midway') drawPaintedMidway(g, t, cam, width, height, time, layerY, air, map);
     else if (t.painted === 'coasteryard') drawPaintedCoasterYard(g, t, cam, width, height, time, layerY, air, map);
     else if (t.painted === 'ferriswheel') drawPaintedFerrisWheel(g, t, cam, width, height, time, layerY, air, map);
+    else if (t.painted === 'stargate') drawPaintedStarGate(g, t, cam, width, height, time, layerY, air, map);
+    else if (t.painted === 'starstair') drawPaintedStarStair(g, t, cam, width, height, time, layerY, air, map);
+    else if (t.painted === 'starcrown') drawPaintedStarCrown(g, t, cam, width, height, time, layerY, air, map);
     else if (t.painted === 'hollowtrunk') drawPaintedHollowTrunk(g, t, cam, width, height, time, layerY, air, map);
     else if (t.painted === 'rootroom') drawPaintedRootRoom(g, t, cam, width, height, time, layerY, air, map);
     else {

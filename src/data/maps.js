@@ -1965,14 +1965,14 @@ Object.assign(MAPS, {
   observatory_steps: {
     id: 'observatory_steps', name: 'Observatory Steps', theme: 'observatory', town: 'crag', world: { x: 232, y: 92 }, music: 'observatory',
     width: 1200, height: 420, groundY: G,
-    look: { sky: ['#0e1440', '#2a2a7a', '#6a5ab0'], far: '#1e2a5a', mid: '#2e3a72', midTrim: '#fff3a6', ...STAR_OUT },
+    look: { sky: ['#0e1440', '#2a2a7a', '#6a5ab0'], far: '#1e2a5a', mid: '#2e3a72', midTrim: '#fff3a6', ...STAR_OUT, painted: 'stargate', islands: 'starbalcony', props: [], ledgeProp: null },
     platforms: [{ x: 420, y: G - 80, w: 140 }],
     ropes: [],
-    deco: [['signpost', 160]],
+    deco: [['signpost', 160], ['starscope', 660], ['stararch', 1070]],
     portals: [
       { id: 'start', x: 640, y: G, hidden: true },
       { id: 'west', x: 50, y: G, to: 'ridge', toPortal: 'observatory' },
-      { id: 'door', x: 1110, y: G, to: 'observatory1', toPortal: 'start', label: 'Star Observatory', dungeon: 'observatory' },
+      { id: 'door', x: 1070, y: G, to: 'observatory1', toPortal: 'start', label: 'Star Observatory', dungeon: 'observatory' },
     ],
     npcs: [{ id: 'lumen', x: 860 }],
     spawns: [],
@@ -1994,7 +1994,7 @@ Object.assign(MAPS, {
         { name: 'The Star Landing', color: '#fff3a6', from: 560, mobs: [] },
       ],
     }),
-    look: { sky: ['#0e1440', '#2a2a7a', '#6a5ab0'], far: '#1e2a5a', mid: '#2e3a72', midTrim: '#fff3a6', ...STAR_OUT },
+    look: { sky: ['#0e1440', '#2a2a7a', '#6a5ab0'], far: '#1e2a5a', mid: '#2e3a72', midTrim: '#fff3a6', ...STAR_OUT, painted: 'starstair', islands: 'starbalcony', props: [], ledgeProp: null },
     task: { kind: 'light', object: 'starlamp1', label: 'Light the star lamps' },
     meteors: { every: 10, damage: 170 },
     portals: [
@@ -2086,7 +2086,7 @@ Object.assign(MAPS, {
     id: 'observatory5', name: 'The Orrery', theme: 'observatory', town: 'crag', dungeon: 'observatory',
     width: 1600, height: 420, groundY: G,
     platforms: [
-      { x: 200, y: 300, w: 90, drift: { dx: 260, period: 8 } }, { x: 1100, y: 300, w: 90, drift: { dx: 260, period: 9 } },
+      { x: 200, y: 300, w: 90, style: 'planet', drift: { dx: 260, period: 8 } }, { x: 1100, y: 300, w: 90, style: 'planet', drift: { dx: 260, period: 9 } },
       { x: 740, y: 230, w: 120 },
     ],
     ropes: [{ x: 800, top: 230, bottom: G }],
@@ -2109,7 +2109,7 @@ Object.assign(MAPS, {
     platforms: [{ x: 240, y: 300, w: 90 }, { x: 560, y: 300, w: 90 }, { x: 1050, y: 300, w: 90 }, { x: 1370, y: 300, w: 90 }, { x: 800, y: 220, w: 100 }],
     // The telescope's ladder, up to its eyepiece (the room's secret).
     ropes: [{ x: 850, top: 220, bottom: G }],
-    look: { sky: ['#06082a', '#1a1a5a', '#4a3a90'], far: '#121a4a', mid: '#1e2a66', midTrim: '#fff3a6', ...STAR_OUT, material: 'starstone' },
+    look: { sky: ['#06082a', '#1a1a5a', '#4a3a90'], far: '#121a4a', mid: '#1e2a66', midTrim: '#fff3a6', ...STAR_OUT, material: 'starstone', painted: 'starcrown', islands: 'gantry', props: [], ledgeProp: null, clouds: false },
     portals: [
       { id: 'west', x: 40, y: G, to: 'observatory5', toPortal: 'east' },
       { id: 'out', x: 1660, y: G, to: 'observatory_steps', toPortal: 'start', label: 'Exit', sealed: true },
@@ -3115,8 +3115,9 @@ const INTERIORS = {
   carnival4: { islands: 'catwalk', material: 'sawdust', ceiling: 'tent', metal: '#c06a8a', props: ['barrel', 'poster', 'crate', 'lantern'], ledgeProp: null, edges: null },
   carnival5: { islands: 'catwalk', material: 'parquet', ceiling: 'beams', metal: '#8a7aa8', props: ['crate', 'barrel', 'books', 'lantern'], ledgeProp: null, edges: null },
   // The observatory's halls: galleries on brass chains.
-  observatory2: { islands: 'gallery', ...GALLERY_PROPS }, observatory3: { islands: 'gallery', ...GALLERY_PROPS, props: ['books', 'orb', 'books', 'candle'] },
-  observatory4: { islands: 'gallery', ...GALLERY_PROPS, props: ['books', 'books', 'candle'] }, observatory5: { islands: 'gallery', ...GALLERY_PROPS, props: ['orb', 'column', 'candle'] },
+  // (Their props sparse, and no empty stub pedestals among them: 2026-11-18.)
+  observatory2: { islands: 'gallery', ...GALLERY_PROPS, props: ['candle', 'orb', 'books', 'candle'], propKeep: 0.66 }, observatory3: { islands: 'gallery', ...GALLERY_PROPS, props: ['books', 'orb', 'books', 'candle'], propKeep: 0.66 },
+  observatory4: { islands: 'gallery', ...GALLERY_PROPS, props: ['books', 'books', 'candle'] }, observatory5: { islands: 'gallery', ...GALLERY_PROPS, props: ['orb', 'candle'], propKeep: 0.66 },
   // The volcano's insides: the mine (timber catwalks under rock), the kitchen and the forge.
   volcano2: { islands: 'catwalk', ceiling: true, metal: '#9a6a4a', props: ['crate', 'barrel', 'torch', 'crystal'], ledgeProp: null, edges: null },
   volcano3: { islands: 'gallery', material: 'parquet', ceiling: 'beams', trim: '#ff9ab8', ceilingTint: { band: '#9a6048' }, props: ['barrel', 'crate', 'lantern'], ledgeProp: null, edges: null },
