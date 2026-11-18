@@ -1,9 +1,12 @@
 // The Clockwork Carnival's rooms (world/carnival.js runs them), in the scenery's outlined chibi style:
 // the Midway's music boxes to wind, the Funhouse's prize balloons, the coaster car and its rail
-// lights, the workshop's conveyor belts, gear saws, the Big Top's trapezes, and Madame Marionette's
+// lights, the workshop's conveyor belts, the Big Top's trapezes, and Madame Marionette's
 // strings on the player she has marked. (x, y) is the bottom center on the floor; `time` (seconds)
 // animates.
 
+import { drawSpectator, SPECTATOR_BEATS } from './mochi-anim.js';
+import { rollMochi } from '../data/mochi-genes.js';
+import { KURI } from '../data/scenes.js';
 import { R, E, T, F, mix } from './pixel.js';
 import { art, place } from './scenery.js';
 
@@ -96,7 +99,7 @@ function drawPrize(ctx, x, y, o, time, now) {
   place(ctx, prizeArt(c), x + Math.sin(time * 1.6 + o.id) * 2, y - 16 + bob);
 }
 
-// ---------- The coaster, saws, belts, trapezes ----------
+// ---------- The coaster, belts, trapezes ----------
 
 function coasterArt() {
   return art('fair-coaster', 100, 46, () => [
@@ -107,16 +110,25 @@ function coasterArt() {
     ...[20, 40, 60].map((x) => F(E(x, 10, 5, 4, '#7fd8ff'))),
   ]);
 }
-function sawArt(f) {
-  return art(`fair-saw|${f}`, 40, 40, () => {
-    const pts = [];
-    for (let i = 0; i < 24; i++) {
-      const a = (i / 24) * TAU + (f / 4) * (TAU / 12);
-      const r = i % 2 ? 19 : 15;
-      pts.push([20 + Math.cos(a) * r, 20 + Math.sin(a) * r]);
-    }
-    return [T(pts, '#d8e2f6'), E(20, 20, 8, 8, '#ffd36b'), F(E(20, 20, 3, 3, '#c8902a'))];
-  });
+
+// Elder Kuri, in the front row of Queen Gearheart's show since festival night, cheering every act.
+const KURI_FAN = { genes: null };
+function drawKuri(ctx, x, y, time) {
+  KURI_FAN.genes ??= Object.assign(rollMochi(KURI.seed, KURI.genes), { wear: { ...KURI.wear } });
+  drawSpectator(ctx, KURI_FAN.genes, x, y, Math.floor(time * 6) % SPECTATOR_BEATS, -1);
+}
+// A mole hole in the plaza: a dark round mouth in a striped brass rim.
+function drawHole(ctx, x, y) {
+  ctx.fillStyle = '#d8a840';
+  ctx.beginPath();
+  ctx.ellipse(x, y - 1, 15, 4.6, 0, 0, TAU);
+  ctx.fill();
+  ctx.fillStyle = '#2a1e36';
+  ctx.beginPath();
+  ctx.ellipse(x, y - 1, 11.4, 3, 0, 0, TAU);
+  ctx.fill();
+  ctx.fillStyle = '#ffd36b';
+  for (let k = 0; k < 6; k++) ctx.fillRect(x - 13 + k * 5, y - 4.4, 2, 1.2);
 }
 
 export function drawCarnivalBack(ctx, world, cam, time) {
@@ -124,6 +136,29 @@ export function drawCarnivalBack(ctx, world, cam, time) {
   const map = world.map;
   if (map.dungeon !== 'carnival') return;
   const gy = map.groundY - cam.y;
+  // The Ferris Wheel plaza: Elder Kuri cheering in the front row (till Queen Gearheart winds down);
+  // the whack-a-mole holes while that game is on; the rings of the ring toss coming down.
+  if (map.id === 'carnival6') {
+    if (!world.char.elders?.kuri && !(world.cine?.cast ?? []).some((c) => c.id === 'kuri' && c.alpha > 0)) drawKuri(ctx, 1250 - cam.x, gy, time);
+    const gh = world.mobs.find((o) => o.def.mech === 'gearheart' && o.hp > 0);
+    if (gh?.engaged && (gh.mech?.phase ?? 1) === 1) for (const hx of map.holes ?? []) drawHole(ctx, hx - cam.x, gy);
+    for (const z of world.dungeon.zones) {
+      if (!z.ring || z.hit) continue;
+      const u = Math.min(1, z.t / z.warn);
+      const x = z.x - cam.x;
+      const y = gy - 4 - (1 - u * u) * 240;
+      ctx.save();
+      ctx.lineWidth = 4;
+      ctx.strokeStyle = ['#ff7aa8', '#7fd8ff', '#ffd36b'][Math.floor(z.x) % 3];
+      ctx.beginPath();
+      ctx.ellipse(x, y, 30, 7 + (1 - u) * 6, Math.sin(time * 6 + z.x) * 0.2 * (1 - u), 0, TAU);
+      ctx.stroke();
+      ctx.strokeStyle = 'rgba(255,255,255,0.7)';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      ctx.restore();
+    }
+  }
   // The trapezes swinging high over the ring.
   for (const tx of map.trapezes ?? []) {
     const x = tx - cam.x;
@@ -192,12 +227,6 @@ export function drawCarnivalFront(ctx, world, cam, time) {
       ctx.fillRect(x - c.dir * (60 + k * 14), gy - 30 + k * 8, -c.dir * 24, 2);
     }
     ctx.globalAlpha = 1;
-  }
-  for (const s of room.saws ?? []) {
-    const x = s.x - cam.x;
-    place(ctx, sawArt(Math.floor(time * 20) % 4), x, gy + 1);
-    ctx.fillStyle = '#ffd36b';
-    for (let k = 0; k < 3; k++) ctx.fillRect(x - s.dir * (10 + k * 7), gy - 2 - k, 2, 2);
   }
   // Madame Marionette's strings on the marked player, tightening as the yank comes.
   const y = room.yank;

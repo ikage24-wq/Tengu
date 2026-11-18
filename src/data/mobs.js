@@ -435,6 +435,12 @@ export const MOBS = {
     drops: [{ id: 'golden_ticket', chance: 1, qty: 3 }, { id: 'mana_elixir', chance: 1, qty: 6 }],
     fight: { every: 2, reach: 76, windup: 0.5 }, mech: 'marionetta',
   }),
+  // Queen Gearheart's whack-a-mole: up out of a hole for a few seconds, never strikes (world/carnival.js).
+  gearmole: mob({
+    id: 'gearmole', name: 'Brass Mole', level: 30, hp: 450, atk: 1, def: 10, acc: 60, eva: 0, exp: 0, gold: [0, 0],
+    speed: 0, w: 26, h: 26, art: 'gearmole', drops: [],
+    fight: { every: 999, reach: 0, windup: 0.5 },
+  }),
   gearheart: mob({
     id: 'gearheart', name: 'Queen Gearheart, the Grand Automaton', level: 30, hp: 90000, atk: 190, def: 44, acc: 88, eva: 5, exp: 36000, gold: [570, 830],
     speed: 28, w: 70, h: 120, art: 'gearheart', boss: true,

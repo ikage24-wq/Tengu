@@ -1935,7 +1935,9 @@ Object.assign(MAPS, {
     // The wheel's spoke ladder, up to a car at its hub (the room's secret).
     ropes: [{ x: 850, top: 220, bottom: G }],
     look: { sky: ['#1a1a4a', '#4a2a7a', '#c86aa8'], far: '#2e2a66', mid: '#4a3a86', midTrim: '#ffd36b', ...FAIR_OUT, skyline: 'ferris', painted: 'ferriswheel', islands: 'gondola', props: [], ledgeProp: null },
-    deco: [['popcorncart', 180], ['balloonstand', 1520, 3]],
+    deco: [['popcorncart', 180], ['fairbench', 1250], ['balloonstand', 1530, 3]],
+    // (Queen Gearheart's whack-a-mole holes: world/carnival.js.)
+    holes: [400, 490, 725, 975, 1170, 1330],
     portals: [
       { id: 'west', x: 40, y: G, to: 'carnival5', toPortal: 'east' },
       { id: 'out', x: 1660, y: G, to: 'carnival_gate', toPortal: 'start', label: 'Exit', sealed: true },

@@ -429,6 +429,9 @@ function runner(world, step) {
       Object.assign(m.cine, { freed: true, alpha: 1, mood: step.as ?? null, gone: false });
       if (m.hp <= 0) m.dying = 0;
     }
+    // (The fight's last swings and numbers, held still under the scene, are swept away for the farewell.)
+    if (world.fx) world.fx.length = 0;
+    if (world.numbers) world.numbers.length = 0;
     return () => true;
   }
   if (step.mood !== undefined) {

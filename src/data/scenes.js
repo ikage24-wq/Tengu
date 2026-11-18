@@ -1391,6 +1391,11 @@ export const AQUA_RADIO = {
 
 
 // ---------- Clockwork Carnival ----------
+// Elder Kuri: in the front row of Queen Gearheart's show since festival night (Chapter 6). Her look,
+// shared by her scenes, the plaza (render/carnival.js) and the palace (render/prologue.js).
+export const KURI = { seed: 71, genes: { dough: '#ecd2b4', hairColor: 'kuri' }, wear: { dress: 'elderrobe', hat: 'elderhat', eyes: 'specs', face: 'fakebeard' } };
+const KURI_CAST = { kind: 'mochi', seed: KURI.seed, size: 'grown', name: 'Elder Kuri', color: '#b0703a', genes: KURI.genes, wear: KURI.wear, idles: ['lookaround'] };
+
 export const CARNIVAL_SCENES = {
   carnival_results: [
     { card: 'Clockwork Carnival', sub: 'Rank {grade}  ·  {time}' },
@@ -1435,35 +1440,62 @@ export const CARNIVAL_SCENES = {
     { wait: 0.4 },
     { cam: 'player', dur: 0.7 },
   ],
-  // Queen Gearheart, staged: under the great wheel the clockwork owl rocks on the beat, tick,
-  // tock, shedding little brass gears, her key humming; she can't stop; then the clock strikes and
-  // she beats her wings down in a burst of gears.
+  // Queen Gearheart, staged (rewritten 2026-11-18, Chapter 6): still performing under the great
+  // wheel for her one faithful fan, Elder Kuri, cheering in the front row; then more audience: you.
   carnival_gearheart: [
-    { together: [{ cam: 'gearheart', up: 40, dur: 1.6 }, { walk: 'player', to: 'gearheart', gap: 180, speed: 100 }, { mood: 'gearheart', as: 'sad' }] },
-    { together: [{ act: 'gearheart', move: 'sway', dur: 3, amp: 0.06, speed: 6.28 }, { fx: 'gears', at: 'gearheart', top: true, n: 8 }] },
-    { who: null, text: 'Under the great wheel, a queen of brass and porcelain turns slowly, her key spinning so fast it hums.' },
-    { together: [{ act: 'gearheart', move: 'sway', dur: 2, amp: 0.06, speed: 6.28 }, { emote: 'gearheart', kind: 'sweat', dur: 1.6 }] },
-    { who: 'gearheart', text: 'Tick... tock... the show... must go on... I cannot stop... I was wound... too tight...', mood: 'sad' },
-    { together: [{ cam: ['player', 'gearheart'], up: 30, dur: 0.9 }, { face: 'player', to: 'gearheart' }, { emote: 'player', kind: 'heart', dur: 1.2 }] },
-    { who: 'player', text: "Then we'll help you stop. Hold on, your majesty!" },
+    { cast: 'kuri', x: 1250, hidden: true, facing: -1, ...KURI_CAST },
+    { together: [{ cam: 'gearheart', up: 40, dur: 1.6 }, { walk: 'player', to: 'gearheart', gap: 180, speed: 100 }, { mood: 'gearheart', as: 'happy' }] },
+    { together: [{ act: 'gearheart', move: 'sway', dur: 2.4, amp: 0.06, speed: 6.28 }, { fx: 'gears', at: 'gearheart', top: true, n: 8 }] },
+    { who: null, text: 'Under the great wheel, a clockwork queen is performing. Twirling. Bowing. Her key spins so fast it hums. Her whole audience: one little Mochi elder.' },
+    { who: 'kuri', text: 'Bravo! BRAVO! Encore!' },
+    { together: [{ emote: 'gearheart', kind: 'sweat', dur: 1.4 }, { act: 'gearheart', move: 'sway', dur: 1.6, amp: 0.06, speed: 6.28 }] },
+    { who: 'gearheart', text: 'An encore. Of course. While anyone is watching, the show must go on... tick... tock...', mood: 'sad' },
+    { together: [{ cam: ['player', 'gearheart'], up: 30, dur: 0.9 }, { face: 'gearheart', to: 'player' }, { emote: 'gearheart', kind: '!' }] },
+    { who: 'gearheart', text: 'More audience! Step right up! Three games, three prizes, and nobody leaves before the finale!', mood: 'happy' },
+    { who: 'player', text: 'Your majesty... you look exhausted.' },
     { together: [{ mood: 'gearheart', as: 'angry' }, { act: 'gearheart', move: 'windup', dur: 0.9 }, { fx: 'gears', at: 'gearheart', n: 10 }] },
-    { who: 'gearheart', text: 'Then... keep up! TICK! TOCK!', mood: 'angry' },
+    { who: 'gearheart', text: 'Toys do not get TIRED! Game one: whack-a-mole! TICK! TOCK!', mood: 'angry' },
     { act: 'gearheart', move: 'attack', dur: 1, async: true },
     { wait: 0.32 },
     { together: [{ flash: '#ffe8a0' }, { shake: 5, dur: 0.5 }, { fx: 'gears', at: 'gearheart', top: true, n: 24 }, { walk: 'player', away: 'gearheart', by: 30, speed: 160 }, { emote: 'player', kind: '!' }] },
     { wait: 0.5 },
     { cam: 'player', dur: 0.7 },
   ],
+  // She winds down; Elder Kuri tells her she can stop; she sits down beside him and rests for the
+  // first time; Kuri goes home; the Queen mumbles in her sleep.
   carnival_freed: [
     { together: [{ free: 'gearheart', as: 'sad' }, { cam: ['gearheart', 'player'], dur: 1.2 }, { walk: 'player', to: 'gearheart', gap: 80, speed: 70 }] },
     { together: [{ face: 'player', to: 'gearheart' }, { face: 'gearheart', to: 'player' }] },
-    { who: 'gearheart', text: '...tick... ...tock... Oh. It is quiet. I had forgotten what quiet sounds like.', mood: 'sad' },
-    { together: [{ act: 'gearheart', move: 'sway', amp: 0.08, speed: 2.4, dur: 2.6 }, { fx: 'gears', at: 'gearheart', top: true }] },
-    { who: null, text: 'Her key slows, and stops. All over the fairground, the toys sit down where they stand and sigh.' },
-    { mood: 'gearheart', as: 'happy' },
-    { who: 'gearheart', text: 'Thank you. Come back tomorrow night. We will play one slow tune, just for you.', mood: 'happy' },
-    { together: [{ act: 'gearheart', move: 'fade', dur: 2.6 }, { fx: 'gears', at: 'gearheart' }, { fx: 'notes', at: 'player', top: true }] },
-    { who: null, text: 'A last slow tick, a scatter of little gears, and the Gearheart is gone to her rest.' },
+    { who: 'gearheart', text: '...tick... tock... I cannot stop. Someone is still watching. The show must go on...', mood: 'sad' },
+    { cast: 'kuri', near: 'gearheart', dx: -64, facing: 1, hidden: true, ...KURI_CAST },
+    { together: [{ show: 'kuri', dur: 0.5 }, { fx: 'sparkle', at: 'kuri', top: true, n: 8 }, { cam: ['gearheart', 'kuri'], up: 20, dur: 1 }] },
+    { who: null, text: 'Elder Kuri toddles over from the front row.' },
+    { together: [{ face: 'gearheart', to: 'kuri' }, { face: 'kuri', to: 'gearheart' }, { emote: 'gearheart', kind: '!' }] },
+    { who: 'kuri', text: "Oh, my dear. I've watched every show since festival night. Every single one." },
+    { who: 'kuri', text: "You can stop now. I'll still be here tomorrow." },
+    { who: 'gearheart', text: '...You will? Even if I am not performing?', mood: 'sad' },
+    { together: [{ jump: 'kuri', height: 10 }, { emote: 'kuri', kind: 'heart' }] },
+    { who: 'kuri', text: 'Front row. Every night. Bring a cushion.' },
+    { together: [{ mood: 'gearheart', as: 'sleep' }, { fx: 'gears', at: 'gearheart', top: true, n: 10 }] },
+    { who: null, text: 'Her key slows... and stops. Queen Gearheart sits down beside Elder Kuri, and rests for the first time.' },
+    { who: null, text: 'All over the fairground the toys sit down where they stand, and sigh. The lights dim, gently.' },
+    { together: [{ walk: 'kuri', to: 'player', gap: 16, speed: 40 }, { fx: 'sparkle', at: 'kuri', top: true }] },
+    { hide: 'kuri', dur: 0.4 },
+    { set: 'royal_bed' },
+    { cast: 'hayate', kind: 'hayate', x: 300, y: 283, seat: 'bed', crown: true, sprout: true, name: 'Hayate', color: '#5aa8c8' },
+    { cast: 'translator', kind: 'mochi', seed: 33, size: 'grown', x: 548, y: 302, facing: -1, name: 'Royal Snore Translator', color: '#b98ad8', idles: ['lookaround'], wear: { dress: 'scholarrobe', hat: 'scholarcap', eyes: 'specs', over: 'eartrumpet' } },
+    { cast: 'kuri', x: 146, y: 302, facing: 1, ...KURI_CAST },
+    { cam: ['hayate', 'translator'], up: 12, dur: 1.2, zoom: 1.25 },
+    { together: [{ walk: 'kuri', to: 252, speed: 40 }, { fx: 'sparkle', at: 'kuri', top: true, n: 8 }] },
+    { together: [{ emote: 'translator', kind: '!' }, { play: 'translator', as: 'wow' }] },
+    { who: 'translator', text: 'Elder Kuri! Back from the fair!', mood: 'surprised' },
+    { who: 'kuri', text: 'Saw a wonderful show. Then a wonderful nap.' },
+    { emote: 'hayate', kind: 'zzz', dur: 1.6 },
+    { who: 'hayate', text: '...mmn... you can rest now...', mood: 'sleepy' },
+    { who: 'translator', text: 'Her Majesty says: "you can rest now". ...Was she talking to us?' },
+    { set: null },
+    { who: null, text: 'Under the great wheel, a little clockwork queen sleeps, her key quite still.' },
+    { together: [{ act: 'gearheart', move: 'fade', dur: 2.6 }, { fx: 'notes', at: 'gearheart', top: true }] },
   ],
 };
 
@@ -1474,7 +1506,7 @@ export const CARNIVAL_RADIO = {
   'enter:carnival3': ['The Coaster Yard! When the rail lights up, GET OFF THE TRACK!'],
   'enter:carnival4': ["The Big Top. Leonie's act. She jumps on you from the trapeze... watch for the spotlight!"],
   'enter:carnival5': ["The Workshop. Madame Marionette makes the puppets here. Don't let her get her strings on you!"],
-  'enter:carnival6': ['The Ferris Wheel. Her Majesty is up there. Please... wind her down gently.'],
+  'enter:carnival6': ["The Ferris Wheel. Her Majesty's still performing... for one little Mochi elder. Please, wind her down gently."],
   'clear:carnival1': ['The music boxes are singing! On to the Funhouse!'],
   'clear:carnival2': ['All the prizes popped! Hee hee.'],
   'clear:carnival3': ['You beat the coaster! Nobody beats the coaster.'],
@@ -1483,8 +1515,9 @@ export const CARNIVAL_RADIO = {
   wipe: ['Wind yourselves back up and try again!', 'Oof. Even toys fall over. Up you get!'],
   roar: ['She roared! Here comes the real act!'],
   puppets: ['Puppets on the belts! Get them!'],
-  cars: ['The wheel cars are coming down! Move!'],
-  overwound: ["She's overwound! It's now or never!"],
+  moles: ['Whack-a-mole! Bop them all before they duck!'],
+  rings: ['Rings coming down! Off the marks!'],
+  finale: ['The coaster! Up on the parked cars, quick!'],
 };
 
 

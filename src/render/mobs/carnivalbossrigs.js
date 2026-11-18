@@ -363,3 +363,215 @@ export function madameStill(pose, f, mood) {
     ], 50, 119),
   };
 }
+
+// =====================================================================================
+// Queen Gearheart, the Grand Automaton (remade 2026-11-18, Chapter 6)
+// =====================================================================================
+// A porcelain wind-up ringmistress who has to perform while anyone is watching: a carousel-canopy
+// skirt, a red tailcoat with a clock brooch, a tiny top hat ringed with a crown of gears, golden
+// ringlets, a star-tipped cane, and a great brass key in her back, spinning faster and faster as she
+// overwinds (m.mech.phase 3). Performs on the tick: cane twirls, bows, a tap step. Sweeps the cane
+// at you. When she winds down at last (mood 'sleep' in her ending) she sits, the key still, and
+// rests for the first time.
+const GRED = ramp('#e8485a', { step: 10, turn: 8 });
+const GCREAM = ramp('#fff4e0', { step: 7, turn: 8 });
+const GHAIR = ramp('#ffd27a', { step: 9, turn: 10 });
+const gh = pairOf('gh');
+// The skirt: a carousel's canopy upside down, striped panels, a scalloped gold hem. Box 54 x 36;
+// the waist at (27, 1).
+const ghSkirt = () => {
+  const out = [];
+  const n = 8;
+  for (let k = 0; k < n; k++) {
+    const x0 = 2 + (50 * k) / n;
+    const x1 = 2 + (50 * (k + 1)) / n;
+    const t0 = 27 + (x0 - 27) * 0.34;
+    const t1 = 27 + (x1 - 27) * 0.34;
+    out.push(T([[t0, 1], [t1, 1], [x1, 31], [x0, 31]], k % 2 ? GCREAM.base : GRED.base));
+  }
+  for (let k = 0; k < 10; k++) out.push(E(4.6 + k * 5.2, 32, 2.8, 2.6, GOLD.base));
+  out.push(F(R(2, 29.4, 50, 2, GOLD.sh)), crescent(27, 18, 24, 16, '#c8a8b8', { k: 0.2, a0: 10, a1: 100 }));
+  for (let k = 0; k < 4; k++) out.push(F(E(9 + k * 12, 22 + (k % 2) * 2, 1.8, 1.8, '#fff2b0')));
+  return out;
+};
+const ghCoat = () => [
+  T([[3, 20], [2, 6], [6, 1], [16, 1], [20, 6], [19, 20]], GRED.base), crescent(11, 10, 9, 9, GRED.sh, { k: 0.2, a0: 100, a1: 200 }),
+  T([[8, 1], [11, 9], [14, 1]], '#ffffff'), ...[0, 1, 2].map((k) => E(11 + (k % 2 ? 1 : -1) * 0.6, 3 + k * 2.4, 2.2, 1.4, '#ffffff')),
+  ...[8, 13, 17].map((y) => F(E(15, y, 0.9, 0.9, GOLD.base))), ...[8, 13, 17].map((y) => F(E(7, y, 0.9, 0.9, GOLD.base))),
+  E(11, 12.6, 3.4, 3.4, GOLD.base), E(11, 12.6, 2.6, 2.6, '#fffaf0'), F(taper([[11, 12.6], [11, 10.6]], 0.5, 0.4, INK)), F(taper([[11, 12.6], [12.6, 12.6]], 0.5, 0.4, INK)),
+];
+const ghTails = () => [T([[4, 0], [14, 0], [16, 14], [12, 12], [9, 16], [6, 12], [2, 14]], GRED.sh), F(R(4, 0, 10, 1.6, GOLD.base))];
+// The head: a china face, golden ringlets, a tiny top hat ringed with gear teeth, a little gold
+// crown on top. Box 34 x 40; the neck at (17, 39).
+const ghHead = () => {
+  const out = [E(16, 27, 12.6, 11.4, GHAIR.base)];
+  for (const [x, y] of [[4.6, 30], [27.4, 30], [6, 36], [26, 36]]) out.push(E(x, y, 3.6, 4.4, GHAIR.base), F(E(x - 0.6, y - 1.6, 1.2, 1.4, GHAIR.hi)));
+  out.push(E(17, 28.6, 10.2, 9.6, GCREAM.base), crescent(17, 28.6, 10.2, 9.6, GCREAM.sh, { k: 0.18, a0: 100, a1: 200 }));
+  out.push(T([[6.6, 26], [9, 19.6], [16, 17.6], [24, 19], [27.6, 25], [23, 22.4], [18.6, 23.6], [14, 21.6], [10, 24]], GHAIR.base), F(E(13, 19.6, 3, 1, GHAIR.hi)));
+  out.push(T([[9, 17.4], [27, 15.4], [27.6, 18.4], [9.4, 20]], '#3a2d4f'));
+  out.push(T([[12, 17], [12, 5], [24, 3.6], [25, 16]], '#4a3a6a'), F(R(13, 5, 2.4, 11, '#6a5a8a')));
+  for (let k = 0; k < 7; k++) out.push(R(12.2 + k * 1.8, 12.6 - (k % 2) * 1.4, 1.4, 2.6 + (k % 2) * 1.4, GOLD.base));
+  out.push(R(12, 13.4, 13, 2, GOLD.sh));
+  out.push(T([[14, 4], [15, 0], [17, 3], [19, 0], [21, 3], [23, 0], [24, 4]], GOLD.base), F(E(19, 2.6, 0.9, 0.9, '#ff6b8a')));
+  return out;
+};
+const ghArm = (far) => () => [taper([[2, 3], [9, 3.4], [13, 3.4]], 5, 4.4, far ? GRED.sh : GRED.base), R(11, 0.6, 3, 5.6, GOLD.base), E(15.4, 3.4, 2.8, 2.6, far ? '#e8e0f0' : '#ffffff')];
+// The cane: gold, a star on top. Box 8 x 40; held at (4, 30).
+const ghCane = () => [taper([[4, 39], [4, 6]], 1.6, 1.4, GOLD.sh), F(taper([[3.4, 36], [3.4, 8]], 0.5, 0.4, '#fff2b0')), T([[4, 0], [5.4, 3.6], [8, 3.8], [6, 5.8], [6.6, 9], [4, 7.4], [1.4, 9], [2, 5.8], [0, 3.8], [2.6, 3.6]], GOLD.base), F(E(3.6, 4.6, 0.9, 0.9, '#ffffff')), E(4, 39.4, 1.4, 1.4, GOLD.base)];
+// Her great key: a long stem and a big bow. Box 22 x 14; the stem's root at (1, 7).
+const ghKey = () => [taper([[1, 7], [9, 7]], 2.4, 2.4, GOLD.sh), ...stroke(arcP(15, 7, 6, 6, 0, 360, 18), 2.4, GOLD.base, false), E(15, 7, 1.8, 1.8, GOLD.sh), E(1.4, 7, 2, 3, GOLD.base)];
+const ghShoe = (far) => () => [E(3.4, 2, 3.4, 2, far ? '#a83a4a' : '#e8485a'), F(E(2.4, 1.4, 1.2, 0.6, '#ffffff'))];
+const GH_SKIRT = gh('skirt', 54, 36, ghSkirt, 2);
+const GH_COAT = gh('coat', 22, 20, ghCoat, 2);
+const GH_TAILS = gh('tails', 18, 17, ghTails, 2);
+const GH_HEAD = gh('head', 34, 40, ghHead, 2);
+const GH_ARM = [false, true].map((f) => gh(`arm${f ? 1 : 0}`, 19, 7, ghArm(f), 2));
+const GH_CANE = gh('cane', 8, 40, ghCane, 2);
+const GH_KEY = gh('key', 22, 14, ghKey, 2);
+const GH_SHOE = [false, true].map((f) => gh(`shoe${f ? 1 : 0}`, 7, 4, ghShoe(f), 2));
+const GH_FACE = { eyes: [[21, 29, 2.3, 3, 1], [13.4, 29.2, 1.9, 2.6, -1]], mouth: [19, 35, 2], blush: [[11.4, 33, 2.2], [25.4, 32.6, 1.6]], iris: '#4a9ad8', lid: 0.2, lashes: 1 };
+const ghFace = (mood) => sm(`gh|face|${mood}`, 34, 40, () => faceShapes(mood, GH_FACE));
+// (On the tick: a value that steps from beat to beat, easing quickly between.)
+const ticked = (t, n) => {
+  const s = t * n;
+  const i = Math.floor(s);
+  return (i + smooth(clamp((s - i) * 3, 0, 1))) / n;
+};
+const ghPass = (bare) => {
+  const i = bare ? 1 : 0;
+  const tag = bare ? 'b' : '';
+  return [
+    { name: `key${tag}`, parent: 'chest', s: GH_KEY[i], pivot: [1, 7], at: () => [-10, -10], rot: (S) => (180 + S.key) * D2R },
+    { name: `tails${tag}`, parent: 'chest', s: GH_TAILS[i], pivot: [9, 0], at: () => [-6, -2], rot: (S) => (14 + S.tails) * D2R },
+    { name: `armF${tag}`, parent: 'chest', s: GH_ARM[1][i], pivot: [2, 3], at: () => [-4, -16], rot: (S) => S.armF * D2R },
+    { name: `shoeF${tag}`, parent: null, s: GH_SHOE[1][i], pivot: [3.4, 3.6], at: (S) => [S.x - 5 + S.tapF * 2, -S.tapF * 3] },
+    { name: `shoeN${tag}`, parent: null, s: GH_SHOE[0][i], pivot: [3.4, 3.6], at: (S) => [S.x + 5 + S.tapN * 2, -S.tapN * 3] },
+    { name: `skirt${tag}`, parent: 'waist', s: GH_SKIRT[i], pivot: [27, 1], rot: (S) => S.skirt * D2R },
+    { name: `coat${tag}`, parent: 'chest', s: GH_COAT[i], pivot: [11, 20] },
+    { name: `head${tag}`, parent: 'nk', s: GH_HEAD[i], pivot: [17, 39] },
+    { name: `cane${tag}`, parent: 'handN', s: GH_CANE[i], pivot: [4, 30], rot: (S) => S.cane * D2R },
+    { name: `armN${tag}`, parent: 'chest', s: GH_ARM[0][i], pivot: [2, 3], at: () => [4, -15], rot: (S) => S.armN * D2R },
+  ];
+};
+export const gearheartRig = sized(makeRig({
+  w: 100,
+  h: 130,
+  soft: true,
+  stride: 30,
+  recover: 0.6,
+  springs: { x: [240, 18], lift: [220, 14], tilt: [180, 11], head: [140, 9], armN: [200, 13], armF: [180, 12], cane: [200, 12], skirt: [100, 7], tails: [90, 6], tapN: [400, 24], tapF: [400, 24], key: [300, 18] },
+  fast: ['x', 'armN', 'cane'],
+  kick: { tilt: -150, head: -220, skirt: 300, tails: 300 },
+  turnKick: { skirt: 260, tails: 300 },
+  pose(m, a) {
+    a.uidOff = (m.uid % 13) * 0.93;
+    const t = a.t + a.uidOff;
+    const over = m.mech?.phase === 3 ? 1 : 0;
+    const rest = a.mood === 'sleep' ? 1 : 0;
+    a.ghRest = rest;
+    a.ghOver = over;
+    const lu = t % 9;
+    const bow = hold(lu, 5, 5.5, 6.4, 7);
+    const twirl = hold(lu, 1.4, 1.8, 3.4, 3.8);
+    // (Everything she does goes on the tick, a little stepped, like clockwork.)
+    const tk = ticked(t, 2 + over * 2);
+    const beat = Math.sin(tk * TAU * 0.5);
+    const keyT = t * (rest ? 0 : 7 + over * 14);
+    const idle = {
+      x: 0, lift: 4 + beat * 1.2 - bow * 3, tilt: beat * 3 + bow * 18, head: -beat * 5 + bow * 12, armN: 40 - twirl * 70 + bow * 50, armF: -60 + beat * 20 - bow * 80,
+      cane: Math.sin(t * 8) * 60 * twirl, skirt: beat * 3, tails: beat * 6, tapN: Math.max(0, beat), tapF: Math.max(0, -beat), key: Math.sin(keyT) * 40,
+    };
+    const s1 = Math.sin(t * 6);
+    const walk = { x: 0, lift: 4 + Math.abs(s1) * 2, tilt: 6, head: -4, armN: 30, armF: -80, cane: -20, skirt: -6, tails: -14, tapN: Math.max(0, s1), tapF: Math.max(0, -s1), key: Math.sin(keyT) * 40 };
+    // The cane sweep: wound back over her head, then swept down across.
+    const antic = { x: -2, lift: 6, tilt: 12, head: 10, armN: -150, armF: 40, cane: -40, skirt: 8, tails: -10, tapN: 1, tapF: 0, key: 0 };
+    const strike = { x: 6, lift: 3, tilt: -14, head: -10, armN: 50, armF: -110, cane: 70, skirt: -10, tails: 24, tapN: 0, tapF: 1, key: 0 };
+    const S = stateBlend(a, idle, walk, antic, strike);
+    // Wound down at last: she sits, the key still, her head nodding.
+    if (rest) Object.assign(S, { lift: -10, tilt: 4, head: 18 + Math.sin(t * 0.8) * 4, armN: 70, armF: 80, cane: 60, skirt: 0, tails: 0, tapN: 0, tapF: 0, key: 0 });
+    return S;
+  },
+  parts: [
+    { name: 'waist', parent: null, at: (S) => [S.x, -34 - S.lift], rot: (S) => S.tilt * 0.3 * D2R },
+    { name: 'chest', parent: 'waist', at: () => [0, 1], rot: (S) => S.tilt * 0.7 * D2R },
+    { name: 'nk', parent: 'chest', at: () => [1, -20], rot: (S) => (S.head - S.tilt * 0.5) * D2R },
+    { name: 'handN', parent: 'armN', at: () => [15.4, 3.4] },
+    ...ghPass(false),
+    ...ghPass(true),
+    { name: 'face', parent: 'nk', s: (a) => ghFace(moodOf(a, a.ghRest ? 'sleep' : null)), pivot: [17, 39] },
+  ],
+  fx(ctx, m, a, S, mat) {
+    if (m.hp <= 0 && !a.ghRest) return;
+    // Overwound: puffs of steam off her key.
+    if (a.ghOver && !a.ghRest) {
+      const [kx, ky] = at2(mat('key'), 15, 7);
+      for (let k = 0; k < 2; k++) {
+        const u = fr(a.now * 1.2 + k / 2);
+        puff(ctx, a, kx - u * 10, ky - u * 22, 3 + u * 5, a.alpha * (1 - u) * 0.6);
+      }
+    }
+    if (a.ph.strike > 0.15) {
+      const [cx, cy] = at2(mat('cane'), 4, 2);
+      sparkle(ctx, a, cx, cy, 8 * a.ph.strike, a.alpha * a.ph.strike, '#fff2b0');
+    }
+  },
+}), 1.3);
+export function gearheartStill(pose, f, mood) {
+  const fm = MOODS.has(mood) ? mood : 'idle';
+  const wy = -38;
+  const cy = wy + 1;
+  const ny = cy - 20;
+  return {
+    w: 100, h: 130, res: 2,
+    shapes: shift([
+      ...put(ghKey(), [1, 7], -10, cy - 10, 180), ...put(ghTails(), [9, 0], -6, cy - 2, 14), ...put(ghArm(true)(), [2, 3], -4, cy - 16, -60),
+      ...put(ghShoe(true)(), [3.4, 3.6], -5, 0), ...put(ghShoe(false)(), [3.4, 3.6], 5, 0), ...put(ghSkirt(), [27, 1], 0, wy), ...put(ghCoat(), [11, 20], 0, cy),
+      ...put(ghHead(), [17, 39], 1, ny), ...put(faceShapes(fm, GH_FACE), [17, 39], 1, ny), ...put(ghCane(), [4, 30], 21, cy - 12), ...put(ghArm(false)(), [2, 3], 4, cy - 15, 40),
+    ], 50, 129),
+  };
+}
+
+// =====================================================================================
+// A Brass Mole (Queen Gearheart's whack-a-mole)
+// =====================================================================================
+// A little brass mole toy in goggles that pops up out of a hole in the plaza (render/carnival.js
+// draws the hole), looks about, and ducks back down; whack it while it's up.
+const MOLE = ramp('#e8b84a', { step: 10, turn: 8 });
+const mo = pairOf('mo');
+const moleBody = () => [
+  E(9, 13, 8.4, 9, MOLE.base), crescent(9, 13, 8.4, 9, MOLE.sh, { k: 0.2, a0: 100, a1: 220 }), shine(9, 13, 8.4, 9, '#ffffff', 0, 0.9),
+  E(15.4, 12, 3.4, 2.6, '#ffe0c8'), E(18, 11.4, 1.8, 1.5, '#ff7a9a'), F(E(17.6, 11, 0.6, 0.5, '#ffffff')),
+  R(3, 6.4, 13, 2, '#6a5a8a'), E(8, 7.4, 2.8, 2.4, '#9fe6f6'), E(13.4, 7.4, 2.6, 2.2, '#9fe6f6'), F(E(7.4, 6.8, 0.8, 0.7, '#ffffff')), F(E(12.8, 6.8, 0.8, 0.7, '#ffffff')),
+  E(4, 3.6, 2.4, 2.2, MOLE.sh), F(E(4, 3.8, 1.2, 1, '#ffd0a0')),
+];
+const molePaw = () => [E(3, 2, 3, 2, MOLE.base), ...[0, 1, 2].map((k) => F(E(1.4 + k * 1.6, 3.4, 0.6, 0.5, '#fff2d0')))];
+const MOLE_B = mo('body', 18, 22, moleBody, 2);
+const MOLE_P = mo('paw', 6, 4, molePaw, 2);
+// How far up out of its hole it is (0..1): up in 0.3 s, down in its last 0.3 s.
+const moleUp = (m, now) => {
+  if (m.hp <= 0) return 0;
+  const age = now - (m.popAt ?? now - 1);
+  const life = m.popLife ?? 4.2;
+  return Math.min(clamp(age / 0.3, 0, 1), clamp((life - age) / 0.3, 0, 1));
+};
+export const moleRig = makeRig({
+  w: 30,
+  h: 34,
+  soft: true,
+  stride: 10,
+  springs: { up: [300, 16], look: [160, 9] },
+  pose(m, a) {
+    return { up: moleUp(m, a.now) * 17, look: Math.sin(a.t * 3 + m.uid) * 10 };
+  },
+  parts: [
+    { name: 'root', parent: null, at: (S) => [0, 17 - S.up] },
+    { name: 'pawF', parent: 'root', s: MOLE_P[0], pivot: [3, 2], at: () => [-6, -15], when: (a, S) => S.up > 12 },
+    // (Only what's up out of the hole shows: the body is cut off at the floor.)
+    { name: 'body', parent: 'root', s: MOLE_B[0], pivot: [9, 18], rot: (S) => S.look * D2R, clip: (a, S) => [-14, -26, 32, 26 - (17 - S.up)] },
+    { name: 'bodyb', parent: 'root', s: MOLE_B[1], pivot: [9, 18], rot: (S) => S.look * D2R, clip: (a, S) => [-14, -26, 32, 26 - (17 - S.up)] },
+    { name: 'pawN', parent: 'root', s: MOLE_P[1], pivot: [3, 2], at: () => [6, -15], when: (a, S) => S.up > 12 },
+  ],
+});
+export function moleStill() {
+  return { w: 24, h: 24, res: 3, shapes: shift([...put(moleBody(), [9, 18], 0, 0)], 12, 23) };
+}

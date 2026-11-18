@@ -650,7 +650,7 @@ test("Malvina's villain story plays through at her tower, and the party guests g
 test('a beaten boss stands up for its farewell, then leaves the room for good', async () => {
   const { spawnMob } = await import('../src/world/mobs.js');
   const { MOBS } = await import('../src/data/mobs.js');
-  for (const [boss, id] of [['gnarlroot', 'hollow_sleep'], ['marigold', 'manor_freed'], ['coralie', 'aquarium_freed'], ['astraea', 'observatory_freed']]) {
+  for (const [boss, id] of [['gnarlroot', 'hollow_sleep'], ['marigold', 'manor_freed'], ['coralie', 'aquarium_freed'], ['gearheart', 'carnival_freed'], ['astraea', 'observatory_freed']]) {
     const w = createWorld(createCharacter('Hana', {}));
     loadMap(w, 'dawnbeach', 'start');
     const m = spawnMob(w.map, { mob: boss, x: w.body.x + 160, y: w.body.y });

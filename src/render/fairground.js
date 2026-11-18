@@ -479,7 +479,16 @@ function drawBalloons(ctx, x, y, time, seed) {
     ctx.fill();
   }
 }
+// A striped park bench: the front row of Queen Gearheart's show.
+function benchPic() {
+  return art('bench', 64, 30, () => [
+    R(6, 18, 4, 12, FG.butterSh), R(54, 18, 4, 12, FG.butterSh), R(2, 15, 60, 5, FG.pink), F(R(2, 15, 60, 1.6, FG.pinkLit)),
+    R(4, 2, 56, 4, FG.cream), R(4, 8, 56, 4, FG.pink), F(R(4, 2, 56, 1.2, '#ffffff')), R(6, 2, 3, 16, FG.butterSh), R(55, 2, 3, 16, FG.butterSh),
+    E(8, 2, 2.4, 2.4, FG.butter), E(56, 2, 2.4, 2.4, FG.butter),
+  ]);
+}
 export const FAIR_KINDS = {
+  fairbench: { w: 64 + M * 2, h: 30 + M, draw: (ctx, x, y) => place(ctx, benchPic(), x, y) },
   fairarch: { w: 300, h: 290, draw: (ctx, x, y, time) => drawFairArch(ctx, x, y, time) },
   popcorncart: { w: 54 + M * 2, h: 70 + M, draw: (ctx, x, y) => place(ctx, popcornPic(), x, y) },
   balloonstand: { w: 80, h: 120, draw: (ctx, x, y, time, seed) => drawBalloons(ctx, x, y, time, seed) },
