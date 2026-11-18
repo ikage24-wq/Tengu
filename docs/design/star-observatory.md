@@ -37,14 +37,14 @@ of and behind the body, and it drifts on a slow figure-eight instead of walking.
 - **Comet Courier**: a messenger girl riding her own comet tail, letters in a satchel; dashes.
 - **Nebula Witch**: a dress of nebula cloud, a starry hat; a nebula burst from her wand.
 - **Star-chart Cartographer**: a long scroll chart and a brass compass; flings the compass needle.
-- **Moth Librarian**: moth wings and feathery antennae, a little lamp; a puff of glittering scale dust.
+- **Owl Librarian** (was the Moth Librarian until 2026-11-18): a little owlet in a scholar's cap and gown with a lantern; bonks you with a book.
 - **Meteor Golem Girl**: rock gauntlets with glowing cracks; a heavy punch.
 - **Gemini Ghosts**: two little twin ghosts holding hands; a twin spin.
 
 ## Bosses
 
 - **Folio, the Archivist** (Archive): an owl-ish librarian with an enormous book. She hurls stacks of
-  overdue books (marked spots), calls Moth Librarians, and at half health the bookcases slide in from
+  overdue books (marked spots), calls Owl Librarians, and at half health the bookcases slide in from
   both ends of the hall (stay in the middle).
 - **The Eclipse Twins, Sol and Luna** (Orrery): the room is split into a sunlit half and a shadowed
   half, swapping at each eclipse. Sol can only really be hurt in the shadow, Luna only in the light:

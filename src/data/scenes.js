@@ -1609,7 +1609,7 @@ export const OBS_RADIO = {
   'clear:observatory4': ['You got past Folio? Return your books on time, next time.'],
   'clear:observatory5': ['The eclipse is over! The crown is right above you!'],
   wipe: ['Dust yourselves off, stargazers. Try again!', 'The stars will wait. Up you get.'],
-  moths: ['Moths! Protect your healer!'],
+  moths: ['Owls! Protect your healer!'],
   shelves: ["The shelves are closing in! Stay in the middle!"],
   lines: ['The constellations! Find the dark between the stars!'],
   nova: ["Supernova! Jump when it flares!"],

@@ -466,7 +466,7 @@ export const MOBS = {
     fight: { every: 2.1, reach: 30, windup: 0.45, range: 150 },
   }),
   mothlibrarian: mob({
-    id: 'mothlibrarian', name: 'Moth Librarian', level: 32, hp: 2500, atk: 134, def: 28, acc: 94, eva: 12, exp: 1300, gold: [16, 32],
+    id: 'mothlibrarian', name: 'Owl Librarian', level: 32, hp: 2500, atk: 134, def: 28, acc: 94, eva: 12, exp: 1300, gold: [16, 32],
     speed: 44, w: 28, h: 34, art: 'mothlibrarian', drops: [{ id: 'moth_scale', chance: 0.4 }, { id: 'astral_shard', chance: 0.08 }],
     fight: { every: 1.9, reach: 38, windup: 0.4 },
   }),

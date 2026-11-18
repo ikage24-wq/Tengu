@@ -61,7 +61,7 @@ A tower above the clouds where the stars are catalogued.
   (connect star-lamps to draw the shape shown), zero-gravity reading rooms (low gravity, long
   jumps), the Orrery (planet platforms orbit a sun), and the Telescope Crown.
 - **Monsters ("astral" rig, floating with orbiting parts):** Comet Courier, Nebula Witch, Star-chart
-  Cartographer, Moth Librarian, Meteor Golem Girl, Twin Gemini Ghosts.
+  Cartographer, Owl Librarian, Meteor Golem Girl, Twin Gemini Ghosts.
 - **Bosses:** the Archivist (books as weapons, silence zones where skills can't be used); the
   Eclipse Twins (sun and moon: light and dark halves of the room); Astraea the Star Keeper.
 

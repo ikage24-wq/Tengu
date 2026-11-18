@@ -6,7 +6,7 @@
 //   The Constellation Hall  the puzzle: five star lamps joined in a constellation; using one flips
 //                         it and the lamps joined to it. Light all five.
 //   The Weightless Reading Room  low gravity: long, floaty jumps between far-apart shelves.
-//   The Archive           Folio: hurled stacks of overdue books, Moth Librarians, and at half health
+//   The Archive           Folio: hurled stacks of overdue books, Owl Librarians, and at half health
 //                         the bookcases slide in from both ends of the hall.
 //   The Orrery            the Eclipse Twins: the hall is half sunlit, half shadowed, swapping at each
 //                         eclipse; Sol is only really hurt in the shadow, Luna only in the light.
@@ -151,7 +151,7 @@ function folio(world, m, up, dt) {
     s.moths.shift();
     const healer = up.find((g) => g.role === 'healer') ?? pick(up);
     adds(world, m, 'mothlibrarian', [m.x - 200, m.x + 200], healer?.id);
-    callout(world, 'Folio calls her moths!', 'They flutter at the healer: catch them');
+    callout(world, 'Folio calls her owls!', 'They flutter at the healer: catch them');
     radio(world, 'moths');
   }
   if (!s.shelved && frac <= 0.5) {

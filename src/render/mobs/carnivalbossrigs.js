@@ -198,7 +198,7 @@ export const leonieRig = sized(makeRig({
   fx(ctx, m, a, S, mat) {
     if (m.hp <= 0) return;
     if (a.ph.strike > 0.15) {
-      const [hx, hy] = at2(mat('hoop'), 13, 13);
+      const [hx, hy] = at2(mat('hoop'), 0, -12);
       sparkle(ctx, a, hx, hy, 8 * a.ph.strike, a.alpha * a.ph.strike, '#fff2b0');
     }
     // A puff of sawdust where she lands from the trapeze.
@@ -504,14 +504,14 @@ export const gearheartRig = sized(makeRig({
     if (m.hp <= 0 && !a.ghRest) return;
     // Overwound: puffs of steam off her key.
     if (a.ghOver && !a.ghRest) {
-      const [kx, ky] = at2(mat('key'), 15, 7);
+      const [kx, ky] = at2(mat('key'), 14, 0);
       for (let k = 0; k < 2; k++) {
         const u = fr(a.now * 1.2 + k / 2);
         puff(ctx, a, kx - u * 10, ky - u * 22, 3 + u * 5, a.alpha * (1 - u) * 0.6);
       }
     }
     if (a.ph.strike > 0.15) {
-      const [cx, cy] = at2(mat('cane'), 4, 2);
+      const [cx, cy] = at2(mat('cane'), 0, -28);
       sparkle(ctx, a, cx, cy, 8 * a.ph.strike, a.alpha * a.ph.strike, '#fff2b0');
     }
   },

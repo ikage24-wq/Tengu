@@ -512,7 +512,7 @@ const ETC = [
   ['sky_scale', 'Sky Scale', 250, '#9fd0ff'],
   ['sky_silk', 'Sky Silk', 30, '#eaf6ff'],
   ['barnacle_shell', 'Barnacle Shell', 32, '#ece4d4'],
-  ['moth_scale', 'Moth Scale', 19, '#f0e0c8'],
+  ['moth_scale', 'Starlit Quill', 19, '#eeeaff'],
   ['meteorite', 'Meteorite Chip', 21, '#ff9a5a'],
   ['tin_spring', 'Tin Spring', 16, '#d8e2f6'],
   ['music_cylinder', 'Music Cylinder', 18, '#c9a6ff'],

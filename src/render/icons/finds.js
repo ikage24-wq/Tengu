@@ -416,13 +416,21 @@ function barnacle_shell() {
   return out;
 }
 
+// (Kept its id; 2026-11-18 it became the Owl Librarian's Starlit Quill: a long writing feather,
+// moon-white vanes edged in lilac, a gold nib, a little star twinkling at its tip.)
 function moth_scale() {
-  const c = '#f0e0c8';
-  const wing = [...bez3([2, 13.6], [1, 6], [6, 1], [14.6, 2], 14), ...bez3([14.6, 2], [13, 7], [12, 12], [2, 13.6], 14).slice(1)];
-  const out = [...ball(wing, c)];
-  out.push(...disc(8.6, 6.4, 2.4, '#c9a6ff', { glow: 0.5 }), S(oval(8.6, 6.4, 1.1, 1.1, 0, 12), '#5a4a80'), S(oval(8.2, 6, 0.4, 0.4, 0, 8), W));
-  for (const t of [0.3, 0.55, 0.8]) out.push(line([[2.4, 13], [2 + t * 12, 2 + (1 - t) * 4 + t * 7]], 0.3, sh(c)));
-  out.push(twinkle(13.4, 12.4, 1.1, '#fff6e0'), ...glint(4, 6.4, 0.5));
+  const c = '#eeeaff';
+  const spine = [[3, 14.2], [13.6, 1.8]];
+  const vane = [...bez3([4.6, 12], [3.4, 7], [8, 2.4], [13.6, 1.8], 14), ...bez3([13.6, 1.8], [13.4, 6.4], [9.6, 11.2], [4.6, 12], 14).slice(1)];
+  const out = [...ball(vane, c, { glow: 0.5 })];
+  out.push(S(oval(11.4, 4.2, 1.6, 2.6, 40), '#cfc4f4'));
+  for (const t of [0.35, 0.55, 0.75]) {
+    const x = 4.6 + t * 9, y = 12 - t * 10.2;
+    out.push(line([[x, y], [x - 2.6, y - 1.2]], 0.3, sh(c)), line([[x, y], [x + 1.2, y + 2.4]], 0.3, sh(c)));
+  }
+  out.push(line(spine, 0.5, '#fffaf0'));
+  out.push(S(tube([[2.2, 15.2], [4.4, 12.6]], 0.7), GOLD), S(oval(2.2, 15.2, 0.6, 0.6, 0, 8), dk(GOLD)));
+  out.push(twinkle(13.8, 1.6, 1.4, '#fff3a6'), twinkle(14.2, 9.4, 0.9, '#ffffff'), ...glint(8, 5.6, 0.5));
   return out;
 }
 

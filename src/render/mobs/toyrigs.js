@@ -145,7 +145,7 @@ export const ballerinaRig = spinWrap(makeRig({
       note(ctx, a, -8 + k * 16 + Math.sin(u * 6 + k) * 3, -12 - u * 30, a.alpha * a.mbNote * Math.sin(u * Math.PI) * 0.8, k ? '#ffc0dc' : '#fff2b0', 6);
     }
     if (a.ph.strike > 0.1) {
-      const [fx, fy] = at2(mat('legF'), 2.6, 9);
+      const [fx, fy] = at2(mat('legF'), 0.1, 8.5);
       sparkle(ctx, a, fx, fy, 5 * a.ph.strike, a.alpha * a.ph.strike, '#fff2b0');
     }
   },
@@ -217,7 +217,7 @@ const bsPass = (bare) => {
 // The bunch of balloons in its far paw, bobbing on their strings (behind it).
 function bsBunch(ctx, m, a, S, mat) {
   if (m.hp <= 0) return;
-  const [hx, hy] = at2(mat('armF'), 9, 2.4);
+  const [hx, hy] = at2(mat('armF'), 8, 0.4);
   ctx.globalAlpha = a.alpha;
   for (let k = 0; k < 3; k++) {
     const sway = Math.sin(a.now * 1.6 + k * 2 + m.uid) * 2 + S.bunch * (0.6 + k * 0.2);
@@ -287,7 +287,7 @@ export const balloonRig = makeRig({
   under: bsBunch,
   fx(ctx, m, a, S, mat) {
     if (a.ph.strike > 0.2) {
-      const [hx, hy] = at2(mat('armF'), 9, 2.4);
+      const [hx, hy] = at2(mat('armF'), 8, 0.4);
       sparkle(ctx, a, hx + 6, hy - 6, 6 * a.ph.strike, a.alpha * a.ph.strike, '#ffd36b');
       puff(ctx, a, hx + 4, hy - 2, 5 * a.ph.strike, a.alpha * a.ph.strike * 0.5);
     }
@@ -419,7 +419,7 @@ export const drummerRig = makeRig({
   fx(ctx, m, a, S, mat) {
     if (a.ph.strike <= 0.05 || m.hp <= 0) return;
     // Rings of sound off the drum.
-    const [dx, dy] = at2(mat('drum'), 13, 5.5);
+    const [dx, dy] = at2(mat('drum'), 6, 0);
     ctx.lineCap = 'round';
     for (let k = 0; k < 3; k++) {
       const u = clamp(a.ph.since * 2.4 - k * 0.22, 0, 1);
@@ -659,7 +659,7 @@ export const marionetteRig = makeRig({
     // The strings, from the bar to her hands and head.
     const C = mat('ctl');
     const ends = [at2(C, -10, 0.4), at2(C, 0, 0), at2(C, 10, 0.4)];
-    const to = [at2(mat('armF'), 8, 1.8), at2(mat('nk'), 0.4, -12), at2(mat('armN'), 8, 1.8)];
+    const to = [at2(mat('armF'), 7, 0.2), at2(mat('nk'), 0.4, -12), at2(mat('armN'), 7, 0.2)];
     ctx.globalAlpha = a.alpha * 0.8;
     ctx.strokeStyle = '#f6f0ff';
     ctx.lineWidth = 0.4;
@@ -785,7 +785,7 @@ export const teddyRig = makeRig({
   fx(ctx, m, a, S, mat) {
     if (a.ph.strike <= 0.1 || m.hp <= 0) return;
     // The thump: dust and stars where the barbell lands.
-    const [bx, by] = at2(mat('bell'), 31, 11);
+    const [bx, by] = at2(mat('bell'), 13, 5);
     puff(ctx, a, bx, by, 6 + a.ph.strike * 6, a.alpha * a.ph.strike * 0.6);
     sparkle(ctx, a, bx + 4, by - 8, 5 * a.ph.strike, a.alpha * a.ph.strike, '#fff2b0');
   },
