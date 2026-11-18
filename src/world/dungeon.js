@@ -29,8 +29,8 @@ import { SKILLS } from '../data/skills.js';
 import { speak, contextOf } from './chatter.js';
 import { botChat, sayOneOf } from './chatlog.js';
 import { placeInGroup, focusOf, behindSide, shared, callout as callOut } from './botfight.js';
-import { loadMap } from './world.js';
-import { radio, roomSetup, tickRoom, cheerOf, capperPhases, sporeSprout, pillarHit, boarPhases, gnarlPhases, heartMultiplier, hollowCalmed, floodComing, onFloor } from './hollow.js';
+import { loadMap, killMob } from './world.js';
+import { radio, roomSetup, tickRoom, cheerOf, capperPhases, sporeSprout, pillarHit, boarPhases, gnarlPhases, GNARL_WORDS, hollowCalmed, floodComing, onFloor } from './hollow.js';
 import { MANOR_MECHS, MANOR_CHANNEL, manorSetup, tickManor, manorBoss, manorHitMul, manorKilled, turnPortrait, crestWords, CREST } from './manor.js';
 import { AQUA_MECHS, AQUA_CHANNEL, aquaSetup, tickAqua, aquaBoss, aquaHitMul, aquaKilled, openClam, bellWords } from './aquarium.js';
 import { CARNIVAL_MECHS, CARNIVAL_CHANNEL, carnivalSetup, tickCarnival, carnivalBoss, carnivalHitMul, carnivalKilled } from './carnival.js';
@@ -622,9 +622,12 @@ export function noteHit(world, m, h) {
   let damage = h.miss ? 0 : h.damage;
   if (m.vulnUntil > world.now) damage = Math.round(damage * 1.5);
   if (m.shield) damage = Math.round(damage * 0.5);
-  // The Sprouts' cheering, and Gnarlroot's open heart (up high is where it's reached).
+  // The Sprouts' cheering.
   const body = groupOf(world).find((g) => g.id === who)?.body;
-  damage = Math.round(damage * cheerOf(run) * heartMultiplier(world, m, body) * manorHitMul(world, m) * aquaHitMul(world, m) * carnivalHitMul(world, m) * obsHitMul(world, m) * volcanoHitMul(world, m, body) * theatreHitMul(world, m) * whaleHitMul(world, m));
+  damage = Math.round(damage * cheerOf(run) * manorHitMul(world, m) * aquaHitMul(world, m) * carnivalHitMul(world, m) * obsHitMul(world, m) * volcanoHitMul(world, m, body) * theatreHitMul(world, m) * whaleHitMul(world, m));
+  // (Gnarlroot can't be beaten, only calmed: blows bring him down to a third, no further, until the
+  // tendrils holding Yomogi are cut.)
+  if (m.def.mech === 'gnarl' && !m.mech?.freed) damage = Math.max(0, Math.min(damage, Math.ceil(m.hp - m.def.hp * 0.3)));
   engage(world, m, who);
   m.threat[who] = (m.threat[who] ?? 0) + Math.max(1, damage) * (run.roles[who] === 'tank' ? TANK_THREAT : 1);
   return damage;
@@ -915,6 +918,8 @@ function fight(world, m, up, dt) {
   m.flash = Math.max(0, m.flash - dt);
   m.age += dt;
   m.lunge = Math.max(0, (m.lunge ?? 0) - dt);
+  // (Knocked up or pulled out of the floor mid-burrow: dug up, the burrow's over.)
+  if (m.move?.kind === 'burrow' && (m.air > 0 || m.airV > 0 || m.yank)) m.move = null;
   if (tickYank(m, dt) || tickAir(m, dt) || tickHop(m, dt)) return;
   if (m.frozenUntil > now) {
     m.stagger = 0;
@@ -944,6 +949,8 @@ function fight(world, m, up, dt) {
     m.state = 'idle';
     return;
   }
+  // (A monster's own move now and then, instead of a swing: see mobMove.)
+  if (f.move && !m.windup && mobMove(world, m, target, up, dt)) return;
   const dx = target.body.x - m.x;
   const reach = reachOf(m);
   if (!m.windup) {
@@ -971,6 +978,108 @@ function fight(world, m, up, dt) {
     m.atkT = f.every;
     m.swingAt = target.id;
     m.swingMul = 1;
+  }
+}
+
+// A dungeon monster's own move (`fight.move`), every so often instead of a swing (Chapter 3's
+// Hollow, 2026-11-18). Each warns with a zone on the floor first, so the party can step out of it:
+//   burrow  (Root Imp) dives into the floor, tunnels over under its target and bursts up there.
+//   cloud   (Myconid Shaman) a drowsy spore cloud gathers on its target, then puffs.
+//   roll    (Bramble Bear) curls into a bramble ball, revs, then rolls along the floor, bowling
+//           over whoever is still in its path.
+// Returns true while the monster is busy with it.
+function mobMove(world, m, target, up, dt) {
+  const mv = m.def.fight.move;
+  const cur = m.move;
+  if (cur) {
+    cur.t += dt;
+    if (cur.t > 6) m.move = null;
+    else if (cur.kind === 'burrow') tickBurrow(world, m, cur, mv, dt);
+    else if (cur.kind === 'cloud') {
+      m.state = 'idle';
+      if (cur.zone.hit && cur.zone.after > 0.25) m.move = null;
+    } else if (cur.kind === 'roll') tickRoll(world, m, cur, mv, up, dt);
+    if (!m.move) m.atkT = Math.max(m.atkT, 0.8);
+    return true;
+  }
+  // (Each monster on its own clock, so a pack doesn't all dig in at the same instant.)
+  m.moveT = (m.moveT ?? (mv.first ?? mv.every) + (m.uid % 5) * 0.7) - dt;
+  if (m.moveT > 0) return false;
+  const dx = target.body.x - m.x;
+  const sameFloor = Math.abs(target.body.y - m.y) < 20 && target.body.x >= m.x1 - 4 && target.body.x <= m.x2 + 4;
+  const later = () => {
+    m.moveT = 1.5;
+    return false;
+  };
+  if (mv.kind === 'burrow') {
+    if (!sameFloor || Math.abs(dx) < 60 || Math.abs(dx) > 280) return later();
+    m.move = { kind: 'burrow', t: 0, at: world.now, phase: 'dig', tx: Math.max(m.x1, Math.min(m.x2, target.body.x)) };
+  } else if (mv.kind === 'cloud') {
+    if (Math.abs(dx) > 230 || Math.abs(target.body.y - m.y) > 140) return later();
+    const nav = navOf(world.map);
+    const surf = nav.surfaces[Math.max(0, surfaceBelow(nav, target.body.x, target.body.y))];
+    const zone = { kind: 'circle', x: target.body.x, y: surf?.yAt ? surf.yAt(target.body.x) : target.body.y, w: mv.w, warn: mv.warn, damage: Math.round(m.def.atk * mv.mul), from: m, noSprout: true };
+    addZone(world, zone);
+    m.dir = Math.sign(dx) || m.dir;
+    m.move = { kind: 'cloud', t: 0, at: world.now, zone };
+  } else if (mv.kind === 'roll') {
+    if (!sameFloor || Math.abs(dx) < 50 || Math.abs(dx) > mv.dist + 40) return later();
+    const dir = Math.sign(dx) || 1;
+    const end = Math.max(m.x1, Math.min(m.x2, m.x + dir * mv.dist));
+    if (Math.abs(end - m.x) < 70) return later();
+    const zone = { kind: 'circle', x: (m.x + end) / 2, y: m.y, w: Math.abs(end - m.x) + m.def.w, warn: mv.warn, damage: 0, from: m, tele: true };
+    addZone(world, zone);
+    m.dir = dir;
+    m.move = { kind: 'roll', t: 0, at: world.now, phase: 'rev', dir, end, hit: new Set(), zone };
+  }
+  m.moveT = mv.every;
+  m.state = 'idle';
+  return true;
+}
+function tickBurrow(world, m, cur, mv, dt) {
+  if (cur.phase === 'dig') {
+    m.state = 'idle';
+    if (cur.t > 0.45) cur.phase = 'under';
+    return;
+  }
+  if (cur.phase === 'under') {
+    const d = cur.tx - m.x;
+    if (Math.abs(d) > 2) {
+      m.state = 'walk';
+      m.dir = Math.sign(d);
+      m.x += Math.sign(d) * Math.min(Math.abs(d), 170 * dt);
+      return;
+    }
+    m.state = 'idle';
+    if (!cur.zone) {
+      cur.zone = { kind: 'circle', x: m.x, y: m.y, w: mv.w, warn: mv.warn, damage: Math.round(m.def.atk * mv.mul), from: m, noSprout: true };
+      addZone(world, cur.zone);
+    } else if (cur.zone.hit) {
+      cur.phase = 'pop';
+      cur.popAt = world.now;
+    }
+    return;
+  }
+  m.state = 'idle';
+  if (world.now - cur.popAt > 0.7) m.move = null;
+}
+function tickRoll(world, m, cur, mv, up, dt) {
+  if (cur.phase === 'rev') {
+    m.state = 'idle';
+    if (cur.zone.hit) cur.phase = 'roll';
+    return;
+  }
+  m.state = 'walk';
+  m.dir = cur.dir;
+  m.x += cur.dir * mv.speed * dt;
+  for (const g of up) {
+    if (cur.hit.has(g.id) || Math.abs(g.body.x - m.x) > m.def.w / 2 + 8 || Math.abs(g.body.y - m.y) > 30) continue;
+    cur.hit.add(g.id);
+    hurtMember(world, g, Math.round(m.def.atk * mv.mul), m.x - cur.dir * 20, { knock: true });
+  }
+  if ((cur.dir > 0 && m.x >= cur.end) || (cur.dir < 0 && m.x <= cur.end)) {
+    m.x = cur.end;
+    m.move = null;
   }
 }
 
@@ -1048,11 +1157,34 @@ function bossMove(world, m, up, dt) {
   if (THEATRE_MECHS.has(m.def.mech)) return theatreBoss(world, m, up, dt);
   if (WHALE_MECHS.has(m.def.mech)) return whaleBoss(world, m, up, dt);
   if (m.def.mech === 'capper') {
-    const s = (m.mech ??= { rain: 7, adds: [0.85, 0.5] });
+    const s = (m.mech ??= { rain: 7, adds: [0.85, 0.5], twirl: 5 });
     capperPhases(world, m, dt);
+    m.hideUntil = world.dungeon.room.darkUntil ?? 0;
+    // Cap Twirl: she spins on the spot (turning to face one way, then the other), flinging a ring of
+    // spores off her brim all round her.
+    if (m.move?.kind === 'spin') {
+      const mv = m.move;
+      mv.t += dt;
+      m.state = 'idle';
+      m.dir = mv.dir0 * (Math.floor(Math.max(0, mv.t - 0.25) / 0.16) % 2 ? -1 : 1);
+      if (mv.t > mv.warn + 0.45) {
+        m.dir = mv.dir0;
+        m.move = null;
+      }
+      return true;
+    }
+    s.twirl = (s.twirl ?? 5) - dt;
+    if (s.twirl <= 0 && !m.windup && up.length) {
+      s.twirl = 15;
+      addZone(world, { kind: 'circle', x: m.x, y: m.y, w: 190, warn: 1.5, damage: 150, from: m, noSprout: true });
+      m.move = { kind: 'spin', t: 0, at: world.now, warn: 1.5, dir0: m.dir || 1 };
+      callout(world, 'Cap Twirl!', 'Step away from the Queen!');
+      return true;
+    }
     s.rain -= dt;
     if (s.rain <= 0 && up.length) {
       s.rain = 10;
+      m.castAt = world.now;
       const victims = [...(nonTanks.length ? nonTanks : up)].sort(() => Math.random() - 0.5).slice(0, 3);
       for (const g of victims) {
         const surf = navOf(map).surfaces[Math.max(0, surfaceBelow(navOf(map), g.body.x, g.body.y))];
@@ -1064,13 +1196,24 @@ function bossMove(world, m, up, dt) {
       s.adds.shift();
       const healer = up.find((g) => g.role === 'healer') ?? pick(nonTanks.length ? nonTanks : up);
       adds(world, m, 'sporeling', [m.x - 90, m.x + 90, m.x - 150], healer?.id);
+      m.callAt = world.now;
       callout(world, 'Spore Mites!', 'They swarm the healer: Tank, War Cry! DPS, kill them!');
     }
     return false;
   }
   if (m.def.mech === 'boar') {
-    const s = (m.mech ??= { charge: 8, gore: 5 });
+    const s = (m.mech ??= { charge: 8, gore: 5, flop: 4 });
     boarPhases(world, m);
+    // Belly Flop: a wiggle, a jump, and down on his belly, the floor shaking round him.
+    if (m.move?.kind === 'flop') {
+      const mv = m.move;
+      const was = mv.t;
+      mv.t += dt;
+      m.state = 'idle';
+      if (was < mv.warn && mv.t >= mv.warn) world.juice.push({ type: 'shake', mag: 6, dur: 0.5 });
+      if (mv.t > mv.warn + 0.7) m.move = null;
+      return true;
+    }
     if (m.charging) {
       const c = m.charging;
       m.state = 'walk';
@@ -1118,6 +1261,14 @@ function bossMove(world, m, up, dt) {
     if (m.aim) return true;
     s.charge -= dt;
     s.gore -= dt;
+    s.flop = (s.flop ?? 4) - dt;
+    if (s.flop <= 0 && s.charge > 2.5 && !m.windup && up.length) {
+      s.flop = 17;
+      addZone(world, { kind: 'circle', x: m.x, y: m.y, w: 210, warn: 1.4, damage: 160, from: m, noSprout: true });
+      m.move = { kind: 'flop', t: 0, at: world.now, warn: 1.4 };
+      callout(world, 'Belly Flop!', 'Get clear of Tuskar!');
+      return true;
+    }
     if (s.charge <= 0 && !m.windup && up.length) {
       s.charge = 13;
       const victim = pick(nonTanks.length ? nonTanks : up);
@@ -1145,45 +1296,66 @@ function bossMove(world, m, up, dt) {
     return false;
   }
   if (m.def.mech === 'gnarl') {
-    const s = (m.mech ??= { slam: 11, thorns: 6, flip: 0, saplings: false, enraged: false });
+    // Gnarlroot says one word a day. Each of his moves comes with the next word of his sentence,
+    // crawling out over his head (render/hollow.js); when the word is done, the move lands.
+    const s = (m.mech ??= { next: 5, word: 0, turn: 0, said: [], taught: {} });
     gnarlPhases(world, m);
-    const k = s.enraged ? 0.7 : 1;
-    const pending = run.zones.some((z) => !z.hit);
-    s.slam -= dt;
-    s.thorns -= dt;
-    if (s.slam <= 0) {
-      if (pending) s.slam = 1;
-      else {
-        s.slam = 15 * k;
-        addZone(world, { kind: 'floor', x: 0, w: map.width, warn: 2.2, damage: 240, from: m });
-        callout(world, 'Root Slam!', 'Jump, or get up on a ledge!');
-        m.slamming = world.now + 2.2;
+    // (Calmed, not beaten: no blow, poison or burn takes him below a third until Yomogi is free.)
+    m.minHp = s.freed ? 0 : Math.ceil(m.def.hp * 0.3);
+    const now = world.now;
+    const say = m.saying;
+    const busy = say && now < say.at + say.dur;
+    if (!busy && !s.freed) {
+      s.next -= dt;
+      const pending = run.zones.some((z) => !z.hit);
+      if (s.next <= 0 && !pending && up.length) {
+        const kinds = s.hugs ? ['slam', 'thorns', 'hug'] : ['slam', 'thorns'];
+        const kind = kinds[s.turn++ % kinds.length];
+        const word = GNARL_WORDS[s.word++ % GNARL_WORDS.length];
+        const dur = { slam: 2.6, thorns: 2.2, hug: 3 }[kind];
+        m.saying = { kind, word, at: now, dur, prev: s.said.slice(-2) };
+        s.said.push(word);
+        s.next = s.untangle ? 7 : 5;
+        if (kind === 'slam') {
+          addZone(world, { kind: 'floor', x: 0, w: map.width, warn: dur, damage: 240, from: m });
+          m.slamming = now + dur;
+        } else if (kind === 'thorns') {
+          const n = 8;
+          const w = map.width / n;
+          for (let k = s.turn % 2; k < n; k += 2) addZone(world, { kind: 'thorns', x: k * w, w, warn: dur, damage: 170, from: m });
+        } else {
+          // The hug: his roots sweep in from both walls and meet, all but one gap.
+          const gap = 150;
+          const c = Math.max(140, Math.min(map.width - 140, m.x + (Math.random() < 0.5 ? -1 : 1) * (160 + Math.random() * 200)));
+          const [l, r] = [c - gap / 2, c + gap / 2];
+          addZone(world, { kind: 'thorns', x: 0, w: l, warn: dur, damage: 200, from: m });
+          addZone(world, { kind: 'thorns', x: r, w: map.width - r, warn: dur, damage: 200, from: m });
+          run.room.hug = { l, r, at: now, warn: dur };
+        }
+        // (The first time each comes, the group is told what his words mean.)
+        if (!s.taught[kind]) {
+          s.taught[kind] = true;
+          const [title, sub] = { slam: ['Root Slam!', 'When his word is done: jump, or get up on a ledge'], thorns: ['Thorns!', 'When his word is done, stand where the floor is safe'], hug: ['Big Hug!', 'Get to the gap before his word is done'] }[kind];
+          callout(world, title, sub);
+        }
       }
     }
-    if (s.thorns <= 0) {
-      if (pending) s.thorns = 1.5;
-      else {
-        s.thorns = 9 * k;
-        const n = 8;
-        const w = map.width / n;
-        for (let i = s.flip; i < n; i += 2) addZone(world, { kind: 'thorns', x: i * w, w, warn: 1.8, damage: 170, from: m });
-        s.flip ^= 1;
-        callout(world, 'Thorns!', 'Stand where the floor is safe');
-      }
+    // Holding on to Yomogi at the last: the Root Tendrils cut, he lets go.
+    if (s.untangle && !s.freed && s.tendrils && !run.room.adds.some((a) => a.def.id === 'sapling' && a.hp > 0)) {
+      s.freed = true;
+      m.minHp = 0;
+      m.yomogiFree = true;
+      // (His acorns roll out behind him, away from Yomogi and the group, for his farewell.)
+      m.dropX = m.x - ((m.heading ?? m.dir) < 0 ? -1 : 1) * 100;
+      m.swaying = false;
+      m.saying = null;
+      run.zones = [];
+      m.hp = 0;
+      killMob(world, m, true);
+      return true;
     }
-    if (!s.saplings && frac <= 0.75) {
-      s.saplings = true;
-      adds(world, m, 'sapling', [m.x - 400, m.x + 400], null);
-      callout(world, 'Corrupted Saplings!', 'They feed him their life: cut them down!');
-    }
-    const feeding = run.room.adds.filter((a) => a.def.fight?.mender && a.hp > 0).length;
-    m.shield = feeding > 0;
-    if (feeding) m.hp = Math.min(m.def.hp, m.hp + m.def.hp * 0.006 * feeding * dt);
-    if (!s.enraged && frac <= 0.2) {
-      s.enraged = true;
-      callout(world, 'Gnarlroot is furious!', 'Everything comes faster now');
-    }
-    return m.slamming > world.now;
+    m.shield = Boolean(s.untangle && !s.freed);
+    return Boolean(m.saying && now < m.saying.at + m.saying.dur);
   }
   return false;
 }
@@ -1205,14 +1377,14 @@ function tickZones(world, up, dt) {
     }
     if (z.t < z.warn) continue;
     z.hit = true;
-    if (z.from?.hp <= 0) continue;
+    if (z.from?.hp <= 0 || z.tele) continue;
     if (z.kind === 'lane') {
       z.from.aim = null;
       z.from.charging = { dir: z.dir, hit: new Set() };
       continue;
     }
     run.vfx.push({ kind: 'zonehit', zone: z.kind, root: z.root, x: z.x, y: z.y, w: z.w, t: 0, dur: 0.5 });
-    if (z.kind === 'circle') sporeSprout(world, z);
+    if (z.kind === 'circle' && !z.noSprout) sporeSprout(world, z);
     if (z.kind === 'floor') world.juice.push({ type: 'shake', mag: 7, dur: 0.6 });
     // (Friends online step out of these in their own games.)
     for (const g of up) if (!g.remote && inZone(world, z, g.body)) hurtMember(world, g, z.damage, z.from?.x ?? z.x, { knock: z.kind !== 'circle' });
@@ -1456,6 +1628,7 @@ export function onMobKilled(world, m) {
   if (m.spawn?.key) run.room.keys.push({ x: m.x, y: m.y, t: 0, got: false });
   if (m.def.mech === 'gnarl') {
     run.room.walls = null;
+    run.room.hug = null;
     hollowCalmed(world);
   }
   manorKilled(world, m);
@@ -1507,9 +1680,7 @@ export function roleThink(bot, world, rng) {
   const role = world.dungeon.roles[bot.id] ?? 'dps';
   // Where they stand in the fight, as a group: world/botfight.js.
   if (!dangerFor(world, bot.body)) placeInGroup(bot, world, role, navOf(world.map));
-  const heart = world.mobs.find((m) => m.heartOpen && m.hp > 0);
   if (floodComing(world)) br.goal = ledgeGoal(world, br.goal.x, 'fight');
-  else if (heart && role !== 'healer') br.goal = ledgeGoal(world, heart.x + (Math.sign(bot.body.x - heart.x) || 1) * 60, 'fight');
 }
 
 // A spot near x on the same surface as the monster m (so a pack on a short ledge is approached on

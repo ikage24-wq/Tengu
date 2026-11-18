@@ -13,7 +13,10 @@ import { ramp, foliage, lightUL, flagShapes, leanFrame, swing, pivoted, flicker,
 import { MAPS } from '../data/maps.js';
 import { drawCat } from './critters.js';
 import { drawPaintedForest, drawPaintedForestFront, drawWoodlandLife, drawMossyAmbience, mossyFireflies, leafShape, drawPaintedMeadow, drawMeadowLife, drawPaintedTownFar, drawVillageLife, washingLine, drawPaintedTownFront } from './painted.js';
-import { drawPortalGate } from './portals.js';
+import { drawPortalGate, drawPortalSwirl } from './portals.js';
+import { drawPaintedCanyon, drawCanyonLife, drawCanyonFront } from './canyon.js';
+import { drawPaintedHollowGate } from './hollowgate.js';
+import { drawPaintedHollowTrunk, drawVine, drawPaintedRootRoom, drawRootRope } from './hollowrooms.js';
 import { drawFarRoom, drawFarWhaleRoom, drawMidRoom } from './rooms.js';
 import { levelRange } from '../world/routes.js';
 import { pineArt, stoneLampArt, smallToriiArt, pagodaArt, bambooArt, reedArt, snowTuftArt, chimeArt } from './regions.js';
@@ -1250,8 +1253,9 @@ function drawSky(ctx, t, theme, width, height, time) {
   // The sun (or moon) smiles down and bobs gently.
   // (Under the ridge's great moon there is no second, smaller one in the sky; nor under the Mochi
   // Garden's harvest moon on a festival night, `noFace`: render/garden-festival.js.)
+  // (`look.faceAt`: where across the sky it hangs, for a map lit from the other side.)
   if (t.face && !t.bigMoon && !t.noFace) {
-    const sx = width * 0.8;
+    const sx = width * (t.faceAt ?? 0.8);
     const sy = 56 + Math.sin(time * 0.8) * 2;
     glow(ctx, sx, sy, 70, t.sun, 0.9);
     const blink = blinking(time, 0.2);
@@ -5081,7 +5085,7 @@ const BUILDINGS = {
 // washed toward the sky like the backdrop, so the ledge reads as passing in front of it.
 // Waterfalls pour off a ledge, and cloud pillars, the watchtower and Mossy Woods' giant trees
 // (whose branches are its ledges) hold one up, on purpose.
-const MEETS_LEDGE = new Set(['woodtree', 'gladecliff', 'waterfall', 'cloudpillar', 'watchtower']);
+const MEETS_LEDGE = new Set(['woodtree', 'gladecliff', 'waterfall', 'cloudpillar', 'watchtower', 'canyonwall', 'canyonspire', 'canyonarch', 'canyoncave', 'canyonstub', 'canyonwalllow', 'greattree', 'rootarch', 'trunkwall', 'hollowstump', 'rootwall', 'rootceiling', 'rootpillar', 'greatcap']);
 const decoSize = (kind, seed) => {
   const b = BUILDINGS[kind];
   if (b) {
@@ -5186,7 +5190,8 @@ function drawLedges(ctx, t, theme, map, cam, width, height, time) {
     if (x + p.w < -20 || x > width + 20 || y > height + 30 || y < -40) continue;
     // A ledge that's part of something already drawn (a tree's bough) shows nothing of its own.
     if (p.bare) continue;
-    if (theme === 'hollow') rootLedge(ctx, t, x, y, p.w, pi, time);
+    // (A remade Hollow room says how its ledges look, `look.islands`; the old ones are thick roots.)
+    if (theme === 'hollow' && !t.islands) rootLedge(ctx, t, x, y, p.w, pi, time);
     // A drifting ledge glides on the same clock as the physics. It's drawn at its own spot with the
     // camera shifted the other way, so its texture and edge flowers ride along with it instead of
     // sliding over it.
@@ -5287,8 +5292,19 @@ function rootLedge(ctx, t, x, y, w, pi, time) {
   }
 }
 
-function drawRopes(ctx, map, cam) {
+function drawRopes(ctx, map, cam, time = 0) {
   for (const r of map.ropes) {
+    // (Inside the great tree you climb hanging vines: `look.ropes: 'vine'`, render/hollowrooms.js.)
+    // (A rope can say its own look, `style`, over its room's.)
+    const ropeLook = r.style ?? map.look?.ropes;
+    if (ropeLook === 'vine' && !r.ladder) {
+      drawVine(ctx, r, cam, time);
+      continue;
+    }
+    if (ropeLook === 'root' && !r.ladder) {
+      drawRootRope(ctx, r, cam);
+      continue;
+    }
     if (r.ladder) {
       drawLadder(ctx, r, cam);
       continue;
@@ -5373,9 +5389,12 @@ function drawPortals(ctx, map, cam, time, nearId, routeId = null) {
     // A gateway in the region's own style, its swirl turning inside (a homestone is a small rune
     // stone instead, with its sign lower down).
     // (A `door` is a building's own door: no gateway, only its name over it.)
+    // (A `mouth` is an opening the map draws itself, a cave or a tree's door: only the swirl turns
+    // in it, `mouth` px up, and its name hangs `labelAt` px over the ground.)
     if (p.homestone) drawHomestone(ctx, x, y, time, p.x);
+    else if (p.mouth) drawPortalSwirl(ctx, map, x, y, time, p.x, p.style, p.mouth);
     else if (!p.door) drawPortalGate(ctx, map, x, y, time, p.x, p.style);
-    const top = p.homestone ? 62 : p.door ? 78 : 94;
+    const top = p.labelAt ?? (p.homestone ? 62 : p.door ? 78 : 94);
     const dest = MAPS[p.to];
     const name = p.label ?? dest?.name;
     if (name) {
@@ -5641,6 +5660,7 @@ function drawCritters(ctx, t, map, cam, width, height, time) {
   if (t.painted === 'forest' && t.forestStyle === 'mossy') drawMossyAmbience(ctx, map, cam, width, height, time);
   else if (t.painted === 'forest') drawWoodlandLife(ctx, map, cam, width, height, time);
   if (t.painted === 'meadow') drawMeadowLife(ctx, map, cam, width, height, time, groundAt);
+  if (t.painted === 'canyon') drawCanyonLife(ctx, map, cam, width, height, time, groundAt);
   // (Not in the Mochi places, the Garden, the stadium and its courses: their life is the Mochi.)
   if (t.painted === 'town' && !(map.garden || map.mochiRace || map.mochiTown)) {
     drawVillageLife(ctx, map, cam, width, height, time, groundAt);
@@ -5871,6 +5891,7 @@ export function drawSceneFront(ctx, map, cam, width, height, time) {
   const t = roomLook(map, map.look ? { ...THEMES[theme], ...map.look } : THEMES[theme]);
   if (t.painted === 'forest') drawPaintedForestFront(ctx, t, cam, width, height, time);
   if (t.painted === 'town') drawPaintedTownFront(ctx, t, cam, width, height, time);
+  if (t.painted === 'canyon') drawCanyonFront(ctx, map, cam, width, height, time);
   drawDrift(ctx, t, cam, width, height, time, 'front');
 }
 
@@ -5976,6 +5997,10 @@ export function drawSceneBack(ctx, map, cam, width, height, time, nearPortalId, 
     // A painted backdrop (painted.js) in place of the flat silhouettes, where the theme has one.
     if (t.painted === 'forest') drawPaintedForest(g, t, cam, width, height, time, layerY, air);
     else if (t.painted === 'meadow') drawPaintedMeadow(g, t, cam, width, height, time, layerY, air);
+    else if (t.painted === 'canyon') drawPaintedCanyon(g, t, cam, width, height, time, layerY, air);
+    else if (t.painted === 'hollowgate') drawPaintedHollowGate(g, t, cam, width, height, time, layerY, air);
+    else if (t.painted === 'hollowtrunk') drawPaintedHollowTrunk(g, t, cam, width, height, time, layerY, air, map);
+    else if (t.painted === 'rootroom') drawPaintedRootRoom(g, t, cam, width, height, time, layerY, air, map);
     else {
       const farY = layerY(50, 0.05);
       veil = { color: air, k: 0.5 * aerial };
@@ -5988,7 +6013,7 @@ export function drawSceneBack(ctx, map, cam, width, height, time, nearPortalId, 
       veil = null;
     }
     // (A painted backdrop lays its own haze at each plane's foot.)
-    if (t.painted !== 'forest' && t.painted !== 'meadow') drawHaze(g, t, width, map.groundY - cam.y);
+    if (t.painted !== 'forest' && t.painted !== 'meadow' && t.painted !== 'canyon' && t.painted !== 'hollowgate' && t.painted !== 'hollowtrunk' && t.painted !== 'rootroom') drawHaze(g, t, width, map.groundY - cam.y);
   };
   backdrop(ctx);
   drawDrift(ctx, t, cam, width, height, time, 'back');
@@ -6001,7 +6026,7 @@ export function drawSceneBack(ctx, map, cam, width, height, time, nearPortalId, 
   drawLedges(ctx, t, theme, map, cam, width, height, time);
   drawDeco(ctx, map, cam, width, time, 'ledges');
   drawProps(ctx, t, map, cam, width, time);
-  drawRopes(ctx, map, cam);
+  drawRopes(ctx, map, cam, time);
   drawMovers(ctx, map, cam, width, height, time);
   drawPortals(ctx, map, cam, time, nearPortalId, routePortalId);
   drawCritters(ctx, t, map, cam, width, height, time);

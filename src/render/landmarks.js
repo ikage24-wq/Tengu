@@ -7,6 +7,9 @@
 import { R, E, T, F, sprite, blit, shade, mix, snap } from './pixel.js';
 import { ramp, foliage, bark, stones, planks, crystal, lean, leanFrame, swing, pivoted, flicker, leafRim, flagShapes } from './propkit.js';
 import { windTravel } from './terrain.js';
+import { CANYON_KINDS } from './canyon.js';
+import { HOLLOWGATE_KINDS } from './hollowgate.js';
+import { HOLLOWROOM_KINDS, ROOTROOM_KINDS } from './hollowrooms.js';
 
 const INK = '#3a2d4f';
 const BLUSH = '#ff9fb8';
@@ -3334,6 +3337,13 @@ const hash01 = (n) => {
 };
 
 const KINDS = {
+  // (Windy Canyon's walls, spires, arch, the Hollow's cave mouth and the dry riverbed: render/canyon.js.)
+  ...CANYON_KINDS,
+  // (The Hollow Gate's great tree and root arch: render/hollowgate.js.)
+  ...HOLLOWGATE_KINDS,
+  // (Rootwood Hollow's rooms: the trunk's inner walls, stumps: render/hollowrooms.js.)
+  ...HOLLOWROOM_KINDS,
+  ...ROOTROOM_KINDS,
   mochicushion: {
     w: 30, h: 14,
     draw(ctx, x, y, time, seed) {
@@ -3943,8 +3953,15 @@ const KINDS = {
     w: 60, h: 120,
     draw(ctx, x, y, time, seed, wx) {
       place(ctx, windtowerArt(), x, y);
-      // The wheel spins with the wind: fast in a gust, idling when the air is still.
-      place(ctx, windwheelArt(Math.floor(windTravel(time - wx / 320) * 16 + time * 3 + seed * 3) % 6), x, y - 120 + 18 + 18);
+      // The wheel spins with the wind: fast in a gust, idling when the air is still. (One picture of
+      // it, turned smoothly, never stepped through frames.)
+      const wheel = windwheelArt(0);
+      const turn = ((windTravel(time - wx / 320) * 16 + time * 3 + seed * 3) / 6) * (Math.PI / 6);
+      ctx.save();
+      ctx.translate(x, y - 120 + 18 + 18 - wheel.h / 2);
+      ctx.rotate(turn);
+      blit(ctx, wheel, -wheel.w / 2, -wheel.h / 2, { soft: true });
+      ctx.restore();
     },
   },
   // Dusk forest gate.
@@ -3998,5 +4015,5 @@ export function drawLandmark(ctx, kind, x, y, time, seed = 0, wx = x, theme = 'm
   if (!k) return;
   waterKey = theme;
   nightNow = night;
-  k.draw(ctx, x, y + SINK, time, seed, wx);
+  k.draw(ctx, x, y + SINK, time, seed, wx, night);
 }

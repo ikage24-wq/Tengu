@@ -142,7 +142,7 @@ export function noteVisit(char, mapId, body = null) {
     if (rec.state !== 'active' || !QUESTS[id]) continue;
     QUESTS[id].objectives.forEach((o, i) => {
       // (An escort's visits are marked by the escort itself: world/escort.js.)
-      if (o.type !== 'visit' || o.map !== mapId || rec.marks?.[i] || o.escort) return;
+      if (o.type !== 'visit' || o.map !== mapId || rec.marks?.[i] || o.escort || o.manual) return;
       if (o.above != null && !(body && body.y <= o.above)) return;
       (rec.marks ??= {})[i] = true;
       out.push(id);

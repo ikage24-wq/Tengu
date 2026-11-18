@@ -78,12 +78,12 @@ export function installKits3(t) {
           const rec = c.quests[id];
           q.objectives.forEach((o, i) => {
             // (An escort's visits are ticked off by the little Mochi getting there: world/escort.js.)
-            if (o.type === 'visit' && o.escort) (rec.marks ??= {})[i] = true;
+            if (o.type === 'visit' && (o.escort || o.manual)) (rec.marks ??= {})[i] = true;
             if (o.type === 'kill') rec.kills[o.mob] = o.count;
             if (o.type === 'catch') (rec.catches ??= {})[o.fish] = o.count;
             if (o.type === 'collect') addItem(c.inventory, o.item, o.count);
             if (o.type === 'deliver') addItem(c.inventory, o.item, 1);
-            if (o.type === 'visit' && !o.escort) noteVisit(c, o.map, { y: (o.above ?? 0) - 1 });
+            if (o.type === 'visit' && !o.escort && !o.manual) noteVisit(c, o.map, { y: (o.above ?? 0) - 1 });
             if (o.type === 'talk' || o.type === 'deliver') noteTalk(c, o.npc);
           });
           c.inventory.equip = [];

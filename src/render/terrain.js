@@ -7,6 +7,8 @@
 
 import { shade, mix, gfx } from './pixel.js';
 import { surfacesOf } from '../world/physics.js';
+import { drawRockShelf } from './canyon.js';
+import { drawLimb, drawRootShelf } from './hollowrooms.js';
 
 const INK = '#3a2d4f';
 const edge = (c) => mix(shade(c, -38), INK, 0.35);
@@ -59,8 +61,9 @@ export const MATERIALS = {
   cellar: { lip: '#d8b088', body: '#8a664c', deep: '#5a3e30', stone: '#c8a47e', style: 'meadowsoil', blades: false, drip: 'root' },
   // Mossy Woods' root tunnels: damp dark loam with roots and buried stones.
   tunnel: { lip: '#8e7a60', body: '#6a5444', deep: '#46362e', stone: '#a08a70', style: 'mossloam', blades: false, drip: 'root' },
-  // Inside Rootwood Hollow: dark root-bound earth with a thin skin of moss, no grass blades.
-  rootden: { lip: '#8aa07a', body: '#7a5a48', deep: '#523a30', stone: '#a8866e', style: 'mossloam', blades: false, drip: 'root', moss: true },
+  // Rootwood Hollow's remade rooms (2026-11-18): an indoor floor of packed earth and roots, no grass or
+  // moss on its edge (the interior rule).
+  rootfloor: { lip: '#8e6c5a', body: '#5e4238', deep: '#3e2a26', stone: '#7e6a62', style: 'loam', blades: false, drip: 'root' },
   // Twilight Ruins' sunken crypt: worn violet flagstones with dark joints.
   crypt: { lip: '#b8b0dc', body: '#5e5494', deep: '#3c3670', stone: '#8c82c4', style: 'flagstone', blades: false, drip: null, joint: '#2e2858' },
   // Map-specific materials (a map's `look.material`).
@@ -2372,6 +2375,9 @@ export function drawIsland(ctx, theme, p, cam, time, pi, look = null, map = null
     }
     else if (style === 'branch') drawBranch(ctx, m, x, y, w, time, pi, look?.edges, p.root);
     else if (style === 'bridge') drawBridge(ctx, x, y, w, time, pi);
+    else if (style === 'shelf') drawRockShelf(ctx, x, y, w, time, pi, p.root, cam.x, map?.night ?? 0);
+    else if (style === 'limb') drawLimb(ctx, x, y, w, time, pi, p.root, cam.x);
+    else if (style === 'rootshelf') drawRootShelf(ctx, x, y, w, time, pi, p, cam, map);
     else if (style === 'leaf') drawLeafPad(ctx, x, y, w, time, pi);
     else if (style === 'stone') drawStone(ctx, theme, m, x, y, w, p.thick ?? 26, cam, time, pi, look?.edges);
     return;

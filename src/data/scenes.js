@@ -1002,17 +1002,42 @@ export const SIDE_SCENES = {
 
 // ---------- Rootwood Hollow ----------
 export const HOLLOW_SCENES = {
-  // Gnarlroot, calmed at last.
+  // Gnarlroot, calmed at last: Elder Yomogi's tendrils cut, he finishes his sentence (it's taken him
+  // since festival night), Yomogi goes home to the Queen's bedchamber, and the Queen, asleep, says
+  // something kind about him. (Yomogi stays there from now on: char.elders, render/prologue.js.)
   hollow_sleep: [
-    { together: [{ free: 'gnarlroot', as: 'sad' }, { cam: ['gnarlroot', 'player'], dur: 1.2 }, { walk: 'player', to: 'gnarlroot', gap: 110, speed: 70 }] },
+    { together: [{ free: 'gnarlroot', as: 'idle' }, { cam: ['gnarlroot', 'player'], dur: 1.2 }, { walk: 'player', to: 'gnarlroot', gap: 120, speed: 70 }] },
+    { cast: 'yomogi', near: 'gnarlroot', dx: 50, kind: 'mochi', seed: 41, size: 'grown', name: 'Elder Yomogi', color: '#6fa36a', genes: { dough: '#d8efc0', hairColor: 'yomogi' }, wear: { dress: 'elderrobe', hat: 'elderhat', eyes: 'monocle', face: 'fakebeard' }, idles: ['lookaround'] },
     { together: [{ face: 'player', to: 'gnarlroot' }, { face: 'gnarlroot', to: 'player' }] },
-    { who: 'gnarlroot', text: '...so... quiet now... the little ones... cheering...', mood: 'sad' },
-    { together: [{ fx: 'notes', at: 'gnarlroot', top: true }, { act: 'gnarlroot', move: 'sway', amp: 0.05, speed: 1.6, dur: 2.4 }] },
-    { who: null, text: 'The great roots sag and settle. Somewhere deep in the Hollow, a lullaby starts up: the Sprouts, humming.' },
-    { mood: 'gnarlroot', as: 'blink' },
-    { who: 'gnarlroot', text: '...thank you... sleep... at last...', mood: 'happy' },
-    { together: [{ act: 'gnarlroot', move: 'sinkaway', dur: 2.8 }, { fx: 'leaves', at: 'gnarlroot' }, { emote: 'player', kind: 'zzz', dur: 1.6 }] },
-    { who: null, text: 'Gnarlroot sinks back down among his roots, snoring. The whole Hollow snores with him.' },
+    { who: 'gnarlroot', text: '...thank...', mood: 'talk' },
+    { wait: 1.2 },
+    { who: 'gnarlroot', text: '...thank... you...', mood: 'talk' },
+    { wait: 1.4 },
+    { who: 'gnarlroot', text: '...thank... you... for...', mood: 'talk' },
+    { wait: 1.6 },
+    { who: 'gnarlroot', text: '...thank... you... for... staying.', mood: 'happy' },
+    { together: [{ jump: 'yomogi', height: 16 }, { emote: 'yomogi', kind: 'heart' }] },
+    { who: 'yomogi', text: "He did it! The whole sentence! Since festival night, that's taken him." },
+    { who: 'yomogi', text: "Nobody ever stayed for the end of one. I did. So he held on to me. Big softie." },
+    { who: 'yomogi', text: "I'd best get home. The Queen's elders are all over the island, and somebody has to be first." },
+    { together: [{ walk: 'yomogi', to: 'player', gap: 16, speed: 40 }, { fx: 'leaves', at: 'gnarlroot', top: true }] },
+    { hide: 'yomogi', dur: 0.4 },
+    { set: 'royal_bed' },
+    { cast: 'hayate', kind: 'hayate', x: 300, y: 283, seat: 'bed', crown: true, sprout: true, name: 'Hayate', color: '#5aa8c8' },
+    { cast: 'translator', kind: 'mochi', seed: 33, size: 'grown', x: 548, y: 302, facing: -1, name: 'Royal Snore Translator', color: '#b98ad8', idles: ['lookaround'], wear: { dress: 'scholarrobe', hat: 'scholarcap', eyes: 'specs', over: 'eartrumpet' } },
+    { cast: 'yomogi', x: 660, y: 302, facing: -1, kind: 'mochi', seed: 41, size: 'grown', name: 'Elder Yomogi', color: '#6fa36a', genes: { dough: '#d8efc0', hairColor: 'yomogi' }, wear: { dress: 'elderrobe', hat: 'elderhat', eyes: 'monocle', face: 'fakebeard' }, idles: ['lookaround'] },
+    { cam: 'hayate', up: 12, dur: 1.2, zoom: 1.5 },
+    { walk: 'yomogi', to: 610, speed: 30 },
+    { together: [{ emote: 'translator', kind: '!' }, { play: 'translator', as: 'wow' }] },
+    { who: 'translator', text: 'Elder Yomogi! Where have you BEEN?', mood: 'surprised' },
+    { who: 'yomogi', text: 'Listening. Somebody had a lot to say. Slowly.' },
+    { emote: 'hayate', kind: 'zzz', dur: 1.6 },
+    { who: 'hayate', text: '...mmn... good... tree...', mood: 'sleepy' },
+    { who: 'translator', text: 'Her Majesty says: "good tree".' },
+    { set: null },
+    { together: [{ cam: 'gnarlroot', up: 40, dur: 1.4 }, { fx: 'leaves', at: 'gnarlroot', top: true, n: 16 }, { act: 'gnarlroot', move: 'sway', amp: 0.05, speed: 1.4, dur: 2.6 }] },
+    { who: null, text: 'Down in the Hollow, a warm breeze finds the old tree. His leaves rustle. He smiles in his sleep.' },
+    { together: [{ act: 'gnarlroot', move: 'sinkaway', dur: 2.8 }, { emote: 'player', kind: 'zzz', dur: 1.6 }] },
   ],
   // The run's result card ({grade}, {time}, {notes}, {bonus} filled in at the chest).
   hollow_results: [
@@ -1058,23 +1083,26 @@ export const HOLLOW_BOSS_SCENES = {
     { walk: 'player', away: 'tuskar', by: 40, speed: 160 },
     { cam: 'player', dur: 0.6 },
   ],
-  // Gnarlroot, staged: the camera rises up the sleeping giant as he tosses and turns, shedding
-  // leaves; he mumbles about the wind, you promise to help him rest, and he wakes cross and slams
-  // his root arms down, shaking bark from the ceiling.
+  // Gnarlroot, staged: the camera rises up the old tree, dozing; Elder Yomogi, tangled in his roots,
+  // explains he's in the middle of a sentence; he opens his eyes and says his next word. Very slowly.
   hollow_gnarl: [
-    { together: [{ mood: 'gnarlroot', as: 'blink' }, { emote: 'gnarlroot', kind: 'zzz', dur: 6 }, { cam: 'gnarlroot', up: 50, dur: 1.6 }] },
-    { who: null, text: 'The Heart of the Hollow. A great old root, tossing and turning, as tall as a house.' },
-    { together: [{ act: 'gnarlroot', move: 'sway', dur: 2.2, amp: 0.07, speed: 4 }, { fx: 'leaves', at: 'gnarlroot', top: true }] },
-    { together: [{ mood: 'gnarlroot', as: 'sad' }, { walk: 'player', to: 'gnarlroot', gap: 130, speed: 90 }] },
-    { who: 'gnarlroot', text: 'Hrrmm... too noisy... too QUIET... the wind stopped singing... I cannot sleep...', mood: 'sad' },
-    { together: [{ cam: ['player', 'gnarlroot'], up: 20, dur: 0.9 }, { face: 'player', to: 'gnarlroot' }] },
-    { emote: 'player', kind: 'heart', dur: 1.2, hold: true },
-    { who: 'player', text: "Then we'll help you rest. Hold still, old friend!" },
-    { together: [{ mood: 'gnarlroot', as: 'angry' }, { emote: 'gnarlroot', kind: 'anger', dur: 1.6 }] },
+    { together: [{ mood: 'gnarlroot', as: 'sleep' }, { emote: 'gnarlroot', kind: 'zzz', dur: 5 }, { cam: 'gnarlroot', up: 50, dur: 1.6 }] },
+    { cast: 'yomogi', near: 'gnarlroot', dx: 50, hidden: true, kind: 'mochi', seed: 41, size: 'grown', name: 'Elder Yomogi', color: '#6fa36a', genes: { dough: '#d8efc0', hairColor: 'yomogi' }, wear: { dress: 'elderrobe', hat: 'elderhat', eyes: 'monocle', face: 'fakebeard' } },
+    { who: null, text: 'The Heart of the Hollow. The oldest tree on the island, fast asleep. Mostly.' },
+    { together: [{ walk: 'player', to: 'gnarlroot', gap: 140, speed: 90 }, { cam: ['player', 'gnarlroot'], up: 20, dur: 0.9 }] },
+    { who: 'yomogi', text: "Oh! A visitor! Don't mind me, I'm a bit stuck. He's in the middle of a sentence." },
+    { emote: 'player', kind: '?' },
+    { who: 'yomogi', text: 'He started it on festival night. He says one word a day. I like to hear how they end.' },
+    { together: [{ mood: 'gnarlroot', as: 'idle' }, { act: 'gnarlroot', move: 'sway', dur: 1.6, amp: 0.04, speed: 2 }] },
+    { wait: 0.8 },
+    { who: 'gnarlroot', text: '...', mood: 'talk' },
+    { wait: 1 },
+    { who: 'gnarlroot', text: '...hrrrm...', mood: 'talk' },
+    { who: 'yomogi', text: "Ooh, here comes the next one. Stand back. They're heavy." },
     { act: 'gnarlroot', move: 'attack', dur: 1, async: true },
     { wait: 0.3 },
     { together: [{ shake: 6, dur: 0.6 }, { fx: 'leaves', at: 'gnarlroot', top: true, n: 20 }, { fx: 'rubble', at: 'gnarlroot' }, { emote: 'player', kind: '!' }, { jump: 'player', height: 14 }] },
-    { wait: 0.6 },
+    { wait: 0.4 },
     { cam: 'player', dur: 0.7 },
   ],
 };
@@ -1100,8 +1128,8 @@ export const HOLLOW_RADIO = {
   pillar: ['HA! Right into the pillar! Hit him while he sees stars!'],
   wargs: ['He called his Wargs! Tank, catch them!'],
   stampede: ["He's stampeding! Watch both ways!"],
-  walls: ['The roots are closing in! Stay in the middle!'],
-  heart: ['His heart is open! Get up high, strike it from above!'],
+  hug: ["He's going in for a hug! When he says it, find the gap!"],
+  yomogi: ["That's Elder Yomogi in his roots! Cut the tendrils. Gently!"],
   cheer: ['Another Sprout! Hear them cheering?', 'Free! Look at it go!'],
 };
 

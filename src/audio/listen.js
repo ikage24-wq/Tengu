@@ -18,6 +18,8 @@ import { isQueen } from '../world/story.js';
 import { introLen, COUNTDOWN, CREST_AHEAD, JUMP_PHASE, FALL, ROLL_BEAT } from '../world/mochi-race.js';
 import { CART_BEAT } from '../data/mochi-race.js';
 import { SKY } from '../world/garden-weather.js';
+import { rumbleAt } from '../world/rumble.js';
+import { windAt } from '../render/terrain.js';
 
 const memo = new WeakMap();
 
@@ -502,9 +504,30 @@ function hearLake(world, R, f) {
   }
 }
 
+// Windy Canyon: at night the rumble of Gnarlroot turning over in his sleep far below (in time with
+// the pebbles hopping, render/canyon.js), and by the arch its wind chimes tinkling when a gust
+// comes through. At the Hollow Gate, right at the old tree's foot, the rumble is louder and deeper.
+function hearCanyon(world, m, cam) {
+  const map = world.map;
+  if (map.id !== 'canyon' && map.id !== 'hollow_gate') return;
+  const t = performance.now() / 1000;
+  const k = rumbleAt(t, map.night ?? 0);
+  if (k > 0.04 && !m.rumbling) sfx('canyonRumble', map.id === 'hollow_gate' ? { db: 5, rate: 0.9 } : {});
+  m.rumbling = k > 0.04;
+  const b = world.body;
+  const near = (map.chimes ?? []).find(([x, y]) => Math.abs(x - b.x) < 240 && Math.abs(y - b.y) < 300);
+  const gust = windAt(t, near?.[0] ?? 0) > 1.08;
+  if (near && gust && !m.gusting && t > (m.chimeAt ?? 0)) {
+    sfx('windChime', { pan: Math.max(-0.7, Math.min(0.7, (near[0] - (cam?.x ?? b.x - 320) - 320) / 400)) });
+    m.chimeAt = t + 5;
+  }
+  m.gusting = gust;
+}
+
 export function hearWorld(world, cam) {
   const m = memo.get(world) ?? memo.set(world, {}).get(world);
   hearFestival(world, m);
+  hearCanyon(world, m, cam);
   hearPaws(world, m);
   const char = world.char;
   const b = world.body;

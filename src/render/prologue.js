@@ -745,8 +745,14 @@ export function drawProloguePiece(ctx, map, kind, wx, extra, cam, width, time) {
       drawBedCovers(ctx, ox, oy);
       TRANSLATOR.genes ??= Object.assign(rollMochi(33), { wear: { dress: 'scholarrobe', hat: 'scholarcap', eyes: 'specs', over: 'eartrumpet' } });
       drawMochiAnim(ctx, TRANSLATOR, ox + 548, oy + 302, time);
+      // The elders who've come home: Elder Yomogi, back from the Hollow (Chapter 3).
+      if (map.elders?.yomogi) {
+        YOMOGI.genes ??= Object.assign(rollMochi(41, { dough: '#d8efc0', hairColor: 'yomogi' }), { wear: { dress: 'elderrobe', hat: 'elderhat', eyes: 'monocle', face: 'fakebeard' } });
+        drawMochiAnim(ctx, YOMOGI, ox + 610, oy + 302, time + 1.3);
+      }
     }
   }
   return true;
 }
 const TRANSLATOR = { genes: null, dir: -1, speed: 0, dist: 0, size: 'grown', runPoints: 300, easy: true, idleBits: ['lookaround'] };
+const YOMOGI = { genes: null, dir: -1, speed: 0, dist: 0, size: 'grown', runPoints: 300, easy: true, idleBits: ['lookaround'] };

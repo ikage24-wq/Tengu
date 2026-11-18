@@ -76,14 +76,18 @@ export const MOBS = {
     id: 'lambkin', name: 'Lambkin', level: 8, hp: 130, atk: 24, def: 7, acc: 21, eva: 4, exp: 56, gold: [2, 6],
     speed: 26, w: 28, h: 30, art: 'lambkin', drops: [{ id: 'curly_wool', chance: 0.45 }, { id: 'honeycomb', chance: 0.08 }, { gear: 'earring', chance: 0.01 }],
   }),
-  // Windy Canyon, on the road up to Ember Crag.
+  // Windy Canyon (both remade from scratch 2026-11-18, render/mobs/basiliskrig.js and manticorerig.js).
+  // A round mint lizard still sitting in half its eggshell, the other half worn as a hat: it waddles
+  // the whole egg along at a steady little pace, and opens its frill like a kite in a gust.
   pebblet: mob({
     id: 'pebblet', name: 'Basilisk Hatchling', level: 9, hp: 150, atk: 28, def: 9, acc: 24, eva: 3, exp: 72, gold: [2, 7],
-    speed: 36, w: 28, h: 32, art: 'pebblet', drops: [{ id: 'pebble', chance: 0.5 }, { id: 'copper_ore', chance: 0.08 }],
+    speed: 30, gait: 'steady', w: 24, h: 30, art: 'pebblet', drops: [{ id: 'pebble', chance: 0.5 }, { id: 'copper_ore', chance: 0.08 }],
   }),
+  // A chubby lion cub with a dandelion-puff mane, felt wings it can't fly with yet and a heart-tipped
+  // tail (its "stinger"): it stalks, creeping low, then trots after you, and pounces.
   scorpip: mob({
     id: 'scorpip', name: 'Manticore Cub', level: 12, hp: 250, atk: 37, def: 10, acc: 30, eva: 5, exp: 190, gold: [3, 9],
-    speed: 58, gait: 'stalk', w: 32, h: 37, art: 'scorpip', drops: [{ id: 'stinger', chance: 0.45 }, { id: 'iron_ore', chance: 0.08 }, { id: 'cargo_pants', chance: 0.01 }],
+    speed: 52, gait: 'stalk', w: 30, h: 30, art: 'scorpip', drops: [{ id: 'stinger', chance: 0.45 }, { id: 'iron_ore', chance: 0.08 }, { id: 'cargo_pants', chance: 0.01 }],
   }),
   leafling: mob({
     id: 'leafling', name: 'Dryad', level: 11, hp: 210, atk: 33, def: 8, acc: 28, eva: 4, exp: 168, gold: [3, 8],
@@ -213,17 +217,17 @@ export const MOBS = {
   rootling: mob({
     id: 'rootling', name: 'Root Imp', level: 10, hp: 300, atk: 36, def: 8, acc: 30, eva: 3, exp: 130, gold: [3, 7],
     speed: 58, gait: 'dart', w: 22, h: 30, art: 'rootling', drops: [{ id: 'oak_log', chance: 0.4 }, { id: 'hollow_acorn', chance: 0.12 }],
-    fight: { every: 1.5, reach: 28, windup: 0.35 },
+    fight: { every: 1.5, reach: 28, windup: 0.35, move: { kind: 'burrow', every: 9, first: 2.2, warn: 0.8, w: 48, mul: 1.5 } },
   }),
   sporecap: mob({
     id: 'sporecap', name: 'Myconid Shaman', level: 10, hp: 240, atk: 30, def: 5, acc: 30, eva: 2, exp: 120, gold: [3, 7],
     speed: 28, w: 22, h: 34, art: 'sporecap', drops: [{ id: 'mushcap', chance: 0.4 }, { id: 'hollow_acorn', chance: 0.08 }],
-    fight: { every: 2.2, reach: 26, windup: 0.5, range: 170 },
+    fight: { every: 2.2, reach: 26, windup: 0.5, range: 170, move: { kind: 'cloud', every: 11, first: 2.6, warn: 1.6, w: 70, mul: 1.4 } },
   }),
   thornback: mob({
     id: 'thornback', name: 'Bramble Bear', level: 12, hp: 900, atk: 52, def: 14, acc: 34, eva: 3, exp: 420, gold: [5, 13],
-    speed: 36, w: 46, h: 34, art: 'thornback', drops: [{ id: 'hollow_acorn', chance: 0.4 }, { id: 'bramble_claw', chance: 0.4 }, { id: 'silkmoss', chance: 0.08 }],
-    fight: { every: 1.8, reach: 32, windup: 0.45 },
+    speed: 36, w: 34, h: 46, art: 'thornback', drops: [{ id: 'hollow_acorn', chance: 0.4 }, { id: 'bramble_claw', chance: 0.4 }, { id: 'silkmoss', chance: 0.08 }],
+    fight: { every: 1.8, reach: 32, windup: 0.45, move: { kind: 'roll', every: 10, first: 3, warn: 0.9, dist: 200, speed: 260, mul: 1.6 } },
   }),
   sporeling: mob({
     id: 'sporeling', name: 'Spore Mite', level: 10, hp: 160, atk: 22, def: 2, acc: 28, eva: 4, exp: 40, gold: [1, 2],
@@ -231,7 +235,7 @@ export const MOBS = {
     fight: { every: 1.2, reach: 22, windup: 0.25 },
   }),
   sapling: mob({
-    id: 'sapling', name: 'Corrupted Sapling', level: 12, hp: 700, atk: 0, def: 10, acc: 0, eva: 0, exp: 160, gold: [1, 3],
+    id: 'sapling', name: 'Root Tendril', level: 12, hp: 700, atk: 0, def: 10, acc: 0, eva: 0, exp: 160, gold: [1, 3],
     speed: 0, w: 18, h: 36, art: 'sapling', drops: [],
     // Saplings don't fight: they feed their life to Gnarlroot.
     fight: { mender: true },
@@ -244,12 +248,12 @@ export const MOBS = {
   }),
   tuskar: mob({
     id: 'tuskar', name: 'Tuskar the Behemoth', level: 13, hp: 9000, atk: 94, def: 18, acc: 42, eva: 2, exp: 4500, gold: [150, 240],
-    speed: 44, w: 96, h: 72, art: 'tuskar', boss: true,
+    speed: 44, w: 72, h: 92, art: 'tuskar', boss: true,
     drops: [{ id: 'hollow_acorn', chance: 1, qty: 3 }, { id: 'white_potion', chance: 1, qty: 10 }],
     fight: { every: 2, reach: 56, windup: 0.5 }, mech: 'boar',
   }),
   gnarlroot: mob({
-    id: 'gnarlroot', name: 'Gnarlroot, the Hollow Heart', level: 14, hp: 16000, atk: 98, def: 20, acc: 44, eva: 2, exp: 9000, gold: [240, 360],
+    id: 'gnarlroot', name: 'Gnarlroot, the Oldest Tree', level: 14, hp: 16000, atk: 98, def: 20, acc: 44, eva: 2, exp: 9000, gold: [240, 360],
     speed: 16, w: 100, h: 150, art: 'gnarlroot', boss: true,
     drops: [{ id: 'hollow_acorn', chance: 1, qty: 5 }],
     fight: { every: 2, reach: 74, windup: 0.55 }, mech: 'gnarl',

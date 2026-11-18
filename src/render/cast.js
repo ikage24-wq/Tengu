@@ -114,6 +114,7 @@ export function drawCast(ctx, world, cam, time) {
       } else if (a.kind === 'crown') drawCrown(ctx, x, y, a.tilt ?? 0);
       else if (a.kind === 'hero') drawYou(ctx, world, a, x, y, time, c.flags);
       else if (a.kind === 'gust') drawGust(ctx, x, y, time);
+      else if (a.kind === 'cake') drawCake(ctx, x, y, a.tilt ?? 0);
       else if (a.kind === 'beard') drawBeard(ctx, x, y, a.tilt ?? 0);
     });
   };
@@ -144,6 +145,40 @@ function drawYou(ctx, world, a, x, y, time, flags = {}) {
   drawHero(ctx, look, wornGear(world.char), 0, -1, { pose: 'idle', time, seed: 1, scale: 1, job: world.char.job, facing: a.facing ?? 1 });
   ctx.restore();
   drawBoatFront(ctx, x, y + bob, rock, time);
+}
+
+// A slice of strawberry shortcake on a little white plate (the Queen's cake).
+function drawCake(ctx, x, y, tilt) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(tilt);
+  const ell = (cx, cy, rx, ry, c) => {
+    ctx.fillStyle = c;
+    ctx.beginPath();
+    ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2);
+    ctx.fill();
+  };
+  ell(0, 0, 9, 2.4, '#e8e4f0');
+  ell(0, -0.6, 8, 1.8, '#ffffff');
+  ctx.fillStyle = '#5a4a6a';
+  ctx.beginPath();
+  ctx.moveTo(-6, -1.5);
+  ctx.lineTo(6, -1.5);
+  ctx.lineTo(4, -9.6);
+  ctx.lineTo(-6, -9.6);
+  ctx.closePath();
+  ctx.fill();
+  for (const [y0, h, c] of [[-2, 2.2, '#f2d29a'], [-4.2, 1.2, '#ffffff'], [-5.4, 2, '#f2d29a'], [-7.4, 1.2, '#ffffff']]) {
+    ctx.fillStyle = c;
+    ctx.fillRect(-5.4, y0 - h + 0.4, 10.2, h);
+  }
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(-5.6, -9.4, 10.6, 1.6);
+  ell(-0.4, -11.2, 2.4, 2.2, '#ff5a6e');
+  ell(-1.2, -11.9, 0.7, 0.5, '#ffd0d8');
+  ctx.fillStyle = '#7fcf9a';
+  ctx.fillRect(-0.8, -13.8, 0.8, 1.4);
+  ctx.restore();
 }
 
 // The gust that went looking for someone: a little swirl of wind and sparkles.

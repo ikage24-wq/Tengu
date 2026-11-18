@@ -112,7 +112,7 @@ const TEMPLATES = {
   story: [
     'just beat {queen}\'s trial!!', '{queen} is so pretty tho', 'is Hayate waking up soon?', 'cried a little at the {queen} cutscene ngl', 'Mira is the best {emote}', 'wait the wind STOPPED?? thats the plot??',
   ],
-  dungeon: ['anyone run {dungeon} with me?', 'the Hollow Heart is so cute when its asleep', 'hard mode {dungeon} anyone?', 'the boar den room {laugh}', 'cleared {dungeon} in {small} min B)'],
+  dungeon: ['anyone run {dungeon} with me?', 'the old tree in the hollow talks SO slow lol', 'hard mode {dungeon} anyone?', 'the boar den room {laugh}', 'cleared {dungeon} in {small} min B)'],
   smalltalk: [
     '{hi} everyone {emote}', '{here} is so pretty today', 'love the music in {here}', 'who else just idles in {here}', 'snack break brb', 'who else is up late {laugh}',
     'anyone else love {npc}?', 'i just want a pet {mobhere} tbh', 'ok who keeps dancing {laugh}', 'brb gonna get water',

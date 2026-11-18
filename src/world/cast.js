@@ -104,6 +104,12 @@ function addCast(world, step) {
   world.map.castOn = true;
   c.cast = c.cast.filter((a) => a.id !== step.cast);
   const kind = step.kind ?? 'mochi';
+  // (`near: 'gnarlroot', dx`: beside a monster on the map, on the side it faces: Elder Yomogi in
+  // Gnarlroot's roots.)
+  if (step.near) {
+    const m = world.mobs.find((q) => q.def.id === step.near);
+    if (m) step = { ...step, x: m.x + ((m.heading ?? m.dir) < 0 ? -1 : 1) * (step.dx ?? 0), y: m.y };
+  }
   const a = {
     // (`x: 'escort'`: where the little Mochi you've brought home is standing: world/escort.js.)
     id: step.cast, kind, x: step.x === 'escort' ? world.escort?.x ?? 320 : step.x ?? 320, y: step.y === 'escort' ? world.escort?.y ?? world.map.groundY : step.y ?? world.map.groundY ?? 344, facing: step.facing ?? 1,

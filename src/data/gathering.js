@@ -134,12 +134,11 @@ export const NODES = {
     { ...SPOT.fiber(1), x: 420, y: 480 },
     { ...SPOT.wood(1), x: 1410, y: 480 },
   ],
-  // The Hollow Gate: a maple by the great tree, silk moss on the mound, chanterelles and (at
-  // night) duskcaps on the ledge above.
+  // The Hollow Gate (remade 2026-11-18): silk moss on the open ground between Bramble's house and his
+  // post, chanterelles and (at night) duskcaps on the top of the root arch, well apart.
   hollow_gate: [
-    { ...SPOT.wood(2), x: 200, y: 380 },
-    { ...SPOT.fiber(2), x: 430, y: 340 },
-    { ...SPOT.herb(2, 'chanterelle'), x: 430, y: 260 },
+    { ...SPOT.fiber(2), x: 805, y: 380 },
+    { ...SPOT.herb(2, 'chanterelle'), x: 432, y: 260 },
     { ...SPOT.night(2), x: 530, y: 260 },
   ],
   // The Crystal Throne: a mithril vein in each side ledge, out of the fight's way.

@@ -12,6 +12,143 @@ import { groupOf } from '../world/dungeon.js';
 
 const TAU = Math.PI * 2;
 
+// One of Gnarlroot's root arms reaching along the floor from a wall (`root`, world x) toward the gap
+// edge `to`, `u` of the way there: thick and gnarled, a leaf here and there along its top, a curl of
+// twig fingers at its tip.
+function hugArm(ctx, root, to, u, gy, cam, time) {
+  const tip = root + (to - root) * u;
+  const len = Math.abs(tip - root);
+  if (len < 4) return;
+  const d = Math.sign(to - root);
+  const n = Math.max(4, Math.ceil(len / 14));
+  const top = [];
+  for (let k = 0; k <= n; k++) {
+    const q = k / n;
+    const wx = root + d * len * q;
+    top.push([wx - cam.x, gy - (48 - 18 * q) + Math.sin(wx * 0.05 + time * 2.2) * 3 * (1 - q * 0.5)]);
+  }
+  ctx.save();
+  ctx.lineJoin = 'round';
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(root - cam.x, gy + 8);
+  for (const [x, y] of top) ctx.lineTo(x, y);
+  const [tx, ty] = top[top.length - 1];
+  ctx.quadraticCurveTo(tx + d * 14, ty + 8, tx + d * 6, gy + 8);
+  ctx.closePath();
+  ctx.fillStyle = '#a8785a';
+  ctx.fill();
+  ctx.strokeStyle = '#3a2622';
+  ctx.lineWidth = 2.4;
+  ctx.stroke();
+  // The shade underneath and a light along the top.
+  ctx.fillStyle = 'rgba(70,40,40,0.35)';
+  ctx.fillRect(Math.min(root, tip) - cam.x, gy - 8, len, 16);
+  ctx.strokeStyle = '#d8a882';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  top.forEach(([x, y], k) => (k ? ctx.lineTo(x, y + 5) : ctx.moveTo(x, y + 5)));
+  ctx.stroke();
+  // Twig fingers curling up at the tip.
+  for (const [a, l] of [[-60, 14], [-30, 16], [0, 12]]) {
+    const r = (a * Math.PI) / 180;
+    const fx = tx + d * Math.cos(r) * l;
+    const fy = ty + 4 + Math.sin(r) * l;
+    for (const [c, w] of [['#3a2622', 5], ['#a8785a', 3]]) {
+      ctx.strokeStyle = c;
+      ctx.lineWidth = w;
+      ctx.beginPath();
+      ctx.moveTo(tx, ty + 6);
+      ctx.quadraticCurveTo(tx + d * l * 0.7, ty + 4, fx, fy);
+      ctx.stroke();
+    }
+  }
+  // Leaves along its top.
+  for (let k = 1; k < top.length - 1; k += 2) {
+    const [x, y] = top[k];
+    ctx.fillStyle = k % 4 === 1 ? '#7fc46a' : '#a2d878';
+    ctx.strokeStyle = '#2e4a2a';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.ellipse(x, y - 2, 5, 2.6, -0.5 * d, 0, TAU);
+    ctx.fill();
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+// Gnarlroot's words, in a speech bubble out in front of his mouth (mx, my): the last two faint, the
+// current one crawling out a letter at a time over its whole wind-up (each letter popping in), then
+// flashing as the move lands.
+function drawWords(ctx, say, now, mx, my, side, by) {
+  const since = now - say.at;
+  const after = since - say.dur;
+  if (after > 1.2) return;
+  const u = Math.max(0, Math.min(1, since / say.dur));
+  const shown = Math.ceil(say.word.length * u);
+  const font = (px) => `900 ${px}px Nunito, "Trebuchet MS", system-ui, sans-serif`;
+  ctx.save();
+  ctx.textBaseline = 'middle';
+  ctx.lineJoin = 'round';
+  ctx.globalAlpha = after > 0 ? 1 - Math.max(0, (after - 0.6) / 0.6) : 1;
+  // The words before it, small and faded, to the left.
+  ctx.font = font(9);
+  const prev = (say.prev ?? []).slice(-1).map((w) => `${w}...`).join(' ');
+  ctx.font = font(18);
+  const letterW = say.word.split('').map((ch) => ctx.measureText(ch).width);
+  const full = letterW.reduce((a, b) => a + b, 0) + ctx.measureText('...').width;
+  ctx.font = font(11);
+  const pw = prev ? ctx.measureText(`${prev} `).width : 0;
+  // The bubble: round, white, its tail pointing back at his mouth.
+  // (Up beside his crown, clear of the group's own chat bubbles, its tail down to his mouth.)
+  const bw = pw + full + 18;
+  const bh = 28;
+  const x = mx + side * (bw / 2 + 26);
+  const y = by;
+  ctx.fillStyle = '#ffffff';
+  ctx.strokeStyle = '#2e1c26';
+  ctx.lineWidth = 2;
+  const [t1, t2] = [x - side * (bw / 2 - 12), x - side * (bw / 2 - 24)];
+  ctx.beginPath();
+  ctx.roundRect(x - bw / 2, y - bh / 2, bw, bh, 11);
+  ctx.moveTo(t1, y + bh / 2 - 2);
+  ctx.lineTo(mx + side * 2, my - 2);
+  ctx.lineTo(t2, y + bh / 2 - 2);
+  ctx.fill();
+  ctx.stroke();
+  // (The bubble's own edge hidden where the tail joins it.)
+  ctx.fillRect(Math.min(t1, t2) + 1, y + bh / 2 - 4, 10, 4);
+  let cx = x - (pw + full) / 2;
+  if (prev) {
+    ctx.fillStyle = 'rgba(90,60,80,0.55)';
+    ctx.fillText(prev, cx, y + 1);
+    cx += pw;
+  }
+  ctx.font = font(18);
+  const lit = after > 0 ? (Math.floor(after * 10) % 2 ? '#e8683a' : '#5a2a40') : '#5a2a40';
+  for (let k = 0; k < say.word.length; k++) {
+    if (k >= shown) break;
+    // (Each letter pops in, a little bounce, as it comes.)
+    const when = (k / say.word.length) * say.dur;
+    const pop = Math.min(1, (since - when) / 0.18);
+    const s = 0.6 + 0.4 * pop + Math.sin(pop * Math.PI) * 0.15;
+    const ly = y + Math.sin(now * 3 + k) * 0.8 - (after > 0 ? Math.sin(Math.min(1, after / 0.3) * Math.PI) * 3 : 0);
+    ctx.save();
+    ctx.translate(cx + letterW[k] / 2, ly);
+    ctx.scale(s, s);
+    ctx.fillStyle = lit;
+    ctx.fillText(say.word[k], -letterW[k] / 2, 0);
+    ctx.restore();
+    cx += letterW[k];
+  }
+  // The trailing dots, while he's still getting there.
+  if (after <= 0) {
+    ctx.fillStyle = 'rgba(90,60,80,0.7)';
+    ctx.fillText('...'.slice(0, 1 + (Math.floor(now * 3) % 3)), cx, y);
+  }
+  ctx.restore();
+}
+
 function glow(ctx, x, y, r, color, alpha) {
   ctx.save();
   ctx.globalAlpha = Math.max(0, Math.min(1, alpha));
@@ -185,27 +322,23 @@ export function drawHollowFront(ctx, world, cam, time) {
       ctx.restore();
     }
   }
-  // Gnarlroot's open heart, glowing above him.
-  const heart = world.mobs.find((m) => m.heartOpen && m.hp > 0);
-  if (heart) {
-    const x = heart.x - cam.x;
-    const y = heart.y - heart.def.h - 30 - cam.y;
-    const beat = 1 + 0.12 * Math.max(0, Math.sin(time * 6));
-    glow(ctx, x, y, 46 * beat, '#ff9ec0', 0.6);
-    ctx.save();
-    ctx.translate(x, y);
-    ctx.scale(beat, beat);
-    ctx.fillStyle = '#ff6f9e';
-    ctx.beginPath();
-    ctx.moveTo(0, 10);
-    ctx.bezierCurveTo(-16, -2, -10, -16, 0, -6);
-    ctx.bezierCurveTo(10, -16, 16, -2, 0, 10);
-    ctx.fill();
-    ctx.fillStyle = 'rgba(255,255,255,0.7)';
-    ctx.beginPath();
-    ctx.ellipse(-5, -5, 3, 2, -0.5, 0, TAU);
-    ctx.fill();
-    ctx.restore();
+  // Gnarlroot's hug: his roots sweeping in along the floor from both walls, all but the gap.
+  const hug = room.hug;
+  if (hug) {
+    const since = world.now - hug.at;
+    const ease = (v) => v * v * (3 - 2 * v);
+    const u = since < hug.warn ? ease(since / hug.warn) : since < hug.warn + 0.4 ? 1 : 1 - ease(Math.min(1, (since - hug.warn - 0.4) / 0.7));
+    if (u > 0.01) {
+      hugArm(ctx, 0, hug.l, u, gy, cam, time);
+      hugArm(ctx, map.width, hug.r, u, gy, cam, time);
+    }
+  }
+  // His sentence, one slow word at a time over his head.
+  const tree = world.mobs.find((m) => m.def.mech === 'gnarl' && m.hp > 0 && m.saying);
+  if (tree) {
+    // (In a bubble out in front of his mouth, below where the damage numbers fly.)
+    const side = (tree.heading ?? tree.dir) < 0 ? -1 : 1;
+    drawWords(ctx, tree.saying, world.now, tree.x - cam.x + side * 8, tree.y - cam.y - 38, side, tree.y - cam.y - 112);
   }
   // The Sprouts you've freed, cheering along behind you; once the Heart is calm, dancing round
   // you with little hearts.

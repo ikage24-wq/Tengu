@@ -33,6 +33,9 @@ SOUNDS = {
     'musicBoxA': ('Sonic Bat - Music Boxes/SBmb_Music Box A 013.wav', 0, 2.84, 'aecho=0.7:0.6:180|340:0.3|0.18', -8),
     'musicBoxB': ('Sonic Bat - Music Boxes/SBmb_Music Box B 028.wav', 0, 2.64, 'aecho=0.7:0.6:180|340:0.3|0.18', -8),
     'musicBoxC': ('Sonic Bat - Music Boxes/SBmb_Music Box C 059.wav', 0, 2.72, 'aecho=0.7:0.6:180|340:0.3|0.18', -8),
+    # Windy Canyon at night (Chapter 3): Gnarlroot turning over in his sleep far below - a deep
+    # creak of old wood and a rumble, heard through the rock (low-passed, a little echo).
+    'canyonRumble': ('Bluezone - Forest Creature Sound Effects/Bluezone_BC0269_creature_wood_texture_crack_heavy_rumble_006.wav', 0, 2.9, 'lowpass=f=700,aecho=0.7:0.5:90:0.25', -6),
 }
 
 

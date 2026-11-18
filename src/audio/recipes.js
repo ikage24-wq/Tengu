@@ -713,6 +713,8 @@ Object.assign(R, {
   twinkle: { db: -18, max: 1, gap: 200, layers: [sparkle('C7:60 E7:60 G7:200')] },
   fireworkFar: { db: -24, max: 1, gap: 200, layers: [whoosh(300, 500, 400, { focus: 0.3 })] },
   alarmFaint: { db: -27, max: 1, gap: 200, room: true, layers: [whoosh(300, 500, 400, { focus: 0.3 })] },
+  // (Windy Canyon at night, audio/listen.js: Gnarlroot turning over in his sleep far below.)
+  canyonRumble: { db: -19, max: 1, gap: 2000, layers: [whoosh(300, 500, 400, { focus: 0.3 })] },
   musicBoxA: { db: -17, max: 1, gap: 200, room: true, layers: [sparkle('C7:60 E7:60 G7:200')] },
   musicBoxB: { db: -17, max: 1, gap: 200, room: true, layers: [sparkle('C7:60 E7:60 G7:200')] },
   musicBoxC: { db: -17, max: 1, gap: 200, room: true, layers: [sparkle('C7:60 E7:60 G7:200')] },

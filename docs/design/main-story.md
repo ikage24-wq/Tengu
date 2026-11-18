@@ -1,177 +1,215 @@
-# The main story, levels 1 to 50
+# The main story, levels 1 to 50: "Five More Minutes"
 
-The plan for Tengu's main story, written 2026-11-05 after the player asked for a story that runs
-the whole way from 1 to 50, is decently built, and makes reaching 50 take time and mean something.
-The player picked: ten chapters, a big twist at the middle (level 30), and every dungeon tied into
-the plot. This file is the plan; build it chapter by chapter, checking in with the player between
-chapters (samples first, then the build), and tick the checklist at the bottom.
+The story was reworked from 2026-11-17 at the player's call (the first plan, from 2026-11-05, is in
+the git history). This file is the plan: the prologue and Chapter 1 are built; Chapters 2 to 10 are
+planned here for the player to approve, then built chapter by chapter, checking in between (pictures
+and a video of each chapter before the next).
 
-Everything follows the game's writing rules (CLAUDE.md): funny, goofy and satirical, every joke
-coming from the character who makes it, and one sincere beat under the jokes at each ending.
+Tone (the player's words): very goofy, funny, sometimes a little tearful. Lines stay short, simple and
+goofy (2026-11-18: "keep it simple and funny goofy"); every joke comes from the character who makes
+it, and one sincere beat sits under the jokes at each ending.
 
 ## The idea in one line
 
-**Everyone on the island ended up alone in the dark, one after another, and you are the one who
-showed up.** Mira says it in chapter 1 ("You're not the chosen one, dear, you're the one who showed
-up. Around here that counts for a lot"), and the whole story proves her right: every queen, every
-dungeon ruler and finally the villain turns out to be someone nobody came to see.
+**The Queen of the Mochi is an overworked girl from the human world who fell asleep at her desk and
+woke up crowned on Windbag Island, and she has been asleep ever since.** She is unimaginably strong,
+hopelessly lazy and quietly, enormously caring. On festival night her wind blew every Mochi away, and
+you, the one person it fetched from far over the sea, bring them home one by one.
 
-## What really happened (the hidden truth, revealed a piece at a time)
+## The Queen
 
-The player never sees this list in one place; it comes out as clues, chapter by chapter.
+- **Hayate.** Cloud-white hair, droopy eyes, her gown and crystal crown, the gold sprout of the Mochi.
+  In the human world she worked nineteen-hour days, talked to her cactus (Mr. Prickles) and kept a
+  secret shelf of anime figures. She thinks the island is a lovely dream, so why get up?
+- **Strong:** her power is the Mochi's love for her; the whole island adores her. **Lazy:** she wakes
+  for exactly one second when it matters, fixes it with one lazy flick, and goes back to sleep.
+  **Caring:** she mumbles everyone's names in her sleep, and the strange kindnesses that happen
+  around the island (a warm breeze, a blanket of cloud, a dropped snack) are hers.
+- **The Royal Snore Translator** (a scholarly Mochi with an ear trumpet, the only one who got stuck in
+  the curtains instead of blowing away) announces what she "says" in her sleep, and gets it wrong
+  every time. She mostly wants cake.
 
-1. **The Night the Sky Stood Still.** Every summer the island holds the Falling Star Festival. This
-   year, on festival night, Astraea the Star Keeper saw the brightest star she had ever seen
-   falling, and she could not bear to lose it. She stopped the whole sky to save it.
-2. **The star was Hayate's light.** It wasn't falling. It was being *pulled down*, into the Crystal
-   Cave.
-3. **Prismaris was scared of the dark.** Down in the cave, the Crystal King has always been afraid
-   of the dark. Hayate used to sing him to sleep every night on the wind. That night the sky froze,
-   the night got stuck, and the lullaby never came. Terrified, he drank the nearest light he could
-   reach: Hayate's.
-4. **Without her light, Hayate fell asleep, and the wind stopped.** Without the wind, the
-   island's spirits grew lonely and sour: the trees can't whisper, the tides can't turn, prayers
-   don't reach the shrine, the warmth doesn't spread, and the songs don't carry.
-5. **So everybody coped badly, in their own way.** A party that never ends, a toy queen wound too
-   tight, a queen who stole all the warmth for her roses, a playwright writing everyone into his
-   play. Each is a lonely person making it everyone else's problem.
+## What really happened (revealed a piece at a time)
 
-Nobody in the story is evil. That's the satire's punchline: the RPG says "find the villain", and
-the villain is a frightened crystal who wants a nightlight.
+1. **The crowning.** She fell asleep in the human world and woke in the Mochi's sacred bed, which by
+   the oldest law nobody may sleep in; the Mochi crowned her on the spot (the prologue).
+2. **Festival night.** Weeks later, on the night of the Falling Star Festival, a "star" fell with a
+   faint ring under it, and she cried in her sleep ("don't make me go back"). Her wind burst out and
+   every Mochi on the island blew away.
+3. **It wasn't an accident (the midpoint twist, Chapter 7).** Half asleep, she felt how many people
+   on the island were alone, remembered being alone herself, and sent a Mochi to keep each of them
+   company: every lonely ruler got an elder. Then she sent one gust far out to sea to fetch someone
+   who would go and visit them all: you.
+4. **The star was her alarm clock (Chapters 8 to 10).** It fell through from the human world and
+   landed in the Crystal Cave, where Prismaris, who is scared of the dark, keeps it as a nightlight.
+   It rings a little louder every day, calling her back to Monday morning.
+5. **The finale (level 50).** She has to really wake up and choose to stay, because now she has
+   friends here. She ends the Alarm with one lazy flick, says "...thanks for showing up," and goes
+   back to sleep, happy this time.
 
-## The clue trail (what each chapter reveals)
+Nobody is evil. Every ruler is someone lonely who was finally visited by a Mochi, and holds on too
+tight. Every boss fight is about getting them to let go.
 
-| Ch | Clue the player learns |
-|---|---|
-| 1 | The wind stopped a few weeks ago. The spirits are sour. Hayate is asleep. |
-| 2 | Everything went sour on the same night: the Falling Star Festival. |
-| 3 | Gnarlroot's lullaby stopped that night (the wind sang it). |
-| 4 | Lady Marigold's clocks all stopped at the same minute that night: midnight, festival night. |
-| 5 | The tides stopped turning that night too. Sylvana: "the wind stopped". |
-| 6 | Tamamo: "something is pulling the island's warmth downhill". The Carnival only appears at night, every night, as if the night never ended. |
-| 7 | **Midpoint twist (level 30-31):** Astraea froze the sky to save a falling star; the stars' records show it wasn't falling, it was being pulled *down*, into the Crystal Cave. It was Hayate's light. |
-| 8 | Lilith took the warmth because the light went; Queen Bonbon stirs the volcano to make up for it. Who is drinking the light? |
-| 9 | The Phantom Playwright has been writing the island's story and can't write its villain: "I tried. Everyone in this story is just scared." |
-| 10 | Selene names Prismaris. The Sky Whale carries you home. Prismaris asks for a nightlight. Hayate wakes. |
+## Threads that run through every chapter
 
-## Running jokes (the satire, from the characters)
+- **The palace fills up.** Every Mochi elder you bring home moves into the Queen's Bedchamber, on a
+  cushion along the wall. By the finale the room is full of elders, every one in an obvious fake beard.
+- **"Is the Queen awake?"** Someone asks in every chapter, and gets a new kind of no.
+- **The Snore Translator's translations**, and the cake: you owe her one (Chapter 1), then another,
+  then a bigger one.
+- **Her sleepy miracle:** each chapter ends with one small kindness from her, shown back in the palace
+  (she mumbles the ruler's name).
+- **Human-world relics:** the Mochi keep a little shrine to the things that came with her in her
+  hoodie pocket: "the Sacred Glowing Rectangle" (her phone, 1%) and a convenience-store onigiri
+  wrapper.
+- **The alarm:** a faint ring under the story, a little louder each chapter, until Chapter 10.
 
-- **"Let me guess, you're lonely."** Every queen has a sad backstory. By the second one the hero
-  starts guessing it, Lilith blames the fox for spoiling it, Selene refuses to give a tragic
-  speech, and by the end the dungeon rulers *know* about the guessing and try to pre-empt it. The
-  payoff: the hero's guess is right every time, because the whole story is about loneliness.
-- **Mira's tutorial tips.** She can't stop telling you the map is on M. In the finale she gives her
-  last real tip ("Most scary things are only scary in the dark").
-- **Quest-giver habits** from each character: Pip and her loyalty card (ten stamps by level 50
-  gets you the "something" at last), Rook's tea that keeps jumping out of the cup, Bramble's
-  party-role rules, Vex's professional pride as a thief, Nim's cue cards and apologies, Elowen's
-  drama and her rivalry with Mira over biscuits.
-- **The Phantom Playwright** (chapter 9) is the story's meta joke: he has been writing the main
-  story as a play, complains about its tropes ("A lonely queen EVERY chapter? Who wrote this?"),
-  and his script is how the hero learns the villain isn't one.
+## The Mochi elders (one per dungeon, each kept by its ruler)
 
-## The ten chapters
+| Ch | Dungeon | Ruler | Elder | Why the ruler held on |
+|---|---|---|---|---|
+| 3 | Rootwood Hollow | Gnarlroot | Elder Yomogi | He says one word a day; Yomogi was the only one who waited for the end of his sentences |
+| 4 | Moonlit Manor | Lady Marigold | Elder Sakura | Her party a hundred years ago had no guests until Sakura got lost there |
+| 5 | Sunken Aquarium | Queen Coralie | Elder Warabi | She keeps everything she loves in glass tanks so nothing can leave |
+| 6 | Clockwork Carnival | Queen Gearheart | Elder Kuri | A wind-up toy who must perform while anyone watches; Kuri never stopped watching |
+| 7 | Star Observatory | Astraea | Elder Goma | A thousand years counting stars alone |
+| 8 | Candy Volcano | Queen Bonbon | Elder Ichigo | She bakes a bigger cake every day hoping someone will share it |
+| 9 | Dream Theatre | the Phantom Playwright | Elder Zunda | He has been writing the Queen's dream as a play, with one fan in the audience |
+| 10 | Sky Whale's Back | the Sky Whale | Elder Ohagi | Everyone is scared of something so big; Ohagi rides on her back |
+| 10 | Crystal Cave | Prismaris | Elder Shiratama, the eldest | Scared of the dark; the oldest Mochi sat with him by the clock's light |
 
-Levels are the quest's minimum level. "New" marks quests to write; the rest exist and get
-re-placed or touched up. Each dungeon chapter has a story quest to go in (the dungeon's gate keeper
-sends you) and a scene back with the main cast after, which carries that chapter's clue.
+## The chapters
 
-### Chapter 1: A New Breeze (1-5)
-Sprout Village, Petal Meadow. Mira meets you; the windmill doesn't turn.
-- 1 Welcome to Sprout (Mira): meet Pip and Kestrel. *Exists.*
-- 3 The Wind Has Stopped (Mira): calm 10 Moss Tortoises; Hayate is explained. *Exists.*
-- Sincere beat: "You're the one who showed up."
+Levels are the quest's minimum. "Kept" quests stay, with their words rewritten for the new story;
+"new" ones are to write. **Boss and area changes are marked; the player approves them before
+building** (most bosses and dungeons were placeholders and may be reworked fully).
+
+### Prologue: Five More Minutes (built 2026-11-18)
+Her flat at 2 a.m.; the crowning; festival night; the gust that fetches you. Plays once for a new hero.
+
+### Chapter 1: A New Breeze (1-5, built 2026-11-18)
+Dawnlight Isle wake-up (Kuro); Mira, the Mochi gone and the Queen asleep; snails; The Mochi Left Behind
+(the baby Mochi you coax home); your job; Say Hello to the Queen ("you owe her a cake").
 
 ### Chapter 2: Sour Hills (5-10)
-Clover Hills. The first clue: the same night.
-- 6 Grumbling Hills (Mira): Goblins stealing left socks. *Exists.*
-- 8 **New: The Last Festival** (Mira): the festival lanterns are still up from the Falling Star
-  Festival, and nobody has taken them down because "it doesn't feel finished". Collect festival
-  ribbons from Jackalopes; Mira realises everything went sour *that* night. Gag: Mira's festival
-  stall sold 300 commemorative mugs, all still in her cupboard.
-- 10 A Path of Your Own (Mira): pick your job. *Exists.* Ends with the earring that catches a wind
-  that isn't there. **Moved to level 5 and to chapter 1 (2026-11-05: first jobs at 5)**, straight
-  after the tortoises; the goblins and the festival follow as your first outings in your new job.
+Clover Hills. The festival's leftovers.
+- 6 Grumbling Hills (Mira, kept): goblins stealing left socks.
+- 7 **New: A Cake for the Queen** (the Snore Translator): you owe her a cake. Bake one at the town
+  stove (the cooking you already have) and bring it up. She eats it in her sleep, in one bite, without
+  opening her eyes. Translation: "Her Majesty says... more."
+- 8 The Last Festival (Mira, kept): the lanterns are still up because "it doesn't feel finished".
+  Clue: everything went sour on festival night; Mira remembers a star that went *ding*.
+- Ending: Rook's tea keeps jumping out of the cup: the ground rumbles under Windy Canyon at night.
+- Areas: none. Bosses: none.
 
 ### Chapter 3: Roots Run Deep (10-15)
 Windy Canyon, Rootwood Hollow (dungeon 10).
-- 10 Rumbles Underfoot (Rook to Bramble). *Exists.*
-- 12 Heart of the Hollow (Bramble): the dungeon, calm Gnarlroot. *Exists.*
-- 13 **New: What the Root Remembers** (Bramble, then Elowen): Gnarlroot talks in his sleep about
-  the night the lullaby stopped, "when the stars stood still". Bramble writes it down on his
-  rules scroll, under "Rule 41: listen to roots". Leads to Elowen.
+- 10 Rumbles Underfoot (Rook to Bramble, kept), 12 Heart of the Hollow (Bramble, kept, the dungeon).
+- **Boss rework: Gnarlroot, the oldest tree.** He talks one word a day, so nobody stays to hear him
+  out, except Elder Yomogi. Since festival night he has held Yomogi in his roots so it can't leave, and
+  he tosses in his sleep (the rumbles). The fight: every attack is telegraphed by the next word of his
+  sentence appearing very, very slowly over his head (a readable, goofy warning); roots close in from
+  both sides in a big hug (get to the gap); then untangle Yomogi by cutting the tendrils while he sways.
+- Ending: his sentence finishes: "...thank... you... for... staying." (Mira, later: "It took him
+  three days.") Yomogi goes home to the palace. Miracle: a warm breeze stirs his leaves; the Queen
+  mumbles "...good tree...".
 
 ### Chapter 4: The Party That Never Ends (15-20)
 Mossy Woods, Manor Hill, Moonlit Manor (dungeon 15).
-- 15 **New: An Invitation** (Elowen, then Mr. Pumpkins): an invitation to Lady Marigold's party
-  arrives for Elowen, dated a hundred years ago and also last month. Elowen refuses to go ("I do
-  not do parties, I do *entrances*") and sends you.
-- 16 **New: The Last Waltz** (Mr. Pumpkins): clear Moonlit Manor and set Marigold free.
-- 17 **New: Stopped Clocks** (back to Elowen): every clock in the manor stopped at midnight on
-  festival night. Elowen and the hero line the clue up with Gnarlroot's.
+- 15 An Invitation (Elowen to Mr. Pumpkins, kept), 16 The Last Waltz (kept, the dungeon).
+- **Boss rework: Lady Marigold.** She threw a party a hundred years ago and nobody came, until Elder
+  Sakura got lost in her ballroom on festival night; she has kept the party going ever since so her
+  one guest can't leave. The fight is a waltz: her attacks land on the beat of the music, three to the
+  bar, so you dodge in rhythm; the pumpkin butlers cut in as dance partners.
+- Ending: "...could you come again next year?" Miracle: next morning, sleepy hand-written invitations
+  to her next party appear on every door on the island. Everybody says yes.
+- 17 Stopped Clocks (Elowen, kept): the clocks stopped at midnight on festival night, when "the star
+  with a bell in it" fell.
 
 ### Chapter 5: Whispers in the Glade (18-23)
 Whispering Glade (Sylvana), Sunken Aquarium Palace (dungeon 20).
-- 18 A Song Out of Tune (Elowen). *Exists, level moves from 16.*
-- 20 The Dryad Queen (Elowen): Sylvana. *Exists.*
-- 21 **New: The Still Tide** (Granny Kelp's friend Marina): the sea stopped turning the same night,
-  and Queen Coralie's palace is drowning; dive with Marina.
-- 22 **New: The Drowned Queen** (Marina): clear the Aquarium, wake Coralie, who remembers the
-  sky "going still like a painting" before she fell asleep.
+- 18 A Song Out of Tune, 20 The Dryad Queen (Elowen, kept): Sylvana heard it that night: "the wind
+  cried". (First hint the Queen was sad, not just sleepy.)
+- 21 The Still Tide, 22 The Drowned Queen (Marina, kept, the dungeon).
+- **Boss rework: Queen Coralie.** She keeps everything she loves in glass tanks so nothing can leave,
+  Elder Warabi in the biggest. The fight: she traps you in bubbles you pop your way out of, then fish
+  in tanks you free one by one; at the end she has to open the last tank herself.
+- Ending: she lets the fish out. Miracle: the sea starts turning again.
 
 ### Chapter 6: Foxfire at Dusk (23-30)
-Fox Shrine Path (Tamamo), Clockwork Carnival (dungeon 25). Second job at 30 (the trials).
-- 23 Tricks on the Road (Vex). *Exists, level moves from 22.*
-- 25 A Forgotten Shrine (Vex). *Exists.*
-- 26 **New: A Fair Nobody Built** (Vex, then Tock): every night a fairground appears past the
-  shrine. Vex is offended that it gives away prizes nobody earned. Tock the runaway tin soldier
-  asks for help.
-- 27 **New: Wound Too Tight** (Tock): clear the Carnival, wind Queen Gearheart down. She was wound
-  up the night the sky stopped and "the night never ended, so the show never could".
-- 28 The Nine-Tailed Empress (Vex): Tamamo. *Exists.* Her secret: the warmth is being pulled
-  downhill.
+Fox Shrine Path (Tamamo), Clockwork Carnival (dungeon 25). Second job at 30.
+- 23 Tricks on the Road, 25 A Forgotten Shrine (Vex, kept). 28 The Nine-Tailed Empress (kept):
+  Tamamo saw one little gust fly out to sea that night, and suspects you came in on it.
+- 26 A Fair Nobody Built, 27 Wound Too Tight (Tock, kept, the dungeon).
+- **Boss rework: Queen Gearheart,** a wind-up toy who has to perform while anyone is watching. Elder
+  Kuri never stopped watching. The fight is the carnival's games, one phase each: whack-a-mole, ring
+  toss, then the rollercoaster.
+- Ending: she winds down and sits beside Kuri, resting for the first time. Miracle: the Queen
+  mumbles "...you can rest now...", and the Carnival's lights dim gently.
 
-### Chapter 7: The Night the Sky Stood Still (30-34) - the midpoint
-Moonlit Ridge, Star Observatory (dungeon 30). The big twist.
-- 30 **New: Charts That Don't Move** (Nim): Nim's star charts have stopped working, because the
-  stars haven't moved in weeks. She asked them nicely. Sends you to Professor Lumen.
-- 31 **New: The Star Keeper** (Professor Lumen): climb the Observatory, set the sky turning,
-  free Astraea.
-- 32 **New: The Falling Star** (back to Nim and Elowen): **the twist.** Astraea's records show the
-  star she tried to save was not falling. It was being pulled *down*, into the Crystal Cave. It
-  was Hayate's light. Something under the island has it. Big scene with Nim, Elowen and Mira
-  (spawned in): the cast realises the culprit is beneath their feet the whole time. Gag: Nim
-  reads the record out loud, gets to the dramatic part, and has to stop to apologise to it.
+### Chapter 7: The Night the Wind Went Out (30-34), the midpoint twist
+Moonlit Ridge, Star Observatory (dungeon 30). (Renamed from "The Night the Sky Stood Still".)
+- 30 Charts That Don't Move, 31 The Star Keeper (Nim and Professor Lumen, kept, the dungeon).
+- **Boss rework: Astraea,** who has counted the stars alone for a thousand years, with Elder Goma
+  keeping her company. The fight: join up constellations (strike their stars in order) while she
+  rearranges the sky.
+- 32 **The twist** (Nim, Elowen and Mira): Astraea's star records of festival night show the Queen's
+  wind didn't just burst. It went out on purpose, one gust to every lonely place on the island, each
+  carrying a Mochi, and one gust far out to sea, to fetch you. The tearful beat: she knew what it was
+  like to be alone. Back at the palace, she mumbles "...nobody should be alone...".
 
 ### Chapter 8: Steam and Roses (33-39)
-Serpent Springs, Frozen Peak, Candy Volcano (dungeon 35), Lilith.
-- 33 Cold Springs (Nim). *Exists, level moves from 31.*
-- 34 Frost on the Mountain (Nim). *Exists.*
-- 35 **New: Dessert Emergency** (Chef Praline): Queen Bonbon is heating the volcano to make up for
-  the warmth that vanished; the biggest dessert in the world is about to bury everyone.
-- 36 **New: Just Desserts** (Praline): clear the Candy Volcano, cool Bonbon down.
-- 38 The Rose Grotto (Nim): Lilith. *Exists, level moves from 37.* She gives the warmth back and
-  points you to Selene.
+Serpent Springs, Frozen Peak, Candy Volcano (dungeon 35), the Rose Grotto (Lilith).
+- 33 Cold Springs, 34 Frost on the Mountain (Nim, kept).
+- 35 Dessert Emergency, 36 Just Desserts (Chef Praline, kept, the dungeon).
+- **Boss rework: Queen Bonbon,** who bakes a bigger cake every day hoping someone will come and share
+  it; Elder Ichigo is her only taster. The fight: layer by layer down the cake (sprinkle rain,
+  frosting floods, a cherry bomb).
+- Ending: everyone shares the cake, and the Queen sleepwalks all the way to the volcano for a slice:
+  the only time she leaves her bed in the whole story.
+- 38 The Rose Grotto (Nim, kept): Lilith, whose roses no one visits, saw the falling star ring like a
+  bell and drop into the Crystal Cave. The alarm is real.
 
 ### Chapter 9: Above the Clouds (40-44)
 Sky Garden, Dream Theatre (dungeon 40).
-- 40 The Sleeping Wind (Elowen). *Exists.*
-- 41 **New: Opening Night** (Madame Encore): the Phantom Playwright is writing the whole island
-  into a play and the audience forgets who they are. Madame Encore, retired leading lady, wants
-  her stage back.
-- 42 **New: A Better Ending** (Encore): clear the Dream Theatre. The Playwright's script is the main
-  story so far, and its villain's page is blank: "I tried. Everyone in this story is just scared."
-  The meta joke peaks here (he critiques the lonely-queen trope).
-- 44 Where Stars Fall (Elowen). *Exists.*
+- 40 The Sleeping Wind (Elowen, kept). 41 Opening Night, 42 A Better Ending (Madame Encore, kept).
+- **Area and boss rework (the big one): the Dream Theatre becomes the Queen's dream.** The Phantom
+  Playwright has been staging her dream as a play, with Elder Zunda as his only fan. Its rooms become
+  her human life: a packed commuter train, the office, the 2 a.m. convenience store, her empty flat
+  (Mr. Prickles is there). **Boss: Monday,** her old life itself, a towering shadow of paperwork
+  telling her to get up and go to work: an avalanche of emails, meeting invites that close in, a
+  deadline clock. You can't beat it; she does, by rolling over in the dream and saying "five more
+  minutes". This is the tearful chapter.
+- 44 Where Stars Fall (Elowen, kept).
 
 ### Chapter 10: The Crystal King (45-50)
-Starfall Heights, Sky Whale's Back (dungeon 45), the Moon Terrace, the Crystal Throne.
-- 45 **New: The Sinking Whale** (Skipper Nimbus): the Sky Whale lost the wind that held her up and
-  is sinking in her sleep; wake her so she can carry you to the Moon Terrace.
-- 46 The Moon Valkyrie (Elowen): Selene. *Exists, level moves from 48.* She names Prismaris.
-- 47 Home Again (Mira). *Exists, level moves from 45.*
-- 49 Heart of Crystal (Mira): Prismaris. *Exists, level moves from 45.* The nightlight.
-- 50 **New: The Wind Returns** (Mira): the finale at level 50 (see below).
+Starfall Heights, Sky Whale's Back (dungeon 45), the Moon Terrace, the Crystal Cave.
+- 45 The Sinking Whale (Skipper Nimbus, kept, the dungeon). **Boss rework: the Sky Whale** isn't the
+  boss; the storm cloud of her sadness is (everyone is scared of something so big, so nobody visits;
+  Elder Ohagi rides on her back). Clear the storm and she sings.
+- 46 The Moon Valkyrie (Selene, kept): she names Prismaris.
+- 47 Home Again, 49 Heart of Crystal (Mira, kept). **Boss rework: Prismaris,** who is scared of the
+  dark and keeps the fallen alarm clock as his nightlight, with Elder Shiratama, the eldest Mochi. He
+  won't give it up until the Queen gives him a real little star of his own.
+- 50 **The Wind Returns** (Mira): **the finale boss, the Alarm,** a giant ringing clock calling her
+  back to Monday. It has snooze phases: hit snooze, it comes back louder, three times. Then she wakes
+  up for real, chooses to stay, and ends it with one lazy flick. **New arena:** the palace at dawn.
+
+## Areas the plan changes (for the player to approve)
+
+- **Chapter 9:** the Dream Theatre's rooms redone as the Queen's dream (train, office, convenience
+  store, flat). The theatre's outside stays.
+- **Chapter 10:** a new finale arena (the palace at dawn) for the Alarm.
+- **Every chapter:** the Queen's Bedchamber gains each elder you bring home.
+- Everything else keeps its maps; the dungeons keep their rooms, with their bosses reworked.
+
+## Mechanics the plan needs
+
+- A boss mechanic per rework (above): slow-word telegraphs, a waltz on the beat, bubbles and tanks,
+  carnival game phases, constellations, cake layers, the Monday shadow, snooze phases.
+- The palace's elders (a list that grows as chapters are done), and the relic shrine.
+- Cake quests through the cooking you already have.
+- Cutscenes use what the prologue built (sets, cast, zoom, sounds, babble).
 
 ## Reaching 50 has to mean something
 
@@ -214,44 +252,28 @@ How to get there without making it a grind (the game's own rule against chores):
 
 ### Level 50 itself
 - **The finale is at level 50 exactly**, so the cap and the story's ending are the same moment.
-- **The Wind Returns:** Hayate wakes, the wind comes back to the whole island at once. The windmill
-  turns, the chimes ring, the Great Forge's bellows fill, the sea turns, kites go up. Every map
-  sours more slowly from then on (the island remembers you).
-- **Everyone you helped comes to Sprout:** a festival scene, the Falling Star Festival finally
-  finished, with the givers of every side story you completed turning up (Pip leaves the shop on
-  purpose, Bramble charges in yelling, Clover's buns, Marlo selling commemorative mugs).
+- **The Wind Returns:** the Queen wakes for real and the wind comes back to the whole island at once.
+  The windmill turns, the chimes ring, the Great Forge's bellows fill, the sea turns, kites go up.
+  Every map sours more slowly from then on (the island remembers you).
+- **Everyone you helped comes to Sprout:** the Falling Star Festival, finally finished, with the
+  givers of every side story you completed, and every Mochi elder from the palace, beards and all.
 - **What you earn:** a title, *the One Who Showed Up*; Hayate's feather earring (the earring Mira
   gave you in chapter 1, now catching a real wind); your name on a plaque under Sprout's windmill;
   and Pip's tenth loyalty stamp, with the "something" at last.
 
 ## Build order (check in with the player between each)
 
-1. [x] Pacing: monsters sized to the maps, the cave and Starfall rebuilt, real kill rates
-   measured, the EXP curve set for about 30 hours to 50 (2026-11-05). The story quests' levels get
-   re-placed chapter by chapter as each is built.
-2. [x] Chapters 1-3: the festival clue, Gnarlroot's memory (2026-11-05; the story now has ten
-   chapter numbers, the later chapters' cards renumbered to match).
-3. [x] Chapter 4: Moonlit Manor in the story (2026-11-05: two Elowen quests, An Invitation and
-   The Last Waltz, since quests are handed in to whoever gave them; the clocks clue lands in the
-   second one's ending).
-4. [x] Chapter 5: Sylvana and the Aquarium (2026-11-05: Marina gives The Still Tide, asking Granny
-   Kelp and Rook, and The Drowned Queen; Vex's chapter now starts at 23).
-5. [x] Chapter 6: Carnival and Tamamo (2026-11-05: Vex sends you to Tock, who gives A Fair Nobody
-   Built and Wound Too Tight at the Carnival Gates; his message leads back to Vex and Tamamo).
-6. [x] Chapter 7: the Observatory and the midpoint twist (2026-11-05: Nim gives Charts That Don't
-   Move and The Star Keeper; the twist plays at her shop with Elowen and Mira; the springs
-   chapter now starts at 33).
-7. [x] Chapter 8: Candy Volcano and Lilith (2026-11-05: Chef Praline gives Dessert Emergency and
-   Just Desserts on the Sugar Trail; Bonbon saw the warmth flow to the grotto; Lilith now at 38).
-8. [x] Chapter 9: the Dream Theatre (2026-11-05: Madame Encore gives Opening Night and A Better
-   Ending on Theatre Row; she performs the Playwright's script, the story so far).
-9. [x] Chapter 10: the Sky Whale, Selene, Prismaris (2026-11-05: Skipper Nimbus gives The Sinking
-   Whale; Selene now at 46, Home Again at 47, the Crystal King at 49).
-10. [x] The Wind Returns: the level-50 finale and its rewards (2026-11-05: Mira's last quest, a
-   midnight festival under the windmill with the friends whose stories you finished, Hayate waking;
-   the windmill, the Starchime chimes and the Great Forge come alive, maps sour half as fast, the
-   title, Hayate's Feather and the plaque). Hayate's portrait was drawn the same day: a sleepy princess in a gown and crystal
-   crown, the player's call (render/hayate.js).
+1. [x] Pacing (2026-11-05): the EXP curve set for about 30 hours to 50.
+2. [x] The prologue and Chapter 1 (2026-11-17 to 18; commits 0a0a566, d2d932a).
+3. [ ] Chapter 2: the cake quest, the festival clue rewritten.
+4. [ ] Chapter 3: Gnarlroot reworked, Elder Yomogi, the palace's first elder.
+5. [ ] Chapter 4: Marigold's waltz, Elder Sakura.
+6. [ ] Chapter 5: Coralie's tanks, Elder Warabi, Sylvana's clue.
+7. [ ] Chapter 6: Gearheart's carnival games, Elder Kuri, Tamamo's clue.
+8. [ ] Chapter 7: Astraea's constellations, Elder Goma, the twist.
+9. [ ] Chapter 8: Bonbon's cake, Elder Ichigo, Lilith's clue, the sleepwalk.
+10. [ ] Chapter 9: the Queen's dream and Monday, Elder Zunda.
+11. [ ] Chapter 10: the Sky Whale's storm, Selene, Prismaris, the Alarm, the finale.
 
 Each step: write the quests and scenes, stage them with care, play-through tests, watch them in
 the game, fix what looks wrong, send a video, then wait for the player before the next.

@@ -52,6 +52,16 @@ export function drawPortalGate(ctx, map, x, y, time, seed = 0, own = null) {
   place(ctx, archArt(key, style), x, y + 2);
 }
 
+// Only the swirl, for a portal that is a mouth in the scenery itself (a cave in a cliff, the door in
+// the great tree's roots: `mouth` on the portal): the opening is drawn by the map, the swirl turns
+// inside it, `lift` px up off the ground.
+export function drawPortalSwirl(ctx, map, x, y, time, seed = 0, own = null, lift = 40) {
+  const key = own && PORTAL_STYLES[own] ? own : portalStyleOf(map);
+  const style = PORTAL_STYLES[key];
+  const f = Math.floor(time * 10 + seed) % FRAMES;
+  place(ctx, swirlArt(key, style.swirl, f), x, y - lift + SH / 2);
+}
+
 function archArt(key, style) {
   return art(`portal|${key}`, W, H, () => style.arch(key).filter(Boolean));
 }

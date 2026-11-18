@@ -213,7 +213,8 @@ export function tickYank(m, dt) {
 // A hit: knocked back (`knock` px/s, away from the blow; negative pulls in), and popped up into
 // the air by a launcher (`launch` px/s); bosses stand firm.
 export function hitMob(m, damage, fromX, now, { knock = 90, launch = 0 } = {}) {
-  m.hp = Math.max(0, m.hp - damage);
+  // (`m.minHp`: a boss that can't be brought lower for now, like Gnarlroot holding on to Yomogi.)
+  m.hp = Math.max(m.minHp ?? 0, m.hp - damage);
   m.flash = 0.12;
   m.aggroUntil = now + AGGRO_TIME;
   // A hit wakes it from a nap; a peaceful one that's hurt runs off (world/habits.js).

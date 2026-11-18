@@ -283,6 +283,47 @@ function fruitArt(tier, stage, c) {
   });
 }
 
+// The canyon's prickly pear (`prickle_pear`): a paddle cactus in a little heap of sand, round pads
+// stacked on one another, a few soft spines, pink fruit sitting on the rims of the top pads (small
+// and green while they grow, plump and pink when ripe; the one she's picking is gone). Pads lit on
+// their west side like the canyon's rock.
+const PEAR_AT = [[-10, -27], [9, -31], [1, -41]];
+function pricklyArt(stage, picked) {
+  return art(`spot|prickly|${stage}|${picked ? 1 : 0}`, 44, 48, () => {
+    const cx = 22;
+    const gy = 47;
+    const g = ramp('#7fc477');
+    const out = [...soil(cx, gy, 11, '#e8bc8a')];
+    const pad = (x, y, rx, ry, k) => {
+      out.push(E(x, y, rx, ry, k ? g.base : mix(g.base, g.sh, 0.35)), F(E(x - rx * 0.35, y - ry * 0.25, rx * 0.4, ry * 0.55, g.hi)));
+      // (Two soft little spines, short ticks, never a field of dots.)
+      for (const [dx, dy] of [[-0.45, -0.35], [0.4, 0.2]]) {
+        const sx = x + dx * rx;
+        const sy = y + dy * ry;
+        out.push(F(T([[sx, sy], [sx + 0.5, sy - 0.2], [sx + 1.4, sy - 1.3], [sx + 0.9, sy - 1.4]], '#fff6e6')));
+      }
+    };
+    pad(cx, gy - 10, 7, 9.5, 1);
+    pad(cx - 9, gy - 20, 5.4, 7.4, 0);
+    pad(cx + 8, gy - 22, 5.6, 7.8, 1);
+    pad(cx + 1, gy - 31, 4.8, 6.6, 1);
+    const sz = [0, 0.45, 0.7, 1][stage];
+    if (sz) {
+      PEAR_AT.forEach(([dx, dy], i) => {
+        if (picked && i === 2) return;
+        const c = ramp(stage === 3 ? '#ff8fb8' : mix('#ff8fb8', '#9ad88f', stage === 1 ? 0.7 : 0.35));
+        const fx = cx + dx;
+        const fy = gy + dy;
+        out.push(E(fx, fy - 2.6 * sz, 2.2 * sz + 0.4, 2.8 * sz + 0.4, c.base), F(E(fx + 0.7 * sz, fy - 2 * sz, 1.1 * sz, 1.6 * sz, c.sh)));
+        if (stage === 3) out.push(F(E(fx - 0.8, fy - 3.8, 0.7, 0.6, '#ffffff')));
+      });
+    }
+    // Ready: a little yellow cactus flower on the top pad.
+    if (stage === 3) for (const [dx, dy] of [[-1.4, 0], [1.4, 0], [0, -1.4], [0, 1.4]]) out.push(F(E(cx + 1 + dx, gy - 38.4 + dy, 1.3, 1.3, '#ffe36b')));
+    return out;
+  });
+}
+
 // ---------- Honey ----------
 
 // A straw skep hanging from a bent post, rings of woven straw, a dark doorway, honey welling at the
@@ -590,6 +631,13 @@ const DRAW = {
     }
   },
   fruit(ctx, x, y, s) {
+    // (The canyon's prickly pear grows on a cactus, not a tree; it barely sways.)
+    if (s.find === 'prickle_pear') {
+      const sway = 0.008 * lean(s.time, s.wx, 0.3) + 0.02 * s.jolt;
+      rotated(ctx, x, y, sway, () => staged(ctx, Math.max(0.34, s.g), (st, al) => placeA(ctx, pricklyArt(st, s.picked), x, y + 1, al)));
+      if (s.ready) twinkle(ctx, x + 10, y - 34, s.time, s.wx);
+      return;
+    }
     const a = 0.025 * lean(s.time, s.wx, 0.3) + 0.02 * s.jolt;
     staged(ctx, Math.min(1, s.g + 0.67), (st, al) => placeA(ctx, fruitTreeArt(s.tier, 'trunk', st), x, y + 1, al));
     rotated(ctx, x, y, a, () => staged(ctx, Math.max(0.67, s.g), (st, al) => placeA(ctx, fruitTreeArt(s.tier, 'crown', st), x, y + 1, al)));

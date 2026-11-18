@@ -16,6 +16,7 @@ import { questState } from '../core/quests.js';
 import { spawnMob } from './mobs.js';
 import { startCine, skipScene, endScene, isStaging } from './director.js';
 import { escortOnMap } from './escort.js';
+import { countItem, removeItem } from '../core/inventory.js';
 
 // ---------- Scenes ----------
 
@@ -141,6 +142,15 @@ export function onStoryMap(world) {
   world.zones = [];
   // The little Mochi you're bringing home, if it's here (world/escort.js).
   escortOnMap(world);
+  // A cake for the Queen (`story_2_cake`): in with a shortcake and she eats it in her sleep.
+  const cake = world.char.quests?.story_2_cake;
+  if (world.map.id === 'royal_bed' && cake?.state === 'active' && !cake.marks?.[0]) {
+    if (countItem(world.char.inventory, 'dish_shortcake') > 0) {
+      removeItem(world.char.inventory, 'dish_shortcake', 1);
+      (cake.marks ??= {})[0] = true;
+      playScene(world, 'queen_cake');
+    } else world.log("The Royal Snore Translator eyes your empty hands. \"No cake, no audience.\"", '#ffc2d4');
+  }
   // The Queen's Bedchamber, the first time you come to say hello (`story_1_queen`).
   const hello = world.char.quests?.story_1_queen;
   if (world.map.id === 'royal_bed' && hello?.state === 'active' && !hello.saw) {

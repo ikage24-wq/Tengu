@@ -2,6 +2,7 @@
 // ledges are drawn with the other ledges (scenery.js), offset by the same clock the physics uses.
 
 import { mix, shade, snap, OUTLINE } from './pixel.js';
+import { drawWhirl } from './canyon.js';
 
 const hash = (n) => {
   const s = Math.sin(n * 127.1) * 43758.5453;
@@ -664,7 +665,8 @@ function springboard(ctx, x, y, since) {
 export function drawMovers(ctx, map, cam, width, height, time) {
   for (const u of map.updrafts ?? []) {
     if (u.x + u.w < cam.x - 20 || u.x - u.w > cam.x + width + 20 || u.bottom < cam.y - 20 || u.top - 40 > cam.y + height) continue;
-    updraft(ctx, u, cam, time);
+    if (u.kind === 'whirl') drawWhirl(ctx, u, cam, time);
+    else updraft(ctx, u, cam, time);
   }
   for (const s of map.springs ?? []) {
     const x = s.x - cam.x;

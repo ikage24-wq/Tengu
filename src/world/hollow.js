@@ -11,8 +11,10 @@
 //   Boar Den          Tuskar charges; a stone pillar in his way stops him cold (dazed, and the
 //                     pillar breaks). Then he calls his Wargs, then he stampedes there and back.
 //   The Root Gate     sap surges over the floor now and then: get up on a ledge.
-//   Heart of the Hollow  Gnarlroot: roots and thorns; then root walls close in from both sides;
-//                     then his heart opens above him, and only blows from the high ledges reach it.
+//   Heart of the Hollow  Gnarlroot, the oldest tree, who says one word a day: each move comes with
+//                     the next word of his sentence crawling out over his head (slam, thorns, and
+//                     from 60% the big hug with one gap); at a third he holds on to Elder Yomogi
+//                     and won't go lower until the Root Tendrils holding it are cut.
 
 import { addZone, adds, callout, hurtMember, isUp } from './dungeon.js';
 import { navOf, surfaceBelow } from './nav.js';
@@ -208,6 +210,7 @@ export function boarPhases(world, m) {
   if (!s.wargs && frac <= 0.6) {
     s.wargs = true;
     adds(world, m, 'boarlet', [m.x - 300, m.x + 300], null);
+    m.callAt = world.now;
     callout(world, 'Tuskar calls his Wargs!', 'Tank, grab them! Damage, bring them down!');
     radio(world, 'wargs');
   }
@@ -219,33 +222,33 @@ export function boarPhases(world, m) {
   }
 }
 
-// Gnarlroot: the roots close in at 60%; at 30% his heart opens above him.
+// Gnarlroot's sentence, one word per move, through the whole fight (he finishes it at the end:
+// data/scenes.js hollow_sleep).
+export const GNARL_WORDS = ['long', 'ago', 'the', 'little', 'ones', 'sang', 'to', 'me', 'and', 'I', 'slept', 'and', 'then', 'a', 'star', 'went', 'ding', 'and', 'they', 'all', 'ran', 'away', 'all', 'but', 'one', 'little', 'one', 'who', 'waited', 'for', 'me', 'to', 'finish', 'so', 'I', 'held', 'on', 'and', 'now', 'you', 'came', 'too', 'and'];
+
+// Gnarlroot: from 60% his hug joins his moves; at a third he holds on to Elder Yomogi, swaying, and
+// the Root Tendrils holding it come up out of the floor round him.
 export function gnarlPhases(world, m) {
   const s = m.mech;
   const frac = m.hp / m.def.hp;
-  const room = world.dungeon.room;
-  if (!s.closing && frac <= 0.6) {
-    s.closing = true;
-    room.walls = { l: 0, r: world.map.width, toL: m.x - 420, toR: m.x + 420 };
-    callout(world, 'The Roots Close In!', "Stay in the middle: the walls bite");
-    radio(world, 'walls');
+  if (!s.hugs && frac <= 0.6) {
+    s.hugs = true;
+    radio(world, 'hug');
   }
-  if (!s.heart && frac <= 0.3) {
-    s.heart = true;
-    m.heartOpen = true;
-    callout(world, 'His Heart Opens!', 'Only blows from the high ledges reach it. Climb!');
-    radio(world, 'heart');
+  if (!s.untangle && frac <= 0.3 + 1e-6) {
+    s.untangle = true;
+    m.swaying = true;
+    const w = world.map.width;
+    adds(world, m, 'sapling', [-170, -90, 90, 170].map((d) => Math.max(40, Math.min(w - 40, m.x + d))), null);
+    s.tendrils = true;
+    callout(world, "He's holding on to Elder Yomogi!", 'Cut the Root Tendrils to free it');
+    radio(world, 'yomogi');
   }
-}
-
-// How much of a hit reaches Gnarlroot once his heart is open: little from the floor, more than
-// usual from up high.
-export function heartMultiplier(world, m, body) {
-  if (!m.heartOpen || !body) return 1;
-  return body.y < world.map.groundY - 40 ? 1.5 : 0.25;
 }
 
 // The Hollow calmed: Gnarlroot falls asleep at last.
 export function hollowCalmed(world) {
+  // (Elder Yomogi goes home to the Queen's bedchamber, and stays: render/prologue.js.)
+  world.char.elders = { ...(world.char.elders ?? {}), yomogi: true };
   playScene(world, 'hollow_sleep');
 }

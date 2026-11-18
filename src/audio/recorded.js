@@ -19,6 +19,8 @@ export const RECORDED = {
   musicBoxA: { trim: 0 },
   musicBoxB: { trim: 0 },
   musicBoxC: { trim: 0 },
+  // Windy Canyon's night rumble (the same tool).
+  canyonRumble: { trim: 0 },
   // Swings and blows.
   swing: { trim: -1.2 },
   swingHeavy: { trim: -1.9 },

@@ -578,54 +578,100 @@ export const MAPS = {
 // ---------- The warrior and mage homes, and the canyon road up to the warriors ----------
 
 Object.assign(MAPS, {
-  // Windy Canyon is a trek across, side by side (data/climb.js lay()): the West Mesa where you
-  // arrive, the Basilisk Hatchlings' sunny plateau with a vent to bounce you up; the Gorge, a long
-  // rope bridge swaying over a deep canyon whose floor below is the Hatchlings' and Manticore Cubs'
-  // hunting ground, with the way into Rootwood Hollow down there and a gust to carry you back up to
-  // the bridge; and the East Mesa, the Manticore Cubs' crags, with the windmill lookout high above
-  // and the road on to Ember Crag beside it.
+  // Windy Canyon (remade 2026-11-18 for Chapter 3) is a tall canyon built out of its own rock
+  // (data/climb.js lay(), zones by height; the art in render/canyon.js): a canyon wall at each end,
+  // two rock spires and the Great Arch between them, and every ledge a sandstone shelf jutting out of
+  // one of them, so nothing floats. At the bottom the Dry Riverbed, where the Basilisk Hatchlings sun
+  // themselves and the way into Rootwood Hollow opens at the east wall's foot; up the Cliff Shelves,
+  // stepping round the spires (a ladder up each), where the Manticore Cubs start; and on the Windy
+  // Top a walk across the whole canyon over the spires' caps, the arch and pennant-strung rope
+  // bridges, to the windmill lookout and the road to Ember Crag. The wind howls up the canyon
+  // beside the arch from the riverbed (Up to ride it) and a vent on the east spire's high shelf puffs
+  // you up to its cap.
   canyon: {
-    id: 'canyon', name: 'Windy Canyon', theme: 'crag', town: 'crag', world: { x: 138, y: 104 },
-    look: { material: 'canyon' },
+    id: 'canyon', name: 'Windy Canyon', theme: 'crag', town: 'crag', world: { x: 138, y: 104 }, perSpawn: 1,
+    look: { painted: 'canyon', light: 'canyon', faceAt: 0.32, sky: ['#ffa37e', '#ffd0a4', '#ffecd2'], far: '#e8b2a4', mid: '#dc946c', material: 'canyon', islands: 'shelf', drift: null, props: [], ledgeKeep: 1, critters: ['hawk'] },
     ...lay({
-      width: 2400, ground: 1000, by: 'x',
-      terrain: [[0, 600], [700, 600], [700, 1000], [1700, 1000], [1700, 560], [2400, 560]],
-      // Ropes down both canyon walls, hanging beside them from the top.
-      ropes: [{ x: 710, top: 600, bottom: 1000 }, { x: 1690, top: 560, bottom: 1000 }],
-      quiet: [[40, 600, 160], [1450, 1000, 200], [2130, 300, 200]],
+      width: 2200, ground: 1000, by: 'y',
+      // (The riverbed sinks a little under the arch, where the water used to run.)
+      terrain: [[0, 1000], [960, 1000], [990, 1012], [1210, 1012], [1240, 1000], [2200, 1000]],
+      quiet: [[60, 1000, 160], [2100, 1000, 160], [2170, 520, 160]],
       zones: [
-        { name: 'West Mesa', color: '#c97a3a', from: 0, mobs: ['pebblet'], nodes: [SPOT.fruit(1, 'prickle_pear'), SPOT.ore(1)] },
-        { name: 'The Gorge', color: '#b05a4a', from: 700, mobs: ['pebblet', 'scorpip'], nodes: [SPOT.ore(1), SPOT.ore(1, { gem: 0.12 })],
-          look: { sky: ['#ffcf9e', '#ffe4c4', '#fff4e4'] } },
-        { name: 'East Mesa', color: '#6a7ad0', from: 1700, mobs: ['scorpip'], nodes: [SPOT.fruit(1, 'prickle_pear'), SPOT.ore(1, { gem: 0.14 }), SPOT.ore(1, { gem: 0.3, night: true })],
-          look: { sky: ['#9fc8ff', '#cfe4ff', '#fff0e0'] } },
+        { name: 'Dry Riverbed', color: '#c97a3a', mobs: ['pebblet'] },
+        { name: 'Cliff Shelves', color: '#b05a4a', from: 900, mobs: ['pebblet', 'scorpip'], look: { sky: ['#ffc39a', '#ffe0b8', '#fff4e2'] } },
+        { name: 'Windy Top', color: '#6a7ad0', from: 600, mobs: ['scorpip'], look: { sky: ['#8fc4ff', '#cfe6ff', '#fff2e0'] } },
       ],
+      // (`root`: the end that grows out of the rock, tucked into it; 'cap' sits on top, free both ends.
+      // Each spire's shelves cross its middle, so the ladder up it stops at every one.)
       ledges: [
-        // The West Mesa's rocks, stacked up to a high shelf.
-        { x: 150, y: 520, w: 300 }, { x: 470, y: 520, w: 220 }, { x: 300, y: 440, w: 280 },
-        // The rope bridge over the gorge, and ledges down both its walls to hunt round.
-        { x: 700, y: 600, w: 990, style: 'bridge' },
-        { x: 750, y: 900, w: 260 }, { x: 1450, y: 880, w: 220 }, { x: 900, y: 790, w: 240 }, { x: 1300, y: 770, w: 240 },
-        { x: 1100, y: 880, w: 260 }, { x: 760, y: 700, w: 240 }, { x: 1420, y: 680, w: 240 },
-        // The East Mesa's crags and the windmill lookout.
-        { x: 1900, y: 460, w: 300 }, { x: 2160, y: 380, w: 230 }, { x: 2000, y: 300, w: 260, thick: 44 },
+        // The west wall's shelves and its top.
+        { x: 150, y: 880, w: 290, root: 'left', noRope: true }, { x: 150, y: 680, w: 228, root: 'left', noRope: true }, { x: 0, y: 520, w: 262, root: 'left', noRope: true },
+        // The west spire (x 600) and its cap.
+        { x: 582, y: 880, w: 250, root: 'left', noRope: true }, { x: 368, y: 780, w: 250, root: 'right', noRope: true }, { x: 582, y: 660, w: 230, root: 'left', noRope: true },
+        { x: 510, y: 520, w: 180, root: 'cap', noRope: true },
+        // The Great Arch's top.
+        { x: 876, y: 520, w: 448, root: 'cap', noRope: true },
+        // The east spire (x 1650) and its cap.
+        { x: 1418, y: 880, w: 250, root: 'right', noRope: true }, { x: 1632, y: 780, w: 250, root: 'left', noRope: true }, { x: 1438, y: 660, w: 230, root: 'right', noRope: true },
+        { x: 1560, y: 520, w: 180, root: 'cap', noRope: true },
+        // The east wall's shelves and its top, the windmill's lookout above.
+        { x: 1760, y: 880, w: 290, root: 'right', noRope: true }, { x: 1822, y: 680, w: 228, root: 'right', noRope: true }, { x: 1938, y: 520, w: 262, root: 'right', noRope: true },
+        { x: 1990, y: 400, w: 120, root: 'cap', thick: 44, noRope: true },
+        // Rope bridges between them all along the windy top (nothing grows on the planks).
+        { x: 262, y: 520, w: 248, style: 'bridge', noProps: true, noRope: true }, { x: 690, y: 520, w: 186, style: 'bridge', noProps: true, noRope: true },
+        { x: 1324, y: 520, w: 236, style: 'bridge', noProps: true, noRope: true }, { x: 1740, y: 520, w: 198, style: 'bridge', noProps: true, noRope: true },
+      ],
+      // Ladders lashed up both walls' faces and up both spires, a stretch between each shelf and the next.
+      ropes: [
+        ...[[880, 1000], [680, 880], [520, 680]].map(([top, bottom]) => ({ x: 214, top, bottom, ladder: true })),
+        ...[[880, 1000], [780, 880], [660, 780], [520, 660]].map(([top, bottom]) => ({ x: 600, top, bottom, ladder: true })),
+        ...[[880, 1000], [780, 880], [660, 780], [520, 660]].map(([top, bottom]) => ({ x: 1650, top, bottom, ladder: true })),
+        ...[[880, 1000], [680, 880], [520, 680]].map(([top, bottom]) => ({ x: 1986, top, bottom, ladder: true })),
+        // (And up the rock the windmill stands on.)
+        { x: 2016, top: 400, bottom: 520, ladder: true },
       ],
     }),
-    // A moving part per zone: a vent on the west mesa, a gust from the gorge floor back up to the
-    // bridge (Up to ride it), and a vent on the east mesa up to the crags.
-    springs: [{ x: 400, y: 600, up: 175, kind: 'gust' }, { x: 1960, y: 560, up: 120, kind: 'gust' }],
-    updrafts: [{ x: 1100, w: 54, top: 570, bottom: 1000, kind: 'gust' }],
+    // Its monsters, placed by hand (one each), spread out, none near the ways in or out.
+    spawns: [
+      // The Dry Riverbed.
+      { mob: 'pebblet', x: 380, y: 1000 }, { mob: 'pebblet', x: 800, y: 1000 }, { mob: 'pebblet', x: 1500, y: 1000 }, { mob: 'pebblet', x: 1800, y: 1000 },
+      // The Cliff Shelves.
+      { mob: 'pebblet', x: 350, y: 880 }, { mob: 'scorpip', x: 290, y: 680 }, { mob: 'scorpip', x: 730, y: 880 }, { mob: 'pebblet', x: 450, y: 780 }, { mob: 'scorpip', x: 720, y: 660 },
+      { mob: 'pebblet', x: 1520, y: 880 }, { mob: 'scorpip', x: 1780, y: 780 }, { mob: 'pebblet', x: 1860, y: 880 }, { mob: 'scorpip', x: 1900, y: 680 },
+      // The Windy Top.
+      { mob: 'scorpip', x: 960, y: 520 }, { mob: 'scorpip', x: 1240, y: 520 }, { mob: 'scorpip', x: 390, y: 520 }, { mob: 'scorpip', x: 1810, y: 520 },
+    ],
+    // Its gathering spots, placed by hand on open, flat ground with room round them (clear of the
+    // walls' and spires' feet, the ladders, the vent, the wind and the monsters, so nothing slides
+    // them): copper on the open sand past the west wall, a gem seam in the dry riverbed under the
+    // arch, the prickly pear before the east wall, gems on the east spire's high shelf, and at night
+    // a glittering seam on top of the arch.
+    nodes: [
+      { ...SPOT.ore(1), x: 300, y: 1000 }, { ...SPOT.ore(1, { gem: 0.12 }), x: 1100, y: 1012 }, { ...SPOT.fruit(1, 'prickle_pear'), x: 1840, y: 1000 },
+      { ...SPOT.ore(1, { gem: 0.14 }), x: 1500, y: 660 }, { ...SPOT.ore(1, { gem: 0.3, night: true }), x: 1100, y: 520 },
+    ],
+    springs: [{ x: 1600, y: 660, up: 175, kind: 'gust' }],
+    updrafts: [{ x: 1372, w: 44, top: 490, bottom: 1000, kind: 'whirl' }],
     portals: [
-      { id: 'south', x: 40, y: 600, to: 'meadow1', toPortal: 'north' },
-      { id: 'north', x: 2200, y: 300, to: 'crag', toPortal: 'south' },
+      { id: 'south', x: 60, y: 1000, to: 'meadow1', toPortal: 'north' },
+      { id: 'north', x: 2170, y: 520, to: 'crag', toPortal: 'south' },
     ],
     npcs: [],
-    // A landmark per zone: the mesa rock and the camp tent in the west, the old bones and the totem
-    // on the gorge floor, the windmill on the lookout.
-    deco: [['mesa', 550], ['tent', 300, 0, 520], ['bones', 790], ['totem', 1300], ['signpost', 2300, 0, 560], ['windmillcrag', 2100, 0, 300]],
-    lamps: [{ x: 300, y: 480 }, { x: 1000, y: 970 }, { x: 2100, y: 260 }],
-    spirit: { x: 1200, y: 500 },
-    habitats: { pebblet: { naps: true, home: { x: 1000, y: 1000 } }, scorpip: { play: true, naps: true } },
+    // The rock it's built from (render/canyon.js): the walls (seed 0 west, 1 east), the spires, the
+    // arch, the Hollow's cave mouth in the east wall's foot, the dry riverbed's stones; the old bones
+    // half buried in it; the windmill on its lookout and the signpost to Ember Crag.
+    deco: [
+      ['canyonwall', 82, 0], ['canyonspire', 600, 0], ['canyonarch', 1100, 0], ['canyonspire', 1650, 1], ['canyonwall', 2118, 1], ['canyonstub', 2050, 2, 520, { under: true }],
+      ['canyoncave', 2100], ['riverbed', 1100, 2], ['bones', 760],
+      ['windmillcrag', 2072, 0, 400], ['signpost', 2130, 0, 520],
+    ],
+    // Pennants strung along the rope bridges, a pair of wind chimes hung under the arch.
+    pennants: [[262, 494, 510, 494, 0], [690, 494, 876, 494, 2], [1324, 494, 1560, 494, 4], [1740, 494, 1938, 494, 1]],
+    chimes: [[1068, 591, 0], [1132, 591, 3]],
+    // (Night light only where something gives it: the homestone's runes, the Hollow's cave mouth.)
+    lamps: [{ x: 110, y: 500 }, { x: 2100, y: 968, c: '#9fe8d8' }],
+    spirit: { x: 1100, y: 430 },
+    habitats: { pebblet: { naps: true, home: { x: 1300, y: 1000 } }, scorpip: { naps: true } },
   },
 
 
@@ -1022,43 +1068,54 @@ export function getMap(id) {
 
 const G = 380; // every room's floor
 const pack = (id, x, ...mobs) => mobs.map((mob, i) => ({ mob, x: x + (i - (mobs.length - 1) / 2) * 34, y: G, pack: id }));
-// What every Hollow room's backdrop shares: root silhouettes, the hollow's own earth, fireflies.
-const ROOTS = { skyline: 'roots', material: 'rootden', critters: ['firefly'] };
 const packAt = (id, x, y, ...mobs) => mobs.map((mob, i) => ({ mob, x: x + (i - (mobs.length - 1) / 2) * 34, y, pack: id }));
 
-MAPS.canyon.portals.push({ id: 'hollow', x: 1450, y: 1000, to: 'hollow_gate', toPortal: 'south', label: 'Rootwood Hollow' });
+MAPS.canyon.portals.push({ id: 'hollow', x: 2100, y: 1000, to: 'hollow_gate', toPortal: 'south', label: 'Rootwood Hollow', mouth: 38, labelAt: 104 });
 
 Object.assign(MAPS, {
+  // The Hollow Gate (remade 2026-11-18 for Chapter 3; art in render/hollowgate.js): where Windy
+  // Canyon ends at the foot of the oldest tree. You come in past the canyon's last sandstone wall; a
+  // giant root of the tree arches out of the ground (its top is the ledge, drawn by the root); Bramble keeps his post by his mushroom house; and the great tree rises off the top of
+  // the screen, its buttress roots framing the glowing doorway down into Rootwood Hollow. High on its
+  // bark it sleeps; when the night rumbles come it scrunches its eyes, and they're loudest here.
   hollow_gate: {
     id: 'hollow_gate', name: 'Hollow Gate', theme: 'forest', town: 'crag', world: { x: 168, y: 132 },
     width: 1200, height: 420, groundY: G,
-    look: { sky: ['#ff9f7a', '#d48ab8', '#6a4f9a'], far: '#9a6a9a', mid: '#7a5a8a', midTrim: '#9a7aa8', skyline: 'roots', shrooms: ['#7fe6d6', '#ffb0d0', '#ffd68a'], material: 'hollow', light: 'dusk', drift: 'spore', critters: ['firefly'], face: null, edges: 'glowcaps' },
-    terrain: [[0, G], [300, G], [380, G - 40], [560, G - 40], [640, G], [1200, G]],
-    platforms: [{ x: 400, y: G - 120, w: 160 }],
+    look: { painted: 'hollowgate', sky: ['#ffae86', '#e294b4', '#7a5aa4'], far: '#9a6a9a', mid: '#7a5a8a', midTrim: '#9a7aa8', shrooms: ['#7fe6d6', '#ffb0d0', '#ffd68a'], material: 'hollow', light: 'dusk', drift: 'spore', critters: ['firefly'], face: null, edges: null, props: ['tuft'], propKeep: 0.86 },
+    // (The mound's top runs flat right under both of the root arch's feet.)
+    terrain: [[0, G], [244, G], [316, G - 40], [644, G - 40], [712, G], [1200, G]],
+    platforms: [{ x: 400, y: G - 120, w: 160, bare: true }],
     ropes: [],
-    deco: [['bigtree', 262, 0], ['mushring', 520], ['giantshroom', 700, 2], ['signpost', 120], ['rootgate', 1080]],
+    deco: [['canyonwalllow', 40, 0], ['signpost', 120], ['rootarch', 480], ['giantshroom', 720, 2], ['greattree', 1080]],
     portals: [
-      { id: 'start', x: 760, y: G, hidden: true },
+      // (Where you come back out of the Hollow: on the step by its door.)
+      { id: 'start', x: 990, y: G, hidden: true },
       { id: 'south', x: 60, y: G, to: 'canyon', toPortal: 'hollow' },
-      { id: 'door', x: 1080, y: G, to: 'hollow1', toPortal: 'start', label: 'Rootwood Hollow', dungeon: 'hollow' },
+      { id: 'door', x: 1080, y: G, to: 'hollow1', toPortal: 'start', label: 'Rootwood Hollow', dungeon: 'hollow', mouth: 50, labelAt: 108 },
     ],
     npcs: [{ id: 'bramble', x: 900 }],
+    // (Night light from Bramble's lantern on its peg and the glowing doorway.)
+    lamps: [{ x: 1010, y: 292, c: '#ffd68a' }, { x: 1080, y: 336, c: '#9fe8d8' }],
     spawns: [],
   },
 
-  // The Canopy Door: the way into Rootwood Hollow starts high in the great tree and goes down. In
-  // the dark the group lands on a canopy branch by a giant owl's nest, crosses on a drifting leaf
-  // (or climbs down), drops into the hollow limb, and reaches the trunk floor where the way on is.
-  // One glowcap waits on each level; ropes join every level so nobody is ever stuck.
+  // The Canopy Door (remade 2026-11-18 for Chapter 3; art in render/hollowrooms.js): inside the great
+  // tree's hollow trunk. The group climbs in by the opening far above, where the moonlight pours
+  // down, onto a branch grown out of the trunk's west wall by a giant owl's nest, crosses on a
+  // drifting leaf (or climbs down the hanging vines), drops onto the branches below and reaches the
+  // trunk floor, where an old stump stands and the way on is. Every ledge is a branch grown out of
+  // one of the trunk's walls. One glowcap waits on each level; vines join every level so nobody is
+  // ever stuck.
   hollow1: {
     id: 'hollow1', name: 'The Canopy Door', theme: 'hollow', town: 'crag', dungeon: 'hollow',
     ...lay({
       width: 1900, ground: 860, by: 'y',
       ledges: [
-        { x: 40, y: 260, w: 700 }, { x: 780, y: 250, w: 120, style: 'leaf', drift: { dx: 300, period: 9 } }, { x: 1200, y: 300, w: 560 },
-        { x: 960, y: 480, w: 760 }, { x: 140, y: 580, w: 700 },
-        { x: 900, y: 720, w: 160 },
-        { x: 1780, y: 216, w: 100 },
+        { x: 40, y: 260, w: 700, root: 'left' }, { x: 780, y: 250, w: 120, style: 'leaf', drift: { dx: 300, period: 9 } }, { x: 1200, y: 300, w: 660, root: 'right' },
+        { x: 960, y: 480, w: 900, root: 'right' }, { x: 40, y: 580, w: 800, root: 'left' },
+        // (The old stump's top: the stump draws it.)
+        { x: 900, y: 720, w: 160, bare: true },
+        { x: 1780, y: 216, w: 80, root: 'right' },
       ],
       zones: [
         { name: 'Trunk Floor', color: '#8fe0c8', mobs: [], look: { sky: ['#1e1a2e', '#33284a', '#4a3a5a'] } },
@@ -1066,11 +1123,11 @@ Object.assign(MAPS, {
         { name: 'Canopy', color: '#9fd88a', from: 380, mobs: [], look: { sky: ['#1e3a5a', '#3a6a7a', '#8ab8a8'] } },
       ],
     }),
-    look: { sky: ['#1e3a5a', '#3a6a7a', '#8ab8a8'], far: '#2a4a4a', mid: '#3a5a4a', midTrim: '#5a8a6a', skyline: 'bigtrees', light: 'ridge', drift: 'leaf', critters: ['firefly'] },
+    look: { painted: 'hollowtrunk', sky: ['#1e3a5a', '#3a6a7a', '#8ab8a8'], far: '#2a4a4a', mid: '#3a5a4a', midTrim: '#5a8a6a', material: 'rootfloor', islands: 'limb', ropes: 'vine', props: [], clouds: false, light: 'ridge', drift: 'leaf', critters: ['firefly'] },
     task: { kind: 'light', label: 'Light the glowcaps' },
     dark: true,
     darkDepth: [0.45, 1],
-    deco: [['owlnest', 520, 0, 260], ['hollowlog', 1350, 0, 480], ['giantshroom', 700, 0], ['mushring', 300]],
+    deco: [['trunkwall', 5, 0], ['trunkwall', 1895, 1], ['hollowstump', 980], ['owlnest', 520, 0, 260]],
     portals: [
       { id: 'out', x: 60, y: 260, to: 'hollow_gate', toPortal: 'door', label: 'Leave' },
       { id: 'start', x: 160, y: 260, hidden: true },
@@ -1081,24 +1138,26 @@ Object.assign(MAPS, {
     spawns: [...packAt('a', 1420, 300, 'rootling', 'sporecap'), ...packAt('b', 560, 580, 'rootling', 'rootling', 'rootling'), ...packAt('c', 1060, 860, 'rootling', 'sporecap', 'rootling', 'sporecap')],
   },
 
-  // Capper's Garden: a sunken bowl of giant mushrooms, tiers rising up both walls and a great cap
-  // standing in the middle. The Myconid Queen holds the floor; bounce caps throw you up out of
-  // her Spore Tide, and the tiers give the group somewhere to be when it floods.
+  // Capper's Garden (remade 2026-11-18; art in render/hollowrooms.js): a root chamber under the trunk
+  // where the Myconid Queen keeps her garden, lit pink by it. Root shelves step up both earthen walls
+  // (the high ones hang from the roots above), and her great mushroom stands in the middle, its broad
+  // cap the middle ledge; bounce caps throw you up out of her Spore Tide.
   hollow2: {
     id: 'hollow2', name: "Capper's Garden", theme: 'hollow', town: 'crag', dungeon: 'hollow',
     ...lay({
       width: 1400, ground: 540,
       ledges: [
-        { x: 60, y: 460, w: 230 }, { x: 60, y: 380, w: 160 }, { x: 170, y: 300, w: 210 },
-        { x: 1110, y: 460, w: 230 }, { x: 1180, y: 380, w: 160 }, { x: 1020, y: 300, w: 210 },
-        { x: 600, y: 320, w: 200 },
-        { x: 90, y: 220, w: 100 },
+        { x: 60, y: 460, w: 230, root: 'left' }, { x: 60, y: 380, w: 160, root: 'left' }, { x: 170, y: 300, w: 210, hang: true },
+        { x: 1110, y: 460, w: 230, root: 'right' }, { x: 1180, y: 380, w: 160, root: 'right' }, { x: 1020, y: 300, w: 210, hang: true },
+        // (The great mushroom's cap: the mushroom draws it.)
+        { x: 600, y: 320, w: 200, bare: true },
+        { x: 90, y: 220, w: 100, hang: true },
       ],
       zones: [{ name: "Capper's Garden", color: '#ffb0d0', mobs: [] }],
     }),
-    look: { sky: ['#4a2a5a', '#8a4a80', '#d890b8'], far: '#5a3460', mid: '#8a5480', midTrim: '#c890b8', ...ROOTS, light: 'grove', drift: 'spore', shrooms: ['#ff9ec8', '#ffd0e8', '#c9a6ff'] },
+    look: { painted: 'rootroom', glow: '#ff9ec8', glowAt: [700, 540], sky: ['#4a2a5a', '#8a4a80', '#d890b8'], far: '#5a3460', mid: '#8a5480', midTrim: '#c890b8', material: 'rootfloor', islands: 'rootshelf', ropes: 'root', props: [], clouds: false, critters: ['firefly'], light: 'grove', drift: 'spore', shrooms: ['#ff9ec8', '#ffd0e8', '#c9a6ff'] },
     bouncers: [{ x: 440 }, { x: 960 }],
-    deco: [['mushring', 610], ['giantshroom', 200, 2, 300], ['giantshroom', 1120, 0, 300], ['glowpool', 700, 0, 320]],
+    deco: [['rootwall', 30, 0], ['rootwall', 1370, 1], ['rootceiling', 210, 0, 96, { under: true }], ['rootceiling', 630, 1, 96, { under: true }], ['rootceiling', 1050, 2, 96, { under: true }], ['rootceiling', 1470, 3, 96, { under: true }], ['greatcap', 700]],
     portals: [
       { id: 'west', x: 40, y: 540, to: 'hollow1', toPortal: 'east' },
       { id: 'east', x: 1360, y: 540, to: 'hollow3', toPortal: 'west', sealed: true },
@@ -1108,27 +1167,28 @@ Object.assign(MAPS, {
     spawns: [{ mob: 'mothercapper', x: 760, y: 540 }],
   },
 
-  // Bramble Tunnels: a root floor on top with holes dropping into the tunnels beneath. The trapped
-  // Sprouts are caged on both levels; spores rise through the first hole to carry you back up, the
-  // Sprouts' stump house stands on top, and roots fall from the low tunnel roof in a fight.
+  // Bramble Tunnels (remade 2026-11-18): a floor of great roots on top, held up on root pillars, with
+  // holes dropping into the earthen tunnels beneath. The trapped Sprouts are caged on both levels;
+  // spores rise through the first hole to carry you back up, the Sprouts' stump house stands on top,
+  // and roots fall from the low tunnel roof in a fight.
   hollow3: {
     id: 'hollow3', name: 'Bramble Tunnels', theme: 'hollow', town: 'crag', dungeon: 'hollow',
     ...lay({
       width: 2400, ground: 700, by: 'y',
       ledges: [
-        { x: 40, y: 420, w: 560 }, { x: 700, y: 420, w: 620 }, { x: 1420, y: 420, w: 560 }, { x: 2060, y: 420, w: 300 },
-        { x: 1080, y: 580, w: 160 },
+        { x: 40, y: 420, w: 560, root: 'left' }, { x: 700, y: 420, w: 620 }, { x: 1420, y: 420, w: 560 }, { x: 2060, y: 420, w: 300, root: 'right' },
+        { x: 1080, y: 580, w: 160, hang: true },
       ],
       zones: [
         { name: 'The Tunnels', color: '#b08ad8', mobs: [], look: { sky: ['#1e1418', '#2e2026', '#45302e'] } },
         { name: 'The Root Floor', color: '#9fd88a', from: 500, mobs: [], look: { sky: ['#2a3a2a', '#45583a', '#6a7a4a'] } },
       ],
     }),
-    look: { sky: ['#1e1418', '#2e2026', '#45302e'], far: '#2e2226', mid: '#4a3434', midTrim: '#6a4a44', ...ROOTS, light: 'cave', drift: 'spore' },
+    look: { painted: 'rootroom', glow: '#e8b070', glowAt: [1200, 700], sky: ['#1e1418', '#2e2026', '#45302e'], far: '#2e2226', mid: '#4a3434', midTrim: '#6a4a44', material: 'rootfloor', islands: 'rootshelf', ropes: 'root', props: [], clouds: false, critters: ['firefly'], light: 'cave', drift: 'spore', shrooms: ['#7fe6d6', '#ffb0d0', '#ffd68a'] },
     task: { kind: 'free', label: 'Free the trapped Sprouts' },
     rootfall: true,
     updrafts: [{ x: 650, w: 56, top: 400, bottom: 700, kind: 'spores' }],
-    deco: [['stumphouse', 1560, 0, 420], ['hollowlog', 420, 0], ['giantshroom', 2240, 1, 420], ['mushring', 1640]],
+    deco: [['rootwall', 10, 2], ['rootwall', 2390, 3], ['rootceiling', 210, 0, 96, { under: true }], ['rootceiling', 630, 1, 96, { under: true }], ['rootceiling', 1050, 2, 96, { under: true }], ['rootceiling', 1470, 3, 96, { under: true }], ['rootceiling', 1890, 0, 96, { under: true }], ['rootceiling', 2310, 1, 96, { under: true }], ['rootpillar', 760], ['rootpillar', 1040], ['rootpillar', 1500], ['rootpillar', 1920], ['stumphouse', 1560, 0, 420]],
     portals: [
       { id: 'west', x: 60, y: 420, to: 'hollow2', toPortal: 'east' },
       { id: 'east', x: 2350, y: 700, to: 'hollow4', toPortal: 'west', sealed: true },
@@ -1138,18 +1198,19 @@ Object.assign(MAPS, {
     spawns: [...packAt('a', 1000, 420, 'rootling', 'thornback', 'rootling'), ...packAt('b', 1340, 700, 'sporecap', 'rootling', 'sporecap'), ...packAt('c', 1880, 700, 'thornback', 'sporecap', 'rootling')],
   },
 
-  // Boar Den: a long, low den, room for Tuskar's charges, with a mud wallow, old bones, two stone
-  // pillars to trick him into, and raised side ledges to dodge onto.
+  // Boar Den (remade 2026-11-18): a long, low den dug in under the roots, warm and earthy, room for
+  // Tuskar's charges: his mud wallow, old bones, two stone pillars to trick him into, a root arching
+  // up out of the floor in the middle and root shelves along both walls to dodge onto.
   hollow4: {
     id: 'hollow4', name: 'Boar Den', theme: 'hollow', town: 'crag', dungeon: 'hollow',
     ...lay({
       width: 1500, ground: 460,
-      ledges: [{ x: 60, y: 380, w: 200 }, { x: 1240, y: 380, w: 200 }, { x: 660, y: 340, w: 180 }, { x: 1360, y: 300, w: 100 }],
+      ledges: [{ x: 60, y: 380, w: 200, root: 'left' }, { x: 1240, y: 380, w: 200, root: 'right' }, { x: 660, y: 340, w: 180, bare: true }, { x: 1360, y: 300, w: 100, root: 'right' }],
       zones: [{ name: 'Boar Den', color: '#d8a878', mobs: [] }],
     }),
-    look: { sky: ['#3a2420', '#6a4232', '#a8704e'], far: '#4a2e26', mid: '#6a4636', midTrim: '#9a6a4e', ...ROOTS, light: 'dusk', drift: 'spore' },
+    look: { painted: 'rootroom', glow: '#ffb070', glowAt: [750, 460], sky: ['#3a2420', '#6a4232', '#a8704e'], far: '#4a2e26', mid: '#6a4636', midTrim: '#9a6a4e', material: 'rootfloor', islands: 'rootshelf', ropes: 'root', props: [], clouds: false, critters: ['firefly'], light: 'dusk', drift: 'spore', shrooms: ['#7fe6d6', '#ffb0d0', '#ffd68a'] },
     pillars: [{ x: 420 }, { x: 1250 }],
-    deco: [['bones', 300], ['pond', 980], ['bones', 1180, 1], ['hollowlog', 560]],
+    deco: [['rootwall', 30, 0], ['rootwall', 1470, 1], ['rootceiling', 210, 0, 96, { under: true }], ['rootceiling', 630, 1, 96, { under: true }], ['rootceiling', 1050, 2, 96, { under: true }], ['rootceiling', 1470, 3, 96, { under: true }], ['rootarch', 750, 120], ['bones', 300], ['pond', 980]],
     portals: [
       { id: 'west', x: 40, y: 460, to: 'hollow3', toPortal: 'east' },
       { id: 'east', x: 1460, y: 460, to: 'hollow5', toPortal: 'west', sealed: true },
@@ -1159,18 +1220,19 @@ Object.assign(MAPS, {
     spawns: [{ mob: 'tuskar', x: 900, y: 460 }],
   },
 
-  // The Root Gate: a tall climb out of the sap. The sap surges over the floor now and then, so the
-  // group climbs: the Sap Pools, the Root Stair, then the Gate Ledge with the Root Gate on top. The
+  // The Root Gate (remade 2026-11-18): a tall climb out of the sap, through a chamber lit amber from
+  // below. The sap surges over the floor now and then, so the group climbs root shelves hung from the
+  // roots above (the Sap Pools, the Root Stair, then the Gate Ledge with the Root Gate on top). The
   // keys are on the Thornbacks, one on each level, and a column of spores lifts you up the middle.
   hollow5: {
     id: 'hollow5', name: 'The Root Gate', theme: 'hollow', town: 'crag', dungeon: 'hollow',
     ...lay({
       width: 2000, ground: 1000, by: 'y',
       ledges: [
-        { x: 80, y: 920, w: 360 }, { x: 1500, y: 920, w: 420 }, { x: 560, y: 860, w: 300 }, { x: 1080, y: 850, w: 320 },
-        { x: 200, y: 770, w: 260 }, { x: 1340, y: 760, w: 300 }, { x: 760, y: 720, w: 240 }, { x: 100, y: 680, w: 300 }, { x: 1600, y: 680, w: 280 },
-        { x: 520, y: 620, w: 260 }, { x: 1220, y: 610, w: 240 }, { x: 820, y: 530, w: 420, thick: 44 },
-        { x: 120, y: 600, w: 130 },
+        { x: 80, y: 920, w: 360, root: 'left' }, { x: 1500, y: 920, w: 420, root: 'right' }, { x: 560, y: 860, w: 300, hang: true }, { x: 1080, y: 850, w: 320, hang: true },
+        { x: 200, y: 770, w: 260, hang: true }, { x: 1340, y: 760, w: 300, hang: true }, { x: 760, y: 720, w: 240, hang: true }, { x: 100, y: 680, w: 300, root: 'left' }, { x: 1600, y: 680, w: 280, hang: true },
+        { x: 520, y: 620, w: 260, hang: true }, { x: 1220, y: 610, w: 240, hang: true }, { x: 820, y: 530, w: 420, thick: 44, hang: true },
+        { x: 120, y: 600, w: 130, root: 'left' },
       ],
       zones: [
         { name: 'The Sap Pools', color: '#e8c070', mobs: [], look: { sky: ['#4a2a14', '#8a5220', '#d8903a'] } },
@@ -1178,11 +1240,11 @@ Object.assign(MAPS, {
         { name: 'The Gate Ledge', color: '#9fd88a', from: 650, mobs: [], look: { sky: ['#3a3a2a', '#6a6a3a', '#b8b060'] } },
       ],
     }),
-    look: { sky: ['#4a2e1a', '#9a6028', '#e8a850'], far: '#5a3a20', mid: '#7a5030', midTrim: '#b88048', ...ROOTS, light: 'crag', drift: 'spore' },
+    look: { painted: 'rootroom', glow: '#ffc860', glowAt: [1000, 1000], sky: ['#4a2e1a', '#9a6028', '#e8a850'], far: '#5a3a20', mid: '#7a5030', midTrim: '#b88048', material: 'rootfloor', islands: 'rootshelf', ropes: 'root', props: [], clouds: false, critters: ['firefly'], light: 'crag', drift: 'spore', shrooms: ['#7fe6d6', '#ffb0d0', '#ffd68a'] },
     task: { kind: 'keys', label: 'Find the Root Keys', count: 3 },
     flood: { every: 24, warn: 3, last: 7, damage: 40 },
     updrafts: [{ x: 1040, w: 60, top: 540, bottom: 1000, kind: 'spores' }],
-    deco: [['rootgate', 1160, 0, 530], ['giantshroom', 230, 2], ['mushring', 1590]],
+    deco: [['rootwall', 60, 2], ['rootwall', 1950, 3], ['rootceiling', 210, 0, 96, { under: true }], ['rootceiling', 630, 1, 96, { under: true }], ['rootceiling', 1050, 2, 96, { under: true }], ['rootceiling', 1470, 3, 96, { under: true }], ['rootceiling', 1890, 0, 96, { under: true }], ['rootgate', 1160, 0, 530]],
     portals: [
       { id: 'west', x: 40, y: 1000, to: 'hollow4', toPortal: 'east' },
       { id: 'east', x: 1160, y: 530, to: 'hollow6', toPortal: 'west', sealed: true },
@@ -1195,19 +1257,20 @@ Object.assign(MAPS, {
     ].map((sp) => (sp.mob === 'thornback' ? { ...sp, key: true } : sp)),
   },
 
-  // Heart of the Hollow: the round chamber under the great tree's glowing heart, ringed with two
-  // tiers of ledges. Gnarlroot's heart opens above him in his last phase: strike it from up high.
+  // Heart of the Hollow (remade 2026-11-18): the round chamber under the great tree's glowing heart,
+  // lit teal, ringed with two tiers of root shelves hung from the roots above. Gnarlroot's heart
+  // opens above him in his last phase: strike it from up high.
   hollow6: {
     id: 'hollow6', name: 'Heart of the Hollow', theme: 'hollow', town: 'crag', dungeon: 'hollow',
     width: 1500, height: 420, groundY: G,
     platforms: [
-      { x: 140, y: 300, w: 170 }, { x: 560, y: 300, w: 150 }, { x: 900, y: 300, w: 150 }, { x: 1220, y: 300, w: 170 },
-      { x: 640, y: 220, w: 120 }, { x: 860, y: 220, w: 120 }, { x: 250, y: 220, w: 140 }, { x: 1060, y: 220, w: 140 },
-      { x: 1180, y: 140, w: 100 },
+      { x: 140, y: 300, w: 170, hang: true }, { x: 560, y: 300, w: 150, hang: true }, { x: 900, y: 300, w: 150, hang: true }, { x: 1220, y: 300, w: 170, hang: true },
+      { x: 640, y: 220, w: 120, hang: true }, { x: 860, y: 220, w: 120, hang: true }, { x: 250, y: 220, w: 140, hang: true }, { x: 1060, y: 220, w: 140, hang: true },
+      { x: 1180, y: 140, w: 100, hang: true },
     ],
     ropes: [],
-    look: { sky: ['#14242e', '#1e4a4a', '#5ac0a8'], far: '#1e3a3a', mid: '#2e5a52', midTrim: '#5aa088', ...ROOTS, light: 'hollow', drift: 'spore', shrooms: ['#7fe6d6', '#c4f6ee', '#9fffb0'] },
-    deco: [['glowpool', 380], ['giantshroom', 1250, 1], ['glowpool', 1120], ['mushring', 760]],
+    look: { painted: 'rootroom', glow: '#7fe6d6', glowAt: [860, 260], sky: ['#14242e', '#1e4a4a', '#5ac0a8'], far: '#1e3a3a', mid: '#2e5a52', midTrim: '#5aa088', material: 'rootfloor', islands: 'rootshelf', ropes: 'root', props: [], clouds: false, critters: ['firefly'], light: 'hollow', drift: 'spore', shrooms: ['#7fe6d6', '#c4f6ee', '#9fffb0'] },
+    deco: [['rootwall', 0, 0], ['rootwall', 1500, 1], ['rootceiling', 210, 0, 96, { under: true }], ['rootceiling', 630, 1, 96, { under: true }], ['rootceiling', 1050, 2, 96, { under: true }], ['rootceiling', 1470, 3, 96, { under: true }], ['glowpool', 380], ['glowpool', 1120]],
     portals: [
       { id: 'west', x: 40, y: G, to: 'hollow5', toPortal: 'east' },
       { id: 'out', x: 1450, y: G, to: 'hollow_gate', toPortal: 'start', label: 'Exit', sealed: true },
@@ -1217,6 +1280,9 @@ Object.assign(MAPS, {
     spawns: [{ mob: 'gnarlroot', x: 860, y: G }],
   },
 });
+
+// (Up the great mushroom's stalk in Capper's Garden you climb a vine, not a root.)
+for (const r of MAPS.hollow2.ropes) if (r.x === 700) r.style = 'vine';
 
 // ---------- Moonlit Manor (the levels 15-20 group dungeon, docs/design/moonlit-manor.md) ----------
 //
@@ -2944,7 +3010,7 @@ MAPS.starfall.spawns.push({ mob: 'selene', x: 1300, y: 1040, respawn: 600 });
 // way), so a long map never means a long walk back.
 const HOMESTONES = {
   meadow1: [1555, 400], meadow2: [200, 700], woods: [1650, 880], ruins: [2220, 900], cave: [2380, 520],
-  sky: [2460, 400], canyon: [410, 520], glade: [880, 900], shrine: [2164, 560], ridge: [2200, 400],
+  sky: [2460, 400], canyon: [110, 520], glade: [880, 900], shrine: [2164, 560], ridge: [2200, 400],
   springs: [1992, 640], peak: [2040, 880], starfall: [2290, 440],
 };
 for (const [id, [x, y]] of Object.entries(HOMESTONES)) {
@@ -2968,8 +3034,7 @@ const GALLERY_PROPS = { props: ['candle', 'books', 'column', 'candle', 'orb'], l
 const SEA_HALL = { islands: 'gallery', material: 'marble', ceiling: 'manor', trim: '#bfeeff', ceilingTint: { band: '#2e5a86', trim: '#bfeeff', swag: '#4fb8c0', lamp: '#d8fbff' }, props: ['column', 'crystal', 'orb', 'crystal'], ledgeProp: 'crystal', edges: null };
 const THEATRE_HALL = { islands: 'gallery', material: 'parquet', ceiling: 'curtain', trim: '#ffd36b', props: ['column', 'lamp', 'poster', 'candle'], ledgeProp: 'candle', edges: null };
 const INTERIORS = {
-  // Inside the great tree: an earthen, root-hung ceiling over the root ledges.
-  hollow2: { ceiling: true }, hollow3: { ceiling: true }, hollow4: { ceiling: true }, hollow5: { ceiling: true }, hollow6: { ceiling: true },
+  // (Rootwood Hollow's rooms draw their own root ceiling as scenery, not the cave's stone one.)
   // The manor's halls: galleries on gilded chains.
   manor2: { islands: 'gallery', ...GALLERY_PROPS }, manor3: { islands: 'gallery', ...GALLERY_PROPS },
   manor4: { islands: 'gallery', ...GALLERY_PROPS, props: ['books', 'books', 'candle', 'column'] }, manor5: { islands: 'gallery', ...GALLERY_PROPS },
@@ -3027,5 +3092,3 @@ for (const h of Object.values(SWEETHEARTS)) {
   };
 }
 
-// The deep rooms of Rootwood Hollow are under the roots: root-bound earth, no grass.
-for (const id of ['hollow3', 'hollow4', 'hollow5', 'hollow6']) MAPS[id].look = { ...MAPS[id].look, material: 'rootden' };

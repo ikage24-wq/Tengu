@@ -142,3 +142,5 @@ the Queen's snore), 344 Audio - Antique Books (pages), Rescopic Sound - Distinct
 Cinematic Sound Design - User Interface (the twinkle), Sonic Bat - Fireworks Ambience (fireworks far
 off), BluezoneCorp - Steampunk Mechanical Sounds (the faint alarm bell), Sonic Bat - Music Boxes (the
 three music-box phrases).
+
+Windy Canyon's night rumble, Gnarlroot turning over in his sleep far below (tools/build-prologue-audio.py `canyonRumble`): a heavy creak and rumble of old wood (Bluezone - Forest Creature Sound Effects), low-passed with a little echo so it sounds far under the rock. Sonniss GDC bundles, royalty free inside the game.

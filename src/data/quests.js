@@ -117,6 +117,7 @@ export const QUESTS = {
     text: "Rule 12: proof or it didn't happen. The Hollow's full of acorns, and the Rootlings hoard them. Take a group of four down, one tank, one healer, two fighters. Not three fighters. Not 'two fighters and a bard'. Bring me 5 Hollow Acorns so I know you went all the way down.",
     objectives: [{ type: 'collect', item: 'hollow_acorn', count: 5 }],
     rewards: { exp: 9000, gold: 600, items: [] },
+    thanks: "Five acorns. And the old tree finished his sentence? Mira's been timing him. Three days, she says. THREE DAYS. Good work.",
   },
   bramble_wipe: {
     id: 'bramble_wipe', name: 'The Great Wipe', giver: 'bramble', minLevel: 12, prereq: 'hollow_heart',
@@ -313,7 +314,7 @@ export const QUESTS = {
     id: 'canyon_lookout', name: 'The Lookout', giver: 'rook', minLevel: 12, prereq: 'canyon_stingers',
     text: "Something's stirring under that canyon. Climb to the very top ledge of Windy Canyon and take a good look, then tell Bramble at the Hollow Gate what you saw. He'll want to know.",
     objectives: [
-      { type: 'visit', map: 'canyon', above: 330, place: 'the top of Windy Canyon' },
+      { type: 'visit', map: 'canyon', above: 430, place: 'the top of Windy Canyon' },
       { type: 'talk', npc: 'bramble', say: "Roots moving under the rock? Then Gnarlroot's waking. Thank you: I'll need brave folk soon." },
     ],
     rewards: { exp: 3200, gold: 240, items: [{ id: 'hollow_acorn', qty: 3 }, { id: 'orange_potion', qty: 20 }] },
@@ -657,7 +658,7 @@ export const QUESTS = {
   kestrel_canyon: {
     id: 'kestrel_canyon', name: 'The Arrow That Never Landed', giver: 'kestrel', minLevel: 12, prereq: 'kestrel_targets',
     text: "Fine, you heard the story. Everyone has. There's a song. It rhymes 'Kestrel' with 'never fell'. I shot it from the very top of Windy Canyon and it never came down. Climb up there and tell me what the wind does. Mind the Manticore Cubs nesting on the ledges: calm 15 of them.",
-    objectives: [{ type: 'visit', map: 'canyon', above: 310, place: 'the very top of Windy Canyon' }, { type: 'kill', mob: 'scorpip', count: 15 }],
+    objectives: [{ type: 'visit', map: 'canyon', above: 420, place: 'the very top of Windy Canyon' }, { type: 'kill', mob: 'scorpip', count: 15 }],
     rewards: { exp: 5600, gold: 180, items: [] },
   },
   kestrel_glade: {
@@ -688,7 +689,7 @@ export const QUESTS = {
     id: 'vex_shadows', name: 'Shadow Run', giver: 'vex', minLevel: 15,
     text: "A dancer's legs carry the whole show. Run to the top of Windy Canyon, cross to Ember Crag and say hi to Tora for me. Quick feet now. Training-montage pace. I'll hum.",
     objectives: [
-      { type: 'visit', map: 'canyon', above: 330, place: 'the top of Windy Canyon' },
+      { type: 'visit', map: 'canyon', above: 430, place: 'the top of Windy Canyon' },
       { type: 'talk', npc: 'tora', say: "Vex sent you? Ha. Tell that rascal I want my good hammer back. She thinks I didn't notice. I notice EVERYTHING. ...Have you seen my glasses?" },
     ],
     rewards: { exp: 8000, gold: 410, items: [] },

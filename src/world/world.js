@@ -173,6 +173,8 @@ export function loadMap(world, mapId, portalId) {
   const map = getMap(mapId);
   const portal = findPortal(map, portalId);
   world.map = map;
+  // (Which of the Queen's elders have come home, for her bedchamber to show: render/prologue.js.)
+  map.elders = world.char.elders ?? null;
   // The Sweethearts are in town by day and at home in their rooms at night (world/goinghome.js).
   settleSweethearts(world);
   world.char.mapId = map.id;
@@ -702,12 +704,13 @@ export function killMob(world, m, byParty = false) {
     world.log(`${QUESTS[qid].name}: ${char.quests[qid].kills[m.def.id]}/${goal.count} ${m.def.name}${by ? ` (${by})` : ''}`, '#bff0dc');
     if (by) (world.partyCredit ??= {})[`${qid}|${m.def.id}`] = { name: by, at: world.now };
   }
-  world.drops.push(...spawnDrops(rollLoot(m.def, Math.random, (d) => fitsJob(char, d)), m.x, m.y));
+  // (`m.dropX`: a big boss's loot lands beside him, not on top of his farewell.)
+  world.drops.push(...spawnDrops(rollLoot(m.def, Math.random, (d) => fitsJob(char, d)), m.dropX ?? m.x, m.y));
   // A queen (or the Crystal King) drops a piece of her set for your job: always from her trial,
   // sometimes from a rematch.
   const story = m.def.id === 'crystalking' && char.quests.story_7_2?.state === 'active';
   const piece = setDropFor(char, m.def.id, m.trialOf || story ? 1 : 0.35);
-  if (piece) world.drops.push(...spawnDrops([{ kind: 'item', inst: makeEquip(piece, { rarity: 1, variant: 'roll' }) }], m.x, m.y));
+  if (piece) world.drops.push(...spawnDrops([{ kind: 'item', inst: makeEquip(piece, { rarity: 1, variant: 'roll' }) }], m.dropX ?? m.x, m.y));
   world.juice.push({ type: 'kill', x: m.x, y: m.y, w: m.def.w, h: m.def.h, boss: Boolean(m.def.boss), mob: m.def.id, leaf: Boolean(m.def.leafPoof) });
   // A boss falls with a short stop; its weight comes from the slow motion and flash after (see
   // render/particles.js).
@@ -1075,7 +1078,7 @@ export function updateWorld(world, dt, input) {
     m.poison.tick -= dt;
     if (m.poison.tick > 0) continue;
     m.poison.tick = 1;
-    m.hp = Math.max(0, m.hp - m.poison.dmg);
+    m.hp = Math.max(m.minHp ?? 0, m.hp - m.poison.dmg);
     const bleed = m.poison.kind === 'bleed';
     const burn = m.poison.kind === 'burn';
     world.fx.push({ kind: burn ? (m.poison.look ? `${m.poison.look}burn` : 'foxburn') : 'poisonpuff', bleed, mob: m, x: m.x, y: m.y, h: m.def.h, t: 0, dur: 0.6, seed: Math.random() });
