@@ -3,10 +3,8 @@
 //                 leaf tucked in its band, a wicker basket of tea on its back and a pair of tea
 //                 shears it snips you with. Signature: the dark bandit mask round its eyes and the
 //                 leaf, which flutters loose when it's hurt.
-//   kettletanuki  Kettle Tanuki: a tanuki halfway through turning into an iron tea kettle (the old
-//                 story of the kettle that grew legs), head, paws and striped tail poking out of a
-//                 cast-iron pot. Signature: its lid rattles as it winds up, then it blasts steam out
-//                 of the spout.
+//   kettletanuki  Kettle Tanuki: a shape-shifter who stands about as a copper kettle and pops out its
+//                 head, feet and tail when it moves or fights (a live rig of its own, 2026-11-19).
 // Faces use the simple eyes and mouths (faces.js). Faces right; see kit.js for the shapes.
 
 //   lantertanuki  Lantern Tanuki: a tanuki pretending to be a paper lantern in the Mist Hollow at
@@ -17,6 +15,7 @@
 //                 his rig is in teapotrig.js.
 
 import { teapotRig, teapotStill } from './teapotrig.js';
+import { kettleDisguiseRig, kettleDisguiseStill } from './kettledisguiserig.js';
 
 // A rig drawn `k` times its size about its feet.
 const grown = (rig, k) => ({
@@ -72,9 +71,7 @@ const WICKER = ramp('#c08a52', { step: 10, turn: 12, sat: -6 });
 const LEAF = ramp('#7cc46a', { step: 11, turn: 16 });
 const TEA = ramp('#5aa85a', { step: 10, turn: 14 });
 const STEEL = ['#eef2f8', '#b8c2d4', '#7a849a'];
-const IRON = ramp('#4a5262', { step: 9, turn: 12, sat: -4 });
 const RIBBON = '#d0504a';
-const STEAM = '#ffffff';
 
 // The tanuki face both share: a round head, round ears with dark insides, the bandit mask, a cream
 // muzzle and a button nose. hx, hy: head centre; k: size; em: the eye mood; m: the mouth mood.
@@ -195,70 +192,6 @@ function tanukipicker(pose, f, mood) {
   return { w: 46, h: 52, res: 3, shapes: shift(out, 2, 2) };
 }
 
-// ---------- Kettle Tanuki ----------
-
-// Attack keys: rattle (the lid's jiggle), crouch, jet (steam out of the spout, 0..1).
-const KETTLE_ATK = [
-  { rattle: 1, crouch: 2, jet: 0 },
-  { rattle: 1.6, crouch: 3, jet: 0 },
-  { rattle: 0, crouch: -1, jet: 1 },
-  { rattle: 0, crouch: 0, jet: 0.7 },
-  { rattle: 0, crouch: 0, jet: 0.25 },
-];
-
-function kettletanuki(pose, f, mood) {
-  const walk = pose === 'walk';
-  const idle = pose === 'idle';
-  const A = pose === 'attack' ? KETTLE_ATK[f] : null;
-  const q = walk ? f / 8 : idle ? f / 6 : 0;
-  const dead = mood === 'dead';
-  const hurt = mood === 'hurt';
-  const out = [];
-  const x0 = 22;
-  const gy = 46;
-  // It scuttles on four stubby legs, the heavy pot rocking; at rest the lid lifts with each breath.
-  const bob = walk ? Math.abs(Math.sin(TAU * q * 2)) * 1.6 : A ? -A.crouch * 0.6 : 0;
-  const rock = dead ? -90 : hurt ? -12 : walk ? 4 * Math.sin(TAU * q) : idle ? sway(q) * 1.5 : 0;
-  const cy = gy - 13 - bob;
-  const pot = [];
-  // Legs: four little dark paws under the pot.
-  [[-8, 0], [-3, 0.5], [3, 0], [8, 0.5]].forEach(([dx, ph], i) => {
-    const step = walk ? Math.sin(TAU * (q * 2 + ph)) * 2 : 0;
-    pot.push(...stroke([[x0 + dx, cy + 7], [x0 + dx + step, gy - 1.4]], 2.4, i % 2 ? DARK.base : DARK.sh, false), O(x0 + dx + step + 0.6, gy - 1, 1.9, 1, 0, DARK.deep, 8));
-  });
-  // The tail out of the back, swinging a beat late.
-  const wag = walk ? Math.sin(TAU * q - 1.2) * 2.4 : idle ? Math.sin(TAU * q - 1.6) * 1.6 : 0;
-  pot.push(...tail(x0 - 12, cy + 1, 0.9, wag));
-  // The iron pot: a squat round body, a rim, a raised band of hobnails, a highlight from the light.
-  pot.push(O(x0, cy, 13, 10, 0, IRON.base, 26), crescent(x0, cy, 13, 10, IRON.sh, { k: 0.3, a0: 60, a1: 240 }));
-  for (let i = 0; i < 7; i++) pot.push(E(x0 - 9 + i * 3, cy - 3.6 + Math.abs(i - 3) * 0.3, 0.7, 0.7, IRON.hi));
-  pot.push(O(x0 - 4, cy - 6, 4, 1.4, -10, IRON.hi, 12));
-  // The spout, out of the front, and the bail handle arching over.
-  pot.push(F(T([[x0 + 10, cy - 1], [x0 + 17, cy - 7], [x0 + 18.6, cy - 6], [x0 + 12, cy + 2]], IRON.sh)), O(x0 + 18, cy - 6.6, 1.4, 1, -40, IRON.deep, 8));
-  // The lid, rattling up and down as it winds up (a held jiggle, the steam squeezing out under it).
-  const rat = A ? A.rattle * (f % 2 ? 1 : -1) : idle ? (Math.sin(TAU * q - 1) + 1) * 0.4 : 0;
-  const ly = cy - 9.6 - Math.abs(rat);
-  const lid = [O(x0, ly, 8.4, 2.2, rat * 3, IRON.sh, 18), O(x0, ly - 1.2, 2, 1.4, 0, IRON.deep, 10)];
-  pot.push(...stroke([[x0 - 10, cy - 7], [x0 - 7, cy - 17], [x0 + 7, cy - 17], [x0 + 10, cy - 7]], 1, IRON.deep));
-  pot.push(...lid);
-  // The tanuki front: head and two paws poking out of the pot's front.
-  const hx = x0 + 6;
-  const hy = cy - 1 + (walk ? Math.sin(TAU * q * 2 - 1.4) * 0.6 : 0);
-  const em = dead ? 'dead' : hurt ? 'hurt' : mood === 'angry' || A ? 'angry' : mood === 'happy' ? 'happy' : mood === 'blink' ? 'blink' : 'idle';
-  const mm = dead || hurt ? 'hurt' : A && f >= 2 ? 'shout' : A ? 'angry' : mood === 'happy' ? 'happy' : 'idle';
-  pot.push(...stroke([[x0 + 4, cy + 4], [x0 + 9, cy + 6]], 2.2, DARK.base, false));
-  pot.push(...tanukiHead(hx, hy, 0.85, em, mm, { dead, ear: walk ? Math.sin(TAU * q * 2) * 5 : 0 }));
-  out.push(...rotate(pot, x0, gy, rock));
-  // Steam: puffs squeezing out under the rattling lid on the wind-up, a jet out of the spout.
-  if (A && A.rattle) for (let i = 0; i < 3; i++) out.push(O(x0 - 6 + i * 6, ly - 3 - i, 1.8 + i * 0.4, 1.2, 0, STEAM, 10));
-  if (A && A.jet) {
-    const n = Math.round(4 * A.jet) + 1;
-    for (let i = 0; i < n; i++) out.push(O(x0 + 20 + i * 4.4 * ease(A.jet), cy - 7 - i * 1.6, 2 + i * 0.9, 1.4 + i * 0.6, -20, STEAM, 12));
-  }
-  if (idle && f === 2) out.push(O(x0 + 19, cy - 9, 1.4, 1, 0, STEAM, 8));
-  return { w: 56, h: 52, res: 3, shapes: shift(out, 2, 2) };
-}
-
 // ---------- Lantern Tanuki ----------
 
 const PAPER = ramp('#f4e4c4', { step: 8, turn: 24, sat: -4 });
@@ -327,7 +260,8 @@ function lantertanuki(pose, f, mood) {
 
 export const ART = {
   tanukipicker: { walk: 8, idle: 6, attack: 4, stride: 20, atkMs: [80, 300, 160], draw: tanukipicker },
-  kettletanuki: { walk: 8, idle: 6, attack: 5, stride: 18, atkMs: [120, 340, 200, 220], draw: kettletanuki },
+  // (Remade 2026-11-19 as the Kettle Disguise: a live rig.)
+  kettletanuki: { pad: 8, walk: 8, idle: 6, attack: 5, stride: 18, atkMs: [120, 340, 200, 220], draw: kettleDisguiseStill, rig: kettleDisguiseRig },
   lantertanuki: { walk: 8, idle: 6, attack: 4, stride: 18, atkMs: [140, 360, 200], draw: lantertanuki },
   // (Drawn a quarter bigger, 2026-11-19: he was small for a boss.)
   grandkettle: { walk: 4, idle: 3, attack: 4, stride: 40, atkMs: [200, 620, 260], draw: teapotStill, rig: grown(teapotRig, 1.25) },
@@ -335,7 +269,7 @@ export const ART = {
 
 export const INFO = {
   tanukipicker: { name: 'Tanuki Picker', w: 26, h: 34 },
-  kettletanuki: { name: 'Kettle Tanuki', w: 34, h: 30 },
+  kettletanuki: { name: 'Kettle Tanuki', w: 34, h: 36 },
   lantertanuki: { name: 'Lantern Tanuki', w: 26, h: 36 },
   grandkettle: { name: 'The Grand Kettle', w: 84, h: 90 },
 };

@@ -1,9 +1,11 @@
-// Monster art: Twilight Ruins (a will-o'-wisp, an imp, a dullahan) and Crystal Cave (a gem mimic,
+// Monster art: Twilight Ruins (a will-o'-wisp, an imp; the dullahan is a live rig of its own since
+// 2026-11-20, a kitten driving an empty suit of armour) and Crystal Cave (a gem mimic,
 // a crystal golem, a wraith). Every design faces right with its feet (or its floating hem) on the
 // bottom edge, and is built back to front from layered shapes with hand-placed shading.
 
 import { E, T, F, mix, arc, stroke, keyAt } from './kit.js';
 import { walkBob } from '../animator.js';
+import { kittenArmourRig, kittenArmourStill } from './kittenarmourrig.js';
 import { eye, glowEye, brow, mouth, blush, sweat, tear, deadEye, vein, starPts, ovalPts, easyEye } from './faces.js';
 
 const TAU = Math.PI * 2;
@@ -532,28 +534,7 @@ function imp(pose, frame, mood) {
   return { w: 46, h: 36, res: 3, shapes: [...out, ...fx] };
 }
 
-// ---------- Dullahan ----------
-// A headless knight: ghost-fire rising from the empty collar, a swept cape, an upright sword, and
-// its plumed helmet carried under one arm, burning slits glowing in the visor. Signature shape:
-// the flame where a head should be, with the helmet held low at its side.
-// Rig: pelvis (march bob) > legs (two-bone IK, feet planted on the ground and lifted in an arc) >
-// torso (lean) > collar flame (chains) and cape (three hanging chains, root to hem) > arms
-// (two-bone IK to a hand target) > the helmet riding the back hand and the sword the front hand.
-const KNIGHT = {
-  plateHi: '#f8faff', plate: '#bcc6ec', s1: '#8085c4', s2: '#5d5499', back: '#d6e4ff',
-  suit: '#56498c', suitD: '#403670', gold: '#ffcd55', goldHi: '#fff4c4', goldS: '#cf8a3c',
-  cape: '#7a5cc0', capeS: '#5e449f', lining: '#ff9ec0', plume: '#ff9ec0', plumeHi: '#ffd2e2', visor: '#211936',
-  blade: '#eef3ff', bladeS: '#b6c1ea', grip: '#7a5a8a',
-};
-// Attack keys: hand targets and sword angle (radians from upright, clockwise), the helmet raised
-// on the back hand, lean, crouch, and the flame's flare. A long wind-up with the sword cocked
-// overhead, a fast chop (smear), the held impact with the tip at the ground, then the settle.
-const DULL_ATK = [
-  { hand: [27, 18.4], sw: -0.9, head: [10.6, 22.4], lean: -0.1, crouch: 1.2, fire: 1.4, dx: -1.2 },
-  { hand: [34.4, 24], sw: 0.9, head: [10.4, 23], lean: 0.08, crouch: 0.4, fire: 1.15, dx: 0.6 },
-  { hand: [33.6, 34.4], sw: 2.62, head: [10.6, 24], lean: 0.14, crouch: 2.4, fire: 1, dx: 1.2 },
-  { hand: [32.6, 32.2], sw: 2.4, head: [10.8, 25], lean: 0.08, crouch: 1.4, fire: 1, dx: 0.8 },
-];
+// ---------- Limb helpers (the Ruins and Crystal Cave walkers) ----------
 
 // Two-bone IK: the joint between `a` and the end `b`, limbs l1 and l2 long, bending toward side
 // `bend` (+1 bends the knee forward, toward +x, for a limb hanging down).
@@ -574,201 +555,6 @@ function gait(p, stride, lift, duty = 0.52) {
 }
 // A segment's frame from point a toward point b (x along the segment).
 const segF = (a, b) => joint(ID, a[0], a[1], Math.atan2(b[1] - a[1], b[0] - a[0]));
-
-function visorEyes(mood, P, look) {
-  const out = [];
-  const c = mood === 'angry' ? '#ff8fc0' : mood === 'dead' ? '#9a94b4' : '#86f0e6';
-  const o = { c, bg: P.visor, shape: 'sharp', look: [look, 0], custom: { up: 0.8, dn: 0.55 } };
-  const act = { angry: { slant: 0.9, lid: 0.15 }, happy: { closed: 'happy' }, blink: { closed: 'blink' }, hurt: { closed: 'squeeze' } }[mood] ?? {};
-  if (mood === 'dead') out.push(...deadEye(10.9, 37.4, 0.8, { c, th: 0.5 }), ...deadEye(15, 37.2, 0.95, { c, th: 0.55 }));
-  else out.push(...glowEye(10.8, 37.3, { ...o, ...act, s: -1, w: 1.35, h: 1.25 }), ...glowEye(15.1, 37.1, { ...o, ...act, s: 1, w: 1.7, h: 1.4 }));
-  return out;
-}
-
-// The helmet, drawn at its rest place under the arm (pivot: where the hand holds it).
-function helmet(mood, P, look, plumeA) {
-  const h = [];
-  const pl = chain(joint(ID, 9.4, 32), [2.6, 2.6, 2.4], plumeA);
-  h.push(...oT(ribbonPts(pts(pl), [3.6, 3.4, 2.6, 0.8]), P.plume, 0.6), F(T(ribbonPts(pts(pl).slice(0, 3).map(([x, y]) => [x + 0.3, y - 0.5]), [1.3, 1.1, 0.5]), P.plumeHi)));
-  // Bucket helm: shadow side, plate toward the light, then the bevel shine and a backlight rim.
-  h.push(...oE(10.4, 38.2, 6.8, 6.6, P.s1), F(E(11.2, 37.4, 6, 5.8, P.plate)), F(T(ovalPts(12.6, 33.4, 3, 1.3, -0.2), P.plateHi)), ...stroke([[4.4, 40], [5.4, 43.4], [8, 44.6]], 0.67, P.back));
-  h.push(...stroke([[5.6, 34.6], [10, 31.8], [14.6, 33.6]], 1.3, P.gold), ...stroke([[7.6, 33], [10, 31.6], [12.4, 32.2]], 0.5, P.goldHi));
-  h.push(F(T([[8.2, 35], [17.6, 34.4], [17.8, 40], [8.6, 40.4]], P.visor)), ...stroke([[8.4, 35.1], [17.4, 34.5]], 0.7, P.plateHi), ...stroke([[13.2, 40.2], [13.2, 43.6]], 1, P.s1));
-  h.push(...visorEyes(mood, P, look));
-  for (const [x, y] of [[11.4, 41.8], [11.6, 43.2], [15, 41.8], [14.8, 43.2]]) h.push(F(E(x, y, 0.45, 0.45, P.visor)));
-  return h;
-}
-
-// Flat armour plates (Dullahan): a pauldron of stacked lames, each a flat band with its own lit
-// top plane and a dark gap line under the one above, so the plates read apart; and a pointed
-// cop (knee or elbow) in two facets, the upper front one lit.
-function lames(x, y, w, h, P, dark = false) {
-  const [base, top, low] = dark ? [P.s1, P.plate, P.s2] : [P.plate, P.plateHi, P.s1];
-  const cap = [[x - w * 0.5, y + h * 0.18], [x - w * 0.3, y - h * 0.5], [x + w * 0.3, y - h * 0.5], [x + w * 0.52, y - h * 0.18], [x + w * 0.52, y + h * 0.18]];
-  const out = [...oT(cap, base, 0.5), F(T([[x - w * 0.28, y - h * 0.5], [x + w * 0.3, y - h * 0.5], [x + w * 0.52, y - h * 0.18], [x - w * 0.1, y - h * 0.18]], top))];
-  [[0.2, 0.46, 0.54, 0.98, base], [0.48, 0.74, 0.5, 0.86, low]].forEach(([y0, y1, r0, r1, c]) => {
-    const band = [[x - w * r0, y + h * y0], [x + w * r0 + w * 0.02, y + h * y0], [x + w * r1 * 0.5, y + h * y1], [x - w * r1 * 0.5, y + h * y1]];
-    out.push(...oT(band, c, 0.5), F(T([[x - w * r0 * 0.9, y + h * y0 + 0.15], [x + w * r0 * 0.94, y + h * y0 + 0.15], [x + w * r0 * 0.9, y + h * y0 + 0.75], [x - w * r0 * 0.86, y + h * y0 + 0.75]], c === low ? base : top)));
-  });
-  return out;
-}
-function cop(x, y, r, P, dark = false) {
-  const [base, top] = dark ? [P.s1, P.plate] : [P.plate, P.plateHi];
-  return [...oT([[x - r, y], [x + 0.2, y - r], [x + r * 1.1, y - 0.1], [x + 0.2, y + r * 0.9]], base, 0.5), F(T([[x + 0.2, y - r], [x + r * 1.1, y - 0.1], [x + 0.3, y - 0.1]], top))];
-}
-
-function dullahan(pose, frame, mood) {
-  const walk = pose === 'walk';
-  const ak = pose === 'attack' ? DULL_ATK[frame] : null;
-  const dead = mood === 'dead';
-  const hurt = mood === 'hurt';
-  const angry = mood === 'angry' || !!ak;
-  const P = KNIGHT;
-  const u = ak ? frame / 4 : frame / (walk ? 8 : 6);
-  const ph = u * TAU;
-  const fl = angry ? ['#ff8fc0', '#ffd0e6', '#ffffff'] : dead ? ['#b8bfd0', '#dde1ea', '#f2f4f8'] : ['#7fe6e0', '#c8fbf4', '#ffffff'];
-  // A heavy march: the pelvis drops just after each foot plants (walkBob), the armour settling a
-  // beat later; standing, it breathes with a slow sideways sway.
-  const br = breath(u);
-  const bob = ak ? ak.crouch : walk ? 1.8 * (1 - walkBob(u)) : 0.6 * br;
-  const sway = ak ? ak.dx : walk ? 0.4 * Math.sin(ph) : 0.45 * Math.sin(ph - 0.8);
-  const hx = sway + (hurt ? -1.4 : 0);
-  const clank = walk ? 0.6 * (1 - walkBob(u, 0.12)) : 0.3 * breath(u - 0.1);
-  let lean = ak ? ak.lean : walk ? 0.06 + 0.02 * Math.sin(2 * ph - 1) : 0.02 * Math.sin(ph - 0.8);
-  if (hurt) lean -= 0.16;
-  if (dead) lean -= 0.1;
-  const pelvis = move(ID, hx, bob + (dead ? 2 : 0));
-  const torso = pivot(pelvis, 22, 42, lean);
-  const out = [];
-  const fxs = [];
-
-  // Legs: feet planted on the ground (no sliding), knees from IK, the far leg in the back plate.
-  const legs = [];
-  const leg = (hipX, p, back) => {
-    const hip = ap(pelvis, hipX, 44);
-    let foot;
-    let toe = 0;
-    if (walk) {
-      const [gx, up] = gait(p, 12, 3.2);
-      foot = [hipX + 1 + gx, 55.6 - up];
-      toe = up > 0.3 ? 0.25 : 0;
-    } else if (ak) foot = [hipX + (back ? -4 : 5) + ak.dx * 0.3, 55.6];
-    else if (dead) foot = [hipX + (back ? -1 : 3), 55.6];
-    else foot = [hipX + (back ? -1.6 : 2.2) + hx * 0.2, 55.6];
-    const knee = ik(hip, foot, 6.1, 6.1, 1);
-    const pc = back ? P.s1 : P.plate;
-    legs.push(...put(segF(hip, knee), limbPts([[0, 0], [6.1, 0]], 4.4, back ? P.suitD : P.suit)));
-    legs.push(...put(segF(knee, foot), [...limbPts([[0, 0], [6.1, 0]], 4.6, pc), F(T([[0.6, -1.9], [5.6, -1.9], [5.6, -0.9], [0.6, -0.9]], back ? P.plate : P.plateHi))]));
-    legs.push(...cop(knee[0] + 0.4, knee[1], 2.3, P, back));
-    // The sabaton stays flat while planted and tips its toe up as it swings through.
-    legs.push(...put(pivot(move(ID, foot[0], foot[1]), 0, 0, -toe), [...oT([[-2.6, -0.8], [1.4, -1], [4.4, 1.6], [4, 2.4], [-2.6, 2.4]], pc, 0.5), F(T([[-2.2, -0.5], [1.2, -0.7], [2.8, 0.4], [-2.2, 0.4]], back ? P.plate : P.plateHi))]));
-    if (walk && !dead && wrap(p) < 0.08) fxs.push(...dust(foot[0] + 1, 58, 0.55));
-  };
-  leg(19.4, u + 0.5, true);
-
-  // Cape: hung from the shoulders on three chains that trail the march, each link a beat later.
-  const capeAmp = dead ? 0 : walk ? 0.13 : ak ? 0.06 : 0.07;
-  const cw = (k, i) => (ak ? [-0.25, 0.3, 0.45, 0.25][frame] * (0.3 + i * 0.25) : 0) + capeAmp * (0.4 + i * 0.3) * Math.sin(ph * (walk ? 2 : 1) - k * 0.6 - i * 0.8) + (walk ? 0.12 * i : 0);
-  const capeChain = (x, y, k, l) => pts(chain(joint(torso, x, y, Math.PI / 2 + 0.42 + k * 0.1), [l, l, l, l * 0.8], [0, ...[1, 2, 3, 4].map((i) => cw(k, i) + 0.04 * i)]));
-  const cb = capeChain(15, 24, 2, 7.4);
-  const cm = capeChain(19, 24, 1, 7.2);
-  const cf = capeChain(24, 24, 0, 6.6);
-  const hem = [cb[4], [lerp(cb[4][0], cm[4][0], 0.5), lerp(cb[4][1], cm[4][1], 0.5) - 2.4], cm[4], [lerp(cm[4][0], cf[4][0], 0.5), lerp(cm[4][1], cf[4][1], 0.5) - 2], cf[4]];
-  const capeP = [ap(torso, 27, 23), ap(torso, 15, 23.4), ...cb.slice(1, 4), ...hem, ...cf.slice(1, 4).reverse()];
-  out.push(...oT(capeP, P.cape));
-  // The back half lies in shadow; folds run parallel down from the shoulders, the lining shows at the hem.
-  out.push(F(T([ap(torso, 15, 23.4), ...cb.slice(1, 5), hem[1], ...cm.slice(1, 4).reverse()], P.capeS)), ...stroke(cm.slice(1, 4), 0.67, P.capeS));
-  out.push(F(T([hem[0], hem[1], hem[2], [cm[4][0] + 0.4, cm[4][1] - 1.4], [cb[4][0] + 0.6, cb[4][1] - 1.6]], P.lining)), F(T([hem[2], hem[3], hem[4], [cf[4][0] - 0.4, cf[4][1] - 1.2], [cm[4][0] + 0.6, cm[4][1] - 1.4]], step(P.lining, -0.08))));
-
-  // Back arm (two-bone IK to the hand that carries the helmet).
-  const headAt = ak ? ak.head : dead ? [12, 47.6] : hurt ? [13.6, 44] : [13.6, 45.4 + clank * 0.5];
-  const bs = ap(torso, 15.4, 27);
-  const bh = [headAt[0] - hx, headAt[1] - bob];
-  const be = ik(bs, bh, 7.6, 7.2, ak ? 1 : -1);
-  out.push(...put(segF(bs, be), limbPts([[0, 0], [7.6, 0]], 3.6, P.suitD)));
-
-  // Breastplate: steel in three steps (shadow side, base, a cold bevel shine with a specular
-  // pin) plus a backlight rim on the shadow edge; gold trim, belt, faulds swinging a beat late.
-  const fs = walk ? 0.06 * Math.sin(2 * ph - 1.6) : ak ? [-0.06, 0.08, 0.12, 0.06][frame] : 0.03 * Math.sin(ph - 1.4);
-  out.push(...put(pivot(torso, 22, 42.6, fs), [...oT([[15.6, 42.6], [28.6, 42.6], [30, 46.8], [14.2, 46.8]], P.s1, 0.5), F(T([[22, 42.8], [28.6, 42.8], [29.8, 46.4], [22.2, 46.4]], P.plate)), F(T([[14.6, 45.6], [29.6, 45.6], [30, 46.8], [14.2, 46.8]], P.gold)), F(T([[22.6, 45.7], [29.4, 45.7], [29.5, 46.1], [22.6, 46.1]], P.goldHi))]));
-  const bp = [[15, 25], [29, 25], [30.6, 31], [28.6, 38], [27.4, 41], [16.6, 41], [15.4, 38], [13.8, 31]];
-  out.push(...put(torso, [...oT(bp, P.plate), F(T([[15, 25], [19, 25], [18, 33], [18.6, 41], [16.6, 41], [15.4, 38], [13.8, 31]], P.s1)), F(T([[14.4, 31], [15.4, 37.6], [16.4, 40.4], [15.6, 37.6]], P.back)),
-    F(T([[24.4, 26], [28.6, 26], [29.8, 31], [27.6, 34.4], [25.6, 31]], P.plateHi)), F(T([[26.8, 35.4], [28.2, 35.6], [27.2, 39], [26.2, 38.6]], P.plateHi)), F(E(27.4, 28, 0.5, 0.5, '#ffffff')),
-    // A centre ridge parting the two flat planes, and the plackart's gap line across the belly.
-    F(T([[21.6, 25.2], [22.6, 25.2], [22.9, 34], [22, 34]], P.plateHi)), F(T([[21.1, 25.2], [21.6, 25.2], [22, 34], [21.5, 34]], P.s1)), F(T([[15.2, 33.8], [22.4, 34.6], [29.6, 33.8], [29.4, 34.6], [22.4, 35.4], [15.4, 34.6]], P.s2)),
-    ...stroke([[21.6, 26], [22.2, 33], [21.8, 40.4]], 0.67, P.s1), F(T([[22.4, 30.4], [24, 32.4], [22.4, 34.6], [20.8, 32.4]], P.gold)), F(T([[22.4, 30.6], [23.4, 31.8], [22.4, 32.4]], P.goldHi)),
-    ...oT([[16.2, 40.2], [27.8, 40.2], [28, 42.6], [16, 42.6]], P.suit, 0.5), F(T([[20.8, 40], [24, 40], [24, 42.8], [20.8, 42.8]], P.gold)), F(E(22.4, 41.4, 0.7, 0.6, P.suitD))]));
-  // Back pauldron, bouncing a beat late on its strap.
-  out.push(...put(move(torso, 0, clank * 0.7), lames(15.2, 26.4, 8.8, 7.8, P, true)));
-
-  // The empty collar and its ghost-fire: three chained tongues, root leading, tips licking after.
-  const fk = (angry ? 1.2 : dead ? 0.35 : 1) * (ak ? ak.fire / 1.2 : 1);
-  const fLean = (walk ? -0.35 : -0.1) + (hurt ? -0.45 : 0) + (ak ? [0.3, -0.5, -0.35, -0.2][frame] : 0);
-  const tongue = (bx, len, w, ph0, c, inner) => {
-    const L = len * fk;
-    const fr = chain(joint(torso, bx, 25, -Math.PI / 2), [L * 0.36, L * 0.34, L * 0.3], wave(3, 0, dead ? 0.02 : 0.15, ph * 2 + ph0, 0.9).map((a, i) => a + fLean * (i ? 0.4 + i * 0.3 : 0.3)));
-    const p = pts(fr);
-    const o = [T(ribbonPts(p, [w, w * 0.78, w * 0.42, 0.3]), c)];
-    if (inner) o.push(F(T(ribbonPts(p.slice(0, 3).map(([px, py]) => [px + 0.4, py + 0.4]), [w * 0.55, w * 0.38, 0.3]), inner)));
-    return o;
-  };
-  out.push(...put(torso, [...oE(22, 25.2, 6.8, 2.8, P.plateHi, 0.5), F(E(22, 24.7, 5, 1.7, P.visor))]));
-  out.push(...tongue(18.6, 8, 4.6, 2, fl[0], fl[1]), ...tongue(25.4, 7.4, 4, 4, fl[0], fl[1]), ...tongue(22, 15, 9.4, 0, fl[0], fl[1]));
-  if (!dead) out.push(F(T(flamePts(...ap(torso, 22.5, 25), 3, 6 * fk, fLean * 3), fl[2])));
-  out.push(...put(torso, [...stroke([[16.4, 26.6], [22, 28.1], [27.6, 26.6]], 0.67, P.gold)]));
-
-  // The helmet rides the back hand, tipping a little after the arm (it's heavy). The forearm
-  // passes behind it and the gauntlet wraps its underside.
-  const look = ak ? 0.5 : walk ? 0.3 : 0.6 * Math.sin(ph);
-  const tip = ak ? [0.15, -0.1, -0.2, -0.05][frame] : dead ? 0.5 : hurt ? -0.25 : walk ? 0.06 * Math.sin(2 * ph - 2.2) : 0.04 * Math.sin(ph - 1.6);
-  const plumeA = wave(3, 0, dead ? 0.02 : walk ? 0.22 : 0.1, ph * (walk ? 2 : 1) - 1.2, 0.8).map((a, i) => a + [Math.PI - 0.5, -0.3, 0.2, 0.3][i] + (ak ? [0.3, -0.4, -0.5, -0.2][frame] * (i ? 1 : 0) : 0));
-  const grip = pivot(move(ID, headAt[0] - 13.6, headAt[1] - 45.4), 13.6, 45.4, tip);
-  out.push(...put(segF(be, headAt), limbPts([[0, 0], [Math.hypot(headAt[0] - be[0], headAt[1] - be[1]), 0]], 3.2, P.suit)));
-  out.push(...put(grip, helmet(dead ? 'dead' : mood === 'idle' && ak ? 'angry' : mood, P, look, plumeA)));
-  out.push(...put(grip, [...oT([[9.6, 43.2], [14.6, 44.6], [15.6, 46.8], [10.4, 46.6], [8.6, 45]], P.s1, 0.5), F(T([[10.2, 43.6], [14.4, 44.8], [14.2, 45.6], [10, 45]], P.plate))]));
-
-  // The near leg, over the faulds.
-  leg(25, u, false);
-  out.push(...legs);
-  legs.length = 0;
-
-  // The sword arm: IK from the shoulder to the hand target; the sword rides the hand.
-  const hand2 = ak ? ak.hand : dead ? [33.4, 42] : hurt ? [33, 36] : [35.2 + (walk ? -1.1 * Math.sin(ph) : 0.3 * Math.sin(ph - 1)), 37 + (walk ? 0.4 * Math.cos(2 * ph) : 0.4 * br)];
-  const sw = ak ? ak.sw : dead ? 1.3 : hurt ? -0.2 : 0.2 + (walk ? 0.08 * Math.sin(ph - 0.6) : 0.04 * Math.sin(ph - 1.2)) + (angry ? -0.12 : 0);
-  const sShoulder = ap(torso, 30.4, 29);
-  const hT = [hand2[0] + (ak ? 0 : hx * 0), hand2[1]];
-  const sEl = ik(sShoulder, hT, 5.4, 5.2, -1);
-  // The chop's smear: a flat crescent along the blade's arc, hard at the leading edge.
-  if (ak && (frame === 1 || frame === 2) && !dead) {
-    // The swept band between the hilt and the tip, thickest at the blade (its leading edge).
-    const [a0, a1] = frame === 1 ? [-0.5, 0.9] : [1.3, 2.62];
-    const pt = (a, r) => [hT[0] + Math.sin(a) * r, Math.min(57.4, hT[1] - Math.cos(a) * r)];
-    const outer = [];
-    const inner = [];
-    for (let i = 0; i <= 6; i++) {
-      const a = a0 + ((a1 - a0) * i) / 6;
-      outer.push(pt(a, 25));
-      inner.unshift(pt(a, 25 - 2 - (i / 6) * 13));
-    }
-    fxs.push(F(T([...outer, ...inner], '#ebe2ff')), F(T([...outer.slice(3), ...inner.slice(0, 4)], '#fbf8ff')));
-  }
-  const sword = [
-    ...oE(0, 3.4, 1.3, 1.3, P.lining, 0.5),
-    ...oT([[-0.8, 2.4], [0.8, 2.4], [0.8, -1.6], [-0.8, -1.6]], P.grip, 0.5),
-    ...oT([[-1.6, -2.8], [1.6, -2.8], [1.6, -22.6], [0, -26.4], [-1.6, -22.6]], P.blade, 0.5),
-    // Steel: the far bevel in shadow, a fuller line, and a specular glint on the lit edge.
-    F(T([[0.1, -2.8], [1.6, -2.8], [1.6, -22.6], [0.1, -25.6]], P.bladeS)), ...stroke([[-0.5, -4], [-0.5, -21]], 0.5, '#ffffff'), F(T(starPts(-0.9, -17 + (ak ? frame * 3 : walk ? 2 * Math.sin(ph) : 0), 1, 4, 0.35), '#ffffff')),
-    ...oT([[-4.2, -1.4], [4.2, -1.4], [3.4, -2.9], [-3.4, -2.9]], P.gold, 0.5), F(T([[-3.6, -2.7], [0, -2.7], [0, -2.2], [-3.8, -2.2]], P.goldHi)),
-    F(E(-4.3, -2.4, 0.7, 0.7, P.gold)), F(E(4.3, -2.4, 0.7, 0.7, P.goldS)),
-  ];
-  out.push(...put(joint(ID, hT[0], hT[1], sw), sword));
-  out.push(...put(segF(sShoulder, sEl), limbPts([[0, 0], [5.4, 0]], 3.2, P.suit)), ...put(segF(sEl, hT), [...limbPts([[0, 0], [5.2, 0]], 3.8, P.plate), F(T([[0.6, -1.5], [4.6, -1.5], [4.6, -0.8], [0.6, -0.8]], P.plateHi))]));
-  out.push(...cop(sEl[0], sEl[1], 1.9, P), ...oE(hT[0], hT[1] - 0.2, 2.1, 2, P.s1), F(E(hT[0] + 0.4, hT[1] - 0.8, 1.2, 0.8, P.plate)));
-  // Front pauldron, layered and gold-rimmed, bouncing a beat late.
-  out.push(...put(move(torso, 0, clank * 0.6), [...lames(29.8, 26.4, 9.6, 8.4, P), F(T([[26.2, 30.1], [33.4, 30.1], [33, 30.8], [26.6, 30.8]], P.gold)), F(E(32.6, 22.9, 0.45, 0.45, '#ffffff'))]));
-  if (ak && frame === 2 && !dead) fxs.push(...burst(42, 54.6, 4, '#8a5aa8', '#8a5aa8', 6, 0.4), ...burst(42, 54.6, 3.4, '#fff3b0', '#ffffff', 6, 0.4), ...dust(39, 58, 0.8));
-  return { w: 44, h: 58, res: 3, shapes: [...out, ...fxs] };
-}
 
 // ---------- Gem Mimic ----------
 // A treasure chest that hops on stubby legs: one big gem eye set in the lid, crystal teeth, a long
@@ -1269,7 +1055,8 @@ function wraith(pose, frame, mood) {
 export const ART = {
   wisp: { pad: 8, walk: 8, idle: 6, attack: 4, stride: 34, atkMs: [50, 200, 150], draw: wisp },
   gloombat: { pad: 7, walk: 8, idle: 6, attack: 4, stride: 24, atkMs: [40, 180, 130], draw: imp },
-  boneknight: { pad: 17, walk: 8, idle: 6, attack: 4, stride: 24, atkMs: [60, 270, 200], draw: dullahan },
+  // (Remade 2026-11-20 as the Kitten in the Armour: a live rig.)
+  boneknight: { pad: 17, walk: 8, idle: 6, attack: 4, stride: 24, atkMs: [60, 270, 200], draw: kittenArmourStill, rig: kittenArmourRig },
   crystalslime: { walk: 8, idle: 6, attack: 4, stride: 22, atkMs: [55, 240, 170], draw: mimic },
   rockgolem: { pad: 7, walk: 8, idle: 6, attack: 4, stride: 30, atkMs: [75, 330, 240], draw: golem },
   shade: { pad: 8, walk: 8, idle: 6, attack: 4, stride: 58, atkMs: [60, 230, 180], draw: wraith },

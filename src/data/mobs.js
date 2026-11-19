@@ -192,7 +192,7 @@ export const MOBS = {
   }),
   kettletanuki: mob({
     id: 'kettletanuki', name: 'Kettle Tanuki', level: 26, hp: 1150, atk: 82, def: 26, acc: 56, eva: 6, exp: 740, gold: [10, 22],
-    speed: 34, w: 34, h: 30, art: 'kettletanuki', drops: [{ id: 'kettle_lid', chance: 0.45 }, { id: 'tea_leaf', chance: 0.12 }],
+    speed: 34, w: 34, h: 36, art: 'kettletanuki', drops: [{ id: 'kettle_lid', chance: 0.45 }, { id: 'tea_leaf', chance: 0.12 }],
   }),
   lantertanuki: mob({
     id: 'lantertanuki', name: 'Lantern Tanuki', level: 28, hp: 1220, atk: 92, def: 22, acc: 60, eva: 12, exp: 840, gold: [11, 24],
