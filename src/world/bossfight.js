@@ -36,7 +36,9 @@ export const band = (world, m, x0, x1, damage, dur) => addZone(world, { kind: 'b
 export const cleave = (world, m, len, damage, dur) => (m.dir < 0 ? band(world, m, m.x + 20, m.x + 20 - len, damage, dur) : band(world, m, m.x - 20, m.x - 20 + len, damage, dur));
 
 // How long each look's landing plays (s): render/bossfx.js draws it over that long.
-export const LOOK_HOLD = { overdue: 0.9, books: 0.8, study: 0.9, bookmark: 0.7, comet: 0.75, crescentsweep: 0.75, eclipse: 1.3, total: 1.3, night: 1.3, shush: 0.9, nova: 0.9, lines: 0.8, starfall: 0.7 };
+export const LOOK_HOLD = { overdue: 0.9, books: 0.8, study: 0.9, bookmark: 0.7, comet: 0.75, crescentsweep: 0.75, eclipse: 1.3, total: 1.3, night: 1.3, shush: 0.9, nova: 0.9, lines: 0.8, starfall: 0.7,
+  // (The Queen's dream: render/dreamfx.js.)
+  memo: 0.7, stamp: 0.8, coffee: 0.8, files: 0.9, steam: 0.9, noodle: 0.7, broth: 0.7, chopsticks: 0.6, boil: 1.1, email: 0.7, redpen: 0.8, alarm: 1, invite: 0.8, deadline: 1.1 };
 
 // ---------- Who ----------
 export const tankOf = (up) => up.find((g) => g.role === 'tank') ?? up[0];

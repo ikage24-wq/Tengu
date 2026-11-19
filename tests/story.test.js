@@ -48,7 +48,7 @@ test('the story chains from Mira at level 1 to the Crystal King, every step real
   const check = (st) => {
     if (st.onMap) assert.ok(MAPS[st.onMap], `onMap names a real map: ${st.onMap}`);
     if (st.cast) {
-      assert.ok(['hayate', 'mochi', 'crown', 'beard', 'hero', 'gust', 'cake'].includes(st.kind ?? 'mochi'), `a known kind of cast: ${st.kind}`);
+      assert.ok(['hayate', 'mochi', 'crown', 'beard', 'hero', 'gust', 'cake', 'mob'].includes(st.kind ?? 'mochi'), `a known kind of cast: ${st.kind}`);
       cast.add(st.cast);
     }
     if (st.set) assert.ok(MAPS[st.set]?.set, `a scene's set is a set: ${st.set}`);

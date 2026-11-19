@@ -2417,7 +2417,7 @@ Object.assign(MAPS, {
     ],
     objects: [],
     npcs: [],
-    spawns: [{ mob: 'persona', x: 800, y: G }],
+    spawns: [{ mob: 'mugboss', x: 800, y: G }],
   },
 
   // The Convenience Store, 2 a.m. (Chapter 9, the Queen's dream). Fluorescent and humming, the
@@ -2434,7 +2434,7 @@ Object.assign(MAPS, {
     ],
     objects: [],
     npcs: [],
-    spawns: [{ mob: 'directrice', x: 900, y: G }],
+    spawns: [{ mob: 'noodledragon', x: 900, y: G }],
   },
 
   // The Final Curtain: Her Flat (Chapter 9, the Queen's dream). Two in the morning, rain on the
@@ -2455,7 +2455,7 @@ Object.assign(MAPS, {
     ],
     objects: [],
     npcs: [],
-    spawns: [{ mob: 'playwright', x: 900, y: G }],
+    spawns: [{ mob: 'monday', x: 1000, y: G }],
   },
 });
 // ---------- The Sky Whale's Back (levels 45-50, docs/design/sky-whale.md) ----------

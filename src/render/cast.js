@@ -17,6 +17,8 @@ import { fakeBeardShapes } from './jobgear/wardrobe.js';
 import { art, place } from './scenery.js';
 import { MOCHI_SIZE } from './wagashi.js';
 import { SCENES } from '../data/story.js';
+import { drawMonster } from './monsters.js';
+import { MOBS } from '../data/mobs.js';
 
 // Where the crown sits on her head, in the head's own space (measured on her, like her sprout:
 // render/hayate.js): the middle of its band, and a point straight up from it for its lean.
@@ -90,6 +92,16 @@ function drawHayateActor(ctx, a, x, y, cam, time, talking) {
   }
 }
 
+// A monster in the scene's own cast, never fought (the Playwright staging the Queen's dream):
+// drawn as the monster itself, `mob` its id in data/mobs.js, its face the cast's `mood` step.
+function drawCastMob(ctx, world, a, x, y, time) {
+  const def = MOBS[a.mob];
+  if (!def) return;
+  const m = (a.fake ??= { def, hp: def.hp, uid: 11, x: a.x, y: a.y, dir: a.facing, heading: a.facing, state: 'idle', stagger: 0, flash: 0, phase: 0 });
+  Object.assign(m, { x: a.x, y: a.y, dir: a.facing, heading: a.facing, cine: a.face ? { mood: a.face } : undefined });
+  drawMonster(ctx, m, x, y, time, world.now + (world.cine?.clock ?? 0));
+}
+
 export function drawCast(ctx, world, cam, time) {
   const c = world.cine;
   if (!c?.cast?.length) return;
@@ -122,6 +134,7 @@ export function drawCast(ctx, world, cam, time) {
       else if (a.kind === 'gust') drawGust(ctx, x, y, time);
       else if (a.kind === 'cake') drawCake(ctx, x, y, a.tilt ?? 0);
       else if (a.kind === 'beard') drawBeard(ctx, x, y, a.tilt ?? 0);
+      else if (a.kind === 'mob') drawCastMob(ctx, world, a, x, y, time);
     });
   };
   for (const a of c.cast) if (a.behind && a.kind !== 'hayate') one(a);

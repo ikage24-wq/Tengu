@@ -1815,6 +1815,14 @@ export const VOLCANO_RADIO = {
 };
 
 // ---------- Dream Theatre ----------
+// ---------- Dream Theatre (Chapter 9) ----------
+// Elder Zunda, the Phantom Playwright's only fan: a pale edamame daifuku with matcha-green hair, in
+// the elders' robe, hat and fake beard. It watches every show from his box (render/theatre.js).
+export const ZUNDA = { seed: 97, genes: { dough: '#eef6d0', hairColor: 'matcha' }, wear: { dress: 'elderrobe', hat: 'elderhat', face: 'fakebeard' } };
+const ZUNDA_CAST = { kind: 'mochi', seed: ZUNDA.seed, size: 'grown', name: 'Elder Zunda', color: '#8cc47a', genes: ZUNDA.genes, wear: ZUNDA.wear, idles: ['lookaround'] };
+// The Playwright in his box, never fought now: he stages the Queen's dream (world/cast.js 'mob').
+const PLAYWRIGHT_CAST = { kind: 'mob', mob: 'playwright', x: 104, y: 214, facing: 1, name: 'The Phantom Playwright', color: '#b89aff' };
+
 export const THEATRE_SCENES = {
   theatre_results: [
     { card: 'Dream Theatre', sub: 'Rank {grade}  ·  {time}' },
@@ -1884,37 +1892,129 @@ export const THEATRE_SCENES = {
     { wait: 0.5 },
     { cam: 'player', dur: 0.7 },
   ],
+  // The Coffee Mug Boss, staged: overtime, every desk empty but his; he spins round from his phone,
+  // delighted, "just one more thing", and slaps a stack of papers down.
+  theatre_mugboss: [
+    { together: [{ cam: 'mugboss', up: 20, dur: 1.2 }, { walk: 'player', to: 'mugboss', gap: 190, speed: 100 }] },
+    { who: null, text: 'Overtime. Every desk is empty but one. A coffee mug in a tie paces in front of it, tapping at his phone.' },
+    { together: [{ face: 'mugboss', to: 'player' }, { emote: 'mugboss', kind: '!' }, { jump: 'mugboss', height: 10 }] },
+    { who: 'mugboss', text: "Ah, good, you're still here! Got a minute? Just one more thing.", mood: 'happy' },
+    { who: 'player', text: "It's ten at night." },
+    { together: [{ fx: 'pages', at: 'mugboss', top: true, n: 10 }, { emote: 'mugboss', kind: 'anger' }] },
+    { who: 'mugboss', text: 'Exactly! The night is young. Like this report. Which was due yesterday.', mood: 'angry' },
+    { act: 'mugboss', move: 'attack', dur: 0.9, async: true },
+    { wait: 0.3 },
+    { together: [{ shake: 3, dur: 0.4 }, { fx: 'pages', at: 'player', n: 12 }, { walk: 'player', away: 'mugboss', by: 30, speed: 160 }, { emote: 'player', kind: '!' }] },
+    { cam: 'player', dur: 0.7 },
+  ],
+  // The Cup-Noodle Dragon, staged: two in the morning, the fridges humming; the lid peels back
+  // in a puff of steam and the noodle dragon uncurls out of its broth.
+  theatre_noodledragon: [
+    { together: [{ cam: 'noodledragon', up: 20, dur: 1.2 }, { walk: 'player', to: 'noodledragon', gap: 190, speed: 100 }] },
+    { who: null, text: 'The convenience store, two in the morning. The fridges hum. By the hot water, a cup of noodles waits out its three minutes.' },
+    { together: [{ fx: 'clouds', at: 'noodledragon', top: true, n: 6 }, { jump: 'noodledragon', height: 12 }, { emote: 'noodledragon', kind: '!' }] },
+    { who: 'noodledragon', text: 'SLUUURP. Dinner again? At this hour? Same as every night?', mood: 'happy' },
+    { who: 'player', text: "I'm not here for dinner." },
+    { together: [{ fx: 'clouds', at: 'noodledragon', top: true }, { emote: 'noodledragon', kind: 'anger' }] },
+    { who: 'noodledragon', text: 'Everyone is here for dinner. Three minutes. Then YOU are dinner.', mood: 'angry' },
+    { act: 'noodledragon', move: 'attack', dur: 0.9, async: true },
+    { wait: 0.3 },
+    { together: [{ shake: 3, dur: 0.4 }, { fx: 'bubbles', at: 'player', n: 10 }, { walk: 'player', away: 'noodledragon', by: 30, speed: 160 }, { emote: 'player', kind: '!' }] },
+    { cam: 'player', dur: 0.7 },
+  ],
+  // Monday, staged: the Playwright announces the final act from his box, his one fan cheering;
+  // then the calendar page stomps up, red pen raised.
+  theatre_monday: [
+    { cast: 'playwright', ...PLAYWRIGHT_CAST },
+    { cast: 'zunda', x: 184, y: 214, facing: 1, ...ZUNDA_CAST },
+    { cam: ['playwright', 'zunda'], up: 10, dur: 1.2 },
+    { who: 'playwright', text: 'Ladies, gentlemen, Mochi! The final act. Her flat, two in the morning. And the villain she fears most of all...' },
+    { together: [{ play: 'zunda', as: 'cheer' }, { emote: 'zunda', kind: 'heart' }] },
+    { who: 'zunda', text: 'Ooh, this is my favourite bit!' },
+    { together: [{ cam: 'monday', up: 30, dur: 1.2 }, { walk: 'player', to: 'monday', gap: 200, speed: 100 }, { fx: 'pages', at: 'monday', top: true }] },
+    { together: [{ face: 'monday', to: 'player' }, { jump: 'monday', height: 14 }, { shake: 3, dur: 0.5 }, { emote: 'monday', kind: 'anger' }] },
+    { who: 'monday', text: 'Good MORNING. It is Monday. It is ALWAYS Monday.', mood: 'angry' },
+    { who: 'player', text: "It's two in the morning." },
+    { who: 'monday', text: 'Then it is VERY early Monday. Up you get!', mood: 'angry' },
+    { act: 'monday', move: 'attack', dur: 0.9, async: true },
+    { wait: 0.3 },
+    { together: [{ shake: 4, dur: 0.4 }, { fx: 'pages', at: 'player', n: 14 }, { walk: 'player', away: 'monday', by: 30, speed: 160 }, { emote: 'player', kind: '!' }] },
+    { cam: 'player', dur: 0.7 },
+  ],
+  // Monday held at the last (world/theatre.js): the Queen climbs down from her loft bed, fast
+  // asleep, and says the magic words; Monday crumples (render/mobs/dreamrigs.js `crumple`).
+  theatre_monday_end: [
+    { together: [{ cam: 'monday', up: 20, dur: 1 }, { jump: 'monday', height: 10 }, { emote: 'monday', kind: 'anger' }] },
+    { who: 'monday', text: 'You cannot beat Monday! Monday ALWAYS comes back! Every week! FOREVER!', mood: 'angry' },
+    { cast: 'hayate', kind: 'hayate', near: 'monday', inward: 240, hidden: true, crown: true, sprout: true, name: 'Hayate', color: '#5aa8c8', sleepwalk: true },
+    { together: [{ show: 'hayate', dur: 0.8 }, { cam: ['hayate', 'monday'], up: 10, dur: 1.2 }, { emote: 'hayate', kind: 'zzz', dur: 2.4 }] },
+    { who: null, text: 'Onto the stage sleepwalks someone who has been asleep the whole show.' },
+    { together: [{ walk: 'hayate', to: 'monday', gap: 70, speed: 50 }, { cam: ['hayate', 'monday'], dur: 2 }] },
+    { together: [{ face: 'monday', to: 'hayate' }, { emote: 'monday', kind: '!', dur: 1.2 }] },
+    { who: 'monday', text: "YOU! It's Monday! Up! Train! Office! Overtime!", mood: 'angry' },
+    { emote: 'hayate', kind: 'zzz', dur: 2 },
+    { who: 'hayate', text: '...mmn... five more minutes...', mood: 'sleepy' },
+    { together: [{ walk: 'hayate', away: 'monday', by: 16, speed: 24 }, { emote: 'hayate', kind: 'zzz', dur: 2 }] },
+    { together: [{ mood: 'monday', as: 'crumple' }, { fx: 'pages', at: 'monday', top: true, n: 18 }, { shake: 2, dur: 0.6 }] },
+    { who: 'monday', text: 'F-five...? Nobody says five more minutes to MONDAY...' },
+    { who: null, text: 'Nobody ever has. Monday has no idea what to do. It crumples up like an old calendar page.' },
+    { together: [{ walk: 'hayate', away: 'monday', by: 260, speed: 50 }, { emote: 'hayate', kind: 'zzz', dur: 3 }] },
+    { hide: 'hayate', dur: 0.8 },
+  ],
+  // The new finale: the Playwright gets the ending he always wanted, written by her; Elder Zunda
+  // goes home to the palace.
   theatre_freed: [
-    { together: [{ free: 'playwright', as: 'sad' }, { cam: ['playwright', 'player'], dur: 1.2 }, { walk: 'player', to: 'playwright', gap: 80, speed: 70 }] },
-    { together: [{ face: 'player', to: 'playwright' }, { face: 'playwright', to: 'player' }] },
-    { who: 'playwright', text: '...Applause? For them? Nobody has ever applauded my ending before.', mood: 'sad' },
-    { together: [{ fx: 'pages', at: 'playwright', top: true }, { act: 'playwright', move: 'sway', amp: 0.1, speed: 2.2, dur: 1.6 }] },
-    { who: null, text: 'The pages settle like snow. Out in the stalls, the audience blink and remember their own names.' },
-    { mood: 'playwright', as: 'happy' },
-    { who: 'playwright', text: 'Very well. One more draft. This time, a happy ending. For everyone.', mood: 'happy' },
-    { together: [{ act: 'playwright', move: 'sinkaway', dur: 2.6 }, { fx: 'ink', at: 'playwright' }, { fx: 'confetti', at: 'player', top: true }] },
-    { who: null, text: 'He takes one deep bow and sinks into his inkwell, already scribbling.' },
+    { cast: 'playwright', ...PLAYWRIGHT_CAST },
+    { cast: 'zunda', x: 184, y: 214, facing: 1, ...ZUNDA_CAST },
+    { together: [{ cam: ['playwright', 'zunda'], up: 10, dur: 1.4 }, { play: 'zunda', as: 'cheer' }, { fx: 'confetti', at: 'zunda', top: true }] },
+    { who: 'zunda', text: 'BRAVO! Bravo! What an ending!' },
+    { who: 'playwright', text: 'I only stage what she dreams, you know. Every night: the train, the office, the noodles. And Monday.' },
+    { who: 'playwright', text: 'The same sad show, night after night. One fan.', mood: 'sad' },
+    { together: [{ emote: 'zunda', kind: 'heart' }, { jump: 'zunda', height: 8 }] },
+    { who: 'zunda', text: 'Forty-two nights! I never missed one!' },
+    { who: 'player', text: 'Well, tonight she wrote her own ending.' },
+    { together: [{ mood: 'playwright', as: 'happy' }, { fx: 'pages', at: 'playwright', top: true }] },
+    { who: 'playwright', text: '"Five more minutes." Short. Simple. Perfect. I could never have written it.', mood: 'happy' },
+    { who: 'playwright', text: "Go home, Elder. Tell the palace tomorrow's show is a lie-in." },
+    { who: 'zunda', text: 'A lie-in! My favourite!' },
+    { set: 'royal_bed' },
+    { cast: 'hayate', kind: 'hayate', x: 300, y: 283, seat: 'bed', crown: true, sprout: true, name: 'Hayate', color: '#5aa8c8' },
+    { cast: 'translator', kind: 'mochi', seed: 33, size: 'grown', x: 548, y: 302, facing: -1, name: 'Royal Snore Translator', color: '#b98ad8', idles: ['lookaround'], wear: { dress: 'scholarrobe', hat: 'scholarcap', eyes: 'specs', over: 'eartrumpet' } },
+    { cast: 'zunda', x: 650, y: 302, facing: -1, ...ZUNDA_CAST },
+    { cam: ['zunda', 'translator'], up: 12, dur: 1.2, zoom: 1.05 },
+    { together: [{ walk: 'zunda', to: 410, speed: 40 }, { fx: 'sparkle', at: 'zunda', top: true, n: 8 }] },
+    { together: [{ emote: 'translator', kind: '!' }, { play: 'translator', as: 'wow' }] },
+    { who: 'translator', text: 'Elder Zunda! Home from the theatre at last! How was the show?', mood: 'surprised' },
+    { who: 'zunda', text: 'Long. But the ending was lovely.' },
+    { emote: 'hayate', kind: 'zzz', dur: 1.6 },
+    { who: 'hayate', text: '...mmn... five more minutes...', mood: 'sleepy' },
+    { who: 'translator', text: 'Her Majesty says: "five more minutes". ...As she does every morning.', mood: 'happy' },
+    { set: null },
   ],
 };
 
 // Madame Encore calling from the wings in a stage whisper (world/theatre.js).
 export const THEATRE_RADIO = {
   'enter:theatre1': ['Three tickets lost somewhere in the lobby, darlings. And step into the spotlights: everything looks better in the light. Even the monsters, who hurt more there.'],
-  'enter:theatre2': ['Act One! The deck rocks, so lean into it. And when the cannons mark the boards, MOVE.'],
-  'enter:theatre3': ['Act Two. Watch the cue lamps, then play them back in order. Miss one and we start from the top!'],
-  'enter:theatre4': ["Persona. Laughing she's quick and slippery; weeping she's slow and open. Strike when she cries."],
-  'enter:theatre5': ['The Directrice. When she shouts "Cut!", you go back to your marks whether you like it or not. Get out of her circle!'],
-  'enter:theatre6': ['The Playwright himself. Jump the curtain, mind the pages, and when the plot twists, switch sides!'],
+  'enter:theatre2': ['Act One: her morning train! It sways, so lean into it. And when the bags tumble off the racks, MOVE.'],
+  'enter:theatre3': ['Act Two: the office. Watch the phones light up, then answer them in order. Miss one and we start from the top!'],
+  'enter:theatre4': ['The Coffee Mug Boss. Spread out for his memos, step away from his stamp, and get behind him for his coffee break.'],
+  'enter:theatre5': ['The Cup-Noodle Dragon. When he sets his timer, get up on the shelves before the broth boils over!'],
+  'enter:theatre6': ['Monday himself, darlings. Find the gap in his invites, jump his Deadline, and hold on. Somebody up there is nearly awake.'],
   'clear:theatre1': ['Tickets found. Take your seats... I mean, on to the stage!'],
   'clear:theatre2': ['Land ho! Lovely sea legs, darlings.'],
   'clear:theatre3': ['Every cue, perfectly timed. Bravo!'],
-  'clear:theatre4': ["The masks are down. She's smiling, I think. Truly."],
-  'clear:theatre5': ["That's a wrap for her! The final curtain is ahead."],
+  'clear:theatre4': ["He's clocked off! First time in years, I expect."],
+  'clear:theatre5': ["Dinner's done! One act left, darlings: her flat."],
   wipe: ['Everyone fluffs a line. From the top, darlings!', 'Up, up! The show must go on.'],
   both: ['Both masks at once! Watch everything!'],
   cut: ['CUT! Back to your marks, then out of her circle!'],
   curtain: ['The curtain! Jump it!'],
   twist: ['Plot twist! Swap sides when the stage turns!'],
+  caffeine: ['He refilled himself! Quicker now, darlings!'],
+  boil: ['Three minutes! Up on the shelves!'],
+  invites: ['Invites from both walls! Find the gap!'],
+  deadline: ['The Deadline! Jump it, or get up on the furniture!'],
 };
 
 // ---------- Sky Whale's Back ----------

@@ -49,7 +49,7 @@ import { easedPace } from './pace.js';
 import { SCENES } from '../data/story.js';
 
 const ease = (u) => (u <= 0 ? 0 : u >= 1 ? 1 : u < 0.5 ? 4 * u * u * u : 1 - (-2 * u + 2) ** 3 / 2);
-const HEIGHT = { hayate: 46, mochi: 30, crown: 10, beard: 8, hero: 46, gust: 10 };
+const HEIGHT = { hayate: 46, mochi: 30, crown: 10, beard: 8, hero: 46, gust: 10, mob: 110 };
 
 export const castOf = (world, id) => (typeof id === 'string' ? world.cine?.cast?.find((a) => a.id === id) ?? null : null);
 
@@ -119,14 +119,17 @@ function addCast(world, step) {
   // Gnarlroot's roots.)
   if (step.near) {
     const m = world.mobs.find((q) => q.def.id === step.near);
-    if (m) step = { ...step, x: m.x + ((m.heading ?? m.dir) < 0 ? -1 : 1) * (step.dx ?? 0), y: m.y };
+    // (`inward`: that far from it on the side toward the middle of the room, facing it, so they're
+    // always on the map wherever the fight has pushed it.)
+    const side = !m ? 1 : step.inward != null ? Math.sign(world.map.width / 2 - m.x) || 1 : (m.heading ?? m.dir) < 0 ? -1 : 1;
+    if (m) step = { ...step, x: m.x + side * (step.inward ?? step.dx ?? 0), y: m.y, ...(step.inward != null ? { facing: -side } : {}) };
   }
   const a = {
     // (`x: 'escort'`: where the little Mochi you've brought home is standing: world/escort.js.)
     id: step.cast, kind, x: step.x === 'escort' ? world.escort?.x ?? 320 : step.x ?? 320, y: step.y === 'escort' ? world.escort?.y ?? world.map.groundY : step.y ?? world.map.groundY ?? 344, facing: step.facing ?? 1,
     alpha: step.hidden ? 0 : 1, lift: 0, sink: step.sink ?? 0, tilt: 0, h: step.h ?? HEIGHT[kind] ?? 30,
     name: step.name ?? null, color: step.color ?? null, behind: Boolean(step.behind), clipY: step.clipY ?? null, pose: step.pose ?? 'idle',
-    seat: step.seat ?? null, sleepwalk: Boolean(step.sleepwalk), human: Boolean(step.human), crown: step.crown ?? false, sprout: step.sprout ?? false, sproutT: step.sprout ? 1 : 0, awake: Boolean(step.awake),
+    mob: step.mob ?? null, seat: step.seat ?? null, sleepwalk: Boolean(step.sleepwalk), human: Boolean(step.human), crown: step.crown ?? false, sprout: step.sprout ?? false, sproutT: step.sprout ? 1 : 0, awake: Boolean(step.awake),
   };
   // (A scene's Mochi walk upright at an easy trot: with no running in them a Mochi crawls.)
   if (kind === 'mochi') {

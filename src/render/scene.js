@@ -57,7 +57,7 @@ import { drawCarnivalBack, drawCarnivalFront, drawCarnivalObject, CARNIVAL_HINT 
 import { drawObsBack, drawObsFront, drawObsObject, OBS_HINT } from './observatory.js';
 import { castWarn, castHit, OWN_WARN } from './bossfx.js';
 import { drawVolcanoBack, drawVolcanoFront, drawVolcanoObject, VOLCANO_HINT } from './volcano.js';
-import { drawTheatreBack, drawTheatreFront, drawTheatreObject, THEATRE_HINT } from './theatre.js';
+import { drawTheatreBack, drawTheatreFront, drawTheatreObject, drawTheatreSet, THEATRE_HINT } from './theatre.js';
 import { drawWhaleBack, drawWhaleFront, drawWhaleObject, WHALE_HINT } from './skywhale.js';
 import { drawCoopBack, drawCoopFront, tagFade } from './coop.js';
 import { drawGlowcap, drawCage, drawSeal, drawRootKey, drawZone, drawZoneHit } from './dungeon.js';
@@ -564,6 +564,8 @@ function drawWorldLayers(ctx, world, cam, time, b, zoom = 1) {
   lapStart();
   drawSceneBack(ctx, world.map, cam, viewW, viewH, time, nearPortal?.id, () => drawStreet(ctx, world.map, cam, viewW, time, { wind: world.char.windBack && !world.windHold, name: world.char.name }), routePortal?.id);
   lap('back');
+  // The Dream Theatre's set pieces, behind everyone (render/theatre.js).
+  if (world.dungeon && !world.cine?.home) drawTheatreSet(ctx, world, cam, time);
   // Water to wade into, behind everyone (render/water.js).
   drawWaterBack(ctx, world.map, cam, VIEW_W, time);
   // Your furniture (or the friend's whose island you're visiting: world/decor.js), behind everyone.

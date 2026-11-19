@@ -287,7 +287,7 @@ export const STORY_QUESTS = {
   story_playwright: s('story_playwright', 9, {
     name: 'A Better Ending', giver: 'encore', minLevel: 42, prereq: 'story_encore',
     text: "Take three friends into the Dream Theatre, darling. Survive his muse, survive his director, and give the Phantom Playwright's story a better ending. And if he drops his script, bring it to me. I want to see my part.",
-    objectives: [{ type: 'kill', mob: 'playwright', count: 1 }],
+    objectives: [{ type: 'kill', mob: 'monday', count: 1 }],
     rewards: { exp: 90000, gold: 1600, items: [{ id: 'elixir', qty: 8 }] },
     scenes: { done: 'playwright_done' },
   }),

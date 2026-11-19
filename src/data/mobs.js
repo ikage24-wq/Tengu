@@ -646,6 +646,28 @@ export const MOBS = {
     drops: [{ id: 'encore_rose', chance: 1, qty: 5 }],
     fight: { every: 2, reach: 88, windup: 0.55 }, mech: 'playwright',
   }),
+  // The Queen's dream's own (Chapter 9, 2026-11-19, the player's picks; render/mobs/dreamrigs.js),
+  // standing in for the three above in the theatre's last acts: her manager at Overtime, the
+  // all-night snack at the 2 a.m. store, and Monday in her flat. (Health carried over from the acts
+  // they replace, to be checked in a live run.)
+  mugboss: mob({
+    id: 'mugboss', name: 'The Coffee Mug Boss', level: 42, hp: 480000, atk: 262, def: 62, acc: 132, eva: 8, exp: 62000, gold: [740, 1000],
+    speed: 34, w: 64, h: 100, art: 'mugboss', boss: true,
+    drops: [{ id: 'encore_rose', chance: 1, qty: 3 }, { id: 'white_potion', chance: 1, qty: 18 }],
+    fight: { every: 1.9, reach: 74, windup: 0.5 }, mech: 'mugboss',
+  }),
+  noodledragon: mob({
+    id: 'noodledragon', name: 'The Cup-Noodle Dragon', level: 43, hp: 520000, atk: 268, def: 64, acc: 134, eva: 6, exp: 66000, gold: [770, 1100],
+    speed: 32, w: 64, h: 110, art: 'noodledragon', boss: true,
+    drops: [{ id: 'encore_rose', chance: 1, qty: 3 }, { id: 'mana_elixir', chance: 1, qty: 9 }],
+    fight: { every: 2, reach: 80, windup: 0.55 }, mech: 'noodledragon',
+  }),
+  monday: mob({
+    id: 'monday', name: 'Monday', level: 45, hp: 560000, atk: 280, def: 68, acc: 138, eva: 8, exp: 96000, gold: [1000, 1400],
+    speed: 28, w: 80, h: 140, art: 'monday', boss: true,
+    drops: [{ id: 'encore_rose', chance: 1, qty: 5 }],
+    fight: { every: 2, reach: 92, windup: 0.6 }, mech: 'monday',
+  }),
   // ---------- Sky Whale's Back (levels 45-50, docs/design/sky-whale.md) ----------
   kiterider: mob({
     id: 'kiterider', name: 'Kite Rider', level: 45, hp: 5200, atk: 220, def: 46, acc: 140, eva: 20, exp: 3300, gold: [28, 50],

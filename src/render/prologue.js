@@ -40,7 +40,7 @@ import { cornice, wainscot, skirting, floorShade, contact, frame, plant, shelf, 
 import { drawHayate } from './hayate.js';
 import { drawMochiAnim } from './mochi-anim.js';
 import { rollMochi } from '../data/mochi-genes.js';
-import { SAKURA, WARABI, KURI, GOMA, ICHIGO } from '../data/scenes.js';
+import { SAKURA, WARABI, KURI, GOMA, ICHIGO, ZUNDA } from '../data/scenes.js';
 
 const TAU = Math.PI * 2;
 const WHITE = '#ffffff';
@@ -778,6 +778,11 @@ export function drawProloguePiece(ctx, map, kind, wx, extra, cam, width, time) {
         ICHIGO_HOME.genes ??= Object.assign(rollMochi(ICHIGO.seed, ICHIGO.genes), { wear: { ...ICHIGO.wear } });
         drawMochiAnim(ctx, ICHIGO_HOME, ox + 500, oy + 302, time + 6.3);
       }
+      // ...and Elder Zunda, home from the Dream Theatre (Chapter 9), still humming the show.
+      if (map.elders?.zunda) {
+        ZUNDA_HOME.genes ??= Object.assign(rollMochi(ZUNDA.seed, ZUNDA.genes), { wear: { ...ZUNDA.wear } });
+        drawMochiAnim(ctx, ZUNDA_HOME, ox + 410, oy + 302, time + 7.1);
+      }
     }
   }
   return true;
@@ -787,5 +792,6 @@ const YOMOGI = { genes: null, dir: -1, speed: 0, dist: 0, size: 'grown', runPoin
 const SAKURA_HOME = { genes: null, dir: -1, speed: 0, dist: 0, size: 'grown', runPoints: 300, easy: true, idleBits: ['lookaround'] };
 const KURI_HOME = { genes: null, dir: 1, speed: 0, dist: 0, size: 'grown', runPoints: 300, easy: true, idleBits: ['lookaround'] };
 const ICHIGO_HOME = { genes: null, dir: -1, speed: 0, dist: 0, size: 'grown', runPoints: 300, easy: true, idleBits: ['lookaround'] };
+const ZUNDA_HOME = { genes: null, dir: 1, speed: 0, dist: 0, size: 'grown', runPoints: 300, easy: true, idleBits: ['lookaround', 'hum'] };
 const GOMA_HOME = { genes: null, dir: -1, speed: 0, dist: 0, size: 'grown', runPoints: 300, easy: true, idleBits: ['lookaround'] };
 const WARABI_HOME = { genes: null, dir: 1, speed: 0, dist: 0, size: 'grown', runPoints: 300, easy: true, idleBits: ['lookaround'] };

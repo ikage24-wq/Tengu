@@ -7,6 +7,11 @@
 import { R, E, T, F } from './pixel.js';
 import { art, place } from './scenery.js';
 import { cueShowing } from '../world/theatre.js';
+import { drawMonster } from './monsters.js';
+import { MOBS } from '../data/mobs.js';
+import { drawMochiAnim } from './mochi-anim.js';
+import { rollMochi } from '../data/mochi-genes.js';
+import { ZUNDA } from '../data/scenes.js';
 
 const TAU = Math.PI * 2;
 export const CUE_C = { rose: '#ff7aa8', gold: '#ffd36b', mint: '#8ff0c8', violet: '#b89aff' };
@@ -181,6 +186,182 @@ export function drawTheatreBack(ctx, world, cam, time) {
   }
   // The cue lamps' sequence, flashed one by one; a wrong cue flushes them all rose for a beat.
   if (room.cues && lit != null) litAt = world.now;
+}
+
+// The set pieces behind everyone, even a scene's own cast (render/scene.js draws this first).
+export function drawTheatreSet(ctx, world, cam, time) {
+  if (world.map.id === 'theatre6') theatreBox(ctx, world, cam, time);
+}
+
+// ---------- The Playwright's box (Chapter 9) ----------
+// A theatre box hung on the wall at stage left of the Queen's flat: the Phantom Playwright stands
+// in it staging her dream, quill going; Elder Zunda, his only fan, claps and hops beside him until
+// it goes home to the palace (render/prologue.js). Velvet drapes tied back with gold rope, two
+// little lamps, a bowed gold-rimmed front with his quill on its crest. (In a scene the two of them
+// are the scene's own cast, standing on the same spots: world/cast.js.)
+export const BOX = { x0: 24, x1: 244, y: 214, pw: 104, zunda: 184 };
+const PW_SET = { def: null, hp: 1, uid: 11, x: 0, y: 0, dir: 1, heading: 1, state: 'idle', stagger: 0, flash: 0, phase: 0 };
+const ZUNDA_FAN = { genes: null, dir: 1, speed: 0, dist: 0, size: 'grown', runPoints: 300, easy: true, idleBits: ['clap', 'hops', 'lookaround'] };
+function theatreBox(ctx, world, cam, time) {
+  const x0 = BOX.x0 - cam.x;
+  const x1 = BOX.x1 - cam.x;
+  const fy = BOX.y - cam.y;
+  if (x1 < -20 || x0 > 660) return;
+  const top = fy - 120;
+  // The drape at the back: deep velvet in soft folds.
+  ctx.fillStyle = '#4a0c22';
+  ctx.fillRect(x0, top, x1 - x0, fy - top);
+  for (let x = x0 + 4, k = 0; x < x1 - 4; x += 16, k++) {
+    ctx.fillStyle = k % 2 ? '#6a1430' : '#5a1028';
+    ctx.fillRect(x, top, 10, fy - top);
+    ctx.fillStyle = 'rgba(255,170,190,0.08)';
+    ctx.fillRect(x + 2, top, 2, fy - top);
+  }
+  // Two little lamps on the drape, glowing.
+  for (const lx of [x0 + 30, x1 - 30]) {
+    glow(ctx, lx, top + 40, 26, '#ffd890', 0.35 + 0.05 * Math.sin(time * 2.2 + lx));
+    ctx.fillStyle = '#c99a3b';
+    ctx.fillRect(lx - 1, top + 44, 2, 10);
+    ctx.fillStyle = '#ffd36b';
+    ctx.beginPath();
+    ctx.moveTo(lx - 6, top + 34);
+    ctx.lineTo(lx + 6, top + 34);
+    ctx.lineTo(lx + 3, top + 46);
+    ctx.lineTo(lx - 3, top + 46);
+    ctx.fill();
+    ctx.fillStyle = '#fff6d0';
+    ctx.beginPath();
+    ctx.ellipse(lx, top + 34, 6, 2, 0, 0, TAU);
+    ctx.fill();
+  }
+  // The curtains, tied back each side with gold rope.
+  for (const s of [-1, 1]) {
+    const ex = s < 0 ? x0 : x1;
+    const tie = fy - 46;
+    ctx.fillStyle = '#9a2040';
+    ctx.strokeStyle = '#5a1028';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(ex, top - 2);
+    ctx.lineTo(ex - s * 46, top - 2);
+    ctx.quadraticCurveTo(ex - s * 30 + Math.sin(time * 0.7) * 1.5, tie - 30, ex - s * 12, tie);
+    ctx.quadraticCurveTo(ex - s * 20, tie + 20, ex - s * 18, fy);
+    ctx.lineTo(ex, fy);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    ctx.strokeStyle = '#b8304e';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(ex - s * 30, top);
+    ctx.quadraticCurveTo(ex - s * 20, tie - 24, ex - s * 8, tie - 2);
+    ctx.stroke();
+    ctx.fillStyle = '#ffd36b';
+    ctx.beginPath();
+    ctx.arc(ex - s * 12, tie, 3.4, 0, TAU);
+    ctx.fill();
+    ctx.fillStyle = '#c99a3b';
+    ctx.fillRect(ex - s * 12 - 1.5, tie + 2, 3, 8);
+    ctx.fillStyle = '#ffd36b';
+    ctx.beginPath();
+    ctx.moveTo(ex - s * 12 - 3.5, tie + 15);
+    ctx.lineTo(ex - s * 12 + 3.5, tie + 15);
+    ctx.lineTo(ex - s * 12 + 1.5, tie + 9);
+    ctx.lineTo(ex - s * 12 - 1.5, tie + 9);
+    ctx.fill();
+  }
+  // The valance along the top: swags with a gold fringe.
+  const n = 4;
+  const sw = (x1 - x0) / n;
+  for (let k = 0; k < n; k++) {
+    const x = x0 + k * sw;
+    ctx.fillStyle = '#9a2040';
+    ctx.strokeStyle = '#5a1028';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(x, top - 4);
+    ctx.quadraticCurveTo(x + sw / 2, top + 22, x + sw, top - 4);
+    ctx.fill();
+    ctx.stroke();
+    ctx.strokeStyle = '#ffd36b';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(x + 3, top);
+    ctx.quadraticCurveTo(x + sw / 2, top + 19, x + sw - 3, top);
+    ctx.stroke();
+  }
+  ctx.fillStyle = '#7a1838';
+  ctx.fillRect(x0 - 6, top - 12, x1 - x0 + 12, 9);
+  ctx.fillStyle = '#ffd36b';
+  ctx.fillRect(x0 - 6, top - 4, x1 - x0 + 12, 2);
+  // The bowed front, under their feet: velvet, a gold rim, his quill on the crest, gold drops.
+  const mid = (x0 + x1) / 2;
+  ctx.fillStyle = '#9a2040';
+  ctx.strokeStyle = '#5a1028';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(x0 - 8, fy);
+  ctx.lineTo(x1 + 8, fy);
+  ctx.lineTo(x1 + 2, fy + 22);
+  ctx.quadraticCurveTo(mid, fy + 46, x0 - 2, fy + 22);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+  ctx.strokeStyle = '#ffd36b';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(x1 - 4, fy + 16);
+  ctx.quadraticCurveTo(mid, fy + 36, x0 + 4, fy + 16);
+  ctx.stroke();
+  ctx.fillStyle = '#c99a3b';
+  ctx.fillRect(x0 - 10, fy - 2, x1 - x0 + 20, 6);
+  ctx.fillStyle = '#ffd36b';
+  ctx.fillRect(x0 - 10, fy - 2, x1 - x0 + 20, 2.5);
+  ctx.fillStyle = '#c99a3b';
+  ctx.beginPath();
+  ctx.ellipse(mid, fy + 18, 11, 9, 0, 0, TAU);
+  ctx.fill();
+  ctx.fillStyle = '#ffd36b';
+  ctx.beginPath();
+  ctx.ellipse(mid, fy + 17, 9.5, 7.5, 0, 0, TAU);
+  ctx.fill();
+  ctx.strokeStyle = '#5a1028';
+  ctx.lineWidth = 1.6;
+  ctx.beginPath();
+  ctx.moveTo(mid - 5, fy + 22);
+  ctx.quadraticCurveTo(mid, fy + 16, mid + 5, fy + 11);
+  ctx.stroke();
+  ctx.fillStyle = '#5a1028';
+  ctx.beginPath();
+  ctx.ellipse(mid + 3, fy + 13, 4, 1.6, -0.8, 0, TAU);
+  ctx.fill();
+  for (const dx of [x0 + 34, x1 - 34]) {
+    const dy = fy + 28 + (Math.abs(dx - mid) < 60 ? 6 : 0);
+    ctx.fillStyle = '#c99a3b';
+    ctx.beginPath();
+    ctx.arc(dx, dy, 3, 0, TAU);
+    ctx.fill();
+    ctx.fillStyle = '#ffd36b';
+    ctx.beginPath();
+    ctx.moveTo(dx - 2.4, dy + 1);
+    ctx.lineTo(dx + 2.4, dy + 1);
+    ctx.lineTo(dx, dy + 8);
+    ctx.fill();
+  }
+  // The Playwright and his fan, unless a scene has them in its own cast just now.
+  const cast = world.cine?.cast ?? [];
+  const inCast = (id) => cast.some((c) => c.id === id && c.alpha > 0);
+  const now = world.scene ? world.now + (world.cine?.clock ?? 0) : world.now;
+  if (!inCast('zunda') && !world.char?.elders?.zunda) {
+    ZUNDA_FAN.genes ??= Object.assign(rollMochi(ZUNDA.seed, ZUNDA.genes), { wear: { ...ZUNDA.wear } });
+    drawMochiAnim(ctx, ZUNDA_FAN, BOX.zunda - cam.x, fy, time);
+  }
+  if (!inCast('playwright')) {
+    PW_SET.def ??= MOBS.playwright;
+    PW_SET.x = BOX.pw;
+    PW_SET.y = BOX.y;
+    drawMonster(ctx, PW_SET, BOX.pw - cam.x, fy, time, now);
+  }
 }
 
 export function drawTheatreFront(ctx, world, cam, time) {

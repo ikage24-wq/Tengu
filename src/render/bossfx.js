@@ -13,15 +13,18 @@
 //                lines (beams of starlight), nova (a star bursting)
 //   Bonbon       sprinkles (rainbow sprinkles gathering overhead, then pouring down), cherry (the
 //                cherry off her crown, lobbed high, coming down in a splash)
+//   The Queen's dream's bosses (the Coffee Mug Boss, the Cup-Noodle Dragon, Monday) draw theirs
+//   in render/dreamfx.js.
 
 import { puff, shock, starFlash, easeOut, bloom } from './fxkit.js';
+import { dreamWarn, dreamHit, DREAM_HOLD } from './dreamfx.js';
 
 const TAU = Math.PI * 2;
 const SW = 640;
 const SH = 360;
 const clamp01 = (v) => Math.max(0, Math.min(1, v));
 // How long each landing effect plays (s); the rest play 0.6 s.
-export const HOLD = { bags: 0.7, sprinkles: 0.7, cherry: 0.9, overdue: 0.9, books: 0.8, study: 0.9, bookmark: 0.7, comet: 0.75, crescentsweep: 0.75, eclipse: 1.3, total: 1.3, night: 1.3, shush: 0.9, nova: 0.9, lines: 0.8, starfall: 0.7 };
+export const HOLD = { bags: 0.7, sprinkles: 0.7, cherry: 0.9, overdue: 0.9, books: 0.8, study: 0.9, bookmark: 0.7, comet: 0.75, crescentsweep: 0.75, eclipse: 1.3, total: 1.3, night: 1.3, shush: 0.9, nova: 0.9, lines: 0.8, starfall: 0.7, ...DREAM_HOLD };
 // Looks that draw their own warning instead of the standard one.
 export const OWN_WARN = new Set(['lines']);
 
@@ -174,6 +177,7 @@ function cherry(ctx, x, y, r, rot) {
 // ---------- The wind-ups ----------
 export function castWarn(ctx, z, x, y, p, time) {
   const look = z.look;
+  if (dreamWarn(ctx, z, x, y, p, time)) return;
   ctx.save();
   if (look === 'bags') {
     // A suitcase wobbling on the rack overhead, then tumbling down onto the mark.
@@ -455,6 +459,7 @@ export function castWarn(ctx, z, x, y, p, time) {
 export function castHit(ctx, z, x, y, u, time) {
   const look = z.look;
   if (!look) return false;
+  if (dreamHit(ctx, z, x, y, u, time)) return true;
   u = clamp01(u);
   const e = easeOut(u);
   const fade = u < 0.5 ? 1 : 1 - (u - 0.5) / 0.5;
