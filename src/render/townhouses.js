@@ -747,7 +747,7 @@ export function starchimeTowerArt() {
 }
 // One crystal chime (drawn live, hanging from the crown and barely swaying).
 export function chimeArt(len) {
-  return art(`chime|${len}`, 8, len + 4, () => [
+  return art(`tchime|${len}`, 8, len + 4, () => [
     R(3.6, 0, 0.8, len - 12, '#4a4a6a'),
     T([[4, len - 13], [7, len - 8], [4, len + 2], [1, len - 8]], '#bfe6ff'),
     F(T([[4, len - 13], [7, len - 8], [4, len + 2]], '#8fc0f0')),

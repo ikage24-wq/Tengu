@@ -462,7 +462,7 @@ export const MAPS = {
         { x: 40, y: 520, w: 330 }, { x: 200, y: 440, w: 380 }, { x: 440, y: 640, w: 320 }, { x: 470, y: 560, w: 300 }, { x: 600, y: 480, w: 240 },
         // The lake: crystal outcrops over each shore, an arch of crystal over the water, and the
         // crystal islet in the middle where you fish (only the raft goes there).
-        { x: 820, y: 800, w: 300 }, { x: 1480, y: 800, w: 300 }, { x: 1150, y: 760, w: 300 },
+        { x: 940, y: 800, w: 180 }, { x: 1480, y: 800, w: 300 }, { x: 1150, y: 760, w: 300 },
         { x: 800, y: 640, w: 320 }, { x: 1480, y: 640, w: 320 }, { x: 1140, y: 600, w: 320 },
         { x: 860, y: 540, w: 260 }, { x: 1480, y: 540, w: 260 }, { x: 1100, y: 460, w: 400 },
         { x: 1140, y: 680, w: 320 },
@@ -488,7 +488,7 @@ export const MAPS = {
     // the lake, a crystal spire in the east.
     // The underground lake fills the cavern's floor, lit from below (render/water.js).
     water: [{ x1: 1000, x2: 1600, y: 900, kind: 'cave' }],
-    deco: [['glowpool', 240, 0, 600], ['crystalspire', 1760, 1, 880], ['stalagmite', 900, 0, 880], ['crystalspire', 1940, 0, 720], ['stalagmite', 2400, 0, 600]],
+    deco: [['glowpool', 240, 0, 600], ['crystalspire', 1760, 1, 880], ['stalagmite', 982, 0, 880], ['crystalspire', 1940, 0, 720], ['stalagmite', 2400, 0, 600]],
     lamps: [{ x: 240, y: 580 }, { x: 1300, y: 850 }, { x: 2100, y: 440 }],
     spirit: { x: 1300, y: 640 },
     habitats: { crystalslime: { naps: true, home: { x: 240, y: 600 } }, rockgolem: { naps: true }, shade: { play: true } },
@@ -3044,7 +3044,7 @@ Object.assign(MAPS, {
 MAPS.nightthrone = arena('nightthrone', 'The Dark Throne', 'cave', 'grove', { x: 366, y: 190 },
   { sky: ['#0a0820', '#1a1440', '#2f2766'], far: '#241e58', mid: '#2f2870', material: 'throne', ceiling: true, light: 'throne', islands: 'stone', skyline: 'columns', props: [] },
   [['throne', 700], ['crystalspire', 320, 1], ['crystalspire', 1080, 0]], ['cave', 'nightthrone']);
-MAPS.cave.portals.push({ id: 'nightthrone', x: 1480, y: 944, to: 'nightthrone', toPortal: 'west', label: 'The Dark Throne' });
+MAPS.cave.portals.push({ id: 'nightthrone', x: 872, y: 880, to: 'nightthrone', toPortal: 'west', label: 'The Dark Throne' });
 // (Who waits there, for a quest's "where to go": core/quests.js mobPlaces.)
 MAPS.nightthrone.trialBoss = 'nightking';
 
@@ -3057,7 +3057,7 @@ MAPS.dawnpalace = arena('dawnpalace', 'The Palace at Dawn', 'meadow', 'sprout', 
 MAPS.dawnpalace.trialBoss = 'alarm';
 // (Always dawn there, and never rain: its own light, whatever the clock.)
 MAPS.dawnpalace.ownLight = true;
-MAPS.sprout.portals.push({ id: 'dawnpalace', x: 200, y: 480, to: 'dawnpalace', toPortal: 'west', label: 'The Palace at Dawn' });
+MAPS.sprout.portals.push({ id: 'dawnpalace', x: 200, y: 480, to: 'dawnpalace', toPortal: 'west', label: 'Palace Lawn' });
 
 // Lilith's grotto behind the waterfall keeps its own rose-lit dusk, day or night.
 MAPS.grotto.ownLight = true;

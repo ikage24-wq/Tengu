@@ -239,7 +239,7 @@ const ROBE = ramp('#9a7ae8', { step: 10, turn: 10 });
 const HATC = ramp('#6a4ab8', { step: 10, turn: 8, lift: 12 });
 const LEMON = ramp('#ffe08a', { step: 9, turn: 10 });
 const LOLLI = '#ff8ab8';
-const lw = pairOf('lw');
+const lw = pairOf('lpw');
 // The robe, down to her toes: a pink sash, gumdrop buttons, little stars. Box 20 x 20; standing at
 // (10, 19.6).
 const lwRobe = () => [
@@ -284,7 +284,7 @@ const LW_STAFF = lw('staff', 14, 36, lwStaff, 2);
 const LW_HAND = [false, true].map((f) => lw(`hand${f ? 1 : 0}`, 7, 7, lwHand(f), 2));
 const LW_SHOE = [false, true].map((f) => lw(`shoe${f ? 1 : 0}`, 7, 4, lwShoe(f), 2));
 const LW_FACE = { eyes: [[7.4, 8.6, 1.3, 1.8, -1], [11.6, 8.4, 1.4, 1.9, 1]], mouth: [9.8, 11.6, 1.2], blush: [[5.6, 10.6, 1.1], [13.2, 10.4, 1]], iris: '#6a3aa8', lid: 0.1, lashes: 1 };
-const lwFace = (mood) => sm(`lw|face|${mood}`, 16, 15, () => faceShapes(mood, LW_FACE));
+const lwFace = (mood) => sm(`lpw|face|${mood}`, 16, 15, () => faceShapes(mood, LW_FACE));
 const lwPass = (bare) => {
   const i = bare ? 1 : 0;
   const tag = bare ? 'b' : '';

@@ -215,6 +215,9 @@ export function makeRig(spec) {
       a.ph = attackPhase(m, a.now, spec.recover);
       a.face = m.hp <= 0 ? 'dead' : a.ph.atk ? 'angry' : a.mood;
       a.atk = a.ph.atk ? 1 : 0;
+      // Calm: up and doing nothing (not walking, attacking, hurt in the last few seconds or beaten),
+      // eased in and out, so an idle quirk such as a doze never plays in the middle of a fight.
+      a.calm = spring(st, '_calm', !a.moving && !a.ph.atk && m.hp > 0 && (a.hurtAgo ?? 9) > 3 ? 1 : 0, 40, 13, dt);
       // (Turning round: the moment it flips, a little lean and dip, so the loose bits swing on.)
       if (st._flip !== undefined && st._flip !== a.flip && m.hp > 0) for (const [k, v] of Object.entries(spec.turnKick ?? { tilt: 160, lift: -40 })) kick(st, k, v);
       st._flip = a.flip;

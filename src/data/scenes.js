@@ -92,7 +92,7 @@ export const QUEST_SCENES = {
 export const SIDE_SCENES = {
   // ----- The tutorial's goodbye -----
   tut_bye: [
-    { who: 'kuro', text: "You've got the hang of it! Grandma Hayate would be proud. If she were awake, anyway.", mood: 'happy' },
+    { who: 'kuro', text: "You've got the hang of it! The Queen would be proud. If she were awake, anyway.", mood: 'happy' },
     { who: 'kuro', text: "The boat goes to Sprout Village. Find Mira there. She makes the best tea on the island." },
     { who: 'player', text: 'Will I see you again?' },
     { who: 'kuro', text: "Of course! Friends on this island always find each other. On the wind, you know.", mood: 'happy' },
@@ -239,7 +239,7 @@ export const SIDE_SCENES = {
     { together: [{ face: 'pip', to: 'player' }, { emote: 'pip', kind: 'heart', dur: 1.8 }] },
     { who: 'pip', text: "Eleven years I thought I had to stay. Turns out I only needed someone to mind the counter for a bit. Thank you, {name}. Really.", mood: 'happy' },
     { who: null, text: 'Pip takes the compass off the shelf and presses it into your hands. The needle does not point north. It points up, toward the clouds.' },
-    { who: 'pip', text: "For whoever goes furthest. That's you. Go and pick your path, and send me a postcard from every map. They're going on THE WORLD shelf.", mood: 'happy' },
+    { who: 'pip', text: "For whoever goes furthest. That's you. Go and see the whole world, and send me a postcard from every map. They're going on THE WORLD shelf.", mood: 'happy' },
     { who: 'pip', text: 'Thank you, come again! ...That one I meant.', mood: 'happy' },
   ],
   letter_open: [
@@ -256,7 +256,7 @@ export const SIDE_SCENES = {
     { who: 'mira', text: "Of course you do. You're all grown up. You don't need my little tips any more.", mood: 'sad' },
     { together: [{ face: 'mira', to: 'player' }, { wait: 0.4 }] },
     { who: 'mira', text: "I've welcomed a hundred adventurers to Sprout and waved every one of them off down that road. It's lovely when one of them brings something back. Thank you, {name}.", mood: 'happy' },
-    { who: 'mira', text: "Now, you're ready for a path of your own. Come and talk to me about it. ...And the map is on M. I'm sorry. I can't stop.", mood: 'happy' },
+    { who: 'mira', text: "Now you've got a job and a map. ...The map is on M. I'm sorry. I can't stop.", mood: 'happy' },
   ],
   runway_done: [
     { who: 'lulu', text: 'Ta-daa! Fluffy trim, antler buttons, and a twirl that could stop traffic!', mood: 'happy' },
@@ -331,8 +331,8 @@ export const SIDE_SCENES = {
     { together: [{ fx: 'wind', at: 'nim' }, { shake: 1.5, dur: 0.6 }, { wait: 1.2 }] },
     { who: 'nim', text: "Thank you. For trying to bring the wind back. For me. You can come home now. We'll wish together.", mood: 'happy' },
     { together: [{ spot: null, dur: 0.6 }, { fx: 'starfall', at: 'nim', n: 18 }, { emote: 'nim', kind: 'heart', dur: 1.8 }, { jump: 'nim', height: 14 }] },
-    { who: null, text: 'Every candle lights itself at once around the Stardust candle, and the flames all lean the same way: up, past the Sky Garden, toward something sleeping above the clouds. The caped one keeps the cape. Nim lets it.' },
-    { who: 'nim', text: "Up there. Elowen says that's where the wind sleeps. I-I think the candles want you to go and say hi.", mood: 'happy' },
+    { who: null, text: 'Every candle lights itself at once around the Stardust candle, and the flames all lean the same way: toward Sprout, and the palace on the hill, where somebody has been asleep for weeks. The caped one keeps the cape. Nim lets it.' },
+    { who: 'nim', text: "That way. The Queen's palace. I-I think the candles want you to go and say hi.", mood: 'happy' },
   ],
   // ----- Tora and the Great Forge -----
   // Yuzu's second tail (Moonleaf Grove; she stands by the Moon Tree at x 440, her house door at 335).
@@ -449,7 +449,7 @@ export const SIDE_SCENES = {
     { together: [{ emote: 'celeste', kind: '?', dur: 1.6 }, { wait: 0.6 }] },
     { who: 'celeste', text: "But I've never been to Starfall Heights. I didn't know what the kites looked like until I dreamed them.", mood: 'surprised' },
     { together: [{ face: 'celeste', to: 1 }, { cam: 'celeste', up: 150, dur: 1.4 }, { fx: 'sparkle', at: 'celeste', n: 10 }] },
-    { who: 'celeste', text: "They're not my dreams. I've been wrong about that all week. Someone else is asleep, somewhere far away, dreaming the whole island. I just sleep so much I keep catching the edges.", mood: 'sad' },
+    { who: 'celeste', text: "They're not my dreams. I've been wrong about that all week. Someone else is asleep, in the palace on the hill, dreaming the whole island. I just sleep so much I keep catching the edges.", mood: 'sad' },
     { together: [{ cam: ['celeste', 'player'], dur: 1 }, { face: 'celeste', to: 'player' }] },
     { who: 'celeste', text: "Whoever it is, they dream very kindly. I'd like to see their face.", mood: 'happy' },
   ],
@@ -469,7 +469,7 @@ export const SIDE_SCENES = {
     { together: [{ emote: 'celeste', kind: 'zzz', dur: 4 }, { expr: 'celeste', as: 'sleepy' }, { cam: 'celeste', up: 170, dur: 2 }, { fx: 'starfall', at: 'celeste', n: 12 }] },
     { who: null, text: 'Far overhead, the net on Starfall Heights fills with a soft light. In her sleep, Celeste smiles.' },
     { together: [{ expr: 'celeste', as: null }, { cam: ['celeste', 'player'], dur: 1.2 }, { face: 'celeste', to: 'player' }, { emote: 'celeste', kind: '!', dur: 1.4 }] },
-    { who: 'celeste', text: "I saw her. A girl made of wind, curled up asleep somewhere very high. She's been asleep a long time. Since the wind stopped.", mood: 'surprised' },
+    { who: 'celeste', text: "I saw her. A girl in a big soft bed, with her crown on sideways. She's been asleep a long time. Since the wind stopped.", mood: 'surprised' },
     { who: 'celeste', text: "And she's dreaming about someone who keeps showing up. In the glade, at the shrine, at a party, under the sea. Every single time.", mood: 'happy' },
     { together: [{ wait: 0.6 }, { emote: 'celeste', kind: 'heart', dur: 1.8 }] },
     { who: 'celeste', text: "It's you. She's dreaming about you. ...I think she'd like you to come and say good morning. When you're ready. Take these gloves. For holding on, wherever she is.", mood: 'happy' },
@@ -670,7 +670,7 @@ export const SIDE_SCENES = {
     { who: 'rook', text: '...This calls for a song. And this time I will sing it. One verse.', mood: 'happy' },
     { together: [{ emote: 'rook', kind: 'note', dur: 2 }, { fx: 'notes', at: 'rook', n: 14 }, { fx: 'feathers', at: 'rook', n: 8 }] },
     { who: null, text: 'Captain Rook sings one verse of a sea shanty. It is about a crab. It is unexpectedly sad. The whole harbor claps, mostly out of relief when it ends.' },
-    { who: 'rook', text: "The Harpies came down from the Sky Garden. Above that is Starfall Heights, and above that, they say, the wind sleeps.", mood: 'happy' },
+    { who: 'rook', text: "The Harpies came down from the Sky Garden. Above that is Starfall Heights, where the stars fall slow.", mood: 'happy' },
     { who: 'rook', text: "Go on up. And if you see a falling star, my crew swears you can catch one.", mood: 'happy' },
   ],
   // ----- Granny Kelp and Old Lumen -----
@@ -871,7 +871,7 @@ export const SIDE_SCENES = {
   ],
   trial_brann_done: [
     { who: 'brann', text: "Look at that. Not a step back. You've got a warrior's heart, {name}. ...That was the speech. I practised it.", mood: 'happy' },
-    { who: 'brann', text: "Two paths now. The Paladin, who shields everyone. Or the Berserker, who ends fights fast. Choose with your heart. Not your stomach. That's how I ended up with this haircut." },
+    { who: 'brann', text: "Two paths now. The Stormwall plants a thunderhead and shields everyone. The Tempest never stands still and ends fights fast. Choose with your heart. Not your stomach. That's how I ended up with this haircut." },
   ],
   // ----- Kestrel's arrow -----
   kestrel_targets_done: [

@@ -394,7 +394,7 @@ export function owlStill(pose, f, mood) {
 // =====================================================================================
 const ROCK = ramp('#8a86a8', { step: 10, turn: 8, lift: 14 });
 const LAVA = '#ff9a4a';
-const mg = pairOf('mg');
+const mg = pairOf('mgol');
 // The body: a round rock, glowing cracks, little craters. Box 24 x 22; standing at (12, 21.6).
 const mgBody = () => [
   E(12, 12, 11, 10, ROCK.base), crescent(12, 12, 11, 10, ROCK.sh, { k: 0.2, a0: 100, a1: 220 }), shine(12, 12, 11, 10, '#ffffff', 0, 0.6),
@@ -407,7 +407,7 @@ const MG_BODY = mg('body', 24, 22, mgBody, 2);
 const MG_FIST = [false, true].map((f) => mg(`fist${f ? 1 : 0}`, 8, 8, mgFist(f), 2));
 const MG_FOOT = [false, true].map((f) => mg(`foot${f ? 1 : 0}`, 8, 5, mgFoot(f), 2));
 const MG_FACE = { eyes: [[15.4, 10, 1.7, 2.2, 1], [9.6, 10.2, 1.5, 2, -1]], mouth: [13, 14.6, 1.8], blush: [[7.6, 13.6, 1.6], [18.2, 13.2, 1.4]], iris: '#ff7a3a', lid: 0 };
-const mgFace = (mood) => sm(`mg|face|${mood}`, 24, 22, () => faceShapes(mood, MG_FACE));
+const mgFace = (mood) => sm(`mgol|face|${mood}`, 24, 22, () => faceShapes(mood, MG_FACE));
 const mgPass = (bare) => {
   const i = bare ? 1 : 0;
   const tag = bare ? 'b' : '';

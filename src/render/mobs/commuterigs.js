@@ -393,7 +393,7 @@ const CROC = ramp('#6ac46a', { step: 10, turn: 10 });
 const CBELLY = '#f4efc0';
 const RED = ramp('#e8404e', { step: 10, turn: 8 });
 const STEEL = '#d0d4e0';
-const sc = pairOf('sc');
+const sc = pairOf('scroc');
 // Body: chubby and upright, a pale banded belly, ridges down its back. Box 22 x 22; standing at
 // (11, 21.6).
 const scBody = () => [
@@ -427,7 +427,7 @@ const SC_BASE = sc('base', 24, 7, scBase, 2);
 const SC_ARM = [false, true].map((f) => sc(`arm${f ? 1 : 0}`, 6, 7, scArm(f), 2));
 const SC_FOOT = [false, true].map((f) => sc(`foot${f ? 1 : 0}`, 8, 4, scFoot(f), 2));
 const SC_FACE = { eyes: [[8.2, 3.8, 1.3, 1.6, -1], [13.2, 3.6, 1.4, 1.7, 1]], mouth: [5.4, 8.2, 1.1], blush: [[10.6, 6.2, 1]], iris: '#3a5a2a', lid: 0.2 };
-const scFace = (mood) => sm(`sc|face|${mood}`, 24, 11, () => faceShapes(mood, SC_FACE));
+const scFace = (mood) => sm(`scroc|face|${mood}`, 24, 11, () => faceShapes(mood, SC_FACE));
 const scPass = (bare) => {
   const i = bare ? 1 : 0;
   const tag = bare ? 'b' : '';

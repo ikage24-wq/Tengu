@@ -453,7 +453,7 @@ export function drummerStill(pose, f, mood) {
 const JBX = ramp('#b48ae8', { step: 9, turn: 8 });
 const JRED = ramp('#ff6b8a', { step: 9, turn: 8 });
 const JBLU = ramp('#7fd8ff', { step: 9, turn: 8 });
-const jb = pairOf('jb');
+const jb = pairOf('jbox');
 // The box: lilac, gold trim, a big star on the side. Box 22 x 19; its joint (the floor) at (11, 18.6).
 const jbBox = () => [
   R(1, 1, 20, 17, JBX.base), F(R(1, 1, 3, 17, JBX.hi)), F(R(17.4, 1, 3.6, 17, JBX.sh)),
@@ -478,7 +478,7 @@ const JB_LID = jb('lid', 22, 4, jbLid, 2);
 const JB_CRANK = jb('crank', 10, 10, jbCrank, 2);
 const JB_HEAD = jb('head', 18, 20, jbHead, 2);
 const JB_FACE = { eyes: [[11.2, 10, 1.1, 1.5, 1], [7.4, 10, 0.9, 1.3, -1]], mouth: [10.4, 14.4, 2], blush: [[6, 13, 1.2], [15.4, 12.8, 1]], iris: '#3a2d4f', lid: 0 };
-const jbFace = (mood) => sm(`jb|face|${mood}`, 18, 20, () => faceShapes(mood, JB_FACE));
+const jbFace = (mood) => sm(`jbox|face|${mood}`, 18, 20, () => faceShapes(mood, JB_FACE));
 // Jack's spring, from the box's mouth up to his ruff: coils, gold, as long as he's out.
 function jbSpring(ctx, a, S) {
   const top = -18 - S.pop;
@@ -569,7 +569,7 @@ export function jackboxStill(pose, f, mood) {
 const WOOD = ramp('#f0d0a0', { step: 8, turn: 10 });
 const DRESS = ramp('#7fb8f0', { step: 9, turn: 8 });
 const YARN = ramp('#ff7a6a', { step: 9, turn: 8 });
-const mn = pairOf('mn');
+const mn = pairOf('mnet');
 // A wooden leg: a peg, a ball knee, a red shoe. Box 6 x 12; the hip at (3, 0.6).
 const mnLeg = (far) => () => [taper([[3, 0.6], [3, 5]], 2.6, 2.4, far ? WOOD.sh : WOOD.base), E(3, 5.4, 1.6, 1.6, far ? WOOD.deep : WOOD.sh), taper([[3, 6], [3, 9.6]], 2.4, 2.2, far ? WOOD.sh : WOOD.base), E(3.8, 10.6, 2.2, 1.3, far ? '#c04a4a' : '#ff5a5a')];
 const mnArm = (far) => () => [taper([[1, 1.6], [4, 1.8]], 2, 1.8, far ? WOOD.sh : WOOD.base), E(4.4, 1.8, 1.2, 1.2, far ? WOOD.deep : WOOD.sh), taper([[4.6, 1.8], [7.6, 1.8]], 1.8, 1.6, far ? WOOD.sh : WOOD.base), E(8, 1.8, 1.2, 1.2, far ? WOOD.sh : WOOD.base)];
@@ -598,7 +598,7 @@ const MN_HEAD = mn('head', 14, 13, mnHead, 2);
 const MN_TAIL = [false, true].map((f) => mn(`tail${f ? 1 : 0}`, 4, 9, mnTail(f), 2));
 const MN_CROSS = mn('cross', 22, 7, mnCross, 2);
 const MN_FACE = { eyes: [[9, 7.6, 1, 1.4, 1], [5.8, 7.6, 0.8, 1.2, -1]], mouth: [8, 10.4, 1.3], blush: [[5, 9.6, 1.2], [10.6, 9.4, 1]], iris: '#3a2d4f', lid: 0 };
-const mnFace = (mood) => sm(`mn|face|${mood}`, 14, 13, () => faceShapes(mood, MN_FACE));
+const mnFace = (mood) => sm(`mnet|face|${mood}`, 14, 13, () => faceShapes(mood, MN_FACE));
 const mnPass = (bare) => {
   const i = bare ? 1 : 0;
   const tag = bare ? 'b' : '';

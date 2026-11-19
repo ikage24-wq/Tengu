@@ -2,7 +2,7 @@
 // a chain of rooms. Each room is a map with `dungeon` set; its sealed exit opens once the room is
 // cleared (every monster down and the room's task done). See world/dungeon.js for the runtime.
 //
-// Roles come from your job: warriors tank (a Berserker deals damage instead), mages (and every job after them) heal, and everyone
+// Roles come from your job: warriors tank (a Tempest deals damage instead), mages (and every job after them) heal, and everyone
 // else deals damage. Novices can't join a dungeon group.
 
 export const DUNGEONS = {
@@ -99,7 +99,7 @@ export const DUNGEONS = {
   // Starfall Heights, crossed from its tail to its brow.
   skywhale: {
     id: 'skywhale', name: "Sky Whale's Back", minLevel: 45,
-    blurb: "The great Sky Whale has fallen into a troubled sleep and is sinking toward the island. Sky pirates are looting its back and the barnacles are building a fortress. Cross from tail to brow, see off the captain and the matriarch, and wake the whale gently.",
+    blurb: "The great Sky Whale has fallen into a troubled sleep and is sinking toward the island. Sky pirates are looting its back and the barnacles are building a fortress. Cross from tail to brow, see off the captain and the matriarch, cheer up the grumpy cloud on her brow, and wake the whale gently.",
     gate: 'cloudcatch_pier', warden: 'nimbus',
     rooms: ['skywhale1', 'skywhale2', 'skywhale3', 'skywhale4', 'skywhale5', 'skywhale6'],
     recruit: { tank: [46, 48], healer: [46, 48], dps: [45, 48] },
@@ -128,7 +128,7 @@ export const GROUP = ['tank', 'healer', 'dps', 'dps'];
 
 export function roleOf(jobId, family) {
   if (jobId === 'novice' || family === 'beginner') return null;
-  // (The Berserker takes the damage seat its family doesn't.)
+  // (The Tempest takes the damage seat its family doesn't.)
   if (jobId === 'tempest') return 'dps';
   // (The Tidecaller is the party's healer.)
   if (jobId === 'tidecaller') return 'healer';

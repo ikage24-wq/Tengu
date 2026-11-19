@@ -234,9 +234,11 @@ const impBase = makeRig({
     const p = u * TAU;
     const lu = t % IMP_LOOP;
     const look = hold(lu, 0.5, 1.1, 2.2, 2.8);
-    const yawn = hold(lu, 3.6, 4.2, 5.2, 5.8);
-    const shake = hold(lu, 7, 7.2, 8, 8.2);
-    const nod = hold(lu, 9.2, 10.2, 11, 11.2);
+    // (The yawn, shake and doze only when it's calm: never mid-fight, hurt or beaten.)
+    const calm = a.calm ?? 1;
+    const yawn = hold(lu, 3.6, 4.2, 5.2, 5.8) * calm;
+    const shake = hold(lu, 7, 7.2, 8, 8.2) * calm;
+    const nod = hold(lu, 9.2, 10.2, 11, 11.2) * calm;
     const still = 1 - a.walkW;
     a.impYawn = yawn * still;
     a.impNod = nod * still;
@@ -474,10 +476,12 @@ export const sporecapRig = makeRig({
     const u = stepPhase(m, a, 'sc', 16);
     const p = u * TAU;
     const lu = t % SC_LOOP;
-    const doze = hold(lu, 1, 2.2, 4.2, 4.4);
-    const jolt = hold(lu, 4.3, 4.4, 4.7, 5.4);
-    const tap = hold(lu, 6.4, 6.7, 7.6, 8);
-    const dance = hold(lu, 9.4, 9.8, 11.4, 11.9);
+    // (Its doze, jolt, tapping and little dance only when it's calm: never mid-fight, hurt or beaten.)
+    const calm = a.calm ?? 1;
+    const doze = hold(lu, 1, 2.2, 4.2, 4.4) * calm;
+    const jolt = hold(lu, 4.3, 4.4, 4.7, 5.4) * calm;
+    const tap = hold(lu, 6.4, 6.7, 7.6, 8) * calm;
+    const dance = hold(lu, 9.4, 9.8, 11.4, 11.9) * calm;
     const still = 1 - a.walkW;
     a.scDoze = doze * still;
     a.scDance = dance * still;
@@ -591,7 +595,7 @@ const MUZ = '#f8e0c4';
 const BRAM = ramp('#4f8a52', { step: 9, turn: 10 });
 const BRAM2 = ramp('#6aa860', { step: 9, turn: 10 });
 const BERRY = ramp('#5a3a8a', { step: 10, turn: 8, lift: 14 });
-const bp = pairOf('bb2');
+const bp = pairOf('bbear');
 
 // Bramble bits: a cluster of three blackberries, a little white flower, a leaf.
 const berries = (x, y, k = 1) => [[0, 0], [1.4 * k, 0.6 * k], [0.4 * k, 1.4 * k]].flatMap(([dx, dy]) => [E(x + dx, y + dy, 1.1 * k, 1.1 * k, BERRY.base), F(E(x + dx - 0.3 * k, y + dy - 0.3 * k, 0.35 * k, 0.35 * k, BERRY.hi))]);
@@ -682,7 +686,7 @@ const BB_TAIL = bp('tail', 6, 6, bbTailShapes, 2);
 const BB_BERRY = bp('berry', 4, 4, bbBerryShapes, 2);
 const BB_BALL = bp('ball', 30, 30, bbBallShapes, 3);
 const BB_FACE = { eyes: [[17.4, 10.4, 2, 2.6, -1], [23, 9.8, 1.6, 2.2, 1]], mouth: [25.4, 20, 2.2], blush: [[13.6, 15.4, 1.9]], iris: '#6a4228', lid: 0 };
-const bbFace = (mood) => faceSprite(`bb2|face|${mood}`, 30, 26, () => faceShapes(mood, BB_FACE));
+const bbFace = (mood) => faceSprite(`bbear|face|${mood}`, 30, 26, () => faceShapes(mood, BB_FACE));
 
 const BB_STRIDE = 14;
 const BB_FEET = { N: [-2.6, 0], F: [3.6, 0.5] };

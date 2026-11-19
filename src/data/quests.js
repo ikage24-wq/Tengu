@@ -163,7 +163,7 @@ export const QUESTS = {
   // it to warriors).
   warrior_trial: {
     id: 'warrior_trial', name: "The Warrior's Trial", giver: 'brann', minLevel: 30, family: 'warrior',
-    text: "You've grown strong, but the next path asks more than strength. Go to the Crystal Cave and break 20 Crystal Golems. Stand your ground the whole time. If you step back, I'll know. I'll feel it in my shield arm. Then come back and I'll show you the Paladin's way and the Berserker's way.",
+    text: "You've grown strong, but the next path asks more than strength. Go to the Crystal Cave and break 20 Crystal Golems. Stand your ground the whole time. If you step back, I'll know. I'll feel it in my shield arm. Then come back and I'll show you the Stormwall's way and the Tempest's way.",
     objectives: [{ type: 'kill', mob: 'rockgolem', count: 20 }],
     rewards: { exp: 48000, gold: 1100, items: [{ id: 'elixir', qty: 5 }] },
   },

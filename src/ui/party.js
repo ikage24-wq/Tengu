@@ -17,6 +17,7 @@ import { MAPS } from '../data/maps.js';
 import { askFriend, addBlocker, isBuddy, thanked } from '../world/buddies.js';
 import { helpOut } from '../world/lives.js';
 import { joinGroup } from '../world/social.js';
+import { peekAlpha } from './peek.js';
 
 // ---------- Right-click menu ----------
 
@@ -155,9 +156,12 @@ export function drawPartyPanel(ui, state, world) {
   const y = state.leftColumnY;
   const w = 120;
   // On a phone the rows are slim (name and HP side by side) and the panel stops above the thumb
-  // stick: rows past that fold into a "+N more" line. The header folds the panel either way.
+  // stick: rows past that fold into a "+N more" line. The header folds the panel either way. In a
+  // dungeon the rows are slim too (the role shows as the dot's colour), so the group list covers
+  // less of a tall room's high ledges.
   const touch = Boolean(ui.input?.touch);
-  const rowH = touch ? 14 : 19;
+  const slim = touch || Boolean(world.dungeon);
+  const rowH = slim ? 14 : 19;
   const total = members.length + friends.length + 1;
   const fold = Boolean(state.partyFold);
   const room = touch ? Math.max(1, Math.floor((TOUCH_FLOOR - y - 18) / rowH)) : total;
@@ -165,6 +169,9 @@ export function drawPartyPanel(ui, state, world) {
   const more = fold ? 0 : total - shown;
   const h = 18 + shown * rowH + (more ? 11 : 0) - (fold ? 3 : 0);
   const lead = world.bots?.partyLead ?? null;
+  // (See-through while someone's behind it: ui/peek.js.)
+  ctx.save();
+  ctx.globalAlpha *= peekAlpha('party', x, y, w, h);
   box(ctx, x, y, w, h, { fill: 'rgba(255,250,246,0.88)', edge: th.main, r: 8, width: 1.5 });
   box(ctx, x + 2, y + 2, w - 4, 12, { fill: th.main, edge: null, r: 6 });
   icon(ctx, 'heart', x + 9, y + 8, 8, '#ffffff');
@@ -182,7 +189,7 @@ export function drawPartyPanel(ui, state, world) {
     const ry = y + 17 + i * rowH;
     const rh = rowH - 2;
     box(ctx, x + 3, ry, w - 6, rh, { fill: hp <= 0 ? '#e8e0f0' : hot ? '#ffffff' : '#fffdfb', edge: th.light, r: 6, width: 1 });
-    const my = touch ? ry + rh / 2 : ry + 5.5;
+    const my = slim ? ry + rh / 2 : ry + 5.5;
     if (leader) icon(ctx, 'crown', x + 10, my + 0.5, 7, '#f0b53a');
     else if (style) {
       ctx.fillStyle = style.color;
@@ -191,7 +198,7 @@ export function drawPartyPanel(ui, state, world) {
       ctx.fill();
     }
     const nx = x + (leader || style ? 14 : 7);
-    if (touch) {
+    if (slim) {
       // Slim: the name on the left, the HP bar on the right.
       text(ctx, fit(ctx, name, 56, 7.5, true), nx, ry + rh / 2 + 2.8, { size: 7.5, bold: true });
       box(ctx, x + 74, ry + rh / 2 - 1.5, w - 81, 3, { fill: 'rgba(74,53,96,0.2)', edge: null, r: 1.5 });
@@ -242,5 +249,6 @@ export function drawPartyPanel(ui, state, world) {
   // Quick emotes for the party, under it (on a phone, the Emote button does this). The party
   // quest card stacks under whatever is last.
   const bar = touch ? 0 : partyEmoteBar(ui, state, world, x, y + h + 3, w);
+  ctx.restore();
   state.leftColumnY = y + h + (bar ? 3 + bar : 0) + 4;
 }

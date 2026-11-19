@@ -30,6 +30,7 @@ import { currentLesson, skipLesson } from '../world/tutorial.js';
 import { othersHere } from '../net/online.js';
 import { inParty } from '../net/together.js';
 import { drawMinimapPings } from './grouping.js';
+import { peekAlpha, peekSpots } from './peek.js';
 import { groupReady, NEAR_BONUS } from '../world/teamwork.js';
 import { VW } from '../input.js';
 import { standings, derbyClock } from '../world/derby.js';
@@ -147,6 +148,7 @@ function lowHpVignette(ctx, k) {
 
 export function drawHud(ui, state, world) {
   const { ctx } = ui;
+  peekSpots(state, world);
   const char = world.char;
   const s = world.stats;
   const t = world.now;
@@ -437,7 +439,14 @@ export function drawHud(ui, state, world) {
   if (settings.minimap) {
     const p = miniAt();
     const mb = minimapBox(world.map);
-    piece(ui, 'minimap', { x: p.x - 4, y: p.y - 16, w: mb.w + 8, h: settings.minimapMin ? 14 : mb.h + 20 }, () => drawMinimap(ui, world));
+    const mr = { x: p.x - 4, y: p.y - 16, w: mb.w + 8, h: settings.minimapMin ? 14 : mb.h + 20 };
+    // (See-through while someone's behind it: ui/peek.js.)
+    piece(ui, 'minimap', mr, () => {
+      ctx.save();
+      ctx.globalAlpha *= peekAlpha('minimap', mr.x, mr.y, mr.w, mr.h);
+      drawMinimap(ui, world);
+      ctx.restore();
+    });
   }
   piece(ui, 'buffs', { x: 8, y: minimapBottom(world), w: Math.max(3, Object.keys(world.char.buffs).length) * 22, h: 28 }, () => drawBuffs(ui, world));
   if (world.dungeon) {
@@ -1218,6 +1227,9 @@ function drawDungeonTracker(ui, world) {
   if (task) rows.push({ label: `${task.label} ${task.have}/${task.need}`, done: task.have >= task.need });
   if (run.room?.cleared) rows.push({ label: 'Head through the exit', done: false, next: true });
   const h = 30 + rows.length * 10;
+  // (See-through while someone's behind it: ui/peek.js.)
+  ctx.save();
+  ctx.globalAlpha *= peekAlpha('dungeon', x, y, w, h);
   box(ctx, x, y, w, h, { fill: 'rgba(255,250,246,0.85)', edge: th.main, r: 8, width: 1.2 });
   box(ctx, x + 2, y + 2, w - 4, 11, { fill: th.main, edge: null, r: 5.5 });
   text(ctx, def.name, x + 8, y + 10.5, { size: 7, bold: true, color: '#ffffff', outline: th.ink });
@@ -1226,6 +1238,7 @@ function drawDungeonTracker(ui, world) {
   text(ctx, `${n}/${def.rooms.length}  ${world.map.name}`, x + 6, y + 22, { size: 7, bold: true, color: COLORS.ink });
   rows.forEach((r, i) => text(ctx, `${r.done ? '✓' : r.next ? '➜' : '•'} ${r.label}`, x + 8, y + 32 + i * 10, { size: 6.5, color: r.done ? COLORS.good : r.next ? th.dark : COLORS.muted, bold: r.next }));
   if (run.wipes) text(ctx, `Wipes: ${run.wipes}`, x + w - 6, y + 22, { size: 6, align: 'right', color: COLORS.bad });
+  ctx.restore();
 }
 
 // The Fishing Derby's live board at Lantern Lagoon (world/derby.js): time left, the top five, and

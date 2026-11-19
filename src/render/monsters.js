@@ -475,7 +475,7 @@ function drawMonsterNow(ctx, m, x, y, time, now = time) {
   const huge = Math.min(1, Math.max(0, (s.h * Math.abs(sy) - 60) / 60));
   const peak = 0.8 - 0.5 * huge;
   const flash = white || (m.flash > 0 || since < 0.1 ? (since < 0.03 ? peak : Math.max(0, (0.45 - 0.25 * huge) * (1 - (since - 0.03) / (0.07 - 0.03 * huge)))) : 0);
-  if (rig) rig.draw(ctx, m, { t, now, dt: mo.dt, mood, moving, mo, flip: (m.heading ?? m.dir) < 0, flash: flash / 8, alpha });
+  if (rig) rig.draw(ctx, m, { t, now, dt: mo.dt, mood, moving, mo, hurtAgo: since, flip: (m.heading ?? m.dir) < 0, flash: flash / 8, alpha });
   else blit(ctx, s, -s.w / 2, -s.h, { flip: (m.heading ?? m.dir) < 0, flash: flash / 8, alpha, soft: Boolean(live) });
   ctx.restore();
   if (puff >= 0) poofCloud(ctx, x, y, s.w, puff);

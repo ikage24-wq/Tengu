@@ -86,7 +86,7 @@ export const STORY_QUESTS = {
   }),
   story_1_4: s('story_1_4', 1, {
     name: 'A Path of Your Own', giver: 'mira', minLevel: 5, prereq: 'story_1_baby',
-    text: "You're ready for a path of your own! Visit an instructor: Brann in Ember Crag, Vex in Pastel Harbor, or Elowen in Moonleaf Grove. M opens the world map. You knew that. I know you knew that. Then come home and tell me everything!",
+    text: "You're ready for a path of your own! Visit an instructor: Kestrel here in Sprout, Brann in Ember Crag, Vex in Pastel Harbor, or Elowen in Moonleaf Grove. M opens the world map. You knew that. I know you knew that. Then come home and tell me everything!",
     objectives: [{ type: 'job', tier: 1 }],
     rewards: { exp: 2000, gold: 240, items: [{ id: 'ear_10', qty: 1, variant: 'roll' }] },
     scenes: { done: 'ch1_end' },
@@ -102,7 +102,7 @@ export const STORY_QUESTS = {
   }),
   story_2_2: s('story_2_2', 3, {
     name: 'Heart of the Hollow', giver: 'bramble', minLevel: 12, prereq: 'story_2_1',
-    text: "Gather a group and go down into Rootwood Hollow. One tank, one healer, two fighters. Gnarlroot isn't wicked, he's frightened. Calm him, and the canyon will rest again. And nobody. Charges. In.",
+    text: "Gather a group and go down into Rootwood Hollow. One tank, one healer, two fighters. Gnarlroot isn't wicked, he's frightened. He's holding on to a little Mochi elder. Calm him, and he'll let go. And nobody. Charges. In.",
     objectives: [{ type: 'kill', mob: 'gnarlroot', count: 1 }],
     rewards: { exp: 12000, gold: 900, items: [] },
     scenes: { done: 'ch2_end' },
@@ -300,7 +300,7 @@ export const STORY_QUESTS = {
   }),
   story_whale: s('story_whale', 10, {
     name: 'The Sinking Whale', giver: 'nimbus', minLevel: 45, prereq: 'story_6_2',
-    text: "The Moon Terrace floats too high to walk to, but my old girl can fly you up. If she weren't asleep. And sinking. And covered in pirates. Take three friends over the Sky Whale's back from tail to brow, see off the captain and the barnacles, and wake her gently. She's grumpy before breakfast. Same as me.",
+    text: "The Moon Terrace floats too high to walk to, but my old girl can fly you up. If she weren't asleep. And sinking. And covered in pirates. Take three friends over the Sky Whale's back from tail to brow, see off the pirates and the barnacles, then cheer up the grumpy cloud on her head. A little Mochi elder is up there with a parasol. Bring it home.",
     objectives: [{ type: 'kill', mob: 'whalestorm', count: 1 }],
     rewards: { exp: 120000, gold: 2000, items: [{ id: 'elixir', qty: 10 }] },
     scenes: { accept: 'whale_open', done: 'whale_done' },
@@ -324,7 +324,7 @@ export const STORY_QUESTS = {
   }),
   story_7_2: s('story_7_2', 10, {
     name: 'Heart of Crystal', giver: 'mira', minLevel: 49, prereq: 'story_7_1',
-    text: "Prismaris, the Crystal King, sits on his throne deep in the Crystal Cave. Bring the light home. I'll have a pot of tea waiting. And biscuits. Don't tell Elowen whose recipe.",
+    text: "Prismaris sits in the dark Crystal Cave, hugging the Queen's alarm clock. He's scared of the dark, dear. Be kind. Bring the clock home. I'll have a pot of tea waiting. And biscuits. Don't tell Elowen whose recipe.",
     objectives: [{ type: 'kill', mob: 'nightking', count: 1 }],
     trial: 'nightthrone',
     rewards: { exp: 400000, gold: 2700, items: [{ id: 'elixir', qty: 20 }] },
@@ -362,6 +362,8 @@ export const STORY_LOCKS = {
   'shrine.sanctum': { quest: 'story_4_3', note: 'The sanctum gate is sealed with a fox charm.' },
   'springs.grotto': { quest: 'story_5_3', note: 'Roses grow thick behind the waterfall.' },
   'starfall.terrace': { quest: 'story_6_3', note: 'Moonlight bars the terrace.' },
+  'cave.nightthrone': { quest: 'story_7_2', note: 'The throne room is dark as a pocket. Something in there says "go away".' },
+  'sprout.dawnpalace': { quest: 'story_alarm', note: 'The palace lawn is quiet. Somebody is still asleep up there.' },
 };
 
 // Where the queens wait: each trial arena, its queen, and the quest that sends you there. After
@@ -768,24 +770,24 @@ export const SCENES = {
   ],
   ch2_end: [
     { who: 'bramble', text: 'The canyon is quiet. Listen... is that... snoring?', mood: 'surprised' },
-    { who: 'gnarlroot', text: '...lullaby... the wind used to sing me a lullaby... so quiet now...' },
-    { who: 'bramble', text: "Poor old root. He wasn't angry. He just couldn't sleep without her song.", mood: 'sad' },
+    { who: 'player', text: "He finished his sentence. 'Thank you for staying.' And Elder Yomogi went home." },
+    { who: 'bramble', text: "One word a day since festival night. I'd have stopped listening on day two.", mood: 'sad' },
     { together: [{ emote: 'bramble', kind: 'sweat', dur: 1.4 }, { wait: 0.4 }] },
-    { who: 'bramble', text: 'I sang him one myself, once. He woke up and asked me to stop. Tell nobody.', mood: 'sad' },
+    { who: 'bramble', text: "Rule 40: stay for the end of the sentence. I've written it on my hand.", mood: 'happy' },
     { who: 'bramble', text: "And now he's started talking in his sleep. Catch your breath, then come and listen with me. Bring a healer. Out of habit." },
   ],
   ch3_root_open: [
     { who: 'bramble', text: 'He talks in his sleep now. Every night. Listen.', mood: 'sad' },
     { together: [{ shake: 1.2, dur: 1.2 }, { fx: 'dust', at: 'bramble', n: 10 }, { face: 'bramble', to: 1 }, { emote: 'player', kind: '?', dur: 1.2 }] },
     { who: null, text: 'From deep under the Hollow door, a voice like a creaking branch rumbles up through the roots.' },
-    { who: 'gnarlroot', text: '...the stars... stood still... so still... and then the song... never came...' },
+    { who: 'gnarlroot', text: '...the stars... stood still... so still... and then... something fell... ringing... ringing...' },
     { together: [{ emote: 'bramble', kind: 'idea', dur: 1.4 }, { fx: 'pages', at: 'bramble', n: 10 }] },
     { who: 'bramble', text: 'I wrote it down. Rule 41: listen to roots. Rule 42: write down what roots say. Rule 43: do not let roots catch you writing.', mood: 'happy' },
   ],
   ch3_root_done: [
     { who: 'player', text: "Elowen says the stars standing still wasn't a dream. Something went wrong in the sky that night. She'll look into it. Dramatically." },
     { together: [{ emote: 'bramble', kind: '!', dur: 1.4 }, { wait: 0.4 }] },
-    { who: 'bramble', text: "The same night as Mira's festival. The same night the lullaby stopped. That's not bad luck, that's a pattern.", mood: 'surprised' },
+    { who: 'bramble', text: "The same night as Mira's festival. The same night he started that sentence. That's not bad luck, that's a pattern.", mood: 'surprised' },
     { who: 'bramble', text: 'Rule 44: when the sky does something strange, go and see Elowen. She will have made it about her by now, but she will be right.', mood: 'happy' },
   ],
   // ----- Chapter 5: the still tide -----
@@ -1114,9 +1116,12 @@ export const SCENES = {
     { who: 'nimbus', text: 'Forty years the wind flew my ponytail out behind me like a flag. Now it just HANGS there. It is deeply unnatural.', mood: 'angry' },
     { together: [{ face: 'nimbus', to: 1 }, { wait: 0.6 }, { fx: 'clouds', at: 'nimbus', n: 8 }] },
     { who: 'nimbus', text: "The wind held my old girl up. Now it's gone, she's sinking in her sleep, and the pirates are picking her clean. I've sailed her back since I was knee-high to a kite.", mood: 'sad' },
+    { who: 'nimbus', text: 'And a little Mochi elder blew out to sea on festival night and landed on her head. Last I saw, it had a parasol.' },
   ],
   whale_done: [
     { who: 'player', text: "She's awake. She said she dreamt she was a pebble at the bottom of the sea." },
+    { who: 'player', text: "The cloud was only sulking. Elder Ohagi's home, too." },
+    { who: 'nimbus', text: 'Of course there was a sulking cloud. She gets that from me.', mood: 'happy' },
     { together: [{ shake: 2.4, dur: 0.8 }, { fx: 'clouds', at: { x: 400, y: 300 }, n: 16 }, { fx: 'clouds', at: { x: 700, y: 280 }, n: 14 }, { face: 'nimbus', to: -1 }] },
     { who: null, text: 'Out beyond the pier, a mountain of soft sky-blue rises up through the clouds, and a great tail sweeps once.' },
     { together: [{ fx: 'wind', at: 'nimbus' }, { fx: 'wind', at: 'player' }, { emote: 'nimbus', kind: '!', dur: 1.2 }, { jump: 'nimbus', height: 14 }] },
@@ -1137,7 +1142,7 @@ export const SCENES = {
   ch6_win: [
     { who: 'selene', text: 'You fight like someone with friends behind you. A glade, a shrine, a garden... I see them all.', mood: 'happy' },
     { who: 'selene', text: '...And yes. It is lonely up here. Do not make the face. The fox warned me about the face.' },
-    { who: 'selene', text: 'Hayate did not choose to sleep. Her light was stolen. Prismaris, the Crystal King, has been drinking it.' },
+    { who: 'selene', text: 'A star that rings fell into the Crystal Cave. Prismaris keeps it close. He is afraid of the dark. Go gently.' },
     { who: 'selene', text: 'Go home first. Then go down into the dark. I will watch over her until you return.' },
   ],
   ch6_end: [
@@ -1210,21 +1215,18 @@ export const SCENES = {
   ],
   ch7_rook: [
     { who: 'player', text: 'Rook says Prismaris has been drinking every bit of light on the island.' },
-    { who: 'mira', text: "Then that's where Hayate's light went. Down a crystal king's throat.", mood: 'sad' },
+    { who: 'mira', text: "Then that's where the ringing star went. Straight into his cave.", mood: 'sad' },
     { together: [{ walk: 'mira', to: 'player', gap: 30, speed: 70 }, { face: 'mira', to: 'player' }] },
     { who: 'mira', text: "One last tip, I promise. You don't have to beat him. Just turn the lights back on. Most scary things are only scary in the dark.", mood: 'happy' },
     { who: 'mira', text: "...And the map is on M. That one's tradition now.", mood: 'happy' },
   ],
   ch7_end: [
-    { who: 'crystalking', text: "Don't... don't turn off the light. Please. It was so dark when she stopped singing.", mood: 'sad' },
-    { who: 'player', text: "She stopped because she had no light left. Give it back, and she'll sing again. For you too." },
-    { who: 'crystalking', text: '...Can I keep a nightlight?', mood: 'sad' },
-    { who: 'player', text: 'You can keep a nightlight.' },
-    { who: null, text: 'The crystals dim, one by one, and a warm glow rises up through the cave, up through the cloud, up to the moon.' },
-    { who: 'hayate', text: '...little one... thank you. I hear the island again. I am... waking.' },
-    { who: 'hayate', text: '...five more minutes...' },
-    { who: 'mira', text: 'The wind chime! Did you hear it? Oh, I made too much tea. I always make too much tea. Today it is exactly right.', mood: 'happy' },
-    { who: 'mira', text: "She's waking, dear. Slowly. She always did love a lie-in. When you reach level 50, come and see me: we have a festival to finish.", mood: 'happy' },
+    { who: 'player', text: 'Prismaris has a little star of his own now. The Queen has her alarm clock back.' },
+    { together: [{ emote: 'mira', kind: '!', dur: 1.2 }, { jump: 'mira', height: 8 }] },
+    { who: 'mira', text: "A nightlight! Of course. Nobody's scary with a nightlight.", mood: 'happy' },
+    { who: 'player', text: "She sleepwalked all the way home with it. Didn't wake up once." },
+    { who: 'mira', text: "That's her. Oh, I made too much tea. I always make too much tea. Today it is exactly right.", mood: 'happy' },
+    { who: 'mira', text: "When you reach level 50, come and see me, dear. We have a festival to finish.", mood: 'happy' },
   ],
 };
 

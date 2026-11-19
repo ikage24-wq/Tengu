@@ -258,7 +258,7 @@ const MFUR = ramp('#9a7a8a', { step: 10, turn: 10 });
 const DENIM = ramp('#4a6ab8', { step: 10, turn: 10 });
 const CLAW = '#ffb8c8';
 const STEEL = ramp('#c8ccd8', { step: 10, turn: 8 });
-const sh = pairOf('sh');
+const sh = pairOf('shand');
 // Body: a chubby mole in denim overalls (bib, straps, gold buttons, a pocket with a pencil) and a
 // tool belt. Box 22 x 22; standing at (11, 21.6).
 const shBody = () => [
@@ -291,7 +291,7 @@ const SH_ARM = [false, true].map((f) => sh(`arm${f ? 1 : 0}`, 9, 12, shArm(f), 2
 const SH_WRENCH = sh('wrench', 10, 28, shWrench, 2);
 const SH_FOOT = [false, true].map((f) => sh(`foot${f ? 1 : 0}`, 8, 4, shFoot(f), 2));
 const SH_FACE = { eyes: [[13.4, 8.4, 1.1, 1.4, -1], [16.4, 8.4, 1.2, 1.5, 1]], mouth: [16.8, 13.6, 1.2], blush: [[12.2, 11, 1.1], [17.6, 11.8, 1]], iris: '#3a2a3a', lid: 0.15 };
-const shFace = (mood) => sm(`sh|face|${mood}`, 24, 18, () => faceShapes(mood, SH_FACE));
+const shFace = (mood) => sm(`shand|face|${mood}`, 24, 18, () => faceShapes(mood, SH_FACE));
 const shPass = (bare) => {
   const i = bare ? 1 : 0;
   const tag = bare ? 'b' : '';

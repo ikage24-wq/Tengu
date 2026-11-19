@@ -4,7 +4,7 @@
 // (and taken off the list when it is).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import { NPCS } from '../src/data/npcs.js';
 import { MOBS } from '../src/data/mobs.js';
 import { MAPS } from '../src/data/maps.js';
@@ -70,4 +70,22 @@ test('every enemy attack has a visible wind-up (a quarter of a second at least)'
     if (!((f.windup ?? 0) >= 0.25) && !KNOWN_WINDUPS.has(id)) bad.push(`${id} (${f.windup})`);
   }
   assert.deepEqual(bad, []);
+});
+
+// Every picture is cached by its name, so two monsters drawing a part under the same name would
+// borrow each other's faces and bodies (whichever is drawn first wins). Seven pairs did this until
+// the 2026-11-19 audit: Lady Marigold lost her face to the Meteor Golem.
+test('own pictures: no two monster rig files share a part name prefix or a face name', () => {
+  const dir = new URL('../src/render/mobs/', import.meta.url);
+  const owner = new Map();
+  for (const f of readdirSync(dir).filter((n) => n.endsWith('.js'))) {
+    const s = readFileSync(new URL(f, dir), 'utf8');
+    const names = new Set();
+    for (const m of s.matchAll(/pairOf\(\s*['"`]([^'"`]+)['"`]/g)) names.add(m[1]);
+    for (const m of s.matchAll(/`([a-zA-Z0-9_]+)\|face\|/g)) names.add(`${m[1]}|face`);
+    for (const n of names) {
+      assert.ok(!owner.has(n) || owner.get(n) === f, `${f} and ${owner.get(n)} both draw pictures named "${n}"`);
+      owner.set(n, f);
+    }
+  }
 });
