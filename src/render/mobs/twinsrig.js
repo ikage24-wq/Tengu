@@ -352,6 +352,22 @@ function solMove(kind) {
     { ...base, x: 9 * big, lift: -1, tilt: 18, head: 8, armN: -6, elbN: 4, prop: aim(0, -6, 4, 18), armF: 150, elbF: -20, capeA: 28, capeB: 24, tab: -8, tail: 52, earN: -20, earF: -18, ...legs(ST - 30, SS + 12, ST + 24, SS - 4) },
   ];
 }
+// What Sol does through each cast (t: seconds into the cast), each its own shape: Sunrise, a deep
+// crouch, head bowed over the shield held low by the ground, trembling as it blazes; Corona,
+// standing tall, the sun shield thrust out at arm's length and spinning, the other paw flung up; Eclipse (and Total
+// Eclipse), up on her toes and leaning back, the shield thrust up and out to the sky, the other
+// paw raised too, swaying; the bash and Solar Fang, leaning in low, the shield pulled right back
+// behind her, quivering to spring.
+function solHold(kind, w, t) {
+  const p = { ...w };
+  if (kind === 'rise') Object.assign(p, { x: Math.sin(t * 26) * 0.7, lift: -6, tilt: 16, head: 18, armN: 96, elbN: 30, prop: aim(0, 96, 30, 16), armF: 120, elbF: -20, ...legs(ST - 30, SS + 48, ST - 26, SS + 44) });
+  else if (kind === 'flare') Object.assign(p, { x: 1, lift: 1, tilt: -4, head: -6, armN: -8, elbN: 0, prop: aim(t * 300, -8, 0, -4), armF: -120, elbF: -20, earN: 14, earF: 12, ...STAND });
+  else if (kind === 'eclipse' || kind === 'total') {
+    const sw = Math.sin(t * 2) * 5;
+    Object.assign(p, { tilt: -14 + sw, head: -18, armN: -40, elbN: -10, prop: aim(0, -40, -10, -14 + sw), armF: -110, elbF: -10 });
+  } else Object.assign(p, { x: -3 + Math.sin(t * 22) * 0.8, lift: -2, tilt: 12, head: 6, armN: 168, elbN: -20, prop: aim(0, 168, -20, 12), armF: 40, elbF: -40, ...CROUCH });
+  return p;
+}
 function lunaMove(kind) {
   const base = { capeA: 4, capeB: 3, tab: 0, tail: 0, earN: 0, earF: 0, armF: 100, elbF: -40 };
   if (kind === 'fall' || kind === 'total') {
@@ -489,8 +505,12 @@ function twinRig(sister) {
       const [antic, strike] = sun ? solMove(kind) : lunaMove(kind);
       let base = idle;
       if (cast > 0) {
-        const k = cast * 0.7;
-        base = Object.fromEntries(Object.keys(idle).map((key) => [key, idle[key] + ((antic[key] ?? idle[key]) - idle[key]) * k]));
+        // (Sol takes up her cast's wind-up all the way and acts it out, so each cast reads as its own
+        // pose: 2026-11-19, they all looked like her shield held out. Luna's read already.)
+        const ct = m.cast ? a.now - m.cast.t0 : 0;
+        const hold = sun ? solHold(kind, antic, ct) : antic;
+        const k = cast * (sun ? 1 : 0.7);
+        base = Object.fromEntries(Object.keys(idle).map((key) => [key, idle[key] + ((hold[key] ?? idle[key]) - idle[key]) * k]));
         a.twAct = {};
       }
       a.twFront = false;

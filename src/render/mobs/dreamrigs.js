@@ -34,9 +34,12 @@ const smoothPts = (pts, n = 3) => {
 const blob = (pts, c, n = 3) => T(smoothPts(pts, n), c);
 const line = (pts, w, c = '#2e1c26') => stroke(pts, w, c).map(F);
 const at2 = (M, x, y) => [M[0] * x + M[2] * y + M[4], M[1] * x + M[3] * y + M[5]];
-// A named cast (world/theatre.js sets m.castPose): the rig takes up that move's wind-up, part way,
-// for the whole cast, then its own wind-up and blow as the cast lands. `moves[kind]` is
-// [antic, strike]. Returns [base, antic, strike, how far into the cast 0..1, kind].
+// A named cast (world/theatre.js sets m.castPose): the rig takes up that cast's own pose for the
+// whole cast, acting it out (`moves[kind][2]`, a function of the time into the cast, or its
+// wind-up when a move has none), then its own wind-up and blow as the cast lands. `moves[kind]`
+// is [antic, strike, hold?]. Each cast reads as its own pose, so the boss itself tells you what's
+// coming (2026-11-19: they all looked alike). Returns [base, antic, strike, how far into the cast
+// 0..1, kind].
 function castMove(m, a, moves, idle, antic, strike) {
   const mo = a.mo ?? {};
   const active = a.ph.antic > 0.02 || a.ph.strike > 0.02;
@@ -46,10 +49,23 @@ function castMove(m, a, moves, idle, antic, strike) {
   const mv = kind ? moves[kind] : null;
   if (!mv) return [idle, antic, strike, 0, null];
   const cast = m.cast && m.castPose ? clamp((a.now - m.cast.t0) / 0.45, 0, 1) : 0;
-  const k = cast * 0.7;
-  const base = k > 0 ? Object.fromEntries(Object.keys(idle).map((key) => [key, idle[key] + ((mv[0][key] ?? idle[key]) - idle[key]) * k])) : idle;
+  const hold = typeof mv[2] === 'function' ? mv[2](m.cast ? a.now - m.cast.t0 : 0) : mv[2] ?? mv[0];
+  const base = cast > 0 ? Object.fromEntries(Object.keys(idle).map((key) => [key, idle[key] + ((hold[key] ?? idle[key]) - idle[key]) * cast])) : idle;
   return [base, mv[0], mv[1], cast, kind];
 }
+// A rig drawn `k` times its size about its feet.
+const sizedRig = (rig, k) => {
+  const draw = rig.draw;
+  rig.draw = (ctx, m, a) => {
+    ctx.save();
+    ctx.scale(k, k);
+    draw(ctx, m, a);
+    ctx.restore();
+  };
+  rig.w = Math.round(rig.w * k);
+  rig.h = Math.round(rig.h * k);
+  return rig;
+};
 const PAPER = '#fbfaf6';
 const TROUSER = ramp('#4a4a5e', { step: 8, turn: 8 });
 const SHOE = '#2a2632';
@@ -128,7 +144,7 @@ const armP = (far) => () => {
   return out;
 };
 const MSP = {
-  MUG: mg('mug', 64, 66, mugP, 2), TIE: mg('tie', 12, 28, tieP, 2), ARM: [false, true].map((f) => mg(`arm${f ? 1 : 0}`, 26, 14, armP(f), 3)),
+  MUG: mg('mug', 64, 66, mugP, 6), TIE: mg('tie', 12, 28, tieP, 2), ARM: [false, true].map((f) => mg(`arm${f ? 1 : 0}`, 26, 14, armP(f), 6)),
   THIGH: [false, true].map((f) => mg(`thigh${f ? 1 : 0}`, 10, 12, thighP(f), 2)), SHIN: [false, true].map((f) => mg(`shin${f ? 1 : 0}`, 10, 11, shinP(f), 2)), FOOT: [false, true].map((f) => mg(`foot${f ? 1 : 0}`, 14, 6, footP(f), 2)),
 };
 const M_BODY = 47;
@@ -141,14 +157,24 @@ const M_LEGS = chibiLegs({ bodyY: M_BODY, l1: M_L1, l2: M_L2, sole: 5, hips: M_H
 // (both hands up over his rim, then slammed down ahead), the coffee break (leaning back, then
 // tipping himself forward to pour), overtime (the files hoisted high, then heaved down).
 const mugSt = (o, fN = [0, 0], fF = [0, 0]) => ({ x: 0, lift: 0, tilt: 0, armN: 40, armF: 120, ...o, ...M_LEGS.at(o.lift ?? 0, o.tilt ?? 0, [M_FEET[0] + fN[0], fN[1]], [M_FEET[1] + fF[0], fF[1]]) });
+// Held through each cast (arms held out where they show past his round body): "just one more
+// thing", up on his toes, a hand up and wagging; the review, leaning back with both hands hoisted
+// up and out in a V, trembling, leaning further as it builds; the coffee break, tipped right
+// forward as if pouring himself out, arms out for balance, rocking; overtime, crouched under the
+// files held overhead, staggering side to side.
 const MUG_MOVES = {
-  memo: [mugSt({ x: -2, lift: 1, tilt: -6, armN: 168, armF: 160 }), mugSt({ x: 4, tilt: 8, armN: 120, armF: -80 }, [3, 0])],
-  stamp: [mugSt({ x: -3, lift: 3, tilt: -12, armN: 176, armF: -86 }), mugSt({ x: 10, tilt: 18, armN: 60, armF: 140 }, [8, 0], [-2, 0])],
-  pour: [mugSt({ x: -4, tilt: -14, armN: 100, armF: 170 }), mugSt({ x: 8, lift: -2, tilt: 40, armN: 70, armF: 160 }, [6, 0], [-4, 0])],
-  files: [mugSt({ lift: 2, tilt: -8, armN: 174, armF: -84 }), mugSt({ x: 6, tilt: 12, armN: 70, armF: 130 }, [5, 0], [-2, 0])],
+  memo: [mugSt({ x: -2, lift: 1, tilt: -6, armN: 168, armF: 160 }), mugSt({ x: 4, tilt: 8, armN: 120, armF: -80 }, [3, 0]),
+    (t) => mugSt({ lift: 2 + Math.abs(Math.sin(t * 3)), tilt: 5, armN: 146 + Math.sin(t * 10) * 16, armF: 104 })],
+  stamp: [mugSt({ x: -3, lift: 3, tilt: -12, armN: 176, armF: -86 }), mugSt({ x: 10, tilt: 18, armN: 60, armF: 140 }, [8, 0], [-2, 0]),
+    (t) => mugSt({ lift: -2, tilt: -10 - Math.min(1, t / 1.4) * 8, armN: 140 + Math.sin(t * 15) * 5, armF: -42 + Math.sin(t * 15 + 1) * 5 })],
+  pour: [mugSt({ x: -4, tilt: -14, armN: 100, armF: 170 }), mugSt({ x: 8, lift: -2, tilt: 40, armN: 70, armF: 160 }, [6, 0], [-4, 0]),
+    (t) => mugSt({ lift: 1, tilt: 24 + Math.sin(t * 2.6) * 5, armN: 30 + Math.sin(t * 2.6 + 0.6) * 10, armF: 8 })],
+  files: [mugSt({ lift: 2, tilt: -8, armN: 174, armF: -84 }), mugSt({ x: 6, tilt: 12, armN: 70, armF: 130 }, [5, 0], [-2, 0]),
+    (t) => mugSt({ lift: -3 + Math.abs(Math.sin(t * 4.4)) * 1.2, tilt: Math.sin(t * 4.4) * 9, armN: 178 + Math.sin(t * 4.4) * 6, armF: -84 + Math.sin(t * 4.4) * 6 })],
 };
 const MUG_MOOD = { memo: 'happy', stamp: 'angry', pour: 'happy', files: 'angry' };
-export const mugRig = makeRig({
+// (Drawn a third bigger, 2026-11-19: he stood half the height of his fellow office bosses.)
+export const mugRig = sizedRig(makeRig({
   w: 120, h: 130, soft: true, stride: 1e9, recover: 0.6,
   springs: { x: [220, 16], lift: [220, 15], tilt: [170, 12], armN: [240, 14], armF: [220, 13], thighN: [340, 21], thighF: [340, 21], shinN: [340, 21], shinF: [340, 21], rollN: [320, 20], rollF: [320, 20] },
   fast: ['x', 'lift', 'armN', 'armF', 'thighN', 'thighF', 'shinN', 'shinF'],
@@ -215,7 +241,7 @@ export const mugRig = makeRig({
       sparkle(ctx, a, px, py - 8, 1.6, a.alpha * a.mugPhone, '#8fd0ff');
     }
   },
-});
+}), 1.35);
 export function mugStill(pose, f, mood) {
   const by = -M_BODY;
   const P = M_LEGS.at(0, 0);
@@ -261,7 +287,7 @@ const ndFace = (mood) => faceSprite(`noodle|face|${mood}`, 50, 40, () => faceSha
 const nThighP = (far) => () => [taper([[5, 2], [5, 8]], 9, 8.4, far ? '#e4e0ee' : '#ffffff'), E(5, 8, 4.2, 4.2, far ? '#e4e0ee' : '#ffffff')];
 const nShinP = (far) => () => [E(5, 2, 4.2, 4.2, far ? CUPR.sh : CUPR.base), taper([[5, 2], [5, 7.6]], 8.4, 8, far ? CUPR.sh : CUPR.base)];
 const NSP = {
-  CUP: nd('cup', 60, 56, cupP, 2), LID: nd('lid', 30, 10, lidP, 2), HEAD: nd('head', 50, 40, dHeadP, 4), NECK: [12, 11, 10].map((w, k) => nd(`neck${k}`, 22, 14, neckP(w), 3)),
+  CUP: nd('cup', 60, 56, cupP, 2), LID: nd('lid', 30, 10, lidP, 2), HEAD: nd('head', 50, 40, dHeadP, 9), NECK: [12, 11, 10].map((w, k) => nd(`neck${k}`, 22, 14, neckP(w), 3)),
   THIGH: [false, true].map((f) => nd(`thigh${f ? 1 : 0}`, 10, 12, nThighP(f), 2)), SHIN: [false, true].map((f) => nd(`shin${f ? 1 : 0}`, 10, 11, nShinP(f), 2)), FOOT: [false, true].map((f) => nd(`foot${f ? 1 : 0}`, 14, 6, footP(f), 2)),
 };
 const N_BODY = 42;
@@ -274,11 +300,18 @@ const N_LEGS = chibiLegs({ bodyY: N_BODY, l1: N_L1, l2: N_L2, sole: 5, hips: N_H
 // ahead), hot broth (head thrown back, then a spit), the chopstick snap (head down and forward,
 // then a snap), the timer (tucked down in his cup, head ticking side to side, then up he rears).
 const ndSt = (o, fN = [0, 0], fF = [0, 0]) => ({ x: 0, lift: 0, tilt: 0, n0: -70, n1: -34, n2: 62, hd: 40, ...o, ...N_LEGS.at(o.lift ?? 0, o.tilt ?? 0, [N_FEET[0] + fN[0], fN[1]], [N_FEET[1] + fF[0], fF[1]]) });
+// Held through each cast: the steam burst, reared up tall on his toes, neck straight up and
+// shuddering as the pressure builds; the whip, coiled far back, swaying to strike; hot broth, head
+// thrown right back, gargling; the chopstick snap, head down low and thrust at you, jaws chomping.
 const ND_MOVES = {
-  steam: [ndSt({ lift: 2, tilt: -4, n0: -92, n1: 2, n2: -2, hd: 18 }), ndSt({ lift: -1, tilt: 4, n0: -78, n1: -12, n2: 24, hd: 50 }, [2, 5])],
-  whip: [ndSt({ x: -3, tilt: -8, n0: -122, n1: -40, n2: 30, hd: 10 }), ndSt({ x: 6, tilt: 10, n0: -20, n1: 22, n2: 8, hd: 70 }, [4, 0], [-2, 0])],
-  spit: [ndSt({ x: -2, tilt: -6, n0: -102, n1: -22, n2: 12, hd: -4 }), ndSt({ x: 3, tilt: 6, n0: -68, n1: -8, n2: 26, hd: 34 })],
-  snap: [ndSt({ tilt: 4, n0: -58, n1: -58, n2: 84, hd: 22 }), ndSt({ x: 6, tilt: 8, n0: -40, n1: 12, n2: 20, hd: 52 }, [4, 0])],
+  steam: [ndSt({ lift: 2, tilt: -4, n0: -92, n1: 2, n2: -2, hd: 18 }), ndSt({ lift: -1, tilt: 4, n0: -78, n1: -12, n2: 24, hd: 50 }, [2, 5]),
+    (t) => ndSt({ lift: 3, tilt: -3, n0: -96, n1: 4 + Math.sin(t * 13) * 4, n2: -6 + Math.sin(t * 13 + 1) * 4, hd: 6 + Math.sin(t * 13 + 2) * 5 })],
+  whip: [ndSt({ x: -3, tilt: -8, n0: -122, n1: -40, n2: 30, hd: 10 }), ndSt({ x: 6, tilt: 10, n0: -20, n1: 22, n2: 8, hd: 70 }, [4, 0], [-2, 0]),
+    (t) => ndSt({ tilt: -10, n0: -128, n1: -46 + Math.sin(t * 4.6) * 8, n2: 36 + Math.sin(t * 4.6 - 0.8) * 10, hd: 8 })],
+  spit: [ndSt({ x: -2, tilt: -6, n0: -102, n1: -22, n2: 12, hd: -4 }), ndSt({ x: 3, tilt: 6, n0: -68, n1: -8, n2: 26, hd: 34 }),
+    (t) => ndSt({ tilt: -12, n0: -114, n1: -44, n2: -14, hd: -44 + Math.sin(t * 8) * 10 })],
+  snap: [ndSt({ tilt: 4, n0: -58, n1: -58, n2: 84, hd: 22 }), ndSt({ x: 6, tilt: 8, n0: -40, n1: 12, n2: 20, hd: 52 }, [4, 0]),
+    (t) => ndSt({ tilt: 12, n0: -36, n1: 34, n2: 24, hd: 68 + Math.max(0, Math.sin(t * 7)) * 14 })],
   timer: [ndSt({ lift: -2, n0: -82, n1: -62, n2: 104, hd: 40 }), ndSt({ lift: 3, tilt: -4, n0: -88, n1: 4, n2: -4, hd: 20 }, [0, 4], [0, 4])],
 };
 const ND_MOOD = { steam: 'angry', whip: 'angry', spit: 'shout', snap: 'angry', timer: 'happy' };
@@ -417,7 +450,7 @@ const mArmP = (far) => () => [taper([[3, 6], [18, 6]], 7, 6.4, far ? '#e4e0ee' :
 // The big red pen. Box 8 x 40; held at (4, 30).
 const penP = () => [R(2, 4, 4, 30, RED.base), F(R(2, 4, 1.4, 30, RED.hi)), T([[2, 34], [6, 34], [4, 40]], '#f4e0c8'), F(T([[3.4, 37.6], [4.6, 37.6], [4, 40]], '#2a2a3a')), R(1.4, 0, 5.2, 5, '#3a3a4a'), F(R(5, 6, 1.6, 10, '#c8ccd8'))];
 const MOSP = {
-  PAGE: mo('page', 76, 96, pageP, 2), ARM: [false, true].map((f) => mo(`arm${f ? 1 : 0}`, 30, 12, mArmP(f), 2)), PEN: mo('pen', 8, 40, penP, 2),
+  PAGE: mo('page', 76, 96, pageP, 7), ARM: [false, true].map((f) => mo(`arm${f ? 1 : 0}`, 30, 12, mArmP(f), 2)), PEN: mo('pen', 8, 40, penP, 2),
   THIGH: [false, true].map((f) => mo(`thigh${f ? 1 : 0}`, 10, 12, thighP(f), 2)), SHIN: [false, true].map((f) => mo(`shin${f ? 1 : 0}`, 10, 11, shinP(f), 2)), FOOT: [false, true].map((f) => mo(`foot${f ? 1 : 0}`, 14, 6, footP(f), 2)),
 };
 const D_BODY = 66;
@@ -432,12 +465,22 @@ const D_LEGS = chibiLegs({ bodyY: D_BODY, l1: D_L1, l2: D_L2, sole: 5, hips: D_H
 // down). And the Queen's "five more minutes" (the scene theatre_monday_end, `mood: 'crumple'`):
 // it sags, pen dropped, wobbling.
 const monSt = (o, fN = [0, 0], fF = [0, 0]) => ({ x: 0, lift: 0, tilt: 0, armN: 40, armF: 140, pen: -20, ...o, ...D_LEGS.at(o.lift ?? 0, o.tilt ?? 0, [D_FEET[0] + fN[0], fN[1]], [D_FEET[1] + fF[0], fF[1]]) });
+// Held through each cast (arms held out where they show past the page): the email avalanche,
+// leaning in and typing frantically, both hands pumping; the red pen, crouched and leaning back
+// with the pen raised high behind him; the alarm clock, jumping on the spot, arms flung up and out
+// in a V, shaking; meeting invites, arms flung wide, beckoning everyone in; the deadline,
+// stretched tall on tiptoe, the pen pointed straight up.
 const MON_MOVES = {
-  email: [monSt({ lift: 3, tilt: -6, armN: 176, armF: -86, pen: -30 }), monSt({ x: 4, tilt: 8, armN: 120, armF: 60, pen: 20 }, [4, 0])],
-  pen: [monSt({ x: -3, lift: 3, tilt: -10, armN: 176, armF: 160, pen: -80 }), monSt({ x: 10, tilt: 14, armN: 30, armF: 120, pen: 80 }, [8, 0], [-2, 0])],
-  alarm: [monSt({ lift: 2, tilt: -4, armN: 160, armF: -70, pen: -40 }), monSt({ lift: -2, tilt: 4, armN: 90, armF: 100, pen: 10 }, [0, 0], [2, 0])],
-  invite: [monSt({ tilt: -2, armN: 100, armF: 10, pen: -10 }), monSt({ x: 4, tilt: 6, armN: 60, armF: 150, pen: 30 })],
-  deadline: [monSt({ lift: 5, tilt: -8, armN: 180, armF: 150, pen: -10 }, [0, 3], [0, 3]), monSt({ x: 6, lift: -3, tilt: 16, armN: 20, armF: 100, pen: 70 }, [6, 0], [-2, 0])],
+  email: [monSt({ lift: 3, tilt: -6, armN: 176, armF: -86, pen: -30 }), monSt({ x: 4, tilt: 8, armN: 120, armF: 60, pen: 20 }, [4, 0]),
+    (t) => monSt({ lift: 1, tilt: 9, armN: 96 + Math.sin(t * 12) * 28, armF: 172 - Math.sin(t * 12) * 28, pen: -24 })],
+  pen: [monSt({ x: -3, lift: 3, tilt: -10, armN: 176, armF: 160, pen: -80 }), monSt({ x: 10, tilt: 14, armN: 30, armF: 120, pen: 80 }, [8, 0], [-2, 0]),
+    (t) => monSt({ lift: -3, tilt: -15, armN: 198 + Math.sin(t * 13) * 4, armF: -46, pen: -104 + Math.sin(t * 13 + 1) * 5 })],
+  alarm: [monSt({ lift: 2, tilt: -4, armN: 160, armF: -70, pen: -40 }), monSt({ lift: -2, tilt: 4, armN: 90, armF: 100, pen: 10 }, [0, 0], [2, 0]),
+    (t) => monSt({ lift: 2 + Math.abs(Math.sin(t * 6.5)) * 9, tilt: Math.sin(t * 19) * 4, armN: 132 + Math.sin(t * 23) * 10, armF: -40 + Math.sin(t * 23 + 1) * 10, pen: -30 })],
+  invite: [monSt({ tilt: -2, armN: 100, armF: 10, pen: -10 }), monSt({ x: 4, tilt: 6, armN: 60, armF: 150, pen: 30 }),
+    (t) => monSt({ tilt: -3, armN: 104 + Math.sin(t * 3.4) * 22, armF: 8 + Math.sin(t * 3.4) * 10, pen: -6 })],
+  deadline: [monSt({ lift: 5, tilt: -8, armN: 180, armF: 150, pen: -10 }, [0, 3], [0, 3]), monSt({ x: 6, lift: -3, tilt: 16, armN: 20, armF: 100, pen: 70 }, [6, 0], [-2, 0]),
+    (t) => monSt({ lift: 6 + Math.sin(t * 5) * 1.2, tilt: -6, armN: 184, armF: 150, pen: -10 }, [0, 3], [0, 3])],
 };
 const MON_MOOD = { email: 'angry', pen: 'angry', alarm: 'shout', invite: 'happy', deadline: 'shout' };
 const monCrumple = (t) => monSt({ lift: -6, tilt: -16 + Math.sin(t * 2.6) * 3, armN: 8, armF: 96, pen: 110 }, [10, 4], [8, 4]);

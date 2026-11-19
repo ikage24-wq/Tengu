@@ -79,16 +79,32 @@ const sulkShapes = (mood) => {
 };
 const sulkFace = (mood) => faceSprite(`sulk|face2|${mood}`, 64, 48, () => sulkShapes(mood));
 
-// Its cast moves: [antic, strike] (castMove holds the antic part way through the whole cast).
+// Its cast moves: [antic, strike, hold]. `hold(t)` is the pose it takes up for the whole cast, acted
+// out (t: seconds into the cast), so each cast reads as its own (2026-11-19: they barely differed).
+// Its cloud arms mostly hide inside its body, so the whole cloud tells the cast:
+//   drizzle     floating high and tipped back, puffs drooping, sobbing up and down: calling the rain
+//   bolt        reared right back, crackling, its lightning tuft flicking
+//   downpour    tipped hard forward over you, pumping
+//   grumble     sunk low and puffed up fat, trembling and rumbling
+//   forked      risen high, rocking side to side
+//   cloudburst  risen higher still, swelling bigger as it builds
+//   umbrella    sunk down small, hugging itself, shivering
 const st = (o) => ({ x: 0, lift: 0, tilt: 0, aN: 170, aF: 10, pL: 0, pR: 0, pT: 0, bolt: 0, ...o });
 const MOVES = {
-  drizzle: [st({ lift: 4, tilt: -4, aN: -70, aF: -110, pT: -2 }), st({ lift: 1, tilt: 6, aN: 20, aF: -20 })],
-  bolt: [st({ x: -3, lift: 3, tilt: -8, aN: -120, aF: 30, bolt: -20 }), st({ x: 8, tilt: 12, aN: -10, aF: 20, bolt: 20 })],
-  downpour: [st({ x: -2, lift: 2, tilt: -10, aN: -40, aF: -60 }), st({ x: 8, tilt: 16, aN: 10, aF: 20 })],
-  grumble: [st({ lift: -2, aN: -15, aF: -165, pL: -2, pR: -2, pT: -3 }), st({ lift: 3, tilt: 0, aN: -40, aF: -140, pL: 2, pR: 2, pT: 2 })],
-  forked: [st({ lift: 8, tilt: -6, aN: -100, aF: -80, bolt: -14 }), st({ lift: 2, tilt: 8, aN: -30, aF: -40, bolt: 14 })],
-  cloudburst: [st({ lift: 16, tilt: -4, aN: -90, aF: -90, pT: -3 }), st({ lift: -4, tilt: 10, aN: 50, aF: 130, pL: 3, pR: 3 })],
-  umbrella: [st({ tilt: -10, aN: 175, aF: 5, x: -2 }), st({ x: 4, tilt: 8, aN: 120, aF: 60 })],
+  drizzle: [st({ lift: 4, tilt: -4, aN: -70, aF: -110, pT: -2 }), st({ lift: 1, tilt: 6, aN: 20, aF: -20 }),
+    (t) => st({ lift: 10 + Math.abs(Math.sin(t * 3.4)) * 3, tilt: -12, aN: -62 + Math.sin(t * 6) * 16, aF: -118 - Math.sin(t * 6 + 1.3) * 16, pL: -2.6, pR: -2.6, pT: -2.6 })],
+  bolt: [st({ x: -3, lift: 3, tilt: -8, aN: -120, aF: 30, bolt: -20 }), st({ x: 8, tilt: 12, aN: -10, aF: 20, bolt: 20 }),
+    (t) => st({ x: Math.sin(t * 31) * 1, lift: 4, tilt: -20, aN: -128 + Math.sin(t * 17) * 6, aF: 62, bolt: -26 + Math.sin(t * 17) * 12 })],
+  downpour: [st({ x: -2, lift: 2, tilt: -10, aN: -40, aF: -60 }), st({ x: 8, tilt: 16, aN: 10, aF: 20 }),
+    (t) => st({ x: 3, lift: 2, tilt: 24 + Math.sin(t * 6) * 3, aN: -8 + Math.sin(t * 6) * 14, aF: -28 + Math.sin(t * 6 + 1) * 14 })],
+  grumble: [st({ lift: -2, aN: -15, aF: -165, pL: -2, pR: -2, pT: -3 }), st({ lift: 3, tilt: 0, aN: -40, aF: -140, pL: 2, pR: 2, pT: 2 }),
+    (t) => st({ x: Math.sin(t * 40) * 1.6, lift: -3, tilt: Math.sin(t * 27) * 1.4, aN: 34, aF: 146, pL: 4.5, pR: 4.5, pT: 4.5 })],
+  forked: [st({ lift: 8, tilt: -6, aN: -100, aF: -80, bolt: -14 }), st({ lift: 2, tilt: 8, aN: -30, aF: -40, bolt: 14 }),
+    (t) => st({ lift: 14, tilt: Math.sin(t * 2.4) * 12, aN: -100 + Math.sin(t * 2.4) * 12, aF: -78 - Math.sin(t * 2.4) * 12, bolt: -14 })],
+  cloudburst: [st({ lift: 16, tilt: -4, aN: -90, aF: -90, pT: -3 }), st({ lift: -4, tilt: 10, aN: 50, aF: 130, pL: 3, pR: 3 }),
+    (t) => st({ lift: 20 + Math.sin(t * 1.6) * 2, tilt: -4, aN: -86, aF: -94, pL: 1 + Math.min(1, t / 2) * 5, pR: 1 + Math.min(1, t / 2) * 5, pT: 1 + Math.min(1, t / 2) * 5 })],
+  umbrella: [st({ tilt: -10, aN: 175, aF: 5, x: -2 }), st({ x: 4, tilt: 8, aN: 120, aF: 60 }),
+    (t) => st({ x: -2 + Math.sin(t * 20) * 0.7, lift: -2, tilt: 8, aN: 176, aF: 4, pL: -2.4, pR: -2.4, pT: -3 })],
 };
 const MOOD = { drizzle: 'hurt', bolt: 'angry', downpour: 'angry', grumble: 'shout', forked: 'angry', cloudburst: 'shout', umbrella: 'hurt' };
 
@@ -145,10 +161,8 @@ export const sulkRig = sized(makeRig({
     const cast = mv && m.cast && m.castPose ? clamp((a.now - m.cast.t0) / 0.45, 0, 1) : 0;
     let base = idle;
     if (cast > 0) {
-      const k = cast * 0.7;
-      base = Object.fromEntries(Object.keys(idle).map((key) => [key, idle[key] + (mv[0][key] - idle[key]) * k]));
-      // (Grumbling, it trembles.)
-      if (kind === 'grumble') base.x += Math.sin(a.now * 40) * 1.2 * cast;
+      const hold = mv[2](a.now - m.cast.t0);
+      base = Object.fromEntries(Object.keys(idle).map((key) => [key, idle[key] + (hold[key] - idle[key]) * cast]));
     }
     const S = stateBlend(a, base, walk, mv ? mv[0] : antic0, mv ? mv[1] : strike0);
     if (clear) Object.assign(S, st({ lift: 6 + bob * 2, tilt: bob * 3, aN: -60 + Math.sin(t * 3) * 10, aF: -120 + Math.sin(t * 3 + 1) * 10, pL: b1 * 1.4, pR: b2 * 1.4, pT: b3 * 1.4 }));
