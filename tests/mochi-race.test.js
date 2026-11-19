@@ -286,7 +286,9 @@ test('the first Master win on a stage brings a Star Egg (only the first)', async
   const w = racer(rec);
   w.char.raceWins = { 'sprint|beginner': true, 'sprint|challenge': true };
   for (const k of [1, 2]) {
-    assert.ok(startRace(w, rec, 'sprint', 'master'));
+    // (A fixed hour's rivals: the real hour's field sometimes beat this Mochi, so the test failed
+    // at some times of day.)
+    assert.ok(startRace(w, rec, 'sprint', 'master', { hour: 498526 }));
     const R = run(w);
     assert.equal(R.racers[0].place, 1);
     assert.equal(Boolean(R.starEgg), k === 1);
