@@ -260,7 +260,7 @@ export const otterRig = makeRig({
     const juggle = hold(lu, 6, 6.3, 8.6, 9) * (1 - a.walkW);
     a.poPolish = polish;
     const toss = Math.abs(Math.sin(t * 5)) * 12 * juggle;
-    const idle = { x: 0, lift: Math.sin(t * 2) * 0.4, lean: polish * 4, arms: polish * Math.sin(t * 12) * 12 - juggle * 30, pearlY: toss, throwX: 0, tail: Math.sin(t * 1.5) * 8 };
+    const idle = { x: 0, lift: (Math.sin(t * 2) + 1) * 0.7, lean: polish * 4 + Math.sin(t * 1.1) * 2.5, arms: polish * Math.sin(t * 12) * 12 - juggle * 30, pearlY: toss, throwX: 0, tail: Math.sin(t * 1.5) * 14 };
     const walk = { x: 0, lift: Math.abs(Math.sin(p)) * 1.2, lean: 6, arms: Math.sin(p) * 6, pearlY: 0, throwX: 0, tail: -10 };
     // The throw: pearl raised overhead, then flung.
     const antic = { x: -2, lift: 0, lean: -12, arms: -120, pearlY: 18, throwX: -4, tail: 10 };

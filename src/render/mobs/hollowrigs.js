@@ -895,7 +895,7 @@ export const sporelingRig = makeRig({
     a.smSneeze = sneeze * still;
     a.smRoll = roll > 0 && roll < 1 ? still : 0;
     const br = Math.sin(t * 2.4);
-    const idle = { x: 0, lift: br * 0.3 + 0.3 + Math.sin(roll * Math.PI) * 3, rock: -sneeze * 14 + (lu > 2.6 && lu < 3.1 ? 20 : 0) + roll * 360, tuft: br * 8 + sneeze * 30, footN: 0, footF: 0 };
+    const idle = { x: 0, lift: br * 1 + 1 + Math.sin(roll * Math.PI) * 3, rock: br * 2 - sneeze * 14 + (lu > 2.6 && lu < 3.1 ? 20 : 0) + roll * 360, tuft: br * 14 + sneeze * 30, footN: 0, footF: 0 };
     // The scoot: quick little rocks forward and back on two hidden nubs.
     const walk = { x: 0, lift: Math.abs(Math.sin(p)) * 1.4, rock: Math.sin(p) * 10 + 4, tuft: -Math.sin(p - 0.8) * 16 - 10, footN: Math.sin(p) * 2, footF: -Math.sin(p) * 2 };
     const antic = { x: -1.5, lift: 0, rock: -18, tuft: 30, footN: 0, footF: 0 };

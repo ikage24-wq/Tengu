@@ -273,7 +273,7 @@ export const crabRig = makeRig({
     const lu = t % 9;
     const peer = hold(lu, 2, 2.5, 4.5, 5);
     const br = Math.sin(t * 2);
-    const idle = { x: 0, lift: br * 0.4, tilt: -peer * 10, scope: -peer * 30 + br * 3, clawN: -20 + Math.sin(t * 4) * 10 * (1 - peer), clawF: -10 + br * 6 };
+    const idle = { x: 0, lift: br * 1.1, tilt: -peer * 10 + br * 1.5, scope: -peer * 30 + br * 6, clawN: -20 + Math.sin(t * 4) * 12 * (1 - peer), clawF: -10 + br * 9 };
     const s1 = Math.sin(a.tcU * TAU);
     const walk = { x: 0, lift: Math.abs(s1) * 1, tilt: s1 * 4, scope: s1 * 4, clawN: -30, clawF: -20 };
     const antic = { x: -2, lift: 0.6, tilt: 8, scope: 10, clawN: -100, clawF: -40 };
@@ -355,11 +355,12 @@ export const owlRig = makeRig({
     const hoot = hold(lu, 6, 6.3, 6.8, 7.1);
     const br = Math.sin(t * 2);
     a.olHoot = hoot;
-    const idle = { x: 0, hop: 0, lift: br * 0.4, tilt: br * 2, head: turn * 30 - hoot * 10, wingN: 50 + br * 4, wingF: hoot * Math.sin(t * 20) * 20 };
+    // (Her lantern held up in front, 2026-11-19: hung low, it went through the floor.)
+    const idle = { x: 0, hop: 0, lift: br * 0.6, tilt: br * 2, head: turn * 30 - hoot * 10, wingN: -22 + br * 4, wingF: hoot * Math.sin(t * 20) * 20 };
     const hp = Math.abs(Math.sin(u * Math.PI * 2));
-    const walk = { x: 0, hop: hp * 3, lift: 0, tilt: 6, head: -4, wingN: 40 + Math.sin(t * 20) * 20, wingF: -30 + Math.sin(t * 20 + 1) * 30 };
+    const walk = { x: 0, hop: hp * 3, lift: 0, tilt: 6, head: -4, wingN: -18 + Math.sin(t * 10) * 6, wingF: -30 + Math.sin(t * 20 + 1) * 30 };
     const antic = { x: -2, hop: 0, lift: 1, tilt: -8, head: -10, wingN: -120, wingF: -20 };
-    const strike = { x: 5, hop: 1, lift: 0, tilt: 16, head: 14, wingN: 40, wingF: 20 };
+    const strike = { x: 5, hop: 1, lift: 0, tilt: 16, head: 14, wingN: -10, wingF: 20 };
     return stateBlend(a, idle, walk, antic, strike);
   },
   parts: [

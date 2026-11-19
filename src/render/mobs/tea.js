@@ -17,6 +17,19 @@
 //                 his rig is in teapotrig.js.
 
 import { teapotRig, teapotStill } from './teapotrig.js';
+
+// A rig drawn `k` times its size about its feet.
+const grown = (rig, k) => ({
+  ...rig,
+  w: Math.round(rig.w * k),
+  h: Math.round(rig.h * k),
+  draw(ctx, m, a) {
+    ctx.save();
+    ctx.scale(k, k);
+    rig.draw(ctx, m, a);
+    ctx.restore();
+  },
+});
 import { E, T, F, stroke, mix } from './kit.js';
 import { simpleEye, simpleMouth, deadEye, sweat, vein } from './faces.js';
 import { ramp, crescent, smear, sway, shine } from './meadow.js';
@@ -316,7 +329,8 @@ export const ART = {
   tanukipicker: { walk: 8, idle: 6, attack: 4, stride: 20, atkMs: [80, 300, 160], draw: tanukipicker },
   kettletanuki: { walk: 8, idle: 6, attack: 5, stride: 18, atkMs: [120, 340, 200, 220], draw: kettletanuki },
   lantertanuki: { walk: 8, idle: 6, attack: 4, stride: 18, atkMs: [140, 360, 200], draw: lantertanuki },
-  grandkettle: { walk: 4, idle: 3, attack: 4, stride: 40, atkMs: [200, 620, 260], draw: teapotStill, rig: teapotRig },
+  // (Drawn a quarter bigger, 2026-11-19: he was small for a boss.)
+  grandkettle: { walk: 4, idle: 3, attack: 4, stride: 40, atkMs: [200, 620, 260], draw: teapotStill, rig: grown(teapotRig, 1.25) },
 };
 
 export const INFO = {

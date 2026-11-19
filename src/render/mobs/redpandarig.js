@@ -200,7 +200,7 @@ const tailParts = () =>
       const w = a.walkW;
       const sway = Math.sin(a.t * 1.1 - i * 0.35);
       const step = Math.sin((a.rpU ?? 0) * TAU * 2 - 1 - i * 0.3) * w;
-      return (i ? 9 + sway * 0.9 + step * 0.6 + S.tail * 0.08 : 200 + S.tail + sway * 4 + step * 2.5) * D2R;
+      return (i ? 9 + sway * 0.9 + step * 0.6 + S.tail * 0.08 : 200 + S.tail + sway * 4 + step * 2.5 + S.stand * 18) * D2R;
     },
   }));
 
@@ -243,7 +243,7 @@ export const redpandaRig = makeRig({
     const rear = hold(lu, 6, 6.7, 9, 9.7);
     const peer = rear > 0.9 ? Math.sin((lu - 6.7) * 1.4) : 0;
     const breath = Math.sin(t * 1.5);
-    const idle = { x: 0, lift: breath * 0.15, tilt: breath * 0.5, stand: rear, head: -look * 12 + peer * 9 + Math.sin(t * 0.6) * 2, arms: 0, bop: 0 };
+    const idle = { x: 0, lift: breath * 0.7, tilt: breath * 1.5, stand: rear, head: -look * 12 + peer * 9 + Math.sin(t * 0.6) * 2, arms: 0, bop: 0 };
     // The pad: a soft bob up off each planted pair, a gentle sway; the head nods a beat behind.
     const p = a.rpU * TAU * 2;
     const walk = { x: 0, lift: 0.4 + (0.5 - 0.5 * Math.cos(p)) * 0.9, tilt: Math.sin(p - 0.5) * 1.6, stand: 0, head: 2 + Math.sin(p - 1.2) * 3, arms: 0, bop: 0 };

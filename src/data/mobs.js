@@ -49,7 +49,7 @@ export const MOBS = {
   }),
   brownie: mob({
     id: 'brownie', name: 'Chickling', level: 7, hp: 105, atk: 22, def: 5, acc: 20, eva: 3, exp: 48, gold: [2, 5],
-    speed: 34, w: 22, h: 43, art: 'brownie', drops: [{ id: 'brownie_crumb', chance: 0.5 }, { id: 'honeycomb', chance: 0.08 }, { id: 'maid_dress', chance: 0.01 }],
+    speed: 34, w: 22, h: 32, art: 'brownie', drops: [{ id: 'brownie_crumb', chance: 0.5 }, { id: 'honeycomb', chance: 0.08 }, { id: 'maid_dress', chance: 0.01 }],
   }),
   harvmouse: mob({
     id: 'harvmouse', name: 'Harvest Mouse', level: 9, hp: 148, atk: 27, def: 7, acc: 24, eva: 6, exp: 72, gold: [2, 7],
@@ -66,7 +66,7 @@ export const MOBS = {
   }),
   sproutling: mob({
     id: 'sproutling', name: 'Turnip Tot', level: 4, hp: 45, atk: 13, def: 2, acc: 14, eva: 1, exp: 22, gold: [1, 3],
-    speed: 34, w: 18, h: 42, art: 'sproutling', drops: [{ id: 'sprout_leaf', chance: 0.5 }, { id: 'clover', chance: 0.08 }, { id: 'overalls', chance: 0.01 }],
+    speed: 34, w: 18, h: 37, art: 'sproutling', drops: [{ id: 'sprout_leaf', chance: 0.5 }, { id: 'clover', chance: 0.08 }, { id: 'overalls', chance: 0.01 }],
   }),
   pumpgob: mob({
     id: 'pumpgob', name: 'Pumpkin Goblin', level: 6, hp: 88, atk: 18, def: 5, acc: 18, eva: 3, exp: 40, gold: [2, 5],
@@ -97,7 +97,7 @@ export const MOBS = {
   // tail that pads along the treetops (render/mobs/redpandarig.js).
   redpanda: mob({
     id: 'redpanda', name: 'Red Panda', level: 18, hp: 620, atk: 58, def: 18, acc: 42, eva: 6, exp: 420, gold: [6, 15],
-    speed: 32, w: 32, h: 28, art: 'redpanda', drops: [{ id: 'panda_fluff', chance: 0.45 }, { id: 'maple_log', chance: 0.08 }],
+    speed: 32, w: 32, h: 36, art: 'redpanda', drops: [{ id: 'panda_fluff', chance: 0.45 }, { id: 'maple_log', chance: 0.08 }],
   }),
   // Mossy Woods' branches (new 2026-11-12, built from scratch): a round little owlet with mossy ear
   // tufts that glides along the branches on spread wings (render/mobs/mossowletrig.js).

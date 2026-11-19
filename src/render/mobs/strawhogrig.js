@@ -228,7 +228,8 @@ export const strawhogRig = makeRig({
     const u = t % 2.8;
     const sniffing = u < 0.9 ? Math.sin((u / 0.9) * Math.PI) : 0;
     const look = Math.max(0, Math.sin(t * 0.37) - 0.7) / 0.3;
-    const idle = { tilt: -look * 5, lift: 0, x: 0, snout: -sniffing * 8 - look * 10, twitch: u < 0.9 ? Math.sin(u * 26) * 2.4 * sniffing : 0, puff: (Math.sin(t * 1.5) + 1) * 0.5, curl: 0 };
+    // (Big enough to see at game size, 2026-11-19: most frames didn't change by a pixel.)
+    const idle = { tilt: -look * 8 + Math.sin(t * 1.5) * 1.4, lift: (Math.sin(t * 1.5) + 1) * 0.6 + sniffing * 0.8, x: 0, snout: -sniffing * 14 - look * 12, twitch: u < 0.9 ? Math.sin(u * 26) * 3.4 * sniffing : 0, puff: (Math.sin(t * 1.5) + 1) * 0.5, curl: 0 };
     // Walk: a quick little scurry. The body is highest as a toe passes under it and settles just
     // after each contact (its springy lift lags a touch, giving the weight), never leaving the
     // ground; it leans into the walk with a slow sway over a few steps, the snout nodding along.

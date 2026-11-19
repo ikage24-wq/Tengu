@@ -253,7 +253,7 @@ export const sleepySheepRig = makeRig({
     const br = Math.sin(t * 1.6);
     a.ssSink = sink;
     a.ssMood = sink > 0.45 ? 'sleep' : jerk > 0.3 ? 'shout' : null;
-    const idle = { x: 0, lift: br * 0.4 - sink * 1 + jerk * 1.4, tilt: br * 1.2 + sink * 7 - jerk * 5, head: sink * 34 - jerk * 14 + br * 2, aN: 6 + sink * 10 - jerk * 30, aF: -4 + sink * 8 + jerk * 20 };
+    const idle = { x: 0, lift: br * 1.1 - sink * 1 + jerk * 1.4, tilt: br * 2.4 + sink * 7 - jerk * 5, head: sink * 34 - jerk * 14 + br * 5, aN: 6 + sink * 10 - jerk * 30 + br * 4, aF: -4 + sink * 8 + jerk * 20 - br * 4 };
     // Walking: a sleepy shuffle, head half down.
     const s1 = Math.sin(a.ssU * TAU);
     const walk = { x: 0, lift: Math.abs(s1) * 0.8, tilt: 4 + s1 * 2, head: 14 + s1 * 4, aN: s1 * 10, aF: -s1 * 10 };

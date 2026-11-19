@@ -76,9 +76,9 @@ const foreP = (far) => () => [taper([[2, 4], [8, 4]], 4.2, 3.6, far ? WOOD.sh : 
 // The control cross over her head: two bars, a gold knob. Box 40 x 14; its middle at (20, 7).
 const crossP = () => [taper([[2, 7], [38, 7]], 2.8, 2.8, BAR.base), taper([[20, 1], [20, 13]], 2.6, 2.6, BAR.base), E(20, 7, 2.2, 2.2, '#ffd36b'), E(2, 7, 1.8, 1.8, BAR.sh), E(38, 7, 1.8, 1.8, BAR.sh)];
 // A little dancer on her string: the string, a head with a bun, a tutu, legs. Box 16 x 32; the
-// string's top at (8, 1).
+// string's top at (8, 9) (a short string, 2026-11-19: on a long one their feet went through the floor).
 const dancerP = (c) => () => [
-  ...line([[8, 1], [8, 13]], 0.45, STRING),
+  ...line([[8, 9], [8, 13]], 0.45, STRING),
   taper([[6.6, 23], [6.2, 30]], 1.6, 1.2, '#f0d8c0'), taper([[9.4, 23], [9.8, 30]], 1.6, 1.2, '#f0d8c0'), E(6.2, 30.4, 1.2, 0.8, c), E(9.8, 30.4, 1.2, 0.8, c),
   blob([[2, 23], [14, 23], [11, 18], [5, 18]], c, 1), T([[5.6, 18.4], [10.4, 18.4], [9.6, 15.6], [6.4, 15.6]], '#ffe8da'),
   E(8, 13.4, 3.2, 3.2, '#ffe8da'), F(E(8, 10.6, 2.4, 1.4, '#8a5a3a')), F(E(9.2, 13.6, 0.5, 0.5, INK)), F(E(7, 13.6, 0.5, 0.5, INK)), F(E(10, 14.8, 0.8, 0.5, '#ff9fb4')),
@@ -204,7 +204,7 @@ export const marionetteRig = makeRig({
       };
       // (Each dancer hangs from a hand on its string, swinging as she moves.)
       const dancer = (far) => ({
-        name: `dancer${far ? 'F' : 'N'}${tg}`, parent: far ? 'handF' : 'handN', s: SP.DANCER[far ? 0 : 1][i], pivot: [8, 1],
+        name: `dancer${far ? 'F' : 'N'}${tg}`, parent: far ? 'handF' : 'handN', s: SP.DANCER[far ? 0 : 1][i], pivot: [8, 9],
         rot: (S) => -(S.tilt + S[far ? 'armF' : 'armN'] + S[far ? 'elbF' : 'elbN']) * D2R,
         soft: { key: far ? 'dF' : 'dN', dir: [0, 20], k: 50, c: 3, gain: 0.9, turn: 0.9, hang: 0.9, max: 40 },
         when: (a) => !a.maDown && a.maPups >= (far ? 2 : 1),

@@ -744,7 +744,8 @@ export const velvetRig = spinWrap(makeRig({
   },
   follow: (S, a) => ({ keys: -S.lean * 1.6 + a.walkW * 14 + Math.sin(a.t * 7) * 6 * a.walkW, tail: a.walkW * -18 + S.lean * 0.6 }),
   parts: [
-    { name: 'float', parent: null, at: (S) => [S.x, -10 - S.bob], rot: (S) => S.lean * D2R },
+    // (Floating 16 px higher, 2026-11-19: her ghost tail sank through the floor.)
+    { name: 'float', parent: null, at: (S) => [S.x, -26 - S.bob], rot: (S) => S.lean * D2R },
     { name: 'waist', parent: 'float', at: () => [0, -34] },
     { name: 'neck', parent: 'waist', at: () => [1, -23], rot: (S) => S.head * D2R },
     { name: 'hand', parent: 'armN', at: () => [14.6, 0] },

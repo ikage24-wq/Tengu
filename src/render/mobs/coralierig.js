@@ -164,15 +164,16 @@ export const coralieRig = makeRig({
     const idle = {
       x: 0, hop: 0, rock: sway * 1.4, lid: sway * 2, lift: sway * 1, lean: sway * 3 + peek * 10, head: peek * 14 - sway * 3,
       armN: 70 - polish * 20 + polish * rub * 10, elbN: -60 + polish * rub * 14, armF: 60, elbF: -70, bowl: peek * -10 + polish * Math.sin(t * 3) * 6, bowlX: peek * 2, bowlY: peek * 3,
-      t1: 14 + sway * 2, t2: 38 - sway * 3, fluke: -70 + Math.sin(t * 2.2) * 10,
+      t1: 10 + sway * 2, t2: 30 - sway * 3, fluke: -70 + Math.sin(t * 2.2) * 10,
     };
     // The clam hops along: a little leap a stride, the lid clapping, her tail streaming.
     const sw = Math.sin(u * TAU);
     const leap = Math.max(0, Math.sin(u * TAU));
-    const walk = { ...idle, hop: leap * 6, rock: 4 - sw * 4, lid: -sw * 10, lift: 2, lean: 6, head: -4, t1: 10 + leap * 6, t2: 34 + leap * 10, fluke: -50 - sw * 20 };
+    const walk = { ...idle, hop: leap * 6, rock: 4 - sw * 4, lid: -sw * 10, lift: 2, lean: 6, head: -4, t1: 2 + leap * 6, t2: 22 + leap * 8, fluke: -50 - sw * 20 };
     // A slap of her tail's water: the bowl tucked in, her free arm swung.
     const antic = { ...idle, x: -3, rock: -4, lid: 6, lean: -12, head: -8, armF: -110, elbF: -30, bowlX: -2, t1: 4, t2: 20, fluke: -100 };
-    const strike = { ...idle, x: 6, rock: 4, lid: -6, lean: 12, head: 6, armF: 30, elbF: -10, bowlX: 2, t1: 20, t2: 48, fluke: -30 };
+    // (Her tail kept up off the floor as she leans in, 2026-11-19: the fluke swept under it.)
+    const strike = { ...idle, x: 6, rock: 4, lid: -6, lean: 12, head: 6, armF: 30, elbF: -10, bowlX: 2, t1: -2, t2: 22, fluke: -30 };
     const S = stateBlend(a, idle, walk, antic, strike);
     const over = (P, w) => {
       if (w <= 0.001) return;
@@ -192,7 +193,7 @@ export const coralieRig = makeRig({
     over({ lean: Math.sin(now * 5) * 10, head: Math.sin(now * 5 + 1) * 12, lid: Math.sin(now * 5) * 6 }, dizzy);
     // The Great Wave: both arms flung up.
     if (m.slamming > now) over({ lift: 10, lean: -12, head: -14, armN: -10, elbN: -50, armF: -60, elbF: -40, bowlX: -3, bowlY: 0, bowl: 0, lid: -8, fluke: -110 }, 1);
-    if (m.hp <= 0) over({ lift: -4, lean: 12, head: 20, armN: 40, elbN: -40, armF: 50, elbF: -40, lid: 10 }, 1);
+    if (m.hp <= 0) over({ lift: -4, lean: 12, head: 20, armN: 40, elbN: -40, armF: 50, elbF: -40, lid: 10, t1: -2, t2: 20 }, 1);
     a.crBubble = bub;
     a.crHug = hug;
     a.crMood = m.hp <= 0 ? 'dead' : dizzy ? 'dizzy' : hug ? 'sleep' : bub > 0.3 ? 'shout' : tide > 0.3 || m.slamming > now ? 'angry' : peek > 0.4 || polish > 0.4 ? 'happy' : null;

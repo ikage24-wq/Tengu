@@ -247,7 +247,7 @@ function twinRig(c) {
       const tiltI = breath * 1 + chase * -8;
       const idle = {
         x: 0, lift: liftI, tilt: tiltI, head: Math.sin(t * 1.1) * 3 - chomp * 4 + chase * 16, jaw: 4 + chomp * snap * 26,
-        tail: 150 + Math.sin(t * 1.6) * 6 + chase * 60 + chase * Math.sin(t * 5) * 12, tail2: 22 + Math.sin(t * 1.6 - 1) * 10 - chase * 40,
+        tail: 162 + Math.sin(t * 1.6) * 6 + chase * 48 + chase * Math.sin(t * 5) * 12, tail2: 14 + Math.sin(t * 1.6 - 1) * 10 - chase * 40,
         armN: 75 - chomp * 150, elbN: -10 - chomp * 70, armF: 100 - chomp * 160 + chase * 50, elbF: -8 - chomp * 60 + chase * 10,
         ...legsAt(liftI, tiltI),
       };
@@ -262,7 +262,8 @@ function twinRig(c) {
         ...legsAt(liftW, tiltW, [FEET[0] + steps[0][0], steps[0][1]], [FEET[1] + steps[1][0], steps[1][1]]),
       };
       // "Chomp!": arms flung up wide, the hood's jaw open, then clapped shut ahead like jaws.
-      const antic = { ...idle, x: -3, lift: 0.6, tilt: -12, head: -10, jaw: 30, tail: 130, tail2: 30, armN: -120, elbN: -30, armF: -140, elbF: -20, ...legsAt(0.6, -12, [FEET[0] - 2, 0], [FEET[1] - 2, 0]) };
+      // (The tail held out behind, never down through the floor, 2026-11-19.)
+      const antic = { ...idle, x: -3, lift: 0.6, tilt: -12, head: -10, jaw: 30, tail: 172, tail2: 6, armN: -120, elbN: -30, armF: -140, elbF: -20, ...legsAt(0.6, -12, [FEET[0] - 2, 0], [FEET[1] - 2, 0]) };
       const strike = { ...idle, x: 7, lift: -1.4, tilt: 16, head: 6, jaw: 0, tail: 170, tail2: 0, armN: 14, elbN: -6, armF: 30, elbF: -8, ...legsAt(-1.4, 16, [FEET[0] + 6, 0], [FEET[1] - 1, 0]) };
       const S = stateBlend(a, idle, walk, antic, strike);
       const over = (P, w) => {
@@ -290,7 +291,7 @@ function twinRig(c) {
         const st = Math.sin(now * 9);
         over({ tilt: 4, head: -6 + st * 3, jaw: 10 + Math.abs(st) * 10, armN: 40 + st * 30, elbN: -90, armF: 50 - st * 30, elbF: -90, ...legsAt(0, 4, [FEET[0], Math.max(0, st) * 4], [FEET[1], Math.max(0, -st) * 4]) }, 1);
       }
-      if (m.hp <= 0) over({ lift: -12, tilt: -10, head: 16, jaw: 20, armN: 60, elbN: 30, armF: 120, elbF: 20, ...legsAt(-12, -10, [FEET[0] + 10, 2], [FEET[1] + 14, 2]) }, 1);
+      if (m.hp <= 0) over({ lift: -6, tilt: -10, head: 16, jaw: 20, tail: 188, tail2: -18, armN: 60, elbN: 30, armF: 120, elbF: 20, ...legsAt(-6, -10, [FEET[0] + 10, 2], [FEET[1] + 14, 2]) }, 1);
       a.mhSpit = burrow ? spit : 0;
       a.mhMad = mad;
       a.mhDive = dive;
