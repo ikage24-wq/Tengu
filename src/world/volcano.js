@@ -12,8 +12,10 @@
 //                             of hot caramel, and at half health the bellows blow everyone back.
 //   The Gingerbread Ramparts  Gretel: lance charges the length of the wall, an icing shield that
 //                             turns hits from the front (strike from behind), frosting rain.
-//   The Crater                Queen Bonbon: sugar bombs, then the caramel rises over the crater
-//                             floor (up on the islands), then Eruption.
+//   The Crater                Queen Bonbon (Chapter 8 rework, 2026-11-19), down her cake a layer
+//                             at a time: Sprinkle Rain, then the Frosting Flood (up on the
+//                             rock-candy stacks), then Cherry Bomb. Elder Ichigo, her only taster,
+//                             eats cake on the far stack the whole time.
 
 import { addZone, adds, callout, hurtMember } from './dungeon.js';
 import { navOf, surfaceBelow } from './nav.js';
@@ -235,46 +237,59 @@ function gretel(world, m, up, dt) {
   return false;
 }
 
+// Queen Bonbon bakes a bigger cake every day in case someone comes to share it. The fight goes down
+// her cake a layer at a time:
+//   the topping   (to 66%)  Sprinkle Rain: a cast, then sprinkles pour onto everyone's spot and two
+//                           more besides (step off the marks).
+//   the frosting  (to 33%)  the Frosting Flood: pink frosting floods the crater floor every so often
+//                           (up on the rock-candy stacks), the sprinkles still falling.
+//   the cherry    (to 0)    Cherry Bomb: she crouches, leaps, and the cherry off her crown comes down
+//                           on one of you in a big splash (get clear), between the floods.
 function bonbon(world, m, up, dt) {
   const room = world.dungeon.room;
-  const s = (m.mech ??= { phase: 1, bombs: 4, erupt: 4 });
+  const map = world.map;
+  const s = (m.mech ??= { phase: 1, rain: 5, cherry: 6 });
   const frac = m.hp / m.def.hp;
-  const pending = world.dungeon.zones.some((z) => !z.hit && z.kind === 'floor');
   if (s.phase === 1 && frac <= 0.66) {
     s.phase = 2;
     room.flood = { t: 2, state: 'calm', since: 0 };
-    callout(world, 'The caramel rises!', 'Up on the rock-candy islands when it bubbles!');
-    // (She flings up her arms to summon it: render/mobs/bonbonrig.js.)
-    m.floodAt = world.now + 0.8;
-    radio(world, 'caramel');
+    callout(world, 'The Frosting Flood!', 'Up on the rock-candy stacks when it comes!');
+    // (A scoop of frosting off the floor, flung high: render/mobs/bonbonrig.js.)
+    m.bombAt = world.now + 0.6;
+    radio(world, 'frosting');
   }
   if (s.phase === 2 && frac <= 0.33) {
     s.phase = 3;
-    callout(world, 'ERUPTION!', 'The whole crater flares: jump, or get up high!');
-    radio(world, 'erupt');
+    s.cherry = 3;
+    callout(world, 'The cherry on top!', 'When her cherry comes down, get out from under it!');
+    radio(world, 'cherry');
   }
-  s.bombs -= dt;
-  if (s.bombs <= 0 && up.length) {
-    s.bombs = s.phase === 3 ? 6 : 8;
-    const spots = up.map((g) => g.body).concat([{ x: m.x + (Math.random() - 0.5) * 600, y: world.map.groundY }]);
-    for (const b of spots) addZone(world, { kind: 'circle', x: b.x, y: b.y === world.map.groundY ? b.y : floorY(world, b), w: 64, warn: 1.5, damage: 180, from: m, bomb: true });
-    callout(world, 'Sugar bombs!', 'Step off the marks');
-    // (A scoop of frosting off the floor, flung high: render/mobs/bonbonrig.js.)
-    m.bombAt = world.now + 0.6;
+  // (A cast with no pose of its own ends when its bar runs out.)
+  if (m.cast && !m.castPose && world.now >= m.cast.t0 + m.cast.dur) m.cast = null;
+  s.rain -= dt;
+  if (s.rain <= 0 && up.length && !m.cast) {
+    s.rain = s.phase === 1 ? 8 : 12;
+    const spots = up.map((g) => ({ x: g.body.x, y: floorY(world, g.body) }));
+    for (let k = 0; k < 2; k++) spots.push({ x: Math.max(60, Math.min(map.width - 60, m.x + (Math.random() - 0.5) * 700)), y: map.groundY });
+    for (const p of spots) addZone(world, { kind: 'circle', x: p.x, y: p.y, w: 64, warn: 1.8, damage: 180, from: m, look: 'sprinkles' });
+    m.cast = { name: 'Sprinkle Rain', t0: world.now, dur: 1.8 };
+    // (Her arms flung up, scattering sprinkles to the sky: render/mobs/bonbonrig.js.)
+    m.floodAt = world.now + 0.8;
+    callout(world, 'Sprinkle Rain!', 'Step off the marks');
   }
   if (s.phase === 3) {
-    s.erupt -= dt;
-    if (s.erupt <= 0) {
-      if (pending) s.erupt = 1;
-      else {
-        s.erupt = 13;
-        addZone(world, { kind: 'floor', x: 0, w: world.map.width, warn: 2, damage: 260, from: m, erupt: true });
-        m.slamming = world.now + 2;
-        // (A cast bar, a crouch, a leap, and she lands with it: render/mobs/bonbonrig.js.)
-        callout(world, 'Eruption!', 'The whole crater flares: jump!');
-        m.cast = { name: 'Eruption', t0: world.now, dur: 2 };
-        m.castPose = 'erupt';
-      }
+    s.cherry -= dt;
+    if (s.cherry <= 0 && up.length && !m.cast) {
+      s.cherry = 13;
+      // (A breath after the splash before the sprinkles come again.)
+      s.rain = Math.max(s.rain, 4.5);
+      const g = up[Math.floor(Math.random() * up.length)];
+      addZone(world, { kind: 'circle', x: g.body.x, y: floorY(world, g.body), w: 170, warn: 2.2, damage: 300, from: m, look: 'cherry', fromX: m.x, fromY: m.y - m.def.h });
+      m.slamming = world.now + 2.2;
+      // (A cast bar, a crouch, a leap, and the cherry comes down: render/mobs/bonbonrig.js.)
+      m.cast = { name: 'Cherry Bomb', t0: world.now, dur: 2.2 };
+      m.castPose = 'erupt';
+      callout(world, 'Cherry Bomb!', 'Get out from under the cherry!');
     }
   }
   // The Eruption's wind-up and blow (for the rig's pose), landing as the floor does.
@@ -297,6 +312,8 @@ export function volcanoKilled(world, m) {
   if (m.def.mech === 'toffee') room.pools = [];
   if (m.def.mech === 'bonbon') {
     room.flood = null;
+    // Elder Ichigo goes home to the palace (render/prologue.js), after a slice.
+    world.char.elders = { ...(world.char.elders ?? {}), ichigo: true };
     playScene(world, 'volcano_freed');
   }
 }

@@ -238,5 +238,29 @@ export const EMOTE_MOVES = {
   },
 };
 
+// Hayate sleepwalking (render/hayate.js, Chapter 8): fast asleep, both arms held out in front of
+// her, gliding along in her gown with a slow sway and a sleepy nod, a soft step every half beat.
+// A loop: `p` goes round 0..1.
+EMOTE_MOVES.queensleepwalk = (p) => {
+  const ph = p * Math.PI * 2;
+  const step = Math.abs(Math.sin(ph));
+  const sway = Math.sin(ph);
+  return {
+    expression: true,
+    tool: 'none', weapon: 0,
+    arm: 94 + sway * 4,
+    lift: 0.7 * step,
+    tilt: 0.06 + 0.025 * sway,
+    rig: (r) => {
+      // (Fast asleep: her eyes stay shut the whole way.)
+      r.eyes = 'blink';
+      r.backArm = hand(4.4 + 0.4 * Math.sin(ph + 1), -1.8);
+      r.hy = q(0.8 * (1 - step));
+      r.tilt = q(5 + 2 * sway);
+      legs(r, 0.4 * step, [1.4, 0, 6], [-1.4, 0, -6]);
+    },
+  };
+};
+
 // How long each needs to read (seconds).
 export const EMOTE_MIN = { emcheer: 1.2, emdance: 2, emflip: 1.1, emlove: 1.6, embow: 1.4, emflex: 1.4, emsleepy: 2.2, emsad: 2, queenwake: 3.2 };

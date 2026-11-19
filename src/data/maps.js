@@ -2277,7 +2277,7 @@ Object.assign(MAPS, {
     ],
     ropes: [{ x: 850, top: 220, bottom: G }],
     look: { sky: ['#5a1a2a', '#c84a4a', '#ffb06a'], far: '#7a2a2a', mid: '#a04040', midTrim: '#ffd36b', ...SUGAR, skyline: 'crater', material: 'rockcandy', critters: [], painted: 'crater', islands: 'rockpillar', props: [], ledgeProp: null },
-    flood: { every: 18, warn: 3, last: 6, damage: 80, color: 'caramel', name: 'The caramel rises!' },
+    flood: { every: 18, warn: 3, last: 6, damage: 80, color: 'frosting', name: 'The frosting floods in!' },
     lateFlood: true,
     portals: [
       { id: 'west', x: 40, y: G, to: 'volcano5', toPortal: 'east' },

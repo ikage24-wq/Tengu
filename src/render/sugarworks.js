@@ -35,6 +35,13 @@ const h01 = (n) => {
 };
 const hexA = (hex, a) => `rgba(${parseInt(hex.slice(1, 3), 16)},${parseInt(hex.slice(3, 5), 16)},${parseInt(hex.slice(5, 7), 16)},${Math.max(0, Math.min(1, a))})`;
 const wrap = (x, span) => ((x % span) + span) % span;
+// The air colour a picture is washed with, snapped to a coarse step: the sky drifts with the time of
+// day, and a picture cached per exact colour would be painted again for every shade it passes.
+const qair = (c) => {
+  if (!c || c[0] !== '#' || c.length < 7) return c;
+  const q = (i) => Math.min(255, Math.round(parseInt(c.slice(i, i + 2), 16) / 24) * 24).toString(16).padStart(2, '0');
+  return `#${q(1)}${q(3)}${q(5)}`;
+};
 
 // ---------- Cached pictures ----------
 const M = 30;
@@ -442,6 +449,7 @@ function sugarArchPic() {
   });
 }
 function lolliPic(seed, h, air = null, r = 20) {
+  air = air && qair(air);
   const cols = [[SW.pink, '#ffffff'], [SW.mint, '#ffffff'], [SW.lemon, SW.pink]][seed % 3].map((c) => (air ? mix(c, air, 0.3) : c));
   return art(`lolli|${seed % 3}|${h}|${air}|${r}`, r * 2 + 10, h, () => {
     const cx = r + 5;
@@ -641,6 +649,7 @@ export function drawPaintedGumdropVale(ctx, t, cam, width, height, time, layerY,
 // The Licorice Mine: layered chocolate rock, licorice timbers bracing it, gumdrop lamps on their
 // lintels, the caramel's glow coming up from below.
 function frameW(air) {
+  air = qair(air);
   return art(`mineframe|${air}`, 200, 300, () => {
     const C = (c) => mix(mix(c, '#1a0e12', 0.35), air, 0.3);
     const out = [];
@@ -713,6 +722,7 @@ export function drawPaintedLicoriceMine(ctx, t, cam, width, height, time, layerY
 // The Candy Kitchen: pink tiles over a candy-striped wainscot, two brick ovens glowing, shelves of
 // sweet jars, copper pans on a rail, and a round window with the volcano smoking outside.
 function ovenPic(air) {
+  air = qair(air);
   return art(`oven|${air}`, 140, 140, () => {
     const C = (c) => mix(c, air, 0.22);
     const out = [R(36, 0, 22, 44, C(SW.copperSh)), F(R(39, 0, 5, 44, C(SW.copper)))];
@@ -756,6 +766,7 @@ function fireMouth(ctx, x, floor, hw, top, time, seed) {
   ctx.restore();
 }
 function jarShelfPic(air) {
+  air = qair(air);
   return art(`jars|${air}`, 160, 60, () => {
     const C = (c) => mix(c, air, 0.22);
     const out = [];
@@ -837,6 +848,7 @@ export function drawPaintedCandyKitchen(ctx, t, cam, width, height, time, layerY
 // The Caramel Forge: toffee-brick walls round a great furnace pouring caramel into a trough,
 // bellows breathing beside it, copper moulds swinging on chains.
 function furnacePic(air) {
+  air = qair(air);
   return art(`furnace|${air}`, 320, 300, () => {
     const C = (c) => mix(c, air, 0.2);
     const out = [T([[60, 0], [260, 0], [300, 90], [20, 90]], C(SW.ironSh)), F(T([[70, 4], [120, 4], [80, 86], [30, 86]], C(SW.iron)))];
@@ -865,6 +877,7 @@ function mouldPic(kind) {
   });
 }
 function toolRackPic(air) {
+  air = qair(air);
   return art(`tools|${air}`, 100, 120, () => {
     const C = (c) => mix(c, air, 0.2);
     const out = [R(0, 0, 100, 12, C(SW.wood)), F(R(0, 0, 100, 2.4, C(SW.woodLit))), F(E(8, 6, 2, 2, C(SW.ironSh))), F(E(92, 6, 2, 2, C(SW.ironSh)))];
@@ -960,6 +973,7 @@ export function drawPaintedCaramelForge(ctx, t, cam, width, height, time, layerY
 // The Gingerbread Ramparts: the cone close behind, frosted and smoking, the wall running on into
 // the distance with its striped turrets, the valley's gumdrops far below.
 function farTowerPic(air) {
+  air = qair(air);
   return art(`fartower|${air}`, 60, 170, () => {
     const C = (c) => mix(c, air, 0.4);
     const out = [R(6, 60, 48, 110, C(SW.ginger)), F(R(6, 60, 8, 110, C(SW.gingerLit))), R(2, 56, 56, 8, C(SW.icing))];

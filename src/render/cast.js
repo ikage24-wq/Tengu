@@ -56,11 +56,17 @@ function drawMochi(ctx, world, a, x, y, time0) {
 }
 
 function drawHayateActor(ctx, a, x, y, cam, time, talking) {
-  const opts = { s: 1, human: a.human, crown: a.crown === true, sprout: a.sprout, awake: a.awake, talking, face: a.face ?? null };
+  const opts = { s: 1, human: a.human, crown: a.crown === true, sprout: a.sprout, awake: a.awake, talking, face: a.face ?? null, sleepwalk: Boolean(a.sleepwalk) };
   // Leaning from the hips (the covers hide everything below them).
   const px = x;
   const py = y - 15;
   ctx.save();
+  // (Up out of bed and walking (Chapter 8's sleepwalk), she turns to face the way she goes.)
+  if (!a.seat && a.facing < 0) {
+    ctx.translate(px, 0);
+    ctx.scale(-1, 1);
+    ctx.translate(-px, 0);
+  }
   if (a.tilt) {
     ctx.translate(px, py);
     ctx.rotate(a.tilt);

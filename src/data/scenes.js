@@ -1655,6 +1655,11 @@ export const OBS_RADIO = {
 
 
 // ---------- Candy Volcano ----------
+// Elder Ichigo, Queen Bonbon's only taster: a white strawberry daifuku with strawberry-pink hair, in
+// the elders' robe, hat and fake beard (Chapter 8).
+export const ICHIGO = { seed: 83, genes: { dough: '#fff4f4', hairColor: 'ichigo' }, wear: { dress: 'elderrobe', hat: 'elderhat', face: 'fakebeard' } };
+const ICHIGO_CAST = { kind: 'mochi', seed: ICHIGO.seed, size: 'grown', name: 'Elder Ichigo', color: '#ff8aa0', genes: ICHIGO.genes, wear: ICHIGO.wear, idles: ['lookaround'] };
+
 export const VOLCANO_SCENES = {
   volcano_results: [
     { card: 'Candy Volcano', sub: 'Rank {grade}  ·  {time}' },
@@ -1707,37 +1712,85 @@ export const VOLCANO_SCENES = {
     { wait: 0.4 },
     { cam: 'player', dur: 0.7 },
   ],
-  // Queen Bonbon, staged: the cake queen rocks round and round stirring her lake of caramel as it
-  // bubbles and spatters, bounces with glee, goes flustered at the word "buried", then scoops up
-  // a great dollop of frosting and flings it at you.
+  // Queen Bonbon, staged (reworked 2026-11-19): the cake queen sways by her caramel with her giant
+  // spoon, proud of today's cake; Elder Ichigo, her only taster, eats a slice up on the far
+  // rock-candy stack. She lights up at visitors... who have come to stop her baking. Then a scoop
+  // of frosting at you.
   volcano_bonbon: [
     { together: [{ cam: 'bonbon', up: 30, dur: 1.4 }, { walk: 'player', to: 'bonbon', gap: 190, speed: 100 }, { mood: 'bonbon', as: 'happy' }, { act: 'bonbon', move: 'sway', dur: 2.6, amp: 0.07, speed: 4 }, { fx: 'caramel', at: 'bonbon', n: 8 }] },
-    { who: null, text: 'The crater. A lake of bubbling caramel, islands of rock candy, and a queen in a gown of cake stirring it all with a giant spoon.' },
-    { together: [{ act: 'bonbon', move: 'sway', dur: 2, amp: 0.07, speed: 4 }, { fx: 'caramel', at: 'bonbon', n: 10 }, { fx: 'sparks', at: 'bonbon', n: 8 }] },
-    { together: [{ face: 'bonbon', to: 'player' }, { jump: 'bonbon', height: 14 }, { emote: 'bonbon', kind: 'heart', dur: 1.4 }] },
-    { who: 'bonbon', text: 'More sugar! More heat! The biggest dessert in the WORLD, and everyone gets a slice!', mood: 'happy' },
-    { together: [{ cam: ['player', 'bonbon'], up: 20, dur: 0.9 }, { face: 'player', to: 'bonbon' }] },
-    { who: 'player', text: 'If it erupts, everyone gets buried in it!' },
+    { who: null, text: "The crater. Caramel bubbling, frosting on the rim, and a queen made of cake, very proud of today's cake." },
+    { cast: 'ichigo', x: 1440, y: 300, facing: -1, ...ICHIGO_CAST },
+    { together: [{ cam: 'ichigo', up: 10, dur: 1.2 }, { emote: 'ichigo', kind: 'heart', dur: 1.2 }] },
+    { who: 'ichigo', text: 'Mmf. Needs more strawberries. ...Second slice, please.' },
+    { who: null, text: 'Up on a stack of rock candy, a little Mochi elder is eating cake. It looks like it has been eating cake for weeks.' },
+    { together: [{ face: 'bonbon', to: 'player' }, { jump: 'bonbon', height: 14 }, { emote: 'bonbon', kind: '!', dur: 1.2 }, { cam: ['player', 'bonbon'], up: 20, dur: 0.9 }] },
+    { who: 'bonbon', text: 'VISITORS! At last! I bake a bigger cake every day, in case somebody comes!', mood: 'happy' },
+    { who: 'player', text: 'The volcano is boiling over. You have to stop baking.' },
     { together: [{ mood: 'bonbon', as: 'hurt' }, { emote: 'bonbon', kind: 'sweat', dur: 1.6, hold: true }] },
-    { who: 'bonbon', text: "...Buried? Oh. Oh dear. Well, I'm not stopping now! Stir, stir, STIR!", mood: 'angry' },
+    { who: 'bonbon', text: '...Stop? Then nobody will come. Nobody leaves before dessert!', mood: 'angry' },
     { together: [{ mood: 'bonbon', as: 'angry' }, { act: 'bonbon', move: 'windup', dur: 0.8 }] },
     { act: 'bonbon', move: 'attack', dur: 0.9, async: true },
     { wait: 0.3 },
     { together: [{ fx: 'caramel', at: 'player', n: 22 }, { shake: 3, dur: 0.3 }, { jump: 'player', height: 16 }, { emote: 'player', kind: 'sweat', dur: 1.4 }] },
     { wait: 0.5 },
+    { hide: 'ichigo', dur: 0.01 },
     { cam: 'player', dur: 0.7 },
   ],
+  // Freed: she owns up, and Ichigo says it stayed every day; everyone shares the cake. Then the
+  // Queen's bed is found empty: she has sleepwalked all the way up the volcano for a slice (the only
+  // time she leaves her bed in the whole story), and wanders home again. Ichigo goes home too.
   volcano_freed: [
     { together: [{ free: 'bonbon', as: 'sad' }, { cam: ['bonbon', 'player'], dur: 1.2 }, { walk: 'player', to: 'bonbon', gap: 80, speed: 70 }] },
     { together: [{ face: 'player', to: 'bonbon' }, { face: 'bonbon', to: 'player' }] },
-    { who: 'bonbon', text: "...Oh my. I got rather carried away, didn't I? It's just... nobody ever stays for dessert.", mood: 'sad' },
-    { together: [{ fx: 'caramel', at: 'bonbon' }, { act: 'bonbon', move: 'sway', amp: 0.06, speed: 2, dur: 1.8 }] },
-    { who: null, text: 'The caramel cools and settles. The volcano gives one last, gentle puff of pink sugar-steam.' },
-    { mood: 'bonbon', as: 'happy' },
-    { who: 'bonbon', text: 'Stay a while? I make a VERY good cake. A normal-sized one. Probably.', mood: 'happy' },
-    { together: [{ fx: 'crumbs', at: 'player', top: true }, { emote: 'player', kind: 'heart', dur: 1.4 }, { jump: 'player' }] },
-    { who: null, text: 'A slice of cake the size of a door lands in your arms. It is, technically, normal-sized. For her.' },
-    { together: [{ act: 'bonbon', move: 'fade', dur: 2.4 }, { fx: 'confetti', at: 'bonbon' }] },
+    { who: 'bonbon', text: '...I got rather carried away. A bigger cake every day, and still nobody stays for dessert.', mood: 'sad' },
+    { cast: 'ichigo', x: 1440, y: 300, facing: -1, ...ICHIGO_CAST },
+    { together: [{ cam: 'ichigo', up: 10, dur: 1.2 }, { jump: 'ichigo', height: 8 }] },
+    { who: 'ichigo', text: 'I stayed. Every day. Second helpings, too.' },
+    { together: [{ cam: 'bonbon', up: 20, dur: 1.2 }, { face: 'bonbon', to: 'ichigo' }, { emote: 'bonbon', kind: '!', dur: 1.2 }] },
+    { who: 'bonbon', text: "...You did, didn't you. Every single day.", mood: 'sad' },
+    { together: [{ mood: 'bonbon', as: 'happy' }, { jump: 'bonbon', height: 12 }, { cam: ['bonbon', 'player'], dur: 0.9 }] },
+    { who: 'bonbon', text: 'Then EVERYBODY gets a slice!', mood: 'happy' },
+    { together: [{ fx: 'confetti', at: 'bonbon' }, { emote: 'player', kind: 'heart', dur: 1.4 }, { jump: 'player' }] },
+    { who: null, text: 'Queen Bonbon cuts the biggest cake in the world. There is enough for everyone. There is enough for everyone twice.' },
+    { set: 'royal_bed' },
+    { cast: 'translator', kind: 'mochi', seed: 33, size: 'grown', x: 548, y: 302, facing: -1, name: 'Royal Snore Translator', color: '#b98ad8', idles: ['lookaround'], wear: { dress: 'scholarrobe', hat: 'scholarcap', eyes: 'specs', over: 'eartrumpet' } },
+    { cam: ['translator'], up: 12, dur: 1, zoom: 1.05 },
+    { together: [{ emote: 'translator', kind: '!' }, { play: 'translator', as: 'wow' }] },
+    { who: 'translator', text: "Her Majesty's bed is... EMPTY?!", mood: 'surprised' },
+    { who: 'translator', text: 'She has not left that bed since the day she was crowned! GUARDS!', mood: 'surprised' },
+    { set: null },
+    { cast: 'ichigo', x: 1440, y: 300, facing: -1, ...ICHIGO_CAST },
+    { cast: 'hayate', kind: 'hayate', near: 'bonbon', dx: -360, crown: true, sprout: true, name: 'Hayate', color: '#5aa8c8', sleepwalk: true },
+    { face: 'hayate', to: 'bonbon' },
+    { together: [{ walk: 'hayate', to: 'bonbon', gap: 70, speed: 50 }, { cam: ['hayate', 'bonbon'], dur: 2 }, { emote: 'hayate', kind: 'zzz', dur: 3 }] },
+    { together: [{ face: 'bonbon', to: 'hayate' }, { emote: 'bonbon', kind: '!', dur: 1.2 }, { jump: 'bonbon', height: 10 }] },
+    { who: 'bonbon', text: 'Is that... the Mochi Queen? Fast asleep?', mood: 'happy' },
+    { who: 'hayate', text: '...mm... cake...', mood: 'sleepy' },
+    { together: [{ fx: 'crumbs', at: 'hayate', top: true }, { emote: 'hayate', kind: 'heart', dur: 1.4 }] },
+    { who: null, text: 'The Queen of the Mochi, fast asleep, eats a slice of cake. Then another one.' },
+    { who: 'hayate', text: '...strawberry... ...nice...', mood: 'sleepy' },
+    { together: [{ walk: 'hayate', away: 'bonbon', by: 420, speed: 50 }, { emote: 'hayate', kind: 'zzz', dur: 3 }] },
+    { hide: 'hayate', dur: 0.8 },
+    { together: [{ face: 'bonbon', to: 'player' }, { cam: ['bonbon', 'player'], dur: 0.9 }] },
+    { who: 'bonbon', text: 'She walked all the way up a volcano. Asleep. For CAKE.', mood: 'happy' },
+    { who: 'player', text: '...She must really like cake.' },
+    { together: [{ cam: 'ichigo', up: 10, dur: 1 }] },
+    { who: 'ichigo', text: 'She always did.' },
+    { set: 'royal_bed' },
+    { cast: 'hayate', kind: 'hayate', x: 300, y: 283, seat: 'bed', crown: true, sprout: true, name: 'Hayate', color: '#5aa8c8' },
+    { cast: 'translator', kind: 'mochi', seed: 33, size: 'grown', x: 548, y: 302, facing: -1, name: 'Royal Snore Translator', color: '#b98ad8', idles: ['lookaround'], wear: { dress: 'scholarrobe', hat: 'scholarcap', eyes: 'specs', over: 'eartrumpet' } },
+    { cast: 'ichigo', x: 650, y: 302, facing: -1, ...ICHIGO_CAST },
+    { cam: ['ichigo', 'translator'], up: 12, dur: 1.2, zoom: 1.05 },
+    { together: [{ walk: 'ichigo', to: 500, speed: 40 }, { fx: 'sparkle', at: 'ichigo', top: true, n: 8 }] },
+    { together: [{ emote: 'translator', kind: '!' }, { play: 'translator', as: 'wow' }] },
+    { who: 'translator', text: 'Elder Ichigo! Home from the volcano! ...And Her Majesty is back in bed. With frosting on her nose.', mood: 'surprised' },
+    { who: 'ichigo', text: 'She had two slices. I counted.' },
+    { emote: 'hayate', kind: 'zzz', dur: 1.6 },
+    { who: 'hayate', text: '...mmn... seconds...', mood: 'sleepy' },
+    { who: 'translator', text: 'Her Majesty says: "seconds". ...I shall fetch a plate.', mood: 'happy' },
+    { set: null },
+    { who: null, text: 'Down in the crater, Queen Bonbon bakes a normal-sized cake, and everyone stays for dessert.' },
+    { together: [{ mood: 'bonbon', as: 'happy' }, { act: 'bonbon', move: 'fade', dur: 2.4 }, { fx: 'confetti', at: 'bonbon' }] },
   ],
 };
 
@@ -1757,8 +1810,8 @@ export const VOLCANO_RADIO = {
   wipe: ['Up you get, sugar! Try again.', 'Everyone falls in the taffy sometimes.'],
   bellows: ['The bellows! Hold on to something!'],
   shield: ['Shield up! Go round behind her!'],
-  caramel: ['The caramel is rising! Islands, now!'],
-  erupt: ['ERUPTION! Jump!'],
+  frosting: ['The frosting! Up on the rock candy, now!'],
+  cherry: ['Her cherry! When it comes down, get out from under it!'],
 };
 
 // ---------- Dream Theatre ----------

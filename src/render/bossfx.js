@@ -11,6 +11,8 @@
 //   Astraea      starfall (falling stars), hoof (a glowing hoof print), comet (a comet down the line),
 //                night (the sky coming down), twinstars (two stars), orbit (a ring of stars),
 //                lines (beams of starlight), nova (a star bursting)
+//   Bonbon       sprinkles (rainbow sprinkles gathering overhead, then pouring down), cherry (the
+//                cherry off her crown, lobbed high, coming down in a splash)
 
 import { puff, shock, starFlash, easeOut, bloom } from './fxkit.js';
 
@@ -19,7 +21,7 @@ const SW = 640;
 const SH = 360;
 const clamp01 = (v) => Math.max(0, Math.min(1, v));
 // How long each landing effect plays (s); the rest play 0.6 s.
-export const HOLD = { overdue: 0.9, books: 0.8, study: 0.9, bookmark: 0.7, comet: 0.75, crescentsweep: 0.75, eclipse: 1.3, total: 1.3, night: 1.3, shush: 0.9, nova: 0.9, lines: 0.8, starfall: 0.7 };
+export const HOLD = { sprinkles: 0.7, cherry: 0.9, overdue: 0.9, books: 0.8, study: 0.9, bookmark: 0.7, comet: 0.75, crescentsweep: 0.75, eclipse: 1.3, total: 1.3, night: 1.3, shush: 0.9, nova: 0.9, lines: 0.8, starfall: 0.7 };
 // Looks that draw their own warning instead of the standard one.
 export const OWN_WARN = new Set(['lines']);
 
@@ -104,11 +106,82 @@ const arcs = (ctx, x, y, r, side, a, c, w) => {
   ctx.stroke();
 };
 
+// Bonbon's sprinkles: little rounded dashes in rainbow colours.
+const SPRINKLE_C = ['#ff6a8a', '#ffd34a', '#7fd8ff', '#9ae66a', '#c8a8ff', '#ffffff'];
+function sprinkle(ctx, x, y, a, c, al) {
+  if (al <= 0.01) return;
+  ctx.globalAlpha = al;
+  ctx.strokeStyle = c;
+  ctx.lineWidth = 2;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(x - Math.cos(a) * 2.4, y - Math.sin(a) * 2.4);
+  ctx.lineTo(x + Math.cos(a) * 2.4, y + Math.sin(a) * 2.4);
+  ctx.stroke();
+  ctx.lineCap = 'butt';
+  ctx.globalAlpha = 1;
+}
+// A big glossy cherry on its stem.
+function cherry(ctx, x, y, r, rot) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(rot);
+  ctx.strokeStyle = '#5a8a3a';
+  ctx.lineWidth = Math.max(1.2, r * 0.18);
+  ctx.beginPath();
+  ctx.moveTo(0, -r * 0.8);
+  ctx.quadraticCurveTo(r * 0.2, -r * 1.6, r * 0.9, -r * 2);
+  ctx.stroke();
+  ctx.fillStyle = '#d8203a';
+  ctx.beginPath();
+  ctx.arc(0, 0, r, 0, TAU);
+  ctx.fill();
+  ctx.fillStyle = '#ff5a6a';
+  ctx.beginPath();
+  ctx.arc(-r * 0.15, -r * 0.1, r * 0.75, 0, TAU);
+  ctx.fill();
+  ctx.fillStyle = '#ffffff';
+  ctx.beginPath();
+  ctx.ellipse(-r * 0.38, -r * 0.4, r * 0.24, r * 0.15, -0.6, 0, TAU);
+  ctx.fill();
+  ctx.restore();
+}
+
 // ---------- The wind-ups ----------
 export function castWarn(ctx, z, x, y, p, time) {
   const look = z.look;
   ctx.save();
-  if (look === 'shush') {
+  if (look === 'sprinkles') {
+    // A little cloud of sprinkles gathers high over the mark, swirling, then pours down into it.
+    const pour = clamp01((p - 0.55) / 0.45);
+    const r = z.w / 2;
+    for (let k = 0; k < 14; k++) {
+      const c = SPRINKLE_C[k % SPRINKLE_C.length];
+      const a0 = (k / 14) * TAU + time * 2.2;
+      const hx = x + Math.cos(a0) * r * 0.5 * (0.6 + 0.4 * p);
+      const hy = y - 120 + Math.sin(a0) * 8;
+      const fall = clamp01(pour * 1.4 - (k % 5) * 0.08);
+      const sx = hx + (Math.cos(k * 2.3) * r * 0.7 - (hx - x)) * fall;
+      const sy = hy + (y - 4 - hy) * fall * fall;
+      sprinkle(ctx, sx, sy, a0 * 2 + k, c, Math.min(1, p * 2.5) * (1 - Math.max(0, fall - 0.9) * 8));
+    }
+  } else if (look === 'cherry') {
+    // The cherry off her crown, lobbed high in an arc and coming down on the mark, its shadow
+    // swelling under it.
+    const sx = x + ((z.fromX ?? z.x) - z.x);
+    const sy = y + ((z.fromY ?? z.y - 100) - z.y);
+    const f = clamp01((p - 0.2) / 0.8);
+    const cx = sx + (x - sx) * f;
+    const cy = sy + (y - 14 - sy) * f - Math.sin(f * Math.PI) * 150;
+    ctx.globalAlpha = 0.25 + 0.35 * f;
+    ctx.fillStyle = '#7a1a2e';
+    ctx.beginPath();
+    ctx.ellipse(x, y - 1, 8 + f * (z.w / 2 - 8), 3 + f * 6, 0, 0, TAU);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+    glow(ctx, cx, cy, 20, '255,90,106', 0.35);
+    cherry(ctx, cx, cy, 7 + f * 7, time * 6 * f);
+  } else if (look === 'shush') {
     // Rings of hush rolling out from her beak, quicker as it comes.
     for (let k = 0; k < 3; k++) {
       const u = (time * (0.8 + p) + k / 3) % 1;
@@ -350,6 +423,38 @@ export function castHit(ctx, z, x, y, u, time) {
   const e = easeOut(u);
   const fade = u < 0.5 ? 1 : 1 - (u - 0.5) / 0.5;
   ctx.save();
+  if (look === 'sprinkles') {
+    // The sprinkles land and bounce out of the mark, a puff of sugar under them.
+    puff(ctx, x, y - 4, 10 * (1 - u) + 4, '#fff4f8', '#ffd0e0');
+    for (let k = 0; k < 16; k++) {
+      const a = (k / 16) * Math.PI + Math.PI;
+      const d = e * (14 + (k % 4) * 6);
+      sprinkle(ctx, x + Math.cos(a) * d, y - 4 + Math.sin(a) * d * 0.9 + u * u * 20, k + u * 6, SPRINKLE_C[k % SPRINKLE_C.length], fade);
+    }
+    ctx.restore();
+    return true;
+  }
+  if (look === 'cherry') {
+    // The cherry bursts: a splash of red juice across the mark, drops flying, a flash of sparkles.
+    if (u < 0.3) starFlash(ctx, x, y - 10, 20 + u * 80, 12, time, '#ff5a6a', '#ffffff');
+    glow(ctx, x, y - 8, z.w / 2, '255,90,106', 0.45 * fade);
+    ctx.globalAlpha = 0.7 * fade;
+    ctx.fillStyle = '#d8203a';
+    ctx.beginPath();
+    ctx.ellipse(x, y - 1, (z.w / 2) * e, 6 * e + 2, 0, 0, TAU);
+    ctx.fill();
+    ctx.globalAlpha = fade;
+    for (let k = 0; k < 12; k++) {
+      const a = Math.PI + (k / 11) * Math.PI;
+      const d = e * (30 + (k % 3) * 22);
+      ctx.fillStyle = k % 3 ? '#ff5a6a' : '#ffffff';
+      ctx.beginPath();
+      ctx.arc(x + Math.cos(a) * d * 1.6, y - 6 + Math.sin(a) * d + u * u * 40, 2.6 - u * 1.6, 0, TAU);
+      ctx.fill();
+    }
+    ctx.restore();
+    return true;
+  }
   if (look === 'shush') {
     for (let k = 0; k < 3; k++) {
       const v = clamp01(e * 1.2 - k * 0.15);

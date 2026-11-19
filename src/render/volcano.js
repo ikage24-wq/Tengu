@@ -5,6 +5,9 @@
 
 import { R, E, T, F, mix } from './pixel.js';
 import { art, place } from './scenery.js';
+import { drawMochiAnim } from './mochi-anim.js';
+import { rollMochi } from '../data/mochi-genes.js';
+import { ICHIGO } from '../data/scenes.js';
 
 const TAU = Math.PI * 2;
 const CANDY_C = { red: '#ff5a6a', yellow: '#ffd36b', green: '#9ae66a', blue: '#7fd8ff' };
@@ -57,10 +60,63 @@ function cauldronArt() {
   ]);
 }
 
+// Elder Ichigo's little table: a round top under a gingham cloth, a plate, a big slice of strawberry
+// cake with a fork in it.
+function cakeTable(ctx, x, y) {
+  ctx.fillStyle = '#946238';
+  ctx.fillRect(x - 1.5, y - 14, 3, 14);
+  ctx.fillRect(x - 6, y - 2, 12, 2);
+  ctx.fillStyle = '#fff6f8';
+  ctx.beginPath();
+  ctx.ellipse(x, y - 15, 13, 3.4, 0, 0, TAU);
+  ctx.fill();
+  ctx.fillRect(x - 13, y - 15, 26, 5);
+  ctx.fillStyle = '#ffd0dc';
+  for (let k = -12; k < 12; k += 5) ctx.fillRect(x + k, y - 15, 2.4, 5);
+  ctx.fillStyle = '#ffffff';
+  ctx.beginPath();
+  ctx.ellipse(x + 2, y - 17.4, 8, 1.8, 0, 0, TAU);
+  ctx.fill();
+  // The slice: sponge and cream in layers, pink icing on top, a strawberry.
+  ctx.fillStyle = '#f6d4a0';
+  ctx.beginPath();
+  ctx.moveTo(x - 4, y - 18);
+  ctx.lineTo(x + 8, y - 18);
+  ctx.lineTo(x + 8, y - 26);
+  ctx.lineTo(x - 4, y - 23);
+  ctx.closePath();
+  ctx.fill();
+  ctx.fillStyle = '#fff4f6';
+  ctx.fillRect(x - 4, y - 21.4, 12, 1.6);
+  ctx.fillStyle = '#ff9ab8';
+  ctx.beginPath();
+  ctx.moveTo(x - 4.6, y - 23.4);
+  ctx.lineTo(x + 8.6, y - 26.6);
+  ctx.lineTo(x + 8.6, y - 25);
+  ctx.lineTo(x - 4.6, y - 21.8);
+  ctx.fill();
+  ctx.fillStyle = '#e8304a';
+  ctx.beginPath();
+  ctx.arc(x + 5, y - 28.4, 2.2, 0, TAU);
+  ctx.fill();
+  ctx.fillStyle = '#5a8a3a';
+  ctx.fillRect(x + 4.4, y - 31.4, 1.2, 1.8);
+  ctx.fillStyle = '#c8ccd8';
+  ctx.fillRect(x - 7, y - 26, 1, 8);
+}
+const ICHIGO_FAN = { genes: null, dir: -1, speed: 0, dist: 0, size: 'grown', runPoints: 300, easy: true, idleBits: ['lookaround'] };
+
 export function drawVolcanoBack(ctx, world, cam, time) {
   const room = world.dungeon.room;
   const map = world.map;
   if (map.dungeon !== 'volcano') return;
+  // Elder Ichigo, Queen Bonbon's only taster, eating cake at a little table up on the far rock-candy
+  // stack, till she stops baking (then it goes home to the palace: render/prologue.js).
+  if (map.id === 'volcano6' && !world.char?.elders?.ichigo && !(world.cine?.cast ?? []).some((c) => c.id === 'ichigo' && c.alpha > 0)) {
+    ICHIGO_FAN.genes ??= Object.assign(rollMochi(ICHIGO.seed, ICHIGO.genes), { wear: { ...ICHIGO.wear } });
+    cakeTable(ctx, 1494 - cam.x, 300 - cam.y);
+    drawMochiAnim(ctx, ICHIGO_FAN, 1440 - cam.x, 300 - cam.y, time);
+  }
   // Sticky taffy pools: stretchy pink with strands lifting.
   for (const s of map.sticky ?? []) {
     const x0 = s.x1 - cam.x;

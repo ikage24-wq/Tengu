@@ -59,6 +59,15 @@ export function castAt(world, id) {
   if (!a) return null;
   return { x: a.x, y: a.y - (a.lift ?? 0), h: a.h };
 }
+// Where someone a cast member walks to, turns to or away from stands: another of the cast, you, or a
+// monster on the map (the Queen sleepwalking up to Queen Bonbon, Chapter 8).
+function spotOf(world, id) {
+  const c = castAt(world, id);
+  if (c) return c;
+  if (id === 'player') return { x: world.body.x };
+  const m = world.mobs?.find((q) => q.def.id === id);
+  return m ? { x: m.x } : null;
+}
 
 // ---------- Sets ----------
 
@@ -117,7 +126,7 @@ function addCast(world, step) {
     id: step.cast, kind, x: step.x === 'escort' ? world.escort?.x ?? 320 : step.x ?? 320, y: step.y === 'escort' ? world.escort?.y ?? world.map.groundY : step.y ?? world.map.groundY ?? 344, facing: step.facing ?? 1,
     alpha: step.hidden ? 0 : 1, lift: 0, sink: step.sink ?? 0, tilt: 0, h: step.h ?? HEIGHT[kind] ?? 30,
     name: step.name ?? null, color: step.color ?? null, behind: Boolean(step.behind), clipY: step.clipY ?? null, pose: step.pose ?? 'idle',
-    seat: step.seat ?? null, human: Boolean(step.human), crown: step.crown ?? false, sprout: step.sprout ?? false, sproutT: step.sprout ? 1 : 0, awake: Boolean(step.awake),
+    seat: step.seat ?? null, sleepwalk: Boolean(step.sleepwalk), human: Boolean(step.human), crown: step.crown ?? false, sprout: step.sprout ?? false, sproutT: step.sprout ? 1 : 0, awake: Boolean(step.awake),
   };
   // (A scene's Mochi walk upright at an easy trot: with no running in them a Mochi crawls.)
   if (kind === 'mochi') {
@@ -366,9 +375,13 @@ export function castStep(world, step) {
   if (step.walk) {
     let target = step.to;
     if (typeof target === 'string') {
-      const other = castAt(world, target) ?? (target === 'player' ? { x: world.body.x } : null);
+      const other = spotOf(world, target);
       if (!other) return () => true;
       target = other.x + (Math.sign(a.x - other.x) || 1) * (step.gap ?? 24);
+    } else if (step.away) {
+      const other = spotOf(world, step.away);
+      if (!other) return () => true;
+      target = a.x + (Math.sign(a.x - other.x) || -1) * (step.by ?? 30);
     } else if (step.by != null) target = a.x + step.by;
     if (target == null) return () => true;
     const speed = step.speed ?? 54;
@@ -390,7 +403,7 @@ export function castStep(world, step) {
   if (step.face) {
     let dir = step.to;
     if (typeof dir === 'string') {
-      const other = castAt(world, dir) ?? (dir === 'player' ? { x: world.body.x } : null);
+      const other = spotOf(world, dir);
       dir = other ? Math.sign(other.x - a.x) || a.facing : null;
     }
     if (dir) {

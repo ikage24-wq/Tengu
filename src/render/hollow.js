@@ -273,16 +273,17 @@ export function drawHollowFront(ctx, world, cam, time) {
     const level = f.state === 'rising' ? (f.since / def.warn) * 6 : f.t < 1 ? 14 * f.t : 14;
     const sea = def.color === 'sea';
     const melt = def.color === 'caramel';
+    const frost = def.color === 'frosting';
     ctx.save();
-    ctx.globalAlpha = sea ? 0.6 : 0.72;
-    ctx.fillStyle = sea ? '#3a8ab0' : melt ? '#d8803a' : '#e8a24a';
+    ctx.globalAlpha = sea ? 0.6 : frost ? 0.86 : 0.72;
+    ctx.fillStyle = sea ? '#3a8ab0' : frost ? '#ffb4cc' : melt ? '#d8803a' : '#e8a24a';
     ctx.beginPath();
     ctx.moveTo(0, gy + 10);
     for (let x = 0; x <= 640; x += 16) ctx.lineTo(x, gy - level + Math.sin(time * 2 + (x + cam.x) * 0.05) * 2);
     ctx.lineTo(640, gy + 10);
     ctx.fill();
     ctx.globalAlpha = 0.6;
-    ctx.fillStyle = sea ? '#bfeeff' : '#ffd68a';
+    ctx.fillStyle = sea ? '#bfeeff' : frost ? '#fff4f8' : '#ffd68a';
     for (let x = 0; x <= 640; x += 16) ctx.fillRect(x, gy - level - 1 + Math.sin(time * 2 + (x + cam.x) * 0.05) * 2, 9, 2);
     // Bubbles popping up through it.
     for (let k = 0; k < 10; k++) {

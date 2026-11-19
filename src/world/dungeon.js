@@ -607,7 +607,7 @@ const BOSS_LINES = {
   astraea: '"Nothing will fall. Nothing will ever fall again."',
   toffee: '"Mind the sparks! Ha!"',
   gretel: '"Halt! None shall pass the gingerbread wall!"',
-  bonbon: '"More sugar! MORE! The biggest dessert in the world!"',
+  bonbon: '"Nobody leaves before dessert!"',
   velvet: '"Shoes OFF in my hallway!"',
   marigold: '"Oh! More guests! Do stay. Stay forever."',
   persona: '"Shall I laugh for you, or weep? Why not both?"',

@@ -170,7 +170,7 @@ const WAKE_FACE = [[0.07, 'sleepy'], [0.2, 'shock'], [0.52, 'excited'], [1, 'smi
 const HUMAN_GEAR = { top: { id: 'hoodie' } };
 let bare = null;
 // `face`: a face of her own for the moment (shock, sad, excited: a cutscene's), over her sleepy one.
-export function drawHayate(ctx, x, y, t, { s = 2, awake = false, talking = false, wake = null, human = false, crown = true, sprout = true, face: own = null } = {}) {
+export function drawHayate(ctx, x, y, t, { s = 2, awake = false, talking = false, wake = null, human = false, crown = true, sprout = true, face: own = null, sleepwalk = false } = {}) {
   if (human) {
     crown = false;
     sprout = false;
@@ -181,11 +181,14 @@ export function drawHayate(ctx, x, y, t, { s = 2, awake = false, talking = false
   const settling = wake != null && wake >= WAKE_SECS && wake < WAKE_SECS + SETTLE ? (wake - WAKE_SECS) / SETTLE : null;
   // She breathes slowly; asleep, she nods off now and then and catches herself.
   const breath = 0.5 + 0.5 * Math.sin(t * 1.3);
-  const nod = awake || own || waking != null ? 0 : Math.max(0, Math.sin(t * 0.7)) ** 6 * 1.2 * s;
+  const nod = awake || own || waking != null || sleepwalk ? 0 : Math.max(0, Math.sin(t * 0.7)) ** 6 * 1.2 * s;
   const held = waking ?? (settling != null ? 1 : null);
   const dy = y - breath * 0.6 * s + nod * 0.3;
   const face = own ?? (waking != null ? WAKE_FACE.find(([u]) => waking < u)[1] : awake ? 'smile' : 'sleepy');
-  const move = waking != null
+  // (Sleepwalking (Chapter 8): her own loop, in 96 steps a round so its poses are kept.)
+  const move = sleepwalk
+    ? { pose: 'queensleepwalk', progress: Math.round(((t / 2.4) % 1) * 96) / 96, dur: 2.4 }
+    : waking != null
     ? { pose: 'queenwake', progress: waking, dur: WAKE_SECS }
     : settling != null
       ? { pose: 'idle', from: { kind: 'queenwake', progress: 1, dur: WAKE_SECS }, blend: settling }
