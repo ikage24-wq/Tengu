@@ -20,7 +20,8 @@ Act III: Overtime (the Coffee Mug Boss), The Convenience Store, 2 a.m. (the Cup-
 Final Curtain: Her Flat (Monday). The train's monsters are the Rush-Hour Penguin and the Sleepy
 Commuter Sheep, the office's the Sticky Note Bird and the Stapler Croc (render/mobs/commuterigs.js;
 mob ids paperdragon, sleepysheep, prompter, primadonna). The lobby keeps its theatre folk (the
-Understudy Ghost, Chorus Flamingo and Stagehand Mole), still the old 2026-11-03 drawings.
+Understudy Ghost, Chorus Flamingo and Stagehand Mole), remade as live rigs the same day
+(render/mobs/stagefolkrigs.js).
 
 (Original premise: its writer, the Phantom Playwright, was writing the island into his play, and
 every night the audience forgot a little more of who they were.)
