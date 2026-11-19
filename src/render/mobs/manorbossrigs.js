@@ -2,13 +2,15 @@
 // (rig.js), chibi, outer outline only, faces bare; everything that grows out of them is rooted in
 // them (plumes and ribbons at their sockets, capes at the shoulders, keys at the belt).
 //
-//   waltzrondo   Dame Rondo, the Leading Armour: a plump suit of armour, haunted (a pale light
-//                for a face in her helm's window), a sweeping plume, a short blue cape, a rapier.
+//   waltzrondo   Dame Rondo, the Leading Armour: a plump suit of armour, haunted (a ghost's glowing
+//                face in her helm's dark window, 2026-11-19), a sweeping plume, a short blue cape, a rapier.
 //                Short legs in sabatons under her plated skirt. Salutes, bows, taps the time.
-//   waltzminuet  Dame Minuet, the Following Armour: a ballgown of steel, its skirt three tiers of
-//                lames, a heart-shaped window in her helm, a tiara, a ribbon, a steel fan.
+//   waltzminuet  Dame Minuet, the Following Armour: a short steel tutu over legs in pink sabatons
+//                (redrawn 2026-11-19 from a floor-length gown), a heart-shaped window in her helm with a
+//                ghost's glowing face, a tiara, a ribbon, a steel fan.
 //                Flutters the fan, curtsies, pirouettes.
-//   velvet       Madame Velvet, the Head Housekeeper: a plump ghost cat in a plum velvet dress, mob
+//   velvet       Madame Velvet, the Head Housekeeper: a plump ghost cat, a plum velvet bodice and short
+//                peplum with an apron, her ghost body tapering into a wisp (redrawn 2026-11-19), mob
 //                cap, half-moon spectacles, keys at her belt, a teapot always in hand.
 //
 // The Armours show their fight: taking hold (facing each other, hand to hand, swaying in three),
@@ -24,6 +26,20 @@ import { D2R, INK, fr, ov, arcP, taper, pairOf, faceSprite, hold, window1, put, 
 import { simpleEye } from './faces.js';
 
 const sm = (key, w, h, shapes) => faceSprite(key, w, h, shapes);
+// A closed shape through these points, its corners rounded (corner cutting).
+const blob = (pts, c, n = 3) => {
+  let q = pts;
+  for (let k = 0; k < n; k++) {
+    const out = [];
+    for (let i = 0; i < q.length; i++) {
+      const p0 = q[i];
+      const p1 = q[(i + 1) % q.length];
+      out.push([p0[0] * 0.75 + p1[0] * 0.25, p0[1] * 0.75 + p1[1] * 0.25], [p0[0] * 0.25 + p1[0] * 0.75, p0[1] * 0.25 + p1[1] * 0.75]);
+    }
+    q = out;
+  }
+  return T(q, c);
+};
 const STEEL = ramp('#cbd8f2', { step: 8, turn: 8, lift: 4 });
 const GOLD = ramp('#ffd36b', { step: 10, turn: 8 });
 const GLOW = '#eef4ff';
@@ -41,6 +57,28 @@ const heartP = (cx, cy, s, n = 26) => {
   }
   return out;
 };
+// A ghost's face of light in a dark helm window (the Armours, redrawn 2026-11-19 as the player's pick
+// "A, Knight & Lady"): glowing eyes and mouth, about (cx, cy), s its size, for each mood.
+const GHOST_GLOW = '#bfefff';
+const ghostFaceShapes = (mood, cx, cy, s = 1) => {
+  const g = GHOST_GLOW;
+  const EN = [cx + 4.2 * s, cy - 0.6 * s];
+  const EF = [cx - 3.8 * s, cy - 0.4 * s];
+  const MX = cx + 0.4 * s;
+  const MY = cy + 4.6 * s;
+  const glowEye = ([x, y], k) => [F(E(x, y, 1.9 * s * k, 2.6 * s * k, g)), F(E(x - 0.5 * s, y - 0.9 * s, 0.7 * s, 0.8 * s, '#ffffff'))];
+  const arc = ([x, y], up) => stroke(arcP(x, y, 2 * s, 1.3 * s, up ? 200 : 20, up ? 340 : 160, 7), 0.9 * s, g);
+  const smile = (k = 1) => stroke(arcP(MX, MY, 2.2 * s * k, 1.2 * s * k, 20, 160, 7), 0.9 * s, g);
+  if (mood === 'blink' || mood === 'sleep') return [...arc(EN, false), ...arc(EF, false), ...smile()];
+  if (mood === 'happy') return [...arc(EN, true), ...arc(EF, true), F(T(arcP(MX, MY - 0.4 * s, 2.4 * s, 2.2 * s, 0, 180, 9), g))];
+  if (mood === 'angry') return [F(T([[EN[0] - 2 * s, EN[1] - 1.2 * s], [EN[0] + 2 * s, EN[1] - 2.6 * s], [EN[0] + 1.8 * s, EN[1] + 2 * s], [EN[0] - 1.8 * s, EN[1] + 2 * s]], g)), F(T([[EF[0] - 1.6 * s, EF[1] - 2.2 * s], [EF[0] + 1.6 * s, EF[1] - 1 * s], [EF[0] + 1.5 * s, EF[1] + 1.8 * s], [EF[0] - 1.5 * s, EF[1] + 1.8 * s]], g)), ...stroke(arcP(MX, MY + 1.2 * s, 2 * s, 0.9 * s, 200, 340, 6), 0.9 * s, g)];
+  if (mood === 'shout') return [...glowEye(EN, 0.9), ...glowEye(EF, 0.9), F(E(MX, MY + 0.6 * s, 1.8 * s, 2.2 * s, g))];
+  if (mood === 'hurt') return [...stroke([[EN[0] - 1.8 * s, EN[1] - 1.6 * s], [EN[0] + 1.2 * s, EN[1]], [EN[0] - 1.8 * s, EN[1] + 1.6 * s]], 0.9 * s, g), ...stroke([[EF[0] + 1.6 * s, EF[1] - 1.4 * s], [EF[0] - 1 * s, EF[1]], [EF[0] + 1.6 * s, EF[1] + 1.4 * s]], 0.9 * s, g), ...stroke(arcP(MX, MY + 1.4 * s, 1.8 * s, 0.8 * s, 200, 340, 6), 0.9 * s, g)];
+  if (mood === 'dead') return [...[EN, EF].flatMap(([x, y]) => [...stroke([[x - 1.5 * s, y - 1.5 * s], [x + 1.5 * s, y + 1.5 * s]], 0.9 * s, g), ...stroke([[x + 1.5 * s, y - 1.5 * s], [x - 1.5 * s, y + 1.5 * s]], 0.9 * s, g)]), ...stroke(arcP(MX, MY + 1.4 * s, 1.8 * s, 0.8 * s, 200, 340, 6), 0.9 * s, g)];
+  if (mood === 'dizzy') return [...[EN, EF].flatMap(([x, y]) => stroke(Array.from({ length: 12 }, (_, i) => [x + Math.cos(i * 0.9) * (0.2 + i * 0.16) * s, y + Math.sin(i * 0.9) * (0.2 + i * 0.16) * s]), 0.7 * s, g)), ...stroke([[MX - 2 * s, MY], [MX - 0.7 * s, MY - 0.6 * s], [MX + 0.7 * s, MY], [MX + 2 * s, MY - 0.6 * s]], 0.8 * s, g)];
+  return [...glowEye(EN, 1), ...glowEye(EF, 0.86), ...smile()];
+};
+const WINDOW = '#1e2440';
 // A turn: the whole of her mirrored for half of each turn (wraps a rig's draw).
 const spinWrap = (rig, spinning) => {
   const draw = rig.draw;
@@ -130,7 +168,7 @@ const rdHelm = () => [
   T([[14, 36], [36, 36], [34, 45], [16, 45]], STEEL.sh),
   E(25, 22.4, 22, 20.6, STEEL.base),
   E(21, 2.8, 4.4, 2.6, GOLD.base),
-  ov(34.6, 26, 10.4, 9.4, 0, GLOW, 22),
+  ov(34.6, 26, 10.4, 9.4, 0, WINDOW, 22),
   ...stroke(arcP(34.6, 26, 10.4, 9.4, 0, 360, 22), 1.2, GOLD.sh),
   F(E(12, 24, 1.6, 1.6, GOLD.base)), F(E(12.6, 30, 1.2, 1.2, GOLD.base)),
   ...stroke(arcP(25, 22.4, 18, 16, 200, 250, 6), 1, STEEL.hi),
@@ -161,7 +199,7 @@ const RD_HELM = rd('helm', 50, 46, rdHelm);
 const RD_PLUME = [0, 1, 2].map((k) => rd(`plume${k}`, 38, 18, rdPlume(k)));
 const RD_CAPE = rd('cape', 32, 42, rdCape);
 const RD_FACE = { eyes: [[30.4, 25, 2.4, 3.2, -1], [38.6, 24.6, 2, 2.8, 1]], mouth: [35, 31, 2.6], blush: [[27.6, 29.2, 2], [41.6, 28.6, 1.4]], iris: '#4a6ad8', k: 2, lid: 0 };
-const rdFace = (mood) => sm(`rd|face|${mood}`, 50, 46, () => faceShapes(mood, RD_FACE));
+const rdFace = (mood) => sm(`rd|gface|${mood}`, 50, 46, () => ghostFaceShapes(mood, 34.6, 26, 1.05));
 const rdPass = (bare) => {
   const i = bare ? 1 : 0;
   const tag = bare ? 'b' : '';
@@ -300,7 +338,7 @@ export function rondoStill(pose, f, mood) {
       ...put(rdArm(true)(), [3, 5], -5, wy - 23, 80), ...put(rdPaul(true)(), [9, 5], -6, wy - 25),
       ...put(rdLeg(false)(), [5, 1], 4, wy + 8), ...put(rdBoot(false)(), [6, 2.4], 4, wy + 24),
       ...put(rdFaulds(), [20, 1], 0, wy - 1), ...put(rdBody(), [20, 33], 0, wy),
-      ...put(rdHelm(), [25, 44], nx, ny), ...put(faceShapes(fm, RD_FACE), [25, 44], nx, ny),
+      ...put(rdHelm(), [25, 44], nx, ny), ...put(ghostFaceShapes(fm, 34.6, 26, 1.05), [25, 44], nx, ny),
       ...put(rdRapier(), [6, 47], hand[0], hand[1], 158), ...put(rdArm(false)(), [3, 5], 6, wy - 22, 70), ...put(rdPaul(false)(), [9, 5], 6, wy - 24),
     ], 50, 122),
   };
@@ -312,10 +350,10 @@ export function rondoStill(pose, f, mood) {
 const LILAC = ramp('#dcd6f8', { step: 8, turn: 8, lift: 4 });
 const ROSE = ramp('#ff9fc0', { step: 9, turn: 8 });
 const mn = pairOf('mn');
-const MN_TW = [[26, 38], [38, 50], [50, 64]];
-// A tier of her steel skirt: lames down it, a trimmed hem. Box 66 x 18; hung at its top (33, 1),
-// the next tier 12 below (tucked up under this one's hem).
-// (Seen from the side a hoop's hem is the front of an ellipse, so each tier's hem curves down.)
+// (Redrawn 2026-11-19: her floor-length gown of steel tiers became a short tutu over two legs.)
+const MN_TW = [[26, 42], [38, 50], [50, 64]];
+// Her short steel tutu: lames down it, a rose-trimmed hem (the old gown's top tier, short).
+// Box 66 x 18; hung at its top (33, 1).
 const mnTier = (k) => () => {
   const [w0, w1] = MN_TW[k];
   const cx = 33;
@@ -353,7 +391,7 @@ const mnHelm = () => [
   T([[13, 7], [15, 1.4], [18.4, 4.6], [22, 0.6], [25.6, 4.6], [29, 1.4], [31, 7]], GOLD.base),
   F(E(22, 4, 1.6, 1.6, ROSE.base)), F(E(15.4, 4.4, 0.9, 0.9, ROSE.hi)), F(E(28.6, 4.4, 0.9, 0.9, ROSE.hi)),
   T([[7, 20.4], [1.6, 15.6], [0.8, 21], [2, 25.4]], ROSE.base), E(6.6, 20.4, 2.2, 2.2, ROSE.sh),
-  T(MN_HEART, GLOW),
+  T(MN_HEART, WINDOW),
   ...stroke([...MN_HEART, MN_HEART[0]], 1.1, GOLD.sh),
   crescent(22, 21, 19, 18, LILAC.sh, { k: 0.18, a0: 110, a1: 230 }),
   shine(22, 21, 19, 18, '#ffffff', 0, 0.6),
@@ -380,7 +418,19 @@ const mnFan = (spread) => () => {
   return out;
 };
 const mnFanShut = () => [taper([[4, 20], [4, 3]], 3.6, 2.2, LILAC.base), F(taper([[4, 18], [4, 5]], 0.6, 0.4, ROSE.base)), E(4, 20, 1.8, 1.8, GOLD.base)];
-const MN_TIER = [0, 1, 2].map((k) => mn(`tier${k}`, 66, 18, mnTier(k)));
+// A slim leg in steel, a knee cop with a rose rivet. Box 10 x 18; the hip at (5, 1), the ankle 16 below.
+const mnLeg = (far) => () => {
+  const c = far ? LILAC.sh : LILAC.base;
+  return [taper([[5, 1], [5, 16.4]], 7, 6, c), E(5, 9.4, 4, 3.2, c), F(E(5, 9.4, 1.4, 1.1, ROSE.base)), F(taper([[3.2, 3], [3.2, 7]], 0.7, 0.5, far ? LILAC.base : '#ffffff'))];
+};
+// A pink sabaton with a little bow. Box 16 x 9; the ankle at (6, 2.4), the sole 6 below.
+const mnBoot = (far) => () => {
+  const c = far ? ROSE.sh : ROSE.base;
+  return [T([[2, 1], [10, 1], [13, 4], [15.4, 7], [14.6, 8.4], [1, 8.4], [0.6, 4]], c), F(E(7, 2.2, 1.8, 1.2, '#ffffff')), F(R(2.4, 2.2, 6, 1, far ? ROSE.base : ROSE.hi))];
+};
+const MN_TIER = [0].map((k) => mn(`tutu${k}`, 66, 18, mnTier(k)));
+const MN_LEG = [false, true].map((f) => mn(`leg${f ? 1 : 0}`, 10, 18, mnLeg(f)));
+const MN_BOOT = [false, true].map((f) => mn(`boot${f ? 1 : 0}`, 16, 9, mnBoot(f)));
 const MN_BOD = mn('bodice', 30, 26, mnBodice);
 const MN_HELM = mn('helm', 44, 42, mnHelm);
 const MN_RIBBON = mn('ribbon', 14, 44, mnRibbon);
@@ -389,14 +439,18 @@ const MN_FANS = [mn('fanshut', 8, 22, mnFanShut), mn('fanhalf', 32, 20, mnFan(70
 const MN_FAN_PIV = [[4, 20], [16, 18], [16, 18]];
 const mnFanOf = (a) => (a.mnOpen < 0.3 ? 0 : a.mnOpen < 0.7 ? 1 : 2);
 const MN_FACE = { eyes: [[24.6, 23, 2.2, 3, -1], [31.6, 22.6, 1.9, 2.7, 1]], mouth: [28.4, 28.2, 2.4], blush: [[22, 26.2, 1.8], [34, 25.8, 1.4]], iris: '#c860a0', k: 1.8, lid: 0, lashes: 1 };
-const mnFace = (mood) => sm(`mn|face|${mood}`, 44, 42, () => faceShapes(mood, MN_FACE));
+const mnFace = (mood) => sm(`mn|gface|${mood}`, 44, 42, () => ghostFaceShapes(mood, 28, 22.6, 0.92));
 const mnPass = (bare) => {
   const i = bare ? 1 : 0;
   const tag = bare ? 'b' : '';
   return [
     { name: `ribbon${tag}`, parent: 'neck', s: MN_RIBBON[i], pivot: [7, 2], at: () => [-16, -20], rot: (S) => clamp(S.ribbon, -10, 75) * D2R },
     { name: `armF${tag}`, parent: 'waist', s: MN_ARM[1][i], pivot: [3, 5], at: () => [-6, -18], rot: (S) => (60 + S.armF) * D2R },
-    ...[2, 1, 0].map((k) => ({ name: `tier${k}${tag}`, parent: `sk${k}`, s: MN_TIER[k][i], pivot: [33, 1] })),
+    ...[false, true].flatMap((near) => [
+      { name: `leg${near ? 'N' : 'F'}${tag}`, parent: 'waist', s: MN_LEG[near ? 0 : 1][i], pivot: [5, 1], at: () => [near ? 4 : -4, 8], rot: (S) => (near ? S.legN : S.legF) * D2R },
+      { name: `boot${near ? 'N' : 'F'}${tag}`, parent: `leg${near ? 'N' : 'F'}${tag}`, s: MN_BOOT[near ? 0 : 1][i], pivot: [6, 2.4], at: () => [0, 16], rot: (S) => (-(near ? S.legN : S.legF) - S.lean) * D2R },
+    ]),
+    { name: `tutu${tag}`, parent: 'sk0', s: MN_TIER[0][i], pivot: [33, 1] },
     { name: `bodice${tag}`, parent: 'waist', s: MN_BOD[i], pivot: [15, 25] },
     { name: `helm${tag}`, parent: 'neck', s: MN_HELM[i], pivot: [22, 40] },
     { name: `fan${tag}`, parent: 'hand', s: (a) => MN_FANS[mnFanOf(a)][i](), pivot: (a) => MN_FAN_PIV[mnFanOf(a)], rot: (S) => (S.fan - (60 + S.armN) - S.lean) * D2R },
@@ -414,8 +468,8 @@ export const minuetRig = spinWrap(makeRig({
   soft: true,
   stride: 34,
   recover: 0.8,
-  springs: { x: [180, 18], lift: [140, 13], lean: [120, 12], head: [120, 10], sk: [120, 9], armN: [140, 12], armF: [120, 11], fan: [140, 11], open: [320, 26], ribbon: [50, 5] },
-  fast: ['x', 'lean', 'armN', 'fan', 'open'],
+  springs: { x: [180, 18], lift: [140, 13], lean: [120, 12], head: [120, 10], sk: [120, 9], armN: [140, 12], armF: [120, 11], fan: [140, 11], open: [320, 26], ribbon: [50, 5], legN: [160, 13], legF: [160, 13] },
+  fast: ['x', 'lean', 'armN', 'fan', 'open', 'legN', 'legF'],
   kick: { lean: -120, head: -200, sk: 300, ribbon: 300 },
   turnKick: { sk: 200, ribbon: 260 },
   pose(m, a) {
@@ -429,20 +483,22 @@ export const minuetRig = spinWrap(makeRig({
     const curtsy = hold(lu, 5.4, 6, 7, 7.6) * still;
     const pir = hold(lu, 9.4, 9.6, 10.6, 10.8) * still;
     const idle = {
-      x: 0, lift: 1 + br * 0.6 - curtsy * 1, lean: curtsy * 4 + pir * 3, head: curtsy * 12 + flutter * Math.sin(t * 2) * 4, sk: curtsy * 1.6 - pir * 3,
+      x: 0, lift: br * 0.4 - curtsy * 1.4, lean: curtsy * 4 + pir * 3, head: curtsy * 12 + flutter * Math.sin(t * 2) * 4, sk: curtsy * 1.6 - pir * 3,
       armN: 30 - flutter * 130 + curtsy * 10 - pir * 60, armF: 30 + curtsy * 30 - pir * 80, fan: 30 - flutter * 30 + flutter * Math.sin(t * 16) * 12, open: Math.max(flutter, pir),
+      // (A curtsy: the near foot slides back behind the other; a pirouette up on her toes.)
+      legN: -4 - curtsy * 16 + pir * 4, legF: 6 + curtsy * 4,
     };
     const p = a.wp;
-    const walk = { x: 0, lift: 1.4 + Math.abs(Math.sin(p)) * 1.2, lean: 5, head: Math.sin(p) * 2, sk: -4 + Math.sin(p) * 2, armN: 30 + Math.sin(p) * 8, armF: 20 - Math.sin(p) * 8, fan: 40, open: 0 };
+    const walk = { x: 0, lift: Math.abs(Math.cos(p)) * 1.4, lean: 5, head: Math.sin(p) * 2, sk: -4 + Math.sin(p) * 2, armN: 30 + Math.sin(p) * 8, armF: 20 - Math.sin(p) * 8, fan: 40, open: 0, legN: Math.sin(p) * 18, legF: -Math.sin(p) * 18 };
     // The fan stroke: snapped shut and raised, then swept open across.
-    const antic = { x: -2, lift: 1, lean: -8, head: -4, sk: 4, armN: 100, armF: 10, fan: -60, open: 0 };
-    const strike = { x: 6, lift: 1.4, lean: 12, head: 4, sk: -6, armN: -40, armF: 40, fan: 100, open: 1 };
+    const antic = { x: -2, lift: 0, lean: -8, head: -4, sk: 4, armN: 100, armF: 10, fan: -60, open: 0, legN: 10, legF: -6 };
+    const strike = { x: 6, lift: 0.6, lean: 12, head: 4, sk: -6, armN: -40, armF: 40, fan: 100, open: 1, legN: 26, legF: -20 };
     const out = stateBlend(a, idle, walk, antic, strike);
     const s = armourStates(m, a);
     const sway = Math.sin(t * Math.PI * 1.4);
-    blendIn(out, s.holdK, { lift: 1.6 + Math.abs(sway), lean: sway * 4, head: sway * 4, sk: -sway * 3, armN: -100, armF: -60, fan: -10, open: 1 });
-    blendIn(out, s.aimK, { lift: 0, lean: -10, head: -4, sk: 5, armN: -50, armF: 50, fan: 80, open: 1 });
-    blendIn(out, s.chargeK, { lift: 2, lean: 6, head: 2, sk: -4, armN: -50, armF: -30, fan: 90, open: 1 });
+    blendIn(out, s.holdK, { lift: 1 + Math.abs(sway), lean: sway * 4, head: sway * 4, sk: -sway * 3, armN: -100, armF: -60, fan: -10, open: 1, legN: -sway * 12, legF: sway * 12 });
+    blendIn(out, s.aimK, { lift: -2, lean: -10, head: -4, sk: 5, armN: -50, armF: 50, fan: 80, open: 1, legN: 20, legF: -14 });
+    blendIn(out, s.chargeK, { lift: 1.4, lean: 6, head: 2, sk: -4, armN: -50, armF: -30, fan: 90, open: 1, legN: 22, legF: -22 });
     blendIn(out, s.guardK, { lean: -6, armN: -60, fan: 40, open: 1 });
     if (m.hp <= 0) blendIn(out, 1, { lean: 6, head: 16, armN: 50, armF: 50, fan: 170, open: 0, lift: -1 });
     a.amHold = s.holdK;
@@ -455,13 +511,11 @@ export const minuetRig = spinWrap(makeRig({
   },
   follow: (S, a) => ({ ribbon: 14 - S.lean * 1 + a.walkW * 16 + (a.amCharge ?? 0) * 40 }),
   parts: [
-    { name: 'waist', parent: null, at: (S) => [S.x, -41 - S.lift], rot: (S) => S.lean * D2R },
+    { name: 'waist', parent: null, at: (S) => [S.x, -30 - S.lift], rot: (S) => S.lean * D2R },
     { name: 'neck', parent: 'waist', at: () => [1, -23], rot: (S) => S.head * D2R },
     { name: 'hand', parent: 'armN', at: () => [11, 0] },
-    // (The skirt's three tiers, each hung from the one above, rippling a beat behind it.)
+    // (The tutu, bobbing a beat behind her.)
     { name: 'sk0', parent: 'waist', at: () => [0, -1], rot: (S, a) => (S.sk * 0.6 + Math.sin(a.t * 2.2) * 1) * D2R },
-    { name: 'sk1', parent: 'sk0', at: () => [0, 12], rot: (S, a) => (S.sk * 0.5 + Math.sin(a.t * 2.2 - 0.9) * 1.4) * D2R },
-    { name: 'sk2', parent: 'sk1', at: () => [0, 12], rot: (S, a) => (S.sk * 0.4 + Math.sin(a.t * 2.2 - 1.8) * 1.6) * D2R },
     ...mnPass(false),
     ...mnPass(true),
     { name: 'face', parent: 'neck', s: (a) => mnFace(moodOf(a, a.amMood)), pivot: [22, 40] },
@@ -487,7 +541,7 @@ minuetRig.draw = (ctx, m, a) => {
 };
 export function minuetStill(pose, f, mood) {
   const fm = MOODS.has(mood) ? mood : 'idle';
-  const wy = -42;
+  const wy = -31;
   const [nx, ny] = [1, wy - 23];
   const hand = [7 + Math.cos(90 * D2R) * 11, wy - 17 + Math.sin(90 * D2R) * 11];
   return {
@@ -496,8 +550,10 @@ export function minuetStill(pose, f, mood) {
     res: 2,
     shapes: shift([
       ...put(mnRibbon(), [7, 2], nx - 16, ny - 20, 14), ...put(mnArm(true)(), [3, 5], -6, wy - 18, 90),
-      ...put(mnTier(2)(), [33, 1], 0, wy + 23), ...put(mnTier(1)(), [33, 1], 0, wy + 11), ...put(mnTier(0)(), [33, 1], 0, wy - 1),
-      ...put(mnBodice(), [15, 25], 0, wy), ...put(mnHelm(), [22, 40], nx, ny), ...put(faceShapes(fm, MN_FACE), [22, 40], nx, ny),
+      ...put(mnLeg(true)(), [5, 1], -4, wy + 8, 6), ...put(mnBoot(true)(), [6, 2.4], -4 - 1.7, wy + 24),
+      ...put(mnLeg(false)(), [5, 1], 4, wy + 8, -4), ...put(mnBoot(false)(), [6, 2.4], 4 + 1.1, wy + 24),
+      ...put(mnTier(0)(), [33, 1], 0, wy - 1),
+      ...put(mnBodice(), [15, 25], 0, wy), ...put(mnHelm(), [22, 40], nx, ny), ...put(ghostFaceShapes(fm, 28, 22.6, 0.92), [22, 40], nx, ny),
       ...put(mnFanShut(), [4, 20], hand[0], hand[1], 30), ...put(mnArm(false)(), [3, 5], 7, wy - 17, 90),
     ], 50, 118),
   };
@@ -509,15 +565,16 @@ export function minuetStill(pose, f, mood) {
 const PLUM = ramp('#8a4a9a', { step: 9, turn: 8, lift: 12 });
 const GHOSTV = ramp('#f0eaff', { step: 8, turn: 8, lift: 3 });
 const vv = pairOf('vv');
-// The velvet dress below the waist, the apron over its front, a lace hem. Box 62 x 40; the waist at (31, 1).
+// Below the waist (redrawn 2026-11-19, the player's pick "A, Ghost Cat Housekeeper": her long dress
+// became this): a short velvet peplum with a lace edge and a short apron over her ghost body, which
+// tapers away into the wisp her tail curls from. Box 62 x 40; the waist at (31, 1).
 const vvDress = () => {
-  const out = [T([[19, 0.6], [43, 0.6], [51, 18], [59, 34], [3, 34], [11, 18]], PLUM.base)];
-  const hem = [];
-  for (let i = 0; i <= 14; i++) hem.push([3 + i * 4, 34 + (i % 2 ? 2.4 : 0.6)]);
-  out.push(T([[3.6, 31], [58.4, 31], ...hem.reverse()], '#fff2f8'));
-  out.push(F(T([[30, 2], [43, 2], [50, 24], [44, 30], [32, 30]], '#ffffff')));
-  out.push(F(R(36, 14, 8, 6, '#f2ecf8')), F(R(36, 14, 8, 1, '#d8d0e8')));
-  out.push(F(T([[12, 20], [16, 6], [18, 6], [16, 30]], PLUM.sh)), F(T([[22, 8], [24, 8], [24, 30], [21, 30]], PLUM.sh)));
+  const out = [blob([[13, 0.6], [49, 0.6], [47, 13], [40, 26], [33, 35], [28, 35], [22, 24], [16, 12]], GHOSTV.base, 2)];
+  out.push(crescent(31, 16, 17, 19, GHOSTV.sh, { k: 0.16, a0: 100, a1: 220 }), F(taper([[38, 6], [36, 24]], 1.6, 1, '#ffffff')));
+  out.push(T([[15, 0.6], [47, 0.6], [51, 9], [11, 9]], PLUM.base), F(T([[15, 0.6], [19, 0.6], [15, 9], [11, 9]], PLUM.sh)));
+  for (let i = 0; i < 11; i++) out.push(E(12 + i * 3.8, 9.6 + (i % 2) * 0.6, 2.2, 1.8, '#fff2f8'));
+  out.push(T([[27, 2], [41, 2], [43, 15], [25, 15]], '#ffffff'), F(R(30, 6, 8, 4, '#f2ecf8')), F(R(30, 6, 8, 0.8, '#d8d0e8')));
+  for (let i = 0; i < 5; i++) out.push(E(26 + i * 4, 15.4, 1.8, 1.4, '#ffffff'));
   return out;
 };
 // The bodice: plump, a white apron bib, gold buttons, a white collar. Box 44 x 28; the waist at (22, 27).
@@ -590,7 +647,7 @@ const vvPass = (bare) => {
   const i = bare ? 1 : 0;
   const tag = bare ? 'b' : '';
   return [
-    ...[0, 1, 2].map((k) => ({ name: `tail${k}${tag}`, parent: k ? `tail${k - 1}${tag}` : 'float', s: VV_TAIL[k][i], pivot: [6, 7], at: k ? () => [10, 0] : () => [-10, -2], rot: (S, a) => ((k ? 40 : 112) + Math.sin(a.t * 2.4 - k * 0.9) * 10 + S.tail * (k + 1) * 0.5) * D2R })),
+    ...[0, 1, 2].map((k) => ({ name: `tail${k}${tag}`, parent: k ? `tail${k - 1}${tag}` : 'float', s: VV_TAIL[k][i], pivot: [6, 7], at: k ? () => [10, 0] : () => [-1.6, 0], rot: (S, a) => ((k ? 40 : 112) + Math.sin(a.t * 2.4 - k * 0.9) * 10 + S.tail * (k + 1) * 0.5) * D2R })),
     { name: `earF${tag}`, parent: 'neck', s: VV_EAR[1][i], pivot: [7, 13], at: () => [-13, -37], rot: (S) => (-16 + S.ear) * D2R },
     { name: `armF${tag}`, parent: 'waist', s: VV_ARM[1][i], pivot: [4, 7], at: () => [-8, -19], rot: (S) => (60 + S.armF) * D2R },
     { name: `dress${tag}`, parent: 'waist', s: VV_DRESS[i], pivot: [31, 1], rot: (S) => S.skirt * D2R },
@@ -757,7 +814,7 @@ export function velvetStill(pose, f, mood) {
     h: 124,
     res: 2,
     shapes: shift([
-      ...put(vvTail(0)(), [6, 7], -10, fy - 2, 112), ...put(vvEar(true)(), [7, 13], nx - 13, ny - 37, -16), ...put(vvArm(true)(), [4, 7], -8, wy - 19, 100),
+      ...put(vvTail(0)(), [6, 7], -1.6, fy, 112), ...put(vvEar(true)(), [7, 13], nx - 13, ny - 37, -16), ...put(vvArm(true)(), [4, 7], -8, wy - 19, 100),
       ...put(vvDress(), [31, 1], 0, wy), ...put(vvKeys(), [8, 2], 13, wy + 2), ...put(vvTorso(), [22, 27], 0, wy),
       ...put(vvHead(), [27, 44], nx, ny), ...put(vvCap(), [23, 15], nx, ny - 34), ...put(vvEar(false)(), [7, 13], nx + 11, ny - 38, 12),
       ...put(faceShapes(fm, VV_FACE), [27, 44], nx, ny), ...put(vvSpecs(), [27, 44], nx, ny),
@@ -779,12 +836,15 @@ const PETAL = [ramp('#ffb03a', { step: 9, turn: 8 }), ramp('#ff962a', { step: 9,
 const LEAF = ramp('#7cc46a', { step: 9, turn: 8 });
 const CREAM = ramp('#fff2dc', { step: 7, turn: 8, lift: 3 });
 const mg = pairOf('mg');
-const MG_TW = [[24, 38], [36, 52], [50, 66]];
-// A petal skirt: its hem a row of round petals. Box 70 x 20; hung at (35, 1), the next 12 below.
+// (Redrawn 2026-11-19, the player's pick "A, Marigold Fairy": a girl with a bob of marigold petals
+// round her face, a leaf bodice, a short two-tier petal skirt, legs in green slippers and wings;
+// her long three-tier petal gown and her face in a flower are gone.)
+const MG_TW = [[24, 34], [32, 44], [50, 66]];
+// A petal skirt: its hem a row of round petals. Box 70 x 20; hung at (35, 1), the next 7 below.
 const mgTier = (k) => () => {
   const [w0, w1] = MG_TW[k];
   const cx = 35;
-  const h = 14;
+  const h = 9;
   const dip = 2 + k * 0.4;
   const hemAt = (f) => [cx - w1 / 2 + w1 * f, h - dip + Math.sin(f * Math.PI) * dip];
   const P = PETAL[k];
@@ -806,21 +866,29 @@ const mgTier = (k) => () => {
   out.push(F(T([[cx - w0 / 2, 0.6], [cx - w0 / 2 + 4, 0.6], hemAt(0.08), hemAt(0)], P.sh)));
   return out;
 };
-// The bodice: cream, a leaf collar, an orange rose, a leaf sash. Box 30 x 28; the waist at (15, 27).
+// The bodice: leaf green, a cream petal collar, an orange rose, a gold sash. Box 30 x 28; the waist at (15, 27).
 const mgBodice = () => [
-  E(15, 12, 11, 10, CREAM.base),
-  T([[5, 13], [25, 13], [20, 27.4], [10, 27.4]], CREAM.base),
-  T([[15, 4], [3.4, 1], [7.4, 8.4]], LEAF.base), T([[15, 4], [26.6, 1], [22.6, 8.4]], LEAF.base),
-  F(taper([[14, 4], [6, 2.6]], 0.6, 0.3, LEAF.sh)), F(taper([[16, 4], [24, 2.6]], 0.6, 0.3, LEAF.sh)),
+  E(15, 12, 11, 10, LEAF.base),
+  T([[5, 13], [25, 13], [20, 27.4], [10, 27.4]], LEAF.base), F(taper([[15, 3], [14, 26]], 0.8, 0.8, LEAF.sh)),
+  T([[15, 4], [3.4, 1], [7.4, 8.4]], CREAM.base), T([[15, 4], [26.6, 1], [22.6, 8.4]], CREAM.base),
+  F(taper([[14, 4], [6, 2.6]], 0.6, 0.3, CREAM.sh)), F(taper([[16, 4], [24, 2.6]], 0.6, 0.3, CREAM.sh)),
   F(E(16, 11, 3, 3, PETAL[0].base)), F(E(16, 11, 1.4, 1.4, '#ffe08a')),
-  F(R(10, 23, 10, 3, LEAF.base)),
-  crescent(15, 12, 11, 10, CREAM.sh, { k: 0.2, a0: 100, a1: 210 }),
+  F(R(9, 23, 12, 3, GOLD.base)),
+  crescent(15, 12, 11, 10, LEAF.sh, { k: 0.2, a0: 100, a1: 210 }),
 ];
 // An arm: a leafy puff sleeve, a cream glove. Box 18 x 10; the shoulder at (3, 5), the hand 11 along.
+const MG_SKIN = ramp('#ffe4d0', { step: 7, turn: 8 });
 const mgArm = (far) => () => {
-  const c = far ? CREAM.sh : CREAM.base;
-  return [taper([[6, 5], [13, 5]], 4, 3.6, c), E(14, 5, 3, 2.8, c), E(4.4, 5, 4.4, 4, far ? LEAF.sh : LEAF.base), F(E(3.4, 3.4, 1.6, 1, LEAF.hi))];
+  const c = far ? MG_SKIN.sh : MG_SKIN.base;
+  return [taper([[6, 5], [13, 5]], 5.2, 4.8, '#e0a890'), E(14, 5, 3.6, 3.4, '#e0a890'), taper([[6, 5], [13, 5]], 4, 3.6, c), E(14, 5, 3, 2.8, c), E(4.4, 5, 4.4, 4, far ? LEAF.sh : LEAF.base), F(E(3.4, 3.4, 1.6, 1, LEAF.hi))];
 };
+// A leg in a pale stocking, a green slipper. Box 10 x 20; the hip at (5, 1), the ankle 17 below.
+const mgLeg = (far) => () => {
+  const c = far ? '#f0e4f0' : '#fff6fa';
+  return [taper([[5, 1], [5, 17]], 5.6, 4.6, c), E(5, 9, 2.6, 2.6, c), blob([[2.4, 15.6], [7, 15.6], [10.4, 18], [10, 20], [2, 20]], far ? LEAF.sh : LEAF.base, 1), F(E(8.6, 17.6, 1, 0.8, '#ffe08a'))];
+};
+// A wing: see-through, pale veins (box 30 x 24; rooted at (27, 20) at her back).
+const mgWing = (k) => () => [blob([[27, 20], [16, 6], [4, 2], [1, 10], [10, 20]], k ? '#d8eeff' : '#e8f6ff', 2), F(taper([[26, 19], [12, 8]], 0.7, 0.4, '#ffffff')), F(taper([[26, 19], [8, 14]], 0.6, 0.3, '#ffffff'))];
 // Her lace fan: cream lace, orange edged; open, half open, shut. Gripped at its rivet.
 const mgFan = (spread) => () => {
   const a0 = 270 - spread / 2;
@@ -839,31 +907,32 @@ const mgFan = (spread) => () => {
 const mgFanShut = () => [taper([[4, 20], [4, 3]], 3.6, 2.2, '#fff8ec'), F(taper([[4, 18], [4, 5]], 0.6, 0.4, PETAL[1].base)), E(4, 20, 1.8, 1.8, GOLD.base)];
 // The blossom: a back ring of twelve deep petals, a front ring of ten bright ones, her face's disc.
 // Box 64 x 64; the blossom's middle at (32, 32).
+// Her hair: a bob of marigold petals behind her face, round the top and down past her cheeks (none
+// under her chin).
 const mgPetalsBack = () => {
-  const out = [E(32, 32, 19, 19, PETAL[2].base)];
-  for (let i = 0; i < 12; i++) {
-    const a = i * 30;
-    out.push(ov(32 + Math.cos(a * D2R) * 21, 32 + Math.sin(a * D2R) * 21, 9.6, 6.4, a, PETAL[2].base));
+  const out = [E(32, 29, 16, 15, PETAL[2].base)];
+  for (let i = 0; i < 11; i++) {
+    const a = 150 + i * 24;
+    const r = a > 330 || a < 210 ? 15 : 17;
+    out.push(ov(32 + Math.cos(a * D2R) * r, 31 + Math.sin(a * D2R) * r, 7.4, 5.4, a, i % 2 ? PETAL[1].base : PETAL[2].base));
   }
-  for (let i = 0; i < 12; i++) {
-    const a = i * 30;
-    out.push(F(taper([[32 + Math.cos(a * D2R) * 15, 32 + Math.sin(a * D2R) * 15], [32 + Math.cos(a * D2R) * 26, 32 + Math.sin(a * D2R) * 26]], 0.8, 0.4, PETAL[2].sh)));
-  }
+  out.push(ov(17.6, 42, 5.4, 6.6, 100, PETAL[1].base), ov(47, 41.4, 5, 6.4, 80, PETAL[1].base));
   return out;
 };
+// Bangs: a row of small petals across her brow, above her eyes.
 const mgPetalsFront = () => {
   const out = [];
-  for (let i = 0; i < 10; i++) {
-    const a = 18 + i * 36;
-    out.push(ov(32 + Math.cos(a * D2R) * 17, 32 + Math.sin(a * D2R) * 17, 7.6, 5.4, a, PETAL[0].base));
+  for (let i = 0; i < 7; i++) {
+    const a = 200 + i * 23;
+    out.push(ov(32.6 + Math.cos(a * D2R) * 12.6, 32 + Math.sin(a * D2R) * 11.6, 4.6, 3.4, a, i % 2 ? PETAL[0].base : PETAL[1].base));
   }
-  for (let i = 0; i < 10; i++) {
-    const a = 18 + i * 36;
-    out.push(F(ov(32 + Math.cos(a * D2R) * 18.4, 32 + Math.sin(a * D2R) * 18.4, 3.4, 1.8, a, PETAL[0].hi)));
+  for (let i = 0; i < 7; i++) {
+    const a = 200 + i * 23;
+    out.push(F(ov(32.6 + Math.cos(a * D2R) * 13, 32 + Math.sin(a * D2R) * 12, 2, 1.2, a, PETAL[0].hi)));
   }
   return out;
 };
-const mgDisc = () => [E(32.6, 33, 12.6, 12, CREAM.base), crescent(32.6, 33, 12.6, 12, CREAM.sh, { k: 0.18, a0: 100, a1: 220 }), shine(32.6, 33, 12.6, 12, '#ffffff', 0, 0.6)];
+const mgDisc = () => [E(32.6, 33, 12.6, 12, MG_SKIN.base), crescent(32.6, 33, 12.6, 12, MG_SKIN.sh, { k: 0.16, a0: 100, a1: 220 })];
 // The crescent-moon tiara. Box 20 x 16; set on the blossom's top at (10, 15).
 const mgTiara = () => [
   crescent(10, 7.4, 6.4, 6.4, GOLD.base, { k: 0.5, a0: 100, a1: 330, n: 20 }),
@@ -873,15 +942,20 @@ const mgTiara = () => [
 ];
 // The gold sash from the bow at the back of her waist. Box 14 x 42; tied at (7, 2).
 const mgSash = () => [taper([[7, 2], [5, 14], [8, 27], [6, 37]], 4, 4.6, GOLD.base), T([[3, 36], [9, 36], [10.4, 41.4], [6, 39], [2, 41.4]], GOLD.base), F(taper([[6.4, 4], [4.6, 14], [7.4, 26]], 0.8, 0.6, GOLD.hi))];
-const MG_TIER = [0, 1, 2].map((k) => mg(`tier${k}`, 70, 20, mgTier(k)));
+const MG_TIER = [0, 1].map((k) => mg(`ftier${k}`, 70, 14, mgTier(k)));
+const MG_LEG = [false, true].map((f) => mg(`leg${f ? 1 : 0}`, 12, 21, mgLeg(f)));
+const MG_WING = [0, 1].map((k) => mg(`wing${k}`, 30, 24, mgWing(k)));
 const MG_BOD = mg('bodice', 30, 28, mgBodice);
 const MG_ARM = [false, true].map((f) => mg(`arm${f ? 1 : 0}`, 18, 10, mgArm(f)));
 const MG_FANS = [mg('fanshut', 8, 22, mgFanShut), mg('fanhalf', 32, 20, mgFan(70)), mg('fanopen', 32, 20, mgFan(150))];
 const MG_FAN_PIV = [[4, 20], [16, 18], [16, 18]];
-const MG_BACK = mg('petalsback', 64, 64, mgPetalsBack);
-const MG_FRONT = mg('petalsfront', 64, 64, mgPetalsFront);
-const MG_DISC = mg('disc', 64, 64, mgDisc);
+const MG_BACK = mg('hairback', 64, 64, mgPetalsBack);
+const MG_FRONT = mg('bangs', 64, 64, mgPetalsFront);
+const MG_DISC = mg('fdisc', 64, 64, mgDisc);
 const MG_TIARA = mg('tiara', 20, 16, mgTiara);
+// Her neck: from inside the collar up under her chin. Box 8 x 14; the base at (4, 12).
+const MG_NECK_SHAPES = () => [R(1.4, 0, 5.2, 13, MG_SKIN.base), F(E(4, 1.4, 2.6, 1.6, MG_SKIN.sh))];
+const MG_NECK = mg('neck', 8, 14, MG_NECK_SHAPES);
 const MG_SASH = mg('sash', 14, 42, mgSash);
 const MG_FACE = { eyes: [[28.6, 32, 2.6, 3.4, -1], [36.8, 31.6, 2.3, 3.1, 1]], mouth: [33, 37.6, 2.6], blush: [[25.6, 35.6, 2], [39.6, 35, 1.6]], iris: '#d8701a', k: 2, lid: 0, lashes: 1 };
 // (Her sad face, which the shared faces don't have: brows tipped up in the middle, a small frown.)
@@ -900,9 +974,13 @@ const mgPass = (bare) => {
   const i = bare ? 1 : 0;
   const tag = bare ? 'b' : '';
   return [
+    // (Her wings flutter at her back, rooted inside her bodice.)
+    ...[1, 0].map((k) => ({ name: `wing${k}${tag}`, parent: 'waist', s: MG_WING[k][i], pivot: [27, 20], at: () => [-3, -16 + k * 2], rot: (S, a) => ((k ? 16 : -6) + Math.sin(a.t * 14 + k) * 12 + S.lean * 0.3) * D2R })),
     { name: `sash${tag}`, parent: 'waist', s: MG_SASH[i], pivot: [7, 2], at: () => [-10, -2], rot: (S) => clamp(S.sash, -10, 75) * D2R },
     { name: `armF${tag}`, parent: 'waist', s: MG_ARM[1][i], pivot: [3, 5], at: () => [-6, -19], rot: (S) => (60 + S.armF) * D2R },
-    ...[2, 1, 0].map((k) => ({ name: `tier${k}${tag}`, parent: `sk${k}`, s: MG_TIER[k][i], pivot: [35, 1] })),
+    ...[false, true].map((near) => ({ name: `leg${near ? 'N' : 'F'}${tag}`, parent: 'waist', s: MG_LEG[near ? 0 : 1][i], pivot: [5, 1], at: () => [near ? 4 : -3, 10], rot: (S, a) => ((near ? -6 : 8) + Math.sin(a.t * 2.4 + (near ? 0 : 1.4)) * 6 + (near ? 1 : -1) * S.lean * 0.4 + a.walkW * Math.sin(a.wp) * (near ? 16 : -16)) * D2R })),
+    ...[1, 0].map((k) => ({ name: `tier${k}${tag}`, parent: `sk${k}`, s: MG_TIER[k][i], pivot: [35, 1] })),
+    { name: `neck${tag}`, parent: 'neckJ', s: MG_NECK[i], pivot: [4, 12], at: () => [0, 3] },
     { name: `bodice${tag}`, parent: 'waist', s: MG_BOD[i], pivot: [15, 27] },
     { name: `back${tag}`, parent: 'bloom', s: MG_BACK[i], pivot: [32, 32] },
     { name: `front${tag}`, parent: 'bloom2', s: MG_FRONT[i], pivot: [32, 32] },
@@ -981,15 +1059,14 @@ export const marigoldRig = spinWrap(makeRig({
   follow: (S, a) => ({ sash: 14 - S.lean * 1 + a.walkW * 16 + (a.mgTwirl != null ? 40 : 0) }),
   parts: [
     { name: 'waist', parent: null, at: (S) => [S.x, -44 - S.lift], rot: (S) => S.lean * D2R },
-    { name: 'neck', parent: 'waist', at: () => [1, -25], rot: (S) => S.head * D2R },
-    { name: 'head', parent: 'neck', at: () => [0, -26] },
+    { name: 'neckJ', parent: 'waist', at: () => [1, -25], rot: (S) => S.head * D2R },
+    { name: 'head', parent: 'neckJ', at: () => [0, -19] },
     // (The petal rings turn about her face: the back one with the bloom, the front a little against it.)
-    { name: 'bloom', parent: 'head', rot: (S) => S.bloom * 0.5 * D2R },
-    { name: 'bloom2', parent: 'head', rot: (S) => -S.bloom * 0.3 * D2R },
+    { name: 'bloom', parent: 'head', rot: (S) => clamp(S.bloom, -60, 60) * 0.06 * D2R },
+    { name: 'bloom2', parent: 'head', rot: (S) => -clamp(S.bloom, -60, 60) * 0.04 * D2R },
     { name: 'hand', parent: 'armN', at: () => [11, 0] },
     { name: 'sk0', parent: 'waist', at: () => [0, -1], rot: (S, a) => (S.sk * 0.6 + Math.sin(a.t * 2.2) * 1) * D2R },
-    { name: 'sk1', parent: 'sk0', at: () => [0, 12], rot: (S, a) => (S.sk * 0.5 + Math.sin(a.t * 2.2 - 0.9) * 1.4) * D2R },
-    { name: 'sk2', parent: 'sk1', at: () => [0, 12], rot: (S, a) => (S.sk * 0.4 + Math.sin(a.t * 2.2 - 1.8) * 1.6) * D2R },
+    { name: 'sk1', parent: 'sk0', at: () => [0, 7], rot: (S, a) => (S.sk * 0.5 + Math.sin(a.t * 2.2 - 0.9) * 1.4) * D2R },
     ...mgPass(false),
     ...mgPass(true),
     { name: 'face', parent: 'head', s: (a) => mgFace(a.face === 'dead' ? 'dead' : a.ph.strike > 0.25 ? 'shout' : a.mgMood === 'sad' || MOODS.has(a.mgMood) ? a.mgMood : moodOf(a)), pivot: [32, 32] },
@@ -1001,12 +1078,19 @@ export const marigoldRig = spinWrap(makeRig({
     for (let k = 0; k < 4; k++) {
       const u = fr(a.t * 0.35 + k / 4);
       ctx.save();
-      ctx.globalAlpha = a.alpha * Math.sin(u * Math.PI) * 0.85;
+      // (They shrink away rather than fade: a fading orange goes brown on the dark halls.)
+      const z = Math.sin(u * Math.PI);
+      ctx.globalAlpha = a.alpha * Math.min(1, z * 3) * 0.95;
       ctx.translate(-20 + k * 14 + Math.sin(u * 6 + k) * 8, -60 - S.lift + u * 56);
       ctx.rotate(u * 7 + k);
+      ctx.scale(z, z);
       ctx.fillStyle = k % 2 ? '#ffb03a' : '#ff8a2a';
       ctx.beginPath();
-      ctx.ellipse(0, 0, 3, 1.8, 0, 0, TAU);
+      ctx.ellipse(0, 0, 3.6, 2, 0, 0, TAU);
+      ctx.fill();
+      ctx.fillStyle = '#ffe08a';
+      ctx.beginPath();
+      ctx.ellipse(-1, -0.5, 1.6, 0.8, 0, 0, TAU);
       ctx.fill();
       ctx.restore();
     }
@@ -1031,16 +1115,18 @@ export function marigoldStill(pose, f, mood) {
   const fm = MOODS.has(mood) || mood === 'sad' ? mood : 'idle';
   const wy = -48;
   const [nx, ny] = [1, wy - 25];
-  const [hx, hy] = [nx, ny - 26];
+  const [hx, hy] = [nx, ny - 19];
   const hand = [7 + Math.cos(90 * D2R) * 11, wy - 18 + Math.sin(90 * D2R) * 11];
   return {
     w: 110,
     h: 150,
     res: 2,
     shapes: shift([
+      ...put(mgWing(1)(), [27, 20], -3, wy - 14, 16), ...put(mgWing(0)(), [27, 20], -3, wy - 16, -6),
       ...put(mgSash(), [7, 2], -10, wy - 2, 14), ...put(mgArm(true)(), [3, 5], -6, wy - 19, 90),
-      ...put(mgTier(2)(), [35, 1], 0, wy + 23), ...put(mgTier(1)(), [35, 1], 0, wy + 11), ...put(mgTier(0)(), [35, 1], 0, wy - 1),
-      ...put(mgBodice(), [15, 27], 0, wy), ...put(mgPetalsBack(), [32, 32], hx, hy), ...put(mgPetalsFront(), [32, 32], hx, hy), ...put(mgDisc(), [32, 32], hx, hy),
+      ...put(mgLeg(true)(), [5, 1], -3, wy + 10, 8), ...put(mgLeg(false)(), [5, 1], 4, wy + 10, -6),
+      ...put(mgTier(1)(), [35, 1], 0, wy + 6), ...put(mgTier(0)(), [35, 1], 0, wy - 1),
+      ...put(MG_NECK_SHAPES(), [4, 12], nx, ny + 3), ...put(mgBodice(), [15, 27], 0, wy), ...put(mgPetalsBack(), [32, 32], hx, hy), ...put(mgPetalsFront(), [32, 32], hx, hy), ...put(mgDisc(), [32, 32], hx, hy),
       ...put(mgTiara(), [10, 15], hx, hy - 24), ...put(mgFaceShapes(fm), [32, 32], hx, hy),
       ...put(mgFanShut(), [4, 20], hand[0], hand[1], 30), ...put(mgArm(false)(), [3, 5], 7, wy - 18, 90),
     ], 55, 146),

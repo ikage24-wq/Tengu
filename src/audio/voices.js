@@ -15,13 +15,13 @@
 const FAMILIES = {
   Critter: ['puffle', 'mosstort', 'redpanda', 'strawhog', 'snailbun', 'harvmouse', 'lambkin', 'pebblet', 'scorpip', 'cloudsheep', 'nekomata', 'pearldiver', 'starcarto', 'cottoncandy', 'stagehand'],
   Beast: ['boarlet', 'thornback', 'lupina', 'teddystrong', 'tuskar', 'leonie', 'gummybear', 'paperdragon', 'tanukipicker', 'kettletanuki', 'lantertanuki', 'grandkettle'],
-  Bird: ['mossowlet', 'windbird', 'gloombat', 'chorusgirl', 'prompter'],
-  Buzz: ['bumble', 'queenbee', 'sporeling', 'mothlibrarian'],
-  Sprite: ['petalsprite', 'wisp', 'starspirit', 'sylph', 'lanternghost', 'stardancer', 'cometcourier', 'musicballerina'],
+  Bird: ['mossowlet', 'windbird', 'gloombat', 'chorusgirl', 'prompter', 'mothlibrarian', 'folio'],
+  Buzz: ['bumble', 'queenbee', 'sporeling'],
+  Sprite: ['petalsprite', 'wisp', 'starspirit', 'sylph', 'lanternghost', 'stardancer', 'cometcourier', 'musicballerina', 'starpoint'],
   Goblin: ['brownie', 'macgoblin', 'pumpgob', 'rootling', 'sporecap', 'jellyninja', 'jackbox', 'gearmole', 'teahatter', 'pumpkinbutler'],
   Plant: ['sproutling', 'leafling', 'mossgolem', 'sapling', 'mothercapper', 'gnarlroot', 'topiarydryad', 'sylvana'],
   Stone: ['boneknight', 'crystalslime', 'rockgolem', 'armourknight', 'waltzrondo', 'waltzminuet', 'tindrummer', 'gearheart', 'meteorgolem', 'chocoknight', 'crystalking', 'gretel'],
-  Ghost: ['shade', 'porcelaindoll', 'ghostmaid', 'candlebride', 'marionette', 'geminighosts', 'understudy', 'yukionna', 'marionetta', 'persona', 'playwright', 'folio'],
+  Ghost: ['shade', 'porcelaindoll', 'ghostmaid', 'candlebride', 'marionette', 'geminighosts', 'understudy', 'yukionna', 'marionetta', 'persona', 'playwright'],
   Sea: ['keepsake', 'jellymaid', 'anglerlamp', 'octoscholar', 'moraymurri', 'morayena', 'seahorseknight', 'barnacleknight', 'matriarch', 'primadonna', 'whaledream'],
   People: ['kitsunemiko', 'lamia', 'velvet', 'marigold', 'puddlekid', 'blossomfairy', 'abyssia', 'coralie', 'nebulawitch', 'lollipopwitch', 'peppermint', 'balloonseller', 'eclipsesol', 'eclipseluna', 'astraea', 'toffee', 'bonbon', 'directrice', 'kiterider', 'shepherdess', 'gunner', 'harpist', 'monk', 'gale', 'tamamo', 'lilith', 'selene'],
 };

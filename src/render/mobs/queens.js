@@ -2247,10 +2247,14 @@ function qp(key, build, pivot, moodOf = null) {
     return box;
   };
   return {
-    s: (a) => {
+    // (`bare`: the same part with no outline, for the second pass that hides the seams.)
+    s: (a, S, bare = false) => {
       const mood = moodOf ? moodOf(a) : 'idle';
       const { ox, oy, w, h } = boxFor();
-      return sprite(`rig|queen|${key}|${mood}`, () => ({ w, h, res: 3, soft: 'cel', crisp: true, selout: true, pad: 3, shapes: build(mood).map((s) => ({ ...s, x: s.x - ox, y: s.y - oy })) }));
+      const shapes = () => build(mood).map((s) => ({ ...s, x: s.x - ox, y: s.y - oy }));
+      return bare
+        ? sprite(`rig|queen|${key}|${mood}|bare`, () => ({ w, h, res: 3, soft: 'cel', crisp: true, bare: true, pad: 3, shapes: shapes() }))
+        : sprite(`rig|queen|${key}|${mood}`, () => ({ w, h, res: 3, soft: 'cel', crisp: true, selout: true, pad: 3, shapes: shapes() }));
     },
     pivot: () => {
       const { ox, oy } = boxFor();
@@ -2271,12 +2275,14 @@ const drawn = (key, build) => qp(key, build, [0, 0]);
 
 // A rig spec in her frame's terms: each part's joint `at0` is a point of the frame (a child's
 // default: its parent's joint), `off(S, a)` moves it live, `clip` is a window of the frame.
+// Outer outline only (2026-11-19, the player: "fix the outline ... on each part, it's so bad"): every
+// part is drawn once with its outline, then all of them again bare on top in the same order, so the
+// seams between parts (shoulders, elbows, sleeves, gown tiers, wings) lose their lines and only her
+// outer edge keeps one.
 function queenRig({ bx, G, parts, ...spec }) {
   const byName = Object.fromEntries(parts.map((p) => [p.name, p]));
   const at0 = (n) => (n ? byName[n].at0 ?? (byName[n].parent ? at0(byName[n].parent) : [bx, G]) : [bx, G]);
-  return makeRig({
-    ...spec,
-    parts: parts.map((p) => {
+  const placed = parts.map((p) => {
       const me = at0(p.name);
       const base = at0(p.parent);
       const b = [me[0] - base[0], me[1] - base[1]];
@@ -2292,12 +2298,13 @@ function queenRig({ bx, G, parts, ...spec }) {
         o.clip = () => [x - me[0], y - me[1], w, h];
       }
       if (p.part) {
-        o.s = p.part.s;
+        o.s = (a, S) => p.part.s(a, S, false);
         o.pivot = p.part.pivot;
       }
       return o;
-    }),
-  });
+    });
+  const bare = placed.filter((o) => o.s).map((o) => ({ ...o, name: `${o.name}~b`, s: (a, S) => byName[o.name].part.s(a, S, true) }));
+  return makeRig({ ...spec, parts: [...placed, ...bare] });
 }
 
 // Arm angles (radians: 0 forward, PI/2 down) that put the hand at `hand` from the shoulder `sh`,
@@ -2380,7 +2387,7 @@ const TA = {
   idle: tArm([TQ.bx + 22, TQ.G - 64]),
   walk: tArm([TQ.bx + 20, TQ.G - 68]),
   antic: tArm([TQ.bx + 4, TQ.G - 56]),
-  strike: tArm([TQ.bx + 36, TQ.G - 84]),
+  strike: tArm([TQ.bx + 38, TQ.G - 76]),
   hurt: tArm([TQ.bx + 14, TQ.G - 72]),
   dead: tArm([TQ.bx + 22, TQ.G - 44]),
 };
@@ -2577,9 +2584,9 @@ const SA = {
 };
 const sGlow = mix(S.vein, '#ffffff', 0.3);
 const sParts = {
-  upperB: bone('sylvana|armBU', SL[0], 6, 5.4, 4.8, S.skinDk, shade(S.skinDk, -10)),
+  upperB: bone('sylvana|armBU', SL[0], 6, 5.4, 4.8, S.skinDk, shade(S.skinDk, -10), () => ball(0, 0, 3.1, 3.1, S.skinDk, { hi: false })),
   foreB: bone('sylvana|armBF', SL[1], 4.8, 4.2, 3.6, S.skinDk, shade(S.skinDk, -10), () => hand(SL[1], 0, 0, S.skinDk, shade(S.skinDk, -8))),
-  upper: bone('sylvana|armU', SL[0], 6, 5.4, 4.8, S.skin, S.skinDk),
+  upper: bone('sylvana|armU', SL[0], 6, 5.4, 4.8, S.skin, S.skinDk, () => ball(0, 0, 3.1, 3.1, S.skin, { hi: false })),
   fore: bone('sylvana|armF', SL[1], 4.8, 4.1, 3.4, S.skin, S.skinDk, () => [
     line([[1.3, 1], [SL[1] * 0.85, 0.8]], 0.5, sGlow),
     ...leaf(SL[1] * 0.8, 0, 2.4, 5, 2.6, S.leaf),
@@ -2888,8 +2895,10 @@ const lilithRig = queenRig({
   parts: [
     { name: 'hip', at0: LQ.hip, off: (S) => [S.x, S.y], rot: (S) => S.lean },
     { name: 'head', parent: 'hip', at0: LQ.neck, rot: (S) => S.head },
-    { name: 'wingF', parent: 'hip', at0: [LQ.bx - 2, LQ.top + 6], rot: (S) => -S.wing * 0.8, part: slice('lilith', 'wingF', [LQ.bx - 2, LQ.top + 6]) },
-    { name: 'wingN', parent: 'hip', at0: [LQ.bx - 7, LQ.top + 8], rot: (S) => S.wing, part: slice('lilith', 'wingN', [LQ.bx - 7, LQ.top + 8]) },
+    // (Neither wing tips far forward as she flings or storms: tipped up further, the top edge of the
+    // wing stood up above it like a plank.)
+    { name: 'wingF', parent: 'hip', at0: [LQ.bx - 2, LQ.top + 6], rot: (S) => -Math.min(S.wing, 0.15) * 0.8, part: slice('lilith', 'wingF', [LQ.bx - 2, LQ.top + 6]) },
+    { name: 'wingN', parent: 'hip', at0: [LQ.bx - 7, LQ.top + 8], rot: (S) => Math.min(S.wing, 0.1), part: slice('lilith', 'wingN', [LQ.bx - 7, LQ.top + 8]) },
     // The tail: each segment hung from the end of the one before, turned by its own spring.
     { name: 'tail0', parent: 'hip', at0: [LQ.bx - 9, LQ.G - 52], rot: (S) => S.c0, part: lParts.tail(0) },
     ...[1, 2].map((i) => ({ name: `tail${i}`, parent: `tail${i - 1}`, off: () => LTAIL[i - 1].pts.at(-1), rot: (S) => S[`c${i}`], part: lParts.tail(i) })),

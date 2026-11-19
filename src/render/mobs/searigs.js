@@ -49,7 +49,7 @@ const jbRim = () => {
 const jbRibbon = (k) => () => (k < 2
   ? [taper([[5, 1], [7.4, 4], [3.4, 7], [7, 10], [4, 13]], 5.4, 2.4, k ? '#ffb3e0' : '#ff9ac8'), ...[0, 1, 2].map((j) => E(j % 2 ? 7.6 : 2.6, 3.4 + j * 3.4, 1.6, 1.4, '#ffd6ee'))]
   : [taper([[5, 1], [6, 8], [4, 15], [6, 21], [5, 25]], 1.6, 0.8, k % 2 ? '#c8a0f0' : '#ffb3e0')]);
-const JB_BELL = jb('bell', 30, 22, jbBell, 2);
+const JB_BELL = jb('bell', 30, 24, jbBell, 2);
 const JB_RIM = jb('rim', 32, 8, jbRim, 2);
 const JB_RIB = [0, 1, 2, 3, 4].map((k) => jb(`rib${k}`, 10, 26, jbRibbon(k), 2));
 const JB_FACE = { eyes: [[12.4, 12.6, 2.1, 2.7, -1], [19.4, 12.4, 1.8, 2.4, 1]], mouth: [16, 16.8, 1.6], blush: [[9.8, 15.6, 1.5], [22, 15.4, 1.2]], iris: '#b04a8a', lid: 0, lashes: 1 };

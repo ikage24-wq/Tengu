@@ -1,11 +1,14 @@
-// Monster art: the Clockwork Carnival's bosses (docs/design/clockwork-carnival.md), all live rigs in
-// carnivalbossrigs.js (remade 2026-11-18 for Chapter 6):
+// Monster art: the Clockwork Carnival's bosses (docs/design/clockwork-carnival.md), all live rigs
+// (redrawn 2026-11-19: leonierig.js, marionetterig.js, gearheartrig.js; the mole in carnivalbossrigs.js):
 //   leonie       Leonie, the Lioness Acrobat
 //   marionetta   Madame Marionette
 //   gearheart    Queen Gearheart, the Grand Automaton
 //   gearmole     a Brass Mole from her whack-a-mole
 
-import { leonieRig, leonieStill, madameRig, madameStill, gearheartRig, gearheartStill, moleRig, moleStill } from './carnivalbossrigs.js';
+import { leonieRig, leonieStill } from './leonierig.js';
+import { marionetteRig as madameRig, marionetteStill as madameStill } from './marionetterig.js';
+import { gearheartRig, gearheartStill } from './gearheartrig.js';
+import { moleRig, moleStill } from './carnivalbossrigs.js';
 
 export const ART = {
   leonie: { pad: 12, walk: 8, idle: 8, attack: 5, stride: 36, atkMs: [90, 160, 280, 220], draw: leonieStill, rig: leonieRig },

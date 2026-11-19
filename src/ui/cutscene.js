@@ -751,12 +751,13 @@ const FACE_S = 2.15;
 // Where a speaking monster's face is: `at`, a share of its height above its feet (else 0.74); `fit`,
 // how much of its height the window shows (else 0.55); `dx`, a nudge sideways for a face that isn't
 // over its feet. (The queens are drawn small and tall, so the window closes right in on them.)
-const QUEEN_FACE = { at: 0.86, fit: 0.3 };
+const QUEEN_FACE = { at: 0.86, fit: 0.3, dx: -12 };
 const FACE_AT = {
-  gnarlroot: { at: 0.32, fit: 0.5 }, sylvana: QUEEN_FACE, tamamo: QUEEN_FACE, lilith: QUEEN_FACE, selene: QUEEN_FACE,
-  crystalking: { at: 0.7, fit: 0.62, dx: -10 }, mothercapper: { at: 0.42 }, tuskar: { at: 0.46, dx: -42 }, moraymurri: { at: 0.68, dx: -24 }, morayena: { at: 0.66, dx: -26 },
-  gearheart: { at: 0.66 }, astraea: { at: 0.62, dx: -22 }, bonbon: { at: 0.5 }, persona: { at: 0.6 }, directrice: { at: 0.66, dx: -6 },
-  matriarch: { at: 0.4, dx: -16 }, whaledream: { at: 0.5, dx: -14 },
+  gnarlroot: { at: 0.58, fit: 0.5 }, sylvana: QUEEN_FACE, tamamo: QUEEN_FACE, lilith: QUEEN_FACE, selene: QUEEN_FACE,
+  crystalking: { at: 0.7, fit: 0.48, dx: -3 }, mothercapper: { at: 0.54, dx: -7 }, tuskar: { at: 0.94, dx: -4 }, moraymurri: { at: 0.58, dx: -5 }, morayena: { at: 0.58, dx: -5 },
+  gearheart: { at: 0.58, fit: 0.62 }, astraea: { at: 0.62, dx: -22 }, bonbon: { at: 0.5 }, persona: { at: 0.78 }, directrice: { at: 0.7, dx: -4 }, playwright: { at: 0.6, fit: 0.5 }, gale: { at: 0.7, dx: -3 },
+  matriarch: { at: 0.27, dx: -15, fit: 0.5 }, whaledream: { at: 0.52, dx: -23 }, marigold: { at: 0.86 }, velvet: { at: 0.74, fit: 0.66 },
+  abyssia: { at: 0.6, fit: 0.62 }, coralie: { at: 0.62 }, leonie: { at: 0.66 }, marionetta: { at: 0.68 },
 };
 // How far above the feet a figure's face sits, per unit of its scale (the hero base: a little under
 // the top of the head, so the brow is in the middle of the window with the shoulders under it).
@@ -778,6 +779,8 @@ function drawSpeaker(ctx, world, step, x, y, t, nod = false) {
   } else if (MOBS[who]) {
     const def = MOBS[who];
     const m = { def, x: 0, y: 0, hp: def.hp, dir: 1, state: 'idle', flash: 0, stagger: 0, phase: t, age: 9, dying: 0, uid: 9000 + who.length, aggroUntil: step.mood === 'angry' ? Infinity : 0, attackAt: -9, gloatAt: step.mood === 'happy' ? world.now + t : -9 };
+    // (Persona speaks a sad line in Tragedy, her blue side to you: render/mobs/personarig.js.)
+    if (who === 'persona') m.mech = { mask: step.mood === 'sad' ? 'tragedy' : 'comedy' };
     // (Its face fills the window, whatever its size: FACE_AT is how high up its body the face is,
     // for the few whose face isn't up near the top - a tree's is in its trunk.)
     const f = FACE_AT[who] ?? {};

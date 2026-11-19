@@ -151,6 +151,7 @@ function leonie(world, m, up, dt) {
       const w = map.width / n;
       const flip = (s.flip = !s.flip) ? 1 : 0;
       for (let i = flip; i < n; i += 2) addZone(world, { kind: 'thorns', x: i * w, w, warn: 1.8, damage: 170, from: m, hoop: true });
+      m.hoopsAt = world.now;
       callout(world, 'Rings of fire!', 'Stand between the hoops');
     }
   }
@@ -158,6 +159,7 @@ function leonie(world, m, up, dt) {
     s.roared = true;
     for (const g of up) hurtMember(world, g, 90, m.x, { knock: true });
     world.juice.push({ type: 'shake', mag: 8, dur: 0.6 });
+    m.roarAt = world.now;
     callout(world, 'ROAAAR!', 'Leonie is angry now: everything comes faster');
     radio(world, 'roar');
   }
@@ -175,11 +177,13 @@ function marionetta(world, m, up, dt) {
     s.mark = 10;
     const g = pick(up.filter((o) => o.role !== 'tank').length ? up.filter((o) => o.role !== 'tank') : up);
     room.yank = { id: g.id, at: world.now + 2.6 };
+    m.yankAt = world.now;
     callout(world, `Strings on ${g.bot ? g.name : 'you'}!`, 'She will yank them to her: be ready to heal and run!');
   }
   if (s.puppets.length && frac <= s.puppets[0]) {
     s.puppets.shift();
     adds(world, m, 'marionette', [m.x - 200, m.x + 200], null);
+    m.cutAt = world.now;
     callout(world, 'She cuts her puppets loose!', 'Marionettes on the belts: bring them down');
     radio(world, 'puppets');
   }

@@ -12,11 +12,11 @@
 //   lantertanuki  Lantern Tanuki: a tanuki pretending to be a paper lantern in the Mist Hollow at
 //                 night, its face peeking through the paper, little legs underneath. Signature: the
 //                 candle inside flares up and it coughs out a puff of lantern flame.
-//   grandkettle   The Grand Kettle, the terraces' area boss: the oldest tanuki of all, so round and
-//                 so long a kettle that he IS one, a giant iron pot with his belly, head and a
-//                 bamboo tea ladle sticking out of it. Signature: his lid rattles louder and louder
-//                 as he winds up, then he slams the ladle down in a burst of steam.
+//   grandkettle   The Grand Kettle, the terraces' area boss, redrawn 2026-11-19 as the Teapot
+//                 Spirit (the oldest tanuki, who sat so long by the hearth he became the teapot):
+//                 his rig is in teapotrig.js.
 
+import { teapotRig, teapotStill } from './teapotrig.js';
 import { E, T, F, stroke, mix } from './kit.js';
 import { simpleEye, simpleMouth, deadEye, sweat, vein } from './faces.js';
 import { ramp, crescent, smear, sway, shine } from './meadow.js';
@@ -312,146 +312,11 @@ function lantertanuki(pose, f, mood) {
   return { w: 46, h: 54, res: 3, shapes: shift(out, 2, 2) };
 }
 
-// ---------- The Grand Kettle, rigged ----------
-// A live skeleton like every boss (render/mobs/rig.js): the giant pot is his body, his head and
-// belly poke out of its front, two stout legs carry it, a bamboo tea ladle in his near paw. The lid
-// rides a spring and rattles on the wind-up; his ears and tail trail the body. Rig space: the floor
-// under him at (0, 0).
-const LADLE = ramp('#c8b46a', { step: 10, turn: 12, sat: -8 });
-const GK = {
-  leg: (near) => part(`gk|leg|${near}`, 18, 22, () => [...stroke([[9, 2], [near ? 10 : 8, 10], [9, 16]], 7, near ? DARK.base : DARK.sh, false), O(10.6, 17.4, 6, 3, 0, DARK.deep, 14)]),
-  tail: () => part('gk|tail', 34, 28, () => tail(28, 22, 2.2, 3)),
-  // The pot: iron with a hobnail band and the light's highlight, the spout out of the front.
-  pot: () => part('gk|pot', 96, 66, () => {
-    const cx = 45;
-    const cy = 36;
-    const o = [F(T([[cx + 30, cy - 6], [cx + 44, cy - 22], [cx + 47, cy - 19], [cx + 34, cy + 2]], IRON.sh)), O(cx + 46, cy - 21, 2.6, 2, -40, IRON.deep, 10)];
-    o.push(O(cx, cy, 40, 28, 0, IRON.base, 32), crescent(cx, cy, 40, 28, IRON.sh, { k: 0.3, a0: 60, a1: 240 }), shine(cx, cy, 40, 28, IRON.hi, 0, 0.8));
-    for (let i = 0; i < 13; i++) o.push(E(cx - 30 + i * 5, cy - 11 + Math.abs(i - 6) * 0.5, 1.1, 1.1, IRON.hi));
-    o.push(O(cx, cy - 26, 30, 4, 0, IRON.deep, 24));
-    return o;
-  }),
-  // The lid with its knob, from its centre (20, 8).
-  lid: () => part('gk|lid', 40, 14, () => [O(20, 8, 19, 4.4, 0, IRON.sh, 20), F(O(16, 6.6, 10, 1.4, 0, IRON.base, 14)), O(20, 3.4, 4, 3, 0, IRON.deep, 12)]),
-  // The bail handle arching over, from its left end (4, 30).
-  bail: () => part('gk|bail', 86, 34, () => stroke([[4, 30], [12, 6], [74, 6], [82, 30]], 2.6, IRON.deep, false)),
-  // His belly out of the pot's front.
-  belly: () => part('gk|belly', 40, 34, () => [O(20, 17, 17, 15, 0, FUR.base, 22), O(22, 19, 12, 11, 0, CREAM.base, 20), crescent(22, 19, 12, 11, CREAM.sh, { k: 0.24, a0: 90, a1: 210 })]),
-  // The head without its eyes and mouth (the face part acts those).
-  head: () => part('gk|head', 46, 40, () => {
-    const hx = 22;
-    const hy = 22;
-    const k = 2.4;
-    return [
-      O(hx, hy, 7 * k, 6.2 * k, 0, FUR.base, 24), crescent(hx, hy, 7 * k, 6.2 * k, FUR.sh, { k: 0.28, a0: 80, a1: 230 }),
-      O(hx - 2.2 * k, hy + 0.2 * k, 2.7 * k, 2.1 * k, 18, DARK.base, 16), O(hx + 3.2 * k, hy + 0.1 * k, 2.9 * k, 2.2 * k, -16, DARK.base, 16),
-      O(hx + 1.6 * k, hy + 3 * k, 3.6 * k, 2.4 * k, 0, CREAM.base, 18), O(hx + 0.4 * k, hy - 3.6 * k, 2.4 * k, 1.3 * k, 0, CREAM.hi, 12),
-      E(hx + 3.6 * k, hy + 2 * k, 1.1 * k, 0.8 * k, DARK.deep),
-    ];
-  }),
-  face: (mood, atk) => part(`gk|face|${mood}|${atk}`, 46, 40, () => {
-    const dead = mood === 'dead';
-    const hurt = mood === 'hurt';
-    const angry = mood === 'angry' || atk;
-    const em = dead ? 'dead' : hurt ? 'hurt' : angry ? 'angry' : mood === 'happy' ? 'happy' : mood === 'blink' ? 'blink' : 'idle';
-    const o = [];
-    if (dead) o.push(...deadEye(17, 22, 3, { type: 'swirl', s: -1, c: '#f6ead6' }), ...deadEye(29.4, 22, 3.4, { type: 'swirl', c: '#f6ead6' }));
-    else o.push(...simpleEye(17.2, 21.6, { s: -1, w: 3, h: 3.6, mood: em, iris: angry ? '#d0504a' : '#3a2418', ink: '#1a1012', lid: 0.3 }), ...simpleEye(29.4, 21.4, { s: 1, w: 3.4, h: 4, mood: em, iris: angry ? '#d0504a' : '#3a2418', ink: '#1a1012', lid: 0.3 }));
-    o.push(...simpleMouth(27.6, 32, { k: 1.8, mood: dead ? 'dead' : atk ? 'shout' : angry ? 'angry' : hurt ? 'hurt' : mood === 'happy' ? 'happy' : 'idle', smug: !angry && !hurt && !dead, lip: '#5a3028' }));
-    // A wispy old white beard under the chin: the oldest tanuki of all.
-    for (let k = -2; k <= 2; k++) o.push(O(27 + k * 2.2, 36.6 - Math.abs(k) * 0.6, 1.6, 2.6, k * 8, k % 2 ? CREAM.hi : '#ffffff', 10));
-    if (angry && !atk) o.push(...vein(9, 10, 1.4));
-    if (hurt) o.push(...sweat(6, 14, 1.4));
-    return o;
-  }),
-  // An ear from its root (7, 10).
-  ear: (near) => part(`gk|ear|${near}`, 14, 14, () => [O(7, 7, 6, 5.6, 0, near ? FUR.base : FUR.sh, 14), O(7.4, 7.6, 3.4, 3, 0, DARK.base, 12)]),
-  arm: () => part('gk|arm', 26, 12, () => [...stroke([[3, 6], [20, 6]], 6.4, DARK.base, false), O(20, 6, 4.2, 4, 0, DARK.deep, 12)]),
-  // The bamboo ladle along +x from the grip at (8, 8): the long jointed handle, the cup at the end.
-  ladle: () => part('gk|ladle', 70, 20, () => {
-    const o = [...stroke([[2, 8], [54, 8]], 2.6, LADLE.base, false), ...stroke([[2, 8.6], [54, 8.6]], 0.7, LADLE.hi)];
-    for (const x of [16, 32, 48]) o.push(...stroke([[x, 6.4], [x, 9.8]], 0.9, LADLE.sh));
-    o.push(O(60, 9, 7, 6, 0, LADLE.base, 16), crescent(60, 9, 7, 6, LADLE.sh, { k: 0.3, a0: 60, a1: 220 }), O(60, 7, 5, 2, 0, LADLE.deep, 12));
-    return o;
-  }),
-};
-const kettleRig = makeRig({
-  w: 96,
-  h: 96,
-  stride: 40,
-  fast: ['arm', 'ladle', 'rear'],
-  kick: { rear: 1.4, lid: 6, earF: 3 },
-  springs: { lid: [180, 6], earF: [80, 5], earB: [70, 5], tail: [50, 4], head: [140, 10] },
-  pose(m, a) {
-    const t = a.t;
-    const s = Math.sin(a.wp);
-    const dip = Math.abs(s);
-    // At rest he sways and his lid lifts a hair with each slow breath, the ladle on his shoulder.
-    const idle = { rear: Math.sin(t * 1.1) * 0.035, bob: Math.sin(t * 1.8) * 1.6, lid: Math.max(0, Math.sin(t * 1.8)) * 1.6, arm: -1.9 + Math.sin(t * 1.1) * 0.05, ladle: -2.5, legF: 0, legB: 0, x: 0 };
-    const walk = { rear: Math.sin(a.wp * 2 - 1) * 0.06, bob: dip * 3 - 1.5, lid: dip * 2, arm: -1.9 + s * 0.08, ladle: -2.5 + s * 0.1, legF: -s * 0.45, legB: s * 0.45, x: s * 2 };
-    // Wind-up: rocking back, the ladle hoisted high behind him, the lid rattling up on the steam.
-    const antic = { rear: -10 * D2R, bob: -4, lid: 7 + Math.sin(t * 40) * 3, arm: -2.6, ladle: -2.9, legF: -0.12, legB: 0.18, x: 0 };
-    // The slam: thrown forward, the ladle brought down in front of him.
-    const strike = { rear: 12 * D2R, bob: 3, lid: 2, arm: 0.7, ladle: 0.75, legF: -0.3, legB: 0.25, x: 0 };
-    return stateBlend(a, idle, walk, antic, strike);
-  },
-  follow: (S) => ({ head: S.rear * 0.5, lidT: S.lid, earF: 0.25 - S.bob * 0.05 - S.rear, earB: -0.3 + S.bob * 0.05 + S.rear, tail: S.rear * 1.6 - S.bob * 0.04 }),
-  parts: [
-    { name: 'root', at: (S) => [S.x, -34 + S.bob], rot: (S) => S.rear },
-    { name: 'tail', parent: 'root', pivot: [28, 22], at: () => [-38, 4], rot: (S) => S.tail, s: () => GK.tail() },
-    { name: 'legB', parent: 'root', pivot: [9, 2], at: () => [-16, 18], rot: (S) => S.legB, s: () => GK.leg(false) },
-    { name: 'legF', parent: 'root', pivot: [9, 2], at: () => [16, 18], rot: (S) => S.legF, s: () => GK.leg(true) },
-    { name: 'bail', parent: 'root', pivot: [4, 30], at: () => [-41, -26], s: () => GK.bail() },
-    { name: 'pot', parent: 'root', pivot: [45, 36], at: () => [0, 0], s: () => GK.pot() },
-    { name: 'lid', parent: 'root', pivot: [20, 8], at: (S) => [0, -30 - (S.lidT ?? S.lid)], s: () => GK.lid() },
-    { name: 'belly', parent: 'root', pivot: [20, 17], at: () => [20, 6], s: () => GK.belly() },
-    { name: 'earB', parent: 'root', pivot: [7, 10], at: () => [16, -24], rot: (S) => S.earB, s: () => GK.ear(false) },
-    { name: 'head', parent: 'root', pivot: [22, 22], at: () => [26, -14], rot: (S) => S.head, s: () => GK.head() },
-    { name: 'face', parent: 'head', pivot: [22, 22], at: () => [0, 0], s: (a) => GK.face(a.face, a.atk) },
-    { name: 'earF', parent: 'head', pivot: [7, 10], at: () => [8, -16], rot: (S) => S.earF - S.head, s: () => GK.ear(true) },
-    { name: 'arm', parent: 'root', pivot: [3, 6], at: () => [30, 2], rot: (S) => S.arm - S.rear, s: () => GK.arm() },
-    { name: 'ladle', parent: 'arm', pivot: [8, 8], at: () => [18, 0], rot: (S) => S.ladle - S.arm, s: () => GK.ladle() },
-  ],
-  fx(ctx, m, a) {
-    // Steam bursting up round where the ladle lands.
-    if (a.ph.since >= 0 && a.ph.since < 0.7) {
-      const u = a.ph.since / 0.7;
-      for (let i = 0; i < 9; i++) {
-        const ang = (-170 + i * 20) * D2R;
-        const r = 10 + 26 * u;
-        ctx.globalAlpha = a.alpha * (1 - u) * 0.85;
-        ctx.fillStyle = STEAM;
-        ctx.beginPath();
-        ctx.ellipse(64 + Math.cos(ang) * r, -4 + Math.sin(ang) * r * 0.6, 4 + 3 * u, 3 + 2 * u, 0, 0, TAU);
-        ctx.fill();
-      }
-    }
-  },
-});
-
-// The Grand Kettle's still frames (galleries, portraits).
-function grandkettle(pose, f, mood) {
-  const atk = pose === 'attack';
-  const lift = atk ? [4, 8, 1, 1][f] ?? 0 : pose === 'idle' ? f % 3 : 0;
-  const out = [];
-  const cx = 50;
-  const gy = 92;
-  for (const s of [-1, 1]) out.push(...stroke([[cx + s * 16, gy - 20], [cx + s * 17, gy - 4]], 7, s < 0 ? DARK.sh : DARK.base, false), O(cx + s * 17 + 1.6, gy - 2.6, 6, 3, 0, DARK.deep, 12));
-  out.push(...tail(cx - 38, gy - 30, 2.2, 3));
-  out.push(O(cx, gy - 36, 40, 28, 0, IRON.base, 30), crescent(cx, gy - 36, 40, 28, IRON.sh, { k: 0.3, a0: 60, a1: 240 }));
-  out.push(...stroke([[cx - 37, gy - 50], [cx - 29, gy - 76], [cx + 29, gy - 76], [cx + 37, gy - 50]], 2.6, IRON.deep));
-  out.push(O(cx, gy - 64 - lift, 19, 4.4, 0, IRON.sh, 18), O(cx, gy - 68.6 - lift, 4, 3, 0, IRON.deep, 10));
-  out.push(O(cx + 20, gy - 30, 17, 15, 0, FUR.base, 20), O(cx + 22, gy - 28, 12, 11, 0, CREAM.base, 18));
-  const em = mood === 'dead' ? 'dead' : mood === 'hurt' ? 'hurt' : atk || mood === 'angry' ? 'angry' : mood;
-  out.push(...tanukiHead(cx + 26, gy - 52, 2.1, em, atk ? 'shout' : 'smug', { dead: mood === 'dead' }));
-  return { w: 104, h: 100, res: 2, shapes: out };
-}
-
 export const ART = {
   tanukipicker: { walk: 8, idle: 6, attack: 4, stride: 20, atkMs: [80, 300, 160], draw: tanukipicker },
   kettletanuki: { walk: 8, idle: 6, attack: 5, stride: 18, atkMs: [120, 340, 200, 220], draw: kettletanuki },
   lantertanuki: { walk: 8, idle: 6, attack: 4, stride: 18, atkMs: [140, 360, 200], draw: lantertanuki },
-  grandkettle: { walk: 4, idle: 3, attack: 4, stride: 40, atkMs: [200, 620, 260], draw: grandkettle, rig: kettleRig },
+  grandkettle: { walk: 4, idle: 3, attack: 4, stride: 40, atkMs: [200, 620, 260], draw: teapotStill, rig: teapotRig },
 };
 
 export const INFO = {

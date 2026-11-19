@@ -241,19 +241,25 @@ export const MOBS = {
     fight: { mender: true },
   }),
   mothercapper: mob({
-    id: 'mothercapper', name: 'Myconid Queen', level: 12, hp: 7000, atk: 84, def: 16, acc: 40, eva: 2, exp: 3000, gold: [120, 190],
+    // (Health sized from a live run, 2026-11-19: a level-13 group does about 220 a second to her;
+    // 18k is a fight of about a minute and a half.)
+    id: 'mothercapper', name: 'Myconid Queen', level: 12, hp: 18000, atk: 84, def: 16, acc: 40, eva: 2, exp: 3000, gold: [120, 190],
     speed: 34, w: 70, h: 100, art: 'mothercapper', boss: true,
     drops: [{ id: 'hollow_acorn', chance: 1, qty: 2 }, { id: 'orange_potion', chance: 1, qty: 10 }],
     fight: { every: 1.8, reach: 52, windup: 0.5 }, mech: 'capper',
   }),
   tuskar: mob({
-    id: 'tuskar', name: 'Tuskar the Behemoth', level: 13, hp: 9000, atk: 94, def: 18, acc: 42, eva: 2, exp: 4500, gold: [150, 240],
+    // (Health sized from a live run, 2026-11-19: about 215 a second from a level-14 group, his
+    // dizzy spells included; 20k is a fight of about a minute and a half.)
+    id: 'tuskar', name: 'Tuskar the Behemoth', level: 13, hp: 20000, atk: 94, def: 18, acc: 42, eva: 2, exp: 4500, gold: [150, 240],
     speed: 44, w: 72, h: 92, art: 'tuskar', boss: true,
     drops: [{ id: 'hollow_acorn', chance: 1, qty: 3 }, { id: 'white_potion', chance: 1, qty: 10 }],
     fight: { every: 2, reach: 56, windup: 0.5 }, mech: 'boar',
   }),
   gnarlroot: mob({
-    id: 'gnarlroot', name: 'Gnarlroot, the Oldest Tree', level: 14, hp: 16000, atk: 98, def: 20, acc: 44, eva: 2, exp: 9000, gold: [240, 360],
+    // (Health sized from a live run, 2026-11-19: 16k took a level-14 group about 55 s, ten of them
+    // cutting Yomogi free; 32k is a fight of about a minute and three quarters, the Hollow's last.)
+    id: 'gnarlroot', name: 'Gnarlroot, the Oldest Tree', level: 14, hp: 32000, atk: 98, def: 20, acc: 44, eva: 2, exp: 9000, gold: [240, 360],
     speed: 16, w: 100, h: 150, art: 'gnarlroot', boss: true,
     drops: [{ id: 'hollow_acorn', chance: 1, qty: 5 }],
     fight: { every: 2, reach: 74, windup: 0.55 }, mech: 'gnarl',
@@ -302,26 +308,32 @@ export const MOBS = {
     speed: 40, w: 28, h: 40, art: 'pumpkinbutler', drops: [{ id: 'moonlit_ribbon', chance: 0.12 }],
     fight: { every: 2, reach: 40, windup: 0.5 },
   }),
+  // (Health sized from a live run, 2026-11-19: a level-18 group took the pair down, 29k between them,
+  // in about 55 s; 26k and 24k make it a dance of about a minute and a half.)
   waltzrondo: mob({
-    id: 'waltzrondo', name: 'Dame Rondo, the Leading Armour', level: 17, hp: 15000, atk: 112, def: 24, acc: 54, eva: 3, exp: 5200, gold: [170, 250],
+    id: 'waltzrondo', name: 'Dame Rondo, the Leading Armour', level: 17, hp: 26000, atk: 112, def: 24, acc: 54, eva: 3, exp: 5200, gold: [170, 250],
     speed: 40, w: 60, h: 104, art: 'waltzrondo', boss: true,
     drops: [{ id: 'moonlit_ribbon', chance: 1, qty: 2 }, { id: 'white_potion', chance: 1, qty: 8 }],
     fight: { every: 1.9, reach: 64, windup: 0.5 }, mech: 'waltz',
   }),
   waltzminuet: mob({
-    id: 'waltzminuet', name: 'Dame Minuet, the Following Armour', level: 17, hp: 14000, atk: 104, def: 22, acc: 54, eva: 4, exp: 5200, gold: [170, 250],
+    id: 'waltzminuet', name: 'Dame Minuet, the Following Armour', level: 17, hp: 24000, atk: 104, def: 22, acc: 54, eva: 4, exp: 5200, gold: [170, 250],
     speed: 40, w: 70, h: 104, art: 'waltzminuet', boss: true,
     drops: [{ id: 'moonlit_ribbon', chance: 1, qty: 2 }, { id: 'orange_potion', chance: 1, qty: 8 }],
     fight: { every: 1.7, reach: 56, windup: 0.45 }, mech: 'waltz',
   }),
+  // (Health sized from a live run, 2026-11-19: about 435 a second from a level-18 group, tea and
+  // bells included; 40k is a fight of about a minute and a half.)
   velvet: mob({
-    id: 'velvet', name: 'Madame Velvet, the Head Housekeeper', level: 18, hp: 26000, atk: 118, def: 24, acc: 56, eva: 3, exp: 8000, gold: [220, 330],
+    id: 'velvet', name: 'Madame Velvet, the Head Housekeeper', level: 18, hp: 40000, atk: 118, def: 24, acc: 56, eva: 3, exp: 8000, gold: [220, 330],
     speed: 30, w: 70, h: 100, art: 'velvet', boss: true,
     drops: [{ id: 'moonlit_ribbon', chance: 1, qty: 3 }, { id: 'white_potion', chance: 1, qty: 10 }],
     fight: { every: 2, reach: 70, windup: 0.5 }, mech: 'velvet',
   }),
+  // (Health sized from a live run, 2026-11-19: 46k took a level-18 group 2 min 11 s, the butlers and
+  // her time aloft included; 42k is a fight of about two minutes, the Manor's last.)
   marigold: mob({
-    id: 'marigold', name: 'Lady Marigold, the Eternal Hostess', level: 20, hp: 46000, atk: 128, def: 28, acc: 60, eva: 4, exp: 16000, gold: [340, 520],
+    id: 'marigold', name: 'Lady Marigold, the Eternal Hostess', level: 20, hp: 42000, atk: 128, def: 28, acc: 60, eva: 4, exp: 16000, gold: [340, 520],
     speed: 26, w: 70, h: 110, art: 'marigold', boss: true,
     drops: [{ id: 'moonlit_ribbon', chance: 1, qty: 5 }],
     fight: { every: 2, reach: 72, windup: 0.55 }, mech: 'marigold',
@@ -359,20 +371,24 @@ export const MOBS = {
     speed: 30, w: 30, h: 34, art: 'octoscholar', drops: [{ id: 'tide_pearl', chance: 0.1 }, { id: 'white_potion', chance: 0.3 }, { id: 'school_blazer', chance: 0.01 }],
     fight: { every: 2.3, reach: 32, windup: 0.5, range: 150 },
   }),
+  // (Health sized from a live run, 2026-11-19: a level-22 group took the sisters down, 40k between
+  // them, in about 76 s, swaps and burrows included; 24k each is a fight of about a minute and a half.)
   moraymurri: mob({
-    id: 'moraymurri', name: 'Murri, the Twin Moray', level: 22, hp: 20000, atk: 138, def: 30, acc: 70, eva: 5, exp: 9000, gold: [240, 340],
+    id: 'moraymurri', name: 'Murri, the Twin Moray', level: 22, hp: 24000, atk: 138, def: 30, acc: 70, eva: 5, exp: 9000, gold: [240, 340],
     speed: 44, w: 56, h: 96, art: 'moraymurri', boss: true,
     drops: [{ id: 'tide_pearl', chance: 1, qty: 2 }, { id: 'white_potion', chance: 1, qty: 10 }],
     fight: { every: 1.8, reach: 64, windup: 0.5 }, mech: 'moray',
   }),
   morayena: mob({
-    id: 'morayena', name: 'Ena, the Twin Moray', level: 22, hp: 20000, atk: 138, def: 30, acc: 70, eva: 5, exp: 9000, gold: [240, 340],
+    id: 'morayena', name: 'Ena, the Twin Moray', level: 22, hp: 24000, atk: 138, def: 30, acc: 70, eva: 5, exp: 9000, gold: [240, 340],
     speed: 44, w: 56, h: 96, art: 'morayena', boss: true,
     drops: [{ id: 'tide_pearl', chance: 1, qty: 2 }, { id: 'orange_potion', chance: 1, qty: 10 }],
     fight: { every: 1.8, reach: 64, windup: 0.5 }, mech: 'moray',
   }),
+  // (Health sized from a live run, 2026-11-19: 38k took a level-22 group about 71 s, her anglers
+  // included; 50k is a fight of about a minute and a half.)
   abyssia: mob({
-    id: 'abyssia', name: 'Lady Abyssia, the Sea Witch', level: 23, hp: 38000, atk: 146, def: 32, acc: 72, eva: 4, exp: 14000, gold: [270, 410],
+    id: 'abyssia', name: 'Lady Abyssia, the Sea Witch', level: 23, hp: 50000, atk: 146, def: 32, acc: 72, eva: 4, exp: 14000, gold: [270, 410],
     speed: 26, w: 80, h: 100, art: 'abyssia', boss: true,
     drops: [{ id: 'tide_pearl', chance: 1, qty: 3 }, { id: 'mana_elixir', chance: 1, qty: 5 }],
     fight: { every: 2.1, reach: 80, windup: 0.55 }, mech: 'abyssia',
@@ -384,6 +400,8 @@ export const MOBS = {
     speed: 30, w: 36, h: 44, art: 'keepsake', drops: [],
     fight: { every: 999, reach: 0, windup: 0.5 },
   }),
+  // (Checked in a live run, 2026-11-19: 62k took a level-22 group about 2 min 3 s, her tanks and
+  // waves included: about right for the palace's last.)
   coralie: mob({
     id: 'coralie', name: 'Queen Coralie, the Drowned Queen', level: 25, hp: 62000, atk: 160, def: 36, acc: 76, eva: 5, exp: 24000, gold: [440, 650],
     speed: 30, w: 64, h: 124, art: 'coralie', boss: true,
@@ -423,14 +441,18 @@ export const MOBS = {
     speed: 40, w: 28, h: 36, art: 'balloonseller', drops: [{ id: 'golden_ticket', chance: 0.08 }, { id: 'white_potion', chance: 0.3 }],
     fight: { every: 2.2, reach: 30, windup: 0.45, range: 160 },
   }),
+  // (Health sized from a live run, 2026-11-19: 52k took a level-27 group about 53 s of game time,
+  // her pounces and rings included; 88k is a fight of about a minute and a half.)
   leonie: mob({
-    id: 'leonie', name: 'Leonie, the Lioness Acrobat', level: 27, hp: 52000, atk: 170, def: 38, acc: 82, eva: 6, exp: 20000, gold: [380, 550],
+    id: 'leonie', name: 'Leonie, the Lioness Acrobat', level: 27, hp: 88000, atk: 170, def: 38, acc: 82, eva: 6, exp: 20000, gold: [380, 550],
     speed: 50, w: 60, h: 100, art: 'leonie', boss: true,
     drops: [{ id: 'golden_ticket', chance: 1, qty: 3 }, { id: 'white_potion', chance: 1, qty: 12 }],
     fight: { every: 1.7, reach: 62, windup: 0.45 }, mech: 'leonie',
   }),
+  // (Health sized from a live run, 2026-11-19: 60k took a level-27 group about 57 s, her yanks and
+  // cut-loose puppets included; 95k is a fight of about a minute and a half.)
   marionetta: mob({
-    id: 'marionetta', name: 'Madame Marionette', level: 28, hp: 60000, atk: 176, def: 40, acc: 84, eva: 5, exp: 24000, gold: [410, 600],
+    id: 'marionetta', name: 'Madame Marionette', level: 28, hp: 95000, atk: 176, def: 40, acc: 84, eva: 5, exp: 24000, gold: [410, 600],
     speed: 30, w: 70, h: 100, art: 'marionetta', boss: true,
     drops: [{ id: 'golden_ticket', chance: 1, qty: 3 }, { id: 'mana_elixir', chance: 1, qty: 6 }],
     fight: { every: 2, reach: 76, windup: 0.5 }, mech: 'marionetta',
@@ -441,8 +463,10 @@ export const MOBS = {
     speed: 0, w: 26, h: 26, art: 'gearmole', drops: [],
     fight: { every: 999, reach: 0, windup: 0.5 },
   }),
+  // (Health sized from a live run, 2026-11-19: 90k took a level-27 group about 94 s through all three
+  // games; 115k is a fight of about two minutes, the Carnival's last.)
   gearheart: mob({
-    id: 'gearheart', name: 'Queen Gearheart, the Grand Automaton', level: 30, hp: 90000, atk: 190, def: 44, acc: 88, eva: 5, exp: 36000, gold: [570, 830],
+    id: 'gearheart', name: 'Queen Gearheart, the Grand Automaton', level: 30, hp: 115000, atk: 190, def: 44, acc: 88, eva: 5, exp: 36000, gold: [570, 830],
     speed: 28, w: 70, h: 120, art: 'gearheart', boss: true,
     drops: [{ id: 'golden_ticket', chance: 1, qty: 5 }],
     fight: { every: 2, reach: 82, windup: 0.55 }, mech: 'gearheart',
@@ -480,29 +504,39 @@ export const MOBS = {
     speed: 48, w: 32, h: 30, art: 'geminighosts', drops: [{ id: 'astral_shard', chance: 0.06 }, { id: 'mana_elixir', chance: 0.3 }, { gear: 'earring', chance: 0.01 }],
     fight: { every: 1.7, reach: 40, windup: 0.35 },
   }),
+  // (Folio, the Twins and Astraea fight a fixed FFXIV-style rotation now, world/observatory.js:
+  // their health raised on 2026-11-18 so a group sees every phase's whole rotation: a live run with
+  // a level 34 group took Folio down in 35 s, the Twins in 30 s and Astraea's last two phases in
+  // 12 s each, without a cast; now about 1.5 to 2 minutes of fighting each.)
   folio: mob({
-    id: 'folio', name: 'Folio, the Archivist', level: 32, hp: 78000, atk: 200, def: 46, acc: 98, eva: 6, exp: 30000, gold: [490, 700],
+    id: 'folio', name: 'Folio, the Archivist', level: 32, hp: 350000, atk: 200, def: 46, acc: 98, eva: 6, exp: 30000, gold: [490, 700],
     speed: 32, w: 70, h: 96, art: 'folio', boss: true,
     drops: [{ id: 'astral_shard', chance: 1, qty: 3 }, { id: 'white_potion', chance: 1, qty: 14 }],
     fight: { every: 2, reach: 70, windup: 0.5 }, mech: 'folio',
   }),
   eclipsesol: mob({
-    id: 'eclipsesol', name: 'Sol, the Eclipse Twin', level: 33, hp: 48000, atk: 196, def: 44, acc: 98, eva: 6, exp: 18000, gold: [360, 520],
+    id: 'eclipsesol', name: 'Sol, the Eclipse Twin', level: 33, hp: 210000, atk: 196, def: 44, acc: 98, eva: 6, exp: 18000, gold: [360, 520],
     speed: 36, w: 60, h: 90, art: 'eclipsesol', boss: true,
     drops: [{ id: 'astral_shard', chance: 1, qty: 2 }, { id: 'elixir', chance: 1, qty: 2 }],
     fight: { every: 1.9, reach: 62, windup: 0.5 }, mech: 'eclipse',
   }),
   eclipseluna: mob({
-    id: 'eclipseluna', name: 'Luna, the Eclipse Twin', level: 33, hp: 48000, atk: 196, def: 44, acc: 98, eva: 6, exp: 18000, gold: [360, 520],
+    id: 'eclipseluna', name: 'Luna, the Eclipse Twin', level: 33, hp: 210000, atk: 196, def: 44, acc: 98, eva: 6, exp: 18000, gold: [360, 520],
     speed: 36, w: 60, h: 90, art: 'eclipseluna', boss: true,
     drops: [{ id: 'astral_shard', chance: 1, qty: 2 }, { id: 'mana_elixir', chance: 1, qty: 6 }],
     fight: { every: 1.9, reach: 62, windup: 0.5 }, mech: 'eclipse',
   }),
   astraea: mob({
-    id: 'astraea', name: 'Astraea, the Star Keeper', level: 35, hp: 130000, atk: 214, def: 50, acc: 104, eva: 6, exp: 52000, gold: [720, 1000],
-    speed: 30, w: 80, h: 104, art: 'astraea', boss: true,
+    id: 'astraea', name: 'Astraea, the Star Keeper', level: 35, hp: 680000, atk: 214, def: 50, acc: 104, eva: 6, exp: 52000, gold: [720, 1000],
+    speed: 30, w: 80, h: 130, art: 'astraea', boss: true,
     drops: [{ id: 'astral_shard', chance: 1, qty: 5 }],
     fight: { every: 2, reach: 84, windup: 0.55 }, mech: 'astraea',
+  }),
+  // A star in Astraea's constellations: strike them in order (world/observatory.js).
+  starpoint: mob({
+    id: 'starpoint', name: 'Wandering Star', level: 34, hp: 900, atk: 1, def: 0, acc: 60, eva: 0, exp: 0, gold: [0, 0],
+    speed: 0, w: 22, h: 22, art: 'starpoint', fly: true, drops: [],
+    fight: { every: 999, reach: 0, windup: 0.5 },
   }),
 
 
@@ -537,20 +571,22 @@ export const MOBS = {
     speed: 60, w: 24, h: 34, art: 'jellyninja', drops: [{ id: 'sugar_gem', chance: 0.08 }, { id: 'white_potion', chance: 0.3 }],
     fight: { every: 2, reach: 30, windup: 0.4, range: 150 },
   }),
+  // (The Candy Volcano's bosses: health raised on 2026-11-19 so a group fights each for about a
+  // minute and a half (a live run at level 37 took Toffee down in 25 s, her moves barely seen).)
   toffee: mob({
-    id: 'toffee', name: 'Toffee, the Caramel Smith', level: 37, hp: 110000, atk: 236, def: 56, acc: 120, eva: 6, exp: 42000, gold: [620, 870],
+    id: 'toffee', name: 'Toffee, the Caramel Smith', level: 37, hp: 380000, atk: 236, def: 56, acc: 120, eva: 6, exp: 42000, gold: [620, 870],
     speed: 30, w: 70, h: 100, art: 'toffee', boss: true,
     drops: [{ id: 'sugar_gem', chance: 1, qty: 3 }, { id: 'white_potion', chance: 1, qty: 16 }],
     fight: { every: 2.1, reach: 72, windup: 0.6 }, mech: 'toffee',
   }),
   gretel: mob({
-    id: 'gretel', name: 'Gretel, the Gingerbread Knight', level: 38, hp: 120000, atk: 240, def: 60, acc: 122, eva: 6, exp: 46000, gold: [650, 920],
+    id: 'gretel', name: 'Gretel, the Gingerbread Knight', level: 38, hp: 340000, atk: 240, def: 60, acc: 122, eva: 6, exp: 46000, gold: [650, 920],
     speed: 40, w: 64, h: 100, art: 'gretel', boss: true,
     drops: [{ id: 'sugar_gem', chance: 1, qty: 3 }, { id: 'mana_elixir', chance: 1, qty: 8 }],
     fight: { every: 1.9, reach: 80, windup: 0.5 }, mech: 'gretel',
   }),
   bonbon: mob({
-    id: 'bonbon', name: 'Queen Bonbon', level: 40, hp: 180000, atk: 252, def: 62, acc: 126, eva: 6, exp: 72000, gold: [870, 1200],
+    id: 'bonbon', name: 'Queen Bonbon', level: 40, hp: 400000, atk: 252, def: 62, acc: 126, eva: 6, exp: 72000, gold: [870, 1200],
     speed: 26, w: 80, h: 100, art: 'bonbon', boss: true,
     drops: [{ id: 'sugar_gem', chance: 1, qty: 5 }],
     fight: { every: 2, reach: 86, windup: 0.55 }, mech: 'bonbon',
@@ -586,20 +622,26 @@ export const MOBS = {
     speed: 40, w: 26, h: 34, art: 'prompter', drops: [{ id: 'script_page', chance: 0.45 }, { id: 'mana_elixir', chance: 0.2 }, { gear: 'earring', chance: 0.01 }],
     fight: { every: 2.2, reach: 30, windup: 0.5, range: 170 },
   }),
+  // (Health sized from a live run, 2026-11-19: a level-43 group does about 6.5k a second to her,
+  // her harder Comedy and softer Tragedy evened out; 600k is a fight of about a minute and a half.)
   persona: mob({
-    id: 'persona', name: 'Persona, the Two-Faced Muse', level: 42, hp: 160000, atk: 262, def: 62, acc: 132, eva: 8, exp: 62000, gold: [740, 1000],
+    id: 'persona', name: 'Persona, the Two-Faced Muse', level: 42, hp: 600000, atk: 262, def: 62, acc: 132, eva: 8, exp: 62000, gold: [740, 1000],
     speed: 34, w: 60, h: 100, art: 'persona', boss: true,
     drops: [{ id: 'encore_rose', chance: 1, qty: 3 }, { id: 'white_potion', chance: 1, qty: 18 }],
     fight: { every: 1.9, reach: 74, windup: 0.5 }, mech: 'persona',
   }),
+  // (Health sized from a live run, 2026-11-19: about 6.2k a second from a level-43 group; 650k is
+  // a fight of about a minute and three quarters.)
   directrice: mob({
-    id: 'directrice', name: 'Madame Directrice', level: 43, hp: 170000, atk: 268, def: 64, acc: 134, eva: 6, exp: 66000, gold: [770, 1100],
+    id: 'directrice', name: 'Madame Directrice', level: 43, hp: 650000, atk: 268, def: 64, acc: 134, eva: 6, exp: 66000, gold: [770, 1100],
     speed: 32, w: 64, h: 100, art: 'directrice', boss: true,
     drops: [{ id: 'encore_rose', chance: 1, qty: 3 }, { id: 'mana_elixir', chance: 1, qty: 9 }],
     fight: { every: 2, reach: 76, windup: 0.55 }, mech: 'directrice',
   }),
+  // (Health sized from a live run, 2026-11-19: about 4k a second from the group against his
+  // tougher hide; 480k is a final act of about two minutes.)
   playwright: mob({
-    id: 'playwright', name: 'The Phantom Playwright', level: 45, hp: 240000, atk: 280, def: 68, acc: 138, eva: 8, exp: 96000, gold: [1000, 1400],
+    id: 'playwright', name: 'The Phantom Playwright', level: 45, hp: 480000, atk: 280, def: 68, acc: 138, eva: 8, exp: 96000, gold: [1000, 1400],
     speed: 28, w: 70, h: 120, art: 'playwright', boss: true,
     drops: [{ id: 'encore_rose', chance: 1, qty: 5 }],
     fight: { every: 2, reach: 88, windup: 0.55 }, mech: 'playwright',
@@ -635,20 +677,26 @@ export const MOBS = {
     speed: 52, w: 26, h: 34, art: 'monk', drops: [{ id: 'sky_silk', chance: 0.4 }, { id: 'sky_scale', chance: 0.1 }],
     fight: { every: 1.7, reach: 46, windup: 0.35 },
   }),
+  // (Health sized from a live run, 2026-11-19: a level-47 group does about 5.4k a second to her;
+  // 560k is a fight of about a minute and three quarters.)
   gale: mob({
-    id: 'gale', name: 'Captain Gale', level: 46, hp: 200000, atk: 290, def: 70, acc: 150, eva: 10, exp: 84000, gold: [1100, 1400],
+    id: 'gale', name: 'Captain Gale', level: 46, hp: 560000, atk: 290, def: 70, acc: 150, eva: 10, exp: 84000, gold: [1100, 1400],
     speed: 38, w: 64, h: 100, art: 'gale', boss: true,
     drops: [{ id: 'sky_scale', chance: 1, qty: 3 }, { id: 'white_potion', chance: 1, qty: 20 }],
     fight: { every: 1.8, reach: 80, windup: 0.5 }, mech: 'gale',
   }),
+  // (Health sized from a live run, 2026-11-19: a level-48 group took 220k off her in 49 s, both her
+  // shells timing out into Tide Crashes; 440k is a fight of about a minute and a half.)
   matriarch: mob({
-    id: 'matriarch', name: 'The Barnacle Matriarch', level: 47, hp: 220000, atk: 296, def: 74, acc: 152, eva: 6, exp: 90000, gold: [1100, 1500],
+    id: 'matriarch', name: 'The Barnacle Matriarch', level: 47, hp: 440000, atk: 296, def: 74, acc: 152, eva: 6, exp: 90000, gold: [1100, 1500],
     speed: 26, w: 80, h: 96, art: 'matriarch', boss: true,
     drops: [{ id: 'sky_scale', chance: 1, qty: 3 }, { id: 'mana_elixir', chance: 1, qty: 10 }],
     fight: { every: 2.1, reach: 84, windup: 0.6 }, mech: 'matriarch',
   }),
+  // (Health sized from a live run, 2026-11-19: a level-50 group does about 4k a second to her;
+  // 440k is a fight of about a minute and three quarters, the dungeon's last.)
   whaledream: mob({
-    id: 'whaledream', name: "The Whale's Dream", level: 50, hp: 320000, atk: 310, def: 76, acc: 156, eva: 8, exp: 130000, gold: [1300, 1700],
+    id: 'whaledream', name: "The Whale's Dream", level: 50, hp: 440000, atk: 310, def: 76, acc: 156, eva: 8, exp: 130000, gold: [1300, 1700],
     speed: 24, w: 90, h: 90, art: 'whaledream', boss: true,
     drops: [{ id: 'sky_scale', chance: 1, qty: 6 }],
     fight: { every: 2.1, reach: 92, windup: 0.6 }, mech: 'whaledream',

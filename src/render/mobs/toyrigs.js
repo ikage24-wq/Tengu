@@ -802,15 +802,3 @@ export function teddyStill(pose, f, mood) {
     ], 23, 55),
   };
 }
-
-// A little marionette dancer, whole, for Madame Marionette's strings (render/mobs/carnivalbossrigs.js):
-// her in one piece, arms and legs a little out. Box 28 x 34; the string to her head at (14, 2).
-export function puppetShapes(mood = 'happy') {
-  const by = 20;
-  const ny = by - 6.6;
-  return shift([
-    ...put(mnTail(true)(), [1.4, 1], -5, ny - 7, 24), ...put(mnArm(true)(), [1, 1.6], -1, by - 6, 120), ...put(mnLeg(true)(), [3, 0.6], -1.4, by + 4, 16), ...put(mnLeg(false)(), [3, 0.6], 1.4, by + 4, -14),
-    ...put(mnDress(), [7, 1], 0, by - 0.6), ...put(mnBodice(), [5, 7], 0, by), ...put(mnHead(), [7, 12.6], 0.4, ny), ...put(faceShapes(mood, MN_FACE), [7, 12.6], 0.4, ny),
-    ...put(mnTail(false)(), [1.4, 1], 5, ny - 7.6, -14), ...put(mnArm(false)(), [1, 1.6], 1.6, by - 6, -120),
-  ], 14, 0);
-}

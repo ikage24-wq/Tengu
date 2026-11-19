@@ -63,5 +63,46 @@ export const ARTS = { ...MEADOW, ...WILDS, ...RUINS, ...SKY, ...HOLLOW, ...BOSSE
 
 export const mobBuild = (art, pose, frame, mood) => {
   const a = ARTS[art];
-  return { res: 2, soft: 'cel', crisp: true, selout: true, pad: a.pad ?? 4, ...a.draw(pose, frame, mood) };
+  return roomFor({ res: 2, soft: 'cel', crisp: true, selout: true, pad: a.pad ?? 4, ...a.draw(pose, frame, mood) }, mood === 'dead');
 };
+
+// Room for everything a frame draws (2026-11-18, the crop sweep): a pose that reaches past its box
+// (a swing, a thrown seed, a body tumbling over in its fall) was cut off at the sprite's edge. The
+// margin round the box grows to hold it, and the sprite is placed as before. Below the box is the
+// floor: a foot pressed a pixel or two into it stays trimmed flat, as it stands; anything deeper
+// (and the whole fallen body, which is knocked up and tumbles) gets room too.
+const SEE_THROUGH = /^#[0-9a-f]{6}00$|^#[0-9a-f]{3}0$|,\s*0\)$/i;
+function roomFor(spec, fallen) {
+  const { w, h, shapes, pad = 1 } = spec;
+  let x0 = Infinity;
+  let y0 = Infinity;
+  let x1 = -Infinity;
+  let y1 = -Infinity;
+  for (const s of shapes) {
+    if (!s || s.c === 'none' || SEE_THROUGH.test(s.c)) continue;
+    if (s.t === 'r') {
+      if (s.w <= 0 || s.h <= 0) continue;
+      x0 = Math.min(x0, s.x);
+      y0 = Math.min(y0, s.y);
+      x1 = Math.max(x1, s.x + s.w);
+      y1 = Math.max(y1, s.y + s.h);
+    } else if (s.t === 'e') {
+      x0 = Math.min(x0, s.x - s.rx);
+      y0 = Math.min(y0, s.y - s.ry);
+      x1 = Math.max(x1, s.x + s.rx);
+      y1 = Math.max(y1, s.y + s.ry);
+    } else if (s.t === 'p') {
+      for (const [px, py] of s.pts) {
+        x0 = Math.min(x0, s.x + px);
+        y0 = Math.min(y0, s.y + py);
+        x1 = Math.max(x1, s.x + px);
+        y1 = Math.max(y1, s.y + py);
+      }
+    }
+  }
+  if (x0 === Infinity) return spec;
+  const side = Math.max(-pad - x0, x1 - (w + pad), -pad - y0);
+  const below = y1 - (h + 1);
+  const out = side > 0.5 ? { ...spec, pad: pad + Math.ceil(side) + 1 } : spec;
+  return below > (fallen ? 0.5 : 2.5) ? { ...out, padB: Math.ceil(below) + 2 } : out;
+}

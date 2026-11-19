@@ -177,6 +177,8 @@ export function capperPhases(world, m, dt) {
     if (s.tide <= 0 && !world.dungeon.zones.some((z) => !z.hit && z.kind === 'floor')) {
       s.tide = 13;
       addZone(world, { kind: 'floor', x: 0, w: world.map.width, warn: 2.4, damage: 170, from: m });
+      // (Her rig, render/mobs/myconidrig.js: a deep breath, then a great puff of spores.)
+      m.tideAt = world.now;
     }
   }
 }

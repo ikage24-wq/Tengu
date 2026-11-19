@@ -40,7 +40,7 @@ import { cornice, wainscot, skirting, floorShade, contact, frame, plant, shelf, 
 import { drawHayate } from './hayate.js';
 import { drawMochiAnim } from './mochi-anim.js';
 import { rollMochi } from '../data/mochi-genes.js';
-import { SAKURA, WARABI, KURI } from '../data/scenes.js';
+import { SAKURA, WARABI, KURI, GOMA } from '../data/scenes.js';
 
 const TAU = Math.PI * 2;
 const WHITE = '#ffffff';
@@ -767,6 +767,11 @@ export function drawProloguePiece(ctx, map, kind, wx, extra, cam, width, time) {
         KURI_HOME.genes ??= Object.assign(rollMochi(KURI.seed, KURI.genes), { wear: { ...KURI.wear } });
         drawMochiAnim(ctx, KURI_HOME, ox + 252, oy + 302, time + 4.2);
       }
+      // ...and Elder Goma, home from counting the stars with Astraea (Chapter 7), by the window.
+      if (map.elders?.goma) {
+        GOMA_HOME.genes ??= Object.assign(rollMochi(GOMA.seed, GOMA.genes), { wear: { ...GOMA.wear } });
+        drawMochiAnim(ctx, GOMA_HOME, ox + 112, oy + 302, time + 5.1);
+      }
     }
   }
   return true;
@@ -775,4 +780,5 @@ const TRANSLATOR = { genes: null, dir: -1, speed: 0, dist: 0, size: 'grown', run
 const YOMOGI = { genes: null, dir: -1, speed: 0, dist: 0, size: 'grown', runPoints: 300, easy: true, idleBits: ['lookaround'] };
 const SAKURA_HOME = { genes: null, dir: -1, speed: 0, dist: 0, size: 'grown', runPoints: 300, easy: true, idleBits: ['lookaround'] };
 const KURI_HOME = { genes: null, dir: 1, speed: 0, dist: 0, size: 'grown', runPoints: 300, easy: true, idleBits: ['lookaround'] };
+const GOMA_HOME = { genes: null, dir: -1, speed: 0, dist: 0, size: 'grown', runPoints: 300, easy: true, idleBits: ['lookaround'] };
 const WARABI_HOME = { genes: null, dir: 1, speed: 0, dist: 0, size: 'grown', runPoints: 300, easy: true, idleBits: ['lookaround'] };

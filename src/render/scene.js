@@ -55,6 +55,7 @@ import { drawManorBack, drawManorFront, drawManorObject, MANOR_HINT } from './ma
 import { drawAquaBack, drawAquaFront, drawAquaObject, AQUA_HINT } from './aquarium.js';
 import { drawCarnivalBack, drawCarnivalFront, drawCarnivalObject, CARNIVAL_HINT } from './carnival.js';
 import { drawObsBack, drawObsFront, drawObsObject, OBS_HINT } from './observatory.js';
+import { castWarn, castHit, OWN_WARN } from './bossfx.js';
 import { drawVolcanoBack, drawVolcanoFront, drawVolcanoObject, VOLCANO_HINT } from './volcano.js';
 import { drawTheatreBack, drawTheatreFront, drawTheatreObject, THEATRE_HINT } from './theatre.js';
 import { drawWhaleBack, drawWhaleFront, drawWhaleObject, WHALE_HINT } from './skywhale.js';
@@ -421,6 +422,16 @@ function drawMobs(ctx, world, cam, time) {
     box(ctx, 170, 60, 300, 12, { fill: 'rgba(58,45,79,0.6)', edge: '#ffffff', r: 6 });
     box(ctx, 171, 61, Math.max(4, (298 * boss.hp) / boss.def.hp), 10, { fill: '#c9a6ff', edge: null, r: 5 });
     text(ctx, `${boss.def.elite ? '★ ' : ''}${boss.def.name}  Lv ${boss.def.level}`, 320, 69, { size: 8, bold: true, align: 'center', color: '#ffffff', outline: boss.def.elite ? (boss.enraged ? '#c83a4a' : '#a8702a') : '#5a3f7a' });
+    // Its cast bar (world/bossfight.js): what it's casting, filling as the cast goes (a twin's cast
+    // shows here too, with her name).
+    const caster = boss.cast ? boss : world.mobs.find((o) => o.cast && o.hp > 0 && o.def.boss);
+    if (caster?.cast) {
+      const c = caster.cast;
+      const u = Math.max(0, Math.min(1, (world.now - c.t0) / c.dur));
+      box(ctx, 220, 76, 200, 8, { fill: 'rgba(58,45,79,0.7)', edge: '#ffe7a0', r: 4 });
+      box(ctx, 221, 77, Math.max(3, 198 * u), 6, { fill: '#ffd36b', edge: null, r: 3 });
+      text(ctx, caster === boss ? c.name : `${caster.def.name.split(',')[0]}: ${c.name}`, 320, 93, { size: 8, bold: true, align: 'center', color: '#fff3c4', outline: '#5a3f7a' });
+    }
   }
 }
 
@@ -1035,7 +1046,8 @@ function drawDungeonBack(ctx, world, cam, time) {
     const p = Math.min(1, z.t / z.warn);
     // Lanes run from the boss toward the wall it's charging at.
     if (z.kind === 'lane' && z.dir < 0) drawZone(ctx, 'lane', z.x + z.w - cam.x, z.y - cam.y, -z.w, p, time);
-    else drawZone(ctx, z.kind, (z.kind === 'circle' ? z.x : z.x) - cam.x, z.y - cam.y, z.w, p, time);
+    else if (!(z.look && OWN_WARN.has(z.look))) drawZone(ctx, z.kind, (z.kind === 'circle' ? z.x : z.x) - cam.x, z.y - cam.y, z.w, p, time, z);
+    if (z.look) castWarn(ctx, z, z.x - cam.x, z.y - cam.y, p, time);
   }
 }
 
@@ -1045,6 +1057,7 @@ function drawDungeonFront(ctx, world, cam, time) {
   const run = world.dungeon;
   for (const z of run.zones) {
     if (!z.hit || z.kind === 'lane') continue;
+    if (z.look && castHit(ctx, z, z.x - cam.x, z.y - cam.y, z.after / (z.hold ?? 0.6), time)) continue;
     drawZoneHit(ctx, z.kind, z.x - cam.x, z.y - cam.y, z.w, Math.min(1, z.after / 0.5), time);
   }
   for (const v of run.vfx) {

@@ -465,7 +465,7 @@ function stitched(ctx, path, s, time) {
 // 'lane' (a charge path from x to x + w; a negative w charges left), 'floor' (the floor from x to
 // x + w is about to be slammed), or 'thorns' (spikes will erupt from x to x + w). `progress` 0..1
 // fills it in as the attack winds up.
-export function drawZone(ctx, kind, x, y, w, progress, time) {
+export function drawZone(ctx, kind, x, y, w, progress, time, z = null) {
   const p = Math.max(0, Math.min(1, progress));
   const s = warnStyle(p, time);
   ctx.save();
@@ -593,6 +593,145 @@ export function drawZone(ctx, kind, x, y, w, progress, time) {
       ctx.ellipse(tx, y + 1.4, 3.4, 1.2, 0, 0, TAU);
       ctx.fill();
     }
+  } else if (kind === 'band') {
+    // (world/bossfight.js) A cleave or a line: a band of floor, filling from the boss's end.
+    const h = 14;
+    const shape = () => {
+      ctx.beginPath();
+      ctx.roundRect(x, y - h / 2, w, h, 6);
+    };
+    ctx.globalAlpha = s.fillA;
+    ctx.fillStyle = s.fill;
+    shape();
+    ctx.fill();
+    ctx.globalAlpha = 0.2 + p * 0.3;
+    ctx.fillStyle = WARN;
+    ctx.beginPath();
+    ctx.roundRect(x, y - h / 2, w * p, h, 6);
+    ctx.fill();
+    stitched(ctx, shape, s, time);
+    ctx.globalAlpha = 0.4 + p * 0.5;
+    ctx.fillStyle = '#ffffff';
+    const o = (time * 30) % 34;
+    for (let mx = x + 18; mx < x + w - 10; mx += 34) {
+      ctx.beginPath();
+      ctx.moveTo(mx + o - 4, y - 3);
+      ctx.lineTo(mx + o, y);
+      ctx.lineTo(mx + o - 4, y + 3);
+      ctx.lineTo(mx + o - 2.6, y);
+      ctx.closePath();
+      ctx.fill();
+    }
+  } else if (kind === 'donut') {
+    // A ring round the boss with a safe middle: the ring fills in, the middle stays clear.
+    const rx = w / 2;
+    const ri = z?.inner ?? rx * 0.35;
+    const ry = 9;
+    const iry = ry * (ri / rx);
+    ctx.globalAlpha = s.fillA;
+    ctx.fillStyle = s.fill;
+    ctx.beginPath();
+    ctx.ellipse(x, y, rx, ry, 0, 0, TAU);
+    ctx.ellipse(x, y, ri, iry, 0, 0, TAU, true);
+    ctx.fill('evenodd');
+    const fr = ri + (rx - ri) * (1 - p);
+    ctx.globalAlpha = 0.22 + p * 0.3;
+    ctx.fillStyle = WARN;
+    ctx.beginPath();
+    ctx.ellipse(x, y, rx, ry, 0, 0, TAU);
+    ctx.ellipse(x, y, fr, (ry * fr) / rx, 0, 0, TAU, true);
+    ctx.fill('evenodd');
+    stitched(ctx, () => { ctx.beginPath(); ctx.ellipse(x, y, rx, ry, 0, 0, TAU); }, s, time);
+    // The safe middle, outlined in calm white.
+    ctx.globalAlpha = 0.7;
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 1.2;
+    ctx.setLineDash([3, 3]);
+    ctx.beginPath();
+    ctx.ellipse(x, y, ri, iry, 0, 0, TAU);
+    ctx.stroke();
+    ctx.setLineDash([]);
+  } else if (kind === 'raid') {
+    // A hit on everyone: rings sweeping out from the boss right across the room.
+    for (let k = 0; k < 3; k++) {
+      const u = (time * 0.9 + k / 3) % 1;
+      ctx.globalAlpha = (1 - u) * (0.25 + p * 0.45);
+      ctx.strokeStyle = s.flash ? '#ff5f80' : '#ffb3c6';
+      ctx.lineWidth = 2 + p * 2;
+      ctx.beginPath();
+      ctx.ellipse(x, y - 10, 30 + u * 420, 8 + u * 40, 0, 0, TAU);
+      ctx.stroke();
+    }
+  } else if (kind === 'buster' || kind === 'stack' || kind === 'spread') {
+    // A marker on a member: a ring round them and an icon over their head. Red with arrows coming
+    // down for a tankbuster, gold with arrows pointing in for a stack, violet with arrows pointing
+    // out for a spread.
+    const col = kind === 'buster' ? '#ff5a6e' : kind === 'stack' ? '#ffd36b' : '#c99aff';
+    const rx = w / 2;
+    const ry = 7;
+    ctx.globalAlpha = 0.18 + p * 0.22;
+    ctx.fillStyle = col;
+    ctx.beginPath();
+    ctx.ellipse(x, y, rx, ry, 0, 0, TAU);
+    ctx.fill();
+    ctx.globalAlpha = 0.6 + p * 0.4;
+    ctx.strokeStyle = col;
+    ctx.lineWidth = 1.6 + p;
+    ctx.beginPath();
+    ctx.ellipse(x, y, rx, ry, 0, 0, TAU);
+    ctx.stroke();
+    const d = kind === 'spread' ? 1 : -1;
+    for (let k = 0; k < 4; k++) {
+      const a = (k / 4) * TAU + time * 0.6 * d;
+      const ax = x + Math.cos(a) * rx;
+      const ay = y + Math.sin(a) * ry;
+      ctx.fillStyle = col;
+      ctx.beginPath();
+      ctx.moveTo(ax + Math.cos(a) * 5 * d, ay + Math.sin(a) * 2 * d);
+      ctx.lineTo(ax - Math.sin(a) * 3, ay + Math.cos(a) * 1.2);
+      ctx.lineTo(ax + Math.sin(a) * 3, ay - Math.cos(a) * 1.2);
+      ctx.closePath();
+      ctx.fill();
+    }
+    // The icon over their head.
+    const iy = y - 54 + Math.sin(time * 5) * 1.5;
+    ctx.globalAlpha = 0.85 + p * 0.15;
+    ctx.fillStyle = '#2e2050';
+    ctx.beginPath();
+    ctx.arc(x, iy, 8, 0, TAU);
+    ctx.fill();
+    ctx.strokeStyle = col;
+    ctx.lineWidth = 1.6;
+    ctx.stroke();
+    ctx.fillStyle = col;
+    if (kind === 'buster') {
+      for (let k = 0; k < 3; k++) {
+        const yy = iy - 4 + k * 3.2;
+        ctx.beginPath();
+        ctx.moveTo(x - 4, yy);
+        ctx.lineTo(x, yy + 2.6);
+        ctx.lineTo(x + 4, yy);
+        ctx.lineTo(x + 4, yy + 1.2);
+        ctx.lineTo(x, yy + 3.8);
+        ctx.lineTo(x - 4, yy + 1.2);
+        ctx.closePath();
+        ctx.fill();
+      }
+    } else {
+      for (let k = 0; k < 4; k++) {
+        const a = (k / 4) * TAU + Math.PI / 4;
+        const dd = kind === 'stack' ? 2 : 5.4;
+        const tip = kind === 'stack' ? -1 : 1;
+        const bx = x + Math.cos(a) * dd;
+        const by = iy + Math.sin(a) * dd;
+        ctx.beginPath();
+        ctx.moveTo(bx + Math.cos(a) * 3 * tip, by + Math.sin(a) * 3 * tip);
+        ctx.lineTo(bx - Math.sin(a) * 2, by + Math.cos(a) * 2);
+        ctx.lineTo(bx + Math.sin(a) * 2, by - Math.cos(a) * 2);
+        ctx.closePath();
+        ctx.fill();
+      }
+    }
   }
   ctx.restore();
 }
@@ -601,6 +740,20 @@ export function drawZone(ctx, kind, x, y, w, progress, time) {
 export function drawZoneHit(ctx, kind, x, y, w, t, time) {
   const u = Math.max(0, Math.min(1, t));
   ctx.save();
+  // (world/bossfight.js's patterns: a flash and a shock ring where each one lands.)
+  if (kind === 'raid' || kind === 'buster' || kind === 'stack' || kind === 'spread' || kind === 'donut' || kind === 'band') {
+    const e = easeOut(u);
+    const col = kind === 'buster' ? '#ff9aa8' : kind === 'stack' ? '#ffe7a0' : kind === 'spread' ? '#e2c8ff' : '#ffd0dc';
+    const cx = kind === 'band' ? x + w / 2 : x;
+    const r = kind === 'raid' ? 360 : w / 2;
+    if (u < 0.25) starFlash(ctx, cx, y - 8, 12 + u * 50, 8, 0.25, col, '#ffffff');
+    for (let k = 0; k < 2; k++) {
+      const v = Math.max(0, e - k * 0.2);
+      shock(ctx, cx, y, r * v, 5 + v * 5, (1 - u) * (5 - k * 2), k ? col : '#ffffff');
+    }
+    ctx.restore();
+    return;
+  }
   if (kind === 'circle') {
     // A burst of pink-violet spore puffs billowing out and up.
     const rx = w / 2;

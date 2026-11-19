@@ -105,7 +105,7 @@ export function tickVolcano(world, dt, group, up) {
   room.pools = room.pools.filter((p) => world.now < p.until);
   // The forge's bellows: everyone pushed back from the smith while they blow.
   const w = room.bellows;
-  if (w && world.now < w.until) for (const g of up) if (!g.body.rope) g.body.x = Math.max(24, Math.min(map.width - 24, g.body.x + Math.sign(g.body.x - w.x || 1) * 130 * dt));
+  if (w && world.now < w.until && world.now >= (w.from ?? 0)) for (const g of up) if (!g.body.rope) g.body.x = Math.max(24, Math.min(map.width - 24, g.body.x + Math.sign(g.body.x - w.x || 1) * 130 * dt));
 }
 
 // ---------- The bosses ----------
@@ -140,6 +140,9 @@ function toffee(world, m, up, dt) {
       addZone(world, { kind: 'floor', x: 0, w: world.map.width, warn: 2, damage: 230, from: m, quake: true });
       callout(world, 'Hammer Quake!', 'The whole floor shakes: jump!');
       m.slamming = world.now + 2;
+      // (A cast bar for it, and her quake pose: render/mobs/toffeerig.js.)
+      m.cast = { name: 'Hammer Quake', t0: world.now, dur: 2 };
+      m.castPose = 'quake';
     }
   }
   if (s.sparks <= 0 && up.length) {
@@ -150,14 +153,30 @@ function toffee(world, m, up, dt) {
       room.pools.push({ x: g.body.x, y, w: 60, until: world.now + 1.5 + 9 });
     }
     callout(world, 'Sparks!', 'Hot caramel splashes down, and stays hot: move off it');
+    // (She flicks it up off her hammer: render/mobs/toffeerig.js.)
+    m.sparkAt = world.now + 0.5;
   }
   if (!s.bellows && frac <= 0.5) {
     s.bellows = true;
-    room.bellows = { x: m.x, until: world.now + 3 };
+    // (A huge breath first, then she blows: render/mobs/toffeerig.js.)
+    room.bellows = { x: m.x, from: world.now + 0.9, until: world.now + 3.9 };
+    m.blowAt = world.now + 0.9;
     callout(world, 'The bellows!', 'A blast of hot air throws everyone back');
     radio(world, 'bellows');
   }
-  return m.slamming > world.now;
+  // The quake's wind-up and blow (for the rig's pose), landing as the floor does.
+  const left = (m.slamming ?? 0) - world.now;
+  if (m.cast && m.castPose === 'quake') {
+    const total = Math.max(0.2, m.def.fight?.windup ?? 0.5);
+    m.windup = left > 0 && left < total ? left : 0;
+    if (left <= 0) {
+      m.cast = null;
+      m.castPose = null;
+      m.windup = 0;
+      m.attackAt = world.now;
+    }
+  }
+  return left > 0;
 }
 
 // A charge down the wall (after a lane telegraph): whoever it passes through is knocked away.
@@ -210,6 +229,8 @@ function gretel(world, m, up, dt) {
     s.rain = 10;
     for (const g of up) addZone(world, { kind: 'circle', x: g.body.x, y: floorY(world, g.body), w: 58, warn: 1.5, damage: 170, from: m, frost: true });
     callout(world, 'Frosting Rain!', 'Step off the pink marks');
+    // (She raises her lance to the sky, then sweeps it down: render/mobs/gretelrig.js.)
+    m.rainAt = world.now + 0.7;
   }
   return false;
 }
@@ -223,6 +244,8 @@ function bonbon(world, m, up, dt) {
     s.phase = 2;
     room.flood = { t: 2, state: 'calm', since: 0 };
     callout(world, 'The caramel rises!', 'Up on the rock-candy islands when it bubbles!');
+    // (She flings up her arms to summon it: render/mobs/bonbonrig.js.)
+    m.floodAt = world.now + 0.8;
     radio(world, 'caramel');
   }
   if (s.phase === 2 && frac <= 0.33) {
@@ -236,6 +259,8 @@ function bonbon(world, m, up, dt) {
     const spots = up.map((g) => g.body).concat([{ x: m.x + (Math.random() - 0.5) * 600, y: world.map.groundY }]);
     for (const b of spots) addZone(world, { kind: 'circle', x: b.x, y: b.y === world.map.groundY ? b.y : floorY(world, b), w: 64, warn: 1.5, damage: 180, from: m, bomb: true });
     callout(world, 'Sugar bombs!', 'Step off the marks');
+    // (A scoop of frosting off the floor, flung high: render/mobs/bonbonrig.js.)
+    m.bombAt = world.now + 0.6;
   }
   if (s.phase === 3) {
     s.erupt -= dt;
@@ -245,10 +270,26 @@ function bonbon(world, m, up, dt) {
         s.erupt = 13;
         addZone(world, { kind: 'floor', x: 0, w: world.map.width, warn: 2, damage: 260, from: m, erupt: true });
         m.slamming = world.now + 2;
+        // (A cast bar, a crouch, a leap, and she lands with it: render/mobs/bonbonrig.js.)
+        callout(world, 'Eruption!', 'The whole crater flares: jump!');
+        m.cast = { name: 'Eruption', t0: world.now, dur: 2 };
+        m.castPose = 'erupt';
       }
     }
   }
-  return m.slamming > world.now;
+  // The Eruption's wind-up and blow (for the rig's pose), landing as the floor does.
+  const left = (m.slamming ?? 0) - world.now;
+  if (m.cast && m.castPose === 'erupt') {
+    const total = Math.max(0.2, m.def.fight?.windup ?? 0.5);
+    m.windup = left > 0 && left < total ? left : 0;
+    if (left <= 0) {
+      m.cast = null;
+      m.castPose = null;
+      m.windup = 0;
+      m.attackAt = world.now;
+    }
+  }
+  return left > 0;
 }
 
 export function volcanoKilled(world, m) {

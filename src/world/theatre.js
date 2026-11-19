@@ -129,11 +129,19 @@ export function theatreBoss(world, m, up, dt) {
   return false;
 }
 
+// (Her rig, render/mobs/personarig.js, dances each of these: m.swapAt a pirouette into the other
+// mask, m.bothAt a pirouette into both, m.confettiAt the Comedy fan flung up and bursting, and the
+// Rain of Tears' cast (m.castPose 'tears') both masks raised until m.tearsAt, when they fall.)
 function persona(world, m, up, dt) {
   const s = (m.mech ??= { mask: 'comedy', swap: 12, comedy: 4, tragedy: 6, both: false });
   const frac = m.hp / m.def.hp;
+  if (m.castPose === 'tears' && (!m.cast || world.now >= m.cast.t0 + m.cast.dur)) {
+    m.cast = null;
+    m.castPose = null;
+  }
   if (!s.both && frac <= 0.5) {
     s.both = true;
+    m.bothAt = world.now;
     callout(world, 'Both masks at once!', 'Confetti AND tears: watch everything');
     radio(world, 'both');
   }
@@ -141,12 +149,14 @@ function persona(world, m, up, dt) {
   if (s.swap <= 0) {
     s.swap = 12;
     s.mask = s.mask === 'comedy' ? 'tragedy' : 'comedy';
+    m.swapAt = world.now;
     callout(world, s.mask === 'comedy' ? 'Comedy!' : 'Tragedy!', s.mask === 'comedy' ? "She's quick and hard to hurt: dodge and wait" : "She's slow and open: hit her hard!");
   }
   if (s.mask === 'comedy' || s.both) {
     s.comedy -= dt;
     if (s.comedy <= 0 && up.length) {
       s.comedy = s.both ? 6 : 4.5;
+      m.confettiAt = world.now + 0.35;
       for (const g of [...up].sort(() => Math.random() - 0.5).slice(0, 2)) addZone(world, { kind: 'circle', x: g.body.x, y: floorY(world, g.body), w: 54, warn: 1.2, damage: 170, from: m, confetti: true });
     }
   }
@@ -156,16 +166,26 @@ function persona(world, m, up, dt) {
       s.tragedy = s.both ? 9 : 7;
       for (const g of up) addZone(world, { kind: 'circle', x: g.body.x, y: floorY(world, g.body), w: 80, warn: 2, damage: 220, from: m, tears: true });
       callout(world, 'A rain of tears!', 'Step out of the blue');
+      m.cast = { name: 'Rain of Tears', t0: world.now, dur: 2 };
+      m.castPose = 'tears';
+      m.tearsAt = world.now + 2;
     }
   }
   m.speedK = s.mask === 'comedy' ? 1.4 : 0.7;
   return false;
 }
 
+// (Her rig, render/mobs/directricerig.js, acts each: m.actionAt the megaphone to her beak and a
+// bellow, the "Cut!" cast (m.castPose 'cut') the baton raised until m.cutAt, a stamp as it lands,
+// m.takeAt arms flung wide for the Understudies.)
 function directrice(world, m, up, dt) {
   const map = world.map;
   const s = (m.mech ??= { action: 4, cut: 16, takes: [0.7, 0.4] });
   const frac = m.hp / m.def.hp;
+  if (m.castPose === 'cut' && (!m.cast || world.now >= m.cast.t0 + m.cast.dur)) {
+    m.cast = null;
+    m.castPose = null;
+  }
   s.action -= dt;
   s.cut -= dt;
   if (s.action <= 0 && up.length) {
@@ -174,6 +194,7 @@ function directrice(world, m, up, dt) {
     // The spotlight lands where they're heading, a beat ahead.
     addZone(world, { kind: 'circle', x: g.body.x + (g.body.vx ?? 0) * 0.6, y: floorY(world, g.body), w: 70, warn: 1.4, damage: 210, from: m, spotlight: true });
     callout(world, 'Action!', `The spotlight finds ${g.bot ? g.name : 'you'}!`);
+    m.actionAt = world.now + 0.35;
   }
   if (s.cut <= 0 && up.length) {
     s.cut = 18;
@@ -182,36 +203,50 @@ function directrice(world, m, up, dt) {
     world.juice.push({ type: 'shake', mag: 3, dur: 0.3 });
     addZone(world, { kind: 'circle', x: m.x, y: map.groundY, w: 150, warn: 2.2, damage: 230, from: m, cut: true });
     callout(world, 'CUT! Places, everyone!', 'Pulled back to your marks: get out of her circle!');
+    m.cast = { name: 'Cut!', t0: world.now, dur: 2.2 };
+    m.castPose = 'cut';
+    m.cutAt = world.now + 2.2;
     radio(world, 'cut');
   }
   if (s.takes.length && frac <= s.takes[0]) {
     s.takes.shift();
     adds(world, m, 'understudy', [m.x - 220, m.x + 220], null);
     callout(world, 'Take two!', 'The Understudies take the stage');
+    m.takeAt = world.now + 0.4;
   }
   return false;
 }
 
+// (His rig, render/mobs/playwrightrig.js, acts each: m.pagesAt a flourish written in the air and
+// pages flung up, the Curtain's cast (m.castPose 'curtain') arms raised until m.curtainAt and a bow
+// as it sweeps, m.twistAt the quill twirled and flung up, m.laughAt a laugh at each new act.)
 function playwright(world, m, up, dt) {
   const map = world.map;
   const s = (m.mech ??= { phase: 1, pages: 4, curtain: 4, twist: 3, side: 0 });
   const frac = m.hp / m.def.hp;
+  if (m.castPose === 'curtain' && (!m.cast || world.now >= m.cast.t0 + m.cast.dur)) {
+    m.cast = null;
+    m.castPose = null;
+  }
   const pending = world.dungeon.zones.some((z) => !z.hit && (z.kind === 'floor' || z.kind === 'thorns'));
   if (s.phase === 1 && frac <= 0.66) {
     s.phase = 2;
     callout(world, 'The curtain falls!', 'It sweeps the whole stage: jump it');
     radio(world, 'curtain');
+    m.laughAt = world.now + 0.3;
   }
   if (s.phase === 2 && frac <= 0.33) {
     s.phase = 3;
     callout(world, 'PLOT TWIST!', 'The danger swaps sides of the stage, faster and faster');
     radio(world, 'twist');
+    m.laughAt = world.now + 0.3;
   }
   s.pages -= dt;
   if (s.pages <= 0 && up.length) {
     s.pages = s.phase === 3 ? 9 : 7;
     for (const g of up) addZone(world, { kind: 'circle', x: g.body.x, y: floorY(world, g.body), w: 60, warn: 1.5, damage: 200, from: m, pages: true });
     callout(world, 'The script rains down!', 'Step off the pages');
+    m.pagesAt = world.now + 0.5;
   }
   if (s.phase === 2) {
     s.curtain -= dt;
@@ -221,6 +256,9 @@ function playwright(world, m, up, dt) {
         s.curtain = 12;
         addZone(world, { kind: 'floor', x: 0, w: map.width, warn: 2, damage: 260, from: m, curtain: true });
         m.slamming = world.now + 2;
+        m.cast = { name: 'The Curtain Falls', t0: world.now, dur: 2 };
+        m.castPose = 'curtain';
+        m.curtainAt = world.now + 2;
       }
     }
   }
@@ -232,6 +270,7 @@ function playwright(world, m, up, dt) {
         s.twist = Math.max(4, 8 - (s.twists = (s.twists ?? 0) + 1) * 0.5);
         s.side ^= 1;
         addZone(world, { kind: 'thorns', x: s.side ? map.width / 2 : 0, w: map.width / 2, warn: 1.6, damage: 260, from: m, twist: true });
+        m.twistAt = world.now + 0.4;
       }
     }
   }

@@ -122,9 +122,9 @@ function outlineFor(c, crisp, side = 0) {
 const EMPTY = -1;
 const NONE = -2;
 
-function rasterize(w, h, shapes, res = 1, soft = false, palette = {}, crisp = false, selout = false, pad = PAD, light = false, edge = null, bare = false) {
+function rasterize(w, h, shapes, res = 1, soft = false, palette = {}, crisp = false, selout = false, pad = PAD, light = false, edge = null, bare = false, padB = PAD) {
   const gw = (w + pad * 2) * res;
-  const gh = (h + pad + PAD) * res;
+  const gh = (h + pad + padB) * res;
   const colors = [];
   const ids = new Map();
   const idOf = (c) => {
@@ -459,11 +459,12 @@ const bytesOf = (s) => s.canvas.width * s.canvas.height * 4;
 // sprites (characters, monsters, scenery) are drawn at the screen's own pixel density, so every
 // cell is exactly one screen pixel: sharp and even at any window size. `pad` is the margin left
 // of, right of and above the w x h box that parts may reach into (wings, tails, smears): the
-// sprite keeps its feet and centre where w x h puts them.
+// sprite keeps its feet and centre where w x h puts them. `padB` is the margin below the box (the
+// sprite is placed by its top-left corner, so a deeper margin moves nothing).
 export function rasterOf(b, scale = gfx.scale) {
-  let { w, h, shapes, palette = {}, res = 1, soft = false, crisp = false, selout = false, pad = PAD, light = false, edge = null, bare = false } = b;
+  let { w, h, shapes, palette = {}, res = 1, soft = false, crisp = false, selout = false, pad = PAD, light = false, edge = null, bare = false, padB = PAD } = b;
   if (res > 1) res = Math.max(res, Math.round(scale));
-  return { w, h, res, crisp, pad, raster: rasterize(w, h, shapes, res, soft, palette, crisp, selout, pad, light, edge, bare) };
+  return { w, h, res, crisp, pad, raster: rasterize(w, h, shapes, res, soft, palette, crisp, selout, pad, light, edge, bare, padB) };
 }
 
 // A raster's colours, pixel by pixel (RGBA), so it can be handed from a worker to the page.

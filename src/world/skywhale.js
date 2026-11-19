@@ -154,11 +154,18 @@ export function whaleBoss(world, m, up, dt) {
 
 const pending = (world) => world.dungeon.zones.some((z) => !z.hit && (z.kind === 'floor' || z.kind === 'thorns'));
 
+// (Her rig, render/mobs/galerig.js, acts each: the Broadside's cast (m.castPose 'broadside') the
+// cutlass raised until m.fireAt, then chopped down, FIRE!; m.portAt braced against the gale;
+// m.boardAt the cutlass thrust up, waving her gunners in.)
 function gale(world, m, up, dt) {
   const map = world.map;
   const room = world.dungeon.room;
   const s = (m.mech ??= { broadside: 6, port: 14, side: 0, boards: [0.7, 0.4] });
   const frac = m.hp / m.def.hp;
+  if (m.castPose === 'broadside' && (!m.cast || world.now >= m.cast.t0 + m.cast.dur)) {
+    m.cast = null;
+    m.castPose = null;
+  }
   s.broadside -= dt;
   s.port -= dt;
   if (s.broadside <= 0 && up.length) {
@@ -167,6 +174,9 @@ function gale(world, m, up, dt) {
       s.broadside = frac < 0.4 ? 8 : 10;
       s.side = Math.random() < 0.5 ? 0 : 1;
       addZone(world, { kind: 'thorns', x: s.side ? map.width / 2 : 0, w: map.width / 2, warn: 2.2, damage: 280, from: m, broadside: true });
+      m.cast = { name: 'Broadside!', t0: world.now, dur: 2.2 };
+      m.castPose = 'broadside';
+      m.fireAt = world.now + 2.2;
       callout(world, 'Broadside!', `The cannons rake the ${s.side ? 'east' : 'west'} deck: clear it or ride the blowhole!`);
       radio(world, 'broadside');
     }
@@ -176,17 +186,22 @@ function gale(world, m, up, dt) {
     room.gust = room.gust ?? { next: Infinity, dir: 1, until: 0 };
     room.gust.dir = m.x < map.width / 2 ? 1 : -1;
     room.gust.until = world.now + 2.2;
+    m.portAt = world.now;
     callout(world, 'Hard to port!', 'The deck heels over: brace!');
   }
   if (room.gust && world.now < room.gust.until) slide(world, up, room.gust.dir, 110, dt, true);
   if (s.boards.length && frac <= s.boards[0]) {
     s.boards.shift();
     adds(world, m, 'gunner', [m.x - 240, m.x + 240], null);
+    m.boardAt = world.now + 0.4;
     callout(world, 'Boarding party!', 'Her gunners swing in on ropes');
   }
   return false;
 }
 
+// (Her rig, render/mobs/matriarchrig.js, acts each: m.shield (Encrust!) backed into her shell as
+// barnacles crust over it, m.vulnUntil flopped out dizzy, m.slamming (Tide Crash) bursting out and
+// driving her staff down, m.spikeAt a stamp of the staff, m.knightAt the staff raised to call them.)
 function matriarch(world, m, up, dt) {
   const map = world.map;
   const s = (m.mech ??= { encrust: 10, spikes: 5, shell: null, knights: [0.6] });
@@ -195,11 +210,14 @@ function matriarch(world, m, up, dt) {
   if (s.spikes <= 0 && up.length) {
     s.spikes = 7;
     for (const g of [...up].sort(() => Math.random() - 0.5).slice(0, 2)) addZone(world, { kind: 'circle', x: g.body.x, y: floorY(world, g.body), w: 60, warn: 1.4, damage: 230, from: m, barnacles: true });
+    m.spikeAt = world.now + 0.35;
   }
   if (!s.shell) {
     s.encrust -= dt;
     if (s.encrust <= 0) {
-      s.shell = { until: world.now + 6, from: m.hp, need: m.def.hp * 0.04 };
+      // (Made crackable 2026-11-19: a group lands only ~600 a second on the shell (it halves the
+      // damage), so it needs 0.8% of her health (3.5k) in 7 s; a burst cracks it early.)
+      s.shell = { until: world.now + 7, from: m.hp, need: m.def.hp * 0.008 };
       callout(world, 'Encrust!', 'Shell up: break it in time!');
       radio(world, 'encrust');
     }
@@ -219,22 +237,28 @@ function matriarch(world, m, up, dt) {
   if (s.knights.length && frac <= s.knights[0]) {
     s.knights.shift();
     adds(world, m, 'barnacleknight', [m.x - 220, m.x + 220], null);
+    m.knightAt = world.now + 0.35;
     callout(world, 'Barnacle Knights!', 'Her guard grows out of the walls');
   }
   m.shield = Boolean(s.shell);
   return m.slamming > world.now;
 }
 
+// (Her rig, render/mobs/whalerig.js, acts each: m.lullabyAt swaying and humming, m.mech.diving
+// nosing down into the clouds, m.breachAt bursting up out of them, m.songAt singing the Starlight
+// Song, m.stirAt a grumpy roll as she stirs.)
 function whaledream(world, m, up, dt) {
   const map = world.map;
   const s = (m.mech ??= { phase: 1, lullaby: 4, dive: 12, song: 3, side: 0, diving: null });
   const frac = m.hp / m.def.hp;
   if (s.phase === 1 && frac <= 0.66) {
     s.phase = 2;
+    m.stirAt = world.now;
     callout(world, 'She stirs...', 'The Deep Dive comes faster now');
   }
   if (s.phase === 2 && frac <= 0.33) {
     s.phase = 3;
+    m.songAt = world.now;
     callout(world, 'The Starlight Song!', 'The wind lanes swap sides, faster and faster');
     radio(world, 'song');
   }
@@ -243,6 +267,7 @@ function whaledream(world, m, up, dt) {
     if (world.now > s.diving.at) {
       m.x = Math.max(m.x1, Math.min(m.x2, s.diving.x));
       s.diving = null;
+      m.breachAt = world.now;
       world.juice.push({ type: 'shake', mag: 6, dur: 0.5 });
     }
     return true;
@@ -260,6 +285,7 @@ function whaledream(world, m, up, dt) {
   if (s.lullaby <= 0 && up.length) {
     s.lullaby = 7;
     for (const g of up) addZone(world, { kind: 'circle', x: g.body.x, y: floorY(world, g.body), w: 70, warn: 1.8, damage: 210, from: m, lullaby: true });
+    m.lullabyAt = world.now;
     callout(world, 'Lullaby...', 'Step out of the song');
   }
   if (s.phase === 3) {
@@ -270,6 +296,7 @@ function whaledream(world, m, up, dt) {
         s.song = Math.max(4, 8 - (s.songs = (s.songs ?? 0) + 1) * 0.5);
         s.side ^= 1;
         addZone(world, { kind: 'thorns', x: s.side ? map.width / 2 : 0, w: map.width / 2, warn: 1.6, damage: 270, from: m, starlight: true });
+        m.songAt = world.now;
       }
     }
   }

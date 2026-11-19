@@ -1,13 +1,8 @@
 // The Star Observatory's keepers, remade for Chapter 7 (2026-11-18): upright, chibi, rigged on
 // rig.js, outer outline only, faces bare, everything that grows out of them rooted in them.
 //
-//   folio        Folio, the Archivist: a grand snowy owl in a long scholar's robe and half-moon
-//                spectacles, reading an enormous book; she shushes, turns pages; slams the book
-//                shut on you (the owl librarians are her students: world/observatory.js).
-//   eclipsesol   Sol, the Eclipse Twin: a little sun fox standing tall, a ring of sunrays rooted
-//                behind her head, a sun disc in her paws; bright and bouncy. A sun-disc swipe.
-//   eclipseluna  Luna, the Eclipse Twin: a moon bunny, a crescent moon held like a shield, a starry
-//                veil; dreamy and slow. A crescent swipe. Alone (her sister down), each one droops.
+//   folio        Folio, the Archivist: her own module now (foliorig.js, redrawn 2026-11-18).
+//   eclipsesol / eclipseluna   the Eclipse Twins: their own module now (twinsrig.js, 2026-11-18).
 
 import { E, T, F, R, stroke } from './kit.js';
 import { ramp, crescent, shine } from './meadow.js';
@@ -42,267 +37,558 @@ const sized = (rig, k) => {
 };
 
 // =====================================================================================
-// Folio, the Archivist
+// Astraea, the Star Keeper (remade 2026-11-18 for Chapter 7; the thin-legged stag is gone, and
+// her bell gown went the same day for legs and a cape: the gown bosses all looked alike)
 // =====================================================================================
-const SNOW = ramp('#f4f0ff', { step: 7, turn: 10, lift: 3 });
-const ROBE = ramp('#4a3a8a', { step: 10, turn: 8, lift: 14 });
-const BOOK = ramp('#a84a5a', { step: 10, turn: 8 });
-const fo = pairOf('fo');
-// The robe: long, to the floor, gold trim, a starry hem. Box 40 x 40; the waist at (20, 1).
-const foRobe = () => {
-  const hem = [];
-  for (let k = 0; k <= 8; k++) hem.push([1 + k * 4.75, 38 + (k % 2 ? 1.4 : 0)]);
-  return [T([[11, 1], [29, 1], [37, 22], [39, 38], ...hem.reverse(), [1, 38], [3, 22]], ROBE.base), F(T([[11, 1], [15, 1], [6, 38], [2, 38]], ROBE.hi)), R(1, 34, 38, 2, GOLD.base), ...[8, 20, 32].map((x) => F(star5(x, 28, 1.6, STARC))), crescent(20, 20, 18, 18, ROBE.sh, { k: 0.2, a0: 10, a1: 90 })];
-};
-// The body: a big round snowy owl chest above the robe. Box 30 x 26; the waist at (15, 25).
-const foBody = () => [E(15, 13, 14, 12.4, SNOW.base), ...[0, 1, 2, 3].map((k) => F(T([[9 + (k % 2) * 6, 9 + k * 3], [10.4 + (k % 2) * 6, 11 + k * 3], [8 + (k % 2) * 6, 11 + k * 3]], '#c8c0e0'))), crescent(15, 13, 14, 12.4, SNOW.sh, { k: 0.2, a0: 110, a1: 210 }), T([[3, 18], [8, 10], [10, 25], [3, 25]], ROBE.base), T([[27, 18], [22, 10], [20, 25], [27, 25]], ROBE.base)];
-// The head: round, two soft ear tufts, a beak, half-moon spectacles on a chain. Box 30 x 26; the neck at (15, 25).
-const foHead = () => [
-  // Feathery ear tufts, each two soft points.
-  T([[4, 8], [2.4, 1], [5.6, 4], [7, 0.6], [9.6, 5]], '#d8d0f0'), T([[26, 8], [27.6, 1], [24.4, 4], [23, 0.6], [20.4, 5]], '#d8d0f0'),
-  E(15, 14, 13, 11.4, SNOW.base), crescent(15, 14, 13, 11.4, SNOW.sh, { k: 0.18, a0: 110, a1: 200 }),
-  // The owl's face: a heart-shaped disc with a soft rim, a big hooked beak.
-  T([[15, 21.6], [6, 17], [4.4, 11], [8, 7.6], [15, 10], [22, 7.6], [25.6, 11], [24, 17]], '#d8d0f0'),
-  T([[15, 20.4], [7, 16.4], [5.8, 11.4], [8.6, 9], [15, 11.4], [21.4, 9], [24.2, 11.4], [23, 16.4]], '#ffffff'),
-  T([[13.2, 15.6], [16.8, 15.6], [16, 19.6], [15, 21], [14, 19.6]], '#ffb03a'), F(T([[13.6, 15.8], [15, 15.8], [14.4, 18.4]], '#ffd38a')),
-  // Half-moon spectacles, on a chain.
-  ...stroke(arcP(10.4, 14.6, 4.6, 3.6, 0, 180, 8), 1.1, GOLD.base), ...stroke(arcP(19.6, 14.6, 4.6, 3.6, 0, 180, 8), 1.1, GOLD.base), ...stroke([[5.8, 14.6], [15, 14], [24.2, 14.6]], 0.8, GOLD.base),
-  ...stroke([[5.8, 14.6], [4, 20], [6, 24]], 0.5, GOLD.sh),
+// An upright moon-fawn who has counted the stars alone for a thousand years: a round lilac fawn
+// face, soft ears, antlers of linked stars like two little constellations, a short two-layer
+// tunic (a cream petal hem peeping under the night blue), sturdy fawn legs in cream fluff cuffs
+// and gold-banded hooves, a white puff of a tail, and a long night cape from her shoulders in three
+// pieces that trail one after another, its constellation lining showing as it flares, two star
+// charms swinging from its corners. She counts with a gold star-pointer, tapping star after star
+// overhead; she walks with a little prance; she rears with the near hoof up and the pointer high,
+// and stamps down a starburst. Rearranging the sky (m.mech.arranging) she floats, legs dangling,
+// sweeping the pointer in great arcs, the cape streaming; starstruck by a constellation she has
+// never seen (m.mech.struck) she kneels, hands clasped, looking up. Stars orbit her all the while.
+const FAWN = ramp('#d6cff6', { step: 8, turn: 10, lift: 3 });
+const NIGHT = ramp('#2e3180', { step: 10, turn: 8, lift: 16 });
+const LINING = ramp('#4a52c4', { step: 8, turn: 8, lift: 10 });
+const LINE = '#8a92ee';
+const as = pairOf('as');
+// A little constellation: thin lines joining star dots (in box space).
+const constel = (pts, joins, lc = LINE, sc = STARC, r = 1.3) => [...joins.map(([i, j]) => F(taper([pts[i], pts[j]], 0.5, 0.5, lc))), ...pts.map(([x, y], k) => F(k % 2 ? E(x, y, r * 0.7, r * 0.7, '#ffffff') : star5(x, y, r * 1.4, sc)))];
+// The bodice: night blue, a cream ruff of fawn fluff at the collar, a gold star brooch. Box 24 x 22;
+// the waist at (12, 21).
+const asChest = () => [
+  T([[4, 6], [20, 6], [18, 21], [6, 21]], NIGHT.base), F(T([[4, 6], [7, 6], [8, 21], [6, 21]], NIGHT.hi)),
+  ...[3, 7.5, 12, 16.5, 21].map((x, k) => E(x, 5 + (k % 2) * 1.2, 3.6, 3, '#fff6ee')), F(E(9, 3.6, 3, 1.4, '#ffffff')),
+  F(star5(12, 12, 3, GOLD.base)), F(E(12, 12, 1, 1, '#fff8d8')),
 ];
-const foWing = (far) => () => [T([[1, 1], [11, 2], [14, 9], [8, 13], [1, 8]], far ? ROBE.sh : ROBE.base), F(taper([[3, 4], [11, 8]], 0.8, 0.4, SNOW.base)), E(13, 10, 2.4, 2.2, far ? SNOW.sh : SNOW.base)];
-// The great book, open: two pages fanned up, its spine down; or shut (closed). Box 34 x 22; held at its spine (17, 20).
-const foBook = (shut) => () => (shut
-  ? [R(3, 6, 28, 14, BOOK.base), F(R(3, 6, 28, 2, BOOK.hi)), R(3, 6, 3, 14, BOOK.sh), R(5, 17, 26, 2.4, '#fff4e0'), F(star5(18, 13, 3, GOLD.base))]
-  : [T([[17, 20], [1, 14], [3, 3], [17, 9]], '#fff4e0'), T([[17, 20], [33, 14], [31, 3], [17, 9]], '#fff8ec'), T([[17, 21], [0, 15], [1, 13], [17, 19]], BOOK.base), T([[17, 21], [34, 15], [33, 13], [17, 19]], BOOK.base), ...[5, 8, 11].map((y) => F(taper([[5, y + 2], [14, y + 4]], 0.3, 0.3, '#c8b8a8'))), ...[5, 8, 11].map((y) => F(taper([[20, y + 4], [29, y + 2]], 0.3, 0.3, '#c8b8a8'))), F(star5(24, 6, 1.6, '#a8a0e0'))]);
-const FO_ROBE = fo('robe', 40, 40, foRobe, 2);
-const FO_BODY = fo('body', 30, 26, foBody, 2);
-const FO_HEAD = fo('head', 30, 26, foHead, 2);
-const FO_WING = [false, true].map((f) => fo(`wing${f ? 1 : 0}`, 15, 14, foWing(f), 2));
-const FO_BOOK = [false, true].map((sh) => fo(`book${sh ? 1 : 0}`, 34, 22, foBook(sh), 2));
-const FO_FACE = { eyes: [[19.6, 12.6, 2.3, 2.6, 1], [10.4, 12.6, 2.3, 2.6, -1]], mouth: [15, 23.4, 0.6], blush: [[7.4, 17.4, 1.6], [22.6, 17.4, 1.6]], iris: '#e8a030', lid: 0.3, lashes: 1 };
-const foFace = (mood) => sm(`fo|face|${mood}`, 30, 26, () => faceShapes(mood, FO_FACE));
-const foPass = (bare) => {
-  const i = bare ? 1 : 0;
-  const tag = bare ? 'b' : '';
+// Rounds a closed outline (corner cutting).
+const asSmooth = (pts, n = 3) => {
+  let q = pts;
+  for (let k = 0; k < n; k++) {
+    const out = [];
+    for (let i = 0; i < q.length; i++) {
+      const p0 = q[i];
+      const p1 = q[(i + 1) % q.length];
+      out.push([p0[0] * 0.75 + p1[0] * 0.25, p0[1] * 0.75 + p1[1] * 0.25], [p0[0] * 0.25 + p1[0] * 0.75, p0[1] * 0.25 + p1[1] * 0.75]);
+    }
+    q = out;
+  }
+  return q;
+};
+const asBlob = (pts, c) => T(asSmooth(pts), c);
+// The head (2026-11-18, the player's pick of the redrawn deer heads: the round fawn): a round
+// crown with a short soft snout reaching forward, a shiny dark nose at its tip, a cream muzzle, a
+// white chin tuft, white rings round her eyes, a darker brow, white fawn spots on her crown, a
+// fluffy tuft at the jaw. Box 38 x 30 (the snout reaches past the crown); the neck at (17, 27).
+const asHead = () => [
+  // (The two little furry bumps the antlers grow out of.)
+  E(10, 5.4, 3.2, 2.8, FAWN.base), E(22.4, 4.8, 3.4, 3, FAWN.base),
+  E(15.6, 14.4, 12.6, 11.6, FAWN.base),
+  asBlob([[19, 13], [25, 14.4], [30.4, 17.6], [32.4, 20.4], [31.4, 23.6], [27.6, 25.4], [22, 26.8], [15, 27.4], [9.6, 24.6], [6, 20], [10, 18], [15, 17]], FAWN.base),
+  asBlob([[6.4, 19.4], [2.6, 23], [6.4, 22.6], [5.2, 26], [9.6, 23.4]], FAWN.base),
+  crescent(15.6, 14.4, 12.6, 11.6, FAWN.sh, { k: 0.14, a0: 110, a1: 200 }),
+  F(asBlob([[12, 4.4], [19, 3.6], [23.4, 6.6], [20, 9.6], [14, 9.6], [10.6, 7.6]], '#b8acec')),
+  ...[[7.4, 9.6, 1.3, 1], [10.2, 6.6, 1.1, 0.85], [5.6, 13.4, 1, 0.8], [12.4, 4.6, 0.8, 0.6]].map(([x, y, rx, ry]) => F(E(x, y, rx, ry, '#ffffff'))),
+  F(E(11.4, 7.2, 3.6, 1.6, FAWN.hi)),
+  F(asBlob([[20.4, 17.4], [26, 17.4], [30.6, 19], [31.4, 22.4], [28.6, 24.8], [23, 25.6], [19.2, 23.4]], '#fff3ea')),
+  F(asBlob([[17.6, 25], [22.6, 25.8], [21.4, 28.2], [17.4, 28.4], [15.6, 26.8]], '#ffffff')),
+  // (White rings round her eyes, as a deer's: her faces draw the eyes in them.)
+  F(E(23.3, 15.8, 4.2, 4.8, '#fff6fa')), F(E(12.3, 15.8, 3.9, 4.5, '#fff6fa')),
+  E(30.8, 19.8, 2.8, 2, '#3a2a4a'), F(E(29.8, 19.1, 0.9, 0.5, '#ffffff')), F(E(31.6, 20.6, 0.5, 0.35, '#1a0f22')),
+  ...stroke([[30.4, 21.6], [29.2, 22.8]], 0.5, '#2e1c26').map(F),
+];
+// An ear: a big deer's ear, a long leaf from its base at (1, 5.5) along +x, lilac-pink inside with
+// a cream tuft, a dark rim at the tip. Box 21 x 11.
+const asEar = (far) => () => {
+  const len = 19;
+  const wid = 9;
+  const at = (pts) => pts.map(([x, y]) => [x + 1, y + 5.5]);
+  const leaf = [[0, -wid * 0.35], [len * 0.35, -wid * 0.55], [len * 0.8, -wid * 0.32], [len, 0], [len * 0.8, wid * 0.32], [len * 0.35, wid * 0.5], [0, wid * 0.3]];
   return [
-    { name: `wingF${tag}`, parent: 'chest', s: FO_WING[1][i], pivot: [1, 1], at: () => [-12, -18], rot: (S) => S.wingF * D2R },
-    { name: `robe${tag}`, parent: 'waist', s: FO_ROBE[i], pivot: [20, 1], rot: (S) => S.robe * D2R },
-    { name: `bodyp${tag}`, parent: 'chest', s: FO_BODY[i], pivot: [15, 25] },
-    { name: `head${tag}`, parent: 'nk', s: FO_HEAD[i], pivot: [15, 25] },
-    { name: `book${tag}`, parent: 'chest', s: (a) => FO_BOOK[a.foShut ? 1 : 0][i](), pivot: [17, 20], at: (S) => [10 + S.bookX, -6 - S.bookY], rot: (S) => S.book * D2R },
-    { name: `wingN${tag}`, parent: 'chest', s: FO_WING[0][i], pivot: [1, 1], at: () => [8, -17], rot: (S) => S.wingN * D2R },
+    asBlob(at(leaf), far ? FAWN.sh : FAWN.base),
+    F(asBlob(at([[len * 0.8, -wid * 0.3], [len, 0], [len * 0.8, wid * 0.3], [len * 0.88, 0]]), '#7a68b8')),
+    F(asBlob(at(leaf.map(([x, y]) => [x * 0.86 + len * 0.06, y * 0.58])), far ? '#d8a8d8' : '#f4c4e4')),
+    F(asBlob(at([[len * 0.1, -wid * 0.1], [len * 0.42, -wid * 0.18], [len * 0.36, wid * 0.06], [len * 0.08, wid * 0.12]]), '#fff3ea')),
   ];
 };
-export const folioRig = sized(makeRig({
-  w: 90, h: 110, soft: true, stride: 30, recover: 0.65,
-  springs: { x: [220, 16], lift: [200, 14], tilt: [160, 10], head: [130, 8], robe: [100, 7], wingN: [200, 12], wingF: [180, 11], book: [220, 14], bookX: [220, 14], bookY: [220, 14] },
-  fast: ['x', 'book', 'bookY', 'wingN'],
-  kick: { tilt: -140, head: -200, robe: 260 },
-  turnKick: { robe: 260 },
+// An antler: a little constellation of linked stars growing from its base at (4, 23). Box 20 x 24.
+const asAntler = (far) => () => {
+  const lc = far ? '#c8a858' : GOLD.base;
+  const sc = far ? '#d8d4ff' : '#fff8d8';
+  const beam = [[4, 23], [5, 15], [3, 8], [6, 1.6]];
+  return [
+    ...stroke(beam, 1.4, lc), ...stroke([[5, 15], [11, 11], [15, 12]], 1.2, lc), ...stroke([[3.6, 9], [10, 4.4]], 1.1, lc),
+    star5(6, 1.8, 2.8, sc), star5(15, 12, 2.4, sc), star5(10, 4.4, 2.2, sc), F(E(5, 15, 1.2, 1.2, '#ffffff')), F(E(3.6, 9, 1, 1, '#ffffff')),
+  ];
+};
+// An arm, in two pieces so it can bend: the upper arm (a soft puffed sleeve, box 11 x 8, from the
+// shoulder at (2, 4) to the elbow at (9, 4)) and the forearm (the sleeve flaring to a gold cuff, a
+// cream hand; box 14 x 8 from the elbow at (1.5, 4); the hand at (10.8, 4)).
+const asUpper = (far) => () => [E(3.2, 4, 3.2, 3.4, far ? NIGHT.sh : NIGHT.base), taper([[2, 4], [9, 4]], 4, 3.4, far ? NIGHT.sh : NIGHT.base), ...(far ? [] : [F(E(2.6, 2.6, 1.6, 1, NIGHT.hi))])];
+const asFore = (far) => () => [taper([[1.5, 4], [8.4, 4]], 3.2, 4.6, far ? NIGHT.sh : NIGHT.base), R(8, 1.4, 1.6, 5.2, far ? GOLD.sh : GOLD.base), E(10.8, 4, 2.4, 2.3, far ? '#e8dcf0' : '#fff6ee')];
+// The neck: lilac fur, rising out of the ruff into the head. Box 8 x 11; from its foot at (4, 10).
+const asNeck = () => [taper([[4, 10], [4.2, 1.6]], 6.2, 5.4, FAWN.base), F(taper([[2.6, 9], [2.8, 3]], 1.2, 1, FAWN.hi))];
+// The star-pointer: a slim gold rod tipped with a star. Box 12 x 52; held at (6, 40).
+const asPointer = () => [R(5.2, 7, 1.6, 44, GOLD.base), F(R(5.2, 7, 0.6, 44, GOLD.hi)), E(6, 40, 1.8, 1.6, GOLD.sh), star5(6, 5.6, 5.4, STARC), F(star5(6, 5.8, 2.6, '#ffffff'))];
+// The tunic, outer layer: night blue, a gold band and two stars, a soft petal hem, short enough to
+// show her legs. Box 28 x 14; the waist at (14, 1).
+const asTunic = () => {
+  const hem = [];
+  for (let k = 0; k <= 6; k++) hem.push([2 + k * 4, 11 + (k % 2 ? 1.8 : 0)]);
+  return [T([[7, 1], [21, 1], [26, 11], ...hem.slice().reverse(), [2, 11]], NIGHT.base), F(T([[7, 1], [10, 1], [5, 11], [2.4, 11]], NIGHT.hi)), R(2.6, 8.6, 23, 1.8, GOLD.base), F(R(2.6, 8.6, 23, 0.6, GOLD.hi)), F(star5(9, 5.4, 1.4, STARC)), F(star5(19, 6, 1.2, '#ffffff')), R(6, 0, 16, 2.4, GOLD.sh)];
+};
+// The tunic's under layer: cream petals peeping below the hem. Box 30 x 16; the waist at (15, 1).
+const asPetals = () => {
+  const out = [T([[8, 1], [22, 1], [27, 10], [3, 10]], '#fff6ee')];
+  for (let k = 0; k < 7; k++) out.push(E(3.4 + k * 3.87, 11.4, 2.4, 2.8, k % 2 ? '#f4ecf8' : '#fff6ee'));
+  return out;
+};
+// A thigh: chunky lilac fur, from the hip at (5, 1) to the knee at (5, 11). Box 10 x 13.
+const asThigh = (far) => () => [taper([[5, 1.4], [5, 10.6]], 9.4, 8.2, far ? FAWN.sh : FAWN.base), F(E(3.4, 4, 1.6, 3, far ? FAWN.base : FAWN.hi))];
+// A shin: from the knee at (5, 1) to a fluffy cream cuff and a gold-banded hoof. Box 11 x 15.
+const asShin = (far) => () => [taper([[5, 1.4], [5, 9]], 8.2, 7, far ? FAWN.sh : FAWN.base), E(5, 9.6, 4.8, 2.8, far ? '#e8dcf0' : '#fff6ee'), E(5.6, 12.4, 4.2, 2.4, far ? '#3a2e66' : '#4e4086'), F(R(1.6, 11.4, 8, 0.9, far ? GOLD.sh : GOLD.base)), F(E(4.4, 12.6, 1.4, 0.6, '#8a7ac8'))];
+// The cape, in three pieces hung one from the next, each from the middle of its top edge; outside
+// night blue with a gold edge, and a lining (drawn over it, fading in as that piece flares up).
+// Top: box 22 x 16 from (11, 1). Middle: box 26 x 10 from (13, 1). Hem: box 30 x 13 from (15, 1),
+// a point at each corner for a charm.
+const capeA = (lin) => () => [T([[5, 1], [17, 1], [21, 15], [1, 15]], lin ? LINING.base : NIGHT.base), ...(lin ? constel([[6, 6], [11, 10], [16, 7]], [[0, 1], [1, 2]], '#c8ccff') : [F(T([[5, 1], [8, 1], [4, 15], [1, 15]], NIGHT.hi))])];
+const capeB = (lin) => () => [T([[2, 1], [24, 1], [25.6, 9], [0.4, 9]], lin ? LINING.base : NIGHT.base), ...(lin ? constel([[5, 3.4], [12, 6.6], [20, 4], [16, 7.6]], [[0, 1], [1, 2], [1, 3]], '#c8ccff') : [F(T([[2, 1], [5, 1], [3.8, 9], [0.4, 9]], NIGHT.hi))])];
+const capeC = (lin) => () => {
+  const c = lin ? LINING.base : NIGHT.base;
+  return [T([[1.4, 1], [28.6, 1], [29.6, 11], [22, 8.6], [15, 10.6], [8, 8.6], [0.4, 11]], c), ...(lin ? constel([[7, 4], [15, 6], [23, 4]], [[0, 1], [1, 2]], '#c8ccff') : []), ...stroke([[0.4, 11], [8, 8.6], [15, 10.6], [22, 8.6], [29.6, 11]], 0.9, lin ? '#c8ccff' : GOLD.base)];
+};
+// A star charm on a thread, hung from (3.5, 0.6). Box 7 x 12.
+const asCharm = () => [...stroke([[3.5, 0.6], [3.5, 6]], 0.5, GOLD.sh), star5(3.5, 8.4, 3, STARC), F(star5(3.5, 8.6, 1.4, '#ffffff'))];
+// The puff of a tail. Box 8 x 8, from its root (6, 4).
+const asPuff = () => [E(4, 4, 3.6, 3.4, '#ffffff'), F(E(3, 3, 1.4, 1, '#ffffff'))];
+const AS = {
+  CHEST: as('chest', 24, 22, asChest, 2), HEAD: as('head', 38, 30, asHead, 2), PTR: as('ptr', 12, 52, asPointer, 2),
+  TUNIC: as('tunic', 28, 14, asTunic, 2), PETALS: as('petals', 30, 16, asPetals, 2), PUFF: as('puff', 8, 8, asPuff, 2), CHARM: as('charm', 7, 12, asCharm, 2),
+  EAR: [false, true].map((f) => as(`ear${f ? 1 : 0}`, 21, 11, asEar(f), 2)), ANT: [false, true].map((f) => as(`ant${f ? 1 : 0}`, 20, 24, asAntler(f), 2)),
+  UP: [false, true].map((f) => as(`up${f ? 1 : 0}`, 11, 8, asUpper(f), 2)), FORE: [false, true].map((f) => as(`fore${f ? 1 : 0}`, 14, 8, asFore(f), 2)), NECK: as('neck', 8, 11, asNeck, 2),
+  THIGH: [false, true].map((f) => as(`thigh${f ? 1 : 0}`, 10, 13, asThigh(f), 2)), SHIN: [false, true].map((f) => as(`shin${f ? 1 : 0}`, 11, 15, asShin(f), 2)),
+  CAPE: [[capeA, 22, 16], [capeB, 26, 10], [capeC, 30, 13]].map(([fn, w, h], k) => [false, true].map((lin) => as(`cape${k}${lin ? 'l' : ''}`, w, h, fn(lin), 2))),
+};
+const AS_FACE = { eyes: [[23, 15.6, 2.7, 3.5, 1], [12.6, 15.6, 2.4, 3.2, -1]], mouth: [19, 25.2, 1.2], blush: [[8.6, 20.4, 2.1], [27.4, 20.4, 2.1]], iris: '#ffc83a', lid: 0, lashes: 1 };
+// Her own faces (2026-11-18: every boss shared one set). Soft lilac brows carry the feeling; eyes
+// gold with star catchlights; only a light blush. Box 34 x 30, eyes at (23, 15.6) and (12.6, 15.6).
+const AS_INK = '#2e1c26';
+const AS_BROW = '#7a68c0';
+const AS_LIP = '#7a3040';
+const AS_TEAR = '#6ec4ff';
+const asStar4 = (x, y, r, c) => T([[x, y - r], [x + r * 0.28, y - r * 0.28], [x + r, y], [x + r * 0.28, y + r * 0.28], [x, y + r], [x - r * 0.28, y + r * 0.28], [x - r, y], [x - r * 0.28, y - r * 0.28]], c);
+const asBrow = (a, b, w, c = AS_BROW) => F(taper([a, b], w, w * 0.55, c));
+const asLine = (pts, w, c = AS_INK) => stroke(pts, w, c).map(F);
+const asEye = (x, y, w, h, { look = 0, cat = 'star' } = {}) => {
+  const out = [E(x, y, w, h, AS_INK), E(x, y + h * 0.3 + look, w * 0.74, h * 0.5, '#ffc83a')];
+  if (cat === 'big') out.push(F(asStar4(x + w * 0.25, y - h * 0.35, w * 0.8, '#ffffff')), F(asStar4(x - w * 0.4, y + h * 0.3, w * 0.42, '#ffffff')));
+  else out.push(F(asStar4(x + w * 0.28, y - h * 0.4 + look * 0.3, w * 0.62, '#ffffff')), F(E(x - w * 0.36, y + h * 0.42, w * 0.18, w * 0.18, '#ffffff')));
+  return out;
+};
+const asShut = (x, y, w, up = false) => asLine(arcP(x, y, w * 1.05, w * 0.55, up ? 200 : 20, up ? 340 : 160, 7), 0.75);
+const asBlush = (k = 1) => [F(E(8.8, 20.8, 1.7 * k, 0.9 * k, '#ffb0c4')), F(E(25.6, 21, 1.5 * k, 0.8 * k, '#ffb0c4'))];
+const AS_FACES = {
+  // Calm: looking ahead, the faintest worry in her brows.
+  idle: () => [...asEye(23, 15.6, 2.7, 3.5), ...asEye(12.6, 15.6, 2.4, 3.2), asBrow([19.8, 10], [26.2, 10.6], 1.1), asBrow([15.6, 10.2], [9.6, 10.8], 1), ...asLine(arcP(28, 23, 1.8, 1.1, 20, 150, 7), 0.55), ...asBlush()],
+  blink: () => [...asShut(23, 16.4, 2.6), ...asShut(12.6, 16.4, 2.3), asBrow([19.8, 10.2], [26.2, 10.8], 1.1), asBrow([15.6, 10.4], [9.6, 11], 1), ...asLine(arcP(28, 23, 1.8, 1.1, 20, 150, 7), 0.55), ...asBlush()],
+  // Counting: eyes up at the stars, worried brows, her lips whispering the numbers (two shapes).
+  count: () => [...asEye(23, 15.6, 2.7, 3.5, { look: -1.6 }), ...asEye(12.6, 15.6, 2.4, 3.2, { look: -1.6 }), asBrow([19.8, 9.6], [26.2, 10.8], 1.2), asBrow([15.6, 9.8], [9.6, 11], 1.1), F(E(27.8, 23.6, 1, 1.2, AS_LIP)), ...asBlush()],
+  count2: () => [...asEye(23, 15.6, 2.7, 3.5, { look: -1.6 }), ...asEye(12.6, 15.6, 2.4, 3.2, { look: -1.6 }), asBrow([19.8, 9.6], [26.2, 10.8], 1.2), asBrow([15.6, 9.8], [9.6, 11], 1.1), ...asLine([[26.8, 23.4], [28.8, 23.4]], 0.6), ...asBlush()],
+  // Lost count: eyes down and away, brows knotted, a small unhappy mouth.
+  lost: () => [...asEye(23, 16.2, 2.7, 3.2, { look: 1.2 }), ...asEye(12.6, 16.2, 2.4, 2.9, { look: 1.2 }), asBrow([19.6, 9.2], [26.4, 11.6], 1.3), asBrow([15.8, 9.4], [9.4, 11.8], 1.2), ...asLine(arcP(28, 24.4, 1.6, 0.9, 200, 340, 6), 0.6), ...asBlush(0.8)],
+  sad: () => [...asEye(23, 16, 2.7, 3.3, { look: 0.8 }), ...asEye(12.6, 16, 2.4, 3, { look: 0.8 }), asBrow([19.6, 9.4], [26.4, 11.4], 1.2), asBrow([15.8, 9.6], [9.4, 11.6], 1.1), ...asLine(arcP(28, 24.2, 1.5, 0.8, 200, 340, 6), 0.6), ...asBlush(0.8)],
+  // Fierce, and frightened under it: a hard frown, a tear she won't let fall.
+  angry: () => [...asEye(23, 16.6, 2.7, 2.6, { cat: 'dot' }), ...asEye(12.6, 16.6, 2.4, 2.4, { cat: 'dot' }), asBrow([19.6, 12.6], [26.6, 9.4], 1.6, AS_INK), asBrow([16, 12.8], [9.4, 10], 1.4, AS_INK), E(26.4, 19.6, 1.2, 1.7, AS_TEAR), F(E(26.1, 19, 0.4, 0.5, '#ffffff')), ...asLine([[25.8, 24], [27, 23.4], [28.2, 24], [29.4, 23.4]], 0.6), ...asBlush(0.8)],
+  // Calling to the sky: brows high, a round open mouth.
+  shout: () => [...asEye(23, 15.6, 2.8, 3.6, { look: -0.6, cat: 'dot' }), ...asEye(12.6, 15.6, 2.5, 3.3, { look: -0.6, cat: 'dot' }), asBrow([19.8, 9], [26.4, 8.4], 1.3), asBrow([15.6, 9.2], [9.4, 8.6], 1.2), E(27.6, 24.4, 1.8, 2.2, AS_LIP), F(E(27.6, 25.4, 1.1, 0.7, '#ff9ab0')), ...asBlush(0.8)],
+  // Hurt: squeezed shut, tears falling as little blue stars.
+  hurt: () => [...asShut(23, 16.4, 2.6), ...asShut(12.6, 16.4, 2.3), asBrow([19.6, 9.4], [26.4, 11.4], 1.2), asBrow([15.8, 9.4], [9.4, 11.6], 1.1), asStar4(27.2, 20.4, 2.2, AS_TEAR), asStar4(25.4, 25.8, 1.6, AS_TEAR), asStar4(8.6, 20.8, 1.9, AS_TEAR), F(E(27.8, 24, 1.4, 1, AS_LIP))],
+  // Awestruck: eyes wide and full of stars, a gasp of a smile.
+  happy: () => [...asEye(23, 15.2, 3, 3.9, { cat: 'big' }), ...asEye(12.6, 15.2, 2.7, 3.6, { cat: 'big' }), ...asLine(arcP(23, 10.4, 3, 1.6, 200, 340, 6), 0.9, AS_BROW), ...asLine(arcP(12.6, 10.6, 2.6, 1.4, 200, 340, 6), 0.8, AS_BROW), T(arcP(27.8, 23, 2.2, 2.2, 0, 180, 8), AS_LIP), F(E(27.8, 24.4, 1.1, 0.7, '#ff9ab0')), ...asBlush(1.15)],
+  sleep: () => [...asShut(23, 16.4, 2.6), ...asShut(12.6, 16.4, 2.3), asBrow([19.8, 10.6], [26.2, 10.8], 1), asBrow([15.6, 10.8], [9.6, 11], 0.9), F(E(27.8, 23.6, 0.7, 0.6, AS_LIP)), ...asBlush()],
+};
+const asFaceShapes = (mood) => (AS_FACES[mood] ?? (() => faceShapes(mood, AS_FACE)))();
+const asFace = (mood) => sm(`as|face3|${mood}`, 38, 30, () => asFaceShapes(mood));
+// Which face: the attack's (fierce in the wind-up, calling out on the blow), then the scene's own
+// ('sad', 'happy', ...), then what she's doing: counting (whispering), losing count, starstruck.
+const asMood = (a) => {
+  if (a.face === 'dead') return 'dead';
+  if (a.ph.strike > 0.25) return 'shout';
+  if (a.ph.atk || a.ph.antic > 0.3) return 'angry';
+  if (a.asStruck) return 'happy';
+  if (a.face && a.face !== 'idle') return AS_FACES[a.face] || MOODS.has(a.face) ? a.face : 'idle';
+  const t = a.t + (a.uidOff ?? 0);
+  if (t % 4.7 < 0.14) return 'blink';
+  if (a.asLost > 0.5) return 'lost';
+  if (a.asArr || a.asCount > 0.5) return fr(t * 2.4) < 0.5 ? 'count' : 'count2';
+  return 'idle';
+};
+// How far a cape piece has flared (0 hanging, 1 streaming out): its lining shows that much.
+const flareOf = (deg) => clamp((deg - 28) / 30, 0, 1);
+const CAPE_KEYS = ['capeA', 'capeB', 'capeC'];
+const asPass = (bare) => {
+  const i = bare ? 1 : 0;
+  const tag = bare ? 'b' : '';
+  const leg = (k, far) => [
+    { name: `thigh${k}${tag}`, parent: 'hip', s: AS.THIGH[far ? 1 : 0][i], pivot: [5, 1], at: () => [far ? -3.6 : 3.6, 5], rot: (S) => (far ? S.thighF : S.thighN) * D2R },
+    { name: `shin${k}${tag}`, parent: `knee${k}`, s: AS.SHIN[far ? 1 : 0][i], pivot: [5, 1], rot: (S) => (far ? S.shinF : S.shinN) * D2R },
+  ];
+  const cape = (k, parent, pivot, at) => [
+    { name: `cape${k}${tag}`, parent, s: AS.CAPE[k][0][i], pivot, at, rot: (S) => S[CAPE_KEYS[k]] * D2R },
+    { name: `capel${k}${tag}`, parent: `cape${k}`, s: AS.CAPE[k][1][i], pivot, alpha: (S) => flareOf(S.capeA + (k > 0 ? S.capeB : 0) + (k > 1 ? S.capeC : 0)) },
+  ];
+  return [
+    { name: `antF${tag}`, parent: 'nk', s: AS.ANT[1][i], pivot: [4, 23], at: () => [-7, -21], rot: (S) => (-14 + S.antl) * D2R },
+    { name: `earF${tag}`, parent: 'nk', s: AS.EAR[1][i], pivot: [1, 5.5], at: () => [-10, -19.6], rot: (S) => (208 - S.earF) * D2R },
+    // The cape: from the nape, behind everything.
+    ...cape(0, 'chest', [11, 1], () => [-2, -19]),
+    ...cape(1, 'capeA', [13, 1], () => [0, 14]),
+    ...cape(2, 'capeB', [15, 1], () => [0, 8]),
+    { name: `charm0${tag}`, parent: 'capeC', s: AS.CHARM[i], pivot: [3.5, 0.6], at: () => [-14.6, 10], rot: (S) => S.charm0 * D2R },
+    { name: `charm1${tag}`, parent: 'capeC', s: AS.CHARM[i], pivot: [3.5, 0.6], at: () => [14.6, 10], rot: (S) => S.charm1 * D2R },
+    { name: `upF${tag}`, parent: 'chest', s: AS.UP[1][i], pivot: [2, 4], at: () => [-5, -15], rot: (S) => S.armF * D2R },
+    { name: `foreF${tag}`, parent: 'elbowF', s: AS.FORE[1][i], pivot: [1.5, 4], rot: (S) => S.elbF * D2R },
+    ...leg(1, true),
+    { name: `puff${tag}`, parent: 'hip', s: AS.PUFF[i], pivot: [6, 4], at: () => [-11, 4], rot: (S) => S.puff * D2R },
+    ...leg(0, false),
+    { name: `petals${tag}`, parent: 'hip', s: AS.PETALS[i], pivot: [15, 1], rot: (S) => S.tunicU * D2R },
+    { name: `tunic${tag}`, parent: 'hip', s: AS.TUNIC[i], pivot: [14, 1], rot: (S) => S.tunic * D2R },
+    { name: `neck${tag}`, parent: 'chest', s: AS.NECK[i], pivot: [4, 10], at: () => [1, -15] },
+    { name: `bodice${tag}`, parent: 'chest', s: AS.CHEST[i], pivot: [12, 21] },
+    // (Both antlers grow from inside her head, out of the bumps on top: drawn behind it.)
+    { name: `antN${tag}`, parent: 'nk', s: AS.ANT[0][i], pivot: [4, 23], at: () => [5.4, -22], rot: (S) => (10 + S.antl) * D2R },
+    { name: `head${tag}`, parent: 'nk', s: AS.HEAD[i], pivot: [17, 27] },
+    { name: `earN${tag}`, parent: 'nk', s: AS.EAR[0][i], pivot: [1, 5.5], at: () => [9, -20], rot: (S) => (-28 + S.earN) * D2R },
+    { name: `upN${tag}`, parent: 'chest', s: AS.UP[0][i], pivot: [2, 4], at: () => [5, -14], rot: (S) => S.armN * D2R },
+    { name: `ptr${tag}`, parent: 'handN', s: AS.PTR[i], pivot: [6, 40], rot: (S) => (90 + S.ptr) * D2R },
+    { name: `foreN${tag}`, parent: 'elbowN', s: AS.FORE[0][i], pivot: [1.5, 4], rot: (S) => S.elbN * D2R },
+  ];
+};
+// The stars in orbit round her: those behind her drawn under her, those in front over her.
+const asOrbit = (front) => (ctx, m, a, S, mat) => {
+  if (m.hp <= 0) return;
+  const [cx, cy] = at2(mat('chest'), 0, -10);
+  const n = 5;
+  const sp = a.asArr ? 1.6 : 0.5;
+  for (let k = 0; k < n; k++) {
+    const ang = a.now * sp + (k / n) * TAU;
+    const z = Math.sin(ang);
+    if ((z > 0) !== front) continue;
+    const r = a.asArr ? 40 : 30;
+    const x = cx + Math.cos(ang) * r;
+    const y = cy + z * 8 - (a.asArr ? Math.sin(ang * 2) * 10 : 0);
+    sparkle(ctx, a, x, y, 2.2 + z * 0.8 + (a.asArr ? 1 : 0), a.alpha * (0.6 + z * 0.3), k % 2 ? '#ffffff' : STARC);
+  }
+};
+// Her attacks, taken in turn: a flick of the pointer that throws a star; a great sweep that draws
+// a constellation in the air; a head-down charge with her antlers blazing; rearing up and stamping
+// down a starburst.
+const AS_KINDS = ['flick', 'sweep', 'charge', 'stamp'];
+// Her walk: one full cycle (a step with each hoof) covers AS_STRIDE rig px, which at her 1.5 size
+// is AS_STRIDE * 1.5 px of floor; each hoof is down AS_DUTY of the cycle.
+const AS_STRIDE = 22;
+const AS_DUTY = 0.56;
+// A leg's two angles (thigh from straight down, shin from the thigh; degrees) that put the hoof's
+// sole `dx` ahead of and `dy` below the hip joint, the knee bending forward; `hipDeg` is the hip's
+// own turn, taken off the thigh.
+const AS_L1 = 9.6;
+const AS_L2 = 13.6;
+function asLegIK(dx, dy, hipDeg) {
+  const d = Math.min(AS_L1 + AS_L2 - 0.05, Math.max(4, Math.hypot(dx, dy)));
+  const hip = Math.acos(clamp((AS_L1 * AS_L1 + d * d - AS_L2 * AS_L2) / (2 * AS_L1 * d), -1, 1));
+  const knee = Math.acos(clamp((AS_L1 * AS_L1 + AS_L2 * AS_L2 - d * d) / (2 * AS_L1 * AS_L2), -1, 1));
+  return [(-Math.atan2(dx, dy) - hip) / D2R - hipDeg, (Math.PI - knee) / D2R];
+}
+// The pointer's turn (in the hand) that points it `want` degrees, given the arm's two angles.
+const aim = (want, arm, elb) => want - arm - elb;
+const asAttack = (kind, t) => {
+  const paw = Math.sin(t * 16);
+  if (kind === 'flick') return [
+    { x: -2, lift: 1, tilt: -9, head: -6, armN: -110, elbN: -50, ptr: aim(-170, -110, -50), armF: 40, elbF: -40, earN: 14, earF: 12, antl: 3, thighN: -6, thighF: 8, shinN: 6, shinF: 0, tunic: 6, tunicU: 8, puff: 10, capeA: 10, capeB: 6, capeC: 4 },
+    { x: 5, lift: 0, tilt: 10, head: 6, armN: 0, elbN: -8, ptr: aim(-14, 0, -8), armF: 100, elbF: -10, earN: -12, earF: -10, antl: -3, thighN: -20, thighF: 10, shinN: 12, shinF: 4, tunic: -8, tunicU: -10, puff: -10, capeA: 30, capeB: 26, capeC: 22 },
+  ];
+  if (kind === 'sweep') return [
+    { x: -3, lift: 3, tilt: -14, head: -12, armN: -160, elbN: -10, ptr: aim(-175, -160, -10), armF: -30, elbF: -60, earN: 18, earF: 16, antl: 5, thighN: -4, thighF: 6, shinN: 0, shinF: 0, tunic: 8, tunicU: 10, puff: 14, capeA: 6, capeB: 3, capeC: 2 },
+    { x: 8, lift: -1, tilt: 16, head: 10, armN: 40, elbN: 10, ptr: aim(55, 40, 10), armF: 120, elbF: 10, earN: -20, earF: -18, antl: -5, thighN: -28, thighF: 16, shinN: 18, shinF: 6, tunic: -12, tunicU: -14, puff: -16, capeA: 36, capeB: 30, capeC: 26 },
+  ];
+  if (kind === 'charge') return [
+    { x: -6, lift: -3, tilt: 18, head: 30, armN: 90, elbN: -40, ptr: aim(150, 90, -40), armF: 110, elbF: -20, earN: -26, earF: -24, antl: 4, thighN: -14 + paw * 16, thighF: 12, shinN: 30 + paw * 20, shinF: 6, tunic: 6, tunicU: 8, puff: 18, capeA: 14, capeB: 10, capeC: 8 },
+    { x: 16, lift: 1, tilt: 26, head: 36, armN: 110, elbN: -20, ptr: aim(170, 110, -20), armF: 120, elbF: -10, earN: -30, earF: -28, antl: -6, thighN: -34, thighF: 30, shinN: 10, shinF: 20, tunic: -14, tunicU: -16, puff: -18, capeA: 44, capeB: 40, capeC: 34 },
+  ];
+  return [
+    { x: -3, lift: 8, tilt: -18, head: -14, armN: -140, elbN: -20, ptr: aim(-150, -140, -20), armF: -40, elbF: -50, earN: 22, earF: 18, antl: 6, thighN: -72, thighF: 6, shinN: 84, shinF: 4, tunic: 12, tunicU: 16, puff: 20, capeA: 2, capeB: 0, capeC: 0 },
+    { x: 6, lift: -2, tilt: 12, head: 12, armN: 40, elbN: -10, ptr: aim(40, 40, -10), armF: 60, elbF: -20, earN: -24, earF: -20, antl: -6, thighN: 12, thighF: -10, shinN: 0, shinF: 8, tunic: -14, tunicU: -18, puff: -20, capeA: 34, capeB: 30, capeC: 26 },
+  ];
+};
+export const astraeaRig = sized(makeRig({
+  w: 70, h: 112, soft: true, stride: 8, recover: 0.7,
+  springs: {
+    x: [200, 16], lift: [150, 13], tilt: [150, 12], head: [120, 10], armN: [190, 14], elbN: [210, 15], armF: [150, 12], elbF: [160, 12], ptr: [200, 14], earN: [110, 6], earF: [110, 6], antl: [120, 7],
+    thighN: [280, 18], thighF: [280, 18], shinN: [280, 18], shinF: [280, 18], tunic: [140, 8], tunicU: [100, 6], puff: [140, 6],
+    capeA: [60, 6], capeB: [48, 5], capeC: [40, 4], charm0: [60, 3.2], charm1: [55, 3],
+  },
+  fast: ['x', 'armN', 'elbN', 'ptr', 'thighN', 'thighF', 'shinN', 'shinF'],
+  kick: { tilt: -120, head: -160, earN: 260, earF: 260, tunic: 180, capeA: 240, capeB: 280, capeC: 320 },
+  turnKick: { capeA: 320, capeB: 380, capeC: 420, tunic: 200, earN: 200, earF: 200, puff: 300 },
   pose(m, a) {
     a.uidOff = (m.uid % 13) * 0.93;
     const t = a.t + a.uidOff;
-    const lu = t % 10;
-    const shush = hold(lu, 4, 4.4, 5.4, 5.8);
-    const turnp = hold(lu, 7.4, 7.6, 8, 8.2);
-    const br = Math.sin(t * 1.4);
-    a.foShut = a.ph.strike > 0.15 || (a.ph.antic > 0.6);
-    a.foShush = shush;
-    const idle = { x: 0, lift: br * 0.6, tilt: br * 1.4 + shush * 6, head: -br * 2 - 6 + shush * 8, robe: br * 2, wingN: 30 - shush * 110 + turnp * 30, wingF: 40 + turnp * 20, book: -6 + turnp * 6, bookX: 0, bookY: 0 };
-    const s1 = Math.sin(t * 4);
-    const walk = { x: 0, lift: Math.abs(s1) * 1, tilt: 6, head: -8, robe: -6, wingN: 34, wingF: 46, book: -10, bookX: 0, bookY: 0 };
-    // The slam: the book up over her head, then shut and down on you.
-    const antic = { x: -3, lift: 2, tilt: -12, head: -14, robe: 8, wingN: -120, wingF: -100, book: -30, bookX: -6, bookY: 28 };
-    const strike = { x: 6, lift: 0, tilt: 16, head: 12, robe: -10, wingN: 60, wingF: 50, book: 70, bookX: 18, bookY: -6 };
-    return stateBlend(a, idle, walk, antic, strike);
+    a.asU = stepPhase(m, a, 'as', AS_STRIDE * 1.5);
+    const mo = a.mo ?? {};
+    // A new attack takes the next of her moves.
+    const active = a.ph.antic > 0.02 || a.ph.strike > 0.02;
+    if (active && !mo.asIn) {
+      mo.asIn = true;
+      mo.asKind = ((mo.asKind ?? -1) + 1) % AS_KINDS.length;
+      mo.asTrail = [];
+    }
+    // (A named cast, world/observatory.js, picks its move; it holds through the blow that ends it.)
+    if (m.castPose && AS_KINDS.includes(m.castPose)) mo.asForce = m.castPose;
+    if (!active) {
+      mo.asIn = false;
+      if (!m.castPose) mo.asForce = null;
+    }
+    const kind = m.asKind ?? mo.asForce ?? AS_KINDS[mo.asKind ?? 0];
+    a.asKind = kind;
+    const arr = m.mech?.arranging ? 1 : 0;
+    const struck = m.mech?.struck && m.vulnUntil > a.now ? 1 : 0;
+    a.asArr = arr;
+    a.asStruck = struck;
+    // Slow, calm breathing; the night wind in her cape.
+    const br = Math.sin(t * 1.05);
+    const wind = Math.sin(t * 1.1) * 3 + Math.sin(t * 2.3) * 1.4;
+    // Her idle, a 14 s act: she counts four stars overhead, tapping each with her pointer and
+    // whispering its number; then she loses count, sighs with a hand to her brow, shakes her head,
+    // breathes in and starts again.
+    const lu = fr(t / 14) * 14;
+    const lost = hold(lu, 9.2, 9.8, 12.2, 12.9);
+    const counting = 1 - lost;
+    const k = Math.min(3, Math.floor(lu / 2.3));
+    const want = [-62, -86, -112, -96][k];
+    const tap = lu < 9.2 ? hold(fr(lu / 2.3) * 2.3, 1, 1.12, 1.24, 1.6) : 0;
+    const shake = hold(lu, 10.6, 10.8, 11.6, 11.9) * Math.sin(t * 11) * 7;
+    const flick = hold(fr(t / 7.3) * 7.3, 3, 3.1, 3.2, 3.5);
+    const shiftW = Math.sin(t * 0.45);
+    a.asCount = counting;
+    a.asLost = lost;
+    a.asTap = tap;
+    const armC = -18;
+    const elbC = want - armC + 6;
+    const idle = {
+      x: 0, lift: br * 0.35 - lost * 0.8, tilt: br * 0.6 - 1 + lost * 4, head: (-6 + (want + 62) * 0.22 - tap * 3) * counting + (6 + shake) * lost,
+      armN: armC * counting + 64 * lost, elbN: elbC * counting - 108 * lost, ptr: (-6 - tap * 12) * counting + aim(-84, 64, -108) * lost,
+      // (The far hand rests on her ruff while she counts; up to her brow when she loses count.)
+      armF: 70 * counting - 30 * lost, elbF: -128 * counting - 118 * lost,
+      earN: br * 3 + flick * 26 - lost * 18, earF: -br * 3 + flick * 20 - lost * 16, antl: br * 1.5,
+      thighN: -1 - Math.max(0, shiftW) * 5, thighF: 1 + Math.max(0, -shiftW) * 3, shinN: Math.max(0, shiftW) * 9, shinF: Math.max(0, -shiftW) * 5,
+      tunic: br * 1.2, tunicU: br * 1.6, puff: Math.sin(t * 2.6) * 8,
+      capeA: 8 + wind, capeB: 4 + wind * 0.8, capeC: 3 + wind * 0.6, charm0: 0, charm1: 0,
+    };
+    // Walking: a graceful deer's step on planted feet. Each hoof stays put on the floor while her
+    // body passes over it, then lifts and swings forward in a smooth arc; her knees bend to wherever
+    // the hoof is (asLegIK), so nothing slides. The body is highest as a leg passes under it; hips,
+    // head, ears, tunic, tail and cape all ride the steps a beat behind one another.
+    const u = a.asU;
+    // (The legs' springs trail their targets by about 0.05 s: the hooves are aimed that far ahead
+    // in the stride, so on the floor they stay exactly put.)
+    const lead = ((mo.rig?.asV ?? 0) / (AS_STRIDE * 1.5)) * 0.05;
+    const [dxN, upN] = pawStep(u + lead, 0, AS_STRIDE, AS_DUTY, 3.4);
+    const [dxF, upF] = pawStep(u + lead, 0.5, AS_STRIDE, AS_DUTY, 3.4);
+    const R = (AS_STRIDE * AS_DUTY) / 2;
+    const under = Math.max(upN ? 0 : 1 - (dxN / R) ** 2, upF ? 0 : 1 - (dxF / R) ** 2);
+    const w2 = u * TAU * 2;
+    const wLift = -1.5 + under * 1;
+    const wTilt = 3 + Math.sin(w2 - 0.4) * 0.6;
+    const [thN, shN] = asLegIK(dxN, 23.6 + wLift - upN, wTilt * 0.3);
+    const [thF, shF] = asLegIK(dxF, 23.6 + wLift - upF, wTilt * 0.3);
+    const sw = Math.sin(u * TAU);
+    const walk = {
+      x: 0, lift: wLift, tilt: wTilt, head: -3 + Math.sin(w2 - 1.1) * 1.4, armN: 60 + Math.sin(u * TAU - 0.5) * 4, elbN: -100, ptr: aim(-88, 60 + Math.sin(u * TAU - 0.5) * 4, -100),
+      armF: 75 - Math.sin(u * TAU - 0.4) * 12, elbF: -30 - Math.max(0, Math.sin(u * TAU - 0.4)) * 16,
+      earN: -6 + Math.sin(w2 - 1.6) * 5, earF: -5 + Math.sin(w2 - 1.9) * 4, antl: -2 + Math.sin(w2 - 1.3) * 1.5,
+      thighN: thN, thighF: thF, shinN: shN, shinF: shF,
+      tunic: -4 + sw * 3, tunicU: -6 + Math.sin(u * TAU - 0.7) * 4, puff: 8 + Math.sin(w2 - 0.8) * 12,
+      capeA: 22 + Math.sin(w2 - 0.6) * 2, capeB: 18 + Math.sin(w2 - 1.5) * 4, capeC: 14 + Math.sin(w2 - 2.4) * 7, charm0: 0, charm1: 0,
+    };
+    const [antic, strike] = asAttack(kind, t);
+    for (const o of [antic, strike]) Object.assign(o, { charm0: 0, charm1: 0 });
+    let S = stateBlend(a, idle, walk, antic, strike);
+    if (arr) {
+      // Floating, legs dangling, the pointer sweeping great arcs, the cape streaming in her own wind.
+      const s2 = Math.sin(t * 1.6);
+      S = { ...S, lift: 6 + Math.sin(t * 2) * 2.4, tilt: -4 + s2 * 3, head: -16 - s2 * 4, armN: -50 + s2 * 34, elbN: -30, ptr: s2 * 30, armF: -120 + s2 * 14, elbF: -30, earN: -16, earF: -12, antl: s2 * 4,
+        thighN: 10 + Math.sin(t * 2.2) * 6, thighF: -6 + Math.sin(t * 2.2 + 1.4) * 6, shinN: 22 + Math.sin(t * 2.2 - 0.6) * 8, shinF: 18 + Math.sin(t * 2.2 + 0.8) * 8, tunic: s2 * 6, tunicU: s2 * 8,
+        capeA: 40 + s2 * 10, capeB: 30 + Math.sin(t * 1.6 - 0.8) * 14, capeC: 24 + Math.sin(t * 1.6 - 1.6) * 18, puff: s2 * 14 };
+    }
+    if (struck) {
+      // Kneeling to look, both hands clasped under her chin, head tipped right back.
+      S = { ...S, lift: -9, tilt: -6, head: -24 + Math.sin(t * 2) * 2, armN: 40, elbN: -150, ptr: aim(-100, 40, -150), armF: 50, elbF: -150, earN: -14 + Math.sin(t * 3) * 6, earF: -12, antl: 3,
+        thighN: -46, thighF: -40, shinN: 112, shinF: 108, tunic: 4, tunicU: 6, capeA: 6 + wind, capeB: 3 + wind * 0.7, capeC: 2 + wind * 0.5, puff: Math.sin(t * 5) * 18 };
+    }
+    return S;
+  },
+  // The charms hang from the cape's corners and swing back down whatever the cape does.
+  follow: (S, a) => {
+    const c = S.capeA + S.capeB + S.capeC + S.tilt;
+    return { charm0: -c + Math.sin(a.t * 2.1) * 6, charm1: -c + Math.sin(a.t * 2.1 + 1.3) * 6 };
   },
   parts: [
-    { name: 'waist', parent: null, at: (S) => [S.x, -40 - S.lift], rot: (S) => S.tilt * 0.3 * D2R },
-    { name: 'chest', parent: 'waist', at: () => [0, 1], rot: (S) => S.tilt * 0.7 * D2R },
-    { name: 'nk', parent: 'chest', at: () => [1, -22], rot: (S) => (S.head - S.tilt * 0.5) * D2R },
-    ...foPass(false),
-    ...foPass(true),
-    { name: 'face', parent: 'nk', s: (a) => foFace(moodOf(a, a.foShush > 0.5 ? 'sleep' : null)), pivot: [15, 25] },
+    { name: 'hip', parent: null, at: (S) => [S.x, -28.6 - S.lift], rot: (S) => S.tilt * 0.3 * D2R },
+    { name: 'chest', parent: 'hip', at: () => [0, 1], rot: (S) => S.tilt * 0.7 * D2R },
+    { name: 'nk', parent: 'chest', at: () => [1, -21], rot: (S) => (S.head - S.tilt * 0.5) * D2R },
+    { name: 'elbowN', parent: 'upN', at: () => [7, 0] },
+    { name: 'elbowF', parent: 'upF', at: () => [7, 0] },
+    { name: 'handN', parent: 'foreN', at: () => [9.3, 0] },
+    { name: 'knee0', parent: 'thigh0', at: () => [0, 9.6] },
+    { name: 'knee1', parent: 'thigh1', at: () => [0, 9.6] },
+    { name: 'capeA', parent: 'cape0' },
+    { name: 'capeB', parent: 'cape1' },
+    { name: 'capeC', parent: 'cape2' },
+    ...asPass(false),
+    ...asPass(true),
+    { name: 'face', parent: 'nk', s: (a) => asFace(asMood(a)), pivot: [17, 27] },
   ],
+  under: asOrbit(false),
   fx(ctx, m, a, S, mat) {
+    asOrbit(true)(ctx, m, a, S, mat);
     if (m.hp <= 0) return;
-    // Loose pages drifting off the open book; a puff when it slams.
-    if (!a.foShut) {
-      for (let k = 0; k < 2; k++) {
-        const u = fr(a.now * 0.3 + k / 2 + (m.uid % 7) * 0.1);
-        const [px, py] = at2(mat('book'), -6 + k * 12, -16);
-        // (Solid paper with ink lines, fading only at the very ends: a half-faded plain cream
-        // square read as a grey block, 2026-11-18.)
-        ctx.globalAlpha = a.alpha * Math.min(1, Math.sin(u * Math.PI) * 4);
-        ctx.save();
-        ctx.translate(px + Math.sin(u * 6 + k) * 6, py - u * 30);
-        ctx.rotate(Math.sin(u * 8 + k) * 0.8);
-        ctx.fillStyle = '#d8c8b0';
-        ctx.fillRect(-3.2, -3.9, 6.4, 7.8);
-        ctx.fillStyle = '#fffaf0';
-        ctx.fillRect(-2.8, -3.5, 5.6, 7);
-        ctx.fillStyle = '#9a8ab8';
-        for (let l = 0; l < 3; l++) ctx.fillRect(-1.9, -2 + l * 1.9, l === 2 ? 2.4 : 3.8, 0.6);
-        ctx.restore();
+    const mo = a.mo ?? {};
+    const [px, py] = at2(mat('handN'), 0, 0);
+    const [sx, sy] = at2(mat('ptr'), 0, -34.4);
+    const dl = Math.hypot(sx - px, sy - py) || 1;
+    // The pointer's star glows, brighter on each counted star.
+    const glowR = 16 + (a.asTap ?? 0) * 8;
+    const g = ctx.createRadialGradient(sx, sy, 0, sx, sy, glowR);
+    g.addColorStop(0, `rgba(255,243,166,${(0.45 + (a.asTap ?? 0) * 0.3) * a.alpha})`);
+    g.addColorStop(1, 'rgba(255,243,166,0)');
+    ctx.fillStyle = g;
+    ctx.fillRect(sx - glowR, sy - glowR, glowR * 2, glowR * 2);
+    if ((a.asTap ?? 0) > 0.3) sparkle(ctx, a, sx + 2, sy - 4, 3.4 * a.asTap, a.alpha * a.asTap, '#ffffff');
+    if (a.asArr) for (let k = 0; k < 3; k++) {
+      const u = fr(a.now * 1.8 + k / 3);
+      sparkle(ctx, a, sx - ((sx - px) / dl) * u * 16 + Math.sin(u * 7 + k) * 3, sy - ((sy - py) / dl) * u * 16 + u * 6, 2.4 * (1 - u) + 0.4, a.alpha * (1 - u), k % 2 ? '#ffffff' : STARC);
+    }
+    const since = a.ph.since;
+    const kind = a.asKind;
+    // Star Flick: a star leaves the pointer's tip and flies on ahead.
+    if (kind === 'flick' && since >= 0 && since < 0.5) {
+      mo.asFrom ??= [sx, sy];
+      const [fx0, fy0] = mo.asFrom;
+      const u = since / 0.5;
+      const x = fx0 + u * 120;
+      const y = fy0 + u * u * 18;
+      for (let k = 3; k >= 0; k--) sparkle(ctx, a, x - k * 9, y - k * 1.2, (5 - k) * (1 - u * 0.6), a.alpha * (1 - k * 0.2) * (1 - u * 0.5), k ? STARC : '#ffffff');
+    } else mo.asFrom = null;
+    // Constellation Sweep: the pointer's path drawn as linked stars, lingering, then fading.
+    if (kind === 'sweep' && since >= 0 && since < 1.1) {
+      const trail = (mo.asTrail ??= []);
+      if (since < 0.3 && (!trail.length || Math.hypot(trail.at(-1)[0] - sx, trail.at(-1)[1] - sy) > 9)) trail.push([sx, sy]);
+      const fade = since < 0.4 ? 1 : 1 - (since - 0.4) / 0.7;
+      ctx.globalAlpha = a.alpha * fade * 0.8;
+      ctx.strokeStyle = '#c8ccff';
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      trail.forEach(([x, y], k) => (k ? ctx.lineTo(x, y) : ctx.moveTo(x, y)));
+      ctx.stroke();
+      ctx.globalAlpha = a.alpha;
+      trail.forEach(([x, y], k) => sparkle(ctx, a, x, y, (k % 2 ? 2.2 : 3.2) * (0.6 + fade * 0.4), a.alpha * fade, k % 2 ? '#ffffff' : STARC));
+    }
+    // Antler Charge: the antlers' stars blaze as she lowers her head, streaks behind her as she goes.
+    if (kind === 'charge' && (a.ph.antic > 0.2 || a.ph.strike > 0.1)) {
+      const on = Math.max(a.ph.antic, a.ph.strike);
+      for (const [nm, pts] of [['antN', [[2, -21.2], [11, -11], [6, -18.6]]], ['antF', [[2, -21.2], [11, -11], [6, -18.6]]]]) {
+        for (const [x, y] of pts) {
+          const [ax, ay] = at2(mat(nm), x, y);
+          sparkle(ctx, a, ax, ay, 2.6 * on + Math.sin(a.now * 20 + x) * 0.6, a.alpha * on, nm === 'antN' ? '#fff8d8' : '#d8d4ff');
+        }
       }
-    } else if (a.ph.strike > 0.3) {
-      const [bx, by] = at2(mat('book'), 0, -4);
-      puff(ctx, a, bx + 6, by + 6, 8 * a.ph.strike, a.alpha * a.ph.strike * 0.6);
+      if (a.ph.strike > 0.1) {
+        const [cx, cy] = at2(mat('chest'), 0, -6);
+        ctx.globalAlpha = a.alpha * a.ph.strike * 0.6;
+        ctx.strokeStyle = '#c8ccff';
+        ctx.lineWidth = 1.4;
+        for (let k = 0; k < 3; k++) {
+          ctx.beginPath();
+          ctx.moveTo(cx - 18 - k * 4, cy - 8 + k * 9);
+          ctx.lineTo(cx - 40 - k * 6, cy - 8 + k * 9);
+          ctx.stroke();
+        }
+        ctx.globalAlpha = a.alpha;
+      }
+    }
+    // Hoof Stamp: a ring of stars bursts out along the floor from her hoof.
+    if (kind === 'stamp' && a.ph.strike > 0.3) {
+      const [fx, fy] = at2(mat('hip'), 8, 28.6);
+      for (let k = 0; k < 8; k++) {
+        const ang2 = Math.PI + (k / 7) * Math.PI;
+        const r = 10 + a.ph.strike * 30;
+        sparkle(ctx, a, fx + Math.cos(ang2) * r, fy + Math.sin(ang2) * r * 0.35, 3.2 * a.ph.strike, a.alpha * a.ph.strike, k % 2 ? '#ffffff' : STARC);
+      }
+      puff(ctx, a, fx - 10, fy - 2, 6 * a.ph.strike, a.alpha * a.ph.strike * 0.4);
+      puff(ctx, a, fx + 12, fy - 2, 5 * a.ph.strike, a.alpha * a.ph.strike * 0.4);
     }
   },
-}), 1.25);
-export function folioStill(pose, f, mood) {
-  const fm = MOODS.has(mood) ? mood : 'idle';
-  const wy = -40;
-  const cy = wy + 1;
-  return { w: 90, h: 110, res: 2, shapes: shift([
-    ...put(foWing(true)(), [1, 1], -12, cy - 18, 40), ...put(foRobe(), [20, 1], 0, wy), ...put(foBody(), [15, 25], 0, cy), ...put(foHead(), [15, 25], 1, cy - 22), ...put(faceShapes(fm, FO_FACE), [15, 25], 1, cy - 22),
-    ...put(foBook(false)(), [17, 20], 10, cy - 6, -6), ...put(foWing(false)(), [1, 1], 8, cy - 17, 30),
-  ], 45, 109) };
+}), 1.5);
+export function astraeaStill(pose, f, mood) {
+  const fm = AS_FACES[mood] || MOODS.has(mood) ? mood : 'idle';
+  const hy = -28.6;
+  const cy = hy + 1;
+  const ny = cy - 21;
+  return { w: 90, h: 114, res: 2, shapes: shift([
+    ...put(asAntler(true)(), [4, 23], -6, ny - 21, -14), ...put(asEar(true)(), [1, 5.5], -10, ny - 19.6, 208),
+    ...put(capeA(false)(), [11, 1], -2, cy - 19, 8), ...put(capeB(false)(), [13, 1], -4, cy - 5, 12), ...put(capeC(false)(), [15, 1], -6, cy + 3, 15),
+    ...put(asUpper(true)(), [2, 4], -5, cy - 15, 70), ...put(asFore(true)(), [1.5, 4], -2.6, cy - 8.4, -58), ...put(asThigh(true)(), [5, 1], -3.6, hy + 5), ...put(asShin(true)(), [5, 1], -3.6, hy + 14.6),
+    ...put(asPuff(), [6, 4], -11, hy + 4), ...put(asThigh(false)(), [5, 1], 3.6, hy + 5), ...put(asShin(false)(), [5, 1], 3.6, hy + 14.6),
+    ...put(asPetals(), [15, 1], 0, hy), ...put(asTunic(), [14, 1], 0, hy), ...put(asNeck(), [4, 10], 1, cy - 15),
+    ...put(asChest(), [12, 21], 0, cy), ...put(asAntler(false)(), [4, 23], 6.4, ny - 22, 10), ...put(asHead(), [17, 27], 1, ny), ...put(asFaceShapes(fm), [17, 27], 1, ny),
+    ...put(asEar(false)(), [1, 5.5], 9, ny - 20, -28),
+    ...put(asUpper(false)(), [2, 4], 5, cy - 14, 60), ...put(asFore(false)(), [1.5, 4], 8.5, cy - 7.9, -100),
+  ], 45, 113) };
+}
+// A wandering star from Astraea's sky (her constellation fight, world/observatory.js): a plump
+// five-point star, slowly turning and bobbing, a soft glow and a ring pulsing out from it to say
+// "strike me next". Its number is drawn over it by render/observatory.js.
+const sp = pairOf('sp');
+const spStar = () => [star5(11, 11.6, 10.4, '#ffe68a'), F(star5(11, 11.6, 6.4, '#fff8d8')), F(E(8.4, 8.4, 2, 1.4, '#ffffff'))];
+const SP_STAR = sp('star', 22, 22, spStar, 2);
+export const starRig = makeRig({
+  w: 26, h: 26, soft: true, stride: 8, recover: 0.4,
+  springs: { bob: [80, 6], spin: [60, 5] },
+  fast: [],
+  kick: { bob: 120 },
+  pose(m, a) {
+    const t = a.t + (m.uid % 7) * 0.7;
+    return { bob: Math.sin(t * 2.2) * 2.4, spin: Math.sin(t * 0.9) * 18 };
+  },
+  parts: [
+    { name: 'core', parent: null, at: (S) => [0, -13 + S.bob], rot: (S) => S.spin * D2R },
+    { name: 'starO', parent: 'core', s: SP_STAR[0], pivot: [11, 11.6] },
+    { name: 'starB', parent: 'core', s: SP_STAR[1], pivot: [11, 11.6] },
+  ],
+  under(ctx, m, a, S, mat) {
+    if (m.hp <= 0) return;
+    const [x, y] = at2(mat('core'), 0, 0);
+    const g = ctx.createRadialGradient(x, y, 0, x, y, 26);
+    g.addColorStop(0, `rgba(255,243,166,${0.55 * a.alpha})`);
+    g.addColorStop(1, 'rgba(255,243,166,0)');
+    ctx.fillStyle = g;
+    ctx.fillRect(x - 26, y - 26, 52, 52);
+    const u = fr(a.now * 0.8);
+    ctx.globalAlpha = a.alpha * (1 - u) * 0.8;
+    ctx.strokeStyle = '#fff3a6';
+    ctx.lineWidth = 1.6;
+    ctx.beginPath();
+    ctx.arc(x, y, 12 + u * 18, 0, TAU);
+    ctx.stroke();
+    ctx.globalAlpha = a.alpha;
+  },
+});
+export function starStill() {
+  return { w: 26, h: 26, res: 2, shapes: shift(put(spStar(), [11, 11.6], 0, -13), 13, 25) };
 }
 
-// =====================================================================================
-// The Eclipse Twins: Sol and Luna
-// =====================================================================================
-const FOX = ramp('#ffa04a', { step: 9, turn: 10 });
-const BUN = ramp('#eceaff', { step: 7, turn: 10, lift: 3 });
-const SUNC = '#ffd36b';
-const MOONC = '#d8e4ff';
-const tw = pairOf('tw');
-// Sol's head: a fox face, big ears, a cream muzzle. Box 28 x 26; the neck at (14, 25).
-const solHead = () => [
-  T([[4, 12], [3, 0.6], [11, 7]], FOX.base), F(T([[5, 10], [4.4, 3], [9, 7.4]], '#fff0e0')), T([[24, 12], [25, 0.6], [17, 7]], FOX.base), F(T([[23, 10], [23.6, 3], [19, 7.4]], '#fff0e0')),
-  E(14, 15, 11, 10, FOX.base), T([[5, 17], [14, 25], [23, 17], [14, 21]], '#fff4e8'), crescent(14, 15, 11, 10, FOX.sh, { k: 0.18, a0: 100, a1: 200 }), E(14, 19.6, 1.6, 1.2, '#4a2a2a'),
-];
-// Luna's head: a round bunny face, long ears with pink insides (their own parts). Box 26 x 24; the neck at (13, 23).
-const lunaHead = () => [E(13, 13, 10.6, 9.6, BUN.base), crescent(13, 13, 10.6, 9.6, BUN.sh, { k: 0.18, a0: 100, a1: 200 }), E(13, 17.6, 1.2, 0.9, '#ff9ab8')];
-const lunaEar = (far) => () => [E(4, 9, 3.6, 9, far ? BUN.sh : BUN.base), F(E(4, 9.6, 1.6, 6.6, '#ffc8dc'))];
-// Bodies: a little dress, sun-gold or moon-blue. Box 20 x 22; the hips at (10, 21).
-const twBody = (c) => () => {
-  const hem = [];
-  for (let k = 0; k <= 5; k++) hem.push([1 + k * 3.6, 20 + (k % 2 ? 1.4 : 0)]);
-  return [T([[6, 1], [14, 1], [19, 20], ...hem.reverse(), [1, 20]], c), F(T([[6, 1], [8, 1], [3, 20], [1, 20]], '#ffffff')), E(10, 1.6, 4, 1.6, '#ffffff')];
-};
-const twArm = (c, far) => () => [taper([[1, 2], [7, 2.4]], 3, 2.6, far ? ramp(c).sh : c), E(8, 2.4, 2, 1.9, far ? '#e8e0f0' : '#ffffff')];
-const twLeg = (c, far) => () => [taper([[2.5, 0], [2.5, 5]], 3, 2.8, far ? ramp(c).sh : c), E(3, 5.6, 2.4, 1.4, far ? '#a8a0c0' : '#ffffff')];
-// Sol's rays: a ring of sun petals rooted behind her head. Box 46 x 46; centred at (23, 23).
-const solRays = () => {
-  const out = [];
-  for (let k = 0; k < 12; k++) {
-    const a = (k / 12) * TAU;
-    out.push(T([[23 + Math.cos(a - 0.18) * 13, 23 + Math.sin(a - 0.18) * 13], [23 + Math.cos(a) * 22, 23 + Math.sin(a) * 22], [23 + Math.cos(a + 0.18) * 13, 23 + Math.sin(a + 0.18) * 13]], k % 2 ? '#ffb84a' : SUNC));
-  }
-  out.push(E(23, 23, 14, 14, '#ffe8a0'));
-  return out;
-};
-const solDisc = () => [E(9, 9, 8.6, 8.6, SUNC), E(9, 9, 6.4, 6.4, '#fff2b0'), F(E(6.6, 6.6, 2, 1.4, '#ffffff'))];
-// Luna's crescent: held like a shield, a star on its tip. Box 22 x 26; held at (6, 13).
-const lunaMoon = () => [T([...arcP(11, 13, 10, 12, 90, 270, 14), ...arcP(15, 13, 7, 10, 270, 90, 14).reverse()], MOONC), F(T([...arcP(11, 13, 8.6, 10.6, 110, 200, 8), [8, 12]], '#ffffff')), star5(3, 2, 2, STARC)];
-const lunaVeil = () => [T([[2, 0], [20, 0], [24, 22], [12, 26], [0, 22]], '#c8d2ff'), ...[[6, 8], [16, 12], [10, 18], [19, 20]].map(([x, y]) => F(star5(x, y, 1.2, '#ffffff')))];
-const SOL = {
-  HEAD: tw('solhead', 28, 26, solHead, 2), BODY: tw('solbody', 20, 22, twBody('#ffd36b'), 2), RAYS: tw('solrays', 46, 46, solRays, 2), DISC: tw('soldisc', 18, 18, solDisc, 2),
-  ARM: [false, true].map((f) => tw(`solarm${f ? 1 : 0}`, 10, 5, twArm('#ffd36b', f), 2)), LEG: [false, true].map((f) => tw(`solleg${f ? 1 : 0}`, 6, 7, twLeg(FOX.base, f), 2)),
-  TAIL: tw('soltail', 20, 14, () => [taper([[1, 12], [8, 9], [14, 4], [19, 3]], 4, 6, FOX.base), E(17, 3.4, 4, 3, '#fff4e8')], 2),
-};
-const LUNA = {
-  HEAD: tw('lunahead', 26, 24, lunaHead, 2), BODY: tw('lunabody', 20, 22, twBody('#a8b8f0'), 2), MOON: tw('lunamoon', 22, 26, lunaMoon, 2), VEIL: tw('lunaveil', 24, 26, lunaVeil, 2),
-  EAR: [false, true].map((f) => tw(`lunaear${f ? 1 : 0}`, 8, 19, lunaEar(f), 2)),
-  ARM: [false, true].map((f) => tw(`lunaarm${f ? 1 : 0}`, 10, 5, twArm('#a8b8f0', f), 2)), LEG: [false, true].map((f) => tw(`lunaleg${f ? 1 : 0}`, 6, 7, twLeg(BUN.base, f), 2)),
-};
-const SOL_FACE = { eyes: [[17.6, 14.6, 1.8, 2.4, 1], [10.6, 14.6, 1.6, 2.2, -1]], mouth: [14, 22, 1.4], blush: [[7.4, 18, 1.6], [20.6, 18, 1.6]], iris: '#e85a2a', lid: 0, lashes: 1 };
-const LUNA_FACE = { eyes: [[16.4, 12.6, 1.8, 2.4, 1], [9.6, 12.6, 1.6, 2.2, -1]], mouth: [13, 18.6, 1.2], blush: [[6.4, 16, 1.6], [19.6, 16, 1.6]], iris: '#6a7ad8', lid: 0.4, lashes: 1 };
-const solFace = (mood) => sm(`tw|sol|${mood}`, 28, 26, () => faceShapes(mood, SOL_FACE));
-const lunaFace = (mood) => sm(`tw|luna|${mood}`, 26, 24, () => faceShapes(mood, LUNA_FACE));
-const twinPose = (m, a, bouncy) => {
-  a.uidOff = (m.uid % 13) * 0.93;
-  const t = a.t + a.uidOff;
-  const u = stepPhase(m, a, 'tw', 12);
-  const alone = m.mech?.alone ? 1 : 0;
-  a.twAlone = alone;
-  const br = Math.sin(t * (bouncy ? 2.6 : 1.4));
-  const s1 = Math.sin(u * TAU);
-  const idle = { x: 0, lift: (bouncy ? Math.abs(br) * 2 : 3 + br * 1.6) - alone * 2, tilt: br * 3 + alone * 10, head: -br * 4 + alone * 16, armN: 40 + br * 10 - alone * 20, armF: -40 - br * 10 + alone * 60, legN: 0, legF: 0, prop: br * 6, extra: Math.sin(t * 1.2) * 10 };
-  const walk = { x: 0, lift: bouncy ? Math.abs(s1) * 2.4 : 3 + Math.abs(s1), tilt: 6, head: -4, armN: 30 + s1 * 16, armF: -30 - s1 * 16, legN: s1 * 26, legF: -s1 * 26, prop: s1 * 6, extra: -10 };
-  const antic = { x: -3, lift: 2, tilt: -12, head: -10, armN: -130, armF: -60, legN: 14, legF: -10, prop: -40, extra: 10 };
-  const strike = { x: 6, lift: 1, tilt: 16, head: 10, armN: 50, armF: 30, legN: -16, legF: 14, prop: 60, extra: -14 };
-  return stateBlend(a, idle, walk, antic, strike);
-};
-const twSprings = { x: [240, 18], lift: [220, 14], tilt: [180, 12], head: [150, 9], armN: [200, 13], armF: [200, 13], legN: [260, 16], legF: [260, 16], prop: [200, 12], extra: [100, 6] };
-const legPart = (P, k, far, tag, i) => ({ name: `leg${k}${tag}`, parent: 'hip', s: P.LEG[far ? 1 : 0][i], pivot: [2.5, 0], at: () => [far ? -2.6 : 2.6, -1], rot: (S) => (far ? S.legF : S.legN) * D2R });
-const solPass = (bare) => {
-  const i = bare ? 1 : 0;
-  const tag = bare ? 'b' : '';
-  return [
-    { name: `rays${tag}`, parent: 'nk', s: SOL.RAYS[i], pivot: [23, 23], at: () => [0, -14], rot: (S, a) => (a.t * 20 + S.extra) * D2R },
-    { name: `tail${tag}`, parent: 'hip', s: SOL.TAIL[i], pivot: [1, 12], at: () => [-6, -4], rot: (S) => (-20 + S.extra) * D2R },
-    { name: `armF${tag}`, parent: 'hip', s: SOL.ARM[1][i], pivot: [1, 2], at: () => [-2, -17], rot: (S) => S.armF * D2R },
-    legPart(SOL, 1, true, tag, i), legPart(SOL, 0, false, tag, i),
-    { name: `body${tag}`, parent: 'hip', s: SOL.BODY[i], pivot: [10, 21] },
-    { name: `head${tag}`, parent: 'nk', s: SOL.HEAD[i], pivot: [14, 25] },
-    { name: `disc${tag}`, parent: 'handN', s: SOL.DISC[i], pivot: [9, 9], rot: (S) => S.prop * D2R },
-    { name: `armN${tag}`, parent: 'hip', s: SOL.ARM[0][i], pivot: [1, 2], at: () => [2.6, -16], rot: (S) => S.armN * D2R },
-  ];
-};
-const lunaPass = (bare) => {
-  const i = bare ? 1 : 0;
-  const tag = bare ? 'b' : '';
-  return [
-    { name: `veil${tag}`, parent: 'nk', s: LUNA.VEIL[i], pivot: [12, 2], at: () => [-4, -18], rot: (S) => (14 + S.extra) * D2R, alpha: () => 0.55 },
-    { name: `earF${tag}`, parent: 'nk', s: LUNA.EAR[1][i], pivot: [4, 17], at: () => [-4, -18], rot: (S) => (-14 - S.extra * 0.6 - S.head * 0.4) * D2R },
-    { name: `armF${tag}`, parent: 'hip', s: LUNA.ARM[1][i], pivot: [1, 2], at: () => [-2, -17], rot: (S) => S.armF * D2R },
-    legPart(LUNA, 1, true, tag, i), legPart(LUNA, 0, false, tag, i),
-    { name: `body${tag}`, parent: 'hip', s: LUNA.BODY[i], pivot: [10, 21] },
-    { name: `head${tag}`, parent: 'nk', s: LUNA.HEAD[i], pivot: [13, 23] },
-    { name: `earN${tag}`, parent: 'nk', s: LUNA.EAR[0][i], pivot: [4, 17], at: () => [3, -19], rot: (S) => (8 - S.extra * 0.6 - S.head * 0.4) * D2R },
-    { name: `moon${tag}`, parent: 'handN', s: LUNA.MOON[i], pivot: [6, 13], rot: (S) => S.prop * D2R },
-    { name: `armN${tag}`, parent: 'hip', s: LUNA.ARM[0][i], pivot: [1, 2], at: () => [2.6, -16], rot: (S) => S.armN * D2R },
-  ];
-};
-const twinRig = (pass, face, bouncy, glowC) => sized(makeRig({
-  w: 80, h: 100, soft: true, stride: 12, recover: 0.6,
-  springs: twSprings,
-  fast: ['x', 'armN', 'prop'],
-  kick: { tilt: -160, head: -220, extra: 300 },
-  turnKick: { extra: 260 },
-  pose: (m, a) => twinPose(m, a, bouncy),
-  parts: [
-    { name: 'hip', parent: null, at: (S) => [S.x, -7 - S.lift], rot: (S) => S.tilt * D2R },
-    { name: 'nk', parent: 'hip', at: () => [0.6, -19], rot: (S) => (S.head - S.tilt * 0.5) * D2R },
-    { name: 'handN', parent: 'armN', at: () => [8, 2.4] },
-    ...pass(false),
-    ...pass(true),
-    { name: 'face', parent: 'nk', s: (a) => face(moodOf(a, a.twAlone ? 'hurt' : null)), pivot: bouncy ? [14, 25] : [13, 23] },
-  ],
-  fx(ctx, m, a, S, mat) {
-    if (m.hp <= 0) return;
-    const [hx, hy] = at2(mat('handN'), 0, 0);
-    const g = ctx.createRadialGradient(hx, hy, 0, hx, hy, 18);
-    g.addColorStop(0, `rgba(${glowC},${0.3 * a.alpha})`);
-    g.addColorStop(1, `rgba(${glowC},0)`);
-    ctx.fillStyle = g;
-    ctx.fillRect(hx - 18, hy - 18, 36, 36);
-    if (a.ph.strike > 0.2) sparkle(ctx, a, hx + 10, hy, 7 * a.ph.strike, a.alpha * a.ph.strike, bouncy ? '#fff2b0' : '#e8f0ff');
-  },
-}), 1.6);
-export const solRig = twinRig(solPass, solFace, true, '255,211,107');
-export const lunaRig = twinRig(lunaPass, lunaFace, false, '216,228,255');
-export function solStill(pose, f, mood) {
-  const fm = MOODS.has(mood) ? mood : 'idle';
-  const hy = -7;
-  const ny = hy - 19;
-  return { w: 80, h: 90, res: 2, shapes: shift([
-    ...put(solRays(), [23, 23], 0.6, ny - 14), ...put(SOLTAIL(), [1, 12], -6, hy - 4, -20), ...put(twLeg(FOX.base, true)(), [2.5, 0], -2.6, hy - 1), ...put(twLeg(FOX.base, false)(), [2.5, 0], 2.6, hy - 1),
-    ...put(twBody('#ffd36b')(), [10, 21], 0, hy), ...put(solHead(), [14, 25], 0.6, ny), ...put(faceShapes(fm, SOL_FACE), [14, 25], 0.6, ny), ...put(solDisc(), [9, 9], 10, hy - 14), ...put(twArm('#ffd36b', false)(), [1, 2], 2.6, hy - 16, 40),
-  ], 40, 89) };
-}
-const SOLTAIL = () => [taper([[1, 12], [8, 9], [14, 4], [19, 3]], 4, 6, FOX.base), E(17, 3.4, 4, 3, '#fff4e8')];
-export function lunaStill(pose, f, mood) {
-  const fm = MOODS.has(mood) ? mood : 'idle';
-  const hy = -10;
-  const ny = hy - 19;
-  return { w: 80, h: 90, res: 2, shapes: shift([
-    ...put(lunaEar(true)(), [4, 17], -3.4, ny - 18, -14), ...put(twLeg(BUN.base, true)(), [2.5, 0], -2.6, hy - 1), ...put(twLeg(BUN.base, false)(), [2.5, 0], 2.6, hy - 1),
-    ...put(twBody('#a8b8f0')(), [10, 21], 0, hy), ...put(lunaHead(), [13, 23], 0.6, ny), ...put(faceShapes(fm, LUNA_FACE), [13, 23], 0.6, ny), ...put(lunaEar(false)(), [4, 17], 3.6, ny - 19, 8),
-    ...put(lunaMoon(), [6, 13], 10, hy - 14), ...put(twArm('#a8b8f0', false)(), [1, 2], 2.6, hy - 16, 40),
-  ], 40, 89) };
-}
+
+

@@ -35,6 +35,7 @@ import { MANOR_MECHS, MANOR_CHANNEL, manorSetup, tickManor, manorBoss, manorHitM
 import { AQUA_MECHS, AQUA_CHANNEL, aquaSetup, tickAqua, aquaBoss, aquaHitMul, aquaKilled, openClam, bellWords } from './aquarium.js';
 import { CARNIVAL_MECHS, CARNIVAL_CHANNEL, carnivalSetup, tickCarnival, carnivalBoss, carnivalHitMul, carnivalKilled } from './carnival.js';
 import { OBS_MECHS, OBS_CHANNEL, obsSetup, tickObs, obsBoss, obsHitMul, obsKilled, pressLamp, lampsLit } from './observatory.js';
+import { LOOK_HOLD } from './bossfight.js';
 import { VOLCANO_MECHS, VOLCANO_CHANNEL, volcanoSetup, tickVolcano, volcanoBoss, volcanoHitMul, volcanoKilled, addCandy, recipeWords, recipeCount, wantCandy } from './volcano.js';
 import { THEATRE_MECHS, THEATRE_CHANNEL, theatreSetup, tickTheatre, theatreBoss, theatreHitMul, theatreKilled, pressCue, cueCount, nextCue } from './theatre.js';
 import { WHALE_MECHS, WHALE_CHANNEL, whaleSetup, tickWhale, whaleBoss, whaleHitMul, whaleKilled, tendBloom, bloomOpen } from './skywhale.js';
@@ -1125,6 +1126,10 @@ function land(world, g, raw, acc, fromX, heavy = false) {
 // ---------- Boss moves ----------
 
 export function addZone(world, z) {
+  // (A cast's look, world/bossfight.js: one for every zone it lays, or one each in turn.)
+  const nl = world.dungeon.nextLook;
+  if (nl && !z.look) z = { ...z, look: Array.isArray(nl) ? nl[Math.min(nl.length - 1, world.dungeon.lookI++)] : nl };
+  if (z.look && z.hold == null) z = { ...z, hold: LOOK_HOLD[z.look] ?? 0.6 };
   world.dungeon.zones.push({ t: 0, hit: false, after: 0, y: world.map.groundY, ...z });
   if (leading(world)) world.net.runAll(world, { op: 'zone', z: { ...z, from: z.from ? z.from.net ?? null : null } });
 }
@@ -1367,6 +1372,10 @@ function bossMove(world, m, up, dt) {
 function inZone(world, z, body) {
   if (z.kind === 'circle') return Math.abs(body.x - z.x) < z.w / 2 + 6 && Math.abs(body.y - z.y) < 16;
   if (z.kind === 'floor') return body.onGround && Math.abs(body.y - world.map.groundY) < 2;
+  // (world/bossfight.js's patterns: a hit on everyone; markers round a member; a ring with a safe middle.)
+  if (z.kind === 'raid') return true;
+  if (z.kind === 'buster' || z.kind === 'stack' || z.kind === 'spread') return Math.abs(body.x - z.x) < z.w / 2 + 4 && Math.abs(body.y - z.y) < 30;
+  if (z.kind === 'donut') return Math.abs(body.x - z.x) > z.inner - 4 && Math.abs(body.x - z.x) < z.w / 2 + 6 && Math.abs(body.y - z.y) < 34;
   return body.x >= z.x - 6 && body.x <= z.x + z.w + 6 && Math.abs(body.y - world.map.groundY) < 34;
 }
 
@@ -1378,9 +1387,26 @@ function tickZones(world, up, dt) {
       z.after += dt;
       continue;
     }
+    // A marker follows its member until a beat before it lands.
+    if (z.target && z.t < z.warn - (z.lock ?? 0.5)) {
+      const g = up.find((o) => o.id === z.target);
+      if (g) {
+        z.x = g.body.x;
+        z.y = g.body.y;
+      }
+    }
     if (z.t < z.warn) continue;
     z.hit = true;
     if (z.from?.hp <= 0 || z.tele) continue;
+    // A stack: the hit shared by everyone in it (too few in it, and it lands harder).
+    if (shared(z)) {
+      const inside = up.filter((g) => inZone(world, z, g.body));
+      const n = Math.max(1, inside.length);
+      const each = Math.round((z.damage / n) * (n >= (z.need ?? 2) ? 1 : 1.5));
+      run.vfx.push({ kind: 'zonehit', zone: z.kind, x: z.x, y: z.y, w: z.w, t: 0, dur: 0.5 });
+      for (const g of inside) if (!g.remote) hurtMember(world, g, each, z.x, { knock: false });
+      continue;
+    }
     if (z.kind === 'lane') {
       z.from.aim = null;
       z.from.charging = { dir: z.dir, hit: new Set() };
@@ -1390,9 +1416,10 @@ function tickZones(world, up, dt) {
     if (z.kind === 'circle' && !z.noSprout) sporeSprout(world, z);
     if (z.kind === 'floor') world.juice.push({ type: 'shake', mag: 7, dur: 0.6 });
     // (Friends online step out of these in their own games.)
-    for (const g of up) if (!g.remote && inZone(world, z, g.body)) hurtMember(world, g, z.damage, z.from?.x ?? z.x, { knock: z.kind !== 'circle' });
+    if (z.kind === 'raid') world.juice.push({ type: 'shake', mag: 4, dur: 0.4 });
+    for (const g of up) if (!g.remote && inZone(world, z, g.body)) hurtMember(world, g, z.damage, z.from?.x ?? z.x, { knock: z.kind !== 'circle' && z.kind !== 'raid' && z.kind !== 'spread' && z.kind !== 'stack' });
   }
-  run.zones = run.zones.filter((z) => !z.hit || z.after < 0.5);
+  run.zones = run.zones.filter((z) => !z.hit || z.after < (z.hold ?? 0.5));
   for (const s of run.shots) {
     if (s.at > world.now) continue;
     const g = up.find((o) => o.id === s.id);
@@ -1402,13 +1429,15 @@ function tickZones(world, up, dt) {
 }
 
 // Is (body) standing somewhere about to go off? Party members use it to dodge.
+// (Not a hit on everyone, which can't be dodged, nor the marker on yourself, which follows you.)
+const dodgeable = (world, z, body) => !z.hit && z.kind !== 'floor' && z.kind !== 'raid' && !shared(z) && !(z.target && groupOf(world).find((g) => g.body === body)?.id === z.target);
 export function dangerFor(world, body) {
-  return world.dungeon?.zones.find((z) => !z.hit && z.kind !== 'floor' && !shared(z) && inZone(world, z, body)) ?? null;
+  return world.dungeon?.zones.find((z) => dodgeable(world, z, body) && inZone(world, z, body)) ?? null;
 }
 
 // The closest safe x on the floor from (body), out of every zone about to go off.
 export function safeX(world, body) {
-  const zones = world.dungeon.zones.filter((z) => !z.hit && z.kind !== 'floor' && !shared(z));
+  const zones = world.dungeon.zones.filter((z) => dodgeable(world, z, body));
   const bad = (x) => zones.some((z) => inZone(world, z, { x, y: body.y, onGround: true }));
   for (let d = 0; d < world.map.width; d += 12) {
     for (const x of [body.x - d, body.x + d]) if (x > 24 && x < world.map.width - 24 && !bad(x)) return x;

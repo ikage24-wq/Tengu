@@ -1275,14 +1275,14 @@ export const AQUA_SCENES = {
     { card: 'Sunken Aquarium Palace', sub: 'Rank {grade}  ·  {time}' },
     { who: null, text: '{notes}. Rank bonus on your rewards: +{bonus}.' },
   ],
-  // The Twin Morays, staged: the grotto goes still, both eels gone into their holes; Murri slides
-  // up out of the floor in a gush of bubbles and peeks about, Ena rises on the far side, they
-  // slither together delighted, and both rear up and lunge at you.
+  // The Twin Morays, staged: the grotto goes still, both sisters gone into their holes; Murri pops
+  // up out of the floor in her eel hood in a gush of bubbles and peeks about, Ena rises on the far
+  // side, they skip together delighted, and both wind up and chomp at you.
   aquarium_moray: [
     { fade: 'out', dur: 0.35, color: '#0e2a40' },
     { together: [{ act: 'moraymurri', move: 'sink' }, { act: 'morayena', move: 'sink' }, { cam: 'moraymurri', dur: 0.1 }] },
     { fade: 'in', dur: 0.6 },
-    { who: null, text: 'A grotto full of holes. Something long and spotted slides out of one, and something long and golden watches from another.' },
+    { who: null, text: 'A grotto full of holes. Out of one pops a little girl in a spotted green eel hood; from another, one in a golden hood watches.' },
     { together: [{ fx: 'bubbles', at: 'moraymurri', n: 18 }, { act: 'moraymurri', move: 'emerge', dur: 1.2 }, { mood: 'moraymurri', as: 'happy' }] },
     { together: [{ face: 'moraymurri', to: 'player' }, { emote: 'moraymurri', kind: '!' }] },
     { who: 'moraymurri', text: "Sister! Visitors! Nobody's visited since the palace went down.", mood: 'happy' },
@@ -1294,8 +1294,8 @@ export const AQUA_SCENES = {
     { together: [{ act: 'moraymurri', move: 'attack', dur: 0.9 }, { act: 'morayena', move: 'attack', dur: 0.9 }, { fx: 'bubbles', at: 'player', n: 16 }, { jump: 'player', height: 20 }, { emote: 'player', kind: '!' }] },
     { cam: 'player', dur: 0.7 },
   ],
-  // Lady Abyssia, staged: the witch twirls her glowing pearl staff and giggles at the little
-  // air-breathers, then raises it, and ink floods the room in a dark swirl.
+  // Lady Abyssia, staged: the witch sways in her bubbling cauldron and giggles at the little
+  // air-breathers, then raises her ladle, and ink floods the room in a dark swirl.
   aquarium_abyssia: [
     { together: [{ cam: 'abyssia', up: 20, dur: 1.2 }, { walk: 'player', to: 'abyssia', gap: 170, speed: 110 }, { mood: 'abyssia', as: 'happy' }] },
     { together: [{ act: 'abyssia', move: 'sway', dur: 1.6, amp: 0.07, speed: 5 }, { fx: 'sparkle', at: 'abyssia', top: true, n: 10 }, { fx: 'bubbles', at: 'abyssia', n: 8 }] },
@@ -1407,7 +1407,7 @@ export const CARNIVAL_SCENES = {
   carnival_leonie: [
     { together: [{ cam: 'leonie', up: 20, dur: 1.2 }, { walk: 'player', to: 'leonie', gap: 180, speed: 110 }, { spot: 'leonie', r: 46, dur: 0.8 }, { mood: 'leonie', as: 'happy' }] },
     { together: [{ shake: 1.5, dur: 1.2 }, { act: 'leonie', move: 'windup', dur: 1.2 }] },
-    { who: null, text: 'The Big Top. A drumroll from nowhere. A spotlight swings round and finds a lioness balancing on a star-print ball, grinning.' },
+    { who: null, text: 'The Big Top. A drumroll from nowhere. A spotlight swings round and finds a lioness in a red lion tamer jacket, hoop held high, grinning.' },
     { together: [{ jump: 'leonie', height: 70 }, { fx: 'confetti', at: 'leonie', top: true, n: 30 }, { emote: 'player', kind: '!' }] },
     { together: [{ fx: 'confetti', at: 'leonie', n: 20 }, { shake: 2, dur: 0.3 }, { spot: null, dur: 0.6 }] },
     { who: 'leonie', text: 'Ladies and gentlemen! Tonight, for one night only... YOU get to be the act!', mood: 'happy' },
@@ -1522,6 +1522,11 @@ export const CARNIVAL_RADIO = {
 
 
 // ---------- Star Observatory ----------
+// Elder Goma: a grey sesame Mochi elder who blew up the Star Observatory's stair on festival night
+// and has counted the stars with Astraea every night since (Chapter 7).
+export const GOMA = { seed: 79, genes: { dough: '#d6d0d8', hairColor: 'goma' }, wear: { dress: 'elderrobe', hat: 'elderhat', face: 'fakebeard' } };
+const GOMA_CAST = { kind: 'mochi', seed: GOMA.seed, size: 'grown', name: 'Elder Goma', color: '#6a6470', genes: GOMA.genes, wear: GOMA.wear, idles: ['lookaround'] };
+
 export const OBS_SCENES = {
   observatory_results: [
     { card: 'Star Observatory', sub: 'Rank {grade}  ·  {time}' },
@@ -1563,35 +1568,66 @@ export const OBS_SCENES = {
     { together: [{ act: 'eclipsesol', move: 'attack', dur: 0.9 }, { act: 'eclipseluna', move: 'attack', dur: 0.9 }, { walk: 'player', away: 'eclipsesol', by: 26, speed: 150 }] },
     { cam: 'player', dur: 0.7 },
   ],
-  // Astraea, staged: the camera looks up from the crown of the tower at stars that do not move,
-  // then comes down to the starry stag, sad and still; she rears and stamps down a starburst, and
-  // for a moment the stars start falling again.
+  // Astraea, staged (reworked 2026-11-18): the camera looks down from the stuck stars to the
+  // moon-fawn counting them, star by star, with her pointer; Elder Goma counts along from a gantry
+  // by the telescope. She hushes you, rears, and stamps a starburst.
   observatory_astraea: [
-    { together: [{ cam: 'astraea', up: 150, dur: 0.01 }, { mood: 'astraea', as: 'sad' }] },
-    { together: [{ cam: 'astraea', up: 30, dur: 2.6 }, { walk: 'player', to: 'astraea', gap: 180, speed: 90 }] },
-    { who: null, text: 'The crown of the tower, open to the sky. The great telescope points straight up at stars that do not move.' },
-    { together: [{ act: 'astraea', move: 'sway', dur: 2.2, amp: 0.04, speed: 2 }, { fx: 'sparkle', at: 'astraea', top: true, n: 8 }] },
-    { who: 'astraea', text: 'Every night, stars fall. Every night, something I love burns out and is gone. So I stopped them.', mood: 'sad' },
-    { together: [{ cam: ['player', 'astraea'], up: 30, dur: 0.9 }, { face: 'player', to: 'astraea' }] },
-    { who: 'player', text: "But a sky that doesn't turn is a sky that's dying. Let them go." },
+    { together: [{ cam: 'astraea', up: 150, dur: 0.01 }] },
+    { together: [{ cam: 'astraea', up: 30, dur: 2.6 }, { walk: 'player', to: 'astraea', gap: 200, speed: 90 }] },
+    { who: null, text: 'The crown of the tower, open to the sky. Not one star is moving. Somebody is counting them.' },
+    { together: [{ fx: 'sparkle', at: 'astraea', top: true, n: 8 }, { act: 'astraea', move: 'sway', dur: 2, amp: 0.03, speed: 2 }] },
+    { who: 'astraea', text: '...nine hundred and ninety-nine thousand, nine hundred and ninety-seven... ninety-eight...' },
+    { cast: 'goma', x: 1092, y: 300, facing: -1, ...GOMA_CAST },
+    { together: [{ cam: ['astraea', 'goma'], up: 10, dur: 1 }, { emote: 'goma', kind: 'note', dur: 1.2 }] },
+    { who: 'goma', text: '...and ninety-nine! Same as last night, dear. Well done.' },
+    { who: null, text: 'Up on a gantry by the great telescope, a little Mochi elder is counting along with her.' },
+    { together: [{ face: 'astraea', to: 'player' }, { emote: 'astraea', kind: '!' }, { cam: ['player', 'astraea'], up: 30, dur: 0.9 }] },
+    { who: 'astraea', text: 'Hush! If I lose count, I lose one. A thousand years I have kept them, and every night one falls and is gone.', mood: 'sad' },
+    { who: 'astraea', text: 'On festival night the brightest one fell. So I stopped them all. Now not one of them can fall.', mood: 'sad' },
+    { who: 'player', text: "Now nothing can go anywhere. Not the night, not the wishes. Let them move." },
     { together: [{ mood: 'astraea', as: 'angry' }, { act: 'astraea', move: 'windup', dur: 1 }, { fx: 'sparkle', at: 'astraea', top: true, n: 16 }] },
-    { who: 'astraea', text: '...Then show me. Show me something worth letting fall for!', mood: 'angry' },
+    { who: 'astraea', text: '...Then show me a sky worth losing them for!', mood: 'angry' },
     { act: 'astraea', move: 'attack', dur: 1, async: true },
     { wait: 0.32 },
     { together: [{ flash: '#fff6c8' }, { shake: 5, dur: 0.5 }, { fx: 'sparkle', at: 'astraea', n: 26 }, { fx: 'starfall', at: 'astraea' }, { walk: 'player', away: 'astraea', by: 30, speed: 160 }, { emote: 'player', kind: '!' }] },
-    { wait: 1.2 },
+    { wait: 1 },
+    { hide: 'goma', dur: 0.01 },
     { cam: 'player', dur: 0.7 },
   ],
+  // Freed: she has lost count for the first time in a thousand years, and Goma says that's all right.
+  // She gives you her record of festival night (the twist, story_astraea's hand-in). Goma goes home;
+  // the Queen mumbles in her sleep.
   observatory_freed: [
     { together: [{ free: 'astraea', as: 'sad' }, { cam: ['astraea', 'player'], dur: 1.2 }, { walk: 'player', to: 'astraea', gap: 80, speed: 70 }] },
     { together: [{ face: 'player', to: 'astraea' }, { face: 'astraea', to: 'player' }] },
-    { who: 'astraea', text: "...Look. They're moving again. And there, a shooting star. It's... beautiful, isn't it?", mood: 'sad' },
-    { together: [{ fx: 'starfall', at: 'astraea' }, { face: 'player', to: 1 }, { emote: 'player', kind: '!', dur: 1.2 }] },
-    { who: null, text: 'The great telescope swings slowly round. Above the tower the whole sky begins to turn, and stars fall like rain.' },
-    { together: [{ face: 'player', to: 'astraea' }, { mood: 'astraea', as: 'happy' }] },
-    { who: 'astraea', text: 'Make a wish, all of you. I think I finally will, too.', mood: 'happy' },
-    { together: [{ act: 'astraea', move: 'ascend', height: 240, dur: 2.8 }, { fx: 'sparkle', at: 'astraea', top: true }] },
-    { who: null, text: 'Astraea leaps up into the falling stars and becomes one of them.' },
+    { who: 'astraea', text: "...I've lost count. For the first time in a thousand years, I've lost count.", mood: 'sad' },
+    { cast: 'goma', x: 1092, y: 300, facing: -1, ...GOMA_CAST },
+    { together: [{ cam: ['astraea', 'goma'], up: 10, dur: 1 }, { jump: 'goma', height: 8 }] },
+    { who: 'goma', text: "That's all right, dear. I counted too. Every one of them is still up there." },
+    { who: 'goma', text: "And the ones that fall don't go anywhere bad. They go wherever somebody wished them." },
+    { together: [{ mood: 'astraea', as: 'happy' }, { fx: 'starfall', at: 'astraea' }, { cam: ['astraea', 'player'], up: 40, dur: 1 }] },
+    { who: null, text: 'Overhead the whole sky begins to turn again, and stars fall like rain.' },
+    { who: 'astraea', text: '...A little Mochi, and a little boat. A thousand years of looking, and I never once saw those.', mood: 'happy' },
+    { who: 'astraea', text: 'Take my record of festival night. I wrote down everything the wind did. It may mean more to you than to me.' },
+    { together: [{ emote: 'player', kind: '!' }, { fx: 'pages', at: 'player', n: 8 }] },
+    { who: 'goma', text: "Off you go, then. I'll be home soon. Someone has to show her a morning first." },
+    { hide: 'goma', dur: 0.4 },
+    { set: 'royal_bed' },
+    { cast: 'hayate', kind: 'hayate', x: 300, y: 283, seat: 'bed', crown: true, sprout: true, name: 'Hayate', color: '#5aa8c8' },
+    { cast: 'translator', kind: 'mochi', seed: 33, size: 'grown', x: 548, y: 302, facing: -1, name: 'Royal Snore Translator', color: '#b98ad8', idles: ['lookaround'], wear: { dress: 'scholarrobe', hat: 'scholarcap', eyes: 'specs', over: 'eartrumpet' } },
+    { cast: 'goma', x: 40, y: 302, facing: 1, ...GOMA_CAST },
+    { cam: ['goma', 'translator'], up: 12, dur: 1.2, zoom: 1.05 },
+    { together: [{ walk: 'goma', to: 112, speed: 40 }, { fx: 'sparkle', at: 'goma', top: true, n: 8 }] },
+    { together: [{ emote: 'translator', kind: '!' }, { play: 'translator', as: 'wow' }] },
+    { who: 'translator', text: 'Elder Goma! Back from the stars!', mood: 'surprised' },
+    { face: 'goma', to: -1 },
+    { who: 'goma', text: 'Every one of them still up there. I checked twice.' },
+    { emote: 'hayate', kind: 'zzz', dur: 1.6 },
+    { who: 'hayate', text: '...mmn... nobody should be alone...', mood: 'sleepy' },
+    { who: 'translator', text: 'Her Majesty says: "nobody should be alone". ...That is the clearest thing she has ever said.', mood: 'surprised' },
+    { set: null },
+    { who: null, text: 'Up in the tower, a fawn in a starry gown sits by the telescope to watch the stars fall, and does not count a single one.' },
+    { together: [{ mood: 'astraea', as: 'happy' }, { fx: 'starfall', at: 'astraea' }, { act: 'astraea', move: 'fade', dur: 2.6 }, { fx: 'sparkle', at: 'astraea', top: true, n: 12 }] },
   ],
 };
 
@@ -1612,6 +1648,8 @@ export const OBS_RADIO = {
   moths: ['Owls! Protect your healer!'],
   shelves: ["The shelves are closing in! Stay in the middle!"],
   lines: ['The constellations! Find the dark between the stars!'],
+  sky: ['She is moving the stars! Strike them in order: one, two, three!', 'Follow the numbers! The sky is a dot-to-dot!'],
+  struck: ['Look at her face! She has never seen that one before!'],
   nova: ["Supernova! Jump when it flares!"],
 };
 
@@ -1729,12 +1767,13 @@ export const THEATRE_SCENES = {
     { card: 'Dream Theatre', sub: 'Rank {grade}  ·  {time}' },
     { who: null, text: '{notes}. Rank bonus on your rewards: +{bonus}.' },
   ],
-  // Persona, staged: the two-coated cat muse waltzes alone under the chandeliers; she can't
-  // decide, so she flips between Comedy and Tragedy, the light flashing gold and blue faster and
-  // faster, until she sweeps both masks round at you.
+  // Persona, staged: the two-coated cat ballerina dances alone under the chandeliers; she can't
+  // decide, so she flips between Comedy and Tragedy (a pirouette each time, her gold side then her
+  // blue side to you: render/mobs/personarig.js), the light flashing gold and blue faster and
+  // faster, until she flicks her fan at you.
   theatre_persona: [
     { together: [{ cam: 'persona', up: 20, dur: 1.4 }, { walk: 'player', to: 'persona', gap: 190, speed: 100 }, { act: 'persona', move: 'sway', dur: 2.4, amp: 0.1, speed: 3.6 }, { fx: 'notes', at: 'persona', top: true }] },
-    { who: null, text: 'The ballroom set glides in. Under the chandeliers a muse in a gown of two colours dances alone, a mask in each hand.' },
+    { who: null, text: 'The ballroom set glides in. Under the chandeliers a muse in a tutu of two colours dances alone, a mask in each paw.' },
     { together: [{ walk: 'persona', by: 40, speed: 60 }, { act: 'persona', move: 'sway', dur: 1.2, amp: 0.12, speed: 5 }] },
     { together: [{ walk: 'persona', by: -40, speed: 60 }, { act: 'persona', move: 'sway', dur: 1.2, amp: 0.12, speed: 5 }] },
     { together: [{ face: 'persona', to: 'player' }, { mood: 'persona', as: 'happy' }, { flash: '#ffd36b' }, { fx: 'confetti', at: 'persona', top: true, n: 12 }] },
@@ -1751,9 +1790,10 @@ export const THEATRE_SCENES = {
     { wait: 0.4 },
     { cam: 'player', dur: 0.7 },
   ],
-  // Madame Directrice, staged: the parrot director spins round at the intrusion and bellows
-  // through her megaphone, rings of sound and feathers flying; she snaps her clapperboard, the
-  // take card cuts in, and ACTION.
+  // Madame Directrice, staged: the cockatoo director spins round at the intrusion, crest flying up,
+  // and bellows through her brass megaphone, rings of sound and feathers flying; the take card
+  // cuts in, and ACTION (render/mobs/directricerig.js: in a scene her wind-up and swing are her
+  // "Action!").
   theatre_directrice: [
     { together: [{ cam: 'directrice', up: 20, dur: 1.2 }, { walk: 'player', to: 'directrice', gap: 190, speed: 100 }, { face: 'directrice', to: 1 }] },
     { together: [{ face: 'directrice', to: 'player' }, { jump: 'directrice', height: 16 }, { emote: 'directrice', kind: 'anger', dur: 2 }, { mood: 'directrice', as: 'angry' }, { fx: 'feathers', at: 'directrice', top: true }] },
@@ -1831,13 +1871,13 @@ export const WHALE_SCENES = {
     { who: null, text: '{notes}. Rank bonus on your rewards: +{bonus}.' },
   ],
   // Captain Gale, staged: the red panda captain stands with her back to you on the deck of the
-  // whale, spyglass to the sky as the wind snaps past; she lowers it, whirls round, swaggers up,
-  // flashes her cutlass, and sweeps it in a scatter of gold.
+  // whale, laughing into the wind as it snaps past her cape; she whirls round, swaggers up, draws
+  // her cutlass back, and sweeps it over the top in a scatter of gold (render/mobs/galerig.js).
   skywhale_gale: [
     { together: [{ cam: 'gale', up: 20, dur: 1.3 }, { walk: 'player', to: 'gale', gap: 200, speed: 100 }, { face: 'gale', to: 'player' }, { mood: 'gale', as: 'happy' }] },
     { face: 'gale', to: 1 },
     { together: [{ fx: 'wind', at: 'gale', top: true }, { act: 'gale', move: 'sway', dur: 1.6, amp: 0.05, speed: 3 }] },
-    { who: null, text: 'A pirate airship is moored over the great blowhole, its sails snapping. On the rail, boot up, a captain lowers her spyglass.' },
+    { who: null, text: "A pirate airship is moored over the great blowhole, its sails snapping. On its rail a red panda in an admiral's hat laughs into the wind, her cape streaming." },
     { together: [{ face: 'gale', to: 'player' }, { emote: 'gale', kind: '!' }, { jump: 'gale', height: 12 }] },
     { who: 'gale', text: "Well, well. Stowaways on MY whale? I'll have you know salvage rights are first come, first served.", mood: 'happy' },
     { together: [{ walk: 'gale', to: 'player', gap: 130, speed: 70 }, { act: 'gale', move: 'sway', dur: 1.2, amp: 0.08, speed: 6 }, { cam: ['player', 'gale'], up: 20, dur: 1 }] },
@@ -1850,12 +1890,13 @@ export const WHALE_SCENES = {
     { wait: 0.4 },
     { cam: 'player', dur: 0.7 },
   ],
-  // The Barnacle Matriarch, staged: the snail queen taps her coral staff and her barnacle children
-  // rattle in a scatter of shells; she sets off toward you at a snail's pace, very slowly, while
-  // you wait; then she raises the staff and a wave of shells rolls out.
+  // The Barnacle Matriarch, staged: a great barnacled whelk sits on the deck, shut; it hops, and the
+  // hermit crab queen pops out of it (render/mobs/matriarchrig.js); she taps her coral staff and
+  // her barnacle children rattle in a scatter of shells; she trundles toward you under her heavy
+  // shell, very slowly, while you wait; then she swings the staff and a wave of shells rolls out.
   skywhale_matriarch: [
     { together: [{ cam: 'matriarch', up: 20, dur: 1.3 }, { walk: 'player', to: 'matriarch', gap: 200, speed: 100 }, { mood: 'matriarch', as: 'angry' }] },
-    { who: null, text: "Walls of shell and coral have grown right over the whale's back. On a throne of scallop, a lady crowned in conch shells taps her staff." },
+    { who: null, text: "Walls of shell and coral have grown right over the whale's back. In a great whelk shell crusted with barnacles, something stirs." },
     { together: [{ jump: 'matriarch', height: 5 }, { fx: 'shells', at: 'matriarch', n: 6 }, { shake: 1, dur: 0.15 }] },
     { together: [{ jump: 'matriarch', height: 5 }, { fx: 'shells', at: 'matriarch', n: 6 }, { shake: 1, dur: 0.15 }] },
     { together: [{ face: 'matriarch', to: 'player' }, { emote: 'matriarch', kind: 'anger', dur: 1.8 }] },
