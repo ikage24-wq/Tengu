@@ -2018,6 +2018,15 @@ export const THEATRE_RADIO = {
 };
 
 // ---------- Sky Whale's Back ----------
+// Elder Ohagi, who blew out to sea on festival night and landed on the whale's head: a sweet-bean
+// daifuku in the elders' robe, hat and beard. It waits out the storm under a parasol on the head of
+// the whale's sleeping dream (render/skywhale.js).
+export const OHAGI = { seed: 101, genes: { dough: '#9a6a62', hairColor: 'azuki' }, wear: { dress: 'elderrobe', hat: 'elderhat', face: 'fakebeard' } };
+const OHAGI_CAST = { kind: 'mochi', seed: OHAGI.seed, size: 'grown', name: 'Elder Ohagi', color: '#8c4a52', genes: OHAGI.genes, wear: OHAGI.wear, idles: ['lookaround'] };
+// The whale's dream, asleep at her brow, never fought now (world/cast.js 'mob'; cast as
+// 'whaledream' so her lines find her portrait).
+const PUP_CAST = { kind: 'mob', mob: 'whaledream', x: 1380, y: 380, facing: -1, name: "The Whale's Dream", color: '#7fb8ff' };
+
 export const WHALE_SCENES = {
   skywhale_results: [
     { card: "Sky Whale's Back", sub: 'Rank {grade}  ·  {time}' },
@@ -2083,14 +2092,51 @@ export const WHALE_SCENES = {
     { wait: 0.5 },
     { cam: 'player', dur: 0.7 },
   ],
+  // The Sulk, staged: rain from one small, very grumpy cloud; Elder Ohagi whispers from the sleeping
+  // whale's head; the cloud huffs, tells everyone to go away, and slaps a gust of rain at you.
+  skywhale_whalestorm: [
+    { cast: 'ohagi', x: 1350, y: 310, facing: -1, ...OHAGI_CAST },
+    { together: [{ cam: 'whalestorm', up: 30, dur: 1.4 }, { walk: 'player', to: 'whalestorm', gap: 200, speed: 90 }, { fx: 'clouds', at: 'whalestorm', top: true }] },
+    { who: null, text: "The whale's brow. Rain is falling out of one small, very grumpy cloud." },
+    { together: [{ cam: 'ohagi', up: 10, dur: 1.2 }, { emote: 'ohagi', kind: '!' }] },
+    { who: 'ohagi', text: "Psst! Up here. On her head. She's been asleep for weeks, and HE won't let her wake up." },
+    { together: [{ cam: 'whalestorm', up: 30, dur: 1 }, { face: 'whalestorm', to: 'player' }, { emote: 'whalestorm', kind: 'anger' }, { shake: 2, dur: 0.4 }] },
+    { who: 'whalestorm', text: 'Go AWAY. Everybody goes away anyway. She is too BIG. Everyone is scared of her.', mood: 'angry' },
+    { who: 'player', text: "We're not scared. We came to visit." },
+    { who: 'whalestorm', text: '...Nobody visits. NOBODY. Go away before I rain on you!', mood: 'angry' },
+    { act: 'whalestorm', move: 'attack', dur: 1, async: true },
+    { wait: 0.3 },
+    { together: [{ fx: 'bubbles', at: 'player', n: 10 }, { shake: 4, dur: 0.4 }, { walk: 'player', away: 'whalestorm', by: 30, speed: 160 }, { emote: 'player', kind: '!' }] },
+    { cam: 'player', dur: 0.7 },
+  ],
+  // The storm cleared: the cloud goes white and fluffy; the whale's dream wakes and sings; Elder
+  // Ohagi goes home to the palace.
   skywhale_woken: [
-    { together: [{ free: 'whaledream', as: 'happy' }, { cam: ['whaledream', 'player'], dur: 1.4 }, { face: 'player', to: 'whaledream' }] },
+    { together: [{ free: 'whalestorm', as: 'happy' }, { cam: ['whalestorm', 'player'], dur: 1.4 }, { face: 'player', to: 'whalestorm' }] },
+    { who: null, text: 'The rain stops. The grumpy grey cloud goes white and fluffy, and very, very embarrassed.' },
+    { who: 'whalestorm', text: '...You stayed. Even when I rained on you. Even the healer. ESPECIALLY the healer.', mood: 'happy' },
+    { cast: 'whaledream', ...PUP_CAST },
+    { cast: 'ohagi', x: 1350, y: 310, facing: -1, ...OHAGI_CAST },
+    { together: [{ cam: ['whaledream', 'ohagi'], up: 20, dur: 1.4 }, { fx: 'notes', at: 'whaledream', top: true }, { emote: 'whaledream', kind: 'sparkle', dur: 1.6 }] },
     { who: 'whaledream', text: "...Oh! Oh my. I was dreaming I was a pebble at the bottom of the sea. Have I been asleep long?", mood: 'happy' },
-    { together: [{ act: 'whaledream', move: 'float', height: 14, dur: 2.4 }, { fx: 'clouds', at: 'whaledream' }] },
-    { who: null, text: 'Somewhere far below, a great tail sweeps once. The whole back rises, and the clouds fall away beneath it.' },
-    { who: 'whaledream', text: 'Thank you, little ones. Ride with me a while. I know a sunrise you have never seen.', mood: 'happy' },
-    { together: [{ act: 'whaledream', move: 'ascend', height: 200, dur: 3.4 }, { fx: 'clouds', at: 'whaledream' }, { emote: 'player', kind: 'sparkle', dur: 1.6 }] },
-    { who: null, text: "The Whale's Dream drifts up into the morning, humming, and the clouds close softly behind it." },
+    { who: 'ohagi', text: 'Weeks! I brought a parasol. I did not bring enough snacks.' },
+    { together: [{ fx: 'notes', at: 'whaledream', top: true, n: 12 }, { fx: 'sparkle', at: 'whaledream', top: true, n: 10 }] },
+    { who: null, text: 'The whale sings. It is very loud, and very lovely, and far below, a great tail sweeps once.' },
+    { who: 'whaledream', text: 'Visitors! Real ones! Come back soon. And bring the little cloud. He can stay.', mood: 'happy' },
+    { together: [{ act: 'whalestorm', move: 'fade', dur: 2.4 }, { fx: 'clouds', at: 'whalestorm' }] },
+    { set: 'royal_bed' },
+    { cast: 'hayate', kind: 'hayate', x: 300, y: 283, seat: 'bed', crown: true, sprout: true, name: 'Hayate', color: '#5aa8c8' },
+    { cast: 'translator', kind: 'mochi', seed: 33, size: 'grown', x: 548, y: 302, facing: -1, name: 'Royal Snore Translator', color: '#b98ad8', idles: ['lookaround'], wear: { dress: 'scholarrobe', hat: 'scholarcap', eyes: 'specs', over: 'eartrumpet' } },
+    { cast: 'ohagi', x: 650, y: 302, facing: -1, ...OHAGI_CAST },
+    { cam: ['ohagi', 'translator'], up: 12, dur: 1.2, zoom: 1.05 },
+    { together: [{ walk: 'ohagi', to: 330, speed: 40 }, { fx: 'sparkle', at: 'ohagi', top: true, n: 8 }] },
+    { together: [{ emote: 'translator', kind: '!' }, { play: 'translator', as: 'wow' }] },
+    { who: 'translator', text: 'Elder Ohagi! Home from... the sky? Your robe is soaking.', mood: 'surprised' },
+    { who: 'ohagi', text: 'It rained. Then it stopped raining. Then a whale sang. Long week.' },
+    { emote: 'hayate', kind: 'zzz', dur: 1.6 },
+    { who: 'hayate', text: '...mm... whale song... nice...', mood: 'sleepy' },
+    { who: 'translator', text: 'Her Majesty says: "whale song, nice". ...She always did like a lullaby.', mood: 'happy' },
+    { set: null },
   ],
 };
 
@@ -2101,7 +2147,7 @@ export const WHALE_RADIO = {
   'enter:skywhale3': ["Her lungs. Feel that? She's breathing. The air-blooms only open on the breath out."],
   'enter:skywhale4': ["Gale's ship. When she calls a broadside, get off that side of the deck, or ride the blowhole over it!"],
   'enter:skywhale5': ['The Matriarch. When she shells up, hit her hard and fast. If the shell holds, it bursts: jump!'],
-  'enter:skywhale6': ["The brow. That's her, the whale herself, dreaming. Wake her gently... well, as gently as you can."],
+  'enter:skywhale6': ["The brow. That's her dream, asleep, and that's a very cross little cloud. Spread out for the drizzle, and stay off the lightning!"],
   'clear:skywhale1': ["Moorings fast! She won't shake us off now."],
   'clear:skywhale2': ['Through the market! The lungs are just ahead.'],
   'clear:skywhale3': ["Listen to her breathe. She's calmer already."],
@@ -2111,6 +2157,8 @@ export const WHALE_RADIO = {
   broadside: ['Broadside! Off that side, quick!'],
   encrust: ['Shell up! Hit her with everything!'],
   song: ["She's singing in her sleep. Watch which side the wind takes!"],
+  thunderhead: ['Thunderhead! Stand in the dry lanes when the lightning comes!'],
+  cloudburst: ["Cloudburst! Up on something high, and huddle under the healer's umbrella!"],
 };
 
 // Taking a job: the instructor sends you off. `first` for a first job (by family), `path` for a

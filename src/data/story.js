@@ -301,7 +301,7 @@ export const STORY_QUESTS = {
   story_whale: s('story_whale', 10, {
     name: 'The Sinking Whale', giver: 'nimbus', minLevel: 45, prereq: 'story_6_2',
     text: "The Moon Terrace floats too high to walk to, but my old girl can fly you up. If she weren't asleep. And sinking. And covered in pirates. Take three friends over the Sky Whale's back from tail to brow, see off the captain and the barnacles, and wake her gently. She's grumpy before breakfast. Same as me.",
-    objectives: [{ type: 'kill', mob: 'whaledream', count: 1 }],
+    objectives: [{ type: 'kill', mob: 'whalestorm', count: 1 }],
     rewards: { exp: 120000, gold: 2000, items: [{ id: 'elixir', qty: 10 }] },
     scenes: { accept: 'whale_open', done: 'whale_done' },
   }),

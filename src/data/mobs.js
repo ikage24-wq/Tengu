@@ -732,6 +732,14 @@ export const MOBS = {
     drops: [{ id: 'sky_scale', chance: 1, qty: 6 }],
     fight: { every: 2.1, reach: 92, windup: 0.6 }, mech: 'whaledream',
   }),
+  // The Sulk (Chapter 10, 2026-11-19): the storm cloud of the whale's sadness, now the brow's boss
+  // (she sleeps behind it). Health as hers, from the same live run.
+  whalestorm: mob({
+    id: 'whalestorm', name: 'The Sulk', level: 50, hp: 440000, atk: 310, def: 76, acc: 156, eva: 8, exp: 130000, gold: [1300, 1700],
+    speed: 22, w: 96, h: 96, art: 'whalestorm', boss: true,
+    drops: [{ id: 'sky_scale', chance: 1, qty: 6 }],
+    fight: { every: 2.1, reach: 96, windup: 0.6 }, mech: 'whalestorm',
+  }),
 
   crystalking: mob({
     // (Level 38, the player's call 2026-11-07: the Crystal Cave's own monsters are 27-35 and the quest

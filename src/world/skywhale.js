@@ -17,14 +17,19 @@
 //   The Whale's Brow      the Whale's Dream: Lullaby circles, the Deep Dive under someone, and in
 //                         her last third the Starlight Song (the wind lanes swap sides, faster and
 //                         faster). She wakes at the end.
+//                         Since Chapter 10 (2026-11-19) she isn't the boss: she sleeps at the brow,
+//                         Elder Ohagi under a parasol on her head, and the boss is The Sulk, the storm
+//                         cloud of her sadness (sulk() below, built the FFXIV way: world/bossfight.js).
+//                         Clear the storm and she wakes and sings.
 
 import { addZone, adds, callout } from './dungeon.js';
 import { navOf, surfaceBelow } from './nav.js';
 import { playScene } from './story.js';
 import { radio } from './hollow.js';
 import { GRAVITY } from './physics.js';
+import { runRotation, raidwide, buster, stack, spread, cleave, band, tankOf, healerOf } from './bossfight.js';
 
-export const WHALE_MECHS = new Set(['gale', 'matriarch', 'whaledream']);
+export const WHALE_MECHS = new Set(['gale', 'matriarch', 'whaledream', 'whalestorm']);
 export const WHALE_CHANNEL = { mooring: 1.2, airbloom: 1 };
 
 const pick = (list) => list[Math.floor(Math.random() * list.length)];
@@ -149,6 +154,7 @@ export function whaleBoss(world, m, up, dt) {
   if (m.def.mech === 'gale') return gale(world, m, up, dt);
   if (m.def.mech === 'matriarch') return matriarch(world, m, up, dt);
   if (m.def.mech === 'whaledream') return whaledream(world, m, up, dt);
+  if (m.def.mech === 'whalestorm') return sulk(world, m, up, dt);
   return false;
 }
 
@@ -303,6 +309,52 @@ function whaledream(world, m, up, dt) {
   return false;
 }
 
+// The Sulk, the storm of the whale's sadness (render/mobs/stormrig.js takes up a move for each cast,
+// m.castPose). Drizzle over everyone, a bad-mood bolt on the tank, a downpour ahead, a grumble of
+// thunder for the whole deck. At 66% the Thunderhead: forked lightning down alternate lanes. At 33%
+// the Cloudburst: rain floods the whole deck (get up high), and the group shares an umbrella.
+const SULK_DRIZZLE = { gap: 2.6, look: 'drizzle', cast: 'Drizzle', dur: 2.8, pose: 'drizzle', sub: 'A little raincloud over each of you: spread out', run: (w, m, up) => spread(w, m, up, 170, 2.8) };
+const SULK_BOLT = { gap: 2.4, look: 'bolt', cast: 'Bad Mood Bolt', dur: 2.6, pose: 'bolt', sub: 'Lightning on the tank: everyone else, step away', run: (w, m, up) => buster(w, m, tankOf(up), 420, 2.6, 84) };
+const SULK_DOWNPOUR = { gap: 2.4, look: 'downpour', cast: 'Downpour', dur: 2.4, pose: 'downpour', sub: 'A sheet of rain in front of it: get behind it', run: (w, m) => cleave(w, m, 380, 240, 2.4) };
+const SULK_GRUMBLE = { gap: 2.6, look: 'grumble', cast: 'Grumble', dur: 2.6, pose: 'grumble', sub: 'Thunder for the whole deck: healer, ready', run: (w, m) => raidwide(w, m, 160, 2.6) };
+const forked = (w, m, dur) => {
+  const n = 8;
+  const width = w.map.width / n;
+  const flip = (m.mech.flip = !m.mech.flip) ? 1 : 0;
+  for (let i = flip; i < n; i += 2) addZone(w, { kind: 'thorns', x: i * width, w: width, warn: dur, damage: 250, from: m });
+};
+const SULK_FORKED = { gap: 2.4, look: 'forked', cast: 'Forked Lightning', dur: 2.4, pose: 'forked', sub: 'Lightning down every other lane: stand in the dry', run: (w, m) => forked(w, m, 2.4) };
+const SULK_SIDEWAYS = { gap: 2.2, look: 'downpour', cast: 'Sideways Rain', dur: 2.4, pose: 'downpour', sub: 'Rain in front, then behind: dodge one, then the other', run: (w, m) => {
+  const d = m.dir < 0 ? -1 : 1;
+  band(w, m, m.x - 20 * d, m.x - 20 * d + 380 * d, 240, 2.4);
+  band(w, m, m.x + 20 * d, m.x + 20 * d - 380 * d, 240, 3.8);
+} };
+const SULK_CLOUDBURST = { gap: 2.4, look: 'cloudburst', cast: 'Cloudburst', dur: 3.2, pose: 'cloudburst', sub: 'Rain floods the whole deck: jump, or get up high', run: (w, m) => addZone(w, { kind: 'floor', x: 0, w: w.map.width, warn: 3.2, damage: 280, from: m }) };
+const SULK_UMBRELLA = { gap: 2.4, look: 'umbrella', cast: 'Share the Umbrella', dur: 3.2, pose: 'umbrella', sub: 'Gather under the healer\'s umbrella to share the rain', run: (w, m, up) => stack(w, m, healerOf(up), 640, 3.2, 3) };
+const SULK_P1 = [SULK_DRIZZLE, SULK_BOLT, SULK_DOWNPOUR, SULK_GRUMBLE];
+const SULK_P2 = [SULK_FORKED, SULK_DRIZZLE, SULK_BOLT, SULK_SIDEWAYS, SULK_GRUMBLE];
+const SULK_P3 = [SULK_CLOUDBURST, SULK_FORKED, SULK_BOLT, SULK_UMBRELLA, SULK_DRIZZLE, SULK_GRUMBLE];
+function sulk(world, m, up, dt) {
+  const s = (m.mech ??= { phase: 1 });
+  const frac = m.hp / m.def.hp;
+  if (s.phase === 1 && frac <= 0.66) {
+    s.phase = 2;
+    callout(world, 'Thunderhead!', 'It swells up dark: lightning down every other lane');
+    radio(world, 'thunderhead');
+  }
+  if (s.phase === 2 && frac <= 0.33) {
+    s.phase = 3;
+    callout(world, 'Cloudburst!', 'The rain will flood the deck: get up high, and share the umbrella');
+    radio(world, 'cloudburst');
+  }
+  return runRotation(world, m, s.phase === 1 ? SULK_P1 : s.phase === 2 ? SULK_P2 : SULK_P3, up, dt);
+}
+
 export function whaleKilled(world, m) {
   if (m.def.mech === 'whaledream') playScene(world, 'skywhale_woken');
+  if (m.def.mech === 'whalestorm') {
+    // Elder Ohagi goes home to the palace (render/prologue.js).
+    world.char.elders = { ...(world.char.elders ?? {}), ohagi: true };
+    playScene(world, 'skywhale_woken');
+  }
 }

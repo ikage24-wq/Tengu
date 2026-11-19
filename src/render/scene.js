@@ -59,7 +59,7 @@ import { castWarn, castHit, OWN_WARN } from './bossfx.js';
 import { dreamShot } from './dreamfx.js';
 import { drawVolcanoBack, drawVolcanoFront, drawVolcanoObject, VOLCANO_HINT } from './volcano.js';
 import { drawTheatreBack, drawTheatreFront, drawTheatreObject, drawTheatreSet, THEATRE_HINT } from './theatre.js';
-import { drawWhaleBack, drawWhaleFront, drawWhaleObject, WHALE_HINT } from './skywhale.js';
+import { drawWhaleBack, drawWhaleFront, drawWhaleObject, drawWhaleSet, WHALE_HINT } from './skywhale.js';
 import { drawCoopBack, drawCoopFront, tagFade } from './coop.js';
 import { drawGlowcap, drawCage, drawSeal, drawRootKey, drawZone, drawZoneHit } from './dungeon.js';
 import { shock, starFlash, puff } from './fxkit.js';
@@ -567,6 +567,7 @@ function drawWorldLayers(ctx, world, cam, time, b, zoom = 1) {
   lap('back');
   // The Dream Theatre's set pieces, behind everyone (render/theatre.js).
   if (world.dungeon && !world.cine?.home) drawTheatreSet(ctx, world, cam, time);
+  if (world.dungeon && !world.cine?.home) drawWhaleSet(ctx, world, cam, time);
   // Water to wade into, behind everyone (render/water.js).
   drawWaterBack(ctx, world.map, cam, VIEW_W, time);
   // Your furniture (or the friend's whose island you're visiting: world/decor.js), behind everyone.

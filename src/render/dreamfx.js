@@ -11,11 +11,13 @@
 //                      in from the wall), deadline (a big clock running out)
 
 import { puff, shock, starFlash, easeOut } from './fxkit.js';
+// (Chapter 10's storm looks live in render/stormfx.js and are handed out from here too.)
+import { STORM_FX, STORM_HOLD } from './stormfx.js';
 
 const TAU = Math.PI * 2;
 const SW = 640;
 const clamp01 = (v) => Math.max(0, Math.min(1, v));
-export const DREAM_HOLD = { memo: 0.7, stamp: 0.8, coffee: 0.8, files: 0.9, steam: 0.9, noodle: 0.7, broth: 0.7, chopsticks: 0.6, boil: 1.1, email: 0.7, redpen: 0.8, alarm: 1, invite: 0.8, deadline: 1.1 };
+export const DREAM_HOLD = { ...STORM_HOLD, memo: 0.7, stamp: 0.8, coffee: 0.8, files: 0.9, steam: 0.9, noodle: 0.7, broth: 0.7, chopsticks: 0.6, boil: 1.1, email: 0.7, redpen: 0.8, alarm: 1, invite: 0.8, deadline: 1.1 };
 
 // ---------- Little things ----------
 function shadow(ctx, x, y, rx, a, c = '#2a2240') {
@@ -861,8 +863,10 @@ export function dreamShot(ctx, shot, x, y, p, d) {
 }
 
 // (render/bossfx.js calls these.)
+const ALL_FX = () => (ALL ??= { ...DREAM_FX, ...STORM_FX });
+let ALL = null;
 export function dreamWarn(ctx, z, x, y, p, time) {
-  const fx = DREAM_FX[z.look];
+  const fx = ALL_FX()[z.look];
   if (!fx) return false;
   ctx.save();
   fx.warn(ctx, z, x, y, p, time);
@@ -870,7 +874,7 @@ export function dreamWarn(ctx, z, x, y, p, time) {
   return true;
 }
 export function dreamHit(ctx, z, x, y, u, time) {
-  const fx = DREAM_FX[z.look];
+  const fx = ALL_FX()[z.look];
   if (!fx) return false;
   u = clamp01(u);
   const e = easeOut(u);

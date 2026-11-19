@@ -40,7 +40,7 @@ import { cornice, wainscot, skirting, floorShade, contact, frame, plant, shelf, 
 import { drawHayate } from './hayate.js';
 import { drawMochiAnim } from './mochi-anim.js';
 import { rollMochi } from '../data/mochi-genes.js';
-import { SAKURA, WARABI, KURI, GOMA, ICHIGO, ZUNDA } from '../data/scenes.js';
+import { SAKURA, WARABI, KURI, GOMA, ICHIGO, ZUNDA, OHAGI } from '../data/scenes.js';
 
 const TAU = Math.PI * 2;
 const WHITE = '#ffffff';
@@ -783,6 +783,11 @@ export function drawProloguePiece(ctx, map, kind, wx, extra, cam, width, time) {
         ZUNDA_HOME.genes ??= Object.assign(rollMochi(ZUNDA.seed, ZUNDA.genes), { wear: { ...ZUNDA.wear } });
         drawMochiAnim(ctx, ZUNDA_HOME, ox + 410, oy + 302, time + 7.1);
       }
+      // ...and Elder Ohagi, home from the Sky Whale's head (Chapter 10), still drying off.
+      if (map.elders?.ohagi) {
+        OHAGI_HOME.genes ??= Object.assign(rollMochi(OHAGI.seed, OHAGI.genes), { wear: { ...OHAGI.wear } });
+        drawMochiAnim(ctx, OHAGI_HOME, ox + 330, oy + 302, time + 8.3);
+      }
     }
   }
   return true;
@@ -792,6 +797,7 @@ const YOMOGI = { genes: null, dir: -1, speed: 0, dist: 0, size: 'grown', runPoin
 const SAKURA_HOME = { genes: null, dir: -1, speed: 0, dist: 0, size: 'grown', runPoints: 300, easy: true, idleBits: ['lookaround'] };
 const KURI_HOME = { genes: null, dir: 1, speed: 0, dist: 0, size: 'grown', runPoints: 300, easy: true, idleBits: ['lookaround'] };
 const ICHIGO_HOME = { genes: null, dir: -1, speed: 0, dist: 0, size: 'grown', runPoints: 300, easy: true, idleBits: ['lookaround'] };
+const OHAGI_HOME = { genes: null, dir: 1, speed: 0, dist: 0, size: 'grown', runPoints: 300, easy: true, idleBits: ['lookaround', 'yawn'] };
 const ZUNDA_HOME = { genes: null, dir: 1, speed: 0, dist: 0, size: 'grown', runPoints: 300, easy: true, idleBits: ['lookaround', 'hum'] };
 const GOMA_HOME = { genes: null, dir: -1, speed: 0, dist: 0, size: 'grown', runPoints: 300, easy: true, idleBits: ['lookaround'] };
 const WARABI_HOME = { genes: null, dir: 1, speed: 0, dist: 0, size: 'grown', runPoints: 300, easy: true, idleBits: ['lookaround'] };

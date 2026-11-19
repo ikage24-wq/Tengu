@@ -7,6 +7,75 @@
 import { R, E, T, F } from './pixel.js';
 import { art, place } from './scenery.js';
 import { breathOf } from '../world/skywhale.js';
+import { drawMonster } from './monsters.js';
+import { MOBS } from '../data/mobs.js';
+import { drawMochiAnim } from './mochi-anim.js';
+import { rollMochi } from '../data/mochi-genes.js';
+import { OHAGI } from '../data/scenes.js';
+
+// ---------- The brow's set (Chapter 10) ----------
+// The whale's own dream, asleep at her brow while The Sulk storms over it (until the storm clears and
+// she wakes, in the scene skywhale_woken); Elder Ohagi on her head under a pink parasol, waiting it
+// out. Drawn behind everyone (render/scene.js), and not while a scene has them in its own cast.
+export const BROW = { pup: 1380, ohagiDx: -30, ohagiUp: 70 };
+const PUP_SET = { def: null, hp: 1, uid: 5, x: 0, y: 0, dir: -1, heading: -1, state: 'idle', stagger: 0, flash: 0, phase: 0 };
+const OHAGI_FAN = { genes: null, dir: -1, speed: 0, dist: 0, size: 'grown', runPoints: 300, easy: true, idleBits: ['lookaround', 'yawn'] };
+function parasol(ctx, x, y, time) {
+  const sway = Math.sin(time * 1.4) * 0.06;
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(sway);
+  ctx.strokeStyle = '#7a4a5a';
+  ctx.lineWidth = 1.6;
+  ctx.beginPath();
+  ctx.moveTo(0, -14);
+  ctx.lineTo(0, 12);
+  ctx.stroke();
+  ctx.fillStyle = '#c84a78';
+  ctx.beginPath();
+  ctx.moveTo(-17, -6);
+  ctx.quadraticCurveTo(-15, -20, 0, -21);
+  ctx.quadraticCurveTo(15, -20, 17, -6);
+  for (let k = 3; k >= 0; k--) {
+    const xa = -17 + ((k + 0.5) / 4) * 34;
+    ctx.quadraticCurveTo(xa + 4.25, -9, xa - 4.25, -6);
+  }
+  ctx.fill();
+  ctx.fillStyle = '#ff8ab0';
+  ctx.beginPath();
+  ctx.moveTo(-15.6, -7);
+  ctx.quadraticCurveTo(-14, -19, 0, -20);
+  ctx.quadraticCurveTo(14, -19, 15.6, -7);
+  ctx.quadraticCurveTo(0, -11, -15.6, -7);
+  ctx.fill();
+  ctx.fillStyle = '#ffffff';
+  ctx.beginPath();
+  ctx.arc(0, -22, 1.6, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+}
+export function drawWhaleSet(ctx, world, cam, time) {
+  const map = world.map;
+  if (map.id !== 'skywhale6') return;
+  const room = world.dungeon?.room;
+  const x = BROW.pup - cam.x;
+  if (x < -140 || x > 780) return;
+  const y = map.groundY - cam.y;
+  const cast = world.cine?.cast ?? [];
+  const inCast = (id) => cast.some((c) => c.id === id && c.alpha > 0);
+  const now = world.scene ? world.now + (world.cine?.clock ?? 0) : world.now;
+  if (!room?.cleared && !inCast('whaledream')) {
+    PUP_SET.def ??= MOBS.whaledream;
+    PUP_SET.x = BROW.pup;
+    PUP_SET.y = map.groundY;
+    drawMonster(ctx, PUP_SET, x, y, time, now);
+  }
+  if (!world.char?.elders?.ohagi && !inCast('ohagi')) {
+    OHAGI_FAN.genes ??= Object.assign(rollMochi(OHAGI.seed, OHAGI.genes), { wear: { ...OHAGI.wear } });
+    drawMochiAnim(ctx, OHAGI_FAN, x + BROW.ohagiDx, y - BROW.ohagiUp, time);
+    if (!room?.cleared) parasol(ctx, x + BROW.ohagiDx + 7, y - BROW.ohagiUp - 26, time);
+  }
+}
 
 const TAU = Math.PI * 2;
 // The breath right now (set each frame by drawWhaleBack, read by drawWhaleObject).

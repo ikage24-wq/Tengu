@@ -2615,7 +2615,7 @@ Object.assign(MAPS, {
     ],
     objects: [],
     npcs: [],
-    spawns: [{ mob: 'whaledream', x: 900, y: G }],
+    spawns: [{ mob: 'whalestorm', x: 900, y: G }],
   },
 });
 

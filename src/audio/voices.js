@@ -14,7 +14,7 @@
 //   People   witches, ladies, captains: anime fight voices
 const FAMILIES = {
   Critter: ['puffle', 'mosstort', 'redpanda', 'strawhog', 'snailbun', 'harvmouse', 'lambkin', 'pebblet', 'scorpip', 'cloudsheep', 'nekomata', 'pearldiver', 'starcarto', 'cottoncandy', 'stagehand', 'sleepysheep'],
-  Beast: ['boarlet', 'thornback', 'lupina', 'teddystrong', 'tuskar', 'leonie', 'gummybear', 'primadonna', 'tanukipicker', 'kettletanuki', 'lantertanuki', 'grandkettle', 'noodledragon', 'monday'],
+  Beast: ['boarlet', 'thornback', 'lupina', 'teddystrong', 'tuskar', 'leonie', 'gummybear', 'primadonna', 'tanukipicker', 'kettletanuki', 'lantertanuki', 'grandkettle', 'whalestorm', 'noodledragon', 'monday'],
   Bird: ['mossowlet', 'windbird', 'gloombat', 'chorusgirl', 'prompter', 'mothlibrarian', 'folio', 'paperdragon'],
   Buzz: ['bumble', 'queenbee', 'sporeling'],
   Sprite: ['petalsprite', 'wisp', 'starspirit', 'sylph', 'lanternghost', 'stardancer', 'cometcourier', 'musicballerina', 'starpoint'],

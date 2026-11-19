@@ -619,6 +619,7 @@ const BOSS_LINES = {
   gale: '"Stowaways! Lovely. Everyone off at the next cloud!"',
   matriarch: '"This whale is OURS now. Every last inch of it."',
   whaledream: '"...mmh... five more minutes... five more centuries..."',
+  whalestorm: '"Go AWAY! Everybody goes away anyway!"',
 };
 
 // A queued hit landing on a monster: wakes it, and adds threat for whoever hit it. Returns the
