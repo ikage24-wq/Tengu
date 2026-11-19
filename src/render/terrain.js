@@ -2344,7 +2344,8 @@ function dripLive(ctx, m, x, y, len, k, sway) {
 // A ledge drawn as a chunk of floating land: flat top, thick in the middle, tapering to a
 // rounded point underneath, with the lip on top and things dangling below.
 export function drawIsland(ctx, theme, p, cam, time, pi, look = null, map = null) {
-  theme = look?.material ?? theme;
+  // (A ledge can have its own material: a cloud drifting through a zone of planks, `material: 'sky'`.)
+  theme = p.material ?? look?.material ?? theme;
   const m = MATERIALS[theme] ?? MATERIALS.meadow;
   camX = cam.x;
   const x = p.x - cam.x;
