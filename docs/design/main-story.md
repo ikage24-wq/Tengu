@@ -170,7 +170,7 @@ Serpent Springs, Frozen Peak, Candy Volcano (dungeon 35), the Rose Grotto (Lilit
 - 38 The Rose Grotto (Nim, kept): Lilith, whose roses no one visits, saw the falling star ring like a
   bell and drop into the Crystal Cave. The alarm is real.
 
-### Chapter 9: Above the Clouds (40-44)
+### Chapter 9: The Queen's Dream (40-44)
 Sky Garden, Dream Theatre (dungeon 40).
 - 40 The Sleeping Wind (Elowen, kept). 41 Opening Night, 42 A Better Ending (Madame Encore, kept).
 - **Area and boss rework (the big one): the Dream Theatre becomes the Queen's dream.** The Phantom
@@ -278,7 +278,12 @@ How to get there without making it a grind (the game's own rule against chores):
 9. [x] Chapter 8: Bonbon's cake, Elder Ichigo, Lilith's clue, the sleepwalk (2026-11-19, the Candy
    Volcano only: rooms remade dad5f57, the six sweets as rigs caf2267, Bonbon's Sprinkle Rain /
    Frosting Flood / Cherry Bomb with Ichigo and the sleepwalk 2cc239c, then the chapter's text).
-10. [ ] Chapter 9: the Queen's dream and Monday, Elder Zunda.
+10. [x] Chapter 9: the Queen's dream and Monday, Elder Zunda (2026-11-19: the theatre's acts redone as
+   her old life 6d7c883; the Coffee Mug Boss, Cup-Noodle Dragon and Monday with the "five more minutes"
+   ending, the Playwright in his box and Elder Zunda home at the palace 9a43200; then the chapter
+   renamed "The Queen's Dream": every morning feels like Monday, Encore's theatre plays the same sad
+   show, and her clue for Chapter 10: her dream flat has no alarm clock, just a dusty ring where one stood). The theatre monsters
+   (lobby to office) are still the old ones.
 11. [ ] Chapter 10: the Sky Whale's storm, Selene, Prismaris, the Alarm, the finale.
 
 Each step: write the quests and scenes, stage them with care, play-through tests, watch them in

@@ -87,7 +87,7 @@ export const DUNGEONS = {
   // played act by act, then backstage, then the final curtain.
   theatre: {
     id: 'theatre', name: 'Dream Theatre', minLevel: 40,
-    blurb: "The Phantom Playwright is writing the whole island into his play, and every night the audience forgets a little more of who they are. Take your seats, play every act, survive his muse and his director, and give the story a better ending.",
+    blurb: "Every night the Dream Theatre plays the same sad show: the Queen's old life. A packed train, the office, noodles at 2 a.m., and Monday. Take your seats, play every act, survive her boss and her midnight noodles, and give her a better ending.",
     gate: 'theatre_row', warden: 'encore',
     rooms: ['theatre1', 'theatre2', 'theatre3', 'theatre4', 'theatre5', 'theatre6'],
     recruit: { tank: [41, 43], healer: [41, 43], dps: [40, 43] },

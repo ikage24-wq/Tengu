@@ -5,9 +5,22 @@ The seventh group dungeon, after the Candy Volcano (35-40), following the ladder
 
 ## The story
 
-High in the Sky Garden a theatre floats on a cloud, where whatever is staged becomes real. Its
-writer, the Phantom Playwright, has been writing the island into his play, and every night the
-audience forgets a little more of who they are. Encore, a retired stage star, has a backstage pass.
+Since Chapter 9 of the story rework (2026-11-19, docs/design/main-story.md): the theatre floating
+on a cloud off the Sky Garden is where the sleeping Queen's dreams drift every night, and the
+Phantom Playwright stages them: always the same sad show, her old life in the human world (a packed
+train, the office, overtime, noodles at 2 a.m., her flat and Monday), to an audience of one, Elder
+Zunda. Every morning the whole island wakes up feeling like it's Monday. Encore, a retired stage
+star, has a backstage pass. The Playwright isn't fought any more: he stands in a theatre box at the
+side of her flat, and Monday is the last boss. At 12% the Queen sleepwalks in and says "five more
+minutes", and Monday crumples (world/theatre.js; the fights are built on world/bossfight.js).
+
+The table below is the original 2026-11-02 run. Rooms 2-6 are now: Act I: The Morning Train (the
+carriage rocks, bags fall off the racks), Act II: The Office (answer the desk phones in order),
+Act III: Overtime (the Coffee Mug Boss), The Convenience Store, 2 a.m. (the Cup-Noodle Dragon), The
+Final Curtain: Her Flat (Monday).
+
+(Original premise: its writer, the Phantom Playwright, was writing the island into his play, and
+every night the audience forgot a little more of who they were.)
 
 ## Where
 
