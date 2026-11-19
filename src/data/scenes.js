@@ -63,7 +63,6 @@ export const QUEST_SCENES = {
   hollow_heart: { accept: 'hollow_open', done: 'bramble_hollow_done' },
   bramble_wipe: { done: 'bramble_wipe_done' },
   bramble_charge: { done: 'bramble_charge_done' },
-  crystal_heart: { accept: 'king_open', done: 'king_done' },
   rook_stars: { done: 'stars_done' },
   rook_harpies: { done: 'rook_harpies_done' },
   kelp_5: { done: 'kelp_done' },
@@ -818,14 +817,6 @@ export const SIDE_SCENES = {
     { together: [{ emote: 'bramble', kind: 'heart', dur: 1.8 }, { fx: 'leaves', at: 'bramble', n: 12 }] },
     { who: 'bramble', text: "Rules keep people safe, {name}. But you go in for the fun part, and I'd forgotten the fun part. Thank you for reminding a grumpy old warden.", mood: 'happy' },
     { who: 'bramble', text: "Now. Elowen in Moonleaf Grove reads the spirits, and she's been asking after you. Go in loud. Just bring a healer.", mood: 'happy' },
-  ],
-  king_open: [
-    { who: 'rook', text: "Prismaris, the Crystal King. He's been sitting on that throne since before my grandfather sailed.", mood: 'sad' },
-    { who: 'rook', text: "The cave's getting darker every week. Somebody has to go and ask him why." },
-  ],
-  king_done: [
-    { who: 'rook', text: 'You did it! The cave is glittering again. I could see it from the harbor!', mood: 'happy' },
-    { who: 'rook', text: "This calls for a song. I won't sing it. But it calls for one." },
   ],
   stars_done: [
     { who: 'rook', text: "A falling star, caught and bottled. My old crew won't believe it!", mood: 'happy' },

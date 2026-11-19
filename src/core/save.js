@@ -334,6 +334,8 @@ export function updateRetiredJobs(char) {
     // (The Archer's and the Thief's trials went with their lines, 2026-11-16.)
     delete char.quests.archer_trial;
     delete char.quests.thief_trial;
+    // (Rook's old level-35 Prismaris quest went too, 2026-11-19: the story meets him at 49.)
+    delete char.quests.crystal_heart;
   }
   char.oldMageTrialCleared = true;
   for (const [id, lv] of Object.entries(char.skills ?? {})) {

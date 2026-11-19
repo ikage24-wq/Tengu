@@ -362,6 +362,9 @@ export const STORY_LOCKS = {
   'shrine.sanctum': { quest: 'story_4_3', note: 'The sanctum gate is sealed with a fox charm.' },
   'springs.grotto': { quest: 'story_5_3', note: 'Roses grow thick behind the waterfall.' },
   'starfall.terrace': { quest: 'story_6_3', note: 'Moonlight bars the terrace.' },
+  // (The old Crystal Throne room, where Prismaris used to wait as a level-38 boss: shut until his
+  // story, so nobody beats him eleven levels early. After it, he's there for rematches.)
+  'cave.boss': { quest: 'story_7_2', note: "Prismaris's old throne room. He's not taking visitors." },
   'cave.nightthrone': { quest: 'story_7_2', note: 'The throne room is dark as a pocket. Something in there says "go away".' },
   'sprout.dawnpalace': { quest: 'story_alarm', note: 'The palace lawn is quiet. Somebody is still asleep up there.' },
 };

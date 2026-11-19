@@ -189,12 +189,6 @@ export const QUESTS = {
     objectives: [{ type: 'kill', mob: 'lamia', count: 20 }],
     rewards: { exp: 46000, gold: 1000, items: [{ id: 'elixir', qty: 5 }] },
   },
-  crystal_heart: {
-    id: 'crystal_heart', name: 'Heart of Crystal', giver: 'rook', minLevel: 35, prereq: 'restless_ruins',
-    text: 'Deep in the Crystal Cave sits Prismaris, the Crystal King. Defeat it and bring peace to the coast.',
-    objectives: [{ type: 'kill', mob: 'crystalking', count: 1 }],
-    rewards: { exp: 120000, gold: 1800, items: [{ id: 'elixir', qty: 10 }] },
-  },
 
   // ---------- Side quests: every town's people, every field ----------
 
@@ -379,7 +373,7 @@ export const QUESTS = {
     rewards: { exp: 4000, gold: 350, items: [] },
   },
   rook_harpies: {
-    id: 'rook_harpies', name: 'Harpy Havoc', giver: 'rook', minLevel: 40, prereq: 'crystal_heart',
+    id: 'rook_harpies', name: 'Harpy Havoc', giver: 'rook', minLevel: 40, prereq: 'restless_ruins',
     text: "The Sky Harpies have started raiding our gulls' nests, all the way from the Sky Garden! Ground 30 of them.",
     objectives: [{ type: 'kill', mob: 'windbird', count: 30 }],
     rewards: { exp: 120000, gold: 1800, items: [] },

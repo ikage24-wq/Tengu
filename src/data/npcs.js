@@ -115,7 +115,7 @@ export const NPCS = {
     building: 'office', sign: 'Harbor Office',
     look: { hairStyle: 'wolfsleek', hairColor: '#e9ebfa', skinTone: '#e7b48f', eyeColor: '#5aa8ff', outfitColor: '#7fb8ff', eyeStyle: 'round', face: 'grin' },
     greeting: 'The harbor needs brave folks. Got time for a job?',
-    quests: ['story_2_1', 'island_deed', 'canyon_eggs', 'canyon_stingers', 'canyon_lookout', 'mush_menace', 'leaf_samples', 'restless_ruins', 'crystal_heart', 'rook_harpies', 'rook_stars', 'daily_harbor'],
+    quests: ['story_2_1', 'island_deed', 'canyon_eggs', 'canyon_stingers', 'canyon_lookout', 'mush_menace', 'leaf_samples', 'restless_ruins', 'rook_harpies', 'rook_stars', 'daily_harbor'],
   },
   bramble: {
     id: 'bramble', name: 'Bramble', title: 'Hollow Warden', role: 'dungeon', dungeon: 'hollow',
