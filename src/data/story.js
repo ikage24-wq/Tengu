@@ -13,7 +13,7 @@
 // being an NPC id, 'player', a monster id (the queens), or null for narration; `mood` a face for
 // whoever speaks ('happy', 'sad', 'surprised', 'angry').
 
-import { SIDE_SCENES, JOB_SCENES, HOLLOW_SCENES, HOLLOW_BOSS_SCENES, MANOR_SCENES, AQUA_SCENES, CARNIVAL_SCENES, OBS_SCENES, VOLCANO_SCENES, THEATRE_SCENES, WHALE_SCENES, CRYSTAL_SCENES } from './scenes.js';
+import { SIDE_SCENES, JOB_SCENES, HOLLOW_SCENES, HOLLOW_BOSS_SCENES, MANOR_SCENES, AQUA_SCENES, CARNIVAL_SCENES, OBS_SCENES, VOLCANO_SCENES, THEATRE_SCENES, WHALE_SCENES, CRYSTAL_SCENES, FINALE_SCENES } from './scenes.js';
 
 export const CHAPTERS = [
   { n: 1, title: 'A New Breeze', levels: '1-5' },
@@ -342,6 +342,15 @@ export const STORY_QUESTS = {
     rewards: { exp: 0, gold: 5000, cash: 3000, title: 'the One Who Showed Up', windBack: true, items: [{ id: 'hayate_feather', qty: 1 }, { id: 'elixir', qty: 20 }] },
     scenes: { done: 'wind_finale' },
   }),
+  // The finale (2026-11-19): the alarm clock she brought home rings itself giant at dawn.
+  story_alarm: s('story_alarm', 10, {
+    name: 'Five More Minutes', giver: 'mira', minLevel: 50, prereq: 'story_wind',
+    text: "That racket is coming from the palace, dear! The Queen's alarm clock is ringing fit to burst, and it's getting BIGGER. It wants her up and off to her Monday. Up the hill, quick. Whatever happens, don't let it take her.",
+    objectives: [{ type: 'kill', mob: 'alarm', count: 1 }],
+    trial: 'dawnpalace',
+    rewards: { exp: 0, gold: 6000, items: [{ id: 'elixir', qty: 20 }] },
+    scenes: { win: 'alarm_win', done: 'alarm_done' },
+  }),
 };
 
 // Story locks: a portal stays shut until its chapter's quest has been accepted (or finished);
@@ -365,6 +374,7 @@ export const TRIALS = {
   terrace: { boss: 'selene', quest: 'story_6_3', field: 'starfall', x: 1000 },
   // (`intro`: a scene the first time you walk in; `elder`: the Mochi elder who goes home when it's won.)
   nightthrone: { boss: 'nightking', quest: 'story_7_2', field: 'cave', x: 700, intro: 'nightthrone_intro', elder: 'shiratama' },
+  dawnpalace: { boss: 'alarm', quest: 'story_alarm', field: 'sprout', x: 900, intro: 'dawnpalace_intro' },
 };
 
 export const SCENES = {
@@ -1188,8 +1198,9 @@ export const SCENES = {
     { together: [{ walk: 'mira', to: 'player', gap: 34, speed: 70 }, { face: 'mira', to: 'player' }] },
     { who: 'mira', text: "You know what you are, dear? Not the chosen one. You're the one who showed up. Every single time. That's better.", mood: 'happy' },
     { together: [{ emote: 'mira', kind: 'heart', dur: 2 }, { fx: 'confetti', at: 'mira', n: 30 }, { fx: 'starfall', at: { x: 1820, y: 100 }, n: 20 }] },
-    { who: 'mira', text: "...And press M for the map. There's a lot more of it out there now.", mood: 'happy' },
-    { card: 'The End', sub: '...of the beginning' },
+    { together: [{ shake: 3, dur: 1.4 }, { emote: 'mira', kind: '!', dur: 1.4 }, { emote: 'player', kind: '!', dur: 1.4 }, { emote: 'elowen', kind: '!', dur: 1.4 }] },
+    { who: null, text: 'Then, from the palace up on the hill: RIIIIIIIIIING.' },
+    { who: 'mira', text: "That's the Queen's alarm clock! And it's getting... BIGGER?! Dear, quick, up to the palace!", mood: 'surprised' },
   ],
   // ----- Chapter 7 -----
   ch7_open: [
@@ -1218,5 +1229,5 @@ export const SCENES = {
 };
 
 // The side quests' and job advancements' scenes (data/scenes.js) play the same way.
-Object.assign(SCENES, SIDE_SCENES, HOLLOW_SCENES, HOLLOW_BOSS_SCENES, MANOR_SCENES, AQUA_SCENES, CARNIVAL_SCENES, OBS_SCENES, VOLCANO_SCENES, THEATRE_SCENES, WHALE_SCENES, CRYSTAL_SCENES);
+Object.assign(SCENES, SIDE_SCENES, HOLLOW_SCENES, HOLLOW_BOSS_SCENES, MANOR_SCENES, AQUA_SCENES, CARNIVAL_SCENES, OBS_SCENES, VOLCANO_SCENES, THEATRE_SCENES, WHALE_SCENES, CRYSTAL_SCENES, FINALE_SCENES);
 for (const [k, v] of Object.entries(JOB_SCENES)) SCENES[`job_${k}`] = v;

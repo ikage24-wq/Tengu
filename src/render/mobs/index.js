@@ -25,6 +25,7 @@ import { ART as STAGE } from './stage.js';
 import { ART as STAGEBOSS } from './stageboss.js';
 import { ART as SKYFOLK } from './skyfolk.js';
 import { ART as SKYBOSS } from './skyboss.js';
+import { ART as FINALE } from './finale.js';
 import { ART as TEA } from './tea.js';
 import { turnipRig } from './turniprig.js';
 import { chickRig, chickStill } from './chickrig.js';
@@ -59,7 +60,7 @@ FARM.redpanda = { walk: 8, idle: 6, attack: 4, stride: 22, atkMs: [80, 300, 220]
 FARM.puddlekid = { walk: 8, idle: 6, attack: 4, stride: 18, atkMs: [80, 300, 220], draw: puddleKidStill, rig: puddleKidRig, pad: 4 };
 FARM.blossomfairy = { walk: 8, idle: 6, attack: 4, stride: 40, atkMs: [80, 300, 220], draw: blossomFairyStill, rig: blossomFairyRig, pad: 4 };
 
-export const ARTS = { ...MEADOW, ...WILDS, ...RUINS, ...SKY, ...HOLLOW, ...BOSSES, ...MAIDENS, ...QUEENS, ...BEES, ...FARM, ...MANOR, ...MANORBOSS, ...SEA, ...SEABOSS, ...TOY, ...TOYBOSS, ...ASTRAL, ...ASTRALBOSS, ...CANDY, ...CANDYBOSS, ...STAGE, ...STAGEBOSS, ...SKYFOLK, ...SKYBOSS, ...TEA };
+export const ARTS = { ...MEADOW, ...WILDS, ...RUINS, ...SKY, ...HOLLOW, ...BOSSES, ...MAIDENS, ...QUEENS, ...BEES, ...FARM, ...MANOR, ...MANORBOSS, ...SEA, ...SEABOSS, ...TOY, ...TOYBOSS, ...ASTRAL, ...ASTRALBOSS, ...CANDY, ...CANDYBOSS, ...STAGE, ...STAGEBOSS, ...SKYFOLK, ...SKYBOSS, ...FINALE, ...TEA };
 
 export const mobBuild = (art, pose, frame, mood) => {
   const a = ARTS[art];

@@ -121,6 +121,21 @@ const QUEENS = {
     adds: { at: [], mob: null },
     enrage: 0.25,
   },
+  // The Alarm (Chapter 10's finale): the Queen's clock grown giant, ringing her back to Monday. A
+  // ring round it, the clock hands slamming down, a bell clang along the floor, and after its
+  // first snooze "IT'S MONDAY!" on the whole lawn. Three snoozes (snoozeTurn), louder each time.
+  alarm: {
+    color: '#ffc94a', light: '#fff6d8',
+    snooze: { at: [0.75, 0.5, 0.25], dur: 5, back: ["RIIING! It's back!", 'RIIIIING! Even louder!', 'RIIIIIIIIING!!!'] },
+    moves: [
+      { id: 'ring', name: 'Wake-Up Ring', sub: 'Get away from it!', every: 7, make: (q) => { q.ringSoon = 1.5; return [{ kind: 'circle', x: q.x, w: 240 + 40 * (q.loud ?? 0), warn: 1.5, k: 1, high: true, fx: 'celquakegold' }]; } },
+      { id: 'hands', name: 'Tick, Tock', sub: 'The clock hands come down: move!', every: 6, make: (q, p, map) => [p.x, ...spread(map, 2 + (q.loud ?? 0))].map((x) => ({ kind: 'pillar', x, w: 54, warn: 1.3, k: 0.8, fx: 'celpillarrage' })) },
+      { id: 'clang', name: 'Bell Clang', sub: 'Jump it!', every: 8, make: (q, p) => [{ ...lane(q, p, 560, 1.1, 0.9, 'celfissure'), low: true }] },
+      { id: 'monday', name: "IT'S MONDAY!", sub: 'Ledges! Now!', every: 12, loud: 1, make: (q, p, map) => [{ kind: 'floor', warn: 2, k: 1.1, fx: 'celquakegold' }, ...spread(map, 2 + (q.loud ?? 0)).map((x) => ({ kind: 'circle', x, w: 60, warn: 2, k: 0.8, high: true, fx: 'celfissure' }))] },
+    ],
+    adds: { at: [], mob: null },
+    enrage: 0,
+  },
   // Prismaris in his trial (Chapter 10): scared of the dark, hugging the Queen's alarm clock.
   // Crystal spikes under you, his nightlight flaring round him, his tail swept along the floor,
   // and from two thirds down, Lights Out: the room goes dark but for three pools of light.
@@ -215,7 +230,13 @@ export function tickStory(world, dt, hurt) {
       // more than a floor or so above or below it, so someone fishing or passing on a
       // ledge of their own high over her isn't picked out).
       if (!(m.aggroUntil > world.now) && (Math.abs(world.body.x - m.x) > 420 || Math.abs(world.body.y - m.y) > NOTICE_DY)) continue;
+      // (The Alarm's snoozes: knocked quiet a while, then back louder.)
+      if (style.snooze && snoozeTurn(world, m, style)) continue;
       queenTurn(world, m, style, dt);
+      if (m.ringSoon) {
+        m.ringAt = world.now + m.ringSoon;
+        m.ringSoon = 0;
+      }
     }
   }
   for (const z of world.zones) {
@@ -289,16 +310,45 @@ function queenTurn(world, m, style, dt) {
   if (world.zones.some((z) => !z.hit && z.from === m)) return;
   for (const mv of style.moves) {
     if (mv.from && frac > mv.from) continue;
+    if (mv.loud && (m.loud ?? 0) < mv.loud) continue;
     s.next[mv.id] ??= mv.every * (0.4 + Math.random() * 0.5);
     s.next[mv.id] -= dt;
   }
-  const ready = style.moves.filter((mv) => (!mv.from || frac <= mv.from) && s.next[mv.id] <= 0);
+  const ready = style.moves.filter((mv) => (!mv.from || frac <= mv.from) && (!mv.loud || (m.loud ?? 0) >= mv.loud) && s.next[mv.id] <= 0);
   if (!ready.length) return;
   const mv = ready[Math.floor(Math.random() * ready.length)];
-  s.next[mv.id] = mv.every * fast;
+  // (Louder after each snooze: quicker too.)
+  s.next[mv.id] = mv.every * fast * (1 - 0.1 * (m.loud ?? 0));
   callout(world, m, mv.name, mv.sub);
   addZones(world, m, mv.make(m, world.body, world.map), base);
   if (mv.chase) s.chase = { move: mv, left: mv.chase - 1, t: 0.8 };
+}
+
+// The Alarm's snoozes (Chapter 10's finale): at each mark it's knocked quiet for a few seconds
+// (nothing takes it lower, it does nothing, its warnings are called off), then it comes back louder:
+// bigger rings, more clock hands, quicker, and from the first snooze on, "IT'S MONDAY!".
+function snoozeTurn(world, m, style) {
+  const s = (m.snooze ??= { at: [...style.snooze.at], until: 0 });
+  if (s.until) {
+    if (world.now < s.until) return true;
+    s.until = 0;
+    m.minHp = 0;
+    m.loud = (m.loud ?? 0) + 1;
+    m.ringAt = world.now;
+    callout(world, m, style.snooze.back[Math.min(style.snooze.back.length - 1, m.loud - 1)], "It's back, and LOUDER");
+    world.juice.push({ type: 'shake', mag: 4, dur: 0.6 });
+    return false;
+  }
+  if (s.at.length && m.hp / m.def.hp <= s.at[0]) {
+    s.at.shift();
+    s.until = world.now + style.snooze.dur;
+    m.snoozeUntil = s.until;
+    m.minHp = m.hp;
+    world.zones = world.zones.filter((z) => z.from !== m || z.hit);
+    callout(world, m, 'SNOOZE!', '...it drifts off. For now.');
+    return true;
+  }
+  return false;
 }
 
 function addZones(world, m, zones, base) {

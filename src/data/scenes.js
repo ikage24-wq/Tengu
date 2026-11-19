@@ -2203,6 +2203,55 @@ export const CRYSTAL_SCENES = {
   ],
 };
 
+// ---------- The finale (Chapter 10) ----------
+export const FINALE_SCENES = {
+  // The lawn before the palace at dawn: the alarm clock, taller than the palace door, ringing her
+  // back to Monday.
+  dawnpalace_intro: [
+    { together: [{ cam: 'alarm', up: 40, dur: 1.4 }, { walk: 'player', to: 'alarm', gap: 240, speed: 90 }] },
+    { who: null, text: "Dawn over the palace. On the lawn stands the Queen's alarm clock, taller than the palace door, ringing fit to burst." },
+    { together: [{ face: 'alarm', to: 'player' }, { jump: 'alarm', height: 12 }, { shake: 3, dur: 0.6 }, { emote: 'alarm', kind: 'anger' }] },
+    { who: 'alarm', text: 'RIIIING! Six a.m.! Up! Shower! Train! Office! MONDAY!', mood: 'angry' },
+    { who: 'player', text: 'She lives here now.' },
+    { who: 'alarm', text: 'NOBODY lives in a dream! Wake her UP and send her BACK!', mood: 'angry' },
+    { act: 'alarm', move: 'attack', dur: 1, async: true },
+    { wait: 0.3 },
+    { together: [{ shake: 4, dur: 0.4 }, { walk: 'player', away: 'alarm', by: 30, speed: 160 }, { emote: 'player', kind: '!' }] },
+    { cam: 'player', dur: 0.7 },
+  ],
+  // Snoozed three times and still ringing: the Queen comes out, wide awake for once, chooses to
+  // stay, and flicks it.
+  alarm_win: [
+    { together: [{ free: 'alarm', as: 'angry' }, { cam: ['alarm', 'player'], dur: 1.2 }] },
+    { who: 'alarm', text: "...ring. ...RING. You can't snooze me forever. Monday ALWAYS comes.", mood: 'angry' },
+    { cast: 'hayate', kind: 'hayate', near: 'alarm', inward: 220, hidden: true, crown: true, sprout: true, awake: true, name: 'Hayate', color: '#5aa8c8' },
+    { together: [{ show: 'hayate', dur: 1 }, { cam: ['hayate', 'alarm'], dur: 1.4 }] },
+    { who: null, text: 'Out of the palace door comes the Queen. Hair everywhere. Crown on sideways. Eyes open.' },
+    { who: 'hayate', text: "...Hm? Oh. It's you. The alarm.", mood: 'sleepy' },
+    { who: 'alarm', text: 'Six a.m.! Train! Office! Monday! You have to go BACK!', mood: 'angry' },
+    { who: 'hayate', text: '...No.' },
+    { walk: 'hayate', to: 'alarm', gap: 50, speed: 40 },
+    { who: 'hayate', text: "I've got a palace full of Mochi, a festival to finish, and friends who keep showing up. I'm staying.", mood: 'happy' },
+    { cast: 'clock', kind: 'clock', near: 'alarm', dx: 0, hidden: true },
+    { together: [{ shake: 5, dur: 0.5 }, { flash: '#fff3a6' }, { fx: 'sparkle', at: 'alarm', top: true, n: 24 }, { act: 'alarm', move: 'fade', dur: 1.6 }] },
+    { who: null, text: 'She flicks it. Once. Lazily. The giant alarm clock goes "...ding", shrinks back to bedside size, and is very quiet.' },
+    { show: 'clock', dur: 0.6 },
+    { who: 'hayate', text: '...Five more minutes.', mood: 'sleepy' },
+    { who: 'hayate', text: "...Then breakfast. Everyone's invited.", mood: 'happy' },
+  ],
+  // Back with Mira: the end.
+  alarm_done: [
+    { who: 'player', text: "The Queen's awake. She flicked the alarm clock and said she's staying." },
+    { together: [{ emote: 'mira', kind: '!', dur: 1.2 }, { jump: 'mira', height: 10 }] },
+    { who: 'mira', text: 'Awake! Our Queen! ...For how long?', mood: 'surprised' },
+    { who: 'player', text: "Five minutes. Then breakfast. Everyone's invited." },
+    { together: [{ emote: 'mira', kind: 'heart', dur: 1.8 }, { fx: 'confetti', at: 'mira', n: 24 }] },
+    { who: 'mira', text: 'Then I had better bake. Thank you, dear. For showing up. Every single time.', mood: 'happy' },
+    { who: 'mira', text: "...And press M for the map. There's a lot more of it out there now.", mood: 'happy' },
+    { card: 'The End', sub: 'Five More Minutes' },
+  ],
+};
+
 // Skipper Nimbus calling from the pier with a conch horn (world/skywhale.js).
 export const WHALE_RADIO = {
   'enter:skywhale1': ["The tail docks! Tie down three moorings. And when she lifts her tail, grab a rope or you'll slide right off!"],

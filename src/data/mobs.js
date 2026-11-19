@@ -763,6 +763,14 @@ export const MOBS = {
     drops: [{ id: 'king_crystal', chance: 1 }, { id: 'elixir', chance: 1, qty: 5 }],
     special: { kind: 'slam', every: 5.5, warn: 1.2, damage: 440, range: 420 },
   }),
+  // The finale (Chapter 10, 2026-11-19): the Queen's alarm clock grown giant, ringing to send her
+  // back to Monday. A solo trial at dawn by the palace (world/story.js QUEENS.alarm), three snoozes.
+  alarm: mob({
+    id: 'alarm', name: 'The Alarm', level: 50, hp: 220000, atk: 300, def: 68, acc: 120, eva: 10, exp: 200000,
+    gold: [1000, 1500], speed: 30, w: 100, h: 130, art: 'alarm', boss: true,
+    drops: [{ id: 'elixir', chance: 1, qty: 10 }],
+    special: { kind: 'slam', every: 6, warn: 1.2, damage: 460, range: 420 },
+  }),
 
   // Queens out of myth: field bosses (Sylvana in Whispering Glade, Tamamo on the Fox Shrine Path,
   // Lilith at Serpent Springs, Selene at Starfall Heights; each also has a story fight). Each winds up a big attack every

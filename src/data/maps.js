@@ -3048,6 +3048,17 @@ MAPS.cave.portals.push({ id: 'nightthrone', x: 1480, y: 944, to: 'nightthrone', 
 // (Who waits there, for a quest's "where to go": core/quests.js mobPlaces.)
 MAPS.nightthrone.trialBoss = 'nightking';
 
+// The Palace at Dawn (Chapter 10's finale, 2026-11-19): the lawn before the Mochi palace on its hill,
+// the sun coming up behind it (render/dawnpalace.js), where the Queen's alarm clock rings itself
+// giant. Up the path past the palace door in Sprout Village.
+MAPS.dawnpalace = arena('dawnpalace', 'The Palace at Dawn', 'meadow', 'sprout', { x: 60, y: 176 },
+  { sky: ['#9a8ad8', '#ffb0c8', '#ffe0a8'], painted: 'dawnpalace', light: 'morning', edges: 'flowers', props: ['flower', 'tulip', 'flower'], clouds: false, rainbow: 0 },
+  [['sakura', 220, 0], ['sakura', 1180, 1]], ['sprout', 'dawnpalace']);
+MAPS.dawnpalace.trialBoss = 'alarm';
+// (Always dawn there, and never rain: its own light, whatever the clock.)
+MAPS.dawnpalace.ownLight = true;
+MAPS.sprout.portals.push({ id: 'dawnpalace', x: 200, y: 480, to: 'dawnpalace', toPortal: 'west', label: 'The Palace at Dawn' });
+
 // Lilith's grotto behind the waterfall keeps its own rose-lit dusk, day or night.
 MAPS.grotto.ownLight = true;
 MAPS.glade.portals.push({ id: 'bower', x: 580, y: 480, to: 'bower', toPortal: 'west', label: "Sylvana's Bower" });
