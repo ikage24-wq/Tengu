@@ -826,6 +826,40 @@ export const DREAM_FX = {
   },
 };
 
+// A monster's thrown shot with a look of its own (render/scene.js, the 'spit' vfx; `p` 0..1 along
+// its flight, `d` the way it flies): the Sticky Note Bird's note, spinning; the Stapler Croc's staple.
+export function dreamShot(ctx, shot, x, y, p, d) {
+  if (shot === 'note') {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(p * 9 * d);
+    note(ctx, 0, 0, 9, 0, '#ff9ac0');
+    ctx.restore();
+    return true;
+  }
+  if (shot === 'staple') {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(p * 14 * d);
+    ctx.strokeStyle = '#5a5e70';
+    ctx.lineWidth = 2.8;
+    ctx.lineJoin = 'round';
+    ctx.beginPath();
+    ctx.moveTo(-4, 3);
+    ctx.lineTo(-4, -2);
+    ctx.lineTo(4, -2);
+    ctx.lineTo(4, 3);
+    ctx.stroke();
+    ctx.strokeStyle = '#e8ecf6';
+    ctx.lineWidth = 1.4;
+    ctx.stroke();
+    ctx.restore();
+    starFlash(ctx, x - d * 6, y, 3 + Math.sin(p * 30) * 1, 4, p * 8, '#d0d4e0', '#ffffff');
+    return true;
+  }
+  return false;
+}
+
 // (render/bossfx.js calls these.)
 export function dreamWarn(ctx, z, x, y, p, time) {
   const fx = DREAM_FX[z.look];

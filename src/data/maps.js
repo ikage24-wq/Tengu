@@ -2372,12 +2372,12 @@ Object.assign(MAPS, {
     objects: [],
     npcs: [],
     spawns: [
-      ...packAt('a', 420, G, 'stagehand', 'paperdragon'),
-      ...packAt('b', 330, 300, 'understudy', 'stagehand'),
-      ...packAt('c', 880, 300, 'chorusgirl', 'stagehand'),
-      ...packAt('d', 1100, G, 'paperdragon', 'understudy', 'chorusgirl'),
-      ...packAt('e', 1440, 300, 'stagehand', 'chorusgirl'),
-      ...packAt('f', 1800, G, 'paperdragon', 'stagehand', 'understudy'),
+      ...packAt('a', 420, G, 'sleepysheep', 'paperdragon'),
+      ...packAt('b', 330, 300, 'paperdragon', 'sleepysheep'),
+      ...packAt('c', 880, 300, 'sleepysheep', 'paperdragon'),
+      ...packAt('d', 1100, G, 'paperdragon', 'sleepysheep', 'paperdragon'),
+      ...packAt('e', 1440, 300, 'sleepysheep', 'paperdragon'),
+      ...packAt('f', 1800, G, 'paperdragon', 'sleepysheep', 'sleepysheep'),
     ],
   },
 
@@ -2400,7 +2400,7 @@ Object.assign(MAPS, {
       { kind: 'cue', colour: 'mint', x: 980, y: G, phone: true }, { kind: 'cue', colour: 'violet', x: 1260, y: 300, phone: true },
     ],
     npcs: [],
-    spawns: [...packAt('a', 300, G, 'prompter', 'primadonna', 'chorusgirl'), ...packAt('b', 1300, G, 'primadonna', 'prompter', 'understudy')],
+    spawns: [...packAt('a', 300, G, 'prompter', 'primadonna', 'prompter'), ...packAt('b', 1300, G, 'primadonna', 'prompter', 'primadonna')],
   },
 
   // Act III: Overtime (Chapter 9, the Queen's dream). The same office at a quarter to midnight, the

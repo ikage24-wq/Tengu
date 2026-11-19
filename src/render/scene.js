@@ -56,6 +56,7 @@ import { drawAquaBack, drawAquaFront, drawAquaObject, AQUA_HINT } from './aquari
 import { drawCarnivalBack, drawCarnivalFront, drawCarnivalObject, CARNIVAL_HINT } from './carnival.js';
 import { drawObsBack, drawObsFront, drawObsObject, OBS_HINT } from './observatory.js';
 import { castWarn, castHit, OWN_WARN } from './bossfx.js';
+import { dreamShot } from './dreamfx.js';
 import { drawVolcanoBack, drawVolcanoFront, drawVolcanoObject, VOLCANO_HINT } from './volcano.js';
 import { drawTheatreBack, drawTheatreFront, drawTheatreObject, drawTheatreSet, THEATRE_HINT } from './theatre.js';
 import { drawWhaleBack, drawWhaleFront, drawWhaleObject, WHALE_HINT } from './skywhale.js';
@@ -1073,7 +1074,7 @@ function drawDungeonFront(ctx, world, cam, time) {
     } else if (v.kind === 'spit') {
       const sx = x + (v.tx - v.x) * p;
       const sy = y + (v.ty - v.y) * p - Math.sin(p * Math.PI) * 18;
-      puff(ctx, sx, sy, 4, '#e0b8ff', '#a07ad6');
+      if (!dreamShot(ctx, v.shot, sx, sy, p, Math.sign(v.tx - v.x) || 1)) puff(ctx, sx, sy, 4, '#e0b8ff', '#a07ad6');
     } else if (v.kind === 'crash') {
       ctx.globalAlpha = 1 - p;
       starFlash(ctx, x, y - 30, 30 * (0.4 + p), 6, p, '#ffe36b');

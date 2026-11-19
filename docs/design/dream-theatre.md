@@ -17,7 +17,10 @@ minutes", and Monday crumples (world/theatre.js; the fights are built on world/b
 The table below is the original 2026-11-02 run. Rooms 2-6 are now: Act I: The Morning Train (the
 carriage rocks, bags fall off the racks), Act II: The Office (answer the desk phones in order),
 Act III: Overtime (the Coffee Mug Boss), The Convenience Store, 2 a.m. (the Cup-Noodle Dragon), The
-Final Curtain: Her Flat (Monday).
+Final Curtain: Her Flat (Monday). The train's monsters are the Rush-Hour Penguin and the Sleepy
+Commuter Sheep, the office's the Sticky Note Bird and the Stapler Croc (render/mobs/commuterigs.js;
+mob ids paperdragon, sleepysheep, prompter, primadonna). The lobby keeps its theatre folk (the
+Understudy Ghost, Chorus Flamingo and Stagehand Mole), still the old 2026-11-03 drawings.
 
 (Original premise: its writer, the Phantom Playwright, was writing the island into his play, and
 every night the audience forgot a little more of who they were.)

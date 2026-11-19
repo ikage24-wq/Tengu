@@ -1102,7 +1102,8 @@ function swing(world, m, up) {
   if (f.range && Math.abs(g.body.x - m.x) > reachOf(m) - f.range + f.reach + 10) {
     const travel = Math.abs(g.body.x - m.x) / 360;
     world.dungeon.shots.push({ at: world.now + travel, id: g.id, raw: m.def.atk * mul, acc: m.def.acc, fromX: m.x });
-    world.dungeon.vfx.push({ kind: 'spit', x: m.x + m.dir * m.def.w * 0.3, y: m.y - m.def.h * 0.6, tx: g.body.x, ty: g.body.y - g.body.h / 2, t: 0, dur: travel });
+    // (`shot`: what it throws, if it has a look of its own: render/dreamfx.js dreamShot.)
+    world.dungeon.vfx.push({ kind: 'spit', x: m.x + m.dir * m.def.w * 0.3, y: m.y - m.def.h * 0.6, tx: g.body.x, ty: g.body.y - g.body.h / 2, t: 0, dur: travel, shot: f.shot ?? null });
     return;
   }
   if (Math.abs(g.body.x - m.x) > reachOf(m) + 16 || Math.abs(g.body.y - m.y) > 60 || blinded(world.now, m)) {

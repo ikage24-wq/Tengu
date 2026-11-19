@@ -607,20 +607,27 @@ export const MOBS = {
     speed: 58, w: 26, h: 34, art: 'stagehand', drops: [{ id: 'script_page', chance: 0.3 }, { id: 'white_potion', chance: 0.3 }, { id: 'encore_rose', chance: 0.06 }],
     fight: { every: 1.8, reach: 38, windup: 0.35 },
   }),
+  // (Chapter 9, 2026-11-19: the train and the office are the Queen's old life. The ids stay, for
+  // saves and Monster Book cards; the monsters are new: render/mobs/commuterigs.js.)
   primadonna: mob({
-    id: 'primadonna', name: 'Prima Donna Frog', level: 42, hp: 5200, atk: 204, def: 44, acc: 130, eva: 8, exp: 2800, gold: [26, 48],
-    speed: 30, w: 30, h: 38, art: 'primadonna', drops: [{ id: 'sequin', chance: 0.45 }, { id: 'encore_rose', chance: 0.1 }, { id: 'crystal_crown', chance: 0.01 }],
-    fight: { every: 2.4, reach: 30, windup: 0.6, range: 180 },
+    id: 'primadonna', name: 'Stapler Croc', level: 42, hp: 5200, atk: 204, def: 44, acc: 130, eva: 8, exp: 2800, gold: [26, 48],
+    speed: 34, w: 30, h: 30, art: 'staplercroc', drops: [{ id: 'sequin', chance: 0.45 }, { id: 'encore_rose', chance: 0.1 }, { id: 'crystal_crown', chance: 0.01 }],
+    fight: { every: 2.4, reach: 30, windup: 0.6, range: 180, shot: 'staple' },
   }),
   paperdragon: mob({
-    id: 'paperdragon', name: 'Paper Dragon', level: 43, hp: 6400, atk: 212, def: 52, acc: 130, eva: 10, exp: 3100, gold: [28, 50],
-    speed: 50, w: 44, h: 36, art: 'paperdragon', drops: [{ id: 'script_page', chance: 0.4 }, { id: 'encore_rose', chance: 0.12 }],
-    fight: { every: 2.1, reach: 54, windup: 0.5 },
+    id: 'paperdragon', name: 'Rush-Hour Penguin', level: 43, hp: 6400, atk: 212, def: 52, acc: 130, eva: 10, exp: 3100, gold: [28, 50],
+    speed: 56, w: 26, h: 36, art: 'rushpenguin', drops: [{ id: 'script_page', chance: 0.4 }, { id: 'encore_rose', chance: 0.12 }],
+    fight: { every: 2.1, reach: 44, windup: 0.5 },
+  }),
+  sleepysheep: mob({
+    id: 'sleepysheep', name: 'Sleepy Commuter Sheep', level: 41, hp: 4800, atk: 198, def: 46, acc: 126, eva: 10, exp: 2600, gold: [25, 46],
+    speed: 34, w: 28, h: 36, art: 'sleepysheep', drops: [{ id: 'wool', chance: 0.4 }, { id: 'script_page', chance: 0.3 }, { id: 'encore_rose', chance: 0.06 }],
+    fight: { every: 2, reach: 40, windup: 0.55 },
   }),
   prompter: mob({
-    id: 'prompter', name: 'Prompter Bat', level: 42, hp: 4300, atk: 200, def: 38, acc: 132, eva: 16, exp: 2700, gold: [25, 47],
-    speed: 40, w: 26, h: 34, art: 'prompter', drops: [{ id: 'script_page', chance: 0.45 }, { id: 'mana_elixir', chance: 0.2 }, { gear: 'earring', chance: 0.01 }],
-    fight: { every: 2.2, reach: 30, windup: 0.5, range: 170 },
+    id: 'prompter', name: 'Sticky Note Bird', level: 42, hp: 4300, atk: 200, def: 38, acc: 132, eva: 16, exp: 2700, gold: [25, 47],
+    speed: 44, w: 24, h: 28, art: 'stickybird', drops: [{ id: 'script_page', chance: 0.45 }, { id: 'mana_elixir', chance: 0.2 }, { gear: 'earring', chance: 0.01 }],
+    fight: { every: 2.2, reach: 30, windup: 0.5, range: 170, shot: 'note' },
   }),
   // (Health sized from a live run, 2026-11-19: a level-43 group does about 6.5k a second to her,
   // her harder Comedy and softer Tragedy evened out; 600k is a fight of about a minute and a half.)
@@ -650,20 +657,22 @@ export const MOBS = {
   // standing in for the three above in the theatre's last acts: her manager at Overtime, the
   // all-night snack at the 2 a.m. store, and Monday in her flat. (Health carried over from the acts
   // they replace, to be checked in a live run.)
+  // (The Queen's dream's bosses, 2026-11-19: sized for about 1.5-2 minutes at the level-43 group's
+  // ~6.5k a second (the bots alone do about half that); Monday's last 12% is the ending scene.)
   mugboss: mob({
-    id: 'mugboss', name: 'The Coffee Mug Boss', level: 42, hp: 480000, atk: 262, def: 62, acc: 132, eva: 8, exp: 62000, gold: [740, 1000],
+    id: 'mugboss', name: 'The Coffee Mug Boss', level: 42, hp: 620000, atk: 262, def: 62, acc: 132, eva: 8, exp: 62000, gold: [740, 1000],
     speed: 34, w: 64, h: 100, art: 'mugboss', boss: true,
     drops: [{ id: 'encore_rose', chance: 1, qty: 3 }, { id: 'white_potion', chance: 1, qty: 18 }],
     fight: { every: 1.9, reach: 74, windup: 0.5 }, mech: 'mugboss',
   }),
   noodledragon: mob({
-    id: 'noodledragon', name: 'The Cup-Noodle Dragon', level: 43, hp: 520000, atk: 268, def: 64, acc: 134, eva: 6, exp: 66000, gold: [770, 1100],
+    id: 'noodledragon', name: 'The Cup-Noodle Dragon', level: 43, hp: 680000, atk: 268, def: 64, acc: 134, eva: 6, exp: 66000, gold: [770, 1100],
     speed: 32, w: 64, h: 110, art: 'noodledragon', boss: true,
     drops: [{ id: 'encore_rose', chance: 1, qty: 3 }, { id: 'mana_elixir', chance: 1, qty: 9 }],
     fight: { every: 2, reach: 80, windup: 0.55 }, mech: 'noodledragon',
   }),
   monday: mob({
-    id: 'monday', name: 'Monday', level: 45, hp: 560000, atk: 280, def: 68, acc: 138, eva: 8, exp: 96000, gold: [1000, 1400],
+    id: 'monday', name: 'Monday', level: 45, hp: 740000, atk: 280, def: 68, acc: 138, eva: 8, exp: 96000, gold: [1000, 1400],
     speed: 28, w: 80, h: 140, art: 'monday', boss: true,
     drops: [{ id: 'encore_rose', chance: 1, qty: 5 }],
     fight: { every: 2, reach: 92, windup: 0.6 }, mech: 'monday',
