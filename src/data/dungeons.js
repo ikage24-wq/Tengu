@@ -75,7 +75,7 @@ export const DUNGEONS = {
   // candy valley and its mines, then up the cone to the crater.
   volcano: {
     id: 'volcano', name: 'Candy Volcano', minLevel: 35,
-    blurb: "Queen Bonbon is stirring the Candy Volcano hotter and hotter to make the biggest dessert in the world. Cross the valley, cook her recipe, beat her smith and her knight, and cool her down before the island is buried in caramel.",
+    blurb: "Queen Bonbon bakes a bigger cake every day, in case somebody comes to share it, and the Candy Volcano is boiling over. Cross the valley, cook her recipe, beat her smith and her knight, and cool her down before the island is buried in cake.",
     gate: 'sugar_trail', warden: 'praline',
     rooms: ['volcano1', 'volcano2', 'volcano3', 'volcano4', 'volcano5', 'volcano6'],
     recruit: { tank: [36, 38], healer: [36, 38], dps: [35, 38] },

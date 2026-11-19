@@ -275,7 +275,9 @@ How to get there without making it a grind (the game's own rule against chores):
 7. [x] Chapter 6: Gearheart's carnival games, Elder Kuri, Tamamo's clue.
 8. [x] Chapter 7: Astraea's constellations, Elder Goma, the twist (2026-11-18 to 19: rooms, monsters and Astraea remade;
    the twist scene; then the chapter renamed "The Night the Wind Went Out" and the quests set up Goma).
-9. [ ] Chapter 8: Bonbon's cake, Elder Ichigo, Lilith's clue, the sleepwalk.
+9. [x] Chapter 8: Bonbon's cake, Elder Ichigo, Lilith's clue, the sleepwalk (2026-11-19, the Candy
+   Volcano only: rooms remade dad5f57, the six sweets as rigs caf2267, Bonbon's Sprinkle Rain /
+   Frosting Flood / Cherry Bomb with Ichigo and the sleepwalk 2cc239c, then the chapter's text).
 10. [ ] Chapter 9: the Queen's dream and Monday, Elder Zunda.
 11. [ ] Chapter 10: the Sky Whale's storm, Selene, Prismaris, the Alarm, the finale.
 
