@@ -13,6 +13,7 @@ import { drawTerrace, drawChimney, drawBalcony } from './manorhill.js';
 import { drawCoralShelf, drawKelpRock, drawAbyssLedge, drawTank } from './aquapalace.js';
 import { drawBooth, drawTrestle, drawGondola, drawPony, drawCarousel, drawFunFloor } from './fairground.js';
 import { drawStarBalcony, drawGantry, drawPlanet } from './starlight.js';
+import { drawWafer, drawLicTrestle, drawMinecart, drawKitchenTable, drawHung, drawForgePier, drawTurret, drawRockPillar } from './sugarworks.js';
 
 const INK = '#3a2d4f';
 const edge = (c) => mix(shade(c, -38), INK, 0.35);
@@ -105,6 +106,11 @@ export const MATERIALS = {
   starstone: { lip: '#fff3a6', body: '#8a8ac0', deep: '#5a5a90', stone: '#c4c4ec', style: 'flagstone', blades: false, drip: null, joint: '#ffd36b' },
   // The Candy Volcano: biscuit ground under a pink icing lip.
   candy: { lip: '#ff9ab8', body: '#e0a878', deep: '#b8805a', stone: '#f6d0a8', style: 'slab', blades: false, drip: 'vine' },
+  // The Candy Volcano's remake (2026-11-19): the valley's chocolate cake under a puff of pink
+  // frosting; the mine's chocolate strata; the forge's toffee flagstones, caramel in the joints.
+  cocoacake: { lip: '#ffb8d0', body: '#8a5a44', deep: '#62402f', stone: '#b4826a', style: 'sponge', blades: false, drip: null, cap: 'puffy', capLine: '#d87e9c', capUnder: '#ffd2e0', capLit: '#ffe8f0' },
+  chocrock: { lip: '#c89070', body: '#6a4434', deep: '#46281e', stone: '#8e624c', style: 'strata', blades: false, drip: null },
+  toffeeflag: { lip: '#ffd08a', body: '#a0603a', deep: '#6e3a22', stone: '#c88a5a', style: 'flagstone', blades: false, drip: null, joint: '#ffb050' },
   // The Gingerbread Ramparts' wall-walk: big iced gingerbread blocks with candy buttons.
   gingerbread: { lip: '#fff8f2', body: '#c8844e', deep: '#9a5a34', stone: '#e2a66c', style: 'ginger', blades: false, drip: null, icing: '#fff8f2' },
   // The Crater's islands: rock candy, crystal facets in sugar pinks and ambers over a toffee crust.
@@ -2432,6 +2438,15 @@ export function drawIsland(ctx, theme, p, cam, time, pi, look = null, map = null
     else if (style === 'starbalcony') drawStarBalcony(ctx, x, y, w, time, pi, map, cam);
     else if (style === 'gantry') drawGantry(ctx, x, y, w, time, pi, map, cam);
     else if (style === 'planet') drawPlanet(ctx, x, y, w, time, pi, p, map, cam);
+    // The Candy Volcano's (render/sugarworks.js).
+    else if (style === 'wafer') drawWafer(ctx, x, y, w, time, pi, map, cam);
+    else if (style === 'licorice') drawLicTrestle(ctx, x, y, w, time, pi, map, cam);
+    else if (style === 'minecart') drawMinecart(ctx, x, y, w, time, pi, p, map, cam);
+    else if (style === 'table') drawKitchenTable(ctx, x, y, w, time, pi, map, cam);
+    else if (style === 'potrack' || style === 'hangdeck') drawHung(ctx, x, y, w, time, pi, map, cam, style);
+    else if (style === 'forgepier') drawForgePier(ctx, x, y, w, time, pi, map, cam);
+    else if (style === 'turret') drawTurret(ctx, x, y, w, time, pi, map, cam);
+    else if (style === 'rockpillar') drawRockPillar(ctx, x, y, w, time, pi, map, cam);
     else if (style === 'leaf') drawLeafPad(ctx, x, y, w, time, pi);
     else if (style === 'stone') drawStone(ctx, theme, m, x, y, w, p.thick ?? 26, cam, time, pi, look?.edges);
     return;

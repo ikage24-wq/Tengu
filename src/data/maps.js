@@ -2138,10 +2138,10 @@ Object.assign(MAPS, {
   sugar_trail: {
     id: 'sugar_trail', name: 'Sugar Trail', theme: 'candy', town: 'grove', world: { x: 270, y: 30 }, music: 'volcano',
     width: 1200, height: 420, groundY: G,
-    look: { sky: ['#ff9ab8', '#ffc8a0', '#fff0c8'], far: '#e08aa8', mid: '#f0a8c0', midTrim: '#ffd36b', ...SUGAR },
+    look: { sky: ['#ff9ab8', '#ffc8a0', '#fff0c8'], far: '#e08aa8', mid: '#f0a8c0', midTrim: '#ffd36b', ...SUGAR, painted: 'gumdropvale', islands: 'wafer', material: 'cocoacake', props: [], ledgeProp: null },
     platforms: [{ x: 420, y: G - 80, w: 140 }],
     ropes: [],
-    deco: [['signpost', 160]],
+    deco: [['signpost', 160], ['gumdrop', 300], ['lollipop', 640], ['gumdrop', 700], ['sugararch', 1110]],
     portals: [
       { id: 'start', x: 640, y: G, hidden: true },
       { id: 'west', x: 50, y: G, to: 'springs', toPortal: 'volcano' },
@@ -2165,7 +2165,8 @@ Object.assign(MAPS, {
         { name: 'The Far Slope', color: '#9ae66a', from: 1900, mobs: [] },
       ],
     }),
-    look: { sky: ['#ff9ab8', '#ffc8a0', '#fff0c8'], far: '#e08aa8', mid: '#f0a8c0', midTrim: '#ffd36b', ...SUGAR },
+    look: { sky: ['#ff9ab8', '#ffc8a0', '#fff0c8'], far: '#e08aa8', mid: '#f0a8c0', midTrim: '#ffd36b', ...SUGAR, painted: 'gumdropvale', islands: 'wafer', material: 'cocoacake', props: [], ledgeProp: null },
+    deco: [['lollipop', 250], ['gumdrop', 720], ['gumdrop', 1870], ['lollipop', 2300], ['gumdrop', 2420]],
     task: { kind: 'light', object: 'crystal', label: 'Gather the sugar crystals' },
     sticky: [{ x1: 760, x2: 1060, y: 680 }, { x1: 1500, x2: 1840, y: 680 }],
     portals: [
@@ -2190,11 +2191,11 @@ Object.assign(MAPS, {
     id: 'volcano2', name: 'The Licorice Mine', theme: 'candy', town: 'grove', dungeon: 'volcano',
     width: 2600, height: 420, groundY: G,
     platforms: [
-      { x: 140, y: 300, w: 300 }, { x: 820, y: 300, w: 100, style: 'planks', drift: { dx: 420, period: 7 } }, { x: 1440, y: 300, w: 100, style: 'planks', drift: { dx: 420, period: 8 } },
+      { x: 140, y: 300, w: 300 }, { x: 820, y: 300, w: 100, style: 'minecart', drift: { dx: 420, period: 7 } }, { x: 1440, y: 300, w: 100, style: 'minecart', drift: { dx: 420, period: 8 } },
       { x: 2100, y: 300, w: 360 }, { x: 1250, y: 220, w: 140 },
     ],
     ropes: [{ x: 1320, top: 220, bottom: G }],
-    look: { sky: ['#3a1e2a', '#5a2e3e', '#8a4a5a'], far: '#3e2230', mid: '#5a3240', midTrim: '#ff7aa8', ...SUGAR_IN },
+    look: { sky: ['#3a1e2a', '#5a2e3e', '#8a4a5a'], far: '#3e2230', mid: '#5a3240', midTrim: '#ff7aa8', ...SUGAR_IN, painted: 'licoricemine', material: 'chocrock' },
     hotFloor: [[700, 1950]],
     portals: [
       { id: 'west', x: 40, y: G, to: 'volcano1', toPortal: 'east' },
@@ -2215,9 +2216,9 @@ Object.assign(MAPS, {
   volcano3: {
     id: 'volcano3', name: 'The Candy Kitchen', theme: 'candy', town: 'grove', dungeon: 'volcano',
     width: 1600, height: 420, groundY: G,
-    platforms: [{ x: 200, y: 300, w: 300 }, { x: 1100, y: 300, w: 300 }, { x: 720, y: 220, w: 160 }],
+    platforms: [{ x: 200, y: 300, w: 300 }, { x: 1100, y: 300, w: 300 }, { x: 720, y: 220, w: 160, style: 'potrack' }],
     ropes: [{ x: 800, top: 220, bottom: G }],
-    look: { sky: ['#4a2a3a', '#7a4a5a', '#c88a8a'], far: '#5a3040', mid: '#7a4656', midTrim: '#ffd36b', ...SUGAR_IN, skyline: 'kitchen' },
+    look: { sky: ['#4a2a3a', '#7a4a5a', '#c88a8a'], far: '#5a3040', mid: '#7a4656', midTrim: '#ffd36b', ...SUGAR_IN, skyline: 'kitchen', painted: 'candykitchen' },
     task: { kind: 'light', object: 'dispenser', label: 'Cook the recipe' },
     cauldron: { x: 800 },
     portals: [
@@ -2237,9 +2238,9 @@ Object.assign(MAPS, {
   volcano4: {
     id: 'volcano4', name: 'The Caramel Forge', theme: 'candy', town: 'grove', dungeon: 'volcano',
     width: 1600, height: 420, groundY: G,
-    platforms: [{ x: 180, y: 300, w: 200 }, { x: 1220, y: 300, w: 200 }, { x: 720, y: 220, w: 160 }],
+    platforms: [{ x: 180, y: 300, w: 200 }, { x: 1220, y: 300, w: 200 }, { x: 720, y: 220, w: 160, style: 'hangdeck' }],
     ropes: [{ x: 800, top: 220, bottom: G }],
-    look: { sky: ['#4a1a1a', '#8a3a2a', '#e08a4a'], far: '#5a2420', mid: '#7a3a2a', midTrim: '#ffd36b', ...SUGAR_IN, skyline: 'forge' },
+    look: { sky: ['#4a1a1a', '#8a3a2a', '#e08a4a'], far: '#5a2420', mid: '#7a3a2a', midTrim: '#ffd36b', ...SUGAR_IN, skyline: 'forge', painted: 'caramelforge', material: 'toffeeflag' },
     portals: [
       { id: 'west', x: 40, y: G, to: 'volcano3', toPortal: 'east' },
       { id: 'east', x: 1560, y: G, to: 'volcano5', toPortal: 'west', sealed: true },
@@ -2256,7 +2257,7 @@ Object.assign(MAPS, {
     width: 2000, height: 420, groundY: G,
     platforms: [{ x: 160, y: 300, w: 160 }, { x: 900, y: 300, w: 200 }, { x: 1680, y: 300, w: 160 }, { x: 950, y: 220, w: 100 }],
     ropes: [{ x: 1000, top: 220, bottom: G }],
-    look: { sky: ['#ff8a6a', '#ffb88a', '#ffe8c0'], far: '#c86a5a', mid: '#e08a6a', midTrim: '#ffffff', ...SUGAR, skyline: 'ramparts', material: 'gingerbread', props: ['barrel', 'flower', 'crate', 'flower'] },
+    look: { sky: ['#ff8a6a', '#ffb88a', '#ffe8c0'], far: '#c86a5a', mid: '#e08a6a', midTrim: '#ffffff', ...SUGAR, skyline: 'ramparts', material: 'gingerbread', painted: 'gingerwall', islands: 'turret', props: [], ledgeProp: null },
     portals: [
       { id: 'west', x: 40, y: G, to: 'volcano4', toPortal: 'east' },
       { id: 'east', x: 1960, y: G, to: 'volcano6', toPortal: 'west', sealed: true },
@@ -2275,7 +2276,7 @@ Object.assign(MAPS, {
       { x: 790, y: 220, w: 120 },
     ],
     ropes: [{ x: 850, top: 220, bottom: G }],
-    look: { sky: ['#5a1a2a', '#c84a4a', '#ffb06a'], far: '#7a2a2a', mid: '#a04040', midTrim: '#ffd36b', ...SUGAR, skyline: 'crater', material: 'rockcandy', critters: [], props: ['crystal', 'rock', 'crystal'] },
+    look: { sky: ['#5a1a2a', '#c84a4a', '#ffb06a'], far: '#7a2a2a', mid: '#a04040', midTrim: '#ffd36b', ...SUGAR, skyline: 'crater', material: 'rockcandy', critters: [], painted: 'crater', islands: 'rockpillar', props: [], ledgeProp: null },
     flood: { every: 18, warn: 3, last: 6, damage: 80, color: 'caramel', name: 'The caramel rises!' },
     lateFlood: true,
     portals: [
@@ -3118,10 +3119,11 @@ const INTERIORS = {
   // (Their props sparse, and no empty stub pedestals among them: 2026-11-18.)
   observatory2: { islands: 'gallery', ...GALLERY_PROPS, props: ['candle', 'orb', 'books', 'candle'], propKeep: 0.66 }, observatory3: { islands: 'gallery', ...GALLERY_PROPS, props: ['books', 'orb', 'books', 'candle'], propKeep: 0.66 },
   observatory4: { islands: 'gallery', ...GALLERY_PROPS, props: ['books', 'books', 'candle'] }, observatory5: { islands: 'gallery', ...GALLERY_PROPS, props: ['orb', 'candle'], propKeep: 0.66 },
-  // The volcano's insides: the mine (timber catwalks under rock), the kitchen and the forge.
-  volcano2: { islands: 'catwalk', ceiling: true, metal: '#9a6a4a', props: ['crate', 'barrel', 'torch', 'crystal'], ledgeProp: null, edges: null },
-  volcano3: { islands: 'gallery', material: 'parquet', ceiling: 'beams', trim: '#ff9ab8', ceilingTint: { band: '#9a6048' }, props: ['barrel', 'crate', 'lantern'], ledgeProp: null, edges: null },
-  volcano4: { islands: 'catwalk', ceiling: 'beams', metal: '#7a5a5a', ceilingTint: { band: '#6a3a3a', lamp: '#ffb070' }, props: ['barrel', 'torch', 'crate'], ledgeProp: null, edges: null },
+  // The volcano's insides (remade 2026-11-19, render/sugarworks.js): the mine's licorice trestles
+  // under rock, the kitchen's tables under beams, the forge's iron grates on toffee-brick piers.
+  volcano2: { islands: 'licorice', ceiling: true, props: [], ledgeProp: null, edges: null },
+  volcano3: { islands: 'table', material: 'parquet', ceiling: 'beams', trim: '#ff9ab8', ceilingTint: { band: '#9a6048' }, props: [], ledgeProp: null, edges: null },
+  volcano4: { islands: 'forgepier', ceiling: 'beams', ceilingTint: { band: '#6a3a3a', lamp: '#ffb070' }, props: [], ledgeProp: null, edges: null },
   // The theatre: its halls under the red valance; backstage under bare beams on catwalks; the
   // acts are painted sets, so only the valance changes over them.
   theatre1: THEATRE_HALL, theatre4: THEATRE_HALL, theatre6: THEATRE_HALL,

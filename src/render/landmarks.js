@@ -13,6 +13,7 @@ import { MANORHILL_KINDS } from './manorhill.js';
 import { AQUA_KINDS } from './aquapalace.js';
 import { FAIR_KINDS } from './fairground.js';
 import { STAR_KINDS } from './starlight.js';
+import { SUGAR_KINDS } from './sugarworks.js';
 import { HOLLOWROOM_KINDS, ROOTROOM_KINDS } from './hollowrooms.js';
 
 const INK = '#3a2d4f';
@@ -3350,6 +3351,7 @@ const KINDS = {
   ...AQUA_KINDS,
   ...FAIR_KINDS,
   ...STAR_KINDS,
+  ...SUGAR_KINDS,
   // (Rootwood Hollow's rooms: the trunk's inner walls, stumps: render/hollowrooms.js.)
   ...HOLLOWROOM_KINDS,
   ...ROOTROOM_KINDS,
