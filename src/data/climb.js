@@ -182,7 +182,8 @@ export function lay({ width, ground, ledges, by = 'x', zones, quiet = [], terrai
   const nodes = [];
   zones.forEach((z, zi) => {
     const free = [];
-    for (const l of floors) for (let x = l.x + 50; x <= l.x + l.w - 50; x += 60) if (zoneOf(x, l.y) === zi && clear(x, l.y)) free.push([x, l.y]);
+    // (`noSpots`: a ledge kept free of gathering spots, like a wooden deck no tree could grow on.)
+    for (const l of floors) if (!l.noSpots) for (let x = l.x + 50; x <= l.x + l.w - 50; x += 60) if (zoneOf(x, l.y) === zi && clear(x, l.y)) free.push([x, l.y]);
     (z.nodes ?? []).forEach((n, i) => {
       const at = pickSpot(free, nodes, Math.floor(((i + 1) * free.length) / (z.nodes.length + 1)));
       if (at) nodes.push({ x: at[0], y: at[1], ...n });

@@ -2877,37 +2877,60 @@ Object.assign(MAPS, {
 
 
 
-  // Serpent Springs climbs a steaming mountainside in three zones (the tall-map rules, a light
-  // rework, data/climb.js): the Hot Spring Pools, where the Lamias bask and steam lifts you up; the
-  // Waterfall Steps, with a ledge drifting across the gap and, behind the waterfall, the way into
-  // Lilith's Rose Grotto; and the Steam Heights, the Wraiths' crags, where steam vents bounce you up
-  // to the lookout and the road on to Frozen Peak. The hot-spring fishing spot is in the quiet east
-  // corner with a dock of its own.
+  // Serpent Springs climbs a steaming mountainside in three zones (zones by height, laid by hand
+  // 2026-11-19 after the audit found the same stack of identical slabs as the shrine path): the Hot
+  // Spring Pools on the ground, the Lamias' two steaming pools with open sky over them, steam rising
+  // off the west pool to carry you up (Up to ride it), and the hot-spring fishing spot in the quiet
+  // east corner with a dock of its own; the Waterfall Steps, where the falls pour off the summit's
+  // edge onto the ledge of Lilith's Rose Grotto, the door behind the water; and the Steam Heights,
+  // the Wraiths' crags, where a steam vent bounces you up to the summit pool and the road on to
+  // Frozen Peak, with a puff of steam drifting across the gap.
   springs: {
     id: 'springs', name: 'Serpent Springs', theme: 'springs', town: 'grove', world: { x: 256, y: 40 },
-    ...climb({
-      width: 2400, ground: 880, quiet: [[40, 880, 160], [2200, 880, 320], [2200, 800, 260], [2200, 720, 260], [1560, 560, 200]],
+    // (One monster a spot: the old stack held a wall of them.)
+    perSpawn: 1,
+    ...lay({
+      width: 2400, ground: 880, by: 'y', monsters: 20,
+      quiet: [[40, 880, 160], [2200, 880, 320], [2340, 880, 110], [1620, 880, 90], [1560, 560, 140], [1992, 640, 90], [1350, 240, 110]],
       zones: [
-        { name: 'Hot Spring Pools', color: '#e0705a', rows: ['wide', 'split'], mobs: ['lamia'], nodes: [SPOT.herb(3, 'steam_ginger'), SPOT.fiber(3)] },
-        { name: 'Waterfall Steps', color: '#4fb0d8', rows: ['tri', 'long', 'splitwide'], mobs: ['lamia', 'shade'], nodes: [SPOT.ore(3), SPOT.wood(3), SPOT.fiber(3)],
+        { name: 'Hot Spring Pools', color: '#e0705a', mobs: ['lamia'], nodes: [SPOT.herb(3, 'steam_ginger'), SPOT.fiber(3)] },
+        { name: 'Waterfall Steps', color: '#4fb0d8', from: 680, mobs: ['lamia', 'shade'], nodes: [SPOT.ore(3), SPOT.wood(3), SPOT.fiber(3)],
           look: { sky: ['#9fd8e8', '#cfeef0', '#fff4ea'] } },
-        { name: 'Steam Heights', color: '#8a86b0', rows: ['split', 'middle'], mobs: ['shade', 'lamia'], nodes: [SPOT.herb(3, 'steam_ginger'), SPOT.night(3)],
+        { name: 'Steam Heights', color: '#8a86b0', from: 440, mobs: ['shade', 'lamia'], nodes: [SPOT.herb(3, 'steam_ginger'), SPOT.night(3)],
           look: { sky: ['#c8c4e0', '#e4e0f0', '#fff4f0'] } },
       ],
+      ledges: [
+        // The Hot Spring Pools: short rock steps, clear of the two pools (860 and 1620) and the
+        // fishing corner; a wooden bath deck over the west pool, where its steam sets you down.
+        { x: 130, y: 790, w: 260 }, { x: 520, y: 720, w: 240 }, { x: 1000, y: 790, w: 230 },
+        { x: 760, y: 640, w: 260, style: 'planks', noSpots: true }, { x: 1300, y: 720, w: 200 }, { x: 1760, y: 780, w: 200, style: 'planks', noSpots: true },
+        // (The homestone's step over the fishing corner: its rope comes down onto the deck, not into the pool.)
+        { x: 1900, y: 640, w: 240, noRope: true },
+        // The Waterfall Steps: the grotto's ledge under the falls, open to the sky (its rope comes
+        // down beside the falls, not into the east pool).
+        { x: 250, y: 640, w: 300 }, { x: 600, y: 560, w: 260 }, { x: 880, y: 480, w: 200 }, { x: 1120, y: 640, w: 200 },
+        { x: 1380, y: 560, w: 380, noRope: true }, { x: 1780, y: 520, w: 260 },
+        // The Steam Heights: the Wraiths' crags, and the summit with its pool.
+        { x: 380, y: 400, w: 300 }, { x: 840, y: 320, w: 230 }, { x: 1700, y: 320, w: 200 }, { x: 1900, y: 400, w: 300 },
+        { x: 1080, y: 240, w: 420, thick: 44 },
+        // A puff of steam drifting across the gap under the summit.
+        { x: 1060, y: 420, w: 120, drift: { dx: 200, period: 9 }, style: 'earth', material: 'sky' },
+      ],
+      ropes: [{ x: 1920, top: 640, bottom: 780 }, { x: 1400, top: 560, bottom: 720 }],
     }),
-    // A moving part per zone: steam rising off the pools (Up to ride it), a ledge drifting across
-    // the steps' gap, and steam vents in the heights.
-    updrafts: [{ x: 1050, w: 56, top: 610, bottom: 880, kind: 'mist' }],
-    springs: [{ x: 960, y: 480, up: 175, kind: 'gust' }],
+    // A moving part per zone: steam rising off the west pool (Up to ride it), the falls, and a
+    // steam vent that bounces you up to the crag under the summit.
+    updrafts: [{ x: 835, w: 56, top: 610, bottom: 880, kind: 'mist' }],
+    springs: [{ x: 1040, y: 480, up: 175, kind: 'gust' }],
     portals: [
       { id: 'west', x: 40, y: 880, to: 'cave', toPortal: 'springs' },
       { id: 'east', x: 1350, y: 240, to: 'peak', toPortal: 'west' },
     ],
     npcs: [],
     // A landmark per zone: the hot springs on the pools floor (the east one with the fishing dock),
-    // the waterfall on the steps, a spring at the top.
-    deco: [['hotspring', 860], ['hotspring', 1620], ['waterfall', 1500, 80, 560], ['hotspring', 1100, 0, 240]],
-    lamps: [{ x: 2150, y: 840 }, { x: 1500, y: 520 }, { x: 1100, y: 200 }],
+    // the falls pouring off the summit's edge onto the grotto's ledge, the summit pool.
+    deco: [['hotspring', 860], ['hotspring', 1620], ['waterfall', 1490, 262, 560], ['hotspring', 1190, 0, 240]],
+    lamps: [{ x: 2150, y: 840 }, { x: 1500, y: 520 }, { x: 1190, y: 200 }],
     spirit: { x: 1600, y: 200 },
     habitats: { lamia: { naps: true, home: { x: 860, y: 880 } }, shade: { play: true } },
   },
@@ -3100,8 +3123,8 @@ MAPS.cave.nodes.push(
 );
 // The Tea Terraces' fishing stone over the pond.
 MAPS.tea.platforms.push({ x: 1620, y: 1000, w: 60, style: 'stone', walkOn: true });
-// Serpent Springs' drifting ledge and fishing dock; the grotto is behind the waterfall.
-MAPS.springs.platforms.push({ x: 1035, y: 480, w: 130, drift: { dx: 200, period: 9 } }, { x: 1990, y: 872, w: 120, style: 'stone', walkOn: true });
+// Serpent Springs' fishing dock; the grotto is behind the waterfall.
+MAPS.springs.platforms.push({ x: 1990, y: 872, w: 120, style: 'stone', walkOn: true });
 // The hot spring sunk into the east corner of the pools floor, behind a stone lip the Lamias never
 // cross: you fish it from a flat stone jutting out over the water.
 MAPS.springs.terrain = [[0, 880], [1960, 880], [1960, 872], [1990, 872], [2024, 920], [2300, 920], [2300, 880], [2400, 880]];

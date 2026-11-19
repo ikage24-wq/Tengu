@@ -474,6 +474,85 @@ function terraceWallArt(w) {
   }, false);
 }
 
+// ---------- The lower town ----------
+// Under each terrace's wall, and behind the grand stairs, the town goes on down the hill: rows of
+// little stucco houses built into the honey rock, one row under another to the foot of the map,
+// each with its arched windows (shutters folded open, flower boxes), a door or a little shop
+// front with a striped awning on the lane at its feet, ivy in the gaps, washing strung across the
+// wider fronts (2026-11-19: the audit found plain cobble filling the hillside, hundreds of pixels
+// tall). The rows sit on one grid down the whole town (ROW_TOP + ROW_H * k) so neighbouring
+// pieces line up.
+const ROW_H = 130;
+const ROW_TOP = 592;
+function cliffRowArt(w, seed) {
+  return art(`cb-row|${w}|${seed}`, w, ROW_H, () => {
+    const rock = ramp('#dcc8a6', 0.7);
+    const lane = ramp(STONE, 0.7);
+    const roof = ramp(ROOF, 0.8);
+    const foot = ROW_H - 8;
+    const out = [R(0, 0, w, ROW_H, rock.base), ...stones(0, 0, w, ROW_H, rock, seed * 7.3)];
+    let x = 6 + Math.floor(hash(seed * 1.9) * 24);
+    let i = 0;
+    while (x < w - 44) {
+      const k = seed * 3.1 + i * 7.7 + 1;
+      const hw = Math.min(w - 6 - x, 48 + Math.floor(hash(k) * 36));
+      if (hw < 40) break;
+      const hh = 70 + Math.floor(hash(k * 1.3) * 30);
+      const top = foot - hh;
+      const wall = ramp(pick(STUCCO, k), 0.6);
+      const shC = pick(SHUTTERS, k * 2.3);
+      out.push(R(x, top, hw, hh, wall.base), ...wallShade(x, top + 2, hw, hh - 2, wall, 2));
+      // Its eave of terracotta tiles.
+      out.push(R(x - 3, top - 5, hw + 6, 6, roof.base), F(R(x - 3, top - 5, hw + 6, 1.4, roof.hi)), F(R(x - 3, top, hw + 6, 1.4, roof.sh)));
+      for (let tx = x - 1; tx < x + hw + 2; tx += 5) out.push(F(R(tx, top - 4, 1, 4, roof.sh)));
+      // Upstairs windows, one or two.
+      const nwin = hw > 66 ? 2 : 1;
+      for (let j = 0; j < nwin; j++) {
+        const wx = x + (hw * (j + 1)) / (nwin + 1) - 5;
+        out.push(...archWindow(wx, top + 10, 10, 20, STONE, hash(k + j * 3.3) > 0.45), ...shutters(wx, top + 14, 10, 16, shC));
+        if (hash(k * 5 + j) > 0.35) out.push(...flowerBox(wx - 2, top + 32, 14, k + j));
+      }
+      // Washing strung across a wide front.
+      if (nwin === 2 && hash(k * 8.8) > 0.5) {
+        const ly = top + 44;
+        out.push(F(R(x + 6, ly, hw - 12, 0.8, '#8a7a7a')));
+        for (let c = 0; c < 3; c++) {
+          const cx = x + 12 + c * ((hw - 30) / 2);
+          out.push(R(cx, ly + 0.5, 7, 8 + (c % 2) * 3, pick(['#ffffff', '#8fd0f0', '#ffb0c8', '#ffe08a'], k + c)), F(R(cx, ly + 0.5, 7, 1, '#ffffff')));
+        }
+      }
+      // A door onto the lane, or a little shop front under a striped awning.
+      if (hash(k * 4.4) < 0.6) {
+        const dx = x + 6 + Math.floor(hash(k * 6.1) * (hw - 26));
+        const wood = ramp('#a8704a', 0.8);
+        out.push(R(dx - 2, foot - 26, 18, 26, mix(wall.base, '#5a4a48', 0.3)), E(dx + 7, foot - 26, 9, 5, mix(wall.base, '#5a4a48', 0.3)));
+        out.push(R(dx, foot - 24, 14, 24, wood.base), E(dx + 7, foot - 24, 7, 4, wood.base), ...planks(dx, foot - 24, 14, 24, wood, 3, k), F(E(dx + 11, foot - 12, 0.9, 0.9, GOLD)));
+      } else {
+        const aw = Math.min(hw - 10, 36);
+        const ax = x + (hw - aw) / 2;
+        const ac = pick(['#e88aa8', '#6fc0b0', '#ffb04a', '#8fa8e8'], k * 9);
+        out.push(R(ax, foot - 20, aw, 20, '#5a4a58'), F(R(ax + 2, foot - 15, aw - 4, 4, '#ffd98a')), F(R(ax + 3, foot - 9, aw - 6, 3, '#c8925a')));
+        out.push(R(ax - 2, foot - 29, aw + 4, 3, ac));
+        for (let s = 0; s < aw + 2; s += 6) out.push(T([[ax - 1 + s, foot - 26], [ax + 5 + s, foot - 26], [ax + 2 + s, foot - 21]], (s / 6) % 2 ? ac : WHITE));
+      }
+      // Ivy climbing the rock in the gap after it.
+      const gap = 8 + Math.floor(hash(k * 3.7) * 22);
+      if (gap > 16) for (let v = 0; v < 8; v++) out.push(F(E(x + hw + gap / 2 + Math.sin(v * 1.7 + k) * 3, foot - 4 - v * 9, 3.4, 3, v % 2 ? '#7fcf8a' : '#5fb070')));
+      x += hw + gap;
+      i++;
+    }
+    // The lane along the row's foot.
+    out.push(R(0, foot, w, ROW_H - foot, lane.base), F(R(0, foot, w, 1.4, lane.hi)), F(R(0, ROW_H - 1.6, w, 1.6, lane.sh)));
+    return out;
+  }, false);
+}
+// The rows from world height `from` down to the foot of the map, across `w` from screen x `x`.
+function lowerTown(ctx, map, cam, x, w, from, seed) {
+  const foot = map.height + 4;
+  let k = Math.ceil((from - ROW_TOP) / ROW_H);
+  for (let wy = ROW_TOP + k * ROW_H; wy < foot; wy += ROW_H, k++) place(ctx, cliffRowArt(Math.round(w), (((seed + k * 3) % 11) + 11) % 11), snap(x + w / 2), snap(wy - cam.y) + ROW_H);
+}
+
 // ---------- The Night Market ----------
 // How far into the night it is, eased (0 by day, 1 in full dark): the market fades in at dusk and
 // out at dawn, never popping.
@@ -701,18 +780,22 @@ export function drawCoinPiece(ctx, map, kind, wx, extra, cam, width, time) {
     const s = terraceWallArt(w);
     // (`extra.drop`: starts that far down, under a canal's basin.)
     place(ctx, s, snap(x + w / 2), gy + (extra?.drop ?? 0) + WALL_H + 2);
+    // ...and under it, the lower town down to the foot of the map.
+    lowerTown(ctx, map, cam, x, w, groundAt(map, wx) + (extra?.drop ?? 0) + WALL_H + 2, Math.round(wx / 37));
     // A lantern over one cellar door glows at night.
     const bays = Math.max(1, Math.round(w / 112));
     for (let i = 0; i < bays; i++) if (hash(w * 0.37 + i * 3.7 + 11) > 0.6) glow(ctx, x + (i + 0.5) * (w / bays), gy + 2 + WALL_H - 70, 24, '#ffc870', 0.1 + night * 0.4);
   } else if (kind === 'cb_stairs') {
-    // A grand stair up the hillside from wx to `extra.to`: the honey stone it's built of down to
-    // the foot of the map, each step's tread and riser along the slope, a stone rail on its outer
-    // edge.
+    // A grand stair up the hillside from wx to `extra.to`, carried on an arcade: under the steps a
+    // band of honey stone pierced by arches stepping up with them (lanterns in some), and behind
+    // and below it the lower town's rows of houses down to the foot of the map (it used to be one
+    // plain brick wedge that stopped in mid-air). Each step's tread and riser along the slope, a
+    // stone rail on its outer edge.
     const x1 = extra?.to ?? wx + 390;
     const y0 = groundAt(map, wx) - cam.y;
     const y1 = groundAt(map, x1) - cam.y;
     const sx1 = x1 - cam.x;
-    const bottom = Math.max(y0, y1) + 400;
+    const bottom = map.height - cam.y + 4;
     ctx.fillStyle = '#e8d4b4';
     ctx.beginPath();
     ctx.moveTo(x, y0);
@@ -723,16 +806,70 @@ export function drawCoinPiece(ctx, map, kind, wx, extra, cam, width, time) {
     ctx.fill();
     ctx.save();
     ctx.clip();
-    // The stone courses, laid in the world (not the screen), so they stay put as you walk.
+    // The lower town behind and below the arcade.
+    lowerTown(ctx, map, cam, x, sx1 - x, Math.min(y0, y1) + cam.y - ROW_H, Math.round(wx / 41));
+    ctx.restore();
+    // The arcade band under the steps: honey stone in courses...
+    const BAND = 62;
+    ctx.fillStyle = '#e8d4b4';
+    ctx.beginPath();
+    ctx.moveTo(x, y0);
+    ctx.lineTo(sx1, y1);
+    ctx.lineTo(sx1, y1 + BAND);
+    ctx.lineTo(x, y0 + BAND);
+    ctx.closePath();
+    ctx.fill();
+    ctx.save();
+    ctx.clip();
+    // (The stone courses, laid in the world, not the screen, so they stay put as you walk.)
     ctx.fillStyle = '#d4bc98';
     const wTop = Math.min(y0, y1) + cam.y;
-    for (let wy = Math.floor(wTop / 12) * 12; wy - cam.y < bottom; wy += 12) {
+    for (let wy = Math.floor(wTop / 12) * 12; wy - cam.y < Math.max(y0, y1) + BAND; wy += 12) {
       const y = wy - cam.y;
       ctx.fillRect(x, snap(y), sx1 - x, 1);
       const row = Math.round(wy / 12);
       for (let bwx = wx + (row % 2 ? 0 : 14); bwx < wx + (sx1 - x); bwx += 28) ctx.fillRect(snap(bwx - cam.x), snap(y), 1, 12);
     }
     ctx.restore();
+    // ...pierced by arches stepping up with the stair, a lantern glowing in some after dark.
+    const slopeY = (sx) => y0 + ((y1 - y0) * (sx - x)) / (sx1 - x || 1);
+    for (let ax = wx + 30; ax < x1 - 30; ax += 54) {
+      const sx = snap(ax - cam.x);
+      const aw = 20;
+      const top = Math.max(slopeY(sx), slopeY(sx + aw)) + 12;
+      const bot = Math.min(slopeY(sx), slopeY(sx + aw)) + BAND - 6;
+      const r = aw / 2;
+      ctx.fillStyle = '#c8b090';
+      ctx.fillRect(sx - 2, top + r - 1, aw + 4, bot - top - r + 1);
+      ctx.beginPath();
+      ctx.arc(sx + r, top + r, r + 2, Math.PI, TAU);
+      ctx.fill();
+      ctx.fillStyle = '#5a4a58';
+      ctx.fillRect(sx, top + r, aw, bot - top - r);
+      ctx.beginPath();
+      ctx.arc(sx + r, top + r, r, Math.PI, TAU);
+      ctx.fill();
+      if (hash(ax * 0.31) > 0.55) {
+        glow(ctx, sx + r, top + r + 6, 16, '#ffc870', 0.12 + night * 0.4);
+        ctx.fillStyle = '#ffc870';
+        ctx.fillRect(sx + r - 2, top + r + 3, 4, 6);
+        ctx.fillStyle = '#4a4a5a';
+        ctx.fillRect(sx + r - 0.5, top + 2, 1, r + 1);
+      }
+    }
+    // The band's foot: a coping beam along the slope, a shadow under it.
+    ctx.strokeStyle = '#c8b8a0';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(x, y0 + BAND);
+    ctx.lineTo(sx1, y1 + BAND);
+    ctx.stroke();
+    ctx.strokeStyle = 'rgba(74,58,72,0.25)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(x, y0 + BAND + 2.5);
+    ctx.lineTo(sx1, y1 + BAND + 2.5);
+    ctx.stroke();
     // The steps: a lit tread and a shaded riser every few pixels up.
     const run = sx1 - x;
     const rise = y0 - y1;
