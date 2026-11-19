@@ -22,7 +22,7 @@ export const CHAPTERS = [
   { n: 4, title: 'The Party That Never Ends', levels: '15-20' },
   { n: 5, title: 'Whispers in the Glade', levels: '18-23' },
   { n: 6, title: 'Foxfire at Dusk', levels: '23-30' },
-  { n: 7, title: 'The Night the Sky Stood Still', levels: '30-34' },
+  { n: 7, title: 'The Night the Wind Went Out', levels: '30-34' },
   { n: 8, title: 'Steam and Roses', levels: '33-39' },
   { n: 9, title: 'Above the Clouds', levels: '40-44' },
   { n: 10, title: 'The Crystal King', levels: '45-50' },
@@ -212,20 +212,20 @@ export const STORY_QUESTS = {
     scenes: { accept: 'ch4_trial', win: 'ch4_win', done: 'ch4_end' },
   }),
 
-  // ---------- Chapter 7: The Night the Sky Stood Still (30-34) ----------
+  // ---------- Chapter 7: The Night the Wind Went Out (30-34) ----------
   story_charts: s('story_charts', 7, {
     name: "Charts That Don't Move", giver: 'nim', minLevel: 30, prereq: 'story_4_3',
-    text: "My star charts stopped working. The stars haven't moved in weeks. I-I asked them nicely. Twice. Professor Lumen at the Observatory Steps, past Moonlit Ridge, knows the sky. Could you ask him? And Lupina's wolves on the ridge have been howling at the stuck moon for weeks: calm 20 of them on the way. Sorry. That's a lot.",
+    text: "My star charts stopped working. The stars haven't moved since the festival. I-I asked them nicely. Twice. Professor Lumen, past Moonlit Ridge, knows the sky. Could you ask him? And calm 20 of Lupina's wolves on the way. They've been howling at the stuck moon for weeks. Sorry. That's a lot.",
     objectives: [
       { type: 'kill', mob: 'lupina', count: 20 },
-      { type: 'talk', npc: 'lumen', say: "Stopped? Of course they've stopped! Astraea stopped them! Fascinating! Terrible! Mostly fascinating! Tell the little spell-seller I have the key to Astraea's tower. Bring three friends and a good neck: there's a lot of looking up." },
+      { type: 'talk', npc: 'lumen', say: "Stopped? Of course they've stopped! Astraea stopped them! Fascinating! Terrible! Mostly fascinating! And there's a little Mochi up there with her, counting along. Every night. Out loud. Tell the spell-seller I have the key to the tower. Bring three friends and a good neck." },
     ],
     rewards: { exp: 27000, gold: 720, items: [{ id: 'white_potion', qty: 20 }] },
     scenes: { accept: 'charts_open', done: 'charts_done' },
   }),
   story_astraea: s('story_astraea', 7, {
     name: 'The Star Keeper', giver: 'nim', minLevel: 31, prereq: 'story_charts',
-    text: "Please set the sky going again. Climb the Star Observatory with three friends (Professor Lumen will let you in) and free Astraea. And if she has any notes about that night... could you bring them? I'll wait here and worry. I'm very good at it.",
+    text: "Please set the sky going again. Climb the Star Observatory with three friends (Professor Lumen has the key) and talk Astraea down. Say hello to the counting Mochi for me. And if she wrote anything down about that night... could you bring it? I'll wait here and worry. I'm very good at it.",
     objectives: [{ type: 'kill', mob: 'astraea', count: 1 }],
     rewards: { exp: 60000, gold: 1200, items: [{ id: 'elixir', qty: 5 }] },
     scenes: { done: 'falling_done' },
@@ -929,8 +929,8 @@ export const SCENES = {
   ],
   // ----- Chapter 7: the twist -----
   charts_open: [
-    { card: 'Chapter 7', sub: 'The Night the Sky Stood Still' },
-    { who: 'nim', text: 'My star charts stopped working. The stars haven\'t moved in weeks. I-I asked them nicely. Twice.', mood: 'sad' },
+    { card: 'Chapter 7', sub: 'The Night the Wind Went Out' },
+    { who: 'nim', text: "My star charts stopped working. The stars haven't moved since the festival. I-I asked them nicely. Twice.", mood: 'sad' },
     { who: 'nim', text: "Professor Lumen knows the sky. Could you ask him for me? He talks very fast and very kindly, and I panic.", mood: 'sad' },
   ],
   charts_done: [
@@ -938,6 +938,9 @@ export const SCENES = {
     { together: [{ emote: 'nim', kind: '!', dur: 1.4 }, { jump: 'nim', height: 10 }] },
     { who: 'nim', text: "On purpose? You can DO that? I-I wasn't even allowed to stop my candles.", mood: 'surprised' },
     { who: 'nim', text: "If the stars don't move, the night can't end, and wishes can't go anywhere. Every wish since the festival is just... stuck up there.", mood: 'sad' },
+    { who: 'player', text: "And there's a Mochi elder up there with her. Counting the stars out loud." },
+    { together: [{ emote: 'nim', kind: 'heart', dur: 1.4 }] },
+    { who: 'nim', text: "Counting stars with a friend... I'd lose count. Then I'd cry. Then I'd start again.", mood: 'happy' },
   ],
   // The twist (2026-11-18): Astraea's record of festival night shows the Queen's wind went out on
   // purpose, a Mochi to everyone alone, and one gust out to sea to fetch you.
