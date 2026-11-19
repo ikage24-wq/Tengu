@@ -297,12 +297,12 @@ const pdParasol = () => {
 };
 const pdKey = () => [taper([[1, 3], [4, 3]], 1.2, 1.2, GOLD.sh), ...stroke(arcP(6, 3, 2, 2.4, 0, 360, 12), 1.1, GOLD.base), E(1, 3, 1, 1.6, GOLD.base)];
 const pdShoe = (far) => () => [E(2.6, 1.6, 2.4, 1.4, far ? '#c87090' : '#ff8fb0')];
-const PD_SKIRT = pd('skirt', 20, 14, pdSkirt, 2);
+const PD_SKIRT = pd('skirt', 20, 14, pdSkirt, 6, 6);
 const PD_BOD = pd('bodice', 10, 9, pdBodice, 2);
-const PD_HEAD = pd('head', 18, 15, pdHead, 2);
+const PD_HEAD = pd('head', 18, 15, pdHead, 6);
 const PD_EAR = [false, true].map((f) => pd(`ear${f ? 1 : 0}`, 5, 12, pdEar(f), 2));
 const PD_ARM = [false, true].map((f) => pd(`arm${f ? 1 : 0}`, 7, 4, pdArm(f), 2));
-const PD_PARASOL = pd('parasol', 22, 26, pdParasol, 2);
+const PD_PARASOL = pd('parasol', 22, 26, pdParasol, 5, 5);
 const PD_KEY = pd('key', 9, 6, pdKey, 2);
 const PD_SHOE = [false, true].map((f) => pd(`shoe${f ? 1 : 0}`, 5, 3, pdShoe(f), 2));
 const PD_FACE = { eyes: [[9.6, 8, 1.4, 1.9, -1], [13, 7.8, 1.1, 1.6, 1]], mouth: [11.6, 11.2, 1.4], blush: [[8, 10, 1.3], [14.2, 9.8, 0.9]], iris: '#7a50b8', lid: 0 };

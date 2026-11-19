@@ -44,7 +44,7 @@ export const taper = (pts, w0, w1, c) => {
   });
   return T([...l, ...r.reverse()], c);
 };
-export const pairOf = (pre) => (key, w, h, shapes, pad = 3) => [() => part(`${pre}|${key}`, w, h, shapes, pad), () => partBare(`${pre}|${key}`, w, h, shapes, pad)];
+export const pairOf = (pre) => (key, w, h, shapes, pad = 3, padB = undefined) => [() => part(`${pre}|${key}`, w, h, shapes, pad, 2, padB), () => partBare(`${pre}|${key}`, w, h, shapes, pad, 2, padB)];
 export const faceSprite = (key, w, h, shapes) => sprite(`rig|${key}`, () => ({ w, h, res: 2, soft: 'cel', crisp: true, bare: true, pad: 3, shapes: shapes() }));
 export const hold = (u, a, b, c, d) => (u < a || u > d ? 0 : u < b ? smooth((u - a) / (b - a)) : u < c ? 1 : 1 - smooth((u - c) / (d - c)));
 // How far into a moment that started at `at` we are, 0..1 over `dur` (0 outside it), with an eased

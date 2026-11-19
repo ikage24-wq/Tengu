@@ -95,7 +95,7 @@ const starP = () => [star5(6, 6, 4.6, GOLD.base), F(E(5, 4.6, 1, 0.8, '#ffffff')
 const cloudP = (k) => () => [E(8, 10, 7, 4.6, '#ffffff'), E(22, 10, 7.6, 5, '#ffffff'), E(15, 7, 8.4, 6, '#ffffff'), F(taper([[3, 13.4], [27, 13.4]], 2, 2, k ? '#d4e6ff' : '#dcecff'))];
 const WD = {
   BODY: wd('body', 84, 58, bodyP, 2), FLUKE: wd('fluke', 30, 40, flukeP, 2), FLIP: [false, true].map((f) => wd(`flip${f ? 1 : 0}`, 26, 22, flipP(f), 2)),
-  HATBASE: wd('hatBase', 40, 30, hatBaseP, 2), HATTIP: wd('hatTip', 34, 20, hatTipP, 2), STAR: wd('star', 12, 12, starP, 2), CLOUD: [0, 1].map((k) => wd(`cloud${k}`, 30, 16, cloudP(k), 2)),
+  HATBASE: wd('hatBase', 40, 30, hatBaseP, 2), HATTIP: wd('hatTip', 34, 20, hatTipP, 8), STAR: wd('star', 12, 12, starP, 2), CLOUD: [0, 1].map((k) => wd(`cloud${k}`, 30, 16, cloudP(k), 2)),
 };
 
 // ---------- Faces (box 34 x 24 about (17, 12), on her head) ----------

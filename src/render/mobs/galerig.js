@@ -163,7 +163,7 @@ const cutlassP = () => [
 const spyP = () => [taper([[1, 4], [9, 4]], 3, 3.4, BRASS.base), taper([[8.4, 4], [17, 4]], 3.8, 4.4, BRASS.sh), E(17, 4, 1.2, 2.2, '#5a8ac8'), F(E(16.8, 3.2, 0.4, 0.6, '#ffffff')), ...[4, 8.4].map((x) => F(taper([[x, 2.4], [x, 5.6]], 0.6, 0.6, '#a87a3a')))];
 const GL = {
   HEAD: gl('head', 44, 42, headP, 2), EAR: [false, true].map((f) => gl(`ear${f ? 1 : 0}`, 12, 16, earP(f), 2)), HAT: gl('hat', 40, 17, hatP, 2), RIBBON: [0, 1].map((k) => gl(`ribbon${k}`, 18, 6, ribbonP(k), 2)),
-  BODY: gl('body', 28, 30, bodyP, 2), EP: gl('ep', 12, 8, epP, 2), FLAP: gl('flap', 8, 18, flapP, 2), CAPE: gl('cape', 28, 38, capeP, 2), TAIL: [0, 1, 2].map((i) => gl(`tail${i}`, TAILL[i] + 12, 14, tailP(i), 2)),
+  BODY: gl('body', 28, 30, bodyP, 9, 9), EP: gl('ep', 12, 8, epP, 2), FLAP: gl('flap', 8, 18, flapP, 2), CAPE: gl('cape', 28, 38, capeP, 2), TAIL: [0, 1, 2].map((i) => gl(`tail${i}`, TAILL[i] + 12, 14, tailP(i), 2)),
   UP: [false, true].map((f) => gl(`up${f ? 1 : 0}`, 12, 8, upperP(f), 2)), FORE: [false, true].map((f) => gl(`fore${f ? 1 : 0}`, 12, 8, foreP(f), 2)), PAW: [false, true].map((f) => gl(`paw${f ? 1 : 0}`, 9, 9, pawP(f), 2)),
   THIGH: [false, true].map((f) => gl(`thigh${f ? 1 : 0}`, 9, 13.4, thighP(f), 2)), SHIN: [false, true].map((f) => gl(`shin${f ? 1 : 0}`, 9, 13, shinP(f), 2)), FOOT: [false, true].map((f) => gl(`foot${f ? 1 : 0}`, 13, 8, footP(f), 2)),
   CUTLASS: gl('cutlass', 40, 12, cutlassP, 2), SPY: gl('spy', 18, 8, spyP, 2),

@@ -20,7 +20,7 @@ const moleBody = () => [
   E(4, 3.6, 2.4, 2.2, MOLE.sh), F(E(4, 3.8, 1.2, 1, '#ffd0a0')),
 ];
 const molePaw = () => [E(3, 2, 3, 2, MOLE.base), ...[0, 1, 2].map((k) => F(E(1.4 + k * 1.6, 3.4, 0.6, 0.5, '#fff2d0')))];
-const MOLE_B = mo('body', 18, 22, moleBody, 2);
+const MOLE_B = mo('body', 18, 22, moleBody, 6);
 const MOLE_P = mo('paw', 6, 4, molePaw, 2);
 // How far up out of its hole it is (0..1): up in 0.3 s, down in its last 0.3 s.
 const moleUp = (m, now) => {

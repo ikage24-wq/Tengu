@@ -110,10 +110,10 @@ const gtPennant = () => [T([[1, 1], [15, 4], [6, 5], [15, 9], [1, 8]], MINT.base
 const gtShield = () => [E(10, 10, 9, 9, '#ffffff'), ...[0, 1, 2, 3, 4, 5].map((k) => F(T([[10, 10], [10 + Math.cos(k * 1.05) * 8.6, 10 + Math.sin(k * 1.05) * 8.6], [10 + Math.cos(k * 1.05 + 0.5) * 8.6, 10 + Math.sin(k * 1.05 + 0.5) * 8.6]], CANE))), E(10, 10, 2, 2, '#ffffff'), F(E(7, 6.6, 1.8, 1, '#ffffff'))];
 const GT = {
   HEAD: gt('head', 36, 32, gtHead, 2), BOW: gt('bow', 22, 12, gtBow, 2), PIG: [0, 1].map((k) => gt(`pig${k}`, 10, 14, gtPig(k), 2)),
-  BODY: gt('body', 32, 30, gtBody, 2), TABARD: gt('tabard', 26, 30, gtTabard, 2),
+  BODY: gt('body', 32, 30, gtBody, 2), TABARD: gt('tabard', 26, 30, gtTabard, 10),
   UP: [false, true].map((f) => gt(`up${f ? 1 : 0}`, 11, 8, gtUpper(f), 2)), FORE: [false, true].map((f) => gt(`fore${f ? 1 : 0}`, 11, 8, gtFore(f), 2)), MITT: [false, true].map((f) => gt(`mitt${f ? 1 : 0}`, 8, 8, gtMitt(f), 2)),
   THIGH: [false, true].map((f) => gt(`thigh${f ? 1 : 0}`, 8, 10, gtThigh(f), 2)), SHIN: [false, true].map((f) => gt(`shin${f ? 1 : 0}`, 8, 10, gtShin(f), 2)), BOOT: [false, true].map((f) => gt(`boot${f ? 1 : 0}`, 14, 9, gtBoot(f), 2)),
-  LANCE: gt('lance', 16, 88, gtLance, 2), PENNANT: gt('pennant', 16, 10, gtPennant, 2), SHIELD: gt('shield', 20, 20, gtShield, 2),
+  LANCE: gt('lance', 16, 88, gtLance, 6), PENNANT: gt('pennant', 16, 10, gtPennant, 2), SHIELD: gt('shield', 20, 20, gtShield, 2),
 };
 
 // ---------- Faces ----------

@@ -160,7 +160,7 @@ const csHead = () => [
 ];
 const csHoof = (far) => () => [E(3, 2.4, 2.4, 2.2, far ? LAMB.sh : LAMB.base), E(3, 4, 2.2, 1.4, HOOF)];
 const csFoot = (far) => () => [R(1.4, 0, 4.2, 2.8, far ? LAMB.sh : LAMB.base), E(3.5, 3.2, 3, 1.6, HOOF)];
-const CS_FLEECE = cs('fleece', 30, 24, csFleece, 2);
+const CS_FLEECE = cs('fleece', 30, 24, csFleece, 8, 8);
 const CS_HEAD = cs('head', 22, 20, csHead, 2);
 const CS_HOOF = [false, true].map((f) => cs(`hoof${f ? 1 : 0}`, 6, 6, csHoof(f), 2));
 const CS_FOOT = [false, true].map((f) => cs(`foot${f ? 1 : 0}`, 7, 5, csFoot(f), 2));
@@ -496,7 +496,7 @@ const ckSword = () => [
 const ckShield = () => [E(7, 7, 6.6, 6.6, '#e0a868'), crescent(7, 7, 6.6, 6.6, '#b87a44', { k: 0.18, a0: 90, a1: 230 }), ...[[4.6, 5], [9, 4], [8.6, 9.4], [4.4, 9.6], [6.8, 7.2]].map(([x, y]) => F(E(x, y, 1.3, 1.1, CHOC.deep))), shine(7, 7, 6.6, 6.6, '#ffffff', 0, 0.6)];
 const ckHand = (far) => () => [E(3.5, 3.5, 3, 2.8, far ? CHOC.sh : CHOC.base), F(E(2.6, 2.6, 1, 0.6, CHOC.hi))];
 const ckBoot = (far) => () => [R(1.4, 0, 6, 3.4, far ? CHOC.deep : CHOC.base), E(5, 3.6, 4, 2.2, far ? CHOC.deep : CHOC.sh)];
-const CK_BODY = ck('body', 22, 22, ckBody, 2);
+const CK_BODY = ck('body', 22, 22, ckBody, 6);
 const CK_HEAD = ck('head', 20, 19, ckHead, 2);
 const CK_PLUME = ck('plume', 10, 12, ckPlume, 2);
 const CK_CAPE = ck('cape', 18, 19, ckCape, 2);
@@ -599,7 +599,7 @@ const jnHand = (k, far) => () => [E(2.5, 2.5, 2.2, 2.1, far ? BEANS[k].deep : BE
 const jnFoot = (far) => () => [E(3, 2, 2.8, 1.8, far ? '#241a30' : '#3a2a4a'), F(E(2.2, 1.4, 0.8, 0.4, '#8a7a9a'))];
 const JN_BEAN = [0, 1, 2, 3].map((k) => jn(`bean${k}`, 18, 26, jnBean(k), 2));
 const JN_BAND = jn('band', 16, 7, jnBand, 2);
-const JN_TAILS = jn('tails', 16, 7, jnTails, 2);
+const JN_TAILS = jn('tails', 16, 7, jnTails, 6);
 const JN_HAND = [0, 1, 2, 3].map((k) => [false, true].map((f) => jn(`hand${k}${f ? 1 : 0}`, 5, 5, jnHand(k, f), 2)));
 const JN_FOOT = [false, true].map((f) => jn(`foot${f ? 1 : 0}`, 6, 4, jnFoot(f), 2));
 const JN_FACE = { eyes: [[10.6, 10.4, 1.3, 1.8, -1], [14.4, 10.2, 1.3, 1.8, 1]], mouth: [12.8, 13.4, 1.1], blush: [[9, 12.4, 1], [15.8, 12.2, 0.9]], iris: '#2a2040', lid: 0.35 };

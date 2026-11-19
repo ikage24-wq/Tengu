@@ -81,7 +81,7 @@ const foreP = (far) => () => [E(2, 5, 3.6, 3.6, GOB.deep), taper([[2, 5], [8, 5]
 const forkP = () => [taper([[8, 76], [8, 14]], 2.2, 2, '#a87a4a'), taper([[2, 14], [14, 14]], 1.8, 1.8, '#9aa0b0'), ...[2.6, 8, 13.4].map((x) => taper([[x, 14], [x, 2]], 1.6, 0.6, '#b8c0cc')), F(taper([[7.4, 70], [7.4, 18]], 0.5, 0.5, '#c89a6a'))];
 
 const SP = {
-  HEAD: mg('head', 36, 34, headP, 2), EAR: [false, true].map((f) => mg(`ear${f ? 1 : 0}`, 18, 10, earP(f), 2)), PUMP: mg('pumpkin', 36, 26, pumpkinP, 2), LEAF: mg('leaf', 14, 7, leafP, 2), BODY: mg('body', 40, 38, bodyP, 2),
+  HEAD: mg('head', 36, 34, headP, 2), EAR: [false, true].map((f) => mg(`ear${f ? 1 : 0}`, 18, 10, earP(f), 2)), PUMP: mg('pumpkin', 36, 26, pumpkinP, 6), LEAF: mg('leaf', 14, 7, leafP, 2), BODY: mg('body', 40, 38, bodyP, 2),
   THIGH: [false, true].map((f) => mg(`thigh${f ? 1 : 0}`, 10, 13, thighP(f), 2)), SHIN: [false, true].map((f) => mg(`shin${f ? 1 : 0}`, 10, 11, shinP(f), 2)), BOOT: [false, true].map((f) => mg(`boot${f ? 1 : 0}`, 15, 8, bootP(f), 2)),
   UP: [false, true].map((f) => mg(`up${f ? 1 : 0}`, 13, 10, upP(f), 2)), FORE: [false, true].map((f) => mg(`fore${f ? 1 : 0}`, 15, 10, foreP(f), 2)), FORK: mg('fork', 16, 78, forkP, 2),
 };

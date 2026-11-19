@@ -157,7 +157,7 @@ const CF_BODY = cf('body', 20, 18, cfBody, 2);
 const CF_SKIRT = cf('skirt', 26, 8, cfSkirt, 2);
 const CF_NECK = cf('neck', 6, 10, cfNeck, 2);
 const CF_HEAD = cf('head', 20, 15, cfHead, 2);
-const CF_PLUME = cf('plume', 14, 16, cfPlume, 2);
+const CF_PLUME = cf('plume', 14, 16, cfPlume, 6);
 const CF_WING = [false, true].map((f) => cf(`wing${f ? 1 : 0}`, 8, 10, cfWing(f), 2));
 const CF_FAN = cf('fan', 14, 10, cfFan, 2);
 const CF_LEG = [false, true].map((f) => cf(`leg${f ? 1 : 0}`, 6, 13, cfLeg(f), 2));

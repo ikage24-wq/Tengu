@@ -240,7 +240,7 @@ const tcClaw = (far) => () => [taper([[1, 6], [4, 5]], 2.6, 2.4, far ? CRAB.sh :
 const tcLeg = (far) => () => [taper([[2, 0], [2.4, 4]], 2.4, 2, far ? CRAB.sh : CRAB.base), E(2.8, 4.6, 1.8, 1.1, far ? CRAB.deep : CRAB.sh)];
 const tcChart = () => [R(0, 0, 10, 3.4, '#fff4dc'), E(0, 1.7, 1.2, 1.7, '#e8d8b8'), E(10, 1.7, 1.2, 1.7, '#e8d8b8'), F(star5(5, 1.7, 1, '#7a6ab8'))];
 const TC_BODY = tc('body', 18, 16, tcBody, 2);
-const TC_SCOPE = tc('scope', 26, 12, tcScope, 2);
+const TC_SCOPE = tc('scope', 26, 12, tcScope, 6);
 const TC_CLAW = [false, true].map((f) => tc(`claw${f ? 1 : 0}`, 11, 8, tcClaw(f), 2));
 const TC_LEG = [false, true].map((f) => tc(`leg${f ? 1 : 0}`, 5, 6, tcLeg(f), 2));
 const TC_CHART = tc('chart', 11, 4, tcChart, 2);

@@ -27,13 +27,15 @@ export const easeIn = (u) => clamp(u, 0, 1) ** 3;
 // One part's sprite: `shapes()` drawn in a w x h box (with `pad` room round it for anything that
 // pokes out), cached like any sprite.
 // (The box is rounded up to whole pixels: the rasterizer needs them.)
-export function part(key, w, h, shapes, pad = 6, res = 2) {
-  return sprite(`rig|${key}`, () => ({ w: Math.ceil(w), h: Math.ceil(h), shapes: shapes(), res, soft: 'cel', crisp: true, selout: true, pad }));
+// (`padB`: room below as well, for a part that hangs down past its box, like a long coat's hem;
+// left out, the bottom stays trimmed close, so feet stand flat on the floor.)
+export function part(key, w, h, shapes, pad = 6, res = 2, padB = undefined) {
+  return sprite(`rig|${key}`, () => ({ w: Math.ceil(w), h: Math.ceil(h), shapes: shapes(), res, soft: 'cel', crisp: true, selout: true, pad, ...(padB != null ? { padB } : {}) }));
 }
 
 // The same part with no outline at all, for the second pass of `outerOutline`.
-export function partBare(key, w, h, shapes, pad = 6, res = 2) {
-  return sprite(`rig|${key}|bare`, () => ({ w: Math.ceil(w), h: Math.ceil(h), shapes: shapes(), res, soft: 'cel', crisp: true, bare: true, pad }));
+export function partBare(key, w, h, shapes, pad = 6, res = 2, padB = undefined) {
+  return sprite(`rig|${key}|bare`, () => ({ w: Math.ceil(w), h: Math.ceil(h), shapes: shapes(), res, soft: 'cel', crisp: true, bare: true, pad, ...(padB != null ? { padB } : {}) }));
 }
 
 // Outer outline only (2026-11-12, the look the player chose on the Red Panda): every part with a

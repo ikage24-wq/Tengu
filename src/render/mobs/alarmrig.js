@@ -53,8 +53,8 @@ const armP = (far) => () => [taper([[3, 5], [12, 5]], 5, 4.4, far ? GOLD.sh : GO
 // A stubby leg with a round gold foot. Box 12 x 16; the hip at (6, 1).
 const legP = (far) => () => [taper([[6, 1], [6, 10]], 6, 6, far ? GOLD.sh : GOLD.base), E(7.4, 12.4, 6, 3.6, far ? '#c8901e' : GOLD.sh)];
 const PARTS = {
-  BODY: al('body', 72, 72, bodyP, 2), BELL: al('bell', 24, 20, bellP, 2), HAMMER: al('hammer', 10, 18, hammerP, 2),
-  ARM: [false, true].map((f) => al(`arm${f ? 1 : 0}`, 18, 10, armP(f), 2)), LEG: [false, true].map((f) => al(`leg${f ? 1 : 0}`, 12, 16, legP(f), 2)),
+  BODY: al('body', 72, 72, bodyP, 2), BELL: al('bell', 24, 20, bellP, 6), HAMMER: al('hammer', 10, 18, hammerP, 2),
+  ARM: [false, true].map((f) => al(`arm${f ? 1 : 0}`, 18, 10, armP(f), 2)), LEG: [false, true].map((f) => al(`leg${f ? 1 : 0}`, 12, 16, legP(f), 6)),
 };
 // Its face on the dial: big eyes with red irises, a mouth; the clock's two hands are its eyebrows,
 // angled with its mood. Box 72 x 72 (over the dial).
