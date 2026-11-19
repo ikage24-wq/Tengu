@@ -21,7 +21,7 @@ const SW = 640;
 const SH = 360;
 const clamp01 = (v) => Math.max(0, Math.min(1, v));
 // How long each landing effect plays (s); the rest play 0.6 s.
-export const HOLD = { sprinkles: 0.7, cherry: 0.9, overdue: 0.9, books: 0.8, study: 0.9, bookmark: 0.7, comet: 0.75, crescentsweep: 0.75, eclipse: 1.3, total: 1.3, night: 1.3, shush: 0.9, nova: 0.9, lines: 0.8, starfall: 0.7 };
+export const HOLD = { bags: 0.7, sprinkles: 0.7, cherry: 0.9, overdue: 0.9, books: 0.8, study: 0.9, bookmark: 0.7, comet: 0.75, crescentsweep: 0.75, eclipse: 1.3, total: 1.3, night: 1.3, shush: 0.9, nova: 0.9, lines: 0.8, starfall: 0.7 };
 // Looks that draw their own warning instead of the standard one.
 export const OWN_WARN = new Set(['lines']);
 
@@ -106,6 +106,30 @@ const arcs = (ctx, x, y, r, side, a, c, w) => {
   ctx.stroke();
 };
 
+// A commuter's suitcase: a rounded box, a handle, a sticker.
+function suitcase(ctx, x, y, rot) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(rot);
+  ctx.fillStyle = '#5a6aa8';
+  ctx.fillRect(-13, -9, 26, 18);
+  ctx.fillStyle = '#7a8ac8';
+  ctx.fillRect(-13, -9, 26, 4);
+  ctx.strokeStyle = '#3a4478';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(-13, -9, 26, 18);
+  ctx.beginPath();
+  ctx.moveTo(-5, -9);
+  ctx.lineTo(-5, -13);
+  ctx.lineTo(5, -13);
+  ctx.lineTo(5, -9);
+  ctx.stroke();
+  ctx.fillStyle = '#ffd34a';
+  ctx.beginPath();
+  ctx.arc(6, 2, 3, 0, TAU);
+  ctx.fill();
+  ctx.restore();
+}
 // Bonbon's sprinkles: little rounded dashes in rainbow colours.
 const SPRINKLE_C = ['#ff6a8a', '#ffd34a', '#7fd8ff', '#9ae66a', '#c8a8ff', '#ffffff'];
 function sprinkle(ctx, x, y, a, c, al) {
@@ -151,7 +175,19 @@ function cherry(ctx, x, y, r, rot) {
 export function castWarn(ctx, z, x, y, p, time) {
   const look = z.look;
   ctx.save();
-  if (look === 'sprinkles') {
+  if (look === 'bags') {
+    // A suitcase wobbling on the rack overhead, then tumbling down onto the mark.
+    const f = clamp01((p - 0.45) / 0.55);
+    const by = y - 150 + f * f * 140;
+    const rot = f * 2.2 + (f < 0.01 ? Math.sin(time * 18) * 0.12 * p : 0);
+    ctx.globalAlpha = 0.25 + 0.4 * f;
+    ctx.fillStyle = '#2a2240';
+    ctx.beginPath();
+    ctx.ellipse(x, y - 1, 10 + f * 16, 3 + f * 3, 0, 0, TAU);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+    suitcase(ctx, x, by, rot);
+  } else if (look === 'sprinkles') {
     // A little cloud of sprinkles gathers high over the mark, swirling, then pours down into it.
     const pour = clamp01((p - 0.55) / 0.45);
     const r = z.w / 2;
@@ -423,6 +459,19 @@ export function castHit(ctx, z, x, y, u, time) {
   const e = easeOut(u);
   const fade = u < 0.5 ? 1 : 1 - (u - 0.5) / 0.5;
   ctx.save();
+  if (look === 'bags') {
+    // It lands with a bump and pops open: socks and a sandwich fly out.
+    puff(ctx, x, y - 4, 12 * (1 - u) + 4, '#ffffff', '#d8d0e8');
+    suitcase(ctx, x, y - 10 - Math.sin(u * Math.PI) * 10, 0.2 * (1 - u));
+    ctx.globalAlpha = fade;
+    for (let k = 0; k < 5; k++) {
+      const a = Math.PI + 0.3 + (k / 4) * (Math.PI - 0.6);
+      ctx.fillStyle = ['#ff9ab8', '#7fb0ff', '#ffd34a', '#8fe0c8', '#ffffff'][k];
+      ctx.fillRect(x + Math.cos(a) * e * 34 - 3, y - 18 + Math.sin(a) * e * 26 + u * u * 24, 6, 4);
+    }
+    ctx.restore();
+    return true;
+  }
   if (look === 'sprinkles') {
     // The sprinkles land and bounce out of the mark, a puff of sugar under them.
     puff(ctx, x, y - 4, 10 * (1 - u) + 4, '#fff4f8', '#ffd0e0');

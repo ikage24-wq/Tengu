@@ -14,6 +14,7 @@ import { drawCoralShelf, drawKelpRock, drawAbyssLedge, drawTank } from './aquapa
 import { drawBooth, drawTrestle, drawGondola, drawPony, drawCarousel, drawFunFloor } from './fairground.js';
 import { drawStarBalcony, drawGantry, drawPlanet } from './starlight.js';
 import { drawWafer, drawLicTrestle, drawMinecart, drawKitchenTable, drawHung, drawForgePier, drawTurret, drawRockPillar } from './sugarworks.js';
+import { drawLuggageRack, drawCabinets, drawBoxStack, drawPaperStack, drawStoreShelf, drawCrates, drawFurniture } from './dreamsets.js';
 
 const INK = '#3a2d4f';
 const edge = (c) => mix(shade(c, -38), INK, 0.35);
@@ -2447,6 +2448,14 @@ export function drawIsland(ctx, theme, p, cam, time, pi, look = null, map = null
     else if (style === 'forgepier') drawForgePier(ctx, x, y, w, time, pi, map, cam);
     else if (style === 'turret') drawTurret(ctx, x, y, w, time, pi, map, cam);
     else if (style === 'rockpillar') drawRockPillar(ctx, x, y, w, time, pi, map, cam);
+    // The Dream Theatre's acts, the Queen's old life (render/dreamsets.js).
+    else if (style === 'luggagerack') drawLuggageRack(ctx, x, y, w, time, pi, map, cam);
+    else if (style === 'cabinets') drawCabinets(ctx, x, y, w, time, pi, map, cam);
+    else if (style === 'boxstack') drawBoxStack(ctx, x, y, w, time, pi, map, cam);
+    else if (style === 'paperstack') drawPaperStack(ctx, x, y, w, time, pi, map, cam);
+    else if (style === 'storeshelf') drawStoreShelf(ctx, x, y, w, time, pi, map, cam);
+    else if (style === 'crates') drawCrates(ctx, x, y, w, time, pi, map, cam);
+    else if (style === 'bookshelf' || style === 'wardrobe' || style === 'fridge' || style === 'loftbed' || style === 'wallshelf') drawFurniture(ctx, x, y, w, time, pi, map, cam, style);
     else if (style === 'leaf') drawLeafPad(ctx, x, y, w, time, pi);
     else if (style === 'stone') drawStone(ctx, theme, m, x, y, w, p.thick ?? 26, cam, time, pi, look?.edges);
     return;

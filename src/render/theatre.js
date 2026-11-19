@@ -45,6 +45,18 @@ function lampArt(colour, on) {
   });
 }
 
+// A desk phone on a little side table, its button the cue's colour.
+function phoneArt(colour, on) {
+  return art(`theatre-phone|${colour}|${on}`, 30, 40, () => {
+    const c = CUE_C[colour];
+    return [
+      R(13, 18, 4, 22, '#8a7a6a'), R(6, 36, 18, 4, '#6a5a4a'), R(2, 14, 26, 5, '#c8a07a'),
+      T([[5, 14], [25, 14], [23, 6], [7, 6]], '#4a4a5a'), R(4, 2, 22, 5, '#5a5a6a'), E(5, 4.5, 3, 3, '#5a5a6a'), E(25, 4.5, 3, 3, '#5a5a6a'),
+      E(15, 10, 4, 2.4, on ? '#ffffff' : c), F(E(15, 10, 2.4, 1.4, c)),
+    ];
+  });
+}
+const wrap = (x, span) => ((x % span) + span) % span;
 // One soft beam from the rigging down onto the floor at x (screen).
 function beam(ctx, x, top, floor, w, color, alpha) {
   ctx.save();
@@ -78,8 +90,31 @@ export function drawTheatreBack(ctx, world, cam, time) {
     if (x < -60 || x > 700) continue;
     beam(ctx, x, -cam.y + map.groundY - 380, map.groundY - cam.y, 80, '#fff2c0', 0.32);
   }
+  // The morning train: hand straps along the carriage, swinging with every lurch.
+  if (map.train) {
+    const roll = room.rock?.roll ?? 0;
+    const top = map.groundY - cam.y - 232;
+    ctx.fillStyle = '#c8ccd8';
+    ctx.fillRect(0, top - 2, 640, 3);
+    for (let x = 20 - wrap(cam.x, 44); x < 660; x += 44) {
+      const a = roll * 0.35 + Math.sin(time * 1.3 + (x + cam.x) * 0.05) * 0.04;
+      const ex = x + Math.sin(a) * 26;
+      const ey = top + Math.cos(a) * 26;
+      ctx.strokeStyle = '#9a9eb0';
+      ctx.lineWidth = 1.6;
+      ctx.beginPath();
+      ctx.moveTo(x, top);
+      ctx.lineTo(ex, ey - 6);
+      ctx.stroke();
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 2.4;
+      ctx.beginPath();
+      ctx.arc(ex, ey, 5, 0, TAU);
+      ctx.stroke();
+    }
+  }
   // The pirate act: painted wave rollers along the front of the stage, turning with the roll.
-  if (map.rocking) {
+  if (map.rocking && !map.train) {
     const roll = room.rock?.roll ?? 0;
     for (let row = 0; row < 2; row++) {
       ctx.fillStyle = row ? '#4a8ad8' : '#6ab0f0';
@@ -205,6 +240,21 @@ export function drawTheatreObject(ctx, o, x, y, time, now) {
     ctx.rotate(Math.sin(time * 1.7 + o.id) * 0.25);
     place(ctx, ticketArt(), 0, 0);
     ctx.restore();
+  } else if (o.kind === 'cue' && o.phone) {
+    // The office's desk phones: one rings (shaking, its light on, rings round it) in the sequence.
+    const ring = lit === o.id || now - (o.pressedAt ?? -9) < 0.35;
+    const shake = ring ? Math.sin(time * 60) * 1.2 : 0;
+    if (ring || o.done) glow(ctx, x, y - 30, 34, CUE_C[o.colour], o.done ? 0.3 : 0.7);
+    place(ctx, phoneArt(o.colour, ring || o.done), x + shake, y);
+    if (ring) {
+      ctx.strokeStyle = CUE_C[o.colour];
+      ctx.lineWidth = 1.6;
+      for (const s of [-1, 1]) for (let k = 0; k < 2; k++) {
+        ctx.beginPath();
+        ctx.arc(x, y - 30, 14 + k * 6 + ((time * 20) % 6), s > 0 ? -0.6 : Math.PI - 0.6, s > 0 ? 0.6 : Math.PI + 0.6);
+        ctx.stroke();
+      }
+    }
   } else if (o.kind === 'cue') {
     const on = lit === o.id || now - (o.pressedAt ?? -9) < 0.35 || o.done;
     if (on) glow(ctx, x, y - 36, 40, CUE_C[o.colour], o.done ? 0.35 + 0.1 * Math.sin(time * 2 + o.id) : 0.8);

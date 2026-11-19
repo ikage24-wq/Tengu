@@ -2350,19 +2350,21 @@ Object.assign(MAPS, {
     ],
   },
 
-  // Act I: The Pirate Ship. A ship set on a rocking stage: masts and yards to climb, a crow's nest,
-  // painted waves rolling in front. Cannons fire at marked spots.
+  // Act I: The Morning Train (Chapter 9, the Queen's dream: render/dreamsets.js). A packed commuter
+  // carriage, rocking on the rails, the town rushing past its windows; luggage racks along the walls,
+  // and when it lurches, bags tumble off them onto marked spots.
   theatre2: {
-    id: 'theatre2', name: 'Act I: The Pirate Ship', theme: 'theatre', town: 'grove', dungeon: 'theatre',
+    id: 'theatre2', name: 'Act I: The Morning Train', theme: 'theatre', town: 'grove', dungeon: 'theatre',
     width: 2200, height: 420, groundY: G,
     platforms: [
-      { x: 200, y: 300, w: 260 }, { x: 760, y: 300, w: 240, mast: true }, { x: 1320, y: 300, w: 240, mast: true },
-      { x: 820, y: 220, w: 120, mast: true }, { x: 1380, y: 220, w: 120 }, { x: 1820, y: 300, w: 240 },
+      { x: 200, y: 300, w: 260 }, { x: 760, y: 300, w: 240 }, { x: 1320, y: 300, w: 240 },
+      { x: 820, y: 220, w: 120 }, { x: 1380, y: 220, w: 120 }, { x: 1820, y: 300, w: 240 },
     ],
     ropes: [{ x: 880, top: 220, bottom: G }, { x: 1440, top: 220, bottom: G }, { x: 330, top: 300, bottom: G }],
-    look: { sky: ['#ff8a6a', '#ffb08a', '#ffe0a0'], far: '#5a3a5a', mid: '#7a4a5a', midTrim: '#ffd36b', ...STAGE, skyline: 'pirate' },
+    look: { sky: ['#ff8a6a', '#ffb08a', '#ffe0a0'], far: '#5a3a5a', mid: '#7a4a5a', midTrim: '#ffd36b', ...STAGE, skyline: 'pirate', painted: 'dreamtrain', islands: 'luggagerack', clouds: false, props: [], ledgeProp: null, edges: null },
+    train: true,
     rocking: { period: 7, push: 55 },
-    cannons: { every: 9, damage: 190 },
+    cannons: { every: 9, damage: 190, look: 'bags', call: 'Bags off the racks!', tip: 'Step out from under them!' },
     portals: [
       { id: 'west', x: 40, y: G, to: 'theatre1', toPortal: 'east' },
       { id: 'east', x: 2160, y: G, to: 'theatre3', toPortal: 'west', sealed: true },
@@ -2379,34 +2381,36 @@ Object.assign(MAPS, {
     ],
   },
 
-  // Act II: The Fairy Forest. Cardboard trees under a paper moon; four coloured cue lamps at the
-  // edge of the stage. Watch the sequence they flash, then play it back.
+  // Act II: The Office (Chapter 9, the Queen's dream). Nine in the morning, rows of desks, the city
+  // through the windows; filing cabinets and a tower of copy-paper boxes to climb. Four desk phones
+  // ring in a sequence: answer them in the same order.
   theatre3: {
-    id: 'theatre3', name: 'Act II: The Fairy Forest', theme: 'theatre', town: 'grove', dungeon: 'theatre',
+    id: 'theatre3', name: 'Act II: The Office', theme: 'theatre', town: 'grove', dungeon: 'theatre',
     width: 1600, height: 420, groundY: G,
-    platforms: [{ x: 200, y: 300, w: 280 }, { x: 1120, y: 300, w: 280 }, { x: 720, y: 220, w: 160 }],
+    platforms: [{ x: 200, y: 300, w: 280, style: 'cabinets' }, { x: 1120, y: 300, w: 280, style: 'cabinets' }, { x: 720, y: 220, w: 160, style: 'boxstack' }],
     ropes: [{ x: 800, top: 220, bottom: G }],
-    look: { sky: ['#1e2a4a', '#2a4a5a', '#4a7a6a'], far: '#22384a', mid: '#2e4a50', midTrim: '#8ff0c8', ...STAGE, skyline: 'fairy' },
-    task: { kind: 'light', object: 'cue', label: 'Play back the cues' },
+    look: { sky: ['#1e2a4a', '#2a4a5a', '#4a7a6a'], far: '#22384a', mid: '#2e4a50', midTrim: '#8ff0c8', ...STAGE, skyline: 'fairy', painted: 'dreamoffice', clouds: false, props: [], ledgeProp: null, edges: null },
+    task: { kind: 'light', object: 'cue', label: 'Answer the phones in order' },
     portals: [
       { id: 'west', x: 40, y: G, to: 'theatre2', toPortal: 'east' },
       { id: 'east', x: 1560, y: G, to: 'theatre4', toPortal: 'west', sealed: true },
     ],
     objects: [
-      { kind: 'cue', colour: 'rose', x: 340, y: 300 }, { kind: 'cue', colour: 'gold', x: 620, y: G },
-      { kind: 'cue', colour: 'mint', x: 980, y: G }, { kind: 'cue', colour: 'violet', x: 1260, y: 300 },
+      { kind: 'cue', colour: 'rose', x: 340, y: 300, phone: true }, { kind: 'cue', colour: 'gold', x: 620, y: G, phone: true },
+      { kind: 'cue', colour: 'mint', x: 980, y: G, phone: true }, { kind: 'cue', colour: 'violet', x: 1260, y: 300, phone: true },
     ],
     npcs: [],
     spawns: [...packAt('a', 300, G, 'prompter', 'primadonna', 'chorusgirl'), ...packAt('b', 1300, G, 'primadonna', 'prompter', 'understudy')],
   },
 
-  // Act III: The Masked Ball. A ballroom set of mirrors and chandeliers; Persona dances alone.
+  // Act III: Overtime (Chapter 9, the Queen's dream). The same office at a quarter to midnight, the
+  // monitors glowing, one lamp still on, the paperwork piled to the ceiling.
   theatre4: {
-    id: 'theatre4', name: 'Act III: The Masked Ball', theme: 'theatre', town: 'grove', dungeon: 'theatre',
+    id: 'theatre4', name: 'Act III: Overtime', theme: 'theatre', town: 'grove', dungeon: 'theatre',
     width: 1600, height: 420, groundY: G,
     platforms: [{ x: 180, y: 300, w: 200 }, { x: 1220, y: 300, w: 200 }, { x: 720, y: 220, w: 160 }],
     ropes: [{ x: 800, top: 220, bottom: G }],
-    look: { sky: ['#2a1a4a', '#5a3a7a', '#a07ab0'], far: '#3a2450', mid: '#5a3a6a', midTrim: '#ffd36b', ...STAGE, skyline: 'ballroom' },
+    look: { sky: ['#2a1a4a', '#5a3a7a', '#a07ab0'], far: '#3a2450', mid: '#5a3a6a', midTrim: '#ffd36b', ...STAGE, skyline: 'ballroom', painted: 'dreamovertime', islands: 'paperstack', clouds: false, props: [], ledgeProp: null, edges: null },
     portals: [
       { id: 'west', x: 40, y: G, to: 'theatre3', toPortal: 'east' },
       { id: 'east', x: 1560, y: G, to: 'theatre5', toPortal: 'west', sealed: true },
@@ -2416,13 +2420,14 @@ Object.assign(MAPS, {
     spawns: [{ mob: 'persona', x: 800, y: G }],
   },
 
-  // Backstage: ropes, sandbags and stacked flats. Madame Directrice runs the show from here.
+  // The Convenience Store, 2 a.m. (Chapter 9, the Queen's dream). Fluorescent and humming, the
+  // fridges glowing along the back, rain on the street outside; shop shelving and drink crates.
   theatre5: {
-    id: 'theatre5', name: 'Backstage', theme: 'theatre', town: 'grove', dungeon: 'theatre',
+    id: 'theatre5', name: 'The Convenience Store, 2 a.m.', theme: 'theatre', town: 'grove', dungeon: 'theatre',
     width: 1800, height: 420, groundY: G,
-    platforms: [{ x: 160, y: 300, w: 180 }, { x: 800, y: 300, w: 200 }, { x: 1460, y: 300, w: 180 }, { x: 850, y: 220, w: 100 }],
+    platforms: [{ x: 160, y: 300, w: 180 }, { x: 800, y: 300, w: 200 }, { x: 1460, y: 300, w: 180 }, { x: 850, y: 220, w: 100, style: 'crates' }],
     ropes: [{ x: 900, top: 220, bottom: G }, { x: 250, top: 300, bottom: G }, { x: 1550, top: 300, bottom: G }],
-    look: { sky: ['#1a1a24', '#2a2a3a', '#4a3a4a'], far: '#24202e', mid: '#3a3040', midTrim: '#ffd36b', ...STAGE, skyline: 'backstage' },
+    look: { sky: ['#1a1a24', '#2a2a3a', '#4a3a4a'], far: '#24202e', mid: '#3a3040', midTrim: '#ffd36b', ...STAGE, skyline: 'backstage', painted: 'dreamstore', islands: 'storeshelf', clouds: false, props: [], ledgeProp: null, edges: null },
     portals: [
       { id: 'west', x: 40, y: G, to: 'theatre4', toPortal: 'east' },
       { id: 'east', x: 1760, y: G, to: 'theatre6', toPortal: 'west', sealed: true },
@@ -2432,17 +2437,18 @@ Object.assign(MAPS, {
     spawns: [{ mob: 'directrice', x: 900, y: G }],
   },
 
-  // The Final Curtain: the great stage under a star cloth, velvet curtains drawn back. The Phantom
-  // Playwright waits at his desk.
+  // The Final Curtain: Her Flat (Chapter 9, the Queen's dream). Two in the morning, rain on the
+  // window, Mr. Prickles on the sill, the calendar with Monday circled; her bookshelf, wardrobe,
+  // fridge and loft bed to climb, a shelf on the wall.
   theatre6: {
-    id: 'theatre6', name: 'The Final Curtain', theme: 'theatre', town: 'grove', dungeon: 'theatre',
+    id: 'theatre6', name: 'The Final Curtain: Her Flat', theme: 'theatre', town: 'grove', dungeon: 'theatre',
     width: 1800, height: 420, groundY: G,
     platforms: [
-      { x: 160, y: 300, w: 160 }, { x: 560, y: 300, w: 140 }, { x: 1100, y: 300, w: 140 }, { x: 1480, y: 300, w: 160 },
-      { x: 840, y: 220, w: 120 },
+      { x: 160, y: 300, w: 160, style: 'bookshelf' }, { x: 560, y: 300, w: 140, style: 'wardrobe' }, { x: 1100, y: 300, w: 140, style: 'fridge' }, { x: 1480, y: 300, w: 160, style: 'loftbed' },
+      { x: 840, y: 220, w: 120, style: 'wallshelf' },
     ],
     ropes: [{ x: 900, top: 220, bottom: G }],
-    look: { sky: ['#140e2a', '#2a1a4a', '#5a2a5a'], far: '#1e1434', mid: '#3a1e44', midTrim: '#ffd36b', ...STAGE, skyline: 'greatstage' },
+    look: { sky: ['#140e2a', '#2a1a4a', '#5a2a5a'], far: '#1e1434', mid: '#3a1e44', midTrim: '#ffd36b', ...STAGE, skyline: 'greatstage', painted: 'dreamflat', material: 'parquet', clouds: false, props: [], ledgeProp: null, edges: null },
     portals: [
       { id: 'west', x: 40, y: G, to: 'theatre5', toPortal: 'east' },
       { id: 'out', x: 1760, y: G, to: 'theatre_row', toPortal: 'start', label: 'Exit', sealed: true },
@@ -3126,9 +3132,9 @@ const INTERIORS = {
   volcano4: { islands: 'forgepier', ceiling: 'beams', ceilingTint: { band: '#6a3a3a', lamp: '#ffb070' }, props: [], ledgeProp: null, edges: null },
   // The theatre: its halls under the red valance; backstage under bare beams on catwalks; the
   // acts are painted sets, so only the valance changes over them.
-  theatre1: THEATRE_HALL, theatre4: THEATRE_HALL, theatre6: THEATRE_HALL,
-  theatre2: { ceiling: 'curtain' }, theatre3: { ceiling: 'curtain' },
-  theatre5: { islands: 'catwalk', material: 'parquet', ceiling: 'beams', metal: '#6a6080', props: ['crate', 'rack', 'poster', 'lantern'], ledgeProp: null, edges: null },
+  // (The acts of the Queen's dream are painted sets under the valance: render/dreamsets.js.)
+  theatre1: THEATRE_HALL, theatre4: { ceiling: 'curtain' }, theatre6: { ceiling: 'curtain' },
+  theatre2: { ceiling: 'curtain' }, theatre3: { ceiling: 'curtain' }, theatre5: { ceiling: 'curtain' },
 };
 for (const [id, look] of Object.entries(INTERIORS)) MAPS[id].look = { ...MAPS[id].look, ...look };
 

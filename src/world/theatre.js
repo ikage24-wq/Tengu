@@ -104,8 +104,8 @@ export function tickTheatre(world, dt, group, up) {
     room.cannonIn -= dt;
     if (room.cannonIn <= 0) {
       room.cannonIn = map.cannons.every;
-      for (const g of [...up].sort(() => Math.random() - 0.5).slice(0, 2)) addZone(world, { kind: 'circle', x: g.body.x, y: floorY(world, g.body), w: 64, warn: 1.6, damage: map.cannons.damage, cannon: true });
-      callout(world, 'Cannon fire!', 'Clear the marks!');
+      for (const g of [...up].sort(() => Math.random() - 0.5).slice(0, 2)) addZone(world, { kind: 'circle', x: g.body.x, y: floorY(world, g.body), w: 64, warn: 1.6, damage: map.cannons.damage, cannon: true, look: map.cannons.look });
+      callout(world, map.cannons.call ?? 'Cannon fire!', map.cannons.tip ?? 'Clear the marks!');
     }
   }
 }
