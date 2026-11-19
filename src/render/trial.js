@@ -6,6 +6,9 @@
 
 import { fxSprite } from './fx-sprites.js';
 import { text } from '../ui/kit.js';
+import { drawMochiAnim } from './mochi-anim.js';
+import { rollMochi } from '../data/mochi-genes.js';
+import { SHIRATAMA } from '../data/scenes.js';
 
 const TAU = Math.PI * 2;
 
@@ -76,7 +79,77 @@ function ground(ctx, x, y, w, p, pulse, z) {
 }
 
 // On top: each move bursting where it lands, and the queens' own flourishes (a puff of smoke).
+// Prismaris's dark throne: Elder Shiratama sitting by the throne with a candle, keeping him company,
+// until it goes home (render/prologue.js); not while a scene has it in its own cast.
+export const SHIRATAMA_AT = { x: 860 };
+const SHIRATAMA_SIT = { genes: null, dir: -1, speed: 0, dist: 0, size: 'grown', runPoints: 300, easy: true, idleBits: ['lookaround', 'yawn'] };
+export function drawTrialSet(ctx, world, cam, time) {
+  if (world.map.id !== 'nightthrone') return;
+  // The room itself dim, every light drunk (the people in it drawn bright over this), until the
+  // Queen has given him his star.
+  if (!world.char?.elders?.shiratama) {
+    ctx.fillStyle = 'rgba(8,6,28,0.5)';
+    ctx.fillRect(-10, -10, 660, 380);
+  }
+  if (world.char?.elders?.shiratama) return;
+  if ((world.cine?.cast ?? []).some((c) => c.id === 'shiratama' && c.alpha > 0)) return;
+  const x = SHIRATAMA_AT.x - cam.x;
+  const y = world.map.groundY - cam.y;
+  SHIRATAMA_SIT.genes ??= Object.assign(rollMochi(SHIRATAMA.seed, SHIRATAMA.genes), { wear: { ...SHIRATAMA.wear } });
+  drawMochiAnim(ctx, SHIRATAMA_SIT, x, y, time);
+  // Its candle on the floor beside it, flickering.
+  const cx = x - 20;
+  const f = 1 + Math.sin(time * 9) * 0.12 + Math.sin(time * 14.3) * 0.08;
+  const g = ctx.createRadialGradient(cx, y - 14, 0, cx, y - 14, 30);
+  g.addColorStop(0, 'rgba(255,220,140,0.45)');
+  g.addColorStop(1, 'rgba(255,220,140,0)');
+  ctx.fillStyle = g;
+  ctx.fillRect(cx - 30, y - 44, 60, 60);
+  ctx.fillStyle = '#fff4e0';
+  ctx.fillRect(cx - 2.5, y - 10, 5, 10);
+  ctx.fillStyle = '#e8d8c0';
+  ctx.fillRect(cx - 2.5, y - 10, 1.4, 10);
+  ctx.fillStyle = '#ffb84a';
+  ctx.beginPath();
+  ctx.ellipse(cx, y - 13.6, 1.8, 3.2 * f, 0, 0, TAU);
+  ctx.fill();
+  ctx.fillStyle = '#fff6c8';
+  ctx.beginPath();
+  ctx.ellipse(cx, y - 12.8, 0.9, 1.6 * f, 0, 0, TAU);
+  ctx.fill();
+}
+
+// Lights Out (Prismaris): the room goes dark round three pools of light while it counts down.
+function lightsOut(ctx, world, cam, time) {
+  const z = (world.zones ?? []).find((q) => q.dark && !q.hit);
+  if (!z) return;
+  const p = Math.min(1, z.t / z.warn);
+  const y = z.y - cam.y;
+  ctx.save();
+  ctx.globalAlpha = 0.3 + 0.45 * p;
+  ctx.fillStyle = '#08061c';
+  ctx.beginPath();
+  ctx.rect(-10, -10, 660, 380);
+  for (const px of z.pools) {
+    const x = px - cam.x;
+    ctx.moveTo(x + 56, y - 40);
+    ctx.ellipse(x, y - 40, 56, 76, 0, 0, TAU);
+  }
+  ctx.fill('evenodd');
+  for (const px of z.pools) {
+    const x = px - cam.x;
+    const g = ctx.createRadialGradient(x, y - 4, 0, x, y - 4, 60);
+    g.addColorStop(0, 'rgba(255,236,170,0.5)');
+    g.addColorStop(1, 'rgba(255,236,170,0)');
+    ctx.globalAlpha = 0.5 + 0.3 * Math.sin(time * 3 + px);
+    ctx.fillStyle = g;
+    ctx.fillRect(x - 60, y - 64, 120, 70);
+  }
+  ctx.restore();
+}
+
 export function drawZonesFront(ctx, world, cam, time) {
+  lightsOut(ctx, world, cam, time);
   for (const z of world.zones ?? []) {
     if (!z.hit || !z.fx) continue;
     const p = Math.min(1, z.after / 0.6);

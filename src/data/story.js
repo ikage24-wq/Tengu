@@ -13,7 +13,7 @@
 // being an NPC id, 'player', a monster id (the queens), or null for narration; `mood` a face for
 // whoever speaks ('happy', 'sad', 'surprised', 'angry').
 
-import { SIDE_SCENES, JOB_SCENES, HOLLOW_SCENES, HOLLOW_BOSS_SCENES, MANOR_SCENES, AQUA_SCENES, CARNIVAL_SCENES, OBS_SCENES, VOLCANO_SCENES, THEATRE_SCENES, WHALE_SCENES } from './scenes.js';
+import { SIDE_SCENES, JOB_SCENES, HOLLOW_SCENES, HOLLOW_BOSS_SCENES, MANOR_SCENES, AQUA_SCENES, CARNIVAL_SCENES, OBS_SCENES, VOLCANO_SCENES, THEATRE_SCENES, WHALE_SCENES, CRYSTAL_SCENES } from './scenes.js';
 
 export const CHAPTERS = [
   { n: 1, title: 'A New Breeze', levels: '1-5' },
@@ -325,9 +325,10 @@ export const STORY_QUESTS = {
   story_7_2: s('story_7_2', 10, {
     name: 'Heart of Crystal', giver: 'mira', minLevel: 49, prereq: 'story_7_1',
     text: "Prismaris, the Crystal King, sits on his throne deep in the Crystal Cave. Bring the light home. I'll have a pot of tea waiting. And biscuits. Don't tell Elowen whose recipe.",
-    objectives: [{ type: 'kill', mob: 'crystalking', count: 1 }],
+    objectives: [{ type: 'kill', mob: 'nightking', count: 1 }],
+    trial: 'nightthrone',
     rewards: { exp: 400000, gold: 2700, items: [{ id: 'elixir', qty: 20 }] },
-    scenes: { done: 'ch7_end' },
+    scenes: { win: 'ch7_win', done: 'ch7_end' },
   }),
   story_wind: s('story_wind', 10, {
     name: 'The Wind Returns', giver: 'mira', minLevel: 50, prereq: 'story_7_2',
@@ -362,6 +363,8 @@ export const TRIALS = {
   sanctum: { boss: 'tamamo', quest: 'story_4_3', field: 'shrine', x: 1000 },
   grotto: { boss: 'lilith', quest: 'story_5_3', field: 'springs', x: 1000 },
   terrace: { boss: 'selene', quest: 'story_6_3', field: 'starfall', x: 1000 },
+  // (`intro`: a scene the first time you walk in; `elder`: the Mochi elder who goes home when it's won.)
+  nightthrone: { boss: 'nightking', quest: 'story_7_2', field: 'cave', x: 700, intro: 'nightthrone_intro', elder: 'shiratama' },
 };
 
 export const SCENES = {
@@ -1215,5 +1218,5 @@ export const SCENES = {
 };
 
 // The side quests' and job advancements' scenes (data/scenes.js) play the same way.
-Object.assign(SCENES, SIDE_SCENES, HOLLOW_SCENES, HOLLOW_BOSS_SCENES, MANOR_SCENES, AQUA_SCENES, CARNIVAL_SCENES, OBS_SCENES, VOLCANO_SCENES, THEATRE_SCENES, WHALE_SCENES);
+Object.assign(SCENES, SIDE_SCENES, HOLLOW_SCENES, HOLLOW_BOSS_SCENES, MANOR_SCENES, AQUA_SCENES, CARNIVAL_SCENES, OBS_SCENES, VOLCANO_SCENES, THEATRE_SCENES, WHALE_SCENES, CRYSTAL_SCENES);
 for (const [k, v] of Object.entries(JOB_SCENES)) SCENES[`job_${k}`] = v;

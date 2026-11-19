@@ -3038,6 +3038,16 @@ Object.assign(MAPS, {
     [['moonstone', 700], ['cloudpillar', 260], ['cloudpillar', 1140]], ['starfall', 'terrace']),
 });
 
+// Prismaris's dark throne (Chapter 10's trial, 2026-11-19): his throne room with every light drunk
+// but the glowing alarm clock he hugs; Elder Shiratama sits by the throne with a candle
+// (render/trial.js). Through its own door beside the Crystal Throne's.
+MAPS.nightthrone = arena('nightthrone', 'The Dark Throne', 'cave', 'grove', { x: 366, y: 190 },
+  { sky: ['#0a0820', '#1a1440', '#2f2766'], far: '#241e58', mid: '#2f2870', material: 'throne', ceiling: true, light: 'throne', islands: 'stone', skyline: 'columns', props: [] },
+  [['throne', 700], ['crystalspire', 320, 1], ['crystalspire', 1080, 0]], ['cave', 'nightthrone']);
+MAPS.cave.portals.push({ id: 'nightthrone', x: 1480, y: 944, to: 'nightthrone', toPortal: 'west', label: 'The Dark Throne' });
+// (Who waits there, for a quest's "where to go": core/quests.js mobPlaces.)
+MAPS.nightthrone.trialBoss = 'nightking';
+
 // Lilith's grotto behind the waterfall keeps its own rose-lit dusk, day or night.
 MAPS.grotto.ownLight = true;
 MAPS.glade.portals.push({ id: 'bower', x: 580, y: 480, to: 'bower', toPortal: 'west', label: "Sylvana's Bower" });

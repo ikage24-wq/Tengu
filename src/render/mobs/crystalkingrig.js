@@ -2,7 +2,8 @@
 // little upright dragon of faceted crystal who has been drinking the island's light because he is
 // afraid of the dark. Pale blue crystal, amethyst plates down his back, tiny wings, a pale snout
 // under and between his eyes, a gold crown far too big for him (it wobbles), a purple royal cape
-// trimmed with ermine, a crystal tail, and a glowing nightlight lantern he never lets go of.
+// trimmed with ermine, a crystal tail, and a glowing nightlight he never lets go of: since Chapter 10
+// (2026-11-19) the Queen's own alarm clock, the 'star' that fell ringing on festival night.
 //
 // How he moves:
 //   idle    a 10 s act: the lantern hugged close; nervous glances into the dark, left and right;
@@ -97,14 +98,32 @@ const footP = (far) => () => [blob([[0.6, 0.4], [8.4, 0.4], [12, 3.6], [11, 5.6]
 // Arms: stubby crystal. Upper: box 11 x 9 at (2, 4.5); fore: box 13 x 9 at (2, 4.5).
 const upP = (far) => () => [taper([[2, 4.5], [8, 4.5]], 7, 6.4, CRY.deep), E(8, 4.5, 3.3, 3.3, CRY.deep), taper([[2, 4.5], [8, 4.5]], 5.6, 5, far ? CRY.sh : CRY.base), E(8, 4.5, 2.6, 2.6, far ? CRY.sh : CRY.base)];
 const foreP = (far) => () => [E(2, 4.5, 3.3, 3.3, CRY.deep), taper([[2, 4.5], [7, 4.5]], 6.4, 6, CRY.deep), E(2, 4.5, 2.6, 2.6, far ? CRY.sh : CRY.base), taper([[2, 4.5], [7, 4.5]], 5, 4.6, far ? CRY.sh : CRY.base), E(9.4, 4.5, 3, 2.8, far ? CRY.sh : CRY.base)];
-// The nightlight lantern: a gold ring to hold, a glass globe with a warm light. Box 16 x 22; held at (8, 2).
-const lanternP = () => [...stroke(arcP(8, 3, 3, 2.6, 180, 360, 8), 1, GOLD, false), F(taper([[8, 4], [8, 6]], 1, 1, GOLD)), T([[3, 6], [13, 6], [12, 8], [4, 8]], GOLD), E(8, 13.6, 6.4, 6.4, '#fff4b0'), F(E(8, 13.6, 4, 4.2, '#ffffff')), T([[3, 19], [13, 19], [12, 21], [4, 21]], GOLD)];
+// His nightlight: the Queen's alarm clock, glowing like a little star; held by the handle between its
+// two bells, a white face, a star at twelve, little feet. Box 16 x 22; held at (8, 2).
+// The little star of his own the Queen gives him (Chapter 10, his trial's end: m.cine.gift), held
+// the same way. Box 16 x 22; held at (8, 2).
+const starP = () => {
+  const pts = [];
+  for (let k = 0; k < 10; k++) {
+    const a = (-90 + k * 36) * D2R;
+    const r = k % 2 ? 3.2 : 7;
+    pts.push([8 + Math.cos(a) * r, 13 + Math.sin(a) * r]);
+  }
+  return [...stroke([[8, 2], [8, 6]], 0.8, GOLD, false), T(pts, '#ffe066'), F(E(7, 12, 2, 1.6, '#fff8d0'))];
+};
+const lanternP = () => [
+  ...stroke(arcP(8, 3, 2.6, 2.2, 180, 360, 8), 1, GOLD, false), F(taper([[8, 4], [8, 7]], 1, 1, GOLD)),
+  E(3.6, 8.4, 2.7, 2.3, GOLD), E(12.4, 8.4, 2.7, 2.3, GOLD), F(E(3.2, 7.8, 1, 0.7, '#fff6c8')), F(E(12, 7.8, 1, 0.7, '#fff6c8')),
+  T([[4.4, 18.6], [6, 18.6], [4.6, 21.6]], GOLD), T([[10, 18.6], [11.6, 18.6], [11.4, 21.6]], GOLD),
+  E(8, 13.6, 6.4, 6.4, '#ffc94a'), F(E(8, 13.6, 4.9, 4.9, '#fffbe8')), F(E(8, 9.8, 0.9, 0.9, '#ffb03a')),
+  ...stroke([[8, 13.6], [8, 10.6]], 0.6, '#7a5a2a'), ...stroke([[8, 13.6], [10.4, 14.8]], 0.6, '#7a5a2a'),
+];
 
 const SP = {
   BODY: ck('body', 40, 40, bodyP, 2), HEAD: ck('head', 36, 38, headP, 2), CROWN: ck('crown', 32, 16, crownP, 2), CAPE: ck('cape', 30, 46, capeP, 2), WING: ck('wing', 18, 14, wingP, 2),
   T1: ck('tail1', 24, 12, tail1P, 2), T2: ck('tail2', 24, 12, tail2P, 2),
   THIGH: [false, true].map((f) => ck(`thigh${f ? 1 : 0}`, 9, 12, thighP(f), 2)), SHIN: [false, true].map((f) => ck(`shin${f ? 1 : 0}`, 9, 11, shinP(f), 2)), FOOT: [false, true].map((f) => ck(`foot${f ? 1 : 0}`, 13, 7, footP(f), 2)),
-  UP: [false, true].map((f) => ck(`up${f ? 1 : 0}`, 11, 9, upP(f), 2)), FORE: [false, true].map((f) => ck(`fore${f ? 1 : 0}`, 13, 9, foreP(f), 2)), LANTERN: ck('lantern', 16, 22, lanternP, 2),
+  UP: [false, true].map((f) => ck(`up${f ? 1 : 0}`, 11, 9, upP(f), 2)), FORE: [false, true].map((f) => ck(`fore${f ? 1 : 0}`, 13, 9, foreP(f), 2)), LANTERN: ck('lantern', 16, 22, lanternP, 2), STAR: ck('star', 16, 22, starP, 2),
 };
 
 // ---------- The skeleton ----------
@@ -128,6 +147,8 @@ export const crystalKingRig = sized(makeRig({
   kick: { tilt: -110, head: -150, crown: 220 },
   turnKick: { crown: 200, head: 60, tail: 160 },
   pose(m, a) {
+    // (Given his own star by the Queen at his trial's end, he holds that instead of her clock.)
+    a.ckStar = Boolean(m.cine?.freed && m.cine?.mood === 'happy');
     a.uidOff = (m.uid % 7) * 1.3;
     const t = a.t + a.uidOff;
     const u = stepPhase(m, a, 'ck2', 16);
@@ -205,7 +226,7 @@ export const crystalKingRig = sized(makeRig({
         { name: `head${tg}`, parent: 'headJ', s: SP.HEAD[i], pivot: [18, 34] },
         ...(pass ? [{ name: 'face', parent: 'headJ', s: (a) => ckFace(a.ckMood ?? 'idle'), pivot: [18, 34] }] : []),
         { name: `crown${tg}`, parent: 'headJ', s: SP.CROWN[i], pivot: [16, 14], at: () => [0, -27], rot: (S) => (-6 + S.crown) * D2R },
-        { name: `lantern${tg}`, parent: 'pawN', s: SP.LANTERN[i], pivot: [8, 2], rot: (S) => -(S.tilt + S.armN + S.elbN) * D2R, soft: { key: 'lamp', dir: [0, 12], k: 85, c: 5.5, gain: 0.25, turn: 0.6, max: 24, flutter: 2, hz: 0.5 } },
+        { name: `lantern${tg}`, parent: 'pawN', s: (a) => (a.ckStar ? SP.STAR[i] : SP.LANTERN[i])(), pivot: [8, 2], rot: (S) => -(S.tilt + S.armN + S.elbN) * D2R, soft: { key: 'lamp', dir: [0, 12], k: 85, c: 5.5, gain: 0.25, turn: 0.6, max: 24, flutter: 2, hz: 0.5 } },
         ...arm(false),
       ];
     }),

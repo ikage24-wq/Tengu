@@ -121,7 +121,32 @@ const QUEENS = {
     adds: { at: [], mob: null },
     enrage: 0.25,
   },
+  // Prismaris in his trial (Chapter 10): scared of the dark, hugging the Queen's alarm clock.
+  // Crystal spikes under you, his nightlight flaring round him, his tail swept along the floor,
+  // and from two thirds down, Lights Out: the room goes dark but for three pools of light.
+  nightking: {
+    color: '#b8a8ff', light: '#f4f0ff',
+    moves: [
+      { id: 'spikes', name: 'Crystal Spikes', sub: 'Step off the glowing cracks', every: 6, make: (q, p, map) => [p.x, ...spread(map, 3)].map((x) => ({ kind: 'circle', x, w: 64, warn: 1.3, k: 0.8, fx: 'celfissure' })) },
+      { id: 'flare', name: 'Nightlight Flare', sub: 'His light flares: get away from him', every: 9, make: (q) => [{ kind: 'circle', x: q.x, w: 260, warn: 1.5, k: 1, high: true, fx: 'celquakegold' }] },
+      { id: 'sweep', name: 'Tail Sweep', sub: 'Jump it!', every: 8, make: (q, p) => [{ ...lane(q, p, 520, 1.1, 0.9, 'celfissure'), low: true }] },
+      { id: 'dark', name: 'Lights Out!', sub: 'Stand in a pool of light!', every: 15, from: 0.66, make: (q, p, map) => lightsOut(map) },
+    ],
+    adds: { at: [], mob: null },
+    enrage: 0.25,
+  },
 };
+
+// Prismaris's Lights Out: the floor everywhere but three pools of light. Each lane carries the pools
+// (render/trial.js darkens the room round them).
+function lightsOut(map) {
+  const pools = spread(map, 3);
+  const r = 52;
+  const cuts = [0, ...pools.flatMap((x) => [x - r, x + r]), map.width];
+  const out = [];
+  for (let k = 0; k < cuts.length; k += 2) if (cuts[k + 1] - cuts[k] > 8) out.push({ kind: 'lane', x: cuts[k], w: cuts[k + 1] - cuts[k], warn: 3, k: 1.3, fx: 'celshadowhit', dark: true, pools });
+  return out;
+}
 
 export const isQueen = (m) => Boolean(QUEENS[m?.def?.id]);
 export const queenStyle = (id) => QUEENS[id];
@@ -165,6 +190,12 @@ export function onStoryMap(world) {
   m.aggroUntil = Infinity;
   world.mobs.push(m);
   world.trial = { key: world.map.trial, queen: m, won: false };
+  // (A trial with an entrance of its own plays it the first time you come in.)
+  const q = world.char.quests[t.quest];
+  if (t.intro && !q.introSeen) {
+    q.introSeen = true;
+    playScene(world, t.intro);
+  }
 }
 
 // Whether a field boss slot may fill: a queen only comes back once you've passed her trial.
@@ -210,6 +241,9 @@ export function tickStory(world, dt, hurt) {
     // Her helpers slip away with her.
     for (const a of world.mobs) if (a.add && a.hp > 0) a.hp = 0;
     const q = QUESTS[TRIALS[tr.key].quest];
+    // (Elder Shiratama goes home from Prismaris's: render/prologue.js.)
+    const elder = TRIALS[tr.key].elder;
+    if (elder) world.char.elders = { ...(world.char.elders ?? {}), [elder]: true };
     playScene(world, q.scenes?.win);
     world.log(`${tr.queen.def.name} is calm again. Report to ${q.giver[0].toUpperCase()}${q.giver.slice(1)}.`, '#ffe36b');
   }

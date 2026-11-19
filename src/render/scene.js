@@ -49,7 +49,7 @@ import { drawNodes, drawNodesFront } from './gathering.js';
 import { lifePose, lifeFind, holdFind, lifeBeats, botLifeBeats, onRodTip, clearRodTip, LIFE_POSES } from './life.js';
 import { drawSpirit, drawSoured } from './spirit.js';
 import { nextStep } from '../world/routes.js';
-import { drawZonesBack, drawZonesFront, drawCallout } from './trial.js';
+import { drawZonesBack, drawZonesFront, drawCallout, drawTrialSet } from './trial.js';
 import { drawHollowBack, drawHollowFront, drawDarkness } from './hollow.js';
 import { drawManorBack, drawManorFront, drawManorObject, MANOR_HINT } from './manor.js';
 import { drawAquaBack, drawAquaFront, drawAquaObject, AQUA_HINT } from './aquarium.js';
@@ -568,6 +568,7 @@ function drawWorldLayers(ctx, world, cam, time, b, zoom = 1) {
   // The Dream Theatre's set pieces, behind everyone (render/theatre.js).
   if (world.dungeon && !world.cine?.home) drawTheatreSet(ctx, world, cam, time);
   if (world.dungeon && !world.cine?.home) drawWhaleSet(ctx, world, cam, time);
+  if (world.map.trial && !world.cine?.home) drawTrialSet(ctx, world, cam, time);
   // Water to wade into, behind everyone (render/water.js).
   drawWaterBack(ctx, world.map, cam, VIEW_W, time);
   // Your furniture (or the friend's whose island you're visiting: world/decor.js), behind everyone.

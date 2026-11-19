@@ -133,6 +133,7 @@ export function drawCast(ctx, world, cam, time) {
       else if (a.kind === 'hero') drawYou(ctx, world, a, x, y, time, c.flags);
       else if (a.kind === 'gust') drawGust(ctx, x, y, time);
       else if (a.kind === 'cake') drawCake(ctx, x, y, a.tilt ?? 0);
+      else if (a.kind === 'clock') drawClock(ctx, x, y, a.tilt ?? 0, time);
       else if (a.kind === 'beard') drawBeard(ctx, x, y, a.tilt ?? 0);
       else if (a.kind === 'mob') drawCastMob(ctx, world, a, x, y, time);
     });
@@ -164,6 +165,41 @@ function drawYou(ctx, world, a, x, y, time, flags = {}) {
   drawHero(ctx, look, wornGear(world.char), 0, -1, { pose: 'idle', time, seed: 1, scale: 1, job: world.char.job, facing: a.facing ?? 1 });
   ctx.restore();
   drawBoatFront(ctx, x, y + bob, rock, time);
+}
+
+// The Queen's alarm clock (Chapter 10): gold, two bells, a white face, glowing a little.
+function drawClock(ctx, x, y, tilt, time) {
+  ctx.save();
+  ctx.translate(x, y - 8);
+  ctx.rotate(tilt);
+  const g = ctx.createRadialGradient(0, 0, 0, 0, 0, 16);
+  g.addColorStop(0, 'rgba(255,236,160,0.5)');
+  g.addColorStop(1, 'rgba(255,236,160,0)');
+  ctx.fillStyle = g;
+  ctx.fillRect(-16, -16, 32, 32);
+  const ell = (cx, cy, rx, ry, c) => {
+    ctx.fillStyle = c;
+    ctx.beginPath();
+    ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2);
+    ctx.fill();
+  };
+  ell(-4, -5.4, 2.4, 2, '#e8a830');
+  ell(4, -5.4, 2.4, 2, '#e8a830');
+  ell(0, 0, 6.4, 6.4, '#c8901e');
+  ell(0, 0, 5.6, 5.6, '#ffc94a');
+  ell(0, 0, 4.2, 4.2, '#fffbe8');
+  ctx.strokeStyle = '#7a5a2a';
+  ctx.lineWidth = 0.8;
+  ctx.beginPath();
+  ctx.moveTo(0, 0);
+  ctx.lineTo(0, -3);
+  ctx.moveTo(0, 0);
+  ctx.lineTo(2.2, 1);
+  ctx.stroke();
+  ctx.fillStyle = '#c8901e';
+  ctx.fillRect(-4.6, 5, 1.6, 3);
+  ctx.fillRect(3, 5, 1.6, 3);
+  ctx.restore();
 }
 
 // A slice of strawberry shortcake on a little white plate (the Queen's cake).

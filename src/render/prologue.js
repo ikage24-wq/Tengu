@@ -40,7 +40,7 @@ import { cornice, wainscot, skirting, floorShade, contact, frame, plant, shelf, 
 import { drawHayate } from './hayate.js';
 import { drawMochiAnim } from './mochi-anim.js';
 import { rollMochi } from '../data/mochi-genes.js';
-import { SAKURA, WARABI, KURI, GOMA, ICHIGO, ZUNDA, OHAGI } from '../data/scenes.js';
+import { SAKURA, WARABI, KURI, GOMA, ICHIGO, ZUNDA, OHAGI, SHIRATAMA } from '../data/scenes.js';
 
 const TAU = Math.PI * 2;
 const WHITE = '#ffffff';
@@ -788,6 +788,12 @@ export function drawProloguePiece(ctx, map, kind, wx, extra, cam, width, time) {
         OHAGI_HOME.genes ??= Object.assign(rollMochi(OHAGI.seed, OHAGI.genes), { wear: { ...OHAGI.wear } });
         drawMochiAnim(ctx, OHAGI_HOME, ox + 330, oy + 302, time + 8.3);
       }
+      // ...and Elder Shiratama, the eldest, home from the Crystal Cave (Chapter 10), keeping an eye on
+      // the alarm clock.
+      if (map.elders?.shiratama) {
+        SHIRATAMA_HOME.genes ??= Object.assign(rollMochi(SHIRATAMA.seed, SHIRATAMA.genes), { wear: { ...SHIRATAMA.wear } });
+        drawMochiAnim(ctx, SHIRATAMA_HOME, ox + 372, oy + 302, time + 9.2);
+      }
     }
   }
   return true;
@@ -797,6 +803,7 @@ const YOMOGI = { genes: null, dir: -1, speed: 0, dist: 0, size: 'grown', runPoin
 const SAKURA_HOME = { genes: null, dir: -1, speed: 0, dist: 0, size: 'grown', runPoints: 300, easy: true, idleBits: ['lookaround'] };
 const KURI_HOME = { genes: null, dir: 1, speed: 0, dist: 0, size: 'grown', runPoints: 300, easy: true, idleBits: ['lookaround'] };
 const ICHIGO_HOME = { genes: null, dir: -1, speed: 0, dist: 0, size: 'grown', runPoints: 300, easy: true, idleBits: ['lookaround'] };
+const SHIRATAMA_HOME = { genes: null, dir: -1, speed: 0, dist: 0, size: 'grown', runPoints: 300, easy: true, idleBits: ['lookaround', 'yawn'] };
 const OHAGI_HOME = { genes: null, dir: 1, speed: 0, dist: 0, size: 'grown', runPoints: 300, easy: true, idleBits: ['lookaround', 'yawn'] };
 const ZUNDA_HOME = { genes: null, dir: 1, speed: 0, dist: 0, size: 'grown', runPoints: 300, easy: true, idleBits: ['lookaround', 'hum'] };
 const GOMA_HOME = { genes: null, dir: -1, speed: 0, dist: 0, size: 'grown', runPoints: 300, easy: true, idleBits: ['lookaround'] };

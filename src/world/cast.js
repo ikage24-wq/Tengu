@@ -49,7 +49,7 @@ import { easedPace } from './pace.js';
 import { SCENES } from '../data/story.js';
 
 const ease = (u) => (u <= 0 ? 0 : u >= 1 ? 1 : u < 0.5 ? 4 * u * u * u : 1 - (-2 * u + 2) ** 3 / 2);
-const HEIGHT = { hayate: 46, mochi: 30, crown: 10, beard: 8, hero: 46, gust: 10, mob: 110 };
+const HEIGHT = { hayate: 46, mochi: 30, crown: 10, beard: 8, hero: 46, gust: 10, mob: 110, clock: 16 };
 
 export const castOf = (world, id) => (typeof id === 'string' ? world.cine?.cast?.find((a) => a.id === id) ?? null : null);
 

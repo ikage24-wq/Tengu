@@ -256,7 +256,8 @@ export function mobPlaces(mobId) {
   const names = [];
   for (const m of Object.values(MAPS)) {
     // (An area boss lives where its nest is: it wakes there.)
-    if (!m.spawns?.some((s) => s.mob === mobId) && m.nest?.mob !== mobId) continue;
+    // (...and a trial's boss in its arena.)
+    if (!m.spawns?.some((s) => s.mob === mobId) && m.nest?.mob !== mobId && m.trialBoss !== mobId) continue;
     const name = m.dungeon ? DUNGEONS[m.dungeon]?.name ?? m.name : m.name;
     if (!names.includes(name)) names.push(name);
   }

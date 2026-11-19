@@ -2140,6 +2140,69 @@ export const WHALE_SCENES = {
   ],
 };
 
+// ---------- The Crystal Cave (Chapter 10) ----------
+// Elder Shiratama, the eldest Mochi: a snow-white rice dumpling in the elders' robe, hat, beard and
+// round specs. It keeps Prismaris company in his dark throne room with a candle (render/trial.js).
+export const SHIRATAMA = { seed: 107, genes: { dough: '#fbf8f2', hairColor: 'shiratama' }, wear: { dress: 'elderrobe', hat: 'elderhat', face: 'fakebeard', eyes: 'specs' } };
+const SHIRATAMA_CAST = { kind: 'mochi', seed: SHIRATAMA.seed, size: 'grown', name: 'Elder Shiratama', color: '#c8b8a8', genes: SHIRATAMA.genes, wear: SHIRATAMA.wear, idles: ['lookaround'] };
+
+export const CRYSTAL_SCENES = {
+  // Walking into the dark throne room the first time: one small light, an alarm clock hugged very
+  // tight; Shiratama by the throne with its candle; Prismaris won't give it up.
+  nightthrone_intro: [
+    { cast: 'shiratama', x: 860, y: 480, facing: -1, ...SHIRATAMA_CAST },
+    { together: [{ cam: 'nightking', up: 30, dur: 1.4 }, { walk: 'player', to: 'nightking', gap: 220, speed: 90 }] },
+    { who: null, text: "The throne room is dark as a pocket. In the middle of it, one small light: an alarm clock, glowing like a star, hugged very tight." },
+    { together: [{ cam: 'shiratama', up: 10, dur: 1 }, { emote: 'shiratama', kind: '!' }] },
+    { who: 'shiratama', text: "Ah, visitors. Mind your step. He doesn't like the dark. Neither do I, much, at my age." },
+    { together: [{ cam: 'nightking', up: 30, dur: 1 }, { face: 'nightking', to: 'player' }, { emote: 'nightking', kind: '!' }, { jump: 'nightking', height: 10 }] },
+    { who: 'nightking', text: "N-no! It's MINE! It fell out of the sky and it's warm and it glows and it's MINE!", mood: 'angry' },
+    { who: 'player', text: "That's the Queen's alarm clock." },
+    { who: 'nightking', text: "If you take it, it'll be dark again. ALL dark. I'll put out every light first!", mood: 'angry' },
+    { act: 'nightking', move: 'attack', dur: 1, async: true },
+    { wait: 0.3 },
+    { together: [{ shake: 4, dur: 0.4 }, { walk: 'player', away: 'nightking', by: 30, speed: 160 }, { emote: 'player', kind: '!' }] },
+    { cam: 'player', dur: 0.7 },
+  ],
+  // His trial won: the Queen sleepwalks in and gives him a little star of his own; he gives her
+  // clock back; Elder Shiratama goes home with the news.
+  ch7_win: [
+    { together: [{ free: 'nightking', as: 'sad' }, { cam: ['nightking', 'player'], dur: 1.2 }] },
+    { who: 'nightking', text: "...Don't take it. Please. It was so dark down here before it fell.", mood: 'sad' },
+    { cast: 'shiratama', x: 860, y: 480, facing: -1, ...SHIRATAMA_CAST },
+    { who: 'shiratama', text: "He's been drinking every light on the island, you know. Just so the dark can't get him." },
+    { cast: 'hayate', kind: 'hayate', near: 'nightking', inward: 230, hidden: true, crown: true, sprout: true, name: 'Hayate', color: '#5aa8c8', sleepwalk: true },
+    { together: [{ show: 'hayate', dur: 0.8 }, { cam: ['hayate', 'nightking'], dur: 1.2 }, { emote: 'hayate', kind: 'zzz', dur: 2.2 }] },
+    { who: null, text: 'Out of the dark sleepwalks the Queen, fast asleep, her gold sprout glowing.' },
+    { walk: 'hayate', to: 'nightking', gap: 64, speed: 45 },
+    { together: [{ fx: 'sparkle', at: 'hayate', top: true, n: 14 }, { emote: 'hayate', kind: 'zzz', dur: 1.6 }] },
+    { who: 'hayate', text: '...mm... here... a nightlight... your own...', mood: 'sleepy' },
+    { together: [{ mood: 'nightking', as: 'happy' }, { fx: 'sparkle', at: 'nightking', top: true, n: 18 }, { flash: '#fff3a6' }] },
+    { who: 'nightking', text: 'A star. A real star. For ME?', mood: 'happy' },
+    { cast: 'clock', kind: 'clock', near: 'nightking', dx: 26 },
+    { who: 'nightking', text: '...Then you can have your clock back. It rings SO loud. I kept putting socks on it.', mood: 'happy' },
+    { toss: 'clock', to: 'hayate', dur: 1.1, height: 46 },
+    { together: [{ hide: 'clock', dur: 0.4 }, { emote: 'hayate', kind: 'zzz', dur: 2 }] },
+    { who: null, text: 'The Queen tucks the alarm clock under her arm, without waking up, and sleepwalks home.' },
+    { walk: 'hayate', away: 'nightking', by: 260, speed: 50 },
+    { hide: 'hayate', dur: 0.8 },
+    { who: 'shiratama', text: "Well. That's my cue. A hundred years I've waited for her to need an alarm clock." },
+    { set: 'royal_bed' },
+    { cast: 'hayate', kind: 'hayate', x: 300, y: 283, seat: 'bed', crown: true, sprout: true, name: 'Hayate', color: '#5aa8c8' },
+    { cast: 'translator', kind: 'mochi', seed: 33, size: 'grown', x: 548, y: 302, facing: -1, name: 'Royal Snore Translator', color: '#b98ad8', idles: ['lookaround'], wear: { dress: 'scholarrobe', hat: 'scholarcap', eyes: 'specs', over: 'eartrumpet' } },
+    { cast: 'shiratama', x: 650, y: 302, facing: -1, ...SHIRATAMA_CAST },
+    { cam: ['shiratama', 'translator'], up: 12, dur: 1.2, zoom: 1.05 },
+    { together: [{ walk: 'shiratama', to: 372, speed: 34 }, { fx: 'sparkle', at: 'shiratama', top: true, n: 8 }] },
+    { together: [{ emote: 'translator', kind: '!' }, { play: 'translator', as: 'wow' }] },
+    { who: 'translator', text: 'Elder Shiratama! The eldest of us all, home at last! ...Is that an ALARM CLOCK?', mood: 'surprised' },
+    { who: 'shiratama', text: "Hers. She brought it home herself. Don't wind it. Not yet." },
+    { emote: 'hayate', kind: 'zzz', dur: 1.6 },
+    { who: 'hayate', text: '...mmn... five more minutes...', mood: 'sleepy' },
+    { who: 'translator', text: 'Her Majesty says: "five more minutes". ...Oh dear. I think she means it this time.', mood: 'surprised' },
+    { set: null },
+  ],
+};
+
 // Skipper Nimbus calling from the pier with a conch horn (world/skywhale.js).
 export const WHALE_RADIO = {
   'enter:skywhale1': ["The tail docks! Tie down three moorings. And when she lifts her tail, grab a rope or you'll slide right off!"],

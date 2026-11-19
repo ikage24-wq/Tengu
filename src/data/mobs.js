@@ -754,6 +754,15 @@ export const MOBS = {
     // Every few seconds the king slams the ground; anyone standing on it takes heavy damage.
     special: { kind: 'slam', every: 6, warn: 1.2, damage: 370, range: 420 },
   }),
+  // His story trial (Chapter 10, 2026-11-19): the same Prismaris at level 49, alone in his dark
+  // throne room with the Queen's alarm clock (world/story.js QUEENS.nightking). Health beside
+  // Selene's, the trial before.
+  nightking: mob({
+    id: 'nightking', name: 'Prismaris, the Crystal King', level: 49, hp: 170000, atk: 286, def: 64, acc: 116, eva: 12, exp: 140000,
+    gold: [800, 1150], speed: 34, w: 100, h: 130, art: 'crystalking', boss: true, setOf: 'crystalking',
+    drops: [{ id: 'king_crystal', chance: 1 }, { id: 'elixir', chance: 1, qty: 5 }],
+    special: { kind: 'slam', every: 5.5, warn: 1.2, damage: 440, range: 420 },
+  }),
 
   // Queens out of myth: field bosses (Sylvana in Whispering Glade, Tamamo on the Fox Shrine Path,
   // Lilith at Serpent Springs, Selene at Starfall Heights; each also has a story fight). Each winds up a big attack every
