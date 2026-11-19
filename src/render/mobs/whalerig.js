@@ -208,8 +208,9 @@ export const whaleRig = sized(makeRig({
     const ws = t * 4.2;
     const walk = { ...idle, rise: Math.sin(ws) * 1.6, roll: Math.sin(ws - 1.2) * 4, fluke: Math.sin(ws) * 24, flipN: 16 + Math.sin(ws + 1) * 20, flipF: 22 + Math.sin(ws + 2) * 14, cap: 14 + Math.sin(ws - 1) * 6, star: 24 + Math.sin(ws - 2) * 14 };
     // A sleepy bonk of her nose: rearing back, then nodding forward into you.
-    const antic = { ...idle, x: -4, rise: 3, roll: -16, fluke: 30, flipN: -30, flipF: -20, cap: -10, star: -20 };
-    const strike = { ...idle, x: 10, rise: -3, roll: 18, fluke: -30, flipN: 40, flipF: 30, cap: 24, star: 40 };
+    // (Bigger, 2026-11-19: it barely read.)
+    const antic = { ...idle, x: -8, rise: 6, roll: -26, fluke: 40, flipN: -40, flipF: -30, cap: -16, star: -30 };
+    const strike = { ...idle, x: 16, rise: -4, roll: 26, fluke: -40, flipN: 50, flipF: 40, cap: 30, star: 50 };
     const S = stateBlend(a, idle, walk, antic, strike);
     const over = (P, w) => {
       if (w <= 0.001) return;

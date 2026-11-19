@@ -103,6 +103,8 @@ export function drawCoopBack(ctx, world, cam, time) {
   ringsOnScreen = [];
   for (const m of coopBosses(world)) {
     for (const s of m.coop.mechs) {
+      // (A guard's pieces stand behind the boss, so they never hide him: Tuskar's flames did.)
+      if (s.def.kind === 'sides') drawGuard(ctx, world, m, s, m.x - cam.x, m.y - (m.air ?? 0) - cam.y, time, 'pieces');
       if (s.def.kind === 'split' && s.ring) drawRing(ctx, world, m, s.ring, cam, time);
       if (s.def.kind === 'seal' && s.x != null) drawSealStone(ctx, s, cam, time);
     }
@@ -204,7 +206,7 @@ export function drawCoopFront(ctx, world, cam, time) {
     const bx = m.x - cam.x;
     const by = m.y - (m.air ?? 0) - cam.y;
     for (const s of m.coop.mechs) {
-      if (s.def.kind === 'sides') drawGuard(ctx, world, m, s, bx, by, time);
+      if (s.def.kind === 'sides') drawGuard(ctx, world, m, s, bx, by, time, 'pips');
       if (s.def.kind === 'split' && s.ring) ringPips(ctx, world, m, s.ring, cam, time);
       if (s.def.kind === 'seal' && s.x != null) drawSealBeam(ctx, s, bx, by - m.def.h * 0.55, cam, time);
       if (s.def.kind === 'twins' && s.pair && !s.done) drawTether(ctx, world, s, cam, time);
@@ -237,8 +239,9 @@ export function drawCoopFront(ctx, world, cam, time) {
 // cracked drawing (light splitting it); while one half is lit the other pulses and a lilac pip
 // over it asks for the blow. Broken, it's gone (the pieces fly, above) until it forms again,
 // growing back in.
-function drawGuard(ctx, world, m, s, bx, by, time) {
-  const k = (s.shell = ease(s.shell ?? 1, s.guard ? 1 : 0, 0.1));
+// (`part`: 'pieces', drawn behind the boss, or 'pips', the asks over everyone.)
+function drawGuard(ctx, world, m, s, bx, by, time, part) {
+  const k = part === 'pieces' ? (s.shell = ease(s.shell ?? 1, s.guard ? 1 : 0, 0.1)) : s.shell ?? 1;
   if (k < 0.03) return;
   const look = guardOf(m.def.id);
   const cy = by - m.def.h * 0.5;
@@ -249,7 +252,7 @@ function drawGuard(ctx, world, m, s, bx, by, time) {
     lit[side] = s.guard ? Math.max(0, 1 - since / s.def.window) : 0;
   }
   const e = smooth(k);
-  for (const q of guardPieces(bx, cy, rx * (0.9 + 0.1 * e), ry * (0.9 + 0.1 * e), look.gap)) {
+  if (part === 'pieces') for (const q of guardPieces(bx, cy, rx * (0.9 + 0.1 * e), ry * (0.9 + 0.1 * e), look.gap)) {
     const L = smooth(Math.min(1, lit[q.side] * 1.6));
     const waiting = s.guard && lit[-q.side] > 0 && lit[q.side] === 0;
     const a = e * (waiting ? 0.75 + 0.25 * Math.sin(time * 12) : 1);
@@ -257,7 +260,7 @@ function drawGuard(ctx, world, m, s, bx, by, time) {
     if (L < 0.98) fxSprite(ctx, look.idle, q.x, q.y, { ...o, alpha: a * (1 - L) });
     if (L > 0.02) fxSprite(ctx, look.crack, q.x, q.y, { ...o, alpha: a * L });
   }
-  for (const side of [-1, 1]) {
+  if (part === 'pips') for (const side of [-1, 1]) {
     if (!(s.guard && lit[-side] > 0 && lit[side] === 0)) continue;
     fxSprite(ctx, 'celcopipoff', bx + side * (rx + 14), cy - 8 + Math.sin(time * 6) * 2, { t: time, scale: 1.3, alpha: 0.6 + 0.4 * Math.sin(time * 12) });
   }

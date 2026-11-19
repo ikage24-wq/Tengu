@@ -314,8 +314,11 @@ export const myconidRig = sized(makeRig({
       ...legsAt(liftW, tiltW, steps[0], steps[1]),
     };
     // A thump of the cane: up overhead, then down hard in front of her.
-    const antic = { ...idle, lift: 1.6, tilt: -6, armN: -60, armF: 40, cane: aim(-110, -6, -60), ...legsAt(1.6, -6) };
-    const strike = { ...idle, lift: -1.4, tilt: 7, x: 2, armN: 34, armF: 70, cane: aim(-70, 7, 34), bonnet: 6, ...legsAt(-1.4, 7) };
+    // (A thump of the cane you can see coming, 2026-11-19: it barely changed from her idle. Up on
+    // her toes and rearing back, the cane hoisted over her head foot-up; then leaning right in,
+    // the cane's foot brought down hard on the floor in front.)
+    const antic = { ...idle, lift: 3, tilt: -12, armN: -115, armF: 40, cane: aim(40, -12, -115), ...legsAt(3, -12) };
+    const strike = { ...idle, lift: -3, tilt: 14, x: 4, armN: 40, armF: 70, cane: aim(-140, 14, 40), bonnet: 8, ...legsAt(-3, 14) };
     const S = stateBlend(a, idle, walk, antic, strike);
     const over = (P, w) => {
       if (w <= 0.001) return;

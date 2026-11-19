@@ -104,7 +104,7 @@ const footP = (far) => () => {
 // The lantern on his far hand (box 12 x 20; hung from its cord's top (6, 1)).
 const lanternP = () => [taper([[6, 1], [6, 6]], 0.8, 0.8, INK), R(2, 5.4, 8, 1.8, '#5a3a2a'), blob([[2, 7], [10, 7], [9.4, 17], [2.6, 17]], '#ffd36b', 1), F(E(6, 12, 2.4, 3.4, '#fff3c4')), R(2.4, 16.6, 7.2, 1.6, '#5a3a2a')];
 const SK = {
-  TRUNK: sk('trunk', 72, 68, trunkP, 2), SPROUT: [0, 1, 2].map((k) => sk(`sprout${k}`, 24, 24, sproutP(k), 2)),
+  TRUNK: sk('trunk', 72, 68, trunkP, 6), SPROUT: [0, 1, 2].map((k) => sk(`sprout${k}`, 24, 24, sproutP(k), 6)),
   UP: [false, true].map((f) => sk(`up${f ? 1 : 0}`, 18, 10, upperP(f), 2)), LOW: [false, true].map((f) => sk(`low${f ? 1 : 0}`, 16, 9, lowerP(f), 2)), HAND: [false, true].map((f) => sk(`hand${f ? 1 : 0}`, 18, 16, handP(f), 2)),
   THIGH: [false, true].map((f) => sk(`thigh${f ? 1 : 0}`, 15, 17, thighP(f), 2)), SHIN: [false, true].map((f) => sk(`shin${f ? 1 : 0}`, 15, 15, shinP(f), 2)), FOOT: [false, true].map((f) => sk(`foot${f ? 1 : 0}`, 25, 9, footP(f), 2)),
   LANTERN: sk('lantern', 12, 20, lanternP, 2),
@@ -277,9 +277,11 @@ export const stumpRig = sized(makeRig({
       sp0: 6 + Math.sin(u * TAU * 2 - 1) * 8, sp1: 4 + Math.sin(u * TAU * 2 - 1.4) * 8, sp2: 6 + Math.sin(u * TAU * 2 - 1.8) * 8,
       ...legsAt(liftW, tiltW, [FEET[0] + steps[0][0], steps[0][1]], [FEET[1] + steps[1][0], steps[1][1]]),
     };
-    // A bonk of his near branch: up, then down in front.
-    const antic = { ...idle, x: -3, lift: 1, tilt: -6, armN: -70, elbN: -30, handN: -20, sp0: -10, sp1: -8, sp2: -10, ...legsAt(1, -6) };
-    const strike = { ...idle, x: 6, lift: -1, tilt: 8, armN: 40, elbN: 10, handN: 10, sp0: 14, sp1: 12, sp2: 16, ...legsAt(-1, 8, [FEET[0] + 6, 0], [FEET[1], 0]) };
+    // His plain swing, a heavy slam (2026-11-19: it was only a raise of one branch): both branches
+    // hauled up high as he rears back on his roots, then brought down hard in front, the sprouts
+    // flung after.
+    const antic = { ...idle, x: -3, lift: 2, tilt: -10, armN: -100, elbN: -20, handN: -20, armF: -80, elbF: -20, sp0: -14, sp1: -12, sp2: -14, ...legsAt(2, -10) };
+    const strike = { ...idle, x: 6, lift: -3, tilt: 13, armN: 70, elbN: 20, handN: 20, armF: 80, elbF: 20, sp0: 20, sp1: 16, sp2: 22, ...legsAt(-3, 13, [FEET[0] + 6, 0], [FEET[1] + 2, 0]) };
     const S = stateBlend(a, idle, walk, antic, strike);
     const over = (P, w) => {
       if (w <= 0.001) return;
