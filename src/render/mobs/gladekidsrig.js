@@ -396,8 +396,9 @@ export const blossomFairyRig = makeRig({
     };
     const walk = { ...idle, tilt: idle.tilt + 7, head: idle.head - 4, armF: idle.armF + 10 };
     // The wand drawn back over her head; then the swish forward and the burst of seeds.
-    const antic = { x: -2, lift: 3.4, tilt: -11, head: -8, armN: -24, armF: 12 };
-    const strike = { x: 3, lift: 2, tilt: 10, head: 6, armN: 34, armF: -10 };
+    // (Bigger, 2026-11-19: it hardly read: the wand hauled right back, then a full swish.)
+    const antic = { x: -3, lift: 4.4, tilt: -16, head: -10, armN: -60, armF: 20 };
+    const strike = { x: 5, lift: 2, tilt: 15, head: 8, armN: 62, armF: -16 };
     return stateBlend(a, idle, walk, antic, strike);
   },
   fx(ctx, m, a, S, matOf) {
@@ -435,18 +436,24 @@ export const blossomFairyRig = makeRig({
     const since = a.ph.since;
     if (since >= 0 && since < 0.6) {
       const u = since / 0.6;
-      for (let i = 0; i < 6; i++) {
-        const ang = -0.5 + i * 0.2;
-        const d = 4 + u * (16 + (i % 3) * 5);
+      // (A big burst of dandelion seeds, each a fluffy head on its little stalk, 2026-11-19: six
+      // specks hardly read.)
+      for (let i = 0; i < 12; i++) {
+        const ang = -0.9 + i * 0.16;
+        const d = 5 + (1 - (1 - u) * (1 - u)) * (28 + (i % 3) * 8);
         const x = wx + Math.cos(ang) * d;
-        const y = wy + Math.sin(ang) * d + Math.sin(u * 6 + i) * 1.2;
-        ctx.globalAlpha = base * (1 - u);
+        const y = wy + Math.sin(ang) * d + Math.sin(u * 6 + i) * 1.6 - u * u * 4;
+        ctx.globalAlpha = base * (1 - u * u);
+        ctx.strokeStyle = '#c8d0dc';
+        ctx.lineWidth = 0.6;
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        ctx.lineTo(x - Math.cos(ang) * 3, y - Math.sin(ang) * 3 + 0.6);
+        ctx.stroke();
         ctx.fillStyle = '#ffffff';
         ctx.beginPath();
-        ctx.arc(x, y, 0.9, 0, TAU);
+        ctx.arc(x, y, 1.7 * (1 - u * 0.3), 0, TAU);
         ctx.fill();
-        ctx.fillStyle = '#c8d0dc';
-        ctx.fillRect(x - Math.cos(ang) * 1.6, y - Math.sin(ang) * 1.6, 0.5, 0.5);
       }
     }
   },

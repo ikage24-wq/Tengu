@@ -150,10 +150,12 @@ export const gearheartRig = makeRig({
     const tap = Math.max(0, beat);
     a.ghSpin = rest || m.hp <= 0 ? 0 : 1;
     a.ghKeyT = (a.ghKeyT ?? 0) + a.dt * (rest ? 0 : 3 + over3 * 6);
-    const liftI = beat * 0.6 - bow * 3;
-    const tiltI = beat * 2 + bow * 26;
+    // (Her bow is a curtsy, 2026-11-19: tipped 26 degrees as one block it read stiff. Knees bent
+    // low, a gentler lean, her head bowing further on her neck, the far arm sweeping out.)
+    const liftI = beat * 0.6 - bow * 5;
+    const tiltI = beat * 2 + bow * 12;
     const idle = {
-      x: 0, lift: liftI, tilt: tiltI, head: -beat * 4 + bow * 16, hat: bow * 30, cane: twirl * Math.sin(t * 8) * 100 + bow * 30,
+      x: 0, lift: liftI, tilt: tiltI, head: -beat * 4 + bow * 26, hat: bow * 34, cane: twirl * Math.sin(t * 8) * 100 + bow * 30,
       armN: 70 - twirl * 30 + bow * 20, elbN: -30 + twirl * 30, armF: 120 - bow * 230, elbF: -30 + bow * -40,
       ...LEGS.at(liftI, tiltI, [FEET[0] + tap * 2, tap * 3], [FEET[1] - bow * 4, 0]),
     };

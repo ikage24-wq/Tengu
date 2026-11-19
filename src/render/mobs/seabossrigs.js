@@ -14,11 +14,57 @@ export const keepsakeRig = {
   w: 60,
   h: 80,
   draw(ctx, m, a) {
-    if (m.hp <= 0) return;
     const t = a.t + (m.uid % 7) * 0.7;
     const held = m.heldId != null;
     const r = 19;
-    const cy = -r - (held ? 22 : 12) - Math.sin(t * 2) * 3;
+    // (Rising as it takes someone up, eased, 2026-11-19: it jumped.)
+    const mo = a.mo ?? {};
+    const goal = held ? 22 : 12;
+    mo.kbUp = mo.kbUp == null ? goal : mo.kbUp + (goal - mo.kbUp) * Math.min(1, (a.dt ?? 1 / 60) * 6);
+    const cy = -r - mo.kbUp - Math.sin(t * 2) * 3;
+    // Popped: the skin bursts into curved shards flying out and fading, a few droplets falling,
+    // the little bow tumbling down (2026-11-19: it just vanished).
+    if (m.hp <= 0) {
+      const u = Math.min(1, (m.dying ?? 1) / 0.45);
+      if (u >= 1) return;
+      const e = 1 - (1 - u) * (1 - u);
+      ctx.save();
+      ctx.globalAlpha = a.alpha * (1 - u);
+      ctx.strokeStyle = '#d8f8ff';
+      ctx.lineWidth = 1.6 * (1 - u) + 0.4;
+      for (let k = 0; k < 7; k++) {
+        const ang = (k / 7) * TAU + 0.3;
+        const rr = r * (1 + e * 0.9);
+        ctx.beginPath();
+        ctx.arc(0, cy, rr, ang, ang + 0.42 * (1 - u * 0.6));
+        ctx.stroke();
+      }
+      ctx.fillStyle = '#e8fbff';
+      for (let k = 0; k < 6; k++) {
+        const ang = (k / 6) * TAU + 0.7;
+        const d = r * (0.6 + e * 0.9);
+        ctx.beginPath();
+        ctx.ellipse(Math.cos(ang) * d, cy + Math.sin(ang) * d + u * u * 14, 1.6 * (1 - u) + 0.4, 2 * (1 - u) + 0.5, 0, 0, TAU);
+        ctx.fill();
+      }
+      ctx.fillStyle = '#ff9ab8';
+      ctx.save();
+      ctx.translate(e * 4, cy - r + u * u * 30);
+      ctx.rotate(u * 3);
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.lineTo(-6, -4);
+      ctx.lineTo(-6, 3);
+      ctx.closePath();
+      ctx.moveTo(0, 0);
+      ctx.lineTo(6, -4);
+      ctx.lineTo(6, 3);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+      ctx.restore();
+      return;
+    }
     const wob = Math.sin(t * 3.4) * 0.05;
     ctx.save();
     const g = ctx.createRadialGradient(-6, cy - 7, 1, 0, cy, r);

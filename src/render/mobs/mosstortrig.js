@@ -255,7 +255,9 @@ export const mosstortRig = makeRig({
     const walk = { x: 0, lift: (0.5 - 0.5 * Math.cos(p)) * 0.5, tilt: Math.sin(p) * 1.1, ext: 7.6, nAng: -4 + Math.sin(p - 0.8) * 3, hRot: Math.sin(p - 1.2) * 3, munch: 0 };
     // The snap: head pulled right in, hunkered and rocked back; then the neck shoots out.
     const antic = { x: -1.5, lift: -0.6, tilt: -3, ext: 0, nAng: -4, hRot: 0, munch: 0 };
-    const strike = { x: 3, lift: 0.2, tilt: 5, ext: 15, nAng: 4, hRot: 6, munch: 0 };
+    // (The whole tortoise lunges into the snap, the neck out only a little further than it rests,
+    // 2026-11-19: shot out to twice its length it read like a hose.)
+    const strike = { x: 6, lift: 0.5, tilt: 8, ext: 10.5, nAng: 8, hRot: 14, munch: 0 };
     return stateBlend(a, idle, walk, antic, strike);
   },
   follow(S, a) {

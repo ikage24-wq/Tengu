@@ -239,7 +239,9 @@ export function drawLighting(ctx, map, cam, w, h, time, lights = []) {
 
 
 // Night (world/daytime.js): a deep blue dusk laid over the world, `k` deep (0-1), with soft holes
-// where the lights are and a warm glow round each ({ x, y, r, c? } in screen space).
+// where the lights are and a warm glow round each ({ x, y, r, c? } in screen space). A light can
+// be a faint one (`hole` 0-1, how much of the dusk it lifts; `glow: false`, no warm glow), like the
+// one each monster carries so a dark one still reads on a dark map.
 export function drawNight(ctx, w, h, k, lights = []) {
   if (k <= 0) return;
   const c = layer('night', LIGHT_W, LIGHT_H);
@@ -253,7 +255,7 @@ export function drawNight(ctx, w, h, k, lights = []) {
   for (const l of lights) {
     const r = l.r * 1.25;
     const hole = g.createRadialGradient(l.x, l.y, 0, l.x, l.y, r);
-    hole.addColorStop(0, 'rgba(0,0,0,0.85)');
+    hole.addColorStop(0, `rgba(0,0,0,${0.85 * (l.hole ?? 1)})`);
     hole.addColorStop(1, 'rgba(0,0,0,0)');
     g.fillStyle = hole;
     g.fillRect(l.x - r, l.y - r, r * 2, r * 2);
@@ -265,6 +267,7 @@ export function drawNight(ctx, w, h, k, lights = []) {
   // The warm glow, added on top.
   ctx.globalCompositeOperation = 'lighter';
   for (const l of lights) {
+    if (l.glow === false) continue;
     const glow = ctx.createRadialGradient(l.x, l.y, 0, l.x, l.y, l.r * 0.8);
     glow.addColorStop(0, rgba(l.c ?? '#ffd9a0', 0.16 * k));
     glow.addColorStop(1, rgba(l.c ?? '#ffd9a0', 0));

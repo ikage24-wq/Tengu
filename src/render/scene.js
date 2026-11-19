@@ -755,6 +755,15 @@ function drawWorldLayers(ctx, world, cam, time, b, zoom = 1) {
   // Night: the map's lamps light up too.
   if (world.map.night > 0) {
     for (const l of world.map.lamps ?? []) lights.push({ x: l.x - cam.x, y: l.y - cam.y, r: 80, c: l.c });
+    // (Each monster on screen lifts a little of the dusk round itself, so a dark one still reads on
+    // a dark map: 2026-11-19, the Kettle Tanuki, Moss Owlet and Root Imp vanished at night.)
+    for (const m of world.mobs) {
+      if (m.hp <= 0) continue;
+      const mx = m.x - cam.x;
+      const h = m.def.h ?? 40;
+      if (mx < -h || mx > VIEW_W + h) continue;
+      lights.push({ x: mx, y: m.y - (m.air ?? 0) - h * 0.5 - cam.y, r: Math.max(24, Math.min(80, h * 0.8)), hole: 0.55, glow: false });
+    }
     lights.push(...fireflyLights(world.map, cam, VIEW_W, VIEW_H, time));
     drawNight(ctx, VIEW_W, VIEW_H, world.map.night, lights);
   }

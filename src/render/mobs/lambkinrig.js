@@ -274,7 +274,9 @@ export const lambkinRig = makeRig({
     bell: [60, 3.5],
   },
   fast: ['tilt', 'x', 'head'],
-  kick: { tilt: -260, wool: 300, earN: 500, earF: 500, bell: 600 },
+  // (The fleece only jiggles on a hit, 2026-11-19: kicked hard, it slid down over the legs and left
+  // the tail behind.)
+  kick: { tilt: -260, wool: 60, earN: 500, earF: 500, bell: 600 },
   pose(m, a) {
     const t = a.t + (m.uid % 9) * 0.47;
     const u = stepPhase(m, a);
@@ -314,12 +316,12 @@ export const lambkinRig = makeRig({
     { name: 'core', parent: null, at: (S) => [S.x, -S.lift - BODY], rot: (S) => S.tilt * D2R },
     ...legParts('bf', true),
     ...legParts('ff', true),
-    { name: 'tail', parent: 'core', s: tailPart, pivot: [4.6, 3.4], at: () => [-10.6, -3.4], rot: (S) => S.tail * D2R },
+    { name: 'tail', parent: 'core', s: tailPart, pivot: [4.6, 3.4], at: () => [-10.6, -3.4], rot: (S) => Math.max(-35, Math.min(35, S.tail)) * D2R },
     { name: 'neck', parent: 'core', at: () => [9.4, -3.6], rot: (S) => S.head * D2R },
     { name: 'earF', parent: 'neck', s: () => earPart(-1), pivot: [7.4, 1.6], at: () => [1.4, -7.8], rot: (S) => (-20 + S.earF) * D2R },
     ...legParts('bn', false),
     ...legParts('fn', false),
-    { name: 'wool', parent: 'core', s: woolPart, pivot: [13, 9.6], at: (S) => [0, S.wool * 0.4] },
+    { name: 'wool', parent: 'core', s: woolPart, pivot: [13, 9.6], at: (S) => [0, Math.max(-1.5, Math.min(1.5, S.wool * 0.4))] },
     { name: 'collar', parent: 'neck', s: collarPart, pivot: [4, 1.5], at: () => [1.4, -0.6], rot: () => -14 * D2R },
     { name: 'head', parent: 'neck', s: headPart, pivot: [4, 12] },
     { name: 'face', parent: 'neck', s: (a) => facePart(faceOf(a)), pivot: [6, 5], at: () => [4, -4.6] },

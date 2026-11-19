@@ -231,18 +231,20 @@ export const crystalKingRig = sized(makeRig({
       ];
     }),
   ],
-  under(ctx, m, a) {
+  under(ctx, m, a, S, mat) {
     ctx.globalAlpha = a.alpha * 0.22;
     ctx.fillStyle = '#1a1a3a';
     ctx.beginPath();
     ctx.ellipse(-4, -0.6, 26, 3.4, 0, 0, TAU);
     ctx.fill();
     ctx.globalAlpha = a.alpha;
+    // The nightlight's warm glow, flaring as he raises it: behind him, so it never washes over his
+    // face (2026-11-19: on the wind-up it did).
+    const [lx, ly] = at2(mat('lantern'), 0, 11.6);
+    puff(ctx, a, lx, ly, 12 + a.ckFlare * 12, 0.35 + a.ckFlare * 0.3, '255,240,170');
+    ctx.globalAlpha = a.alpha;
   },
   fx(ctx, m, a, S, mat) {
-    // The nightlight's warm glow, flaring as he raises it.
-    const [lx, ly] = at2(mat('lantern'), 0, 11.6);
-    puff(ctx, a, lx, ly, 12 + a.ckFlare * 18, 0.35 + a.ckFlare * 0.4, '255,240,170');
     if (m.hp <= 0) return;
     // The stomp: crystal sparkles bursting up off the floor.
     if (a.ckBurst > 0) for (let k = 0; k < 7; k++) {

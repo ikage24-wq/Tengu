@@ -452,8 +452,11 @@ export const anglerRig = makeRig({
     const t = a.t + a.uidOff;
     const idle = { x: 0, bob: 10 + Math.sin(t * 1.8) * 2.4, tilt: Math.sin(t * 1.1) * 5, lure: Math.sin(t * 1.4) * 10, fin: Math.sin(t * 6) * 14 };
     const walk = { x: 0, bob: 10 + Math.sin(t * 2.6) * 2, tilt: 8, lure: -16, fin: Math.sin(t * 10) * 20 };
-    const antic = { x: -3, bob: 11, tilt: -14, lure: 20, fin: 0 };
-    const strike = { x: 8, bob: 9, tilt: 14, lure: -24, fin: 30 };
+    // (The whole fish in it, 2026-11-19: only the lure's glow changed. Drawing back and up, the lure
+    // swung back over its head; then a dart forward and down, the lure flung out ahead, fin
+    // kicking.)
+    const antic = { x: -6, bob: 15, tilt: -24, lure: 42, fin: -10 };
+    const strike = { x: 14, bob: 7, tilt: 26, lure: -52, fin: 44 };
     return stateBlend(a, idle, walk, antic, strike);
   },
   parts: [
@@ -470,7 +473,7 @@ export const anglerRig = makeRig({
     if (m.hp <= 0) return;
     const flash = a.ph.antic;
     inPart(ctx, mat, 'lure', () => {
-      const g = ctx.createRadialGradient(11, -11, 0, 11, -11, 12 + flash * 14);
+      const g = ctx.createRadialGradient(11, -11, 0, 11, -11, 12 + flash * 6);
       g.addColorStop(0, `rgba(255,246,168,${(0.5 + 0.2 * Math.sin(a.now * 3) + flash * 0.4) * a.alpha})`);
       g.addColorStop(1, 'rgba(255,246,168,0)');
       ctx.fillStyle = g;
