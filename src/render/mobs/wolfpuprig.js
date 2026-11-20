@@ -14,7 +14,7 @@
 
 import { E, T, F } from './kit.js';
 import { makeRig, stateBlend, clamp, TAU } from './rig.js';
-import { D2R, taper, pairOf, faceSprite, hold, stepPhase, pawStep, put, shift, MOODS, moodOf, faceShapes, INK } from './rigkit.js';
+import { D2R, taper, pairOf, faceSprite, hold, stepPhase, pawStep, put, shift, MOODS, moodOf, INK, ov, arcP } from './rigkit.js';
 
 const K = 0.72;
 const WOLF = '#8a96c0';
@@ -60,8 +60,57 @@ const PR = {
   TAIL: wp('tail', 16, 16, tailP, 3, 3), LEG: [false, true].map((f) => wp(`leg${f ? 1 : 0}`, 10, 14, legP(f), 3, 3)), BODY: wp('body', 28, 20, bodyP, 3, 3),
   RUFF: wp('ruff', 20, 18, ruffP, 3, 3), HEAD: wp('head', 30, 32, headP, 3, 3),
 };
-const FACE = { eyes: [[13, 17, 1.9, 2.4, -1], [18.6, 17, 1.7, 2.2, 1]], mouth: [20, 25, 1.2], blush: [[10, 21, 1.3]], iris: '#c8862a', lid: 0, lashes: 0 };
-const pupFace = (mood) => faceSprite(`wolfpup|face|${mood}`, 30, 32, () => faceShapes(mood, FACE));
+// ---------- Its own face: round amber wolf eyes, cream husky brow spots, a little curled pup mouth
+// under the nose with its tongue out panting; it wrinkles its snout to growl and throws its head
+// back to howl. ----------
+const PDARK = '#22203a';
+const PAMBER = '#e8a23a';
+const PLINE = '#3a3050';
+const PTONGUE = '#ff8fab';
+const ln = (pts, w, c = PLINE) => [F(taper(pts, w, w * 0.85, c))];
+// The near eye (bigger) and the far one, toward the snout.
+const PEYES = [[12.8, 16.8, 1], [18.6, 16.6, 0.88]];
+const pupFaceShapes = (mood) => {
+  const out = [];
+  const angry = mood === 'angry' || mood === 'shout';
+  for (const [x, y, k] of PEYES) {
+    // The brow spots: up and worried when hurt, slanted in to growl.
+    const by = y - 3.3 * k;
+    if (mood === 'hurt') out.push(F(ov(x, by - 0.2, 1.1 * k, 0.6 * k, x < 15 ? -22 : 22, WCREAM)));
+    else if (angry) out.push(F(ov(x + 0.2, by + 0.6, 1.2 * k, 0.6 * k, x < 15 ? 24 : -24, WCREAM)));
+    else out.push(F(E(x, by - (mood === 'happy' ? 0.5 : 0), 1.1 * k, 0.65 * k, WCREAM)));
+    if (mood === 'blink' || mood === 'sleep' || mood === 'dead' || mood === 'shout') out.push(...ln(arcP(x, y - 0.2, 1.8 * k, 1.1 * k, 15, 165, 8), 0.75 * k, PDARK));
+    else if (mood === 'dizzy') {
+      const pts = [];
+      for (let i = 0; i <= 14; i++) pts.push([x + Math.cos(i * 0.8) * (0.15 + i * 0.12) * k, y + Math.sin(i * 0.8) * (0.15 + i * 0.12) * k]);
+      out.push(...ln(pts, 0.5 * k, '#b06a20'));
+    } else {
+      const big = mood === 'happy' || mood === 'hurt' ? 1.12 : 1;
+      let ring = Array.from({ length: 18 }, (_, i) => [x + Math.cos((i / 18) * Math.PI * 2) * 1.95 * k * big, y + Math.sin((i / 18) * Math.PI * 2) * 2.15 * k * big]);
+      if (mood === 'angry') {
+        const cut = (px) => y - 1.6 * k + (px - x) * (x < 15 ? 0.32 : -0.32);
+        ring = ring.map(([px, py]) => [px, Math.max(py, cut(px))]);
+      }
+      out.push(F(T(ring, PDARK)));
+      const ik = mood === 'angry' ? 0.55 : 1;
+      out.push(F(E(x + 0.2 * k, y + 0.3 * k, 1.45 * k * big, 1.6 * k * big * (mood === 'angry' ? 0.8 : 1), PAMBER)), F(E(x + 0.25 * k, y + 0.35 * k, 0.9 * k * big * ik, 1.05 * k * big * ik, PDARK)));
+      if (mood !== 'angry') out.push(F(E(x + 0.65 * k, y - 0.65 * k, 0.6 * k * big, 0.6 * k * big, '#ffffff')), F(E(x - 0.55 * k, y + 0.9 * k, 0.26 * k, 0.26 * k, '#ffffff')));
+      if (mood === 'happy') out.push(F(T([[x - 1.4 * k, y - 0.9 * k], [x - 1.25 * k, y - 1.3 * k], [x - 1.1 * k, y - 0.9 * k], [x - 1.25 * k, y - 0.5 * k]], '#ffffff')));
+    }
+  }
+  if (mood === 'hurt') out.push(F(E(12.2, 20, 0.5, 0.75, '#9ad8ff')), F(E(12.2, 20.4, 0.35, 0.35, '#ffffff')));
+  // The snout wrinkles to growl.
+  if (angry) out.push(...ln([[19.6, 18.6], [20.6, 18.2]], 0.4, WOLFD), ...ln([[19.8, 19.6], [20.9, 19.2]], 0.4, WOLFD));
+  // The mouth, under the nose (24.4, 20).
+  if (mood === 'shout') out.push(F(E(22.8, 23.6, 1.3, 1.7, '#7a3040')), F(E(22.8, 24.6, 0.8, 0.5, PTONGUE)));
+  else if (mood === 'happy') out.push(F(T(arcP(22.6, 22.6, 1.8, 1.8, 0, 180, 10), '#7a3040')), F(E(22.4, 24.4, 1, 1.3, PTONGUE)));
+  else if (mood === 'angry') out.push(...ln([[24.2, 21], [23.6, 22.6], [22.4, 22.9], [21.2, 22.3]], 0.45), F(T([[22.2, 22.8], [23, 22.8], [22.6, 23.9]], '#fffaf2')));
+  else if (mood === 'hurt') out.push(...ln([[24.2, 21], [23.6, 22.6], [22.8, 22.9], [22.2, 23.3], [21.4, 22.9]], 0.4));
+  else if (mood === 'dizzy' || mood === 'dead') out.push(...ln([[24.2, 21], [23.6, 22.6], [22.2, 22.8]], 0.4), F(ov(22.2, 24.2, 0.75, 1.4, 25, PTONGUE)));
+  else out.push(...ln([[24.2, 21], [23.7, 22.5], [22.8, 23], [21.8, 22.6]], 0.4), F(E(22.9, 23.7, 0.75, 0.95, PTONGUE)));
+  return out;
+};
+const pupFace = (mood) => faceSprite(`wolfpup|face|${mood}`, 30, 32, () => pupFaceShapes(mood));
 
 // The body's middle sits 14.8 above the paws; the hips 2 below it.
 const BODY_Y = 14.8;
@@ -189,7 +238,7 @@ export function wolfPupStill(pose, f, mood) {
   const hip = (k) => [HIPS[k][0], by + HIPS[k][1]];
   const sh = [
     ...put(tailP(), [13, 13], -11, by - 4), ...put(legP(true)(), [5, 1], ...hip('hf')), ...put(legP(true)(), [5, 1], ...hip('ff')), ...put(bodyP(), [14, 10], 0, by),
-    ...put(legP(false)(), [5, 1], ...hip('hn')), ...put(legP(false)(), [5, 1], ...hip('fn')), ...put(headP(), [6, 26], 11, by - 8), ...put(faceShapes(fm, FACE), [6, 26], 11, by - 8),
+    ...put(legP(false)(), [5, 1], ...hip('hn')), ...put(legP(false)(), [5, 1], ...hip('fn')), ...put(headP(), [6, 26], 11, by - 8), ...put(pupFaceShapes(fm), [6, 26], 11, by - 8),
     ...put(ruffP(), [8, 8], 11, by - 4),
   ];
   const ox = 24;

@@ -13,7 +13,7 @@
 
 import { E, T, R, F } from './kit.js';
 import { makeRig, stateBlend, clamp, TAU } from './rig.js';
-import { D2R, taper, arcP, pairOf, faceSprite, hold, stepPhase, put, shift, MOODS, moodOf, faceShapes, INK } from './rigkit.js';
+import { D2R, taper, arcP, pairOf, faceSprite, hold, stepPhase, put, shift, MOODS, moodOf, INK } from './rigkit.js';
 
 const K = 0.82;
 const TFUR = '#d9a476';
@@ -61,8 +61,47 @@ const PR = {
   TAIL: pl('tail', 14, 14, tailP, 3, 3), FOOT: [false, true].map((f) => pl(`foot${f ? 1 : 0}`, 10, 8, footP(f), 3)), EAR: [false, true].map((f) => pl(`ear${f ? 1 : 0}`, 10, 10, earP(f), 3, 3)),
   LANTERN: pl('lantern', 40, 36, lanternP, 3, 3),
 };
-const FACE = { eyes: [[17.6, 15.6, 1.7, 2.2, -1], [24.6, 15.6, 1.7, 2.2, 1]], mouth: [21.6, 21.4, 1.3], blush: [[14.6, 18.6, 1.2], [27.6, 18.6, 1.2]], iris: '#5a3a2a', lid: 0, lashes: 0 };
-const lanFace = (mood) => faceSprite(`paperlant|face|${mood}`, 40, 36, () => faceShapes(mood, FACE));
+// ---------- Its own face, peeking from the paper: big white startled eyes glancing sideways (lit
+// gold by the candle), a nervous little wobble of a mouth; shy and blushing when pleased; and the
+// paper lantern ghost's long tongue when it jumps out at you. ----------
+const LWHITE = '#fffaf0';
+const LPUP = '#2a1a26';
+const LLINE = '#3a2430';
+const LTONGUE = '#ff8fab';
+const ln = (pts, w, c = LLINE) => [F(taper(pts, w, w * 0.85, c))];
+const LEYES = [[17.6, 15.8, -1], [24.6, 15.8, 1]];
+const lanFaceShapes = (mood) => {
+  const out = [];
+  const [mx, my] = [22, 21.2];
+  const angry = mood === 'angry';
+  for (const [x, y, s] of LEYES) {
+    if (mood === 'blink' || mood === 'sleep' || mood === 'happy' || mood === 'dead') {
+      out.push(...ln(arcP(x, y + (mood === 'happy' ? 0.4 : -0.3), 1.8, 1.1, mood === 'happy' ? 200 : 20, mood === 'happy' ? 340 : 160, 8), 0.7));
+    } else if (mood === 'hurt') out.push(...ln([[x - s * 1.5, y - 1.2], [x + s * 1, y], [x - s * 1.5, y + 1.2]], 0.75), F(E(x + s * 0.4, y + 2.4, 0.45, 0.7, '#9ad8ff')));
+    else {
+      const big = mood === 'shout' ? 1.2 : 1;
+      let white = Array.from({ length: 16 }, (_, i) => [x + Math.cos((i / 16) * Math.PI * 2) * 1.9 * big, y + Math.sin((i / 16) * Math.PI * 2) * 2.2 * big]);
+      if (angry) {
+        const cut = (px) => y - 1.4 + (px - x) * -s * 0.4;
+        white = white.map(([px, py]) => [px, Math.max(py, cut(px))]);
+      }
+      out.push(F(T(white, LWHITE)));
+      // Where it looks: off to the side (peeking), crossed in a daze, a pinprick when it shouts.
+      const [px, py, pr] = mood === 'dizzy' ? [x + s * 0.7, y + (s < 0 ? -0.8 : 0.8), 0.7] : mood === 'shout' ? [x, y, 0.55] : angry ? [x, y + 0.5, 0.75] : [x + 0.75, y + 0.2, 1];
+      out.push(F(E(px, py, pr, pr * 1.25, LPUP)));
+      if (mood !== 'shout') out.push(F(E(px + 0.35 * pr, py - 0.45 * pr, 0.32 * pr, 0.32 * pr, '#ffd06a')));
+    }
+  }
+  // Shy: a big rosy blush; a bit pink when startled too.
+  if (mood === 'happy') out.push(F(E(14.6, 18.8, 1.7, 0.9, '#ff9fb4')), F(E(28.4, 18.8, 1.7, 0.9, '#ff9fb4')));
+  if (mood === 'happy') out.push(...ln([[mx - 1.1, my - 0.2], [mx - 0.3, my + 0.6], [mx + 0.3, my + 0.6], [mx + 1.1, my - 0.2]], 0.45));
+  else if (mood === 'shout') out.push(F(E(mx, my + 0.8, 1.6, 1.6, '#7a3040')), F(T([[mx - 1, my + 1.2], [mx + 1, my + 1.2], [mx + 1.3, my + 4.6], [mx + 0.4, my + 6], [mx - 0.6, my + 5.4], [mx - 1.2, my + 3.6]], LTONGUE)), ...ln([[mx, my + 2], [mx + 0.1, my + 4.4]], 0.3, '#e0607a'));
+  else if (angry) out.push(...ln([[mx - 1.5, my + 0.2], [mx + 1.5, my + 0.2]], 0.45), F(T([[mx - 1.1, my + 0.3], [mx - 0.4, my + 0.3], [mx - 0.75, my + 1.2]], '#fffaf2')), F(T([[mx + 0.4, my + 0.3], [mx + 1.1, my + 0.3], [mx + 0.75, my + 1.2]], '#fffaf2')));
+  else if (mood === 'dizzy' || mood === 'dead') out.push(...ln([[mx - 1, my], [mx + 1, my + 0.2]], 0.45), F(T([[mx - 0.6, my + 0.1], [mx + 0.6, my + 0.1], [mx + 0.7, my + 2.4], [mx, my + 3], [mx - 0.7, my + 2.4]], LTONGUE)));
+  else out.push(...ln([[mx - 1.3, my + 0.2], [mx - 0.6, my - 0.2], [mx, my + 0.2], [mx + 0.6, my - 0.2], [mx + 1.3, my + 0.2]], 0.45));
+  return out;
+};
+const lanFace = (mood) => faceSprite(`paperlant|face|${mood}`, 40, 36, () => lanFaceShapes(mood));
 
 // The lantern's middle sits 20.2 above the feet.
 const BODY_Y = 20.2;
@@ -184,7 +223,7 @@ export function paperLanternStill(pose, f, mood) {
   const by = -BODY_Y;
   const sh = [
     ...put(tailP(), [12, 12], -14, by + 10, -10), ...put(earP(true)(), [5, 7], -8, by - 16), ...put(earP(false)(), [5, 7], 8, by - 16),
-    ...put(footP(true)(), [5, 1], -5, by + 15.8), ...put(footP(false)(), [5, 1], 5, by + 15.8), ...put(lanternP(), [20, 18], 0, by), ...put(faceShapes(fm, FACE), [20, 18], 0, by),
+    ...put(footP(true)(), [5, 1], -5, by + 15.8), ...put(footP(false)(), [5, 1], 5, by + 15.8), ...put(lanternP(), [20, 18], 0, by), ...put(lanFaceShapes(fm), [20, 18], 0, by),
   ];
   const ox = 22;
   const oy = 46;

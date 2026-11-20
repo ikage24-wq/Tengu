@@ -13,7 +13,7 @@
 
 import { E, T, F } from './kit.js';
 import { makeRig, stateBlend, clamp, TAU } from './rig.js';
-import { D2R, taper, pairOf, faceSprite, hold, stepPhase, pawStep, put, shift, MOODS, moodOf, faceShapes, INK } from './rigkit.js';
+import { D2R, taper, pairOf, faceSprite, hold, stepPhase, pawStep, put, shift, MOODS, moodOf, INK, arcP } from './rigkit.js';
 
 const K = 0.72;
 const TFUR = '#d9a476';
@@ -73,8 +73,42 @@ const PR = {
   BODY: tp('body', 26, 18, bodyP, 3, 3), ARM: tp('arm', 12, 8, armP, 3, 3), BLADE: [false, true].map((l) => tp(`blade${l ? 1 : 0}`, 16, 8, bladeP(l), 3, 3)),
   HEAD: tp('head', 26, 24, headP, 3, 3), HAT: tp('hat', 38, 16, hatP, 3, 3), LEAF: tp('leaf', 12, 10, bandLeafP, 3, 3),
 };
-const FACE = { eyes: [[9.6, 14.2, 1.8, 2.4, -1], [17.2, 14.2, 1.8, 2.4, 1]], mouth: [14, 19.4, 1.6], blush: [[6.6, 17.4, 1.4], [20.4, 17.4, 1.4]], iris: '#5a3a2a', lid: 0, lashes: 0 };
-const pickFace = (mood) => faceSprite(`teapick|face|${mood}`, 26, 24, () => faceShapes(mood, FACE));
+// ---------- Its own face: a calm, contented worker. Small round shiny bead eyes sitting
+// in the dark mask; a little tanuki "w" mouth under the nose. Upset, its marks are drawn in cream so
+// they show on the mask. ----------
+const TBEAD = '#2a1a20';
+const TLINE = '#4a2e28';
+const ln = (pts, w, c = TLINE) => [F(taper(pts, w, w * 0.85, c))];
+const TEYES = [[9.4, 14.4, -1], [17, 14.4, 1]];
+const pickFaceShapes = (mood) => {
+  const out = [];
+  const [mx, my] = [14, 18.4];
+  const angry = mood === 'angry' || mood === 'shout';
+  for (const [x, y, s] of TEYES) {
+    if (mood === 'blink' || mood === 'sleep') out.push(...ln([[x - 1.5, y + 0.3], [x, y + 0.6], [x + 1.5, y + 0.3]], 0.7, TBEAD));
+    else if (mood === 'happy') out.push(...ln(arcP(x, y + 0.9, 1.6, 1.5, 200, 340, 8), 0.8, TBEAD));
+    else if (mood === 'hurt') out.push(...ln([[x - s * 1.5, y - 1.1], [x + s * 0.9, y], [x - s * 1.5, y + 1.1]], 0.7, TCREAM), ...(s > 0 ? [F(E(x + 3.4, y - 2.4, 0.7, 1, '#9ad8ff'))] : []));
+    else if (mood === 'dizzy') {
+      const pts = [];
+      for (let i = 0; i <= 12; i++) pts.push([x + Math.cos(i * 0.85) * (0.15 + i * 0.12), y + Math.sin(i * 0.85) * (0.15 + i * 0.12)]);
+      out.push(...ln(pts, 0.45, TCREAM));
+    } else if (mood === 'dead') out.push(...ln(arcP(x, y - 0.4, 1.4, 0.9, 20, 160, 6), 0.6, TCREAM));
+    else {
+      // The bead, shiny; a slanted cream brow when cross.
+      let bead = Array.from({ length: 14 }, (_, i) => [x + Math.cos((i / 14) * Math.PI * 2) * 1.35, y + 0.2 + Math.sin((i / 14) * Math.PI * 2) * 1.4]);
+      out.push(F(T(bead, TBEAD)), F(E(x + 0.45, y - 0.35, 0.48, 0.48, '#ffffff')), F(E(x - 0.45, y + 0.75, 0.2, 0.2, '#ffffff')));
+      if (angry) out.push(...ln([[x - s * 1.4, y - 1.6], [x + s * 1.8, y - 2.7]], 0.7, TCREAM));
+    }
+  }
+  if (mood === 'shout') out.push(F(T([[mx - 1.6, my - 0.2], [mx + 1.6, my - 0.2], [mx, my + 2.6]], '#7a3040')), F(E(mx, my + 1.4, 0.7, 0.5, '#ff8fab')));
+  else if (mood === 'angry') out.push(...ln([[mx - 1.4, my + 0.7], [mx, my - 0.1], [mx + 1.4, my + 0.7]], 0.45));
+  else if (mood === 'happy') out.push(F(T([...arcP(mx - 0.8, my, 0.8, 0.9, 0, 180, 6), ...arcP(mx + 0.8, my, 0.8, 0.9, 0, 180, 6)], '#7a3040')));
+  else if (mood === 'hurt' || mood === 'dizzy') out.push(...ln([[mx - 1.3, my + 0.3], [mx - 0.6, my - 0.1], [mx, my + 0.3], [mx + 0.6, my - 0.1], [mx + 1.3, my + 0.3]], 0.4));
+  else if (mood === 'dead') out.push(F(E(mx, my + 0.4, 0.55, 0.6, '#7a3040')));
+  else out.push(...ln(arcP(mx - 0.75, my, 0.75, 0.7, 0, 180, 6), 0.42), ...ln(arcP(mx + 0.75, my, 0.75, 0.7, 0, 180, 6), 0.42));
+  return out;
+};
+const pickFace = (mood) => faceSprite(`teapick|face|${mood}`, 26, 24, () => pickFaceShapes(mood));
 
 // The body's middle sits 10.2 above the feet; the head 20 above that.
 const BODY_Y = 10.2;
@@ -223,7 +257,7 @@ export function teaPickerStill(pose, f, mood) {
   const hand = [SH[0] + Math.cos(ang * D2R) * 8.6, by + SH[1] + Math.sin(ang * D2R) * 8.6];
   const sh = [
     ...put(tailP(), [12, 12], -11, by, -6), ...put(basketP(), [12, 12], -9, by - 13), ...put(footP(true)(), [5, 1], -4, by + 4.8), ...put(bodyP(), [13, 9], 0, by), ...put(footP(false)(), [5, 1], 4.4, by + 4.8),
-    ...put(headP(), [13, 14], head[0], head[1]), ...put(faceShapes(fm, FACE), [13, 14], head[0], head[1]), ...put(hatP(), [19, 12], head[0], head[1] - 5.4), ...put(bandLeafP(), [2, 6], head[0] + 4, head[1] - 7.4),
+    ...put(headP(), [13, 14], head[0], head[1]), ...put(pickFaceShapes(fm), [13, 14], head[0], head[1]), ...put(hatP(), [19, 12], head[0], head[1] - 5.4), ...put(bandLeafP(), [2, 6], head[0] + 4, head[1] - 7.4),
     ...put(bladeP(true)(), [4, 4], hand[0], hand[1], ang + 24), ...put(armP(), [2, 4], SH[0], by + SH[1], ang), ...put(bladeP(false)(), [4, 4], hand[0], hand[1], ang + 16),
   ];
   const ox = 22;
