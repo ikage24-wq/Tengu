@@ -3,6 +3,9 @@
 // Carnival Gates: a carousel in the middle, pastel horses bobbing on gold poles, its striped canopy
 // flat on top (a ledge), and a clockwork ticket kiosk, a wind-up key turning in its side, its roof
 // the step up to the canopy (the striped CARNIVAL arch at the door stays: render/fairground.js).
+// Observatory Steps: the Great Telescope on a carved pedestal (its railed deck a ledge), its tube
+// sweeping the sky; a brass orrery, planets circling a glowing sun; Professor Lumen's stargazing
+// tent with a crate desk of charts (the star arch at the door stays: render/starlight.js).
 // Tidepool Pier: Marina's dive shop on the quay (its roof deck a ledge, a stack of crates to climb
 // to it) and, at the pier's end, a timber crane with a big brass diving bell resting on the boards,
 // its hatch open: the way down to the Sunken Aquarium Palace (the portal's swirl turns in it).
@@ -300,10 +303,140 @@ function drawKiosk(ctx, x, y, time) {
   place(ctx, keyArt(Math.floor(time * 6) % 8), x + 56, y - 40);
 }
 
+// ---------- The Great Telescope: a round stone pedestal carved with stars, a railed deck on top (a
+// ledge GS_DECK up), a fork mount and a long brass tube aimed at the sky, sweeping slowly (drawn
+// live). Bottom middle at the pedestal. ----------
+const GS_W = 200;
+const GS_H = 130;
+export const GS_DECK = 80;
+export const GS_SPAN = [-74, 74];
+const STAR = { stone: '#8a90c8', stoneLit: '#b0b8e8', stoneSh: '#666ca8', stoneDeep: '#4e5490', gold: '#ffd36b', goldSh: '#d8a840', goldLit: '#fff0b8', navy: '#2a2a5a', glass: '#bfe6ff', tent: '#3a3a7a', tentSh: '#2a2a5a', lamp: '#ffd890' };
+const star5 = (x, y, r, c) => T(Array.from({ length: 10 }, (_, i) => {
+  const a = ((-90 + i * 36) * Math.PI) / 180;
+  const rr = i % 2 ? r * 0.45 : r;
+  return [x + Math.cos(a) * rr, y + Math.sin(a) * rr];
+}), c);
+function scopeBase() {
+  return art('scopebase', GS_W, GS_H, () => {
+    const out = [];
+    const cx = GS_W / 2;
+    const H = GS_H;
+    const dk = H - GS_DECK;
+    // The pedestal: a stone drum, carved stars, a little arched niche glowing.
+    out.push(T([[cx - 64, H], [cx - 60, dk + 12], [cx + 60, dk + 12], [cx + 64, H]], STAR.stone));
+    out.push(F(T([[cx + 30, dk + 12], [cx + 60, dk + 12], [cx + 64, H], [cx + 34, H]], STAR.stoneSh)), F(T([[cx - 60, dk + 12], [cx - 46, dk + 12], [cx - 50, H], [cx - 64, H]], STAR.stoneLit)));
+    for (const y of [dk + 34, dk + 58]) out.push(F(R(cx - 62, y, cx + 62, y + 2, STAR.stoneDeep)));
+    out.push(T([[cx - 12, H], [cx - 12, H - 30], ...arc(cx, H - 30, 12, 12, 180, 360, 8), [cx + 12, H - 30], [cx + 12, H]], STAR.navy), F(E(cx, H - 20, 6, 9, STAR.lamp)));
+    for (const [sx, sy, r] of [[-38, dk + 24, 5], [36, dk + 46, 4], [-30, dk + 52, 3.4], [44, dk + 22, 3]]) out.push(F(star5(cx + sx, sy, r, STAR.gold)));
+    // The deck: a stone slab with a gold rail.
+    const [d0, d1] = GS_SPAN;
+    out.push(R(cx + d0 - 4, dk, cx + d1 + 4, dk + 12, STAR.stoneLit), F(R(cx + d0 - 4, dk + 9, cx + d1 + 4, dk + 12, STAR.stoneSh)));
+    for (const px of [d0, d1 - 3]) out.push(R(cx + px, dk - 20, cx + px + 3, dk, STAR.gold));
+    out.push(F(R(cx + d0, dk - 20, cx + d1, dk - 18, STAR.gold)));
+    // The fork mount on the deck.
+    out.push(T([[cx - 16, dk], [cx - 10, dk - 30], [cx + 10, dk - 30], [cx + 16, dk]], STAR.navy), F(R(cx - 18, dk - 34, cx + 18, dk - 28, STAR.goldSh)));
+    return out;
+  });
+}
+function scopeTube() {
+  return art('scopetube', 220, 40, () => {
+    const out = [];
+    out.push(T([[0, 12], [200, 4], [200, 30], [0, 26]], STAR.gold));
+    out.push(F(T([[0, 12], [200, 4], [200, 10], [0, 16]], STAR.goldLit)), F(T([[0, 23], [200, 26], [200, 30], [0, 26]], STAR.goldSh)));
+    for (const x of [30, 90, 150]) out.push(R(x, 6 + (x / 200) * -2, x + 8, 30 - (x / 200) * -2, STAR.goldSh));
+    out.push(R(196, 0, 214, 34, STAR.navy), F(E(210, 17, 4, 13, STAR.glass)), F(E(209, 11, 1.4, 4, '#ffffff')));
+    out.push(R(-12, 14, 2, 24, STAR.navy));
+    return out;
+  });
+}
+function drawScope(ctx, x, y, time) {
+  place(ctx, scopeBase(), x, y);
+  // The tube on its pivot over the fork, sweeping slowly across the sky.
+  const px = x;
+  const py = y - GS_DECK - 32;
+  const a = -0.62 + Math.sin(time * 0.15) * 0.12;
+  ctx.save();
+  ctx.translate(px, py);
+  ctx.rotate(a);
+  const s = scopeTube();
+  blit(ctx, s, snap(-40 - 30), snap(-M - 17));
+  ctx.restore();
+}
+
+// ---------- The orrery: a brass stand with a glowing sun on top and three planets on arms
+// circling it at their own speeds (drawn live). Bottom middle at its foot. ----------
+function orreryStand() {
+  return art('orrery', 80, 120, () => [
+    T([[22, 120], [30, 108], [50, 108], [58, 120]], STAR.navy), R(37, 40, 43, 108, STAR.goldSh), F(R(37, 40, 39, 108, STAR.goldLit)),
+    E(40, 40, 28, 6, STAR.goldSh), F(E(40, 39, 24, 4, STAR.navy)),
+  ]);
+}
+function drawOrrery(ctx, x, y, time) {
+  place(ctx, orreryStand(), x, y);
+  const cy = y - 96;
+  const sun = ctx.createRadialGradient(x, cy, 2, x, cy, 30);
+  sun.addColorStop(0, hexA('#fff4c0', 0.9));
+  sun.addColorStop(1, hexA('#ffd36b', 0));
+  ctx.fillStyle = sun;
+  ctx.fillRect(x - 30, cy - 30, 60, 60);
+  for (const [r, sp, c, s] of [[22, 1.1, '#9fd8ff', 3.4], [36, 0.7, '#ff9ab8', 4.6], [50, 0.45, '#c8a8ff', 4]]) {
+    const a = time * sp;
+    const px = x + Math.cos(a) * r;
+    const py = cy + Math.sin(a) * r * 0.32;
+    ctx.strokeStyle = hexA('#d8a840', 0.8);
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.moveTo(x, cy);
+    ctx.lineTo(px, py);
+    ctx.stroke();
+    ctx.fillStyle = c;
+    ctx.beginPath();
+    ctx.arc(px, py, s, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.fillStyle = '#fff4c0';
+  ctx.beginPath();
+  ctx.arc(x, cy, 7, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+// ---------- Professor Lumen's stargazing camp: a navy tent spangled with stars, its flap tied open
+// on lamplight, a crate desk with a star chart, books and a teapot. Bottom middle at the tent. ----
+function tentArt() {
+  return art('startent', 200, 120, () => {
+    const out = [];
+    const cx = 80;
+    const H = 120;
+    out.push(T([[cx - 70, H], [cx, H - 100], [cx + 70, H]], STAR.tent), F(T([[cx, H - 100], [cx + 70, H], [cx + 36, H]], STAR.tentSh)));
+    out.push(T([[cx - 22, H], [cx, H - 70], [cx + 22, H]], '#5a4a6e'), F(T([[cx - 14, H], [cx, H - 56], [cx + 14, H]], STAR.lamp)));
+    out.push(T([[cx, H - 70], [cx - 30, H], [cx - 22, H]], '#4a4a8a'));
+    for (const [sx, sy, r] of [[-40, 60, 3], [30, 44, 2.6], [-14, 34, 2.4], [44, 80, 3], [-52, 90, 2.4], [16, 70, 2]]) out.push(F(star5(cx + sx, sy, r, STAR.gold)));
+    out.push(F(band([[cx, H - 100], [cx, H - 112]], () => 1.4, STAR.goldSh)), T([[cx + 1, H - 112], [cx + 14, H - 108], [cx + 1, H - 104]], '#ff9ab8'));
+    // The crate desk: a star chart, books, a teapot.
+    const dx = 150;
+    out.push(R(dx - 26, H - 30, dx + 26, H, '#c89a74'), F(R(dx - 26, H - 30, dx + 26, H - 27, '#e4b892')), F(R(dx + 18, H - 30, dx + 26, H, '#a07656')));
+    out.push(T([[dx - 22, H - 32], [dx + 6, H - 34], [dx + 8, H - 30], [dx - 20, H - 28]], '#f4ecd8'), F(star5(dx - 8, H - 31.6, 2.4, STAR.navy)));
+    out.push(R(dx + 8, H - 40, dx + 22, H - 30, '#9a74c8'), R(dx + 10, H - 46, dx + 22, H - 40, '#7fd8ff'));
+    out.push(E(dx - 16, H - 38, 6, 5, '#ff9ab8'), F(band([[dx - 22, H - 40], [dx - 26, H - 44]], () => 1.4, '#ff9ab8')));
+    return out;
+  });
+}
+function drawTent(ctx, x, y, time) {
+  place(ctx, tentArt(), x + 20, y);
+  const g = ctx.createRadialGradient(x, y - 24, 2, x, y - 24, 46);
+  g.addColorStop(0, hexA('#ffd890', 0.3 + 0.05 * Math.sin(time * 3)));
+  g.addColorStop(1, hexA('#ffd890', 0));
+  ctx.fillStyle = g;
+  ctx.fillRect(x - 46, y - 70, 92, 80);
+}
+
 export const GATE_KINDS = {
   diveshop: { w: DS_W + M * 2, h: DS_H + M, draw: (ctx, x, y) => place(ctx, shopArt(), x, y) },
   quaycrates: { w: CS_W + M * 2, h: CS_H + M, draw: (ctx, x, y) => place(ctx, cratesArt(), x, y) },
   bellcrane: { w: BC_W + M * 2, h: BC_H + M, draw: drawBell },
   carousel: { w: CR_W + M * 2, h: CR_H + M, draw: drawCarousel },
   windkiosk: { w: KS_W + M * 2, h: KS_H + M, draw: drawKiosk },
+  greatscope: { w: 420, h: 340, draw: drawScope },
+  orrery: { w: 160, h: 200, draw: drawOrrery },
+  startent: { w: 280, h: 200, draw: drawTent },
 };

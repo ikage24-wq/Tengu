@@ -2061,14 +2061,18 @@ const STAR_IN = { skyline: 'starhall', material: 'starstone', critters: [], drif
 
 Object.assign(MAPS, {
   // The Observatory Steps: the top of Moonlit Ridge, where a tower that only appears on clear nights
-  // stands against the stars. Professor Lumen has the key.
+  // stands against the stars. Professor Lumen has the key. (Its makeover 2026-11-20,
+  // render/gateart.js: the Great Telescope on its carved pedestal, its deck to stand on and its tube
+  // sweeping the sky; a brass orrery turning; the professor's stargazing tent and crate desk.)
   observatory_steps: {
     id: 'observatory_steps', name: 'Observatory Steps', theme: 'observatory', town: 'crag', world: { x: 232, y: 92 }, music: 'observatory',
     width: 1200, height: 420, groundY: G,
     look: { sky: ['#0e1440', '#2a2a7a', '#6a5ab0'], far: '#1e2a5a', mid: '#2e3a72', midTrim: '#fff3a6', ...STAR_OUT, painted: 'stargate', islands: 'starbalcony', props: [], ledgeProp: null },
-    platforms: [{ x: 420, y: G - 80, w: 140 }],
+    // The telescope's deck (drawn with it).
+    platforms: [{ x: 346, y: G - 80, w: 148, bare: true }],
     ropes: [],
-    deco: [['signpost', 160], ['starscope', 660], ['stararch', 1070]],
+    deco: [['signpost', 160], ['greatscope', 420, 0], ['orrery', 640, 0], ['startent', 820, 0], ['stararch', 1070]],
+    lamps: [{ x: 420, y: 350 }, { x: 640, y: 290 }, { x: 800, y: 350 }],
     portals: [
       { id: 'start', x: 640, y: G, hidden: true },
       { id: 'west', x: 50, y: G, to: 'ridge', toPortal: 'observatory' },
