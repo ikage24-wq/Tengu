@@ -18,8 +18,8 @@
 
 import { E, T, F, stroke } from './kit.js';
 import { ramp, crescent } from './meadow.js';
-import { makeRig, stateBlend, clamp, smooth, TAU } from './rig.js';
-import { D2R, fr, arcP, taper, pairOf, faceSprite, hold, window1, stepPhase, pawStep, put, shift, MOODS, moodOf, faceShapes, puff } from './rigkit.js';
+import { makeRig, stateBlend, clamp, TAU } from './rig.js';
+import { D2R, fr, arcP, taper, pairOf, faceSprite, hold, window1, stepPhase, pawStep, put, shift, MOODS, moodOf, puff } from './rigkit.js';
 
 const smoothPts = (pts, n = 3) => {
   let q = pts;
@@ -142,8 +142,94 @@ const sprites = (c) => {
   };
   return SPR[c];
 };
-const faceCfg = (c) => ({ eyes: [[32.6, 29.4, 3.4, 4.2, 1], [23.2, 29.8, 2.9, 3.8, -1]], mouth: [28.6, 36.2, 2.8], blush: [[34.4, 33.6, 2.3], [21.4, 33.8, 1.9]], iris: TWIN[c].iris, k: 1.7, lid: 0, lashes: 1 });
-const faceOf = (c, mood) => faceSprite(`mh${c}|face|${mood}`, 52, 50, () => faceShapes(mood, faceCfg(c)));
+// Their own faces, twins but not the same: Murri (green) calm and half-lidded with a deadpan mouth, one
+// snaggle tooth and freckles; Ena (orange) wide-eyed with a sparkle in each eye, a lash flick, a toothy
+// grin and round pink cheeks. Box 52 x 50.
+const oLn = (pts, w, c = INK) => {
+  const l = [];
+  const r = [];
+  pts.forEach(([x, y], i) => {
+    const [ax, ay] = pts[Math.max(0, i - 1)];
+    const [bx, by] = pts[Math.min(pts.length - 1, i + 1)];
+    const d = Math.hypot(bx - ax, by - ay) || 1;
+    const nx = ((-(by - ay) / d) * w) / 2;
+    const ny = (((bx - ax) / d) * w) / 2;
+    l.push([x + nx, y + ny]);
+    r.push([x - nx, y - ny]);
+  });
+  return [F(T([...l, ...r.reverse()], c))];
+};
+const oArc = (cx, cy, rx, ry, a0, a1, n = 8) => Array.from({ length: n + 1 }, (_, i) => {
+  const a = ((a0 + ((a1 - a0) * i) / n) * Math.PI) / 180;
+  return [cx + Math.cos(a) * rx, cy + Math.sin(a) * ry];
+});
+const oRing = (cx, cy, rx, ry, rot = 0, n = 16) => Array.from({ length: n }, (_, i) => {
+  const a = (i / n) * Math.PI * 2;
+  const x = Math.cos(a) * rx;
+  const y = Math.sin(a) * ry;
+  return [cx + x * Math.cos(rot) - y * Math.sin(rot), cy + x * Math.sin(rot) + y * Math.cos(rot)];
+});
+const oCut = (pts, lid) => pts.map(([px, py]) => [px, Math.max(py, lid(px))]);
+const oSquint = (x, y, s, r, w, c = INK) => oLn([[x + s * r, y - r], [x - s * r * 0.8, y], [x + s * r, y + r]], w, c);
+const oSpiral = (x, y, r, w, c, s = 1) => oLn(Array.from({ length: 15 }, (_, i) => [x + Math.cos(i * 0.8 * s) * r * (0.12 + i / 15), y + Math.sin(i * 0.8 * s) * r * (0.12 + i / 15)]), w, c);
+const oDrop = (x, y, r, c = '#9ad8ff') => [F(E(x, y, r * 0.7, r, c)), F(E(x - r * 0.2, y - r * 0.3, r * 0.25, r * 0.25, '#ffffff'))];
+const oStar = (x, y, r, c, n = 5, k = 0.45) => F(T(Array.from({ length: n * 2 }, (_, i) => {
+  const a = (i * Math.PI) / n - Math.PI / 2;
+  const rr = i % 2 ? r * k : r;
+  return [x + Math.cos(a) * rr, y + Math.sin(a) * rr];
+}), c));
+const oX = (x, y, w, h, wd, c = INK) => [...oLn([[x - w * 0.7, y - h * 0.55], [x + w * 0.7, y + h * 0.55]], wd, c), ...oLn([[x - w * 0.7, y + h * 0.55], [x + w * 0.7, y - h * 0.55]], wd, c)];
+const oWave = (mx, my, hw, wd, c = INK) => oLn(Array.from({ length: 5 }, (_, i) => [mx - hw + (i * hw) / 2, my + (i % 2 ? -0.3 : 0.3)]), wd, c);
+const MH_EYES = [[32.6, 29.4, 1, 3.4, 4.2], [23.2, 29.8, -1, 2.9, 3.8]];
+const MH_LOW = { murri: '#6ac890', ena: '#ffb84a' };
+const MH_MOUTH = '#7a2a3a';
+const mhSparkle = (x, y, r) => F(T([[x, y - r], [x + r * 0.28, y - r * 0.28], [x + r, y], [x + r * 0.28, y + r * 0.28], [x, y + r], [x - r * 0.28, y + r * 0.28], [x - r, y], [x - r * 0.28, y - r * 0.28]], '#ffffff'));
+const mhTooth = (x, y) => F(T([[x - 0.5, y], [x + 0.5, y], [x, y + 0.9]], '#ffffff'));
+const mhOwnFace = (c, mood) => {
+  const calm = c === 'murri';
+  const tw = TWIN[c];
+  const out = [];
+  for (const [x, y, s, w, h] of MH_EYES) {
+    if (mood === 'angry' || mood === 'hurt' || mood === 'shout') {
+      const inner = mood === 'angry' ? 1.1 : mood === 'hurt' ? -1 : -0.4;
+      out.push(...oLn([[x - s * w * 0.9, y - h * 1.28 + inner], [x + s * w * 0.05, y - h * 1.44 + inner * 0.3], [x + s * w * 0.95, y - h * 1.36 - inner * 0.3]], 0.6, tw.hair.sh));
+    }
+    if (mood === 'blink' || mood === 'sleep') out.push(...oLn(oArc(x, y + 0.4, w, h * 0.35, 15, 165, 8), 0.95));
+    else if (mood === 'happy') out.push(...oLn(oArc(x, y + h * 0.35, w, h * 0.7, 200, 340, 8), 0.95));
+    else if (mood === 'hurt') out.push(...oSquint(x, y, s, w * 0.8, 0.9));
+    else if (mood === 'dizzy') out.push(...oSpiral(x, y, w, 0.75, tw.iris, s));
+    else if (mood === 'dead') out.push(...oX(x, y, w, h, 0.85));
+    else {
+      // Murri: calm and half-lidded; Ena: wide open. Both glare down when cross.
+      const lid = mood === 'angry' ? (px) => y - h * 0.25 + (px - x) * -s * 0.55 : mood === 'shout' || !calm ? () => -99 : () => y - h * 0.42;
+      const small = mood === 'shout';
+      out.push(F(T(oCut(oRing(x, y, w, h), lid), INK)), F(T(oCut(oRing(x, y + h * 0.08, w * 0.82, h * 0.84), lid), tw.iris)), F(T(oCut(oRing(x, y + h * 0.45, w * 0.62, h * 0.4), lid), MH_LOW[c])));
+      out.push(F(T(oCut(oRing(x, y + h * 0.1, w * (small ? 0.25 : 0.4), h * (small ? 0.27 : 0.42)), lid), INK)));
+      if (calm || small) out.push(F(T(oCut(oRing(x + w * 0.3, y - h * 0.12, w * 0.24, w * 0.24, 0, 8), lid), '#ffffff')));
+      else out.push(mhSparkle(x + w * 0.3, y - h * 0.3, w * 0.42));
+      out.push(F(E(x - w * 0.35, y + h * 0.5, w * 0.1, w * 0.1, '#ffffff')));
+      out.push(...oLn(oCut(oArc(x, y, w * 1.02, h * 1.02, 190, 350, 10), (px) => lid(px) - 0.25), 1));
+      if (!calm) out.push(...oLn([[x + s * w * 0.85, y - h * 0.55], [x + s * w * 1.35, y - h * 0.95]], 0.6));
+    }
+  }
+  if (mood !== 'dead') {
+    if (calm) for (const [bx, by, k] of [[34.6, 33.4, 1], [21.4, 33.6, 0.85]]) for (const [dx, dy] of [[-0.9, 0], [0.4, -0.5], [0.8, 0.5]]) out.push(F(E(bx + dx * k, by + dy * k, 0.38 * k, 0.38 * k, '#d89070')));
+    else for (const [bx, by, r] of [[34.4, 33.6, 2.3], [21.4, 33.8, 1.9]]) out.push(F(E(bx, by, r, r * 0.6, '#ff9ab0')));
+  }
+  const [mx, my] = [28.6, 36.2];
+  if (mood === 'shout') out.push(F(E(mx, my + 0.6, 1.9, 2.1, MH_MOUTH)), F(E(mx, my + 1.8, 1.1, 0.55, '#ff8fab')), mhTooth(mx - 0.8, my - 1.2), mhTooth(mx + 0.8, my - 1.2));
+  else if (mood === 'happy') out.push(F(T(oArc(mx, my - 0.5, 2.3, 2.2, 0, 180, 8), MH_MOUTH)), F(E(mx, my + 0.9, 1.2, 0.55, '#ff8fab')), mhTooth(mx + 0.9, my - 0.45));
+  else if (mood === 'angry') {
+    if (calm) out.push(...oLn([[mx - 1.6, my + 0.4], [mx, my - 0.1], [mx + 1.6, my + 0.4]], 0.7));
+    else out.push(F(T([[mx - 2, my - 0.4], [mx + 2, my - 0.4], [mx + 1.6, my + 0.8], [mx - 1.6, my + 0.8]], '#ffffff')), ...oLn([[mx - 2, my - 0.4], [mx + 2, my - 0.4], [mx + 1.6, my + 0.8], [mx - 1.6, my + 0.8], [mx - 2, my - 0.4]], 0.5), ...oLn([[mx, my - 0.4], [mx, my + 0.8]], 0.3, '#c8b8b8'));
+  } else if (mood === 'hurt' || mood === 'dizzy') out.push(...oWave(mx, my, 1.7, 0.6));
+  else if (mood === 'dead') out.push(F(E(mx, my + 0.3, 0.8, 0.9, MH_MOUTH)));
+  else if (calm) out.push(...oLn([[mx - 1.4, my + 0.2], [mx + 1.5, my - 0.1]], 0.7), mhTooth(mx + 0.6, my + 0.05));
+  else out.push(F(T(oArc(mx, my - 0.3, 2, 1.7, 0, 180, 8), MH_MOUTH)), F(E(mx, my + 0.8, 1, 0.45, '#ff8fab')), mhTooth(mx - 0.75, my - 0.25), mhTooth(mx + 0.75, my - 0.25));
+  if (mood === 'hurt') out.push(...oDrop(35.4, 31.6, 0.95));
+  return out;
+};
+const faceOf = (c, mood) => faceSprite(`mh${c}|face|${mood}`, 52, 50, () => mhOwnFace(c, mood));
 
 // ---------- The skeleton ----------
 const BODY_Y = 20;
@@ -381,7 +467,7 @@ export function morayStill(c) {
         ...put(upP(c, true)(), [2, 4], SHF[0], by + SHF[1], 100), ...put(foreP(c, true)(), [2, 4.5], SHF[0] + Math.cos(100 * D2R) * UA, by + SHF[1] + Math.sin(100 * D2R) * UA, 92),
         ...leg('F', 1, true), ...leg('N', 0, false),
         ...put(torsoP(c)(), [15, 24], 0, by), ...put(hoodP(c)(), [24, 46], nx, ny),
-        ...put(faceShapes(MOODS.has(mood) ? mood : 'idle', faceCfg(c)), [24, 46], nx, ny),
+        ...put(mhOwnFace(c, MOODS.has(mood) ? mood : 'idle'), [24, 46], nx, ny),
         ...put(jawP(c)(), [3, 4], nx - 12, ny - 4, 4),
         ...put(upP(c, false)(), [2, 4], SHN[0], by + SHN[1], 75), ...put(foreP(c, false)(), [2, 4.5], SHN[0] + Math.cos(75 * D2R) * UA, by + SHN[1] + Math.sin(75 * D2R) * UA, 65),
       ], 70, 106),
