@@ -19,8 +19,8 @@
 
 import { E, T, F, R, stroke } from './kit.js';
 import { ramp, crescent, shine } from './meadow.js';
-import { makeRig, stateBlend, clamp, inPart, TAU } from './rig.js';
-import { D2R, fr, ov, arcP, taper, pairOf, faceSprite, hold, stepPhase, pawStep, put, shift, MOODS, moodOf, faceShapes, dot, puff, sparkle } from './rigkit.js';
+import { makeRig, stateBlend, inPart, TAU } from './rig.js';
+import { D2R, INK, fr, arcP, taper, pairOf, faceSprite, hold, stepPhase, pawStep, put, shift, MOODS, moodOf, dot, puff, sparkle } from './rigkit.js';
 
 const sm = (key, w, h, shapes) => faceSprite(key, w, h, shapes);
 const st = (mood) => (MOODS.has(mood) ? mood : 'idle');
@@ -52,8 +52,80 @@ const jbRibbon = (k) => () => (k < 2
 const JB_BELL = jb('bell', 30, 24, jbBell, 2);
 const JB_RIM = jb('rim', 32, 8, jbRim, 2);
 const JB_RIB = [0, 1, 2, 3, 4].map((k) => jb(`rib${k}`, 10, 26, jbRibbon(k), 2));
-const JB_FACE = { eyes: [[12.4, 12.6, 2.1, 2.7, -1], [19.4, 12.4, 1.8, 2.4, 1]], mouth: [16, 16.8, 1.6], blush: [[9.8, 15.6, 1.5], [22, 15.4, 1.2]], iris: '#b04a8a', lid: 0, lashes: 1 };
-const jbFace = (mood) => sm(`jb|face|${mood}`, 30, 22, () => faceShapes(mood, JB_FACE));
+const oLn = (pts, w, c = INK) => {
+  const l = [];
+  const r = [];
+  pts.forEach(([x, y], i) => {
+    const [ax, ay] = pts[Math.max(0, i - 1)];
+    const [bx, by] = pts[Math.min(pts.length - 1, i + 1)];
+    const d = Math.hypot(bx - ax, by - ay) || 1;
+    const nx = ((-(by - ay) / d) * w) / 2;
+    const ny = (((bx - ax) / d) * w) / 2;
+    l.push([x + nx, y + ny]);
+    r.push([x - nx, y - ny]);
+  });
+  return [F(T([...l, ...r.reverse()], c))];
+};
+const oArc = (cx, cy, rx, ry, a0, a1, n = 8) => Array.from({ length: n + 1 }, (_, i) => {
+  const a = ((a0 + ((a1 - a0) * i) / n) * Math.PI) / 180;
+  return [cx + Math.cos(a) * rx, cy + Math.sin(a) * ry];
+});
+const oRing = (cx, cy, rx, ry, rot = 0, n = 16) => Array.from({ length: n }, (_, i) => {
+  const a = (i / n) * Math.PI * 2;
+  const x = Math.cos(a) * rx;
+  const y = Math.sin(a) * ry;
+  return [cx + x * Math.cos(rot) - y * Math.sin(rot), cy + x * Math.sin(rot) + y * Math.cos(rot)];
+});
+const oCut = (pts, lid) => pts.map(([px, py]) => [px, Math.max(py, lid(px))]);
+const oSquint = (x, y, s, r, w, c = INK) => oLn([[x + s * r, y - r], [x - s * r * 0.8, y], [x + s * r, y + r]], w, c);
+const oSpiral = (x, y, r, w, c, s = 1) => oLn(Array.from({ length: 15 }, (_, i) => [x + Math.cos(i * 0.8 * s) * r * (0.12 + i / 15), y + Math.sin(i * 0.8 * s) * r * (0.12 + i / 15)]), w, c);
+const oDrop = (x, y, r, c = '#9ad8ff') => [F(E(x, y, r * 0.7, r, c)), F(E(x - r * 0.2, y - r * 0.3, r * 0.25, r * 0.25, '#ffffff'))];
+const oStar = (x, y, r, c, n = 5, k = 0.45) => F(T(Array.from({ length: n * 2 }, (_, i) => {
+  const a = (i * Math.PI) / n - Math.PI / 2;
+  const rr = i % 2 ? r * k : r;
+  return [x + Math.cos(a) * rr, y + Math.sin(a) * rr];
+}), c));
+const oX = (x, y, w, h, wd, c = INK) => [...oLn([[x - w * 0.7, y - h * 0.55], [x + w * 0.7, y + h * 0.55]], wd, c), ...oLn([[x - w * 0.7, y + h * 0.55], [x + w * 0.7, y - h * 0.55]], wd, c)];
+const oWave = (mx, my, hw, wd, c = INK) => oLn(Array.from({ length: 5 }, (_, i) => [mx - hw + (i * hw) / 2, my + (i % 2 ? -0.3 : 0.3)]), wd, c);
+const NOLID = () => -99;
+// The closed and knocked-about eyes every face has (each face draws its own open eyes).
+const oShut = (mood, x, y, s, w, h, lw, sc = INK) => {
+  if (mood === 'blink' || mood === 'sleep') return oLn(oArc(x, y + h * 0.1, w, h * 0.35, 15, 165, 8), lw);
+  if (mood === 'happy') return oLn(oArc(x, y + h * 0.35, w, h * 0.7, 200, 340, 8), lw);
+  if (mood === 'hurt') return oSquint(x, y, s, w * 0.8, lw);
+  if (mood === 'dizzy') return oSpiral(x, y, w, lw * 0.8, sc, s);
+  if (mood === 'dead') return oX(x, y, w, h, lw * 0.9);
+  return null;
+};
+// An open eye's ink, two-tone iris and lid line, all cut by its lid.
+const oOpen = (x, y, w, h, lid, top, low) => [F(T(oCut(oRing(x, y, w, h), lid), INK)), F(T(oCut(oRing(x, y + h * 0.08, w * 0.82, h * 0.84), lid), top)), F(T(oCut(oRing(x, y + h * 0.45, w * 0.62, h * 0.4), lid), low))];
+const oLid = (x, y, w, h, lid, lw) => oLn(oCut(oArc(x, y, w * 1.02, h * 1.02, 190, 350, 10), (px) => lid(px) - lw * 0.25), lw);
+const oDot = (x, y, r, c, lid = NOLID) => F(T(oCut(oRing(x, y, r, r, 0, 8), lid), c));
+// Its own face, a jellyfish's: dreamy pink eyes with little bubbles of light rising in them, a row of
+// glowing aqua dots on each cheek and a small round smile. Box 30 x 22.
+const JB_EYES = [[12.4, 12.6, -1, 2.1, 2.7], [19.4, 12.4, 1, 1.8, 2.4]];
+const jbOwnFace = (mood) => {
+  const out = [];
+  for (const [x, y, s, w, h] of JB_EYES) {
+    const shut = oShut(mood, x, y, s, w, h, 0.6, '#b04a8a');
+    if (shut) { out.push(...shut); continue; }
+    const lid = mood === 'angry' ? (px) => y - h * 0.2 + (px - x) * -s * 0.6 : mood === 'shout' ? NOLID : () => y - h * 0.75;
+    out.push(...oOpen(x, y, w, h, lid, '#b04a8a', '#ffa8d8'), oDot(x, y + h * 0.15, w * (mood === 'shout' ? 0.22 : 0.3), '#5a1a4a', lid));
+    for (const [dx, dy, r] of [[0.35, -0.3, 0.2], [0.05, -0.55, 0.12], [0.45, -0.62, 0.08]]) out.push(oDot(x + w * dx, y + h * dy, w * r, '#ffffff', lid));
+    out.push(...oLid(x, y, w, h, lid, 0.6));
+  }
+  if (mood !== 'dead') for (const [bx, by] of [[9.8, 15.8], [22, 15.6]]) for (const dx of [-0.9, 0, 0.9]) out.push(F(E(bx + dx, by + Math.abs(dx) * 0.25, 0.42, 0.42, '#8af0f0')), F(E(bx + dx, by + Math.abs(dx) * 0.25, 0.2, 0.2, '#ffffff')));
+  const [mx, my] = [16, 16.8];
+  if (mood === 'shout') out.push(F(E(mx, my + 0.3, 1, 1.2, '#8a2a5a')));
+  else if (mood === 'happy') out.push(F(T(oArc(mx, my - 0.3, 1.4, 1.3, 0, 180, 8), '#8a2a5a')), F(E(mx, my + 0.5, 0.7, 0.3, '#ff9ac8')));
+  else if (mood === 'angry') out.push(...oLn([[mx - 1, my + 0.4], [mx, my], [mx + 1, my + 0.4]], 0.45));
+  else if (mood === 'hurt' || mood === 'dizzy') out.push(...oWave(mx, my, 1.1, 0.4));
+  else if (mood === 'dead') out.push(F(E(mx, my + 0.2, 0.45, 0.55, '#8a2a5a')));
+  else out.push(...oLn(oArc(mx, my - 0.7, 1.1, 1, 25, 155, 6), 0.45), F(E(mx, my + 0.4, 0.4, 0.3, '#8a2a5a')));
+  if (mood === 'hurt') out.push(...oDrop(22, 12.8, 0.7));
+  return out;
+};
+const jbFace = (mood) => sm(`jb|face|${mood}`, 30, 22, () => jbOwnFace(mood));
 // (Two frilly arms under the middle; three thin tentacles from the rim's back, trailing.)
 const JB_RIBX = [-2, 3, -10, -6, 8];
 const jbPass = (bare) => {
@@ -109,7 +181,7 @@ export const jellyRig = makeRig({
 export function jellyStill(pose, f, mood) {
   const fm = st(mood);
   const by = -21;
-  return { w: 34, h: 46, res: 3, shapes: shift([...JB_RIBX.flatMap((x, k) => put(jbRibbon(k)(), [5, 1], x, by - 2, k < 2 ? 0 : 20)), ...put(jbRim(), [16, 1], 0, by - 1), ...put(jbBell(), [15, 20], 0, by), ...put(faceShapes(fm, JB_FACE), [15, 20], 0, by)], 17, 45) };
+  return { w: 34, h: 46, res: 3, shapes: shift([...JB_RIBX.flatMap((x, k) => put(jbRibbon(k)(), [5, 1], x, by - 2, k < 2 ? 0 : 20)), ...put(jbRim(), [16, 1], 0, by - 1), ...put(jbBell(), [15, 20], 0, by), ...put(jbOwnFace(fm), [15, 20], 0, by)], 17, 45) };
 }
 
 // =====================================================================================
@@ -146,8 +218,31 @@ const SH_HELM = sh('helm', 18, 16, shHelm, 2);
 const SH_FIN = sh('fin', 10, 8, shFin, 2);
 const SH_ARM = sh('arm', 9, 5, shArm, 2);
 const SH_LANCE = sh('lance', 6, 30, shLance, 2);
-const SH_FACE = { eyes: [[17.6, 9, 2.3, 2.9, 1]], mouth: [24, 13, 1], blush: [[14.8, 12.8, 1.5]], iris: '#6a3a1a', lid: 0 };
-const shFace = (mood) => sm(`sh|face|${mood}`, 30, 30, () => faceShapes(mood, SH_FACE));
+// Its own face, a seahorse knight's (side on): a ringed eye (amber ring round a dark middle) under a bold
+// crested brow, and its snout's little round mouth at the tip. Box 30 x 30.
+const shOwnFace = (mood) => {
+  const out = [];
+  const [x, y, s, w, h] = [17.6, 9, 1, 2.3, 2.9];
+  const lift = mood === 'angry' ? 1 : mood === 'shout' || mood === 'happy' ? -0.6 : mood === 'hurt' ? -0.4 : 0;
+  if (mood !== 'dead') out.push(F(T([[x - w * 1, y - h * 0.95 + lift * 0.3], [x + w * 0.2, y - h * 1.45], [x + w * 1.2, y - h * 1.25 + lift], [x + w * 0.4, y - h * 1.08 + lift * 0.6]], '#3a2018')));
+  const shut = oShut(mood, x, y, s, w, h, 0.65, '#c87a1a');
+  if (shut) out.push(...shut);
+  else {
+    const lid = mood === 'angry' ? (px) => y - h * 0.3 + (px - x) * 0.55 : mood === 'shout' ? NOLID : () => y - h * 0.62;
+    out.push(F(T(oCut(oRing(x, y, w, h), lid), INK)), F(T(oCut(oRing(x + 0.2, y + h * 0.05, w * 0.8, h * 0.82), lid), '#e8a030')), F(T(oCut(oRing(x + 0.2, y + h * 0.05, w * 0.55, h * 0.56), lid), '#6a3a1a')), oDot(x + 0.2, y + h * 0.05, w * (mood === 'shout' ? 0.18 : 0.3), INK, lid));
+    out.push(oDot(x + w * 0.42, y - h * 0.18, w * 0.18, '#ffffff', lid), ...oLid(x, y, w, h, lid, 0.65));
+  }
+  if (mood !== 'dead') out.push(F(E(14.8, 12.8, 1.5, 0.7, '#ffa088')));
+  const [mx, my] = [24, 13];
+  if (mood === 'shout') out.push(F(E(mx, my, 0.75, 0.9, '#7a2a1a')));
+  else if (mood === 'hurt' || mood === 'dizzy') out.push(...oWave(mx - 0.2, my, 0.7, 0.3));
+  else if (mood === 'dead') out.push(...oLn([[mx - 0.5, my], [mx + 0.5, my]], 0.32));
+  else if (mood === 'angry') out.push(...oLn([[mx - 0.55, my + 0.2], [mx + 0.5, my - 0.1]], 0.36));
+  else out.push(F(E(mx, my, 0.5, 0.5, '#7a2a1a')), F(E(mx - 0.12, my - 0.12, 0.15, 0.15, '#c86a5a')));
+  if (mood === 'hurt') out.push(...oDrop(20.4, 12.6, 0.7));
+  return out;
+};
+const shFace = (mood) => sm(`sh|face|${mood}`, 30, 30, () => shOwnFace(mood));
 const shPass = (bare) => {
   const i = bare ? 1 : 0;
   const tag = bare ? 'b' : '';
@@ -195,7 +290,7 @@ export const seahorseRig = makeRig({
 });
 export function seahorseStill(pose, f, mood) {
   const by = -20;
-  return { w: 40, h: 54, res: 3, shapes: shift([...put(shTail(), [9, 1], -1, by - 2), ...put(shFin(), [8, 7], -8, by - 16, -10), ...put(shBody(), [13, 29], 0, by), ...put(shHelm(), [9, 14], 2, by - 20), ...put(faceShapes(st(mood), SH_FACE), [13, 29], 0, by), ...put(shLance(), [3, 22], 9, by - 8, 30), ...put(shArm(), [1, 2.4], 4, by - 12, 70)], 20, 52) };
+  return { w: 40, h: 54, res: 3, shapes: shift([...put(shTail(), [9, 1], -1, by - 2), ...put(shFin(), [8, 7], -8, by - 16, -10), ...put(shBody(), [13, 29], 0, by), ...put(shHelm(), [9, 14], 2, by - 20), ...put(shOwnFace(st(mood)), [13, 29], 0, by), ...put(shLance(), [3, 22], 9, by - 8, 30), ...put(shArm(), [1, 2.4], 4, by - 12, 70)], 20, 52) };
 }
 
 // =====================================================================================
@@ -227,8 +322,37 @@ const PO_PEARL = po('pearl', 10, 10, poPearl, 2);
 const PO_ARM = [false, true].map((f) => po(`arm${f ? 1 : 0}`, 9, 5, poArm(f), 2));
 const PO_FOOT = [false, true].map((f) => po(`foot${f ? 1 : 0}`, 6, 3, poFoot(f), 2));
 const PO_TAIL = po('tail', 14, 6, poTail, 2);
-const PO_FACE = { eyes: [[10.8, 8, 1.9, 2.4, -1], [16, 7.8, 1.6, 2.1, 1]], mouth: [15.6, 13, 1.2], blush: [[8.8, 11.2, 1.3], [18.6, 10.8, 1]], iris: '#3a2a1a', lid: 0 };
-const poFace = (mood) => sm(`po|face|${mood}`, 24, 30, () => faceShapes(mood, PO_FACE));
+// Its own face, an otter's: big shiny black eyes with two glints, whisker dots on its muzzle and a
+// cheeky little "w" with two buck teeth under its nose. Box 24 x 30.
+const PO_EYES = [[10.8, 8, -1, 1.9, 2.4], [16, 7.8, 1, 1.6, 2.1]];
+const poOwnFace = (mood) => {
+  const out = [];
+  for (const [x, y, s, w, h] of PO_EYES) {
+    if (mood === 'angry') out.push(...oLn([[x - s * w * 1, y - h * 0.85 + 0.6], [x + s * w * 0.9, y - h * 1.05]], 0.55, '#4a2a1a'));
+    const shut = oShut(mood, x, y, s, w, h, 0.55, '#3a2a1a');
+    if (shut) { out.push(...shut); continue; }
+    const lid = mood === 'angry' ? (px) => y - h * 0.2 + (px - x) * -s * 0.55 : NOLID;
+    const k = mood === 'shout' ? 0.8 : 1;
+    out.push(F(T(oCut(oRing(x, y, w * 0.9 * k, h * 0.85 * k), lid), '#1a1010')), oDot(x + w * 0.28, y - h * 0.25, w * 0.26, '#ffffff', lid), oDot(x - w * 0.28, y + h * 0.3, w * 0.12, '#ffffff', lid));
+  }
+  // (Its nose is part of its head, at the tip of its muzzle.)
+  if (mood !== 'dead') out.push(F(E(8.8, 11.4, 1.3, 0.6, '#ffa0a0')));
+  if (mood !== 'dead') for (const [bx, by] of [[13.4, 11.6]]) for (const [dx, dy] of [[-0.4, 0], [0.35, -0.2], [0.2, 0.4]]) out.push(F(E(bx + dx, by + dy, 0.16, 0.16, '#4a2a1a')));
+  const [mx, my] = [17.4, 12.6];
+  if (mood === 'shout') out.push(F(E(mx, my + 0.3, 0.9, 1.1, '#7a2a2a')), F(T([[mx - 0.5, my - 0.6], [mx + 0.5, my - 0.6], [mx + 0.45, my - 0.05], [mx - 0.45, my - 0.05]], '#ffffff')));
+  else if (mood === 'hurt' || mood === 'dizzy') out.push(...oWave(mx, my, 0.9, 0.32));
+  else if (mood === 'dead') out.push(...oLn([[mx - 0.7, my], [mx + 0.7, my]], 0.32));
+  else if (mood === 'angry') out.push(...oLn([[mx - 0.8, my + 0.2], [mx, my - 0.1], [mx + 0.8, my + 0.2]], 0.34));
+  else {
+    const open = mood === 'happy';
+    out.push(...oLn([[mx + 0.2, my - 1.3], [mx, my - 0.5]], 0.3), ...oLn([[mx - 1, my - 0.6], [mx - 0.5, my - 0.15], [mx, my - 0.5], [mx + 0.5, my - 0.15], [mx + 1, my - 0.6]], 0.34));
+    out.push(F(T([[mx - 0.45, my - 0.32], [mx + 0.45, my - 0.32], [mx + 0.4, my + 0.35], [mx - 0.4, my + 0.35]], '#ffffff')), ...oLn([[mx, my - 0.32], [mx, my + 0.35]], 0.12, '#c8c0c0'));
+    if (open) out.push(F(E(mx, my + 0.75, 0.6, 0.35, '#ff9a9a')));
+  }
+  if (mood === 'hurt') out.push(...oDrop(18.8, 8.4, 0.6));
+  return out;
+};
+const poFace = (mood) => sm(`po|face|${mood}`, 24, 30, () => poOwnFace(mood));
 const poPass = (bare) => {
   const i = bare ? 1 : 0;
   const tag = bare ? 'b' : '';
@@ -278,7 +402,7 @@ export const otterRig = makeRig({
   },
 });
 export function otterStill(pose, f, mood) {
-  return { w: 36, h: 46, res: 3, shapes: shift([...put(poFoot(true)(), [3, 1.4], -3, -1), ...put(poTail(), [1, 2], -7, -5, 150), ...put(poArm(true)(), [1, 2.4], -3, -19, 40), ...put(poBody(), [12, 29], 0, -2), ...put(faceShapes(st(mood), PO_FACE), [12, 29], 0, -2), ...put(poFoot(false)(), [3, 1.4], 3, -1), ...put(poPearl(), [5, 5], 3, -11), ...put(poArm(false)(), [1, 2.4], 3, -18, 50), ...put(poHelm(), [13, 22], 0, -16)], 18, 45) };
+  return { w: 36, h: 46, res: 3, shapes: shift([...put(poFoot(true)(), [3, 1.4], -3, -1), ...put(poTail(), [1, 2], -7, -5, 150), ...put(poArm(true)(), [1, 2.4], -3, -19, 40), ...put(poBody(), [12, 29], 0, -2), ...put(poOwnFace(st(mood)), [12, 29], 0, -2), ...put(poFoot(false)(), [3, 1.4], 3, -1), ...put(poPearl(), [5, 5], 3, -11), ...put(poArm(false)(), [1, 2.4], 3, -18, 50), ...put(poHelm(), [13, 22], 0, -16)], 18, 45) };
 }
 
 // =====================================================================================
@@ -308,8 +432,31 @@ const sdStar = () => {
 const sdBow = () => [T([[6, 4], [0.6, 0.6], [0.6, 7.4]], '#ff7aa8'), T([[6, 4], [11.4, 0.6], [11.4, 7.4]], '#ff7aa8'), E(6, 4, 1.8, 1.8, '#ff5a8a')];
 const SD_STAR = sd('star', 34, 34, sdStar, 2);
 const SD_BOW = sd('bow', 12, 8, sdBow, 2);
-const SD_FACE = { eyes: [[14.4, 16.4, 1.9, 2.5, -1], [20.6, 16.2, 1.7, 2.3, 1]], mouth: [17.6, 21, 1.6], blush: [[11.8, 19.6, 1.4], [23.2, 19.4, 1.2]], iris: '#b04a2a', lid: 0, lashes: 1 };
-const sdFace = (mood) => sm(`sd|face|${mood}`, 34, 34, () => faceShapes(mood, SD_FACE));
+// Her own face, a starfish idol's: big amber eyes with a pink heart of light in each, long lashes, a wink
+// when she's pleased and a bright idol smile. Box 34 x 34.
+const SD_EYES = [[14.4, 16.4, -1, 1.9, 2.5], [20.6, 16.2, 1, 1.7, 2.3]];
+const sdHeart = (x, y, r, c, lid) => [oDot(x - r * 0.5, y - r * 0.15, r * 0.58, c, lid), oDot(x + r * 0.5, y - r * 0.15, r * 0.58, c, lid), F(T(oCut([[x - r * 1.05, y], [x + r * 1.05, y], [x, y + r * 1.05]], lid), c))];
+const sdOwnFace = (mood) => {
+  const out = [];
+  for (const [x, y, s, w, h] of SD_EYES) {
+    const lashes = (yy) => [...oLn([[x + s * w * 0.85, yy - h * 0.45], [x + s * w * 1.45, yy - h * 0.85]], 0.5), ...oLn([[x + s * w * 0.45, yy - h * 0.8], [x + s * w * 0.7, yy - h * 1.3]], 0.45)];
+    const wink = mood === 'happy' && s > 0;
+    const shut = wink ? oLn([[x - w, y + 0.1], [x + w * 0.2, y - h * 0.35], [x + w, y + 0.1]], 0.55) : oShut(mood, x, y, s, w, h, 0.55, '#e0703a');
+    if (shut) { out.push(...shut); if (mood === 'happy' || mood === 'blink') out.push(...lashes(y + h * 0.4)); continue; }
+    const lid = mood === 'angry' ? (px) => y - h * 0.25 + (px - x) * -s * 0.55 : NOLID;
+    out.push(...oOpen(x, y, w, h, lid, '#b04a2a', '#ffb070'), oDot(x, y + h * 0.15, w * (mood === 'shout' ? 0.2 : 0.32), '#4a1a0a', lid), ...sdHeart(x + w * 0.3, y - h * 0.3, w * 0.24, '#ffe0ec', lid), ...oLid(x, y, w, h, lid, 0.55), ...lashes(y));
+  }
+  if (mood !== 'dead') out.push(F(E(11.8, 19.8, 1.4, 0.7, '#ff8aa8')), F(E(23.2, 19.6, 1.2, 0.6, '#ff8aa8')));
+  const [mx, my] = [17.6, 21];
+  if (mood === 'shout') out.push(F(E(mx, my + 0.3, 1, 1.2, '#8a2a3a')), F(E(mx, my + 0.9, 0.6, 0.3, '#ff9ab0')));
+  else if (mood === 'angry') out.push(...oLn([[mx - 0.9, my + 0.4], [mx, my], [mx + 0.9, my + 0.4]], 0.45));
+  else if (mood === 'hurt' || mood === 'dizzy') out.push(...oWave(mx, my, 1, 0.38));
+  else if (mood === 'dead') out.push(F(E(mx, my + 0.2, 0.45, 0.5, '#8a2a3a')));
+  else out.push(F(T(oArc(mx, my - 0.5, 1.5, 1.4, 0, 180, 8), '#8a2a3a')), F(T(oArc(mx, my - 0.5, 1.5, 1.4, 0, 180, 8).map(([px, py]) => [px, Math.min(py, my - 0.05)]), '#ffffff')), F(E(mx, my + 0.4, 0.75, 0.32, '#ff9ab0')));
+  if (mood === 'hurt') out.push(...oDrop(23, 16.6, 0.65));
+  return out;
+};
+const sdFace = (mood) => sm(`sd|face|${mood}`, 34, 34, () => sdOwnFace(mood));
 export const starRig = makeRig({
   w: 40, h: 44, soft: true, stride: 24, recover: 0.5,
   springs: { x: [220, 18], lift: [200, 15], rock: [160, 12], bow: [90, 7] },
@@ -351,7 +498,7 @@ export const starRig = makeRig({
   },
 });
 export function starStill(pose, f, mood) {
-  return { w: 40, h: 46, res: 3, shapes: shift([...put(sdStar(), [17, 18], 0, -15), ...put(sdBow(), [6, 6], 1, -29), ...put(faceShapes(st(mood), SD_FACE), [17, 18], 0, -15)], 20, 44) };
+  return { w: 40, h: 46, res: 3, shapes: shift([...put(sdStar(), [17, 18], 0, -15), ...put(sdBow(), [6, 6], 1, -29), ...put(sdOwnFace(st(mood)), [17, 18], 0, -15)], 20, 44) };
 }
 
 // =====================================================================================
@@ -372,8 +519,32 @@ const OS_CAP = os('cap', 20, 9, osCap, 2);
 const OS_TASSEL = os('tassel', 3, 10, osTassel, 1);
 const OS_BOOK = os('book', 13, 10, osBook, 2);
 // (Glasses are part of the face, over the eyes.)
-const OS_FACE = { eyes: [[14.6, 14.6, 1.9, 2.4, -1], [21.4, 14.4, 1.7, 2.2, 1]], mouth: [18, 19.6, 1.4], blush: [[11.4, 18, 1.4], [24.6, 17.6, 1.2]], iris: '#4a3a8a', lid: 0 };
-const osFace = (mood) => sm(`os|face|${mood}`, 30, 26, () => [...faceShapes(mood, OS_FACE), ...stroke(arcP(15, 15, 3.2, 3, 0, 360, 14), 0.7, '#3a3058', false), ...stroke(arcP(21, 14.8, 2.8, 2.7, 0, 360, 14), 0.7, '#3a3058', false), ...stroke([[18.2, 14.8], [18.2, 14.6]], 0.6, '#3a3058')]);
+// Its own face, a scholar octopus's (behind its round glasses): studious eyes under lowered lids with the
+// pupils down at its book, a thoughtful little pursed mouth and a smudge of blue ink on its cheek.
+// Box 30 x 26.
+const OS_EYES = [[14.6, 14.6, -1, 1.9, 2.4], [21.4, 14.4, 1, 1.7, 2.2]];
+const osOwnFace = (mood) => {
+  const out = [];
+  for (const [x, y, s, w, h] of OS_EYES) {
+    const shut = oShut(mood, x, y, s, w, h, 0.55, '#4a3a8a');
+    if (shut) { out.push(...shut); continue; }
+    const lid = mood === 'angry' ? (px) => y - h * 0.2 + (px - x) * -s * 0.55 : mood === 'shout' ? NOLID : () => y - h * 0.35;
+    const py = mood === 'shout' ? y : y + h * 0.3;
+    out.push(...oOpen(x, y, w, h, lid, '#4a3a8a', '#9a8ad8'), oDot(x, py, w * (mood === 'shout' ? 0.2 : 0.32), '#1e1840', lid), oDot(x + w * 0.3, py - h * 0.25, w * 0.16, '#ffffff', lid), ...oLid(x, y, w, h, lid, 0.55));
+  }
+  if (mood !== 'dead') out.push(F(E(11.4, 18.2, 1.3, 0.6, '#ff9ac0')), F(E(24.6, 17.8, 1.1, 0.5, '#ff9ac0')));
+  out.push(F(E(9.6, 19.6, 0.7, 0.45, '#3a5ab8')), F(E(8.8, 20.1, 0.3, 0.25, '#3a5ab8')));
+  const [mx, my] = [18, 19.6];
+  if (mood === 'shout') out.push(F(E(mx, my + 0.3, 0.9, 1.1, '#6a2a4a')));
+  else if (mood === 'happy') out.push(F(T(oArc(mx, my - 0.3, 1.2, 1.1, 0, 180, 8), '#6a2a4a')));
+  else if (mood === 'angry') out.push(...oLn([[mx - 0.8, my + 0.3], [mx + 0.8, my + 0.3]], 0.42));
+  else if (mood === 'hurt' || mood === 'dizzy') out.push(...oWave(mx, my, 0.9, 0.36));
+  else if (mood === 'dead') out.push(F(E(mx, my + 0.2, 0.4, 0.45, '#6a2a4a')));
+  else out.push(...oLn([[mx - 0.55, my + 0.1], [mx - 0.15, my - 0.15], [mx + 0.15, my + 0.15], [mx + 0.55, my - 0.1]], 0.4));
+  if (mood === 'hurt') out.push(...oDrop(24.4, 15.8, 0.6));
+  return out;
+};
+const osFace = (mood) => sm(`os|face|${mood}`, 30, 26, () => [...osOwnFace(mood), ...stroke(arcP(15, 15, 3.2, 3, 0, 360, 14), 0.7, '#3a3058', false), ...stroke(arcP(21, 14.8, 2.8, 2.7, 0, 360, 14), 0.7, '#3a3058', false), ...stroke([[18.2, 14.8], [18.2, 14.6]], 0.6, '#3a3058')]);
 const OS_ARMX = [-10, -6, -2, 2, 6, 10];
 export const octoRig = makeRig({
   w: 40, h: 44, soft: true, stride: 18, recover: 0.6,
@@ -416,7 +587,7 @@ export const octoRig = makeRig({
   },
 });
 export function octoStill(pose, f, mood) {
-  return { w: 40, h: 46, res: 3, shapes: shift([...OS_ARMX.flatMap((x, k) => put(osArm(k)(), [5, 1], x, -16, x * 1.6)), ...put(osHead(), [15, 25], 0, -14), ...put(osCap(), [10, 7], 0, -36), ...put(faceShapes(st(mood), OS_FACE), [15, 25], 0, -14), ...put(osBook(), [6, 5], 9, -18)], 20, 45) };
+  return { w: 40, h: 46, res: 3, shapes: shift([...OS_ARMX.flatMap((x, k) => put(osArm(k)(), [5, 1], x, -16, x * 1.6)), ...put(osHead(), [15, 25], 0, -14), ...put(osCap(), [10, 7], 0, -36), ...put(osOwnFace(st(mood)), [15, 25], 0, -14), ...put(osBook(), [6, 5], 9, -18)], 20, 45) };
 }
 
 // =====================================================================================
@@ -439,8 +610,26 @@ const laLure = () => [taper([[2, 15], [3, 8], [8, 3], [12, 3.4]], 1.6, 1, ANG.sh
 const LA_BODY = la('body', 34, 26, laBody, 2);
 const LA_FIN = la('fin', 9, 9, laFin, 2);
 const LA_LURE = la('lure', 16, 16, laLure, 2);
-const LA_FACE = { eyes: [[18.6, 9, 2.4, 3, 1]], mouth: [24, 12, 0.1], blush: [[15, 12.8, 1.5]], iris: '#2a2a5a', lid: 0 };
-const laFace = (mood) => sm(`la|face|${mood}`, 34, 26, () => faceShapes(mood, LA_FACE));
+// Its own face, an anglerfish's (side on): one wide round deep-sea eye (white, a small pupil) with its
+// lure's yellow light caught in it, under a heavy grumpy brow; its toothy mouth is part of its body.
+// Box 34 x 26.
+const laOwnFace = (mood) => {
+  const out = [];
+  const [x, y, s, w, h] = [18.6, 9, 1, 2.4, 3];
+  const drop = mood === 'angry' ? 1 : mood === 'shout' ? -0.8 : mood === 'happy' ? -0.4 : mood === 'hurt' ? -0.5 : 0.3;
+  if (mood !== 'dead') out.push(...oLn([[x - w * 1.05, y - h * 1 - drop * 0.2], [x + w * 0.2, y - h * 1.2 + drop * 0.4], [x + w * 1.1, y - h * 0.95 + drop]], 0.9, '#22285a'));
+  const shut = oShut(mood, x, y, s, w, h, 0.65, '#ffd84a');
+  if (shut) out.push(...shut);
+  else {
+    const lid = mood === 'angry' ? (px) => y - h * 0.3 + (px - x) * 0.5 : NOLID;
+    const pr = w * (mood === 'shout' ? 0.16 : 0.26);
+    out.push(F(T(oCut(oRing(x, y, w, h), lid), INK)), F(T(oCut(oRing(x, y, w * 0.86, h * 0.88), lid), '#f4f2ff')), oDot(x + w * 0.15, y + h * 0.05, pr, '#1a1a3a', lid), oDot(x - w * 0.35, y - h * 0.35, w * 0.2, '#ffe060', lid), oDot(x - w * 0.15, y - h * 0.5, w * 0.09, '#ffe060', lid), ...oLid(x, y, w, h, lid, 0.65));
+  }
+  if (mood !== 'dead') out.push(F(E(15, 13, 1.5, 0.7, '#ff9ab8')));
+  if (mood === 'hurt') out.push(...oDrop(21.6, 12.6, 0.75));
+  return out;
+};
+const laFace = (mood) => sm(`la|face|${mood}`, 34, 26, () => laOwnFace(mood));
 export const anglerRig = makeRig({
   w: 44, h: 44, soft: true, stride: 24, recover: 0.6,
   springs: { x: [200, 18], bob: [90, 8], tilt: [140, 11], lure: [60, 5], fin: [140, 9] },
@@ -482,5 +671,5 @@ export const anglerRig = makeRig({
   },
 });
 export function anglerStill(pose, f, mood) {
-  return { w: 44, h: 46, res: 3, shapes: shift([...put(laLure(), [2, 15], 4, -34), ...put(laBody(), [16, 25], 0, -14), ...put(laFin(), [1, 3], -13, -20, 150), ...put(faceShapes(st(mood), LA_FACE), [16, 25], 0, -14)], 22, 44) };
+  return { w: 44, h: 46, res: 3, shapes: shift([...put(laLure(), [2, 15], 4, -34), ...put(laBody(), [16, 25], 0, -14), ...put(laFin(), [1, 3], -13, -20, 150), ...put(laOwnFace(st(mood)), [16, 25], 0, -14)], 22, 44) };
 }
