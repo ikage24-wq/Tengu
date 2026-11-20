@@ -6,6 +6,9 @@
 // Observatory Steps: the Great Telescope on a carved pedestal (its railed deck a ledge), its tube
 // sweeping the sky; a brass orrery, planets circling a glowing sun; Professor Lumen's stargazing
 // tent with a crate desk of charts (the star arch at the door stays: render/starlight.js).
+// Sugar Trail: Chef Praline's gingerbread hut (its frosted roof ridge a ledge), a giant cupcake
+// (its frosting the step up to the roof), and the way into the Candy Volcano: a doorway cut in a
+// slab of layered cake dripping caramel at the volcano's foot.
 // Tidepool Pier: Marina's dive shop on the quay (its roof deck a ledge, a stack of crates to climb
 // to it) and, at the pier's end, a timber crane with a big brass diving bell resting on the boards,
 // its hatch open: the way down to the Sunken Aquarium Palace (the portal's swirl turns in it).
@@ -430,6 +433,141 @@ function drawTent(ctx, x, y, time) {
   ctx.fillRect(x - 46, y - 70, 92, 80);
 }
 
+// ---------- Sugar Trail's pieces ----------
+const SW = {
+  ginger: '#c8844a', gingerLit: '#e0a066', gingerSh: '#a06438', icing: '#ffffff', icingSh: '#f0e4ec',
+  frost: '#ffb0cc', frostLit: '#ffd6e6', frostSh: '#e88aae', mint: '#9ff0dc', mintSh: '#6ad0b8',
+  choc: '#7a4a3a', chocSh: '#5a3428', chocLit: '#9a6450', sponge: '#ffd0a0', spongeSh: '#e8b080',
+  caramel: '#e8a040', caramelLit: '#ffc870', cherry: '#ff4a6a', wrap: '#9fd8ff', wrapSh: '#6ab8e8',
+  sprinkle: ['#ff6a9a', '#ffd36b', '#7fe0c8', '#c8a0f0', '#7fd8ff'],
+};
+const sprinkles = (x0, x1, y0, y1, n, seed) => Array.from({ length: n }, (_, i) => {
+  const x = x0 + h01(seed + i) * (x1 - x0);
+  const y = y0 + h01(seed + i * 3) * (y1 - y0);
+  const a = h01(seed + i * 7) * Math.PI;
+  return F(band([[x - Math.cos(a) * 2.4, y - Math.sin(a) * 2.4], [x + Math.cos(a) * 2.4, y + Math.sin(a) * 2.4]], () => 1.6, SW.sprinkle[i % 5]));
+});
+
+// The gingerbread hut: gingerbread walls trimmed with icing, gumdrop buttons, a peppermint window,
+// a candy-cane door frame, a pink frosted roof with a flat ridge on top (a ledge GH_ROOF up),
+// a striped chimney (puffing, drawn live). Bottom middle at the door.
+const GH_W = 240;
+const GH_H = 200;
+export const GH_ROOF = 150;
+export const GH_SPAN = [-60, 60];
+function gingerArt() {
+  return art('ginger', GH_W, GH_H, () => {
+    const out = [];
+    const cx = GH_W / 2;
+    const H = GH_H;
+    const rt = H - GH_ROOF;
+    // The chimney, behind the roof.
+    out.push(R(cx + 50, rt - 6, cx + 72, rt + 40, '#ffffff'));
+    for (let y = rt - 2; y < rt + 40; y += 10) out.push(F(T([[cx + 50, y], [cx + 72, y - 6], [cx + 72, y], [cx + 50, y + 6]], SW.cherry)));
+    // The walls.
+    out.push(R(cx - 90, rt + 50, cx + 90, H, SW.ginger), F(R(cx + 64, rt + 50, cx + 90, H, SW.gingerSh)), F(R(cx - 90, rt + 50, cx - 82, H, SW.gingerLit)));
+    for (let x = cx - 88; x < cx + 88; x += 12) out.push(F(T([[x, rt + 52], [x + 6, rt + 58], [x + 12, rt + 52]], SW.icing)));
+    out.push(F(R(cx - 90, H - 6, cx + 90, H - 3, SW.icing)));
+    // The door in its candy-cane frame, gumdrop buttons.
+    out.push(T([[cx - 20, H], [cx - 20, H - 52], ...arc(cx, H - 52, 20, 18, 180, 360, 10), [cx + 20, H - 52], [cx + 20, H]], '#ffffff'));
+    for (let k = 0; k < 8; k++) {
+      const a = Math.PI + (k / 7) * Math.PI;
+      out.push(F(E(cx + Math.cos(a) * 20, H - 52 + Math.sin(a) * 18, 2.4, 2.4, SW.cherry)));
+    }
+    out.push(T([[cx - 15, H], [cx - 15, H - 50], ...arc(cx, H - 50, 15, 14, 180, 360, 10), [cx + 15, H - 50], [cx + 15, H]], SW.choc), F(E(cx + 8, H - 26, 2.2, 2.2, SW.caramelLit)));
+    for (const [gx, gy, c] of [[-60, H - 30, '#7fe0c8'], [60, H - 30, '#ffd36b'], [-60, H - 60, '#ff9ac0'], [60, H - 60, '#c8a0f0']]) out.push(E(cx + gx, gy, 6, 5, c), F(E(cx + gx - 2, gy - 2, 2, 1.4, '#ffffff')));
+    // The peppermint window.
+    const wx = cx - 52;
+    const wy = rt + 76;
+    out.push(E(wx, wy, 12, 12, '#ffffff'));
+    for (let k = 0; k < 6; k++) out.push(F(T([[wx, wy], ...arc(wx, wy, 11, 11, k * 60, k * 60 + 30, 3)], SW.cherry)));
+    // The roof: pink frosting, drippy eaves, a flat ridge, sprinkles.
+    const [r0, r1] = GH_SPAN;
+    const drips = [];
+    for (let x = cx + 108; x >= cx - 108; x -= 18) drips.push([x, rt + 50], [x - 9, rt + 58 + h01(x) * 8]);
+    out.push(T([[cx + r0, rt], [cx + r1, rt], [cx + 108, rt + 46], ...drips, [cx - 108, rt + 46]], SW.frost));
+    out.push(F(T([[cx + r0, rt], [cx + r0 + 30, rt], [cx - 70, rt + 40], [cx - 104, rt + 44]], SW.frostLit)));
+    out.push(F(T([[cx + r1 - 20, rt + 4], [cx + r1, rt], [cx + 108, rt + 46], [cx + 80, rt + 46]], SW.frostSh)));
+    out.push(F(R(cx + r0 + 4, rt, cx + r1 - 4, rt + 3, SW.icing)));
+    out.push(...sprinkles(cx - 90, cx + 90, rt + 10, rt + 40, 26, 7));
+    return out;
+  });
+}
+function drawGinger(ctx, x, y, time) {
+  place(ctx, gingerArt(), x, y);
+  // Sugar smoke puffing from the chimney.
+  for (let k = 0; k < 4; k++) {
+    const u = (time * 0.3 + k / 4) % 1;
+    ctx.fillStyle = hexA(k % 2 ? '#ffd6e6' : '#ffffff', Math.sin(u * Math.PI) * 0.7);
+    ctx.beginPath();
+    ctx.arc(x + 61 + Math.sin(time + k) * 4, y - GH_ROOF - 12 - u * 50, 4 + u * 7, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+// The giant cupcake: a pleated striped wrapper, a swirl of frosting flat on top (a ledge CC_TOP up),
+// sprinkles, a cherry at the edge. Bottom middle at its foot.
+const CC_W = 140;
+const CC_H = 120;
+export const CC_TOP = 80;
+export const CC_SPAN = [-46, 46];
+function cupcakeArt() {
+  return art('cupcake', CC_W, CC_H, () => {
+    const out = [];
+    const cx = CC_W / 2;
+    const H = CC_H;
+    const top = H - CC_TOP;
+    out.push(T([[cx - 44, H], [cx - 56, top + 36], [cx + 56, top + 36], [cx + 44, H]], SW.wrap));
+    for (let k = -4; k <= 4; k++) out.push(F(band([[cx + k * 11, top + 38], [cx + k * 9, H - 2]], () => 2, SW.wrapSh)));
+    const [c0, c1] = CC_SPAN;
+    out.push(T([[cx - 62, top + 40], [cx - 64, top + 26], [cx - 54, top + 10], [cx + c0, top], [cx + c1, top], [cx + 54, top + 10], [cx + 64, top + 26], [cx + 62, top + 40]], SW.frost));
+    for (let k = -2; k <= 2; k++) out.push(F(band(arc(cx + k * 22, top + 24, 14, 10, 200, 340, 8), () => 2, SW.frostSh)));
+    out.push(F(R(cx + c0 + 4, top, cx + c1 - 4, top + 3, SW.frostLit)));
+    out.push(...sprinkles(cx - 50, cx + 50, top + 6, top + 34, 20, 31));
+    out.push(E(cx + 56, top + 2, 9, 9, SW.cherry), F(E(cx + 53, top - 1, 3, 2.4, '#ffffff')), F(band([[cx + 56, top - 6], [cx + 62, top - 18]], () => 1.2, '#6aa04a')));
+    return out;
+  });
+}
+
+// The cake cave: a slab of layered cake at the volcano's foot (chocolate, pink sponge, cream),
+// caramel dripping off its top, sprinkles, a doorway cut in it with a candy-cane frame, dark
+// chocolate inside (the portal's swirl turns in it, CK_DOOR). Bottom middle at the door.
+const CK_W = 270;
+const CK_H = 240;
+export const CK_DOOR = { w: 64, h: 92 };
+function cakeArt() {
+  return art('cake', CK_W, CK_H, () => {
+    const out = [];
+    const cx = CK_W / 2;
+    const H = CK_H;
+    const body = [[cx - 128, H], [cx - 126, 70], [cx - 110, 34], [cx - 60, 14], [cx + 20, 8], [cx + 90, 20], [cx + 122, 50], [cx + 130, H]];
+    out.push(T(body, SW.sponge));
+    // The layers.
+    for (const [y, c, th] of [[90, SW.choc, 26], [150, SW.choc, 22], [200, SW.choc, 18]]) {
+      out.push(F(T([[cx - 127, y], [cx + 129, y - 4], [cx + 130, y + th], [cx - 127, y + th]], c)));
+      out.push(F(T([[cx - 127, y - 4], [cx + 129, y - 8], [cx + 129, y - 2], [cx - 127, y + 2]], SW.icing)));
+    }
+    out.push(F(T([[cx + 80, 20], [cx + 122, 50], [cx + 130, H], [cx + 96, H]], SW.spongeSh)));
+    // Caramel over the top, dripping.
+    const drips = [];
+    for (let x = cx + 120; x >= cx - 120; x -= 16) drips.push([x, 52 + Math.abs(x - cx) * 0.08], [x - 8, 64 + h01(x) * 26]);
+    out.push(T([[cx - 126, 70], [cx - 110, 34], [cx - 60, 14], [cx + 20, 8], [cx + 90, 20], [cx + 122, 50], ...drips], SW.caramel));
+    out.push(F(T([[cx - 100, 36], [cx - 60, 18], [cx + 10, 12], [cx - 50, 26], [cx - 96, 46]], SW.caramelLit)));
+    out.push(...sprinkles(cx - 110, cx + 110, 20, 54, 30, 53));
+    // The doorway with its candy-cane frame.
+    const dw = CK_DOOR.w / 2;
+    out.push(T([[cx - dw - 8, H], ...arc(cx, H - CK_DOOR.h + dw, dw + 8, dw + 8, 180, 360, 16), [cx + dw + 8, H]], '#ffffff'));
+    for (let k = 0; k < 10; k++) {
+      const a = Math.PI + (k / 9) * Math.PI;
+      out.push(F(E(cx + Math.cos(a) * (dw + 4), H - CK_DOOR.h + dw + Math.sin(a) * (dw + 4), 3, 3, SW.cherry)));
+    }
+    out.push(F(R(cx - dw - 8, H - CK_DOOR.h + dw, cx - dw, H, SW.cherry)), F(R(cx + dw, H - CK_DOOR.h + dw, cx + dw + 8, H, SW.cherry)));
+    out.push(T([[cx - dw, H], ...arc(cx, H - CK_DOOR.h + dw, dw, dw, 180, 360, 14), [cx + dw, H]], SW.chocSh));
+    out.push(F(T([[cx - dw + 8, H], ...arc(cx, H - CK_DOOR.h + dw + 6, dw - 8, dw - 8, 180, 360, 12), [cx + dw - 8, H]], SW.choc)));
+    return out;
+  });
+}
+
 export const GATE_KINDS = {
   diveshop: { w: DS_W + M * 2, h: DS_H + M, draw: (ctx, x, y) => place(ctx, shopArt(), x, y) },
   quaycrates: { w: CS_W + M * 2, h: CS_H + M, draw: (ctx, x, y) => place(ctx, cratesArt(), x, y) },
@@ -439,4 +577,7 @@ export const GATE_KINDS = {
   greatscope: { w: 420, h: 340, draw: drawScope },
   orrery: { w: 160, h: 200, draw: drawOrrery },
   startent: { w: 280, h: 200, draw: drawTent },
+  gingerhut: { w: GH_W + M * 2, h: GH_H + M, draw: drawGinger },
+  giantcupcake: { w: CC_W + M * 2, h: CC_H + M, draw: (ctx, x, y) => place(ctx, cupcakeArt(), x, y) },
+  cakecave: { w: CK_W + M * 2, h: CK_H + M, draw: (ctx, x, y) => place(ctx, cakeArt(), x, y) },
 };

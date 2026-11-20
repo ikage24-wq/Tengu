@@ -2238,19 +2238,23 @@ const SUGAR_IN = { skyline: 'candycave', material: 'candy', critters: [], drift:
 
 Object.assign(MAPS, {
   // The Sugar Trail: past the steam of Serpent Springs, a path of candy stones up to the foot of a
-  // mountain that smells of caramel. Chef Praline finds groups here.
+  // mountain that smells of caramel. Chef Praline finds groups here. (Its makeover 2026-11-20,
+  // render/gateart.js: Praline's gingerbread hut with a frosted roof to stand on, a giant cupcake to
+  // climb it by, and the way in cut into a slab of layered cake dripping caramel.)
   sugar_trail: {
     id: 'sugar_trail', name: 'Sugar Trail', theme: 'candy', town: 'grove', world: { x: 270, y: 30 }, music: 'volcano',
     width: 1200, height: 420, groundY: G,
     look: { sky: ['#ff9ab8', '#ffc8a0', '#fff0c8'], far: '#e08aa8', mid: '#f0a8c0', midTrim: '#ffd36b', ...SUGAR, painted: 'gumdropvale', islands: 'wafer', material: 'cocoacake', props: [], ledgeProp: null },
-    platforms: [{ x: 420, y: G - 80, w: 140 }],
+    // The cupcake's frosting and the hut's roof ridge (drawn with them).
+    platforms: [{ x: 434, y: G - 80, w: 92, bare: true }, { x: 300, y: G - 150, w: 120, bare: true }],
     ropes: [],
-    deco: [['signpost', 160], ['gumdrop', 300], ['lollipop', 640], ['gumdrop', 700], ['sugararch', 1110]],
+    deco: [['signpost', 160], ['gingerhut', 360, 0], ['giantcupcake', 480, 0], ['gumdrop', 620], ['lollipop', 700], ['gumdrop', 760], ['cakecave', 1080, 0]],
     portals: [
       { id: 'start', x: 640, y: G, hidden: true },
       { id: 'west', x: 50, y: G, to: 'springs', toPortal: 'volcano' },
-      { id: 'door', x: 1110, y: G, to: 'volcano1', toPortal: 'start', label: 'Candy Volcano', dungeon: 'volcano' },
+      { id: 'door', x: 1080, y: G, to: 'volcano1', toPortal: 'start', label: 'Candy Volcano', dungeon: 'volcano', mouth: 44, labelAt: 120 },
     ],
+    lamps: [{ x: 360, y: 340 }, { x: 1080, y: 330 }],
     npcs: [{ id: 'praline', x: 860 }],
     spawns: [],
   },
