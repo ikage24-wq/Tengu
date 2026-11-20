@@ -82,6 +82,10 @@ export const rot = (shapes, ang, px, py) => {
 };
 export const put = (shapes, [pvx, pvy], x, y, deg = 0) => rot(shift(shapes, x - pvx, y - pvy), deg * D2R, x, y);
 export const MOODS = new Set(['idle', 'angry', 'hurt', 'happy', 'blink', 'dead', 'shout', 'sleep', 'dizzy']);
+// A boss's own face for a mood, from its own face map; a mood it has no face for takes its nearest own
+// face (closed eyes for sleep, its hurt face for dizzy and so on), never the shared face.
+export const FACE_NEAR = { sleep: 'blink', dizzy: 'hurt', dead: 'hurt', shout: 'angry', blink: 'idle', sad: 'hurt', cross: 'angry', happy: 'idle' };
+export const ownFace = (map, mood) => (map[mood] ?? map[FACE_NEAR[mood]] ?? map.idle ?? map.sleep)();
 export const moodOf = (a, extra = null) => {
   if (a.face === 'dead') return 'dead';
   if (extra === 'dizzy') return extra;

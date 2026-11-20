@@ -21,7 +21,7 @@
 import { E, T, F, R, stroke } from './kit.js';
 import { ramp } from './meadow.js';
 import { makeRig, stateBlend, clamp, smooth, TAU } from './rig.js';
-import { D2R, fr, arcP, taper, pairOf, faceSprite, hold, put, MOODS, faceShapes, sparkle, puff, note } from './rigkit.js';
+import { D2R, fr, arcP, taper, pairOf, faceSprite, hold, put, MOODS, sparkle, puff, note, ownFace } from './rigkit.js';
 
 const at2 = (M, x, y) => [M[0] * x + M[2] * y + M[4], M[1] * x + M[3] * y + M[5]];
 const sized = (rig, k) => {
@@ -139,8 +139,7 @@ const WD_FACES = {
 WD_FACES.blink = WD_FACES.sleep;
 WD_FACES.idle = WD_FACES.sleep;
 WD_FACES.angry = WD_FACES.cross;
-const FACE_FB = { eyes: [[EN[0], EN[1], 2.8, 3, 1], [EF[0], EF[1], 2.2, 2.4, -1]], mouth: [MX, MY, 1], blush: [[EN[0] + 0.8, EN[1] + 4.4, 1.4], [EF[0] - 1, EF[1] + 4.4, 1.2]], iris: '#3a7ad8', lid: 0, lashes: 1 };
-const wdFace = (mood) => faceSprite(`wd2|face|${mood}`, 34, 24, () => (WD_FACES[mood] ?? (() => faceShapes(mood, FACE_FB)))());
+const wdFace = (mood) => faceSprite(`wd2|face|${mood}`, 34, 24, () => ownFace(WD_FACES, mood));
 
 // ---------- Skeleton ----------
 const FLOAT = 42;

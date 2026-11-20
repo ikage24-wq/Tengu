@@ -5,9 +5,9 @@
 //   eclipsesol / eclipseluna   the Eclipse Twins: their own module now (twinsrig.js, 2026-11-18).
 
 import { E, T, F, R, stroke } from './kit.js';
-import { ramp, crescent, shine } from './meadow.js';
+import { ramp, crescent } from './meadow.js';
 import { makeRig, stateBlend, clamp, smooth, TAU } from './rig.js';
-import { D2R, fr, ov, arcP, taper, pairOf, faceSprite, hold, stepPhase, pawStep, put, shift, MOODS, moodOf, faceShapes, sparkle, puff } from './rigkit.js';
+import { D2R, fr, arcP, taper, pairOf, faceSprite, hold, stepPhase, pawStep, put, shift, MOODS, sparkle, puff, ownFace } from './rigkit.js';
 
 const sm = (key, w, h, shapes) => faceSprite(key, w, h, shapes);
 const at2 = (M, x, y) => [M[0] * x + M[2] * y + M[4], M[1] * x + M[3] * y + M[5]];
@@ -172,7 +172,6 @@ const AS = {
   THIGH: [false, true].map((f) => as(`thigh${f ? 1 : 0}`, 10, 13, asThigh(f), 2)), SHIN: [false, true].map((f) => as(`shin${f ? 1 : 0}`, 11, 15, asShin(f), 2)),
   CAPE: [[capeA, 22, 16], [capeB, 26, 10], [capeC, 30, 13]].map(([fn, w, h], k) => [false, true].map((lin) => as(`cape${k}${lin ? 'l' : ''}`, w, h, fn(lin), 2))),
 };
-const AS_FACE = { eyes: [[23, 15.6, 2.7, 3.5, 1], [12.6, 15.6, 2.4, 3.2, -1]], mouth: [19, 25.2, 1.2], blush: [[8.6, 20.4, 2.1], [27.4, 20.4, 2.1]], iris: '#ffc83a', lid: 0, lashes: 1 };
 // Her own faces (2026-11-18: every boss shared one set). Soft lilac brows carry the feeling; eyes
 // gold with star catchlights; only a light blush. Box 34 x 30, eyes at (23, 15.6) and (12.6, 15.6).
 const AS_INK = '#2e1c26';
@@ -210,7 +209,7 @@ const AS_FACES = {
   happy: () => [...asEye(23, 15.2, 3, 3.9, { cat: 'big' }), ...asEye(12.6, 15.2, 2.7, 3.6, { cat: 'big' }), ...asLine(arcP(23, 10.4, 3, 1.6, 200, 340, 6), 0.9, AS_BROW), ...asLine(arcP(12.6, 10.6, 2.6, 1.4, 200, 340, 6), 0.8, AS_BROW), T(arcP(27.8, 23, 2.2, 2.2, 0, 180, 8), AS_LIP), F(E(27.8, 24.4, 1.1, 0.7, '#ff9ab0')), ...asBlush(1.15)],
   sleep: () => [...asShut(23, 16.4, 2.6), ...asShut(12.6, 16.4, 2.3), asBrow([19.8, 10.6], [26.2, 10.8], 1), asBrow([15.6, 10.8], [9.6, 11], 0.9), F(E(27.8, 23.6, 0.7, 0.6, AS_LIP)), ...asBlush()],
 };
-const asFaceShapes = (mood) => (AS_FACES[mood] ?? (() => faceShapes(mood, AS_FACE)))();
+const asFaceShapes = (mood) => ownFace(AS_FACES, mood);
 const asFace = (mood) => sm(`as|face3|${mood}`, 38, 30, () => asFaceShapes(mood));
 // Which face: the attack's (fierce in the wind-up, calling out on the blow), then the scene's own
 // ('sad', 'happy', ...), then what she's doing: counting (whispering), losing count, starstruck.
@@ -589,6 +588,4 @@ export const starRig = makeRig({
 export function starStill() {
   return { w: 26, h: 26, res: 2, shapes: shift(put(spStar(), [11, 11.6], 0, -13), 13, 25) };
 }
-
-
 

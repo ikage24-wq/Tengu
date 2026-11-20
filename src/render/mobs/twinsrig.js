@@ -21,7 +21,7 @@
 import { E, T, F, R, stroke } from './kit.js';
 import { ramp, crescent } from './meadow.js';
 import { makeRig, stateBlend, clamp, smooth, TAU } from './rig.js';
-import { D2R, fr, arcP, taper, pairOf, faceSprite, hold, stepPhase, pawStep, put, shift, MOODS, faceShapes, sparkle, puff } from './rigkit.js';
+import { D2R, fr, arcP, taper, pairOf, faceSprite, hold, stepPhase, pawStep, put, shift, MOODS, sparkle, puff, ownFace } from './rigkit.js';
 
 const at2 = (M, x, y) => [M[0] * x + M[2] * y + M[4], M[1] * x + M[3] * y + M[5]];
 const sized = (rig, k) => {
@@ -204,7 +204,6 @@ const faceSet = (fox) => {
     dead: () => [...xEye(EN), ...xEye(EF), ...openM(fox, lip, 0.6)],
   };
 };
-const FACE_FB = { eyes: [[EN[0], EN[1], 2.6, 3, 1], [EF[0], EF[1], 2.2, 2.6, -1]], mouth: [HX + 9, HY + 8.6, 1], blush: [[HX - 7, HY + 5.6, 1.6], [HX + 12, HY + 5.4, 1.6]], iris: '#e85a2a', lid: 0, lashes: 1 };
 
 // ---------- The skeleton ----------
 const HIP = 18;
@@ -263,7 +262,7 @@ function twinParts(sister) {
   const behind = propBehind(sun ? ring : pole);
   const before = (a, S) => !behind(a, S);
   const faces = faceSet(sun);
-  const faceOf = (mood) => faceSprite(`tw2|${sister}|face|${mood}`, 36, 32, () => (faces[mood] ?? (() => faceShapes(mood, FACE_FB)))());
+  const faceOf = (mood) => faceSprite(`tw2|${sister}|face|${mood}`, 36, 32, () => ownFace(faces, mood));
   const pass = (bare) => {
     const i = bare ? 1 : 0;
     const t = bare ? 'b' : '';
@@ -662,7 +661,7 @@ function still(sister, mood) {
     ...put(tabard(sun)(), [13, 1], 0, ch[1] - 12), ...put(plate(sun)(), [12, 1], 0, ch[1] - 25),
     ...an.up,
     ...(sun ? put(foxEar(false)(), [5, 16], nk[0] + 5, nk[1] - 21, 12) : put(bunEar(false)(), [5, 24], nk[0] + 3, nk[1] - 23, 10)),
-    ...put(sun ? foxHead() : bunHead(), [19, 29], nk[0], nk[1]), ...put(faces[fm](), [19, 29], nk[0], nk[1]),
+    ...put(sun ? foxHead() : bunHead(), [19, 29], nk[0], nk[1]), ...put(ownFace(faces, fm), [19, 29], nk[0], nk[1]),
     ...(sun ? [...an.fore, ...an.hand, ...propS] : [...an.fore, ...propS, ...an.hand]),
   ], 30, 91) };
 }

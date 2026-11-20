@@ -17,7 +17,7 @@
 import { E, T, F, R, stroke } from './kit.js';
 import { ramp, crescent } from './meadow.js';
 import { makeRig, stateBlend, clamp, smooth, TAU } from './rig.js';
-import { D2R, fr, arcP, taper, pairOf, faceSprite, hold, window1, stepPhase, pawStep, put, shift, MOODS, moodOf, faceShapes, sparkle, puff } from './rigkit.js';
+import { D2R, fr, taper, pairOf, faceSprite, hold, window1, stepPhase, pawStep, put, shift, MOODS, moodOf, sparkle, puff } from './rigkit.js';
 import { chibiLegs } from './chibilegs.js';
 
 const smoothPts = (pts, n = 3) => {
@@ -61,8 +61,101 @@ const headP = () => {
     T([[16, 13.4], [28, 13.4], [29, 7], [26, 10], [22, 5], [18, 10], [15, 7]], BRASS.base), F(star(22, 3.6, 2.6, BRASS.hi)),
   ];
 };
-const FACE = { eyes: [[27.4, 45, 3.4, 4.3, 1], [17.6, 45.4, 3, 3.9, -1]], mouth: [23.4, 52, 2.4], blush: [[29.4, 49.6, 2.4], [15.2, 49.8, 2]], iris: '#3a8ad8', k: 1.7, lid: 0, lashes: 1 };
-const ghFace = (mood) => faceSprite(`gh2|face|${mood}`, 44, 66, () => faceShapes(mood, FACE));
+// Her own face, a porcelain doll's: glass-blue eyes with a cog for a pupil, painted lashes above and
+// below, thin painted brows high on her brow, heart-shaped rouge and a tiny painted rosebud mouth. She
+// blinks like a doll (the painted lids drop, lashes and all); knocked, one eye rolls off. Box 44 x 66.
+const oLn = (pts, w, c = INK) => {
+  const l = [];
+  const r = [];
+  pts.forEach(([x, y], i) => {
+    const [ax, ay] = pts[Math.max(0, i - 1)];
+    const [bx, by] = pts[Math.min(pts.length - 1, i + 1)];
+    const d = Math.hypot(bx - ax, by - ay) || 1;
+    const nx = ((-(by - ay) / d) * w) / 2;
+    const ny = (((bx - ax) / d) * w) / 2;
+    l.push([x + nx, y + ny]);
+    r.push([x - nx, y - ny]);
+  });
+  return [F(T([...l, ...r.reverse()], c))];
+};
+const oArc = (cx, cy, rx, ry, a0, a1, n = 8) => Array.from({ length: n + 1 }, (_, i) => {
+  const a = ((a0 + ((a1 - a0) * i) / n) * Math.PI) / 180;
+  return [cx + Math.cos(a) * rx, cy + Math.sin(a) * ry];
+});
+const oRing = (cx, cy, rx, ry, rot = 0, n = 16) => Array.from({ length: n }, (_, i) => {
+  const a = (i / n) * Math.PI * 2;
+  const x = Math.cos(a) * rx;
+  const y = Math.sin(a) * ry;
+  return [cx + x * Math.cos(rot) - y * Math.sin(rot), cy + x * Math.sin(rot) + y * Math.cos(rot)];
+});
+const oCut = (pts, lid) => pts.map(([px, py]) => [px, Math.max(py, lid(px))]);
+const oSquint = (x, y, s, r, w, c = INK) => oLn([[x + s * r, y - r], [x - s * r * 0.8, y], [x + s * r, y + r]], w, c);
+const oSpiral = (x, y, r, w, c, s = 1) => oLn(Array.from({ length: 15 }, (_, i) => [x + Math.cos(i * 0.8 * s) * r * (0.12 + i / 15), y + Math.sin(i * 0.8 * s) * r * (0.12 + i / 15)]), w, c);
+const oDrop = (x, y, r, c = '#9ad8ff') => [F(E(x, y, r * 0.7, r, c)), F(E(x - r * 0.2, y - r * 0.3, r * 0.25, r * 0.25, '#ffffff'))];
+const oStar = (x, y, r, c, n = 5, k = 0.45) => F(T(Array.from({ length: n * 2 }, (_, i) => {
+  const a = (i * Math.PI) / n - Math.PI / 2;
+  const rr = i % 2 ? r * k : r;
+  return [x + Math.cos(a) * rr, y + Math.sin(a) * rr];
+}), c));
+const oX = (x, y, w, h, wd, c = INK) => [...oLn([[x - w * 0.7, y - h * 0.55], [x + w * 0.7, y + h * 0.55]], wd, c), ...oLn([[x - w * 0.7, y + h * 0.55], [x + w * 0.7, y - h * 0.55]], wd, c)];
+const oWave = (mx, my, hw, wd, c = INK) => oLn(Array.from({ length: 5 }, (_, i) => [mx - hw + (i * hw) / 2, my + (i % 2 ? -0.3 : 0.3)]), wd, c);
+const GH_EYES = [[27.4, 45, 1, 3.4, 4.3], [17.6, 45.4, -1, 3, 3.9]];
+const GH_LID = PORC.base;
+const GH_BROW = '#c8903a';
+const ghCogPts = (x, y, r, n = 6) => Array.from({ length: n * 4 }, (_, i) => {
+  const t = Math.floor(i / 4);
+  const k = i % 4;
+  const a = ((t + [-0.2, 0.2, 0.3, 0.7][k]) / n) * Math.PI * 2;
+  const rr = k < 2 ? r : r * 0.7;
+  return [x + Math.cos(a) * rr, y + Math.sin(a) * rr];
+});
+const ghLashes = (x, y, w, h, s, angles, len, wd) => angles.flatMap((a0) => {
+  const a = ((s > 0 ? a0 : 180 - a0) * Math.PI) / 180;
+  const [px, py] = [x + Math.cos(a) * w, y + Math.sin(a) * h];
+  return oLn([[px, py], [px + Math.cos(a) * len, py + Math.sin(a) * len]], wd);
+});
+const ghOwnFace = (mood) => {
+  const out = [];
+  for (const [x, y, s, w, h] of GH_EYES) {
+    const inner = mood === 'angry' ? 1.2 : mood === 'hurt' ? -1 : 0;
+    const lift = mood === 'shout' ? -0.8 : mood === 'happy' ? -0.3 : 0;
+    out.push(...oLn([[x - s * w * 0.9, y - h * 1.55 + lift + inner], [x + s * w * 0.15, y - h * 1.78 + lift + inner * 0.2], [x + s * w * 1.05, y - h * 1.6 + lift - inner * 0.3]], 0.55, GH_BROW));
+    if (mood === 'blink' || mood === 'sleep') {
+      // A doll's sleep-eyes: the painted lids drop shut, lashes hanging.
+      out.push(F(T(oRing(x, y, w, h), GH_LID)), ...oLn(oArc(x, y + h * 0.2, w, h * 0.55, 10, 170, 10), 1), ...ghLashes(x, y + h * 0.2, w, h * 0.55, s, [30, 65, 100], 1.1, 0.5));
+    } else if (mood === 'happy') out.push(...oLn(oArc(x, y + h * 0.35, w, h * 0.7, 200, 340, 8), 1), ...ghLashes(x, y + h * 0.35, w, h * 0.7, s, [-25, -50], 1, 0.5));
+    else if (mood === 'hurt' && s > 0) out.push(...oSquint(x, y, s, w * 0.8, 0.95), ...ghLashes(x, y, w * 0.8, h * 0.6, s, [35, 70], 0.8, 0.45));
+    else if (mood === 'dizzy') out.push(...oSpiral(x, y, w, 0.7, '#3a8ad8', s));
+    else {
+      const lid = mood === 'angry' ? (px) => y - h * 0.25 + (px - x) * -s * 0.55 : mood === 'dead' ? () => y : mood === 'hurt' ? () => y - h * 0.3 : mood === 'shout' ? () => -99 : () => y - h * 0.82;
+      const dull = mood === 'dead';
+      out.push(F(T(oRing(x, y, w, h), GH_LID)));
+      out.push(F(T(oCut(oRing(x, y, w, h), lid), INK)), F(T(oCut(oRing(x, y + h * 0.06, w * 0.84, h * 0.84), lid), dull ? '#8a9ab0' : '#3a8ad8')), F(T(oCut(oRing(x, y + h * 0.4, w * 0.66, h * 0.42), lid), dull ? '#a8b4c4' : '#8ad0f4')));
+      const [gx, gy] = mood === 'hurt' ? [x + s * w * 0.2, y + h * 0.32] : [x, y + h * 0.1];
+      out.push(F(T(oCut(ghCogPts(gx, gy, w * (mood === 'shout' ? 0.42 : 0.6)), lid), dull ? '#4a5060' : '#1a2a4a')), F(T(oCut(oRing(gx, gy, w * 0.16, w * 0.16, 0, 8), lid), dull ? '#8a9ab0' : '#3a8ad8')));
+      if (!dull) out.push(F(T(oCut(oRing(x + w * 0.34, y - h * 0.28, w * 0.24, w * 0.24, 0, 8), lid), '#ffffff')), F(E(x - w * 0.36, y + h * 0.5, w * 0.11, w * 0.11, '#ffffff')));
+      out.push(...oLn(oCut(oArc(x, y, w * 1.03, h * 1.02, 190, 350, 10), (px) => lid(px) - 0.25), 1.1));
+      if (mood === 'idle' || mood === 'shout') out.push(...ghLashes(x, y, w * 1.03, h * 1.02, s, [-25, -50, -75], 1.2, 0.55));
+      else out.push(...oLn([[x + s * w * 0.95, lid(x + s * w * 0.95) - 0.1], [x + s * w * 1.5, lid(x + s * w * 0.95) - 0.9]], 0.55));
+      out.push(...ghLashes(x, y, w * 1.02, h * 1.02, s, [25, 60, 95], 0.8, 0.45));
+    }
+  }
+  // Heart-shaped rouge.
+  if (mood !== 'dead') for (const [bx, by, k] of [[29.6, 49.8, 1], [15, 50, 0.85]]) {
+    const r = 1.05 * k;
+    out.push(F(E(bx - r * 0.55, by - r * 0.2, r * 0.68, r * 0.62, '#ff9aaa')), F(E(bx + r * 0.55, by - r * 0.2, r * 0.68, r * 0.62, '#ff9aaa')), F(T([[bx - r * 1.2, by - 0.05], [bx + r * 1.2, by - 0.05], [bx, by + r * 1.15]], '#ff9aaa')));
+  }
+  const [mx, my] = [23.4, 52];
+  if (mood === 'shout') out.push(F(E(mx, my + 0.4, 1.6, 2, RED.base)), F(E(mx, my + 0.5, 1.05, 1.45, '#6a1828')), F(E(mx, my + 1.3, 0.7, 0.4, '#ff8a9a')));
+  else if (mood === 'happy') out.push(F(T(oArc(mx, my - 0.4, 2, 1.8, 0, 180, 8), RED.base)), F(T(oArc(mx, my - 0.2, 1.4, 1.2, 0, 180, 8), '#6a1828')));
+  else if (mood === 'angry') out.push(F(E(mx, my + 0.2, 0.9, 0.45, RED.base)), ...oLn([[mx - 1.6, my + 0.6], [mx - 0.9, my + 0.25]], 0.35, RED.sh), ...oLn([[mx + 1.6, my + 0.6], [mx + 0.9, my + 0.25]], 0.35, RED.sh));
+  else if (mood === 'hurt' || mood === 'dizzy') out.push(...oWave(mx, my, 1.6, 0.5, RED.sh));
+  else if (mood === 'dead') out.push(F(E(mx, my + 0.3, 0.6, 0.7, RED.sh)));
+  else out.push(F(E(mx - 0.5, my - 0.15, 0.62, 0.45, RED.base)), F(E(mx + 0.5, my - 0.15, 0.62, 0.45, RED.base)), F(E(mx, my + 0.45, 0.85, 0.55, RED.base)), ...oLn([[mx - 0.8, my + 0.12], [mx, my + 0.25], [mx + 0.8, my + 0.12]], 0.3, '#8a2030'), F(E(mx + 0.25, my + 0.55, 0.25, 0.15, '#ffc0c8')));
+  if (mood === 'hurt') out.push(...oDrop(30.6, 48.4, 0.95));
+  return out;
+};
+const ghFace = (mood) => faceSprite(`gh2|face|${mood}`, 44, 66, () => ghOwnFace(mood));
 // The ringlets behind her head and a ringlet hanging at each side. Back: box 40 x 34, behind the
 // head's middle at (20, 14). Ringlet: box 10 x 22, hung from (5, 1).
 const hairBackP = () => [E(20, 14, 16, 14, GOLDH.sh), ...[5, 12, 28, 35].map((x, k) => E(x, 24 + (k % 2) * 2, 4.6, 4.6, GOLDH.sh))];
@@ -308,7 +401,7 @@ export function gearheartStill(pose, f, mood) {
     shapes: shift([
       ...put(keyP(0)(), [1, 10], -9, by - 10, 180), ...put(tailsP(), [14, 1], -7, by + 2), ...put(ringletP(true)(), [5, 1], nx - 14, ny - 14), ...put(hairBackP(), [20, 14], nx - 1, ny - 18),
       ...arm(true, 120, -30), ...leg('F', true), ...leg('N', false), ...put(coatP(), [15, 26], 0, by), ...put(ringletP(false)(), [5, 1], nx + 12, ny - 12),
-      ...put(headP(), [22, 62], nx, ny), ...put(faceShapes(MOODS.has(mood) ? mood : 'idle', FACE), [22, 62], nx, ny),
+      ...put(headP(), [22, 62], nx, ny), ...put(ghOwnFace(MOODS.has(mood) ? mood : 'idle'), [22, 62], nx, ny),
       ...put(caneP(), [6, 16], hx2, hy2, 0), ...arm(false, 70, -30),
     ], 60, 136),
   };

@@ -20,7 +20,7 @@
 import { E, T, F, R, stroke } from './kit.js';
 import { ramp, crescent } from './meadow.js';
 import { makeRig, stateBlend, clamp, smooth, TAU } from './rig.js';
-import { D2R, fr, arcP, taper, pairOf, faceSprite, hold, window1, stepPhase, pawStep, put, shift, MOODS, faceShapes, sparkle, puff, dot } from './rigkit.js';
+import { D2R, fr, arcP, taper, pairOf, faceSprite, hold, window1, stepPhase, pawStep, put, shift, MOODS, puff, dot, ownFace } from './rigkit.js';
 
 const at2 = (M, x, y) => [M[0] * x + M[2] * y + M[4], M[1] * x + M[3] * y + M[5]];
 const sized = (rig, k) => {
@@ -168,8 +168,7 @@ const MQ_FACES = {
   hurt: () => [...line([[EN[0] - 2.4, EN[1] - 1.8], [EN[0] + 1.4, EN[1]], [EN[0] - 2.4, EN[1] + 1.8]], 0.8), ...line([[EF[0] + 2, EF[1] - 1.6], [EF[0] - 1.2, EF[1]], [EF[0] + 2, EF[1] + 1.6]], 0.8), ...line(arcP(MX, MY + 1.6, 2, 1, 200, 340, 6), 0.8, LIP), ...blush()],
   dead: () => [...[EN, EF].flatMap(([x, y, r]) => line(Array.from({ length: 16 }, (_, i) => [x + Math.cos(i * 0.85) * (0.2 + i * r * 0.07), y + Math.sin(i * 0.85) * (0.2 + i * r * 0.07)]), 0.6)), ...line(arcP(MX, MY + 1.8, 2, 1, 200, 340, 6), 0.8, LIP)],
 };
-const FACE_FB = { eyes: [[EN[0], EN[1], 2.8, 3, 1], [EF[0], EF[1], 2.2, 2.4, -1]], mouth: [MX, MY, 1], blush: [[EN[0] + 0.8, EN[1] + 4.6, 1.4], [EF[0] - 1, EF[1] + 4.4, 1.2]], iris: '#7a5a3a', lid: 0.2, lashes: 1 };
-const mqFace = (mood) => faceSprite(`mq2|face|${mood}`, 34, 26, () => (MQ_FACES[mood] ?? (() => faceShapes(mood, FACE_FB)))());
+const mqFace = (mood) => faceSprite(`mq2|face|${mood}`, 34, 26, () => ownFace(MQ_FACES, mood));
 
 // ---------- Skeleton ----------
 const BODY_Y = 34;

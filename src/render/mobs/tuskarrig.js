@@ -15,10 +15,10 @@
 //           (m.move 'flop') a leg raised, a jump, and down on his belly; his Wargs (m.callAt) a clap
 //           and a roar.
 
-import { E, T, F, R, stroke } from './kit.js';
+import { E, T, F, stroke } from './kit.js';
 import { ramp, crescent } from './meadow.js';
 import { makeRig, stateBlend, clamp, smooth, TAU } from './rig.js';
-import { D2R, fr, arcP, taper, pairOf, faceSprite, hold, stepPhase, pawStep, put, shift, MOODS, faceShapes, sparkle, puff, dot } from './rigkit.js';
+import { D2R, fr, arcP, taper, pairOf, faceSprite, hold, stepPhase, pawStep, put, shift, MOODS, sparkle, puff, ownFace } from './rigkit.js';
 
 const at2 = (M, x, y) => [M[0] * x + M[2] * y + M[4], M[1] * x + M[3] * y + M[5]];
 const sized = (rig, k) => {
@@ -130,8 +130,7 @@ const TK_FACES = {
   hurt: () => [...line([[EN[0] - 2.2, EN[1] - 1.8], [EN[0] + 1.2, EN[1]], [EN[0] - 2.2, EN[1] + 1.8]], 0.8), ...line([[EF[0] + 1.8, EF[1] - 1.6], [EF[0] - 1.2, EF[1]], [EF[0] + 1.8, EF[1] + 1.6]], 0.8), ...brows(-1, -1.4), ...line(arcP(MX, MY + 1.6, 2.4, 1, 200, 340, 6), 0.8, LIP), ...blush()],
   dead: () => [...swirl(EN), ...swirl(EF), ...line(arcP(MX, MY + 1.8, 2.4, 1, 200, 340, 6), 0.8, LIP)],
 };
-const FACE_FB = { eyes: [[EN[0], EN[1], 2.2, 2.4, 1], [EF[0], EF[1], 1.8, 2, -1]], mouth: [MX, MY, 1], blush: [[EN[0] + 1, EN[1] + 4.2, 1.4], [EF[0] - 1.4, EF[1] + 4.2, 1.2]], iris: INK, lid: 0, lashes: 0 };
-const tkFace = (mood) => faceSprite(`tk2|face|${mood}`, 34, 28, () => (TK_FACES[mood] ?? (() => faceShapes(mood, FACE_FB)))());
+const tkFace = (mood) => faceSprite(`tk2|face|${mood}`, 34, 28, () => ownFace(TK_FACES, mood));
 
 // ---------- Skeleton ----------
 const BODY_Y = 38;

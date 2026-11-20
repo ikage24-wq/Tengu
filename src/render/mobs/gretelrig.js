@@ -21,7 +21,7 @@
 import { E, T, F, R, stroke } from './kit.js';
 import { ramp, crescent } from './meadow.js';
 import { makeRig, stateBlend, blend, clamp, smooth, TAU } from './rig.js';
-import { D2R, fr, arcP, taper, pairOf, faceSprite, hold, stepPhase, pawStep, put, shift, MOODS, faceShapes, sparkle, puff } from './rigkit.js';
+import { D2R, fr, arcP, taper, pairOf, faceSprite, hold, stepPhase, pawStep, put, shift, MOODS, sparkle, puff, ownFace } from './rigkit.js';
 
 const at2 = (M, x, y) => [M[0] * x + M[2] * y + M[4], M[1] * x + M[3] * y + M[5]];
 const sized = (rig, k) => {
@@ -148,8 +148,7 @@ const GT_FACES = {
   hurt: () => [...line([[EN[0] - 2.4, EN[1] - 1.8], [EN[0] + 1.4, EN[1]], [EN[0] - 2.4, EN[1] + 1.8]], 0.7), ...line([[EF[0] + 2, EF[1] - 1.8], [EF[0] - 1.2, EF[1]], [EF[0] + 2, EF[1] + 1.8]], 0.7), ...brows([[HX + 3.4, HY - 5], [HX + 9, HY - 3]], [[HX - 5.4, HY - 3], [HX - 0.8, HY - 5]]), ...frown(), E(HX + 10.6, HY + 3, 0.9, 1.4, '#6ec4ff')],
   dead: () => [...line([[EN[0] - 2, EN[1] - 2], [EN[0] + 2, EN[1] + 2]], 0.7), ...line([[EN[0] + 2, EN[1] - 2], [EN[0] - 2, EN[1] + 2]], 0.7), ...line([[EF[0] - 1.8, EF[1] - 1.8], [EF[0] + 1.8, EF[1] + 1.8]], 0.6), ...line([[EF[0] + 1.8, EF[1] - 1.8], [EF[0] - 1.8, EF[1] + 1.8]], 0.6), ...openM(0.6)],
 };
-const FACE_FB = { eyes: [[EN[0], EN[1], 2.4, 2.8, 1], [EF[0], EF[1], 2.2, 2.6, -1]], mouth: [MOUTH[0], MOUTH[1], 1], blush: [[HX - 7, HY + 5.2, 1.6], [HX + 11.4, HY + 4.6, 1.6]], iris: '#3a7ad8', lid: 0, lashes: 1 };
-const gtFace = (mood) => faceSprite(`gt2|face|${mood}`, 36, 32, () => (GT_FACES[mood] ?? (() => faceShapes(mood, FACE_FB)))());
+const gtFace = (mood) => faceSprite(`gt2|face|${mood}`, 36, 32, () => ownFace(GT_FACES, mood));
 
 // ---------- Skeleton ----------
 const HIP = 22;

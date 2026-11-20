@@ -17,9 +17,9 @@
 
 import { E, T, F, stroke } from './kit.js';
 import { ramp, crescent } from './meadow.js';
-import { makeRig, stateBlend, clamp, smooth, TAU } from './rig.js';
-import { simpleEye } from './faces.js';
-import { D2R, INK, fr, arcP, taper, pairOf, faceSprite, hold, window1, stepPhase, put, shift, MOODS, moodOf, faceShapes, sparkle, dot } from './rigkit.js';
+import { makeRig, stateBlend, TAU } from './rig.js';
+
+import { D2R, INK, fr, arcP, taper, pairOf, faceSprite, hold, window1, stepPhase, put, shift, MOODS, moodOf, sparkle, dot } from './rigkit.js';
 
 const smoothPts = (pts, n = 3) => {
   let q = pts;
@@ -117,15 +117,83 @@ const SP = {
   UP: [false, true].map((f) => cr(`up${f ? 1 : 0}`, 12, 10, upP(f), 2)), FORE: [false, true].map((f) => cr(`fore${f ? 1 : 0}`, 14, 8, foreP(f), 2)),
   BOWL: cr('bowl', 26, 24, bowlP, 2),
 };
-const CR_FACE = { eyes: [[27.6, 42.4, 3.8, 4.8, 1], [17.4, 42.8, 3.3, 4.3, -1]], mouth: [23, 50, 2.8], blush: [[29.6, 47.2, 2.4], [15.6, 47.4, 2]], iris: '#3aa8c8', k: 1.8, lid: 0, lashes: 1 };
-// (Her sad face for her scenes: drooping brows, a little frown.)
+// Her own face, the sea's: sea-glass eyes (deep teal fading to aqua) with a pearl of light, long lashes
+// ending in a little fin flick, pink scales for a blush, soft rosy lips; she sings open-mouthed to shout.
+// Her sad face for her scenes: drooping brows, brimming eyes, a little frown. Box 44 x 62.
+const oLn = (pts, w, c = INK) => {
+  const l = [];
+  const r = [];
+  pts.forEach(([x, y], i) => {
+    const [ax, ay] = pts[Math.max(0, i - 1)];
+    const [bx, by] = pts[Math.min(pts.length - 1, i + 1)];
+    const d = Math.hypot(bx - ax, by - ay) || 1;
+    const nx = ((-(by - ay) / d) * w) / 2;
+    const ny = (((bx - ax) / d) * w) / 2;
+    l.push([x + nx, y + ny]);
+    r.push([x - nx, y - ny]);
+  });
+  return [F(T([...l, ...r.reverse()], c))];
+};
+const oArc = (cx, cy, rx, ry, a0, a1, n = 8) => Array.from({ length: n + 1 }, (_, i) => {
+  const a = ((a0 + ((a1 - a0) * i) / n) * Math.PI) / 180;
+  return [cx + Math.cos(a) * rx, cy + Math.sin(a) * ry];
+});
+const oRing = (cx, cy, rx, ry, rot = 0, n = 16) => Array.from({ length: n }, (_, i) => {
+  const a = (i / n) * Math.PI * 2;
+  const x = Math.cos(a) * rx;
+  const y = Math.sin(a) * ry;
+  return [cx + x * Math.cos(rot) - y * Math.sin(rot), cy + x * Math.sin(rot) + y * Math.cos(rot)];
+});
+const oCut = (pts, lid) => pts.map(([px, py]) => [px, Math.max(py, lid(px))]);
+const oSquint = (x, y, s, r, w, c = INK) => oLn([[x + s * r, y - r], [x - s * r * 0.8, y], [x + s * r, y + r]], w, c);
+const oSpiral = (x, y, r, w, c, s = 1) => oLn(Array.from({ length: 15 }, (_, i) => [x + Math.cos(i * 0.8 * s) * r * (0.12 + i / 15), y + Math.sin(i * 0.8 * s) * r * (0.12 + i / 15)]), w, c);
+const oDrop = (x, y, r, c = '#9ad8ff') => [F(E(x, y, r * 0.7, r, c)), F(E(x - r * 0.2, y - r * 0.3, r * 0.25, r * 0.25, '#ffffff'))];
+const oStar = (x, y, r, c, n = 5, k = 0.45) => F(T(Array.from({ length: n * 2 }, (_, i) => {
+  const a = (i * Math.PI) / n - Math.PI / 2;
+  const rr = i % 2 ? r * k : r;
+  return [x + Math.cos(a) * rr, y + Math.sin(a) * rr];
+}), c));
+const oX = (x, y, w, h, wd, c = INK) => [...oLn([[x - w * 0.7, y - h * 0.55], [x + w * 0.7, y + h * 0.55]], wd, c), ...oLn([[x - w * 0.7, y + h * 0.55], [x + w * 0.7, y - h * 0.55]], wd, c)];
+const oWave = (mx, my, hw, wd, c = INK) => oLn(Array.from({ length: 5 }, (_, i) => [mx - hw + (i * hw) / 2, my + (i % 2 ? -0.3 : 0.3)]), wd, c);
+const CR_EYES = [[27.6, 42.4, 1, 3.8, 4.8], [17.4, 42.8, -1, 3.3, 4.3]];
+const CR_LIPS = '#d85a7a';
+const CR_MOUTH = '#a83a5a';
 const crFaceShapes = (mood) => {
-  if (mood !== 'sad') return faceShapes(mood, CR_FACE);
   const out = [];
-  for (const [x, y, w, h, sd] of CR_FACE.eyes) out.push(...simpleEye(x, y, { s: -sd, w, h, mood: 'angry', iris: CR_FACE.iris, ink: INK, wing: 1 }));
-  for (const [x, y, rx] of CR_FACE.blush) out.push(F(E(x, y, rx, rx * 0.5, '#ff9fb4')));
-  const [mx, my, mw] = CR_FACE.mouth;
-  out.push(...stroke(arcP(mx, my + 1.4, mw * 0.45, mw * 0.3, 200, 340, 6), 0.8, INK));
+  for (const [x, y, s, w, h] of CR_EYES) {
+    const fin = (yy) => [F(T([[x + s * w * 0.7, yy - h * 0.12], [x + s * w * 1.45, yy - h * 0.55], [x + s * w * 1.15, yy - h * 0.12], [x + s * w * 1.4, yy + h * 0.1]], TAIL.base)), ...oLn([[x + s * w * 0.7, yy - h * 0.12], [x + s * w * 1.4, yy - h * 0.5]], 0.6)];
+    // Fine brows: drooping (inner ends up) when sad or hurt, knitted when cross.
+    const inner = mood === 'sad' || mood === 'hurt' ? -1.1 : mood === 'angry' ? 1 : 0;
+    const lift = mood === 'shout' ? -0.8 : mood === 'happy' ? -0.4 : 0;
+    out.push(...oLn([[x - s * w * 0.95, y - h * 1.32 + lift + inner], [x + s * w * 0.1, y - h * 1.5 + lift], [x + s * w * 1.05, y - h * 1.38 + lift - inner * 0.3]], 0.7, HAIR.sh));
+    if (mood === 'blink' || mood === 'sleep') out.push(...oLn(oArc(x, y + 0.5, w, h * 0.35, 15, 165, 8), 1), ...fin(y + 0.3));
+    else if (mood === 'happy') out.push(...oLn(oArc(x, y + h * 0.35, w, h * 0.7, 200, 340, 8), 1), ...fin(y - h * 0.15));
+    else if (mood === 'hurt') out.push(...oSquint(x, y, s, w * 0.8, 0.9));
+    else if (mood === 'dizzy') out.push(...oSpiral(x, y, w, 0.75, '#2a8aa8', s));
+    else if (mood === 'dead') out.push(...oLn([[x - w * 0.8, y + 0.4], [x + w * 0.8, y + 0.4]], 0.8), ...fin(y + 0.3));
+    else {
+      const lid = mood === 'angry' ? (px) => y - h * 0.3 + (px - x) * -s * 0.5 : mood === 'sad' ? (px) => y - h * 0.55 + (px - x) * s * 0.3 : mood === 'shout' ? () => -99 : () => y - h * 0.8;
+      out.push(F(T(oCut(oRing(x, y, w, h), lid), INK)), F(T(oCut(oRing(x, y + h * 0.08, w * 0.84, h * 0.84), lid), '#1a6a8a')), F(T(oCut(oRing(x, y + h * 0.42, w * 0.7, h * 0.45), lid), '#4ac8d8')), F(T(oCut(oRing(x, y + h * 0.58, w * 0.42, h * 0.22), lid), '#a8f0e8')));
+      if (mood !== 'shout') out.push(F(T(oCut(oRing(x, y + h * 0.05, w * 0.3, h * 0.32), lid), '#0e3a50')));
+      out.push(F(T(oCut(oRing(x + w * 0.32, y - h * 0.22, w * 0.27, w * 0.27, 0, 10), lid), PEARL)), F(E(x - w * 0.36, y + h * 0.36, w * 0.12, w * 0.12, '#ffffff')), F(E(x - w * 0.14, y + h * 0.56, w * 0.07, w * 0.07, '#ffffff')));
+      if (mood === 'sad') out.push(...oLn(oArc(x, y + h * 0.1, w * 0.86, h * 0.86, 30, 150, 8), 0.5, '#9ae8f0'));
+      out.push(...oLn(oCut(oArc(x, y, w * 1.04, h * 1.02, 192, 348, 10), (px) => lid(px) - 0.25), 1.05), ...fin(Math.max(y - h * 0.32, lid(x + s * w * 0.7))));
+    }
+  }
+  // A blush of little pink scales.
+  if (mood !== 'dead') for (const [bx, by, k] of [[29.8, 47.4, 1], [15.4, 47.6, 0.85]]) {
+    out.push(F(E(bx, by, 2.3 * k, 1.1 * k, '#ffc8d0')));
+    for (const [dx, dy] of [[-0.8, -0.35], [0.8, -0.35], [0, 0.45]]) out.push(...oLn(oArc(bx + dx * k, by + dy * k, 0.75 * k, 0.6 * k, 15, 165, 5), 0.42, '#ff8aa4'));
+  }
+  const [mx, my] = [23, 50];
+  if (mood === 'shout') out.push(F(E(mx, my + 0.5, 1.5, 2, CR_MOUTH)), F(E(mx, my + 1.6, 0.9, 0.5, '#ff9ab4')));
+  else if (mood === 'happy') out.push(F(T(oArc(mx, my - 0.5, 2.3, 2.1, 0, 180, 8), CR_MOUTH)), F(E(mx, my + 0.9, 1.1, 0.5, '#ff9ab4')));
+  else if (mood === 'sad') out.push(...oLn(oArc(mx, my + 1.4, 1.5, 1, 205, 335, 6), 0.7, CR_LIPS));
+  else if (mood === 'angry') out.push(...oLn([[mx - 1.5, my + 0.4], [mx, my], [mx + 1.5, my + 0.4]], 0.7, CR_LIPS));
+  else if (mood === 'hurt' || mood === 'dizzy') out.push(...oWave(mx, my, 1.7, 0.6, CR_LIPS));
+  else if (mood === 'dead') out.push(F(E(mx, my + 0.3, 0.7, 0.8, CR_MOUTH)));
+  else out.push(...oLn(oArc(mx, my - 0.8, 1.9, 1.3, 25, 155, 6), 0.7, CR_LIPS), F(E(mx, my + 0.95, 0.75, 0.32, '#ff9ab4')));
+  if (mood === 'hurt') out.push(...oDrop(30.6, 45.6, 1, '#a8e8f8'));
   return out;
 };
 const crFace = (mood) => faceSprite(`cr2|face|${mood}`, 44, 62, () => crFaceShapes(mood));

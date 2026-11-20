@@ -20,9 +20,9 @@
 //           'erupt', a cast bar): a deep crouch, a leap, and she lands with the whole crater.
 
 import { E, T, F, R, stroke } from './kit.js';
-import { ramp, crescent } from './meadow.js';
+import { ramp } from './meadow.js';
 import { makeRig, stateBlend, blend, clamp, smooth, TAU } from './rig.js';
-import { D2R, fr, arcP, taper, pairOf, faceSprite, hold, stepPhase, pawStep, put, shift, MOODS, faceShapes, sparkle, puff } from './rigkit.js';
+import { D2R, fr, arcP, taper, pairOf, faceSprite, hold, stepPhase, pawStep, put, shift, MOODS, sparkle, puff, ownFace } from './rigkit.js';
 
 const at2 = (M, x, y) => [M[0] * x + M[2] * y + M[4], M[1] * x + M[3] * y + M[5]];
 const smoothPts = (pts, n = 3) => {
@@ -161,8 +161,7 @@ const BB_FACES = {
   hurt: () => [...line([[EN[0] - 3, EN[1] - 2.2], [EN[0] + 1.6, EN[1]], [EN[0] - 3, EN[1] + 2.2]], 0.8), ...line([[EF[0] + 2.6, EF[1] - 2], [EF[0] - 1.4, EF[1]], [EF[0] + 2.6, EF[1] + 2]], 0.8), ...brows([[23, 13], [30, 15.4]], [[12.6, 15.4], [18, 13]]), ...pout(), E(31, 22, 1.1, 1.6, '#6ec4ff')],
   dead: () => [...line([[EN[0] - 2.6, EN[1] - 2.6], [EN[0] + 2.6, EN[1] + 2.6]], 0.8), ...line([[EN[0] + 2.6, EN[1] - 2.6], [EN[0] - 2.6, EN[1] + 2.6]], 0.8), ...line([[EF[0] - 2.2, EF[1] - 2.2], [EF[0] + 2.2, EF[1] + 2.2]], 0.7), ...line([[EF[0] + 2.2, EF[1] - 2.2], [EF[0] - 2.2, EF[1] + 2.2]], 0.7), ...openM(0.6)],
 };
-const FACE_FB = { eyes: [[EN[0], EN[1], 3, 3.4, 1], [EF[0], EF[1], 2.6, 3, -1]], mouth: [MOUTH[0], MOUTH[1], 1], blush: [[10, 25, 1.6], [31, 25, 1.6]], iris: '#c83a6a', lid: 0, lashes: 1 };
-const bbFace = (mood) => faceSprite(`bb2|face|${mood}`, 36, 34, () => (BB_FACES[mood] ?? (() => faceShapes(mood, FACE_FB)))());
+const bbFace = (mood) => faceSprite(`bb2|face|${mood}`, 36, 34, () => ownFace(BB_FACES, mood));
 
 // ---------- Skeleton ----------
 // (The hip 20 above the floor; the bottom tier sits 2 under it, the middle tier on top of that

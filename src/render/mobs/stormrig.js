@@ -18,7 +18,7 @@
 import { E, T, F, stroke } from './kit.js';
 import { ramp } from './meadow.js';
 import { makeRig, stateBlend, clamp, TAU } from './rig.js';
-import { D2R, arcP, pairOf, faceSprite, hold, put, MOODS, faceShapes, sparkle, INK } from './rigkit.js';
+import { D2R, pairOf, faceSprite, hold, put, MOODS, sparkle, INK } from './rigkit.js';
 
 const at2 = (M, x, y) => [M[0] * x + M[2] * y + M[4], M[1] * x + M[3] * y + M[5]];
 const sized = (rig, k) => {
@@ -64,18 +64,89 @@ const PARTS = Object.fromEntries(['storm', 'clear'].map((coat) => [coat, {
   ARM: [false, true].map((f) => sk(`arm${f ? 1 : 0}|${coat}`, 20, 12, armP(coat, f), 2)),
 }]));
 const BOLT = sk('bolt', 14, 22, boltP, 2);
-// Its face: big wet eyes, the near one bigger, a pout. Box 64 x 48 (over the cloud).
-const SULK_FACE = { eyes: [[37.4, 23, 3.2, 3.6, 1], [27.6, 23.4, 2.7, 3.1, -1]], mouth: [33, 30.6, 2.4], blush: [[23.6, 28.4, 1.9], [41.6, 28.4, 1.7]], iris: '#4a5a9a', lid: 0 };
-const line = (pts, w, c = INK) => stroke(pts, w, c).map(F);
-// Its sulk: big wet eyes under worried brows, a pout, a tear on its cheek (its blink keeps the pout).
+// Its own face: brimming eyes (navy, tears welling along the bottom, two big glints), worried brows,
+// a pout with its lower lip stuck out and gloom streaks under its eyes; a tear sits on its cheek. Puffs up
+// cross with red cheeks and a little bolt for an anger mark; wails with its eyes squeezed shut and tears
+// streaming. Box 64 x 48 (over the cloud).
+const oLn = (pts, w, c = INK) => {
+  const l = [];
+  const r = [];
+  pts.forEach(([x, y], i) => {
+    const [ax, ay] = pts[Math.max(0, i - 1)];
+    const [bx, by] = pts[Math.min(pts.length - 1, i + 1)];
+    const d = Math.hypot(bx - ax, by - ay) || 1;
+    const nx = ((-(by - ay) / d) * w) / 2;
+    const ny = (((bx - ax) / d) * w) / 2;
+    l.push([x + nx, y + ny]);
+    r.push([x - nx, y - ny]);
+  });
+  return [F(T([...l, ...r.reverse()], c))];
+};
+const oArc = (cx, cy, rx, ry, a0, a1, n = 8) => Array.from({ length: n + 1 }, (_, i) => {
+  const a = ((a0 + ((a1 - a0) * i) / n) * Math.PI) / 180;
+  return [cx + Math.cos(a) * rx, cy + Math.sin(a) * ry];
+});
+const oRing = (cx, cy, rx, ry, rot = 0, n = 16) => Array.from({ length: n }, (_, i) => {
+  const a = (i / n) * Math.PI * 2;
+  const x = Math.cos(a) * rx;
+  const y = Math.sin(a) * ry;
+  return [cx + x * Math.cos(rot) - y * Math.sin(rot), cy + x * Math.sin(rot) + y * Math.cos(rot)];
+});
+const oCut = (pts, lid) => pts.map(([px, py]) => [px, Math.max(py, lid(px))]);
+const oSquint = (x, y, s, r, w, c = INK) => oLn([[x + s * r, y - r], [x - s * r * 0.8, y], [x + s * r, y + r]], w, c);
+const oSpiral = (x, y, r, w, c, s = 1) => oLn(Array.from({ length: 15 }, (_, i) => [x + Math.cos(i * 0.8 * s) * r * (0.12 + i / 15), y + Math.sin(i * 0.8 * s) * r * (0.12 + i / 15)]), w, c);
+const oDrop = (x, y, r, c = '#9ad8ff') => [F(E(x, y, r * 0.7, r, c)), F(E(x - r * 0.2, y - r * 0.3, r * 0.25, r * 0.25, '#ffffff'))];
+const oStar = (x, y, r, c, n = 5, k = 0.45) => F(T(Array.from({ length: n * 2 }, (_, i) => {
+  const a = (i * Math.PI) / n - Math.PI / 2;
+  const rr = i % 2 ? r * k : r;
+  return [x + Math.cos(a) * rr, y + Math.sin(a) * rr];
+}), c));
+const oX = (x, y, w, h, wd, c = INK) => [...oLn([[x - w * 0.7, y - h * 0.55], [x + w * 0.7, y + h * 0.55]], wd, c), ...oLn([[x - w * 0.7, y + h * 0.55], [x + w * 0.7, y - h * 0.55]], wd, c)];
+const oWave = (mx, my, hw, wd, c = INK) => oLn(Array.from({ length: 5 }, (_, i) => [mx - hw + (i * hw) / 2, my + (i % 2 ? -0.3 : 0.3)]), wd, c);
+const SU_EYES = [[37.4, 23, 1, 3.2, 3.6], [27.6, 23.4, -1, 2.7, 3.1]];
+const SU_LIP = '#7a3040';
+const SU_TEAR = '#a8d8ff';
 const sulkShapes = (mood) => {
-  if (mood !== 'idle' && mood !== 'blink') return faceShapes(mood, SULK_FACE);
-  return [
-    ...faceShapes(mood === 'blink' ? 'sleep' : 'idle', { ...SULK_FACE, mouth: [-40, -40, 0.1] }),
-    ...line(arcP(33, 32.6, 2.4, 1.5, 200, 340, 6), 0.7, '#7a3040'),
-    ...line([[34.4, 18.2], [40.4, 19.8]], 0.8), ...line([[30.4, 18.8], [24.8, 20.2]], 0.8),
-    F(E(41.4, 26.8, 0.9, 1.5, '#bfe4ff')),
-  ];
+  const out = [];
+  for (const [x, y, s, w, h] of SU_EYES) {
+    const inner = mood === 'angry' ? 1.3 : mood === 'happy' ? 0.2 : -1.2;
+    const lift = mood === 'shout' ? -0.6 : 0;
+    if (mood !== 'dead') out.push(...oLn([[x - s * w * 0.9, y - h * 1.45 + lift + inner], [x + s * w * 0.95, y - h * 1.55 + lift - inner * 0.35]], 0.8));
+    if (mood === 'blink' || mood === 'sleep') out.push(...oLn(oArc(x, y + 0.3, w, h * 0.38, 15, 165, 8), 0.85));
+    else if (mood === 'happy') out.push(...oLn(oArc(x, y + h * 0.35, w, h * 0.7, 200, 340, 8), 0.85));
+    else if (mood === 'hurt' || mood === 'shout') out.push(...oSquint(x, y, s, w * 0.8, 0.85));
+    else if (mood === 'dizzy') out.push(...oSpiral(x, y, w, 0.65, '#4a5a9a', s));
+    else if (mood === 'dead') out.push(...oX(x, y, w, h, 0.75));
+    else {
+      const lid = mood === 'angry' ? (px) => y - h * 0.25 + (px - x) * -s * 0.55 : () => y - h * 0.9;
+      const wy = (px) => y + h * 0.3 + Math.sin((px - x) * 2.2) * 0.22;
+      out.push(F(T(oCut(oRing(x, y, w, h), lid), INK)), F(T(oCut(oRing(x, y + h * 0.05, w * 0.86, h * 0.86), lid), '#3a4a8a')));
+      out.push(F(T(oCut(oRing(x, y - h * 0.05, w * 0.36, h * 0.38), lid), '#1a2050')));
+      // The welling tears: a wobbly band of water along the bottom of each eye.
+      out.push(F(T(oCut(oCut(oRing(x, y + h * 0.05, w * 0.86, h * 0.86), lid), wy), '#6a9ae0')), ...oLn(Array.from({ length: 7 }, (_, i) => { const px = x - w * 0.62 + (i / 6) * w * 1.24; return [px, wy(px)]; }), 0.35, '#c8e8ff'));
+      out.push(F(T(oCut(oRing(x + w * 0.3, y - h * 0.38, w * 0.32, w * 0.32, 0, 10), lid), '#ffffff')), F(E(x - w * 0.35, y + h * 0.02, w * 0.14, w * 0.14, '#ffffff')), F(E(x + w * 0.25, y + h * 0.55, w * 0.1, w * 0.1, '#ffffff')));
+      out.push(...oLn(oCut(oArc(x, y, w * 1.02, h * 1.02, 190, 350, 10), (px) => lid(px) - 0.2), 0.9));
+    }
+    // Gloom streaks under each eye while it sulks.
+    if (mood === 'idle' || mood === 'blink' || mood === 'sleep' || mood === 'hurt') for (const k of [-1, 0, 1]) out.push(...oLn([[x + k * w * 0.55 + 0.25, y + h * 1.3], [x + k * w * 0.55 - 0.25, y + h * 1.8]], 0.4, '#7a8ac8'));
+    // Wailing: tears stream down from shut eyes.
+    if (mood === 'shout') out.push(...oLn([[x + s * w * 0.2, y + h * 0.5], [x + s * w * 0.45, y + h * 1.6], [x + s * w * 0.4, y + h * 2.6]], 1, SU_TEAR), ...oLn([[x + s * w * 0.1, y + h * 0.9], [x + s * w * 0.25, y + h * 1.8]], 0.3, '#ffffff'));
+  }
+  if (mood === 'angry' || mood === 'happy') for (const [bx, by, r] of [[23.6, 28.4, 1.9], [41.6, 28.4, 1.7]]) {
+    const k = mood === 'angry' ? 1.25 : 1;
+    out.push(F(E(bx, by, r * k, r * 0.6 * k, '#f4a0b8')));
+  }
+  if (mood === 'angry') out.push(F(T([[44.6, 14.6], [46.6, 14.8], [45.5, 16.8], [47.2, 16.8], [44.2, 20.6], [45.1, 17.9], [43.7, 17.8]], '#ffd84a')));
+  const [mx, my] = [33, 30.6];
+  if (mood === 'shout') out.push(F(T(oArc(mx, my - 0.8, 2.6, 2.6, 0, 180, 8), '#5a1a2a')), F(E(mx, my + 1, 1.3, 0.55, '#ff8fab')));
+  else if (mood === 'happy') out.push(...oLn(oArc(mx, my - 1.2, 1.8, 1.5, 25, 155, 6), 0.7, SU_LIP));
+  else if (mood === 'angry') out.push(...oLn([[mx - 1.8, my + 0.3], [mx - 0.6, my - 0.1], [mx + 0.6, my + 0.1], [mx + 1.8, my - 0.2]], 0.7, SU_LIP));
+  else if (mood === 'hurt' || mood === 'dizzy') out.push(...oWave(mx, my, 1.8, 0.6, SU_LIP));
+  else if (mood === 'dead') out.push(F(E(mx, my + 0.3, 0.7, 0.8, SU_LIP)));
+  else out.push(...oLn(oArc(mx, my + 2, 2.3, 1.5, 205, 335, 7), 0.75, SU_LIP), F(T(oArc(mx, my + 0.75, 1, 0.65, 0, 180, 6), '#e88aa0')));
+  if (mood === 'idle' || mood === 'blink') out.push(...oDrop(41.4, 27, 0.95, SU_TEAR));
+  if (mood === 'hurt') out.push(...oDrop(41.6, 27.4, 1.05, SU_TEAR), ...oDrop(24.4, 27.8, 0.9, SU_TEAR));
+  return out;
 };
 const sulkFace = (mood) => faceSprite(`sulk|face2|${mood}`, 64, 48, () => sulkShapes(mood));
 

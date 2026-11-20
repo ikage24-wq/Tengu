@@ -14,8 +14,8 @@
 //           bonking you with its head.
 //   hit     the shell rattles, the hat jumps.
 
-import { E, T, F, stroke } from './kit.js';
-import { simpleEye, deadEye, tear, vein } from './faces.js';
+import { E, T, F } from './kit.js';
+
 import { ramp, crescent, shine } from './meadow.js';
 import { part, partBare, makeRig, stateBlend, smooth, clamp, TAU } from './rig.js';
 import { sprite } from '../pixel.js';
@@ -86,24 +86,75 @@ const tailShapes = (i) => () => {
   const w1 = w0 - 0.6;
   return [E(1.4, 2, w0 / 2 + 0.1, w0 / 2 + 0.1, SKIN.base), T([[1.4, 2 - w0 / 2], [4.8, 2 - w1 / 2], [4.8, 2 + w1 / 2], [1.4, 2 + w0 / 2]], SKIN.base), E(4.8, 2, w1 / 2, w1 / 2, SKIN.base)];
 };
-// The face (bare): huge glossy eyes, little nostrils, a small smile.
+// The face (bare): a hatchling gecko's. Big gold-green eyes with a slit pupil and two glints under a
+// soft brow ridge, a long smile that curls up at the back, a nostril; a pink tongue blep when happy, a
+// hiss with its tongue out to shout, and its stare goes bright gold when cross (the basilisk glare).
 const MOODS = new Set(['idle', 'angry', 'hurt', 'happy', 'blink', 'dead', 'shout']);
+const oLn = (pts, w, c = INK) => {
+  const l = [];
+  const r = [];
+  pts.forEach(([x, y], i) => {
+    const [ax, ay] = pts[Math.max(0, i - 1)];
+    const [bx, by] = pts[Math.min(pts.length - 1, i + 1)];
+    const d = Math.hypot(bx - ax, by - ay) || 1;
+    const nx = ((-(by - ay) / d) * w) / 2;
+    const ny = (((bx - ax) / d) * w) / 2;
+    l.push([x + nx, y + ny]);
+    r.push([x - nx, y - ny]);
+  });
+  return [F(T([...l, ...r.reverse()], c))];
+};
+const oArc = (cx, cy, rx, ry, a0, a1, n = 8) => Array.from({ length: n + 1 }, (_, i) => {
+  const a = ((a0 + ((a1 - a0) * i) / n) * Math.PI) / 180;
+  return [cx + Math.cos(a) * rx, cy + Math.sin(a) * ry];
+});
+const oRing = (cx, cy, rx, ry, rot = 0, n = 16) => Array.from({ length: n }, (_, i) => {
+  const a = (i / n) * Math.PI * 2;
+  const x = Math.cos(a) * rx;
+  const y = Math.sin(a) * ry;
+  return [cx + x * Math.cos(rot) - y * Math.sin(rot), cy + x * Math.sin(rot) + y * Math.cos(rot)];
+});
+const oCut = (pts, lid) => pts.map(([px, py]) => [px, Math.max(py, lid(px))]);
+const oSquint = (x, y, s, r, w, c = INK) => oLn([[x + s * r, y - r], [x - s * r * 0.8, y], [x + s * r, y + r]], w, c);
+const oSpiral = (x, y, r, w, c, s = 1) => oLn(Array.from({ length: 15 }, (_, i) => [x + Math.cos(i * 0.8 * s) * r * (0.12 + i / 15), y + Math.sin(i * 0.8 * s) * r * (0.12 + i / 15)]), w, c);
+const oDrop = (x, y, r, c = '#9ad8ff') => [F(E(x, y, r * 0.7, r, c)), F(E(x - r * 0.2, y - r * 0.3, r * 0.25, r * 0.25, '#ffffff'))];
+const oStar = (x, y, r, c, n = 5, k = 0.45) => F(T(Array.from({ length: n * 2 }, (_, i) => {
+  const a = (i * Math.PI) / n - Math.PI / 2;
+  const rr = i % 2 ? r * k : r;
+  return [x + Math.cos(a) * rr, y + Math.sin(a) * rr];
+}), c));
+const oX = (x, y, w, h, wd, c = INK) => [...oLn([[x - w * 0.7, y - h * 0.55], [x + w * 0.7, y + h * 0.55]], wd, c), ...oLn([[x - w * 0.7, y + h * 0.55], [x + w * 0.7, y - h * 0.55]], wd, c)];
+const oWave = (mx, my, hw, wd, c = INK) => oLn(Array.from({ length: 5 }, (_, i) => [mx - hw + (i * hw) / 2, my + (i % 2 ? -0.3 : 0.3)]), wd, c);
+const BH_EYES = [[10, 7.6, -1, 2.1, 2.7], [14.4, 7.2, 1, 1.6, 2.2]];
+const BH_TONGUE = '#ff8aa8';
 const faceShapes = (mood) => () => {
   const out = [];
-  if (mood === 'dead') out.push(...deadEye(10, 7.6, 1.5, { c: INK, th: 0.5 }), ...deadEye(14.4, 7.2, 1.2, { c: INK, th: 0.5 }));
-  else {
-    const so = { iris: '#2e7a5a', ink: INK, lid: 0, mood: mood === 'shout' ? 'angry' : mood };
-    out.push(...simpleEye(10, 7.6, { ...so, s: -1, w: 2.1, h: 2.7 }), ...simpleEye(14.4, 7.2, { ...so, s: 1, w: 1.6, h: 2.2 }));
-    out.push(F(E(8.6, 11, 1.4, 0.7, '#ffa8b4')));
+  for (const [x, y, s, w, h] of BH_EYES) {
+    const knit = mood === 'angry' ? 0.8 : mood === 'hurt' ? -0.5 : 0;
+    out.push(...oLn([[x - s * w * 1.05, y - h * 1.08 + knit], [x + s * w * 0.9, y - h * 1.2 - knit * 0.4]], 0.5, SKIN.sh));
+    if (mood === 'blink') out.push(...oLn(oArc(x, y + 0.3, w, h * 0.35, 15, 165, 8), 0.55));
+    else if (mood === 'happy') out.push(...oLn(oArc(x, y + h * 0.35, w, h * 0.7, 200, 340, 8), 0.55));
+    else if (mood === 'hurt') out.push(...oSquint(x, y, s, w * 0.8, 0.55));
+    else if (mood === 'dead') out.push(...oX(x, y, w, h, 0.5));
+    else {
+      const glare = mood === 'angry';
+      const lid = glare ? (px) => y - h * 0.3 + (px - x) * -s * 0.5 : () => -99;
+      out.push(F(T(oCut(oRing(x, y, w, h), lid), INK)), F(T(oCut(oRing(x, y + h * 0.05, w * 0.82, h * 0.84), lid), glare ? '#ffd23a' : '#c8c040')), F(T(oCut(oRing(x, y + h * 0.4, w * 0.62, h * 0.42), lid), glare ? '#fff08a' : '#9ad870')));
+      out.push(F(T(oCut(oRing(x, y + h * 0.05, w * (mood === 'shout' ? 0.12 : 0.2), h * 0.7), lid), INK)));
+      out.push(F(T(oCut(oRing(x + w * 0.38, y - h * 0.32, w * 0.24, w * 0.24, 0, 8), lid), '#ffffff')), F(E(x - w * 0.4, y + h * 0.4, w * 0.12, w * 0.12, '#ffffff')));
+      if (glare) out.push(...oLn(oCut(oArc(x, y, w * 1.02, h * 1.02, 190, 350, 8), (px) => lid(px) - 0.2), 0.5));
+    }
   }
+  if (mood !== 'dead') out.push(F(E(8.4, 11, 1.4, 0.7, '#ffa8b4')));
   out.push(F(E(16.4, 8.6, 0.35, 0.3, INK)));
-  if (mood === 'shout') out.push(F(E(14.8, 11.4, 1.7, 1.3, '#7a3040')), F(E(14.8, 12, 1, 0.5, '#ff9ab0')));
-  else out.push(...stroke([[13, 11.2], [14.4, 11.9], [15.8, 11.1]], 0.4, INK));
-  if (mood === 'hurt') out.push(...tear(10.6, 9.2, 0.7, { type: 'stream', len: 2 }));
-  if (mood === 'angry') out.push(...vein(5, 3, 0.6));
+  if (mood === 'shout') out.push(F(T([[12.2, 10.7], [16.4, 10.5], [15.8, 12.6], [13, 12.4]], '#7a3040')), F(T([[14.4, 11.6], [16.4, 11.2], [17.6, 10.8], [17, 11.5], [17.8, 11.9], [16.6, 11.9], [14.6, 12.3]], BH_TONGUE)));
+  else if (mood === 'happy') out.push(...oLn([[11.2, 10.3], [12.2, 11.2], [14.2, 11.7], [16.2, 11]], 0.42), F(T([[15.2, 11.3], [16.2, 11.05], [16.4, 12.2], [15.7, 12.5], [15.2, 12]], BH_TONGUE)));
+  else if (mood === 'angry') out.push(...oLn([[11.4, 11.3], [13.2, 11], [15, 11.3], [16.4, 10.9]], 0.42));
+  else if (mood === 'hurt') out.push(...oWave(13.8, 11.3, 1.8, 0.4), ...oDrop(11.2, 10.6, 0.75));
+  else if (mood === 'dead') out.push(...oLn([[12.4, 11.3], [16, 11.2]], 0.4));
+  else out.push(...oLn([[11, 10.2], [11.6, 10.6], [12.6, 11.3], [14.4, 11.7], [16.2, 11]], 0.42));
   return out;
 };
-
 const SHELLP = pair('shell', 20, 13, shellShapes);
 const CAPP = pair('cap', 12, 8, capShapes);
 const BODYP = pair('body', 14, 11, bodyShapes);

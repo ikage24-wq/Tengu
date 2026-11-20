@@ -17,10 +17,10 @@
 //           staff raised, the small claw beckoning.
 //   scene   she starts hidden in her shell and pops out on her first hop.
 
-import { E, T, F, R, stroke } from './kit.js';
+import { E, T, F, stroke } from './kit.js';
 import { ramp, crescent } from './meadow.js';
 import { makeRig, stateBlend, clamp, smooth, TAU } from './rig.js';
-import { D2R, fr, arcP, taper, pairOf, faceSprite, hold, stepPhase, pawStep, put, shift, MOODS, faceShapes, sparkle, dot } from './rigkit.js';
+import { D2R, fr, arcP, taper, pairOf, faceSprite, hold, stepPhase, pawStep, put, shift, MOODS, sparkle, dot, ownFace } from './rigkit.js';
 
 const at2 = (M, x, y) => [M[0] * x + M[2] * y + M[4], M[1] * x + M[3] * y + M[5]];
 const sized = (rig, k) => {
@@ -180,8 +180,7 @@ const MT_FACES = {
   hurt: () => [...line([[EN[0] - 2.4, EN[1] - 1.8], [EN[0] + 1.4, EN[1]], [EN[0] - 2.4, EN[1] + 1.8]], 0.8), ...line([[EF[0] + 2, EF[1] - 1.6], [EF[0] - 1.2, EF[1]], [EF[0] + 2, EF[1] + 1.6]], 0.8), ...line(arcP(MX, MY + 1.6, 2, 1, 200, 340, 6), 0.8, LIP), ...blush()],
   dead: () => [...line([[EN[0] - 2, EN[1] - 2], [EN[0] + 2, EN[1] + 2]], 0.8), ...line([[EN[0] + 2, EN[1] - 2], [EN[0] - 2, EN[1] + 2]], 0.8), ...line([[EF[0] - 1.6, EF[1] - 1.6], [EF[0] + 1.6, EF[1] + 1.6]], 0.7), ...line([[EF[0] + 1.6, EF[1] - 1.6], [EF[0] - 1.6, EF[1] + 1.6]], 0.7), ...line(arcP(MX, MY + 1.8, 2, 1, 200, 340, 6), 0.8, LIP)],
 };
-const FACE_FB = { eyes: [[EN[0], EN[1], 2.8, 3, 1], [EF[0], EF[1], 2.2, 2.4, -1]], mouth: [MX, MY, 1], blush: [[EN[0] + 1, EN[1] + 4.8, 1.4], [EF[0] - 1, EF[1] + 4.6, 1.2]], iris: IRIS, lid: 0.2, lashes: 1 };
-const mtFace = (mood) => faceSprite(`mt2|face|${mood}`, 44, 42, () => (MT_FACES[mood] ?? (() => faceShapes(mood, FACE_FB)))());
+const mtFace = (mood) => faceSprite(`mt2|face|${mood}`, 44, 42, () => ownFace(MT_FACES, mood));
 
 // ---------- Skeleton ----------
 const BODY = [14, -24];

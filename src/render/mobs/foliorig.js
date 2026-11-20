@@ -28,7 +28,7 @@
 import { E, T, F, R, stroke } from './kit.js';
 import { ramp, crescent } from './meadow.js';
 import { makeRig, stateBlend, clamp, smooth, TAU } from './rig.js';
-import { D2R, fr, arcP, taper, pairOf, faceSprite, hold, stepPhase, pawStep, put, shift, MOODS, faceShapes, sparkle, puff } from './rigkit.js';
+import { D2R, fr, arcP, taper, pairOf, faceSprite, hold, stepPhase, pawStep, put, shift, MOODS, sparkle, puff, ownFace } from './rigkit.js';
 
 const at2 = (M, x, y) => [M[0] * x + M[2] * y + M[4], M[1] * x + M[3] * y + M[5]];
 const sized = (rig, k) => {
@@ -258,8 +258,7 @@ const FO_FACES = {
   happy: () => [...shut(EN, true), ...shut(EF, true), ...brows(...browsUp(1.6)), ...beakOpen(0.4), ...blush(1.2), ...specs()],
   dead: () => [...line([[EN[0] - 2.6, EN[1] - 2.6], [EN[0] + 2.6, EN[1] + 2.6]], 0.9), ...line([[EN[0] + 2.6, EN[1] - 2.6], [EN[0] - 2.6, EN[1] + 2.6]], 0.9), ...line([[EF[0] - 2.2, EF[1] - 2.2], [EF[0] + 2.2, EF[1] + 2.2]], 0.8), ...line([[EF[0] + 2.2, EF[1] - 2.2], [EF[0] - 2.2, EF[1] + 2.2]], 0.8), ...beakOpen(0.3), ...specs()],
 };
-const FACE_FALLBACK = { eyes: [[EN[0], EN[1], 3.4, 3.6, 1], [EF[0], EF[1], 3, 3.2, -1]], mouth: [HX + 5, HY + 9, 1], blush: [[HX - 8.2, HY + 7, 1.6], [HX + 16, HY + 6.6, 1.6]], iris: '#f5b030', lid: 0, lashes: 1 };
-const foFaceShapes = (mood) => (FO_FACES[mood] ?? (() => faceShapes(mood, FACE_FALLBACK)))();
+const foFaceShapes = (mood) => ownFace(FO_FACES, mood);
 const foFace = (mood) => faceSprite(`fo2|face|${mood}`, 46, 40, () => foFaceShapes(mood));
 const foMood = (a) => {
   if (a.face === 'dead') return 'dead';

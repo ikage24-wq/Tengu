@@ -14,10 +14,10 @@
 //            it comes back louder.
 //   freed    (m.cine.mood 'happy', the finale's end) small and sheepish, ringing softly.
 
-import { E, T, F, R, stroke } from './kit.js';
+import { E, T, F, stroke } from './kit.js';
 import { ramp } from './meadow.js';
 import { makeRig, stateBlend, TAU } from './rig.js';
-import { D2R, arcP, taper, pairOf, faceSprite, hold, stepPhase, pawStep, put, MOODS, faceShapes, sparkle, INK } from './rigkit.js';
+import { D2R, taper, pairOf, faceSprite, hold, stepPhase, pawStep, put, MOODS, sparkle, INK } from './rigkit.js';
 
 const at2 = (M, x, y) => [M[0] * x + M[2] * y + M[4], M[1] * x + M[3] * y + M[5]];
 const sized = (rig, k) => {
@@ -56,9 +56,92 @@ const PARTS = {
   BODY: al('body', 72, 72, bodyP, 2), BELL: al('bell', 24, 20, bellP, 6), HAMMER: al('hammer', 10, 18, hammerP, 2),
   ARM: [false, true].map((f) => al(`arm${f ? 1 : 0}`, 18, 10, armP(f), 2)), LEG: [false, true].map((f) => al(`leg${f ? 1 : 0}`, 12, 16, legP(f), 6)),
 };
-// Its face on the dial: big eyes with red irises, a mouth; the clock's two hands are its eyebrows,
-// angled with its mood. Box 72 x 72 (over the dial).
-const FACE = { eyes: [[43, 38, 4.4, 5, 1], [28.6, 38.4, 3.8, 4.4, -1]], mouth: [36, 52, 4], blush: [[22, 46, 2.6], [50, 46, 2.4]], iris: '#d8304a', lid: 0 };
+// Its face on the dial: wide red-eyed eyes with bags under them (it never gets to sleep) under heavy
+// lids, a grumpy frown that rings open to a bell-mouth with its clapper swinging inside, gritted teeth
+// when cross; the clock's two hands are its eyebrows, angled with its mood. Box 72 x 72 (over the dial).
+const oLn = (pts, w, c = INK) => {
+  const l = [];
+  const r = [];
+  pts.forEach(([x, y], i) => {
+    const [ax, ay] = pts[Math.max(0, i - 1)];
+    const [bx, by] = pts[Math.min(pts.length - 1, i + 1)];
+    const d = Math.hypot(bx - ax, by - ay) || 1;
+    const nx = ((-(by - ay) / d) * w) / 2;
+    const ny = (((bx - ax) / d) * w) / 2;
+    l.push([x + nx, y + ny]);
+    r.push([x - nx, y - ny]);
+  });
+  return [F(T([...l, ...r.reverse()], c))];
+};
+const oArc = (cx, cy, rx, ry, a0, a1, n = 8) => Array.from({ length: n + 1 }, (_, i) => {
+  const a = ((a0 + ((a1 - a0) * i) / n) * Math.PI) / 180;
+  return [cx + Math.cos(a) * rx, cy + Math.sin(a) * ry];
+});
+const oRing = (cx, cy, rx, ry, rot = 0, n = 16) => Array.from({ length: n }, (_, i) => {
+  const a = (i / n) * Math.PI * 2;
+  const x = Math.cos(a) * rx;
+  const y = Math.sin(a) * ry;
+  return [cx + x * Math.cos(rot) - y * Math.sin(rot), cy + x * Math.sin(rot) + y * Math.cos(rot)];
+});
+const oCut = (pts, lid) => pts.map(([px, py]) => [px, Math.max(py, lid(px))]);
+const oSquint = (x, y, s, r, w, c = INK) => oLn([[x + s * r, y - r], [x - s * r * 0.8, y], [x + s * r, y + r]], w, c);
+const oSpiral = (x, y, r, w, c, s = 1) => oLn(Array.from({ length: 15 }, (_, i) => [x + Math.cos(i * 0.8 * s) * r * (0.12 + i / 15), y + Math.sin(i * 0.8 * s) * r * (0.12 + i / 15)]), w, c);
+const oDrop = (x, y, r, c = '#9ad8ff') => [F(E(x, y, r * 0.7, r, c)), F(E(x - r * 0.2, y - r * 0.3, r * 0.25, r * 0.25, '#ffffff'))];
+const oStar = (x, y, r, c, n = 5, k = 0.45) => F(T(Array.from({ length: n * 2 }, (_, i) => {
+  const a = (i * Math.PI) / n - Math.PI / 2;
+  const rr = i % 2 ? r * k : r;
+  return [x + Math.cos(a) * rr, y + Math.sin(a) * rr];
+}), c));
+const oX = (x, y, w, h, wd, c = INK) => [...oLn([[x - w * 0.7, y - h * 0.55], [x + w * 0.7, y + h * 0.55]], wd, c), ...oLn([[x - w * 0.7, y + h * 0.55], [x + w * 0.7, y - h * 0.55]], wd, c)];
+const oWave = (mx, my, hw, wd, c = INK) => oLn(Array.from({ length: 5 }, (_, i) => [mx - hw + (i * hw) / 2, my + (i % 2 ? -0.3 : 0.3)]), wd, c);
+const AL_EYES = [[43, 38, 1, 4.4, 5], [28.6, 38.4, -1, 3.8, 4.4]];
+const AL_RED = '#d8304a';
+const AL_MOUTH = '#8a2a3a';
+const alOwnFace = (mood) => {
+  const out = [];
+  for (const [x, y, s, w, h] of AL_EYES) {
+    if (mood !== 'dead') out.push(...oLn(oArc(x, y + h * 0.5, w * 0.78, h * 0.8, 55, 125, 6), 0.6, '#c8a878'));
+    if (mood === 'blink' || mood === 'sleep') out.push(...oLn(oArc(x, y + 0.6, w, h * 0.32, 15, 165, 8), 1.1));
+    else if (mood === 'happy') out.push(...oLn(oArc(x, y + h * 0.35, w, h * 0.7, 200, 340, 8), 1.1));
+    else if (mood === 'hurt') out.push(...oSquint(x, y, s, w * 0.75, 1.1));
+    else if (mood === 'dizzy') out.push(...oSpiral(x, y, w * 0.95, 0.85, AL_RED, s));
+    else if (mood === 'dead') out.push(...oX(x, y, w, h, 1));
+    else {
+      // Heavy grumpy lids; slammed down to glare; thrown wide when it rings.
+      const lid = mood === 'angry' ? (px) => y - h * 0.4 + (px - x) * -s * 0.55 : mood === 'shout' ? () => -99 : () => y - h * 0.55;
+      const ir = w * (mood === 'shout' ? 0.3 : mood === 'angry' ? 0.4 : 0.47);
+      const [ix, iy] = [x, y + h * 0.12];
+      out.push(F(T(oRing(x, y, w, h), '#f2e2b0')));
+      out.push(F(T(oCut(oRing(x, y, w, h), lid), INK)), F(T(oCut(oRing(x, y, w - 0.85, h - 0.85), lid), '#ffffff')));
+      out.push(F(T(oCut(oRing(ix, iy, ir, ir * 1.08), lid), AL_RED)), F(T(oCut(oRing(ix, iy, ir * 0.42, ir * 0.46), lid), INK)));
+      out.push(F(T(oCut(oRing(ix + ir * 0.4, iy - ir * 0.45, ir * 0.3, ir * 0.3, 0, 8), lid), '#ffffff')));
+      out.push(...oLn(oCut(oArc(x, y, w, h, 190, 350, 10), (px) => lid(px) - 0.3), 1.3));
+    }
+  }
+  const [mx, my] = [36, 52];
+  if (mood === 'shout') {
+    // RING: a bell-mouth thrown open, its clapper swinging inside, shake marks either side.
+    out.push(F(T(oRing(mx, my + 1, 5.4, 4.4), INK)), F(T(oRing(mx, my + 1.3, 4.6, 3.6), AL_MOUTH)), F(E(mx, my + 3.4, 2.8, 1.3, '#ff7a8a')));
+    out.push(F(T(oRing(mx, my + 1.3, 4.5, 3.5).map(([px, py]) => [px, Math.min(py, my - 1)]), '#ffffff')));
+    out.push(...oLn([[mx, my - 1.4], [mx + 0.6, my + 1]], 0.7, '#c8901e'), F(E(mx + 0.7, my + 1.6, 1.3, 1.3, '#ffc94a')), F(E(mx + 0.3, my + 1.2, 0.45, 0.45, '#fff6c8')));
+    for (const k of [-1, 1]) out.push(...oLn([[mx + k * 7.4, my - 2.2], [mx + k * 8.6, my + 0.6], [mx + k * 7.4, my + 3.4]], 0.7), ...oLn([[mx + k * 9.6, my - 3], [mx + k * 11, my + 0.6], [mx + k * 9.6, my + 4.2]], 0.7));
+  } else if (mood === 'happy') {
+    out.push(F(T(oArc(mx, my - 1, 4.8, 4.2, 0, 180, 10), INK)), F(T(oArc(mx, my - 0.6, 4, 3.4, 0, 180, 10), AL_MOUTH)));
+    out.push(F(T(oArc(mx, my - 0.6, 4, 3.4, 0, 180, 10).map(([px, py]) => [px, Math.min(py, my + 0.5)]), '#ffffff')), F(E(mx, my + 2, 2, 0.9, '#ff7a8a')));
+  } else if (mood === 'angry') {
+    // Gritted teeth.
+    out.push(F(T(oRing(mx, my, 4.6, 2.1), INK)), F(T(oRing(mx, my, 3.9, 1.45), '#ffffff')), ...oLn([[mx - 3.6, my], [mx + 3.6, my]], 0.4, '#b8a898'));
+    for (const k of [-2, -1, 0, 1, 2]) {
+      const hh = 1.45 * Math.sqrt(1 - ((k * 1.4) / 3.9) ** 2) - 0.1;
+      out.push(...oLn([[mx + k * 1.4, my - hh], [mx + k * 1.4, my + hh]], 0.35, '#b8a898'));
+    }
+  } else if (mood === 'hurt' || mood === 'dizzy') out.push(...oWave(mx, my, 3.2, 0.9));
+  else if (mood === 'dead') out.push(...oLn([[mx - 2.6, my], [mx + 2.6, my]], 0.9));
+  else if (mood === 'sleep') out.push(F(E(mx, my + 0.6, 1.2, 1.5, INK)));
+  else out.push(...oLn(oArc(mx, my + 2.6, 3.8, 2.4, 205, 335, 8), 1.05));
+  if (mood === 'hurt') out.push(...oDrop(50.4, 33, 1.4));
+  return out;
+};
 const BROWS = {
   angry: [[[32, 26], [40, 31]], [[47, 26], [38, 31]]],
   shout: [[[31, 25], [40, 30]], [[48, 25], [38, 30]]],
@@ -68,7 +151,7 @@ const BROWS = {
 };
 const alarmFace = (mood) => faceSprite(`alarm|face|${mood}`, 72, 72, () => {
   const b = BROWS[mood] ?? BROWS.idle;
-  return [...faceShapes(mood, FACE), ...line(b[0], 2.6, '#3a2a2a'), ...line(b[1], 2, '#3a2a2a')];
+  return [...alOwnFace(mood), ...line(b[0], 2.6, '#3a2a2a'), ...line(b[1], 2, '#3a2a2a')];
 });
 
 const pass = (bare) => {
@@ -190,7 +273,7 @@ export function alarmStill(pose, f, mood) {
   return { w: 168, h: 180, res: 2, shapes: [
     ...sc(armP(true)(), [3, 5], -30, ty + 4, 110), ...sc(legP(true)(), [6, 1], -12, ty + 28), ...sc(legP(false)(), [6, 1], 12, ty + 28),
     ...sc(hammerP(), [5, 17], 0, ty - 31), ...sc(bellP(), [12, 19], -20, ty - 26, -24), ...sc(bellP(), [12, 19], 20, ty - 26, 24),
-    ...sc(bodyP(), [36, 36], 0, ty), ...sc([...faceShapes(fm, FACE), ...line(b[0], 2.6, '#3a2a2a'), ...line(b[1], 2, '#3a2a2a')], [36, 36], 0, ty),
+    ...sc(bodyP(), [36, 36], 0, ty), ...sc([...alOwnFace(fm), ...line(b[0], 2.6, '#3a2a2a'), ...line(b[1], 2, '#3a2a2a')], [36, 36], 0, ty),
     ...sc(armP(false)(), [3, 5], 30, ty + 4, 70),
   ] };
 }

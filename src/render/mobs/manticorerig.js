@@ -17,9 +17,9 @@
 //   hit     knocked back on its tilt, the mane puffing out.
 
 import { E, T, F, stroke } from './kit.js';
-import { simpleEye, deadEye, tear, vein } from './faces.js';
+import { tear } from './faces.js';
 import { ramp, crescent, shine } from './meadow.js';
-import { part, partBare, makeRig, stateBlend, smooth, clamp, lerp, kick, TAU } from './rig.js';
+import { part, partBare, makeRig, stateBlend, smooth, clamp, kick, TAU } from './rig.js';
 import { sprite } from '../pixel.js';
 import { windAt } from '../terrain.js';
 
@@ -92,24 +92,73 @@ const tailShapes = (i) => () => {
   const e = 1.6 + TAILLEN;
   return [E(1.6, 2, w0 / 2 + 0.2, w0 / 2 + 0.2, FUR.base), T([[1.6, 2 - w0 / 2], [e, 2 - w1 / 2], [e, 2 + w1 / 2], [1.6, 2 + w0 / 2]], FUR.base), E(e, 2, w1 / 2, w1 / 2, FUR.base)];
 };
-// The face (bare, over the head): big glossy eyes, a pink nose, a little cat mouth, a blush.
+// The face (bare, over the head): a lion cub's. Amber eyes with a dark rim and a winged corner, a big
+// pink nose, a little cat mouth with one baby fang peeking; it roars with both fangs out, and tufts of fur knit over its eyes when cross.
 const MOODS = new Set(['idle', 'angry', 'hurt', 'happy', 'blink', 'dead', 'shout']);
+const oLn = (pts, w, c = INK) => {
+  const l = [];
+  const r = [];
+  pts.forEach(([x, y], i) => {
+    const [ax, ay] = pts[Math.max(0, i - 1)];
+    const [bx, by] = pts[Math.min(pts.length - 1, i + 1)];
+    const d = Math.hypot(bx - ax, by - ay) || 1;
+    const nx = ((-(by - ay) / d) * w) / 2;
+    const ny = (((bx - ax) / d) * w) / 2;
+    l.push([x + nx, y + ny]);
+    r.push([x - nx, y - ny]);
+  });
+  return [F(T([...l, ...r.reverse()], c))];
+};
+const oArc = (cx, cy, rx, ry, a0, a1, n = 8) => Array.from({ length: n + 1 }, (_, i) => {
+  const a = ((a0 + ((a1 - a0) * i) / n) * Math.PI) / 180;
+  return [cx + Math.cos(a) * rx, cy + Math.sin(a) * ry];
+});
+const oRing = (cx, cy, rx, ry, rot = 0, n = 16) => Array.from({ length: n }, (_, i) => {
+  const a = (i / n) * Math.PI * 2;
+  const x = Math.cos(a) * rx;
+  const y = Math.sin(a) * ry;
+  return [cx + x * Math.cos(rot) - y * Math.sin(rot), cy + x * Math.sin(rot) + y * Math.cos(rot)];
+});
+const oCut = (pts, lid) => pts.map(([px, py]) => [px, Math.max(py, lid(px))]);
+const oSquint = (x, y, s, r, w, c = INK) => oLn([[x + s * r, y - r], [x - s * r * 0.8, y], [x + s * r, y + r]], w, c);
+const oSpiral = (x, y, r, w, c, s = 1) => oLn(Array.from({ length: 15 }, (_, i) => [x + Math.cos(i * 0.8 * s) * r * (0.12 + i / 15), y + Math.sin(i * 0.8 * s) * r * (0.12 + i / 15)]), w, c);
+const oDrop = (x, y, r, c = '#9ad8ff') => [F(E(x, y, r * 0.7, r, c)), F(E(x - r * 0.2, y - r * 0.3, r * 0.25, r * 0.25, '#ffffff'))];
+const oStar = (x, y, r, c, n = 5, k = 0.45) => F(T(Array.from({ length: n * 2 }, (_, i) => {
+  const a = (i * Math.PI) / n - Math.PI / 2;
+  const rr = i % 2 ? r * k : r;
+  return [x + Math.cos(a) * rr, y + Math.sin(a) * rr];
+}), c));
+const oX = (x, y, w, h, wd, c = INK) => [...oLn([[x - w * 0.7, y - h * 0.55], [x + w * 0.7, y + h * 0.55]], wd, c), ...oLn([[x - w * 0.7, y + h * 0.55], [x + w * 0.7, y - h * 0.55]], wd, c)];
+const oWave = (mx, my, hw, wd, c = INK) => oLn(Array.from({ length: 5 }, (_, i) => [mx - hw + (i * hw) / 2, my + (i % 2 ? -0.3 : 0.3)]), wd, c);
+const MC_EYES = [[12.4, 8.6, -1, 1.9, 2.4], [16.8, 8.2, 1, 1.5, 2]];
 const faceShapes = (mood) => () => {
   const out = [];
-  if (mood === 'dead') out.push(...deadEye(12.4, 8.6, 1.4, { c: INK, th: 0.5 }), ...deadEye(16.8, 8.2, 1.1, { c: INK, th: 0.5 }));
-  else {
-    const so = { iris: '#7a4a1e', ink: INK, lid: 0, mood: mood === 'shout' ? 'angry' : mood };
-    out.push(...simpleEye(12.4, 8.6, { ...so, s: -1, w: 1.9, h: 2.4 }), ...simpleEye(16.8, 8.2, { ...so, s: 1, w: 1.5, h: 2 }));
-    out.push(F(E(11.2, 12, 1.5, 0.75, '#ffa4b4')));
+  for (const [x, y, s, w, h] of MC_EYES) {
+    if (mood === 'angry') out.push(F(T([[x - s * w * 1.1, y - h * 0.75], [x + s * w * 1, y - h * 1.35], [x + s * w * 0.6, y - h * 0.95]], FUR.sh)));
+    if (mood === 'blink') out.push(...oLn(oArc(x, y + 0.3, w, h * 0.35, 15, 165, 8), 0.5));
+    else if (mood === 'happy') out.push(...oLn(oArc(x, y + h * 0.35, w, h * 0.7, 200, 340, 8), 0.5));
+    else if (mood === 'hurt') out.push(...oSquint(x, y, s, w * 0.8, 0.5));
+    else if (mood === 'dead') out.push(...oX(x, y, w, h, 0.45));
+    else {
+      const lid = mood === 'angry' ? (px) => y - h * 0.3 + (px - x) * -s * 0.5 : () => -99;
+      out.push(F(T(oCut(oRing(x, y, w, h), lid), INK)), F(T(oCut(oRing(x, y + h * 0.08, w * 0.8, h * 0.8), lid), '#e8962a')), F(T(oCut(oRing(x, y + h * 0.42, w * 0.6, h * 0.4), lid), '#ffd070')));
+      out.push(F(T(oCut(oRing(x, y + h * 0.05, w * (mood === 'shout' ? 0.24 : 0.38), h * (mood === 'shout' ? 0.3 : 0.44)), lid), INK)));
+      out.push(F(T(oCut(oRing(x + w * 0.32, y - h * 0.3, w * 0.26, w * 0.26, 0, 8), lid), '#ffffff')), F(E(x - w * 0.35, y + h * 0.42, w * 0.12, w * 0.12, '#ffffff')));
+      out.push(...oLn([[x + s * w * 0.9, y - h * 0.15], [x + s * w * 1.35, y - h * 0.4]], 0.45));
+    }
   }
-  out.push(F(T([[18.4, 10], [20.2, 10], [19.3, 11.2]], '#ff8ea2')));
-  if (mood === 'shout') out.push(F(E(17.8, 13.2, 1.5, 1.3, '#8a3040')), F(E(17.8, 13.8, 0.9, 0.5, '#ff9ab0')));
-  else out.push(...stroke([[17.4, 12.4], [18.3, 13], [19.3, 12.2]], 0.4, INK), ...stroke([[19.3, 12.2], [19.6, 11.4]], 0.35, INK));
-  if (mood === 'hurt') out.push(...tear(13, 10, 0.7, { type: 'stream', len: 2 }));
-  if (mood === 'angry') out.push(...vein(7, 4, 0.6));
+  if (mood !== 'dead') out.push(F(E(11, 12.2, 1.5, 0.75, '#ffa4b4')));
+  out.push(F(T([[18.2, 9.9], [20.3, 9.9], [19.9, 10.6], [19.3, 11.2], [18.6, 10.6]], '#ff8ea2')), F(E(18.9, 10.15, 0.4, 0.2, '#ffd0dc')));
+  if (mood === 'shout') out.push(F(T([[17.2, 12.1], [19.2, 11.9], [19, 13.7], [18, 14.1], [17.2, 13.3]], '#8a3040')), F(E(18.2, 13.6, 0.7, 0.35, '#ff9ab0')), F(T([[17.45, 12.1], [17.95, 12.05], [17.7, 12.9]], '#ffffff')), F(T([[18.55, 12], [19.05, 11.95], [18.8, 12.8]], '#ffffff')));
+  else if (mood === 'happy') out.push(...oLn([[19.3, 11.2], [19.1, 12]], 0.35), F(T([[17.3, 12.2], [19.1, 12], [18.6, 13.4], [17.8, 13.4]], '#8a3040')), F(E(18.2, 13.1, 0.55, 0.3, '#ff9ab0')));
+  else if (mood === 'hurt') out.push(...oLn([[19.3, 11.2], [19.1, 12]], 0.35), ...oWave(18.2, 12.6, 1, 0.35), ...oDrop(13.4, 10.6, 0.7));
+  else if (mood === 'dead') out.push(...oLn([[19.3, 11.2], [19.1, 12]], 0.35), ...oLn([[17.4, 12.5], [19.1, 12.4]], 0.35));
+  else {
+    out.push(...oLn([[19.3, 11.2], [19.1, 12.1], [18.3, 12.85], [17.4, 12.3]], 0.38), F(T([[18.0, 12.6], [18.55, 12.75], [18.3, 13.45]], '#ffffff')));
+    if (mood === 'angry') out.push(...oLn([[19.1, 12.1], [19.5, 12.7]], 0.35));
+  }
   return out;
 };
-
 const BODY = pair('body', 20, 15, bodyShapes);
 const HEAD = pair('head', 20, 18, headShapes);
 const EAR = [false, true].map((far) => pair(`ear${far ? 1 : 0}`, 7, 7, earShapes(far)));

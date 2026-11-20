@@ -18,7 +18,7 @@
 import { E, T, F, R, stroke } from './kit.js';
 import { ramp, crescent } from './meadow.js';
 import { makeRig, stateBlend, clamp, smooth, TAU } from './rig.js';
-import { D2R, fr, arcP, taper, pairOf, faceSprite, hold, stepPhase, pawStep, put, shift, MOODS, faceShapes, sparkle, puff, dot } from './rigkit.js';
+import { D2R, fr, arcP, taper, pairOf, faceSprite, hold, stepPhase, pawStep, put, shift, MOODS, puff, dot, ownFace } from './rigkit.js';
 import { drawMochiAnim } from '../mochi-anim.js';
 import { rollMochi } from '../../data/mochi-genes.js';
 import { YOMOGI } from './gnarlrig.js';
@@ -144,8 +144,7 @@ const SK_FACES = {
 };
 SK_FACES.blink = SK_FACES.sleep;
 SK_FACES.dead = SK_FACES.sleep;
-const FACE_FB = { eyes: [[EN[0], EN[1], 3, 3.2, 1], [EF[0], EF[1], 2.4, 2.6, -1]], mouth: [MX, MY, 1], blush: [[EN[0] + 0.8, EN[1] + 5, 1.4], [EF[0] - 1, EF[1] + 5, 1.2]], iris: '#5a8a3a', lid: 0.3, lashes: 1 };
-const skFace = (mood) => faceSprite(`sk2|face|${mood}`, 34, 28, () => (SK_FACES[mood] ?? (() => faceShapes(mood, FACE_FB)))());
+const skFace = (mood) => faceSprite(`sk2|face|${mood}`, 34, 28, () => ownFace(SK_FACES, mood));
 
 // ---------- Elder Yomogi, kept in his roots ----------
 const yomogiOf = (a) => {
