@@ -1,7 +1,8 @@
 // Monster art: Petal Meadow and Clover Hills (levels 1-8), the first monsters a player meets.
 //   puffle      Blossom Kit: a pink fox kit whose petals fold up into a bud; it blooms, then pounces
 //               (a live rig, its own file since 2026-11-19)
-//   snailbun    Bud Snail: a plump peach snail whose shell is a pink flower bud that blooms
+//   snailbun    Bud Snail: the Mushroom Cottage snail, a lavender snail whose shell is a little
+//               cottage with a mushroom roof (cottagesnailrig.js, 2026-11-20)
 //   sproutling  Turnip Tot: a plump turnip that hops about and headbutts
 // Every design faces right with its feet on the bottom edge; see kit.js for the shapes. Each has
 // its own gait (a light trot, a heavy plod, a root-footed scurry, a bow-legged swagger, bounding
@@ -9,9 +10,10 @@
 // big round eyes, a goblin's shifty squint, a hare's glossy eye), an idle fidget loop, and a
 // four-frame attack (wind-up, strike, impact, recover).
 
-import { R, E, T, F, C, BLUSH, arc, stroke, shade, mix, sparkLine, keyAt } from './kit.js';
+import { E, T, F, arc, stroke, sparkLine } from './kit.js';
 import { budKitRig, budKitStill } from './budkitrig.js';
-import { eye, brow, nose, blush as cheek, sweat, tear, vein, deadEye, band, simpleEye, simpleMouth, easyEye } from './faces.js';
+import { cottageSnailRig, cottageSnailStill } from './cottagesnailrig.js';
+import { eye, brow, nose, blush as cheek, sweat, tear, vein, deadEye, band, simpleEye, simpleMouth } from './faces.js';
 
 const TAU = Math.PI * 2;
 const D2R = Math.PI / 180;
@@ -263,33 +265,6 @@ function leaf(bx, by, deg, len, wid, c) {
   return T([p(0, 0.35), p(0.18, 0.85), p(0.45, 1), p(0.75, 0.7), p(1, 0), p(0.75, -0.7), p(0.45, -1), p(0.18, -0.85), p(0, -0.35)], c);
 }
 
-// A broad leaf whose spine curves from b along deg, its tip sagging by `bend`.
-function cleaf(b, deg, len, wid, bend, c, rib, rim = 0) {
-  const a = deg * D2R;
-  const ctl = [b[0] + Math.cos(a) * len * 0.6, b[1] + Math.sin(a) * len * 0.6];
-  const tip = [b[0] + Math.cos(a) * len, b[1] + Math.sin(a) * len + bend];
-  const l = [];
-  const r = [];
-  const spine = [];
-  for (let i = 0; i <= 9; i++) {
-    const t = i / 9;
-    const [x, y] = bz(b, ctl, tip, t);
-    const tx = 2 * (1 - t) * (ctl[0] - b[0]) + 2 * t * (tip[0] - ctl[0]);
-    const ty = 2 * (1 - t) * (ctl[1] - b[1]) + 2 * t * (tip[1] - ctl[1]);
-    const tl = Math.hypot(tx, ty) || 1;
-    const w = rim + wid * Math.pow(Math.sin(Math.PI * (0.06 + 0.88 * t)), 0.7) * (1 + 0.1 * Math.sin(t * 20));
-    l.push([x - (ty / tl) * w, y + (tx / tl) * w]);
-    r.push([x + (ty / tl) * w, y - (tx / tl) * w]);
-    if (t <= 0.8) spine.push([x, y]);
-  }
-  if (rim) return [F(T([...l, ...r.reverse()], c))];
-  // Two values split at the midrib: the half facing down and away from the light in shadow.
-  const lo = l.reduce((n, p) => n + p[1], 0) > r.reduce((n, p) => n + p[1], 0) ? l : r;
-  const mid = [];
-  for (let i = 0; i <= 9; i++) mid.push(bz(b, ctl, tip, i / 9));
-  return [T([...l, ...r.reverse()], c), F(T([...lo, ...mid.reverse()], hue(c, 14, 4, -10))), band(spine, (t) => 0.5 * (1 - t * 0.6), rib)];
-}
-
 const bz = (a, b, c, t) => [
   (1 - t) * (1 - t) * a[0] + 2 * (1 - t) * t * b[0] + t * t * c[0],
   (1 - t) * (1 - t) * a[1] + 2 * (1 - t) * t * b[1] + t * t * c[1],
@@ -329,25 +304,7 @@ function flame(x, y, h, lean, outer, inner) {
   ];
 }
 
-// ---------- Bud Snail (snailbun) ----------
-// (Petal Meadow's new cast, 2026-11-11: replaced the Moss Tortoise.) A plump peach snail whose
-// shell is a big pink flower bud. It creeps on a soft body that ripples from tail to head, its
-// antennae bobbing a beat behind; the bud sways on its back. Cross, it flicks the bud open into a
-// bloom and sneezes a puff of pollen; hurt, the bud pops open in fright; dead, the bloom wilts.
-
-// Attack: the pollen sneeze. pull: head drawn back (-) or thrust (+), open: how far the bud
-// blooms (0 shut, 1 wide), tilt: bud lean (deg, + forward), puff: pollen cloud size, lift: body
-// rear (the front rising).
-const BUD_ATK = [
-  // Wind-up (held): head tucked back, the bud rocked back and squeezed shut, the front rising.
-  { pull: -2.6, open: 0, tilt: -14, puff: 0, lift: 1.6 },
-  // Strike: the bud flicks forward and bursts open, pollen blasting out ahead.
-  { pull: 1.8, open: 1, tilt: 16, puff: 3.4, lift: 0 },
-  // Impact (held): wide open, the cloud at full size with a star in it.
-  { pull: 1.4, open: 0.92, tilt: 11, puff: 6, lift: 0 },
-  // Recover: the bloom folding back up, the last of the cloud drifting.
-  { pull: -0.4, open: 0.3, tilt: -3, puff: 7.4, lift: 0 },
-];
+// ---------- Attack poses (the Turnip Tot's) ----------
 
 // An attack pose between keys (an art with `atkTween`): frame f = key + quarters; each key holds
 // for the first part of its beat, then eases into the next (or back to rest after the last).
@@ -360,109 +317,6 @@ function atkPose(table, f, rest) {
   const out = {};
   for (const key of Object.keys(a)) out[key] = a[key] + ((b[key] ?? a[key]) - a[key]) * e;
   return out;
-}
-
-function budSnail(pose, f, mood) {
-  const walk = pose === 'walk';
-  const idle = pose === 'idle';
-  const A = pose === 'attack' ? atkPose(BUD_ATK, f, { pull: 0, open: 0, tilt: 0, puff: 8, lift: 0 }) : null;
-  const fk = Math.floor(f);
-  const q = walk ? f / 8 : idle ? f / 6 : 0;
-  const angry = mood === 'angry';
-  const hurt = mood === 'hurt';
-  const dead = mood === 'dead';
-  const happy = mood === 'happy';
-  // Peach body warming to rose in shadow; a pink bud deepening to raspberry; leafy green sepals.
-  const skin = ramp('#ffdcc4', { step: 9, turn: 14, sat: -6 });
-  const bud = ramp('#ff9cc4', { step: 10, turn: 12, sat: -8 });
-  const leafC = ramp('#8fd08a', { step: 10, turn: 16, sat: -10 });
-  const out = [];
-  const br = idle ? breath(q) : 0;
-
-  // The body: round segments along the foot, a ripple running from the tail to the head as it
-  // creeps (each segment lifts in turn), resting flat when dead.
-  const segs = [[4.6, 2.6], [8.4, 3.1], [12.4, 3.5], [16.6, 3.8], [20.8, 3.9], [24.8, 3.8]];
-  const lift = (i) => (walk ? 1.3 * Math.max(0, Math.sin(TAU * q - i * 0.85)) : idle ? br * 0.25 * (i / 5) : 0) + (A && i >= 4 ? A.lift * (i - 3) * 0.5 : 0);
-  const sy = (i) => 27.2 - segs[i][1] - lift(i) + (dead ? 0.8 : 0);
-  segs.forEach(([x, r], i) => out.push(E(x, sy(i), r + 0.6, r, skin.base)));
-  // Its underside in shadow and a soft lit line along the back.
-  out.push(F(E(14.6, 26.4, 11.6, 1.1, skin.sh)));
-  segs.slice(1, 5).forEach(([x, r], i) => out.push(F(E(x - 0.4, sy(i + 1) - r * 0.55, r * 0.5, r * 0.18, skin.hi))));
-
-  // The neck and head: the neck rises from the front of the foot, the head pushes forward with
-  // each creep, draws back to wind up, flops when dead.
-  const push = A ? A.pull : walk ? 0.9 * Math.sin(TAU * q - 4.2) : idle ? sway(q) * 0.4 : hurt ? -1.4 : 0;
-  const hx = 30.4 + push + (dead ? 2 : 0);
-  const hy = (dead ? 22.4 : 15.6 - br * 0.6 + (A ? -A.lift : 0)) + (walk ? -0.5 * Math.max(0, Math.sin(TAU * q - 4.6)) : 0);
-  out.push(...limb([25.6, sy(5) - 0.6], [hx - 1.6, hy + 2.4], 4.4, 4.8, skin.base));
-
-  // The bud shell, sitting on the body's back and swaying a beat behind it. It blooms open
-  // (petals splaying out round a golden heart) when it attacks, is hurt, or is happy; dead, the
-  // bloom wilts and droops.
-  const open = dead ? 0.2 : A ? A.open : hurt ? 0.85 : happy ? 0.55 : 0;
-  const tilt = (A ? A.tilt : walk ? 5 * Math.sin(TAU * q - 1.6) : idle ? sway(q) * 4 : 0) + (dead ? 26 : 0) + (hurt ? -6 : 0);
-  const bx = 15.6;
-  const by = sy(3) - 2.2 + (idle ? -br * 0.5 : 0);
-  const sh = [];
-  // Sepals: two leafy cups hugging the bud's foot.
-  sh.push(leaf(bx - 1, by + 0.6, 196, 6.2, 2.2, leafC.sh), leaf(bx + 1, by + 0.6, -16, 6.2, 2.2, leafC.base));
-  const droop = dead ? 36 : 0;
-  if (open > 0.25) {
-    // The outer petals, behind, opening out flat.
-    const o = (open - 0.25) / 0.75;
-    for (const s of [-1, 1]) sh.push(leaf(bx, by - 1, -90 + s * (34 + 26 * o) + (dead ? s * droop : 0), 11.5 + o, 4.8, bud.sh));
-  }
-  // The heart, shown as it opens.
-  if (open > 0.1 && !dead) sh.push(E(bx, by - 10 - 1.5 * open, 2.4 + open * 1.2, 1.8 + open * 0.8, dead ? '#e8c87a' : '#ffe27a'), F(E(bx - 0.7, by - 10.8 - 1.5 * open, 1, 0.6, '#fff6c8')));
-  // The three main petals: the side ones turned in to a closed bud, opening out with `open`.
-  for (const s of [-1, 1]) sh.push(leaf(bx + s * 0.6, by, -90 + s * (16 + 20 * open) + (dead ? s * droop : 0), 15 - 1.5 * open, 5.6, s < 0 ? bud.base : bud.hi));
-  if (open < 0.6) {
-    const c = 1 - open / 0.6;
-    sh.push(leaf(bx, by + 0.4, -90, 15.6 * (0.55 + 0.45 * c), 5.2, bud.base));
-    // A soft swirl down the front petal, where the bud's petals wrap.
-    sh.push(...stroke([[bx + 1.6, by - 12.4 * c], [bx + 0.4, by - 8.4 * c], [bx + 1.4, by - 4]], 0.6, bud.hi), F(E(bx - 1.8, by - 9 * c, 0.9, 2.6 * c, mix(bud.hi, '#ffffff', 0.4))));
-  }
-  out.push(...spin(sh, bx, by + 1, tilt));
-
-  // Antennae: two little stalks from the top of the head, each a chain swaying a beat behind the
-  // head, with a round pink bulb on the end; they droop when it's sad or dead and stand up cross.
-  const head = [];
-  head.push(E(hx, hy, 5.4, 5, skin.base), crescent(hx + 0.4, hy + 0.3, 5.9, 5.4, skin.sh, { k: 0.3, a0: 60, a1: 210 }), shine(hx, hy, 5.4, 5, skin.hi, 0, 1.1));
-  const aph = walk ? TAU * q - 2.4 : idle ? TAU * q - 1.2 : 0;
-  for (const [x0, a0, s] of [[hx - 2, -112, -1], [hx + 1.4, -78, 1]]) {
-    const base = dead ? a0 + s * 60 + 40 : hurt ? a0 + s * 30 : angry ? a0 - s * 6 : a0;
-    const ch = chain(x0, hy - 4.2, base, [2.4, 2.4], wave(aph + s * 0.5, walk ? 12 : idle ? 9 : 0));
-    const tip = ch.at(-1);
-    head.push(...stroke(ch.map((p) => p.slice(0, 2)), 0.75, skin.sh), E(tip[0], tip[1], 1.3, 1.3, bud.base), F(E(tip[0] - 0.4, tip[1] - 0.4, 0.45, 0.45, '#ffffff')));
-  }
-  // Face: big bright eyes, rosy cheeks, a tiny smile; a pout when cross, tears when hurt.
-  const ey = hy - 0.2;
-  const eyeF = [hx - 1.4, ey];
-  const eyeN = [hx + 2.4, ey - 0.1];
-  const ink = '#4a2f3a';
-  if (dead) head.push(...deadEye(eyeF[0], eyeF[1], 1.2, { c: ink, th: 0.5 }), ...deadEye(eyeN[0], eyeN[1], 1.4, { c: ink, th: 0.55 }));
-  else {
-    const so = { iris: angry || A ? '#d0507a' : '#7a4a5a', ink, lid: 0, mood: A && !hurt ? 'angry' : { idle: 'idle', angry: 'angry', hurt: 'hurt', happy: 'happy', blink: 'blink' }[mood] ?? 'idle' };
-    head.push(...simpleEye(eyeF[0], eyeF[1], { ...so, s: -1, w: 1.6, h: 2.2 }), ...simpleEye(eyeN[0], eyeN[1], { ...so, s: 1, w: 1.9, h: 2.5 }));
-  }
-  if (angry || A) head.push(...brow(eyeF[0], ey - 2.9, { s: -1, len: 1.1, angle: 26, th: 0.6, c: ink }), ...brow(eyeN[0], ey - 3.1, { s: 1, len: 1.4, angle: 26, th: 0.65, c: ink }));
-  if (!dead) head.push(...cheek(hx - 2.2, ey + 2.6, 1, { on: skin.base }), ...cheek(hx + 2.6, ey + 2.8, 1.1, { on: skin.base }));
-  const sneeze = A && fk >= 1 && fk <= 2;
-  head.push(...simpleMouth(hx + 1.6, ey + 2.6, { k: 0.9, mood: dead ? 'dead' : sneeze ? 'shout' : angry ? 'angry' : happy ? 'happy' : hurt ? 'hurt' : 'idle', lip: ink }));
-  if (hurt) head.push(...tear(eyeN[0] + 0.4, ey + 1.4, 0.8, { type: 'stream', len: 3 }), ...sweat(hx - 4.4, hy - 3, 0.9));
-  if (angry) head.push(...vein(hx - 2.4, hy - 3.4, 0.7));
-  out.push(...spin(head, hx - 1.6, hy + 3, dead ? 18 : A ? -A.pull * 2 : walk ? 3 * Math.sin(TAU * q - 4.2) : idle ? -br * 3 : 0));
-
-  // The pollen sneeze: a smear on the strike, then a golden cloud billowing ahead of the bloom.
-  if (A && A.puff) {
-    const cx = Math.min(37, 34 + A.puff * 0.4);
-    const cy = hy - 6 - A.puff * 0.3;
-    const k = A.puff / 6;
-    for (const [dx, dy, r] of [[0, 0, 2.4], [2.4, -1.6, 1.8], [2.2, 1.6, 1.6], [-1.8, -1.2, 1.3]]) out.push(E(cx + dx * k, cy + dy * k, r * Math.min(1.2, 0.5 + k * 0.6), r * Math.min(1.2, 0.5 + k * 0.6), fk === 3 ? '#fff4c8' : '#ffe27a'));
-    if (A.puff >= 6 && fk === 2) out.push(...star(cx + 1, cy - 2, 2.6, '#fff2a8'));
-  }
-  if (A && fk === 2) out.push(...dust(30, 27.6, 0.7));
-  return { w: 40, h: 28, res: 3, shapes: out };
 }
 
 // ---------- Turnip Tot (sproutling) ----------
@@ -589,7 +443,7 @@ function turnipTot(pose, f, mood) {
 export const ART = {
   // (Remade 2026-11-19 as the Bud-to-Bloom Kit: a live rig.)
   puffle: { pad: 7, walk: 8, idle: 6, attack: 4, stride: 22, atkMs: [45, 190, 140], draw: budKitStill, rig: budKitRig },
-  snailbun: { pad: 7, sub: 8, atkTween: true, walk: 8, idle: 6, attack: 4, stride: 12, atkMs: [70, 270, 210], draw: budSnail },
+  snailbun: { pad: 7, walk: 8, idle: 6, attack: 4, stride: 12, atkMs: [70, 270, 210], draw: cottageSnailStill, rig: cottageSnailRig },
   // (Its live motion is a rig now, render/mobs/turniprig.js: these frames are its still pictures.)
   sproutling: { pad: 6, sub: 16, atkTween: true, idleCycle: 3.2, walk: 8, idle: 6, attack: 4, stride: 44, atkMs: [55, 240, 170], draw: turnipTot },
 };
