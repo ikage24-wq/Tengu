@@ -157,11 +157,11 @@ export const MAPS = {
     deco: [['meadowsun', 850, 0], ['meadowhive', 1110, 0, 480], ['meadowcherry', 600, 0, 320]],
     spawns: [
       // Petal Fields: Bud Snails.
-      ...[440, 700, 1150].map((x) => ({ mob: 'snailbun', x, y: 640 })),
+      ...[440, 700, 940, 1150].map((x) => ({ mob: 'snailbun', x, y: 640 })),
       ...[300].map((x) => ({ mob: 'snailbun', x, y: 560 })),
       ...[1150, 1300].map((x) => ({ mob: 'snailbun', x, y: 560 })),
       // Beehive Banks: Puffbees round their hive.
-      ...[520, 680, 1240].map((x) => ({ mob: 'bumble', x, y: 480 })),
+      ...[520, 680, 1110, 1240].map((x) => ({ mob: 'bumble', x, y: 480 })),
       // Blossom Boughs: the Blossom Kits' playground.
       ...[300, 480].map((x) => ({ mob: 'puffle', x, y: 400 })),
       ...[1210, 1380].map((x) => ({ mob: 'puffle', x, y: 400 })),
@@ -181,7 +181,7 @@ export const MAPS = {
   // the Lambkins frolic and the Harvest Mice scurry round the old tree. A hay bale bounces you up
   // from the fields and chaff rises from the cellar through the west hole.
   meadow2: {
-    id: 'meadow2', name: 'Clover Hills', theme: 'meadow', town: 'harbor', world: { x: 162, y: 196 }, perSpawn: 1,
+    id: 'meadow2', name: 'Clover Hills', theme: 'meadow', town: 'harbor', world: { x: 162, y: 196 }, perSpawn: 2,
     look: { sky: ['#5ec8ff', '#aee8ff', '#e8fff2'], far: '#9fdf9f', mid: '#6fcf7a', midTrim: '#4fae5f', rainbow: 0, meadowStyle: 'clover', material: 'clover', edges: 'clover', light: 'noon', drift: null, props: ['tuft', 'flower', 'tuft'], propKeep: 0.8, ledgeKeep: 0.86, critters: ['butterfly'], spots: 'cute', rabbits: 2, rabbitsAt: [690, 1560], bees: 0 },
     ...lay({
       width: 1700, ground: 1000, by: 'y', quiet: [[40, 700, 160], [1660, 700, 160], [90, 1000, 320], [90, 920, 280], [610, 1000, 90]],
@@ -207,12 +207,12 @@ export const MAPS = {
         { x: 650, y: 460, w: 420 },
       ],
     }),
-    // Its monsters, placed by hand (one each: perSpawn), five a zone at most, clear of the ladders,
+    // Its monsters, placed by hand (two each: perSpawn; 2026-11-20, the hunting pace), clear of the ladders,
     // the gathering spots and the spring.
     spawns: [
       // Root Cellar: Turnip Tots and Chicklings.
-      ...[[500, 1000], [1300, 1000], [520, 920]].map(([x, y]) => ({ mob: 'sproutling', x, y })),
-      ...[[850, 1000], [1260, 920]].map(([x, y]) => ({ mob: 'brownie', x, y })),
+      ...[[500, 1000], [680, 1000], [1300, 1000], [520, 920]].map(([x, y]) => ({ mob: 'sproutling', x, y })),
+      ...[[850, 1000], [1560, 1000], [1260, 920], [800, 840]].map(([x, y]) => ({ mob: 'brownie', x, y })),
       // Farm Fields: Strawhogs out in the fields, a Pumpkin Goblin by the barn. (Its east
       // field is the way in from the harbour road, so it's kept clear.)
       ...[480, 1010].map((x) => ({ mob: 'strawhog', x, y: 700 })),
@@ -321,7 +321,7 @@ export const MAPS = {
   // Branchways, the Canopy, with the stump house on the middle crown and the ways to the manor and
   // the glade on the outer ones.
   woods: {
-    id: 'woods', name: 'Mossy Woods', theme: 'forest', town: 'harbor', world: { x: 254, y: 166 }, perSpawn: 1,
+    id: 'woods', name: 'Mossy Woods', theme: 'forest', town: 'harbor', world: { x: 254, y: 166 }, perSpawn: 2,
     look: { sky: ['#6fc6f0', '#b6e6f0', '#eafbe4'], far: '#86cc9c', mid: '#58b474', midTrim: '#479a62', forestStyle: 'mossy', material: 'mossy', edges: 'mossy', islands: 'branch', props: ['tuft'], propKeep: 0.4, ledgeKeep: 0.3, critters: [], drift: null, noAmbient: true, spots: 'cute' },
     ...lay({
       width: 1800, ground: 1000, by: 'y', quiet: [[40, 1000, 160], [1760, 1000, 160]],
@@ -356,11 +356,12 @@ export const MAPS = {
     // Its monsters, placed by hand (one each), spread out, none near the ways in or out.
     spawns: [
       // The Forest Floor, between the trees.
-      { mob: 'mosstort', x: 620, y: 1000 }, { mob: 'mosstort', x: 1180, y: 1000 },
+      { mob: 'mosstort', x: 620, y: 1000 }, { mob: 'mosstort', x: 960, y: 1000 }, { mob: 'mosstort', x: 1180, y: 1000 },
       // The Branchways.
       { mob: 'mossowlet', x: 520, y: 880 }, { mob: 'mosstort', x: 200, y: 760 }, { mob: 'mossowlet', x: 1060, y: 720 }, { mob: 'mossowlet', x: 1280, y: 760 },
+      { mob: 'mossowlet', x: 720, y: 840 }, { mob: 'mossowlet', x: 1480, y: 880 }, { mob: 'redpanda', x: 480, y: 640 },
       // The Canopy (and the Red Panda that likes the east tree's top branch).
-      { mob: 'redpanda', x: 800, y: 520 }, { mob: 'redpanda', x: 1540, y: 640 },
+      { mob: 'redpanda', x: 800, y: 520 }, { mob: 'redpanda', x: 1000, y: 520 }, { mob: 'redpanda', x: 1540, y: 640 },
     ],
     // Its gathering spots, placed by hand, clear of the trunks, the doors and the ladders.
     nodes: [
@@ -680,7 +681,7 @@ Object.assign(MAPS, {
   // beside the arch from the riverbed (Up to ride it) and a vent on the east spire's high shelf puffs
   // you up to its cap.
   canyon: {
-    id: 'canyon', name: 'Windy Canyon', theme: 'crag', town: 'crag', world: { x: 138, y: 104 }, perSpawn: 1,
+    id: 'canyon', name: 'Windy Canyon', theme: 'crag', town: 'crag', world: { x: 138, y: 104 }, perSpawn: 3,
     look: { painted: 'canyon', light: 'canyon', faceAt: 0.32, sky: ['#ffa37e', '#ffd0a4', '#ffecd2'], far: '#e8b2a4', mid: '#dc946c', material: 'canyon', islands: 'shelf', drift: null, props: [], ledgeKeep: 1, critters: ['hawk'] },
     ...lay({
       width: 2200, ground: 1000, by: 'y',
@@ -725,12 +726,12 @@ Object.assign(MAPS, {
     // Its monsters, placed by hand (one each), spread out, none near the ways in or out.
     spawns: [
       // The Dry Riverbed.
-      { mob: 'pebblet', x: 380, y: 1000 }, { mob: 'pebblet', x: 800, y: 1000 }, { mob: 'pebblet', x: 1500, y: 1000 }, { mob: 'pebblet', x: 1800, y: 1000 },
+      { mob: 'pebblet', x: 380, y: 1000 }, { mob: 'pebblet', x: 800, y: 1000 }, { mob: 'pebblet', x: 1300, y: 1000 }, { mob: 'pebblet', x: 1500, y: 1000 }, { mob: 'pebblet', x: 1800, y: 1000 },
       // The Cliff Shelves.
       { mob: 'pebblet', x: 350, y: 880 }, { mob: 'scorpip', x: 290, y: 680 }, { mob: 'scorpip', x: 730, y: 880 }, { mob: 'pebblet', x: 450, y: 780 }, { mob: 'scorpip', x: 720, y: 660 },
       { mob: 'pebblet', x: 1520, y: 880 }, { mob: 'scorpip', x: 1780, y: 780 }, { mob: 'pebblet', x: 1860, y: 880 }, { mob: 'scorpip', x: 1900, y: 680 },
       // The Windy Top.
-      { mob: 'scorpip', x: 960, y: 520 }, { mob: 'scorpip', x: 1240, y: 520 }, { mob: 'scorpip', x: 390, y: 520 }, { mob: 'scorpip', x: 1810, y: 520 },
+      { mob: 'scorpip', x: 960, y: 520 }, { mob: 'scorpip', x: 1240, y: 520 }, { mob: 'scorpip', x: 1440, y: 520 }, { mob: 'scorpip', x: 390, y: 520 }, { mob: 'scorpip', x: 1810, y: 520 },
     ],
     // Its gathering spots, placed by hand on open, flat ground with room round them (clear of the
     // walls' and spires' feet, the ladders, the vent, the wind and the monsters, so nothing slides
@@ -2736,7 +2737,7 @@ Object.assign(MAPS, {
   // where the Blossom Fairies keep their hoard and the way on to Sylvana's Bower is. (Its little folk
   // are tanukis in disguise: the Puddle Kids below, the Blossom Fairies up top.)
   glade: {
-    id: 'glade', name: 'Whispering Glade', theme: 'forest', town: 'harbor', world: { x: 278, y: 160 }, perSpawn: 1,
+    id: 'glade', name: 'Whispering Glade', theme: 'forest', town: 'harbor', world: { x: 278, y: 160 }, perSpawn: 3,
     look: { sky: ['#8fe0d8', '#d2f4ea', '#fffbe8'], far: '#8fd6bc', mid: '#6cc4a0', midTrim: '#4fae86', light: 'morning', forestStyle: 'glade', material: 'glade', edges: 'flowers', props: ['flower', 'tuft', 'tulip'], propKeep: 0.45, ledgeKeep: 0.35, drift: null, critters: [], noAmbient: true, rainbow: 0.35 },
     ...lay({
       width: 1000, ground: 900, by: 'y',
@@ -2762,7 +2763,7 @@ Object.assign(MAPS, {
         { x: 380, y: 900, w: 80, posts: true, walkOn: true },
       ],
     }),
-    // Its monsters, placed by hand (one each: perSpawn): Puddle Kids on the meadow, Blossom Fairies up the cliffs.
+    // Its monsters, placed by hand (three each: perSpawn; 2026-11-20, the hunting pace): Puddle Kids on the meadow, Blossom Fairies up the cliffs.
     // (Kept clear of the arrivals: the way in from the woods in the west, and the way back down
     // from Sylvana's Bower on the leaf.)
     spawns: [

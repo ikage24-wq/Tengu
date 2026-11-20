@@ -46,6 +46,9 @@ export function navOf(map) {
   // moves are shifted by how far it has glided since, see `driftShift`.)
   nav = { surfaces, ground, edges: surfaces.map(() => []), x1At: surfaces.map((s) => s.x1) };
   const below = (x, y) => surfaceBelow(nav, x, y + 2);
+  // A bounce flower or vent on surface j between x0 and x1 (where a move would come down): it
+  // throws you straight back up, and a party member taking that move would loop.
+  const springOn = (j, x0, x1) => (map.springs ?? []).some((sp) => sp.x >= Math.min(x0, x1) - 18 && sp.x <= Math.max(x0, x1) + 18 && Math.abs(surfaces[j].yAt(sp.x) - sp.y) < 4);
   surfaces.forEach((a, i) => {
     surfaces.forEach((b, j) => {
       if (i === j) return;
@@ -72,28 +75,33 @@ export function navOf(map) {
       // ...or a running jump across a small gap (or up a cliff wall from right below it).
       const across = (from, to, dir) => {
         const rise = a.yAt(from) - b.yAt(to);
-        if (rise > 0 && rise <= REACH_UP && clear(to + dir * 6, a.yAt(from))) nav.edges[i].push({ to: j, kind: 'jump', lo: from, hi: from, land: to + dir * 6 });
+        if (rise > 0 && rise <= REACH_UP && clear(to + dir * 6, a.yAt(from)) && !springOn(j, to, to + dir * 6)) nav.edges[i].push({ to: j, kind: 'jump', lo: from, hi: from, land: to + dir * 6 });
       };
       if (b.x1 >= a.x2 && b.x1 - a.x2 <= REACH_SIDE) across(a.x2 - 6, b.x1 + INSET, 1);
       else if (a.x1 >= b.x2 && a.x1 - b.x2 <= REACH_SIDE) across(a.x1 + 6, b.x2 - INSET, -1);
     });
-    // Drop through a ledge onto whatever is right below, wherever that's this surface.
+    // Drop through a ledge onto whatever is right below, wherever that's this surface (never onto a
+    // bounce flower or vent).
     if (!a.ground) {
-      const drops = new Map();
+      const drops = [];
+      let run = null;
       for (let x = a.x1 + 6; x <= a.x2 - 6; x += 8) {
         const j = below(x, a.y);
-        if (j === i) continue;
-        const r = drops.get(j);
-        if (r) r.hi = x;
-        else drops.set(j, { lo: x, hi: x });
+        if (j === i || j < 0 || springOn(j, x, x)) {
+          run = null;
+          continue;
+        }
+        if (run && run.to === j) run.hi = x;
+        else drops.push((run = { to: j, lo: x, hi: x }));
       }
-      for (const [j, r] of drops) nav.edges[i].push({ to: j, kind: 'drop', lo: r.lo, hi: r.hi });
+      for (const r of drops) nav.edges[i].push({ to: r.to, kind: 'drop', lo: r.lo, hi: r.hi });
     }
-    // Walk off either end, onto whatever is below (not up a cliff wall).
-    for (const [x, from] of [[a.x1 - 8, a.x1], [a.x2 + 8, a.x2]]) {
+    // Walk off either end, onto whatever is below (not up a cliff wall, nor onto a bounce flower
+    // or vent where you'd come down, carried on a little by your walk).
+    for (const [x, from, dir] of [[a.x1 - 8, a.x1, -1], [a.x2 + 8, a.x2, 1]]) {
       if (x < 12 || x > map.width - 12) continue;
       const j = firstBelow(nav, x, a.yAt(from));
-      if (j >= 0 && j !== i) nav.edges[i].push({ to: j, kind: 'walk', lo: x, hi: x });
+      if (j >= 0 && j !== i && !springOn(j, x, x + dir * 40)) nav.edges[i].push({ to: j, kind: 'walk', lo: x, hi: x });
     }
   });
   for (const r of map.ropes) {
