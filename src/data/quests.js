@@ -487,6 +487,126 @@ export const QUESTS = {
     rewards: { exp: 62000, gold: 900, items: [{ id: 'mochi_egg', qty: 1 }] },
   },
 
+  // Marina's story (Tidepool Pier, 2026-11-21): her bubble charm is leaking, the deep's gone dark
+  // and cold since the tide stuck, and the old diving bell hasn't rung since her grandmother's
+  // day. You patch the charm with wisp-fire, chase the Imps off her lamp glass, bring the divers
+  // something warm, and Granny Kelp remembers the bell's last song.
+  marina_charm: {
+    id: 'marina_charm', name: 'A Leaky Bubble', giver: 'marina', minLevel: 22, prereq: 'story_tide',
+    text: "My bubble charm's leaking. Not a lot. Just enough that I come up with one wet ear. A bubble wants to be warm to stay round, so: Will-o'-Wisps in Twilight Ruins burn without burning anything. Bring me 10 Wisp Flames and I'll tuck them in the charm. Don't sit on them.",
+    objectives: [{ type: 'collect', item: 'wisp_flame', count: 10 }],
+    rewards: { exp: 21000, gold: 380, items: [{ id: 'orange_potion', qty: 15 }] },
+  },
+  marina_imps: {
+    id: 'marina_imps', name: 'Light Fingers', giver: 'marina', minLevel: 23, prereq: 'marina_charm',
+    text: "The Imps in Twilight Ruins flew off with the glass from my diving lamp. Shiny things. They can't help it. I can't dive in the dark either, so we're at an impasse. Shoo 15 of them and see if one drops it. If one's wearing it as a hat, let him keep the hat. Just get the glass.",
+    objectives: [{ type: 'kill', mob: 'gloombat', count: 15 }],
+    rewards: { exp: 24000, gold: 420, items: [] },
+  },
+  marina_tea: {
+    id: 'marina_tea', name: 'Something Warm', giver: 'marina', minLevel: 24, prereq: 'marina_imps',
+    text: "Since the tide stuck, the deep's gone cold. Not 'brr' cold. 'I can hear my teeth from up here' cold. The divers come up blue. The Tanuki Pickers on the Tea Terraces grow the best tea on the island, and they're very protective of it. Bring me 10 Fresh Tea Leaves. Ask nicely first. Then less nicely.",
+    objectives: [{ type: 'collect', item: 'tea_leaf', count: 10 }],
+    rewards: { exp: 27000, gold: 460, items: [{ id: 'white_potion', qty: 10 }] },
+  },
+  marina_bell: {
+    id: 'marina_bell', name: 'The Bell Rings Twice', giver: 'marina', minLevel: 25, prereq: 'marina_tea',
+    text: "That diving bell on the pier hasn't rung since my gran's day. She said it rang twice when the sea was happy. I tried everything. Hitting it. Asking it. Singing at it. Granny Kelp at the lighthouse dived with my gran. Ask her how it went. The song, not the hitting.",
+    objectives: [{ type: 'talk', npc: 'kelp', say: "The bell? Oh, dearie. Your Marina's gran never rang it. She hummed to the fish, and the fish rang it for her, bumping it with their noses. Twice, when they were happy. Tell her to hum. Off key is fine. Fish are very forgiving." }],
+    rewards: { exp: 30000, gold: 520, items: [{ id: 'elixir', qty: 3 }] },
+  },
+
+  // Tock's story (Carnival Gates): a runaway tin soldier who has never once stopped. His key slips,
+  // the Nekomata keep pinching the fair's bells, and he has never slept: you mend his key with a
+  // kettle lid, help him drum a march, stand watch on the carousel with him, and make him a paper
+  // lantern so he can rest in the dark without being scared of it.
+  tock_key: {
+    id: 'tock_key', name: 'A Spare Key', giver: 'tock', minLevel: 26, prereq: 'story_fair',
+    text: "Sir! My key, sir. It slips. Every turn, a little less tock in the tick. Brass, sir, that's what it wants, and the Kettle Tanuki on the Tea Terraces wear the finest brass on the island. As lids. Bring me 8 Little Kettle Lids and I'll make a spare. For emergencies, sir. Like now.",
+    objectives: [{ type: 'collect', item: 'kettle_lid', count: 8 }],
+    rewards: { exp: 30000, gold: 480, items: [{ id: 'white_potion', qty: 10 }] },
+  },
+  tock_bells: {
+    id: 'tock_bells', name: 'Drum Practice', giver: 'tock', minLevel: 27, prereq: 'tock_key',
+    text: "A soldier needs a march, sir, and a march needs bells! The fair's bells keep going missing, and every Nekomata on the Fox Shrine Path jingles when it walks. I'm not saying. I'm just saying. Bring me 10 Nekomata Bells and we'll have the finest march on the island!",
+    objectives: [{ type: 'collect', item: 'nekomata_bell', count: 10 }],
+    rewards: { exp: 34000, gold: 520, items: [] },
+  },
+  tock_watch: {
+    id: 'tock_watch', name: 'On Patrol', giver: 'tock', minLevel: 28, prereq: 'tock_bells',
+    text: "Sentry duty, sir! Climb to the top of the carousel by the gates. Best lookout at the fair. Then help me with the Lantern Tanuki on the Tea Terraces: they shine their lanterns at our sign all night, and it gets in the horses' eyes. 15 of them, sir. Politely!",
+    objectives: [{ type: 'visit', map: 'carnival_gate', above: 230, place: 'the top of the carousel' }, { type: 'kill', mob: 'lantertanuki', count: 15 }],
+    rewards: { exp: 38000, gold: 580, items: [{ id: 'elixir', qty: 2 }] },
+  },
+  tock_rest: {
+    id: 'tock_rest', name: 'At Ease, Soldier', giver: 'tock', minLevel: 29, prereq: 'tock_watch',
+    text: "Sir. A confession, sir. I've never stopped. Not once. I'm afraid of what happens when the key runs down. It goes dark, sir. Everyone says the Queen sleeps beautifully. I'd like to try. Just a little. With a light. Bring me 8 Lantern Papers and I'll fold one. You can stay. If you like.",
+    objectives: [{ type: 'collect', item: 'lantern_paper', count: 8 }],
+    rewards: { exp: 42000, gold: 640, items: [{ id: 'elixir', qty: 3 }] },
+  },
+
+  // Chef Praline's story (Sugar Trail): a new tasting menu for the island now the volcano's calm.
+  // Hot-spring eggs from Serpent Springs, snow syrup from Frozen Peak, a mist-fine sieve from a
+  // Wraith's shroud, and a tasting round for the people who helped.
+  praline_eggs: {
+    id: 'praline_eggs', name: 'Onsen Eggs', giver: 'praline', minLevel: 36, prereq: 'story_dessert',
+    text: "New menu, chef! Course one: eggs poached in the hot springs, wobbly as a jelly. The Lamias at Serpent Springs guard the hot pools and hiss at my egg basket. Calm 15 of them so I can get in. They're grumpy without their bath. I'm grumpy without my eggs. We understand each other.",
+    objectives: [{ type: 'kill', mob: 'lamia', count: 15 }],
+    rewards: { exp: 56000, gold: 760, items: [{ id: 'white_potion', qty: 15 }] },
+  },
+  praline_snow: {
+    id: 'praline_snow', name: 'Snow Syrup', giver: 'praline', minLevel: 37, prereq: 'praline_eggs',
+    text: "Course two: shaved ice! Not just any ice. The Yuki-onna on Frozen Peak carry Snow Gems that never melt, even in a pan. I checked. Accidentally. Bring me 8 and I'll shave them over strawberry syrup. It'll be the coldest dessert in history. Yes, chef!",
+    objectives: [{ type: 'collect', item: 'snow_gem', count: 8 }],
+    rewards: { exp: 61000, gold: 820, items: [] },
+  },
+  praline_sieve: {
+    id: 'praline_sieve', name: 'Fine as Mist', giver: 'praline', minLevel: 38, prereq: 'praline_snow',
+    text: "Course three: the softest cream on the island, but it wants a sieve finer than any sieve I own. A Wraith's shroud is woven of mist. You see where I'm going. Bring me 8 Wraith Shrouds from Serpent Springs. Clean ones, please. Well. As clean as a ghost's laundry gets.",
+    objectives: [{ type: 'collect', item: 'shade_cloth', count: 8 }],
+    rewards: { exp: 66000, gold: 880, items: [{ id: 'elixir', qty: 3 }] },
+  },
+  praline_menu: {
+    id: 'praline_menu', name: 'The Tasting Round', giver: 'praline', minLevel: 39, prereq: 'praline_sieve',
+    text: "It's ready! Three courses. Now the most important part: other people's faces. Take a tasting box to Professor Lumen at the observatory, and one to Yuzu in Moonleaf Grove. Watch their faces. Tell me everything. Especially the bad parts. Actually, don't. Tell me the good parts.",
+    objectives: [
+      { type: 'talk', npc: 'lumen', say: "A tasting box? For me? Oh my. *eats the shaved ice* It tastes like a clear night. How does it taste like a clear night? Tell the chef it's the best thing that's happened to my teeth in forty years." },
+      { type: 'talk', npc: 'yuzu', say: "Is this a trick? It's a trick. *eats an egg* ...It's not a trick. It wobbles! Tell the chef my second tail likes it. My FIRST tail is reserving judgement." },
+    ],
+    rewards: { exp: 72000, gold: 960, items: [{ id: 'elixir', qty: 4 }] },
+  },
+
+  // Madame Encore's story (Theatre Row): her comeback tour. A cloud gown, nerves on the poster
+  // column with hecklers in the sky, a bouquet of feathers since nothing flowers on a cloud, and
+  // the invitations to opening night.
+  encore_gown: {
+    id: 'encore_gown', name: 'A Gown of Cloud', giver: 'encore', minLevel: 41, prereq: 'story_encore',
+    text: "Darling, a comeback needs a gown, and a gown on a cloud should be MADE of cloud. The Pegasus Foals in the Sky Garden have manes like whipped cream. Bring me 12 Cloud Manes. I'll sew all night. I always sewed all night. That's why I was always late for rehearsal.",
+    objectives: [{ type: 'collect', item: 'wool', count: 12 }],
+    rewards: { exp: 74000, gold: 980, items: [{ id: 'white_potion', qty: 20 }] },
+  },
+  encore_nerves: {
+    id: 'encore_nerves', name: 'Stage Fright', giver: 'encore', minLevel: 42, prereq: 'encore_gown',
+    text: "Forty years, and my knees still knock, darling. The trick is to find the highest place in the house and say your first line to the back row. Climb the poster column out here and say it for me: 'Good evening!' Then the Sky Harpies, who heckle every show I've ever done. Twenty of them. Exit, pursued by you.",
+    objectives: [{ type: 'visit', map: 'theatre_row', above: 260, place: 'the top of the poster column' }, { type: 'kill', mob: 'windbird', count: 20 }],
+    rewards: { exp: 80000, gold: 1050, items: [] },
+  },
+  encore_bouquet: {
+    id: 'encore_bouquet', name: 'Flowers for the Leading Lady', giver: 'encore', minLevel: 43, prereq: 'encore_nerves',
+    text: "A leading lady must be thrown flowers, darling. It's in the contract. Nothing flowers on a cloud, so we'll be clever: a bouquet of feathers. Bring me 10 Harpy Feathers from the Sky Garden. Pink, if they come in pink. They never do. I ask anyway. It keeps the harpies humble.",
+    objectives: [{ type: 'collect', item: 'feather', count: 10 }],
+    rewards: { exp: 86000, gold: 1120, items: [{ id: 'elixir', qty: 4 }] },
+  },
+  encore_invites: {
+    id: 'encore_invites', name: 'Opening Night', giver: 'encore', minLevel: 44, prereq: 'encore_bouquet',
+    text: "Invitations, darling! A show is nothing without an audience, and I want the best one on the island. Take these to Skipper Nimbus at Cloudcatch Pier and Chef Praline on the Sugar Trail. Front row seats. Tell them to come as they are. Tell Praline to bring dessert.",
+    objectives: [
+      { type: 'talk', npc: 'nimbus', say: "Opening night? Front row? I'll wear my good hat. The one without the seagull in it. ...I'll wear the one with the seagull. He likes the theatre." },
+      { type: 'talk', npc: 'praline', say: "Front row! For me? I'll bring dessert. Three courses. Four! An intermission course! Tell her yes, chef! Tell her YES!" },
+    ],
+    rewards: { exp: 92000, gold: 1200, items: [{ id: 'elixir', qty: 5 }] },
+  },
+
   // Yuzu's story (Moonleaf Grove, by the Moon Tree): she borrows Professor Lumen's star maps because
   // a fox who reaches the Tail Star at the top of the world grows her second tail, or so the elder
   // spirits told her. At the summit of Frozen Peak there is no star, only its reflection in the

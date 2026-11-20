@@ -131,13 +131,13 @@ export const NPCS = {
     shop: ['red_potion', 'orange_potion', 'white_potion', 'blue_potion', 'mana_elixir', 'return_scroll'],
   },
   marina: {
-    id: 'marina', name: 'Marina', title: 'Harbor Diver', role: 'dungeon', quests: ['story_tide', 'story_coralie'], dungeon: 'aquarium',
+    id: 'marina', name: 'Marina', title: 'Harbor Diver', role: 'dungeon', quests: ['story_tide', 'story_coralie', 'marina_charm', 'marina_imps', 'marina_tea', 'marina_bell'], dungeon: 'aquarium',
     look: { hairStyle: 'wolf', hairColor: '#7fd8e8', skinTone: '#e7b48f', eyeColor: '#1f7a8b', outfitColor: '#5ac8c8', eyeStyle: 'sparkle', face: 'grin' },
     greeting: 'The palace down there is glowing again. My bubble charm takes four at a time: a tank, a healer, two fighters. Hold your breath!',
     shop: ['red_potion', 'orange_potion', 'white_potion', 'blue_potion', 'mana_elixir', 'return_scroll'],
   },
   tock: {
-    id: 'tock', name: 'Tock', title: 'Runaway Tin Soldier', role: 'dungeon', quests: ['story_fair', 'story_gearheart'], dungeon: 'carnival',
+    id: 'tock', name: 'Tock', title: 'Runaway Tin Soldier', role: 'dungeon', quests: ['story_fair', 'story_gearheart', 'tock_key', 'tock_bells', 'tock_watch', 'tock_rest'], dungeon: 'carnival',
     look: { hairStyle: 'bob', hairColor: '#ff8a5a', skinTone: '#fbd9bf', eyeColor: '#3a4aa8', outfitColor: '#e04a5a', eyeStyle: 'round', face: 'determined' },
     greeting: "Psst! I ran away from the Carnival. Her Majesty is wound too tight and none of us can stop. Bring three friends and help me wind her down!",
     shop: ['red_potion', 'orange_potion', 'white_potion', 'blue_potion', 'mana_elixir', 'return_scroll'],
@@ -149,13 +149,13 @@ export const NPCS = {
     shop: ['red_potion', 'orange_potion', 'white_potion', 'blue_potion', 'mana_elixir', 'return_scroll'],
   },
   praline: {
-    id: 'praline', name: 'Chef Praline', title: 'Runaway Confectioner', role: 'dungeon', quests: ['story_dessert', 'story_bonbon'], dungeon: 'volcano',
+    id: 'praline', name: 'Chef Praline', title: 'Runaway Confectioner', role: 'dungeon', quests: ['story_dessert', 'story_bonbon', 'praline_eggs', 'praline_snow', 'praline_sieve', 'praline_menu'], dungeon: 'volcano',
     look: { hairStyle: 'fluffybob', hairColor: '#c88a5a', skinTone: '#fbd9bf', eyeColor: '#a8520a', outfitColor: '#ffffff', eyeStyle: 'sparkle', face: 'grin' },
     greeting: "I was Queen Bonbon's pastry chef, till her cakes got bigger than the kitchen! If the volcano boils over, we're all dessert. Bring a tank, a healer and two fighters... and a spoon.",
     shop: ['red_potion', 'orange_potion', 'white_potion', 'blue_potion', 'mana_elixir', 'return_scroll'],
   },
   encore: {
-    id: 'encore', name: 'Madame Encore', title: 'Retired Leading Lady', role: 'dungeon', quests: ['story_encore', 'story_playwright'], dungeon: 'theatre',
+    id: 'encore', name: 'Madame Encore', title: 'Retired Leading Lady', role: 'dungeon', quests: ['story_encore', 'story_playwright', 'encore_gown', 'encore_nerves', 'encore_bouquet', 'encore_invites'], dungeon: 'theatre',
     look: { hairStyle: 'wolf', hairColor: '#f2f0f6', skinTone: '#f6d2b8', eyeColor: '#b03050', outfitColor: '#9a2040', eyeStyle: 'sparkle', face: 'smile' },
     greeting: "Forty years I played that stage, darling, and now it plays somebody's Monday. Bring a tank, a healer and two fighters, and never miss your cue.",
     shop: ['red_potion', 'orange_potion', 'white_potion', 'blue_potion', 'mana_elixir', 'return_scroll'],
