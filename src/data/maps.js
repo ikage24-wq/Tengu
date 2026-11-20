@@ -2584,19 +2584,24 @@ const WHALE = { skyline: 'whaleback', material: 'whaleskin', critters: ['gull'],
 
 Object.assign(MAPS, {
   // Cloudcatch Pier: a wooden pier off the east rim of Starfall Heights, the whale swimming close
-  // beyond the clouds. Skipper Nimbus finds groups here.
+  // beyond the clouds. Skipper Nimbus finds groups here. (Its makeover 2026-11-20,
+  // render/gateart.js: the cloud-fishing boards in the west kept open; a little sky schooner moored
+  // alongside, its deck to hop onto and a rope ladder up its mast to the crow's nest; and the way up
+  // to the whale: a striped hot-air balloon tethered at the pier's end, its basket's gate open.)
   cloudcatch_pier: {
     id: 'cloudcatch_pier', name: 'Cloudcatch Pier', theme: 'skywhale', town: 'grove', world: { x: 400, y: 30 }, music: 'skywhale',
     width: 1200, height: 420, groundY: G,
     look: { sky: ['#5a9ae0', '#9fd0ff', '#fff0d8'], far: '#8ab8e8', mid: '#b8d8f6', midTrim: '#ffffff', skyline: 'whale', material: 'dockwood', critters: ['gull'], drift: 'sparkle', face: 'sun' },
-    platforms: [{ x: 420, y: G - 80, w: 140 }],
-    ropes: [],
-    deco: [['signpost', 160]],
+    // The schooner's deck and crow's nest (drawn with it), a rope ladder up its mast.
+    platforms: [{ x: 604, y: G - 80, w: 192, bare: true }, { x: 676, y: G - 190, w: 48, bare: true }],
+    ropes: [{ x: 700, top: G - 190, bottom: G - 80 }],
+    deco: [['signpost', 160], ['skyboat', 700, 0], ['balloondock', 1060, 0]],
     portals: [
       { id: 'start', x: 640, y: G, hidden: true },
       { id: 'west', x: 50, y: G, to: 'starfall', toPortal: 'whale' },
-      { id: 'door', x: 1110, y: G, to: 'skywhale1', toPortal: 'start', label: "Sky Whale's Back", dungeon: 'skywhale' },
+      { id: 'door', x: 1060, y: G, to: 'skywhale1', toPortal: 'start', label: "Sky Whale's Back", dungeon: 'skywhale', mouth: 30, labelAt: 130 },
     ],
+    lamps: [{ x: 1060, y: 270 }],
     npcs: [{ id: 'nimbus', x: 860 }],
     spawns: [],
   },

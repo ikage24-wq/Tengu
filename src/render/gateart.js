@@ -12,6 +12,9 @@
 // Theatre Row: a stack of stage trunks (the step up), a poster column (its rim a ledge) and the
 // grand entrance of the Dream Theatre: a gilded arch, a marquee of bulbs, velvet curtains drawn
 // back, the way in between them.
+// Cloudcatch Pier: a little sky schooner moored alongside, cloud sails on its mast (its deck and
+// crow's nest ledges), and the way up to the whale's back: a striped hot-air balloon tethered at
+// the pier's end, its basket's gate open.
 // Tidepool Pier: Marina's dive shop on the quay (its roof deck a ledge, a stack of crates to climb
 // to it) and, at the pier's end, a timber crane with a big brass diving bell resting on the boards,
 // its hatch open: the way down to the Sunken Aquarium Palace (the portal's swirl turns in it).
@@ -689,6 +692,136 @@ function entranceArt() {
   });
 }
 
+// ---------- Cloudcatch Pier's pieces ----------
+const CL = {
+  hull: '#ffffff', hullSh: '#dfe6fb', trim: '#5a9ae0', trimSh: '#3a7ac0', wood: '#c89a74', woodLit: '#e4b892', woodSh: '#a07656', woodDeep: '#7a5640',
+  sail: '#ffffff', sailSh: '#e2eafc', rope: '#e8d8b0', ropeSh: '#c8b088', wicker: '#d8a868', wickerSh: '#b08048', wickerDeep: '#8a6038',
+  stripes: ['#ff9ab8', '#ffd36b', '#9ff0dc', '#a8c8ff'], hole: '#2a3a5a', holeIn: '#3a5a7a', flag: '#ff6a8a', glass: '#bfe6ff',
+};
+
+// The sky schooner, moored alongside the pier: a rounded white hull with a blue trim and portholes
+// (its keel sunk behind the boards), a deck (a ledge SB_DECK up), a mast with puffy cloud sails, a
+// crow's nest (a ledge SB_NEST up, a rope ladder to it), a pennant, a propeller at the stern turning
+// (drawn live). Bottom middle at the mast's foot level with the pier.
+const SB_W = 260;
+const SB_H = 270;
+export const SB_DECK = 80;
+export const SB_NEST = 190;
+export const SB_DECK_SPAN = [-96, 96];
+export const SB_NEST_SPAN = [-24, 24];
+function boatArt() {
+  return art('skyboat', SB_W, SB_H, () => {
+    const out = [];
+    const cx = SB_W / 2;
+    const H = SB_H;
+    const dk = H - SB_DECK;
+    const ns = H - SB_NEST;
+    // The mast and the sails (behind the hull's rail).
+    out.push(R(cx - 4, ns - 40, cx + 4, dk, CL.wood), F(R(cx + 1, ns - 40, cx + 4, dk, CL.woodSh)));
+    const sail = (x0, y0, w, h) => {
+      out.push(T([[x0, y0], [x0 + w, y0 + 6], [x0 + w + 8, y0 + h * 0.5], [x0 + w, y0 + h], [x0, y0 + h]], CL.sail));
+      out.push(F(T([[x0 + w * 0.6, y0 + 4], [x0 + w, y0 + 6], [x0 + w + 8, y0 + h * 0.5], [x0 + w, y0 + h], [x0 + w * 0.6, y0 + h]], CL.sailSh)));
+      for (const [px, py, r] of [[x0 + w, y0 + h * 0.3, 10], [x0 + w + 6, y0 + h * 0.65, 11], [x0 + w * 0.5, y0 + h + 2, 9]]) out.push(E(px, py, r, r * 0.8, CL.sail));
+    };
+    sail(cx + 6, ns + 6, 60, 46);
+    sail(cx + 6, ns + 60, 76, 38);
+    out.push(F(band([[cx + 4, ns - 40], [cx + 4, ns - 56]], () => 1, CL.woodDeep)), T([[cx + 5, ns - 56], [cx + 26, ns - 50], [cx + 5, ns - 44]], CL.flag));
+    // The crow's nest.
+    const [n0, n1] = SB_NEST_SPAN;
+    out.push(T([[cx + n0, ns], [cx + n1, ns], [cx + n1 - 4, ns + 20], [cx + n0 + 4, ns + 20]], CL.wood));
+    out.push(F(R(cx + n0, ns, cx + n1, ns + 3, CL.woodLit)));
+    for (let x = cx + n0 + 6; x < cx + n1 - 2; x += 8) out.push(F(R(x, ns + 3, x + 1.2, ns + 20, CL.woodSh)));
+    // The hull: rounded, white with a blue trim and portholes, sunk behind the pier below its deck.
+    const [d0, d1] = SB_DECK_SPAN;
+    out.push(T([[cx + d0 - 18, dk - 6], [cx + d1 + 24, dk - 12], [cx + d1 + 10, dk + 40], [cx + 60, H + 30], [cx - 70, H + 30], [cx + d0 - 8, dk + 36]], CL.hull));
+    out.push(F(T([[cx + d0 - 18, dk - 6], [cx + d1 + 24, dk - 12], [cx + d1 + 22, dk - 4], [cx + d0 - 16, dk + 2]], CL.trim)));
+    out.push(F(T([[cx + 40, dk + 6], [cx + d1 + 20, dk - 4], [cx + d1 + 10, dk + 40], [cx + 60, H + 30], [cx + 30, H + 30]], CL.hullSh)));
+    out.push(F(R(cx + d0 - 10, dk + 26, cx + d1 + 12, dk + 31, CL.trim)));
+    for (const px of [-60, -20, 20, 60]) out.push(E(cx + px, dk + 14, 6, 6, CL.trimSh), F(E(cx + px, dk + 14, 4, 4, CL.glass)));
+    // The deck rail.
+    out.push(R(cx + d0, dk - 2, cx + d1, dk + 3, CL.wood), F(R(cx + d0, dk - 2, cx + d1, dk, CL.woodLit)));
+    return out;
+  });
+}
+function propArt(f) {
+  return art(`prop|${f}`, 30, 40, () => {
+    const h = Math.abs(Math.cos((f / 6) * Math.PI)) * 16 + 2;
+    return [R(0, 18, 12, 22, CL.woodDeep), E(16, 20, 3, h, CL.wood), F(E(16, 20, 1.4, Math.max(1, h - 3), CL.woodLit)), E(16, 20, 3, 3, CL.trimSh)];
+  });
+}
+function drawBoat(ctx, x, y, time) {
+  // It rides the clouds a little, up and down.
+  const bob = Math.round(Math.sin(time * 0.9) * 2);
+  place(ctx, boatArt(), x, y + bob);
+  place(ctx, propArt(Math.floor(time * 10) % 6), x - 128, y - SB_DECK + 26 + bob);
+}
+
+// The balloon dock: a striped hot-air balloon tethered at the pier's end, its burner glowing,
+// ropes down to a wicker basket standing on the boards, the basket's gate swung open (BALLOON_DOOR:
+// the way up to the whale's back; the portal's swirl turns in it), sandbags, a mooring post.
+// Bottom middle at the basket's gate.
+const BD_W = 240;
+const BD_H = 330;
+export const BALLOON_DOOR = { w: 50, h: 60 };
+function envelopeArt() {
+  return art('envelope', BD_W, 220, () => {
+    const out = [];
+    const cx = BD_W / 2;
+    const top = 6;
+    const env = [...arc(cx, top + 90, 92, 90, 180, 360, 24), [cx + 92, top + 96], [cx + 60, top + 170], [cx + 28, top + 196], [cx - 28, top + 196], [cx - 60, top + 170], [cx - 92, top + 96]];
+    out.push(T(env, CL.stripes[0]));
+    for (let k = 0; k < 6; k++) {
+      const u0 = -1 + (k * 2) / 6;
+      const u1 = -1 + (k * 2 + 1) / 6;
+      const gore = (u) => [...Array.from({ length: 9 }, (_, i) => {
+        const t = i / 8;
+        const y = top + t * 196;
+        const half = t < 0.48 ? Math.sin(Math.acos(1 - t / 0.48)) * 92 : 92 - (t - 0.48) / 0.52 * 64;
+        return [cx + u * half, y];
+      })];
+      const a = gore(u0);
+      const b = gore(u1).reverse();
+      out.push(F(T([...a, ...b], CL.stripes[(k + 1) % 4])));
+    }
+    out.push(F(T([...arc(cx, top + 90, 92, 90, 200, 250, 6), [cx - 40, top + 60], [cx - 70, top + 90]], '#ffffff')));
+    out.push(R(cx - 28, top + 194, cx + 28, top + 200, CL.woodDeep));
+    return out;
+  });
+}
+function basketArt() {
+  return art('basket', BD_W, 110, () => {
+    const out = [];
+    const cx = BD_W / 2;
+    const H = 110;
+    // The ropes up to the envelope.
+    for (const [x0, x1] of [[-40, -28], [40, 28], [-14, -10], [14, 10]]) out.push(F(band([[cx + x0, H - 66], [cx + x1, 0]], () => 1, CL.rope)));
+    // The basket and its open gate.
+    out.push(R(cx - 46, H - 70, cx + 46, H, CL.wicker));
+    for (let y = H - 64; y < H; y += 8) out.push(F(R(cx - 46, y, cx + 46, y + 1.4, CL.wickerSh)));
+    for (let x = cx - 40; x < cx + 46; x += 10) out.push(F(R(x, H - 70, x + 1.2, H, CL.wickerSh)));
+    out.push(R(cx - 50, H - 74, cx + 50, H - 66, CL.wickerDeep), F(R(cx - 50, H - 74, cx + 50, H - 72, CL.wicker)));
+    const dw = BALLOON_DOOR.w / 2;
+    out.push(R(cx - dw, H - BALLOON_DOOR.h, cx + dw, H, CL.hole), F(R(cx - dw + 5, H - BALLOON_DOOR.h + 5, cx + dw - 5, H, CL.holeIn)));
+    out.push(T([[cx + dw, H - BALLOON_DOOR.h], [cx + dw + 22, H - BALLOON_DOOR.h + 6], [cx + dw + 22, H - 4], [cx + dw, H]], CL.wicker), F(R(cx + dw + 8, H - BALLOON_DOOR.h + 10, cx + dw + 9.4, H - 8, CL.wickerSh)));
+    // Sandbags and the mooring post with its tether.
+    for (const [sx, sy] of [[-52, H - 50], [-56, H - 30]]) out.push(E(cx + sx, sy, 7, 9, '#e8d4b0'), F(E(cx + sx + 2, sy + 3, 4, 5, '#c8b088')));
+    out.push(R(cx - 98, H - 40, cx - 86, H, CL.wood), F(R(cx - 90, H - 40, cx - 86, H, CL.woodSh)), E(cx - 92, H - 40, 6, 3, CL.woodLit));
+    out.push(F(band([[cx - 92, H - 34], [cx - 70, H - 46], [cx - 46, H - 66]], () => 1.4, CL.rope)));
+    return out;
+  });
+}
+function drawBalloon(ctx, x, y, time) {
+  // The envelope bobs a little on its ropes over the basket; the burner flickers.
+  const bob = Math.round(Math.sin(time * 0.8) * 3);
+  place(ctx, envelopeArt(), x, y - 110 + bob);
+  const f = 0.5 + 0.5 * Math.sin(time * 9);
+  ctx.fillStyle = hexA('#ffb070', 0.6 + 0.3 * f);
+  ctx.beginPath();
+  ctx.ellipse(x, y - 112 + bob, 6, 8 + f * 3, 0, 0, Math.PI * 2);
+  ctx.fill();
+  place(ctx, basketArt(), x, y);
+}
+
 export const GATE_KINDS = {
   diveshop: { w: DS_W + M * 2, h: DS_H + M, draw: (ctx, x, y) => place(ctx, shopArt(), x, y) },
   quaycrates: { w: CS_W + M * 2, h: CS_H + M, draw: (ctx, x, y) => place(ctx, cratesArt(), x, y) },
@@ -704,4 +837,6 @@ export const GATE_KINDS = {
   postercolumn: { w: PC_W + M * 2, h: PC_H + M, draw: (ctx, x, y) => place(ctx, columnArt(), x, y) },
   stagetrunks: { w: SK_W + M * 2, h: SK_H + M, draw: (ctx, x, y) => place(ctx, trunksArt(), x, y) },
   grandentrance: { w: GE_W + M * 2, h: GE_H + M, draw: (ctx, x, y) => place(ctx, entranceArt(), x, y) },
+  skyboat: { w: SB_W + M * 2, h: SB_H + M, draw: drawBoat },
+  balloondock: { w: BD_W + M * 2, h: BD_H + M, draw: drawBalloon },
 };
