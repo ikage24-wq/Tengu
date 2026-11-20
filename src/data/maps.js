@@ -2861,61 +2861,67 @@ Object.assign(MAPS, {
     nest: { mob: 'grandkettle', x: 2130, y: 1040, kills: 150, name: 'The giant teapot hut', wake: 'WHO is rattling MY kettles?! Everyone to the teapot hut!', stirs: ['Steam is puffing out of the giant teapot hut...', "The teapot hut's lid is rattling! Someone very old and very round is waking up."] },
   },
 
-  // The Fox Shrine Path climbs a sacred hill in three zones (zones by height, laid by hand
-  // 2026-11-19 after the audit found a dozen identical slabs stacked like pancakes): the Torii Steps
-  // on the ground, three great gates with their fox statues standing in open sky, short stone steps
-  // zig-zagging up between them; the Lantern Terraces, wider steps that span the gates high up,
-  // where foxfire rises to carry you higher and two cherry trees bloom; and the Hokora Heights, the
-  // Kitsune Miko's last steps up to the shrine on the summit, where the way into Tamamo's Sanctum
-  // opens, with a petal cloud drifting across the gap below it.
+  // The Fox Shrine Path (its makeover, 2026-11-20): a sacred hill built round its landmarks
+  // (render/shrineart.js), zones by height. The Torii Steps on the ground: you come in by the
+  // five-tier pagoda (its roofs are the steps up it, a jump apart) and walk under the giant sacred
+  // cherry with the straw rope round its trunk, foxfire rising between them (Up to ride it to the
+  // cherry's crown); a great gate opens the steep stone stair climbing the hill under a tunnel of
+  // vermilion gates. The Lantern Terraces: the pagoda's middle roofs, a lantern bridge from its
+  // fourth roof across to the cherry's boughs. The Hokora Heights: the pagoda's top roof, the
+  // cherry's crown (the homestone stands in it, by the foxfire) and the summit, where the Fox Shrine stands (its doorway is the way into
+  // Tamamo's Sanctum) and the road to the Clockwork Carnival leaves.
   shrine: {
-    id: 'shrine', name: 'Fox Shrine Path', theme: 'shrine', town: 'grove', world: { x: 378, y: 86 },
-    // (One monster a spot: the old stack held 15-21 on a screen.)
-    perSpawn: 1,
+    id: 'shrine', name: 'Fox Shrine Path', theme: 'shrine', town: 'grove', world: { x: 378, y: 86 }, perSpawn: 2,
+    // (The hill is soft earth under a grass cap, Petal Meadow's, not the old path's stone slabs.)
+    look: { material: 'petal', props: [], ledgeKeep: 1 },
     ...lay({
-      width: 2600, ground: 880, by: 'y', monsters: 22,
-      quiet: [[40, 880, 160], [2400, 880, 110], [2164, 560, 80], [1450, 240, 110]],
+      width: 2000, ground: 960, by: 'y',
+      // The ground, the stair up the hill (render/shrineart.js TS_RUN x TS_RISE) and the summit.
+      terrain: [[0, 960], [1000, 960], [1480, 520], [2000, 520]],
+      // Up the cherry: from the ground to its low bough, on to its mid bough, on to its crown.
+      ropes: [{ x: 610, top: 800, bottom: 960 }, { x: 880, top: 640, bottom: 800 }, { x: 700, top: 480, bottom: 640 }],
+      quiet: [[40, 960, 200], [1965, 520, 120], [1720, 520, 90]],
       zones: [
-        { name: 'Torii Steps', color: '#e0504a', mobs: ['nekomata'], nodes: [SPOT.wood(3), SPOT.fruit(3, 'shrine_plum')] },
-        { name: 'Lantern Terraces', color: '#e0a040', from: 680, mobs: ['nekomata', 'kitsunemiko'], nodes: [SPOT.fruit(3, 'cherry'), SPOT.wood(3), SPOT.fruit(3, 'shrine_plum')],
-          look: { sky: ['#ffb8a8', '#ffd8c8', '#fff0e4'] } },
-        { name: 'Hokora Heights', color: '#8f6cc4', from: 440, mobs: ['kitsunemiko'], nodes: [SPOT.ore(3), SPOT.night(3)],
-          look: { sky: ['#c8a8e0', '#e8d0f0', '#fff0f4'] } },
+        { name: 'Torii Steps', color: '#e0504a', mobs: ['nekomata'] },
+        { name: 'Lantern Terraces', color: '#e0a040', from: 800, mobs: ['nekomata', 'kitsunemiko'], look: { sky: ['#ffb8a8', '#ffd8c8', '#fff0e4'] } },
+        { name: 'Hokora Heights', color: '#8f6cc4', from: 560, mobs: ['kitsunemiko'], look: { sky: ['#c8a8e0', '#e8d0f0', '#fff0f4'] } },
       ],
       ledges: [
-        // The Torii Steps: short steps in the open between the gates (the gates stand at 380, 1220
-        // and 1900, nothing low over them).
-        { x: 100, y: 780, w: 170 }, { x: 40, y: 660, w: 180 },
-        { x: 530, y: 800, w: 230 }, { x: 830, y: 720, w: 250 }, { x: 560, y: 640, w: 220 },
-        { x: 1390, y: 790, w: 290 }, { x: 1420, y: 680, w: 210 },
-        { x: 2060, y: 800, w: 230 }, { x: 2350, y: 720, w: 200 }, { x: 2080, y: 640, w: 230 },
-        // The Lantern Terraces: wider steps that span the gates high up, then the cherry steps.
-        { x: 190, y: 560, w: 360 }, { x: 880, y: 580, w: 260 }, { x: 1560, y: 560, w: 330 }, { x: 2040, y: 560, w: 300 },
-        { x: 420, y: 470, w: 300 }, { x: 1000, y: 460, w: 240, noRope: true }, { x: 1700, y: 470, w: 300 }, { x: 2250, y: 470, w: 220 },
-        // The Hokora Heights: the last steps up either side, and the summit with the shrine.
-        { x: 640, y: 380, w: 280 }, { x: 1580, y: 380, w: 260 },
-        { x: 930, y: 310, w: 160 }, { x: 1510, y: 310, w: 150 },
-        { x: 1090, y: 240, w: 420, thick: 44 },
-        // The petal cloud drifting across the gap under the summit.
-        { x: 1100, y: 400, w: 130, drift: { dx: 300, period: 11 }, style: 'earth', material: 'sky' },
+        // The pagoda's five roofs, a jump apart (drawn with it).
+        { x: 220, y: 880, w: 280, bare: true, noProps: true, noRope: true }, { x: 235, y: 800, w: 250, bare: true, noProps: true, noRope: true },
+        { x: 250, y: 720, w: 220, bare: true, noProps: true, noRope: true }, { x: 265, y: 640, w: 190, bare: true, noProps: true, noRope: true },
+        { x: 280, y: 560, w: 160, bare: true, noProps: true, noRope: true },
+        // The lantern bridge from the pagoda's fourth roof to the cherry's mid bough.
+        { x: 452, y: 640, w: 131, style: 'bridge', noProps: true, noRope: true },
+        // The cherry's low bough, mid bough and crown (drawn with it).
+        { x: 580, y: 800, w: 400, bare: true, noProps: true, noRope: true }, { x: 580, y: 640, w: 320, bare: true, noProps: true, noRope: true },
+        { x: 584, y: 480, w: 376, bare: true, noProps: true, noRope: true },
       ],
     }),
-    // A moving part per zone: a blossom that bounces you up the steps, foxfire rising through the
-    // terraces (Up to ride it), and the petal cloud drifting across the heights' gap.
-    springs: [{ x: 1370, y: 880, up: 170, kind: 'blossom' }],
-    // (The foxfire is the way up to the middle terrace step: it has no rope.)
-    updrafts: [{ x: 1090, w: 44, top: 440, bottom: 580, kind: 'foxfire' }],
-    portals: [{ id: 'west', x: 40, y: 880, to: 'ruins', toPortal: 'shrine' }],
+    // Its monsters, placed by hand, three a spot, well away from the way in (the arrival rule).
+    spawns: [
+      { mob: 'nekomata', x: 500, y: 960 }, { mob: 'nekomata', x: 820, y: 960 }, { mob: 'nekomata', x: 1240, y: 740 },
+      { mob: 'nekomata', x: 440, y: 880 }, { mob: 'kitsunemiko', x: 340, y: 720 }, { mob: 'kitsunemiko', x: 330, y: 640 }, { mob: 'kitsunemiko', x: 360, y: 560 },
+      { mob: 'nekomata', x: 760, y: 800 }, { mob: 'kitsunemiko', x: 760, y: 640 }, { mob: 'kitsunemiko', x: 800, y: 480 },
+    ],
+    // Its gathering spots, placed by hand, clear of the monsters, ropes, foxfire and ways.
+    nodes: [
+      { ...SPOT.wood(3), x: 300, y: 960 }, { ...SPOT.fruit(3, 'shrine_plum'), x: 680, y: 960 }, { ...SPOT.night(3), x: 940, y: 800 },
+      { ...SPOT.fruit(3, 'cherry'), x: 640, y: 640 }, { ...SPOT.fruit(3, 'cherry'), x: 920, y: 480 }, { ...SPOT.ore(3), x: 1530, y: 520 },
+    ],
+    // A moving part per zone: foxfire rising between the pagoda and the cherry (Up to ride it to the
+    // cherry's crown), the petals drifting off the cherry, the paper lanterns on the bridge.
+    updrafts: [{ x: 560, w: 44, top: 450, bottom: 960, kind: 'foxfire' }],
+    portals: [{ id: 'west', x: 40, y: 960, to: 'ruins', toPortal: 'shrine' }],
     npcs: [],
-    // A landmark per zone: the three great gates on the steps, the cherry trees on the terraces,
-    // the hokora shrine on the summit.
-    deco: [['torii', 380], ['foxstatue', 290, 0], ['foxstatue', 470, 1], ['torii', 1220], ['foxstatue', 1130, 0], ['foxstatue', 1310, 1], ['torii', 1900], ['foxstatue', 1820, 0], ['foxstatue', 1980, 1],
-      ['sakura', 600, 0, 470], ['sakura', 1860, 1, 470], ['hokora', 1200, 0, 240]],
-    lamps: [{ x: 1200, y: 200 }, { x: 600, y: 430 }, { x: 1220, y: 850 }],
-    spirit: { x: 1700, y: 200 },
-    habitats: { nekomata: { naps: true, play: true, home: { x: 1220, y: 880 } }, kitsunemiko: { naps: true } },
+    // The landmarks: the pagoda, the sacred cherry, the great gate and the torii stair, the Fox
+    // Shrine with its fox guardians and a stone lantern.
+    deco: [['pagoda', 360, 0], ['sacredtree', 780, 0], ['toriistair', 1000, 0, 960], ['torii', 950], ['foxshrine', 1720, 0, 520],
+      ['foxstatue', 1610, 0, 520], ['foxstatue', 1830, 1, 520], ['stonelamp', 1506, 0, 520]],
+    lamps: [{ x: 360, y: 930 }, { x: 604, y: 836 }, { x: 956, y: 836 }, { x: 1720, y: 470 }, { x: 1544, y: 390 }, { x: 1896, y: 390 }],
+    spirit: { x: 1100, y: 300 },
+    habitats: { nekomata: { naps: true, play: true, home: { x: 780, y: 960 } }, kitsunemiko: { naps: true } },
   },
-
 
   // Moonlit Ridge is a walk along a ridgeline, side by side (data/climb.js lay()): the ground itself
   // rises and falls. The Moonlit Meadow in the west, a low saddle among the moonstones where a
@@ -3238,8 +3244,8 @@ MAPS.glade.portals.push({ id: 'bower', x: 580, y: 480, to: 'bower', toPortal: 'w
 // The way to the Clockwork Carnival (its rooms are with the dungeons above).
 MAPS.springs.portals.push({ id: 'volcano', x: 2340, y: 880, to: 'sugar_trail', toPortal: 'west', label: 'Candy Volcano' });
 MAPS.ridge.portals.push({ id: 'observatory', x: 2360, y: 560, to: 'observatory_steps', toPortal: 'west', label: 'Star Observatory' });
-MAPS.shrine.portals.push({ id: 'carnival', x: 2400, y: 880, to: 'carnival_gate', toPortal: 'west', label: 'Clockwork Carnival' });
-MAPS.shrine.portals.push({ id: 'sanctum', x: 1450, y: 240, to: 'sanctum', toPortal: 'west', label: "Tamamo's Sanctum" });
+MAPS.shrine.portals.push({ id: 'carnival', x: 1965, y: 520, to: 'carnival_gate', toPortal: 'west', label: 'Clockwork Carnival' });
+MAPS.shrine.portals.push({ id: 'sanctum', x: 1720, y: 520, to: 'sanctum', toPortal: 'west', label: "Tamamo's Sanctum", mouth: 48, labelAt: 150 });
 // The Tea Terraces' fishing stone over the pond.
 MAPS.tea.platforms.push({ x: 1620, y: 1000, w: 60, style: 'stone', walkOn: true });
 // Serpent Springs' fishing dock; the grotto is behind the waterfall.
@@ -3258,7 +3264,7 @@ MAPS.starfall.portals.push({ id: 'terrace', x: 2140, y: 380, to: 'terrace', toPo
 // The queens roam their regions as field bosses (from the start: the story is optional), back
 // every ten minutes or so after they fall.
 MAPS.glade.spawns.push({ mob: 'sylvana', x: 760, y: 900, respawn: 600 });
-MAPS.shrine.spawns.push({ mob: 'tamamo', x: 1220, y: 880, respawn: 600 });
+MAPS.shrine.spawns.push({ mob: 'tamamo', x: 780, y: 960, respawn: 600 });
 MAPS.springs.spawns.push({ mob: 'lilith', x: 500, y: 400, respawn: 600 });
 MAPS.starfall.spawns.push({ mob: 'selene', x: 1200, y: 1040, respawn: 600 });
 
@@ -3267,7 +3273,7 @@ MAPS.starfall.spawns.push({ mob: 'selene', x: 1200, y: 1040, respawn: 600 });
 // way), so a long map never means a long walk back.
 const HOMESTONES = {
   meadow1: [1555, 400], meadow2: [200, 700], woods: [1650, 880], ruins: [1764, 330], cave: [1660, 362],
-  sky: [1920, 330], canyon: [110, 520], glade: [880, 900], shrine: [2164, 560], ridge: [2200, 400],
+  sky: [1920, 330], canyon: [110, 520], glade: [880, 900], shrine: [620, 480], ridge: [2200, 400],
   springs: [1992, 640], peak: [1740, 880], starfall: [1920, 380],
 };
 for (const [id, [x, y]] of Object.entries(HOMESTONES)) {
