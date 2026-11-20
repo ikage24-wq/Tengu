@@ -87,7 +87,7 @@ const pickFaceShapes = (mood) => {
   for (const [x, y, s] of TEYES) {
     if (mood === 'blink' || mood === 'sleep') out.push(...ln([[x - 1.5, y + 0.3], [x, y + 0.6], [x + 1.5, y + 0.3]], 0.7, TBEAD));
     else if (mood === 'happy') out.push(...ln(arcP(x, y + 0.9, 1.6, 1.5, 200, 340, 8), 0.8, TBEAD));
-    else if (mood === 'hurt') out.push(...ln([[x - s * 1.5, y - 1.1], [x + s * 0.9, y], [x - s * 1.5, y + 1.1]], 0.7, TCREAM), ...(s > 0 ? [F(E(x + 3.4, y - 2.4, 0.7, 1, '#9ad8ff'))] : []));
+    else if (mood === 'hurt') out.push(...ln([[x + s * 1.5, y - 1.1], [x - s * 0.9, y], [x + s * 1.5, y + 1.1]], 0.7, TCREAM), ...(s > 0 ? [F(E(x + 3.4, y - 2.4, 0.7, 1, '#9ad8ff'))] : []));
     else if (mood === 'dizzy') {
       const pts = [];
       for (let i = 0; i <= 12; i++) pts.push([x + Math.cos(i * 0.85) * (0.15 + i * 0.12), y + Math.sin(i * 0.85) * (0.15 + i * 0.12)]);

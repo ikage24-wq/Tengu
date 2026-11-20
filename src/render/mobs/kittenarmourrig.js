@@ -19,7 +19,7 @@
 
 import { E, T, R, F } from './kit.js';
 import { makeRig, stateBlend, clamp, TAU } from './rig.js';
-import { D2R, taper, arcP, pairOf, faceSprite, hold, stepPhase, pawStep, put, MOODS, moodOf, faceShapes } from './rigkit.js';
+import { D2R, taper, arcP, pairOf, faceSprite, hold, stepPhase, pawStep, put, MOODS, moodOf } from './rigkit.js';
 
 const K = 1;
 const STL = '#d3dbf4';
@@ -97,8 +97,49 @@ const PR = {
   PAULF: ka('paulF', 12, 9, paulFP, 3, 3), PAULN: ka('paulN', 14, 12, paulNP, 3, 3), COLLAR: ka('collar', 20, 8, collarP, 3, 3), LIP: ka('lip', 20, 8, lipP, 3, 3),
   KITTEN: ka('kitten', 16, 28, kittenP, 3, 3), PAW: ka('paw', 6, 6, pawP, 3, 3), HELM: ka('helm', 20, 18, helmP, 3, 3),
 };
-const FACE = { eyes: [[6, 10.2, 1.4, 1.8, -1], [10, 10.2, 1.4, 1.8, 1]], mouth: [8, 13, 1.1], blush: [[4.2, 12, 1], [11.8, 12, 1]], iris: '#3a8a5a', lid: 0, lashes: 0 };
-const kitFace = (mood) => faceSprite(`kitarm|face|${mood}`, 16, 28, () => faceShapes(mood, FACE));
+// ---------- Its own face: big green kitten eyes with tall pupils, a pink nose, the little cat
+// mouth and whiskers; it hisses with its fangs when cross and squeezes its eyes shut to yowl. ----------
+const CDARK = '#2a2a3a';
+const CGREEN = '#6ad08a';
+const CPINK = '#ff8fab';
+const CWHISK = '#b8703e';
+const ln = (pts, w, c = CDARK) => [F(taper(pts, w, w * 0.85, c))];
+const CEYES = [[6, 10.1, -1], [10, 10.1, 1]];
+const kitFaceShapes = (mood) => {
+  const out = [];
+  for (const [x, y, s] of CEYES) {
+    if (mood === 'blink' || mood === 'sleep') out.push(...ln(arcP(x, y, 1.3, 0.8, 15, 165, 6), 0.55));
+    else if (mood === 'happy') out.push(...ln(arcP(x, y + 0.8, 1.3, 1.2, 200, 340, 6), 0.6));
+    else if (mood === 'shout') out.push(...ln([[x + s * 1.1, y - 1], [x - s * 0.9, y], [x + s * 1.1, y + 1]], 0.6));
+    else if (mood === 'dead') out.push(...ln([[x - 1.1, y + 0.2], [x, y + 0.5], [x + 1.1, y + 0.2]], 0.5));
+    else if (mood === 'dizzy') {
+      const pts = [];
+      for (let i = 0; i <= 11; i++) pts.push([x + Math.cos(i * 0.9 * s) * (0.12 + i * 0.1), y + Math.sin(i * 0.9 * s) * (0.12 + i * 0.1)]);
+      out.push(...ln(pts, 0.35, '#3a9a5a'));
+    } else {
+      const angry = mood === 'angry';
+      let ring = Array.from({ length: 14 }, (_, i) => [x + Math.cos((i / 14) * Math.PI * 2) * 1.35, y + Math.sin((i / 14) * Math.PI * 2) * 1.5]);
+      if (angry) ring = ring.map(([px, py]) => [px, Math.max(py, y - 0.5 + (px - x) * -s * 0.5)]);
+      out.push(F(T(ring, CDARK)), F(E(x, y + 0.2, 1.05, angry ? 0.9 : 1.15, CGREEN)));
+      const big = mood === 'hurt';
+      out.push(F(E(x, y + 0.2, angry ? 0.2 : big ? 0.75 : 0.42, angry ? 0.8 : 0.95, CDARK)));
+      if (!angry) out.push(F(E(x + 0.45, y - 0.45, 0.36, 0.36, '#ffffff')), F(E(x - 0.4, y + 0.7, 0.16, 0.16, '#ffffff')));
+      if (big) out.push(F(E(x, y + 1.4, 1.1, 0.35, '#bfe8ff')));
+    }
+  }
+  // Whiskers, the pink nose, the mouth.
+  out.push(...ln([[1.6, 11.4], [3.6, 11.9]], 0.25, CWHISK), ...ln([[1.6, 12.9], [3.6, 12.6]], 0.25, CWHISK), ...ln([[14.4, 11.4], [12.4, 11.9]], 0.25, CWHISK), ...ln([[14.4, 12.9], [12.4, 12.6]], 0.25, CWHISK));
+  out.push(F(T([[7.4, 11.2], [8.6, 11.2], [8, 11.9]], CPINK)));
+  const [mx, my] = [8, 12.3];
+  if (mood === 'happy') out.push(F(T(arcP(mx, my - 0.1, 1, 1, 0, 180, 8), '#7a3040')), F(E(mx, my + 0.5, 0.5, 0.3, CPINK)));
+  else if (mood === 'shout') out.push(F(T([[mx - 1.2, my - 0.1], [mx + 1.2, my - 0.1], [mx, my + 2]], '#7a3040')), F(E(mx, my + 1.1, 0.45, 0.3, CPINK)));
+  else if (mood === 'angry') out.push(F(T(arcP(mx, my - 0.1, 1.1, 0.9, 0, 180, 8), '#7a3040')), F(T([[mx - 0.8, my - 0.05], [mx - 0.4, my - 0.05], [mx - 0.6, my + 0.6]], '#fffaf2')), F(T([[mx + 0.4, my - 0.05], [mx + 0.8, my - 0.05], [mx + 0.6, my + 0.6]], '#fffaf2')));
+  else if (mood === 'hurt' || mood === 'dizzy') out.push(...ln([[mx - 1, my + 0.3], [mx - 0.35, my], [mx + 0.35, my + 0.3], [mx + 1, my]], 0.3));
+  else if (mood === 'dead') out.push(...ln([[mx - 0.6, my + 0.2], [mx + 0.6, my + 0.2]], 0.3));
+  else out.push(...ln([[mx, my - 0.4], [mx, my]], 0.25), ...ln(arcP(mx - 0.5, my, 0.5, 0.45, 0, 180, 6), 0.28), ...ln(arcP(mx + 0.5, my, 0.5, 0.45, 0, 180, 6), 0.28));
+  return out;
+};
+const kitFace = (mood) => faceSprite(`kitarm|face|${mood}`, 16, 28, () => kitFaceShapes(mood));
 
 // The trunk (the breastplate's middle) sits 27 above the feet; the collar 10.4 above that.
 const TRUNK_Y = 27;
@@ -263,7 +304,7 @@ export function kittenArmourStill(pose, f, mood) {
   return { w: 64, h: 66, res: 3, shapes: put([
     ...put(tailP(), [14, 10], -9, ty + 10, -6), ...put(capeP(), [16, 2], 0, ty - 9), ...put(swordP(), [5, 7], hand[0], hand[1]), ...put(armFP(), [4, 1.5], SH_F[0], ty + SH_F[1], 22),
     ...put(legP(true)(), [7, 1], -4, ty + 11), ...put(legP(false)(), [7, 1], 5.2, ty + 11), ...put(fauldsP(), [11, 1], 0, ty + 9), ...put(torsoP(), [13, 10], 0, ty),
-    ...put(paulFP(), [6, 4.5], -11, ty - 8), ...put(collarP(), [10, 4], 0, ty + COLLAR_Y), ...put(kit, [8, 10], 0, ky), ...put(faceShapes(fm, FACE), [8, 10], 0, ky),
+    ...put(paulFP(), [6, 4.5], -11, ty - 8), ...put(collarP(), [10, 4], 0, ty + COLLAR_Y), ...put(kit, [8, 10], 0, ky), ...put(kitFaceShapes(fm), [8, 10], 0, ky),
     ...put(lipP(), [10, 4], 0, ty + COLLAR_Y), ...put(pawP(), [3, 3], -4.4, ty + COLLAR_Y - 0.6), ...put(pawP(), [3, 3], 4.4, ty + COLLAR_Y - 0.6),
     ...put(helmP(), [9, 11], 14.4, ty + 6.4), ...put(armNP(), [3, 1], 11.4, ty - 5, -4), ...put(paulNP(), [7, 4], 11.2, ty - 8.6),
   ], [0, 0], ox, oy) };

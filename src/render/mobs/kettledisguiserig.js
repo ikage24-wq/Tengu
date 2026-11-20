@@ -18,7 +18,7 @@
 
 import { E, T, R, F } from './kit.js';
 import { makeRig, stateBlend, clamp, TAU } from './rig.js';
-import { D2R, taper, arcP, pairOf, faceSprite, hold, stepPhase, pawStep, put, MOODS, moodOf, faceShapes, INK } from './rigkit.js';
+import { D2R, taper, arcP, pairOf, faceSprite, hold, stepPhase, pawStep, put, MOODS, moodOf, INK } from './rigkit.js';
 
 const K = 0.85;
 const COP = '#f0a060';
@@ -76,8 +76,46 @@ const PR = {
   HEAD: kd('head', 26, 24, headP, 3), TAIL: kd('tail', 14, 14, tailP, 3, 3),
   LEG: [false, true].map((f) => kd(`leg${f ? 1 : 0}`, 10, 10, legP(f), 3)), ARM: [false, true].map((f) => kd(`arm${f ? 1 : 0}`, 10, 8, armP(f), 3)),
 };
-const FACE = { eyes: [[9.6, 13.2, 1.8, 2.4, -1], [17.2, 13.2, 1.8, 2.4, 1]], mouth: [14, 18.4, 1.8], blush: [[6.6, 16.4, 1.4], [20.4, 16.4, 1.4]], iris: '#5a3a2a', lid: 0, lashes: 0 };
-const headFace = (mood) => faceSprite(`kdisg|face|${mood}`, 26, 24, () => faceShapes(mood, FACE));
+// ---------- Its own face: round copper eyes (the kettle's own colour) in the dark mask, and a
+// cheeky buck-toothed grin; it lets off a puff of steam when hurt and goes boggle-eyed dizzy. ----------
+const KCOP = '#f08a3a';
+const KDARK = '#2a1a20';
+const KBROW = '#5a3a30';
+const KTOOTH = '#fffaf2';
+const ln = (pts, w, c = KDARK) => [F(taper(pts, w, w * 0.85, c))];
+const teeth = (x, y, h = 1.1) => [F(T([[x - 0.72, y], [x - 0.04, y], [x - 0.04, y + h], [x - 0.72, y + h]], KTOOTH)), F(T([[x + 0.04, y], [x + 0.72, y], [x + 0.72, y + h], [x + 0.04, y + h]], KTOOTH))];
+const KEYES = [[9.6, 13.2, -1], [17.2, 13.2, 1]];
+const kettleFaceShapes = (mood) => {
+  const out = [];
+  const angry = mood === 'angry';
+  for (const [x, y, s] of KEYES) {
+    if (mood === 'blink' || mood === 'sleep') out.push(...ln(arcP(x, y + 0.2, 1.6, 0.9, 15, 165, 6), 0.7));
+    else if (mood === 'happy') out.push(...ln([[x - 1.6, y + 0.8], [x, y - 0.9], [x + 1.6, y + 0.8]], 0.8));
+    else if (mood === 'hurt') out.push(...ln([[x + s * 1.4, y - 1.1], [x - s * 0.9, y], [x + s * 1.4, y + 1.1]], 0.7, TCREAM));
+    else if (mood === 'dizzy') out.push(...ln(arcP(x, y, 1.55, 1.55, 0, 360, 16), 0.45, KCOP), ...ln(arcP(x, y, 0.65, 0.65, 0, 360, 10), 0.4, KCOP));
+    else if (mood === 'dead') out.push(...ln([[x - 1.4, y], [x - 0.7, y - 0.5], [x, y], [x + 0.7, y - 0.5], [x + 1.4, y]], 0.5, TCREAM));
+    else {
+      const wide = mood === 'shout' ? 1.15 : 1;
+      let ring = Array.from({ length: 16 }, (_, i) => [x + Math.cos((i / 16) * Math.PI * 2) * 1.75 * wide, y + Math.sin((i / 16) * Math.PI * 2) * 1.9 * wide]);
+      if (angry) ring = ring.map(([px, py]) => [px, Math.max(py, y - 0.6 + (px - x) * -s * 0.5)]);
+      out.push(F(T(ring, KDARK)), F(E(x + 0.1, y + 0.35, 1.3 * wide, 1.35 * wide * (angry ? 0.8 : 1), KCOP)), F(E(x + 0.15, y + 0.45, mood === 'shout' ? 0.4 : 0.7, mood === 'shout' ? 0.45 : 0.8, KDARK)));
+      if (!angry) out.push(F(E(x + 0.6, y - 0.65, 0.5, 0.5, '#ffffff')), F(E(x - 0.6, y + 0.9, 0.22, 0.22, '#ffffff')));
+      if (angry) out.push(...ln([[x + s * 1.8, y - 4], [x - s * 1.4, y - 2.9]], 0.75, KBROW));
+    }
+  }
+  // A puff of steam off its head when hurt.
+  if (mood === 'hurt') out.push(F(E(21.6, 7.4, 1.3, 1.1, '#ffffff')), F(E(23, 6.2, 1, 0.9, '#ffffff')), F(E(22.8, 8.2, 0.8, 0.7, '#ffffff')));
+  const [mx, my] = [14, 17.3];
+  if (mood === 'happy') out.push(F(T(arcP(mx, my - 0.3, 2, 1.9, 0, 180, 10), '#7a3040')), ...teeth(mx, my - 0.25, 0.9));
+  else if (mood === 'shout') out.push(F(E(mx, my + 0.8, 1.7, 1.8, '#7a3040')), F(E(mx, my + 1.8, 1, 0.5, '#ff8fab')), ...teeth(mx, my - 0.6, 0.9));
+  else if (angry) out.push(...ln([[mx - 1.8, my + 0.2], [mx + 1.8, my + 0.2]], 0.4), ...teeth(mx, my + 0.25, 0.9));
+  else if (mood === 'hurt') out.push(...ln([[mx - 1.5, my + 0.3], [mx - 0.7, my], [mx, my + 0.3], [mx + 0.7, my], [mx + 1.5, my + 0.3]], 0.4), ...teeth(mx, my + 0.4, 0.8));
+  else if (mood === 'dizzy') out.push(...ln([[mx - 1.4, my + 0.4], [mx - 0.4, my], [mx + 0.6, my + 0.5], [mx + 1.4, my + 0.1]], 0.4), F(T([[mx - 0.5, my + 0.3], [mx + 0.2, my + 0.3], [mx + 0.2, my + 1.2], [mx - 0.5, my + 1.2]], KTOOTH)));
+  else if (mood === 'dead') out.push(F(E(mx, my + 0.5, 0.6, 0.65, '#7a3040')));
+  else out.push(...ln(arcP(mx, my - 0.3, 1.9, 1.1, 20, 160, 8), 0.4), ...teeth(mx, my + 0.65, 1));
+  return out;
+};
+const headFace = (mood) => faceSprite(`kdisg|face|${mood}`, 26, 24, () => kettleFaceShapes(mood));
 
 // The belly's middle sits 11.6 up (on the floor) or 17.2 (stood up on its feet). The head's middle
 // sits 1 below the belly's middle when hidden (its lid then sitting on the kettle's rim) and 18 above
@@ -267,7 +305,7 @@ export function kettleDisguiseStill(pose, f, mood) {
   const hy = py + HEAD_OUT;
   return { w: 54, h: 54, res: 3, shapes: sc([
     ...put(tailP(), [12, 12], -11, py + 7, -10), ...put(legP(true)(), [5, 1], -7, py + 8), ...put(spoutP(), [2, 14], 9, py - 1),
-    ...put(headP(), [13, 13], 0, hy), ...put(faceShapes(fm, FACE), [13, 13], 0, hy), ...put(legP(false)(), [5, 1], 7, py + 8),
+    ...put(headP(), [13, 13], 0, hy), ...put(kettleFaceShapes(fm), [13, 13], 0, hy), ...put(legP(false)(), [5, 1], 7, py + 8),
     ...put(potP(), [16, 13], 0, py), ...put(lidP(), [12, 16], 0, hy + LID_ON), ...put(armP(false)(), [2, 4], 11, py - 1, 10),
   ]) };
 }

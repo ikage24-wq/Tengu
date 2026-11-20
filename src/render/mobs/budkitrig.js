@@ -16,7 +16,7 @@
 
 import { E, T, F } from './kit.js';
 import { makeRig, stateBlend, clamp, TAU } from './rig.js';
-import { D2R, taper, pairOf, faceSprite, hold, stepPhase, pawStep, put, MOODS, moodOf, faceShapes, INK } from './rigkit.js';
+import { D2R, taper, pairOf, faceSprite, hold, stepPhase, pawStep, put, MOODS, moodOf, INK, ov, arcP } from './rigkit.js';
 
 const K = 0.62;
 const FUR = '#ffc4d6';
@@ -86,8 +86,56 @@ const P = {
   PETAL: bk('petal', 14, 20, petalP, 3), BUD: bk('bud', 28, 34, budP, 3),
 };
 // The face (bare), over the head. Box 30 x 26.
-const FACE = { eyes: [[11.2, 12.6, 2.6, 3.2, -1], [19.4, 12.6, 2.6, 3.2, 1]], mouth: [18, 19.2, 2.2], blush: [[7.4, 16.6, 1.7], [23.6, 16.6, 1.5]], iris: '#c8507a', lid: 0, lashes: 0 };
-const kitFace = (mood) => faceSprite(`budkit|face|${mood}`, 30, 26, () => faceShapes(mood, FACE));
+// ---------- Its own face: big rosy eyes with a cherry-blossom shine, petal-shaped blush, a
+// little open baby smile under the nose; dizzy, it sees spinning blossoms. ----------
+const KEYE = '#5a2040';
+const KIRIS = '#e86a9a';
+const KMOUTH = '#a8385a';
+const ln = (pts, w, c = KEYE) => [F(taper(pts, w, w * 0.85, c))];
+const blossom = (x, y, r, c, ci, rot = 0) => [...Array.from({ length: 5 }, (_, i) => {
+  const a = rot + (i * Math.PI * 2) / 5 - Math.PI / 2;
+  return F(E(x + Math.cos(a) * r * 0.55, y + Math.sin(a) * r * 0.55, r * 0.45, r * 0.45, c));
+}), F(E(x, y, r * 0.3, r * 0.3, ci))];
+// A petal, notched at its tip, turned deg.
+const petal = (x, y, r, deg, c) => put([F(T([[0, r], [-0.7 * r, 0.2 * r], [-0.55 * r, -0.6 * r], [-0.18 * r, -0.95 * r], [0, -0.7 * r], [0.18 * r, -0.95 * r], [0.55 * r, -0.6 * r], [0.7 * r, 0.2 * r]], c))], [0, 0], x, y, deg);
+const KEYES = [[11.2, 12.8, -1], [19.4, 12.8, 1]];
+const kitFaceShapes = (mood) => {
+  const out = [];
+  const [mx, my] = [18, 19.2];
+  for (const [x, y, s] of KEYES) {
+    if (mood === 'blink' || mood === 'sleep' || mood === 'dead') out.push(...ln(arcP(x, y + 0.4, 2.3, 1.3, 15, 165, 8), 0.8), ...(mood === 'dead' ? [] : ln([[x + s * 2.2, y + 0.75], [x + s * 3, y - 0.2]], 0.6)));
+    else if (mood === 'happy') out.push(...ln(arcP(x, y + 1.2, 2.3, 2, 200, 340, 8), 0.9));
+    else if (mood === 'shout') out.push(...ln([[x + s * 1.6, y - 1.5], [x - s * 1.3, y], [x + s * 1.6, y + 1.5]], 0.9));
+    else if (mood === 'dizzy') out.push(...blossom(x, y, 2.3, '#ff7aa8', '#fff4a0', s * 0.6));
+    else {
+      const angry = mood === 'angry';
+      let eye = Array.from({ length: 18 }, (_, i) => [x + Math.cos((i / 18) * Math.PI * 2) * 2.4, y + Math.sin((i / 18) * Math.PI * 2) * 3]);
+      let iris = Array.from({ length: 14 }, (_, i) => [x + Math.cos((i / 14) * Math.PI * 2) * 1.8, y + 1 + Math.sin((i / 14) * Math.PI * 2) * 1.7]);
+      if (angry) {
+        const cut = (px) => y - 0.6 + (px - x) * -s * 0.55;
+        eye = eye.map(([px, py]) => [px, Math.max(py, cut(px))]);
+        iris = iris.map(([px, py]) => [px, Math.max(py, cut(px) + 0.3)]);
+      }
+      out.push(F(T(eye, KEYE)), F(T(iris, KIRIS)));
+      if (!angry) out.push(...blossom(x + 0.7, y - 1.1, 1.35, '#ffffff', '#ffe0ea'), F(E(x - 0.9, y + 1.7, 0.35, 0.35, '#ffffff')));
+      else out.push(F(E(x + 0.5, y + 0.4, 0.4, 0.4, '#ffffff')));
+      if (mood === 'hurt') out.push(F(E(x, y + 2.5, 1.7, 0.55, '#bfe8ff')), F(E(x + s * 1.6, y + 3.6, 0.45, 0.7, '#9ad8ff')));
+    }
+  }
+  // The petal blush (none when out cold); a fallen petal resting on its head.
+  if (mood !== 'dead') out.push(...petal(7.2, 16.6, 1.5, -70, '#ff8ab0'), ...petal(23.8, 16.6, 1.4, 70, '#ff8ab0'));
+  else out.push(...petal(14, 3.4, 1.8, 30, '#ffb2cc'));
+  out.push(...ln([[18.2, 17], [18.1, my - 0.7]], 0.35, KMOUTH));
+  if (mood === 'happy') out.push(F(T(arcP(mx, my - 0.7, 1.9, 1.9, 0, 180, 10), KMOUTH)), F(E(mx, my + 0.6, 0.9, 0.55, '#ff9ab0')));
+  else if (mood === 'shout') out.push(F(E(mx, my + 0.4, 1.3, 1.6, KMOUTH)), F(E(mx, my + 1.2, 0.8, 0.5, '#ff9ab0')));
+  else if (mood === 'angry') out.push(...ln([[mx - 1.2, my + 0.3], [mx, my - 0.4], [mx + 1.2, my + 0.3]], 0.45, KMOUTH));
+  else if (mood === 'hurt') out.push(...ln([[mx - 1.2, my + 0.2], [mx - 0.4, my - 0.2], [mx + 0.4, my + 0.2], [mx + 1.2, my - 0.2]], 0.42, KMOUTH));
+  else if (mood === 'dizzy') out.push(F(ov(mx, my, 0.6, 0.9, 20, KMOUTH)));
+  else if (mood === 'dead') out.push(...ln([[mx - 0.8, my - 0.2], [mx + 0.8, my]], 0.42, KMOUTH));
+  else out.push(F(T(arcP(mx, my - 0.6, 1.2, 1.1, 0, 180, 8), KMOUTH)), F(E(mx, my + 0.1, 0.6, 0.35, '#ff9ab0')));
+  return out;
+};
+const kitFace = (mood) => faceSprite(`budkit|face|${mood}`, 30, 26, () => kitFaceShapes(mood));
 
 // The petals: bunched up inside the bud, they turn out round its face as it blooms (each the near
 // way round, so none spins).
@@ -227,7 +275,7 @@ export function budKitStill(pose, f, mood) {
   const head = [HEAD_AT[0], -11 + HEAD_AT[1]];
   return { w: 40, h: 44, res: 3, shapes: sc([
     ...put(tailP(), [18, 26], -7, -9), ...put(legP(true)(), [5, 1], -4.8, -7), ...put(armP(true)(), [4, 1.6], -7.4, -15, -12), ...put(bodyP(), [10, 10], 0, -11),
-    ...put(budP(), [14, 30], head[0], head[1] + 2), ...put(headP(), [15, 13], head[0], head[1]), ...put(faceShapes(fm, FACE), [15, 13], head[0], head[1]),
+    ...put(budP(), [14, 30], head[0], head[1] + 2), ...put(headP(), [15, 13], head[0], head[1]), ...put(kitFaceShapes(fm), [15, 13], head[0], head[1]),
     ...put(legP(false)(), [5, 1], 4.8, -7), ...put(armP(false)(), [4, 1.6], 8.2, -15, 12),
   ]) };
 }

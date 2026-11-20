@@ -77,7 +77,7 @@ const lanFaceShapes = (mood) => {
   for (const [x, y, s] of LEYES) {
     if (mood === 'blink' || mood === 'sleep' || mood === 'happy' || mood === 'dead') {
       out.push(...ln(arcP(x, y + (mood === 'happy' ? 0.4 : -0.3), 1.8, 1.1, mood === 'happy' ? 200 : 20, mood === 'happy' ? 340 : 160, 8), 0.7));
-    } else if (mood === 'hurt') out.push(...ln([[x - s * 1.5, y - 1.2], [x + s * 1, y], [x - s * 1.5, y + 1.2]], 0.75), F(E(x + s * 0.4, y + 2.4, 0.45, 0.7, '#9ad8ff')));
+    } else if (mood === 'hurt') out.push(...ln([[x + s * 1.5, y - 1.2], [x - s * 1, y], [x + s * 1.5, y + 1.2]], 0.75), F(E(x + s * 0.4, y + 2.4, 0.45, 0.7, '#9ad8ff')));
     else {
       const big = mood === 'shout' ? 1.2 : 1;
       let white = Array.from({ length: 16 }, (_, i) => [x + Math.cos((i / 16) * Math.PI * 2) * 1.9 * big, y + Math.sin((i / 16) * Math.PI * 2) * 2.2 * big]);

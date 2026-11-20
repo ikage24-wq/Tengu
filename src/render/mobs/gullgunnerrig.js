@@ -14,7 +14,7 @@
 
 import { E, T, R, F } from './kit.js';
 import { makeRig, stateBlend, clamp, TAU } from './rig.js';
-import { D2R, taper, pairOf, faceSprite, hold, stepPhase, pawStep, put, MOODS, moodOf, faceShapes } from './rigkit.js';
+import { D2R, taper, pairOf, faceSprite, hold, stepPhase, pawStep, put, MOODS, moodOf, ov, arcP } from './rigkit.js';
 
 const K = 0.7;
 const GULL = '#ffffff';
@@ -66,8 +66,59 @@ const PR = {
   LEG: gg('leg', 10, 10, legP, 3), BODY: gg('body', 30, 26, bodyP, 3, 3), WING: gg('wing', 18, 18, wingP, 3, 3), GUN: gg('gun', 36, 12, gunP, 3, 3),
   GRIP: gg('grip', 6, 6, gripP, 3, 3), HEAD: gg('head', 34, 26, headP, 3, 3), HAT: gg('hat', 34, 14, hatP, 3, 3),
 };
-const FACE = { eyes: [[15.4, 12.4, 1.8, 2.3, -1], [21, 12.4, 1.6, 2.1, 1]], mouth: [24.6, 19.2, 0.1], blush: [[12.6, 16, 1.2]], iris: '#3a2a2a', lid: 0, lashes: 0 };
-const gullFace = (mood) => faceSprite(`gullgun|face|${mood}`, 34, 26, () => faceShapes(mood, FACE));
+// ---------- Its own face: a pirate. One pale-gold gull eye under a heavy grey brow (the gull's
+// famous glare), a black eyepatch over the other, and the big beak cackling open; dazed, the patch
+// slips down. ----------
+const GDARK = '#2a2a3a';
+const GIRIS = '#ffe680';
+const GBROW = '#8a96aa';
+const GPATCH = '#2a2436';
+const ln = (pts, w, c = GDARK) => [F(taper(pts, w, w * 0.85, c))];
+const beakOpen = (gape, tongue = false) => [
+  F(T([[21.4, 15.8], [30.6, 16.2], [29.4, 17.4 + gape], [21.8, 18.2 + gape]], '#7a3040')),
+  ...(tongue ? [F(E(24.4, 17.6 + gape, 2.2, 0.7, '#ff8fab'))] : []),
+  F(T([[21, 17.6 + gape], [30, 17.2 + gape], [29.4, 18.8 + gape], [21.4, 19.6 + gape]], '#ffbf3a')),
+  F(E(28.4, 18.1 + gape, 0.9, 0.7, '#ff6a5a')),
+];
+// The patch on its strap; slipped (dazed) it hangs lower and crooked.
+const patch = (slip) => [
+  ...ln([[22.4, 11.4 + slip * 2], [18, 9.2 + slip], [10, 8], [3.6, 9.6]], 0.55, GPATCH),
+  F(ov(20.8, 12.2 + slip * 2.4, 1.85, 1.7, slip * 25, GPATCH)), F(ov(20.4, 11.6 + slip * 2.4, 0.7, 0.4, slip * 25, '#4a4258')),
+];
+const GEYE = [15.2, 12.6];
+const gullFaceShapes = (mood) => {
+  const out = [];
+  const [x, y] = GEYE;
+  const dazed = mood === 'dizzy' || mood === 'dead';
+  out.push(...patch(dazed ? 1 : 0));
+  if (mood === 'blink' || mood === 'sleep') out.push(...ln([[x - 1.6, y + 0.2], [x + 1.6, y + 0.2]], 0.6));
+  else if (mood === 'happy') out.push(...ln(arcP(x, y + 1, 1.6, 1.5, 200, 340, 6), 0.7));
+  else if (mood === 'hurt') out.push(...ln([[x - 1.4, y - 1.3], [x + 1.2, y], [x - 1.4, y + 1.3]], 0.65));
+  else if (mood === 'dizzy') {
+    const pts = [];
+    for (let i = 0; i <= 12; i++) pts.push([x + Math.cos(i * 0.85) * (0.12 + i * 0.12), y + Math.sin(i * 0.85) * (0.12 + i * 0.12)]);
+    out.push(...ln(pts, 0.42));
+  } else if (mood === 'dead') out.push(...ln(arcP(x, y - 0.2, 1.5, 0.9, 15, 165, 6), 0.6));
+  else {
+    // Half-lidded and smug; narrowed to glare; wide, a pinprick pupil, to squawk.
+    const angry = mood === 'angry';
+    const shout = mood === 'shout';
+    const lid = angry ? (px) => y - 0.2 + (px - x) * 0.45 : shout ? () => -99 : () => y - 0.55;
+    const ring = Array.from({ length: 16 }, (_, i) => [x + Math.cos((i / 16) * Math.PI * 2) * 1.75, y + Math.sin((i / 16) * Math.PI * 2) * 1.9]).map(([px, py]) => [px, Math.max(py, lid(px))]);
+    const iris = Array.from({ length: 14 }, (_, i) => [x + Math.cos((i / 14) * Math.PI * 2) * 1.3, y + 0.1 + Math.sin((i / 14) * Math.PI * 2) * 1.45]).map(([px, py]) => [px, Math.max(py, lid(px) + 0.3)]);
+    out.push(F(T(ring, GDARK)), F(T(iris, GIRIS)), F(E(x + 0.25, y + 0.3, shout ? 0.35 : 0.55, shout ? 0.4 : 0.65, GDARK)));
+    if (!angry) out.push(F(E(x + 0.7, y - 0.2, 0.28, 0.28, '#ffffff')));
+  }
+  // The brow: a heavy grey ridge, dropped low to glare, raised to squawk or laugh.
+  const bt = mood === 'angry' ? [[x - 2.1, y - 3], [x + 2.1, y - 1.6]] : mood === 'shout' || mood === 'happy' ? [[x - 2, y - 3.4], [x + 2, y - 3]] : mood === 'hurt' ? [[x - 2, y - 2.4], [x + 2, y - 3.2]] : [[x - 2.1, y - 2.6], [x + 2.1, y - 2]];
+  out.push(...ln(bt, 1, GBROW));
+  if (mood === 'happy') out.push(...beakOpen(1.2));
+  else if (mood === 'shout') out.push(...beakOpen(2.6, true));
+  else if (dazed) out.push(...beakOpen(0.8, mood === 'dizzy'));
+  else if (mood === 'hurt') out.push(...beakOpen(0.5));
+  return out;
+};
+const gullFace = (mood) => faceSprite(`gullgun|face|${mood}`, 34, 26, () => gullFaceShapes(mood));
 
 // The body's middle sits 17.3 above the feet; the head 21.5 above that, a little forward.
 const BODY_Y = 17.3;
@@ -211,7 +262,7 @@ export function gullGunnerStill(pose, f, mood) {
   const gun = [GUN_AT[0], by + GUN_AT[1]];
   const sh = [
     ...put(legP(), [5, 1], -3.5, by + 10.1), ...put(bodyP(), [17, 13], 0, by), ...put(legP(), [5, 1], 4.5, by + 10.1),
-    ...put(headP(), [13, 13], head[0], head[1]), ...put(faceShapes(fm, FACE), [13, 13], head[0], head[1]), ...put(hatP(), [13, 7], head[0], head[1] - 6),
+    ...put(headP(), [13, 13], head[0], head[1]), ...put(gullFaceShapes(fm), [13, 13], head[0], head[1]), ...put(hatP(), [13, 7], head[0], head[1] - 6),
     ...put(wingP(), [8, 2], -4.5, by - 7.5), ...put(gunP(), [16, 6], gun[0], gun[1], -4), ...put(gripP(), [3, 3], gun[0] - 3, gun[1] - 1),
   ];
   const ox = 22;

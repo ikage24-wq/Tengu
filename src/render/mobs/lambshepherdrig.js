@@ -14,7 +14,7 @@
 
 import { E, T, R, F } from './kit.js';
 import { makeRig, stateBlend, clamp, TAU } from './rig.js';
-import { D2R, taper, arcP, pairOf, faceSprite, hold, stepPhase, pawStep, put, MOODS, moodOf, faceShapes } from './rigkit.js';
+import { D2R, taper, arcP, pairOf, faceSprite, hold, stepPhase, pawStep, put, MOODS, moodOf } from './rigkit.js';
 
 const K = 0.75;
 const WOOL = '#ffffff';
@@ -74,8 +74,52 @@ const PR = {
   BODY: ls('body', 28, 22, bodyP, 3, 3), ARM: ls('arm', 16, 10, armP, 3, 3), HAND: ls('hand', 6, 6, handP, 3, 3), RIBBON: ls('ribbon', 16, 6, ribbonP, 3, 3),
   BELL: ls('bell', 8, 8, bellP, 3, 3), HEAD: ls('head', 32, 26, headP, 3, 3),
 };
-const FACE = { eyes: [[15, 14.6, 1.7, 2.2, -1], [20.4, 14.6, 1.7, 2.2, 1]], mouth: [19, 19.4, 1.2], blush: [[12.4, 17.6, 1.2], [22.8, 17.6, 1.2]], iris: '#4a3a6a', lid: 0, lashes: 0 };
-const lambFace = (mood) => faceSprite(`lambsh|face|${mood}`, 32, 26, () => faceShapes(mood, FACE));
+// ---------- Its own face: gentle, sleepy-lidded eyes with long lashes (the only lashes in the
+// flock), a little pink heart of a nose and the lamb's "y" mouth; a stern look to scold, a big
+// "baa" to shout, and out cold it simply dozes off. ----------
+const LDARK = '#2e2448';
+const LIRIS = '#c8b8f0';
+const LNOSE = '#ff9fb8';
+const ln = (pts, w, c = LDARK) => [F(taper(pts, w, w * 0.85, c))];
+const lashes = (x, y, s, up = 1) => [...ln([[x + s * 1.3, y], [x + s * 2.1, y - 0.8 * up]], 0.45), ...ln([[x + s * 0.6, y - 0.15 * up], [x + s * 1, y - 1.1 * up]], 0.4)];
+const LEYES = [[15, 14.8, -1], [20.4, 14.8, 1]];
+const lambFaceShapes = (mood) => {
+  const out = [];
+  for (const [x, y, s] of LEYES) {
+    if (mood === 'blink' || mood === 'sleep' || mood === 'dead') {
+      out.push(...ln(arcP(x, y, 1.5, 0.9, 15, 165, 6), 0.6));
+      out.push(...ln([[x + s * 1.3, y + 0.4], [x + s * 2, y + 1]], 0.4), ...ln([[x + s * 0.5, y + 0.9], [x + s * 0.8, y + 1.7]], 0.38));
+    } else if (mood === 'happy') out.push(...ln(arcP(x, y + 0.9, 1.5, 1.4, 200, 340, 6), 0.65), ...lashes(x, y - 0.1, s));
+    else if (mood === 'shout') out.push(...ln([[x + s * 1.3, y - 1.2], [x - s * 1, y], [x + s * 1.3, y + 1.2]], 0.65));
+    else if (mood === 'dizzy') {
+      const pts = [];
+      for (let i = 0; i <= 11; i++) pts.push([x + Math.cos(i * 0.9) * (0.12 + i * 0.12), y + Math.sin(i * 0.9) * (0.12 + i * 0.12)]);
+      out.push(...ln(pts, 0.4, '#6a50a8'));
+    } else {
+      const angry = mood === 'angry';
+      const hurt = mood === 'hurt';
+      // Lidded: the eye is cut under an arch (serene); slanted when stern; wide open when hurt.
+      const lid = angry ? (px) => y - 0.4 + (px - x) * -s * 0.45 : hurt ? () => -99 : (px) => y + 0.4 - 1.25 * Math.sqrt(Math.max(0, 1 - ((px - x) / 1.7) ** 2));
+      const eye = Array.from({ length: 16 }, (_, i) => [x + Math.cos((i / 16) * Math.PI * 2) * 1.5, y + Math.sin((i / 16) * Math.PI * 2) * 1.85]).map(([px, py]) => [px, Math.max(py, lid(px))]);
+      const iris = Array.from({ length: 12 }, (_, i) => [x + Math.cos((i / 12) * Math.PI * 2) * 1.05, y + 0.7 + Math.sin((i / 12) * Math.PI * 2) * 0.8]).map(([px, py]) => [px, Math.max(py, lid(px) + 0.2)]);
+      out.push(F(T(eye, LDARK)), F(T(iris, LIRIS)), F(E(x + 0.45, hurt ? y - 0.7 : y + 0.1, 0.36, 0.36, '#ffffff')));
+      if (!hurt) out.push(...ln(Array.from({ length: 7 }, (_, i) => x - 1.6 + (i * 3.2) / 6).map((px) => [px, lid(px)]), 0.55));
+      out.push(...lashes(x, hurt ? y - 1.4 : angry ? lid(x + s * 1.3) : y - 0.4, s));
+      if (hurt) out.push(F(E(x, y + 1.6, 1.2, 0.4, '#bfe8ff')));
+    }
+  }
+  // The heart nose, the mouth under it; a "z" when it dozes off.
+  out.push(F(E(18.6, 16.9, 0.55, 0.5, LNOSE)), F(E(19.5, 16.9, 0.55, 0.5, LNOSE)), F(T([[18.1, 17.1], [20, 17.1], [19.05, 18]], LNOSE)));
+  const [mx, my] = [19.05, 18.6];
+  if (mood === 'shout') out.push(F(E(mx, my + 1, 1, 1.2, '#7a3040')), F(E(mx, my + 1.6, 0.6, 0.35, '#ff8fab')));
+  else if (mood === 'happy') out.push(...ln([[mx, my - 0.5], [mx, my]], 0.35), F(T(arcP(mx, my, 1.1, 1, 0, 180, 8), '#7a3040')));
+  else if (mood === 'angry') out.push(...ln([[mx, my - 0.5], [mx, my]], 0.35), ...ln([[mx - 1, my + 0.4], [mx + 1, my + 0.2]], 0.4));
+  else if (mood === 'hurt' || mood === 'dizzy') out.push(...ln([[mx, my - 0.5], [mx, my]], 0.35), ...ln([[mx - 1.1, my + 0.5], [mx - 0.4, my + 0.1], [mx + 0.4, my + 0.5], [mx + 1.1, my + 0.1]], 0.35));
+  else out.push(...ln([[mx, my - 0.5], [mx, my]], 0.35), ...ln(arcP(mx - 0.55, my, 0.55, 0.5, 0, 180, 6), 0.35), ...ln(arcP(mx + 0.55, my, 0.55, 0.5, 0, 180, 6), 0.35));
+  if (mood === 'dead') out.push(...ln([[25, 11.4], [26.6, 11.4], [25, 13], [26.6, 13]], 0.45, '#6a50a8'));
+  return out;
+};
+const lambFace = (mood) => faceSprite(`lambsh|face|${mood}`, 32, 26, () => lambFaceShapes(mood));
 
 // The body's middle sits 15.6 above the feet, the head 18 above that.
 const BODY_Y = 15.6;
@@ -249,7 +293,7 @@ export function lambShepherdStill(pose, f, mood) {
   const sh = [
     ...put(cloudletP(0.75)(), [8, 6], HOME[2][0], HOME[2][1]), ...put(cloudletP(0.8)(), [8, 6], HOME[1][0], HOME[1][1]),
     ...put(legP(), [4, 1], -3, by + 7), ...put(handP(), [3, 3], grip[0] - 0.6, grip[1] - 2.4), ...put(crookP(), [8, 32], grip[0], grip[1], 4),
-    ...put(bodyP(), [14, 11], 0, by), ...put(legP(), [4, 1], 4.1, by + 7), ...put(headP(), [15, 14], 0, by - 18), ...put(faceShapes(fm, FACE), [15, 14], 0, by - 18),
+    ...put(bodyP(), [14, 11], 0, by), ...put(legP(), [4, 1], 4.1, by + 7), ...put(headP(), [15, 14], 0, by - 18), ...put(lambFaceShapes(fm), [15, 14], 0, by - 18),
     ...put(ribbonP(), [8, 2], 1, by - 9.4), ...put(bellP(), [4, 1], 1, by - 7.6), ...put(armP(), [3, 2], arm[0], arm[1]), ...put(cloudletP(0.9)(), [8, 6], HOME[0][0], HOME[0][1]),
   ];
   const ox = 26;

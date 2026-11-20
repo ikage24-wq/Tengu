@@ -16,7 +16,7 @@
 
 import { E, T, R, F } from './kit.js';
 import { makeRig, stateBlend, clamp, TAU } from './rig.js';
-import { D2R, taper, pairOf, faceSprite, hold, stepPhase, put, MOODS, moodOf, faceShapes } from './rigkit.js';
+import { D2R, taper, pairOf, faceSprite, hold, stepPhase, put, MOODS, moodOf, arcP } from './rigkit.js';
 
 const K = 0.8;
 const DUCK = '#ffd45a';
@@ -73,8 +73,44 @@ const PR = {
   KITE: kd('kite', 40, 42, kiteP, 3, 3), TAIL: kd('tail', 36, 16, tailP, 3, 3), BODY: kd('body', 24, 14, bodyP, 3, 3),
   WING: [false, true].map((f) => kd(`wing${f ? 1 : 0}`, 8, 16, wingP(f), 3, 3)), FOOT: kd('foot', 10, 10, footP, 3), HEAD: kd('head', 22, 20, headP, 3, 3),
 };
-const FACE = { eyes: [[12, 9.4, 1.7, 2.2, 1]], mouth: [17.4, 14.4, 0.9], blush: [[12.6, 13, 1.2]], iris: '#3a2a2a', lid: 0, lashes: 0 };
-const duckFace = (mood) => faceSprite(`kiteduck|face|${mood}`, 22, 20, () => faceShapes(mood, FACE));
+// ---------- Its own face (side on): one big glossy bead eye under the flying cap, and the beak
+// does the talking: it opens to quack, gapes wide to shout and hangs open when it is dazed. ----------
+const DDARK = '#2a2030';
+const DINSIDE = '#7a3040';
+const ln = (pts, w, c = DDARK) => [F(taper(pts, w, w * 0.85, c))];
+// The beak open: dark inside, the lower half dropped by gape.
+const beakOpen = (gape, tongue = false) => [
+  F(T([[14.2, 11.8], [19.4, 11.9], [18.6, 12.6 + gape], [14.4, 12.8 + gape]], DINSIDE)),
+  ...(tongue ? [F(E(16, 12.4 + gape, 1.6, 0.6, '#ff8fab'))] : []),
+  F(T([[14, 12.6 + gape], [18.8, 12.4 + gape], [18.4, 13.9 + gape], [14.4, 14.2 + gape]], BEAK)),
+];
+const DEYE = [11.6, 9.8];
+const duckFaceShapes = (mood) => {
+  const out = [];
+  const [x, y] = DEYE;
+  if (mood === 'blink' || mood === 'sleep') out.push(...ln(arcP(x, y, 1.5, 0.9, 15, 165, 6), 0.65));
+  else if (mood === 'happy') out.push(...ln(arcP(x, y + 0.9, 1.5, 1.4, 200, 340, 6), 0.7));
+  else if (mood === 'hurt') out.push(...ln([[x - 1.3, y - 1.2], [x + 1.1, y], [x - 1.3, y + 1.2]], 0.65), F(E(x - 0.4, y + 2.4, 0.4, 0.65, '#9ad8ff')));
+  else if (mood === 'dizzy') {
+    const pts = [];
+    for (let i = 0; i <= 12; i++) pts.push([x + Math.cos(i * 0.85) * (0.12 + i * 0.12), y + Math.sin(i * 0.85) * (0.12 + i * 0.12)]);
+    out.push(...ln(pts, 0.4));
+  } else if (mood === 'dead') out.push(...ln([[x - 1.3, y + 0.6], [x, y + 0.1], [x + 1.3, y + 0.6]], 0.6));
+  else if (mood === 'shout') out.push(F(E(x, y, 1.6, 1.8, '#ffffff')), F(E(x + 0.3, y + 0.1, 0.75, 0.85, DDARK)), F(E(x + 0.55, y - 0.25, 0.25, 0.25, '#ffffff')));
+  else {
+    const angry = mood === 'angry';
+    let bead = Array.from({ length: 16 }, (_, i) => [x + Math.cos((i / 16) * Math.PI * 2) * 1.55, y + Math.sin((i / 16) * Math.PI * 2) * 1.75]);
+    if (angry) bead = bead.map(([px, py]) => [px, Math.max(py, y - 0.9 + (px - x) * 0.45)]);
+    out.push(F(T(bead, DDARK)), F(E(x + 0.5, y - (angry ? 0 : 0.6), 0.55, 0.55, '#ffffff')), F(E(x - 0.5, y + 0.75, 0.24, 0.24, '#ffffff')));
+    if (angry) out.push(...ln([[x - 1.8, y - 2.4], [x + 1.6, y - 1]], 0.7, '#c8902a'));
+  }
+  if (mood === 'happy') out.push(...beakOpen(1));
+  else if (mood === 'shout') out.push(...beakOpen(2.4, true));
+  else if (mood === 'dizzy' || mood === 'dead') out.push(...beakOpen(0.7, mood === 'dizzy'));
+  else if (mood === 'hurt') out.push(...beakOpen(0.5));
+  return out;
+};
+const duckFace = (mood) => faceSprite(`kiteduck|face|${mood}`, 22, 20, () => duckFaceShapes(mood));
 
 // The body's middle sits 9.6 above the feet; the head 10 above that; the kite's bottom point (its
 // grip) 17 above the body.
@@ -189,7 +225,7 @@ export function kiteDuckStill(pose, f, mood) {
   const sh = [
     ...put(tailP(), [34, 2], grip[0], grip[1], 0), ...put(kiteP(), [20, 40], grip[0], grip[1], 4), ...put(wingP(true)(), [4, 14], -2, by - 5),
     ...put(footP(), [5, 1], -3, by + 3, 8), ...put(bodyP(), [12, 7], 0, by), ...put(footP(), [5, 1], 3, by + 3, -6),
-    ...put(headP(), [9, 10], head[0], head[1]), ...put(faceShapes(fm, FACE), [9, 10], head[0], head[1]), ...put(wingP(false)(), [4, 14], 3.6, by - 5, -4),
+    ...put(headP(), [9, 10], head[0], head[1]), ...put(duckFaceShapes(fm), [9, 10], head[0], head[1]), ...put(wingP(false)(), [4, 14], 3.6, by - 5, -4),
   ];
   const ox = 34;
   const oy = 64;
