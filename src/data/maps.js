@@ -2411,19 +2411,23 @@ const STAGE = { material: 'stage', critters: [], drift: 'sparkle', face: null, l
 
 Object.assign(MAPS, {
   // Theatre Row: a street of lamp posts and poster pillars on the clouds, the playhouse floating
-  // beyond. Madame Encore finds groups here.
+  // beyond. Madame Encore finds groups here. (Its makeover 2026-11-20, render/gateart.js: a stack of
+  // stage trunks to climb onto a poster column, and the Dream Theatre's grand entrance, a gilded
+  // arch with a marquee of bulbs, its velvet curtains drawn back on the way in.)
   theatre_row: {
     id: 'theatre_row', name: 'Theatre Row', theme: 'theatre', town: 'grove', world: { x: 362, y: 28 }, music: 'theatre',
     width: 1200, height: 420, groundY: G,
     look: { sky: ['#4a2a6a', '#a05a9a', '#ffb0a0'], far: '#6a3a7a', mid: '#8a4a7a', midTrim: '#ffd36b', skyline: 'theatre', material: 'stage', critters: [], drift: 'sparkle', face: 'moon', stars: true },
-    platforms: [{ x: 420, y: G - 80, w: 140 }],
+    // The trunks' top and the poster column's rim (drawn with them).
+    platforms: [{ x: 294, y: G - 60, w: 72, bare: true }, { x: 394, y: G - 130, w: 72, bare: true }],
     ropes: [],
-    deco: [['signpost', 160]],
+    deco: [['signpost', 160], ['stagetrunks', 330, 0], ['postercolumn', 430, 0], ['grandentrance', 1060, 0]],
     portals: [
       { id: 'start', x: 640, y: G, hidden: true },
       { id: 'west', x: 50, y: G, to: 'sky', toPortal: 'theatre' },
-      { id: 'door', x: 1110, y: G, to: 'theatre1', toPortal: 'start', label: 'Dream Theatre', dungeon: 'theatre' },
+      { id: 'door', x: 1060, y: G, to: 'theatre1', toPortal: 'start', label: 'Dream Theatre', dungeon: 'theatre', mouth: 50, labelAt: 230 },
     ],
+    lamps: [{ x: 1060, y: 150 }, { x: 1060, y: 300 }],
     npcs: [{ id: 'encore', x: 860 }],
     spawns: [],
   },

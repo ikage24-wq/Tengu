@@ -9,6 +9,9 @@
 // Sugar Trail: Chef Praline's gingerbread hut (its frosted roof ridge a ledge), a giant cupcake
 // (its frosting the step up to the roof), and the way into the Candy Volcano: a doorway cut in a
 // slab of layered cake dripping caramel at the volcano's foot.
+// Theatre Row: a stack of stage trunks (the step up), a poster column (its rim a ledge) and the
+// grand entrance of the Dream Theatre: a gilded arch, a marquee of bulbs, velvet curtains drawn
+// back, the way in between them.
 // Tidepool Pier: Marina's dive shop on the quay (its roof deck a ledge, a stack of crates to climb
 // to it) and, at the pier's end, a timber crane with a big brass diving bell resting on the boards,
 // its hatch open: the way down to the Sunken Aquarium Palace (the portal's swirl turns in it).
@@ -568,6 +571,124 @@ function cakeArt() {
   });
 }
 
+// ---------- Theatre Row's pieces ----------
+const TH = {
+  gold: '#ffd36b', goldSh: '#d8a840', goldLit: '#fff0b8', velvet: '#d8405a', velvetLit: '#ff6a80', velvetSh: '#a02a44',
+  cream: '#fff4e0', creamSh: '#e8d4bc', copper: '#7fc8b0', copperSh: '#4fa08a', dark: '#2a1a3a', darkIn: '#4a2a5a',
+  trunk: '#8a5a8a', trunkSh: '#6a3a6a', trunk2: '#4a7aa8', trunk2Sh: '#3a5a88', strap: '#c89a74', bulb: '#fff2b0',
+};
+const thStar = (x, y, r, c) => T(Array.from({ length: 10 }, (_, i) => {
+  const a = ((-90 + i * 36) * Math.PI) / 180;
+  const rr = i % 2 ? r * 0.45 : r;
+  return [x + Math.cos(a) * rr, y + Math.sin(a) * rr];
+}), c);
+
+// The poster column: a round column on a plinth, three show posters (a mask, the moon, a star), a
+// flat rim on top (a ledge PC_TOP up) with a little copper dome and a finial behind. Bottom middle.
+const PC_W = 120;
+const PC_H = 180;
+export const PC_TOP = 130;
+export const PC_SPAN = [-36, 36];
+function columnArt() {
+  return art('column', PC_W, PC_H, () => {
+    const out = [];
+    const cx = PC_W / 2;
+    const H = PC_H;
+    const top = H - PC_TOP;
+    // The dome and finial behind the rim.
+    out.push(T([[cx - 24, top], ...arc(cx, top, 24, 22, 180, 360, 12), [cx + 24, top]], TH.copper), F(T([[cx + 6, top - 20], ...arc(cx, top, 24, 22, 300, 360, 6), [cx + 24, top]], TH.copperSh)));
+    out.push(R(cx - 2, top - 34, cx + 2, top - 20, TH.goldSh), E(cx, top - 36, 4, 4, TH.gold));
+    // The column.
+    out.push(R(cx - 32, top + 8, cx + 32, H - 12, TH.cream), F(R(cx + 16, top + 8, cx + 32, H - 12, TH.creamSh)), F(R(cx - 32, top + 8, cx - 26, H - 12, '#ffffff')));
+    out.push(R(cx - 40, H - 12, cx + 40, H, TH.creamSh), F(R(cx - 40, H - 12, cx + 40, H - 10, TH.cream)));
+    // The posters.
+    const poster = (x0, y0, w, h, bg, draw) => {
+      out.push(R(x0, y0, x0 + w, y0 + h, bg), F(R(x0, y0, x0 + w, y0 + 2, '#ffffff')));
+      out.push(...draw(x0 + w / 2, y0 + h / 2));
+    };
+    poster(cx - 28, top + 16, 26, 36, '#a05a9a', (x, y) => [F(E(x, y, 9, 6, '#ffffff')), F(E(x - 4, y - 1, 2.4, 1.6, '#a05a9a')), F(E(x + 4, y - 1, 2.4, 1.6, '#a05a9a')), F(band(arc(x, y + 2, 4, 2.4, 20, 160, 6), () => 1, '#a05a9a'))]);
+    poster(cx + 2, top + 22, 24, 32, '#2a2a6a', (x, y) => [F(T([...arc(x, y, 9, 9, 60, 300, 10), ...arc(x + 4, y, 7, 7.4, 290, 70, 10)], TH.gold))]);
+    poster(cx - 18, top + 64, 36, 30, '#ff9ab8', (x, y) => [F(thStar(x, y, 10, TH.gold)), F(thStar(x, y, 5, '#ffffff'))]);
+    // The rim.
+    const [c0, c1] = PC_SPAN;
+    out.push(R(cx + c0 - 2, top, cx + c1 + 2, top + 10, TH.gold), F(R(cx + c0 - 2, top, cx + c1 + 2, top + 2, TH.goldLit)), F(R(cx + c0 - 2, top + 8, cx + c1 + 2, top + 10, TH.goldSh)));
+    return out;
+  });
+}
+
+// The stage trunks: a big travelling trunk with a smaller one on it (flat on top, a ledge ST_TOP
+// up), straps and stickers, a hat box, a crescent moon prop on a stick. Bottom middle.
+const SK_W = 130;
+const SK_H = 100;
+export const SK_TOP = 60;
+export const SK_SPAN = [-36, 36];
+function trunksArt() {
+  return art('trunks', SK_W, SK_H, () => {
+    const out = [];
+    const cx = SK_W / 2;
+    const H = SK_H;
+    // The moon prop leaning behind.
+    out.push(F(band([[cx + 34, H], [cx + 48, H - 80]], () => 2, TH.strap)));
+    out.push(T([...arc(cx + 50, H - 86, 12, 12, 60, 300, 10), ...arc(cx + 55, H - 86, 9, 9.6, 290, 70, 10)], TH.gold));
+    // The big trunk.
+    out.push(R(cx - 46, H - 36, cx + 46, H, TH.trunk), F(R(cx + 30, H - 36, cx + 46, H, TH.trunkSh)), F(R(cx - 46, H - 36, cx + 46, H - 33, '#a87aa8')));
+    for (const sx of [-30, 26]) out.push(F(R(cx + sx, H - 36, cx + sx + 6, H, TH.strap)));
+    out.push(R(cx - 6, H - 26, cx + 6, H - 18, TH.gold));
+    out.push(F(E(cx - 14, H - 14, 6, 4, '#ffd36b')), F(R(cx + 8, H - 16, cx + 20, H - 8, '#9ff0dc')));
+    // The small trunk on top, flat.
+    const [s0, s1] = SK_SPAN;
+    out.push(R(cx + s0, H - SK_TOP, cx + s1, H - 36, TH.trunk2), F(R(cx + s1 - 10, H - SK_TOP, cx + s1, H - 36, TH.trunk2Sh)), F(R(cx + s0, H - SK_TOP, cx + s1, H - SK_TOP + 3, '#6a9ac8')));
+    out.push(F(R(cx - 4, H - SK_TOP, cx + 4, H - 36, TH.strap)), F(thStar(cx - 20, H - 48, 5, TH.gold)));
+    // The hat box at the foot.
+    out.push(E(cx - 58, H - 4, 14, 4, '#ff9ab8'), R(cx - 72, H - 22, cx - 44, H - 4, '#ff9ab8'), E(cx - 58, H - 22, 14, 4, '#ffc0d8'), F(R(cx - 72, H - 14, cx - 44, H - 11, '#ffffff')));
+    return out;
+  });
+}
+
+// The grand entrance: a gilded arch on two columns, a marquee of bulbs with a crescent moon on its
+// crown, red velvet curtains drawn back in swags with gold tassels, low steps, and between the
+// curtains the dark doorway (GE_DOOR: the portal's swirl turns in it). Bottom middle at the door.
+const GE_W = 300;
+const GE_H = 290;
+export const GE_DOOR = { w: 80, h: 130 };
+function entranceArt() {
+  return art('entrance', GE_W, GE_H, () => {
+    const out = [];
+    const cx = GE_W / 2;
+    const H = GE_H;
+    // The steps.
+    out.push(R(cx - 120, H - 8, cx + 120, H, TH.creamSh), R(cx - 104, H - 14, cx + 104, H - 8, TH.cream));
+    // The doorway, dark, a soft light falling inside.
+    out.push(R(cx - 70, H - 200, cx + 70, H - 14, TH.dark), F(T([[cx - 30, H - 200], [cx + 30, H - 200], [cx + 50, H - 14], [cx - 50, H - 14]], TH.darkIn)));
+    // The columns.
+    for (const s of [-1, 1]) {
+      const x0 = cx + s * 100 - 14;
+      out.push(R(x0, H - 210, x0 + 28, H - 14, TH.cream), F(R(x0 + 18, H - 210, x0 + 28, H - 14, TH.creamSh)));
+      for (const fx of [6, 14, 22]) out.push(F(R(x0 + fx - 0.8, H - 200, x0 + fx + 0.8, H - 24, TH.creamSh)));
+      out.push(R(x0 - 4, H - 220, x0 + 32, H - 208, TH.gold), R(x0 - 4, H - 24, x0 + 32, H - 14, TH.gold));
+    }
+    // The arch and its marquee of bulbs, the crescent moon on the crown.
+    out.push(T([[cx - 128, H - 214], [cx - 128, H - 236], ...arc(cx, H - 236, 128, 50, 180, 360, 20), [cx + 128, H - 236], [cx + 128, H - 214]], TH.gold));
+    out.push(F(T([[cx - 116, H - 214], [cx - 116, H - 232], ...arc(cx, H - 232, 116, 40, 180, 360, 18), [cx + 116, H - 232], [cx + 116, H - 214]], '#a05a9a')));
+    for (let k = 0; k <= 16; k++) {
+      const a = Math.PI + (k / 16) * Math.PI;
+      out.push(E(cx + Math.cos(a) * 122, H - 236 + Math.sin(a) * 45, 3, 3, TH.bulb));
+    }
+    out.push(T([...arc(cx, H - 272, 16, 16, 60, 300, 12), ...arc(cx + 7, H - 272, 12, 12.6, 290, 70, 12)], TH.gold), F(thStar(cx + 12, H - 284, 4, '#ffffff')));
+    // The curtains, drawn back in swags, gold tassels.
+    for (const s of [-1, 1]) {
+      const x0 = cx + s * 70;
+      const sw = [[x0, H - 212], [cx + s * 6, H - 212], [cx + s * 10, H - 190], [x0 - s * 30, H - 120], [x0 - s * 8, H - 60], [x0 - s * 14, H - 14], [x0, H - 14]];
+      out.push(T(sw, TH.velvet));
+      out.push(F(T([[cx + s * 10, H - 190], [x0 - s * 30, H - 120], [x0 - s * 22, H - 118], [cx + s * 20, H - 188]], TH.velvetLit)));
+      for (const k of [0.3, 0.6]) out.push(F(band([[x0 - s * 70 * k * 0.4, H - 200], [x0 - s * 18, H - 100], [x0 - s * 8, H - 20]], () => 1.4, TH.velvetSh)));
+      out.push(E(x0 - s * 30, H - 118, 6, 5, TH.gold), F(band([[x0 - s * 30, H - 114], [x0 - s * 30, H - 100]], () => 3, TH.goldSh)));
+    }
+    out.push(T([[cx - 70, H - 214], [cx + 70, H - 214], [cx + 60, H - 196], [cx, H - 190], [cx - 60, H - 196]], TH.velvet), F(R(cx - 70, H - 214, cx + 70, H - 211, TH.goldSh)));
+    return out;
+  });
+}
+
 export const GATE_KINDS = {
   diveshop: { w: DS_W + M * 2, h: DS_H + M, draw: (ctx, x, y) => place(ctx, shopArt(), x, y) },
   quaycrates: { w: CS_W + M * 2, h: CS_H + M, draw: (ctx, x, y) => place(ctx, cratesArt(), x, y) },
@@ -580,4 +701,7 @@ export const GATE_KINDS = {
   gingerhut: { w: GH_W + M * 2, h: GH_H + M, draw: drawGinger },
   giantcupcake: { w: CC_W + M * 2, h: CC_H + M, draw: (ctx, x, y) => place(ctx, cupcakeArt(), x, y) },
   cakecave: { w: CK_W + M * 2, h: CK_H + M, draw: (ctx, x, y) => place(ctx, cakeArt(), x, y) },
+  postercolumn: { w: PC_W + M * 2, h: PC_H + M, draw: (ctx, x, y) => place(ctx, columnArt(), x, y) },
+  stagetrunks: { w: SK_W + M * 2, h: SK_H + M, draw: (ctx, x, y) => place(ctx, trunksArt(), x, y) },
+  grandentrance: { w: GE_W + M * 2, h: GE_H + M, draw: (ctx, x, y) => place(ctx, entranceArt(), x, y) },
 };
