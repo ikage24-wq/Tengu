@@ -829,7 +829,8 @@ export const DREAM_FX = {
 };
 
 // A monster's thrown shot with a look of its own (render/scene.js, the 'spit' vfx; `p` 0..1 along
-// its flight, `d` the way it flies): the Sticky Note Bird's note, spinning; the Stapler Croc's staple.
+// its flight, `d` the way it flies): the Sticky Note Bird's note, spinning; the Stapler Croc's staple;
+// the Candle Bride's flame.
 export function dreamShot(ctx, shot, x, y, p, d) {
   if (shot === 'note') {
     ctx.save();
@@ -857,6 +858,23 @@ export function dreamShot(ctx, shot, x, y, p, d) {
     ctx.stroke();
     ctx.restore();
     starFlash(ctx, x - d * 6, y, 3 + Math.sin(p * 30) * 1, 4, p * 8, '#d0d4e0', '#ffffff');
+    return true;
+  }
+  if (shot === 'flame') {
+    // A teardrop of fire, its tail streaming back and flickering.
+    const fl = Math.sin(p * 40) * 1.2;
+    ctx.save();
+    ctx.translate(x, y);
+    for (const [r, len, c] of [[5, 12, '#ffa03a'], [3.4, 8, '#ffd060'], [1.8, 4.4, '#fff4c0']]) {
+      ctx.fillStyle = c;
+      ctx.beginPath();
+      ctx.moveTo(-d * (r + len), fl * (r / 5));
+      ctx.quadraticCurveTo(-d * r * 0.4, -r * 1.2, d * r * 0.2, -r);
+      ctx.arc(d * r * 0.2, 0, r, -Math.PI / 2, Math.PI / 2, d < 0);
+      ctx.quadraticCurveTo(-d * r * 0.4, r * 1.2, -d * (r + len), fl * (r / 5));
+      ctx.fill();
+    }
+    ctx.restore();
     return true;
   }
   return false;

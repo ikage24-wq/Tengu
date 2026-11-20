@@ -280,7 +280,7 @@ export const MOBS = {
   candlebride: mob({
     id: 'candlebride', name: 'Candle Bride', level: 17, hp: 760, atk: 62, def: 12, acc: 50, eva: 5, exp: 300, gold: [6, 13],
     speed: 30, w: 24, h: 38, art: 'candlebride', drops: [{ id: 'candle_wax', chance: 0.4 }, { id: 'moonlit_ribbon', chance: 0.08 }, { id: 'long_skirt', chance: 0.01 }],
-    fight: { every: 2.3, reach: 30, windup: 0.55, range: 170 },
+    fight: { every: 2.3, reach: 30, windup: 0.55, range: 170, shot: 'flame' },
   }),
   topiarydryad: mob({
     id: 'topiarydryad', name: 'Topiary Swan', level: 15, hp: 600, atk: 56, def: 14, acc: 46, eva: 6, exp: 230, gold: [5, 11],

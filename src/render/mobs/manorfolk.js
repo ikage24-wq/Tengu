@@ -4,7 +4,8 @@
 // the rig itself stays for the other dungeons that still use it).
 //   porcelaindoll  Porcelain Doll: a wind-up china bunny with a parasol (manorrigs.js, remade 2026-11-18)
 //   ghostmaid      Ghost Maid: a little ghost cat maid with a feather duster (manorrigs.js, 2026-11-18)
-//   candlebride    Candle Bride: a living candle in a bridal veil, her flame for hair; it flares up.
+//   candlebride    Candle Bride: the Melty Bride, a chubby candle whose melting wax makes her dress
+//                  ruffles, in a lace veil; she flares up and throws a flame (meltybriderig.js, 2026-11-20)
 //   topiarydryad   Topiary Swan: a hedge clipped into a swan, a rose on its head (manorrigs.js, 2026-11-18)
 //   lanternghost   Lantern Wisp: a flame spirit living in an iron lantern (manorrigs.js, 2026-11-18)
 //   armourknight   Armour Knight: a small empty suit of armour, its helm too big, eyes glowing
@@ -14,59 +15,12 @@
 // Every design faces right, its lowest point on the bottom edge. Attacks are four frames:
 // wind-up (the tell), strike, impact, recover.
 
-import { E, T, F, R, mix, ramp, crescent, shine, smear, chain, wave, breath, sway, TAU, D2R, O, arcPts, limb, spin, strand, star, cuteFace, blob, bubbles } from './critter.js';
+import { E, T, F, R, ramp, smear, chain, wave, TAU, D2R, O, limb, spin, strand, star, blob } from './critter.js';
 import { swanRig, swanStill, wispRig, wispStill, dollRig, dollStill, maidRig, maidStill, teapotRig, teapotStill, butlerRig, butlerStill } from './manorrigs.js';
+import { meltyBrideRig, meltyBrideStill } from './meltybriderig.js';
 
 const frames = (pose) => (pose === 'walk' ? 8 : pose === 'attack' ? 4 : 6);
 const phase = (pose, f) => f / frames(pose);
-// A flame: a teardrop flickering by phase.
-export function flame(x, y, h, q, outer = '#ff9a3a', inner = '#ffe36b') {
-  const w = h * 0.42;
-  const lean = Math.sin(q * TAU * 3) * h * 0.12;
-  return [F(T([[x - w, y], [x - w * 0.9, y - h * 0.45], [x + lean, y - h], [x + w * 0.9, y - h * 0.5], [x + w, y], [x, y + w * 0.6]], outer)), F(T([[x - w * 0.5, y], [x - w * 0.4, y - h * 0.4], [x + lean * 0.6, y - h * 0.7], [x + w * 0.45, y - h * 0.35], [x + w * 0.5, y]], inner)), F(E(x, y - h * 0.15, w * 0.3, w * 0.35, '#ffffff'))];
-}
-
-// ---------- Candle Bride ----------
-
-const CANDLE_ATK = [
-  { flare: 0.6, lean: -8 },
-  { flare: 1.8, lean: 10, smear: 1 },
-  { flare: 2.2, lean: 12, hit: 1 },
-  { flare: 0.8, lean: 0 },
-];
-
-function candle(pose, f, mood) {
-  const q = phase(pose, f);
-  const A = pose === 'attack' ? CANDLE_ATK[f] : null;
-  const dead = mood === 'dead';
-  const walk = pose === 'walk';
-  const wax = ramp('#fff4e0', { step: 8, turn: 12 });
-  const cx = 17;
-  const step = walk ? Math.sin(TAU * q * 2) : 0;
-  const cy = (dead ? 12 : 0) - Math.abs(step) * 1;
-  const lean = dead ? 88 : A ? A.lean : walk ? step * 3 : sway(q) * 2;
-  const out = [];
-  const body = [];
-  // A silver candlestick foot it shuffles along on.
-  body.push(O(cx, 36, 9, 2.4, 0, '#b8b8d0', 16), R(cx - 3, cy + 30, 6, 6, '#d8d8e8'), O(cx, cy + 30, 7, 2, 0, '#e8e8f4', 16));
-  // The candle: a fat wax pillar with drips down the sides, her face on it.
-  body.push(R(cx - 7, cy + 8, 14, 22, wax.base), F(R(cx + 4, cy + 8, 3, 22, wax.sh)), O(cx, cy + 8, 7, 2.4, 0, wax.hi, 16));
-  for (const [x, l] of [[-5, 5], [-1, 8], [3, 4], [5.6, 6]]) body.push(R(cx + x - 1, cy + 8, 2, l, wax.hi), E(cx + x, cy + 8 + l, 1.1, 1.3, wax.hi));
-  body.push(...cuteFace(cx + 1, cy + 17, 1, mood, { iris: '#c05ad8', gap: 5, atk: A ? (f === 1 || f === 2 ? 1 : 0.3) : 0, skin: wax.base, mouthDy: 3.6, lash: 1.4, wing: 1.2 }));
-  // The flame on top, flaring up big on the attack.
-  const fh = 8 + (A ? A.flare * 6 : (walk ? Math.abs(step) : breath(q)) * 1.6);
-  body.push(...limb([cx, cy + 6], [cx, cy + 4], 0.6, 0.6, '#3a2a2a'), ...flame(cx, cy + 5, fh, q));
-  // A bridal veil from a little crown of wax flowers, flowing back.
-  // The veil: a soft sheer drape from the crown down the back of the candle, its hem swaying.
-  const sw = Math.sin(TAU * q * (walk ? 2 : 1)) * (walk ? 2 : 1);
-  body.push(T([[cx - 5, cy + 6], [cx - 1, cy + 6], [cx - 6, cy + 14], [cx - 9 + sw, cy + 26], [cx - 11 + sw, cy + 27], [cx - 10 + sw * 0.5, cy + 16]], '#f4f0ff'), F(T([[cx - 5, cy + 7], [cx - 7, cy + 14], [cx - 9 + sw, cy + 25], [cx - 8 + sw * 0.6, cy + 15]], '#ffffff')));
-  for (const [dx, c] of [[-5, '#ffb3cf'], [-2, '#ffffff'], [1, '#ffb3cf']]) body.push(E(cx + dx, cy + 7.4, 1.5, 1.3, c));
-  out.push(...spin(body, cx, 36, lean));
-  if (A?.smear) out.push(smear([[cx, cy - 6], [cx + 10, cy - 8], [cx + 20, cy - 2]], 4, '#fff0c8'));
-  if (A?.hit) out.push(...flame(cx + 20, cy + 6, 10, q), ...star(cx + 22, cy - 2, 3, '#fff6a8'));
-  return { w: 40, h: 38, res: 3, shapes: out };
-}
-
 // ---------- Armour Knight ----------
 
 const ARMOUR_ATK = [
@@ -119,7 +73,7 @@ function armour(pose, f, mood) {
 export const ART = {
   porcelaindoll: { pad: 6, walk: 8, idle: 6, attack: 4, stride: 18, atkMs: [70, 220, 180], draw: dollStill, rig: dollRig },
   ghostmaid: { pad: 6, walk: 8, idle: 6, attack: 4, stride: 26, atkMs: [60, 210, 170], draw: maidStill, rig: maidRig },
-  candlebride: { pad: 8, walk: 8, idle: 6, attack: 4, stride: 22, atkMs: [80, 260, 200], draw: candle },
+  candlebride: { pad: 8, walk: 8, idle: 6, attack: 4, stride: 22, atkMs: [80, 260, 200], draw: meltyBrideStill, rig: meltyBrideRig },
   topiarydryad: { pad: 6, walk: 8, idle: 6, attack: 4, stride: 24, atkMs: [60, 200, 160], draw: swanStill, rig: swanRig },
   lanternghost: { pad: 8, walk: 8, idle: 6, attack: 4, stride: 20, atkMs: [60, 220, 170], draw: wispStill, rig: wispRig },
   armourknight: { pad: 6, walk: 8, idle: 6, attack: 4, stride: 18, atkMs: [80, 260, 200], draw: armour },

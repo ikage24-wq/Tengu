@@ -1430,9 +1430,9 @@ Object.assign(MAPS, {
     ],
     npcs: [],
     spawns: [
-      ...packAt('a', 820, 900, 'ghostmaid', 'porcelaindoll', 'ghostmaid'),
+      ...packAt('a', 820, 900, 'ghostmaid', 'candlebride', 'ghostmaid'),
       ...packAt('b', 420, 740, 'teahatter', 'ghostmaid'),
-      ...packAt('c', 880, 580, 'porcelaindoll', 'teahatter', 'porcelaindoll'),
+      ...packAt('c', 880, 580, 'porcelaindoll', 'teahatter', 'candlebride'),
       ...packAt('d', 260, 420, 'ghostmaid', 'teahatter'),
     ],
   },
