@@ -17,7 +17,7 @@
 // `redpandaStill(pose, f, mood)` gives the still pictures (portraits, the book) from the same shapes.
 
 import { E, T, F, stroke } from './kit.js';
-import { simpleEye, deadEye, tear, vein } from './faces.js';
+import { tear } from './faces.js';
 import { ramp, crescent, shine } from './meadow.js';
 import { part, makeRig, stateBlend, smooth, clamp, lerp, TAU } from './rig.js';
 import { sprite } from '../pixel.js';
@@ -59,21 +59,58 @@ const earShapes = (far) => [
 // The face (unoutlined, over the head): big dark glossy eyes, white brows, the tear marks running
 // down to the muzzle, a black nose and a small smile. Box 20 x 17, matching the head's box.
 const MOODS = new Set(['idle', 'angry', 'hurt', 'happy', 'blink', 'dead', 'shout']);
+// Its own face: the red panda's white brow patches and rust tear marks, big glossy dark eyes with a
+// warm amber glow low in them, its black nose, and a tiny tongue tip poking out ("blep").
+const fLine = (pts, w, c) => {
+  const l = [];
+  const r = [];
+  pts.forEach(([x, y], i) => {
+    const [ax, ay] = pts[Math.max(0, i - 1)];
+    const [bx, by] = pts[Math.min(pts.length - 1, i + 1)];
+    const d = Math.hypot(bx - ax, by - ay) || 1;
+    const nx = ((-(by - ay) / d) * w) / 2;
+    const ny = (((bx - ax) / d) * w) / 2;
+    l.push([x + nx, y + ny]);
+    r.push([x - nx, y - ny]);
+  });
+  return [F(T([...l, ...r.reverse()], c))];
+};
+const fArc = (cx, cy, rx, ry, a0, a1, n = 8) => Array.from({ length: n + 1 }, (_, i) => {
+  const a = ((a0 + ((a1 - a0) * i) / n) * Math.PI) / 180;
+  return [cx + Math.cos(a) * rx, cy + Math.sin(a) * ry];
+});
+const fRing = (cx, cy, rx, ry, rot = 0, n = 14) => Array.from({ length: n }, (_, i) => {
+  const a = (i / n) * Math.PI * 2;
+  const x = Math.cos(a) * rx;
+  const y = Math.sin(a) * ry;
+  return [cx + x * Math.cos(rot) - y * Math.sin(rot), cy + x * Math.sin(rot) + y * Math.cos(rot)];
+});
+const fSquint = (x, y, s, r, c, w) => fLine([[x + s * r, y - r], [x - s * r * 0.8, y], [x + s * r, y + r]], w, c);
+const fDrop = (x, y, r) => [F(E(x, y, r * 0.7, r, '#9ad8ff')), F(E(x - r * 0.2, y - r * 0.3, r * 0.25, r * 0.25, '#ffffff'))];
 const faceShapes = (mood) => {
   const out = [];
   out.push(...stroke([[11.4, 10.4], [11.2, 12], [12.2, 13.6]], 1, TEARC), ...stroke([[15.6, 10], [15.8, 11]], 0.8, TEARC));
   out.push(F(E(11.2, 5.4, 1.6, 0.9, WHITE)), F(E(15.4, 5.4, 1.3, 0.8, WHITE)));
-  if (mood === 'dead') out.push(...deadEye(11.6, 8.2, 1.3, { c: INK, th: 0.5 }), ...deadEye(15.6, 8, 1.1, { c: INK, th: 0.5 }));
-  else {
-    const so = { iris: '#2a1a16', ink: INK, lid: 0, mood: mood === 'shout' ? 'angry' : mood };
-    out.push(...simpleEye(11.6, 8.2, { ...so, s: -1, w: 1.7, h: 2.1 }), ...simpleEye(15.6, 8, { ...so, s: 1, w: 1.4, h: 1.8 }));
-    out.push(F(E(9.6, 11, 1.3, 0.65, '#ff9eae')));
+  for (const [x, y, s, r] of [[11.6, 8.2, -1, 1.75], [15.6, 8, 1, 1.45]]) {
+    if (mood === 'blink') out.push(...fLine(fArc(x, y + 0.2, r, r * 0.55, 15, 165, 6), 0.55, INK));
+    else if (mood === 'happy') out.push(...fLine(fArc(x, y + 1, r, r, 200, 340, 6), 0.6, INK));
+    else if (mood === 'hurt') out.push(...fSquint(x, y, s, r * 0.85, INK, 0.55));
+    else if (mood === 'dead') out.push(...fLine([[x - r, y + 0.3], [x + r, y + 0.3]], 0.5, INK));
+    else {
+      const wide = mood === 'shout' || mood === 'angry';
+      out.push(F(E(x, y, r, r * 1.15, INK)), F(E(x, y + r * 0.45, r * 0.72, r * 0.5, '#9a4a26')));
+      if (wide) out.push(F(E(x, y + 0.2, r * 0.42, r * 0.5, '#2a1410')), F(E(x + r * 0.3, y - r * 0.5, r * 0.2, r * 0.2, '#ffffff')));
+      else out.push(F(E(x + r * 0.35, y - r * 0.4, r * 0.4, r * 0.4, '#ffffff')), F(E(x - r * 0.4, y + r * 0.35, r * 0.17, r * 0.17, '#ffffff')));
+    }
   }
+  if (mood !== 'dead') out.push(F(E(9.6, 11, 1.3, 0.65, '#ff9eae')));
   out.push(E(19, 10.6, 1.2, 0.95, INK), F(E(18.7, 10.3, 0.45, 0.32, '#8a7a7a')));
-  if (mood === 'shout') out.push(F(E(17, 13.2, 1.4, 1.1, '#7a2a30')));
-  else out.push(...stroke([[15.8, 12.6], [16.9, 13.3], [18.2, 12.4]], 0.4, INK));
-  if (mood === 'hurt') out.push(...tear(12.2, 9.6, 0.7, { type: 'stream', len: 2 }));
-  if (mood === 'angry') out.push(...vein(6, 3, 0.6));
+  if (mood === 'shout') out.push(F(E(17, 13.2, 1.4, 1.1, '#7a2a30')), F(T([[16, 12.3], [16.6, 12.3], [16.3, 13.2]], '#fffaf2')), F(T([[17.4, 12.3], [18, 12.3], [17.7, 13.2]], '#fffaf2')));
+  else if (mood === 'angry') out.push(...fLine([[15.8, 13], [16.9, 12.5], [18.2, 13]], 0.4, INK), F(T([[16.4, 12.8], [17, 12.7], [16.7, 13.6]], '#fffaf2')));
+  else if (mood === 'happy') out.push(F(T(fArc(17, 12.5, 1.3, 1.2, 0, 180, 6), '#7a2a30')), F(E(17, 13.3, 0.7, 0.4, '#ff8fab')));
+  else if (mood === 'hurt') out.push(...fLine([[15.8, 12.8], [16.5, 12.4], [17.2, 12.8], [17.9, 12.4]], 0.4, INK), ...fDrop(12.6, 10, 0.7));
+  else if (mood === 'dead') out.push(...fLine([[16, 12.8], [18, 12.8]], 0.4, INK));
+  else out.push(...stroke([[15.8, 12.6], [16.9, 13.3], [18.2, 12.4]], 0.4, INK), F(E(17, 13.7, 0.55, 0.6, '#ff8fab')));
   return out;
 };
 // A paw: a round dark paw with a hint of toes. Box 5 x 4; its middle at (2.5, 2).

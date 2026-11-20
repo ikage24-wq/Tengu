@@ -18,7 +18,7 @@
 // `mosstortStill(pose, f, mood)` gives the still pictures (portraits, the book) from the same shapes.
 
 import { E, T, F, stroke } from './kit.js';
-import { simpleEye, deadEye, tear, vein } from './faces.js';
+
 import { ramp, crescent, shine } from './meadow.js';
 import { part, partBare, outerOutline, makeRig, stateBlend, smooth, clamp, TAU } from './rig.js';
 import { sprite } from '../pixel.js';
@@ -88,16 +88,56 @@ const headShapes = () => [
 // The face (unoutlined, on the head): one big sleepy eye with a heavy lid, a blush, a nostril and
 // a little smile; snapping, the beak opens wide. Box 13 x 10, centre (6.5, 5).
 const MOODS = new Set(['idle', 'angry', 'hurt', 'happy', 'blink', 'dead', 'shout']);
+// Its own face (side on): a sleepy old tortoise's heavy-lidded eye with two wrinkles over it and a
+// bushy white brow, its nostril and a content little smile.
+const fLine = (pts, w, c) => {
+  const l = [];
+  const r = [];
+  pts.forEach(([x, y], i) => {
+    const [ax, ay] = pts[Math.max(0, i - 1)];
+    const [bx, by] = pts[Math.min(pts.length - 1, i + 1)];
+    const d = Math.hypot(bx - ax, by - ay) || 1;
+    const nx = ((-(by - ay) / d) * w) / 2;
+    const ny = (((bx - ax) / d) * w) / 2;
+    l.push([x + nx, y + ny]);
+    r.push([x - nx, y - ny]);
+  });
+  return [F(T([...l, ...r.reverse()], c))];
+};
+const fArc = (cx, cy, rx, ry, a0, a1, n = 8) => Array.from({ length: n + 1 }, (_, i) => {
+  const a = ((a0 + ((a1 - a0) * i) / n) * Math.PI) / 180;
+  return [cx + Math.cos(a) * rx, cy + Math.sin(a) * ry];
+});
+const fRing = (cx, cy, rx, ry, rot = 0, n = 14) => Array.from({ length: n }, (_, i) => {
+  const a = (i / n) * Math.PI * 2;
+  const x = Math.cos(a) * rx;
+  const y = Math.sin(a) * ry;
+  return [cx + x * Math.cos(rot) - y * Math.sin(rot), cy + x * Math.sin(rot) + y * Math.cos(rot)];
+});
+const fSquint = (x, y, s, r, c, w) => fLine([[x + s * r, y - r], [x - s * r * 0.8, y], [x + s * r, y + r]], w, c);
+const fDrop = (x, y, r) => [F(E(x, y, r * 0.7, r, '#9ad8ff')), F(E(x - r * 0.2, y - r * 0.3, r * 0.25, r * 0.25, '#ffffff'))];
 const faceShapes = (mood) => {
   const out = [];
-  if (mood === 'dead') out.push(...deadEye(5.6, 3.6, 1.2, { c: INK, th: 0.5 }));
-  else out.push(...simpleEye(5.6, 3.6, { iris: '#4a3a2a', ink: INK, lid: 0, mood: mood === 'shout' ? 'angry' : mood, s: 1, w: 1.4, h: 1.7 }));
-  if (mood !== 'dead') out.push(F(E(6.4, 6.2, 1, 0.5, '#ffa8ba')));
+  const [x, y] = [5.6, 3.8];
+  const BROW = '#f4f4ec';
+  const browY = mood === 'angry' ? 0.8 : mood === 'shout' || mood === 'happy' ? -0.6 : 0;
+  out.push(F(T([[x - 2.2, y - 2.3 + browY * 0.4], [x - 0.6, y - 3.4 + browY], [x + 1.6, y - 3.1 + browY * 1.4], [x + 2.4, y - 2.2 + browY * 1.4], [x + 0.2, y - 2.3 + browY]], BROW)));
+  out.push(...fLine(fArc(x, y - 0.6, 2.2, 1.2, 205, 335, 6), 0.3, SKIN.sh), ...fLine(fArc(x, y - 1.2, 1.8, 1, 210, 330, 6), 0.3, SKIN.sh));
+  if (mood === 'blink' || mood === 'dead') out.push(...fLine(fArc(x, y + 0.2, 1.4, 0.7, 15, 165, 6), 0.5, INK));
+  else if (mood === 'happy') out.push(...fLine(fArc(x, y + 0.9, 1.3, 1.2, 200, 340, 6), 0.5, INK));
+  else if (mood === 'hurt') out.push(...fSquint(x, y, 1, 1.1, INK, 0.5), ...fDrop(7.2, 5.4, 0.7));
+  else {
+    // Heavy-lidded, sleepy; slanted lower to glare; wide open to bellow.
+    const lid = mood === 'shout' ? () => -99 : mood === 'angry' ? (px) => y - 0.6 + (px - x) * 0.45 : () => y - 0.3;
+    out.push(F(T(fRing(x, y, 1.3, 1.5).map(([px, py]) => [px, Math.max(py, lid(px))]), INK)), F(E(x + 0.45, y + 0.35, 0.3, 0.3, '#ffffff')));
+    if (mood !== 'shout') out.push(...fLine([[x - 1.6, lid(x - 1.6)], [x + 1.6, lid(x + 1.6)]], 0.55, SKIN.sh));
+  }
+  if (mood !== 'dead') out.push(F(E(6.4, 6.4, 1, 0.5, '#ffb8c4')));
   out.push(F(E(11.6, 4.5, 0.32, 0.28, INK)));
   if (mood === 'shout') out.push(F(T([[7.4, 7.2], [12.2, 6.4], [12, 9.4], [8, 8.6]], '#8a3a48')), F(E(10.2, 8.4, 1.2, 0.5, '#ff8a9a')));
-  else out.push(...stroke([[8.4, 6.4], [10.2, 6.9], [12, 6.3]], 0.36, INK));
-  if (mood === 'hurt') out.push(...tear(7.4, 5, 0.7, { type: 'stream', len: 2 }));
-  if (mood === 'angry') out.push(...vein(3.6, 1.6, 0.6));
+  else if (mood === 'happy') out.push(F(T([[8.4, 6.4], [12, 6.2], [10.6, 7.8]], '#8a3a48')));
+  else if (mood === 'angry') out.push(...fLine([[8.4, 6.9], [10.2, 6.5], [12, 6.9]], 0.36, INK));
+  else out.push(...fLine([[8.4, 6.4], [10.2, 6.9], [12, 6.3]], 0.36, INK));
   return out;
 };
 // The garden on its shell. A seedling: a stem with two round leaves: box 9 x 9, its base at

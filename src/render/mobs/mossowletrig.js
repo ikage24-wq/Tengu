@@ -15,7 +15,7 @@
 // `mossowletStill(pose, f, mood)` gives the still pictures (portraits, the book) from the same shapes.
 
 import { E, T, F, stroke } from './kit.js';
-import { simpleEye, deadEye, tear } from './faces.js';
+
 import { ramp, crescent, shine } from './meadow.js';
 import { part, partBare, outerOutline, makeRig, stateBlend, spring, smooth, clamp, TAU } from './rig.js';
 import { sprite } from '../pixel.js';
@@ -57,18 +57,57 @@ const headShapes = () => [
 // The face (unoutlined, over the disc): huge amber eyes, a small hooked beak between them, rosy
 // cheeks. Box 18 x 11, centre (9, 5.5).
 const MOODS = new Set(['idle', 'angry', 'hurt', 'happy', 'blink', 'dead', 'shout']);
+// Its own face: an owlet's huge round eyes, lime-gold irises round big pupils with a leaf of light
+// in each, and little mossy feather tufts for brows; owl-blinks with flat lids.
+const fLine = (pts, w, c) => {
+  const l = [];
+  const r = [];
+  pts.forEach(([x, y], i) => {
+    const [ax, ay] = pts[Math.max(0, i - 1)];
+    const [bx, by] = pts[Math.min(pts.length - 1, i + 1)];
+    const d = Math.hypot(bx - ax, by - ay) || 1;
+    const nx = ((-(by - ay) / d) * w) / 2;
+    const ny = (((bx - ax) / d) * w) / 2;
+    l.push([x + nx, y + ny]);
+    r.push([x - nx, y - ny]);
+  });
+  return [F(T([...l, ...r.reverse()], c))];
+};
+const fArc = (cx, cy, rx, ry, a0, a1, n = 8) => Array.from({ length: n + 1 }, (_, i) => {
+  const a = ((a0 + ((a1 - a0) * i) / n) * Math.PI) / 180;
+  return [cx + Math.cos(a) * rx, cy + Math.sin(a) * ry];
+});
+const fRing = (cx, cy, rx, ry, rot = 0, n = 14) => Array.from({ length: n }, (_, i) => {
+  const a = (i / n) * Math.PI * 2;
+  const x = Math.cos(a) * rx;
+  const y = Math.sin(a) * ry;
+  return [cx + x * Math.cos(rot) - y * Math.sin(rot), cy + x * Math.sin(rot) + y * Math.cos(rot)];
+});
+const fSquint = (x, y, s, r, c, w) => fLine([[x + s * r, y - r], [x - s * r * 0.8, y], [x + s * r, y + r]], w, c);
+const fDrop = (x, y, r) => [F(E(x, y, r * 0.7, r, '#9ad8ff')), F(E(x - r * 0.2, y - r * 0.3, r * 0.25, r * 0.25, '#ffffff'))];
 const faceShapes = (mood) => {
   const out = [];
-  if (mood === 'dead') out.push(...deadEye(5, 5, 1.6, { c: INK, th: 0.6 }), ...deadEye(13, 5, 1.6, { c: INK, th: 0.6 }));
-  else {
-    const so = { iris: '#e89a2a', ink: INK, lid: 0, mood: mood === 'shout' ? 'angry' : mood };
-    out.push(...simpleEye(5, 5, { ...so, s: -1, w: 2.6, h: 2.9 }), ...simpleEye(13, 5, { ...so, s: 1, w: 2.6, h: 2.9 }));
-    out.push(F(E(2.6, 8.6, 1.3, 0.6, '#ffa8b8')), F(E(15.4, 8.6, 1.3, 0.6, '#ffa8b8')));
+  for (const [x, y, s] of [[5, 5, -1], [13, 5, 1]]) {
+    // The feather brows: tufts that knit to glare, lift in surprise, droop when hurt.
+    const lift = mood === 'shout' ? 0.8 : mood === 'happy' ? 0.4 : 0;
+    const knit = mood === 'angry' ? 0.9 : mood === 'hurt' ? -0.7 : 0;
+    out.push(F(T([[x - 2.6, y - 2.9 - lift + (s < 0 ? -knit : knit) * 0.6], [x - 0.2, y - 4.4 - lift], [x + 2.6, y - 2.9 - lift + (s < 0 ? knit : -knit) * 0.6], [x + 0.2, y - 3.3 - lift]], FEATH.sh)));
+    if (mood === 'blink') out.push(...fLine(fArc(x, y - 0.6, 2.5, 0.6, 15, 165, 8), 0.75, INK));
+    else if (mood === 'happy') out.push(...fLine(fArc(x, y + 1.2, 2.3, 2, 200, 340, 8), 0.8, INK));
+    else if (mood === 'hurt') out.push(...fSquint(x, y, s, 1.9, INK, 0.75));
+    else if (mood === 'dead') out.push(...fLine([[x - 2, y + 0.4], [x + 2, y + 0.4]], 0.65, INK));
+    else {
+      const wide = mood === 'shout';
+      out.push(F(E(x, y, 2.6, 2.8, INK)), F(E(x, y + 0.2, 2.1, 2.3, '#c8d84a')), F(E(x, y + 0.3, wide ? 0.8 : 1.3, wide ? 0.9 : 1.5, INK)));
+      if (!wide) out.push(F(T(fRing(x + 0.9, y - 0.9, 0.85, 0.42, -0.8, 10), '#ffffff')), F(E(x - 0.8, y + 1.1, 0.28, 0.28, '#ffffff')));
+      // Cross: the pale disc's lids slant down over the eyes.
+      if (mood === 'angry') out.push(F(T([[x - 2.9, y - 3 + (s < 0 ? 0 : 1.6)], [x + 2.9, y - 3 + (s < 0 ? 1.6 : 0)], [x + 2.9, y - 3.2], [x - 2.9, y - 3.2]], DISC)), ...fLine([[x - 2.7, y - 2.9 + (s < 0 ? 0 : 1.6)], [x + 2.7, y - 2.9 + (s < 0 ? 1.6 : 0)]], 0.6, INK));
+    }
   }
   if (mood === 'shout') out.push(F(T([[7.8, 6.6], [10.2, 6.6], [9.6, 9.6], [8.4, 9.6]], '#c86a2a')), F(T([[8.2, 8], [9.8, 8], [9.4, 9.4], [8.6, 9.4]], '#8a3a3a')));
   else out.push(F(T([[7.8, 6.6], [10.2, 6.6], [9.4, 9.2], [9, 9.6], [8.6, 9.2]], BEAK)), F(T([[8.2, 6.8], [9, 6.8], [8.8, 7.8]], '#ffe0a0')));
-  if (mood === 'hurt') out.push(...tear(13.6, 7, 0.8, { type: 'stream', len: 2 }));
-    return out;
+  if (mood === 'hurt') out.push(...fDrop(14.2, 7.6, 0.8));
+  return out;
 };
 // An ear tuft of moss: three little leafy feathers from its base at (3, 6.6). Box 7 x 7.
 const tuftShapes = (side) => {
