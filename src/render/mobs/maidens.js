@@ -388,11 +388,18 @@ function backHair(H, low = 7.6) {
 // A limb from a to b to c as one smooth inked band (a curve through the joint, so knees and elbows
 // bend softly instead of two straight pieces meeting at a ball). With a second colour `col2` the
 // lower part (a boot, a glove) is col2 and the upper part laid over it in `col` to the joint.
-function limb(a, b, c, w0, w1, w2, col, col2 = col) {
+function limb(a, b, c, w0, w1, w2, col, col2 = col, rounded = true) {
   const sm = (t) => t * t * (3 - 2 * t);
   const wf = (t) => (t < 0.5 ? lerp(w0, w1, sm(t / 0.5)) : lerp(w1, w2, sm((t - 0.5) / 0.5)));
-  if (col2 === col) return oband([a, b, c], wf, col, 5);
-  return [...oband([a, b, c], wf, col2, 5), ...oband([a, b], (t) => wf(t * 0.5), col, 4)];
+  // (Legs go without: their tops tuck under a skirt, shorts or hem.)
+  if (!rounded) return col2 === col ? oband([a, b, c], wf, col, 5) : [...oband([a, b, c], wf, col2, 5), ...oband([a, b], (t) => wf(t * 0.5), col, 4)];
+  // The round cap: the band starts half a width back from the joint, its end a half circle.
+  const L = Math.hypot(a[0] - b[0], a[1] - b[1]) || 1;
+  const a0 = [a[0] + ((a[0] - b[0]) / L) * w0 * 0.5, a[1] + ((a[1] - b[1]) / L) * w0 * 0.5];
+  const cap = (u) => w0 * Math.sqrt(Math.max(0.04, 2 * u - u * u));
+  const whole = (t) => (t < 1 / 3 ? cap(t * 3) : wf((t - 1 / 3) * 1.5));
+  if (col2 === col) return oband([a0, a, b, c], whole, col, 5);
+  return [...oband([a0, a, b, c], whole, col2, 5), ...oband([a0, a, b], (t) => (t < 0.5 ? cap(t * 2) : wf((t - 0.5))), col, 4)];
 }
 // A closed shape with its corners rounded off (Chaikin corner cutting, `k` passes).
 function round(pts, k = 2) {
@@ -858,7 +865,7 @@ function sylph(pose, f, mood) {
     const a = kn.f;
     const dir = Math.atan2(a[1] - kn.k[1], a[0] - kn.k[0]) - 0.35;
     const toe = [a[0] + Math.cos(dir) * 3.2, a[1] + Math.sin(dir) * 3.2];
-    const out2 = [...limb(h0, kn.k, a, 3.4, 2.3, 1.5, c), ...oband([a, toe], taperW(1.7, 0.6), c, 1)];
+    const out2 = [...limb(h0, kn.k, a, 3.4, 2.3, 1.5, c, c, false), ...oband([a, toe], taperW(1.7, 0.6), c, 1)];
     out2.push(line([[a[0] - 1, a[1] - 2.2], [a[0] + 1, a[1] - 1.4]], 0.5, c2), line([[a[0] - 0.9, a[1] - 0.8], [a[0] + 1, a[1] - 0.1]], 0.5, c2));
     return out2;
   };
@@ -1019,13 +1026,6 @@ function yuki(pose, f, mood) {
     const pts = under
       ? flowPts(root, Math.PI / 2 + 0.2, 0.55 + Math.sin(ph - 1.2) * 0.12, len, ph - 0.5, 0.2, 6, 0.75)
       : lockPts(root, Math.PI / 2 + 0.16 + 0.12 * drift + lean * 0.6, len, ph - 0.5, 0.9 * drift + 0.3, -0.03 * drift, 6, 0.7);
-    // Loose strands floating free of the mass.
-    if (!dead) {
-      for (let k = 0; k < 2; k++) {
-        const fl = flowPts([root[0] - 1 - k, root[1] + 3 + k * 4], Math.PI / 2 + 0.6 + k * 0.2, under ? 0.9 : 0.4, 20 - k * 4, ph - k * 1.7, under ? 0.45 : 0.2, 6, 0.9);
-        out.push(...oband(fl, lockW(1.6, 1, 0.3, 0.1), k ? P.hairDk : P.hair, 3, 0.45));
-      }
-    }
     out.push(...oband(pts, (t) => (t < 0.12 ? lerp(13, 11, t / 0.12) : lerp(11, 1.5, ((t - 0.12) / 0.88) ** 2.2)), P.hair, 4));
     out.push(fband(pts.slice(1).map(([x, y]) => [x - 2.2, y]), lockW(3.4, 0.6, 0.3, 0.1), P.hairDk, 3));
     for (const dx of [-0.4, 1.6]) out.push(fband(pts.slice(1, 6).map(([x, y], k) => [x + dx * (1 - k * 0.15), y]), taperW(0.4, 0.2), P.hairDk, 3));
@@ -1201,7 +1201,7 @@ function nekomata(pose, f, mood) {
     feet = [[-2.4, 0], [4.4, -0.6]];
   }
   // Idle fidget: she brings a paw up to lick it, then flexes her claws.
-  const lick = pose === 'idle' && !dead && !hurt && (f === 2 || f === 3);
+  const lick = pose === 'idle' && !dead && !hurt && (Math.floor(f) === 2 || Math.floor(f) === 3);
   // Attack: 0 coils low, 1 leaps with a cross slash, 2 lands slashing through, 3 recovers.
   const A = atk ? [[-1, 50, 0.38, -0.26], [5, 36, 0.22, -0.1], [5, 45.5, 0.32, -0.2], [3, 45, 0.14, -0.08]][f] : null;
   if (A) {
@@ -1233,7 +1233,7 @@ function nekomata(pose, f, mood) {
   const tb = pt(-4, -0.6);
   for (let i = 0; i < 2; i++) {
     const a0 = (dead ? -3.4 : angry ? -2.35 : -2.75) + i * 0.42;
-    const pts = flowPts(tb, a0, dead ? 0.6 : 2.2 - i * 0.4, dead ? 15 : 22, ph - i * 1.4, walk ? 0.5 : 0.35, 7, 0.75);
+    const pts = flowPts(tb, a0, dead ? 1.8 - i * 0.3 : 2.2 - i * 0.4, dead ? 17 : 22, ph - i * 1.4, walk ? 0.5 : 0.35, 7, 0.75);
     out.push(...oband(pts, lockW(3.4, 0.7, 0.3, 0.4), i ? P.fur : P.furLt, 3));
     const sp = spline(pts, 3);
     out.push(fband(sp.slice(-6), (t) => lerp(2.2, 0.4, t), P.tip, 1));
@@ -1252,7 +1252,7 @@ function nekomata(pose, f, mood) {
   if (dead) handB = [shB[0] + 1, shB[1] + 10];
   else if (A) handB = [[shB[0] - 6, shB[1] + 1.5], [shB[0] + 11, shB[1] - 2], [shB[0] + 9, shB[1] + 6], [shB[0] + 6, shB[1] + 5]][f];
   else if (walk) handB = [shB[0] + 2 - sw * 3, shB[1] + 8];
-  else handB = [shB[0] + 4.4, shB[1] + 6.6 + Math.sin(ph) * 0.4];
+  else handB = [shB[0] + 1.6, shB[1] + 7 + Math.sin(ph) * 0.4];
   const elB = joint(shB, handB, 5.8, 5.8, -1);
   out.push(...dagger(elB.f, A ? [0.4, -0.5, 1.3, 1.6][f] : 1.9 + sw * 0.2, P, true));
   out.push(...limb(shB, elB.k, elB.f, 2.2, 2.6, 2.6, P.skinDk, P.furDk), ...pawHand(elB.f, P, true));
@@ -1267,7 +1267,7 @@ function nekomata(pose, f, mood) {
   }
   const leg = ({ h0, kn }, back) => {
     const c = back ? shade(P.stocking, -6) : P.stocking;
-    const r = [...limb(h0, kn.k, kn.f, 4, 2.8, 2, c)];
+    const r = [...limb(h0, kn.k, kn.f, 4, 2.8, 2, c, c, false)];
     const a = kn.f;
     const ang = Math.atan2(a[1] - kn.k[1], a[0] - kn.k[0]);
     const cuff = [kn.k[0] + Math.cos(ang) * 4.6, kn.k[1] + Math.sin(ang) * 4.6];
@@ -1277,7 +1277,8 @@ function nekomata(pose, f, mood) {
     r.push(line([[kn.k[0] + 0.4, kn.k[1] - 0.6], [kn.k[0] + 1, kn.k[1] + 0.8]], 0.4, P.stockingLt));
     return r;
   };
-  out.push(...leg(legs[0], true));
+  // Both legs go behind the torso, so her shorts cover the tops of her stockings.
+  out.push(...leg(legs[0], true), ...leg(legs[1], false));
 
   // Torso: cropped leather top with gold buckles, bare midriff, belted shorts with pouches.
   within(T0, () => {
@@ -1294,11 +1295,10 @@ function nekomata(pose, f, mood) {
 
   // The scarf wrapped at her throat.
   within(T0, () => out.push(...opoly([[-2.4, -15.4], [2.6, -15.6], [3.4, -13], [-2.6, -12.8]], P.scarf), fpoly([[-2.4, -15.4], [-0.6, -15.4], [-0.6, -12.9], [-2.6, -12.8]], P.scarfDk), ...ooval(-2.2, -13.6, 1.4, 1.2, P.scarfDk)));
-  out.push(...leg(legs[1], false));
 
   // Head: cat ears, a messy bob, fur tufts at the cheeks.
   within(at(hc[0], hc[1], tilt), () => {
-    const earT = walk ? Math.sin(ph * 2) * 0.06 : f === 2 && pose === 'idle' ? -0.22 : 0;
+    const earT = walk ? Math.sin(ph * 2) * 0.06 : Math.floor(f) === 2 && pose === 'idle' ? -0.22 : 0;
     const earFlat = angry ? 0.45 : hurt || dead ? 0.7 : 0;
     within(at(-3.6, -5.2, -0.42 - earFlat - earT), () => out.push(...opoly([[-3, 0.8], [-0.6, -6.2], [0.4, -6.4], [3, 0.6]], P.furDk), fpoly([[-1.4, 0.2], [-0.2, -4.2], [1.4, 0.2]], shade(P.earIn, -8))));
     const HR = { c: P.fur, sh: P.furDk, sh2: mix(P.furDk, '#3a2a70', 0.35), lt: P.furLt };
@@ -1327,7 +1327,7 @@ function nekomata(pose, f, mood) {
   else handF = [shF[0] + 6, shF[1] + 5.2 + Math.sin(ph - 0.4) * 0.4 - (angry ? 1.6 : 0)];
   const elF = joint(shF, handF, 5.8, 5.8, pose === 'idle' && f < 2 && !angry ? 1 : -1);
   out.push(...limb(shF, elF.k, elF.f, 2.4, 2.8, 2.8, P.skin, P.fur), ...pawHand(elF.f, P, false));
-  if (pose === 'idle' && f === 4 && !dead) {
+  if (pose === 'idle' && Math.floor(f) === 4 && !dead) {
     // Claws flexed out.
     const h = elF.f;
     for (const [dx, dy] of [[2.2, -1.6], [2.9, -0.4], [2.6, 0.9]]) out.push(fpoly([[h[0] + dx - 0.6, h[1] + dy - 0.3], [h[0] + dx + 1.2, h[1] + dy - 0.1], [h[0] + dx - 0.4, h[1] + dy + 0.4]], '#ffffff'));
@@ -1482,6 +1482,24 @@ function lamia(pose, f, mood) {
   const neck = pt(1, -14.2);
   const hc = [neck[0] + 0.6 + Math.sin(lean + tilt) * 7, neck[1] - 7.6];
 
+  // The veil: a sheer shawl from her raised hand, sweeping down behind her back (drawn first, so
+  // her long hair falls over it and her raised arm stays behind her head).
+  const shB = pt(-3, -12.2);
+  let handB;
+  if (dead) handB = [shB[0] - 5, shB[1] + 5];
+  else if (A) handB = [[shB[0] - 2, shB[1] - 9], [shB[0] + 8, shB[1] - 6], [shB[0] + 6, shB[1] - 8], [shB[0] + 1, shB[1] - 10]][f];
+  else handB = [shB[0] + 1.6 + sway * 1.2, shB[1] - 10 + Math.abs(sway) * 0.6];
+  const elB = joint(shB, handB, 6, 6, -1);
+  {
+    const v0 = elB.f;
+    const sw = walk ? -2 : 0;
+    const pts = [v0, [v0[0] - 4 + sw * 0.5, v0[1] + 3 + Math.sin(ph) * 0.6], [hip[0] - 9 + sw, hip[1] - 6 + Math.sin(ph - 1)], [hip[0] - 12 + sw * 1.5, hip[1] + 1 + Math.sin(ph - 2) * 1.2], [hip[0] - 13 + sw * 2 + Math.sin(ph - 3), hip[1] + 7]];
+    out.push(...oband(pts, lockW(4.6, 0.35, 0.45, 0.8), P.veilLt, 4, 0.4), fband(pts.slice(1).map(([x, y]) => [x - 0.9, y + 0.4]), lockW(1.1, 0.4, 0.4, 0.5), P.veil, 4), fband(pts.slice(2).map(([x, y]) => [x + 1.1, y - 0.2]), lockW(0.7, 0.4, 0.4, 0.3), P.veil, 4));
+    out.push(...ooval(pts[4][0], pts[4][1] + 1.2, 0.7, 0.7, P.gold));
+  }
+  out.push(...limb(shB, elB.k, elB.f, 2.2, 1.8, 1.4, P.skinDk), ...ooval(elB.f[0], elB.f[1], 1.05, 0.95, P.skinDk));
+  out.push(...opoly(bandPtsRaw([lerp2(elB.k, elB.f, 0.55), lerp2(elB.k, elB.f, 0.8)], () => 2.2), P.gold, 0.4));
+
   // Long wavy hair down her back.
   for (let i = 0; i < 3; i++) {
     const root = [hc[0] - 4 - i * 1.2, hc[1] - 2 + i * 2.6];
@@ -1508,23 +1526,6 @@ function lamia(pose, f, mood) {
     out.push(...snakeTail(ctrl, (t) => (t < 0.3 ? lerp(9, 7, t / 0.3) : lerp(7, 0.8, ((t - 0.3) / 0.7) ** 1.3)), P));
     if (A && f === 1) for (let k = 0; k < 2; k++) out.push(...oband(arcPts(bx + 16, 64, 14 - k * 4, 12 - k * 3, 215, 290, 6), (t) => 1.2 * Math.sin(Math.PI * t), P.strike, 2, 0.35));
   }
-
-  // The veil: a sheer shawl from her raised hand, sweeping behind her back.
-  const shB = pt(-3, -12.2);
-  let handB;
-  if (dead) handB = [shB[0] - 5, shB[1] + 5];
-  else if (A) handB = [[shB[0] - 2, shB[1] - 9], [shB[0] + 8, shB[1] - 6], [shB[0] + 6, shB[1] - 8], [shB[0] + 1, shB[1] - 10]][f];
-  else handB = [shB[0] + 1.6 + sway * 1.2, shB[1] - 10 + Math.abs(sway) * 0.6];
-  const elB = joint(shB, handB, 6, 6, -1);
-  {
-    const v0 = elB.f;
-    const sw = walk ? -2 : 0;
-    const pts = [v0, [v0[0] - 4 + sw * 0.5, v0[1] + 3 + Math.sin(ph) * 0.6], [hip[0] - 9 + sw, hip[1] - 6 + Math.sin(ph - 1)], [hip[0] - 12 + sw * 1.5, hip[1] + 1 + Math.sin(ph - 2) * 1.2], [hip[0] - 13 + sw * 2 + Math.sin(ph - 3), hip[1] + 7]];
-    out.push(...oband(pts, lockW(2.6, 0.4, 0.35, 0.6), P.veilLt, 4, 0.4), fband(pts.slice(1).map(([x, y]) => [x - 0.5, y + 0.3]), lockW(0.8, 0.4, 0.4, 0.3), P.veil, 4));
-    out.push(...ooval(pts[4][0], pts[4][1] + 1.2, 0.7, 0.7, P.gold));
-  }
-  out.push(...limb(shB, elB.k, elB.f, 2.2, 1.8, 1.4, P.skinDk), ...ooval(elB.f[0], elB.f[1], 1.05, 0.95, P.skinDk));
-  out.push(...opoly(bandPtsRaw([lerp2(elB.k, elB.f, 0.55), lerp2(elB.k, elB.f, 0.8)], () => 2.2), P.gold, 0.4));
 
   // Torso: a jewelled gold bandeau, a hip belt hung with coins, and silk sashes over the scales.
   within(T0, () => {
@@ -1701,14 +1702,14 @@ function lupina(pose, f, mood) {
   let handB;
   if (dead) handB = [shB[0] - 1, shB[1] + 10];
   else if (A) handB = [[shB[0] + 12.6, shB[1] + 0.6], [shB[0] + 12.6, shB[1] + 0.6], [shB[0] + 12.4, shB[1] + 1], [shB[0] + 9, shB[1] + 6]][f];
-  else if (walk) handB = [shB[0] + 2.6 - sw * 3.4, shB[1] + 9.6];
-  else handB = [shB[0] + 2.2, shB[1] + 9.8 + Math.sin(ph) * 0.3];
+  else if (walk) handB = [shB[0] + 3 - sw * 1.8, shB[1] + 12.4];
+  else handB = [shB[0] + 2.2, shB[1] + 12 + Math.sin(ph) * 0.3];
   const elB = joint(shB, handB, 6.4, 6.4, -1);
   // The draw hand's position (front arm) is needed for the string.
   // Idle fidget: she rolls her shoulder, then plucks her bowstring to test it.
-  const shF = rest && f === 2 ? pt(2.8, -12.9) : pt(3.4, -12);
-  const pluck = rest && (f === 3 || f === 4) ? lerp2(tipU, tipL, 0.4) : null;
-  if (pluck && f === 4) pluck[0] += 1.4;
+  const shF = rest && Math.floor(f) === 2 ? pt(2.8, -12.9) : pt(3.4, -12);
+  const pluck = rest && (Math.floor(f) === 3 || Math.floor(f) === 4) ? lerp2(tipU, tipL, 0.4) : null;
+  if (pluck && Math.floor(f) === 4) pluck[0] += 1.4;
   const cheek = within(at(hc[0], hc[1], tilt), () => X(3.6, 5.8));
   let handF;
   if (dead) handF = [shF[0] + 2, shF[1] + 10];
@@ -1718,7 +1719,7 @@ function lupina(pose, f, mood) {
   else if (pluck) handF = [pluck[0] + 0.6, pluck[1]];
   else if (rest) handF = [shF[0] + 1, shF[1] + 10.4];
   else handF = [shF[0] + 3.8, shF[1] + 8.2 + Math.sin(ph - 0.4) * 0.3];
-  const bowA = dead ? 0.1 : A ? [-Math.PI / 2, -Math.PI / 2, -Math.PI / 2 + 0.05, -1.4][f] : -1.74 - sw * 0.1;
+  const bowA = dead ? 0.1 : A ? [-Math.PI / 2, -Math.PI / 2, -Math.PI / 2 + 0.05, -1.4][f] : -1.02 - sw * 0.05;
   const drawn = A && f === 0 ? [handF[0] + 0.6, handF[1]] : null;
   const bow = (h) => longbow(h, bowA, drawn, P, A && f === 1);
   if (dead) out.push(...bow([elB.f[0], 62.6]));
@@ -1732,7 +1733,8 @@ function lupina(pose, f, mood) {
     legs.push({ h0, kn: joint(h0, a, 11, 11, 1) });
   }
   const leg = ({ h0, kn }, back) => {
-    const r = [...limb(h0, kn.k, kn.f, 4, 2.9, 2.2, back ? shade(P.legging, -6) : P.legging)];
+    const lc = back ? shade(P.legging, -6) : P.legging;
+    const r = [...limb(h0, kn.k, kn.f, 4, 2.9, 2.2, lc, lc, false)];
     const a = kn.f;
     const ang = Math.atan2(a[1] - kn.k[1], a[0] - kn.k[0]);
     const top = [kn.k[0] + Math.cos(ang) * 1.2, kn.k[1] + Math.sin(ang) * 1.2];
@@ -1742,9 +1744,9 @@ function lupina(pose, f, mood) {
     r.push(...ooval(top[0], top[1], 2.4, 1.3, back ? P.furDk : P.fur, ang + Math.PI / 2));
     return r;
   };
-  out.push(...leg(legs[0], true));
+  out.push(...leg(legs[0], true), ...leg(legs[1], false));
 
-  // Torso: a cream blouse, a laced leather bodice, a belted leather skirt.
+  // Torso: a cream blouse, a laced leather bodice, a belted leather skirt (over the tops of her legs).
   within(T0, () => {
     out.push(...opoly([[-4.8, 3.2], [-4.6, -1.4], [3.8, -1.4], [4.8, 3.6], [1, 4.4], [-2, 4]], P.leatherDk));
     out.push(...opoly([[-4.6, -1.6], [3.8, -1.6], [5.4, 3], [2.4, 3.4], [0.6, 2.2], [-1.4, 3.4], [-5, 3]], P.leather), line([[0.6, -1.2], [0.6, 2.2]], 0.4, P.leatherDk));
@@ -1757,11 +1759,10 @@ function lupina(pose, f, mood) {
     // Cape clasp and its collar of fur.
     out.push(...ooval(-1.2, -13.6, 3.4, 1.6, P.fur), ...ooval(-1.4, -13.9, 2.4, 0.9, P.furDk), ...gem(2.2, -12.9, 0.9, P.cape));
   });
-  out.push(...leg(legs[1], false));
 
   // Head: wolf ears, a high silver ponytail.
   within(at(hc[0], hc[1], tilt), () => {
-    const earT = walk ? Math.sin(ph * 2 - 1) * 0.05 : f === 4 && pose === 'idle' ? 0.16 : 0;
+    const earT = walk ? Math.sin(ph * 2 - 1) * 0.05 : Math.floor(f) === 4 && pose === 'idle' ? 0.16 : 0;
     const earFlat = angry ? -0.1 : hurt || dead ? 0.7 : 0;
     within(at(-3.4, -5.4, -0.36 - earFlat - earT), () => out.push(...opoly([[-2.8, 0.8], [-0.4, -7.4], [2.8, 0.6]], P.furDk), fpoly([[-1.4, 0.2], [-0.4, -5], [1.4, 0.2]], shade(P.earIn, -8))));
     // Ponytail, tied high and swinging a beat behind her head.
@@ -1789,7 +1790,7 @@ function lupina(pose, f, mood) {
   // Walking, she carries the bow in this hand, upright at her side.
   if (!A && !dead && !rest) out.push(...bow(elF.f));
   out.push(...ooval(elF.f[0] + 0.2, elF.f[1], 1.2, 1.1, P.leatherDk));
-  out.push(...ooval(shF[0] - 0.2, shF[1] + 0.6, 2.4, 2, P.leather), ...ooval(shF[0], shF[1] + 0.2, 1.6, 1.2, P.leatherLt));
+  out.push(...ooval(shF[0] - 0.2, shF[1] + 1.6, 2.3, 1.9, P.leather), ...ooval(shF[0], shF[1] + 1.2, 1.5, 1.1, P.leatherLt));
   if (A) out.push(...bow(elB.f));
   if (A && f === 1) {
     out.push(...arrow([56, cheek[1] - 0.2], 0, P), line([[38, cheek[1] - 1.4], [48, cheek[1] - 1.4]], 0.4, P.streak), line([[40, cheek[1] + 1], [50, cheek[1] + 1]], 0.4, P.streak));
@@ -1836,12 +1837,12 @@ function arrow(p, a, P, tail) {
 }
 
 export const ART = {
-  kitsunemiko: { walk: 8, idle: 6, attack: 4, stride: 14, atkMs: [60, 240, 180], draw: kitsune },
-  sylph: { walk: 8, idle: 6, attack: 4, stride: 40, atkMs: [50, 210, 160], draw: sylph },
-  yukionna: { pad: 5, walk: 8, idle: 6, attack: 4, stride: 30, atkMs: [70, 260, 200], draw: yuki },
-  nekomata: { walk: 8, idle: 6, attack: 4, stride: 18, atkMs: [40, 190, 130], draw: nekomata },
-  lamia: { walk: 8, idle: 6, attack: 4, stride: 32, atkMs: [60, 250, 190], draw: lamia },
-  lupina: { walk: 8, idle: 6, attack: 4, stride: 20, atkMs: [45, 220, 150], draw: lupina },
+  kitsunemiko: { sub: 8, walk: 8, idle: 6, attack: 4, stride: 14, atkMs: [60, 240, 180], draw: kitsune },
+  sylph: { sub: 8, walk: 8, idle: 6, attack: 4, stride: 40, atkMs: [50, 210, 160], draw: sylph },
+  yukionna: { pad: 5, sub: 8, walk: 8, idle: 6, attack: 4, stride: 30, atkMs: [70, 260, 200], draw: yuki },
+  nekomata: { sub: 8, walk: 8, idle: 6, attack: 4, stride: 18, atkMs: [40, 190, 130], draw: nekomata },
+  lamia: { sub: 8, walk: 8, idle: 6, attack: 4, stride: 32, atkMs: [60, 250, 190], draw: lamia },
+  lupina: { sub: 8, walk: 8, idle: 6, attack: 4, stride: 20, atkMs: [45, 220, 150], draw: lupina },
 };
 
 export const INFO = {
