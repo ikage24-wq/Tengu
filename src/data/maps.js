@@ -3025,55 +3025,82 @@ Object.assign(MAPS, {
   },
 
 
-  // Frozen Peak is a descent (data/climb.js lay()): you arrive on the windswept Summit, where the
-  // Yuki-onna drift in the snow and a frost vent bounces you up to the lookout, and work your way
-  // down the Icefall Crevasse, ice ledges zig-zagging down its walls with a floe drifting across the
-  // gap and a howling wind to ride back up, to the Frozen Lake at the bottom, the Pegasus Foals'
-  // snowfield, with an ice-fishing dock in its quiet corner and the way out to the Sky Garden's sea
-  // of cloud.
+  // Frozen Peak (its makeover, 2026-11-20): a real mountain (render/peakart.js), zones by height.
+  // You arrive on the windswept Summit by the Yuki-onna's little snow shrine; the mountain's snowy
+  // mass runs down from it to a mid shelf and then the frozen lake. A rope bridge crosses from the
+  // summit to the glacier lip of the Great Icefall, a giant frozen waterfall: the Icefall Crevasse
+  // is its ice shelves stepping down either side of it, an ice ladder cut up its middle, a floe
+  // drifting over from the mid shelf, and the howling wind beside it to ride back up. The Frozen
+  // Lake at the bottom: igloos on the shore, the ice-fishing hole, a frost vent bouncing you onto
+  // the first shelf, a high ledge with the homestone, and the way out to the Sky Garden.
   peak: {
-    id: 'peak', name: 'Frozen Peak', theme: 'snow', town: 'grove', world: { x: 312, y: 18 },
+    id: 'peak', name: 'Frozen Peak', theme: 'snow', town: 'grove', world: { x: 312, y: 18 }, perSpawn: 3,
+    // (The mountain's mass is packed snow, not the snowfield's slabs.)
+    look: { material: 'snowpeak' },
     ...lay({
-      width: 2200, ground: 1120, by: 'y', quiet: [[40, 280, 200], [2140, 1120, 160], [1950, 1120, 320], [1990, 1136, 160], [1950, 1040, 260], [2000, 960, 260]],
-      // The frozen lake lies sunk in the snowfield in the quiet east corner, behind snowy lips.
-      terrain: [[0, 1120], [1840, 1120], [1840, 1112], [1880, 1112], [1880, 1136], [2100, 1136], [2100, 1120], [2200, 1120]],
+      width: 1800, ground: 1120, by: 'y', quiet: [[40, 280, 200], [1760, 1120, 160], [1550, 1120, 200]],
+      // The mountain: the summit, a cliff down to the mid shelf, a cliff down to the lake's shore;
+      // the frozen lake lies sunk in the shore behind snowy lips.
+      terrain: [[0, 280], [460, 280], [460, 700], [760, 700], [760, 1120], [1420, 1120], [1420, 1112], [1450, 1112], [1450, 1136], [1650, 1136], [1650, 1120], [1800, 1120]],
       zones: [
-        { name: 'Frozen Lake', color: '#7ab8e8', mobs: ['cloudsheep', 'yukionna'], nodes: [SPOT.fruit(4, 'snow_peach'), SPOT.ore(4)] },
-        { name: 'Icefall Crevasse', color: '#8f8ad0', from: 760, mobs: ['yukionna', 'cloudsheep'], nodes: [SPOT.ore(4), SPOT.ore(4, { gem: 0.3, night: true })],
-          look: { sky: ['#9fb8e8', '#c8d8f4', '#eef4ff'] } },
-        { name: 'Summit', color: '#e8f4ff', from: 480, mobs: ['yukionna'], nodes: [SPOT.ore(4, { gem: 0.2 }), SPOT.ore(4), SPOT.fruit(4, 'snow_peach')],
-          look: { sky: ['#6a8ad0', '#a8c4f0', '#f0f6ff'] } },
+        { name: 'Frozen Lake', color: '#7ab8e8', mobs: ['cloudsheep', 'yukionna'] },
+        { name: 'Icefall Crevasse', color: '#8f8ad0', from: 820, mobs: ['yukionna', 'cloudsheep'], look: { sky: ['#9fb8e8', '#c8d8f4', '#eef4ff'] } },
+        { name: 'Summit', color: '#e8f4ff', from: 460, mobs: ['yukionna'], look: { sky: ['#6a8ad0', '#a8c4f0', '#f0f6ff'] } },
       ],
       ledges: [
-        // The Summit: the plateau you arrive on, and its lookout.
-        { x: 0, y: 280, w: 560 }, { x: 640, y: 340, w: 420 }, { x: 1140, y: 300, w: 380 },
-        { x: 760, y: 220, w: 300, thick: 44 },
-        // The Icefall Crevasse, zig-zagging down.
-        { x: 1500, y: 420, w: 480 }, { x: 1100, y: 500, w: 420 }, { x: 500, y: 580, w: 520 },
-        { x: 150, y: 660, w: 400 }, { x: 620, y: 740, w: 500 }, { x: 1200, y: 800, w: 520 },
-        { x: 1700, y: 880, w: 420 }, { x: 1150, y: 960, w: 440 }, { x: 500, y: 1040, w: 520 },
-        // The ice floe drifting across the crevasse.
-        { x: 1040, y: 660, w: 130, drift: { dx: 300, period: 10 } },
+        // The rope bridge from the summit to the glacier lip (drawn with the icefall).
+        { x: 460, y: 300, w: 530, style: 'bridge', noProps: true, noRope: true }, { x: 990, y: 246, w: 220, bare: true, noProps: true, noRope: true },
+        // The ice shelves stepping down either side of the icefall, each growing out of the ice.
+        { x: 820, y: 400, w: 290, root: 'right', noRope: true }, { x: 1090, y: 520, w: 210, root: 'left', noRope: true },
+        { x: 820, y: 640, w: 290, root: 'right', noRope: true }, { x: 1090, y: 760, w: 290, root: 'left', noRope: true },
+        { x: 820, y: 880, w: 290, root: 'right', noRope: true }, { x: 1090, y: 1000, w: 290, root: 'left', noRope: true },
+        // Two long ice ridges and a high ledge (with the homestone) jutting from the east cliff.
+        { x: 1340, y: 420, w: 460, root: 'right', noRope: true }, { x: 1300, y: 640, w: 500, root: 'right', noRope: true },
+        { x: 1560, y: 880, w: 240, root: 'right', noRope: true },
+        // The ice floe drifting from the mid shelf over to the icefall.
+        { x: 762, y: 680, w: 70, drift: { dx: 70, period: 6 } },
+      ],
+      ropes: [
+        // Down the cliffs, beside them.
+        { x: 470, top: 280, bottom: 700 }, { x: 770, top: 700, bottom: 1120 },
+        // The ice ladder up the icefall's middle, a stretch between each shelf.
+        ...[[1000, 1120], [880, 1000], [760, 880], [640, 760], [520, 640], [400, 520], [246, 400]].map(([top, bottom]) => ({ x: 1100, top, bottom, ladder: true })),
+        // Down from the high ledge, and between the ridges and the ledge.
+        { x: 1690, top: 880, bottom: 1120 }, { x: 1500, top: 420, bottom: 640 }, { x: 1640, top: 640, bottom: 880 },
       ],
     }),
-    // A moving part per zone: a frost vent on the summit, the drifting floe in the crevasse, and a
-    // howling wind up from the lake (Up to ride it).
-    springs: [{ x: 1040, y: 340, up: 160, kind: 'gust' }],
-    updrafts: [{ x: 1050, w: 56, top: 470, bottom: 1120, kind: 'gust' }],
+    // Its monsters, placed by hand, three a spot, well away from the ways in (the arrival rule).
+    spawns: [
+      { mob: 'yukionna', x: 600, y: 300 }, { mob: 'yukionna', x: 840, y: 300 }, { mob: 'yukionna', x: 1160, y: 246 },
+      { mob: 'yukionna', x: 940, y: 400 }, { mob: 'yukionna', x: 1240, y: 520 }, { mob: 'cloudsheep', x: 940, y: 640 },
+      { mob: 'cloudsheep', x: 1260, y: 760 }, { mob: 'yukionna', x: 940, y: 880 }, { mob: 'cloudsheep', x: 1260, y: 1000 },
+      { mob: 'cloudsheep', x: 600, y: 700 }, { mob: 'cloudsheep', x: 940, y: 1120 }, { mob: 'yukionna', x: 1200, y: 1120 },
+      { mob: 'yukionna', x: 1440, y: 420 }, { mob: 'yukionna', x: 1680, y: 420 }, { mob: 'cloudsheep', x: 1400, y: 640 }, { mob: 'yukionna', x: 1720, y: 640 },
+    ],
+    // Its gathering spots, placed by hand, clear of the monsters, ropes and ways.
+    nodes: [
+      { ...SPOT.ore(4), x: 160, y: 280 }, { ...SPOT.fruit(4, 'snow_peach'), x: 290, y: 280 }, { ...SPOT.ore(4, { gem: 0.3, night: true }), x: 420, y: 280 },
+      { ...SPOT.ore(4), x: 1340, y: 1120 }, { ...SPOT.ore(4, { gem: 0.2 }), x: 1600, y: 880 },
+    ],
+    // A moving part per zone: the drifting floe, the howling wind up beside the icefall (Up to ride
+    // it), and a frost vent on the shore bouncing you onto the first shelf.
+    springs: [{ x: 1250, y: 1120, up: 160, kind: 'gust' }],
+    updrafts: [{ x: 792, w: 44, top: 250, bottom: 1120, kind: 'gust' }],
     // The lake's ice (drawn as a frozen sheet: you stand on it and fish through a hole).
-    water: [{ x1: 1880, x2: 2100, y: 1136, kind: 'ice' }],
+    water: [{ x1: 1450, x2: 1650, y: 1136, kind: 'ice' }],
     portals: [
       { id: 'west', x: 40, y: 280, to: 'springs', toPortal: 'east' },
-      { id: 'east', x: 2140, y: 1120, to: 'sky', toPortal: 'peak' },
+      { id: 'east', x: 1760, y: 1120, to: 'sky', toPortal: 'peak' },
     ],
     npcs: [],
-    // A landmark per zone: the great pine on the summit, a snowman on the crevasse ledges, the
-    // snowmen and pines round the frozen lake.
-    deco: [['snowpine', 420, 0, 280], ['snowman', 900, 0, 740], ['snowman', 640], ['snowpine', 1000, 1], ['snowpine', 1480, 0], ['snowman', 1700]],
-    lamps: [{ x: 900, y: 180 }, { x: 1950, y: 1100 }, { x: 900, y: 710 }],
-    spirit: { x: 1800, y: 300 },
-    habitats: { yukionna: { play: true, naps: true }, cloudsheep: { naps: true, home: { x: 640, y: 1120 } } },
+    // The landmarks: the snow shrine and a great pine on the summit, the icefall, a snowman on the
+    // mid shelf, igloos on the shore.
+    deco: [['snowshrine', 250, 0, 280], ['snowpine', 440, 0, 280], ['icefall', 1100, 0], ['snowman', 690, 0, 700], ['igloo', 1360, 0], ['igloo', 1540, 1]],
+    lamps: [{ x: 362, y: 250 }, { x: 1326, y: 1100 }, { x: 1506, y: 1100 }, { x: 1100, y: 1080 }],
+    spirit: { x: 1400, y: 400 },
+    habitats: { yukionna: { play: true, naps: true }, cloudsheep: { naps: true, home: { x: 940, y: 1120 } } },
   },
+
 
 
   // Starfall Heights is a valley (data/climb.js lay(), its zones side by side): you arrive high on
@@ -3233,7 +3260,7 @@ MAPS.starfall.spawns.push({ mob: 'selene', x: 1300, y: 1040, respawn: 600 });
 const HOMESTONES = {
   meadow1: [1555, 400], meadow2: [200, 700], woods: [1650, 880], ruins: [1764, 330], cave: [1660, 362],
   sky: [1920, 330], canyon: [110, 520], glade: [880, 900], shrine: [2164, 560], ridge: [2200, 400],
-  springs: [1992, 640], peak: [2040, 880], starfall: [2290, 440],
+  springs: [1992, 640], peak: [1740, 880], starfall: [2290, 440],
 };
 for (const [id, [x, y]] of Object.entries(HOMESTONES)) {
   const m = MAPS[id];
