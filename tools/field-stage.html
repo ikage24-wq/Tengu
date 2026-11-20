@@ -124,7 +124,8 @@ window.reach = async (x, y, timeout = 30) => {
   const t0 = performance.now();
   while ((performance.now() - t0) / 1000 < timeout) {
     const here = surfaceOf(nav, w.body);
-    if (here === i && Math.abs(w.body.x - x) < 14) { setKeys({}); return { ok: true, secs: +((performance.now() - t0) / 1000).toFixed(1), trail }; }
+    // (Onto a drifting cloud anywhere counts: the spot on it glides away.)
+    if (here === i && (nav.surfaces[i].drift || Math.abs(w.body.x - x) < 14)) { setKeys({}); return { ok: true, secs: +((performance.now() - t0) / 1000).toFixed(1), trail }; }
     if (here >= 0 && (!path || path.lost)) { path = findPath(nav, here, w.body.x, i, x) ?? []; trail.push(`plan from ${here} at ${Math.round(w.body.x)}: ${path.map((st) => `${st.kind}->${st.to}@${Math.round(st.x)}`).join(' ')}`); }
     if (here < 0 && w.body.rope && !path) { setKeys({ up: true }); await tick(); continue; }
     const f = path ? followPath(nav, w.body, path, x) : { intent: {} };
@@ -185,7 +186,7 @@ window.tour = async ({ timeout = 30, name = null, bitrate = 2.5e6 } = {}) => {
     let ok = false;
     while ((performance.now() - t0) / 1000 < timeout) {
       const here = surfaceOf(nav, w.body);
-      if (here === next && Math.abs(w.body.x - tx) < 14) { ok = true; break; }
+      if (here === next && (s.drift || Math.abs(w.body.x - tx) < 14)) { ok = true; break; }
       if (here >= 0 && (!path || path.lost)) path = findPath(nav, here, w.body.x, next, tx) ?? [];
       // Hanging on a rope with no way planned yet: climb to its top first, then plan from there.
       if (here < 0 && w.body.rope && !path) { setKeys({ up: true }); await tick(); continue; }

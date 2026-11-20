@@ -105,11 +105,16 @@ test('on every field map, party members can travel between any two surfaces', as
       let path = findPath(nav, a, x0, b, tx);
       assert.ok(path, `${map.id}: a way from ${a} to ${b}`);
       let t = 0;
-      for (; t < 60 * 40 && !(surfaceOf(nav, body) === b && Math.abs(body.x - tx) < 8); t++) {
+      // (The map's clock runs as in the game, so its drifting clouds glide and can be waited for.)
+      map.clock = 0;
+      // (Onto a drifting cloud anywhere counts: the spot on it moves with it.)
+      for (; t < 60 * 40 && !(surfaceOf(nav, body) === b && (sb.drift || Math.abs(body.x - tx) < 8)); t++) {
         const { intent, lost } = followPath(nav, body, path, tx);
         if (lost && surfaceOf(nav, body) >= 0) path = findPath(nav, surfaceOf(nav, body), body.x, b, tx) ?? [];
         stepBody(body, map, intent, DT);
+        map.clock += DT;
       }
+      map.clock = 0;
       assert.ok(t < 60 * 40, `${map.id}: from (${Math.round(x0)}, ${sa.yAt(x0)}) to (${Math.round(tx)}, ${sb.yAt(tx)}), stuck at (${Math.round(body.x)}, ${Math.round(body.y)})`);
     }
   }
