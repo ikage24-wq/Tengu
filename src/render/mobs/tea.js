@@ -1,21 +1,18 @@
-// Monster art: the Tanuki Tea Terraces (the player's pick, 2026-11-10).
-//   tanukipicker  Tanuki Picker: a round, sly tanuki in a tea-picker's cone hat with a shapeshifting
-//                 leaf tucked in its band, a wicker basket of tea on its back and a pair of tea
-//                 shears it snips you with. Signature: the dark bandit mask round its eyes and the
-//                 leaf, which flutters loose when it's hurt.
+// Monster art: the Tanuki Tea Terraces (the player's pick, 2026-11-10). Every one is a live rig of its
+// own now (the last two since 2026-11-20, the player's picks from concept sheets); this file lists them.
+//   tanukipicker  Tanuki Picker: a round tanuki in a straw cone hat with its shapeshifting leaf in
+//                 the band, a basket of tea on its back and tea shears; snip-snip, leaves flying.
 //   kettletanuki  Kettle Tanuki: a shape-shifter who stands about as a copper kettle and pops out its
-//                 head, feet and tail when it moves or fights (a live rig of its own, 2026-11-19).
-// Faces use the simple eyes and mouths (faces.js). Faces right; see kit.js for the shapes.
-
+//                 head, feet and tail when it moves or fights.
 //   lantertanuki  Lantern Tanuki: a tanuki pretending to be a paper lantern in the Mist Hollow at
-//                 night, its face peeking through the paper, little legs underneath. Signature: the
-//                 candle inside flares up and it coughs out a puff of lantern flame.
+//                 night, its face peeking through a hole; the candle flares and it puffs flame.
 //   grandkettle   The Grand Kettle, the terraces' area boss, redrawn 2026-11-19 as the Teapot
-//                 Spirit (the oldest tanuki, who sat so long by the hearth he became the teapot):
-//                 his rig is in teapotrig.js.
+//                 Spirit (the oldest tanuki, who sat so long by the hearth he became the teapot).
 
 import { teapotRig, teapotStill } from './teapotrig.js';
 import { kettleDisguiseRig, kettleDisguiseStill } from './kettledisguiserig.js';
+import { teaPickerRig, teaPickerStill } from './teapickerrig.js';
+import { paperLanternRig, paperLanternStill } from './paperlanternrig.js';
 
 // A rig drawn `k` times its size about its feet.
 const grown = (rig, k) => ({
@@ -29,240 +26,11 @@ const grown = (rig, k) => ({
     ctx.restore();
   },
 });
-import { E, T, F, stroke, mix } from './kit.js';
-import { simpleEye, simpleMouth, deadEye, sweat, vein } from './faces.js';
-import { ramp, crescent, smear, sway, shine } from './meadow.js';
-import { part, makeRig, stateBlend } from './rig.js';
-
-const TAU = Math.PI * 2;
-const D2R = Math.PI / 180;
-const shift = (shapes, dx, dy) => shapes.map((s) => s && (s.t === 'p' ? { ...s, pts: s.pts.map(([x, y]) => [x + dx, y + dy]) } : { ...s, x: s.x + dx, y: s.y + dy }));
-function O(cx, cy, rx, ry, deg, c, n = 18) {
-  const a = deg * D2R;
-  const pts = [];
-  for (let i = 0; i < n; i++) {
-    const t = (i / n) * TAU;
-    const x = Math.cos(t) * rx;
-    const y = Math.sin(t) * ry;
-    pts.push([cx + x * Math.cos(a) - y * Math.sin(a), cy + x * Math.sin(a) + y * Math.cos(a)]);
-  }
-  return T(pts, c);
-}
-function rotate(shapes, cx, cy, deg) {
-  if (!deg) return shapes;
-  const c = Math.cos(deg * D2R);
-  const s = Math.sin(deg * D2R);
-  const r = (x, y) => [cx + (x - cx) * c - (y - cy) * s, cy + (x - cx) * s + (y - cy) * c];
-  return shapes.map((sh) => {
-    if (!sh) return sh;
-    if (sh.t === 'p') return { ...sh, x: 0, y: 0, pts: sh.pts.map(([px, py]) => r(sh.x + px, sh.y + py)) };
-    const [x, y] = sh.t === 'e' ? r(sh.x, sh.y) : r(sh.x + sh.w / 2, sh.y + sh.h / 2);
-    return sh.t === 'e' ? { ...sh, x, y } : { ...sh, x: x - sh.w / 2, y: y - sh.h / 2 };
-  });
-}
-// An ease for every pose change (no linear motion in bodies).
-const ease = (t) => t * t * (3 - 2 * t);
-
-const FUR = ramp('#a07a5a', { step: 10, turn: 14, sat: -4 });
-const DARK = ramp('#4e3a34', { step: 8, turn: 10 });
-const CREAM = ramp('#f2e2c6', { step: 8, turn: 26, sat: -6 });
-const STRAW = ramp('#e6c27a', { step: 10, turn: 12, sat: -8 });
-const WICKER = ramp('#c08a52', { step: 10, turn: 12, sat: -6 });
-const LEAF = ramp('#7cc46a', { step: 11, turn: 16 });
-const TEA = ramp('#5aa85a', { step: 10, turn: 14 });
-const STEEL = ['#eef2f8', '#b8c2d4', '#7a849a'];
-const RIBBON = '#d0504a';
-
-// The tanuki face both share: a round head, round ears with dark insides, the bandit mask, a cream
-// muzzle and a button nose. hx, hy: head centre; k: size; em: the eye mood; m: the mouth mood.
-function tanukiHead(hx, hy, k, em, m, { dead = false, ear = 0 } = {}) {
-  const o = [];
-  // Ears: round, the far one a little lower, the near one flicking with `ear`.
-  for (const [ex, ey, s, a] of [[hx - 4.6 * k, hy - 5.2 * k, -1, -8], [hx + 3.4 * k, hy - 5.8 * k, 1, 10 + ear]]) {
-    o.push(O(ex, ey, 2.6 * k, 2.4 * k, a, s < 0 ? FUR.sh : FUR.base, 12), O(ex + 0.2 * k, ey + 0.3 * k, 1.4 * k, 1.3 * k, a, DARK.base, 10));
-  }
-  o.push(O(hx, hy, 7 * k, 6.2 * k, 0, FUR.base, 20), crescent(hx, hy, 7 * k, 6.2 * k, FUR.sh, { k: 0.28, a0: 80, a1: 230 }));
-  // The bandit mask: two dark patches sweeping down from the eyes.
-  o.push(O(hx - 2.2 * k, hy + 0.2 * k, 2.7 * k, 2.1 * k, 18, DARK.base, 14), O(hx + 3.2 * k, hy + 0.1 * k, 2.9 * k, 2.2 * k, -16, DARK.base, 14));
-  // Cream muzzle and brow.
-  o.push(O(hx + 1.6 * k, hy + 3 * k, 3.6 * k, 2.4 * k, 0, CREAM.base, 16), O(hx + 0.4 * k, hy - 3.6 * k, 2.4 * k, 1.3 * k, 0, CREAM.hi, 12));
-  o.push(E(hx + 3.6 * k, hy + 2 * k, 1.1 * k, 0.8 * k, DARK.deep));
-  if (dead) o.push(...deadEye(hx - 2 * k, hy, 1.4 * k, { s: -1, c: '#f6ead6' }), ...deadEye(hx + 3.1 * k, hy, 1.6 * k, { c: '#f6ead6' }));
-  else {
-    // Bright eyes in the dark mask: a pale ring so they read.
-    o.push(...simpleEye(hx - 2 * k, hy - 0.2 * k, { s: -1, w: 1.3 * k, h: 1.6 * k, mood: em, iris: '#3a2418', ink: '#1a1012' }));
-    o.push(...simpleEye(hx + 3.1 * k, hy - 0.3 * k, { s: 1, w: 1.5 * k, h: 1.8 * k, mood: em, iris: '#3a2418', ink: '#1a1012' }));
-  }
-  o.push(...simpleMouth(hx + 2.4 * k, hy + 4.2 * k, { k: 0.8 * k, mood: m, smug: m === 'smug', lip: '#5a3028' }));
-  return o;
-}
-
-// A striped tail, curling up behind; `wag` swings its tip (it trails the body a beat late).
-function tail(x, y, k, wag, c = FUR) {
-  const pts = [];
-  for (let i = 0; i <= 4; i++) {
-    const t = i / 4;
-    pts.push([x - 5 * k * t - Math.sin(t * 2.2) * 2 * k, y - 6 * k * t * t + wag * t * t]);
-  }
-  const o = [];
-  pts.forEach(([px, py], i) => o.push(O(px, py, (3.2 - i * 0.25) * k, (2.8 - i * 0.2) * k, 0, i % 2 ? DARK.base : c.base, 12)));
-  return o;
-}
-
-// ---------- Tanuki Picker ----------
-
-// Attack keys: shears (the near arm's reach, deg), lean, hop. Wind-up held, the snip fast.
-const PICK_ATK = [
-  { arm: -70, lean: -12, hop: 0, open: 1 },
-  { arm: 60, lean: 16, hop: 2, open: 0.2 },
-  { arm: 70, lean: 18, hop: 0, open: 0 },
-  { arm: 20, lean: 6, hop: 0, open: 0.6 },
-];
-
-function tanukipicker(pose, f, mood) {
-  const walk = pose === 'walk';
-  const idle = pose === 'idle';
-  const A = pose === 'attack' ? PICK_ATK[f] : null;
-  const q = walk ? f / 8 : idle ? f / 6 : 0;
-  const dead = mood === 'dead';
-  const hurt = mood === 'hurt';
-  const out = [];
-  const x0 = 20;
-  const gy = 44;
-  // A waddle: the body rolls side to side and bobs twice a loop; at rest it breathes.
-  const bob = walk ? Math.abs(Math.sin(TAU * q)) * 2.2 : idle ? (Math.sin(TAU * q - 1) + 1) * 0.5 : A ? A.hop : 0;
-  const lean = dead ? 84 : A ? A.lean : hurt ? -16 : walk ? 5 * Math.sin(TAU * q) : sway(q) * 2;
-  const by = gy - 11 - bob;
-  const body = [];
-  // Legs: short dark socks, stepping on the walk, planted otherwise.
-  for (const [s, ph] of [[-1, 0], [1, 0.5]]) {
-    const step = walk ? Math.sin(TAU * (q + ph)) * 3.2 : 0;
-    const lift = walk ? Math.max(0, Math.cos(TAU * (q + ph))) * 1.6 : 0;
-    const fx = x0 + s * 3.4 + step;
-    body.push(...stroke([[x0 + s * 3, by + 6], [fx, gy - 1.6 - lift]], 3, s < 0 ? DARK.sh : DARK.base, false), O(fx + 1, gy - 1 - lift, 2.4, 1.2, 0, DARK.deep, 10));
-  }
-  // The striped tail, trailing the body's sway a beat late.
-  const wag = walk ? Math.sin(TAU * q - 1.2) * 2.6 : idle ? Math.sin(TAU * q - 1.6) * 1.8 : A ? -A.lean * 0.15 : 0;
-  body.push(...tail(x0 - 7, by + 4, 1, wag));
-  // The wicker basket on its back, tea leaves heaped in it.
-  body.push(F(T([[x0 - 11, by - 7], [x0 - 4, by - 8], [x0 - 4.6, by + 3], [x0 - 10, by + 2.4]], WICKER.base)));
-  for (let i = 0; i < 3; i++) body.push(...stroke([[x0 - 10.8, by - 4 + i * 2.6], [x0 - 4.4, by - 5 + i * 2.6]], 0.5, WICKER.sh));
-  body.push(O(x0 - 7.6, by - 8.6, 3.6, 1.8, -8, TEA.base, 12), O(x0 - 9, by - 9.4, 1.6, 1, 30, TEA.hi, 8), O(x0 - 6, by - 9.8, 1.4, 0.9, -30, TEA.sh, 8));
-  // The round body and cream belly.
-  body.push(O(x0, by, 8.6, 8.2, 0, FUR.base, 22), crescent(x0, by, 8.6, 8.2, FUR.sh, { k: 0.28, a0: 70, a1: 240 }));
-  body.push(O(x0 + 2.2, by + 1.6, 5, 5.4, 0, CREAM.base, 16), crescent(x0 + 2.2, by + 1.6, 5, 5.4, CREAM.sh, { k: 0.22, a0: 90, a1: 200 }));
-  // The basket strap across the chest.
-  body.push(...stroke([[x0 - 5, by - 6], [x0 + 5, by + 3]], 0.9, WICKER.sh));
-  // Arms: the far one resting on the belly; the near one holding the shears.
-  body.push(...stroke([[x0 - 2, by - 3], [x0 + 1.4, by + 2]], 2.4, DARK.sh, false));
-  const sh2 = [x0 + 4.6, by - 3];
-  const reach = A ? A.arm : walk ? 10 * Math.sin(TAU * q + 1) : idle ? 4 + 3 * Math.sin(TAU * q - 0.7) : hurt ? -40 : 10;
-  const ar = reach * D2R;
-  const hand = [sh2[0] + Math.sin(ar) * 6, sh2[1] + Math.cos(ar) * 6];
-  const arm = [...stroke([sh2, hand], 2.6, DARK.base, false), O(hand[0], hand[1], 1.5, 1.4, 0, DARK.deep, 10)];
-  // The shears: two blades pivoting at the hand, opening by `open`.
-  const open = A ? A.open : 0.35;
-  const dir = ar;
-  for (const s of [-1, 1]) {
-    const a = dir + s * open * 0.45;
-    const tip = [hand[0] + Math.sin(a) * 8, hand[1] + Math.cos(a) * 8];
-    arm.push(...stroke([hand, tip], 1.1, s < 0 ? STEEL[1] : STEEL[0]));
-  }
-  arm.push(O(hand[0] - Math.sin(dir) * 1.6, hand[1] - Math.cos(dir) * 1.6, 1.4, 1, 0, RIBBON, 8));
-  out.push(...rotate([...body, ...arm], x0, gy, lean));
-  // The head, nodding a beat after the body.
-  const hx = x0 + 2;
-  const hy = by - 11 + (walk ? Math.sin(TAU * q * 2 - 1.4) * 0.8 : idle ? Math.sin(TAU * q - 1.6) * 0.6 : 0);
-  const em = dead ? 'dead' : hurt ? 'hurt' : mood === 'angry' || A ? 'angry' : mood === 'happy' ? 'happy' : mood === 'blink' ? 'blink' : 'idle';
-  const mm = dead || hurt ? 'hurt' : A && f === 1 ? 'shout' : A ? 'angry' : mood === 'happy' ? 'happy' : 'smug';
-  const ear = idle ? (f === 3 ? 18 : 0) : walk ? Math.sin(TAU * q * 2 - 2) * 6 : 0;
-  const head = tanukiHead(hx, hy, 1, em, mm, { dead, ear });
-  // The cone hat with its red band, tilted; the leaf tucked in the band (blown loose when hurt).
-  const hat = [F(T([[hx - 10, hy - 4.6], [hx + 10, hy - 6.2], [hx + 0.6, hy - 13]], STRAW.base)), F(T([[hx + 0.6, hy - 13], [hx + 10, hy - 6.2], [hx + 3, hy - 6]], STRAW.sh))];
-  for (let i = 1; i < 4; i++) hat.push(...stroke([[hx + 0.6, hy - 13], [hx - 10 + i * 5, hy - 5.1 - i * 0.4]], 0.4, STRAW.sh));
-  hat.push(...stroke([[hx - 5.4, hy - 7.4], [hx + 5.6, hy - 8.4]], 1, RIBBON));
-  if (!hurt && !dead) hat.push(O(hx + 3.4, hy - 10, 2.6, 1.2, -38, LEAF.base, 10), ...stroke([[hx + 1.6, hy - 8.6], [hx + 5, hy - 11.6]], 0.35, LEAF.sh));
-  const tilt = walk ? Math.sin(TAU * q * 2 - 1.8) * 3 : idle ? Math.sin(TAU * q - 1.8) * 2 : A ? A.lean * 0.3 : 0;
-  out.push(...rotate([...head, ...hat], hx, hy + 6, tilt + lean * 0.4));
-  // Hurt: the leaf flutters off its hat.
-  if (hurt) out.push(O(hx + 10, hy - 16, 2.6, 1.2, 30, LEAF.base, 10));
-  if (hurt) out.push(...sweat(hx - 6, hy - 6, 0.8));
-  if (A && f === 1) out.push(smear([[x0 + 6, by - 10], [x0 + 14, by - 6], [x0 + 20, by]], 3, '#e8fff0'));
-  if (A && f === 2) for (let i = 0; i < 4; i++) out.push(O(x0 + 20 + Math.cos(i * 1.6) * 4, by - 2 + Math.sin(i * 1.6) * 3, 1.6, 0.8, i * 47, i % 2 ? TEA.hi : LEAF.base, 8));
-  return { w: 46, h: 52, res: 3, shapes: shift(out, 2, 2) };
-}
-
-// ---------- Lantern Tanuki ----------
-
-const PAPER = ramp('#f4e4c4', { step: 8, turn: 24, sat: -4 });
-const LACQ = ramp('#c8463c', { step: 10, turn: 12 });
-const FLAME = ['#fff4c0', '#ffc860', '#ff8a3a'];
-
-// Attack keys: crouch, flare (the candle swelling, 0..1), puff (the flame blown out, 0..1).
-const LANTERN_ATK = [
-  { crouch: 2, flare: 0.6, puff: 0 },
-  { crouch: 3, flare: 1, puff: 0 },
-  { crouch: -2, flare: 0.3, puff: 1 },
-  { crouch: 0, flare: 0.2, puff: 0.5 },
-];
-
-function lantertanuki(pose, f, mood) {
-  const walk = pose === 'walk';
-  const idle = pose === 'idle';
-  const A = pose === 'attack' ? LANTERN_ATK[f] : null;
-  const q = walk ? f / 8 : idle ? f / 6 : 0;
-  const dead = mood === 'dead';
-  const hurt = mood === 'hurt';
-  const out = [];
-  const x0 = 20;
-  const gy = 48;
-  // It hops along on stubby legs, the lantern swinging a beat behind.
-  const hop = walk ? Math.abs(Math.sin(TAU * q)) * 3 : A ? -A.crouch * 0.6 : idle ? (Math.sin(TAU * q - 1) + 1) * 0.4 : 0;
-  const swing = dead ? 80 : hurt ? -14 : walk ? 6 * Math.sin(TAU * q - 0.8) : idle ? sway(q) * 2.4 : 0;
-  const cy = gy - 17 - hop;
-  const body = [];
-  for (const [s, ph] of [[-1, 0], [1, 0.5]]) {
-    const st = walk ? Math.sin(TAU * (q + ph)) * 2.6 : 0;
-    body.push(...stroke([[x0 + s * 3, cy + 9], [x0 + s * 3.4 + st, gy - 1.4]], 2.6, s < 0 ? DARK.sh : DARK.base, false), O(x0 + s * 3.4 + st + 0.8, gy - 1, 2, 1, 0, DARK.deep, 8));
-  }
-  const wag = walk ? Math.sin(TAU * q - 1.2) * 2.4 : Math.sin(TAU * q - 1.6) * 1.4;
-  body.push(...tail(x0 - 8, cy + 6, 0.8, wag));
-  // The candle's glow through the paper, brighter as it flares.
-  const flare = A ? A.flare : idle ? 0.25 + 0.1 * Math.sin(TAU * q * 2) : 0.25;
-  // The lantern: lacquered caps top and bottom, the paper ribbed by its bamboo hoops.
-  body.push(O(x0, cy, 10, 11, 0, PAPER.base, 22), crescent(x0, cy, 10, 11, PAPER.sh, { k: 0.26, a0: 70, a1: 230 }));
-  body.push(F(O(x0 + 1.4, cy + 1, 6 + flare * 2, 7 + flare * 2, 0, mix(PAPER.hi, FLAME[1], 0.25 + flare * 0.4), 18)));
-  for (let i = -3; i <= 3; i++) {
-    const half = Math.sqrt(Math.max(0, 1 - (i / 3.6) ** 2)) * 10;
-    body.push(...stroke([[x0 - half, cy + i * 3], [x0 + half, cy + i * 3]], 0.45, PAPER.sh));
-  }
-  body.push(F(T([[x0 - 6, cy - 12.6], [x0 + 6, cy - 12.6], [x0 + 5, cy - 9.6], [x0 - 5, cy - 9.6]], LACQ.base)), F(T([[x0 - 6, cy + 12.6], [x0 + 6, cy + 12.6], [x0 + 5, cy + 9.6], [x0 - 5, cy + 9.6]], LACQ.sh)));
-  // Its tanuki face peeking through the paper, ears poking out of the top cap.
-  const em = dead ? 'dead' : hurt ? 'hurt' : mood === 'angry' || A ? 'angry' : mood === 'happy' ? 'happy' : mood === 'blink' ? 'blink' : 'idle';
-  const mm = dead || hurt ? 'hurt' : A && f === 2 ? 'shout' : A ? 'angry' : mood === 'happy' ? 'happy' : 'smug';
-  for (const [ex, a] of [[x0 - 4, -12], [x0 + 4.4, 14 + (idle && f === 4 ? 14 : 0)]]) body.push(O(ex, cy - 13.6, 2.2, 2, a, FUR.base, 10), O(ex, cy - 13.3, 1.1, 1, a, DARK.base, 8));
-  body.push(O(x0 - 0.8, cy - 1.4, 2.4, 1.8, 18, DARK.base, 12), O(x0 + 4, cy - 1.5, 2.6, 1.9, -16, DARK.base, 12));
-  if (dead) body.push(...deadEye(x0 - 0.6, cy - 1.6, 1.3, { s: -1, c: '#f6ead6' }), ...deadEye(x0 + 4, cy - 1.6, 1.4, { c: '#f6ead6' }));
-  else body.push(...simpleEye(x0 - 0.6, cy - 1.8, { s: -1, w: 1.2, h: 1.5, mood: em, iris: '#3a2418', ink: '#1a1012' }), ...simpleEye(x0 + 4, cy - 1.9, { s: 1, w: 1.4, h: 1.7, mood: em, iris: '#3a2418', ink: '#1a1012' }));
-  body.push(O(x0 + 2.4, cy + 2, 2.6, 1.6, 0, CREAM.base, 12), E(x0 + 4, cy + 1.3, 0.8, 0.6, DARK.deep));
-  body.push(...simpleMouth(x0 + 2.6, cy + 3.4, { k: 0.8, mood: mm, lip: '#5a3028' }));
-  // A tassel under the lantern, trailing the swing.
-  body.push(...stroke([[x0, cy + 12.6], [x0 - swing * 0.08, cy + 15]], 0.7, LACQ.sh), O(x0 - swing * 0.1, cy + 15.6, 0.9, 1.4, 0, LACQ.base, 8));
-  out.push(...rotate(body, x0, gy, swing * 0.4));
-  // The flame puffed out of its mouth: flame tongues ahead of it.
-  if (A && A.puff) {
-    const n = Math.round(3 * A.puff) + 1;
-    for (let i = 0; i < n; i++) out.push(O(x0 + 12 + i * 3.4, cy + 2 - i * 0.4, 2.4 - i * 0.3, 1.6 - i * 0.2, -10, FLAME[i % 3], 10));
-  }
-  if (hurt) out.push(...sweat(x0 - 8, cy - 8, 0.8));
-  return { w: 46, h: 54, res: 3, shapes: shift(out, 2, 2) };
-}
 
 export const ART = {
-  tanukipicker: { walk: 8, idle: 6, attack: 4, stride: 20, atkMs: [80, 300, 160], draw: tanukipicker },
-  // (Remade 2026-11-19 as the Kettle Disguise: a live rig.)
+  tanukipicker: { walk: 8, idle: 6, attack: 4, stride: 20, atkMs: [80, 300, 160], draw: teaPickerStill, rig: teaPickerRig },
   kettletanuki: { pad: 8, walk: 8, idle: 6, attack: 5, stride: 18, atkMs: [120, 340, 200, 220], draw: kettleDisguiseStill, rig: kettleDisguiseRig },
-  lantertanuki: { walk: 8, idle: 6, attack: 4, stride: 18, atkMs: [140, 360, 200], draw: lantertanuki },
+  lantertanuki: { walk: 8, idle: 6, attack: 4, stride: 18, atkMs: [140, 360, 200], draw: paperLanternStill, rig: paperLanternRig },
   // (Drawn a quarter bigger, 2026-11-19: he was small for a boss.)
   grandkettle: { walk: 4, idle: 3, attack: 4, stride: 40, atkMs: [200, 620, 260], draw: teapotStill, rig: grown(teapotRig, 1.25) },
 };
