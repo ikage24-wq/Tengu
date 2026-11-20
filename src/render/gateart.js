@@ -1,11 +1,15 @@
 // The dungeon gate maps (their makeover, 2026-11-20): landmarks for the short stretches outside
 // each dungeon, the door built into one of them the way Hollow Gate's is in the great tree's roots.
+// Carnival Gates: a carousel in the middle, pastel horses bobbing on gold poles, its striped canopy
+// flat on top (a ledge), and a clockwork ticket kiosk, a wind-up key turning in its side, its roof
+// the step up to the canopy (the striped CARNIVAL arch at the door stays: render/fairground.js).
 // Tidepool Pier: Marina's dive shop on the quay (its roof deck a ledge, a stack of crates to climb
 // to it) and, at the pier's end, a timber crane with a big brass diving bell resting on the boards,
 // its hatch open: the way down to the Sunken Aquarium Palace (the portal's swirl turns in it).
 
 import { E, T, F, sprite, blit, snap } from './pixel.js';
 import { band } from './propkit.js';
+import { FG } from './fairground.js';
 
 export const GT = {
   board: '#8fc4e0', boardLit: '#b8dcf0', boardSh: '#6a9ec0', trim: '#fff6ea', trimSh: '#e6d8c8',
@@ -174,8 +178,132 @@ function drawBell(ctx, x, y, time) {
   }
 }
 
+// ---------- The carousel: a round wooden stage trimmed with bulbs, a candy-striped centre pole, a
+// striped canopy flat on top (a ledge CR_TOP up) with a scalloped valance and bulbs, a gold gear on
+// its front, a pennant on top; horses on gold poles bobbing in turn (drawn live). Bottom middle at
+// the stage's middle. ----------
+const CR_W = 320;
+const CR_H = 210;
+export const CR_TOP = 160;
+export const CR_SPAN = [-110, 110];
+const BULB = ['#fff2b0', '#ff9ac0', '#9ff0dc', '#ffd36b', '#c8a8ff'];
+function carouselBack() {
+  return art('carouselB', CR_W, CR_H, () => {
+    const out = [];
+    const cx = CR_W / 2;
+    const H = CR_H;
+    const top = H - CR_TOP;
+    // The stage and the centre pole (behind the horses).
+    out.push(R(cx - 140, H - 18, cx + 140, H, FG.wood), F(R(cx - 140, H - 18, cx + 140, H - 15, FG.woodLit)), F(R(cx - 140, H - 5, cx + 140, H, FG.woodSh)));
+    for (let k = 0; k < 14; k++) out.push(E(cx - 130 + k * 20, H - 9, 3, 3, BULB[k % 5]));
+    out.push(R(cx - 8, top + 40, cx + 8, H - 18, FG.cream));
+    for (let y = top + 44; y < H - 22; y += 14) out.push(F(T([[cx - 8, y], [cx + 8, y - 6], [cx + 8, y], [cx - 8, y + 6]], FG.pink)));
+    // The mirrored drum round the pole's top.
+    out.push(R(cx - 40, top + 40, cx + 40, top + 66, FG.butter), F(R(cx - 40, top + 60, cx + 40, top + 66, FG.butterSh)));
+    for (let k = 0; k < 4; k++) out.push(F(R(cx - 34 + k * 18, top + 44, cx - 22 + k * 18, top + 58, FG.sky)));
+    return out;
+  });
+}
+function carouselTop() {
+  return art('carouselT', CR_W, CR_H, () => {
+    const out = [];
+    const cx = CR_W / 2;
+    const top = CR_H - CR_TOP;
+    const [c0, c1] = CR_SPAN;
+    // The canopy: flat on top, sloping out to the valance, in pink and cream stripes.
+    out.push(T([[cx + c0, top], [cx + c1, top], [cx + 152, top + 30], [cx - 152, top + 30]], FG.cream));
+    for (let k = 0; k < 10; k += 2) {
+      const tx = (u) => cx + c0 + (c1 - c0) * u;
+      const bx = (u) => cx - 152 + 304 * u;
+      out.push(F(T([[tx(k / 10), top], [tx((k + 1) / 10), top], [bx((k + 1) / 10), top + 30], [bx(k / 10), top + 30]], FG.pink)));
+    }
+    out.push(F(R(cx + c0 + 4, top, cx + c1 - 4, top + 3, '#ffffff')));
+    // The scalloped valance with bulbs.
+    for (let k = 0; k < 12; k++) {
+      const x0 = cx - 152 + k * (304 / 12);
+      const x1 = x0 + 304 / 12;
+      out.push(T([[x0, top + 30], [x1, top + 30], ...arc((x0 + x1) / 2, top + 36, (x1 - x0) / 2, 8, 0, 180, 6)], k % 2 ? FG.mint : FG.lilac));
+      out.push(E((x0 + x1) / 2, top + 30, 2.6, 2.6, BULB[k % 5]));
+    }
+    // The gold gear on the canopy's front, and the pennant on top.
+    const gy = top + 16;
+    for (let k = 0; k < 8; k++) {
+      const a = (k / 8) * Math.PI * 2;
+      out.push(F(E(cx + Math.cos(a) * 11, gy + Math.sin(a) * 9, 3.4, 3, FG.butter)));
+    }
+    out.push(F(E(cx, gy, 10, 8.6, FG.butter)), F(E(cx, gy, 4, 3.4, FG.butterSh)));
+    out.push(F(band([[cx + c1 - 6, top], [cx + c1 - 6, top - 26]], () => 1.2, FG.woodDeep)), T([[cx + c1 - 5, top - 26], [cx + c1 + 12, top - 21], [cx + c1 - 5, top - 16]], FG.pink));
+    return out;
+  });
+}
+// A carousel horse (side view), its pole through it, in one of three colours.
+function horseArt(v) {
+  const body = ['#ffffff', '#ffd0e4', '#d0e8ff'][v];
+  const mane = ['#ff9ac0', '#c8a0f0', '#ffd36b'][v];
+  return art(`horse|${v}`, 60, 70, () => [
+    R(28, 0, 32, 70, FG.butter), F(R(30.6, 0, 32, 70, FG.butterSh)),
+    E(30, 40, 20, 11, body),
+    T([[44, 34], [52, 16], [58, 18], [58, 26], [50, 34], [48, 42]], body),
+    F(T([[44, 32], [50, 16], [46, 18], [40, 32]], mane)), F(E(55, 22, 1.4, 1.4, FG.navy)),
+    T([[12, 46], [6, 58], [10, 60], [18, 48]], body), T([[44, 46], [52, 56], [48, 60], [40, 48]], body),
+    T([[14, 36], [4, 34], [2, 44], [10, 42]], mane),
+    F(R(22, 28, 38, 33, FG.pink)), F(R(26, 33, 34, 40, FG.pinkSh)),
+  ]);
+}
+function drawCarousel(ctx, x, y, time) {
+  place(ctx, carouselBack(), x, y);
+  // Three horses bobbing in turn on their poles under the canopy.
+  for (const [dx, v, ph] of [[-96, 0, 0], [-6, 1, 2.1], [84, 2, 4.2]]) {
+    const bob = Math.sin(time * 2.2 + ph) * 8;
+    place(ctx, horseArt(v), x + dx + 30, y - 40 + bob);
+  }
+  place(ctx, carouselTop(), x, y);
+}
+
+// ---------- The ticket kiosk: a tin booth (red and cream, riveted) with a ticket window and a
+// ticket on its sign, a domed roof flat on top (a ledge KS_TOP up), a big wind-up key in its side
+// turning (drawn live). Bottom middle at the window. ----------
+const KS_W = 120;
+const KS_H = 130;
+export const KS_TOP = 80;
+export const KS_SPAN = [-44, 44];
+function kioskArt() {
+  return art('kiosk', KS_W, KS_H, () => {
+    const out = [];
+    const cx = KS_W / 2;
+    const H = KS_H;
+    const top = H - KS_TOP;
+    out.push(R(cx - 40, top + 8, cx + 40, H, '#e8605a'), F(R(cx + 24, top + 8, cx + 40, H, '#c0484a')), F(R(cx - 40, top + 8, cx - 34, H, '#ff8a80')));
+    out.push(R(cx - 40, H - 22, cx + 40, H, FG.cream), F(R(cx - 40, H - 22, cx + 40, H - 19, '#ffffff')));
+    for (const yy of [top + 14, H - 26]) for (let x = cx - 34; x <= cx + 34; x += 10) out.push(F(E(x, yy, 1.3, 1.3, FG.butterSh)));
+    // The window and the ticket sign.
+    out.push(R(cx - 24, top + 22, cx + 24, top + 50, FG.navy), F(R(cx - 21, top + 25, cx + 21, top + 47, '#4a4a8a')), F(R(cx - 26, top + 50, cx + 26, top + 54, FG.cream)));
+    out.push(T([[cx - 14, top + 30], [cx + 14, top + 30], [cx + 14, top + 34], [cx + 12, top + 36], [cx + 14, top + 38], [cx + 14, top + 42], [cx - 14, top + 42], [cx - 14, top + 38], [cx - 12, top + 36], [cx - 14, top + 34]], FG.butter));
+    out.push(F(R(cx - 8, top + 35, cx + 8, top + 37, FG.butterSh)));
+    // The domed roof, flat on top, a gold rim, pink stripes.
+    const [k0, k1] = KS_SPAN;
+    out.push(T([[cx - 48, top + 10], [cx - 46, top + 4], [cx + k0, top], [cx + k1, top], [cx + 46, top + 4], [cx + 48, top + 10]], FG.cream));
+    out.push(F(R(cx - 48, top + 8, cx + 48, top + 11, FG.butter)), F(R(cx + k0 + 4, top, cx + k1 - 4, top + 2, '#ffffff')));
+    for (let k = 0; k < 4; k++) out.push(F(T([[cx + k0 + 6 + k * 22, top + 1], [cx + k0 + 16 + k * 22, top + 1], [cx + k0 + 14 + k * 22, top + 8], [cx + k0 + 6 + k * 22, top + 8]], FG.pink)));
+    return out;
+  });
+}
+// The wind-up key, turning: its bow drawn edge-on to face-on and back.
+function keyArt(f) {
+  return art(`key|${f}`, 40, 40, () => {
+    const w = Math.abs(Math.cos((f / 8) * Math.PI)) * 14 + 3;
+    return [R(0, 18, 16, 22, FG.butterSh), E(20, 20, w, 13, FG.butter), F(E(20, 20, Math.max(1, w - 6), 7, FG.butterSh)), F(E(20 - w * 0.3, 16, Math.max(1, w * 0.3), 3, '#fff0b8'))];
+  });
+}
+function drawKiosk(ctx, x, y, time) {
+  place(ctx, kioskArt(), x, y);
+  place(ctx, keyArt(Math.floor(time * 6) % 8), x + 56, y - 40);
+}
+
 export const GATE_KINDS = {
   diveshop: { w: DS_W + M * 2, h: DS_H + M, draw: (ctx, x, y) => place(ctx, shopArt(), x, y) },
   quaycrates: { w: CS_W + M * 2, h: CS_H + M, draw: (ctx, x, y) => place(ctx, cratesArt(), x, y) },
   bellcrane: { w: BC_W + M * 2, h: BC_H + M, draw: drawBell },
+  carousel: { w: CR_W + M * 2, h: CR_H + M, draw: drawCarousel },
+  windkiosk: { w: KS_W + M * 2, h: KS_H + M, draw: drawKiosk },
 };

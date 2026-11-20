@@ -1870,14 +1870,18 @@ const FAIR_IN = { skyline: 'bigtop', material: 'carnival', critters: [], drift: 
 Object.assign(MAPS, {
   // The Carnival Gates: past the last torii of the Fox Shrine Path, a striped arch strung with
   // lights where Tock, a runaway tin soldier, finds groups. (Remade 2026-11-18, Chapter 6, like the
-  // rooms inside: render/fairground.js. The whole fair lit up beyond, a ticket booth to climb.)
+  // rooms inside: render/fairground.js. Its makeover 2026-11-20, render/gateart.js: a clockwork
+  // ticket kiosk, its wind-up key turning, and a carousel of bobbing horses; the kiosk's roof is the
+  // step up onto the carousel's canopy.)
   carnival_gate: {
     id: 'carnival_gate', name: 'Carnival Gates', theme: 'carnival', town: 'grove', world: { x: 400, y: 104 }, music: 'carnival',
     width: 1200, height: 420, groundY: G,
     look: { sky: ['#2a2a6a', '#7a4aa8', '#ff9ab8'], far: '#4a3a8a', mid: '#6a4aa8', midTrim: '#ffd36b', ...FAIR_OUT, painted: 'fairgate', islands: 'booth', props: [], ledgeProp: null },
-    platforms: [{ x: 420, y: G - 80, w: 140 }],
+    // The kiosk's roof and the carousel's canopy (drawn with them).
+    platforms: [{ x: 426, y: G - 80, w: 88, bare: true }, { x: 530, y: G - 160, w: 220, bare: true }],
     ropes: [],
-    deco: [['signpost', 160], ['popcorncart', 270], ['balloonstand', 700, 1], ['fairarch', 1060]],
+    deco: [['signpost', 160], ['popcorncart', 270], ['windkiosk', 470, 0], ['carousel', 640, 0], ['balloonstand', 800, 1], ['fairarch', 1060]],
+    lamps: [{ x: 640, y: 250 }, { x: 470, y: 330 }],
     portals: [
       { id: 'start', x: 640, y: G, hidden: true },
       { id: 'west', x: 50, y: G, to: 'shrine', toPortal: 'carnival' },
