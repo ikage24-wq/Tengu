@@ -14,7 +14,7 @@
 
 import { E, T, R, F } from './kit.js';
 import { makeRig, stateBlend, clamp, TAU } from './rig.js';
-import { D2R, taper, pairOf, faceSprite, hold, stepPhase, pawStep, put, shift, MOODS, moodOf, faceShapes } from './rigkit.js';
+import { D2R, taper, pairOf, faceSprite, hold, stepPhase, pawStep, put, shift, MOODS, moodOf, arcP } from './rigkit.js';
 
 const K = 0.75;
 const PUFD = '#2a2a3a';
@@ -59,8 +59,49 @@ const PR = {
   FOOT: pm('foot', 10, 6, footP, 3, 3), ROBE: pm('robe', 34, 26, robeP, 3, 3), HEAD: pm('head', 32, 24, headP, 3, 3),
   ARM: [false, true].map((f) => pm(`arm${f ? 1 : 0}`, 22, 10, armP(f), 3, 3)),
 };
-const FACE = { eyes: [[13.6, 11, 1.7, 2.2, -1], [18, 11, 1.4, 1.9, 1]], mouth: [23, 19, 0.1], blush: [[11, 14.6, 1.2]], iris: '#3a2a2a', lid: 0, lashes: 0 };
-const pufFace = (mood) => faceSprite(`pufmonk|face|${mood}`, 32, 24, () => faceShapes(mood, FACE));
+// ---------- Its own face: a puffin's. Small calm eyes with a red-orange eye ring and the puffin's
+// soft grey marks above and behind them, the lids gently lowered in meditation; it opens them wide and
+// lets out a martial "kiai!" from the big beak to fight. ----------
+const MDARK = '#22222e';
+const MRING = '#ff6a3a';
+const MMARK = '#a8a8be';
+const ln = (pts, w, c = MDARK) => [F(taper(pts, w, w * 0.85, c))];
+const beakOpen = (gape, tongue = false) => [
+  F(T([[19.4, 14.4], [28.6, 14.6], [27.6, 15.4 + gape], [19.6, 17.4 + gape]], '#7a3040')),
+  ...(tongue ? [F(E(22, 16.2 + gape, 1.6, 0.6, '#ff8fab'))] : []),
+  F(T([[19.2, 16.4 + gape], [28.4, 14.8 + gape], [28, 16.2 + gape], [19.4, 18.6 + gape]], '#ff7a3a')),
+];
+const MEYES = [[13.6, 11.2, -1, 1], [18, 11, 1, 0.85]];
+const pufFaceShapes = (mood) => {
+  const out = [];
+  const angry = mood === 'angry' || mood === 'shout';
+  for (const [x, y, s, k] of MEYES) {
+    // The puffin's marks: a little grey triangle over the eye, a line back from it.
+    const tilt = angry ? 0.6 : mood === 'hurt' ? -0.5 : 0;
+    out.push(F(T([[x - 0.75 * k, y - 1.75 * k + tilt * s], [x + 0.75 * k, y - 1.75 * k - tilt * s], [x + s * 0.15 * k, y - 2.8 * k]], MMARK)), ...ln([[x - s * 1.3 * k, y + 0.3 * k], [x - s * 2.6 * k, y + 0.8 * k]], 0.4 * k, MMARK));
+    if (mood === 'blink' || mood === 'sleep' || mood === 'dead') out.push(...ln(arcP(x, y, 1.3 * k, 0.75 * k, 15, 165, 6), 0.55 * k));
+    else if (mood === 'happy') out.push(...ln(arcP(x, y + 0.8 * k, 1.3 * k, 1.2 * k, 200, 340, 6), 0.6 * k));
+    else if (mood === 'hurt') out.push(...ln([[x + s * 1.1 * k, y - 1 * k], [x - s * 0.9 * k, y], [x + s * 1.1 * k, y + 1 * k]], 0.55 * k));
+    else if (mood === 'dizzy') {
+      const pts = [];
+      for (let i = 0; i <= 11; i++) pts.push([x + Math.cos(i * 0.9) * (0.12 + i * 0.1) * k, y + Math.sin(i * 0.9) * (0.12 + i * 0.1) * k]);
+      out.push(...ln(pts, 0.38 * k, MRING));
+    } else {
+      // Calm: lids lowered (the eye cut level); to fight: wide open, the pupil small.
+      const lid = angry ? () => -99 : (px) => y + 0.35 * k - 1.05 * k * Math.sqrt(Math.max(0, 1 - ((px - x) / (1.5 * k)) ** 2));
+      const ring = Array.from({ length: 14 }, (_, i) => [x + Math.cos((i / 14) * Math.PI * 2) * 1.35 * k, y + Math.sin((i / 14) * Math.PI * 2) * 1.35 * k]).map(([px, py]) => [px, Math.max(py, lid(px))]);
+      const pup = Array.from({ length: 12 }, (_, i) => [x + Math.cos((i / 12) * Math.PI * 2) * (angry ? 0.5 : 0.85) * k, y + 0.15 * k + Math.sin((i / 12) * Math.PI * 2) * (angry ? 0.55 : 0.85) * k]).map(([px, py]) => [px, Math.max(py, lid(px) + 0.15)]);
+      out.push(F(T(ring, MRING)), F(T(pup, MDARK)));
+      if (!angry) out.push(...ln(Array.from({ length: 7 }, (_, i) => x - 1.5 * k + (i * 3 * k) / 6).map((px) => [px, lid(px)]), 0.5 * k));
+      else out.push(F(E(x + 0.35 * k, y - 0.3 * k, 0.22 * k, 0.22 * k, '#ffffff')));
+    }
+  }
+  if (mood === 'happy') out.push(F(E(11.4, 14.8, 1.2, 0.6, '#ffb0c4')));
+  if (mood === 'shout') out.push(...beakOpen(2, true));
+  else if (mood === 'hurt' || mood === 'dizzy') out.push(...beakOpen(0.6));
+  return out;
+};
+const pufFace = (mood) => faceSprite(`pufmonk|face|${mood}`, 32, 24, () => pufFaceShapes(mood));
 
 // The robe's middle sits 16.2 above the feet; the head 21 above that.
 const BODY_Y = 16.2;
@@ -192,7 +233,7 @@ export function puffinMonkStill(pose, f, mood) {
   const head = [HEAD_AT[0], by + HEAD_AT[1]];
   const sh = [
     ...put(armP(true)(), [3, 4], SH_F[0], by + SH_F[1], -30), ...put(footP(), [5, 1], -5, by + 12.6), ...put(footP(), [5, 1], 4, by + 12.6), ...put(robeP(), [17, 12], 0, by),
-    ...put(headP(), [12, 12], head[0], head[1]), ...put(faceShapes(fm, FACE), [12, 12], head[0], head[1]), ...put(armP(false)(), [3, 4], SH_N[0], by + SH_N[1], -58),
+    ...put(headP(), [12, 12], head[0], head[1]), ...put(pufFaceShapes(fm), [12, 12], head[0], head[1]), ...put(armP(false)(), [3, 4], SH_N[0], by + SH_N[1], -58),
   ];
   const ox = 22;
   const oy = 46;

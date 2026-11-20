@@ -14,7 +14,7 @@
 
 import { E, T, F } from './kit.js';
 import { makeRig, stateBlend, clamp, TAU } from './rig.js';
-import { D2R, taper, pairOf, faceSprite, hold, stepPhase, pawStep, put, shift, MOODS, moodOf, faceShapes } from './rigkit.js';
+import { D2R, taper, pairOf, faceSprite, hold, stepPhase, pawStep, put, shift, MOODS, moodOf, arcP } from './rigkit.js';
 
 const K = 0.68;
 const PEN = '#2e3450';
@@ -66,8 +66,46 @@ const PR = {
   FOOT: pl('foot', 10, 6, footP, 3, 3), BODY: pl('body', 34, 36, bodyP, 3, 3), FLIP: pl('flip', 12, 14, flipperP, 3, 3), HEAD: pl('head', 34, 24, headP, 3, 3),
   HELM: pl('helm', 30, 22, helmP, 3, 3), LANCE: pl('lance', 44, 12, lanceP, 3, 3), GRIP: pl('grip', 8, 8, gripP, 3, 3),
 };
-const FACE = { eyes: [[15.6, 11.6, 1.6, 2.1, -1], [20, 11.4, 1.4, 1.9, 1]], mouth: [24.4, 17, 0.1], blush: [[13.6, 15, 1.1]], iris: '#3a2a2a', lid: 0, lashes: 0 };
-const penFace = (mood) => faceSprite(`penlance|face|${mood}`, 34, 24, () => faceShapes(mood, FACE));
+// ---------- Its own face: an earnest little squire. Round eager eyes with a sunny gold glint low
+// in them, short stubby brows that knit to look brave, a rosy cheek, and the beak that opens to
+// cheer or bellow a charge. ----------
+const PDARK = '#22263e';
+const PGLINT = '#ffb84a';
+const ln = (pts, w, c = PDARK) => [F(taper(pts, w, w * 0.85, c))];
+const beakOpen = (gape, tongue = false) => [
+  F(T([[21.8, 14], [27.4, 14.4], [22, 15.2 + gape]], '#7a3040')),
+  ...(tongue ? [F(E(23, 14.9 + gape * 0.6, 1, 0.45, '#ff8fab'))] : []),
+  F(T([[21.6, 14.9 + gape], [27, 14.6 + gape * 0.5], [21.8, 16.4 + gape]], FOOT)),
+];
+const PEYES = [[15.6, 11.8, -1, 1], [20, 11.5, 1, 0.88]];
+const penFaceShapes = (mood) => {
+  const out = [];
+  for (const [x, y, s, k] of PEYES) {
+    const angry = mood === 'angry' || mood === 'shout';
+    // The brows: knit brave, level when calm, up when hurt.
+    const brow = angry ? [[x - s * 1.4 * k, y - 2.2 * k], [x + s * 1.2 * k, y - 3.2 * k]] : mood === 'hurt' ? [[x - s * 1.3 * k, y - 3.2 * k], [x + s * 1.3 * k, y - 2.5 * k]] : [[x - s * 1.3 * k, y - 2.7 * k], [x + s * 1.3 * k, y - 3 * k]];
+    if (mood !== 'dead' && mood !== 'dizzy') out.push(...ln(brow, 0.75 * k));
+    if (mood === 'blink' || mood === 'sleep' || mood === 'dead') out.push(...ln(arcP(x, y, 1.4 * k, 0.8 * k, 15, 165, 6), 0.6 * k));
+    else if (mood === 'happy') out.push(...ln(arcP(x, y + 0.8 * k, 1.4 * k, 1.3 * k, 200, 340, 6), 0.65 * k));
+    else if (mood === 'hurt') out.push(...ln([[x + s * 1.2 * k, y - 1.1 * k], [x - s * 0.9 * k, y], [x + s * 1.2 * k, y + 1.1 * k]], 0.6 * k));
+    else if (mood === 'dizzy') {
+      const pts = [];
+      for (let i = 0; i <= 11; i++) pts.push([x + Math.cos(i * 0.9) * (0.12 + i * 0.11) * k, y + Math.sin(i * 0.9) * (0.12 + i * 0.11) * k]);
+      out.push(...ln(pts, 0.4 * k));
+    } else {
+      let eye = Array.from({ length: 16 }, (_, i) => [x + Math.cos((i / 16) * Math.PI * 2) * 1.5 * k, y + Math.sin((i / 16) * Math.PI * 2) * 1.8 * k]);
+      if (angry) eye = eye.map(([px, py]) => [px, Math.max(py, y - 0.7 * k + (px - x) * -s * 0.4)]);
+      out.push(F(T(eye, PDARK)), F(E(x, y + 0.9 * k, 1 * k, 0.6 * k, PGLINT)));
+      if (!angry) out.push(F(E(x + 0.5 * k, y - 0.6 * k, 0.5 * k, 0.5 * k, '#ffffff')), F(E(x - 0.45 * k, y + 0.3 * k, 0.2 * k, 0.2 * k, '#ffffff')));
+    }
+  }
+  if (mood !== 'dead') out.push(F(E(14.6, 15.4, 1.3, 0.65, mood === 'happy' ? '#ff8aa8' : '#ffb0c4')));
+  if (mood === 'happy') out.push(...beakOpen(1));
+  else if (mood === 'shout') out.push(...beakOpen(2.2, true));
+  else if (mood === 'hurt' || mood === 'dizzy' || mood === 'dead') out.push(...beakOpen(0.6));
+  return out;
+};
+const penFace = (mood) => faceSprite(`penlance|face|${mood}`, 34, 24, () => penFaceShapes(mood));
 
 // The body's middle sits 16 above the feet (12 when it's down on its belly); the head 20 above.
 const BODY_Y = 16;
@@ -192,7 +230,7 @@ export function penguinLancerStill(pose, f, mood) {
   const head = [HEAD_AT[0], by + HEAD_AT[1]];
   const sh = [
     ...put(footP(), [5, 1], -4, by + 13), ...put(flipperP(), [8, 2], -11, by - 6), ...put(bodyP(), [17, 18], 0, by), ...put(footP(), [5, 1], 4, by + 13),
-    ...put(headP(), [14, 12], head[0], head[1]), ...put(faceShapes(fm, FACE), [14, 12], head[0], head[1]), ...put(helmP(), [14, 16], head[0], head[1] - 5.4),
+    ...put(headP(), [14, 12], head[0], head[1]), ...put(penFaceShapes(fm), [14, 12], head[0], head[1]), ...put(helmP(), [14, 16], head[0], head[1] - 5.4),
     ...put(lanceP(), [8, 6], 3, by, -40), ...put(gripP(), [4, 4], 3, by),
   ];
   const ox = 22;

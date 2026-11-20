@@ -14,7 +14,7 @@
 
 import { E, T, R, F } from './kit.js';
 import { makeRig, stateBlend, clamp, TAU } from './rig.js';
-import { D2R, taper, pairOf, faceSprite, hold, stepPhase, pawStep, put, shift, MOODS, moodOf, faceShapes } from './rigkit.js';
+import { D2R, taper, pairOf, faceSprite, hold, stepPhase, pawStep, put, shift, MOODS, moodOf, arcP } from './rigkit.js';
 
 const K = 0.85;
 const CREAM = '#fff4ec';
@@ -62,8 +62,50 @@ const PR = {
   TAIL: pf('tail', 16, 18, tailP, 3, 3), LEG: [false, true].map((f) => pf(`leg${f ? 1 : 0}`, 10, 14, legP(f), 3)), BODY: pf('body', 32, 20, bodyP, 3, 3),
   WINGF: pf('wingF', 22, 12, wingP(17, '#ffffff', '#a8c8ff'), 3, 3), WINGN: pf('wingN', 22, 12, wingP(15, '#f4f8ff', '#8ab4f8'), 3, 3), HEAD: pf('head', 32, 36, headP, 3, 3),
 };
-const FACE = { eyes: [[18, 16, 2, 2.6, 1]], mouth: [23.4, 25, 1], blush: [[18.4, 21, 1.4]], iris: '#5a4a9a', lid: 0, lashes: 0 };
-const pegFace = (mood) => faceSprite(`pegfoal|face|${mood}`, 32, 36, () => faceShapes(mood, FACE));
+// ---------- Its own face (side on): one big dreamy pony eye, its iris fading pink to blue like the
+// mane, a sweep of lashes, and a sweet little smile on the muzzle; its nostril flares to huff. ----------
+const GDARK = '#2e2448';
+const ln = (pts, w, c = GDARK) => [F(taper(pts, w, w * 0.85, c))];
+const plash = (x, y, up = 1) => [...ln([[x + 1.7, y - 1.6 * up], [x + 2.8, y - 2.6 * up]], 0.5), ...ln([[x + 0.9, y - 2.2 * up], [x + 1.6, y - 3.2 * up]], 0.45), ...ln([[x + 0.1, y - 2.5 * up], [x + 0.4, y - 3.5 * up]], 0.4)];
+const PE = [18, 16.2];
+const pegFaceShapes = (mood) => {
+  const out = [];
+  const [x, y] = PE;
+  const angry = mood === 'angry';
+  if (mood === 'blink' || mood === 'sleep' || mood === 'dead') out.push(...ln(arcP(x, y, 2, 1.1, 15, 165, 8), 0.75), ...ln([[x + 1.8, y + 0.5], [x + 2.6, y + 1.2]], 0.45), ...ln([[x + 0.8, y + 1], [x + 1.1, y + 1.9]], 0.4));
+  else if (mood === 'happy') out.push(...ln(arcP(x, y + 1.1, 2, 1.8, 200, 340, 8), 0.8), ...plash(x, y + 1.2));
+  else if (mood === 'hurt') out.push(...ln([[x - 1.6, y - 1.5], [x + 1.3, y], [x - 1.6, y + 1.5]], 0.75), F(E(x - 0.6, y + 2.6, 0.5, 0.8, '#9ad8ff')));
+  else if (mood === 'dizzy') {
+    const pts = [];
+    for (let i = 0; i <= 13; i++) pts.push([x + Math.cos(i * 0.85) * (0.15 + i * 0.13), y + Math.sin(i * 0.85) * (0.15 + i * 0.13)]);
+    out.push(...ln(pts, 0.5, '#8a6ad0'));
+  } else {
+    const wide = mood === 'shout' ? 1.1 : 1;
+    let eye = Array.from({ length: 18 }, (_, i) => [x + Math.cos((i / 18) * Math.PI * 2) * 2 * wide, y + Math.sin((i / 18) * Math.PI * 2) * 2.6 * wide]);
+    let top = Array.from({ length: 14 }, (_, i) => [x + 0.1 + Math.cos((i / 14) * Math.PI * 2) * 1.5, y + 0.2 + Math.sin((i / 14) * Math.PI * 2) * 1.9]);
+    if (angry) {
+      eye = eye.map(([px, py]) => [px, Math.max(py, y - 1.2 + (px - x) * 0.5)]);
+      top = top.map(([px, py]) => [px, Math.max(py, y - 0.9 + (px - x) * 0.5)]);
+    }
+    // The iris: pink over blue, like the mane.
+    out.push(F(T(eye, GDARK)), F(T(top, '#f0a0d0')), F(T(top.map(([px, py]) => [px, Math.max(py, y + 0.5)]), '#8ab4f8')));
+    out.push(F(E(x + 0.1, y + 0.3, mood === 'shout' ? 0.45 : 0.75, mood === 'shout' ? 0.6 : 1, GDARK)));
+    if (!angry) out.push(F(E(x + 0.6, y - 0.9, 0.65, 0.65, '#ffffff')), F(E(x - 0.6, y + 1.3, 0.3, 0.3, '#ffffff')));
+    out.push(...ln(angry ? [[x - 2.2, y - 2.2], [x + 2.3, y - 0.1]] : arcP(x, y + 0.1, 2.15, 2.75, 200, 345, 8), 0.7));
+    if (!angry) out.push(...plash(x, y + 0.3));
+  }
+  // The muzzle: the nostril (flared to huff) and the mouth.
+  const [mx, my] = [23.2, 24.2];
+  if (angry || mood === 'shout') out.push(F(E(24.5, 20.4, 0.9, 0.7, '#c8909a')));
+  if (mood === 'happy') out.push(F(T(arcP(mx, my - 0.4, 1.4, 1.3, 0, 180, 8), '#a8506a')));
+  else if (mood === 'shout') out.push(F(E(mx, my + 0.3, 1.1, 1.3, '#a8506a')), F(E(mx, my + 0.9, 0.6, 0.4, '#ff8fab')));
+  else if (angry) out.push(...ln([[mx - 1.2, my + 0.3], [mx, my - 0.2], [mx + 1.2, my + 0.3]], 0.4, '#a8506a'));
+  else if (mood === 'hurt' || mood === 'dizzy') out.push(...ln([[mx - 1.1, my + 0.3], [mx - 0.4, my - 0.1], [mx + 0.4, my + 0.3], [mx + 1.1, my - 0.1]], 0.38, '#a8506a'));
+  else if (mood === 'dead') out.push(F(E(mx, my, 0.5, 0.55, '#a8506a')));
+  else out.push(...ln(arcP(mx, my - 0.6, 1.3, 0.9, 20, 160, 8), 0.4, '#a8506a'));
+  return out;
+};
+const pegFace = (mood) => faceSprite(`pegfoal|face|${mood}`, 32, 36, () => pegFaceShapes(mood));
 
 // The body's middle sits 15 above the hooves; the hips 3 below it.
 const BODY_Y = 15;
@@ -194,7 +236,7 @@ export function pegasusFoalStill(pose, f, mood) {
   const sh = [
     ...put(tailP(), [13, 4], -12, by - 4), ...put(legP(true)(), [5, 1], ...hip('hf')), ...put(legP(true)(), [5, 1], ...hip('ff')), ...put(wingP(17, '#ffffff', '#a8c8ff')(), [2, 7], -4, by - 6, -150),
     ...put(bodyP(), [16, 10], 0, by), ...put(legP(false)(), [5, 1], ...hip('hn')), ...put(legP(false)(), [5, 1], ...hip('fn')),
-    ...put(headP(), [6, 30], 10, by - 3), ...put(faceShapes(fm, FACE), [6, 30], 10, by - 3), ...put(wingP(15, '#f4f8ff', '#8ab4f8')(), [2, 7], 2, by - 6, -128),
+    ...put(headP(), [6, 30], 10, by - 3), ...put(pegFaceShapes(fm), [6, 30], 10, by - 3), ...put(wingP(15, '#f4f8ff', '#8ab4f8')(), [2, 7], 2, by - 6, -128),
   ];
   const ox = 28;
   const oy = 46;

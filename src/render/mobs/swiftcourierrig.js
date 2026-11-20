@@ -13,7 +13,7 @@
 
 import { E, T, R, F } from './kit.js';
 import { makeRig, stateBlend, clamp, TAU } from './rig.js';
-import { D2R, taper, pairOf, faceSprite, hold, put, shift, MOODS, moodOf, faceShapes } from './rigkit.js';
+import { D2R, taper, pairOf, faceSprite, hold, put, shift, MOODS, moodOf, arcP } from './rigkit.js';
 
 const K = 0.75;
 const NAVY = '#2c3a7a';
@@ -59,8 +59,44 @@ const PR = {
   TAIL: sc('tail', 20, 14, tailP, 3, 3), WINGF: sc('wingF', 24, 12, wingP('#4a5aa8', '#7a8ad0'), 3, 3), WINGN: sc('wingN', 24, 12, wingP('#5a6ab8', '#8a9ae0'), 3, 3),
   BODY: sc('body', 28, 20, bodyP, 3, 3), SATCHEL: sc('satchel', 16, 22, satchelP, 3, 3), HEAD: sc('head', 26, 22, headP, 3, 3),
 };
-const FACE = { eyes: [[12.6, 11, 1.8, 2.3, 1]], mouth: [18, 16.6, 0.1], blush: [[13, 15.4, 1.2]], iris: '#2a2a3a', lid: 0, lashes: 0 };
-const swiftFace = (mood) => faceSprite(`swiftc|face|${mood}`, 26, 22, () => faceShapes(mood, FACE));
+// ---------- Its own face (side on): a keen courier. A sharp white almond eye on the navy head,
+// the pupil fixed ahead where it is going, a little speed flick at the back corner; the tiny beak
+// opens to chirp or shriek. ----------
+const WDARK = '#1a1a2e';
+const WPALE = '#dfe6ff';
+const ln = (pts, w, c = WDARK) => [F(taper(pts, w, w * 0.85, c))];
+const beakOpen = (gape) => [
+  F(T([[17.2, 12.4], [22.6, 12.6], [17.4, 13.8 + gape]], '#7a3040')),
+  F(T([[17, 13.4 + gape], [22, 12.9 + gape * 0.6], [17.2, 15 + gape]], '#2a2a3a')),
+];
+const WE = [12.4, 11.2];
+const swiftFaceShapes = (mood) => {
+  const out = [];
+  const [x, y] = WE;
+  const angry = mood === 'angry';
+  if (mood === 'blink' || mood === 'sleep' || mood === 'dead') out.push(...ln([[x - 1.9, y + 0.3], [x, y + 0.7], [x + 1.8, y + 0.2]], 0.6, WPALE));
+  else if (mood === 'happy') out.push(...ln(arcP(x, y + 0.9, 1.7, 1.4, 200, 340, 8), 0.65, WPALE));
+  else if (mood === 'hurt') out.push(...ln([[x - 1.4, y - 1.2], [x + 1.1, y], [x - 1.4, y + 1.2]], 0.6, WPALE));
+  else if (mood === 'dizzy') {
+    const pts = [];
+    for (let i = 0; i <= 12; i++) pts.push([x + Math.cos(i * 0.85) * (0.12 + i * 0.12), y + Math.sin(i * 0.85) * (0.12 + i * 0.12)]);
+    out.push(...ln(pts, 0.42, WPALE));
+  } else if (mood === 'shout') out.push(F(E(x, y, 1.7, 1.8, '#ffffff')), F(E(x + 0.4, y, 0.5, 0.55, WDARK)));
+  else {
+    // The almond: back corner flicked up and away, the front corner pointed toward the beak.
+    const top = arcP(x, y + 0.5, 2.1, angry ? 1.3 : 2, 195, 345, 8);
+    const bot = arcP(x, y - 0.1, 2, 1.4, 15, 165, 8);
+    let pts = [...top, ...bot];
+    if (angry) pts = pts.map(([px, py]) => [px, Math.max(py, y - 0.6 + (px - x) * 0.4)]);
+    out.push(F(T(pts, '#ffffff')), F(E(x + 0.8, y + 0.1, 0.75, angry ? 0.7 : 0.95, WDARK)), F(E(x + 1.05, y - 0.3, 0.22, 0.22, '#ffffff')));
+    out.push(...ln([[x - 2.6, y - 0.9], [x - 1.8, y - 0.1]], 0.5, WPALE));
+  }
+  if (mood === 'happy') out.push(...beakOpen(0.8));
+  else if (mood === 'shout') out.push(...beakOpen(1.8));
+  else if (mood === 'hurt' || mood === 'dizzy') out.push(...beakOpen(0.5));
+  return out;
+};
+const swiftFace = (mood) => faceSprite(`swiftc|face|${mood}`, 26, 22, () => swiftFaceShapes(mood));
 
 // The body's middle sits 12 above its hover point.
 const BODY_Y = 12;
@@ -73,9 +109,10 @@ const pass = (bare) => {
     { name: `wingF${tag}`, parent: 'bodyJ', s: PR.WINGF[i], pivot: [2, 7], at: () => [-2, -2], rot: (S) => (-150 + S.wg) * D2R },
     { name: `satchel${tag}`, parent: 'bodyJ', s: PR.SATCHEL[i], pivot: [14, 2], at: () => [0, -2], rot: (S) => S.sat * D2R, soft: { key: 'satchel', dir: [-4, 16], k: 70, c: 5, gain: 0.8, turn: 0.6, max: 30 } },
     { name: `body${tag}`, parent: 'bodyJ', s: PR.BODY[i], pivot: [14, 10] },
+    // The near wing goes behind the head, so it never hides the face.
+    { name: `wingN${tag}`, parent: 'bodyJ', s: PR.WINGN[i], pivot: [2, 7], at: () => [4, -4], rot: (S) => (-30 - S.wg) * D2R },
     { name: `head${tag}`, parent: 'headJ', s: PR.HEAD[i], pivot: [10, 12] },
     ...(bare ? [{ name: 'face', parent: 'headJ', s: (a) => swiftFace(MOODS.has(a.scMood) ? a.scMood : 'idle'), pivot: [10, 12] }] : []),
-    { name: `wingN${tag}`, parent: 'bodyJ', s: PR.WINGN[i], pivot: [2, 7], at: () => [4, -4], rot: (S) => (-30 - S.wg) * D2R },
   ];
 };
 
@@ -197,7 +234,7 @@ export function swiftCourierStill(pose, f, mood) {
   const by = -BODY_Y;
   const sh = [
     ...put(tailP(), [18, 6], -12, by + 4), ...put(wingP('#4a5aa8', '#7a8ad0')(), [2, 7], -2, by - 2, -150), ...put(satchelP(), [14, 2], 0, by - 2),
-    ...put(bodyP(), [14, 10], 0, by), ...put(headP(), [10, 12], 10, by - 8), ...put(faceShapes(fm, FACE), [10, 12], 10, by - 8), ...put(wingP('#5a6ab8', '#8a9ae0')(), [2, 7], 4, by - 4, -30),
+    ...put(bodyP(), [14, 10], 0, by), ...put(wingP('#5a6ab8', '#8a9ae0')(), [2, 7], 4, by - 4, -30), ...put(headP(), [10, 12], 10, by - 8), ...put(swiftFaceShapes(fm), [10, 12], 10, by - 8),
   ];
   const ox = 26;
   const oy = 40;

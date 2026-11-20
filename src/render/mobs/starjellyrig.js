@@ -14,7 +14,7 @@
 
 import { E, T, F } from './kit.js';
 import { makeRig, stateBlend, clamp, TAU } from './rig.js';
-import { D2R, taper, arcP, pairOf, faceSprite, hold, put, shift, MOODS, moodOf, faceShapes } from './rigkit.js';
+import { D2R, taper, arcP, pairOf, faceSprite, hold, put, shift, MOODS, moodOf } from './rigkit.js';
 
 const K = 0.78;
 const JELLY = '#c8c0ff';
@@ -58,8 +58,49 @@ const starP = () => [F(star5(7, 7, 6, '#ffd86a')), F(star5(7, 6.6, 3.2, '#fff8dc
 // The halo. Box 20 x 8; its middle (10, 4).
 const haloP = () => [taper(arcP(10, 4, 8, 2.4, 0, 360, 18), 1.6, 1.6, GOLD)];
 const PR = { BELL: sj('bell', 44, 28, bellP, 3, 3), STAR: sj('star', 14, 14, starP, 3, 3), HALO: sj('halo', 20, 8, haloP, 3, 3) };
-const FACE = { eyes: [[17, 15, 1.9, 2.5, -1], [27, 15, 1.9, 2.5, 1]], mouth: [22, 19.4, 1.1], blush: [[14, 18.4, 1.3], [30, 18.4, 1.3]], iris: '#5a4aa8', lid: 0, lashes: 0 };
-const jellyFace = (mood) => faceSprite(`starjelly|face|${mood}`, 44, 28, () => faceShapes(mood, FACE));
+// ---------- Its own face, either side of its star: starry eyes (deep violet with a little night
+// sky of white specks in them), stardust freckles on its cheeks, a small serene smile under the
+// star; teary, its tears glow. ----------
+const JDARK = '#2e2266';
+const JLOW = '#7a6ad8';
+const ln = (pts, w, c = JDARK) => [F(taper(pts, w, w * 0.85, c))];
+const twinkle = (x, y, r, c = '#ffffff') => F(T([[x, y - r], [x + r * 0.3, y - r * 0.3], [x + r, y], [x + r * 0.3, y + r * 0.3], [x, y + r], [x - r * 0.3, y + r * 0.3], [x - r, y], [x - r * 0.3, y - r * 0.3]], c));
+const JEYES = [[15.2, 14.6, -1], [28.8, 14.6, 1]];
+const jellyFaceShapes = (mood) => {
+  const out = [];
+  const angry = mood === 'angry';
+  for (const [x, y, s] of JEYES) {
+    if (mood === 'blink' || mood === 'sleep') out.push(...ln(arcP(x, y, 1.9, 1, 15, 165, 8), 0.7));
+    else if (mood === 'happy') out.push(...ln(arcP(x, y + 1.1, 1.9, 1.7, 200, 340, 8), 0.75));
+    else if (mood === 'hurt') out.push(...ln([[x + s * 1.5, y - 1.3], [x - s * 1.1, y], [x + s * 1.5, y + 1.3]], 0.7), F(E(x, y + 2.5, 0.55, 0.85, '#bff4ff')), twinkle(x, y + 2.3, 0.4));
+    else if (mood === 'dizzy') out.push(twinkle(x - 1, y - 0.8, 1.1, '#f0a020'), twinkle(x + 1, y + 0.2, 0.9, '#f0a020'), twinkle(x - 0.4, y + 1.4, 0.75, '#f0a020'));
+    else if (mood === 'dead') out.push(...ln([[x - 1.5, y + 0.2], [x + 1.5, y + 0.2]], 0.55, '#8a80b8'));
+    else {
+      const wide = mood === 'shout' ? 1.12 : 1;
+      let eye = Array.from({ length: 16 }, (_, i) => [x + Math.cos((i / 16) * Math.PI * 2) * 1.9 * wide, y + Math.sin((i / 16) * Math.PI * 2) * 2.4 * wide]);
+      let low = Array.from({ length: 12 }, (_, i) => [x + Math.cos((i / 12) * Math.PI * 2) * 1.35, y + 1 + Math.sin((i / 12) * Math.PI * 2) * 1.1]);
+      if (angry) {
+        eye = eye.map(([px, py]) => [px, Math.max(py, y - 0.7 + (px - x) * -s * 0.5)]);
+        low = low.map(([px, py]) => [px, Math.max(py, y - 0.4 + (px - x) * -s * 0.5)]);
+      }
+      out.push(F(T(eye, JDARK)), F(T(low, JLOW)));
+      // The little night sky: a big shine and three specks.
+      if (!angry) out.push(twinkle(x + 0.6, y - 0.9, 0.85), F(E(x - 0.8, y + 0.2, 0.17, 0.17, '#ffffff')), F(E(x + 0.2, y + 1.4, 0.15, 0.15, '#ffffff')), F(E(x - 0.3, y - 1.3, 0.13, 0.13, '#ffffff')));
+      else out.push(...ln([[x + s * 2, y - 3.4], [x - s * 1.6, y - 2.2]], 0.6));
+    }
+  }
+  // Stardust freckles (gone when it is out).
+  if (mood !== 'dead') for (const [fx, fy] of [[11.4, 17.6], [12.6, 18.6], [11, 19.2], [32.6, 17.6], [31.4, 18.6], [33, 19.2]]) out.push(F(E(fx, fy, 0.32, 0.32, '#ffe08a')));
+  const [mx, my] = [22, 21];
+  if (mood === 'happy') out.push(F(T(arcP(mx, my - 0.4, 1.3, 1.2, 0, 180, 8), '#5a3a8a')));
+  else if (mood === 'shout') out.push(F(E(mx, my + 0.3, 1, 1.3, '#5a3a8a')));
+  else if (angry) out.push(...ln([[mx - 1, my + 0.3], [mx, my - 0.2], [mx + 1, my + 0.3]], 0.4));
+  else if (mood === 'hurt' || mood === 'dizzy') out.push(...ln([[mx - 1, my + 0.2], [mx - 0.35, my - 0.15], [mx + 0.35, my + 0.2], [mx + 1, my - 0.15]], 0.35));
+  else if (mood === 'dead') out.push(...ln([[mx - 0.7, my], [mx + 0.7, my]], 0.35, '#8a80b8'));
+  else out.push(...ln(arcP(mx, my - 0.5, 1, 0.7, 20, 160, 8), 0.4));
+  return out;
+};
+const jellyFace = (mood) => faceSprite(`starjelly|face|${mood}`, 44, 28, () => jellyFaceShapes(mood));
 
 // The bell's middle floats 36 above its hover point, the ribbons hanging down to it.
 const BELL_Y = 36;
@@ -236,7 +277,7 @@ export function starJellyStill(pose, f, mood) {
     for (let i = 0; i <= 6; i++) pts.push([rx + Math.sin(i * 0.9 + k) * 2.6, by + 9 + (i / 6) * 27]);
     return [taper(pts, 2.2, 0.8, k % 2 ? '#fff0b0' : '#ffffff')];
   });
-  const sh = [...ribbons, ...put(haloP(), [10, 4], 0, by - 16), ...put(bellP(), [22, 13], 0, by), ...put(starP(), [7, 7], 0, by), ...put(faceShapes(fm, FACE), [22, 13], 0, by)];
+  const sh = [...ribbons, ...put(haloP(), [10, 4], 0, by - 16), ...put(bellP(), [22, 13], 0, by), ...put(starP(), [7, 7], 0, by), ...put(jellyFaceShapes(fm), [22, 13], 0, by)];
   const ox = 24;
   const oy = 46;
   return { w: 48, h: 50, res: 3, shapes: sh.map((s) => (s.t === 'p' ? { ...s, pts: s.pts.map(([px, py]) => [px * K + ox, py * K + oy]) } : { ...s, x: s.x * K + ox, y: s.y * K + oy, ...(s.rx != null ? { rx: s.rx * K, ry: s.ry * K } : {}), ...(s.t === 'r' ? { w: s.w * K, h: s.h * K } : {}) })) };

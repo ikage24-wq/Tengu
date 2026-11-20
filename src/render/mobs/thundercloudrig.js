@@ -15,7 +15,7 @@
 
 import { E, T, F } from './kit.js';
 import { makeRig, stateBlend, clamp, TAU } from './rig.js';
-import { D2R, taper, arcP, pairOf, faceSprite, hold, put, shift, MOODS, moodOf, faceShapes } from './rigkit.js';
+import { D2R, taper, arcP, pairOf, faceSprite, hold, put, shift, MOODS, moodOf } from './rigkit.js';
 
 const K = 0.7;
 const STORM = '#6a76a8';
@@ -47,8 +47,47 @@ const handP = () => [E(4, 4, 3, 2.8, STORM)];
 const PR = {
   CLOUD: tc('cloud', 52, 40, cloudP, 3, 3), HORNL: tc('hornL', 14, 22, hornLP, 3, 3), HORNR: tc('hornR', 14, 22, hornRP, 3, 3), HARP: tc('harp', 18, 22, harpP, 3, 3), HAND: tc('hand', 8, 8, handP, 3, 3),
 };
-const FACE = { eyes: [[23, 17, 1.9, 2.4, -1], [30, 17, 1.9, 2.4, 1]], mouth: [26.6, 21.6, 1.3], blush: [[20, 20.4, 1.3], [33.4, 20.4, 1.3]], iris: '#2a3a6a', lid: 0, lashes: 0 };
-const cloudFace = (mood) => faceSprite(`thundercl|face|${mood}`, 52, 40, () => faceShapes(mood, FACE));
+// ---------- Its own face: a little storm. Deep navy eyes with a gold lightning-bolt glint, puffy
+// storm-cloud brows that gather when it is cross, a rumbling wavy mouth that opens to sing; it
+// roars with a jagged thunder-crack of a mouth and cries rain when hurt. ----------
+const SDARK = '#1e2448';
+const SBROW = '#444e86';
+const ln = (pts, w, c = SDARK) => [F(taper(pts, w, w * 0.85, c))];
+const bolt = (x, y, k, c) => F(T([[x - 0.2 * k, y - 1.2 * k], [x + 0.6 * k, y - 1.2 * k], [x + 0.15 * k, y - 0.2 * k], [x + 0.6 * k, y - 0.2 * k], [x - 0.5 * k, y + 1.2 * k], [x - 0.05 * k, y + 0.1 * k], [x - 0.5 * k, y + 0.1 * k]], c));
+const SEYES = [[22.6, 17, -1], [30.4, 17, 1]];
+const cloudFaceShapes = (mood) => {
+  const out = [];
+  const [mx, my] = [26.5, 22];
+  const angry = mood === 'angry';
+  for (const [x, y, s] of SEYES) {
+    // The storm brows: two puffs over each eye, gathered and low to scowl, high when hurt.
+    const lift = angry ? 0 : mood === 'hurt' ? -0.6 : mood === 'happy' || mood === 'shout' ? -1 : -0.5;
+    const tilt = angry ? 0.9 : mood === 'hurt' ? -0.6 : 0;
+    out.push(F(E(x - s * 0.9, y - 3.6 + lift + tilt, 1.4, 0.9, SBROW)), F(E(x + s * 0.9, y - 3.6 + lift - tilt, 1.4, 0.9, SBROW)));
+    if (mood === 'blink' || mood === 'sleep') out.push(...ln(arcP(x, y, 1.8, 1, 15, 165, 8), 0.75));
+    else if (mood === 'happy') out.push(...ln(arcP(x, y + 1, 1.8, 1.6, 200, 340, 8), 0.8));
+    else if (mood === 'hurt') out.push(...ln([[x + s * 1.6, y - 1.4], [x - s * 1.1, y], [x + s * 1.6, y + 1.4]], 0.75), F(E(x + s * 0.4, y + 2.4, 0.5, 0.8, '#9ad8ff')), F(E(x + s * 0.2, y + 4.2, 0.4, 0.65, '#9ad8ff')));
+    else if (mood === 'dizzy') {
+      const pts = [];
+      for (let i = 0; i <= 13; i++) pts.push([x + Math.cos(i * 0.85) * (0.15 + i * 0.13), y + Math.sin(i * 0.85) * (0.15 + i * 0.13)]);
+      out.push(...ln(pts, 0.5, '#ffd84a'));
+    } else if (mood === 'dead') out.push(...ln([[x - 1.6, y + 0.2], [x, y + 0.7], [x + 1.6, y + 0.2]], 0.65), F(E(x, y + 2.2, 0.4, 0.65, '#9ad8ff')));
+    else if (mood === 'shout') out.push(F(E(x, y, 2, 2.4, '#ffffff')), F(E(x, y + 0.2, 0.7, 0.8, SDARK)), bolt(x + 0.2, y + 0.2, 0.45, '#ffd84a'));
+    else {
+      let eye = Array.from({ length: 16 }, (_, i) => [x + Math.cos((i / 16) * Math.PI * 2) * 1.9, y + Math.sin((i / 16) * Math.PI * 2) * 2.4]);
+      if (angry) eye = eye.map(([px, py]) => [px, Math.max(py, y - 0.8 + (px - x) * -s * 0.5)]);
+      out.push(F(T(eye, SDARK)), bolt(x + 0.5, y - 0.2, angry ? 1 : 1.2, angry ? '#ff9a3a' : '#ffd84a'));
+      if (!angry) out.push(F(E(x - 0.7, y + 1.3, 0.3, 0.3, '#ffffff')));
+    }
+  }
+  if (mood === 'happy') out.push(F(E(mx, my + 0.3, 1.3, 1.5, '#3a2a5a')), F(E(mx, my + 1, 0.8, 0.5, '#ff8fab')));
+  else if (mood === 'shout') out.push(F(T([[mx - 2.8, my - 0.6], [mx - 1.6, my + 0.2], [mx - 0.6, my - 0.6], [mx + 0.6, my + 0.2], [mx + 1.6, my - 0.6], [mx + 2.8, my + 0.2], [mx + 1.8, my + 3.2], [mx - 1.8, my + 3.2]], '#3a2a5a')), F(E(mx, my + 2.4, 1.2, 0.5, '#ff8fab')));
+  else if (angry) out.push(...ln([[mx - 1.8, my + 0.6], [mx - 0.6, my - 0.2], [mx + 0.6, my + 0.6], [mx + 1.8, my - 0.2]], 0.5));
+  else if (mood === 'dead') out.push(...ln([[mx - 1.4, my + 0.4], [mx, my - 0.2], [mx + 1.4, my + 0.4]], 0.45));
+  else out.push(...ln([[mx - 1.8, my], [mx - 0.9, my - 0.5], [mx, my], [mx + 0.9, my - 0.5], [mx + 1.8, my]], 0.45));
+  return out;
+};
+const cloudFace = (mood) => faceSprite(`thundercl|face|${mood}`, 52, 40, () => cloudFaceShapes(mood));
 
 // The cloud's middle floats 20 above the floor.
 const BODY_Y = 20;
@@ -226,7 +265,7 @@ export function thundercloudStill(pose, f, mood) {
   const fm = MOODS.has(mood) ? mood : 'idle';
   const by = -BODY_Y - 1.6;
   const sh = [
-    ...put(hornLP(), [6, 20], -7.4, by - 20), ...put(hornRP(), [6, 20], 9.6, by - 20), ...put(cloudP(), [26, 20], 0, by), ...put(faceShapes(fm, FACE), [26, 20], 0, by),
+    ...put(hornLP(), [6, 20], -7.4, by - 20), ...put(hornRP(), [6, 20], 9.6, by - 20), ...put(cloudP(), [26, 20], 0, by), ...put(cloudFaceShapes(fm), [26, 20], 0, by),
     ...put(harpP(), [5, 13], HARP_AT[0], by + HARP_AT[1], -6), ...put(handP(), [4, 4], HARP_AT[0] - 1, by + HARP_AT[1] + 1),
   ];
   const ox = 26;
