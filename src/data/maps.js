@@ -2923,51 +2923,65 @@ Object.assign(MAPS, {
     habitats: { nekomata: { naps: true, play: true, home: { x: 780, y: 960 } }, kitsunemiko: { naps: true } },
   },
 
-  // Moonlit Ridge is a walk along a ridgeline, side by side (data/climb.js lay()): the ground itself
-  // rises and falls. The Moonlit Meadow in the west, a low saddle among the moonstones where a
-  // moonbeam lifts you; the Wolf Den on the rocky knoll and the dip beyond it, the Lupina's home,
-  // with a ledge drifting over the dip; and the Howling Rock in the east, the high summit where
-  // fallen stars have woken as Meteor Golems (the observatory's road leaves from it), and a vent
-  // bounces you up onto the great howling rock itself.
+  // Moonlit Ridge (its makeover, 2026-11-20): a walk up a ridgeline built round its landmarks
+  // (render/ridgeart.js), zones side by side. The Moonlit Meadow where you come in: the moon gate,
+  // two standing moonstones with a capstone across them, the moonbeam rising between them (Up to
+  // ride it onto the capstone). The Wolf Den on the knoll: the Lupinas' den, a mound of mossy
+  // boulders with a warm doorway, a lantern and a campfire (climb its side boulder to its roof), and
+  // a cloud ferrying you over the dip beyond it. The Howling Rock on the summit: a great rock shaped
+  // like a wolf howling at the moon (a gust at its foot bounces you onto its crown, the top of
+  // Howling Rock for the quests; the homestone stands on its chest), and the road to the
+  // observatory at the summit's end.
   ridge: {
-    id: 'ridge', name: 'Moonlit Ridge', theme: 'ridge', town: 'crag', world: { x: 246, y: 104 },
+    id: 'ridge', name: 'Moonlit Ridge', theme: 'ridge', town: 'crag', world: { x: 246, y: 104 }, perSpawn: 3,
+    // (The ridge is soft night earth under a grass lip, not the old heavy cobbles.)
+    look: { material: 'grove', props: [], ledgeKeep: 1 },
     ...lay({
-      width: 2400, ground: 880, by: 'x',
-      terrain: [[0, 880], [600, 880], [600, 760], [1000, 760], [1000, 840], [1400, 840], [1400, 700], [1800, 700], [1800, 560], [2400, 560]],
-      // Ropes down each rock face, hanging beside it from the top.
-      ropes: [{ x: 590, top: 760, bottom: 880 }, { x: 1010, top: 760, bottom: 840 }, { x: 1390, top: 700, bottom: 840 }, { x: 1790, top: 560, bottom: 700 }],
-      quiet: [[40, 880, 160]],
+      width: 2000, ground: 900, by: 'x',
+      // The meadow, the knoll, the dip, the summit.
+      terrain: [[0, 900], [640, 900], [640, 780], [1000, 780], [1000, 880], [1320, 880], [1320, 640], [2000, 640]],
+      // Down each rock face, beside it from the top.
+      ropes: [{ x: 630, top: 780, bottom: 900 }, { x: 1010, top: 780, bottom: 880 }, { x: 1310, top: 640, bottom: 880 }],
+      quiet: [[40, 900, 200], [1960, 640, 120]],
       zones: [
-        { name: 'Moonlit Meadow', color: '#6a8ad0', from: 0, mobs: ['lupina'], nodes: [SPOT.herb(3, 'moon_thyme'), SPOT.wood(3)] },
-        { name: 'Wolf Den', color: '#8a7ab0', from: 600, mobs: ['lupina', 'meteorgolem'], nodes: [SPOT.ore(3), SPOT.ore(3, { gem: 0.16 })],
-          look: { sky: ['#2a2e6a', '#4a4e8a', '#8a8ac0'] } },
-        { name: 'Howling Rock', color: '#a8b8e0', from: 1400, mobs: ['meteorgolem', 'lupina'], nodes: [SPOT.herb(3, 'moon_thyme'), SPOT.night(3)],
-          look: { sky: ['#1e2058', '#3a3c7a', '#6a6aa8'] } },
+        { name: 'Moonlit Meadow', color: '#6a8ad0', from: 0, mobs: ['lupina'] },
+        { name: 'Wolf Den', color: '#8a7ab0', from: 640, mobs: ['lupina', 'meteorgolem'], look: { sky: ['#2a2e6a', '#4a4e8a', '#8a8ac0'] } },
+        { name: 'Howling Rock', color: '#a8b8e0', from: 1320, mobs: ['meteorgolem', 'lupina'], look: { sky: ['#1e2058', '#3a3c7a', '#6a6aa8'] } },
       ],
       ledges: [
-        // The meadow's rocks.
-        { x: 150, y: 800, w: 300 }, { x: 250, y: 720, w: 260 },
-        // Ledges on the den's knoll, and over the dip.
-        { x: 650, y: 680, w: 300 }, { x: 800, y: 600, w: 260 }, { x: 1080, y: 760, w: 260 },
-        // The rise, the howling rock on the summit, and a perch above it.
-        { x: 1450, y: 620, w: 280 },
-        { x: 2000, y: 480, w: 300 }, { x: 2100, y: 400, w: 200 },
-        // The ledge drifting over the dip.
-        { x: 1010, y: 700, w: 120, drift: { dx: 260, period: 9 } },
+        // The moon gate's capstone (drawn with it) and a rock shelf up to the knoll.
+        { x: 270, y: 740, w: 220, bare: true, noProps: true, noRope: true },
+        { x: 500, y: 820, w: 132, root: 'right', noProps: true, noRope: true },
+        // The den's side boulder and its roof (drawn with it).
+        { x: 670, y: 720, w: 76, bare: true, noProps: true, noRope: true }, { x: 730, y: 660, w: 220, bare: true, noProps: true, noRope: true },
+        // The Howling Rock's crown and its chest (drawn with it).
+        { x: 1620, y: 480, w: 100, bare: true, noProps: true, noRope: true }, { x: 1750, y: 560, w: 84, bare: true, noProps: true, noRope: true },
+        // The cloud ferrying you over the dip, knoll to summit.
+        { x: 1004, y: 720, w: 110, drift: { dx: 206, period: 9 }, style: 'earth', material: 'sky' },
       ],
     }),
-    // A moving part per zone: a moonbeam rising in the meadow (Up to ride it), the ledge drifting
-    // over the dip, and a vent up onto the howling rock.
-    updrafts: [{ x: 520, w: 50, top: 690, bottom: 880, kind: 'wisplight' }],
-    springs: [{ x: 2060, y: 560, up: 120, kind: 'gust' }],
-    portals: [{ id: 'west', x: 40, y: 880, to: 'crag', toPortal: 'ridge' }],
+    // Its monsters, placed by hand, three a spot, well away from the ways in (the arrival rule).
+    spawns: [
+      { mob: 'lupina', x: 520, y: 900 }, { mob: 'lupina', x: 380, y: 740 }, { mob: 'lupina', x: 560, y: 820 },
+      { mob: 'lupina', x: 740, y: 780 }, { mob: 'meteorgolem', x: 980, y: 780 }, { mob: 'lupina', x: 880, y: 660 },
+      { mob: 'meteorgolem', x: 1110, y: 880 }, { mob: 'meteorgolem', x: 1500, y: 640 }, { mob: 'meteorgolem', x: 1670, y: 480 },
+    ],
+    // Its gathering spots, placed by hand, clear of the monsters, ropes, moonbeam and ways.
+    nodes: [
+      { ...SPOT.wood(3), x: 170, y: 900 }, { ...SPOT.herb(3, 'moon_thyme'), x: 260, y: 900 }, { ...SPOT.ore(3), x: 860, y: 780 },
+      { ...SPOT.ore(3, { gem: 0.16 }), x: 760, y: 660 }, { ...SPOT.night(3), x: 1240, y: 880 }, { ...SPOT.herb(3, 'moon_thyme'), x: 1380, y: 640 },
+    ],
+    // A moving part per zone: the moonbeam rising through the moon gate, the cloud over the dip,
+    // a gust at the Howling Rock's foot.
+    updrafts: [{ x: 380, w: 50, top: 700, bottom: 900, kind: 'wisplight' }],
+    springs: [{ x: 1598, y: 640, up: 180, kind: 'gust' }],
+    portals: [{ id: 'west', x: 40, y: 900, to: 'crag', toPortal: 'ridge' }],
     npcs: [],
-    // A landmark per zone: the moonstones in the meadow, a howling rock on the knoll, the great
-    // howling rock on the summit.
-    deco: [['moonstone', 400], ['moonstone', 1200, 0, 840], ['howlrock', 800, 0, 760], ['howlrock', 2150, 0, 480], ['moonstone', 1650, 1, 700]],
-    lamps: [{ x: 400, y: 850 }, { x: 800, y: 720 }, { x: 2150, y: 440 }],
-    spirit: { x: 1700, y: 480 },
-    habitats: { lupina: { play: true, home: { x: 800, y: 760 } }, meteorgolem: { naps: true } },
+    // The landmarks: the moon gate, the den, the Howling Rock, and moonstones by the dip and the road.
+    deco: [['moongate', 380, 0], ['wolfden', 840, 0, 780], ['wolfrock', 1650, 0, 640], ['moonstone', 1200, 0, 880], ['moonstone', 1880, 1, 640]],
+    lamps: [{ x: 380, y: 860 }, { x: 840, y: 740 }, { x: 944, y: 760 }, { x: 1650, y: 600 }],
+    spirit: { x: 1200, y: 600 },
+    habitats: { lupina: { play: true, home: { x: 840, y: 780 } }, meteorgolem: { naps: true } },
   },
 
 
@@ -3243,7 +3257,7 @@ MAPS.grotto.ownLight = true;
 MAPS.glade.portals.push({ id: 'bower', x: 580, y: 480, to: 'bower', toPortal: 'west', label: "Sylvana's Bower" });
 // The way to the Clockwork Carnival (its rooms are with the dungeons above).
 MAPS.springs.portals.push({ id: 'volcano', x: 2340, y: 880, to: 'sugar_trail', toPortal: 'west', label: 'Candy Volcano' });
-MAPS.ridge.portals.push({ id: 'observatory', x: 2360, y: 560, to: 'observatory_steps', toPortal: 'west', label: 'Star Observatory' });
+MAPS.ridge.portals.push({ id: 'observatory', x: 1960, y: 640, to: 'observatory_steps', toPortal: 'west', label: 'Star Observatory' });
 MAPS.shrine.portals.push({ id: 'carnival', x: 1965, y: 520, to: 'carnival_gate', toPortal: 'west', label: 'Clockwork Carnival' });
 MAPS.shrine.portals.push({ id: 'sanctum', x: 1720, y: 520, to: 'sanctum', toPortal: 'west', label: "Tamamo's Sanctum", mouth: 48, labelAt: 150 });
 // The Tea Terraces' fishing stone over the pond.
@@ -3273,7 +3287,7 @@ MAPS.starfall.spawns.push({ mob: 'selene', x: 1200, y: 1040, respawn: 600 });
 // way), so a long map never means a long walk back.
 const HOMESTONES = {
   meadow1: [1555, 400], meadow2: [200, 700], woods: [1650, 880], ruins: [1764, 330], cave: [1660, 362],
-  sky: [1920, 330], canyon: [110, 520], glade: [880, 900], shrine: [620, 480], ridge: [2200, 400],
+  sky: [1920, 330], canyon: [110, 520], glade: [880, 900], shrine: [620, 480], ridge: [1800, 560],
   springs: [1992, 640], peak: [1740, 880], starfall: [1920, 380],
 };
 for (const [id, [x, y]] of Object.entries(HOMESTONES)) {

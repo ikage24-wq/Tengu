@@ -15,6 +15,7 @@ import { SKY_KINDS } from './skyart.js';
 import { PEAK_KINDS } from './peakart.js';
 import { STARFALL_KINDS } from './starfallart.js';
 import { SHRINE_KINDS } from './shrineart.js';
+import { RIDGE_KINDS } from './ridgeart.js';
 import { MANORHILL_KINDS } from './manorhill.js';
 import { AQUA_KINDS } from './aquapalace.js';
 import { FAIR_KINDS } from './fairground.js';
@@ -3364,6 +3365,8 @@ const KINDS = {
   ...STARFALL_KINDS,
   // (Fox Shrine Path's pagoda, sacred cherry, torii stair and Fox Shrine: render/shrineart.js.)
   ...SHRINE_KINDS,
+  // (Moonlit Ridge's moon gate, wolf den and Howling Rock: render/ridgeart.js.)
+  ...RIDGE_KINDS,
   // (Manor Hill's gates, the pumpkin coach, lamp posts, rose hedges, topiaries: render/manorhill.js.)
   ...MANORHILL_KINDS,
   ...AQUA_KINDS,
