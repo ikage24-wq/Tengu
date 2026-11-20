@@ -166,7 +166,7 @@ export const SPOTS = {
   // Tier 3: the glowing pool by the Crystal Throne's gate, and the serpent's hot spring.
   cave: [{ x: 1070, y: 898, face: 1, bx: 1160, by: 925, tier: 3, pool: { fish_cavefish: 6, fish_eel: 2, fish_char: 1, fish_blindfish: 5, fish_crystaltetra: 3, fish_geode: 2, fish_spiritfish: 1.5 } }],
   tea: [{ x: 1640, y: 1000, face: 1, bx: 1700, by: 1052, tier: 3, pool: { fish_koi: 3, fish_char: 3, fish_eel: 2, fish_loach: 4, fish_carp: 4 } }],
-  springs: [{ x: 2090, y: 872, face: 1, bx: 2180, by: 895, tier: 3, pool: { fish_hotfish: 6, fish_char: 2, fish_koi: 1.5, fish_eel: 1.5, fish_dragonkoi: 0.3, fish_onsengoby: 4, fish_snapper: 2.5, fish_embereel: 1.5, fish_jadeserpent: 0.1 } }],
+  springs: [{ x: 432, y: 900, face: 1, bx: 530, by: 913, tier: 3, pool: { fish_hotfish: 6, fish_char: 2, fish_koi: 1.5, fish_eel: 1.5, fish_dragonkoi: 0.3, fish_onsengoby: 4, fish_snapper: 2.5, fish_embereel: 1.5, fish_jadeserpent: 0.1 } }],
   // Tier 4: ice fishing on the frozen lake, the cloud sea off the Sky Garden's cloud dock, and the
   // star pool at Starfall.
   peak: [{ x: 1480, y: 1136, face: 1, bx: 1556, by: 1136, ice: true, tier: 4, pool: { fish_icefish: 6, fish_auroratrout: 4, fish_trout: 1, fish_seraph: 0.4, fish_smelt: 5, fish_glacierpike: 1.5, fish_cod: 3, fish_aurorajelly: 1.2 } }],

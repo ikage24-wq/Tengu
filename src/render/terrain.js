@@ -77,6 +77,8 @@ export const MATERIALS = {
   // Map-specific materials (a map's `look.material`).
   // Starfall Heights: cloud tinted lavender by the night sky.
   starcloud: { lip: '#f2ecff', body: '#d8d0f6', deep: '#b0a4e0', stone: '#ffffff', style: 'cloud', blades: false, drip: null },
+  // Serpent Springs: warm mineral earth under a white crust where the hot water has run for ages.
+  onsen: { lip: '#fbf6f0', body: '#f0d8c8', deep: '#d4b4a4', stone: '#fff2e6', style: 'petalsoil', blades: false, drip: null },
   // Clover Hills' fields (its art pass, 2026-11-11): Petal Meadow's puffy grass cap and soft soil
   // in warm farm browns.
   clover: { lip: '#86dc7e', body: '#d8a77a', deep: '#a8734e', stone: '#f2d2a8', style: 'petalsoil', blades: true, drip: 'root', cap: 'puffy' },
