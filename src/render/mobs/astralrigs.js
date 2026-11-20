@@ -17,8 +17,8 @@
 
 import { E, T, F, R, stroke } from './kit.js';
 import { ramp, crescent, shine } from './meadow.js';
-import { makeRig, stateBlend, clamp, TAU } from './rig.js';
-import { D2R, fr, ov, arcP, taper, pairOf, faceSprite, hold, stepPhase, pawStep, put, shift, MOODS, moodOf, faceShapes, sparkle, puff, dot } from './rigkit.js';
+import { makeRig, stateBlend, TAU } from './rig.js';
+import { D2R, INK, fr, arcP, taper, pairOf, faceSprite, hold, stepPhase, pawStep, put, shift, MOODS, moodOf, sparkle, puff } from './rigkit.js';
 
 const sm = (key, w, h, shapes) => faceSprite(key, w, h, shapes);
 const at2 = (M, x, y) => [M[0] * x + M[2] * y + M[4], M[1] * x + M[3] * y + M[5]];
@@ -56,8 +56,74 @@ const CC_HEAD = cc('head', 17, 15, ccHead, 2);
 const CC_WING = [false, true].map((f) => cc(`wing${f ? 1 : 0}`, 11, 9, ccWing(f), 2));
 const CC_FOOT = [false, true].map((f) => cc(`foot${f ? 1 : 0}`, 6, 5, ccFoot(f), 2));
 const CC_BAG = cc('bag', 9, 9, ccBag, 2);
-const CC_FACE = { eyes: [[10, 9.4, 1.2, 1.6, 1]], mouth: [12, 12.4, 0.8], blush: [[9.4, 12, 1.2]], iris: '#3a2d4f', lid: 0 };
-const ccFace = (mood) => sm(`cc|face|${mood}`, 17, 15, () => faceShapes(mood, CC_FACE));
+const oLn = (pts, w, c = INK) => {
+  const l = [];
+  const r = [];
+  pts.forEach(([x, y], i) => {
+    const [ax, ay] = pts[Math.max(0, i - 1)];
+    const [bx, by] = pts[Math.min(pts.length - 1, i + 1)];
+    const d = Math.hypot(bx - ax, by - ay) || 1;
+    const nx = ((-(by - ay) / d) * w) / 2;
+    const ny = (((bx - ax) / d) * w) / 2;
+    l.push([x + nx, y + ny]);
+    r.push([x - nx, y - ny]);
+  });
+  return [F(T([...l, ...r.reverse()], c))];
+};
+const oArc = (cx, cy, rx, ry, a0, a1, n = 8) => Array.from({ length: n + 1 }, (_, i) => {
+  const a = ((a0 + ((a1 - a0) * i) / n) * Math.PI) / 180;
+  return [cx + Math.cos(a) * rx, cy + Math.sin(a) * ry];
+});
+const oRing = (cx, cy, rx, ry, rot = 0, n = 16) => Array.from({ length: n }, (_, i) => {
+  const a = (i / n) * Math.PI * 2;
+  const x = Math.cos(a) * rx;
+  const y = Math.sin(a) * ry;
+  return [cx + x * Math.cos(rot) - y * Math.sin(rot), cy + x * Math.sin(rot) + y * Math.cos(rot)];
+});
+const oCut = (pts, lid) => pts.map(([px, py]) => [px, Math.max(py, lid(px))]);
+const oSquint = (x, y, s, r, w, c = INK) => oLn([[x + s * r, y - r], [x - s * r * 0.8, y], [x + s * r, y + r]], w, c);
+const oSpiral = (x, y, r, w, c, s = 1) => oLn(Array.from({ length: 15 }, (_, i) => [x + Math.cos(i * 0.8 * s) * r * (0.12 + i / 15), y + Math.sin(i * 0.8 * s) * r * (0.12 + i / 15)]), w, c);
+const oDrop = (x, y, r, c = '#9ad8ff') => [F(E(x, y, r * 0.7, r, c)), F(E(x - r * 0.2, y - r * 0.3, r * 0.25, r * 0.25, '#ffffff'))];
+const oStar = (x, y, r, c, n = 5, k = 0.45) => F(T(Array.from({ length: n * 2 }, (_, i) => {
+  const a = (i * Math.PI) / n - Math.PI / 2;
+  const rr = i % 2 ? r * k : r;
+  return [x + Math.cos(a) * rr, y + Math.sin(a) * rr];
+}), c));
+const oX = (x, y, w, h, wd, c = INK) => [...oLn([[x - w * 0.7, y - h * 0.55], [x + w * 0.7, y + h * 0.55]], wd, c), ...oLn([[x - w * 0.7, y + h * 0.55], [x + w * 0.7, y - h * 0.55]], wd, c)];
+const oWave = (mx, my, hw, wd, c = INK) => oLn(Array.from({ length: 5 }, (_, i) => [mx - hw + (i * hw) / 2, my + (i % 2 ? -0.3 : 0.3)]), wd, c);
+const NOLID = () => -99;
+// The closed and knocked-about eyes every face has (each face draws its own open eyes).
+const oShut = (mood, x, y, s, w, h, lw, sc = INK) => {
+  if (mood === 'blink' || mood === 'sleep') return oLn(oArc(x, y + h * 0.1, w, h * 0.35, 15, 165, 8), lw);
+  if (mood === 'happy') return oLn(oArc(x, y + h * 0.35, w, h * 0.7, 200, 340, 8), lw);
+  if (mood === 'hurt') return oSquint(x, y, s, w * 0.8, lw);
+  if (mood === 'dizzy') return oSpiral(x, y, w, lw * 0.8, sc, s);
+  if (mood === 'dead') return oX(x, y, w, h, lw * 0.9);
+  return null;
+};
+// An open eye's ink, two-tone iris and lid line, all cut by its lid.
+const oOpen = (x, y, w, h, lid, top, low) => [F(T(oCut(oRing(x, y, w, h), lid), INK)), F(T(oCut(oRing(x, y + h * 0.08, w * 0.82, h * 0.84), lid), top)), F(T(oCut(oRing(x, y + h * 0.45, w * 0.62, h * 0.4), lid), low))];
+const oLid = (x, y, w, h, lid, lw) => oLn(oCut(oArc(x, y, w * 1.02, h * 1.02, 190, 350, 10), (px) => lid(px) - lw * 0.25), lw);
+const oDot = (x, y, r, c, lid = NOLID) => F(T(oCut(oRing(x, y, r, r, 0, 8), lid), c));
+// Its own face, a comet courier bird's (side on): a bright eye with a comet of light (a glint trailing a
+// short tail) under a little keen brow; its beak is part of its head. Box 17 x 15.
+const ccOwnFace = (mood) => {
+  const out = [];
+  const [x, y, s, w, h] = [10, 9.4, 1, 1.2, 1.6];
+  const tilt = mood === 'angry' ? 0.5 : mood === 'hurt' ? -0.4 : mood === 'shout' || mood === 'happy' ? -0.3 : 0.1;
+  if (mood !== 'dead') out.push(...oLn([[x - w * 0.9, y - h * 1.05 - tilt * 0.4], [x + w * 0.9, y - h * 1.1 + tilt]], 0.42));
+  const shut = oShut(mood, x, y, s, w, h, 0.45, '#3a5ab8');
+  if (shut) out.push(...shut);
+  else {
+    const lid = mood === 'angry' ? (px) => y - h * 0.25 + (px - x) * 0.6 : NOLID;
+    out.push(...oOpen(x, y, w, h, lid, '#1e2a5a', '#4a7ad8'), oDot(x, y + h * 0.12, w * (mood === 'shout' ? 0.2 : 0.3), INK, lid));
+    out.push(...oLn(oCut([[x - w * 0.25, y + h * 0.05], [x + w * 0.1, y - h * 0.15], [x + w * 0.32, y - h * 0.28]], lid), 0.18, '#bfe0ff'), oDot(x + w * 0.35, y - h * 0.3, w * 0.2, '#ffffff', lid), ...oLid(x, y, w, h, lid, 0.45));
+  }
+  if (mood !== 'dead') out.push(F(E(9.4, 12, 1.1, 0.5, '#ff9ab0')));
+  if (mood === 'hurt') out.push(...oDrop(11.8, 11, 0.5));
+  return out;
+};
+const ccFace = (mood) => sm(`cc|face|${mood}`, 17, 15, () => ccOwnFace(mood));
 const ccPass = (bare) => {
   const i = bare ? 1 : 0;
   const tag = bare ? 'b' : '';
@@ -142,7 +208,7 @@ export function cometStill(pose, f, mood) {
   const fm = MOODS.has(mood) ? mood : 'idle';
   return { w: 34, h: 40, res: 3, shapes: shift([
     ...put(ccWing(true)(), [1, 1], -3, -16, -10), ...put(ccFoot(true)(), [2, 0], -2, -4.6), ...put(ccBag(), [4.5, 0.5], -4, -12), ...put(ccFoot(false)(), [2, 0], 2, -4.6),
-    ...put(ccBody(), [9, 17.6], 0, -4), ...put(ccHead(), [8, 14.4], 1, -18), ...put(faceShapes(fm, CC_FACE), [8, 14.4], 1, -18), ...put(ccWing(false)(), [1, 1], -2, -15, 10),
+    ...put(ccBody(), [9, 17.6], 0, -4), ...put(ccHead(), [8, 14.4], 1, -18), ...put(ccOwnFace(fm), [8, 14.4], 1, -18), ...put(ccWing(false)(), [1, 1], -2, -15, 10),
   ], 17, 39) };
 }
 
@@ -167,8 +233,34 @@ const NW_CLOUD = nw('cloud', 26, 22, nwCloud, 2);
 const NW_HAT = nw('hat', 20, 21, nwHat, 2);
 const NW_ARM = [false, true].map((f) => nw(`arm${f ? 1 : 0}`, 6, 6, nwArm(f), 2));
 const NW_WAND = nw('wand', 4, 13, nwWand, 2);
-const NW_FACE = { eyes: [[16, 11.4, 1.4, 1.9, 1], [10.6, 11.6, 1.2, 1.7, -1]], mouth: [13.6, 14.6, 1.4], blush: [[8.6, 14, 1.4], [18.4, 13.6, 1.2]], iris: '#7a50b8', lid: 0, lashes: 1 };
-const nwFace = (mood) => sm(`nw|face|${mood}`, 26, 22, () => faceShapes(mood, NW_FACE));
+// Her own face, a nebula witch's: galaxy eyes (pink fading into deep indigo) with a scatter of tiny stars
+// in them, long lashes and a dreamy little smile. Box 26 x 22.
+const NW_EYES = [[16, 11.4, 1, 1.4, 1.9], [10.6, 11.6, -1, 1.2, 1.7]];
+const nwOwnFace = (mood) => {
+  const out = [];
+  for (const [x, y, s, w, h] of NW_EYES) {
+    const shut = oShut(mood, x, y, s, w, h, 0.5, '#7a50b8');
+    if (shut) out.push(...shut);
+    else {
+      const lid = mood === 'angry' ? (px) => y - h * 0.2 + (px - x) * -s * 0.6 : NOLID;
+      out.push(...oOpen(x, y, w, h, lid, '#2a1e6a', '#e86ab8'));
+      for (const [dx, dy, r] of [[0.3, -0.3, 0.2], [-0.35, 0.05, 0.1], [0.15, 0.25, 0.08], [-0.1, -0.45, 0.07]]) out.push(oDot(x + w * dx, y + h * dy, w * r, '#ffffff', lid));
+      out.push(...oLid(x, y, w, h, lid, 0.5));
+    }
+    if (mood !== 'dead' && mood !== 'hurt' && mood !== 'dizzy') out.push(...oLn([[x + s * w * 0.85, y - h * 0.3], [x + s * w * 1.35, y - h * 0.7]], 0.35), ...oLn([[x + s * w * 0.4, y - h * 0.8], [x + s * w * 0.6, y - h * 1.25]], 0.3));
+  }
+  if (mood !== 'dead') out.push(F(E(8.6, 14, 1.3, 0.6, '#ff9ad0')), F(E(18.4, 13.6, 1.1, 0.5, '#ff9ad0')));
+  const [mx, my] = [13.6, 14.6];
+  if (mood === 'shout') out.push(F(E(mx, my + 0.3, 0.8, 0.95, '#5a2a6a')));
+  else if (mood === 'happy') out.push(F(T(oArc(mx, my - 0.3, 1.1, 1, 0, 180, 8), '#5a2a6a')), F(E(mx, my + 0.4, 0.55, 0.25, '#ff9ac8')));
+  else if (mood === 'angry') out.push(...oLn([[mx - 0.9, my + 0.3], [mx, my], [mx + 0.9, my + 0.3]], 0.35));
+  else if (mood === 'hurt' || mood === 'dizzy') out.push(...oWave(mx, my, 0.9, 0.3));
+  else if (mood === 'dead') out.push(F(E(mx, my + 0.2, 0.35, 0.4, '#5a2a6a')));
+  else out.push(...oLn(oArc(mx, my - 0.7, 1, 0.9, 25, 155, 6), 0.35));
+  if (mood === 'hurt') out.push(...oDrop(18.4, 11.4, 0.55));
+  return out;
+};
+const nwFace = (mood) => sm(`nw|face|${mood}`, 26, 22, () => nwOwnFace(mood));
 const nwPass = (bare) => {
   const i = bare ? 1 : 0;
   const tag = bare ? 'b' : '';
@@ -220,7 +312,7 @@ export const nebulaRig = makeRig({
 export function nebulaStill(pose, f, mood) {
   const fm = MOODS.has(mood) ? mood : 'idle';
   return { w: 36, h: 52, res: 3, shapes: shift([
-    ...put(nwArm(true)(), [2.6, 2.6], -11, -15), ...put(nwCloud(), [13, 21], 0, -6), ...put(nwHat(), [10, 20], -1, -23), ...put(faceShapes(fm, NW_FACE), [13, 21], 0, -6),
+    ...put(nwArm(true)(), [2.6, 2.6], -11, -15), ...put(nwCloud(), [13, 21], 0, -6), ...put(nwHat(), [10, 20], -1, -23), ...put(nwOwnFace(fm), [13, 21], 0, -6),
     ...put(nwWand(), [1, 11], 11.2, -17, -10), ...put(nwArm(false)(), [2.6, 2.6], 11.2, -17),
   ], 18, 51) };
 }
@@ -244,8 +336,34 @@ const TC_SCOPE = tc('scope', 26, 12, tcScope, 6);
 const TC_CLAW = [false, true].map((f) => tc(`claw${f ? 1 : 0}`, 11, 8, tcClaw(f), 2));
 const TC_LEG = [false, true].map((f) => tc(`leg${f ? 1 : 0}`, 5, 6, tcLeg(f), 2));
 const TC_CHART = tc('chart', 11, 4, tcChart, 2);
-const TC_FACE = { eyes: [[11, 7.4, 1.3, 1.7, 1], [6.6, 7.6, 1.1, 1.5, -1]], mouth: [9.4, 10.4, 1.4], blush: [[5, 9.6, 1.2], [13.4, 9.4, 1]], iris: '#3a2d4f', lid: 0 };
-const tcFace = (mood) => sm(`tc|face|${mood}`, 18, 16, () => faceShapes(mood, TC_FACE));
+// Its own face, a star-gazing crab's: one eye screwed shut as if still peering down its telescope, the
+// other bright and keen, and a little crab "w" of a smile blowing a bubble. Box 18 x 16.
+const TC_EYES = [[11, 7.4, 1, 1.3, 1.7], [6.6, 7.6, -1, 1.1, 1.5]];
+const tcOwnFace = (mood) => {
+  const out = [];
+  for (const [x, y, s, w, h] of TC_EYES) {
+    const shut = oShut(mood, x, y, s, w, h, 0.45, '#c82a2a');
+    if (shut) { out.push(...shut); continue; }
+    if (s < 0 && mood === 'idle') { out.push(...oLn([[x - w, y + 0.1], [x, y - h * 0.15], [x + w, y + 0.2]], 0.5), ...oLn([[x - w * 0.2, y - h * 0.65], [x + w * 0.9, y - h * 0.45]], 0.35)); continue; }
+    const lid = mood === 'angry' ? (px) => y - h * 0.2 + (px - x) * -s * 0.6 : NOLID;
+    out.push(...oOpen(x, y, w, h, lid, '#2a2040', '#6a5ab8'), oDot(x, y + h * 0.12, w * (mood === 'shout' ? 0.2 : 0.3), INK, lid), oDot(x + w * 0.3, y - h * 0.25, w * 0.22, '#ffffff', lid), ...oLid(x, y, w, h, lid, 0.45));
+  }
+  if (mood !== 'dead') out.push(F(E(5, 9.8, 1, 0.45, '#ffb0b0')), F(E(13.4, 9.6, 0.85, 0.4, '#ffb0b0')));
+  const [mx, my] = [9.4, 10.4];
+  if (mood === 'shout') out.push(F(E(mx, my + 0.3, 0.75, 0.9, '#7a1a2a')));
+  else if (mood === 'happy') out.push(F(T(oArc(mx, my - 0.2, 0.95, 0.85, 0, 180, 8), '#7a1a2a')));
+  else if (mood === 'angry') out.push(...oLn([[mx - 0.8, my + 0.3], [mx, my], [mx + 0.8, my + 0.3]], 0.32));
+  else if (mood === 'hurt' || mood === 'dizzy') out.push(...oWave(mx, my, 0.8, 0.28));
+  else if (mood === 'dead') out.push(...oLn([[mx - 0.6, my], [mx + 0.6, my]], 0.28));
+  else {
+    out.push(...oLn([[mx - 0.9, my - 0.15], [mx - 0.45, my + 0.25], [mx, my - 0.05], [mx + 0.45, my + 0.25], [mx + 0.9, my - 0.15]], 0.3));
+    const ring = oRing(mx + 1.6, my - 0.4, 0.5, 0.5, 0, 10);
+    out.push(...oLn([...ring, ring[0]], 0.16, '#bfe8ff'), oDot(mx + 1.45, my - 0.55, 0.12, '#ffffff'));
+  }
+  if (mood === 'hurt') out.push(...oDrop(13.2, 7.6, 0.5));
+  return out;
+};
+const tcFace = (mood) => sm(`tc|face|${mood}`, 18, 16, () => tcOwnFace(mood));
 const tcPass = (bare) => {
   const i = bare ? 1 : 0;
   const tag = bare ? 'b' : '';
@@ -297,7 +415,7 @@ export function crabStill(pose, f, mood) {
   const fm = MOODS.has(mood) ? mood : 'idle';
   return { w: 44, h: 40, res: 3, shapes: shift([
     ...put(tcScope(), [13, 10], -4, -17, -16), ...put(tcClaw(true)(), [1, 6], -5, -14, -10), ...put(tcLeg(true)(), [2, 0], -3, -5), ...put(tcLeg(false)(), [2, 0], 3, -5),
-    ...put(tcBody(), [9, 15.6], 0, -5), ...put(faceShapes(fm, TC_FACE), [9, 15.6], 0, -5), ...put(tcChart(), [5, 1.7], 2, -9, -10), ...put(tcClaw(false)(), [1, 6], 5, -13, -20),
+    ...put(tcBody(), [9, 15.6], 0, -5), ...put(tcOwnFace(fm), [9, 15.6], 0, -5), ...put(tcChart(), [5, 1.7], 2, -9, -10), ...put(tcClaw(false)(), [1, 6], 5, -13, -20),
   ], 22, 39) };
 }
 
@@ -325,8 +443,26 @@ const OL_HEAD = ol('head', 18, 17, olHead, 2);
 const OL_WING = [false, true].map((f) => ol(`wing${f ? 1 : 0}`, 10, 10, olWing(f), 2));
 const OL_FOOT = [false, true].map((f) => ol(`foot${f ? 1 : 0}`, 6, 3, olFoot(f), 2));
 const OL_LAMP = ol('lamp', 8, 12, olLamp, 2);
-const OL_FACE = { eyes: [[11.8, 9.4, 1.4, 1.8, 1], [6.4, 9.4, 1.4, 1.8, -1]], mouth: [9, 14.4, 0.8], blush: [[4, 12, 1.2], [14, 12, 1.2]], iris: '#c87a2a', lid: 0 };
-const olFace = (mood) => sm(`ol|face|${mood}`, 18, 17, () => faceShapes(mood, OL_FACE));
+// Its own face, a scholar owl's: big amber eyes set in pale rings of facial-disc feathers, one brow
+// raised wisely; it hoots with its beak open. Box 18 x 17.
+const OL_EYES = [[11.8, 9.4, 1, 1.4, 1.8], [6.4, 9.4, -1, 1.4, 1.8]];
+const olOwnFace = (mood) => {
+  const out = [];
+  for (const [x, y, s, w, h] of OL_EYES) {
+    if (mood !== 'dead') out.push(F(T(oRing(x, y + 0.1, w * 1.55, h * 1.3, 0, 14), '#f4e6c8')));
+    const raise = mood === 'angry' ? 0.7 : mood === 'hurt' ? -0.5 : s > 0 ? -0.6 : 0;
+    if (mood !== 'dead') out.push(...oLn([[x - s * w * 1, y - h * 1.15 + raise * (s > 0 ? 0.4 : 1)], [x + s * w * 0.2, y - h * 1.4 + raise * 0.6], [x + s * w * 1.1, y - h * 1.2 + raise * 0.2]], 0.45, '#5a3a1a'));
+    const shut = oShut(mood, x, y, s, w, h, 0.5, '#c87a2a');
+    if (shut) { out.push(...shut); continue; }
+    const lid = mood === 'angry' ? (px) => y - h * 0.2 + (px - x) * -s * 0.6 : NOLID;
+    out.push(...oOpen(x, y, w, h, lid, '#c87a2a', '#ffc860'), oDot(x, y + h * 0.08, w * (mood === 'shout' ? 0.22 : 0.42), INK, lid), oDot(x + w * 0.3, y - h * 0.3, w * 0.2, '#ffffff', lid), ...oLid(x, y, w, h, lid, 0.5));
+  }
+  // (Its beak is part of its head; it opens to hoot.)
+  if (mood === 'shout' || mood === 'happy') out.push(F(T([[8.3, 12.2], [9.7, 12.2], [9, 13.4]], '#5a1a1a')), F(T([[8.5, 12.9], [9.5, 12.9], [9, 14.2]], '#e8a030')));
+  if (mood === 'hurt') out.push(...oDrop(14, 10.6, 0.55));
+  return out;
+};
+const olFace = (mood) => sm(`ol|face|${mood}`, 18, 17, () => olOwnFace(mood));
 const olPass = (bare) => {
   const i = bare ? 1 : 0;
   const tag = bare ? 'b' : '';
@@ -386,7 +522,7 @@ export function owlStill(pose, f, mood) {
   const fm = MOODS.has(mood) ? mood : 'idle';
   return { w: 34, h: 44, res: 3, shapes: shift([
     ...put(olWing(true)(), [1, 1], -5, -16.4, 10), ...put(olFoot(true)(), [2.6, 2.6], -3, 0), ...put(olFoot(false)(), [2.6, 2.6], 3, 0), ...put(olBody(), [9, 17.6], 0, -2.4),
-    ...put(olHead(), [9, 16.6], 0.4, -17.4), ...put(faceShapes(fm, OL_FACE), [9, 16.6], 0.4, -17.4), ...put(olLamp(), [4, 0.6], 9, -10), ...put(olWing(false)(), [1, 1], 3, -15.4, 50),
+    ...put(olHead(), [9, 16.6], 0.4, -17.4), ...put(olOwnFace(fm), [9, 16.6], 0.4, -17.4), ...put(olLamp(), [4, 0.6], 9, -10), ...put(olWing(false)(), [1, 1], 3, -15.4, 50),
   ], 17, 43) };
 }
 
@@ -407,8 +543,29 @@ const mgFoot = (far) => () => [E(3.6, 2.6, 3.6, 2.6, far ? ROCK.sh : ROCK.base)]
 const MG_BODY = mg('body', 24, 22, mgBody, 2);
 const MG_FIST = [false, true].map((f) => mg(`fist${f ? 1 : 0}`, 8, 8, mgFist(f), 2));
 const MG_FOOT = [false, true].map((f) => mg(`foot${f ? 1 : 0}`, 8, 5, mgFoot(f), 2));
-const MG_FACE = { eyes: [[15.4, 10, 1.7, 2.2, 1], [9.6, 10.2, 1.5, 2, -1]], mouth: [13, 14.6, 1.8], blush: [[7.6, 13.6, 1.6], [18.2, 13.2, 1.4]], iris: '#ff7a3a', lid: 0 };
-const mgFace = (mood) => sm(`mgol|face|${mood}`, 24, 22, () => faceShapes(mood, MG_FACE));
+// Its own face, a star-rock golem's: eyes that glow like a molten star core (a bright yellow middle in a
+// ring of orange glow, no glint) and a stony mouth with a chip out of it. Box 24 x 22.
+const MG_EYES = [[15.4, 10, 1, 1.7, 2.2], [9.6, 10.2, -1, 1.5, 2]];
+const mgOwnFace = (mood) => {
+  const out = [];
+  for (const [x, y, s, w, h] of MG_EYES) {
+    const shut = oShut(mood, x, y, s, w, h, 0.6, '#ff7a3a');
+    if (shut) { out.push(...shut); continue; }
+    const lid = mood === 'angry' ? (px) => y - h * 0.2 + (px - x) * -s * 0.6 : mood === 'shout' ? NOLID : () => y - h * 0.55;
+    out.push(F(T(oCut(oRing(x, y, w * 1.12, h * 1.08), lid), '#ffb070')), F(T(oCut(oRing(x, y, w, h), lid), '#2a1a28')), F(T(oCut(oRing(x, y + h * 0.1, w * 0.7, h * 0.72), lid), '#ff7a3a')), F(T(oCut(oRing(x, y + h * 0.15, w * 0.38, h * 0.4), lid), '#ffe060')));
+    out.push(...oLn(oCut(oArc(x, y, w * 1.05, h * 1.05, 190, 350, 10), (px) => lid(px) - 0.15), 0.6, '#3a3048'));
+  }
+  if (mood !== 'dead') out.push(F(E(7.6, 13.6, 1.4, 0.6, '#ff9a7a')), F(E(18.2, 13.2, 1.2, 0.5, '#ff9a7a')));
+  const [mx, my] = [13, 14.6];
+  if (mood === 'shout') out.push(F(T([[mx - 1.4, my - 0.6], [mx + 1.4, my - 0.6], [mx + 1, my + 1], [mx - 1, my + 1]], '#2a1a28')), F(T([[mx - 0.8, my - 0.2], [mx + 0.8, my - 0.2], [mx + 0.6, my + 0.6], [mx - 0.6, my + 0.6]], '#ff7a3a')));
+  else if (mood === 'happy') out.push(F(T(oArc(mx, my - 0.4, 1.4, 1.2, 0, 180, 8), '#2a1a28')), F(E(mx, my + 0.3, 0.7, 0.3, '#ff7a3a')));
+  else if (mood === 'hurt' || mood === 'dizzy') out.push(...oWave(mx, my, 1.2, 0.42, '#2a1a28'));
+  else if (mood === 'dead') out.push(...oLn([[mx - 1, my], [mx + 1, my]], 0.42, '#2a1a28'));
+  else out.push(...oLn([[mx - 1.3, my + (mood === 'angry' ? 0.3 : 0)], [mx - 0.3, my + 0.15], [mx, my - 0.25], [mx + 0.3, my + 0.15], [mx + 1.3, my + (mood === 'angry' ? 0.3 : -0.05)]], 0.45, '#2a1a28'));
+  if (mood === 'hurt') out.push(...oDrop(17.6, 10.8, 0.65));
+  return out;
+};
+const mgFace = (mood) => sm(`mgol|face|${mood}`, 24, 22, () => mgOwnFace(mood));
 const mgPass = (bare) => {
   const i = bare ? 1 : 0;
   const tag = bare ? 'b' : '';
@@ -465,7 +622,7 @@ export const golemRig = makeRig({
 export function golemStill(pose, f, mood) {
   const fm = MOODS.has(mood) ? mood : 'idle';
   return { w: 40, h: 36, res: 3, shapes: shift([
-    ...put(mgFist(true)(), [4, 4], -11, -15), ...put(mgFoot(true)(), [3.6, 4.6], -4, 0), ...put(mgFoot(false)(), [3.6, 4.6], 4, 0), ...put(mgBody(), [12, 21.6], 0, -6), ...put(faceShapes(fm, MG_FACE), [12, 21.6], 0, -6), ...put(mgFist(false)(), [4, 4], 9, -14),
+    ...put(mgFist(true)(), [4, 4], -11, -15), ...put(mgFoot(true)(), [3.6, 4.6], -4, 0), ...put(mgFoot(false)(), [3.6, 4.6], 4, 0), ...put(mgBody(), [12, 21.6], 0, -6), ...put(mgOwnFace(fm), [12, 21.6], 0, -6), ...put(mgFist(false)(), [4, 4], 9, -14),
   ], 20, 35) };
 }
 
@@ -483,8 +640,30 @@ const ggGhost = (C, tip) => () => {
 };
 const GG_A = gg('a', 16, 20, ggGhost(GHA, STARC), 2);
 const GG_B = gg('b', 16, 20, ggGhost(GHB, '#ffb8d8'), 2);
-const GG_FACE = { eyes: [[10, 10, 1.2, 1.7, 1], [6, 10, 1.1, 1.6, -1]], mouth: [8, 13, 1.2], blush: [[4.4, 12, 1.1], [11.6, 12, 1.1]], iris: '#3a2d4f', lid: 0 };
-const ggFace = (mood) => sm(`gg|face|${mood}`, 16, 20, () => faceShapes(mood, GG_FACE));
+// Their own face, the ghost twins': big dark eyes with a little four-point star of light, a round "boo"
+// of a mouth and pink cheeks; the second twin is always the cheerful one. Box 16 x 20.
+const GG_EYES = [[10, 10, 1, 1.2, 1.7], [6, 10, -1, 1.1, 1.6]];
+const ggOwnFace = (mood) => {
+  const out = [];
+  for (const [x, y, s, w, h] of GG_EYES) {
+    const shut = oShut(mood, x, y, s, w, h, 0.45, '#5a4a8a');
+    if (shut) { out.push(...shut); continue; }
+    const lid = mood === 'angry' ? (px) => y - h * 0.2 + (px - x) * -s * 0.6 : NOLID;
+    const k = mood === 'shout' ? 1.1 : 1;
+    out.push(F(T(oCut(oRing(x, y, w * 0.9 * k, h * 0.9 * k), lid), '#241a3a')), F(T(oCut(oRing(x, y + h * 0.35, w * 0.55, h * 0.3), lid), '#5a4a8a')), oStar(x + w * 0.25, y - h * 0.25, w * 0.42, '#ffffff', 4, 0.35));
+  }
+  if (mood !== 'dead') out.push(F(E(4.4, 12.2, 1, 0.45, '#ffa8c8')), F(E(11.6, 12.2, 1, 0.45, '#ffa8c8')));
+  const [mx, my] = [8, 13];
+  if (mood === 'shout') out.push(F(E(mx, my + 0.4, 0.75, 1, '#4a2a4a')));
+  else if (mood === 'happy') out.push(F(T(oArc(mx, my - 0.2, 0.9, 0.85, 0, 180, 8), '#4a2a4a')), F(E(mx, my + 0.35, 0.45, 0.22, '#ff9ab8')));
+  else if (mood === 'angry') out.push(...oLn([[mx - 0.7, my + 0.3], [mx, my], [mx + 0.7, my + 0.3]], 0.32));
+  else if (mood === 'hurt' || mood === 'dizzy') out.push(...oWave(mx, my, 0.7, 0.28));
+  else if (mood === 'dead') out.push(...oLn([[mx - 0.5, my], [mx + 0.5, my]], 0.28));
+  else out.push(F(E(mx, my + 0.15, 0.4, 0.5, '#4a2a4a')));
+  if (mood === 'hurt') out.push(...oDrop(11.4, 10, 0.5));
+  return out;
+};
+const ggFace = (mood) => sm(`gg|face|${mood}`, 16, 20, () => ggOwnFace(mood));
 export const twinsRig = makeRig({
   w: 44, h: 40, soft: true, stride: 20, recover: 0.6,
   springs: { x: [240, 16], spin: [200, 12], aY: [120, 7], bY: [120, 7], aR: [140, 8], bR: [140, 8] },
@@ -532,6 +711,6 @@ export const twinsRig = makeRig({
 export function twinsStill(pose, f, mood) {
   const fm = MOODS.has(mood) ? mood : 'idle';
   return { w: 44, h: 36, res: 3, shapes: shift([
-    ...put(ggGhost(GHA, STARC)(), [8, 19], -7, -5), ...put(faceShapes(fm, GG_FACE), [8, 19], -7, -5), ...put(ggGhost(GHB, '#ffb8d8')(), [8, 19], 7, -5), ...put(faceShapes('happy', GG_FACE), [8, 19], 7, -5),
+    ...put(ggGhost(GHA, STARC)(), [8, 19], -7, -5), ...put(ggOwnFace(fm), [8, 19], -7, -5), ...put(ggGhost(GHB, '#ffb8d8')(), [8, 19], 7, -5), ...put(ggOwnFace('happy'), [8, 19], 7, -5),
   ], 22, 35) };
 }

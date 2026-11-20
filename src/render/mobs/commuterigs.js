@@ -19,7 +19,7 @@
 import { E, T, F, R, stroke } from './kit.js';
 import { ramp, crescent, shine } from './meadow.js';
 import { makeRig, stateBlend, TAU } from './rig.js';
-import { D2R, ov, arcP, taper, pairOf, faceSprite, hold, stepPhase, pawStep, put, shift, MOODS, moodOf, faceShapes, sparkle, puff, note } from './rigkit.js';
+import { D2R, INK, ov, arcP, taper, pairOf, faceSprite, hold, stepPhase, pawStep, put, shift, MOODS, moodOf, sparkle, note } from './rigkit.js';
 
 const sm = (key, w, h, shapes) => faceSprite(key, w, h, shapes);
 const at2 = (M, x, y) => [M[0] * x + M[2] * y + M[4], M[1] * x + M[3] * y + M[5]];
@@ -99,8 +99,73 @@ const RP_HEAD = rp('head', 22, 17, rpHead, 2);
 const RP_FLIP = [false, true].map((f) => rp(`flip${f ? 1 : 0}`, 7, 12, rpFlip(f), 2));
 const RP_CASE = rp('case', 14, 11, rpCase, 2);
 const RP_FOOT = [false, true].map((f) => rp(`foot${f ? 1 : 0}`, 9, 4, rpFoot(f), 2));
-const RP_FACE = { eyes: [[11.4, 9.2, 1.4, 1.8, -1], [14.8, 9, 1.5, 1.9, 1]], mouth: [17.6, 11.4, 1.6], blush: [[10.2, 11.6, 1.2], [15.6, 11.8, 1.1]], iris: '#2a3a6a', lid: 0.1 };
-const rpFace = (mood) => sm(`rp|face|${mood}`, 22, 17, () => faceShapes(mood, RP_FACE));
+const oLn = (pts, w, c = INK) => {
+  const l = [];
+  const r = [];
+  pts.forEach(([x, y], i) => {
+    const [ax, ay] = pts[Math.max(0, i - 1)];
+    const [bx, by] = pts[Math.min(pts.length - 1, i + 1)];
+    const d = Math.hypot(bx - ax, by - ay) || 1;
+    const nx = ((-(by - ay) / d) * w) / 2;
+    const ny = (((bx - ax) / d) * w) / 2;
+    l.push([x + nx, y + ny]);
+    r.push([x - nx, y - ny]);
+  });
+  return [F(T([...l, ...r.reverse()], c))];
+};
+const oArc = (cx, cy, rx, ry, a0, a1, n = 8) => Array.from({ length: n + 1 }, (_, i) => {
+  const a = ((a0 + ((a1 - a0) * i) / n) * Math.PI) / 180;
+  return [cx + Math.cos(a) * rx, cy + Math.sin(a) * ry];
+});
+const oRing = (cx, cy, rx, ry, rot = 0, n = 16) => Array.from({ length: n }, (_, i) => {
+  const a = (i / n) * Math.PI * 2;
+  const x = Math.cos(a) * rx;
+  const y = Math.sin(a) * ry;
+  return [cx + x * Math.cos(rot) - y * Math.sin(rot), cy + x * Math.sin(rot) + y * Math.cos(rot)];
+});
+const oCut = (pts, lid) => pts.map(([px, py]) => [px, Math.max(py, lid(px))]);
+const oSquint = (x, y, s, r, w, c = INK) => oLn([[x + s * r, y - r], [x - s * r * 0.8, y], [x + s * r, y + r]], w, c);
+const oSpiral = (x, y, r, w, c, s = 1) => oLn(Array.from({ length: 15 }, (_, i) => [x + Math.cos(i * 0.8 * s) * r * (0.12 + i / 15), y + Math.sin(i * 0.8 * s) * r * (0.12 + i / 15)]), w, c);
+const oDrop = (x, y, r, c = '#9ad8ff') => [F(E(x, y, r * 0.7, r, c)), F(E(x - r * 0.2, y - r * 0.3, r * 0.25, r * 0.25, '#ffffff'))];
+const oStar = (x, y, r, c, n = 5, k = 0.45) => F(T(Array.from({ length: n * 2 }, (_, i) => {
+  const a = (i * Math.PI) / n - Math.PI / 2;
+  const rr = i % 2 ? r * k : r;
+  return [x + Math.cos(a) * rr, y + Math.sin(a) * rr];
+}), c));
+const oX = (x, y, w, h, wd, c = INK) => [...oLn([[x - w * 0.7, y - h * 0.55], [x + w * 0.7, y + h * 0.55]], wd, c), ...oLn([[x - w * 0.7, y + h * 0.55], [x + w * 0.7, y - h * 0.55]], wd, c)];
+const oWave = (mx, my, hw, wd, c = INK) => oLn(Array.from({ length: 5 }, (_, i) => [mx - hw + (i * hw) / 2, my + (i % 2 ? -0.3 : 0.3)]), wd, c);
+const NOLID = () => -99;
+// The closed and knocked-about eyes every face has (each face draws its own open eyes).
+const oShut = (mood, x, y, s, w, h, lw, sc = INK) => {
+  if (mood === 'blink' || mood === 'sleep') return oLn(oArc(x, y + h * 0.1, w, h * 0.35, 15, 165, 8), lw);
+  if (mood === 'happy') return oLn(oArc(x, y + h * 0.35, w, h * 0.7, 200, 340, 8), lw);
+  if (mood === 'hurt') return oSquint(x, y, s, w * 0.8, lw);
+  if (mood === 'dizzy') return oSpiral(x, y, w, lw * 0.8, sc, s);
+  if (mood === 'dead') return oX(x, y, w, h, lw * 0.9);
+  return null;
+};
+// An open eye's ink, two-tone iris and lid line, all cut by its lid.
+const oOpen = (x, y, w, h, lid, top, low) => [F(T(oCut(oRing(x, y, w, h), lid), INK)), F(T(oCut(oRing(x, y + h * 0.08, w * 0.82, h * 0.84), lid), top)), F(T(oCut(oRing(x, y + h * 0.45, w * 0.62, h * 0.4), lid), low))];
+const oLid = (x, y, w, h, lid, lw) => oLn(oCut(oArc(x, y, w * 1.02, h * 1.02, 190, 350, 10), (px) => lid(px) - lw * 0.25), lw);
+const oDot = (x, y, r, c, lid = NOLID) => F(T(oCut(oRing(x, y, r, r, 0, 8), lid), c));
+// Its own face, a commuter penguin's, late as ever: wide anxious eyes with tiny pupils under little
+// worried brows and a sweat drop at its temple; its beak is part of its head. Box 22 x 17.
+const RP_EYES = [[11.4, 9.2, -1, 1.4, 1.8], [14.8, 9, 1, 1.5, 1.9]];
+const rpOwnFace = (mood) => {
+  const out = [];
+  for (const [x, y, s, w, h] of RP_EYES) {
+    const inner = mood === 'angry' ? 0.7 : mood === 'happy' ? 0 : -0.6;
+    if (mood !== 'dead') out.push(...oLn([[x - s * w * 0.8, y - h * 1.1 + inner], [x + s * w * 0.8, y - h * 1.2 - inner * 0.3]], 0.4));
+    const shut = oShut(mood, x, y, s, w, h, 0.5, '#2a3a6a');
+    if (shut) { out.push(...shut); continue; }
+    const lid = mood === 'angry' ? (px) => y - h * 0.2 + (px - x) * -s * 0.6 : NOLID;
+    out.push(F(T(oCut(oRing(x, y, w, h), lid), INK)), F(T(oCut(oRing(x, y, w * 0.82, h * 0.85), lid), '#ffffff')), oDot(x, y + h * 0.1, w * (mood === 'shout' ? 0.18 : 0.3), '#1a2240', lid), oDot(x + w * 0.12, y - h * 0.02, w * 0.08, '#ffffff', lid), ...oLid(x, y, w, h, lid, 0.5));
+  }
+  if (mood !== 'dead') out.push(F(E(10.2, 11.8, 1.1, 0.5, '#ff9ab0')), F(E(15.6, 11.8, 1, 0.45, '#ff9ab0')));
+  if (mood === 'idle' || mood === 'blink' || mood === 'hurt' || mood === 'shout') out.push(...oDrop(17.6, 7, 0.65));
+  return out;
+};
+const rpFace = (mood) => sm(`rp|face|${mood}`, 22, 17, () => rpOwnFace(mood));
 const rpPass = (bare) => {
   const i = bare ? 1 : 0;
   const tag = bare ? 'b' : '';
@@ -173,7 +238,7 @@ export function penguinStill(pose, f, mood) {
   const fm = MOODS.has(mood) ? mood : 'idle';
   return { w: 44, h: 44, res: 3, shapes: shift([
     ...put(rpFlip(true)(), [3.5, 1.5], -3, -20, 18), ...put(rpFoot(true)(), [4.4, 3.8], -3, 0), ...put(rpFoot(false)(), [4.4, 3.8], 3, 0), ...put(rpBody(), [11, 23.6], 0, -3),
-    ...put(rpHead(), [10, 16.4], 1, -22), ...put(faceShapes(fm, RP_FACE), [10, 16.4], 1, -22), ...put(rpFlip(false)(), [3.5, 1.5], 4, -19, 12), ...put(rpCase(), [7, 1], 2.1, -10.2, -8),
+    ...put(rpHead(), [10, 16.4], 1, -22), ...put(rpOwnFace(fm), [10, 16.4], 1, -22), ...put(rpFlip(false)(), [3.5, 1.5], 4, -19, 12), ...put(rpCase(), [7, 1], 2.1, -10.2, -8),
   ], 22, 43) };
 }
 
@@ -218,8 +283,35 @@ const SS_HEAD = ss('head', 26, 20, ssHead, 2);
 const SS_PILLOW = ss('pillow', 16, 9, ssPillow, 2);
 const SS_ARM = [false, true].map((f) => ss(`arm${f ? 1 : 0}`, 6, 10, ssArm(f), 2));
 const SS_FOOT = [false, true].map((f) => ss(`foot${f ? 1 : 0}`, 6, 4, ssFoot(f), 2));
-const SS_FACE = { eyes: [[13, 11.6, 1.4, 1.8, -1], [16.4, 11.4, 1.5, 1.9, 1]], mouth: [19.4, 16.4, 1.3], blush: [[12, 14.4, 1.2], [17.4, 14.8, 1.1]], iris: '#6a5a4a', lid: 0.5 };
-const ssFace = (mood) => sm(`ss|face|${mood}`, 26, 20, () => faceShapes(mood, SS_FACE));
+// Its own face, a sleepy commuter sheep's: lids almost shut over drowsy brown eyes with soft bags under
+// them, a sleep bubble blowing from its nose and a little round mouth. Box 26 x 20.
+const SS_EYES = [[13, 11.6, -1, 1.4, 1.8], [16.4, 11.4, 1, 1.5, 1.9]];
+const ssOwnFace = (mood) => {
+  const out = [];
+  for (const [x, y, s, w, h] of SS_EYES) {
+    if (mood !== 'dead') out.push(...oLn(oArc(x, y + h * 0.55, w * 0.75, h * 0.7, 50, 130, 6), 0.3, '#c8a8a0'));
+    const shut = oShut(mood, x, y, s, w, h, 0.45, '#6a5a4a');
+    if (shut) { out.push(...shut); continue; }
+    const lid = mood === 'angry' ? (px) => y - h * 0.05 + (px - x) * -s * 0.5 : mood === 'shout' ? () => y - h * 0.6 : () => y + h * 0.12;
+    out.push(...oOpen(x, y, w, h, lid, '#5a4a3a', '#a8907a'), oDot(x, y + h * 0.35, w * 0.3, '#2a2018', lid), ...oLid(x, y, w, h, lid, 0.5));
+  }
+  if (mood !== 'dead') out.push(F(E(12, 14.6, 1.1, 0.5, '#ffb0b8')), F(E(17.4, 15, 1, 0.45, '#ffb0b8')));
+  if (mood === 'idle' || mood === 'blink' || mood === 'sleep') {
+    const r = mood === 'blink' ? 0.9 : 1.3;
+    const ring = oRing(21.4, 13.4, r, r, 0, 14);
+    out.push(F(T(ring, '#d8f0ff')), ...oLn([...ring, ring[0]], 0.18, '#8ac0e8'), oDot(21.4 - r * 0.35, 13.4 - r * 0.35, r * 0.22, '#ffffff'));
+  }
+  const [mx, my] = [19.4, 16.4];
+  if (mood === 'shout') out.push(F(E(mx, my + 0.2, 0.75, 0.9, '#6a2a3a')));
+  else if (mood === 'happy') out.push(F(T(oArc(mx, my - 0.2, 0.9, 0.8, 0, 180, 8), '#6a2a3a')));
+  else if (mood === 'angry') out.push(...oLn([[mx - 0.7, my + 0.2], [mx + 0.7, my + 0.2]], 0.3));
+  else if (mood === 'hurt' || mood === 'dizzy') out.push(...oWave(mx, my, 0.7, 0.26));
+  else if (mood === 'dead') out.push(...oLn([[mx - 0.5, my], [mx + 0.5, my]], 0.26));
+  else out.push(F(E(mx, my + 0.1, 0.38, 0.42, '#6a2a3a')));
+  if (mood === 'hurt') out.push(...oDrop(18.2, 12, 0.55));
+  return out;
+};
+const ssFace = (mood) => sm(`ss|face|${mood}`, 26, 20, () => ssOwnFace(mood));
 const ssPass = (bare) => {
   const i = bare ? 1 : 0;
   const tag = bare ? 'b' : '';
@@ -284,7 +376,7 @@ export function sleepySheepStill(pose, f, mood) {
   const fm = MOODS.has(mood) ? mood : 'idle';
   return { w: 44, h: 46, res: 3, shapes: shift([
     ...put(ssArm(true)(), [3, 1], -6, -21, -4), ...put(ssFoot(true)(), [3, 3.6], -4, 0), ...put(ssFoot(false)(), [3, 3.6], 4, 0), ...put(ssBody(), [12, 24.6], 0, -3),
-    ...put(ssHead(), [9, 18], 2, -24), ...put(faceShapes(fm, SS_FACE), [9, 18], 2, -24), ...put(ssPillow(), [8, 2], 2, -24), ...put(ssArm(false)(), [3, 1], 7, -20, 6),
+    ...put(ssHead(), [9, 18], 2, -24), ...put(ssOwnFace(fm), [9, 18], 2, -24), ...put(ssPillow(), [8, 2], 2, -24), ...put(ssArm(false)(), [3, 1], 7, -20, 6),
   ], 22, 45) };
 }
 
@@ -317,8 +409,29 @@ const SB_CREST = sb('crest', 12, 9, sbCrest, 2);
 const SB_TAIL = sb('tail', 12, 10, sbTail, 2);
 const SB_WING = [sb('wing0', 10, 10, sbWing(PINKN, '#d86a94'), 2), sb('wing1', 10, 10, sbWing(BLUEN, '#5a9ac8'), 2)];
 const SB_FOOT = [false, true].map((f) => sb(`foot${f ? 1 : 0}`, 8, 4, sbFoot(f), 2));
-const SB_FACE = { eyes: [[12.8, 8.2, 1.3, 1.7, -1], [16.2, 8, 1.4, 1.8, 1]], mouth: [18.2, 10.4, 1.2], blush: [[11.2, 10.6, 1.1], [16.4, 11, 1]], iris: '#3a2a4a', lid: 0 };
-const sbFace = (mood) => sm(`sb|face|${mood}`, 22, 18, () => faceShapes(mood, SB_FACE));
+// Its own face, a sticky-note bird's: big round eyes with a big glint and a little blue-pen heart
+// doodled on its cheek; its beak is part of its head. Box 22 x 18.
+const SB_EYES = [[12.8, 8.2, -1, 1.3, 1.7], [16.2, 8, 1, 1.4, 1.8]];
+const SB_PEN = '#3a5ad8';
+const sbOwnFace = (mood) => {
+  const out = [];
+  for (const [x, y, s, w, h] of SB_EYES) {
+    const shut = oShut(mood, x, y, s, w, h, 0.45, SB_PEN);
+    if (shut) out.push(...shut);
+    else {
+      const lid = mood === 'angry' ? (px) => y - h * 0.2 + (px - x) * -s * 0.6 : NOLID;
+      out.push(...oOpen(x, y, w, h, lid, '#2a2040', '#6a5a8a'), oDot(x, y + h * 0.12, w * (mood === 'shout' ? 0.2 : 0.3), INK, lid), oDot(x + w * 0.3, y - h * 0.28, w * 0.24, '#ffffff', lid), ...oLid(x, y, w, h, lid, 0.45));
+    }
+  }
+  if (mood !== 'dead') {
+    out.push(F(E(11.2, 10.8, 1, 0.45, '#ffa0a0')));
+    const hx = 17.4, hy = 10.8;
+    out.push(...oLn([[hx, hy + 0.55], [hx - 0.55, hy], [hx - 0.45, hy - 0.4], [hx - 0.1, hy - 0.4], [hx, hy - 0.1], [hx + 0.1, hy - 0.4], [hx + 0.45, hy - 0.4], [hx + 0.55, hy], [hx, hy + 0.55]], 0.18, SB_PEN));
+  }
+  if (mood === 'hurt') out.push(...oDrop(17.6, 8.6, 0.5));
+  return out;
+};
+const sbFace = (mood) => sm(`sb|face|${mood}`, 22, 18, () => sbOwnFace(mood));
 const sbPass = (bare) => {
   const i = bare ? 1 : 0;
   const tag = bare ? 'b' : '';
@@ -382,7 +495,7 @@ export function stickyBirdStill(pose, f, mood) {
   const fm = MOODS.has(mood) ? mood : 'idle';
   return { w: 40, h: 34, res: 3, shapes: shift([
     ...put(sbWing(BLUEN, '#5a9ac8')(), [8.6, 1.4], -1, -14), ...put(sbTail(), [10, 3], -7, -10), ...put(sbFoot(true)(), [3.4, 3], -2.4, 0), ...put(sbFoot(false)(), [3.4, 3], 2.6, 0),
-    ...put(sbCrest(), [6, 8], 1, -17), ...put(sbBody(), [10, 17.6], 0, -2), ...put(faceShapes(fm, SB_FACE), [10, 17.6], 0, -2), ...put(sbWing(PINKN, '#d86a94')(), [8.6, 1.4], 1, -13),
+    ...put(sbCrest(), [6, 8], 1, -17), ...put(sbBody(), [10, 17.6], 0, -2), ...put(sbOwnFace(fm), [10, 17.6], 0, -2), ...put(sbWing(PINKN, '#d86a94')(), [8.6, 1.4], 1, -13),
   ], 20, 33) };
 }
 
@@ -426,8 +539,31 @@ const SC_TOP = sc('top', 24, 11, scTop, 2);
 const SC_BASE = sc('base', 24, 7, scBase, 2);
 const SC_ARM = [false, true].map((f) => sc(`arm${f ? 1 : 0}`, 6, 7, scArm(f), 2));
 const SC_FOOT = [false, true].map((f) => sc(`foot${f ? 1 : 0}`, 8, 4, scFoot(f), 2));
-const SC_FACE = { eyes: [[8.2, 3.8, 1.3, 1.6, -1], [13.2, 3.6, 1.4, 1.7, 1]], mouth: [5.4, 8.2, 1.1], blush: [[10.6, 6.2, 1]], iris: '#3a5a2a', lid: 0.2 };
-const scFace = (mood) => sm(`scroc|face|${mood}`, 24, 11, () => faceShapes(mood, SC_FACE));
+// Its own face, a stapler croc's: sly heavy-lidded eyes up on the bumps of its head (gold-green, a slit
+// pupil) under brows made of two little silver staples, and a toothy little grin. Box 24 x 11.
+const SC_EYES = [[8.2, 3.8, -1, 1.3, 1.6], [13.2, 3.6, 1, 1.4, 1.7]];
+const scOwnFace = (mood) => {
+  const out = [];
+  for (const [x, y, s, w, h] of SC_EYES) {
+    const tilt = mood === 'angry' ? 0.5 : mood === 'hurt' ? -0.4 : mood === 'shout' || mood === 'happy' ? -0.3 : 0;
+    const by = y - h * 1.05;
+    if (mood !== 'dead') out.push(...oLn([[x - w * 0.9, by + 0.45 + (s < 0 ? -tilt : tilt) * 0.5], [x - w * 0.9, by + (s < 0 ? -tilt : tilt) * 0.5], [x + w * 0.9, by + (s < 0 ? tilt : -tilt) * 0.5], [x + w * 0.9, by + 0.45 + (s < 0 ? tilt : -tilt) * 0.5]], 0.22, '#c8ccd8'));
+    const shut = oShut(mood, x, y, s, w, h, 0.45, '#3a5a2a');
+    if (shut) { out.push(...shut); continue; }
+    const lid = mood === 'angry' ? (px) => y - h * 0.1 + (px - x) * -s * 0.6 : mood === 'shout' ? NOLID : () => y - h * 0.3;
+    out.push(...oOpen(x, y, w, h, lid, '#8a9a2a', '#d0e060'), F(T(oCut(oRing(x, y + h * 0.05, w * 0.16, h * 0.6), lid), INK)), oDot(x + w * 0.35, y - h * 0.05, w * 0.16, '#ffffff', lid), ...oLid(x, y, w, h, lid, 0.5));
+  }
+  if (mood !== 'dead') out.push(F(E(10.6, 6.4, 0.9, 0.4, '#ff9aa0')));
+  const [mx, my] = [5.4, 8.2];
+  if (mood === 'shout') out.push(F(E(mx, my + 0.2, 0.8, 0.8, '#6a2a2a')), F(T([[mx - 0.5, my - 0.4], [mx - 0.1, my - 0.4], [mx - 0.3, my + 0.1]], '#ffffff')));
+  else if (mood === 'hurt' || mood === 'dizzy') out.push(...oWave(mx, my, 0.8, 0.28));
+  else if (mood === 'dead') out.push(...oLn([[mx - 0.6, my], [mx + 0.6, my]], 0.28));
+  else if (mood === 'angry') out.push(...oLn([[mx - 0.9, my], [mx + 0.9, my - 0.2]], 0.3), F(T([[mx - 0.3, my - 0.05], [mx + 0.1, my - 0.1], [mx - 0.1, my + 0.45]], '#ffffff')));
+  else out.push(...oLn([[mx - 1, my - 0.4], [mx - 0.3, my + 0.2], [mx + 0.6, my + 0.1], [mx + 1, my - 0.3]], 0.3), F(T([[mx - 0.25, my + 0.15], [mx + 0.15, my + 0.12], [mx - 0.05, my + 0.6]], '#ffffff')));
+  if (mood === 'hurt') out.push(...oDrop(15.2, 4.6, 0.5));
+  return out;
+};
+const scFace = (mood) => sm(`scroc|face|${mood}`, 24, 11, () => scOwnFace(mood));
 const scPass = (bare) => {
   const i = bare ? 1 : 0;
   const tag = bare ? 'b' : '';
@@ -490,6 +626,6 @@ export function staplerCrocStill(pose, f, mood) {
   const fm = MOODS.has(mood) ? mood : 'idle';
   return { w: 50, h: 36, res: 3, shapes: shift([
     ...put(scArm(true)(), [3, 1], -2, -15), ...put(scTail(), [15.6, 3.6], -7, -8), ...put(scFoot(true)(), [4, 3.6], -3.6, 0), ...put(scFoot(false)(), [4, 3.6], 3.6, 0), ...put(scBody(), [11, 21.6], 0, -3),
-    ...put(scBase(), [3, 1.8], 5, -18.6), ...put(scTop(), [3, 7.4], 5, -20, -3), ...put(faceShapes(fm, SC_FACE), [3, 7.4], 5, -20, -3), ...put(scArm(false)(), [3, 1], 7, -13),
+    ...put(scBase(), [3, 1.8], 5, -18.6), ...put(scTop(), [3, 7.4], 5, -20, -3), ...put(scOwnFace(fm), [3, 7.4], 5, -20, -3), ...put(scArm(false)(), [3, 1], 7, -13),
   ], 18, 35) };
 }

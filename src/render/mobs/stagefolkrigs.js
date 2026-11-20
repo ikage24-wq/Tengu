@@ -16,7 +16,7 @@
 import { E, T, F, R, stroke } from './kit.js';
 import { ramp, crescent, shine } from './meadow.js';
 import { makeRig, stateBlend, TAU } from './rig.js';
-import { D2R, ov, arcP, taper, pairOf, faceSprite, hold, stepPhase, pawStep, put, shift, MOODS, moodOf, faceShapes, sparkle } from './rigkit.js';
+import { D2R, INK, ov, arcP, taper, pairOf, faceSprite, hold, stepPhase, pawStep, put, shift, MOODS, moodOf, sparkle } from './rigkit.js';
 
 const sm = (key, w, h, shapes) => faceSprite(key, w, h, shapes);
 const at2 = (M, x, y) => [M[0] * x + M[2] * y + M[4], M[1] * x + M[3] * y + M[5]];
@@ -53,8 +53,82 @@ const UG_BODY = ug('body', 24, 26, ugBody, 2);
 const UG_ARM = [false, true].map((f) => ug(`arm${f ? 1 : 0}`, 6, 8, ugArm(f), 2));
 const UG_MASK = ug('mask', 14, 17, ugMask, 2);
 const UG_SCRIPT = ug('script', 9, 11, ugScript, 2);
-const UG_FACE = { eyes: [[12.6, 10, 1.5, 2, -1], [16.6, 9.8, 1.6, 2.1, 1]], mouth: [15, 13.6, 1.5], blush: [[10.6, 12.6, 1.3], [18.4, 12.4, 1.2]], iris: '#6a5aa8', lid: 0.1 };
-const ugFace = (mood) => sm(`ug|face|${mood}`, 24, 26, () => faceShapes(mood, UG_FACE));
+const oLn = (pts, w, c = INK) => {
+  const l = [];
+  const r = [];
+  pts.forEach(([x, y], i) => {
+    const [ax, ay] = pts[Math.max(0, i - 1)];
+    const [bx, by] = pts[Math.min(pts.length - 1, i + 1)];
+    const d = Math.hypot(bx - ax, by - ay) || 1;
+    const nx = ((-(by - ay) / d) * w) / 2;
+    const ny = (((bx - ax) / d) * w) / 2;
+    l.push([x + nx, y + ny]);
+    r.push([x - nx, y - ny]);
+  });
+  return [F(T([...l, ...r.reverse()], c))];
+};
+const oArc = (cx, cy, rx, ry, a0, a1, n = 8) => Array.from({ length: n + 1 }, (_, i) => {
+  const a = ((a0 + ((a1 - a0) * i) / n) * Math.PI) / 180;
+  return [cx + Math.cos(a) * rx, cy + Math.sin(a) * ry];
+});
+const oRing = (cx, cy, rx, ry, rot = 0, n = 16) => Array.from({ length: n }, (_, i) => {
+  const a = (i / n) * Math.PI * 2;
+  const x = Math.cos(a) * rx;
+  const y = Math.sin(a) * ry;
+  return [cx + x * Math.cos(rot) - y * Math.sin(rot), cy + x * Math.sin(rot) + y * Math.cos(rot)];
+});
+const oCut = (pts, lid) => pts.map(([px, py]) => [px, Math.max(py, lid(px))]);
+const oSquint = (x, y, s, r, w, c = INK) => oLn([[x + s * r, y - r], [x - s * r * 0.8, y], [x + s * r, y + r]], w, c);
+const oSpiral = (x, y, r, w, c, s = 1) => oLn(Array.from({ length: 15 }, (_, i) => [x + Math.cos(i * 0.8 * s) * r * (0.12 + i / 15), y + Math.sin(i * 0.8 * s) * r * (0.12 + i / 15)]), w, c);
+const oDrop = (x, y, r, c = '#9ad8ff') => [F(E(x, y, r * 0.7, r, c)), F(E(x - r * 0.2, y - r * 0.3, r * 0.25, r * 0.25, '#ffffff'))];
+const oStar = (x, y, r, c, n = 5, k = 0.45) => F(T(Array.from({ length: n * 2 }, (_, i) => {
+  const a = (i * Math.PI) / n - Math.PI / 2;
+  const rr = i % 2 ? r * k : r;
+  return [x + Math.cos(a) * rr, y + Math.sin(a) * rr];
+}), c));
+const oX = (x, y, w, h, wd, c = INK) => [...oLn([[x - w * 0.7, y - h * 0.55], [x + w * 0.7, y + h * 0.55]], wd, c), ...oLn([[x - w * 0.7, y + h * 0.55], [x + w * 0.7, y - h * 0.55]], wd, c)];
+const oWave = (mx, my, hw, wd, c = INK) => oLn(Array.from({ length: 5 }, (_, i) => [mx - hw + (i * hw) / 2, my + (i % 2 ? -0.3 : 0.3)]), wd, c);
+const NOLID = () => -99;
+// The closed and knocked-about eyes every face has (each face draws its own open eyes).
+const oShut = (mood, x, y, s, w, h, lw, sc = INK) => {
+  if (mood === 'blink' || mood === 'sleep') return oLn(oArc(x, y + h * 0.1, w, h * 0.35, 15, 165, 8), lw);
+  if (mood === 'happy') return oLn(oArc(x, y + h * 0.35, w, h * 0.7, 200, 340, 8), lw);
+  if (mood === 'hurt') return oSquint(x, y, s, w * 0.8, lw);
+  if (mood === 'dizzy') return oSpiral(x, y, w, lw * 0.8, sc, s);
+  if (mood === 'dead') return oX(x, y, w, h, lw * 0.9);
+  return null;
+};
+// An open eye's ink, two-tone iris and lid line, all cut by its lid.
+const oOpen = (x, y, w, h, lid, top, low) => [F(T(oCut(oRing(x, y, w, h), lid), INK)), F(T(oCut(oRing(x, y + h * 0.08, w * 0.82, h * 0.84), lid), top)), F(T(oCut(oRing(x, y + h * 0.45, w * 0.62, h * 0.4), lid), low))];
+const oLid = (x, y, w, h, lid, lw) => oLn(oCut(oArc(x, y, w * 1.02, h * 1.02, 190, 350, 10), (px) => lid(px) - lw * 0.25), lw);
+const oDot = (x, y, r, c, lid = NOLID) => F(T(oCut(oRing(x, y, r, r, 0, 8), lid), c));
+// Its own face, a stage ghost's, made up like Pierrot: melancholy half-lowered lids over violet eyes with
+// winged liner, a painted dark teardrop under one eye and a small round mouth. Box 24 x 26.
+const UG_EYES = [[12.6, 10, -1, 1.5, 2], [16.6, 9.8, 1, 1.6, 2.1]];
+const ugOwnFace = (mood) => {
+  const out = [];
+  if (mood !== 'dead') out.push(F(E(12.4, 13.2, 0.42, 0.65, '#3a3a6a')), F(T([[12.1, 13], [12.7, 13], [12.4, 12.2]], '#3a3a6a')));
+  for (const [x, y, s, w, h] of UG_EYES) {
+    const shut = oShut(mood, x, y, s, w, h, 0.5, '#6a5aa8');
+    if (shut) out.push(...shut);
+    else {
+      const lid = mood === 'angry' ? (px) => y - h * 0.2 + (px - x) * -s * 0.6 : mood === 'shout' ? NOLID : (px) => y - h * 0.4 + (px - x) * s * 0.2;
+      out.push(...oOpen(x, y, w, h, lid, '#5a4a98', '#a898e0'), oDot(x, y + h * 0.15, w * (mood === 'shout' ? 0.2 : 0.3), '#1e1838', lid), oDot(x + w * 0.3, y - h * 0.05, w * 0.18, '#ffffff', lid), ...oLid(x, y, w, h, lid, 0.5));
+    }
+    if (mood !== 'dead' && mood !== 'hurt' && mood !== 'dizzy') out.push(...oLn([[x + s * w * 0.9, y - h * 0.15], [x + s * w * 1.5, y - h * 0.45]], 0.4));
+  }
+  if (mood !== 'dead') out.push(F(E(18.4, 12.6, 1, 0.45, '#ffb0c8')));
+  const [mx, my] = [15, 13.6];
+  if (mood === 'shout') out.push(F(E(mx, my + 0.3, 0.85, 1, '#5a2a4a')));
+  else if (mood === 'happy') out.push(F(T(oArc(mx, my - 0.2, 0.95, 0.85, 0, 180, 8), '#5a2a4a')));
+  else if (mood === 'angry') out.push(...oLn([[mx - 0.8, my + 0.3], [mx, my], [mx + 0.8, my + 0.3]], 0.34));
+  else if (mood === 'hurt' || mood === 'dizzy') out.push(...oWave(mx, my, 0.8, 0.3));
+  else if (mood === 'dead') out.push(...oLn([[mx - 0.6, my], [mx + 0.6, my]], 0.3));
+  else out.push(F(E(mx, my + 0.1, 0.42, 0.45, '#c84a6a')));
+  if (mood === 'hurt') out.push(...oDrop(18.6, 10.4, 0.6));
+  return out;
+};
+const ugFace = (mood) => sm(`ug|face|${mood}`, 24, 26, () => ugOwnFace(mood));
 const ugPass = (bare) => {
   const i = bare ? 1 : 0;
   const tag = bare ? 'b' : '';
@@ -117,7 +191,7 @@ export const ghostRig = makeRig({
 export function ghostStill(pose, f, mood) {
   const fm = MOODS.has(mood) ? mood : 'idle';
   return { w: 44, h: 48, res: 3, shapes: shift([
-    ...put(ugArm(true)(), [3, 1], -6, -21, 8), ...put(ugScript(), [4.5, 2], -6.8, -15.4, -5), ...put(ugBody(), [12, 25.4], 0, -7), ...put(faceShapes(fm, UG_FACE), [12, 25.4], 0, -7),
+    ...put(ugArm(true)(), [3, 1], -6, -21, 8), ...put(ugScript(), [4.5, 2], -6.8, -15.4, -5), ...put(ugBody(), [12, 25.4], 0, -7), ...put(ugOwnFace(fm), [12, 25.4], 0, -7),
     ...put(ugArm(false)(), [3, 1], 6, -20, -40), ...put(ugMask(), [7, 16], 9.6, -15.7, 30),
   ], 22, 47) };
 }
@@ -162,8 +236,25 @@ const CF_WING = [false, true].map((f) => cf(`wing${f ? 1 : 0}`, 8, 10, cfWing(f)
 const CF_FAN = cf('fan', 14, 10, cfFan, 2);
 const CF_LEG = [false, true].map((f) => cf(`leg${f ? 1 : 0}`, 6, 13, cfLeg(f), 2));
 const CF_FOOT = [false, true].map((f) => cf(`foot${f ? 1 : 0}`, 7, 4, cfFoot(f), 2));
-const CF_FACE = { eyes: [[8.8, 6.6, 1.3, 1.7, -1], [11.8, 6.4, 1.4, 1.8, 1]], mouth: [13.6, 9.6, 1.1], blush: [[7, 8.8, 1.1], [12.4, 9.2, 1]], iris: '#a8306a', lid: 0.1, lashes: 1 };
-const cfFace = (mood) => sm(`cf|face|${mood}`, 20, 15, () => faceShapes(mood, CF_FACE));
+// Her own face, a flamingo showgirl's: sultry half-lidded pink eyes under gold glitter shadow, three long
+// lashes each; her beak is part of her head. Box 20 x 15.
+const CF_EYES = [[8.8, 6.6, -1, 1.3, 1.7], [11.8, 6.4, 1, 1.4, 1.8]];
+const cfOwnFace = (mood) => {
+  const out = [];
+  for (const [x, y, s, w, h] of CF_EYES) {
+    if (mood !== 'dead') for (const [dx, dy, r] of [[-0.4, -1.2, 0.2], [0.6, -1.15, 0.24]]) out.push(oStar(x + w * dx * s, y + h * dy, r * 1.6, '#ffd84a', 4, 0.4));
+    const lashes = (yy) => [0.95, 0.6, 0.25].flatMap((t, i) => oLn([[x + s * w * t, yy - h * 0.6 * Math.sqrt(1 - t * t * 0.8)], [x + s * w * (t + 0.35), yy - h * (1 - i * 0.12) - 0.4]], 0.28));
+    const shut = oShut(mood, x, y, s, w, h, 0.45, '#a8306a');
+    if (shut) { out.push(...shut); if (mood === 'blink' || mood === 'happy') out.push(...lashes(y + h * 0.4)); continue; }
+    const lid = mood === 'angry' ? (px) => y - h * 0.15 + (px - x) * -s * 0.6 : mood === 'shout' ? NOLID : () => y - h * 0.3;
+    if (mood !== 'shout') out.push(F(T(oRing(x, y - 0.1, w * 1.1, h * 1.06).map(([px, py]) => [px, Math.min(py, lid(px) + 0.25)]), '#e890c8')));
+    out.push(...oOpen(x, y, w, h, lid, '#4a0a3a', '#d84a98'), oDot(x + w * 0.3, y - h * 0.02, w * 0.24, '#ffffff', lid), oDot(x - w * 0.3, y + h * 0.4, w * 0.1, '#ffffff', lid), ...oLid(x, y, w, h, lid, 0.45), ...lashes(mood === 'shout' ? y : Math.max(y, lid(x) + h * 0.55)));
+  }
+  if (mood !== 'dead') out.push(F(E(7, 8.8, 1, 0.45, '#ff8ab8')));
+  if (mood === 'hurt') out.push(...oDrop(13.4, 7.6, 0.5));
+  return out;
+};
+const cfFace = (mood) => sm(`cf|face|${mood}`, 20, 15, () => cfOwnFace(mood));
 const cfPass = (bare) => {
   const i = bare ? 1 : 0;
   const tag = bare ? 'b' : '';
@@ -247,7 +338,7 @@ export function flamingoStill(pose, f, mood) {
   return { w: 44, h: 56, res: 3, shapes: shift([
     ...put(cfWing(true)(), [2, 1], -4, hy - 12, 20), ...put(cfLeg(true)(), [3, 1], -2.6, hy), ...put(cfFoot(true)(), [2, 1.6], -2.6, hy + 10.6), ...put(cfLeg(false)(), [3, 1], 2.6, hy), ...put(cfFoot(false)(), [2, 1.6], 2.6, hy + 10.6),
     ...put(cfBody(), [10, 17], 0, hy), ...put(cfSkirt(), [13, 3], 0, hy - 1.4), ...put(cfNeck(), [3, 9], 4, hy - 14, -8),
-    ...put(cfPlume(), [7, 15], 4.4, hy - 32), ...put(cfHead(), [6, 13], 3.4, hy - 22), ...put(faceShapes(fm, CF_FACE), [6, 13], 3.4, hy - 22), ...put(cfWing(false)(), [2, 1], 4, hy - 11, 20),
+    ...put(cfPlume(), [7, 15], 4.4, hy - 32), ...put(cfHead(), [6, 13], 3.4, hy - 22), ...put(cfOwnFace(fm), [6, 13], 3.4, hy - 22), ...put(cfWing(false)(), [2, 1], 4, hy - 11, 20),
   ], 20, 55) };
 }
 
@@ -290,8 +381,33 @@ const SH_HEAD = sh('head', 24, 18, shHead, 2);
 const SH_ARM = [false, true].map((f) => sh(`arm${f ? 1 : 0}`, 9, 12, shArm(f), 2));
 const SH_WRENCH = sh('wrench', 10, 28, shWrench, 2);
 const SH_FOOT = [false, true].map((f) => sh(`foot${f ? 1 : 0}`, 8, 4, shFoot(f), 2));
-const SH_FACE = { eyes: [[13.4, 8.4, 1.1, 1.4, -1], [16.4, 8.4, 1.2, 1.5, 1]], mouth: [16.8, 13.6, 1.2], blush: [[12.2, 11, 1.1], [17.6, 11.8, 1]], iris: '#3a2a3a', lid: 0.15 };
-const shFace = (mood) => sm(`shand|face|${mood}`, 24, 18, () => faceShapes(mood, SH_FACE));
+// Its own face, a stagehand mole's: tiny bead eyes it squints with (moles hardly see), a few whiskers,
+// and buck teeth in a determined little mouth; its big pink nose is part of its head. Box 24 x 18.
+const SH_EYES = [[13.4, 8.4, -1, 1.1, 1.4], [16.4, 8.4, 1, 1.2, 1.5]];
+const shOwnFace = (mood) => {
+  const out = [];
+  for (const [x, y, s, w, h] of SH_EYES) {
+    const shut = oShut(mood, x, y, s, w * 0.8, h * 0.8, 0.4, '#3a2a3a');
+    if (shut) { out.push(...shut); continue; }
+    const r = mood === 'shout' ? 0.55 : 0.4;
+    out.push(F(E(x, y, w * r, h * r * 0.9, '#1a1018')), oDot(x + w * 0.12, y - h * 0.12, w * 0.12, '#ffffff'));
+    if (mood !== 'shout') out.push(...oLn([[x - w * 0.75, y - h * 0.5], [x, y - h * 0.62], [x + w * 0.75, y - h * 0.5]], 0.3, '#5a4a5a'));
+    if (mood === 'angry') out.push(...oLn([[x - s * w * 0.9, y - h * 0.95 + 0.5], [x + s * w * 0.8, y - h * 1.05]], 0.4, '#3a2a3a'));
+  }
+  if (mood !== 'dead') out.push(F(E(12.2, 11, 1, 0.45, '#ffa8b8')));
+  for (const dy of [-0.35, 0.35]) out.push(...oLn([[19.4, 11.4 + dy], [21, 11.2 + dy * 1.8]], 0.18, '#5a4a5a'));
+  const [mx, my] = [16.8, 13.6];
+  if (mood === 'shout') out.push(F(E(mx, my + 0.3, 0.8, 0.9, '#6a2a3a')), F(T([[mx - 0.45, my - 0.5], [mx + 0.45, my - 0.5], [mx + 0.4, my], [mx - 0.4, my]], '#ffffff')));
+  else if (mood === 'hurt' || mood === 'dizzy') out.push(...oWave(mx, my, 0.8, 0.28));
+  else if (mood === 'dead') out.push(...oLn([[mx - 0.6, my], [mx + 0.6, my]], 0.28));
+  else {
+    out.push(...oLn(mood === 'happy' ? oArc(mx, my - 0.6, 0.9, 0.7, 20, 160, 6) : [[mx - 0.8, my - 0.1], [mx, my + 0.05], [mx + 0.8, my - 0.1]], 0.3));
+    out.push(F(T([[mx - 0.4, my], [mx + 0.4, my], [mx + 0.35, my + 0.55], [mx - 0.35, my + 0.55]], '#ffffff')), ...oLn([[mx, my], [mx, my + 0.55]], 0.1, '#c8c0c0'));
+  }
+  if (mood === 'hurt') out.push(...oDrop(17.8, 7, 0.5));
+  return out;
+};
+const shFace = (mood) => sm(`shand|face|${mood}`, 24, 18, () => shOwnFace(mood));
 const shPass = (bare) => {
   const i = bare ? 1 : 0;
   const tag = bare ? 'b' : '';
@@ -353,6 +469,6 @@ export function moleStill(pose, f, mood) {
   const fm = MOODS.has(mood) ? mood : 'idle';
   return { w: 46, h: 52, res: 3, shapes: shift([
     ...put(shArm(true)(), [3, 1], -6, -17, 8), ...put(shFoot(true)(), [4, 3.8], -3.6, 0), ...put(shFoot(false)(), [4, 3.8], 3.6, 0), ...put(shBody(), [11, 21.6], 0, -3),
-    ...put(shHead(), [10, 16], 2, -21), ...put(faceShapes(fm, SH_FACE), [10, 16], 2, -21), ...put(shArm(false)(), [3, 1], 6, -16, 14), ...put(shWrench(), [5, 22], 4.3, -8, -54),
+    ...put(shHead(), [10, 16], 2, -21), ...put(shOwnFace(fm), [10, 16], 2, -21), ...put(shArm(false)(), [3, 1], 6, -16, 14), ...put(shWrench(), [5, 22], 4.3, -8, -54),
   ], 21, 51) };
 }
