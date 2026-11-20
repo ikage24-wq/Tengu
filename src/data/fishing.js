@@ -171,7 +171,7 @@ export const SPOTS = {
   // star pool at Starfall.
   peak: [{ x: 1480, y: 1136, face: 1, bx: 1556, by: 1136, ice: true, tier: 4, pool: { fish_icefish: 6, fish_auroratrout: 4, fish_trout: 1, fish_seraph: 0.4, fish_smelt: 5, fish_glacierpike: 1.5, fish_cod: 3, fish_aurorajelly: 1.2 } }],
   sky: [{ x: 1820, y: 1040, face: -1, bx: 1745, by: 1055, tier: 4, pool: { fish_cloudcarp: 6, fish_comet: 2, fish_nebularay: 0.6, fish_whale: 0.6, fish_breeze: 5, fish_cloudkoi: 1.5, fish_sunangel: 1.5 } }],
-  starfall: [{ x: 870, y: 800, face: 1, bx: 925, by: 813, sky: true, tier: 4, pool: { fish_comet: 5, fish_seraph: 3, fish_starfish: 2, fish_nebularay: 0.8, fish_whale: 0.5, fish_twinkle: 3, fish_moonfish: 1.5, fish_polaris: 0.12 } }],
+  starfall: [{ x: 500, y: 700, face: 1, bx: 590, by: 713, sky: true, tier: 4, pool: { fish_comet: 5, fish_seraph: 3, fish_starfish: 2, fish_nebularay: 0.8, fish_whale: 0.5, fish_twinkle: 3, fish_moonfish: 1.5, fish_polaris: 0.12 } }],
   // Lantern Lagoon: the cove's rock pools (anyone can fish them), the boardwalk's edges over the
   // lagoon, and the deep water off Lighthouse Point.
   lagoon: [

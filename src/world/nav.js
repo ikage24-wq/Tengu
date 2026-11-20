@@ -201,8 +201,12 @@ export function followPath(nav, body, path, tx, near = 4) {
     toward(tx, near);
     // Heading down the bank of a pool on this same piece of ground: hold Down so a footbridge over
     // it doesn't carry them across (physics.js `walkOn`).
+    // (Only with a footbridge in the way: Down beside a rope's top would grab the rope.)
     const s = nav.surfaces[here];
-    if (s?.ground && s.yAt(Math.max(s.x1, Math.min(s.x2, tx))) > body.y + 8) intent.down = true;
+    const lo = Math.min(body.x, tx);
+    const hi = Math.max(body.x, tx);
+    const bridged = nav.surfaces.some((b) => b.walkOn && b.x1 < hi && b.x2 > lo);
+    if (s?.ground && bridged && s.yAt(Math.max(s.x1, Math.min(s.x2, tx))) > body.y + 8) intent.down = true;
     return { intent, lost: false };
   }
   if (here !== step.from) return { intent, lost: true };

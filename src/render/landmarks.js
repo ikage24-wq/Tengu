@@ -13,6 +13,7 @@ import { RUINS_KINDS } from './ruinsart.js';
 import { CAVE_KINDS } from './cavecrystal.js';
 import { SKY_KINDS } from './skyart.js';
 import { PEAK_KINDS } from './peakart.js';
+import { STARFALL_KINDS } from './starfallart.js';
 import { MANORHILL_KINDS } from './manorhill.js';
 import { AQUA_KINDS } from './aquapalace.js';
 import { FAIR_KINDS } from './fairground.js';
@@ -3358,6 +3359,8 @@ const KINDS = {
   ...SKY_KINDS,
   // (Frozen Peak's icefall, snow shrine and igloos: render/peakart.js.)
   ...PEAK_KINDS,
+  // (Starfall Heights' fallen star and moon cradle: render/starfallart.js.)
+  ...STARFALL_KINDS,
   // (Manor Hill's gates, the pumpkin coach, lamp posts, rose hedges, topiaries: render/manorhill.js.)
   ...MANORHILL_KINDS,
   ...AQUA_KINDS,

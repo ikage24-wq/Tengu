@@ -22,7 +22,7 @@ test('every landmark placed at a height rests on a floor (only ceilings and fall
   // (A piece given its own height in `deco` stands on the ground or a ledge there; the Hollow's root
   // ceilings and the Glade's falls are the hung ones, on purpose, and the Sky Garden's floating
   // islands and rainbow float.)
-  const HUNG = new Set(['rootceiling', 'waterfall', 'skyisland', 'rainbowarch']);
+  const HUNG = new Set(['rootceiling', 'waterfall', 'skyisland', 'rainbowarch', 'mooncradle']);
   for (const map of Object.values(MAPS)) {
     for (const [kind, x, , y] of map.deco ?? []) if (y != null && !HUNG.has(kind)) assert.ok(on(map, x, y), `${map.id}: ${kind} at ${x},${y} stands on a floor`);
   }

@@ -3103,62 +3103,71 @@ Object.assign(MAPS, {
 
 
 
-  // Starfall Heights is a valley (data/climb.js lay(), its zones side by side): you arrive high on
-  // the West Rim, where the Sky Harpies wheel and a star pool by its lower steps is a quiet place to
-  // fish; step down the cliff terraces into the Fallen Star Crater, where the Star Seraphs gather
-  // round the fallen stars, Selene walks, and starlight rises to lift you; and climb out up the
-  // East Rim to the high island where the way to the Moon Terrace opens. A star-cloud ferry glides
-  // the whole width of the valley, rim to rim.
+  // Starfall Heights (its makeover, 2026-11-20): a smaller valley round its landmarks
+  // (render/starfallart.js), zones side by side. The West Rim where you arrive, a crescent moon
+  // hung over it on golden chains like a hammock (its cradle is the top of the heights), a long
+  // star-cloud bank and the steps down past the star pool. The Fallen Star Crater: the Fallen Star
+  // itself resting on the crater floor, asleep, its upper arms ledges, vines down from
+  // its arms, the starlight rising behind it (Up to ride it), Selene walking its floor and a
+  // star-cloud ferry gliding over it rim to rim. The East Rim: a long star-cloud bank, the steps
+  // up, little stars stepping up to the floating island with the gazebo, the way to the Moon
+  // Terrace and the homestone, and the way to Cloudcatch Pier at the rim's end.
   starfall: {
-    id: 'starfall', name: 'Starfall Heights', theme: 'sky', music: 'starfall', town: 'grove', world: { x: 390, y: 34 },
-    look: { sky: ['#1d1b48', '#4a3f8c', '#a68ad6'], sun: '#e6dcff', far: '#5a4f9e', mid: '#6a5fa8', midTrim: '#8a7cc8', face: 'moon', stars: true, shooting: true, rainbow: 0, light: 'starfall', material: 'starcloud', props: ['cloudpuff', 'star', 'flower', 'cloudpuff'], drift: 'sparkle', ground: '#e6e0fa', groundDeep: '#c4b8ec', ledge: '#ece6ff', ledgeShade: '#c4b8ec' },
+    id: 'starfall', name: 'Starfall Heights', theme: 'sky', music: 'starfall', town: 'grove', world: { x: 390, y: 34 }, perSpawn: 4,
+    look: { sky: ['#1d1b48', '#4a3f8c', '#a68ad6'], sun: '#e6dcff', far: '#5a4f9e', mid: '#6a5fa8', midTrim: '#8a7cc8', face: 'moon', stars: true, shooting: true, rainbow: 0, light: 'starfall', material: 'starcloud', props: [], ledgeKeep: 1 },
     ...lay({
-      width: 2600, ground: 1040, by: 'x',
-      terrain: [[0, 520], [460, 520], [460, 640], [760, 640], [760, 800], [846, 800], [870, 840], [950, 840], [974, 800], [1000, 800], [1000, 1040], [1600, 1040], [1600, 800], [1840, 800], [1840, 640], [2140, 640], [2140, 520], [2600, 520]],
-      // Ropes down each cliff step, hanging beside the wall from its top.
-      ropes: [{ x: 470, top: 520, bottom: 640 }, { x: 770, top: 640, bottom: 800 }, { x: 1010, top: 800, bottom: 1040 }, { x: 1590, top: 800, bottom: 1040 }, { x: 1830, top: 640, bottom: 800 }, { x: 2130, top: 520, bottom: 640 }],
-      quiet: [[40, 520, 200], [880, 800, 260], [910, 840, 120], [820, 640, 320], [2500, 440, 200]],
+      width: 2200, ground: 1040, by: 'x',
+      // The valley: the rims, a step down either side (the star pool sunk in the west one), the crater.
+      terrain: [[0, 520], [440, 520], [440, 700], [530, 700], [544, 712], [636, 712], [650, 700], [720, 700], [720, 1040], [1480, 1040], [1480, 700], [1760, 700], [1760, 520], [2200, 520]],
+      ropes: [
+        // Down each cliff step, beside the wall.
+        { x: 450, top: 520, bottom: 700 }, { x: 730, top: 700, bottom: 1040 }, { x: 1470, top: 700, bottom: 1040 }, { x: 1750, top: 520, bottom: 700 },
+        // Down from the moon's cradle; vines down from the star's arms.
+        { x: 230, top: 382, bottom: 520 }, { x: 900, top: 759, bottom: 1040 }, { x: 1300, top: 759, bottom: 1040 },
+      ],
+      quiet: [[40, 520, 200], [2160, 520, 160], [2140, 380, 140], [500, 700, 120]],
       zones: [
-        { name: 'West Rim', color: '#8fa8f0', from: 0, mobs: ['windbird', 'shepherdess', 'kiterider'], nodes: [SPOT.night(4), SPOT.herb(4, 'star_anise')] },
-        { name: 'Fallen Star Crater', color: '#e0b84a', from: 1000, mobs: ['starspirit', 'monk', 'windbird'], nodes: [SPOT.ore(4), SPOT.ore(4, { gem: 0.2 })],
-          look: { sky: ['#2a1e58', '#5a3f8c', '#c08ad6'] } },
-        { name: 'East Rim', color: '#c8b8ff', from: 1600, mobs: ['starspirit', 'harpist', 'monk'], nodes: [SPOT.herb(4, 'star_anise'), SPOT.wood(4)],
-          look: { sky: ['#141238', '#3a2f7c', '#8a7ad0'] } },
+        { name: 'West Rim', color: '#8fa8f0', from: 0, mobs: ['windbird', 'shepherdess', 'kiterider'] },
+        { name: 'Fallen Star Crater', color: '#e0b84a', from: 720, mobs: ['starspirit', 'monk', 'windbird'], look: { sky: ['#2a1e58', '#5a3f8c', '#c08ad6'] } },
+        { name: 'East Rim', color: '#c8b8ff', from: 1480, mobs: ['starspirit', 'harpist', 'monk'], look: { sky: ['#141238', '#3a2f7c', '#8a7ad0'] } },
       ],
       ledges: [
-        // Islands floating over the crater, in tiers either side of the starlight column (rebuilt
-        // 2026-11-05 with more and wider star-cloud floors, so the heights hunt like a real map).
-        { x: 1030, y: 960, w: 240 }, { x: 1330, y: 960, w: 240 },
-        { x: 1150, y: 880, w: 300 },
-        { x: 1020, y: 800, w: 240 }, { x: 1340, y: 800, w: 240 },
-        { x: 1020, y: 560, w: 220 }, { x: 1360, y: 560, w: 220 },
-        // Star-cloud terraces over the west rim and its steps (none over the star pool).
-        { x: 60, y: 440, w: 380 }, { x: 240, y: 360, w: 380 },
-        { x: 500, y: 560, w: 300 }, { x: 560, y: 480, w: 360 },
-        // The east rim: clouds over its steps, and its high island with the way to the terrace.
-        { x: 1620, y: 720, w: 200 }, { x: 1640, y: 480, w: 300 }, { x: 1880, y: 560, w: 240 },
-        { x: 2160, y: 360, w: 300 },
-        { x: 2250, y: 440, w: 300, thick: 44 },
-        // The star-cloud ferry, gliding rim to rim across the valley.
-        { x: 760, y: 640, w: 150, drift: { dx: 930, period: 16 } },
-        // The cloud dock out over the star pool on the west steps.
-        { x: 840, y: 800, w: 70, walkOn: true },
+        // The moon's cradle (drawn with it).
+        { x: 220, y: 382, w: 120, bare: true, noProps: true, noRope: true },
+        // The long star-cloud banks either side of the crater.
+        { x: 446, y: 560, w: 374, noRope: true }, { x: 1380, y: 560, w: 374, noRope: true },
+        // The Fallen Star's upper arms (drawn with it).
+        { x: 885, y: 759, w: 153, bare: true, noProps: true, noRope: true }, { x: 1162, y: 759, w: 153, bare: true, noProps: true, noRope: true },
+        // Little stars stepping up to the gazebo's island (drawn with it as an island).
+        { x: 1800, y: 460, w: 80, noRope: true }, { x: 1880, y: 380, w: 320, bare: true, noProps: true, noRope: true },
+        // The star-cloud ferry, gliding across the crater rim to rim.
+        { x: 720, y: 700, w: 130, drift: { dx: 630, period: 16 } },
       ],
     }),
-    // A moving part per zone: the ferry on the west rim's steps, starlight rising from the crater
-    // (Up to ride it, and catch the ferry going over), and a vent up to the east rim's island.
-    updrafts: [{ x: 1300, w: 56, top: 610, bottom: 1040, kind: 'wisplight' }],
-    springs: [{ x: 2300, y: 520, up: 120, kind: 'gust' }],
-    // The star pool sunk in the west rim's lower step: night sky in the cloud.
-    water: [{ x1: 846, x2: 974, y: 812, kind: 'star' }],
-    portals: [{ id: 'west', x: 40, y: 520, to: 'sky', toPortal: 'starfall' }, { id: 'whale', x: 2550, y: 520, to: 'cloudcatch_pier', toPortal: 'west', label: 'Cloudcatch Pier' }],
+    // Its monsters, placed by hand, three a spot, well away from the ways in (the arrival rule).
+    spawns: [
+      { mob: 'windbird', x: 500, y: 560 }, { mob: 'kiterider', x: 740, y: 560 },
+      { mob: 'shepherdess', x: 780, y: 1040 }, { mob: 'monk', x: 1000, y: 1040 }, { mob: 'starspirit', x: 1200, y: 1040 }, { mob: 'harpist', x: 1420, y: 1040 },
+      { mob: 'monk', x: 958, y: 759 }, { mob: 'starspirit', x: 1242, y: 759 },
+      { mob: 'harpist', x: 1440, y: 560 }, { mob: 'starspirit', x: 1700, y: 560 }, { mob: 'monk', x: 1680, y: 700 },
+    ],
+    // Its gathering spots, placed by hand, clear of the monsters, ropes and ways.
+    nodes: [
+      { ...SPOT.night(4), x: 280, y: 382 }, { ...SPOT.herb(4, 'star_anise'), x: 620, y: 560 }, { ...SPOT.ore(4), x: 690, y: 700 },
+      { ...SPOT.ore(4, { gem: 0.2 }), x: 1530, y: 700 }, { ...SPOT.wood(4), x: 1570, y: 560 }, { ...SPOT.fiber(4), x: 1840, y: 460 },
+    ],
+    // A moving part per zone: the moon swaying on its chains, starlight rising behind the Fallen
+    // Star up past its tip (Up to ride it, and catch the ferry going over), and the ferry itself.
+    updrafts: [{ x: 1100, w: 56, top: 600, bottom: 1040, kind: 'wisplight' }],
+    // The star pool sunk in the west step: night sky in the cloud.
+    water: [{ x1: 544, x2: 636, y: 712, kind: 'star' }],
+    portals: [{ id: 'west', x: 40, y: 520, to: 'sky', toPortal: 'starfall' }, { id: 'whale', x: 2160, y: 520, to: 'cloudcatch_pier', toPortal: 'west', label: 'Cloudcatch Pier' }],
     npcs: [],
-    // A landmark per zone: a cloud pillar on the west rim, the moonstones round the crater, the
-    // gazebo on the east rim's island.
-    deco: [['cloudpillar', 300], ['moonstone', 1200], ['moonstone', 1450], ['cloudpillar', 2000], ['skygazebo', 2380, 0, 440]],
-    lamps: [{ x: 860, y: 730 }, { x: 1300, y: 1000 }, { x: 2380, y: 400 }],
-    spirit: { x: 1300, y: 760 },
-    habitats: { windbird: { play: true }, starspirit: { naps: true, home: { x: 1300, y: 1040 } }, shepherdess: { naps: true }, monk: { naps: true }, kiterider: { play: true } },
+    // The landmarks: the moon cradle, the Fallen Star, the gazebo's island and the gazebo.
+    deco: [['mooncradle', 280, 0, 424], ['fallenstar', 1100, 0], ['skyisland', 2040, 2, 510], ['skygazebo', 2020, 0, 380]],
+    lamps: [{ x: 1100, y: 840 }, { x: 2020, y: 340 }, { x: 280, y: 360 }],
+    spirit: { x: 1100, y: 520 },
+    habitats: { windbird: { play: true }, starspirit: { naps: true, home: { x: 1100, y: 1040 } }, shepherdess: { naps: true }, monk: { naps: true }, kiterider: { play: true } },
     // Its flyers keep over the floors they live on, not out over the open crater (world/mobs.js).
     flyersStay: true,
   },
@@ -3244,15 +3253,14 @@ for (const r of MAPS.springs.ropes) if (r.bottom === 880 && r.x > 1940 && r.x < 
 MAPS.springs.portals.push({ id: 'grotto', x: 1560, y: 560, to: 'grotto', toPortal: 'west', label: 'Rose Grotto' });
 // Cloud cotton on the high cloud by the Moon Terrace, a quiet spot above the busy east rim
 // (placed by hand: the rim's own floors are full of monsters).
-MAPS.starfall.nodes.push({ ...SPOT.fiber(4), x: 2240, y: 360 });
-MAPS.starfall.portals.push({ id: 'terrace', x: 2500, y: 440, to: 'terrace', toPortal: 'west', label: 'Moon Terrace' });
+MAPS.starfall.portals.push({ id: 'terrace', x: 2140, y: 380, to: 'terrace', toPortal: 'west', label: 'Moon Terrace' });
 
 // The queens roam their regions as field bosses (from the start: the story is optional), back
 // every ten minutes or so after they fall.
 MAPS.glade.spawns.push({ mob: 'sylvana', x: 760, y: 900, respawn: 600 });
 MAPS.shrine.spawns.push({ mob: 'tamamo', x: 1220, y: 880, respawn: 600 });
 MAPS.springs.spawns.push({ mob: 'lilith', x: 500, y: 400, respawn: 600 });
-MAPS.starfall.spawns.push({ mob: 'selene', x: 1300, y: 1040, respawn: 600 });
+MAPS.starfall.spawns.push({ mob: 'selene', x: 1200, y: 1040, respawn: 600 });
 
 // A shortcut home (the map rules): a homestone on a ledge at each big hunting map's far end, far
 // from the way you came in from town. Step up to it and it carries you straight back to town (one
@@ -3260,7 +3268,7 @@ MAPS.starfall.spawns.push({ mob: 'selene', x: 1300, y: 1040, respawn: 600 });
 const HOMESTONES = {
   meadow1: [1555, 400], meadow2: [200, 700], woods: [1650, 880], ruins: [1764, 330], cave: [1660, 362],
   sky: [1920, 330], canyon: [110, 520], glade: [880, 900], shrine: [2164, 560], ridge: [2200, 400],
-  springs: [1992, 640], peak: [1740, 880], starfall: [2290, 440],
+  springs: [1992, 640], peak: [1740, 880], starfall: [1920, 380],
 };
 for (const [id, [x, y]] of Object.entries(HOMESTONES)) {
   const m = MAPS[id];
