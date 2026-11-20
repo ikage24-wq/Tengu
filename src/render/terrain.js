@@ -142,7 +142,9 @@ export const MATERIALS = {
   // layers, pebbles and buried chestnuts are the course's own, render/courseart.js.)
   // Cloud Glide (its redraw, 2026-11-13: a snowy peak over a sea of clouds): snow puffed over a
   // frosty bed glittering faintly.
-  snowpeak: { lip: '#ffffff', body: '#e2e6f8', deep: '#b8c0e0', stone: '#f6f8ff', style: 'snowpack', blades: false, drip: null, cap: 'puffy' },
+  // (Drawn in Petal Meadow's soft layers, in cool snow tones with icy stones and no rootlets, so a
+  // tall cliff of it doesn't read as a blank slab: the play-test of 2026-11-21.)
+  snowpeak: { lip: '#ffffff', body: '#dce2f6', deep: '#a2acd4', stone: '#f6f8ff', style: 'petalsoil', pebbles: ['#f4f8ff', '#d4e2fa', '#c4d6f2', '#b8cced'], noRoots: true, blades: false, drip: null, cap: 'puffy' },
   maplecliff: { lip: '#c8d46a', body: '#f2c8a0', deep: '#d29270', stone: '#fde2c8', style: 'leafloam', blades: true, drip: 'root', cap: 'puffy' },
   // Long Hill Run (its redraw, 2026-11-13: hills of Japanese sweets): white frosting puffed over
   // golden sponge cake; the cream and jam layers and buried sweets are the course's own,
@@ -915,7 +917,7 @@ function paintTile(g, m, theme) {
     layer(18, 5, 1, mix(m.body, m.deep, 0.45), 0.55, shade(m.body, 10));
     layer(78, 6, 2, mix(m.body, m.deep, 0.7), 0.5, shade(m.body, 6));
     // Pebbles, in pastel stone tints.
-    const tints = ['#f4d9c0', '#e8c9d6', '#d9d2e8', '#f6e3c6'];
+    const tints = m.pebbles ?? ['#f4d9c0', '#e8c9d6', '#d9d2e8', '#f6e3c6'];
     for (let i = 0; i < 7; i++) {
       const k = seed + i * 7.9 + 90;
       const x = hash(k) * TW;
@@ -941,8 +943,8 @@ function paintTile(g, m, theme) {
         g.fill();
       });
     }
-    // Little curled rootlets: a short curl each, lighter on top.
-    for (let i = 0; i < 3; i++) {
+    // Little curled rootlets: a short curl each, lighter on top (none in snow).
+    for (let i = 0; i < (m.noRoots ? 0 : 3); i++) {
       const k = seed + i * 11.3 + 40;
       const x = hash(k) * TW;
       const y = 8 + hash(k + 1) * (TH - 16);

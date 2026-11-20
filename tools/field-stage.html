@@ -1,0 +1,230 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Field stage</title>
+<style>html, body { margin: 0; background: #1c1830; } canvas { display: block; image-rendering: pixelated; width: 100vw; max-height: calc(100vh - 24px); object-fit: contain; } #hud { position: fixed; left: 8px; bottom: 6px; color: #fff; font: 12px monospace; text-shadow: 0 1px 2px #000; }</style>
+</head><body>
+<canvas id="game"></canvas><div id="hud"></div>
+<script type="module">
+// Dev tool: a hero in any field map, played with the real keyboard through the game's own input,
+// world and renderer (no save needed), for live play-tests. ?map=shrine&portal=west&job=warrior&lv=30
+// (&god=0 to be hurt, &night=0/1). From outside: window.go(map, portal) moves her to another map,
+// window.hold(code, ms) holds a key the way a player would (real keydown/keyup events),
+// window.tap(code), window.rec(secs, name) records the canvas to an MP4 posted to the local
+// receiver, window.W is the world, window.pos() where she stands.
+import { balanceChar } from './balance.mjs';
+import { createWorld, updateWorld, loadMap } from '../src/world/world.js';
+import { createCamera, updateCamera, drawWorld } from '../src/render/scene.js';
+import { setHd, nextFrame } from '../src/render/pixel.js';
+import { preloadFxSprites } from '../src/render/fx-sprites.js';
+import { createInput, endFrame, VW, VH } from '../src/input.js';
+
+const q = new URLSearchParams(location.search);
+const S = Number(q.get('s') ?? 2);
+const canvas = document.getElementById('game');
+canvas.width = VW * S;
+canvas.height = VH * S;
+const ctx = canvas.getContext('2d');
+const input = createInput(canvas);
+preloadFxSprites();
+const w = createWorld(balanceChar(q.get('job') ?? 'warrior', Number(q.get('lv') ?? 30)));
+w.log = () => {};
+w.god = q.get('god') !== '0';
+if (q.get('night') != null) w.forceNight = Number(q.get('night'));
+const cam = createCamera();
+const go = (map, portal = 'west') => {
+  loadMap(w, map, portal);
+  w.god = q.get('god') !== '0';
+};
+go(q.get('map') ?? 'shrine', q.get('portal') ?? 'west');
+const hud = document.getElementById('hud');
+let t = 0;
+let last = performance.now();
+let acc = 0;
+// (Paced by a message channel, not requestAnimationFrame: the desktop app throttles hidden
+// windows to a frame a second, which would make a play-test crawl.)
+const frameWaiters = [];
+const chan = new MessageChannel();
+let lastDraw = 0;
+chan.port1.onmessage = () => {
+  const now = performance.now();
+  if (now - lastDraw >= 1000 / 60) {
+    lastDraw = now;
+    frame(now);
+    while (frameWaiters.length) frameWaiters.shift()();
+  }
+  chan.port2.postMessage(0);
+};
+const frame = (now) => {
+  acc += Math.min(0.1, (now - last) / 1000);
+  last = now;
+  while (acc >= 1 / 60) {
+    updateWorld(w, 1 / 60, input);
+    updateCamera(cam, w, 1 / 60);
+    endFrame(input);
+    t += 1 / 60;
+    acc -= 1 / 60;
+  }
+  nextFrame();
+  ctx.setTransform(S, 0, 0, S, 0, 0);
+  ctx.imageSmoothingEnabled = false;
+  setHd(true, S);
+  drawWorld(ctx, w, cam, t);
+  hud.textContent = `${w.map.name} (${w.map.id})  x ${Math.round(w.body.x)} y ${Math.round(w.body.y)}${w.body.rope ? '  on rope' : ''}  monsters ${w.mobs.filter((m) => m.hp > 0).length}`;
+};
+chan.port2.postMessage(0);
+
+const key = (type, code) => window.dispatchEvent(new KeyboardEvent(type, { code, key: code.startsWith('Key') ? code.slice(3).toLowerCase() : code, bubbles: true }));
+window.W = w;
+window.go = go;
+window.pos = () => ({ map: w.map.id, x: Math.round(w.body.x), y: Math.round(w.body.y), rope: !!w.body.rope, ground: !!w.body.onGround });
+const frames = async (n) => { for (let i = 0; i < n; i++) await new Promise((res) => frameWaiters.push(res)); };
+window.tap = async (code) => { key('keydown', code); await frames(4); key('keyup', code); };
+window.hold = async (code, ms) => { key('keydown', code); await frames(Math.round(ms / (1000 / 60))); key('keyup', code); return window.pos(); };
+window.holdAll = async (codes, ms) => { for (const c of codes) key('keydown', c); await frames(Math.round(ms / (1000 / 60))); for (const c of codes) key('keyup', c); return window.pos(); };
+window.rec = async (secs, name) => {
+  const stream = canvas.captureStream(60);
+  const type = ['video/mp4;codecs=avc1', 'video/mp4', 'video/webm'].find((m) => MediaRecorder.isTypeSupported(m));
+  const r = new MediaRecorder(stream, { mimeType: type, videoBitsPerSecond: 6e6 });
+  const parts = [];
+  r.ondataavailable = (e) => parts.push(e.data);
+  const done = new Promise((res) => (r.onstop = res));
+  r.start();
+  await frames(Math.round(secs * 60));
+  r.stop();
+  await done;
+  const blob = new Blob(parts, { type });
+  if (name) await fetch(`http://127.0.0.1:8001/${name}`, { method: 'POST', body: blob });
+  return `${type} ${blob.size}`;
+};
+// A play-test tour: she visits every floor, ledge and rope top on the map in turn (nearest next),
+// steered by the game's own path-finding but moving only through real key presses, the way a
+// player would play it. Gives up on a spot after `timeout` seconds and notes it. With `name`, the
+// whole tour is recorded to an MP4 posted to the local receiver. window.tour({ timeout, name, bitrate }).
+const { navOf, surfaceOf, findPath, followPath } = await import('../src/world/nav.js');
+const KEYS = { left: 'ArrowLeft', right: 'ArrowRight', up: 'ArrowUp', down: 'ArrowDown', jump: 'Space' };
+const down = new Map();
+const setKeys = (intent) => {
+  for (const [k, code] of Object.entries(KEYS)) {
+    const want = !!intent[k];
+    const held = down.get(code);
+    if (want && held == null) { key('keydown', code); down.set(code, 0); }
+    else if (want && k === 'jump' && held > 18) { key('keyup', code); down.delete(code); }
+    else if (want) down.set(code, held + 1);
+    else if (!want && held != null) { key('keyup', code); down.delete(code); }
+  }
+};
+const tick = () => new Promise((res) => frameWaiters.push(res));
+// One spot: she makes her way to surface `i` (by index, or the one under x, y) like in the tour.
+window.reach = async (x, y, timeout = 30) => {
+  const nav = navOf(w.map);
+  const i = nav.surfaces.findIndex((q) => x >= q.x1 && x <= q.x2 && Math.abs(q.yAt(x) - y) < 4);
+  if (i < 0) return 'no surface there';
+  const trail = [];
+  let path = null;
+  let fightT = 0;
+  const t0 = performance.now();
+  while ((performance.now() - t0) / 1000 < timeout) {
+    const here = surfaceOf(nav, w.body);
+    if (here === i && Math.abs(w.body.x - x) < 14) { setKeys({}); return { ok: true, secs: +((performance.now() - t0) / 1000).toFixed(1), trail }; }
+    if (here >= 0 && (!path || path.lost)) { path = findPath(nav, here, w.body.x, i, x) ?? []; trail.push(`plan from ${here} at ${Math.round(w.body.x)}: ${path.map((st) => `${st.kind}->${st.to}@${Math.round(st.x)}`).join(' ')}`); }
+    if (here < 0 && w.body.rope && !path) { setKeys({ up: true }); await tick(); continue; }
+    const f = path ? followPath(nav, w.body, path, x) : { intent: {} };
+    if (f.lost) path = null;
+    setKeys(f.intent ?? {});
+    fightT = (fightT + 1) % 14;
+    if (fightT === 0 && w.mobs.some((m) => m.hp > 0 && Math.abs(m.x - w.body.x) < 70 && Math.abs(m.y - w.body.y) < 50)) window.tap('KeyZ');
+    await tick();
+  }
+  setKeys({});
+  return { ok: false, at: window.pos(), trail: trail.slice(-6) };
+};
+window.tour = async ({ timeout = 30, name = null, bitrate = 2.5e6 } = {}) => {
+  const nav = navOf(w.map);
+  const S2 = nav.surfaces;
+  let rec = null;
+  let parts = [];
+  if (name) {
+    const type = ['video/mp4;codecs=avc1', 'video/mp4'].find((m) => MediaRecorder.isTypeSupported(m));
+    rec = new MediaRecorder(canvas.captureStream(60), { mimeType: type, videoBitsPerSecond: bitrate });
+    rec.ondataavailable = (e) => parts.push(e.data);
+    rec.start();
+  }
+  let fightT = 0;
+  // A contact sheet: a thumbnail every three seconds, labelled with the time and where she is.
+  const thumbs = [];
+  let tf = 0;
+  const T0 = performance.now();
+  const snap = () => {
+    const c2 = document.createElement('canvas');
+    c2.width = 320;
+    c2.height = 180;
+    const g = c2.getContext('2d');
+    g.drawImage(canvas, 0, 0, 320, 180);
+    g.fillStyle = 'rgba(0,0,0,0.55)';
+    g.fillRect(0, 0, 320, 14);
+    g.fillStyle = '#fff';
+    g.font = '10px monospace';
+    g.fillText(`${((performance.now() - T0) / 1000).toFixed(0)}s  x${Math.round(w.body.x)} y${Math.round(w.body.y)}`, 4, 10);
+    thumbs.push(c2);
+  };
+  const left = new Set(S2.map((_, i) => i));
+  const log = [];
+  window.tourLog = log;
+  window.tourDone = false;
+  while (left.size) {
+    // The nearest spot not yet visited.
+    const b = w.body;
+    const next = [...left].sort((p, q) => {
+      const d = (s) => Math.hypot((s.x1 + s.x2) / 2 - b.x, s.yAt((s.x1 + s.x2) / 2) - b.y);
+      return d(S2[p]) - d(S2[q]);
+    })[0];
+    left.delete(next);
+    const s = S2[next];
+    const tx = Math.round((s.x1 + s.x2) / 2);
+    let path = null;
+    const t0 = performance.now();
+    let ok = false;
+    while ((performance.now() - t0) / 1000 < timeout) {
+      const here = surfaceOf(nav, w.body);
+      if (here === next && Math.abs(w.body.x - tx) < 14) { ok = true; break; }
+      if (here >= 0 && (!path || path.lost)) path = findPath(nav, here, w.body.x, next, tx) ?? [];
+      // Hanging on a rope with no way planned yet: climb to its top first, then plan from there.
+      if (here < 0 && w.body.rope && !path) { setKeys({ up: true }); await tick(); continue; }
+      const f = path ? followPath(nav, w.body, path, tx) : { intent: {} };
+      if (f.lost) path = null;
+      setKeys(f.intent ?? {});
+      // Like a player, she swings at any monster in her way (the attack key, tapped).
+      fightT = (fightT + 1) % 14;
+      if (fightT === 0 && w.mobs.some((m) => m.hp > 0 && Math.abs(m.x - w.body.x) < 70 && Math.abs(m.y - w.body.y) < 50)) window.tap('KeyZ');
+      if (++tf % 180 === 0) snap();
+      await tick();
+    }
+    setKeys({});
+    // Anything she reaches on the way counts too.
+    log.push({ spot: `${Math.round(s.x1)}-${Math.round(s.x2)}@${Math.round(s.yAt(tx))}`, ok, secs: +((performance.now() - t0) / 1000).toFixed(1), at: window.pos() });
+    for (let k = 0; k < 10; k++) await tick();
+  }
+  let size = 0;
+  if (rec) {
+    const done = new Promise((res) => (rec.onstop = res));
+    rec.stop();
+    await done;
+    const blob = new Blob(parts, { type: rec.mimeType });
+    size = blob.size;
+    await fetch(`http://127.0.0.1:8001/${name}`, { method: 'POST', body: blob });
+  }
+  if (name && thumbs.length) {
+    const cols = 6;
+    const sheet = document.createElement('canvas');
+    sheet.width = cols * 320;
+    sheet.height = Math.ceil(thumbs.length / cols) * 180;
+    const g = sheet.getContext('2d');
+    thumbs.forEach((c2, i) => g.drawImage(c2, (i % cols) * 320, Math.floor(i / cols) * 180));
+    const png = await new Promise((res) => sheet.toBlob(res));
+    await fetch(`http://127.0.0.1:8001/${name.replace(/\.mp4$/, '')}-sheet.png`, { method: 'POST', body: png });
+  }
+  window.tourDone = true;
+  return (window.lastTour = { map: w.map.id, spots: log.length, failed: log.filter((l) => !l.ok), size, log });
+};
+document.title = 'ready';
+</script>
+</body></html>
