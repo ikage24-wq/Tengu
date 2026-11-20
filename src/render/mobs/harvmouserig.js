@@ -18,7 +18,7 @@
 // `harvmouseStill(pose, f, mood)` gives the still pictures (portraits, the book) from the same shapes.
 
 import { E, T, F, stroke } from './kit.js';
-import { simpleEye, simpleMouth, deadEye, tear, vein } from './faces.js';
+
 import { ramp, crescent, shine } from './meadow.js';
 import { part, makeRig, stateBlend, smooth, TAU } from './rig.js';
 import { sprite } from '../pixel.js';
@@ -54,17 +54,55 @@ const headShapes = () => [
 ];
 // The face (unoutlined, on the head): big glossy eyes, cheeks, the nose, whiskers and a little
 // mouth. Box 13 x 10, centre (6.5, 5).
+// Its own face: huge glossy black mouse eyes with two big shines each, fine whiskers off its snout,
+// pink cheeks and a tiny mouth.
+const fLine = (pts, w, c) => {
+  const l = [];
+  const r = [];
+  pts.forEach(([x, y], i) => {
+    const [ax, ay] = pts[Math.max(0, i - 1)];
+    const [bx, by] = pts[Math.min(pts.length - 1, i + 1)];
+    const d = Math.hypot(bx - ax, by - ay) || 1;
+    const nx = ((-(by - ay) / d) * w) / 2;
+    const ny = (((bx - ax) / d) * w) / 2;
+    l.push([x + nx, y + ny]);
+    r.push([x - nx, y - ny]);
+  });
+  return [F(T([...l, ...r.reverse()], c))];
+};
+const fArc = (cx, cy, rx, ry, a0, a1, n = 8) => Array.from({ length: n + 1 }, (_, i) => {
+  const a = ((a0 + ((a1 - a0) * i) / n) * Math.PI) / 180;
+  return [cx + Math.cos(a) * rx, cy + Math.sin(a) * ry];
+});
+const fRing = (cx, cy, rx, ry, rot = 0, n = 14) => Array.from({ length: n }, (_, i) => {
+  const a = (i / n) * Math.PI * 2;
+  const x = Math.cos(a) * rx;
+  const y = Math.sin(a) * ry;
+  return [cx + x * Math.cos(rot) - y * Math.sin(rot), cy + x * Math.sin(rot) + y * Math.cos(rot)];
+});
+const fSquint = (x, y, s, r, c, w) => fLine([[x + s * r, y - r], [x - s * r * 0.8, y], [x + s * r, y + r]], w, c);
+const fDrop = (x, y, r) => [F(E(x, y, r * 0.7, r, '#9ad8ff')), F(E(x - r * 0.2, y - r * 0.3, r * 0.25, r * 0.25, '#ffffff'))];
 const faceShapes = (mood) => {
   const out = [];
-  if (mood === 'dead') out.push(...deadEye(4.3, 4.4, 1, { c: INK, th: 0.5 }), ...deadEye(9, 4.3, 1.1, { c: INK, th: 0.5 }));
-  else {
-    const so = { iris: '#5a3420', ink: INK, lid: 0, mood: mood === 'shout' ? 'angry' : mood };
-    out.push(...simpleEye(4.3, 4.4, { ...so, s: -1, w: 1.25, h: 1.7 }), ...simpleEye(9, 4.3, { ...so, s: 1, w: 1.4, h: 1.9 }));
-    out.push(F(E(3.4, 6.7, 1, 0.55, '#ff9eb0')), F(E(9.8, 6.9, 1, 0.55, '#ff9eb0')));
+  for (const [x, y, s, r] of [[4.2, 4.3, -1, 1.65], [8.9, 4.2, 1, 1.85]]) {
+    if (mood === 'blink') out.push(...fLine(fArc(x, y + 0.2, r, r * 0.55, 15, 165, 6), 0.5, INK));
+    else if (mood === 'happy') out.push(...fLine(fArc(x, y + 1, r, r, 200, 340, 6), 0.55, INK));
+    else if (mood === 'shout' || mood === 'hurt') out.push(...fSquint(x, y, s, r * 0.8, INK, 0.5));
+    else if (mood === 'dead') out.push(...fLine([[x - r * 0.9, y + 0.3], [x + r * 0.9, y + 0.3]], 0.45, INK));
+    else {
+      let ring = fRing(x, y, r, r * 1.08);
+      if (mood === 'angry') ring = ring.map(([px, py]) => [px, Math.max(py, y - r * 0.35 + (px - x) * -s * 0.5)]);
+      out.push(F(T(ring, '#1e1418')), F(E(x + r * 0.35, y - r * 0.35, r * 0.42, r * 0.42, '#ffffff')), F(E(x - r * 0.4, y + r * 0.5, r * 0.18, r * 0.18, '#ffffff')));
+    }
   }
-  out.push(...simpleMouth(10.8, 7.4, { k: 0.5, mood: mood === 'idle' || mood === 'blink' ? 'happy' : mood, lip: INK }));
-  if (mood === 'hurt') out.push(...tear(8.8, 5.4, 0.7, { type: 'stream', len: 2 }));
-  if (mood === 'angry') out.push(...vein(2.4, 1, 0.6));
+  if (mood !== 'dead') out.push(F(E(3, 7, 1, 0.55, '#ff9eb0')), F(E(9.8, 7.1, 1, 0.55, '#ff9eb0')));
+  for (const [dx, dy] of [[2.6, -0.9], [2.9, 0], [2.6, 0.9]]) out.push(...fLine([[11.4, 6.6 + dy * 0.3], [11.4 + dx, 6.6 + dy]], 0.22, '#8a5a3a'));
+  const [mx, my] = [10.8, 7.6];
+  if (mood === 'shout') out.push(F(E(mx, my + 0.2, 0.75, 0.85, '#7a3040')));
+  else if (mood === 'happy') out.push(F(T(fArc(mx, my - 0.2, 0.9, 0.8, 0, 180, 6), '#7a3040')));
+  else if (mood === 'hurt') out.push(...fLine([[mx - 0.8, my + 0.2], [mx - 0.25, my - 0.1], [mx + 0.3, my + 0.2], [mx + 0.8, my - 0.1]], 0.3, INK), ...fDrop(7.4, 6.2, 0.7));
+  else if (mood === 'dead') out.push(F(E(mx, my, 0.35, 0.4, '#7a3040')));
+  else out.push(...fLine([[mx - 0.7, my - 0.2], [mx, my + 0.3], [mx + 0.6, my - 0.2]], 0.32, INK));
   return out;
 };
 // The nose and whiskers, from the tip of the snout at (2, 2.5): a pink button nose with a shine,

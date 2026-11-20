@@ -18,7 +18,7 @@
 // `pumpgobStill(pose, f, mood)` gives the still pictures (portraits, the book) from the same shapes.
 
 import { E, T, F, stroke } from './kit.js';
-import { simpleEye, simpleMouth, deadEye, tear, vein } from './faces.js';
+
 import { ramp, crescent, shine } from './meadow.js';
 import { part, makeRig, stateBlend, smooth, TAU } from './rig.js';
 import { sprite } from '../pixel.js';
@@ -66,19 +66,61 @@ const earShapes = (dir) => {
 };
 // The face (unoutlined, on the head): eyes, cheeks, a round nose, a grin with one tooth. Box 12 x 9,
 // centre (6, 4.5).
+// Its own face, a goblin's: shifty pumpkin-orange eyes, the left one squinting, the right one wide;
+// a big green nose and a crooked grin with one snaggletooth poking up.
+const fLine = (pts, w, c) => {
+  const l = [];
+  const r = [];
+  pts.forEach(([x, y], i) => {
+    const [ax, ay] = pts[Math.max(0, i - 1)];
+    const [bx, by] = pts[Math.min(pts.length - 1, i + 1)];
+    const d = Math.hypot(bx - ax, by - ay) || 1;
+    const nx = ((-(by - ay) / d) * w) / 2;
+    const ny = (((bx - ax) / d) * w) / 2;
+    l.push([x + nx, y + ny]);
+    r.push([x - nx, y - ny]);
+  });
+  return [F(T([...l, ...r.reverse()], c))];
+};
+const fArc = (cx, cy, rx, ry, a0, a1, n = 8) => Array.from({ length: n + 1 }, (_, i) => {
+  const a = ((a0 + ((a1 - a0) * i) / n) * Math.PI) / 180;
+  return [cx + Math.cos(a) * rx, cy + Math.sin(a) * ry];
+});
+const fRing = (cx, cy, rx, ry, rot = 0, n = 14) => Array.from({ length: n }, (_, i) => {
+  const a = (i / n) * Math.PI * 2;
+  const x = Math.cos(a) * rx;
+  const y = Math.sin(a) * ry;
+  return [cx + x * Math.cos(rot) - y * Math.sin(rot), cy + x * Math.sin(rot) + y * Math.cos(rot)];
+});
+const fSquint = (x, y, s, r, c, w) => fLine([[x + s * r, y - r], [x - s * r * 0.8, y], [x + s * r, y + r]], w, c);
+const fDrop = (x, y, r) => [F(E(x, y, r * 0.7, r, '#9ad8ff')), F(E(x - r * 0.2, y - r * 0.3, r * 0.25, r * 0.25, '#ffffff'))];
 const faceShapes = (mood) => {
   const out = [];
-  if (mood === 'dead') out.push(...deadEye(3.6, 3.4, 1, { c: INK, th: 0.5 }), ...deadEye(8, 3.3, 1.1, { c: INK, th: 0.5 }));
-  else {
-    const so = { iris: '#3a2a18', ink: INK, lid: 0, mood: mood === 'shout' ? 'angry' : mood };
-    out.push(...simpleEye(3.6, 3.4, { ...so, s: -1, w: 1.6, h: 2.2 }), ...simpleEye(8, 3.3, { ...so, s: 1, w: 1.8, h: 2.4 }));
-    out.push(F(E(2, 6.3, 1.2, 0.7, '#ff9eb0')), F(E(9.8, 6.5, 1.2, 0.7, '#ff9eb0')));
+  const IRIS = '#ff9a3c';
+  for (const [x, y, s, r] of [[3.6, 3.5, -1, 1.5], [8, 3.4, 1, 1.75]]) {
+    if (mood === 'blink') out.push(...fLine(fArc(x, y, r, r * 0.55, 15, 165, 6), 0.55, INK));
+    else if (mood === 'happy') out.push(...fLine(fArc(x, y + 0.9, r, r, 200, 340, 6), 0.6, INK));
+    else if (mood === 'shout' || mood === 'hurt') out.push(...fSquint(x, y, s, r * 0.85, INK, 0.55));
+    else if (mood === 'dead') out.push(...fLine([[x - r, y + 0.2], [x + r, y + 0.2]], 0.5, INK));
+    else {
+      // The shifty squint: the left eye lidded flat (both slanted in to scowl).
+      const lid = mood === 'angry' ? (px) => y - r * 0.3 + (px - x) * -s * 0.5 : s < 0 ? () => y - r * 0.15 : () => -99;
+      const ring = fRing(x, y, r, r * 1.05).map(([px, py]) => [px, Math.max(py, lid(px))]);
+      out.push(F(T(ring, '#fffbe8')), F(T(fRing(x + 0.4, y + 0.2, r * 0.62, r * 0.68).map(([px, py]) => [px, Math.max(py, lid(px))]), IRIS)), F(T(fRing(x + 0.5, y + 0.25, r * 0.3, r * 0.36).map(([px, py]) => [px, Math.max(py, lid(px))]), '#2a2018')));
+      if (s < 0 || mood === 'angry') out.push(...fLine([[x - r - 0.2, lid(x - r - 0.2)], [x + r + 0.2, lid(x + r + 0.2)]], 0.6, INK));
+      else out.push(...fLine(fArc(x, y + 0.1, r * 1.05, r * 1.1, 200, 340, 8), 0.5, INK));
+    }
   }
   out.push(E(10.8, 5, 1.2, 1, SKIN.sh), F(E(10.6, 4.6, 0.4, 0.3, '#e6ffd8')));
-  out.push(...simpleMouth(6.6, 7, { k: 0.9, mood: mood === 'blink' ? 'happy' : mood === 'idle' ? 'happy' : mood, lip: INK }));
-  if (mood !== 'dead') out.push(F(T([[6.2, 6.8], [7, 6.8], [6.6, 7.7]], '#ffffff')));
-  if (mood === 'hurt') out.push(...tear(8.6, 4.8, 0.7, { type: 'stream', len: 2 }));
-  if (mood === 'angry') out.push(...vein(1, 0.4, 0.6));
+  const [mx, my] = [6.4, 7];
+  if (mood === 'shout') out.push(F(E(mx, my + 0.4, 1.5, 1.2, '#5a2a2a')), F(T([[mx - 1, my - 0.5], [mx - 0.4, my - 0.5], [mx - 0.7, my + 0.4]], '#fffbe8')), F(T([[mx + 0.4, my - 0.5], [mx + 1, my - 0.5], [mx + 0.7, my + 0.4]], '#fffbe8')));
+  else if (mood === 'hurt') out.push(...fLine([[mx - 1.4, my + 0.3], [mx - 0.5, my - 0.1], [mx + 0.4, my + 0.3], [mx + 1.3, my - 0.1]], 0.4, INK), ...fDrop(8.8, 5.2, 0.7));
+  else if (mood === 'dead') out.push(...fLine([[mx - 1, my], [mx + 1, my + 0.2]], 0.4, INK), F(E(mx + 0.4, my + 0.9, 0.5, 0.7, '#ff8fab')));
+  else {
+    // The crooked grin, its snaggletooth poking up from the lower lip.
+    const curve = mood === 'angry' ? [[mx - 1.6, my + 0.3], [mx, my - 0.1], [mx + 1.4, my + 0.4]] : [[mx - 1.8, my - 0.4], [mx - 0.4, my + 0.5], [mx + 1, my + 0.3], [mx + 1.8, my - 0.6]];
+    out.push(...fLine(curve, 0.5, INK), F(T([[mx + 0.3, my + 0.5], [mx + 1.1, my + 0.45], [mx + 0.8, my - 0.6]], '#fffbe8')));
+  }
   return out;
 };
 // The pumpkin helmet: a plump round pumpkin, five soft ribs (the outer ones in shade), curved

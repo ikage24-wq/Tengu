@@ -17,7 +17,7 @@
 // `strawhogStill(pose, f, mood)` gives the still pictures (portraits, the book) from the same parts.
 
 import { E, T, F, stroke } from './kit.js';
-import { simpleEye, blush as cheek, deadEye, tear, vein } from './faces.js';
+
 import { ramp, crescent, shine } from './meadow.js';
 import { part, makeRig, stateBlend, smooth, TAU } from './rig.js';
 import { sprite } from '../pixel.js';
@@ -105,16 +105,49 @@ const CLUMPS = [
   [16, 14, 4.6, 3.4, 215, 330, 4, true, true],
 ];
 // The face (unoutlined, it sits on the body): eyes, cheeks. Box 12 x 8, centre (6, 4).
+// Its own face: glossy black bead eyes under bushy brows of hay (they knit, rise and droop with its
+// mood); it scrunches its eyes shut to charge.
+const fLine = (pts, w, c) => {
+  const l = [];
+  const r = [];
+  pts.forEach(([x, y], i) => {
+    const [ax, ay] = pts[Math.max(0, i - 1)];
+    const [bx, by] = pts[Math.min(pts.length - 1, i + 1)];
+    const d = Math.hypot(bx - ax, by - ay) || 1;
+    const nx = ((-(by - ay) / d) * w) / 2;
+    const ny = (((bx - ax) / d) * w) / 2;
+    l.push([x + nx, y + ny]);
+    r.push([x - nx, y - ny]);
+  });
+  return [F(T([...l, ...r.reverse()], c))];
+};
+const fArc = (cx, cy, rx, ry, a0, a1, n = 8) => Array.from({ length: n + 1 }, (_, i) => {
+  const a = ((a0 + ((a1 - a0) * i) / n) * Math.PI) / 180;
+  return [cx + Math.cos(a) * rx, cy + Math.sin(a) * ry];
+});
+const fRing = (cx, cy, rx, ry, rot = 0, n = 14) => Array.from({ length: n }, (_, i) => {
+  const a = (i / n) * Math.PI * 2;
+  const x = Math.cos(a) * rx;
+  const y = Math.sin(a) * ry;
+  return [cx + x * Math.cos(rot) - y * Math.sin(rot), cy + x * Math.sin(rot) + y * Math.cos(rot)];
+});
+const fSquint = (x, y, s, r, c, w) => fLine([[x + s * r, y - r], [x - s * r * 0.8, y], [x + s * r, y + r]], w, c);
+const fDrop = (x, y, r) => [F(E(x, y, r * 0.7, r, '#9ad8ff')), F(E(x - r * 0.2, y - r * 0.3, r * 0.25, r * 0.25, '#ffffff'))];
 const faceShapes = (mood) => {
   const out = [];
-  if (mood === 'dead') out.push(...deadEye(4.2, 3.4, 1, { c: INK, th: 0.5 }), ...deadEye(8.4, 3.3, 1.1, { c: INK, th: 0.5 }));
-  else {
-    const so = { iris: '#3a2418', ink: INK, lid: 0, mood: mood === 'shout' ? 'angry' : mood };
-    out.push(...simpleEye(4.2, 3.4, { ...so, s: -1, w: 1.25, h: 1.75 }), ...simpleEye(8.4, 3.3, { ...so, s: 1, w: 1.45, h: 1.95 }));
-    out.push(...cheek(2.8, 5.8, 1, { on: CREAM.base }), ...cheek(10, 6, 1, { on: CREAM.base }));
+  const BROW = '#8a5a2a';
+  for (const [x, y, s, r] of [[4.2, 3.5, -1, 1.15], [8.4, 3.4, 1, 1.3]]) {
+    // The hay brows: three short wisps fanning, tilted by mood.
+    const tilt = mood === 'angry' || mood === 'shout' ? 0.5 : mood === 'hurt' ? -0.45 : mood === 'happy' ? -0.15 : 0;
+    const by = y - r - 1.5 - (mood === 'happy' ? 0.3 : 0);
+    out.push(...fLine([[x - s * 1.1, by + s * tilt * 0.9 * -1], [x, by - 0.35], [x + s * 1.1, by + s * tilt * 0.9]], 0.55, BROW));
+    if (mood === 'blink') out.push(...fLine(fArc(x, y, r, r * 0.6, 15, 165, 6), 0.5, INK));
+    else if (mood === 'happy') out.push(...fLine(fArc(x, y + 0.8, r, r, 200, 340, 6), 0.55, INK));
+    else if (mood === 'shout' || mood === 'hurt') out.push(...fSquint(x, y, s, r * 0.9, INK, 0.5));
+    else if (mood === 'dead') out.push(...fLine([[x - r, y], [x + r, y]], 0.45, INK));
+    else out.push(F(E(x, y, r, r * 1.15, INK)), F(E(x + r * 0.3, y - r * 0.4, r * 0.3, r * 0.3, '#ffffff')));
   }
-  if (mood === 'hurt') out.push(...tear(9, 4.8, 0.7, { type: 'stream', len: 2 }));
-  if (mood === 'angry') out.push(...vein(1.4, 0.4, 0.6));
+  if (mood === 'hurt') out.push(...fDrop(9.6, 5.4, 0.7));
   return out;
 };
 // The snout from its root at (0.6, 2.6): a short cream nub, the pink button nose, a little mouth.

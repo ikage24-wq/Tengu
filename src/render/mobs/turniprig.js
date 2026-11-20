@@ -17,7 +17,7 @@
 //   hit     a kick on its tilt spring: knocked back, it wobbles upright again.
 
 import { E, T, F, stroke } from './kit.js';
-import { simpleEye, simpleMouth, blush as cheek, deadEye, tear, vein } from './faces.js';
+import { blush as cheek } from './faces.js';
 import { ramp, crescent, shine } from './meadow.js';
 import { part, makeRig, stateBlend, TAU } from './rig.js';
 import { sprite } from '../pixel.js';
@@ -48,19 +48,54 @@ const FACE_MOODS = new Set(['idle', 'angry', 'hurt', 'happy', 'blink', 'dead', '
 // (Not outlined: a part's outline wraps its own silhouette, and on a face that's a dark ring round
 // each eye and cheek. The body's outline frames it as on a whole-body drawing.)
 const face = (mood) => sprite(`rig|turnip|face|${mood}`, () => ({ w: 16, h: 10, res: 2, soft: 'cel', crisp: true, bare: true, pad: 4, shapes: faceShapes(mood) }));
+// Its own face, a kawaii vegetable's: tall capsule eyes with a glint, round pink cheeks and a wide
+// shallow smile; it squeezes its eyes shut to headbutt.
+const fLine = (pts, w, c) => {
+  const l = [];
+  const r = [];
+  pts.forEach(([x, y], i) => {
+    const [ax, ay] = pts[Math.max(0, i - 1)];
+    const [bx, by] = pts[Math.min(pts.length - 1, i + 1)];
+    const d = Math.hypot(bx - ax, by - ay) || 1;
+    const nx = ((-(by - ay) / d) * w) / 2;
+    const ny = (((bx - ax) / d) * w) / 2;
+    l.push([x + nx, y + ny]);
+    r.push([x - nx, y - ny]);
+  });
+  return [F(T([...l, ...r.reverse()], c))];
+};
+const fArc = (cx, cy, rx, ry, a0, a1, n = 8) => Array.from({ length: n + 1 }, (_, i) => {
+  const a = ((a0 + ((a1 - a0) * i) / n) * Math.PI) / 180;
+  return [cx + Math.cos(a) * rx, cy + Math.sin(a) * ry];
+});
+const fRing = (cx, cy, rx, ry, rot = 0, n = 14) => Array.from({ length: n }, (_, i) => {
+  const a = (i / n) * Math.PI * 2;
+  const x = Math.cos(a) * rx;
+  const y = Math.sin(a) * ry;
+  return [cx + x * Math.cos(rot) - y * Math.sin(rot), cy + x * Math.sin(rot) + y * Math.cos(rot)];
+});
+const fSquint = (x, y, s, r, c, w) => fLine([[x + s * r, y - r], [x - s * r * 0.8, y], [x + s * r, y + r]], w, c);
+const fDrop = (x, y, r) => [F(E(x, y, r * 0.7, r, '#9ad8ff')), F(E(x - r * 0.2, y - r * 0.3, r * 0.25, r * 0.25, '#ffffff'))];
 const faceShapes = (mood) => {
   const out = [];
   const ey = 4;
-  if (mood === 'dead') out.push(...deadEye(5.4, ey, 1.2, { c: INK, th: 0.5 }), ...deadEye(10.4, ey, 1.4, { c: INK, th: 0.55 }));
-  else {
-    const em = mood === 'shout' ? 'angry' : mood;
-    const so = { iris: mood === 'angry' || mood === 'shout' ? '#d0507a' : '#8a5a7a', ink: INK, lid: 0, mood: em };
-    out.push(...simpleEye(5.4, ey, { ...so, s: -1, w: 1.6, h: 2.1 }), ...simpleEye(10.4, ey - 0.1, { ...so, s: 1, w: 1.9, h: 2.4 }));
-    out.push(...cheek(3, ey + 2.6, 1.1, { on: CREAM.base }), ...cheek(13, ey + 2.6, 1.2, { on: CREAM.base }));
+  for (const [x, s] of [[5.4, -1], [10.6, 1]]) {
+    if (mood === 'blink') out.push(...fLine(fArc(x, ey + 0.4, 1, 0.6, 15, 165, 6), 0.55, INK));
+    else if (mood === 'happy') out.push(...fLine(fArc(x, ey + 1, 1.1, 1.1, 200, 340, 6), 0.6, INK));
+    else if (mood === 'shout' || mood === 'hurt') out.push(...fSquint(x, ey, s, 1.1, INK, 0.55));
+    else if (mood === 'dead') out.push(...fLine([[x - 1, ey + 0.4], [x + 1, ey + 0.4]], 0.5, INK));
+    else {
+      out.push(F(T(fRing(x, ey, 0.85, 1.75, mood === 'angry' ? s * 0.35 : 0), INK)), F(E(x + 0.25, ey - 0.8, 0.32, 0.45, '#ffffff')));
+    }
   }
-  out.push(...simpleMouth(8, ey + 3, { k: 0.95, mood: mood === 'blink' ? 'idle' : mood, lip: INK }));
-  if (mood === 'hurt') out.push(...tear(11.2, ey + 1.2, 0.8, { type: 'stream', len: 2.6 }));
-  if (mood === 'angry') out.push(...vein(2, ey - 3, 0.7));
+  if (mood !== 'dead') out.push(F(E(3, ey + 2.8, 1.1, 1, '#ffa8c8')), F(E(13, ey + 2.8, 1.1, 1, '#ffa8c8')));
+  const my = ey + 3;
+  if (mood === 'happy') out.push(F(T(fArc(8, my - 0.3, 1.8, 1.6, 0, 180, 8), '#8a3050')), F(E(8, my + 0.6, 0.8, 0.45, '#ff8fab')));
+  else if (mood === 'shout') out.push(F(E(8, my + 0.3, 1.3, 1.4, '#8a3050')));
+  else if (mood === 'angry') out.push(...fLine([[6.6, my + 0.3], [7.3, my - 0.2], [8, my + 0.3], [8.7, my - 0.2], [9.4, my + 0.3]], 0.45, INK));
+  else if (mood === 'hurt') out.push(...fLine([[6.8, my + 0.2], [7.6, my - 0.2], [8.4, my + 0.2], [9.2, my - 0.2]], 0.4, INK), ...fDrop(11.6, ey + 2.4, 0.8));
+  else if (mood === 'dead') out.push(F(E(8, my, 0.5, 0.55, '#8a3050')));
+  else out.push(...fLine(fArc(8, my - 0.9, 2.2, 1.1, 25, 155, 8), 0.5, INK));
   return out;
 };
 

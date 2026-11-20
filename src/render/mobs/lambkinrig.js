@@ -16,7 +16,7 @@
 // `lambkinStill(pose, f, mood)` gives the still pictures (portraits, the book) from the same shapes.
 
 import { E, T, F, stroke } from './kit.js';
-import { simpleEye, simpleMouth, deadEye, tear, vein } from './faces.js';
+
 import { ramp, crescent, shine } from './meadow.js';
 import { part, makeRig, stateBlend, smooth, TAU } from './rig.js';
 import { sprite } from '../pixel.js';
@@ -74,18 +74,59 @@ const headShapes = () => [
 ];
 // The face (unoutlined, on the head): big glossy eyes, pink cheeks, the nose and a little mouth.
 // Box 12 x 10, centre (6, 5).
+// Its own face: big round brown eyes peeking out from under a fluffy fringe of wool, a pink nose and
+// a small lamb's smile.
+const fLine = (pts, w, c) => {
+  const l = [];
+  const r = [];
+  pts.forEach(([x, y], i) => {
+    const [ax, ay] = pts[Math.max(0, i - 1)];
+    const [bx, by] = pts[Math.min(pts.length - 1, i + 1)];
+    const d = Math.hypot(bx - ax, by - ay) || 1;
+    const nx = ((-(by - ay) / d) * w) / 2;
+    const ny = (((bx - ax) / d) * w) / 2;
+    l.push([x + nx, y + ny]);
+    r.push([x - nx, y - ny]);
+  });
+  return [F(T([...l, ...r.reverse()], c))];
+};
+const fArc = (cx, cy, rx, ry, a0, a1, n = 8) => Array.from({ length: n + 1 }, (_, i) => {
+  const a = ((a0 + ((a1 - a0) * i) / n) * Math.PI) / 180;
+  return [cx + Math.cos(a) * rx, cy + Math.sin(a) * ry];
+});
+const fRing = (cx, cy, rx, ry, rot = 0, n = 14) => Array.from({ length: n }, (_, i) => {
+  const a = (i / n) * Math.PI * 2;
+  const x = Math.cos(a) * rx;
+  const y = Math.sin(a) * ry;
+  return [cx + x * Math.cos(rot) - y * Math.sin(rot), cy + x * Math.sin(rot) + y * Math.cos(rot)];
+});
+const fSquint = (x, y, s, r, c, w) => fLine([[x + s * r, y - r], [x - s * r * 0.8, y], [x + s * r, y + r]], w, c);
+const fDrop = (x, y, r) => [F(E(x, y, r * 0.7, r, '#9ad8ff')), F(E(x - r * 0.2, y - r * 0.3, r * 0.25, r * 0.25, '#ffffff'))];
 const faceShapes = (mood) => {
   const out = [];
-  if (mood === 'dead') out.push(...deadEye(4.2, 4.6, 1, { c: INK, th: 0.5 }), ...deadEye(9, 4.5, 1.1, { c: INK, th: 0.5 }));
-  else {
-    const so = { iris: '#4a2a1c', ink: INK, lid: 0, mood: mood === 'shout' ? 'angry' : mood };
-    out.push(...simpleEye(4.2, 4.6, { ...so, s: -1, w: 1.4, h: 1.9 }), ...simpleEye(9, 4.5, { ...so, s: 1, w: 1.6, h: 2.1 }));
-    out.push(F(E(3, 7.1, 1.1, 0.6, '#ff9eb0')), F(E(10, 7.3, 1.1, 0.6, '#ff9eb0')));
+  for (const [x, y, s, r] of [[4.2, 4.8, -1, 1.45], [9, 4.7, 1, 1.6]]) {
+    if (mood === 'blink') out.push(...fLine(fArc(x, y + 0.2, r, r * 0.55, 15, 165, 6), 0.5, INK));
+    else if (mood === 'happy') out.push(...fLine(fArc(x, y + 1, r, r, 200, 340, 6), 0.55, INK));
+    else if (mood === 'shout' || mood === 'hurt') out.push(...fSquint(x, y, s, r * 0.85, INK, 0.5));
+    else if (mood === 'dead') out.push(...fLine([[x - r, y + 0.3], [x + r, y + 0.3]], 0.45, INK));
+    else {
+      let ring = fRing(x, y, r, r * 1.1);
+      if (mood === 'angry') ring = ring.map(([px, py]) => [px, Math.max(py, y - r * 0.4 + (px - x) * -s * 0.5)]);
+      out.push(F(T(ring, '#4a2a1c')), F(E(x, y + r * 0.45, r * 0.62, r * 0.45, '#8a5a3c')), F(E(x + r * 0.35, y - r * 0.2, r * 0.32, r * 0.32, '#ffffff')));
+    }
+    if (mood !== 'dead') out.push(F(E(x - s * 0.2 - 1.4 * (s < 0 ? 0.4 : -0.6), y + 2.6, 1, 0.55, '#ff9eb0')));
   }
+  // The wool fringe over the tops of its eyes.
+  for (const [fx, fy, fr] of [[2.6, 2.6, 1.9], [5.2, 2.1, 2.1], [7.8, 2.2, 2.1], [10.2, 2.7, 1.7]]) out.push(F(E(fx, fy, fr, fr * 0.85, WOOL.base)));
+  for (const [fx, fy] of [[3.4, 3.6], [6.2, 3.3], [8.8, 3.4]]) out.push(...fLine(fArc(fx, fy - 0.8, 1, 0.7, 20, 160, 5), 0.3, WOOL.sh));
   out.push(E(11, 6.6, 1, 0.8, '#ff8fa8'), F(E(10.7, 6.3, 0.35, 0.3, '#ffffff')));
-  out.push(...simpleMouth(9.8, 8.2, { k: 0.6, mood: mood === 'idle' || mood === 'blink' ? 'happy' : mood, lip: INK }));
-  if (mood === 'hurt') out.push(...tear(9, 5.6, 0.7, { type: 'stream', len: 2 }));
-  if (mood === 'angry') out.push(...vein(2, 1.2, 0.6));
+  const [mx, my] = [9.8, 8.2];
+  if (mood === 'shout') out.push(F(E(mx, my + 0.2, 0.9, 1, '#8a3040')));
+  else if (mood === 'happy') out.push(F(T(fArc(mx, my - 0.3, 1, 0.9, 0, 180, 6), '#8a3040')));
+  else if (mood === 'angry') out.push(...fLine([[mx - 0.8, my + 0.3], [mx, my - 0.2], [mx + 0.8, my + 0.3]], 0.35, INK));
+  else if (mood === 'hurt') out.push(...fLine([[mx - 0.9, my + 0.2], [mx - 0.3, my - 0.1], [mx + 0.3, my + 0.2], [mx + 0.9, my - 0.1]], 0.32, INK), ...fDrop(8.2, 6.4, 0.7));
+  else if (mood === 'dead') out.push(F(E(mx, my, 0.4, 0.45, '#8a3040')));
+  else out.push(...fLine([[mx, my - 0.6], [mx, my - 0.1]], 0.3, INK), ...fLine(fArc(mx - 0.5, my - 0.1, 0.5, 0.45, 0, 180, 5), 0.3, INK), ...fLine(fArc(mx + 0.5, my - 0.1, 0.5, 0.45, 0, 180, 5), 0.3, INK));
   return out;
 };
 // An ear from its root at (0.6, 1.6), pointing out +x (mirrored, -x, from (7.4, 1.6)): soft and

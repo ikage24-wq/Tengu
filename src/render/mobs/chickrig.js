@@ -13,7 +13,7 @@
 // `chickStill(pose, f, mood)` gives the still pictures (portraits, galleries) from the same parts.
 
 import { E, T, F, stroke } from './kit.js';
-import { simpleEye, blush as cheek, deadEye, tear, vein } from './faces.js';
+
 import { ramp, crescent, shine } from './meadow.js';
 import { part, makeRig, stateBlend } from './rig.js';
 import { sprite } from '../pixel.js';
@@ -39,17 +39,48 @@ const bodyShapes = () => {
   return out;
 };
 // The face on the front: two eyes (the near one bigger), cheeks. 14 x 10, centred (7, 5).
+// Its own face: small shiny black bead eyes, and little peachy blush strokes (///) on its cheeks; it
+// squeezes its eyes shut to cheep and peck.
+const fLine = (pts, w, c) => {
+  const l = [];
+  const r = [];
+  pts.forEach(([x, y], i) => {
+    const [ax, ay] = pts[Math.max(0, i - 1)];
+    const [bx, by] = pts[Math.min(pts.length - 1, i + 1)];
+    const d = Math.hypot(bx - ax, by - ay) || 1;
+    const nx = ((-(by - ay) / d) * w) / 2;
+    const ny = (((bx - ax) / d) * w) / 2;
+    l.push([x + nx, y + ny]);
+    r.push([x - nx, y - ny]);
+  });
+  return [F(T([...l, ...r.reverse()], c))];
+};
+const fArc = (cx, cy, rx, ry, a0, a1, n = 8) => Array.from({ length: n + 1 }, (_, i) => {
+  const a = ((a0 + ((a1 - a0) * i) / n) * Math.PI) / 180;
+  return [cx + Math.cos(a) * rx, cy + Math.sin(a) * ry];
+});
+const fRing = (cx, cy, rx, ry, rot = 0, n = 14) => Array.from({ length: n }, (_, i) => {
+  const a = (i / n) * Math.PI * 2;
+  const x = Math.cos(a) * rx;
+  const y = Math.sin(a) * ry;
+  return [cx + x * Math.cos(rot) - y * Math.sin(rot), cy + x * Math.sin(rot) + y * Math.cos(rot)];
+});
+const fSquint = (x, y, s, r, c, w) => fLine([[x + s * r, y - r], [x - s * r * 0.8, y], [x + s * r, y + r]], w, c);
+const fDrop = (x, y, r) => [F(E(x, y, r * 0.7, r, '#9ad8ff')), F(E(x - r * 0.2, y - r * 0.3, r * 0.25, r * 0.25, '#ffffff'))];
 const faceShapes = (mood) => {
   const out = [];
-  if (mood === 'dead') out.push(...deadEye(4.6, 4, 1.1, { c: INK, th: 0.5 }), ...deadEye(9.4, 4, 1.3, { c: INK, th: 0.55 }));
-  else {
-    const em = mood === 'shout' ? 'angry' : mood;
-    const so = { iris: '#3a2418', ink: INK, lid: 0, mood: em };
-    out.push(...simpleEye(4.6, 4, { ...so, s: -1, w: 1.4, h: 1.9 }), ...simpleEye(9.4, 3.9, { ...so, s: 1, w: 1.7, h: 2.2 }));
-    out.push(...cheek(2.4, 6.6, 1.1, { on: FUZZ.base }), ...cheek(11.6, 6.6, 1.2, { on: FUZZ.base }));
+  for (const [x, y, s, r] of [[4.8, 5.1, -1, 1.25], [9.6, 5, 1, 1.45]]) {
+    if (mood === 'blink') out.push(...fLine(fArc(x, y, r, r * 0.6, 15, 165, 6), 0.5, INK));
+    else if (mood === 'happy') out.push(...fLine(fArc(x, y + 0.8, r, r, 200, 340, 6), 0.55, INK));
+    else if (mood === 'shout' || mood === 'hurt') out.push(...fSquint(x, y, s, r * 0.9, INK, 0.5));
+    else if (mood === 'dead') out.push(...fLine([[x - r, y], [x + r, y + 0.2]], 0.45, INK));
+    else {
+      out.push(F(E(x, y, r, r * 1.1, INK)), F(E(x + r * 0.35, y - r * 0.4, r * 0.32, r * 0.32, '#ffffff')));
+      if (mood === 'angry') out.push(...fLine([[x - s * r * 1.2, y - r * 1.9], [x + s * r * 1.1, y - r * 1.2]], 0.5, INK));
+    }
   }
-  if (mood === 'hurt') out.push(...tear(10.4, 5.6, 0.8, { type: 'stream', len: 2.4 }));
-  if (mood === 'angry') out.push(...vein(1.4, 0.6, 0.7));
+  if (mood !== 'dead') for (const [cx, cy] of [[2.2, 7.6], [11.8, 7.6]]) for (let k = 0; k < 3; k++) out.push(...fLine([[cx - 0.9 + k * 0.8, cy + 0.5], [cx - 0.4 + k * 0.8, cy - 0.5]], 0.32, mood === 'happy' ? '#ff6a5a' : '#ff9a7a'));
+  if (mood === 'hurt') out.push(...fDrop(10.8, 6.9, 0.75));
   return out;
 };
 // The beak, from its base at (0.6, 2.5) in a 7 x 5 box: closed, or open for a peck or a cheep.
