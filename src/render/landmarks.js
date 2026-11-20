@@ -9,6 +9,7 @@ import { ramp, foliage, bark, stones, planks, crystal, lean, leanFrame, swing, p
 import { windTravel } from './terrain.js';
 import { CANYON_KINDS } from './canyon.js';
 import { HOLLOWGATE_KINDS } from './hollowgate.js';
+import { RUINS_KINDS } from './ruinsart.js';
 import { MANORHILL_KINDS } from './manorhill.js';
 import { AQUA_KINDS } from './aquapalace.js';
 import { FAIR_KINDS } from './fairground.js';
@@ -3346,6 +3347,8 @@ const KINDS = {
   ...CANYON_KINDS,
   // (The Hollow Gate's great tree and root arch: render/hollowgate.js.)
   ...HOLLOWGATE_KINDS,
+  // (Twilight Ruins' bell tower, Moon Maiden, portico and tombs: render/ruinsart.js.)
+  ...RUINS_KINDS,
   // (Manor Hill's gates, the pumpkin coach, lamp posts, rose hedges, topiaries: render/manorhill.js.)
   ...MANORHILL_KINDS,
   ...AQUA_KINDS,

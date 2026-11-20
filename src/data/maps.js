@@ -387,52 +387,88 @@ export const MAPS = {
 
 
 
-  // Twilight Ruins is a descent into a sunken temple (data/climb.js lay(), zones by height): you
-  // arrive on the Temple Roof, broken rooftops where the Imps nest and a vent bounces you up; drop
-  // down through the Collapsed Halls, storeys whose floors have fallen through, where the Wisps
-  // drift, a slab of stone floats across the gap and the way to the Fox Shrine Path leads off; to
-  // the Sunken Crypt at the bottom, where the Dullahans keep their watch and the way on to Crystal
-  // Cave runs underground. A great column of wisp-light rises from the crypt through every hole,
-  // all the way back up to the roof (Up to ride it).
+  // Twilight Ruins (its makeover, 2026-11-20): a smaller sunken temple at dusk, built round three
+  // landmarks (render/ruinsart.js) the way Mossy Woods is built round its giant trees, zones by
+  // height. In the west the bell tower: you arrive from Moonleaf Grove on its belfry floor, and its
+  // balconies step down round it, a ladder up the inside. In the middle the Moon Maiden, a giant
+  // statue asleep on her plinth in the crypt: her level forearm and her crescent crown are ledges,
+  // a vine climbs her robe, and the column of wisp-light rises beside the lantern she holds up. In
+  // the east the portico, its floors fallen in, the way to the Fox Shrine Path off its far pillar.
+  // Broken roof spans join the three tops into the Temple Roof (a gust vent on the first); a slab
+  // drifts across the Collapsed Halls; the Sunken Crypt's floor runs under it all, with tombs, to
+  // the way on to the Tanuki Tea Terraces.
   ruins: {
-    id: 'ruins', name: 'Twilight Ruins', theme: 'ruins', town: 'grove', world: { x: 322, y: 90 },
-    look: { islands: 'stone' },
+    id: 'ruins', name: 'Twilight Ruins', theme: 'ruins', town: 'grove', world: { x: 322, y: 90 }, perSpawn: 1,
+    look: { painted: 'ruins', noFace: true, light: 'dusk', sky: ['#5e4e9e', '#a888cc', '#f2c6d6'], far: '#9a88c8', mid: '#7a6aa8', midTrim: '#9a8ac0', islands: 'temple', material: 'crypt', ropes: 'vine', props: [], ledgeKeep: 1, critters: [], drift: 'sparkle' },
     ...lay({
-      width: 2600, ground: 1120, by: 'y', quiet: [[40, 300, 160], [2380, 700, 200], [2540, 1120, 160]],
+      width: 1800, ground: 1040, by: 'y', quiet: [[40, 300, 160], [1750, 580, 150], [1760, 1040, 160]],
       zones: [
-        { name: 'Sunken Crypt', color: '#5d5285', mobs: ['boneknight', 'wisp'], nodes: [SPOT.ore(2), SPOT.ore(2, { gem: 0.14 })],
-          look: underground({ material: 'crypt', edges: null, sky: ['#1e1a3a', '#2e2852', '#46406e'], far: '#2c2650', mid: '#3a3462', midTrim: '#5a5288', skyline: 'columns', drift: 'sparkle' }) },
-        { name: 'Collapsed Halls', color: '#4f95e0', from: 800, mobs: ['wisp', 'gloombat'], nodes: [SPOT.herb(2, 'temple_mint'), SPOT.fiber(2), SPOT.wood(2)],
-          look: { sky: ['#5a4a98', '#8a76c0', '#c8b8e8'] } },
-        { name: 'Temple Roof', color: '#c84f8a', from: 440, mobs: ['gloombat'], nodes: [SPOT.herb(2, 'temple_mint'), SPOT.night(2)] },
+        // (The crypt is the open floor of the pit now: the dusk sky, only deeper.)
+        { name: 'Sunken Crypt', color: '#5d5285', mobs: ['boneknight', 'wisp'],
+          look: { sky: ['#3e3478', '#6e5ca6', '#b494cc'], far: '#7a6aac', mid: '#5e4e90' } },
+        { name: 'Collapsed Halls', color: '#4f95e0', from: 860, mobs: ['wisp', 'gloombat'] },
+        { name: 'Temple Roof', color: '#c84f8a', from: 460, mobs: ['gloombat'] },
       ],
       ledges: [
-        // The Temple Roof, broken in the middle.
-        { x: 0, y: 300, w: 900 }, { x: 1000, y: 340, w: 600 }, { x: 1700, y: 300, w: 900 },
-        // The Collapsed Halls: two storeys with their floors fallen through.
-        { x: 100, y: 520, w: 700 }, { x: 950, y: 520, w: 400 }, { x: 1500, y: 520, w: 900 },
-        { x: 300, y: 700, w: 600 }, { x: 1100, y: 700, w: 500 }, { x: 1750, y: 700, w: 700 },
-        // Shelves in the crypt.
-        { x: 200, y: 900, w: 400 }, { x: 1000, y: 900, w: 500 }, { x: 1900, y: 900, w: 400 },
-        // The slab of stone floating across the halls.
-        { x: 1360, y: 620, w: 120, style: 'stone', drift: { dx: 300, period: 10 } },
+        // The bell tower (x 300): the belfry floor where you arrive, its balconies stepping down
+        // round it, each growing out of the stone (`root`), the ladder up the inside.
+        { x: 0, y: 300, w: 420, noRope: true },
+        { x: 282, y: 440, w: 240, root: 'left', noRope: true }, { x: 78, y: 560, w: 240, root: 'right', noRope: true }, { x: 282, y: 680, w: 240, root: 'left', noRope: true },
+        { x: 78, y: 800, w: 240, root: 'right', noRope: true }, { x: 282, y: 920, w: 240, root: 'left', noRope: true },
+        // The Temple Roof: broken spans joining the belfry, the Maiden's crown and the portico.
+        { x: 460, y: 330, w: 360, noRope: true }, { x: 984, y: 350, w: 256, noRope: true }, { x: 1650, y: 330, w: 150, root: 'left', noRope: true },
+        // The Moon Maiden (x 900): her crown, her forearm, her plinth (drawn with her).
+        { x: 856, y: 340, w: 88, bare: true, noProps: true, noRope: true }, { x: 798, y: 640, w: 156, bare: true, noProps: true, noRope: true }, { x: 768, y: 960, w: 264, bare: true, noProps: true, noRope: true },
+        // A fallen pillar's stub beside her lantern-light, and the hall floor on to the portico.
+        { x: 958, y: 668, w: 82, noRope: true }, { x: 1086, y: 712, w: 206, noRope: true },
+        // The portico (x 1450): its entablature (drawn with it), its fallen floors, the top one running
+        // on out past its far pillar to the way to the Fox Shrine Path.
+        { x: 1262, y: 360, w: 376, bare: true, noProps: true, noRope: true },
+        { x: 1300, y: 880, w: 190, root: 'left', noRope: true }, { x: 1420, y: 740, w: 180, root: 'right', noRope: true }, { x: 1300, y: 580, w: 500, root: 'left', noRope: true },
+        // The slab of stone drifting across the halls, between the tower and the Maiden.
+        { x: 500, y: 520, w: 110, drift: { dx: 140, period: 9 } },
+      ],
+      ropes: [
+        // The ladder up inside the tower.
+        ...[[920, 1040], [800, 920], [680, 800], [560, 680], [440, 560], [300, 440]].map(([top, bottom]) => ({ x: 300, top, bottom, ladder: true })),
+        // A vine up the Maiden's robe to her forearm.
+        { x: 814, top: 640, bottom: 960 },
+        // Vines hanging inside the portico.
+        { x: 1360, top: 880, bottom: 1040 }, { x: 1452, top: 740, bottom: 880 }, { x: 1470, top: 580, bottom: 740 }, { x: 1330, top: 360, bottom: 580 },
+        // A vine down from the Fox Shrine ledge to the crypt floor.
+        { x: 1700, top: 580, bottom: 1040 },
       ],
     }),
-    // A moving part per zone: a vent on the roof, the floating slab in the halls, and the column of
-    // wisp-light rising from the crypt through every hole to the roof.
-    updrafts: [{ x: 930, w: 50, top: 330, bottom: 1120, kind: 'wisplight' }],
-    springs: [{ x: 1250, y: 340, up: 160, kind: 'gust' }],
+    // Its monsters, placed by hand, few and spread out, none near the ways in or out.
+    spawns: [
+      // The Temple Roof.
+      { mob: 'gloombat', x: 660, y: 330 }, { mob: 'gloombat', x: 1100, y: 350 }, { mob: 'gloombat', x: 1580, y: 360 },
+      // The Collapsed Halls.
+      { mob: 'wisp', x: 420, y: 680 }, { mob: 'wisp', x: 1270, y: 712 }, { mob: 'gloombat', x: 1400, y: 580 }, { mob: 'wisp', x: 1520, y: 740 },
+      // The Sunken Crypt.
+      { mob: 'boneknight', x: 560, y: 1040 }, { mob: 'boneknight', x: 1180, y: 1040 }, { mob: 'boneknight', x: 1580, y: 1040 }, { mob: 'wisp', x: 400, y: 920 },
+    ],
+    // Its gathering spots, placed by hand, clear of the ladders and the ways.
+    nodes: [
+      { ...SPOT.ore(2), x: 470, y: 1040 }, { ...SPOT.ore(2, { gem: 0.14 }), x: 1330, y: 1040 },
+      { ...SPOT.herb(2, 'temple_mint'), x: 160, y: 560 }, { ...SPOT.herb(2, 'temple_mint'), x: 480, y: 330 },
+      { ...SPOT.wood(2), x: 150, y: 800 }, { ...SPOT.fiber(2), x: 1132, y: 712 }, { ...SPOT.night(2), x: 1420, y: 360 },
+    ],
+    // A moving part per zone: the gust vent on the roof span and the bell swinging in the belfry,
+    // the drifting slab in the halls, and the column of wisp-light rising from the crypt beside the
+    // Maiden's lantern, all the way up to the roof (Up to ride it).
+    updrafts: [{ x: 1074, w: 46, top: 330, bottom: 1040, kind: 'wisplight' }],
+    springs: [{ x: 700, y: 330, up: 150, kind: 'gust' }],
     portals: [
       { id: 'west', x: 40, y: 300, to: 'grove', toPortal: 'east' },
-      { id: 'east', x: 2540, y: 1120, to: 'tea', toPortal: 'west', label: 'Tanuki Tea Terraces' },
+      { id: 'east', x: 1760, y: 1040, to: 'tea', toPortal: 'west', label: 'Tanuki Tea Terraces' },
     ],
     npcs: [],
-    // A landmark per zone: pillars and a statue on the roof, the great arch in the halls, the
-    // statues and arch of the crypt.
-    deco: [['ruinpillar', 400, 0, 300], ['statue', 2100, 0, 300], ['ruinarch', 1150, 0, 520], ['ruinarch', 300], ['statue', 860], ['ruinpillar', 1660]],
-    lamps: [{ x: 1150, y: 480 }, { x: 860, y: 1080 }, { x: 930, y: 1100 }],
-    spirit: { x: 1300, y: 240 },
-    habitats: { boneknight: { naps: true, home: { x: 860, y: 1120 } }, wisp: { play: true }, gloombat: { play: true, naps: true } },
+    // The three landmarks, standing on the crypt floor behind their ledges, and two tombs.
+    deco: [['ruintower', 300, 0], ['moonmaiden', 900, 0], ['ruinportico', 1450, 0], ['ruintomb', 590], ['ruintomb', 1230, 1]],
+    lamps: [{ x: 300, y: 500, c: '#ffe2a0' }, { x: 300, y: 740, c: '#ffe2a0' }, { x: 1024, y: 432, c: '#fff0c0' }, { x: 1450, y: 480, c: '#ffd6a8' }, { x: 590, y: 1020 }, { x: 1230, y: 1020 }],
+    spirit: { x: 1100, y: 250 },
+    habitats: { boneknight: { naps: true, home: { x: 1180, y: 1040 } }, wisp: { play: true }, gloombat: { play: true, naps: true } },
   },
 
 
@@ -2634,7 +2670,7 @@ const along = (y, x1, x2, n, ...mobs) => Array.from({ length: n }, (_, i) => ({ 
 
 MAPS.woods.portals.push({ id: 'glade', x: 1540, y: 520, to: 'glade', toPortal: 'west', label: 'Whispering Glade' });
 // The way to the shrine leads off the collapsed halls.
-MAPS.ruins.portals.push({ id: 'shrine', x: 2380, y: 700, to: 'shrine', toPortal: 'west', label: 'Fox Shrine Path' });
+MAPS.ruins.portals.push({ id: 'shrine', x: 1750, y: 580, to: 'shrine', toPortal: 'west', label: 'Fox Shrine Path' });
 // The tunnel to the springs leaves from the cave's east rim.
 MAPS.cave.portals.push({ id: 'springs', x: 2540, y: 600, to: 'springs', toPortal: 'west', label: 'Serpent Springs' });
 
@@ -3148,7 +3184,7 @@ MAPS.starfall.spawns.push({ mob: 'selene', x: 1300, y: 1040, respawn: 600 });
 // from the way you came in from town. Step up to it and it carries you straight back to town (one
 // way), so a long map never means a long walk back.
 const HOMESTONES = {
-  meadow1: [1555, 400], meadow2: [200, 700], woods: [1650, 880], ruins: [2220, 900], cave: [2380, 520],
+  meadow1: [1555, 400], meadow2: [200, 700], woods: [1650, 880], ruins: [1764, 330], cave: [2380, 520],
   sky: [2460, 400], canyon: [110, 520], glade: [880, 900], shrine: [2164, 560], ridge: [2200, 400],
   springs: [1992, 640], peak: [2040, 880], starfall: [2290, 440],
 };

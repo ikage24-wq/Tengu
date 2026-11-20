@@ -19,7 +19,7 @@ const SCALE = Number(q.get('s') ?? 2);
 canvas.width = VW * SCALE;
 canvas.height = VH * SCALE;
 preloadFxSprites();
-const c = balanceChar('thief', Number(q.get('lv') ?? 30));
+const c = balanceChar('moonmoth', Number(q.get('lv') ?? 30));
 const w = createWorld(c);
 w.log = () => {};
 window.W = w;

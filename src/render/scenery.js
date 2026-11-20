@@ -16,6 +16,7 @@ import { drawPaintedForest, drawPaintedForestFront, drawWoodlandLife, drawMossyA
 import { drawPortalGate, drawPortalSwirl } from './portals.js';
 import { drawPaintedCanyon, drawCanyonLife, drawCanyonFront } from './canyon.js';
 import { drawPaintedHollowGate } from './hollowgate.js';
+import { drawPaintedRuins } from './ruinsart.js';
 import { drawPaintedManorHill, drawManorHillLife, drawPaintedManorGarden, drawPaintedManorRoof } from './manorhill.js';
 import { drawPaintedAquaGate, drawPaintedAquaKelp, drawPaintedAquaHall, drawPaintedAquaAbyss, drawPaintedTidePier } from './aquapalace.js';
 import { drawPaintedFairGate, drawPaintedMidway, drawPaintedCoasterYard, drawPaintedFerrisWheel } from './fairground.js';
@@ -5092,7 +5093,7 @@ const BUILDINGS = {
 // washed toward the sky like the backdrop, so the ledge reads as passing in front of it.
 // Waterfalls pour off a ledge, and cloud pillars, the watchtower and Mossy Woods' giant trees
 // (whose branches are its ledges) hold one up, on purpose.
-const MEETS_LEDGE = new Set(['woodtree', 'gladecliff', 'waterfall', 'cloudpillar', 'watchtower', 'canyonwall', 'canyonspire', 'canyonarch', 'canyoncave', 'canyonstub', 'canyonwalllow', 'greattree', 'rootarch', 'trunkwall', 'hollowstump', 'rootwall', 'rootceiling', 'rootpillar', 'greatcap', 'manorgates', 'pumpkincoach', 'partylamp', 'rosehedge', 'topiary', 'coralclump', 'shellpile', 'kelpclump', 'divingbell']);
+const MEETS_LEDGE = new Set(['ruintower', 'moonmaiden', 'ruinportico', 'woodtree', 'gladecliff', 'waterfall', 'cloudpillar', 'watchtower', 'canyonwall', 'canyonspire', 'canyonarch', 'canyoncave', 'canyonstub', 'canyonwalllow', 'greattree', 'rootarch', 'trunkwall', 'hollowstump', 'rootwall', 'rootceiling', 'rootpillar', 'greatcap', 'manorgates', 'pumpkincoach', 'partylamp', 'rosehedge', 'topiary', 'coralclump', 'shellpile', 'kelpclump', 'divingbell']);
 const decoSize = (kind, seed) => {
   const b = BUILDINGS[kind];
   if (b) {
@@ -6037,6 +6038,7 @@ export function drawSceneBack(ctx, map, cam, width, height, time, nearPortalId, 
     else if (t.painted === 'meadow') drawPaintedMeadow(g, t, cam, width, height, time, layerY, air);
     else if (t.painted === 'canyon') drawPaintedCanyon(g, t, cam, width, height, time, layerY, air);
     else if (t.painted === 'hollowgate') drawPaintedHollowGate(g, t, cam, width, height, time, layerY, air);
+    else if (t.painted === 'ruins') drawPaintedRuins(g, t, cam, width, height, time, layerY, air);
     else if (t.painted === 'manorhill') drawPaintedManorHill(g, t, cam, width, height, time, layerY, air, map);
     else if (t.painted === 'manorgarden') drawPaintedManorGarden(g, t, cam, width, height, time, layerY, air, map);
     else if (t.painted === 'manorroof') drawPaintedManorRoof(g, t, cam, width, height, time, layerY, air, map);
