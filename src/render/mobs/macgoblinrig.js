@@ -12,8 +12,8 @@
 
 import { E, T, F, R, stroke } from './kit.js';
 import { ramp, crescent } from './meadow.js';
-import { makeRig, stateBlend, clamp, TAU } from './rig.js';
-import { D2R, fr, arcP, taper, pairOf, faceSprite, hold, stepPhase, pawStep, put, shift, MOODS, moodOf, faceShapes, puff } from './rigkit.js';
+import { makeRig, stateBlend, TAU } from './rig.js';
+import { D2R, fr, taper, pairOf, faceSprite, hold, stepPhase, pawStep, put, shift, MOODS, moodOf, puff } from './rigkit.js';
 import { chibiLegs } from './chibilegs.js';
 
 const smoothPts = (pts, n = 3) => {
@@ -51,8 +51,71 @@ const headP = () => [
   blob([[9, 26], [15, 23], [20, 25], [25, 23], [30, 26], [28, 30], [22, 28], [19, 29], [15, 28], [10, 30]], WHITE, 2),
   ...line([[12, 11.6], [17, 12.4]], 1.8, WHITE), ...line([[22, 12], [28, 11]], 2, WHITE),
 ];
-const FACE = { eyes: [[25, 16.4, 2.6, 3.2, 1], [15.4, 16.8, 2.2, 2.8, -1]], mouth: [20, 31.4, 2.4], blush: [[27.4, 20, 1.8], [12.6, 20.4, 1.6]], iris: '#7a5a2a', k: 1.5, lid: 0.3, lashes: 0 };
-const mgFace = (mood) => faceSprite(`mg2|face|${mood}`, 36, 34, () => faceShapes(mood, FACE));
+// ---------- His own face: a grumpy old farmer's. Small beady yellow goblin eyes under heavy lids,
+// crow's feet at their corners, a grumble under his moustache, and one gold tooth when he grins or
+// bellows. ----------
+const oLn = (pts, w, c = INK) => {
+  const l = [];
+  const r = [];
+  pts.forEach(([x, y], i) => {
+    const [ax, ay] = pts[Math.max(0, i - 1)];
+    const [bx, by] = pts[Math.min(pts.length - 1, i + 1)];
+    const d = Math.hypot(bx - ax, by - ay) || 1;
+    const nx = ((-(by - ay) / d) * w) / 2;
+    const ny = (((bx - ax) / d) * w) / 2;
+    l.push([x + nx, y + ny]);
+    r.push([x - nx, y - ny]);
+  });
+  return [F(T([...l, ...r.reverse()], c))];
+};
+const oArc = (cx, cy, rx, ry, a0, a1, n = 8) => Array.from({ length: n + 1 }, (_, i) => {
+  const a = ((a0 + ((a1 - a0) * i) / n) * Math.PI) / 180;
+  return [cx + Math.cos(a) * rx, cy + Math.sin(a) * ry];
+});
+const oRing = (cx, cy, rx, ry, rot = 0, n = 16) => Array.from({ length: n }, (_, i) => {
+  const a = (i / n) * Math.PI * 2;
+  const x = Math.cos(a) * rx;
+  const y = Math.sin(a) * ry;
+  return [cx + x * Math.cos(rot) - y * Math.sin(rot), cy + x * Math.sin(rot) + y * Math.cos(rot)];
+});
+const oCut = (pts, lid) => pts.map(([px, py]) => [px, Math.max(py, lid(px))]);
+const oSquint = (x, y, s, r, w, c = INK) => oLn([[x + s * r, y - r], [x - s * r * 0.8, y], [x + s * r, y + r]], w, c);
+const oSpiral = (x, y, r, w, c, s = 1) => oLn(Array.from({ length: 15 }, (_, i) => [x + Math.cos(i * 0.8 * s) * r * (0.12 + i / 15), y + Math.sin(i * 0.8 * s) * r * (0.12 + i / 15)]), w, c);
+const oDrop = (x, y, r, c = '#9ad8ff') => [F(E(x, y, r * 0.7, r, c)), F(E(x - r * 0.2, y - r * 0.3, r * 0.25, r * 0.25, '#ffffff'))];
+const oStar = (x, y, r, c, n = 5, k = 0.45) => F(T(Array.from({ length: n * 2 }, (_, i) => {
+  const a = (i * Math.PI) / n - Math.PI / 2;
+  const rr = i % 2 ? r * k : r;
+  return [x + Math.cos(a) * rr, y + Math.sin(a) * rr];
+}), c));
+const MG_EYES = [[25, 16.6, 1, 2.6, 3.2], [15.4, 17, -1, 2.2, 2.8]];
+const MG_TOOTH = '#f2c860';
+const mgOwnFace = (mood) => {
+  const out = [];
+  const shut = mood === 'blink' || mood === 'sleep' || mood === 'dead';
+  for (const [x, y, s, w, h] of MG_EYES) {
+    out.push(...oLn([[x + s * w * 1.15, y - 0.1], [x + s * w * 1.5, y - 0.7]], 0.45, GOB.sh), ...oLn([[x + s * w * 1.15, y + 0.9], [x + s * w * 1.5, y + 1.4]], 0.45, GOB.sh));
+    if (shut) out.push(...oLn([[x - w, y + 0.4], [x, y + 0.9], [x + w, y + 0.4]], 0.8));
+    else if (mood === 'happy') out.push(...oLn(oArc(x, y + h * 0.4, w, h * 0.6, 200, 340, 7), 0.85));
+    else if (mood === 'hurt') out.push(...oSquint(x, y, s, w * 0.8, 0.8));
+    else if (mood === 'dizzy') out.push(...oSpiral(x, y, w, 0.6, '#b89a20', s));
+    else {
+      const lid = mood === 'angry' ? (px) => y - h * 0.05 + (px - x) * -s * 0.5 : mood === 'shout' ? () => y - h * 0.7 : (px) => y - h * 0.35 + (px - x) * -s * 0.12;
+      out.push(F(T(oCut(oRing(x, y, w, h), lid), INK)), F(T(oCut(oRing(x, y + 0.3, w * 0.72, h * 0.72), lid), '#e8c84a')), F(T(oCut(oRing(x + s * 0.1, y + 0.4, w * 0.32, h * 0.38), lid), INK)));
+      if (mood !== 'angry') out.push(F(E(x + w * 0.3, Math.max(lid(x + w * 0.3) + 0.6, y - h * 0.2), w * 0.18, w * 0.18, '#ffffff')));
+      out.push(...oLn([[x - w * 1.15, lid(x - w * 1.15)], [x + w * 1.15, lid(x + w * 1.15)]], 0.85, GOB.sh));
+    }
+  }
+  const [mx, my] = [20, 31.4];
+  if (mood === 'shout') out.push(F(E(mx, my + 0.6, 2.4, 2, '#5a2a2a')), F(T([[mx + 0.4, my - 1.2], [mx + 1.4, my - 1.2], [mx + 0.9, my]], MG_TOOTH)), F(E(mx, my + 1.6, 1.3, 0.6, '#ff8fab')));
+  else if (mood === 'happy') out.push(F(T(oArc(mx, my - 0.4, 2.6, 1.8, 0, 180, 8), '#5a2a2a')), F(T([[mx + 0.3, my - 0.4], [mx + 1.3, my - 0.4], [mx + 0.8, my + 0.8]], MG_TOOTH)), F(T([[mx - 1.4, my - 0.4], [mx - 0.5, my - 0.4], [mx - 0.95, my + 0.6]], '#fffbe8')));
+  else if (mood === 'angry') out.push(...oLn([[mx - 2.4, my + 0.8], [mx, my - 0.2], [mx + 2.4, my + 0.8]], 0.7), F(T([[mx + 0.2, my - 0.1], [mx + 1, my + 0.1], [mx + 0.6, my + 1]], MG_TOOTH)));
+  else if (mood === 'hurt' || mood === 'dizzy') out.push(...oLn([[mx - 2, my + 0.4], [mx - 0.7, my - 0.2], [mx + 0.6, my + 0.4], [mx + 2, my - 0.2]], 0.6));
+  else if (mood === 'dead') out.push(...oLn([[mx - 1.4, my + 0.3], [mx + 1.4, my + 0.3]], 0.6));
+  else out.push(...oLn(oArc(mx, my + 1.4, 2.2, 1.2, 200, 340, 7), 0.65));
+  if (mood === 'hurt') out.push(...oDrop(28.6, 13, 1));
+  return out;
+};
+const mgFace = (mood) => faceSprite(`mg2|face|${mood}`, 36, 34, () => mgOwnFace(mood));
 // A droopy ear: long, a darker inside. Box 18 x 10; rooted at (2, 4).
 const earP = (far) => () => [blob([[1, 2], [17, 6], [16, 8.6], [2, 7]], far ? GOB.sh : GOB.base, 2), F(blob([[4, 4], [14, 6.4], [4, 6]], '#5a8a3a', 1))];
 // The pumpkin helmet: ribbed, a hole cut for his head, a stem and a leaf. Box 36 x 26; sits on his
@@ -233,7 +296,7 @@ export function macGoblinStill(pose, f, mood) {
     res: 2,
     shapes: shift([
       ...put(earP(true)(), [2, 4], nx - 10, ny - 16, 160), ...arm(true, 110, -20), ...leg('F', true), ...leg('N', false), ...put(bodyP(), [20, 30], 0, by),
-      ...put(headP(), [18, 32], nx, ny), ...put(faceShapes(MOODS.has(mood) ? mood : 'idle', FACE), [18, 32], nx, ny), ...put(earP(false)(), [2, 4], nx + 12, ny - 16, 15),
+      ...put(headP(), [18, 32], nx, ny), ...put(mgOwnFace(MOODS.has(mood) ? mood : 'idle'), [18, 32], nx, ny), ...put(earP(false)(), [2, 4], nx + 12, ny - 16, 15),
       ...put(pumpkinP(), [18, 22], nx, ny - 23), ...put(leafP(), [1, 4], nx + 1, ny - 44), ...put(forkP(), [8, 40], hx2, hy2, -4), ...arm(false, 40, -60),
     ], 60, 116),
   };

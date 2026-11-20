@@ -16,7 +16,7 @@
 import { E, T, F, R, stroke } from './kit.js';
 import { ramp, crescent } from './meadow.js';
 import { makeRig, stateBlend, clamp, smooth, TAU } from './rig.js';
-import { D2R, fr, arcP, taper, pairOf, faceSprite, hold, window1, stepPhase, pawStep, put, shift, MOODS, moodOf, faceShapes, sparkle, puff } from './rigkit.js';
+import { D2R, fr, arcP, taper, pairOf, faceSprite, hold, window1, stepPhase, pawStep, put, shift, MOODS, moodOf, sparkle, puff } from './rigkit.js';
 import { chibiLegs } from './chibilegs.js';
 
 const smoothPts = (pts, n = 3) => {
@@ -59,8 +59,73 @@ const headP = () => [
   blob([[9.6, 22], [34.4, 20], [32, 9], [13, 10]], RED.base, 2), crescent(22, 15, 11, 7, RED.sh, { k: 0.25, a0: 150, a1: 220 }),
   F(taper([[10, 21.4], [34, 19.4]], 3, 3, GOLD.base)), blob([[26, 20.4], [39, 19.6], [37, 23.4], [27, 23]], BOOT.base, 1), F(star(22, 14.6, 3, GOLD.base)),
 ];
-const FACE = { eyes: [[27.6, 27.8, 3.4, 4.2, 1], [17.8, 28.2, 3, 3.8, -1]], mouth: [24.8, 37.6, 2.6], blush: [[29.8, 32.6, 2.2], [15.4, 32.8, 1.8]], iris: '#c87a1a', k: 1.7, lid: 0, lashes: 1 };
-const loFace = (mood) => faceSprite(`lo2|face|${mood}`, 44, 50, () => faceShapes(mood, FACE));
+// ---------- Her own face, the ring's star: amber eyes with a gold star of light in each and winged
+// liner, a confident lid, the lion's muzzle with a smirk and one fang; she winks "ta-da!" and roars. ----------
+const oLn = (pts, w, c = INK) => {
+  const l = [];
+  const r = [];
+  pts.forEach(([x, y], i) => {
+    const [ax, ay] = pts[Math.max(0, i - 1)];
+    const [bx, by] = pts[Math.min(pts.length - 1, i + 1)];
+    const d = Math.hypot(bx - ax, by - ay) || 1;
+    const nx = ((-(by - ay) / d) * w) / 2;
+    const ny = (((bx - ax) / d) * w) / 2;
+    l.push([x + nx, y + ny]);
+    r.push([x - nx, y - ny]);
+  });
+  return [F(T([...l, ...r.reverse()], c))];
+};
+const oArc = (cx, cy, rx, ry, a0, a1, n = 8) => Array.from({ length: n + 1 }, (_, i) => {
+  const a = ((a0 + ((a1 - a0) * i) / n) * Math.PI) / 180;
+  return [cx + Math.cos(a) * rx, cy + Math.sin(a) * ry];
+});
+const oRing = (cx, cy, rx, ry, rot = 0, n = 16) => Array.from({ length: n }, (_, i) => {
+  const a = (i / n) * Math.PI * 2;
+  const x = Math.cos(a) * rx;
+  const y = Math.sin(a) * ry;
+  return [cx + x * Math.cos(rot) - y * Math.sin(rot), cy + x * Math.sin(rot) + y * Math.cos(rot)];
+});
+const oCut = (pts, lid) => pts.map(([px, py]) => [px, Math.max(py, lid(px))]);
+const oSquint = (x, y, s, r, w, c = INK) => oLn([[x + s * r, y - r], [x - s * r * 0.8, y], [x + s * r, y + r]], w, c);
+const oSpiral = (x, y, r, w, c, s = 1) => oLn(Array.from({ length: 15 }, (_, i) => [x + Math.cos(i * 0.8 * s) * r * (0.12 + i / 15), y + Math.sin(i * 0.8 * s) * r * (0.12 + i / 15)]), w, c);
+const oDrop = (x, y, r, c = '#9ad8ff') => [F(E(x, y, r * 0.7, r, c)), F(E(x - r * 0.2, y - r * 0.3, r * 0.25, r * 0.25, '#ffffff'))];
+const oStar = (x, y, r, c, n = 5, k = 0.45) => F(T(Array.from({ length: n * 2 }, (_, i) => {
+  const a = (i * Math.PI) / n - Math.PI / 2;
+  const rr = i % 2 ? r * k : r;
+  return [x + Math.cos(a) * rr, y + Math.sin(a) * rr];
+}), c));
+const LO_EYES = [[27.6, 27.8, 1, 3.4, 4.2], [17.8, 28.2, -1, 3, 3.8]];
+const loOwnFace = (mood) => {
+  const out = [];
+  const shut = mood === 'blink' || mood === 'sleep' || mood === 'dead';
+  for (const [x, y, s, w, h] of LO_EYES) {
+    const wink = mood === 'happy' && s < 0;
+    if (shut) out.push(...oLn([...oArc(x, y + 0.4, w, h * 0.45, 165, 15, 8), [x + s * w * 1.5, y - 0.8]].sort((a, b) => s * (a[0] - b[0])), 0.9));
+    else if (wink || (mood === 'happy' && false)) out.push(...oLn(oArc(x, y + h * 0.4, w, h * 0.7, 200, 340, 8), 0.95));
+    else if (mood === 'hurt') out.push(...oSquint(x, y, s, w * 0.8, 0.9));
+    else if (mood === 'dizzy') out.push(...oSpiral(x, y, w, 0.7, '#c87a1a', s));
+    else {
+      const fierce = mood === 'angry' || mood === 'shout';
+      const lid = fierce ? (px) => y - h * 0.2 + (px - x) * -s * 0.55 : (px) => y - h * 0.62 + (px - x) * s * 0.08;
+      out.push(F(T(oCut(oRing(x, y, w, h), lid), INK)), F(T(oCut(oRing(x, y + h * 0.25, w * 0.78, h * 0.62), lid), '#e8961a')));
+      out.push(F(T(oCut(oRing(x + s * 0.1, y + h * 0.3, fierce ? w * 0.16 : w * 0.34, h * 0.5), lid), INK)));
+      if (!fierce) out.push(oStar(x + w * 0.3, y - h * 0.15, w * 0.42, '#fff4b8'));
+      out.push(...oLn([...oCut(oArc(x, y, w * 1.05, h * 1.02, 195, 345, 8), (px) => lid(px) - 0.2), [x + s * w * 1.7, lid(x + s * w * 1.05) - 1.2]].sort((a, b) => s * (a[0] - b[0])), 1));
+    }
+  }
+  if (mood !== 'dead') out.push(F(E(30.4, 33, 2.2, 1.1, '#ffaa9a')), F(E(15, 33.2, 1.8, 0.9, '#ffaa9a')));
+  const [mx, my] = [24.8, 37.6];
+  const FANG = '#fffaf2';
+  if (mood === 'shout') out.push(F(E(mx, my + 0.6, 2.6, 2.6, '#6a2a2a')), F(T([[mx - 1.8, my - 1.4], [mx - 1, my - 1.4], [mx - 1.4, my - 0.1]], FANG)), F(T([[mx + 1, my - 1.4], [mx + 1.8, my - 1.4], [mx + 1.4, my - 0.1]], FANG)), F(E(mx, my + 1.8, 1.4, 0.7, '#ff8fab')));
+  else if (mood === 'happy') out.push(F(T(oArc(mx, my - 0.4, 2.6, 2.2, 0, 180, 8), '#6a2a2a')), F(E(mx, my + 1, 1.4, 0.7, '#ff8fab')), oStar(13.6, 24, 1.4, '#ffd84a'));
+  else if (mood === 'angry') out.push(...oLn([[mx - 2.4, my + 0.2], [mx + 2.4, my + 0.2]], 0.7), F(T([[mx - 1.8, my + 0.2], [mx - 1, my + 0.2], [mx - 1.4, my + 1.4]], FANG)), F(T([[mx + 1, my + 0.2], [mx + 1.8, my + 0.2], [mx + 1.4, my + 1.4]], FANG)));
+  else if (mood === 'hurt' || mood === 'dizzy') out.push(...oLn([[mx - 2, my + 0.4], [mx - 0.7, my - 0.2], [mx + 0.6, my + 0.4], [mx + 2, my - 0.2]], 0.6));
+  else if (mood === 'dead') out.push(F(E(mx, my + 0.3, 0.8, 0.9, '#6a2a2a')));
+  else out.push(...oLn([[mx, my - 1], [mx, my]], 0.6), ...oLn(oArc(mx - 1.1, my, 1.1, 0.9, 0, 180, 6), 0.6), ...oLn([[mx, my], [mx + 1.1, my + 0.8], [mx + 2.4, my - 0.4]], 0.6), F(T([[mx + 0.8, my + 0.6], [mx + 1.5, my + 0.5], [mx + 1.2, my + 1.6]], FANG)));
+  if (mood === 'hurt') out.push(...oDrop(29.4, 31.4, 1));
+  return out;
+};
+const loFace = (mood) => faceSprite(`lo2|face|${mood}`, 44, 50, () => loOwnFace(mood));
 // The fluffy cream ruff at her collar. Box 32 x 12; the neck at (16, 5).
 const ruffP = () => [...[[4, 6], [9, 4], [16, 3.4], [23, 4], [28, 6]].map(([x, y]) => E(x, y, 4.6, 4, CREAM)), F(E(16, 8, 10, 2.4, '#f4dcb0'))];
 // The jacket: red, gold frogging, epaulettes, a black belt with a gold buckle. Box 30 x 32; bodyJ at (15, 26).
@@ -304,7 +369,7 @@ export function leonieStill(pose, f, mood) {
     shapes: shift([
       ...put(tail2P(), [2, 7], -10 + Math.cos(165 * D2R) * 18, by + Math.sin(165 * D2R) * 18, 235), ...put(tail1P(), [2, 5], -10, by, 165), ...put(tailsP(), [12, 1], -8, by + 2),
       ...arm(true, 140, -20), ...leg('F', true), ...leg('N', false), ...put(jacketP(), [15, 26], 0, by),
-      ...put(ruffP(), [16, 5], nx, ny + 1), ...put(headP(), [22, 46], nx, ny), ...put(faceShapes(MOODS.has(mood) ? mood : 'idle', FACE), [22, 46], nx, ny),
+      ...put(ruffP(), [16, 5], nx, ny + 1), ...put(headP(), [22, 46], nx, ny), ...put(loOwnFace(MOODS.has(mood) ? mood : 'idle'), [22, 46], nx, ny),
       ...arm(false, 70, -40),
     ], 60, 116),
   };

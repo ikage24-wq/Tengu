@@ -14,7 +14,7 @@
 import { E, T, F, stroke } from './kit.js';
 import { ramp, crescent } from './meadow.js';
 import { makeRig, stateBlend, clamp, smooth, TAU } from './rig.js';
-import { D2R, fr, arcP, taper, pairOf, faceSprite, hold, stepPhase, pawStep, put, shift, MOODS, moodOf, faceShapes, puff } from './rigkit.js';
+import { D2R, fr, arcP, taper, pairOf, faceSprite, hold, stepPhase, pawStep, put, shift, MOODS, moodOf, puff } from './rigkit.js';
 import { chibiLegs } from './chibilegs.js';
 
 const smoothPts = (pts, n = 3) => {
@@ -51,8 +51,75 @@ const potP = () => [
   F(taper(arcP(32, 26, 23, 21, 200, 340, 12).map(([x, y]) => [x, y + 3]), 1.8, 1.8, BLUE.base)),
   ...[[14, 34, 2.4], [20, 44, 2], [44, 44, 2.2], [48, 36, 1.6]].map(([x, y, r]) => F(E(x, y, r, r * 0.85, BLUE.base))), F(E(24, 13, 5, 2, '#ffffff')),
 ];
-const FACE = { eyes: [[38, 26, 3.4, 4.2, 1], [28.4, 26.4, 3, 3.8, -1]], mouth: [34, 33, 2.6], blush: [[40, 30.6, 2.4], [26.4, 31, 2]], iris: '#3a2a1a', k: 1.7, lid: 0, lashes: 0 };
-const tpFace = (mood) => faceSprite(`tp2|face|${mood}`, 76, 52, () => faceShapes(mood, FACE));
+// ---------- His own face, painted on the porcelain: a tanuki's mask in soft blue glaze round his eyes,
+// kind old dark eyes, long drooping blue-painted brows, and a little painted smile; hurt, a fine
+// crack runs over his cheek. ----------
+const oLn = (pts, w, c = INK) => {
+  const l = [];
+  const r = [];
+  pts.forEach(([x, y], i) => {
+    const [ax, ay] = pts[Math.max(0, i - 1)];
+    const [bx, by] = pts[Math.min(pts.length - 1, i + 1)];
+    const d = Math.hypot(bx - ax, by - ay) || 1;
+    const nx = ((-(by - ay) / d) * w) / 2;
+    const ny = (((bx - ax) / d) * w) / 2;
+    l.push([x + nx, y + ny]);
+    r.push([x - nx, y - ny]);
+  });
+  return [F(T([...l, ...r.reverse()], c))];
+};
+const oArc = (cx, cy, rx, ry, a0, a1, n = 8) => Array.from({ length: n + 1 }, (_, i) => {
+  const a = ((a0 + ((a1 - a0) * i) / n) * Math.PI) / 180;
+  return [cx + Math.cos(a) * rx, cy + Math.sin(a) * ry];
+});
+const oRing = (cx, cy, rx, ry, rot = 0, n = 16) => Array.from({ length: n }, (_, i) => {
+  const a = (i / n) * Math.PI * 2;
+  const x = Math.cos(a) * rx;
+  const y = Math.sin(a) * ry;
+  return [cx + x * Math.cos(rot) - y * Math.sin(rot), cy + x * Math.sin(rot) + y * Math.cos(rot)];
+});
+const oCut = (pts, lid) => pts.map(([px, py]) => [px, Math.max(py, lid(px))]);
+const oSquint = (x, y, s, r, w, c = INK) => oLn([[x + s * r, y - r], [x - s * r * 0.8, y], [x + s * r, y + r]], w, c);
+const oSpiral = (x, y, r, w, c, s = 1) => oLn(Array.from({ length: 15 }, (_, i) => [x + Math.cos(i * 0.8 * s) * r * (0.12 + i / 15), y + Math.sin(i * 0.8 * s) * r * (0.12 + i / 15)]), w, c);
+const oDrop = (x, y, r, c = '#9ad8ff') => [F(E(x, y, r * 0.7, r, c)), F(E(x - r * 0.2, y - r * 0.3, r * 0.25, r * 0.25, '#ffffff'))];
+const oStar = (x, y, r, c, n = 5, k = 0.45) => F(T(Array.from({ length: n * 2 }, (_, i) => {
+  const a = (i * Math.PI) / n - Math.PI / 2;
+  const rr = i % 2 ? r * k : r;
+  return [x + Math.cos(a) * rr, y + Math.sin(a) * rr];
+}), c));
+const TP_EYES = [[38, 26, 1, 3.4, 4.2], [28.4, 26.4, -1, 3, 3.8]];
+const TP_GLAZE = '#8aa8e0';
+const tpOwnFace = (mood) => {
+  const out = [];
+  const shut = mood === 'blink' || mood === 'sleep' || mood === 'dead';
+  for (const [x, y, s, w, h] of TP_EYES) {
+    out.push(F(T(oRing(x - s * 0.6, y + 0.8, w * 1.75, h * 1.2, s * 0.25), TP_GLAZE)));
+    // The painted brows, long and drooping at their outer ends (furrowed in, lifted, as he feels).
+    const bl = mood === 'angry' ? 1.2 : mood === 'hurt' || mood === 'shout' ? -1 : mood === 'happy' ? -0.5 : 0;
+    const bt = mood === 'angry' ? 1.2 : mood === 'hurt' ? -0.8 : 0;
+    out.push(...oLn([[x - s * w * 1.1, y - h * 1.5 + bl + bt * 0.6], [x + s * w * 0.3, y - h * 1.7 + bl], [x + s * w * 1.4, y - h * 1.35 + bl - bt * 0.4], [x + s * w * 2, y - h * 0.9 + bl]], 1, BLUE.base));
+    if (shut) out.push(...oLn(oArc(x, y + 0.4, w * 0.9, h * 0.45, 15, 165, 8), 0.95));
+    else if (mood === 'happy') out.push(...oLn(oArc(x, y + h * 0.4, w * 0.9, h * 0.7, 200, 340, 8), 1));
+    else if (mood === 'hurt') out.push(...oSquint(x, y, s, w * 0.75, 0.95));
+    else if (mood === 'dizzy') out.push(...oSpiral(x, y, w * 0.9, 0.8, BLUE.base, s));
+    else {
+      const r = mood === 'shout' ? 1.15 : 1;
+      out.push(F(E(x, y, w * 0.7 * r, h * 0.7 * r, INK)), F(E(x + w * 0.25, y - h * 0.25, w * 0.24, w * 0.24, '#ffffff')), F(E(x - w * 0.2, y + h * 0.3, w * 0.1, w * 0.1, '#ffffff')));
+    }
+  }
+  if (mood !== 'dead') out.push(F(E(41, 31.4, 2.2, 1.1, '#ffb8c4')), F(E(25.6, 31.8, 1.9, 1, '#ffb8c4')));
+  const [mx, my] = [34, 33.2];
+  if (mood === 'shout') out.push(F(E(mx, my + 0.8, 2, 2.4, '#5a2a3a')), F(E(mx, my + 2, 1.2, 0.6, '#ff8fab')));
+  else if (mood === 'happy') out.push(F(T(oArc(mx, my - 0.3, 2.4, 2, 0, 180, 8), '#5a2a3a')), F(E(mx, my + 0.9, 1.3, 0.6, '#ff8fab')));
+  else if (mood === 'angry') out.push(...oLn([[mx - 2, my + 0.8], [mx, my - 0.2], [mx + 2, my + 0.8]], 0.8, BLUE.base));
+  else if (mood === 'dead') out.push(F(E(mx, my + 0.4, 0.8, 0.9, '#5a2a3a')));
+  else if (mood === 'hurt' || mood === 'dizzy') out.push(...oLn([[mx - 2, my + 0.4], [mx - 0.7, my - 0.2], [mx + 0.6, my + 0.4], [mx + 2, my - 0.2]], 0.7, BLUE.base));
+  else out.push(...oLn(oArc(mx - 1, my, 1, 0.9, 0, 180, 6), 0.75, BLUE.base), ...oLn(oArc(mx + 1, my, 1, 0.9, 0, 180, 6), 0.75, BLUE.base));
+  // A fine crack over his cheek when he is hurt or beaten.
+  if (mood === 'hurt' || mood === 'dead') out.push(...oLn([[43.4, 22], [42.4, 24.4], [44, 25.8], [43, 28.4]], 0.4, '#7a7a90'));
+  return out;
+};
+const tpFace = (mood) => faceSprite(`tp2|face|${mood}`, 76, 52, () => tpOwnFace(mood));
 // The lid: a low dome, a band, a blue knob. Box 36 x 16; its rim's middle at (18, 13).
 const lidP = () => [E(18, 12, 16.4, 4.6, GLAZE.base), E(18, 8, 10.4, 4.4, GLAZE.base), F(taper([[3, 12], [33, 12]], 1.2, 1.2, BLUE.base)), E(18, 3.4, 3, 2.6, BLUE.base), F(E(17, 2.6, 1, 0.8, '#8ab0e0')), crescent(18, 10, 16, 6, GLAZE.sh, { k: 0.3, a0: 120, a1: 200 })];
 // A tanuki ear peeking up by the lid. Box 10 x 11; rooted at (5, 10).
@@ -205,7 +272,7 @@ export function teapotStill(pose, f, mood) {
     res: 2,
     shapes: shift([
       ...put(tailP(), [20, 4], -24, by + 8), ...leg('F', true), ...leg('N', false), ...put(earP(true)(), [5, 10], -13, by - 18), ...put(earP(false)(), [5, 10], 13, by - 19),
-      ...put(potP(), [32, 26], 0, by), ...put(faceShapes(MOODS.has(mood) ? mood : 'idle', FACE), [32, 26], 0, by), ...put(lidP(), [18, 13], 0, by - 19), ...put(armP(), [2, 4], 18, by, 70),
+      ...put(potP(), [32, 26], 0, by), ...put(tpOwnFace(MOODS.has(mood) ? mood : 'idle'), [32, 26], 0, by), ...put(lidP(), [18, 13], 0, by - 19), ...put(armP(), [2, 4], 18, by, 70),
     ], 60, 106),
   };
 }

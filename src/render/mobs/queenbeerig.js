@@ -11,8 +11,8 @@
 
 import { E, T, F, stroke } from './kit.js';
 import { ramp, crescent } from './meadow.js';
-import { makeRig, stateBlend, clamp, smooth, TAU } from './rig.js';
-import { D2R, fr, arcP, taper, pairOf, faceSprite, hold, put, shift, MOODS, moodOf, faceShapes, dot } from './rigkit.js';
+import { makeRig, stateBlend, TAU } from './rig.js';
+import { D2R, fr, arcP, taper, pairOf, faceSprite, hold, put, shift, MOODS, moodOf, dot } from './rigkit.js';
 
 const smoothPts = (pts, n = 3) => {
   let q = pts;
@@ -67,8 +67,80 @@ const headP = () => [
   E(17, 24, 15, 14, YEL.base), crescent(17, 24, 15, 14, YEL.sh, { k: 0.15, a0: 110, a1: 220 }), F(E(19, 27, 11, 9, CREAMF)),
   T([...arcP(17, 24, 15.4, 14.4, 214, 326, 8).map(([x, y]) => [x, y + 0.4]), [29, 8], [26, 2], [22, 6], [17, 0], [12, 6], [8, 2], [5, 9]], GOLD), ...[[11, 8], [17, 6], [23, 8]].map(([x, y]) => F(hex(x, y, 1.8, HONEY))),
 ];
-const FACE = { eyes: [[23.4, 25.6, 3.4, 4.2, 1], [14, 26, 3, 3.8, -1]], mouth: [19.6, 32.4, 2.4], blush: [[25.4, 30, 2.2], [12, 30.4, 1.8]], iris: '#3a2a3a', k: 1.6, lid: 0, lashes: 1 };
-const qbFace = (mood) => faceSprite(`qb2|face|${mood}`, 34, 40, () => faceShapes(mood, FACE));
+// ---------- Her own face: a queen's. Big honey-gold eyes with a little honeycomb of light in each and
+// long royal lashes, fine arched brows, rosy heart-shaped lips; she looks down her nose to scorn you
+// and shrieks to sting. ----------
+const oLn = (pts, w, c = INK) => {
+  const l = [];
+  const r = [];
+  pts.forEach(([x, y], i) => {
+    const [ax, ay] = pts[Math.max(0, i - 1)];
+    const [bx, by] = pts[Math.min(pts.length - 1, i + 1)];
+    const d = Math.hypot(bx - ax, by - ay) || 1;
+    const nx = ((-(by - ay) / d) * w) / 2;
+    const ny = (((bx - ax) / d) * w) / 2;
+    l.push([x + nx, y + ny]);
+    r.push([x - nx, y - ny]);
+  });
+  return [F(T([...l, ...r.reverse()], c))];
+};
+const oArc = (cx, cy, rx, ry, a0, a1, n = 8) => Array.from({ length: n + 1 }, (_, i) => {
+  const a = ((a0 + ((a1 - a0) * i) / n) * Math.PI) / 180;
+  return [cx + Math.cos(a) * rx, cy + Math.sin(a) * ry];
+});
+const oRing = (cx, cy, rx, ry, rot = 0, n = 16) => Array.from({ length: n }, (_, i) => {
+  const a = (i / n) * Math.PI * 2;
+  const x = Math.cos(a) * rx;
+  const y = Math.sin(a) * ry;
+  return [cx + x * Math.cos(rot) - y * Math.sin(rot), cy + x * Math.sin(rot) + y * Math.cos(rot)];
+});
+const oCut = (pts, lid) => pts.map(([px, py]) => [px, Math.max(py, lid(px))]);
+const oSquint = (x, y, s, r, w, c = INK) => oLn([[x + s * r, y - r], [x - s * r * 0.8, y], [x + s * r, y + r]], w, c);
+const oSpiral = (x, y, r, w, c, s = 1) => oLn(Array.from({ length: 15 }, (_, i) => [x + Math.cos(i * 0.8 * s) * r * (0.12 + i / 15), y + Math.sin(i * 0.8 * s) * r * (0.12 + i / 15)]), w, c);
+const oDrop = (x, y, r, c = '#9ad8ff') => [F(E(x, y, r * 0.7, r, c)), F(E(x - r * 0.2, y - r * 0.3, r * 0.25, r * 0.25, '#ffffff'))];
+const oStar = (x, y, r, c, n = 5, k = 0.45) => F(T(Array.from({ length: n * 2 }, (_, i) => {
+  const a = (i * Math.PI) / n - Math.PI / 2;
+  const rr = i % 2 ? r * k : r;
+  return [x + Math.cos(a) * rr, y + Math.sin(a) * rr];
+}), c));
+const QB_EYES = [[23.4, 25.6, 1, 3.4, 4.2], [14, 26, -1, 3, 3.8]];
+const qbOwnFace = (mood) => {
+  const out = [];
+  const shut = mood === 'blink' || mood === 'sleep' || mood === 'dead';
+  for (const [x, y, s, w, h] of QB_EYES) {
+    // The brows: fine arches, lowered to scorn, lifted when hurt or shrieking.
+    const bl = mood === 'angry' ? 1.4 : mood === 'hurt' || mood === 'shout' ? -1.2 : mood === 'happy' ? -0.6 : 0;
+    const bt = mood === 'angry' ? 1 : mood === 'hurt' ? -0.9 : 0;
+    out.push(...oLn([[x - s * w * 1.1, y - h * 1.55 + bl + bt * 0.6], [x + s * w * 0.1, y - h * 1.75 + bl], [x + s * w * 1.2, y - h * 1.5 + bl - bt * 0.6]], 0.7));
+    const lashes = (yy) => [...oLn([[x + s * w * 0.85, yy - h * 0.55], [x + s * w * 1.55, yy - h * 1.05]], 0.75), ...oLn([[x + s * w * 0.45, yy - h * 0.82], [x + s * w * 0.85, yy - h * 1.45]], 0.65), ...oLn([[x, yy - h * 0.92], [x + s * w * 0.15, yy - h * 1.55]], 0.55)];
+    if (shut) out.push(...oLn(oArc(x, y + 0.4, w, h * 0.45, 15, 165, 8), 0.9), ...oLn([[x + s * w * 0.9, y + 0.9], [x + s * w * 1.5, y + 1.8]], 0.7));
+    else if (mood === 'happy') out.push(...oLn(oArc(x, y + h * 0.4, w, h * 0.75, 200, 340, 8), 0.9), ...lashes(y + h * 0.35));
+    else if (mood === 'hurt') out.push(...oSquint(x, y, s, w * 0.8, 0.9));
+    else if (mood === 'dizzy') out.push(...oSpiral(x, y, w, 0.7, '#c87a10', s));
+    else {
+      const lid = mood === 'angry' ? (px) => y - h * 0.25 + (px - x) * -s * 0.55 : mood === 'shout' ? () => -99 : () => y - h * 0.82;
+      out.push(F(T(oCut(oRing(x, y, w, h), lid), INK)), F(T(oCut(oRing(x, y + h * 0.35, w * 0.78, h * 0.5), lid), '#e8a020')));
+      if (mood === 'shout') out.push(F(E(x, y + h * 0.1, w * 0.3, h * 0.3, INK)));
+      else out.push(F(T(oRing(x + w * 0.3, y - h * 0.32, w * 0.34, w * 0.34, 0, 6), '#ffffff')), F(E(x - w * 0.35, y + h * 0.5, w * 0.12, w * 0.12, '#ffffff')));
+      out.push(...oLn(oCut(oArc(x, y, w * 1.05, h * 1.02, 195, 345, 8), (px) => lid(px) - 0.2), 1), ...lashes(y));
+    }
+  }
+  if (mood !== 'dead') out.push(F(E(25.6, 30.4, 2.2, 1.1, '#ffb0c0')), F(E(12, 30.8, 1.8, 0.9, '#ffb0c0')));
+  const [mx, my] = [19.6, 32.6];
+  const LIPS = '#e0607a';
+  if (mood === 'shout') out.push(F(E(mx, my + 0.6, 1.8, 2.2, '#8a2a40')), F(E(mx, my + 1.8, 1.1, 0.6, '#ff8fab')));
+  else if (mood === 'happy') out.push(F(T(oArc(mx, my - 0.3, 2.2, 2, 0, 180, 8), '#8a2a40')), F(E(mx, my + 1, 1.2, 0.6, '#ff8fab')));
+  else if (mood === 'hurt' || mood === 'dizzy') out.push(...oLn([[mx - 1.6, my + 0.4], [mx - 0.6, my - 0.2], [mx + 0.4, my + 0.4], [mx + 1.4, my - 0.2]], 0.6, LIPS));
+  else if (mood === 'dead') out.push(F(E(mx, my, 0.7, 0.8, LIPS)));
+  else {
+    // The heart lips (a pout to scorn).
+    const k = mood === 'angry' ? 0.75 : 1;
+    out.push(F(E(mx - 0.7 * k, my - 0.2, 0.9 * k, 0.8 * k, LIPS)), F(E(mx + 0.7 * k, my - 0.2, 0.9 * k, 0.8 * k, LIPS)), F(T([[mx - 1.55 * k, my], [mx + 1.55 * k, my], [mx, my + 1.6 * k]], LIPS)), F(E(mx - 0.6 * k, my - 0.5, 0.3, 0.2, '#ffd0d8')));
+  }
+  if (mood === 'hurt') out.push(...oDrop(25.2, 29, 0.9));
+  return out;
+};
+const qbFace = (mood) => faceSprite(`qb2|face|${mood}`, 34, 40, () => qbOwnFace(mood));
 // An antenna: a black stalk, a round knob. Box 8 x 14; rooted at (4, 13).
 const antP = () => [taper([[4, 13], [4, 3]], 1.3, 1.1, BLK.base), E(4, 2.6, 2.4, 2.4, BLK.base), F(E(3.4, 2, 0.8, 0.8, '#7a6a7a'))];
 // A wing: see-through white-blue, a vein. Box 26 x 14; rooted at (2, 7).
@@ -173,7 +245,7 @@ export function queenBeeStill(pose, f, mood) {
       ...put(wingP(true)(), [2, 7], -6, by - 12, -136), ...put(wingP(true)(), [2, 7], -6, by - 5, -158), ...put(legP(true)(), [3.5, 1], -5, by + 16),
       ...put(armP(true)(), [2, 3.5], -12, by - 6, 110), ...put(wingP(false)(), [2, 7], -3, by - 12, -128), ...put(wingP(false)(), [2, 7], -3, by - 5, -150), ...put(legP(false)(), [3.5, 1], 5, by + 16),
       ...put(bodyP(), [23, 22], 0, by), ...put(antP(), [4, 13], -6, by - 39, -35), ...put(antP(), [4, 13], 13, by - 40, 30), ...put(ruffP(), [15, 4], 3, by - 16),
-      ...put(headP(), [17, 36], 3, by - 17), ...put(faceShapes(MOODS.has(mood) ? mood : 'idle', FACE), [17, 36], 3, by - 17),
+      ...put(headP(), [17, 36], 3, by - 17), ...put(qbOwnFace(MOODS.has(mood) ? mood : 'idle'), [17, 36], 3, by - 17),
       ...put(dipperP(), [7, 32], 12 + Math.cos(40 * D2R) * 9, by - 6 + Math.sin(40 * D2R) * 9, 35), ...put(armP(false)(), [2, 3.5], 12, by - 6, 40),
     ], 45, 80),
   };
