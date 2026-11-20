@@ -17,6 +17,7 @@ import { STARFALL_KINDS } from './starfallart.js';
 import { SHRINE_KINDS } from './shrineart.js';
 import { RIDGE_KINDS } from './ridgeart.js';
 import { SPRING_KINDS } from './springart.js';
+import { GATE_KINDS } from './gateart.js';
 import { MANORHILL_KINDS } from './manorhill.js';
 import { AQUA_KINDS } from './aquapalace.js';
 import { FAIR_KINDS } from './fairground.js';
@@ -3370,6 +3371,8 @@ const KINDS = {
   ...RIDGE_KINDS,
   // (Serpent Springs' bathhouse, terraces, aqueduct, rose arch and Serpent Stone: render/springart.js.)
   ...SPRING_KINDS,
+  // (The dungeon gate maps' landmarks: render/gateart.js.)
+  ...GATE_KINDS,
   // (Manor Hill's gates, the pumpkin coach, lamp posts, rose hedges, topiaries: render/manorhill.js.)
   ...MANORHILL_KINDS,
   ...AQUA_KINDS,

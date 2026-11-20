@@ -1655,20 +1655,24 @@ MAPS.harbor.portals.push({ id: 'pier', x: 2180, y: 480, to: 'tidepool_pier', toP
 Object.assign(MAPS, {
   // Tidepool Pier: a little pier off the east end of Pastel Harbor, over water glowing from below,
   // where Marina the diver keeps her bubble charm and finds groups. (Remade 2026-11-18: the palace's
-  // domes glow up through the sea behind, and a diving bell hangs from a crane at the pier's end to
-  // take you down: render/aquapalace.js.)
+  // domes glow up through the sea behind: render/aquapalace.js. Its makeover 2026-11-20,
+  // render/gateart.js: the boards of the pier underfoot, Marina's dive shop on the quay with a roof
+  // deck to climb to by the crates, and at the pier's end a timber crane over a big brass diving bell
+  // resting on the boards, its hatch open: the way down.)
   tidepool_pier: {
     id: 'tidepool_pier', name: 'Tidepool Pier', theme: 'harbor', town: 'harbor', world: { x: 236, y: 214 }, music: 'aquarium',
     width: 1200, height: 420, groundY: G,
-    look: { painted: 'tidepier', sky: ['#5a8ad8', '#9ac8e8', '#ffd8c0'], far: '#6a9ad0', mid: '#ffffff', midTrim: '#8fd3ff', skyline: 'sea', light: 'dusk', critters: ['gull'] },
-    platforms: [{ x: 420, y: G - 80, w: 140, style: 'planks', posts: true }],
+    look: { painted: 'tidepier', sky: ['#5a8ad8', '#9ac8e8', '#ffd8c0'], far: '#6a9ad0', mid: '#ffffff', midTrim: '#8fd3ff', skyline: 'sea', light: 'dusk', critters: ['gull'], material: 'dockwood' },
+    // The crates and the dive shop's roof deck (drawn with them).
+    platforms: [{ x: 342, y: G - 56, w: 28, bare: true }, { x: 410, y: G - 120, w: 160, bare: true }],
     ropes: [],
-    deco: [['signpost', 160], ['shellpile', 300, 0], ['divingbell', 1000]],
+    deco: [['signpost', 160], ['quaycrates', 370, 0], ['diveshop', 500, 0], ['shellpile', 700, 0], ['bellcrane', 1060, 0]],
     portals: [
       { id: 'start', x: 640, y: G, hidden: true },
       { id: 'west', x: 50, y: G, to: 'harbor', toPortal: 'pier' },
-      { id: 'door', x: 1110, y: G, to: 'aquarium1', toPortal: 'start', label: 'Sunken Aquarium Palace', dungeon: 'aquarium' },
+      { id: 'door', x: 1060, y: G, to: 'aquarium1', toPortal: 'start', label: 'Sunken Aquarium Palace', dungeon: 'aquarium', mouth: 38, labelAt: 160 },
     ],
+    lamps: [{ x: 1060, y: 230 }, { x: 500, y: 300 }],
     npcs: [{ id: 'marina', x: 860 }],
     spawns: [],
   },

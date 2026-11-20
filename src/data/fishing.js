@@ -190,7 +190,7 @@ export const SPOTS = {
     { x: 720, y: 420, span: [600, 742], fixed: true, face: 1, bx: 748, by: 466, sea: true, tier: 1, pool: { fish_flying: 6, fish_sardine: 3, fish_mackerel: 3, fish_dorado: 2, fish_seapony: 0.4, fish_starfish: 0.15, fish_squid: 2.5, fish_barracuda: 1.5 } },
   ]])),
   // Tidepool Pier: a line over the rail into the deep water by the Sunken Aquarium (Fishing Lv 30).
-  tidepool_pier: [{ x: 400, y: 380, span: [240, 560], anyFace: true, face: 1, bx: 440, by: 356, sea: true, tier: 3, lv: 30, pool: { fish_wrasse: 6, fish_trigger: 3, fish_glassfish: 2.5, fish_seabass: 2, fish_cuttle: 1.5, fish_gramma: 1, fish_goliath: 0.7 } }],
+  tidepool_pier: [{ x: 760, y: 380, span: [620, 900], anyFace: true, face: 1, bx: 800, by: 356, sea: true, tier: 3, lv: 30, pool: { fish_wrasse: 6, fish_trigger: 3, fish_glassfish: 2.5, fish_seabass: 2, fish_cuttle: 1.5, fish_gramma: 1, fish_goliath: 0.7 } }],
   // Cloudcatch Pier: a line over the rail into the cloud sea beside the Sky Whale (Fishing Lv 42).
   cloudcatch_pier: [{ x: 380, y: 380, span: [200, 560], anyFace: true, face: 1, bx: 420, by: 358, tier: 4, lv: 42, pool: { fish_nimbusminnow: 6, fish_skymanta: 2, fish_rainbowfin: 2.5, fish_sunflyer: 2.5, fish_thundereel: 1.2, fish_driftjelly: 1.2 } }],
 };

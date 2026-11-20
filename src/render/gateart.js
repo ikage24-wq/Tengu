@@ -1,0 +1,181 @@
+// The dungeon gate maps (their makeover, 2026-11-20): landmarks for the short stretches outside
+// each dungeon, the door built into one of them the way Hollow Gate's is in the great tree's roots.
+// Tidepool Pier: Marina's dive shop on the quay (its roof deck a ledge, a stack of crates to climb
+// to it) and, at the pier's end, a timber crane with a big brass diving bell resting on the boards,
+// its hatch open: the way down to the Sunken Aquarium Palace (the portal's swirl turns in it).
+
+import { E, T, F, sprite, blit, snap } from './pixel.js';
+import { band } from './propkit.js';
+
+export const GT = {
+  board: '#8fc4e0', boardLit: '#b8dcf0', boardSh: '#6a9ec0', trim: '#fff6ea', trimSh: '#e6d8c8',
+  wood: '#c89a74', woodLit: '#e4b892', woodSh: '#a07656', woodDeep: '#7a5640',
+  roof: '#e86a6a', roofLit: '#ff9a8a', roofSh: '#c04a5a', awning: ['#ffffff', '#ff8a8a'],
+  brass: '#f0c060', brassLit: '#ffe6a0', brassSh: '#c8943a', brassDeep: '#9a6a2a',
+  glass: '#9fe6ff', glassLit: '#e8faff', hole: '#2a3a5a', holeIn: '#3a5a7a',
+  rope: '#e8d8b0', ropeSh: '#c8b088', buoy: '#ff6a6a', ink: '#4a3a5c', crate: '#d8a870', crateSh: '#b08050',
+};
+
+const h01 = (n) => {
+  const x = Math.sin(n * 127.1 + 311.7) * 43758.5453;
+  return x - Math.floor(x);
+};
+const hexA = (hex, a) => `rgba(${parseInt(hex.slice(1, 3), 16)},${parseInt(hex.slice(3, 5), 16)},${parseInt(hex.slice(5, 7), 16)},${a})`;
+const arc = (cx, cy, rx, ry, a0, a1, n = 12) => Array.from({ length: n + 1 }, (_, i) => {
+  const a = ((a0 + ((a1 - a0) * i) / n) * Math.PI) / 180;
+  return [cx + Math.cos(a) * rx, cy + Math.sin(a) * ry];
+});
+const R = (x0, y0, x1, y1, c) => T([[x0, y0], [x1, y0], [x1, y1], [x0, y1]], c);
+
+const M = 40;
+const moveIn = (sh) => (sh.pts ? { ...sh, pts: sh.pts.map(([px, py]) => [px + M, py + M]) } : { ...sh, x: (sh.x ?? 0) + M, y: (sh.y ?? 0) + M });
+function art(key, w, h, build) {
+  return sprite(`gt|${key}`, () => ({ w: w + M * 2, h: h + M, shapes: build().filter(Boolean).map(moveIn), res: 2, soft: 'cel' }));
+}
+function place(ctx, s, x, y) {
+  blit(ctx, s, snap(x - s.w / 2), snap(y - s.h));
+}
+// A life ring at (x, y), radius r.
+const lifeRing = (x, y, r) => {
+  const out = [E(x, y, r, r, GT.trim)];
+  for (let k = 0; k < 4; k++) {
+    const a0 = k * 90 + 20;
+    out.push(F(band(arc(x, y, r * 0.78, r * 0.78, a0, a0 + 45, 6), () => r * 0.42, GT.buoy)));
+  }
+  out.push(E(x, y, r * 0.5, r * 0.5, GT.board), F(E(x, y, r * 0.42, r * 0.42, GT.boardSh)));
+  return out;
+};
+// A round porthole at (x, y), radius r: a brass rim, glass, a glint.
+const porthole = (x, y, r) => [E(x, y, r, r, GT.brass), F(E(x, y, r * 0.72, r * 0.72, GT.glass)), F(E(x - r * 0.25, y - r * 0.25, r * 0.28, r * 0.2, GT.glassLit)), F(band(arc(x, y, r * 0.86, r * 0.86, 200, 330, 8), () => 1, GT.brassLit))];
+
+// ---------- Marina's dive shop: a painted-board shack on the quay, a striped awning, a porthole
+// window, a brass diving helmet on its sign, a life ring and coiled rope, glass floats in a net,
+// a railed roof deck on top (a ledge DS_ROOF up). Bottom middle at its door. ----------
+const DS_W = 240;
+const DS_H = 170;
+export const DS_ROOF = 120;
+export const DS_ROOF_SPAN = [-90, 70];
+function shopArt() {
+  return art('shop', DS_W, DS_H, () => {
+    const out = [];
+    const cx = DS_W / 2;
+    const H = DS_H;
+    const rt = H - DS_ROOF;
+    // The walls: painted boards on a timber frame.
+    out.push(R(cx - 88, rt + 10, cx + 88, H, GT.board));
+    for (let y = rt + 22; y < H; y += 12) out.push(F(R(cx - 88, y, cx + 88, y + 1.4, GT.boardSh)));
+    out.push(F(R(cx + 60, rt + 10, cx + 88, H, GT.boardSh)), F(R(cx - 88, rt + 10, cx - 80, H, GT.boardLit)));
+    for (const px of [-92, 84]) out.push(R(cx + px, rt + 4, cx + px + 8, H, GT.wood), F(R(cx + px + 5, rt + 4, cx + px + 8, H, GT.woodSh)));
+    // The door, the porthole window, the life ring.
+    out.push(R(cx - 16, H - 62, cx + 16, H, GT.woodDeep), F(R(cx - 13, H - 59, cx + 13, H, GT.wood)), F(E(cx + 8, H - 30, 2, 2, GT.brass)));
+    out.push(...porthole(cx - 52, H - 56, 15));
+    out.push(...lifeRing(cx + 52, H - 64, 14));
+    // Coiled rope and glass floats in a net by the door.
+    out.push(E(cx + 50, H - 10, 16, 8, GT.rope), F(E(cx + 50, H - 11, 10, 4.4, GT.ropeSh)), F(E(cx + 50, H - 12, 4, 1.6, GT.rope)));
+    for (const [fx, fy, c] of [[-58, -12, GT.glass], [-46, -16, '#b8f0c8'], [-68, -20, '#ffd0e8']]) out.push(E(cx + fx, H + fy, 7, 7, c), F(E(cx + fx - 2, H + fy - 2, 2.4, 2, GT.glassLit)));
+    out.push(F(band([[cx - 76, H - 26], [cx - 36, H - 6]], () => 0.8, GT.ropeSh)), F(band([[cx - 36, H - 26], [cx - 76, H - 6]], () => 0.8, GT.ropeSh)));
+    // The sign over the door: a brass diving helmet.
+    out.push(R(cx - 26, rt + 14, cx + 26, rt + 40, GT.trim), F(R(cx - 26, rt + 36, cx + 26, rt + 40, GT.trimSh)));
+    out.push(E(cx, rt + 27, 10, 10, GT.brass), F(E(cx, rt + 27, 6, 6, GT.glass)), F(R(cx - 8, rt + 35, cx + 8, rt + 38, GT.brassSh)));
+    // The striped awning.
+    for (let k = 0; k < 8; k++) {
+      const x0 = cx - 96 + k * 24;
+      out.push(T([[x0, rt + 2], [x0 + 24, rt + 2], [x0 + 24, rt + 12], [x0 + 12, rt + 16], [x0, rt + 12]], GT.awning[k % 2]));
+    }
+    // The roof deck: planks and a rail of posts and rope.
+    const [r0, r1] = DS_ROOF_SPAN;
+    out.push(R(cx - 98, rt - 4, cx + 98, rt + 4, GT.wood), F(R(cx - 98, rt - 4, cx + 98, rt - 2, GT.woodLit)), F(R(cx - 98, rt + 2, cx + 98, rt + 4, GT.woodSh)));
+    for (const px of [-96, 84]) out.push(R(cx + px, rt - 26, cx + px + 6, rt - 4, GT.wood), F(R(cx + px + 4, rt - 26, cx + px + 6, rt - 4, GT.woodSh)));
+    out.push(F(band(arc(cx - 6, rt - 30, 90, 10, 20, 160, 14), () => 1.4, GT.rope)));
+    // A little flag on the rail.
+    out.push(F(band([[cx + 87, rt - 26], [cx + 87, rt - 44]], () => 1, GT.woodDeep)), T([[cx + 88, rt - 44], [cx + 102, rt - 40], [cx + 88, rt - 36]], GT.buoy));
+    return out;
+  });
+}
+
+// ---------- A stack of crates and a barrel on the quay, flat on top (a ledge CS_TOP up). ----------
+const CS_W = 96;
+const CS_H = 70;
+export const CS_TOP = 56;
+function cratesArt() {
+  return art('crates', CS_W, CS_H, () => {
+    const out = [];
+    const cx = CS_W / 2;
+    const H = CS_H;
+    const crate = (x0, y0, s) => {
+      out.push(R(x0, y0, x0 + s, y0 + s, GT.crate), F(R(x0 + s - 5, y0, x0 + s, y0 + s, GT.crateSh)));
+      out.push(F(R(x0, y0, x0 + s, y0 + 3, GT.woodLit)), F(band([[x0 + 3, y0 + 3], [x0 + s - 3, y0 + s - 3]], () => 1.6, GT.crateSh)), F(R(x0 + 2, y0 + s / 2 - 1, x0 + s - 2, y0 + s / 2 + 1, GT.crateSh)));
+    };
+    crate(cx - 40, H - 28, 28);
+    crate(cx - 10, H - 28, 28);
+    crate(cx - 28, H - CS_TOP, 28);
+    // A barrel at the end.
+    out.push(T([[cx + 22, H], [cx + 20, H - 18], [cx + 22, H - 34], [cx + 42, H - 34], [cx + 44, H - 18], [cx + 42, H]], GT.wood));
+    out.push(F(R(cx + 21, H - 26, cx + 43, H - 23, GT.woodDeep)), F(R(cx + 21, H - 10, cx + 43, H - 7, GT.woodDeep)), F(R(cx + 36, H - 33, cx + 42, H - 1, GT.woodSh)));
+    return out;
+  });
+}
+
+// ---------- The crane and the diving bell: a timber crane over the end of the pier, its arm out
+// over the bell, a chain down to it; the bell (brass, riveted, portholes either side, a lamp on top)
+// resting on the boards, its round hatch open in front (BELL_DOOR) - the way down. Bottom middle at
+// the hatch. ----------
+const BC_W = 320;
+const BC_H = 300;
+export const BELL_DOOR = { w: 56, h: 72 };
+function bellArt() {
+  return art('bell', BC_W, BC_H, () => {
+    const out = [];
+    const cx = BC_W / 2;
+    const H = BC_H;
+    // The crane: a mast on a block to the left, a brace, the arm out over the bell, a pulley.
+    const mx = cx - 110;
+    out.push(R(mx - 22, H - 16, mx + 22, H, GT.woodDeep), R(mx - 9, H - 290, mx + 9, H - 16, GT.wood), F(R(mx + 4, H - 290, mx + 9, H - 16, GT.woodSh)));
+    for (let y = H - 40; y > H - 280; y -= 22) out.push(F(R(mx - 9, y, mx + 9, y + 2.4, GT.woodSh)));
+    out.push(R(mx - 14, H - 292, cx + 30, H - 278, GT.wood), F(R(mx - 14, H - 292, cx + 30, H - 289, GT.woodLit)), F(R(mx - 14, H - 281, cx + 30, H - 278, GT.woodSh)));
+    out.push(F(band([[mx + 6, H - 210], [mx + 90, H - 282]], () => 4, GT.woodSh)));
+    out.push(E(cx, H - 272, 9, 9, GT.woodDeep), F(E(cx, H - 272, 4, 4, GT.brass)));
+    // The chain down to the bell's ring.
+    for (let y = H - 262; y < H - 140; y += 9) out.push(E(cx + ((y / 9) % 2 ? 0.6 : -0.6), y, 2.6, 4.4, (y / 9) % 2 ? GT.brassSh : '#9aa0b8'));
+    // The bell: a brass dome flaring to a lip, rivet bands, a ring and a lamp on top.
+    out.push(E(cx, H - 142, 10, 8, GT.brassSh), F(E(cx, H - 142, 5, 4, GT.brassDeep)));
+    const dome = [[cx - 76, H], [cx - 74, H - 16], [cx - 64, H - 60], ...arc(cx, H - 70, 64, 66, 180, 360, 18), [cx + 64, H - 60], [cx + 74, H - 16], [cx + 76, H]];
+    out.push(T(dome, GT.brass));
+    out.push(F(T([[cx - 64, H - 60], ...arc(cx, H - 70, 64, 66, 180, 250, 8), [cx - 30, H - 120], [cx - 46, H - 70], [cx - 58, H - 20], [cx - 70, H - 16]], GT.brassLit)));
+    out.push(F(T([[cx + 64, H - 60], ...arc(cx, H - 70, 64, 66, 330, 360, 4), [cx + 74, H - 16], [cx + 76, H], [cx + 50, H], [cx + 52, H - 50]], GT.brassSh)));
+    out.push(R(cx - 78, H - 14, cx + 78, H - 4, GT.brassSh), F(R(cx - 78, H - 14, cx + 78, H - 12, GT.brassLit)));
+    for (const yb of [H - 60, H - 14]) for (let x = cx - 66; x <= cx + 66; x += 12) out.push(F(E(x, yb - 5, 1.6, 1.6, GT.brassDeep)));
+    out.push(...porthole(cx - 46, H - 70, 12), ...porthole(cx + 46, H - 70, 12));
+    // The lamp on top.
+    out.push(R(cx - 6, H - 146, cx + 6, H - 136, GT.brassSh), E(cx, H - 150, 7, 6, '#fff0b0'), F(E(cx - 2, H - 152, 2.4, 2, '#ffffff')));
+    // The hatch, swung open: the dark round doorway (the swirl turns in it), the door hinged aside.
+    const dw = BELL_DOOR.w / 2;
+    out.push(T([[cx - dw - 6, H - 4], ...arc(cx, H - BELL_DOOR.h + dw, dw + 6, dw + 6, 180, 360, 14), [cx + dw + 6, H - 4]], GT.brassDeep));
+    out.push(T([[cx - dw, H - 4], ...arc(cx, H - BELL_DOOR.h + dw, dw, dw, 180, 360, 14), [cx + dw, H - 4]], GT.hole));
+    out.push(F(T([[cx - dw + 8, H - 4], ...arc(cx, H - BELL_DOOR.h + dw + 6, dw - 8, dw - 8, 180, 360, 12), [cx + dw - 8, H - 4]], GT.holeIn)));
+    out.push(T([[cx + dw + 6, H - 6], [cx + dw + 22, H - 10], [cx + dw + 24, H - BELL_DOOR.h + 6], [cx + dw + 8, H - BELL_DOOR.h + 14]], GT.brass), F(E(cx + dw + 16, H - 38, 4, 6, GT.glass)));
+    return out;
+  });
+}
+function drawBell(ctx, x, y, time) {
+  place(ctx, bellArt(), x, y);
+  // The lamp's glow, and bubbles rising off the bell's lip where it meets the water.
+  const g = ctx.createRadialGradient(x, y - 150, 2, x, y - 150, 40);
+  g.addColorStop(0, hexA('#fff0b0', 0.5));
+  g.addColorStop(1, hexA('#fff0b0', 0));
+  ctx.fillStyle = g;
+  ctx.fillRect(x - 40, y - 190, 80, 80);
+  for (let i = 0; i < 5; i++) {
+    const u = (time * 0.4 + i / 5) % 1;
+    ctx.fillStyle = hexA('#e8faff', (1 - u) * 0.7);
+    ctx.beginPath();
+    ctx.arc(x - 70 + h01(i) * 140, y - 4 - u * 50, 1.6 + h01(i + 2) * 1.6, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+export const GATE_KINDS = {
+  diveshop: { w: DS_W + M * 2, h: DS_H + M, draw: (ctx, x, y) => place(ctx, shopArt(), x, y) },
+  quaycrates: { w: CS_W + M * 2, h: CS_H + M, draw: (ctx, x, y) => place(ctx, cratesArt(), x, y) },
+  bellcrane: { w: BC_W + M * 2, h: BC_H + M, draw: drawBell },
+};
