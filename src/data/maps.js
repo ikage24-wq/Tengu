@@ -562,67 +562,92 @@ export const MAPS = {
 
 
 
-  // Sky Garden is a chain of floating islands over a sea of cloud (a sky-islands layout, its zones
-  // side by side, data/climb.js lay()): the Cloud Meadows in the west, low flowered islands where
-  // the Pegasus Foals graze and a blossom bounces you up off the cloud sea; the Harpy Roost in the
-  // middle, islands stacked round the cloud pillars, where a skyward wind lifts you; and the Starlit
-  // Terrace in the east, the Star Seraphs' high islands, reached by a drifting cloud, with the way
-  // up to Starfall Heights on the highest of them. Frozen Peak is down on the cloud sea's far end.
+  // Sky Garden (its makeover, 2026-11-20): a smaller sky built round its landmarks
+  // (render/skyart.js), zones side by side over the cloud sea. The Cloud Meadows in the west: a big
+  // floating garden island pouring a waterfall into the clouds, a small one above it, a blossom on
+  // the cloud sea bouncing you up, the Pegasus Foals grazing. A rainbow arches from the meadows over
+  // to the Harpy Roost, little clouds riding it for steps. The Harpy Roost in the middle: a round
+  // birdhouse on a tall pillar of cloud, its perches stepping up round the pillar to the balcony,
+  // the skyward wind rising beside it (Up to ride it). The Starlit Terrace in the east: floating
+  // terrace islands stepping up to the gazebo and the way to Starfall Heights, a cloud drifting to
+  // the top one; down on the cloud sea, a gap to fish and the ways to Theatre Row and Frozen Peak.
   sky: {
-    id: 'sky', name: 'Sky Garden', theme: 'sky', town: 'grove', world: { x: 348, y: 36 },
+    id: 'sky', name: 'Sky Garden', theme: 'sky', town: 'grove', world: { x: 348, y: 36 }, perSpawn: 3,
     ...lay({
-      width: 3000, ground: 1040, by: 'x', quiet: [[40, 1040, 160], [2940, 1040, 160], [2880, 320, 200], [2620, 1040, 260]],
+      width: 2200, ground: 1040, by: 'x', quiet: [[40, 1040, 160], [2040, 1040, 120], [2140, 1040, 120], [2080, 330, 160], [1800, 1040, 200]],
       // In the quiet east corner the cloud parts on the open sky below: a gap to fish.
-      terrain: [[0, 1040], [2496, 1040], [2524, 1078], [2616, 1078], [2644, 1040], [3000, 1040]],
+      terrain: [[0, 1040], [1700, 1040], [1728, 1078], [1820, 1078], [1848, 1040], [2200, 1040]],
       zones: [
-        { name: 'Cloud Meadows', color: '#ff9ec7', from: 0, mobs: ['cloudsheep'], nodes: [SPOT.fruit(4, 'cloudberry'), SPOT.fiber(4)] },
-        { name: 'Harpy Roost', color: '#4f95e0', from: 1000, mobs: ['windbird'], nodes: [SPOT.fruit(4, 'cloudberry'), SPOT.wood(4), SPOT.fiber(4)],
-          look: { sky: ['#8fc8ff', '#c8e4ff', '#fff6ee'] } },
-        { name: 'Starlit Terrace', color: '#e0b84a', from: 2050, mobs: ['starspirit'], nodes: [SPOT.herb(4, 'star_anise'), SPOT.wood(4), SPOT.night(4)],
-          look: { sky: ['#6a6ad0', '#a8a0e8', '#fff0d8'], stars: true } },
+        { name: 'Cloud Meadows', color: '#ff9ec7', from: 0, mobs: ['cloudsheep'] },
+        { name: 'Harpy Roost', color: '#4f95e0', from: 880, mobs: ['windbird'], look: { sky: ['#8fc8ff', '#c8e4ff', '#fff6ee'] } },
+        { name: 'Starlit Terrace', color: '#e0b84a', from: 1560, mobs: ['starspirit'], look: { sky: ['#6a6ad0', '#a8a0e8', '#fff0d8'], stars: true } },
       ],
       ledges: [
-        // Cloud Meadows: low islands stepping up from the cloud sea.
-        { x: 100, y: 960, w: 320 }, { x: 560, y: 960, w: 340 },
-        { x: 260, y: 880, w: 360 },
-        { x: 80, y: 800, w: 300 }, { x: 520, y: 800, w: 360 },
-        { x: 300, y: 720, w: 340 },
-        { x: 700, y: 640, w: 300 },
-        // Harpy Roost: islands round the cloud pillars.
-        { x: 1000, y: 720, w: 300 }, { x: 1250, y: 640, w: 300 },
-        { x: 1050, y: 560, w: 300 },
-        { x: 1400, y: 480, w: 300 },
-        { x: 1750, y: 560, w: 300 },
-        // Starlit Terrace: the high islands, the topmost with the way to Starfall.
-        { x: 2100, y: 640, w: 300 }, { x: 2300, y: 560, w: 300 },
-        { x: 2050, y: 480, w: 300 },
-        { x: 2400, y: 400, w: 300 },
-        { x: 2650, y: 320, w: 300, thick: 44 },
-        // The drifting cloud from the roost over to the terrace.
-        { x: 1710, y: 480, w: 140, drift: { dx: 200, period: 9 } },
-        // A little cloud dock out over the gap in the quiet east corner, for fishing: no monster
-        // drifts down to it.
-        { x: 2570, y: 1040, w: 76, walkOn: true },
+        // The floating islands' tops (drawn with them): the big one, the small one above it.
+        { x: 120, y: 860, w: 560, bare: true, noProps: true, noRope: true }, { x: 180, y: 700, w: 240, bare: true, noProps: true, noRope: true },
+        // A long cloud bank over the meadows, off the rainbow's top.
+        { x: 380, y: 570, w: 520, noRope: true },
+        // Little clouds riding the rainbow, up over its top and down to the roost.
+        { x: 660, y: 790, w: 70, noRope: true }, { x: 730, y: 715, w: 70, noRope: true }, { x: 830, y: 650, w: 70, noRope: true }, { x: 910, y: 630, w: 70, noRope: true },
+        { x: 1010, y: 660, w: 70, noRope: true }, { x: 1110, y: 720, w: 70, noRope: true }, { x: 1200, y: 790, w: 70, noRope: true },
+        // The roost's perches stepping up round its pillar, and its balcony (drawn with it).
+        { x: 1400, y: 960, w: 160, style: 'planks', root: 'left', noRope: true }, { x: 1240, y: 880, w: 160, style: 'planks', root: 'right', noRope: true },
+        { x: 1400, y: 800, w: 160, style: 'planks', root: 'left', noRope: true }, { x: 1240, y: 720, w: 160, style: 'planks', root: 'right', noRope: true },
+        { x: 1400, y: 640, w: 160, style: 'planks', root: 'left', noRope: true },
+        { x: 1328, y: 456, w: 144, bare: true, noProps: true, noRope: true },
+        // The Starlit Terrace's islands (drawn with them), stepping up to the gazebo's.
+        { x: 1600, y: 760, w: 320, bare: true, noProps: true, noRope: true }, { x: 1800, y: 600, w: 320, bare: true, noProps: true, noRope: true },
+        { x: 1560, y: 440, w: 320, bare: true, noProps: true, noRope: true }, { x: 1870, y: 330, w: 240, bare: true, noProps: true, noRope: true },
+        // The cloud drifting from the third terrace up to the gazebo's.
+        { x: 1800, y: 390, w: 90, drift: { dx: 140, period: 9 } },
+        // A little cloud dock out over the gap, for fishing: no monster drifts down to it.
+        { x: 1772, y: 1040, w: 76, walkOn: true },
+      ],
+      ropes: [
+        // Vines off the islands.
+        { x: 140, top: 860, bottom: 1040 }, { x: 250, top: 700, bottom: 860 }, { x: 400, top: 570, bottom: 700 },
+        // Up the roost's pillar from the top perch to the balcony.
+        { x: 1430, top: 456, bottom: 640 },
+        // Between the terraces, and down from the first to the cloud sea.
+        { x: 1900, top: 760, bottom: 1040 }, { x: 1860, top: 600, bottom: 760 }, { x: 1840, top: 440, bottom: 600 },
       ],
     }),
-    // A moving part per zone: a blossom on the cloud sea bouncing you up into the meadows, a
-    // skyward wind through the roost (Up to ride it), and the drifting cloud to the terrace.
-    springs: [{ x: 470, y: 1040, up: 170, kind: 'blossom' }],
-    updrafts: [{ x: 1450, w: 56, top: 450, bottom: 1040, kind: 'gust' }],
-    water: [{ x1: 2496, x2: 2644, y: 1054, kind: 'cloud' }],
+    // Its monsters, placed by hand, well away from the ways in (the arrival rule), three a spot.
+    spawns: [
+      // The Cloud Meadows: on the islands and the cloud sea.
+      { mob: 'cloudsheep', x: 220, y: 860 }, { mob: 'cloudsheep', x: 420, y: 860 }, { mob: 'cloudsheep', x: 620, y: 860 }, { mob: 'cloudsheep', x: 240, y: 700 },
+      { mob: 'cloudsheep', x: 640, y: 1040 }, { mob: 'cloudsheep', x: 880, y: 1040 }, { mob: 'cloudsheep', x: 1120, y: 1040 }, { mob: 'cloudsheep', x: 1360, y: 1040 }, { mob: 'cloudsheep', x: 1580, y: 1040 },
+      // The Harpy Roost: on the cloud bank, round its perches and on its balcony.
+      { mob: 'windbird', x: 560, y: 570 }, { mob: 'windbird', x: 780, y: 570 },
+      { mob: 'windbird', x: 1480, y: 960 }, { mob: 'windbird', x: 1320, y: 880 }, { mob: 'windbird', x: 1480, y: 800 }, { mob: 'windbird', x: 1320, y: 720 }, { mob: 'windbird', x: 1480, y: 640 }, { mob: 'windbird', x: 1400, y: 456 },
+      // The Starlit Terrace.
+      { mob: 'starspirit', x: 1680, y: 760 }, { mob: 'starspirit', x: 1860, y: 760 }, { mob: 'starspirit', x: 1880, y: 600 }, { mob: 'starspirit', x: 2060, y: 600 }, { mob: 'starspirit', x: 1620, y: 440 },
+    ],
+    // Its gathering spots, placed by hand, clear of the monsters, ropes and ways (several on the
+    // rainbow's clouds).
+    nodes: [
+      { ...SPOT.fruit(4, 'cloudberry'), x: 380, y: 700 }, { ...SPOT.fiber(4), x: 765, y: 715 }, { ...SPOT.night(4), x: 945, y: 630 },
+      { ...SPOT.fruit(4, 'cloudberry'), x: 1145, y: 720 }, { ...SPOT.wood(4), x: 760, y: 1040 }, { ...SPOT.herb(4, 'star_anise'), x: 1780, y: 440 },
+    ],
+    // A moving part per zone: the blossom bouncing you up onto the big island, the skyward wind by
+    // the roost, the cloud drifting up to the gazebo.
+    springs: [{ x: 560, y: 1040, up: 200, kind: 'blossom' }],
+    updrafts: [{ x: 1610, w: 50, top: 440, bottom: 1040, kind: 'gust' }],
+    water: [{ x1: 1700, x2: 1848, y: 1054, kind: 'cloud' }],
     portals: [
       { id: 'west', x: 40, y: 1040, to: 'cave', toPortal: 'east' },
-      { id: 'peak', x: 2940, y: 1040, to: 'peak', toPortal: 'east', label: 'Frozen Peak' },
-      { id: 'starfall', x: 2880, y: 320, to: 'starfall', toPortal: 'west', label: 'Starfall Heights' },
+      { id: 'peak', x: 2140, y: 1040, to: 'peak', toPortal: 'east', label: 'Frozen Peak' },
+      { id: 'starfall', x: 2080, y: 330, to: 'starfall', toPortal: 'west', label: 'Starfall Heights' },
     ],
     npcs: [],
-    // A landmark per zone: a giant flower in the meadows, the cloud pillars and the gazebo in the
-    // roost, the gazebo on the terrace's high island.
-    deco: [['giantflower', 450, 1, 880], ['cloudpillar', 1150, 0], ['cloudpillar', 1850, 1], ['skygazebo', 1200, 0, 560], ['skygazebo', 2750, 0, 320]],
-    lamps: [{ x: 1200, y: 520 }, { x: 2750, y: 280 }, { x: 450, y: 840 }],
-    spirit: { x: 2550, y: 260 },
+    // The landmarks: the islands, the rainbow, the roost, and the gazebo on the top terrace.
+    deco: [['skyisland', 400, 0, 1030], ['skyisland', 300, 1, 810], ['rainbowarch', 940, 0, 940], ['roosttower', 1400, 0, 1040],
+      ['skyisland', 1760, 2, 890], ['skyisland', 1960, 2, 730], ['skyisland', 1720, 2, 570], ['skyisland', 1990, 1, 440], ['skygazebo', 2010, 0, 330]],
+    lamps: [{ x: 1400, y: 420 }, { x: 2010, y: 290 }, { x: 400, y: 840 }],
+    spirit: { x: 1100, y: 560 },
     habitats: { cloudsheep: { naps: true, play: true }, windbird: { play: true }, starspirit: { naps: true } },
   },
+
 
 
   bossroom: {
@@ -2685,7 +2710,7 @@ Object.assign(MAPS, {
   },
 });
 
-MAPS.sky.portals.push({ id: 'theatre', x: 2800, y: 1040, to: 'theatre_row', toPortal: 'west', label: 'Theatre Row' });
+MAPS.sky.portals.push({ id: 'theatre', x: 2040, y: 1040, to: 'theatre_row', toPortal: 'west', label: 'Theatre Row' });
 
 // ---------- The far regions (levels 19-50) ----------
 //
@@ -3207,7 +3232,7 @@ MAPS.starfall.spawns.push({ mob: 'selene', x: 1300, y: 1040, respawn: 600 });
 // way), so a long map never means a long walk back.
 const HOMESTONES = {
   meadow1: [1555, 400], meadow2: [200, 700], woods: [1650, 880], ruins: [1764, 330], cave: [1660, 362],
-  sky: [2460, 400], canyon: [110, 520], glade: [880, 900], shrine: [2164, 560], ridge: [2200, 400],
+  sky: [1920, 330], canyon: [110, 520], glade: [880, 900], shrine: [2164, 560], ridge: [2200, 400],
   springs: [1992, 640], peak: [2040, 880], starfall: [2290, 440],
 };
 for (const [id, [x, y]] of Object.entries(HOMESTONES)) {

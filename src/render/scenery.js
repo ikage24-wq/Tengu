@@ -5094,7 +5094,7 @@ const BUILDINGS = {
 // washed toward the sky like the backdrop, so the ledge reads as passing in front of it.
 // Waterfalls pour off a ledge, and cloud pillars, the watchtower and Mossy Woods' giant trees
 // (whose branches are its ledges) hold one up, on purpose.
-const MEETS_LEDGE = new Set(['glowcap', 'geode', 'crystalcolumn', 'ruintower', 'moonmaiden', 'ruinportico', 'woodtree', 'gladecliff', 'waterfall', 'cloudpillar', 'watchtower', 'canyonwall', 'canyonspire', 'canyonarch', 'canyoncave', 'canyonstub', 'canyonwalllow', 'greattree', 'rootarch', 'trunkwall', 'hollowstump', 'rootwall', 'rootceiling', 'rootpillar', 'greatcap', 'manorgates', 'pumpkincoach', 'partylamp', 'rosehedge', 'topiary', 'coralclump', 'shellpile', 'kelpclump', 'divingbell']);
+const MEETS_LEDGE = new Set(['skyisland', 'rainbowarch', 'roosttower', 'glowcap', 'geode', 'crystalcolumn', 'ruintower', 'moonmaiden', 'ruinportico', 'woodtree', 'gladecliff', 'waterfall', 'cloudpillar', 'watchtower', 'canyonwall', 'canyonspire', 'canyonarch', 'canyoncave', 'canyonstub', 'canyonwalllow', 'greattree', 'rootarch', 'trunkwall', 'hollowstump', 'rootwall', 'rootceiling', 'rootpillar', 'greatcap', 'manorgates', 'pumpkincoach', 'partylamp', 'rosehedge', 'topiary', 'coralclump', 'shellpile', 'kelpclump', 'divingbell']);
 const decoSize = (kind, seed) => {
   const b = BUILDINGS[kind];
   if (b) {
