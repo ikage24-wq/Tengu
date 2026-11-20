@@ -25,7 +25,7 @@ export const CHAPTERS = [
   { n: 7, title: 'The Night the Wind Went Out', levels: '30-34' },
   { n: 8, title: 'Steam and Roses', levels: '33-39' },
   { n: 9, title: 'The Queen\'s Dream', levels: '40-44' },
-  { n: 10, title: 'The Crystal King', levels: '45-50' },
+  { n: 10, title: 'Rise and Shine', levels: '45-50' },
 ];
 
 const s = (id, chapter, fields) => ({ id, story: true, chapter, ...fields });
@@ -307,18 +307,18 @@ export const STORY_QUESTS = {
   }),
   story_6_3: s('story_6_3', 10, {
     name: 'The Moon Valkyrie', giver: 'elowen', minLevel: 46, prereq: 'story_whale',
-    text: "Selene guards Hayate's sleep on the Moon Terrace at the far end of Starfall Heights. She will test you, she won't hold back, and she won't give a tragic speech either. She thinks those are tacky. Show her the island is worth waking for.",
+    text: "Selene watches over the Queen's sleep from the Moon Terrace, at the far end of Starfall Heights. She sees every star that falls. She will test you, she won't hold back, and she won't give a tragic speech either. She thinks those are tacky. Show her the island is worth waking for.",
     objectives: [{ type: 'kill', mob: 'selene', count: 1 }],
     trial: 'terrace',
     rewards: { exp: 300000, gold: 3000, items: [{ id: 'elixir', qty: 10 }] },
     scenes: { accept: 'ch6_trial', win: 'ch6_win', done: 'ch6_end' },
   }),
 
-  // ---------- Chapter 10: The Crystal King (45-50) ----------
+  // ---------- Chapter 10: Rise and Shine (45-50) ----------
   story_7_1: s('story_7_1', 10, {
     name: 'Home Again', giver: 'mira', minLevel: 47, prereq: 'story_6_3',
     text: "You're back! Oh, look at you. Sit. Tea. Tell me everything... and then, I'm afraid, there's one more thing. Captain Rook says the Crystal Cave has gone completely dark. Caves are usually dark, dear. This is extra.",
-    objectives: [{ type: 'talk', npc: 'rook', say: "The throne room's dark as a pocket. Prismaris has been drinking every bit of light on the island. I lit a candle down there and it got nervous and left. Go easy on him, kid... but go." }],
+    objectives: [{ type: 'talk', npc: 'rook', say: "The throne room's dark as a pocket. Prismaris has been drinking every bit of light on the island. I lit a candle down there and it got nervous and left. And every hour, right on the hour, something down there goes 'ding'. Muffled. Like it's wearing a sock. Go easy on him, kid... but go." }],
     rewards: { exp: 100000, gold: 1700, items: [{ id: 'elixir', qty: 10 }] },
     scenes: { accept: 'ch7_open', done: 'ch7_rook' },
   }),
@@ -1114,6 +1114,7 @@ export const SCENES = {
     { who: 'elowen', text: "Oh, and you'll need a ride. The terrace floats far too high to walk to. Skipper Nimbus at Cloudcatch Pier, past Starfall, has a whale. It's sinking. Do sort that out first.", mood: 'happy' },
   ],
   whale_open: [
+    { card: 'Chapter 10', sub: 'Rise and Shine' },
     { together: [{ emote: 'nimbus', kind: '!', dur: 1.2 }, { jump: 'nimbus', height: 10 }] },
     { who: 'nimbus', text: "Hold onto your hat! ...Ha. Habit. I don't even have a hat. The wind took it twenty years ago, and I never bought another.", mood: 'happy' },
     { who: 'nimbus', text: 'Forty years the wind flew my ponytail out behind me like a flag. Now it just HANGS there. It is deeply unnatural.', mood: 'angry' },
@@ -1131,21 +1132,22 @@ export const SCENES = {
     { who: null, text: "And the tail's gust, the first wind on the island in weeks, blows Skipper Nimbus's ponytail straight out like a flag." },
     { together: [{ face: 'nimbus', to: 'player' }, { emote: 'nimbus', kind: 'heart', dur: 1.8 }, { fx: 'sparkle', at: 'nimbus', n: 12 }] },
     { who: 'nimbus', text: "MY PONYTAIL! Look at it go! Oh, I have missed that. Forty years, and she still can't wake up without making a scene.", mood: 'happy' },
-    { who: 'nimbus', text: "She'll carry you up past the clouds to the Moon Terrace, kid, where Selene keeps watch. Whatever's down in the dark, you'll go in from the top of the sky. Make it count.", mood: 'happy' },
+    { who: 'nimbus', text: "She'll carry you up past the clouds to the Moon Terrace, kid, where Selene keeps watch. If anyone saw where your ringing star landed, it's her.", mood: 'happy' },
     { who: 'nimbus', text: "Go and tell your witch friend in the Grove you've got a ride. I'm going to stand here and enjoy the breeze.", mood: 'happy' },
   ],
   ch6_trial: [
     { who: 'player', text: "Skipper Nimbus's whale is awake. She'll carry me up to the Moon Terrace." },
     { who: 'elowen', text: 'Then go. Stand up straight. And if she makes a speech after all, do tell me. I will never let her forget it.', mood: 'happy' },
     { who: null, text: 'The Moon Terrace. Stars fall like slow snow. A knight in silver stands between you and the sky.' },
-    { who: 'selene', text: 'Hayate sleeps. She is tired, traveller. Tired of a world that only takes.', mood: 'sad' },
+    { who: 'selene', text: 'The Queen sleeps. She is tired, traveller. The world she came from only ever took.', mood: 'sad' },
     { who: 'player', text: "Let me guess. You're lonely, and this is a cry for—" },
     { who: 'selene', text: 'No. I am a knight, and this is a duel. Hold nothing back. I will not.', mood: 'angry' },
   ],
   ch6_win: [
     { who: 'selene', text: 'You fight like someone with friends behind you. A glade, a shrine, a garden... I see them all.', mood: 'happy' },
     { who: 'selene', text: '...And yes. It is lonely up here. Do not make the face. The fox warned me about the face.' },
-    { who: 'selene', text: 'A star that rings fell into the Crystal Cave. Prismaris keeps it close. He is afraid of the dark. Go gently.' },
+    { who: 'selene', text: 'Your ringing star fell into the Crystal Cave. I watched it fall. It was no star. Stars do not tick.' },
+    { who: 'selene', text: 'Prismaris keeps it close. He is afraid of the dark. Go gently.' },
     { who: 'selene', text: 'Go home first. Then go down into the dark. I will watch over her until you return.' },
   ],
   ch6_end: [
@@ -1177,8 +1179,9 @@ export const SCENES = {
     { who: null, text: 'And the stars fall. Dozens of them, slow and silver, the way they were meant to on festival night.' },
     { together: [{ wind: true }, { fx: 'wind', at: 'player' }, { fx: 'wind', at: 'mira' }, { fx: 'wind', at: 'elowen' }, { fx: 'clouds', at: { x: 1800, y: 200 }, n: 14 }, { shake: 2, dur: 0.8 }] },
     { who: null, text: 'Somewhere very high above, a great wind stretches, yawns, and comes home. The windmill catches it, creaks once, and begins to turn.' },
-    { who: 'hayate', text: '...mmh. Good morning, little island. ...Is it morning? It feels like morning.' },
-    { who: 'hayate', text: 'I dreamt someone kept showing up. In the glade, at the shrine, at a party, under the sea, in the dark beneath the cave. Every single time. Was that you?', mood: 'happy' },
+    { who: null, text: 'Down from the palace on the hill, on the wind, comes a very sleepy voice.' },
+    { who: 'hayate', text: '...mmh. Is it morning? ...It feels like morning.', mood: 'sleepy' },
+    { who: 'hayate', text: '...someone kept showing up... in the hollow... at a party... under the sea... in the dark... every single time... was that you...?', mood: 'sleepy' },
     { together: [{ emote: 'player', kind: 'heart', dur: 1.8 }, { fx: 'hearts', at: 'player', n: 10 }] },
     { together: [{ jump: 'pip', height: 14 }, { emote: 'pip', kind: 'heart', dur: 1.4 }], when: 'pip_lunch' },
     { who: 'pip', text: "I left the shop! On PURPOSE! Also: tenth stamp! Your something is...", mood: 'happy', when: 'pip_lunch' },
@@ -1212,13 +1215,13 @@ export const SCENES = {
   ],
   // ----- Chapter 7 -----
   ch7_open: [
-    { card: 'Chapter 10', sub: 'The Crystal King' },
     { who: 'mira', text: "Look at you! Taller somehow. Or maybe I'm just proud again. Have you been eating? Sit. Tea.", mood: 'happy' },
     { who: 'mira', text: 'The cave has gone completely dark, dear. Talk to Rook. And then... bring the light home.' },
   ],
   ch7_rook: [
-    { who: 'player', text: 'Rook says Prismaris has been drinking every bit of light on the island.' },
-    { who: 'mira', text: "Then that's where the ringing star went. Straight into his cave.", mood: 'sad' },
+    { who: 'player', text: "Rook says Prismaris is drinking every light on the island. And something in his cave goes 'ding' every hour." },
+    { who: 'mira', text: "Every hour, on the hour? Dear, that's no star. That's the Queen's alarm clock.", mood: 'surprised' },
+    { who: 'mira', text: 'And the poor thing has been sitting on it in the dark all this time.', mood: 'sad' },
     { together: [{ walk: 'mira', to: 'player', gap: 30, speed: 70 }, { face: 'mira', to: 'player' }] },
     { who: 'mira', text: "One last tip, I promise. You don't have to beat him. Just turn the lights back on. Most scary things are only scary in the dark.", mood: 'happy' },
     { who: 'mira', text: "...And the map is on M. That one's tradition now.", mood: 'happy' },

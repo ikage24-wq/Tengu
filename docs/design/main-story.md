@@ -182,7 +182,7 @@ Sky Garden, Dream Theatre (dungeon 40).
   minutes". This is the tearful chapter.
 - 44 Where Stars Fall (Elowen, kept).
 
-### Chapter 10: The Crystal King (45-50)
+### Chapter 10: Rise and Shine (45-50)
 Starfall Heights, Sky Whale's Back (dungeon 45), the Moon Terrace, the Crystal Cave.
 - 45 The Sinking Whale (Skipper Nimbus, kept, the dungeon). **Boss rework: the Sky Whale** isn't the
   boss; the storm cloud of her sadness is (everyone is scared of something so big, so nobody visits;
@@ -284,7 +284,11 @@ How to get there without making it a grind (the game's own rule against chores):
    renamed "The Queen's Dream": every morning feels like Monday, Encore's theatre plays the same sad
    show, and her clue for Chapter 10: her dream flat has no alarm clock, just a dusty ring where one stood). The theatre monsters
    (lobby to office) are still the old ones.
-11. [ ] Chapter 10: the Sky Whale's storm, Selene, Prismaris, the Alarm, the finale.
+11. [x] Chapter 10: the Sky Whale's storm, Selene, Prismaris, the Alarm, the finale (2026-11-19: the Sulk storm
+   cloud with Elder Ohagi 59e5555; Prismaris's Dark Throne trial at 49 with Elder Shiratama d1673a5; the Alarm
+   at the Palace at Dawn ac23f29; 2026-11-21: the chapter renamed "Rise and Shine" with its card moved to the
+   whale, Selene saw the star fall ("Stars do not tick"), Rook hears it ding in a sock, Mira knows it for the
+   alarm clock, and the Queen only talks in her sleep at the midnight festival).
 
 Each step: write the quests and scenes, stage them with care, play-through tests, watch them in
 the game, fix what looks wrong, send a video, then wait for the player before the next.
