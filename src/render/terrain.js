@@ -9,6 +9,7 @@ import { shade, mix, gfx } from './pixel.js';
 import { surfacesOf, groundAt } from '../world/physics.js';
 import { drawRockShelf } from './canyon.js';
 import { drawTempleLedge } from './ruinsart.js';
+import { drawGeodeLedgeRooted } from './cavecrystal.js';
 import { drawLimb, drawRootShelf } from './hollowrooms.js';
 import { drawTerrace, drawChimney, drawBalcony } from './manorhill.js';
 import { drawCoralShelf, drawKelpRock, drawAbyssLedge, drawTank } from './aquapalace.js';
@@ -2422,6 +2423,7 @@ export function drawIsland(ctx, theme, p, cam, time, pi, look = null, map = null
     else if (style === 'bridge') drawBridge(ctx, x, y, w, time, pi);
     else if (style === 'shelf') drawRockShelf(ctx, x, y, w, time, pi, p.root, cam.x, map?.night ?? 0);
     else if (style === 'temple') drawTempleLedge(ctx, x, y, w, time, pi, p.root, cam.x);
+    else if (style === 'geode') drawGeodeLedgeRooted(ctx, x, y, w, time, pi, p.root);
     else if (style === 'limb') drawLimb(ctx, x, y, w, time, pi, p.root, cam.x);
     else if (style === 'rootshelf') drawRootShelf(ctx, x, y, w, time, pi, p, cam, map);
     else if (style === 'terrace') drawTerrace(ctx, x, y, w, time, pi, map, cam);

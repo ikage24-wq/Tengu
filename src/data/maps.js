@@ -398,7 +398,7 @@ export const MAPS = {
   // drifts across the Collapsed Halls; the Sunken Crypt's floor runs under it all, with tombs, to
   // the way on to the Tanuki Tea Terraces.
   ruins: {
-    id: 'ruins', name: 'Twilight Ruins', theme: 'ruins', town: 'grove', world: { x: 322, y: 90 }, perSpawn: 1,
+    id: 'ruins', name: 'Twilight Ruins', theme: 'ruins', town: 'grove', world: { x: 322, y: 90 },
     look: { painted: 'ruins', noFace: true, light: 'dusk', sky: ['#5e4e9e', '#a888cc', '#f2c6d6'], far: '#9a88c8', mid: '#7a6aa8', midTrim: '#9a8ac0', islands: 'temple', material: 'crypt', ropes: 'vine', props: [], ledgeKeep: 1, critters: [], drift: 'sparkle' },
     ...lay({
       width: 1800, ground: 1040, by: 'y', quiet: [[40, 300, 160], [1750, 580, 150], [1760, 1040, 160]],
@@ -447,6 +447,7 @@ export const MAPS = {
       { mob: 'wisp', x: 420, y: 680 }, { mob: 'wisp', x: 1270, y: 712 }, { mob: 'gloombat', x: 1400, y: 580 }, { mob: 'wisp', x: 1520, y: 740 },
       // The Sunken Crypt.
       { mob: 'boneknight', x: 560, y: 1040 }, { mob: 'boneknight', x: 1180, y: 1040 }, { mob: 'boneknight', x: 1580, y: 1040 }, { mob: 'wisp', x: 400, y: 920 },
+      { mob: 'boneknight', x: 160, y: 1040 }, { mob: 'boneknight', x: 900, y: 960 }, { mob: 'wisp', x: 200, y: 800 }, { mob: 'wisp', x: 880, y: 640 }, { mob: 'gloombat', x: 420, y: 440 },
     ],
     // Its gathering spots, placed by hand, clear of the ladders and the ways.
     nodes: [
@@ -473,63 +474,90 @@ export const MAPS = {
 
 
 
-  // Crystal Cave is a cavern valley round an underground lake (data/climb.js lay(), zones side by
-  // side): the Glowcap Terraces step down from the west, the Crystal Slimes' glowing shelves, where
-  // the mine road home leaves and a vent bounces you up to a crystal ledge; the Underground Lake
-  // lies at the bottom, the Rock Golems' shore, with a crystal raft ferrying across the water and
-  // the gate to the Crystal Throne by the lake; and the Shade Spires climb out to the east, where
-  // crystal dust floats you up to the ledge with the way to the Sky Garden, and the tunnel to
-  // Serpent Springs leaves from the east rim.
+  // Crystal Cave (its makeover, 2026-11-20): a smaller cavern built round its landmarks
+  // (render/cavecrystal.js), zones side by side. The Glowcap Terraces in the west: giant glowing
+  // mushrooms on the shelf where you come in from the Tea Terraces, their caps the high ledges (a
+  // bouncy glowcap springs you up onto the first), a small one down on the shore by the door to the
+  // Dark Throne. The Underground Lake in the middle, and sat in it a giant geode cracked open: its
+  // rim, a crystal shelf inside it and its lower lip (where you fish) are ledges, stepping stones
+  // lead out to it, and a crystal shard drifts between the small glowcap and its rim. The Shade
+  // Spires in the east: two great crystal columns on the east shelf, shelves growing out of them,
+  // crystal dust rising between (Up to ride it), the way up to the Sky Garden on the taller one's
+  // top, the tunnel to Serpent Springs off its high shelf, and the Crystal Throne's door on the east shore.
   cave: {
     id: 'cave', name: 'Crystal Cave', theme: 'cave', town: 'grove', world: { x: 336, y: 148 },
-    look: { ceiling: true },
+    look: { ceiling: true, painted: 'crystalcave', islands: 'geode', sky: ['#1a1432', '#2a224c', '#40346c'], far: '#3e3268', mid: '#2e2650', props: [], ledgeKeep: 1, critters: [] },
     ...lay({
-      width: 2600, ground: 1000, by: 'x',
-      terrain: [[0, 600], [400, 600], [400, 720], [800, 720], [800, 880], [1000, 880], [1000, 944], [1600, 944], [1600, 880], [1800, 880], [1800, 720], [2200, 720], [2200, 600], [2600, 600]],
-      // Ropes down each crystal step, hanging beside it from the top (and out of the lake).
-      ropes: [{ x: 410, top: 600, bottom: 720 }, { x: 810, top: 720, bottom: 880 }, { x: 1010, top: 880, bottom: 944 }, { x: 1590, top: 880, bottom: 944 }, { x: 1790, top: 720, bottom: 880 }, { x: 2190, top: 600, bottom: 720 }],
-      quiet: [[40, 600, 160], [500, 720, 160], [1300, 944, 320], [1300, 872, 120], [1300, 760, 200], [1700, 880, 120], [2100, 480, 160], [2540, 600, 160], [350, 440, 140], [1300, 600, 140], [2420, 420, 130]],
+      width: 2000, ground: 960, by: 'x',
+      terrain: [[0, 640], [470, 640], [470, 800], [780, 800], [780, 960], [1220, 960], [1220, 800], [1500, 800], [1500, 640], [2000, 640]],
+      quiet: [[40, 640, 160], [560, 800, 140], [1380, 800, 140], [1960, 400, 120], [1860, 302, 120], [1640, 362, 100]],
       zones: [
-        { name: 'Glowcap Terraces', color: '#4fb0d8', from: 0, mobs: ['crystalslime', 'rockgolem'], nodes: [SPOT.ore(3), SPOT.herb(3, 'crystal_truffle')] },
-        { name: 'Underground Lake', color: '#8a7ab0', from: 800, mobs: ['rockgolem', 'crystalslime', 'shade'], nodes: [SPOT.ore(3), SPOT.herb(3, 'crystal_truffle')] },
-        { name: 'Shade Spires', color: '#5d5285', from: 1800, mobs: ['shade', 'rockgolem'], nodes: [SPOT.ore(3, { gem: 0.18 }), SPOT.herb(3, 'crystal_truffle')] },
+        { name: 'Glowcap Terraces', color: '#4fb0d8', from: 0, mobs: ['crystalslime', 'rockgolem'] },
+        { name: 'Underground Lake', color: '#8a7ab0', from: 760, mobs: ['rockgolem', 'crystalslime', 'shade'] },
+        { name: 'Shade Spires', color: '#5d5285', from: 1480, mobs: ['shade', 'rockgolem'] },
       ],
       ledges: [
-        // Glowcap Terraces: long crystal shelves over the steps, and the high ledges (rebuilt
-        // 2026-11-05 wider and more of them, so the terraces hunt in a loop).
-        { x: 40, y: 520, w: 330 }, { x: 200, y: 440, w: 380 }, { x: 440, y: 640, w: 320 }, { x: 470, y: 560, w: 300 }, { x: 600, y: 480, w: 240 },
-        // The lake: crystal outcrops over each shore, an arch of crystal over the water, and the
-        // crystal islet in the middle where you fish (only the raft goes there).
-        { x: 940, y: 800, w: 180 }, { x: 1480, y: 800, w: 300 }, { x: 1150, y: 760, w: 300 },
-        { x: 800, y: 640, w: 320 }, { x: 1480, y: 640, w: 320 }, { x: 1140, y: 600, w: 320 },
-        { x: 860, y: 540, w: 260 }, { x: 1480, y: 540, w: 260 }, { x: 1100, y: 460, w: 400 },
-        { x: 1140, y: 680, w: 320 },
-        { x: 1245, y: 872, w: 110, style: 'stone' },
-        // Shade Spires: spires climbing out, and the ledge with the way to the sky.
-        { x: 1830, y: 640, w: 320 }, { x: 1820, y: 560, w: 260 }, { x: 2250, y: 520, w: 300 }, { x: 2280, y: 420, w: 280 },
-        { x: 1900, y: 480, w: 280, thick: 44 },
-        // The crystal raft ferrying across the lake, shore to shore past the islet.
-        { x: 1000, y: 880, w: 130, style: 'stone', drift: { dx: 470, period: 14 } },
+        // The glowcaps' caps (drawn with them): the big teal one, the tall pink one, the small one.
+        { x: 70, y: 426, w: 168, bare: true, noProps: true, noRope: true }, { x: 272, y: 346, w: 136, bare: true, noProps: true, noRope: true },
+        { x: 577, y: 666, w: 114, bare: true, noProps: true, noRope: true },
+        // The geode (drawn with it): its rim, the crystal shelf inside, its lower lip.
+        { x: 930, y: 640, w: 140, bare: true, noProps: true, noRope: true }, { x: 924, y: 800, w: 152, bare: true, noProps: true, noRope: true },
+        { x: 900, y: 898, w: 200, bare: true, noProps: true, noRope: true },
+        // Stepping stones out to it from either shore.
+        { x: 818, y: 880, w: 72, noRope: true }, { x: 1110, y: 880, w: 72, noRope: true },
+        // The crystal columns' sheared tops (drawn with them), and the shelves growing out of them.
+        { x: 1600, y: 362, w: 80, bare: true, noProps: true, noRope: true }, { x: 1820, y: 302, w: 80, bare: true, noProps: true, noRope: true },
+        { x: 1652, y: 560, w: 120, root: 'left', noRope: true }, { x: 1540, y: 480, w: 88, root: 'right', noRope: true },
+        { x: 1772, y: 500, w: 78, root: 'right', noRope: true }, { x: 1872, y: 400, w: 118, root: 'left', noRope: true },
+        // A long crystal walkway across the top of the cavern, from the tall pink glowcap to the first
+        // crystal column, and crystal shelves across under it above the geode, stepping up off the
+        // drifting shard.
+        { x: 420, y: 420, w: 480, noRope: true }, { x: 1080, y: 420, w: 456, noRope: true },
+        { x: 720, y: 570, w: 180, noRope: true }, { x: 900, y: 490, w: 180, noRope: true }, { x: 1080, y: 570, w: 220, noRope: true },
+        // The crystal shard drifting from the small glowcap to the geode's rim.
+        { x: 660, y: 650, w: 80, drift: { dx: 190, period: 10 } },
+      ],
+      ropes: [
+        // Down each step of the cave floor, beside the drop.
+        { x: 480, top: 640, bottom: 800 }, { x: 790, top: 800, bottom: 960 }, { x: 1210, top: 800, bottom: 960 }, { x: 1490, top: 640, bottom: 800 },
+        // Down the big and the small glowcaps' stems; inside the geode.
+        { x: 100, top: 426, bottom: 640 }, { x: 596, top: 666, bottom: 800 }, { x: 960, top: 800, bottom: 898 }, { x: 1040, top: 640, bottom: 800 },
+        // Down the crystal columns.
+        { x: 1612, top: 362, bottom: 480 }, { x: 1835, top: 302, bottom: 500 },
+        // From the high shelf down to the geode's rim, and from the east shelf down to the east shore.
+        { x: 1000, top: 490, bottom: 640 }, { x: 1270, top: 570, bottom: 800 },
       ],
     }),
-    // A moving part per zone: a vent on the terraces, the raft across the lake, and crystal dust
-    // rising in the spires (Up to ride it).
-    springs: [{ x: 620, y: 720, up: 170, kind: 'gust' }],
-    updrafts: [{ x: 2100, w: 50, top: 450, bottom: 720, kind: 'wisplight' }],
+    // Its monsters, placed by hand, few and spread out, well away from the five ways in (the
+    // arrival rule): up on the glowcaps' caps, on the geode's rim, and up the crystal columns.
+    spawns: [
+      { mob: 'crystalslime', x: 150, y: 426 }, { mob: 'rockgolem', x: 340, y: 346 }, { mob: 'crystalslime', x: 634, y: 666 },
+      { mob: 'rockgolem', x: 560, y: 420 }, { mob: 'crystalslime', x: 760, y: 420 }, { mob: 'shade', x: 1200, y: 420 }, { mob: 'rockgolem', x: 1420, y: 420 },
+      { mob: 'shade', x: 1000, y: 640 }, { mob: 'rockgolem', x: 800, y: 570 }, { mob: 'crystalslime', x: 960, y: 490 }, { mob: 'shade', x: 1170, y: 570 },
+      { mob: 'shade', x: 1585, y: 480 }, { mob: 'crystalslime', x: 1810, y: 500 }, { mob: 'rockgolem', x: 1600, y: 640 }, { mob: 'crystalslime', x: 1880, y: 640 },
+    ],
+    // Its gathering spots, placed by hand, clear of the monsters, ropes and ways.
+    nodes: [
+      { ...SPOT.ore(3), x: 420, y: 640 }, { ...SPOT.herb(3, 'crystal_truffle'), x: 260, y: 640 }, { ...SPOT.herb(3, 'crystal_truffle'), x: 720, y: 800 }, { ...SPOT.herb(3, 'crystal_truffle'), x: 1000, y: 800 },
+      { ...SPOT.herb(3, 'duskcap', { night: true }), x: 915, y: 898 }, { ...SPOT.ore(3, { gem: 0.18 }), x: 1712, y: 560 }, { ...SPOT.ore(3), x: 1560, y: 480 },
+    ],
+    // A moving part per zone: the bouncy glowcap on the terraces, the drifting shard over the lake,
+    // the crystal dust rising between the columns.
+    springs: [{ x: 120, y: 640, up: 230, kind: 'shroom' }],
+    updrafts: [{ x: 1760, w: 44, top: 300, bottom: 640, kind: 'wisplight' }],
     portals: [
-      { id: 'west', x: 40, y: 600, to: 'tea', toPortal: 'east', label: 'Tanuki Tea Terraces' },
-      { id: 'east', x: 2100, y: 480, to: 'sky', toPortal: 'west' },
-      { id: 'boss', x: 1700, y: 880, to: 'bossroom', toPortal: 'west', label: 'Throne' },
+      { id: 'west', x: 40, y: 640, to: 'tea', toPortal: 'east', label: 'Tanuki Tea Terraces' },
+      { id: 'east', x: 1860, y: 302, to: 'sky', toPortal: 'west' },
+      { id: 'boss', x: 1380, y: 800, to: 'bossroom', toPortal: 'west', label: 'Throne' },
     ],
     npcs: [],
-    // A landmark per zone: glowing pools on the terraces, a great crystal by the throne's gate at
-    // the lake, a crystal spire in the east.
-    // The underground lake fills the cavern's floor, lit from below (render/water.js).
-    water: [{ x1: 1000, x2: 1600, y: 900, kind: 'cave' }],
-    deco: [['glowpool', 240, 0, 600], ['crystalspire', 1760, 1, 880], ['stalagmite', 982, 0, 880], ['crystalspire', 1940, 0, 720], ['stalagmite', 2400, 0, 600]],
-    lamps: [{ x: 240, y: 580 }, { x: 1300, y: 850 }, { x: 2100, y: 440 }],
-    spirit: { x: 1300, y: 640 },
-    habitats: { crystalslime: { naps: true, home: { x: 240, y: 600 } }, rockgolem: { naps: true }, shade: { play: true } },
+    // The underground lake fills the cave's floor between the shores, lit from below (render/water.js).
+    water: [{ x1: 780, x2: 1220, y: 924, kind: 'cave' }],
+    // The landmarks, standing on the floors behind their ledges.
+    deco: [['glowcap', 160, 0], ['glowcap', 330, 1], ['glowcap', 640, 2], ['geode', 1000, 0], ['crystalcolumn', 1640, 0], ['crystalcolumn', 1860, 1]],
+    lamps: [{ x: 154, y: 440, c: '#9ff0ff' }, { x: 340, y: 360, c: '#ffd0e6' }, { x: 634, y: 680, c: '#9ff0ff' }, { x: 1000, y: 780, c: '#e8c8ff' }, { x: 1640, y: 500, c: '#9ff0ff' }, { x: 1860, y: 440, c: '#9ff0ff' }],
+    spirit: { x: 1000, y: 560 },
+    habitats: { crystalslime: { naps: true, home: { x: 1000, y: 800 } }, rockgolem: { naps: true }, shade: { play: true } },
   },
 
 
@@ -2672,7 +2700,7 @@ MAPS.woods.portals.push({ id: 'glade', x: 1540, y: 520, to: 'glade', toPortal: '
 // The way to the shrine leads off the collapsed halls.
 MAPS.ruins.portals.push({ id: 'shrine', x: 1750, y: 580, to: 'shrine', toPortal: 'west', label: 'Fox Shrine Path' });
 // The tunnel to the springs leaves from the cave's east rim.
-MAPS.cave.portals.push({ id: 'springs', x: 2540, y: 600, to: 'springs', toPortal: 'west', label: 'Serpent Springs' });
+MAPS.cave.portals.push({ id: 'springs', x: 1960, y: 400, to: 'springs', toPortal: 'west', label: 'Serpent Springs' });
 
 Object.assign(MAPS, {
   // The Whispering Glade (remade 2026-11-12, the player's pick: small, two tiers): a little valley
@@ -3128,7 +3156,7 @@ Object.assign(MAPS, {
 MAPS.nightthrone = arena('nightthrone', 'The Dark Throne', 'cave', 'grove', { x: 366, y: 190 },
   { sky: ['#0a0820', '#1a1440', '#2f2766'], far: '#241e58', mid: '#2f2870', material: 'throne', ceiling: true, light: 'throne', islands: 'stone', skyline: 'columns', props: [] },
   [['throne', 700], ['crystalspire', 320, 1], ['crystalspire', 1080, 0]], ['cave', 'nightthrone']);
-MAPS.cave.portals.push({ id: 'nightthrone', x: 872, y: 880, to: 'nightthrone', toPortal: 'west', label: 'The Dark Throne' });
+MAPS.cave.portals.push({ id: 'nightthrone', x: 560, y: 800, to: 'nightthrone', toPortal: 'west', label: 'The Dark Throne' });
 // (Who waits there, for a quest's "where to go": core/quests.js mobPlaces.)
 MAPS.nightthrone.trialBoss = 'nightking';
 
@@ -3151,12 +3179,6 @@ MAPS.springs.portals.push({ id: 'volcano', x: 2340, y: 880, to: 'sugar_trail', t
 MAPS.ridge.portals.push({ id: 'observatory', x: 2360, y: 560, to: 'observatory_steps', toPortal: 'west', label: 'Star Observatory' });
 MAPS.shrine.portals.push({ id: 'carnival', x: 2400, y: 880, to: 'carnival_gate', toPortal: 'west', label: 'Clockwork Carnival' });
 MAPS.shrine.portals.push({ id: 'sanctum', x: 1450, y: 240, to: 'sanctum', toPortal: 'west', label: "Tamamo's Sanctum" });
-// The Crystal Cave's gathering spots, on the quiet ledges kept for them round the lake (its floors
-// are busy with monsters, so they're placed by hand).
-MAPS.cave.nodes.push(
-  { ...SPOT.ore(3), x: 350, y: 440 }, { ...SPOT.herb(3, 'crystal_truffle'), x: 1300, y: 600 },
-  { ...SPOT.herb(3, 'duskcap', { night: true }), x: 1300, y: 760 }, { ...SPOT.ore(3, { gem: 0.18 }), x: 2420, y: 420 },
-);
 // The Tea Terraces' fishing stone over the pond.
 MAPS.tea.platforms.push({ x: 1620, y: 1000, w: 60, style: 'stone', walkOn: true });
 // Serpent Springs' fishing dock; the grotto is behind the waterfall.
@@ -3184,7 +3206,7 @@ MAPS.starfall.spawns.push({ mob: 'selene', x: 1300, y: 1040, respawn: 600 });
 // from the way you came in from town. Step up to it and it carries you straight back to town (one
 // way), so a long map never means a long walk back.
 const HOMESTONES = {
-  meadow1: [1555, 400], meadow2: [200, 700], woods: [1650, 880], ruins: [1764, 330], cave: [2380, 520],
+  meadow1: [1555, 400], meadow2: [200, 700], woods: [1650, 880], ruins: [1764, 330], cave: [1660, 362],
   sky: [2460, 400], canyon: [110, 520], glade: [880, 900], shrine: [2164, 560], ridge: [2200, 400],
   springs: [1992, 640], peak: [2040, 880], starfall: [2290, 440],
 };

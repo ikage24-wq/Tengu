@@ -10,6 +10,7 @@ import { windTravel } from './terrain.js';
 import { CANYON_KINDS } from './canyon.js';
 import { HOLLOWGATE_KINDS } from './hollowgate.js';
 import { RUINS_KINDS } from './ruinsart.js';
+import { CAVE_KINDS } from './cavecrystal.js';
 import { MANORHILL_KINDS } from './manorhill.js';
 import { AQUA_KINDS } from './aquapalace.js';
 import { FAIR_KINDS } from './fairground.js';
@@ -3349,6 +3350,8 @@ const KINDS = {
   ...HOLLOWGATE_KINDS,
   // (Twilight Ruins' bell tower, Moon Maiden, portico and tombs: render/ruinsart.js.)
   ...RUINS_KINDS,
+  // (Crystal Cave's glowcaps, geode and crystal columns: render/cavecrystal.js.)
+  ...CAVE_KINDS,
   // (Manor Hill's gates, the pumpkin coach, lamp posts, rose hedges, topiaries: render/manorhill.js.)
   ...MANORHILL_KINDS,
   ...AQUA_KINDS,
