@@ -2796,6 +2796,9 @@ Object.assign(MAPS, {
     // (Kept clear of the arrivals: the way in from the woods in the west, and the way back down
     // from Sylvana's Bower on the leaf.)
     spawns: [
+      // (Four Puddle Kid spots since the 2026-11-21 playthrough: with two, the Moss Stones for Tora's
+      // and Vex's quests took most of an hour.)
+      { mob: 'puddlekid', x: 330, y: 900 }, { mob: 'puddlekid', x: 650, y: 900 },
       { mob: 'puddlekid', x: 800, y: 900 }, { mob: 'puddlekid', x: 940, y: 900 },
       { mob: 'blossomfairy', x: 90, y: 660 }, { mob: 'blossomfairy', x: 740, y: 780 }, { mob: 'blossomfairy', x: 910, y: 660 }, { mob: 'blossomfairy', x: 500, y: 660 },
     ],

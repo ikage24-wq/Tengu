@@ -705,7 +705,8 @@ function questPage(ui, state, world, npc, area, key) {
   if (st === 'ready' && (button(ui, tx + tw - 154, by, 74, 17, 'Complete', { primary: true }) || enter)) {
     const r = completeQuest(char, dlg.quest);
     if (r) {
-      world.log(`Quest complete: ${q.name}! +${r.exp} EXP, +${r.gold} gold`, '#ffe36b');
+      // (At the level cap there's no EXP to give: the game's last quest read "+0 EXP".)
+      world.log(`Quest complete: ${q.name}! ${[r.exp > 0 ? `+${r.exp.toLocaleString()} EXP` : null, r.gold > 0 ? `+${r.gold.toLocaleString()} gold` : null].filter(Boolean).join(', ')}`.replace(/! $/, '!'), '#ffe36b');
       for (const it of r.items) world.log(`Received ${ITEMS[it.id].name}${it.qty > 1 ? ` x${it.qty}` : ''}.`, ITEMS[it.id].color);
       if (r.mount) {
         world.log(`New mount: ${MOUNTS[r.mount].name}! ${MOUNTS[r.mount].trickText}`, '#ffe36b');

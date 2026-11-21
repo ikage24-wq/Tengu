@@ -40,6 +40,7 @@ const { groundAt } = await import(S + 'world/physics.js');
 const { cook } = await import(S + 'ui/cooking.js');
 const { DISH_BY_ID } = await import(S + 'data/cooking.js');
 const { nestBoss } = await import(S + 'world/nest.js');
+const { TRIALS } = await import(S + 'data/story.js');
 
 const JOB1 = process.argv[2] ?? 'warrior';
 const JOB2 = process.argv[3] ?? 'stormwall';
@@ -280,6 +281,15 @@ function doObjective(q, o) {
     }
     // (An area boss that wakes at its nest once enough has fallen on its map, world/nest.js: hunt
     // there until it wakes, timed, then take it down.)
+    // (A story trial's boss waits on its own stage, there once its quest is taken: data/story.js
+    // TRIALS, world/story.js onStoryMap. Prismaris, the Alarm.)
+    const stage = !field && Object.values(MAPS).find((m) => m.trial && TRIALS[m.trial]?.boss === o.mob);
+    if (stage) {
+      go(stage.id);
+      const have = () => (c.quests[q.id]?.kills?.[o.mob] ?? 0) >= o.count;
+      if (!huntHere((m) => m.def.id === o.mob, have, 900)) { note('STALL', `${q.id}: couldn't beat ${MOBS[o.mob].name} on ${stage.name} in 15 min`); for (let k = 0; k < o.count; k++) Q.recordKill(c, o.mob); }
+      return;
+    }
     const nest = !field && Object.values(MAPS).find((m) => m.nest?.mob === o.mob);
     if (nest) {
       go(nest.id);
