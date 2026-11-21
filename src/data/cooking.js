@@ -25,6 +25,9 @@ export const DISHES = [
   // bonuses at once and for longer, none of them past what the next tier gives.
   { id: 'dish_melonsorbet', name: 'Sea Melon Sorbet', vessel: 'bowl', colors: ['#8fd8a8', '#ffffff'], needs: { sea_melon: 1, clover: 1 }, heal: 480, values: { hp: 150, mp: 150, speed: 8 }, secs: 900, about: 'Max HP and MP, and speed' },
   { id: 'dish_pineskewers', name: 'Sun Pineapple Skewers', vessel: 'plate', colors: ['#ffd05a', '#c8ecff'], needs: { sun_pineapple: 1, fish_fallsdace: 1 }, heal: 700, values: { watk: 11, matk: 11, critRate: 0.04 }, secs: 900, about: 'Attack, magic and critical hits' },
+  // Your island farm's eggs and milk (data/home.js FARM_GOODS).
+  { id: 'dish_eggtart', name: 'Sunny Egg Tart', vessel: 'plate', colors: ['#ffe07a', '#ff6b8a'], needs: { sunny_egg: 2, cherry: 1 }, heal: 420, values: { hp: 120, regenPct: 0.01 }, secs: 900, about: 'Max HP, and HP back every second' },
+  { id: 'dish_milkpudding', name: 'Strawberry Milk Pudding', vessel: 'bowl', colors: ['#ffc8d8', '#ff5a6e'], needs: { strawberry_milk: 1, wild_strawberry: 2 }, heal: 650, values: { mp: 180, eva: 16 }, secs: 900, about: 'Max MP and avoid' },
   { id: 'dish_gourdhotpot', name: 'Lantern Gourd Hotpot', vessel: 'bowl', colors: ['#ffa86b', '#bff4e0'], needs: { lantern_gourd: 1, fish_glowloach: 1 }, heal: 1100, values: { hp: 350, mp: 250, regenPct: 0.015 }, secs: 900, about: 'Max HP and MP, and HP back every second' },
   { id: 'dish_doradotaco', name: 'Dorado Tacos', vessel: 'plate', colors: ['#7fe0a0', '#ffd66b'], needs: { fish_dorado: 1, fish_flying: 1 }, heal: 400, values: { watk: 9, matk: 9 }, secs: 600, about: 'Attack and magic', learn: 'fish_dorado' },
   { id: 'dish_groupercurry', name: 'Coral Grouper Curry', vessel: 'bowl', colors: ['#ffc870', '#ff8a7a'], needs: { fish_grouper: 1, fish_lagoonray: 1 }, heal: 600, values: { hp: 280 }, secs: 600, about: 'Max HP', learn: 'fish_grouper' },

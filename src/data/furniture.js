@@ -22,6 +22,7 @@ export const FURN_SETS = {
   bake: { name: 'Sweet Bakery', color: '#ff9ec0' },
   star: { name: 'Starry Night', color: '#8f7fe0' },
   trophy: { name: 'Trophies and Catches', color: '#e0a52f' },
+  isle: { name: 'Island Keepsakes', color: '#7fd8c8' },
   // (Bought from Kinako in the Mochi Market, not made: for your Mochi Garden, 2026-11-15.)
   garden: { name: 'Mochi Garden', color: '#8fd0a0' },
 };
@@ -72,6 +73,12 @@ export const FURNITURE = [
   F('trophy_tank', 'Home Aquarium', 'trophy', 'floor', 64, 50, { oak_log: 4, shell: 3, rose_quartz: 2 }, { level: 6, show: 'tank', fish: 4, desc: 'A glass tank on a wooden stand. Four of the rarest fish you have caught swim in it.' }),
   F('trophy_grandtank', 'Grand Aquarium', 'trophy', 'floor', 112, 66, { maple_log: 6, amethyst: 3, sea_kelp: 4, shell: 4 }, { level: 18, stage: 2, show: 'tank', fish: 8, desc: 'A great tank with a coral garden. Eight of the rarest fish you have caught swim in it.' }),
   F('trophy_ribbon', 'Derby Ribbon', 'trophy', 'wall', 18, 28, { cotton: 2 }, { where: 'in', level: 3, show: 'derby', desc: 'A rosette that shows how many Fishing Derbies you have won.' }),
+  // ----- Island Keepsakes (2026-11-21): made from your island's own crops, catches and wool -----
+  F('isle_lighthouse', 'Lighthouse Lamp', 'isle', 'floor', 16, 46, { lantern_gourd: 1, silver_ore: 1, shell: 2 }, { level: 18, stage: 5, desc: 'A little lighthouse that lights up at night, its beam turning slowly.' }),
+  F('isle_rug', 'Seafoam Wool Rug', 'isle', 'rug', 74, 6, { seafoam_wool: 4 }, { where: 'in', level: 6, stage: 2, desc: 'A round rug woven from your own sheep\'s wool, in waves of sea green.' }),
+  F('isle_pouf', 'Sea Melon Pouf', 'isle', 'floor', 24, 18, { sea_melon: 2, seafoam_wool: 2 }, { level: 5, stage: 2, desc: 'A squashy seat striped like a sea melon. Sit on it. Do not eat it.' }),
+  F('isle_crystal', 'Grotto Crystal Lamp', 'isle', 'surface', 12, 16, { fish_glowloach: 1, amethyst: 1 }, { level: 12, stage: 2, desc: 'A crystal from the grotto that glows teal after dark, like its pool.' }),
+  F('isle_gourds', 'Gourd Lantern String', 'isle', 'hang', 90, 18, { lantern_gourd: 2, cotton: 2 }, { level: 20, stage: 5, desc: 'Little lantern gourds strung on a line. They glow warm at night.' }),
   // ----- Mochi Garden: set out in your garden, and your Mochi use them (world/garden-life.js) -----
   // (`price` in gold from Kinako; `use`: what the Mochi do with it.)
   G('garden_bench', 'Garden Bench', 'floor', 40, 22, 1200, 'sit', 'A little bench painted cream and pink. Two Mochi can sit on it together, swinging their feet.'),

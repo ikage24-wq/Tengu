@@ -20,7 +20,15 @@ import { applyGardenGift } from '../world/garden-life.js';
 function islandOf(char) {
   return {
     name: char.name,
-    home: { stage: char.home?.stage ?? 1, placed: (char.home?.placed ?? []).map(({ id, map, x, y, flip }) => ({ id, map, x, y, flip })) },
+    // (Its rooms, what's growing in its plots and its farm too, 2026-11-21, so a visitor sees it all.)
+    home: {
+      stage: char.home?.stage ?? 1,
+      layout: char.home?.layout ?? null,
+      placed: (char.home?.placed ?? []).map(({ id, map, x, y, flip }) => ({ id, map, x, y, flip })),
+      rooms: (char.home?.rooms ?? []).map(({ id, x }) => ({ id, x })),
+      plots: (char.home?.plots ?? []).map((p) => (p?.id ? { id: p.id, at: p.at, wet: Boolean(p.wet) } : null)),
+      farm: Object.fromEntries(Object.entries(char.home?.farm ?? {}).map(([id, e]) => [id, { at: e.at }])),
+    },
     fishBook: Object.fromEntries(Object.entries(char.fishBook ?? {}).filter(([, r]) => r.best).map(([id, r]) => [id, { best: r.best, n: r.n }])),
     dungeons: Object.fromEntries(Object.entries(char.dungeons ?? {}).map(([id, r]) => [id, { best: r.best, hardClears: r.hardClears ?? 0 }])),
     mount: char.mount ?? null,
@@ -142,6 +150,14 @@ export function onVisit(world, msg, g) {
   }
   if (msg.op === 'none') {
     world.log(`${g?.name ?? 'They'} doesn't have an island yet.`, '#ffb3c6');
+    return;
+  }
+  // A party friend asks you over to their island (their Shelly: net/together.js inviteToIsland).
+  if (msg.op === 'invite') {
+    if (!online.party?.members.includes(msg.id)) return;
+    online.islandInvite = { from: msg.id, name: msg.name ?? g?.name ?? 'A friend', until: Date.now() + 60000 };
+    world.events.push({ type: 'islandinvite' });
+    world.log(`${online.islandInvite.name} invites your party over to their island!`, '#ffc2d4');
     return;
   }
   if (msg.op === 'data' && msg.island) {

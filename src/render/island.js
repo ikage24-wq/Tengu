@@ -33,7 +33,7 @@ import { groundAt } from '../world/physics.js';
 import { drawAfloat } from './water.js';
 import { ITEMS } from '../data/items.js';
 import { PLOT_X, TIER_Y, TIER_X, G, IN, hutWidth, plotGrowth } from '../world/home.js';
-import { ROOM_BY_ID } from '../data/home.js';
+import { ROOM_BY_ID, FARM_SECS } from '../data/home.js';
 import { drawItemIcon } from './icons.js';
 
 const TAU = Math.PI * 2;
@@ -656,6 +656,205 @@ function grottoArt() {
   });
 }
 
+// ---------- The farm (world/home.js: its buildings, its animals) ----------
+// The island look the player picked (2026-11-21): tropical-crested hens, seafoam sheep in flower
+// leis, strawberry-milk cows. Round and chibi, legs hidden under feathers and fleece (only little
+// feet show, stepping). Each pose is a cached picture (a walk is 8 of them, picked by the distance
+// walked; grazing 4; a blink and a sleep), placed facing either way by a mirror flip.
+const INK = '#3a2d4f';
+function feet(f, xs, y, c, step) {
+  // The little feet, stepping in turn as it walks (f: 0-7 through the stride, null standing).
+  return xs.map((x, i) => {
+    const a = f == null ? 0 : (f / 8) * TAU + (i % 2) * Math.PI;
+    return E(x + Math.sin(a) * step, y - (f == null ? 0 : Math.max(0, -Math.cos(a)) * 1.4), 2.6, 1.6, c);
+  });
+}
+function henArt(pose, f, blink) {
+  return art(`farm-hen|${pose}|${f}|${blink}`, 32, 30, () => {
+    const body = ramp('#ffe07a', 0.75);
+    const wing = ramp('#ffb86b', 0.8);
+    const sit = pose === 'sleep' ? 3 : 0;
+    const peck = pose === 'graze' ? [0, 4, 6, 2][f ?? 0] : 0;
+    const out = [];
+    if (!sit) out.push(...feet(pose === 'walk' ? f : null, [11, 17], 29, '#ff9a5a', 1.4));
+    // Tail feathers fanned at the back, teal and pink.
+    out.push(T([[6, 15 + sit], [0, 6 + sit], [5, 9 + sit]], '#ff9ec0'), T([[6, 15 + sit], [1, 11 + sit], [3, 5 + sit]], '#7fd8c8'));
+    out.push(E(14, 18 + sit, 10, 10.5, body.base), F(E(16, 22 + sit, 7, 5, body.sh)), F(E(11, 13 + sit, 4, 2.4, body.hi)));
+    out.push(E(11, 19 + sit, 6, 4.4, wing.base), F(E(11, 20 + sit, 5, 3, wing.sh)));
+    // The head (lowered to peck), its crest, beak and eye.
+    const hx = 20 + peck * 0.3;
+    const hy = 10 + sit + peck;
+    out.push(E(hx, hy, 6, 6, body.base), F(E(hx - 1.6, hy - 2, 2.4, 1.6, body.hi)));
+    out.push(T([[hx - 3, hy - 5], [hx - 4, hy - 11], [hx - 1, hy - 6]], '#7fd8c8'), T([[hx - 1, hy - 5.5], [hx + 1, hy - 12], [hx + 1.6, hy - 5.6]], '#ff9ec0'), T([[hx + 1, hy - 5], [hx + 4, hy - 10], [hx + 3, hy - 4.6]], '#7fd8c8'));
+    out.push(T([[hx + 5, hy - 1], [hx + 9, hy + 0.6], [hx + 5, hy + 2]], '#ff9a5a'));
+    out.push(F(blink || sit ? R(hx + 0.6, hy - 1, 2.4, 0.8, INK) : E(hx + 1.6, hy - 1.2, 1.1, 1.5, INK)), F(E(hx + 2, hy + 2.4, 1.6, 1, '#ffb3c6')));
+    return out;
+  });
+}
+function sheepArt(pose, f, blink) {
+  return art(`farm-sheep|${pose}|${f}|${blink}`, 48, 40, () => {
+    const wool = ramp('#c8f0e8', 0.7);
+    const face = ramp('#ffe8d8', 0.6);
+    const sit = pose === 'sleep' ? 4 : 0;
+    const graze = pose === 'graze' ? [3, 5, 6, 4][f ?? 0] : 0;
+    const out = [];
+    if (!sit) out.push(...feet(pose === 'walk' ? f : null, [12, 19, 27, 33], 38, '#6a5a7a', 1.2));
+    // The fleece: a cloud of round tufts, lit on top.
+    for (const [x, y, r] of [[11, 19, 9], [19, 12, 10], [29, 14, 9], [13, 27, 9], [27, 26, 9], [20, 21, 11]]) out.push(E(x, y + sit, r, r * 0.92, wool.base));
+    for (const [x, y, r] of [[17, 9, 5], [28, 11, 4], [9, 15, 3.4]]) out.push(F(E(x, y + sit, r, r * 0.6, '#ffffff')));
+    out.push(F(E(20, 30 + sit, 12, 4, wool.sh)));
+    // The face, an ear, the flower lei round its neck.
+    const fx = 37 + graze * 0.2;
+    const fy = 21 + sit + graze;
+    out.push(T([[fx - 5, fy - 4], [fx - 11, fy - 6], [fx - 6, fy - 1]], face.sh), E(fx, fy, 7, 7.4, face.base), F(E(fx - 2, fy - 3, 3, 1.8, face.hi)));
+    out.push(F(blink || sit ? R(fx + 0.4, fy - 1.4, 2.8, 0.8, INK) : E(fx + 1.8, fy - 1.4, 1.1, 1.6, INK)), F(E(fx + 2.6, fy + 2.4, 1.6, 1, '#ffb3c6')), F(R(fx + 3, fy + 4, 1.6, 0.6, INK)));
+    for (let k = 0; k < 5; k++) out.push(E(30 + k * 2.6, 28 + sit + Math.sin(k * 1.1) * 1.4 + graze * 0.3, 1.9, 1.9, k % 2 ? '#fff0a0' : '#ff9ec0'));
+    return out;
+  });
+}
+function cowArt(pose, f, blink) {
+  return art(`farm-cow|${pose}|${f}|${blink}`, 62, 48, () => {
+    // (Strawberry milk: a cream cow with strawberry-pink heart spots and a pink nose, so she reads
+    // as a cow, not a piglet, 2026-11-21.)
+    const hide = ramp('#fff4f0', 0.7);
+    const nose = ramp('#ffc8d8', 0.7);
+    const sit = pose === 'sleep' ? 5 : 0;
+    const graze = pose === 'graze' ? [4, 6, 7, 5][f ?? 0] : 0;
+    const out = [];
+    if (!sit) out.push(...feet(pose === 'walk' ? f : null, [12, 20, 32, 40], 47, '#6a5a7a', 1.4));
+    // A curl of tail, the round body with white heart spots.
+    out.push(T([[6, 24 + sit], [1, 16 + sit], [3, 15 + sit], [7, 21 + sit]], hide.sh), E(2, 14 + sit, 2.4, 2.4, '#ffffff'));
+    out.push(E(26, 30 + sit, 21, 14, hide.base), F(E(28, 36 + sit, 17, 6, hide.sh)), F(E(19, 22 + sit, 9, 3.4, hide.hi)));
+    for (const [hx, hy, k] of [[16, 26, 1.3], [31, 34, 1], [36, 24, 0.8]]) out.push(F(T([[hx, hy + 4 * k + sit], [hx - 4 * k, hy + sit], [hx - 2 * k, hy - 2.4 * k + sit], [hx, hy - 0.8 * k + sit], [hx + 2 * k, hy - 2.4 * k + sit], [hx + 4 * k, hy + sit]], '#ff9fb8')));
+    // The head (lowered to graze): horns, ears, snout, an eye, the seashell cowbell.
+    const hx = 47 + graze * 0.2;
+    const hy = 21 + sit + graze;
+    out.push(T([[hx - 6, hy - 7], [hx - 8, hy - 13], [hx - 4, hy - 8]], '#fff4dc'), T([[hx + 2, hy - 8], [hx + 4, hy - 14], [hx + 5, hy - 7]], '#fff4dc'));
+    out.push(E(hx - 10, hy - 4, 4.6, 2.4, '#ffc8d8'), E(hx, hy, 11, 10, hide.base), F(E(hx - 3, hy - 4, 4, 2.4, hide.hi)), F(T([[hx - 5, hy - 8], [hx - 1, hy - 4], [hx - 6, hy - 2]], '#ff9fb8')), E(hx + 9, hy - 5, 3.6, 2, '#ffc8d8'));
+    out.push(E(hx + 4, hy + 5, 7, 4.6, nose.base), F(E(hx + 2, hy + 5, 1, 1.3, '#d0607a')), F(E(hx + 6, hy + 5, 1, 1.3, '#d0607a')));
+    out.push(F(blink || sit ? R(hx - 1.4, hy - 2, 3, 0.9, INK) : E(hx, hy - 2, 1.3, 1.9, INK)));
+    out.push(F(T([[hx - 6, hy + 9], [hx + 6, hy + 9], [hx + 5, hy + 10.4], [hx - 5, hy + 10.4]], '#5fb8d8')), T([[hx - 2, hy + 10], [hx + 2, hy + 10], [hx + 3, hy + 15], [hx - 3, hy + 15]], '#ffd8a8'), F(R(hx - 0.4, hy + 11, 0.8, 4, '#e8b080')));
+    return out;
+  });
+}
+const ANIMAL_ART = { hen: henArt, sheep: sheepArt, cow: cowArt };
+const STRIDE = { hen: 10, sheep: 14, cow: 18 };
+
+// The coop: a little teal hen house on stilts, a coral roof, a round door with a ramp down, a nest
+// box window with an egg in it.
+function coopArt() {
+  return art('farm-coop', 84, 72, () => {
+    const wall = ramp('#bfe8e0', 0.7);
+    const roof = ramp('#ff9a8a', 0.8);
+    const wood = ramp(WOOD, 0.8);
+    const out = [];
+    for (const x of [12, 66]) out.push(R(x, 52, 5, 20, wood.sh), F(R(x, 52, 1.6, 20, wood.base)));
+    out.push(R(8, 26, 68, 28, wall.base), ...[16, 26, 36, 46, 56, 66].map((x) => F(R(x, 26, 1, 28, wall.sh))), F(R(8, 50, 68, 4, wall.sh)));
+    out.push(T([[0, 30], [42, 2], [84, 30]], roof.base), F(T([[42, 2], [84, 30], [42, 30]], roof.sh)), ...[4, 16, 28, 40, 52, 64, 76].map((x) => F(R(x, 28, 5, 4, roof.sh))));
+    out.push(E(30, 44, 8, 9, '#6a4a52'), F(E(30, 46, 6, 7, '#4a3442')));
+    out.push(T([[24, 52], [36, 52], [52, 72], [40, 72]], wood.base), ...[56, 61, 66].map((y) => F(R(24 + (y - 52) * 0.8, y, 12, 1.2, wood.sh))));
+    out.push(R(50, 34, 18, 12, '#fff4e0'), F(R(51, 40, 16, 6, '#e8c07a')), E(59, 39, 3, 3.6, '#ffe07a'), F(E(58, 38, 1, 1.2, '#fff8d6')));
+    return out;
+  }, false);
+}
+// The sheep pen's shelter: a lean-to of posts and a straw roof at the back, hay bales under it.
+function shelterArt() {
+  return art('farm-shelter', 70, 58, () => {
+    const straw = ramp('#e8c07a', 0.8);
+    const wood = ramp(WOOD, 0.8);
+    const out = [R(6, 12, 4, 46, wood.sh), R(60, 18, 4, 40, wood.sh)];
+    out.push(T([[0, 16], [70, 8], [70, 18], [0, 24]], straw.base), F(T([[0, 22], [70, 15], [70, 18], [0, 24]], straw.sh)), ...[6, 18, 30, 42, 54].map((x) => F(R(x, 20 - x * 0.1, 3, 6, straw.sh))));
+    out.push(R(14, 44, 22, 14, straw.base), F(R(14, 44, 22, 2, straw.hi)), F(R(24, 44, 1, 14, straw.sh)), R(38, 48, 18, 10, straw.base), F(R(38, 48, 18, 2, straw.hi)));
+    return out;
+  }, false);
+}
+// The pen's fence, in front of the sheep: white posts and two rails along the yard.
+function fenceArt(w) {
+  return art(`farm-fence|${w}`, w, 24, () => {
+    const out = [];
+    for (let x = 2; x < w; x += 14) out.push(R(x, 2, 3.4, 22, '#ffffff'), F(R(x + 2.2, 2, 1.2, 22, '#e8dcec')), T([[x, 2], [x + 1.7, 0], [x + 3.4, 2]], '#ffffff'));
+    out.push(R(0, 7, w, 3, '#ffffff'), R(0, 16, w, 3, '#ffffff'), F(R(0, 9, w, 1, '#e8dcec')), F(R(0, 18, w, 1, '#e8dcec')));
+    return out;
+  }, false);
+}
+// The barn: butter-yellow walls, white trim and X-braced doors, a hay loft window with hay
+// poking out, and a milk can by the door.
+function barnArt() {
+  return art('farm-barn', 116, 96, () => {
+    // (Butter-yellow, so the cream-and-pink cows stand out against it.)
+    const wall = ramp('#ffe2a0', 0.75);
+    const roof = ramp('#d98a6a', 0.8);
+    const out = [R(10, 40, 96, 56, wall.base), ...[20, 32, 44, 72, 84, 96].map((x) => F(R(x, 40, 1, 56, wall.sh)))];
+    out.push(T([[2, 44], [26, 14], [58, 2], [90, 14], [114, 44]], roof.base), F(T([[58, 2], [90, 14], [114, 44], [58, 44]], roof.sh)));
+    out.push(T([[10, 42], [26, 16], [58, 6], [90, 16], [106, 42], [106, 46], [10, 46]], '#ffffff'), T([[14, 44], [28, 20], [58, 10], [88, 20], [102, 44]], wall.base));
+    out.push(R(46, 22, 24, 18, '#ffffff'), R(49, 25, 18, 15, '#6a4a52'), F(T([[49, 40], [52, 30], [56, 34], [60, 28], [64, 33], [67, 40]], '#e8c07a')));
+    out.push(R(38, 60, 40, 36, '#ffffff'), R(41, 63, 16, 33, '#c8865a'), R(59, 63, 16, 33, '#c8865a'));
+    for (const x0 of [41, 59]) out.push(F(T([[x0, 63], [x0 + 2, 63], [x0 + 16, 94], [x0 + 14, 96]], '#ffffff')), F(T([[x0 + 14, 63], [x0 + 16, 63], [x0 + 2, 96], [x0, 94]], '#ffffff')));
+    out.push(R(88, 80, 12, 16, '#d8e0ec'), F(R(88, 80, 4, 16, '#ffffff')), R(87, 78, 14, 3, '#b8c0d0'));
+    return out;
+  }, false);
+}
+// Draws the farm: each building, then its animals in front of it (and the pen's fence in front of
+// its sheep), then a little bubble over a building with its goods waiting.
+function drawFarm(ctx, map, cam, width, time) {
+  const gy = G - cam.y;
+  const night = (map.night ?? 0) > 0.6;
+  const now = Date.now() / 1000;
+  for (const { def, entry } of map.farm ?? []) {
+    const bx = def.x - cam.x;
+    if (bx < -160 || bx > width + 160) continue;
+    if (def.id === 'coop') place(ctx, coopArt(), snap(bx), gy + 2);
+    else if (def.id === 'pen') place(ctx, shelterArt(), snap(bx + 26), gy + 2);
+    else if (def.id === 'barn') place(ctx, barnArt(), snap(bx), gy + 2);
+    for (const a of map.animals ?? []) {
+      if (a.building !== def.id) continue;
+      const ax = a.x - cam.x;
+      const seed = a.seed;
+      let pose = a.state === 'walk' ? 'walk' : a.state === 'graze' ? 'graze' : a.state === 'sleep' ? 'sleep' : 'idle';
+      let f = null;
+      if (pose === 'walk') f = Math.floor(((a.walked % STRIDE[a.kind]) / STRIDE[a.kind]) * 8) % 8;
+      if (pose === 'graze') f = Math.floor(time * 3 + seed) % 4;
+      if (pose === 'idle') pose = 'stand';
+      const blink = pose !== 'sleep' && ((time * 0.37 + seed * 0.013) % 4) < 0.12 ? 1 : 0;
+      // (A walk bobs a little with the stride, a standing one breathes: both in half pixels.)
+      const bob = pose === 'walk' ? Math.round(Math.abs(Math.sin((f / 8) * Math.PI * 2)) * 2) / 2 : pose === 'stand' ? Math.round(Math.sin(time * 1.8 + seed)) / 2 : 0;
+      ctx.save();
+      ctx.translate(snap(ax), gy + 2 - bob);
+      ctx.scale(a.dir, 1);
+      place(ctx, ANIMAL_ART[a.kind](pose, f, blink), 0, 0);
+      ctx.restore();
+      if (pose === 'sleep') {
+        // Little z's floating up.
+        const u = (time * 0.5 + seed * 0.1) % 1;
+        ctx.save();
+        ctx.globalAlpha = (1 - u) * 0.8;
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '800 7px Nunito, "Trebuchet MS", system-ui, sans-serif';
+        ctx.fillText('z', snap(ax + a.dir * 8 + u * 6), snap(gy - 26 - u * 14));
+        ctx.restore();
+      }
+    }
+    if (def.id === 'pen') place(ctx, fenceArt(def.yard[1] - def.yard[0] + 12), snap((def.yard[0] + def.yard[1]) / 2 - cam.x), gy + 2);
+    // Goods waiting: a bubble with one in it, bobbing gently over the building.
+    if (!night && entry && Math.floor((now - entry.at) / FARM_SECS) >= 1) {
+      const by = gy - (def.id === 'barn' ? 110 : def.id === 'coop' ? 86 : 70) + Math.sin(time * 2 + def.x) * 2;
+      ctx.fillStyle = '#ffffff';
+      ctx.strokeStyle = '#e8dcec';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.ellipse(snap(bx), by, 11, 10, 0, 0, TAU);
+      ctx.fill();
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(bx - 3, by + 9);
+      ctx.lineTo(bx, by + 14);
+      ctx.lineTo(bx + 3, by + 9);
+      ctx.fill();
+      drawItemIcon(ctx, def.good, snap(bx - 8), snap(by - 8), 1);
+    }
+  }
+}
+
 // ---------- Drawing ----------
 
 // A palm (on a tier, at its own height): its trunk ringed and leaning, its fronds stirring.
@@ -687,7 +886,7 @@ function palm(ctx, x, gy, lean, time, seed) {
 }
 
 // Pieces that reach far from where they're placed are culled by their own span.
-const WIDE = new Set(['plots', 'zipline', 'waterfall', 'seep', 'ropebridge', 'hutroom']);
+const WIDE = new Set(['plots', 'zipline', 'waterfall', 'seep', 'ropebridge', 'hutroom', 'farm']);
 
 export function drawIslandPiece(ctx, map, kind, wx, extra, cam, width, time) {
   if (!map.home) return false;
@@ -1082,6 +1281,9 @@ export function drawIslandPiece(ctx, map, kind, wx, extra, cam, width, time) {
       }
       return true;
     }
+    case 'farm':
+      drawFarm(ctx, map, cam, width, time);
+      return true;
     case 'grottopool': {
       place(ctx, grottoArt(), snap(x), 420 + 60 - cam.y);
       // Light off the water playing over the crystals.

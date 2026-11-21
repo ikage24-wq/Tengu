@@ -392,3 +392,87 @@ test('the bedroom rests you better, and the telescope tells you what\'s out afte
   assert.match(lines.join(' '), /Firefly Minnow/);
   assert.match(lines.join(' '), /Moonpetal/);
 });
+
+// ---------- The farm, the Island Keepsakes, and inviting your party (2026-11-21) ----------
+import { farmNeeds, buildFarm, farmReady, tickAnimal, refreshHome } from '../src/world/home.js';
+import { FARM, FARM_SECS, FARM_CAP, FARM_GOODS } from '../src/data/home.js';
+import { onVisit } from '../src/net/visit.js';
+import { online } from '../src/net/online.js';
+
+const payFor = (char, def) => {
+  char.gold = (char.gold ?? 0) + def.gold;
+  for (const [id, n] of Object.entries(def.needs)) addItem(char.inventory, id, n);
+};
+
+test('Shelly builds the farm a building at a time, its animals come with it, and they make their goods on their own', () => {
+  const w = islander();
+  const char = w.char;
+  const coop = FARM.find((f) => f.id === 'coop');
+  assert.match(buildFarm(char, 'pen'), /Tide Pond/, 'the pen waits for its stage');
+  payFor(char, coop);
+  assert.equal(buildFarm(char, 'coop'), coop.name);
+  assert.ok(farmNeeds(char, 'coop').built);
+  loadMap(w, 'home', 'dock');
+  assert.equal(w.map.animals.filter((a) => a.kind === 'hen').length, coop.count, 'three hens');
+  // Nothing yet, then a batch of eggs, collected at the coop.
+  Object.assign(w.body, { x: coop.x, y: BEACH, onGround: true });
+  updateWorld(w, DT, keys([], ['ArrowUp']));
+  assert.equal(countItem(char.inventory, 'sunny_egg'), 0);
+  char.home.farm.coop.at -= FARM_SECS * 10;
+  assert.equal(farmReady(char.home.farm.coop, coop), FARM_CAP * coop.count, 'only so many wait');
+  updateWorld(w, DT, keys([], ['ArrowUp']));
+  assert.equal(countItem(char.inventory, 'sunny_egg'), FARM_CAP * coop.count);
+  assert.equal(farmReady(char.home.farm.coop, coop), 0);
+  // Whoever lives with you collects them into the trunk.
+  char.home.farm.coop.at -= FARM_SECS;
+  char.livingWith = 'poppy';
+  const world = { storage: { etc: [] } };
+  assert.deepEqual(helperPicks(char, world), [{ id: 'sunny_egg', n: coop.count }]);
+  for (const g of FARM_GOODS) assert.ok(DISHES.some((d) => d.needs[g.id]) || /craft bench/.test(ITEMS[g.id].desc), `${g.name} has a use`);
+});
+
+test('the animals wander their own yard, and walk home to bed at night', () => {
+  const w = islander();
+  for (const f of FARM) {
+    w.char.home.stage = 5;
+    payFor(w.char, f);
+    assert.equal(buildFarm(w.char, f.id), f.name);
+  }
+  loadMap(w, 'home', 'dock');
+  const animals = w.map.animals;
+  assert.equal(animals.length, FARM.reduce((n, f) => n + f.count, 0));
+  for (let t = 0; t < 120; t += 0.1) for (const a of animals) tickAnimal(a, 0.1, false);
+  for (const a of animals) assert.ok(a.x >= a.yard[0] - 1 && a.x <= a.yard[1] + 1, `${a.kind} stays in its yard`);
+  assert.ok(animals.some((a) => a.walked > 20), 'they get about');
+  for (let t = 0; t < 60; t += 0.1) for (const a of animals) tickAnimal(a, 0.1, true);
+  for (const a of animals) assert.ok(a.state === 'sleep' && Math.abs(a.x - a.home) < 1, `${a.kind} asleep at home`);
+});
+
+test('the Island Keepsakes are made from the island\'s own things', () => {
+  const isle = FURNITURE.filter((f) => f.set === 'isle');
+  assert.equal(isle.length, 5);
+  const used = new Set(isle.flatMap((f) => Object.keys(f.needs)));
+  for (const id of ['seafoam_wool', 'sea_melon', 'lantern_gourd', 'fish_glowloach']) assert.ok(used.has(id), `${id} goes into one`);
+  for (const f of isle) assert.ok(RECIPES.some((r) => r.makes === f.id), `${f.name} is made at a bench`);
+});
+
+test('your party can be asked over, and a visitor sees the island as it is', () => {
+  const w = islander();
+  const was = { id: online.id, party: online.party };
+  online.id = 'me';
+  online.party = { members: ['me', 'kai'] };
+  w.events.length = 0;
+  onVisit(w, { to: 'me', id: 'kai', op: 'invite', name: 'Kai' }, null);
+  assert.ok(w.events.some((e) => e.type === 'islandinvite'));
+  assert.equal(online.islandInvite.from, 'kai');
+  online.islandInvite = null;
+  onVisit(w, { to: 'me', id: 'stranger', op: 'invite', name: 'Who' }, null);
+  assert.equal(online.islandInvite, null, 'only from your party');
+  Object.assign(online, was);
+  // A friend's island arrives with its rooms, crops and farm.
+  refreshHome(w.char, { name: 'Kai', home: { stage: 3, layout: 2, placed: [], rooms: [{ id: 'kitchen', x: 640 }], plots: [{ id: 'clover', at: 0 }], farm: { coop: { at: 0 } } } });
+  assert.equal(MAPS.home.farm.length, 1);
+  assert.equal(MAPS.home.plots[0].id, 'clover');
+  assert.equal(MAPS.home_in.width, 900);
+  refreshHome(w.char);
+});

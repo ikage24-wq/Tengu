@@ -43,7 +43,7 @@ import { tickDaytime } from './daytime.js';
 import { tickVoyage, setSail } from './voyage.js';
 import { rideStep, rideAfter, dismount, toggleMount, giveMount, ownsMount } from './mount.js';
 import { WADE, MOUNTS } from '../data/mounts.js';
-import { refreshHome, tendPlot, crateHere, trunkHere, bedHere, scopeHere, stargaze, homeTick, G as HOME_BEACH } from './home.js';
+import { refreshHome, tendPlot, crateHere, trunkHere, bedHere, scopeHere, stargaze, homeTick, collectFarm, G as HOME_BEACH } from './home.js';
 import { refreshGarden, grantGarden } from './garden.js';
 import { restoreCarried } from './decor.js';
 import { tickShow, showTentUp } from './mochi-show.js';
@@ -536,6 +536,8 @@ function interact(world) {
   // Your island's own (world/home.js): the garden plots, the sell crate on the beach, and in your
   // hut the trunk (your storage) and the bed.
   if (world.map.home && tendPlot(world)) return true;
+  // The farm's buildings: collect the eggs, wool and milk waiting there.
+  if (world.map.home && collectFarm(world)) return true;
   if (crateHere(world)) {
     world.events.push({ type: 'sellcrate' });
     return true;

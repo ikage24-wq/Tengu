@@ -83,6 +83,16 @@ window and a welcome mat (4), a star on the roof (5). Nothing withers and there 
   a rained-on plot ripens in three quarters of the time (its soil shows dark and wet).
 - **Someone living with you** (a sweetheart) picks whatever's ripe while you're away and puts it
   in the trunk; you're told when you come home. A crop that won't fit in storage they leave.
+- **The farm** (Shelly's "Build a farm", on the beach's east end; the player's "like Harvest Moon").
+  Three buildings, each with its animals, in the island look the player picked: a **Chicken Coop**
+  (stage 1, 5,000 gold: three tropical-crested hens, Sunny Eggs), a **Sheep Pen** (stage 2, 9,000:
+  two seafoam sheep in flower leis, Seafoam Wool) and a **Cow Barn** (stage 3, 15,000: two cream
+  cows with strawberry heart spots, Strawberry Milk). Nobody needs feeding or tending: every 24
+  minutes each animal makes its goods, up to three batches waiting (a bubble over the building
+  shows it); Up at the building collects them, and whoever lives with you collects them into the
+  trunk. By day they wander their yard, graze and look about; at night they walk home and sleep.
+  Eggs and milk cook into a Sunny Egg Tart and a Strawberry Milk Pudding; wool goes into the
+  Island Keepsakes.
 - **Fishing.** Three waters with the island's own fish: the sea (Seashell Wrasse), the pond
   (Waterfall Dace) and the grotto (Grotto Glowloach, and the legend, the Lantern Koi, at night
   only; Shelly's rumour tells of it). Each everyday one cooks into its own dish.
@@ -114,7 +124,10 @@ on the floor. Islands from before rooms had prices keep the ones their stages ga
 - **Crafted** at any bench, in the **Home** tab, from what you gather, mine, fish and hunt.
   Recipes need an island; the bakery set opens with the Tide Pond (stage 2), Starry Night with the
   Rocky Rise (3), the crown cushion with Coral Islet (4).
-- **23 pieces in four sets:** Seaside Cottage, Sweet Bakery, Starry Night, Trophies and Catches.
+- **28 pieces in five sets:** Seaside Cottage, Sweet Bakery, Starry Night, Trophies and Catches,
+  and **Island Keepsakes** (made from the island's own things: a Lighthouse Lamp whose beam turns at
+  night, a Seafoam Wool Rug, a Sea Melon Pouf, a Grotto Crystal Lamp glowing teal, a Gourd Lantern
+  String).
 - **Decorate mode** (Y, or the Decorate button at home): a bar of your furniture at the bottom; a
   see-through preview snaps to where it would go, green where it fits, red with a reason where it
   doesn't. Click to set down, click a placed piece to move it, F flips, Delete puts it away,
@@ -124,6 +137,11 @@ on the floor. Islands from before rooms had prices keep the ones their stages ga
   from a beam. Up to 60 pieces on the island and 60 in the hut.
 
 ## Visiting friends
+
+**Inviting your party:** in a room, ask Shelly to "Invite my party over": each party friend online
+gets an invite (Go! / Not now, for a minute) and arrives at your dock the usual way. Visitors see
+your island as it is (its rooms, what's growing, the farm and its animals) and can use your stove
+and craft bench.
 
 Online, right-click a friend and **Visit their island**: you arrive at their dock and see their
 island at its own stage with their furniture and their records on the trophies. Only people on the

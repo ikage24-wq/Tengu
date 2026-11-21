@@ -369,6 +369,37 @@ const ART = {
   star_lights(w, h) {
     return [];
   },
+  // ----- Island Keepsakes (2026-11-21): your island's own crops, catches and wool -----
+  isle_lighthouse(w, h) {
+    // A little lighthouse: stone base, white tower in two coral bands, the lamp room and cap.
+    const out = [R(1, h - 5, w - 2, 5, '#d8c8b8'), F(R(1, h - 5, w - 2, 1.2, '#f0e4d8'))];
+    out.push(T([[2.5, h - 5], [w - 2.5, h - 5], [w - 4.5, 12], [4.5, 12]], '#fffaf2'), F(T([[w / 2 + 1, h - 5], [w - 2.5, h - 5], [w - 4.5, 12], [w / 2 + 1, 12]], '#ece2e8')));
+    out.push(T([[3.4, 30], [w - 3.4, 30], [w - 3.8, 24], [4.2, 24]], '#ff8a8a'), T([[4.4, 20], [w - 4.4, 20], [w - 4.6, 15], [4.6, 15]], '#ff8a8a'));
+    out.push(R(3, 10, w - 6, 2.4, '#ff8a8a'), R(4.5, 4, w - 9, 6, '#d8f0ff'), F(R(w / 2 - 0.4, 4, 0.8, 6, '#ffffff')), T([[3, 4], [w - 3, 4], [w / 2, 0]], '#ff8a8a'));
+    out.push(T([[w / 2 - 2, h - 5], [w / 2 - 2, h - 10], [w / 2, h - 12], [w / 2 + 2, h - 10], [w / 2 + 2, h - 5]], '#8fd8c0'));
+    return out;
+  },
+  isle_rug(w, h) {
+    // Seafoam wool in rings, a wave stitched round its edge.
+    const out = [E(w / 2, h / 2, w / 2, h / 2, '#c8f0e8'), F(E(w / 2, h / 2, w / 2 - 8, h / 2 - 1, '#a8e4d8')), F(E(w / 2, h / 2, w / 2 - 20, h / 2 - 1.6, '#c8f0e8'))];
+    for (let x = 8; x < w - 6; x += 9) out.push(F(E(x, h / 2 + 0.6, 2.4, 0.9, '#ffffff')));
+    return out;
+  },
+  isle_pouf(w, h) {
+    // A round squashy seat striped like a sea melon, a stalk on top.
+    const out = [E(w / 2, h / 2 + 1, w / 2, h / 2 - 1, '#8fd8a8')];
+    for (const dx of [-7, 0, 7]) out.push(F(T([[w / 2 + dx - 1.2, 2.4], [w / 2 + dx + 1.2, 2.4], [w / 2 + dx * 1.3 + 1.2, h - 2], [w / 2 + dx * 1.3 - 1.2, h - 2]], '#5fae7a')));
+    out.push(F(E(w / 2 - 5, 5, 4, 2, '#c8f0d0')), R(w / 2 - 0.8, 0, 1.6, 3, '#6a8a4a'));
+    return out;
+  },
+  isle_crystal(w, h) {
+    // A teal crystal cluster from the grotto on a little stone.
+    return [E(w / 2, h - 2, w / 2, 2, '#8a9ab0'), T([[2, h - 3], [4, 6], [6, h - 3]], '#7fe6d6'), T([[4.5, h - 3], [w / 2, 0], [w - 4.5, h - 3]], '#9ff0e0'), T([[w - 6, h - 3], [w - 3, 8], [w - 1.5, h - 3]], '#7fe6d6'),
+      F(T([[w / 2 - 0.6, h - 4], [w / 2, 2], [w / 2 + 1.2, h - 4]], '#e6fffa'))];
+  },
+  isle_gourds(w, h) {
+    return [];
+  },
   star_scope(w, h) {
     const br = ramp('#e0b060', 0.8);
     return [T([[w / 2, 16], [2, h], [5, h]], '#8a6a4a'), T([[w / 2, 16], [w - 2, h], [w - 5, h]], '#8a6a4a'), T([[w / 2 - 1, 16], [w / 2 + 1, 16], [w / 2 + 1, h], [w / 2 - 1, h]], '#a8805a'), E(w / 2, 16, 3, 3, br.sh)];
@@ -636,6 +667,35 @@ export function drawPiece(ctx, p, x, y, time, { night = 0, char = null, ghost = 
       ctx.fill();
     }
   }
+  // Lantern gourds on a sagging line, each glowing warm (more after dark), swaying a little.
+  if (def.id === 'isle_gourds') {
+    const top = y - def.h;
+    ctx.strokeStyle = '#8a6a52';
+    ctx.lineWidth = 0.8;
+    ctx.beginPath();
+    for (let i = 0; i <= 16; i++) {
+      const u = i / 16;
+      const px = x - def.w / 2 + u * def.w;
+      const py = top + 2 + Math.sin(Math.PI * u) * 8;
+      if (i) ctx.lineTo(px, py);
+      else ctx.moveTo(px, py);
+    }
+    ctx.stroke();
+    for (let i = 1; i < 7; i++) {
+      const u = i / 7;
+      const px = x - def.w / 2 + u * def.w + Math.sin(time * 1.4 + i) * 0.8;
+      const py = top + 7 + Math.sin(Math.PI * u) * 8;
+      glow(ctx, px, py, 9, '#ffc070', 0.2 + night * 0.6);
+      ctx.fillStyle = '#ffa86b';
+      ctx.beginPath();
+      ctx.ellipse(px, py, 3.2, 3.6, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#ffe08a';
+      ctx.beginPath();
+      ctx.ellipse(px, py + 0.4, 1.6, 2, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
   ctx.save();
   if (p.flip) {
     ctx.translate(x, 0);
@@ -808,6 +868,23 @@ export function drawPiece(ctx, p, x, y, time, { night = 0, char = null, ghost = 
     }
   }
   if (def.id === 'sea_lamp' || def.id === 'bake_lamp') glow(ctx, x, top + 6, 18, '#ffe08a', 0.2 + night * 0.6);
+  if (def.id === 'isle_crystal') glow(ctx, x, top + 8, 16, '#7fe6d6', 0.15 + night * 0.55);
+  if (def.id === 'isle_lighthouse') {
+    // Its lamp, and at night a little beam turning.
+    glow(ctx, x, top + 7, 12, '#fff3a6', 0.2 + night * 0.6);
+    if (night > 0.2) {
+      const side = Math.cos(time * 0.8 + x * 0.01);
+      ctx.save();
+      ctx.globalAlpha *= 0.25 * night * Math.abs(side);
+      ctx.fillStyle = '#fff6c0';
+      ctx.beginPath();
+      ctx.moveTo(x, top + 6);
+      ctx.lineTo(x + Math.sign(side || 1) * 40, top + 1);
+      ctx.lineTo(x + Math.sign(side || 1) * 40, top + 12);
+      ctx.fill();
+      ctx.restore();
+    }
+  }
   if (def.id === 'bake_cake') {
     // Its glass dome, see-through, with a shine.
     ctx.save();

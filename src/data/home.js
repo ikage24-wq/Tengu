@@ -61,7 +61,30 @@ export const ISLAND_CROPS = [
   { id: 'lantern_gourd', name: 'Lantern Gourd', price: 140, color: '#ffa86b', tier: 3, stage: 5, desc: 'A round gourd that glows softly from inside, like the lighthouse. Simmered into a hotpot at a stove.', seed: { id: 'seed_lantern', name: 'Lantern Gourd Seeds', price: 900 } },
 ];
 export const CROP_BY_SEED = Object.fromEntries(ISLAND_CROPS.map((c) => [c.seed.id, c]));
-export const CROP_TIER = Object.fromEntries(ISLAND_CROPS.map((c) => [c.id, c.tier]));
+
+// The farm on the beach's east end (2026-11-21, the player's "like Harvest Moon"): three buildings
+// Shelly builds, each with its animals (the island look the player picked: tropical-crested hens,
+// seafoam sheep in flower leis, strawberry-milk cows). They wander their yard, graze, and go to bed
+// at night; nobody needs feeding or tending (the 2026-10-31 rule: no hungry-pet chores). Each makes
+// its goods on its own, `count` every FARM_SECS, up to FARM_CAP batches waiting; Up at the building
+// collects them (and whoever lives with you collects them into the trunk while you're away).
+// { id, name, animal, count, good, about, needs, gold, stage, x (its building), yard: [x1, x2] }.
+export const FARM_SECS = 24 * 60;
+export const FARM_CAP = 3;
+export const FARM = [
+  { id: 'coop', name: 'Chicken Coop', animal: 'hen', count: 3, good: 'sunny_egg', about: 'Three tropical hens and their coop on stilts. They lay Sunny Eggs on their own.', needs: { oak_log: 15, cotton: 8 }, gold: 5000, stage: 1, x: 1540, yard: [1494, 1600] },
+  { id: 'pen', name: 'Sheep Pen', animal: 'sheep', count: 2, good: 'seafoam_wool', about: 'Two seafoam sheep in a fenced pen with a shelter. Their wool grows on its own.', needs: { maple_log: 14, cotton: 12 }, gold: 9000, stage: 2, x: 1690, yard: [1626, 1756] },
+  { id: 'barn', name: 'Cow Barn', animal: 'cow', count: 2, good: 'strawberry_milk', about: 'Two strawberry-milk cows and their little barn. They give Strawberry Milk on their own.', needs: { maple_log: 20, iron_ore: 8, cotton: 10 }, gold: 15000, stage: 3, x: 1840, yard: [1770, 1900] },
+];
+export const FARM_BY_ID = Object.fromEntries(FARM.map((f) => [f.id, f]));
+// The farm's goods: eggs and milk for cooking, wool for the island furniture set (data/furniture.js).
+export const FARM_GOODS = [
+  { id: 'sunny_egg', name: 'Sunny Egg', price: 25, color: '#ffe07a', tier: 1, desc: 'A warm golden egg from your island\'s hens. Baked into tarts at a stove.' },
+  { id: 'strawberry_milk', name: 'Strawberry Milk', price: 45, color: '#ffc8d8', tier: 2, desc: 'Pink, sweet milk from your island\'s cows (yes, it comes out like that). Set into pudding at a stove.' },
+  { id: 'seafoam_wool', name: 'Seafoam Wool', price: 40, color: '#c8f0e8', tier: 2, desc: 'Soft sea-green wool from your island\'s sheep. Used in crafting at a town craft bench: the Island Keepsakes set.' },
+];
+// (The tier each of the island's own things cooks at: data/cooking.js.)
+export const CROP_TIER = Object.fromEntries([...ISLAND_CROPS, ...FARM_GOODS].map((c) => [c.id, c.tier]));
 
 // Sleeping at home (log off inside your hut): rested EXP like a night at the Gilded Kettle
 // (world/inn.js), at half its rate, so a room at the inn is still the better night; with the

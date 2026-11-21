@@ -505,6 +505,13 @@ export function setGroupHandler(fn) {
 // ---------- The world's hooks (merged into world.net) ----------
 
 export const togetherApi = {
+  // Your party over to your island (net/visit.js 'invite'): each friend online in your party gets
+  // an invite (ui/island-invite.js). Returns how many were asked.
+  inviteToIsland(world) {
+    const ids = online.party ? online.party.members.filter((id) => id !== online.id && online.ghosts.has(id)) : [];
+    for (const id of ids) send({ t: 'visit', op: 'invite', to: id, name: world.char.name });
+    return ids.length;
+  },
   // A catch: friends in the room hear about it.
   caught(world, fish) {
     send({ t: 'catch', fish: fish.id, name: fish.name, rarity: fish.rarity });

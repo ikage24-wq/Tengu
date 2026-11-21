@@ -1015,8 +1015,51 @@ function seedPacket(c) {
   };
 }
 
+// The farm's goods (data/home.js FARM_GOODS).
+function sunny_egg() {
+  const c = '#ffe07a';
+  return [...ball(oval(8, 9, 5, 6.2, 0, 26), c), S(oval(9.6, 11.4, 1.6, 1, -20, 10), sh(c)), ...glint(6, 6, 0.6)];
+}
+function strawberry_milk() {
+  // A little glass bottle of pink milk with a cap and a strawberry tag.
+  const out = [...ball(rrect(4.4, 4.4, 7.2, 10.6, 2), '#ffc8d8'), S(rrect(5.4, 1.6, 5.2, 3.4, 1), '#ffffff'), S(rrect(4.4, 4.4, 7.2, 2.4, 1), '#fff0f4')];
+  out.push(...disc(8, 10.6, 1.8, '#ff5a6e'), ...leaf([8, 8.6], [9.6, 7.8], 0.8, '#6fbf5a').shapes, ...glint(5.8, 6.6, 0.45));
+  return out;
+}
+function seafoam_wool() {
+  // A soft ball of sea-green wool, a strand trailing.
+  const out = [...ball(oval(8, 9, 6, 5.6, 0, 26), '#c8f0e8')];
+  for (const k of [-1, 0, 1]) out.push(line(arcPts(8 + k * 1.4, 9, 4.6, 4.2, 200 + k * 20, 330 + k * 20, 10), 0.4, '#8fd8c8'));
+  out.push(line(bez([12.6, 12], [14.6, 13], [14.2, 15], 8), 0.45, '#8fd8c8'), ...glint(5.4, 6.4, 0.5));
+  return out;
+}
+// Island Keepsakes (data/furniture.js).
+function isle_lighthouse() {
+  const out = [...ball([[5.4, 15], [10.6, 15], [9.6, 4.6], [6.4, 4.6]], '#fffaf2'), S([[5.8, 11], [10.2, 11], [10, 9], [6, 9]], '#ff8a8a'), S([[6.2, 7.4], [9.8, 7.4], [9.7, 6], [6.3, 6]], '#ff8a8a')];
+  out.push(S(rrect(6.2, 2.2, 3.6, 2.6, 0.6), '#ffe08a'), S([[5.6, 2.4], [10.4, 2.4], [8, 0.6]], '#ff8a8a'), twinkle(12.6, 3, 1.2, '#fff3a6'));
+  return out;
+}
+function isle_rug() {
+  return [...ball(oval(8, 9, 7, 4.4, 0, 28), '#c8f0e8'), S(oval(8, 9, 4.6, 2.8, 0, 22), '#a8e4d8'), S(oval(8, 9, 2.2, 1.3, 0, 14), '#c8f0e8'), ...glint(4.6, 7.4, 0.4)];
+}
+function isle_pouf() {
+  const out = [...ball(oval(8, 9.6, 6.4, 5, 0, 26), '#8fd8a8')];
+  for (const k of [-3, 0, 3]) out.push(line(arcPts(8 + k, 9.6, 1.6 + Math.abs(k) * 0.6, 4.8, -80, 80, 8), 0.5, '#5fae7a'));
+  out.push(S(tube(bez([8, 4.8], [8.2, 3.4], [9.2, 2.8], 6), 0.4), '#6a8a4a'), ...glint(4.8, 7.4, 0.5));
+  return out;
+}
+function isle_crystal() {
+  return [S(oval(8, 13.6, 5.4, 1.8, 0, 16), '#8a9ab0'), ...ball([[4, 13], [5.4, 6], [7, 13]], '#7fe6d6'), ...ball([[6, 13], [8, 2], [10, 13]], '#9ff0e0'), ...ball([[9.4, 13], [11.2, 7], [12.6, 13]], '#7fe6d6'), twinkle(12.8, 3.6, 1.2, '#e6fffa')];
+}
+function isle_gourds() {
+  const out = [line(bez([1, 4], [8, 9], [15, 4], 12), 0.5, '#8a6a52')];
+  for (const [x, y] of [[4, 7.4], [8, 9.4], [12, 7.4]]) out.push(...disc(x, y + 2, 2.4, '#ffa86b'), S(oval(x, y + 2.3, 1.1, 1.3, 0, 10), '#ffe08a'));
+  return out;
+}
+
 const ART = {
-  sea_melon, sun_pineapple, lantern_gourd,
+  sea_melon, sun_pineapple, lantern_gourd, sunny_egg, strawberry_milk, seafoam_wool,
+  isle_lighthouse, isle_rug, isle_pouf, isle_crystal, isle_gourds,
   seed_seamelon: seedPacket('#8fd8a8'), seed_sunpine: seedPacket('#ffd05a'), seed_lantern: seedPacket('#ffa86b'),
   look_gacha_dewsparkle_face: dewsparkle,
   royal_jelly, home_shell, mount_kettle, mount_nimbus, lantern_bait,

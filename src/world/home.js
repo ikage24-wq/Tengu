@@ -18,7 +18,7 @@ import { MAPS } from '../data/maps.js';
 import { SPOTS, FISH } from '../data/fishing.js';
 import { SPOT, TIER_LV, FIND_TIER, TIER_FINDS, NODES } from '../data/gathering.js';
 import { ITEMS } from '../data/items.js';
-import { HOME_STAGES, HOME_MAX, HOME_SEA_POOL, HOME_POND_POOL, HOME_GROTTO_POOL, PLOTS_AT, PLANTABLE, NIGHT_PLANTS, GROW_SECS, GROW_YIELD, NIGHT_YIELD, RAIN_GROW, ISLAND_CROPS, CROP_BY_SEED, CROP_TIER, ROOM_BY_ID } from '../data/home.js';
+import { HOME_STAGES, HOME_MAX, HOME_SEA_POOL, HOME_POND_POOL, HOME_GROTTO_POOL, PLOTS_AT, PLANTABLE, NIGHT_PLANTS, GROW_SECS, GROW_YIELD, NIGHT_YIELD, RAIN_GROW, ISLAND_CROPS, CROP_BY_SEED, CROP_TIER, ROOM_BY_ID, FARM, FARM_BY_ID, FARM_SECS, FARM_CAP } from '../data/home.js';
 import { countItem, removeItem, addItem } from '../core/inventory.js';
 import { stashItem } from '../core/storage.js';
 import { lifeLevel, lifeAction } from '../core/life.js';
@@ -38,6 +38,7 @@ export const TIER_STAGE = { garden: 1, rise: 3, islet: 4, summit: 5 };
 
 // The beach's fixtures.
 export const CRATE_X = 340;
+const LADDER_X = 1456;
 export const PLOT_X = [520, 600, 680, 760, 840, 920];
 const PLOT_REACH = 30;
 // The zip line: from the post on the summit down to the post on the dock. A rider hangs `hang`
@@ -98,7 +99,9 @@ export function homeMap(stage = 1) {
   if (s >= 2) platforms.push({ x: 988, y: G - 12, w: 58, style: 'planks', dock: true });
   if (built(s, 'rise')) {
     platforms.push({ x: TIER_X.rise[0], y: TIER_Y.rise, w: TIER_X.rise[1] - TIER_X.rise[0], bare: true });
-    ropes.push({ x: 1846, top: TIER_Y.rise, bottom: G, ladder: true });
+    // (Up the cliff by the summit, so the farm has the beach's east end; the summit's ladder
+    // carries on straight up from its top.)
+    ropes.push({ x: LADDER_X, top: TIER_Y.rise, bottom: G, ladder: true });
   }
   if (built(s, 'islet')) {
     // The rope bridge from the rise out to the sea stack (render/island.js draws it), and its top.
@@ -107,7 +110,7 @@ export function homeMap(stage = 1) {
   }
   if (built(s, 'summit')) {
     platforms.push({ x: TIER_X.summit[0], y: TIER_Y.summit, w: TIER_X.summit[1] - TIER_X.summit[0], bare: true });
-    ropes.push({ x: 1452, top: TIER_Y.summit, bottom: TIER_Y.rise, ladder: true });
+    ropes.push({ x: LADDER_X, top: TIER_Y.summit, bottom: TIER_Y.rise, ladder: true });
   }
   // Fishing: the sea off the beach's far end, and the pond from its jetty.
   const spots = [{ x: 1948, y: G, face: 1, bx: 2012, by: WATER + 2, sea: true, tier: 1, pool: HOME_SEA_POOL }];
@@ -145,7 +148,9 @@ export function homeMap(stage = 1) {
     // The falls (and, half behind them, the grotto's mouth), then the hut in front of the headland.
     ...(s >= 2 ? [['grotto', 1128], ['waterfall', 1098], ['reeds', 990]] : [['seep', 1098]]),
     ['hut', 1290, s],
-    ['palm', 1520, 1], ['rockpools', 1730], ['palm', 1890, -1],
+    // The farm on the beach's east end (its buildings and animals: render/island.js), and a palm
+    // leaning out over the fishing nook.
+    ['farm', 1700, s], ['palm', 1928, -1],
     ...(built(s, 'islet') ? [['ropebridge', TIER_X.rise[1]], ['islethut', 2222], ['tierpalm', 2338, TIER_Y.islet]] : []),
     ...(built(s, 'summit') ? [['terrace', 1262], ['isle_lighthouse', 1402], ['zipline', ZIP.x1]] : []),
   ];
@@ -294,6 +299,9 @@ export function refreshHome(char, guest = null) {
   const home = (guest ?? char).home;
   if (home) home.plots ??= [];
   map.plots = home?.plots ?? [];
+  // The farm's buildings and their animals (render/island.js draws them; homeTick moves them).
+  map.farm = FARM.filter((f) => home?.farm?.[f.id]).map((f) => ({ def: f, entry: home.farm[f.id] }));
+  map.animals = map.farm.flatMap(({ def }) => Array.from({ length: def.count }, (_, k) => newAnimal(def, k)));
   // (A friend who hasn't been home since the tall rework: their outdoor furniture stood on the old
   // strip, so it isn't shown until they move in themselves.)
   if (guest?.home && guest.home.layout !== 2) guest.home.placed = (guest.home.placed ?? []).filter((p) => p.map !== 'home');
@@ -445,6 +453,7 @@ export function homeTick(world, dt) {
     pond.y += (want - pond.y) * Math.min(1, dt * 0.5);
   }
   if (rain && !map.guestOf) for (const p of world.char.home?.plots ?? []) if (p?.id && !p.wet) p.wet = true;
+  for (const a of map.animals ?? []) tickAnimal(a, dt, (map.night ?? 0) > 0.6);
 }
 
 // Coming home with someone living with you: while you were away they picked whatever was ripe on
@@ -460,7 +469,133 @@ export function helperPicks(char, w, now = nowSecs()) {
     got.push({ id: plot.id, n });
     char.home.plots[i] = null;
   });
+  // (And the farm's eggs, wool and milk.)
+  for (const f of FARM) {
+    const entry = char.home.farm?.[f.id];
+    const n = farmReady(entry, f, now);
+    if (!n || !stashItem(w, f.good, n)) continue;
+    takeFarm(entry, now);
+    got.push({ id: f.good, n });
+  }
   return got;
+}
+
+// ---------- The farm (data/home.js FARM) ----------
+// `home.farm`: { [building]: { at } } (when its animals last gave their goods). Shelly builds each
+// building, its animals with it; they give `count` goods every FARM_SECS, up to FARM_CAP batches.
+export const farmBuilt = (home, id) => Boolean(home?.farm?.[id]);
+export function farmReady(entry, def, now = nowSecs()) {
+  if (!entry) return 0;
+  return Math.min(FARM_CAP, Math.floor((now - entry.at) / FARM_SECS)) * def.count;
+}
+function takeFarm(entry, now) {
+  const b = Math.floor((now - entry.at) / FARM_SECS);
+  entry.at = b >= FARM_CAP ? now : entry.at + b * FARM_SECS;
+}
+// What a building needs, like a room's.
+export function farmNeeds(char, id) {
+  const def = FARM_BY_ID[id];
+  if (!def) return null;
+  return {
+    def,
+    built: farmBuilt(char.home, id),
+    stageOk: (char.home?.stage ?? 1) >= def.stage,
+    items: Object.entries(def.needs).map(([iid, need]) => ({ id: iid, need, have: countItem(char.inventory, iid) })),
+    gold: def.gold,
+    haveGold: char.gold,
+  };
+}
+// Shelly builds a farm building (and its animals arrive). Returns its name or why not.
+export function buildFarm(char, id, now = nowSecs()) {
+  const n = farmNeeds(char, id);
+  if (!n || !char.home) return "There's no such building.";
+  if (n.built) return `Your ${n.def.name} is already built!`;
+  if (!n.stageOk) return `Shelly needs ${HOME_STAGES[n.def.stage].name} built first.`;
+  if (n.haveGold < n.gold || n.items.some((i) => i.have < i.need)) return "You don't have everything she needs yet.";
+  char.gold -= n.gold;
+  for (const i of n.items) removeItem(char.inventory, i.id, i.need);
+  (char.home.farm ??= {})[id] = { at: now };
+  refreshHome(char);
+  return n.def.name;
+}
+// The farm building you're standing at (on your own island's beach), or null.
+export function farmHere(world) {
+  if (world.map.id !== 'home' || world.map.guestOf || Math.abs(world.body.y - G) > 4) return null;
+  return (world.map.farm ?? []).find(({ def }) => Math.abs(world.body.x - def.x) < 40)?.def ?? null;
+}
+// Up at a building: collect what's waiting, or hear how long it'll be. Returns true if handled.
+const GOOD_WORD = { sunny_egg: 'lay', strawberry_milk: 'give milk', seafoam_wool: 'grow wool' };
+export function collectFarm(world, now = nowSecs()) {
+  const def = farmHere(world);
+  if (!def) return false;
+  const entry = world.char.home.farm[def.id];
+  const n = farmReady(entry, def, now);
+  if (!n) {
+    const mins = Math.max(1, Math.ceil((entry.at + FARM_SECS - now) / 60));
+    world.log(`Your ${def.animal === 'sheep' ? 'sheep' : `${def.animal}s`} ${GOOD_WORD[def.good]} again in about ${mins} minute${mins === 1 ? '' : 's'}.`, '#cfe8ff');
+    return true;
+  }
+  if (!addItem(world.char.inventory, def.good, n)) {
+    world.log('Your bag is full. Make some room and come back for them.', '#ffb3c6');
+    return true;
+  }
+  takeFarm(entry, now);
+  world.log(`You collect ${n} ${ITEMS[def.good].name}${n > 1 ? 's' : ''} from the ${def.name}.`, '#ffe9a6');
+  world.lastGathered = { x: def.x, y: G - 30, items: [def.good], at: world.now };
+  return true;
+}
+
+// The animals: they wander their own yard, stop to graze or look about, turn round (a short pause,
+// then a mirror flip), and at night walk home to their building and sleep. Steady, eased steps:
+// speed eases up and down; the walk cycle runs by the distance walked (render/island.js).
+const SPEED = { hen: 30, sheep: 22, cow: 18 };
+function newAnimal(def, k) {
+  const [x1, x2] = def.yard;
+  const seed = (def.id.length * 97 + k * 131) % 997;
+  return { kind: def.animal, building: def.id, yard: def.yard, home: def.x + (k - (def.count - 1) / 2) * 18, x: x1 + ((k + 0.5) / def.count) * (x2 - x1), dir: k % 2 ? -1 : 1, v: 0, state: 'idle', t: 1 + k * 0.7, walked: 0, target: null, seed, rng: seed };
+}
+// (A tiny seeded random per animal, so they don't all move in step.)
+const rnd = (a) => ((a.rng = (a.rng * 9301 + 49297) % 233280) / 233280);
+export function tickAnimal(a, dt, night) {
+  a.t -= dt;
+  // (Bedtime: home to their building, wherever they were off to.)
+  if (night && a.state !== 'sleep' && a.state !== 'turn' && !(a.state === 'walk' && a.target === a.home)) Object.assign(a, { state: 'walk', target: a.home });
+  if (a.state === 'walk') {
+    const want = a.target - a.x;
+    const dir = Math.sign(want) || a.dir;
+    if (dir !== a.dir) {
+      // Turning round: stop and look, then face the other way.
+      a.v = 0;
+      Object.assign(a, { state: 'turn', t: 0.25, next: dir });
+      return;
+    }
+    const top = SPEED[a.kind] * (Math.abs(want) < 12 ? Math.max(0.3, Math.abs(want) / 12) : 1);
+    a.v += (top - a.v) * Math.min(1, dt * 3);
+    const step = Math.min(Math.abs(want), a.v * dt);
+    a.x += dir * step;
+    a.walked += step;
+    if (Math.abs(a.target - a.x) < 0.5) {
+      a.v = 0;
+      a.state = night ? 'sleep' : 'idle';
+      a.t = 1.5 + rnd(a) * 3;
+    }
+    return;
+  }
+  if (a.state === 'turn') {
+    if (a.t <= 0) Object.assign(a, { dir: a.next, state: 'walk' });
+    return;
+  }
+  if (a.state === 'sleep') {
+    if (!night) Object.assign(a, { state: 'idle', t: 1 + rnd(a) * 2 });
+    return;
+  }
+  if (a.t > 0) return;
+  const r = rnd(a);
+  if (r < 0.5) {
+    const [x1, x2] = a.yard;
+    Object.assign(a, { state: 'walk', target: x1 + 8 + rnd(a) * (x2 - x1 - 16), t: 20 });
+  } else if (r < 0.8) Object.assign(a, { state: 'graze', t: 2 + rnd(a) * 3 });
+  else Object.assign(a, { state: 'idle', t: 1.5 + rnd(a) * 2.5 });
 }
 
 // Up at a plot: pick it when it's ripe (kneeling and tugging, like the Mochi Garden's crop bed), say
