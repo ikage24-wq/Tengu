@@ -1111,15 +1111,23 @@ function drawMinimap(ui, world) {
   arrow(1);
   ctx.restore();
   // The map's calm (world/calm.js) on the right of the title bar: a petal and a little bar that
-  // fills pink as the map calms, and glows once it's calm.
+  // fills pink as the map calms, and glows once it's calm. (Between the name's tape and the fold
+  // and size buttons, shorter when a long name leaves less room: it sat over both buttons, the
+  // 2026-11-21 NPC sweep. With no room at all, just inside the map's top corner.)
   if (soothes(map)) {
     const v = calmOf(world);
-    const bx = x + w - 40;
-    const by = y - 10;
-    box(ctx, bx, by, 36, 5, { fill: 'rgba(255,255,255,0.85)', edge: null, r: 2.5 });
-    box(ctx, bx, by, Math.max(5, 36 * v), 5, { fill: v >= CALM ? '#ff7fb6' : v < SOUR ? '#b8b0c8' : '#ffb3d1', edge: null, r: 2.5 });
+    const right = x + w - 27;
+    let bx = Math.max(x + nw + 12, right - 36);
+    let by = y - 10;
+    if (right - bx < 14) {
+      bx = x + w - 40;
+      by = y + 4;
+    }
+    const bw = by < y ? right - bx : 36;
+    box(ctx, bx, by, bw, 5, { fill: 'rgba(255,255,255,0.85)', edge: null, r: 2.5 });
+    box(ctx, bx, by, Math.max(5, bw * v), 5, { fill: v >= CALM ? '#ff7fb6' : v < SOUR ? '#b8b0c8' : '#ffb3d1', edge: null, r: 2.5 });
     icon(ctx, 'heart', bx - 6, by + 2.5, 6, v >= CALM ? '#ff5fa2' : '#ffffff');
-    if (hover(ui, bx - 10, by - 3, 48, 11)) tooltip(ui, v >= CALM ? 'Calm: its spirit is back. More EXP here, extra finds when gathering.' : v < SOUR ? 'Souring: hunt here to calm it.' : `Calming: ${Math.round(v * 100)}%. Hunt here to calm it.`);
+    if (hover(ui, bx - 10, by - 3, bw + 12, 11)) tooltip(ui, v >= CALM ? 'Calm: its spirit is back. More EXP here, extra finds when gathering.' : v < SOUR ? 'Souring: hunt here to calm it.' : `Calming: ${Math.round(v * 100)}%. Hunt here to calm it.`);
   }
 }
 

@@ -621,7 +621,16 @@ export function npcWindow(ui, state, world) {
   dlg.words ??= npc.role === 'sweetheart' ? greetingFor(world, npc.id) : null;
   const hello = dlg.words ?? (npc.nightGreeting && isNight(world) ? npc.nightGreeting : npc.greeting);
   const chars = typed(ui, dlg, `hi:${dlg.id}:${hello.length}`, world, area, hello);
-  const end = wrap(ctx, hello, tx, area.y + 2, tw, { size: 8.5, chars, lineHeight: 11.5 });
+  // (A long greeting steps its text down a little so its last line never runs under the choices:
+  // Chef Praline's "...and a spoon." hid behind her buttons, the 2026-11-21 NPC sweep.)
+  const top = area.bottom - rows * 24 + 2;
+  let size = 8.5;
+  let lineHeight = 11.5;
+  while (size > 7 && wrap(ctx, hello, tx, area.y + 2, tw, { size, chars: 0, lineHeight }) - lineHeight + size * 0.5 > top) {
+    size -= 0.5;
+    lineHeight -= 0.75;
+  }
+  const end = wrap(ctx, hello, tx, area.y + 2, tw, { size, chars, lineHeight });
   if (chars >= hello.length) sparkle(ctx, tx + tw - 4, end - 10 + Math.sin(world.now * 6) * 1.5, 2.5, th.main);
   const colW = (tw - 6) / 2;
   choices.forEach((c, i) => {
