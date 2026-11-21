@@ -138,7 +138,9 @@ export const MOBS = {
   }),
   gloombat: mob({
     id: 'gloombat', name: 'Imp', level: 22, hp: 740, atk: 67, def: 15, acc: 50, eva: 8, exp: 540, gold: [7, 18],
-    speed: 86, gait: 'dart', w: 32, h: 30, art: 'gloombat', fly: true, drops: [{ id: 'bat_wing', chance: 0.65 }, { id: 'silver_ore', chance: 0.08 }],
+    // (A touch slower since the 2026-11-21 playthrough: darting at 86 it was the slowest hunt in the
+    // game for its three 'beat 15' quests.)
+    speed: 66, gait: 'dart', w: 32, h: 30, art: 'gloombat', fly: true, drops: [{ id: 'bat_wing', chance: 0.65 }, { id: 'silver_ore', chance: 0.08 }],
   }),
   boneknight: mob({
     id: 'boneknight', name: 'Dullahan', level: 24, hp: 1120, atk: 78, def: 30, acc: 54, eva: 6, exp: 700, gold: [9, 21],
@@ -758,7 +760,9 @@ export const MOBS = {
   // throne room with the Queen's alarm clock (world/story.js QUEENS.nightking). Health beside
   // Selene's, the trial before.
   nightking: mob({
-    id: 'nightking', name: 'Prismaris, the Crystal King', level: 49, hp: 170000, atk: 286, def: 64, acc: 116, eva: 12, exp: 140000,
+    // (Health raised 2026-11-21: tools/bossfair.mjs had a player at this level's gear down its in
+    // under a minute, too short to see all its moves; now about a minute for it, two for most players.)
+    id: 'nightking', name: 'Prismaris, the Crystal King', level: 49, hp: 360000, atk: 286, def: 64, acc: 116, eva: 12, exp: 140000,
     gold: [800, 1150], speed: 34, w: 100, h: 130, art: 'crystalking', boss: true, setOf: 'crystalking',
     drops: [{ id: 'king_crystal', chance: 1 }, { id: 'elixir', chance: 1, qty: 5 }],
     special: { kind: 'slam', every: 5.5, warn: 1.2, damage: 440, range: 420 },
@@ -766,7 +770,9 @@ export const MOBS = {
   // The finale (Chapter 10, 2026-11-19): the Queen's alarm clock grown giant, ringing to send her
   // back to Monday. A solo trial at dawn by the palace (world/story.js QUEENS.alarm), three snoozes.
   alarm: mob({
-    id: 'alarm', name: 'The Alarm', level: 50, hp: 220000, atk: 300, def: 68, acc: 120, eva: 10, exp: 200000,
+    // (Health raised 2026-11-21: tools/bossfair.mjs had a player at this level's gear down its in
+    // under a minute, too short to see all its moves; now about a minute for it, two for most players.)
+    id: 'alarm', name: 'The Alarm', level: 50, hp: 275000, atk: 300, def: 68, acc: 120, eva: 10, exp: 200000,
     gold: [1000, 1500], speed: 30, w: 100, h: 130, art: 'alarm', boss: true,
     drops: [{ id: 'elixir', chance: 1, qty: 10 }],
     special: { kind: 'slam', every: 6, warn: 1.2, damage: 460, range: 420 },
@@ -795,13 +801,17 @@ export const MOBS = {
     special: { kind: 'slam', every: 6, warn: 1.5, damage: 240, range: 260 },
   }),
   lilith: mob({
-    id: 'lilith', name: 'Lilith, the Succubus Queen', level: 38, hp: 110000, atk: 220, def: 48, acc: 94, eva: 12, exp: 90000,
+    // (Health raised 2026-11-21: tools/bossfair.mjs had a player at this level's gear down her in
+    // under a minute, too short to see all her moves; now about a minute for it, two for most players.)
+    id: 'lilith', name: 'Lilith, the Succubus Queen', level: 38, hp: 250000, atk: 220, def: 48, acc: 94, eva: 12, exp: 90000,
     gold: [570, 920], speed: 36, w: 62, h: 120, art: 'lilith', boss: true,
     drops: [{ id: 'bat_wing', chance: 1, qty: 20 }, { id: 'shade_cloth', chance: 1, qty: 5 }, { id: 'elixir', chance: 1, qty: 4 }],
     special: { kind: 'slam', every: 6, warn: 1.1, damage: 360, range: 400 },
   }),
   selene: mob({
-    id: 'selene', name: 'Selene, the Moon Valkyrie', level: 50, hp: 190000, atk: 290, def: 66, acc: 118, eva: 14, exp: 150000,
+    // (Health raised 2026-11-21: tools/bossfair.mjs had a player at this level's gear down her in
+    // under a minute, too short to see all her moves; now about a minute for it, two for most players.)
+    id: 'selene', name: 'Selene, the Moon Valkyrie', level: 50, hp: 300000, atk: 290, def: 66, acc: 118, eva: 14, exp: 150000,
     gold: [810, 1200], speed: 40, w: 62, h: 122, art: 'selene', boss: true,
     drops: [{ id: 'stardust', chance: 1, qty: 20 }, { id: 'moon_plume', chance: 0.5 }, { id: 'elixir', chance: 1, qty: 5 }],
     special: { kind: 'slam', every: 5.5, warn: 1.2, damage: 480, range: 440 },

@@ -9,6 +9,10 @@ const SAME_FOR = 600;
 const GAP = 4;
 const PER_MIN = 7;
 const OWN_GAP = 30;
+const BOSS_BUBBLE_GAP = 3.5;
+
+// Whether a boss is up and close to you on this map (in a fight with it, or about to be).
+const bossNear = (world) => (world.mobs ?? []).some((m) => m.def?.boss && m.hp > 0 && Math.abs(m.x - (world.body?.x ?? m.x)) < 900);
 
 // What a line comes down to: no names, numbers, emoticons or punctuation.
 export function shape(text, names = []) {
@@ -35,10 +39,18 @@ export function botChat(world, bot, text, { color = '#e6dcff', prefix = '', impo
   const key = shape(text, [world.char?.name, bot.name]);
   if (!key || (!repeat && g.said.has(key) && world.now - g.said.get(key) < SAME_FOR)) return false;
   if (!important && !repeat && world.now - (bot.chatAt ?? -99) < OWN_GAP) return false;
+  // (While a boss is up near you, the fight stays readable: no idle chatter at all, and only one
+  // bubble over anyone's head every few seconds; a callout past that still reaches your chat log.
+  // Party lines and the boss's own piled up over its telegraphs, the 2026-11-21 playthrough.)
+  const boss = bot.map === world.map?.id && bossNear(world);
+  if (boss && !important) return false;
+  const bubble = !boss || world.now - (g.bossBubbleAt ?? -99) >= BOSS_BUBBLE_GAP;
+  if (boss && bubble) g.bossBubbleAt = world.now;
   bot.chatAt = world.now;
   g.said.set(key, world.now);
   if (g.said.size > 400) for (const [k, t] of g.said) if (world.now - t >= SAME_FOR) g.said.delete(k);
-  bot.bubble = { text, t };
+  if (bubble) bot.bubble = { text, t };
+  else if (!log) return true;
   if (!log || bot.map !== world.map.id || !world.log) return true;
   g.recent = g.recent.filter((t) => world.now - t < 60);
   if (!important && (world.now - g.last < GAP || g.recent.length >= PER_MIN)) return true;

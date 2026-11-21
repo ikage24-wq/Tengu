@@ -445,8 +445,9 @@ export const MAPS = {
     }),
     // Its monsters, placed by hand, few and spread out, none near the ways in or out.
     spawns: [
-      // The Temple Roof.
+      // The Temple Roof. (Two more Imps since the 2026-11-21 playthrough: three quests want 15 each.)
       { mob: 'gloombat', x: 660, y: 330 }, { mob: 'gloombat', x: 1100, y: 350 }, { mob: 'gloombat', x: 1580, y: 360 },
+      { mob: 'gloombat', x: 880, y: 340 }, { mob: 'gloombat', x: 1340, y: 360 },
       // The Collapsed Halls.
       { mob: 'wisp', x: 420, y: 680 }, { mob: 'wisp', x: 1270, y: 712 }, { mob: 'gloombat', x: 1400, y: 580 }, { mob: 'wisp', x: 1520, y: 740 },
       // The Sunken Crypt.

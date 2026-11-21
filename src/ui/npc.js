@@ -169,7 +169,15 @@ function typed(ui, dlg, page, world, area, text = '') {
     dlg.page = page;
     dlg.typedAt = world.now;
   }
-  if (clicked(ui, area.x, area.y - 10, area.w, 30) || ui.input.pressed?.has('Space')) dlg.typedAt = -1e9;
+  // A click, Space, Enter or Z while it's still typing shows it all at once. (Enter used to do
+  // nothing until the words were out, so a quick press felt ignored: the 2026-11-21 playthrough.
+  // That press is used up here, so it doesn't also accept or open the chat.)
+  const pressed = ui.input.pressed;
+  const typing = (world.now - dlg.typedAt) * 70 < len;
+  if (clicked(ui, area.x, area.y - 10, area.w, 30) || pressed?.has('Space') || (typing && (pressed?.has('Enter') || pressed?.has('KeyZ')))) {
+    dlg.typedAt = -1e9;
+    if (typing) pressed?.delete('Enter');
+  }
   const n = (world.now - dlg.typedAt) * 70;
   dlg.talking = n < len;
   // Their voice: a blip every other letter as the words type out (none on spaces), at their own
