@@ -3,8 +3,8 @@
 import { NPCS } from '../data/npcs.js';
 import { sfx } from '../audio/sfx.js';
 import { MOUNTS } from '../data/mounts.js';
-import { HOME_STAGES } from '../data/home.js';
-import { nextStageNeeds, buildNext } from '../world/home.js';
+import { HOME_STAGES, HOME_ROOMS } from '../data/home.js';
+import { nextStageNeeds, buildNext, roomNeeds, buildRoom } from '../world/home.js';
 import { QUESTS } from '../data/quests.js';
 import { ITEMS } from '../data/items.js';
 import { MOBS } from '../data/mobs.js';
@@ -350,9 +350,25 @@ export function npcWindow(ui, state, world) {
   // Shelly builds your island up (world/home.js).
   if (npc.role === 'builder' && world.map.guestOf) {
     choices.push({ label: 'Lovely island!', sub: `This is ${world.map.guestOf.name}'s. I built it all!`, icon: 'heart', run: () => say(world, 'shelly', `Isn't it? ${world.map.guestOf.name} brings me the best bits. Come back any time!`) });
+  } else if (npc.role === 'builder' && dlg.roomList) {
+    // The hut's rooms (data/home.js HOME_ROOMS), each with its own price; pick one to see it.
+    choices.length = 0;
+    for (const r of HOME_ROOMS) {
+      const rn = roomNeeds(char, r.id);
+      const sub = rn.built ? 'Built!' : !rn.stageOk ? `Needs ${HOME_STAGES[r.stage].name} first` : `${r.gold.toLocaleString()} gold · ${r.about}`;
+      choices.push({ label: `Room: ${r.name}`, sub, icon: rn.built ? 'star' : 'hammer', primary: !rn.built && rn.stageOk, run: () => {
+        dlg.roomList = false;
+        if (rn.built) say(world, 'shelly', `Your ${r.name}? Already done! I even swept it.`);
+        else dlg.build = { room: r.id };
+      } });
+    }
+    choices.push({ label: 'Back', sub: 'Something else', icon: 'door', run: () => (dlg.roomList = false) });
   } else if (npc.role === 'builder') {
     const n = nextStageNeeds(char);
     choices.push(n ? { label: `Build: ${n.def.name}`, sub: n.def.about, icon: 'hammer', primary: true, run: () => (dlg.build = true) } : { label: 'All built!', sub: 'Your island is finished. Make it yours!', icon: 'star', run: () => say(world, 'shelly', "It's perfect, isn't it? I might need a bigger shell...") });
+    // Rooms for the hut, each built for its own price.
+    const left = HOME_ROOMS.filter((r) => !roomNeeds(char, r.id).built).length;
+    choices.push({ label: 'Build a room', sub: left ? `${left} room${left > 1 ? 's' : ''} she could add to your hut` : 'Every room is built!', icon: 'hammer', run: () => (dlg.roomList = true) });
   }
   // Clover the Puff Bun keeper: your mounts, in the Collection.
   if (npc.role === 'stable' && char.mounts?.length) {
@@ -696,13 +712,15 @@ function buildPage(ui, state, world, area) {
   const { ctx } = ui;
   const dlg = state.npc;
   const char = world.char;
-  const n = nextStageNeeds(char);
+  // (A room for the hut, `dlg.build.room`, or else the island's next stage.)
+  const room = dlg.build?.room ?? null;
+  const n = room ? roomNeeds(char, room) : nextStageNeeds(char);
   const { x: tx, w: tw, theme: th } = area;
-  if (!n) {
+  if (!n || n.built) {
     dlg.build = false;
     return;
   }
-  text(ctx, `Stage ${n.stage}: ${n.def.name}`, tx, area.y, { size: 9, bold: true, color: th.ink });
+  text(ctx, room ? `A room: ${n.def.name}` : `Stage ${n.stage}: ${n.def.name}`, tx, area.y, { size: 9, bold: true, color: th.ink });
   wrap(ctx, n.def.about, tx, area.y + 12, tw, { size: 7, lineHeight: 9, color: COLORS.muted });
   let x = tx;
   const y = area.y + 34;
@@ -715,9 +733,27 @@ function buildPage(ui, state, world, area) {
   }
   const goldOk = n.haveGold >= n.gold;
   text(ctx, `${n.gold.toLocaleString()} gold`, x + 4, y + 16, { size: 8, bold: true, color: goldOk ? COLORS.gold : COLORS.bad });
-  const ready = goldOk && n.items.every((i) => i.have >= i.need);
+  const ready = goldOk && n.items.every((i) => i.have >= i.need) && (n.stageOk ?? true);
   const by = area.bottom - 16;
-  if (button(ui, tx + tw - 154, by, 74, 17, ready ? 'Build it!' : 'Not yet', { primary: ready, enabled: ready, size: 8 })) {
+  if (room && !n.stageOk) text(ctx, `Shelly needs ${HOME_STAGES[n.def.stage].name} built first.`, tx, by + 11, { size: 7, bold: true, color: COLORS.bad });
+  if (room && button(ui, tx + tw - 154, by, 74, 17, ready ? 'Build it!' : 'Not yet', { primary: ready, enabled: ready, size: 8 })) {
+    const r = buildRoom(char, room);
+    if (r === n.def.name) {
+      world.log(`Shelly built your ${r}! ${n.def.about}`, '#ffe36b');
+      say(world, 'shelly', ['A whole new room! Go on, have a look!', 'Done! I measured twice. Well, once. It\'s fine!', 'Your hut\'s getting fancy!'][char.home.rooms.length % 3]);
+      // (Inside the hut, it opens round you.)
+      if (world.map.id === 'home_in') {
+        const x0 = world.body.x;
+        loadMap(world, 'home_in', 'door');
+        world.body.x = x0;
+      }
+      state.npc = null;
+      state.windows.npc.open = false;
+      return;
+    }
+    world.log(r, '#ffb3c6');
+  }
+  if (!room && button(ui, tx + tw - 154, by, 74, 17, ready ? 'Build it!' : 'Not yet', { primary: ready, enabled: ready, size: 8 })) {
     const r = buildNext(char);
     if (typeof r === 'number') {
       world.log(`Shelly built ${HOME_STAGES[r].name}! ${HOME_STAGES[r].about}`, '#ffe36b');

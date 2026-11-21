@@ -37,6 +37,17 @@ function put(list, entry) {
   }
 }
 
+// Puts `qty` of an Etc item straight into a world's storage (whoever lives on your island picking
+// your ripe crops for you: world/home.js), only if all of it fits. Returns true when it went in.
+export function stashItem(world, id, qty) {
+  world.storage ??= {};
+  const list = (world.storage.etc ??= []);
+  const entry = { id, qty };
+  if (!ITEMS[id] || !fits(list, entry)) return false;
+  put(list, entry);
+  return true;
+}
+
 // Moves cell `i` of `tab` from one inventory to the other. Returns true when it moved.
 function move(from, to, tab, i) {
   const list = from[tab];

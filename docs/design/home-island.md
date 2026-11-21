@@ -54,9 +54,9 @@ mittens. She opens the next stage when you bring what she needs:
 | Stage | Opens | Shelly needs |
 |---|---|---|
 | 1 Shell Beach | The beach, the dock and sell crate, the workshop and bench, your hut (bed, trunk, stove), sea fishing, the garden terrace with 2 plots | (free with the deed) |
-| 2 Tide Pond | The waterfall, the pond and its jetty, the grotto, the hut's kitchen nook, a 3rd plot | 3,000 gold, 10 Oak Logs, 6 Cotton, 6 Snail Buds |
-| 3 The Rocky Rise | The rise and its ladder, ore, herbs and a fruit tree, the hut's loft, a 4th plot | 8,000 gold, 12 Copper Ore, 8 Maple Logs, 10 Lucky Clover |
-| 4 Coral Islet | The rope bridge and the sea stack, the hut's sunroom, a 5th plot | 20,000 gold, 20 Maple Logs, 10 Iron Ore, 8 Silkmoss, 6 Hollow Acorns |
+| 2 Tide Pond | The waterfall, the pond and its jetty, the grotto, a 3rd plot | 3,000 gold, 10 Oak Logs, 6 Cotton, 6 Snail Buds |
+| 3 The Rocky Rise | The rise and its ladder, ore, herbs and a fruit tree, a 4th plot | 8,000 gold, 12 Copper Ore, 8 Maple Logs, 10 Lucky Clover |
+| 4 Coral Islet | The rope bridge and the sea stack, a 5th plot | 20,000 gold, 20 Maple Logs, 10 Iron Ore, 8 Silkmoss, 6 Hollow Acorns |
 | 5 Sunset Summit | The summit's ladder, the lighthouse, the trophy terrace, the zip line, a 6th plot | 50,000 gold, 15 Cedar Logs, 10 Silver Ore, 8 Lotus Fibre |
 
 The hut grows on the outside too: a window box (2), a porch rail and shell chime (3), a second
@@ -74,6 +74,15 @@ window and a welcome mat (4), a star on the roof (5). Nothing withers and there 
   grows into 3 (the night-only rares into 2) in 24 minutes of real time, so it grows while you're
   away, and waits for you once it's ripe. You pick it by hand, for Gathering EXP. A friend
   visiting can look but not pick.
+- **Island crops** (Shelly's shop): Sea Melon Seeds (150 gold, from the start), Sun Pineapple
+  Crowns (400, once the Rocky Rise is built), Lantern Gourd Seeds (900, once the summit is).
+  They only grow in your plots and each cooks into the best dish of its tier (several bonuses at
+  once, 15 minutes): Sea Melon Sorbet, Sun Pineapple Skewers, Lantern Gourd Hotpot.
+- **Rain.** The island gets its own weather (tropical). While it rains the pond under the falls
+  fills a little (and drains after), Rainbow Trout bite in it, and whatever's growing gets watered:
+  a rained-on plot ripens in three quarters of the time (its soil shows dark and wet).
+- **Someone living with you** (a sweetheart) picks whatever's ripe while you're away and puts it
+  in the trunk; you're told when you come home. A crop that won't fit in storage they leave.
 - **Fishing.** Three waters with the island's own fish: the sea (Seashell Wrasse), the pond
   (Waterfall Dace) and the grotto (Grotto Glowloach, and the legend, the Lantern Koi, at night
   only; Shelly's rumour tells of it). Each everyday one cooks into its own dish.
@@ -85,10 +94,20 @@ window and a welcome mat (4), a star on the roof (5). Nothing withers and there 
 ## The hut inside
 
 The main room (plank walls, beams, the big round window, the mint door, a rug, two wall shelves)
-has a boxed bed with a patchwork quilt by the left wall and a sea chest under the right shelf.
-It grows: a kitchen nook to the right (2, the stove moves in, with a window, tiles, a counter, jars
-and pans), a loft over the main room on brackets, up a ladder by the left wall (3), and a sunroom
-past the kitchen with tall arched windows onto the sea (4). Anything you use stays on the floor.
+has a boxed bed with a patchwork quilt by the left wall, a sea chest under the right shelf, and
+the stove until there's a kitchen. **Every other room Shelly builds for its own price** ("Build a
+room"): side rooms open off the right of the hut in the order you build them and never move
+again (so furniture in them stays put); the loft goes over the main room. Anything you use stays
+on the floor. Islands from before rooms had prices keep the ones their stages gave them.
+
+| Room | What it is | Needs |
+|---|---|---|
+| Kitchen Nook | The stove moves in: tiles, a counter, jars, pans, a window | stage 1 · 4,000 gold, 12 Oak Logs, 8 Copper Ore |
+| The Loft | A gallery over the main room, up a ladder by the left wall | stage 2 · 6,000 gold, 12 Maple Logs, 10 Cotton |
+| Sunroom | Tall arched windows onto the sea, a bright floor | stage 3 · 12,000 gold, 16 Maple Logs, 10 Silkmoss, 6 Iron Ore |
+| Bedroom | A proper bed: log off in the hut and rest at three quarters of the inn's rate | stage 3 · 25,000 gold, 12 Cedar Logs, 10 Lotus Fibre, 12 Cotton |
+| Aquarium Room | Three tanks with your biggest catch of each fish swimming in them | stage 4 · 30,000 gold, 12 Iron Ore, 20 Snail Buds, 6 Silver Ore |
+| Observatory | A telescope under a skylight (the real sky, day or night): Up at it for the night-only fish you haven't caught and where the night flowers bloom | stage 5 · 40,000 gold, 12 Silver Ore, 10 Cedar Logs, 2 Sapphires |
 
 ## Furniture and decorating (just for looks: the player's choice)
 

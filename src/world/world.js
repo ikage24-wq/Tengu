@@ -43,7 +43,7 @@ import { tickDaytime } from './daytime.js';
 import { tickVoyage, setSail } from './voyage.js';
 import { rideStep, rideAfter, dismount, toggleMount, giveMount, ownsMount } from './mount.js';
 import { WADE, MOUNTS } from '../data/mounts.js';
-import { refreshHome, tendPlot, crateHere, trunkHere, bedHere, G as HOME_BEACH } from './home.js';
+import { refreshHome, tendPlot, crateHere, trunkHere, bedHere, scopeHere, stargaze, homeTick, G as HOME_BEACH } from './home.js';
 import { refreshGarden, grantGarden } from './garden.js';
 import { restoreCarried } from './decor.js';
 import { tickShow, showTentUp } from './mochi-show.js';
@@ -545,7 +545,14 @@ function interact(world) {
     return true;
   }
   if (bedHere(world)) {
-    world.log('A cosy bed by the wall. Log off in your hut tonight and you\'ll wake up rested (double EXP for a while).', '#ffe9a6');
+    world.log(bedHere(world) === 'bedroom'
+      ? 'Your own bedroom. Log off in your hut tonight and you\'ll wake up well rested (three quarters of the inn\'s rest).'
+      : 'A cosy bed by the wall. Log off in your hut tonight and you\'ll wake up rested (double EXP for a while).', '#ffe9a6');
+    return true;
+  }
+  // The observatory's telescope: what's still out there to find after dark.
+  if (scopeHere(world)) {
+    for (const line of stargaze(world.char)) world.log(line, '#c8d8ff');
     return true;
   }
   // The little Mochi hiding in the meadow (world/escort.js): Up beside it and it follows you.
@@ -831,6 +838,8 @@ export function updateWorld(world, dt, input) {
   }
   // The clothes stall's four for today, wherever it stands (world/garden-life.js).
   if (world.map.wearStall != null && !world.gardenVisit && world.char.garden) stallClothes(world.char);
+  // Rain on your island: the pond fills, the garden's watered (world/home.js).
+  if (world.map.home) homeTick(world, dt);
   tickGoingHome(world, dt);
   // Your Mochi going about their day in the garden (world/garden-life.js).
   if (world.gardenLife) {

@@ -9,6 +9,7 @@
 
 import { FIND_TIER } from './gathering.js';
 import { FISH_BY_ID } from './fishing.js';
+import { CROP_TIER } from './home.js';
 
 export const DISHES = [
   // Lantern Lagoon's own (Twin Noodles sells them too).
@@ -20,6 +21,11 @@ export const DISHES = [
   { id: 'dish_wrassebake', name: 'Wrasse Baked in a Shell', vessel: 'plate', colors: ['#ffc8a8', '#fff4e0'], needs: { fish_shellwrasse: 1, shell: 1 }, heal: 300, values: { hp: 150 }, secs: 600, about: 'Max HP', learn: 'fish_shellwrasse' },
   { id: 'dish_dacefritters', name: 'Waterfall Dace Fritters', vessel: 'plate', colors: ['#ffe2a0', '#c8ecff'], needs: { fish_fallsdace: 2 }, heal: 250, values: { speed: 8, jump: 4 }, secs: 600, about: 'Speed and jump', learn: 'fish_fallsdace' },
   { id: 'dish_glowsoup', name: 'Glowloach Lantern Soup', vessel: 'bowl', colors: ['#bff4e0', '#ffe08a'], needs: { fish_glowloach: 1, moonpetal: 1 }, heal: 380, values: { mp: 180 }, secs: 600, about: 'Max MP', learn: 'fish_glowloach' },
+  // Your island's own crops (data/home.js ISLAND_CROPS): the best dish of each tier, several
+  // bonuses at once and for longer, none of them past what the next tier gives.
+  { id: 'dish_melonsorbet', name: 'Sea Melon Sorbet', vessel: 'bowl', colors: ['#8fd8a8', '#ffffff'], needs: { sea_melon: 1, clover: 1 }, heal: 480, values: { hp: 150, mp: 150, speed: 8 }, secs: 900, about: 'Max HP and MP, and speed' },
+  { id: 'dish_pineskewers', name: 'Sun Pineapple Skewers', vessel: 'plate', colors: ['#ffd05a', '#c8ecff'], needs: { sun_pineapple: 1, fish_fallsdace: 1 }, heal: 700, values: { watk: 11, matk: 11, critRate: 0.04 }, secs: 900, about: 'Attack, magic and critical hits' },
+  { id: 'dish_gourdhotpot', name: 'Lantern Gourd Hotpot', vessel: 'bowl', colors: ['#ffa86b', '#bff4e0'], needs: { lantern_gourd: 1, fish_glowloach: 1 }, heal: 1100, values: { hp: 350, mp: 250, regenPct: 0.015 }, secs: 900, about: 'Max HP and MP, and HP back every second' },
   { id: 'dish_doradotaco', name: 'Dorado Tacos', vessel: 'plate', colors: ['#7fe0a0', '#ffd66b'], needs: { fish_dorado: 1, fish_flying: 1 }, heal: 400, values: { watk: 9, matk: 9 }, secs: 600, about: 'Attack and magic', learn: 'fish_dorado' },
   { id: 'dish_groupercurry', name: 'Coral Grouper Curry', vessel: 'bowl', colors: ['#ffc870', '#ff8a7a'], needs: { fish_grouper: 1, fish_lagoonray: 1 }, heal: 600, values: { hp: 280 }, secs: 600, about: 'Max HP', learn: 'fish_grouper' },
   { id: 'dish_anglerpot', name: 'Lantern Angler Hotpot', vessel: 'bowl', colors: ['#ffe08a', '#5a4a8a'], needs: { fish_angler: 1, fish_parrot: 1 }, heal: 650, values: { wdef: 20, mdef: 20 }, secs: 600, about: 'Defense', learn: 'fish_angler' },
@@ -114,7 +120,7 @@ export const DISHES = [
 
 // Each dish's tier (1-4, for the Cooking level it needs: TIER_LV in data/gathering.js): the
 // highest region among the finds and fish it's made from.
-for (const d of DISHES) d.tier = Math.max(1, ...Object.keys(d.needs).map((id) => FIND_TIER[id] ?? FISH_BY_ID[id]?.tier ?? 1));
+for (const d of DISHES) d.tier = Math.max(1, ...Object.keys(d.needs).map((id) => FIND_TIER[id] ?? FISH_BY_ID[id]?.tier ?? CROP_TIER[id] ?? 1));
 
 export const DISH_BY_ID = Object.fromEntries(DISHES.map((d) => [d.id, d]));
 

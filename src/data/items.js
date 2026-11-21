@@ -7,6 +7,7 @@ import { GACHA_LOOKS, SHINY_VARIANTS } from './outfits-gacha.js';
 import { FISH, RARITY_NAMES } from './fishing.js';
 import { DISHES, FEASTS } from './cooking.js';
 import { GATHERED } from './gathering.js';
+import { ISLAND_CROPS } from './home.js';
 import { CRAFT_MATERIALS, craftedItemDefs } from './crafting.js';
 import { FURNITURE, FURN_SETS } from './furniture.js';
 import { GARDEN_CROPS, MOCHI_SWEETS } from './mochi-raise.js';
@@ -568,6 +569,13 @@ for (const f of FEASTS) {
 
 // Gathered and mined finds (data/gathering.js).
 for (const [id, name, price, color, desc] of GATHERED) add({ id, name, type: 'etc', gathered: true, price, color, desc });
+// Your island's own crops, and the seeds Shelly sells for them (data/home.js): they only grow in
+// your garden plots.
+const STAGE_NAMES = ['', 'Shell Beach', 'the Tide Pond', 'the Rocky Rise', 'Coral Islet', 'Sunset Summit'];
+for (const c of ISLAND_CROPS) {
+  add({ id: c.id, name: c.name, type: 'etc', islandCrop: true, price: c.price, color: c.color, desc: c.desc });
+  add({ id: c.seed.id, name: c.seed.name, type: 'etc', seed: c.id, price: c.seed.price, color: c.color, desc: `Plant it in a garden plot on your island${c.stage > 1 ? ` (once Shelly has built ${STAGE_NAMES[c.stage]})` : ''} and it grows into three ${c.name}s. Only Shelly has these.` });
+}
 // The shared life-skill materials (ore, gems, logs, fibre) not already gathered above, and
 // everything the craft benches make (data/crafting.js).
 for (const [id, name, price, color, desc] of CRAFT_MATERIALS) if (!ITEMS[id]) add({ id, name, type: 'etc', gathered: true, price, color, desc });

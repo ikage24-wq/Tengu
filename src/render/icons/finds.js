@@ -976,7 +976,48 @@ function dewsparkle() {
   return out;
 }
 
+// ---------- Your island's own crops and their seeds (data/home.js ISLAND_CROPS) ----------
+// A striped green melon with a curly stem.
+function sea_melon() {
+  const c = '#8fd8a8';
+  const out = [...ball(oval(8, 9.2, 6.4, 5.4, 0, 28), c)];
+  for (const k of [-2, 0, 2]) out.push(line(arcPts(8 + k * 1.6, 9.2, 1.4 + Math.abs(k) * 0.9, 5, -80, 80, 10), 0.55, sh(sh(c))));
+  out.push(S(tube(bez([8, 4], [8.6, 2.4], [10.4, 2], 8), 0.45), '#6a8a4a'), ...leaf([9.4, 2.6], [12.6, 1.6], 1.6, '#7fd07a').shapes);
+  out.push(...glint(4.6, 6.6, 0.55));
+  return out;
+}
+// A golden pineapple, criss-crossed, under a spiky green crown.
+function sun_pineapple() {
+  const c = '#ffd05a';
+  const out = [];
+  for (const a of [-130, -105, -90, -75, -50]) out.push(...leaf([8, 6], [8 + Math.cos(a * D2R) * 5, 6 + Math.sin(a * D2R) * 5.4], 1.5, a === -90 ? '#8fd08a' : '#6fbf5a').shapes);
+  out.push(...ball(oval(8, 10.6, 4.6, 4.8, 0, 26), c));
+  for (const d of [-4, -1.6, 0.8, 3.2]) out.push(line([[8 + d - 2.6, 7], [8 + d + 2.6, 14.4]], 0.4, sh(c)), line([[8 + d + 2.6, 7], [8 + d - 2.6, 14.4]], 0.4, sh(c)));
+  out.push(...glint(5.6, 8.6, 0.5));
+  return out;
+}
+// A round gourd lit from inside, ribbed, a curly stalk on top.
+function lantern_gourd() {
+  const c = '#ffa86b';
+  const out = [...ball(oval(8, 9.6, 6, 5.4, 0, 28), c), S(oval(8, 10, 3, 2.6, 0, 18), '#ffe08a')];
+  for (const k of [-1, 1]) out.push(line(arcPts(8, 9.6, 3 + 0.3 * k, 5.2, k < 0 ? 100 : -80, k < 0 ? 260 : 80, 10), 0.5, sh(c)));
+  out.push(S(tube(bez([8, 4.4], [7.6, 2.4], [9.6, 1.4], 8), 0.6), '#8a6a3a'));
+  out.push(twinkle(12.8, 4, 1.3, '#fff3a6'), ...glint(4.8, 7.4, 0.5));
+  return out;
+}
+// A paper seed packet, its top folded over, the crop it grows drawn on the front.
+function seedPacket(c) {
+  return () => {
+    const out = [...ball(rrect(3.4, 2.6, 9.2, 12, 1.2), '#fff4e0'), S(rrect(3.4, 2.6, 9.2, 2.6, 1), '#e8d2b0')];
+    out.push(...disc(8, 9.4, 2.6, c), line([[4.6, 13.4], [11.4, 13.4]], 0.4, '#e0c8a0'));
+    out.push(...glint(5, 5.4, 0.4));
+    return out;
+  };
+}
+
 const ART = {
+  sea_melon, sun_pineapple, lantern_gourd,
+  seed_seamelon: seedPacket('#8fd8a8'), seed_sunpine: seedPacket('#ffd05a'), seed_lantern: seedPacket('#ffa86b'),
   look_gacha_dewsparkle_face: dewsparkle,
   royal_jelly, home_shell, mount_kettle, mount_nimbus, lantern_bait,
   bee_fuzz, sprite_petal, hay_quill, pumpkin_seed, curly_wool, woven_nest, moss_scute, owl_down, panda_fluff, brownie_crumb, moonlit_ribbon, porcelain_shard, candle_wax, tide_pearl, sea_glass,

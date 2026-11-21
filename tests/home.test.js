@@ -296,3 +296,99 @@ test('an island from before the rework moves in: outdoor furniture back to the b
   assert.equal(char.home.layout, 2);
   assert.equal(settleHome(char), 0, 'only once');
 });
+
+// ---------- The island's crops, rain, your helper, and the hut's rooms (2026-11-21) ----------
+import { roomsOf, roomNeeds, buildRoom, homeTick, helperPicks, stargaze, homeInside } from '../src/world/home.js';
+import { ISLAND_CROPS, HOME_ROOMS, RAIN_GROW, HOME_REST_BEDROOM } from '../src/data/home.js';
+import { DISHES } from '../src/data/cooking.js';
+
+test("Shelly's island seeds grow only in your plots, each from its stage, into a top dish of its tier", () => {
+  assert.deepEqual(NPCS.shelly.shop, ISLAND_CROPS.map((c) => c.seed.id), 'she sells the seeds');
+  for (const c of ISLAND_CROPS) {
+    const dish = DISHES.find((d) => d.needs[c.id]);
+    assert.ok(dish && dish.tier === c.tier, `${c.name} cooks into a tier ${c.tier} dish`);
+    assert.ok(ITEMS[c.seed.id].price >= 100, 'seeds cost something');
+  }
+  const w = islander();
+  w.char.life = { gathering: { level: 30, exp: 0 } };
+  addItem(w.char.inventory, 'seed_seamelon', 2);
+  addItem(w.char.inventory, 'seed_sunpine', 1);
+  assert.match(plant(w.char, 0, 'seed_sunpine'), /Rocky Rise/, 'a pineapple wants the rise built');
+  assert.equal(plant(w.char, 0, 'seed_seamelon'), null);
+  assert.equal(w.char.home.plots[0].id, 'sea_melon');
+  w.char.home.plots[0].at -= GROW_SECS + 5;
+  loadMap(w, 'home', 'dock');
+  Object.assign(w.body, { x: PLOT_X[0], y: TIER_Y.garden, onGround: true });
+  run(w, 2.5, [], ['ArrowUp']);
+  assert.equal(countItem(w.char.inventory, 'sea_melon'), 3);
+});
+
+test('rain on the island fills the pond and waters the garden, so it ripens sooner', () => {
+  const w = islander();
+  w.char.home.stage = 2;
+  plant(w.char, 0, (addItem(w.char.inventory, 'clover', 1), 'clover'));
+  loadMap(w, 'home', 'dock');
+  const pond = w.map.water.find((x) => x.kind === 'spring');
+  const dry = pond.y;
+  w.weather = 'rain';
+  for (let t = 0; t < 10; t += DT) homeTick(w, DT);
+  assert.ok(pond.y < dry - 4, 'the pond rises');
+  assert.ok(w.char.home.plots[0].wet, 'the plot got watered');
+  const at = w.char.home.plots[0].at;
+  assert.equal(plotGrowth(w.char.home.plots[0], at + GROW_SECS * RAIN_GROW), 1, 'ripe sooner');
+  w.weather = null;
+  for (let t = 0; t < 20; t += DT) homeTick(w, DT);
+  assert.ok(Math.abs(pond.y - dry) < 0.5, 'and drains again');
+  assert.ok(homeMap(2).spots[1].pool.fish_rainbow, 'a rain fish in the pond');
+});
+
+test('whoever lives with you picks your ripe crops into the trunk while you were away', () => {
+  const w = islander();
+  addItem(w.char.inventory, 'clover', 2);
+  plant(w.char, 0, 'clover');
+  plant(w.char, 1, 'clover');
+  w.char.home.plots[0].at -= GROW_SECS + 5;
+  const world = { storage: { equip: [], use: [], etc: [] } };
+  assert.deepEqual(helperPicks(w.char, world), [], 'nobody lives here yet');
+  w.char.livingWith = 'poppy';
+  assert.deepEqual(helperPicks(w.char, world), [{ id: 'clover', n: 3 }]);
+  assert.equal(world.storage.etc.find((e) => e.id === 'clover').qty, 3);
+  assert.equal(w.char.home.plots[0], null, 'picked');
+  assert.ok(w.char.home.plots[1], 'the one still growing is left');
+});
+
+test('Shelly builds each room of the hut for its own price; rooms open off the main room and stay put', () => {
+  const w = islander();
+  const char = w.char;
+  assert.deepEqual(roomsOf(char.home), [], 'one room to start');
+  assert.match(buildRoom(char, 'bedroom'), /Rocky Rise/, 'the bedroom waits for its stage');
+  assert.match(buildRoom(char, 'kitchen'), /don't have/);
+  const k = HOME_ROOMS.find((r) => r.id === 'kitchen');
+  char.gold = k.gold + 10;
+  for (const [id, n] of Object.entries(k.needs)) addItem(char.inventory, id, n);
+  assert.equal(buildRoom(char, 'kitchen'), k.name);
+  assert.equal(char.gold, 10, 'paid');
+  assert.deepEqual(roomsOf(char.home), [{ id: 'kitchen', x: 640 }]);
+  loadMap(w, 'home_in', 'door');
+  assert.equal(w.map.width, 900);
+  assert.ok(w.map.stove > 640, 'the stove moved into the kitchen');
+  assert.ok(roomNeeds(char, 'kitchen').built);
+  // An island from before rooms had prices keeps what its stages gave it.
+  const old = { stage: 4 };
+  assert.deepEqual(roomsOf(old).map((r) => r.id), ['kitchen', 'loft', 'sunroom']);
+  assert.equal(homeInside(4, roomsOf(old)).width, 640 + 260 + 280);
+});
+
+test('the bedroom rests you better, and the telescope tells you what\'s out after dark', () => {
+  const char = createCharacter('Isla', { hairStyle: 'bob' });
+  char.level = 20;
+  char.home = { stage: 3, placed: [], plots: [], rooms: [{ id: 'bedroom', x: 640 }], layout: 2 };
+  const hut = { ...structuredClone(char), mapId: 'home_in', savedAt: Date.now() - 4 * 3600000, rested: 0 };
+  const inn = { ...structuredClone(char), inn: { checkedIn: true }, mapId: 'coin_inn', savedAt: Date.now() - 4 * 3600000, rested: 0 };
+  const b = wakeAtInn(hut);
+  const a = wakeAtInn(inn);
+  assert.ok(Math.abs(b - a * HOME_REST_BEDROOM) <= 1, `${b} is three quarters of ${a}`);
+  const lines = stargaze(char);
+  assert.match(lines.join(' '), /Firefly Minnow/);
+  assert.match(lines.join(' '), /Moonpetal/);
+});

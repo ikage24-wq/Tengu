@@ -10,6 +10,9 @@ import { drawDateHud } from './dates.js';
 import { VW } from '../input.js';
 import { ITEMS } from '../data/items.js';
 import { SKILLS } from '../data/skills.js';
+import { SWEETHEARTS } from '../data/sweethearts.js';
+import { loadWorld, saveGame } from '../core/save.js';
+import { helperPicks } from '../world/home.js';
 import { HOTKEYS, bindFirstTonics } from '../core/character.js';
 import { statsWindow } from './windows.js';
 import { skillsWindow } from './skills.js';
@@ -200,6 +203,16 @@ export function routeInput(state, world, input, dt) {
       state.banner = 2.5;
       state.npc = null;
       state.windows.npc.open = false;
+      // Home to your island with someone living with you: what they picked while you were away is
+      // in the trunk (world/home.js).
+      if (e.mapId === 'home' && !world.visiting && world.char.livingWith) {
+        const got = helperPicks(world.char, loadWorld(world.char.file ?? 0));
+        if (got.length) {
+          const who = SWEETHEARTS[world.char.livingWith]?.name ?? 'Someone';
+          world.log(`${who} picked your ${got.map((g) => `${g.n} ${ITEMS[g.id].name}`).join(', ')} while you were away. It's all in the trunk!`, '#ffc2dc');
+          saveGame(world.char);
+        }
+      }
     }
   }
   world.events.length = 0;

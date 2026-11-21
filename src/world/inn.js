@@ -9,7 +9,7 @@
 import { addRep, REP_FOR } from './rep.js';
 import { expToNext } from '../core/exp.js';
 import { FISH } from '../data/fishing.js';
-import { HOME_REST } from '../data/home.js';
+import { HOME_REST, HOME_REST_BEDROOM } from '../data/home.js';
 
 export const ROOM_GOLD = 300;
 const REST_PER_HOUR = 0.04;
@@ -37,7 +37,8 @@ export function wakeAtInn(char, now = Date.now()) {
   const atHome = !atInn && char.mapId === 'home_in' && Boolean(char.home);
   if (char.inn?.checkedIn && !atInn) char.inn = null;
   if (!atInn && !atHome) return 0;
-  const rate = atInn ? REST_PER_HOUR : REST_PER_HOUR * HOME_REST;
+  // (With the bedroom Shelly builds, a better night: data/home.js HOME_ROOMS.)
+  const rate = atInn ? REST_PER_HOUR : REST_PER_HOUR * (char.home.rooms?.some((r) => r.id === 'bedroom') ? HOME_REST_BEDROOM : HOME_REST);
   const hours = Math.max(0, (now - char.savedAt) / 3600000);
   const need = expToNext(char.level);
   const add = Math.round(Math.min(REST_CAP * need - (char.rested ?? 0), hours * rate * need));

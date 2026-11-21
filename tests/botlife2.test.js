@@ -127,7 +127,8 @@ test('a goal moves along as they play, completes, and they move on to the next (
   s.goal = { kind: 'set', set: 'sylvana', slot: 'hat', item: `set_sylvana_${bot.char.job === 'mage' ? 'mage' : 'warrior'}_hat`, setName: 'Dryad Bloom', from: 'Sylvana', need: 2, got: 0 };
   if (!ITEMS[s.goal.item]) s.goal.item = Object.keys(ITEMS).find((id) => id.startsWith('set_sylvana_') && id.endsWith('_hat'));
   const first = s.goal;
-  for (let t = 0; t < 900 && s.goal === first; t += 0.5) {
+  // (Up to half an hour of play: new items and dishes shift a seeded bot's luck, 2026-11-21.)
+  for (let t = 0; t < 1800 && s.goal === first; t += 0.5) {
     world.now += 0.5;
     updateBots(bots, world, 0.5);
   }

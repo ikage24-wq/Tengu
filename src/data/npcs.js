@@ -192,6 +192,8 @@ export const NPCS = {
     id: 'shelly', name: 'Shelly', title: 'Island Carpenter', role: 'builder',
     look: { hairStyle: 'fluffybob', hairColor: '#ff9a8a', hairTip: '#ffd2c8', skinTone: '#fff0e6', eyeColor: '#c8506a', outfitColor: '#fff0e6', eyeStyle: 'sparkle', browStyle: 'stubby', face: 'smile' },
     greeting: "Ooh, a visitor! Oh, it's you, it's YOUR island! Bring me the bits and I'll build you something lovely. I've got a whole shell full of ideas!",
+    // Seeds for the island's own crops (data/home.js ISLAND_CROPS): nobody else has them.
+    shop: ['seed_seamelon', 'seed_sunpine', 'seed_lantern'],
   },
   // Malvina Grimsworth, Sprout Village's self-declared villainess, in her spooky little tower on
   // the edge of the village square (where everyone can see it). Every scheme she hatches turns

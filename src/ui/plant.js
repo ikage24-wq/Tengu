@@ -4,7 +4,7 @@
 // ripe. Each needs the Gathering level of its tier, like picking it wild.
 
 import { ITEMS } from '../data/items.js';
-import { GROW_SECS } from '../data/home.js';
+import { GROW_SECS, HOME_STAGES } from '../data/home.js';
 import { plantables, plant, plantLevel, plotYield } from '../world/home.js';
 import { sfx } from '../audio/sfx.js';
 import { COLORS, windowFrame, text, hover, clicked, itemSlot, tooltip, button } from './kit.js';
@@ -40,16 +40,16 @@ export function plantWindow(ui, state, world) {
     const y = gy + Math.floor(i / COLS) * CELL;
     const hot = hover(ui, x, y, CELL - 3, CELL - 3);
     itemSlot(ctx, x, y, CELL - 3, { id: e.id, qty: e.n }, { state: hot && e.ok ? 'hot' : null, fill: e.ok ? '#fffdfb' : '#efeaf2' });
-    // (Locked: faded, its Gathering level across the top.)
+    // (Locked: faded, its Gathering level, or the stage an island seed waits for, across the top.)
     if (!e.ok) {
       ctx.fillStyle = 'rgba(239, 234, 242, 0.55)';
       ctx.fillRect(x + 1, y + 1, CELL - 5, CELL - 5);
-      text(ctx, `Lv ${plantLevel(e.id)}`, x + (CELL - 3) / 2, y + 7, { size: 6.5, bold: true, align: 'center', color: COLORS.bad });
+      text(ctx, e.stage ? 'Later' : `Lv ${plantLevel(e.id)}`, x + (CELL - 3) / 2, y + 7, { size: 6.5, bold: true, align: 'center', color: COLORS.bad });
     }
     if (hot) {
       const more = e.ok
         ? { text: `Plant one: grows into ${plotYield(e.id)}`, size: 7, bold: true, color: '#3fb383' }
-        : { text: `Needs Gathering Lv ${plantLevel(e.id)}`, size: 7, bold: true, color: COLORS.bad };
+        : { text: e.stage ? `Needs ${HOME_STAGES[e.stage].name} built first` : `Needs Gathering Lv ${plantLevel(e.id)}`, size: 7, bold: true, color: COLORS.bad };
       tooltip(ui, [...itemTooltip(char, e.id), more]);
     }
     if (clicked(ui, x, y, CELL - 3, CELL - 3)) {

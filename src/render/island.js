@@ -32,7 +32,9 @@ import { art, place } from './scenery.js';
 import { groundAt } from '../world/physics.js';
 import { drawAfloat } from './water.js';
 import { ITEMS } from '../data/items.js';
-import { PLOT_X, TIER_Y, TIER_X, G, IN, roomWidth, plotGrowth } from '../world/home.js';
+import { PLOT_X, TIER_Y, TIER_X, G, IN, hutWidth, plotGrowth } from '../world/home.js';
+import { ROOM_BY_ID } from '../data/home.js';
+import { drawItemIcon } from './icons.js';
 
 const TAU = Math.PI * 2;
 const WOOD = '#c89a6a';
@@ -208,7 +210,7 @@ function bedArt() {
 // What a plant looks like as it grows (the item's own colour on what ripens). Five steps: a
 // seedling, a sprout, leafy, budding, ripe.
 const LOOKS = {
-  berry: ['cherry', 'wild_strawberry', 'prickle_pear', 'shrine_plum', 'snow_peach', 'cloudberry', 'whisperberry'],
+  berry: ['cherry', 'wild_strawberry', 'prickle_pear', 'shrine_plum', 'snow_peach', 'cloudberry', 'whisperberry', 'sea_melon', 'sun_pineapple', 'lantern_gourd'],
   flower: ['moonpetal', 'foxfire_lily', 'starbloom'],
   shroom: ['chanterelle', 'duskcap', 'crystal_truffle'],
   boll: ['cotton', 'cloud_cotton'],
@@ -469,7 +471,163 @@ function sunroomArt() {
   }, false);
 }
 
-// The loft (stage 3): a gallery over the main room on brackets, plank deck, a railing.
+// The bedroom (a room Shelly builds): lilac walls with a little dotted pattern, a window with
+// curtains, a proper bed (headboard, quilt with stars, a fat pillow) whose middle is where you
+// stand to use it (world/home.js bedroomBed: the room's x + 150), a bedside table and a rug.
+function bedroomArt() {
+  return art('isle-bedroom', 260, 480, () => {
+    const wall = ramp('#f2e4ff', 0.6);
+    const floor = ramp('#d8a878', 0.8);
+    const beam = ramp('#b8865a', 0.8);
+    const quilt = ramp('#c9b6ff', 0.75);
+    const out = [R(0, 0, 260, 480, wall.base)];
+    for (let y = 30; y < 250; y += 24) for (let x = 14 + ((y / 24) % 2) * 12; x < 256; x += 24) out.push(F(E(x, y, 1.6, 1.6, wall.hi)));
+    out.push(R(0, 250, 260, 50, mix(wall.base, '#ffffff', 0.35)), F(R(0, 250, 260, 3, wall.hi)), F(R(0, 296, 260, 4, beam.sh)));
+    out.push(R(0, 0, 10, 300, beam.base), F(R(0, 0, 3, 300, beam.hi)));
+    // The window and its curtains.
+    out.push(R(30, 92, 64, 74, '#ffffff'), R(35, 97, 54, 64, '#9fd8ff'), F(R(35, 136, 54, 25, '#5fb8d8')), F(R(61, 97, 2, 64, '#ffffff')));
+    out.push(T([[26, 88], [48, 88], [40, 130], [26, 150]], '#c9b6ff'), T([[98, 88], [76, 88], [84, 130], [98, 150]], '#c9b6ff'), R(24, 84, 76, 5, beam.base));
+    out.push(...planks(0, 300, 260, 180, floor, 16, 61));
+    out.push(R(0, 0, 260, 16, beam.base), F(R(0, 14, 260, 2, beam.sh)));
+    // The bedside table and its lamp.
+    out.push(R(46, 330, 30, 30, beam.base), F(R(46, 330, 30, 3, beam.hi)), R(58, 316, 6, 14, '#e8c070'), T([[50, 316], [72, 316], [66, 302], [56, 302]], '#ffe8b0'));
+    // The bed: headboard, footboard, mattress, quilt, pillow.
+    out.push(T([[94, 360], [94, 286], [100, 278], [112, 278], [118, 286], [118, 360]], beam.base), F(R(98, 284, 3, 76, beam.hi)));
+    out.push(R(206, 312, 10, 48, beam.base), F(R(206, 312, 10, 3, beam.hi)));
+    out.push(R(114, 326, 96, 26, '#fff6ea'), R(114, 352, 96, 8, beam.sh));
+    out.push(R(132, 318, 80, 22, quilt.base), F(R(132, 318, 80, 4, quilt.hi)), F(R(132, 336, 80, 4, quilt.sh)));
+    for (const [sx, sy] of [[146, 326], [168, 330], [190, 325]]) out.push(F(T([[sx, sy - 3], [sx + 1, sy - 1], [sx + 3, sy], [sx + 1, sy + 1], [sx, sy + 3], [sx - 1, sy + 1], [sx - 3, sy], [sx - 1, sy - 1]], '#fff0a0')));
+    out.push(E(126, 318, 12, 7, '#ffffff'), F(E(124, 316, 6, 3, '#fff8f0')));
+    // A round rug.
+    out.push(E(150, 368, 70, 9, '#c9b6ff'), F(E(150, 368, 54, 6, '#e8dcff')));
+    return out;
+  }, false);
+}
+
+// The aquarium room: cool aqua walls and three big tanks on wooden stands (sand, weed, a pebble or
+// two); the fish swimming in them are your own best catches, drawn live (drawTanks).
+const TANKS = [55, 150, 245];
+function aquariumArt() {
+  return art('isle-aquarium', 300, 480, () => {
+    const wall = ramp('#d6f2f4', 0.6);
+    const floor = ramp('#c8a888', 0.8);
+    const beam = ramp('#a8865a', 0.8);
+    const out = [R(0, 0, 300, 480, wall.base)];
+    for (let x = 0; x < 300; x += 20) out.push(F(R(x, 0, 1, 250, wall.sh)));
+    out.push(R(0, 250, 300, 50, mix(wall.base, '#8fd0d8', 0.3)), F(R(0, 296, 300, 4, beam.sh)));
+    out.push(R(0, 0, 10, 300, beam.base), F(R(0, 0, 3, 300, beam.hi)));
+    out.push(...planks(0, 300, 300, 180, floor, 16, 71));
+    out.push(R(0, 0, 300, 16, beam.base), F(R(0, 14, 300, 2, beam.sh)));
+    for (const cx of TANKS) {
+      // The stand, then the tank: its frame, the water, the sand, weed and a pebble or two.
+      out.push(R(cx - 40, 290, 80, 70, beam.base), F(R(cx - 40, 290, 80, 3, beam.hi)), F(R(cx - 2, 296, 4, 60, beam.sh)));
+      out.push(R(cx - 44, 190, 88, 100, '#ffffff'), R(cx - 41, 194, 82, 92, '#9fe0f0'), F(R(cx - 41, 194, 82, 8, '#c8f0f8')));
+      out.push(F(T([[cx - 41, 286], [cx - 41, 276], [cx - 10, 272], [cx + 20, 276], [cx + 41, 272], [cx + 41, 286]], '#f4dcae')));
+      for (const [dx, h] of [[-30, 30], [-24, 22], [26, 34], [32, 20]]) out.push(F(T([[cx + dx - 2, 278], [cx + dx + 2, 278], [cx + dx + 4, 278 - h], [cx + dx, 278 - h - 4]], '#5aae7a')));
+      out.push(F(E(cx + 8, 279, 4, 2.4, '#c8b8d8')), F(E(cx - 12, 280, 3, 2, '#ffc8d8')));
+      out.push(F(R(cx - 41, 194, 3, 92, '#ffffff')));
+    }
+    return out;
+  }, false);
+}
+// Your best catches swimming in the tanks: the biggest of each fish you've landed, three a tank,
+// gliding to and fro (turning round at each end), a bubble now and then.
+function drawTanks(ctx, map, rx, cam, time) {
+  const list = Object.entries(map.fishBook ?? {}).filter(([id, r]) => r?.n > 0 && ITEMS[id]).sort((a, b) => (b[1].best ?? 0) - (a[1].best ?? 0)).slice(0, 9);
+  const top = 194 - cam.y;
+  list.forEach(([id], k) => {
+    const tx = rx + TANKS[k % 3];
+    const lane = Math.floor(k / 3);
+    const ph = time * 0.35 + k * 1.9;
+    const fx = tx + Math.sin(ph) * 26;
+    const fy = top + 24 + lane * 22 + Math.sin(time * 0.9 + k) * 2.5;
+    const dir = Math.cos(ph) >= 0 ? 1 : -1;
+    ctx.save();
+    ctx.translate(snap(fx), snap(fy));
+    ctx.scale(dir, 1);
+    drawItemIcon(ctx, id, -9, -9, 1.15);
+    ctx.restore();
+  });
+  ctx.fillStyle = 'rgba(255,255,255,0.75)';
+  for (let k = 0; k < 6; k++) {
+    const u = (time * 0.25 + k / 6) % 1;
+    ctx.beginPath();
+    ctx.arc(rx + TANKS[k % 3] + 18 - (k % 2) * 30, top + 88 - u * 84, 1.4, 0, TAU);
+    ctx.fill();
+  }
+}
+
+// The observatory: a deep-blue room with star charts, a brass telescope on its tripod (world/home.js
+// scopeAt: the room's x + 160) aimed up at a round skylight (drawSkylight paints the sky in it).
+function observatoryArt() {
+  return art('isle-observatory', 260, 480, () => {
+    const wall = ramp('#3a4280', 0.7);
+    const floor = ramp('#8a6a5a', 0.8);
+    const beam = ramp('#6a5a7a', 0.8);
+    const brass = ramp('#e8c070', 0.7);
+    const out = [R(0, 0, 260, 480, wall.base)];
+    for (let k = 0; k < 18; k++) out.push(F(E(10 + hash(k * 3.3) * 240, 120 + hash(k * 7.7) * 120, 0.9, 0.9, '#c8d8ff')));
+    out.push(R(0, 250, 260, 50, mix(wall.base, '#000000', 0.15)), F(R(0, 296, 260, 4, beam.sh)));
+    out.push(R(0, 0, 10, 300, beam.base), F(R(0, 0, 3, 300, beam.hi)));
+    // Star charts pinned to the wall.
+    for (const [cx, cy] of [[40, 190], [222, 176]]) {
+      out.push(R(cx - 20, cy - 24, 40, 48, '#f4ecd8'), F(R(cx - 18, cy - 22, 36, 44, '#e8dcc0')));
+      for (let k = 0; k < 5; k++) out.push(F(E(cx - 12 + hash(cx + k) * 24, cy - 16 + hash(cy + k * 3) * 32, 1.2, 1.2, '#5a6ab0')));
+    }
+    out.push(...planks(0, 300, 260, 180, floor, 16, 83));
+    out.push(R(0, 0, 260, 16, beam.base), F(R(0, 14, 260, 2, beam.sh)));
+    // The telescope: three legs, a brass tube aimed up-left at the skylight, an eyepiece.
+    out.push(T([[156, 300], [160, 300], [136, 360], [132, 360]], beam.base), T([[158, 300], [162, 300], [186, 360], [182, 360]], beam.base), R(158, 300, 3, 60, beam.sh));
+    out.push(T([[150, 304], [170, 296], [134, 210], [118, 218]], brass.base), F(T([[150, 304], [156, 302], [124, 214], [118, 218]], brass.hi)));
+    out.push(E(126, 212, 11, 7, brass.sh), F(E(125, 211, 8, 4.4, '#2a2a4a')), R(162, 296, 10, 8, brass.sh));
+    // A cushion to sit on and gaze.
+    out.push(E(210, 354, 20, 8, '#ff9ec0'), F(E(206, 350, 10, 3, '#ffc2d8')));
+    return out;
+  }, false);
+}
+// The observatory's skylight: the sky as it is now (night: deep blue, the stars twinkling in turn;
+// day: blue with a cloud drifting across), in a round brass frame.
+function drawSkylight(ctx, rx, cam, time, night) {
+  const cx = rx + 130;
+  const cy = 96 - cam.y;
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(cx, cy, 56, 0, TAU);
+  ctx.fillStyle = night > 0.3 ? '#1c2060' : '#9fd8ff';
+  ctx.fill();
+  ctx.clip();
+  if (night > 0.3) {
+    for (let k = 0; k < 16; k++) {
+      ctx.globalAlpha = 0.4 + 0.6 * Math.abs(Math.sin(time * 1.3 + k * 2.1));
+      ctx.fillStyle = '#fff8d2';
+      ctx.fillRect(snap(cx - 50 + hash(k * 4.1) * 100), snap(cy - 50 + hash(k * 9.3) * 100), 1.5, 1.5);
+    }
+  } else {
+    const u = ((time * 6) % 160) - 80;
+    ctx.fillStyle = '#ffffff';
+    for (const [dx, dy, r] of [[0, 0, 10], [10, 2, 8], [-10, 3, 7]]) {
+      ctx.beginPath();
+      ctx.arc(cx + u + dx, cy + 10 + dy, r, 0, TAU);
+      ctx.fill();
+    }
+  }
+  ctx.restore();
+  ctx.strokeStyle = '#e8c070';
+  ctx.lineWidth = 5;
+  ctx.beginPath();
+  ctx.arc(cx, cy, 56, 0, TAU);
+  ctx.stroke();
+  ctx.strokeStyle = '#a8805a';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(cx - 56, cy);
+  ctx.lineTo(cx + 56, cy);
+  ctx.moveTo(cx, cy - 56);
+  ctx.lineTo(cx, cy + 56);
+  ctx.stroke();
+}
+
+// The loft: a gallery over the main room on brackets, plank deck, a railing.
 function loftArt() {
   const w = IN.loft[1] - IN.loft[0];
   return art(`isle-loft|${w}`, w + 8, 90, () => {
@@ -593,6 +751,11 @@ export function drawIslandPiece(ctx, map, kind, wx, extra, cam, width, time) {
         if (px < -60 || px > width + 60) continue;
         place(ctx, bedArt(), snap(px), ty + 4);
         const plot = map.plots?.[i];
+        // (Rained on: the soil dark and wet, so it ripens sooner: world/home.js homeTick.)
+        if (plot?.wet) {
+          ctx.fillStyle = 'rgba(70, 40, 40, 0.28)';
+          ctx.fillRect(snap(px - BED_W / 2), snap(ty - 10), BED_W, 7);
+        }
         const k = plotGrowth(plot, now);
         if (k == null) continue;
         const step = k >= 1 ? 4 : k >= 0.7 ? 3 : k >= 0.4 ? 2 : k >= 0.12 ? 1 : 0;
@@ -895,15 +1058,24 @@ export function drawIslandPiece(ctx, map, kind, wx, extra, cam, width, time) {
       return true;
     }
     case 'hutroom': {
-      // (The floor runs past the bottom of the view: you walk on the hut's own boards.)
-      const s = extra ?? 1;
+      // The main room, then each room Shelly built off it, where it opened (`extra`: the hut's
+      // rooms, world/home.js). (The floor runs past the bottom of the view: you walk on the boards.)
+      const rooms = Array.isArray(extra) ? extra : [];
       const by = 480 - cam.y;
-      if (s >= 2) place(ctx, kitchenArt(), snap(640 + 130 - cam.x), by);
-      if (s >= 4) place(ctx, sunroomArt(), snap(900 + 140 - cam.x), by);
+      for (const r of rooms) {
+        const w = ROOM_BY_ID[r.id]?.w;
+        if (r.x == null || !w) continue;
+        const rx = r.x - cam.x;
+        if (rx > width + 20 || rx + w < -20) continue;
+        const pic = { kitchen: kitchenArt, sunroom: sunroomArt, bedroom: bedroomArt, aquarium: aquariumArt, observatory: observatoryArt }[r.id];
+        if (pic) place(ctx, pic(), snap(rx + w / 2), by);
+        if (r.id === 'aquarium') drawTanks(ctx, map, rx, cam, time);
+        if (r.id === 'observatory') drawSkylight(ctx, rx, cam, time, map.skyNight ?? 0);
+      }
       place(ctx, roomArt(), snap(x), by);
-      if (s >= 3) place(ctx, loftArt(), snap((IN.loft[0] + IN.loft[1]) / 2 - cam.x), IN.loftY + 20 - cam.y);
+      if (rooms.some((r) => r.id === 'loft')) place(ctx, loftArt(), snap((IN.loft[0] + IN.loft[1]) / 2 - cam.x), IN.loftY + 20 - cam.y);
       // (Past the last room, a plain wall, so a wide view never shows the void.)
-      const end = roomWidth(s) - cam.x;
+      const end = hutWidth(rooms) - cam.x;
       if (end < width) {
         ctx.fillStyle = '#b8865a';
         ctx.fillRect(snap(end), 0, width - end + 2, 480);
