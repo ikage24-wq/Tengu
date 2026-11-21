@@ -12,7 +12,7 @@ import { drawLandmark, LANDMARKS } from './landmarks.js';
 import { ramp, foliage, lightUL, flagShapes, leanFrame, swing, pivoted, flicker, stones, planks, bark, windowPane, wallShade, beam, gable } from './propkit.js';
 import { MAPS } from '../data/maps.js';
 import { drawCat } from './critters.js';
-import { drawPaintedForest, drawPaintedForestFront, drawWoodlandLife, drawMossyAmbience, mossyFireflies, leafShape, drawPaintedMeadow, drawMeadowLife, drawPaintedTownFar, drawVillageLife, washingLine, drawPaintedTownFront } from './painted.js';
+import { drawPaintedForest, drawPaintedForestFront, drawWoodlandLife, drawMossyAmbience, mossyFireflies, leafShape, drawPaintedMeadow, drawMeadowLife, drawPaintedTownFar, drawPaintedHarborFar, drawVillageLife, washingLine, drawPaintedTownFront } from './painted.js';
 import { drawPortalGate, drawPortalSwirl } from './portals.js';
 import { drawPaintedCanyon, drawCanyonLife, drawCanyonFront } from './canyon.js';
 import { drawPaintedHollowGate } from './hollowgate.js';
@@ -5094,7 +5094,7 @@ const BUILDINGS = {
 // washed toward the sky like the backdrop, so the ledge reads as passing in front of it.
 // Waterfalls pour off a ledge, and cloud pillars, the watchtower and Mossy Woods' giant trees
 // (whose branches are its ledges) hold one up, on purpose.
-const MEETS_LEDGE = new Set(['skyboat', 'balloondock', 'postercolumn', 'stagetrunks', 'grandentrance', 'gingerhut', 'giantcupcake', 'cakecave', 'greatscope', 'orrery', 'startent', 'carousel', 'windkiosk', 'diveshop', 'quaycrates', 'bellcrane', 'bathhouse', 'terraces', 'aqueduct', 'rosearch', 'serpentstone', 'moongate', 'wolfden', 'wolfrock', 'pagoda', 'sacredtree', 'toriistair', 'foxshrine', 'fallenstar', 'mooncradle', 'icefall', 'skyisland', 'rainbowarch', 'roosttower', 'glowcap', 'geode', 'crystalcolumn', 'ruintower', 'moonmaiden', 'ruinportico', 'woodtree', 'gladecliff', 'waterfall', 'cloudpillar', 'watchtower', 'canyonwall', 'canyonspire', 'canyonarch', 'canyoncave', 'canyonstub', 'canyonwalllow', 'greattree', 'rootarch', 'trunkwall', 'hollowstump', 'rootwall', 'rootceiling', 'rootpillar', 'greatcap', 'manorgates', 'pumpkincoach', 'partylamp', 'rosehedge', 'topiary', 'coralclump', 'shellpile', 'kelpclump', 'divingbell']);
+const MEETS_LEDGE = new Set(['fishmast', 'skyboat', 'balloondock', 'postercolumn', 'stagetrunks', 'grandentrance', 'gingerhut', 'giantcupcake', 'cakecave', 'greatscope', 'orrery', 'startent', 'carousel', 'windkiosk', 'diveshop', 'quaycrates', 'bellcrane', 'bathhouse', 'terraces', 'aqueduct', 'rosearch', 'serpentstone', 'moongate', 'wolfden', 'wolfrock', 'pagoda', 'sacredtree', 'toriistair', 'foxshrine', 'fallenstar', 'mooncradle', 'icefall', 'skyisland', 'rainbowarch', 'roosttower', 'glowcap', 'geode', 'crystalcolumn', 'ruintower', 'moonmaiden', 'ruinportico', 'woodtree', 'gladecliff', 'waterfall', 'cloudpillar', 'watchtower', 'canyonwall', 'canyonspire', 'canyonarch', 'canyoncave', 'canyonstub', 'canyonwalllow', 'greattree', 'rootarch', 'trunkwall', 'hollowstump', 'rootwall', 'rootceiling', 'rootpillar', 'greatcap', 'manorgates', 'pumpkincoach', 'partylamp', 'rosehedge', 'topiary', 'coralclump', 'shellpile', 'kelpclump', 'divingbell']);
 const decoSize = (kind, seed) => {
   const b = BUILDINGS[kind];
   if (b) {
@@ -6075,6 +6075,11 @@ export function drawSceneBack(ctx, map, cam, width, height, time, nearPortalId, 
       veil = { color: air, k: 0.5 * aerial };
       // The village keeps its drawn houses in front but gets a painted hillside town far behind.
       if (t.painted === 'town') drawPaintedTownFar(g, t, cam, width, height, time, layerY, air);
+      // (Pastel Harbor's own, over its open sea: its hill of houses, the lighthouse point, your island.)
+      else if (t.painted === 'harborbay') {
+        drawFar(g, far, cam, width, farY, time);
+        drawPaintedHarborFar(g, t, cam, width, height, time, layerY, air, map);
+      }
       else drawFar(g, far, cam, width, farY, time);
       footHaze(g, air, width, height, farY + 24, 0.3 * aerial);
       veil = { color: air, k: 0.22 * aerial };

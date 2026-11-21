@@ -264,7 +264,8 @@ export const MAPS = {
     // The capsule machine stands on the Docks, between the pier's lamps, the sea behind it.
     gacha: 2056,
     width: 2900, height: 520, groundY: 480,
-    look: { islands: 'planks', material: 'quay', propKeep: 0.8 },
+    // (Its makeover, 2026-11-21: rose brick paving, the painted bay behind - render/painted.js.)
+    look: { islands: 'planks', material: 'harborpave', painted: 'harborbay', propKeep: 0.8 },
     terrain: [[0, 480], [760, 480], [800, 460], [1240, 460], [1280, 480], [2900, 480]],
     homeStyle: 'canal',
     // Canal houses wall to wall, each with its own gable, and the warehouse (render/townhouses.js).
@@ -303,7 +304,9 @@ export const MAPS = {
     ],
     // Lamps that glow at night (world/daytime.js): the market, the square, the alley, the pier, the ship.
     lamps: [{ x: 330, y: 440 }, { x: 700, y: 440 }, { x: 1060, y: 420 }, { x: 1320, y: 430 }, { x: 2000, y: 400 }, { x: 2120, y: 400 }, { x: 2390, y: 330 }],
-    deco: [['alleylamp', 1320], ['laundryline', 1470]],
+    // A landmark per district (render/harborart.js): the market mast, the Harbor Clock behind the
+    // square; the alley's lamp and washing line.
+    deco: [['fishmast', 410], ['harborclock', 945], ['alleylamp', 1320], ['laundryline', 1470]],
     spawns: [],
   },
 

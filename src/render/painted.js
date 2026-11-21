@@ -1488,6 +1488,156 @@ export function drawMeadowLife(ctx, map, cam, width, height, time, groundAt) {
   }
 }
 
+// ---------- Pastel Harbor ----------
+
+// Far behind Pastel Harbor (its makeover, 2026-11-21), over the theme's own open sea (scenery draws
+// it first): at the left the town's green hill climbs out of the water, pastel houses tumbling down
+// its slope between round trees; then the open bay, sailboats crossing it, a little lighthouse on a
+// rocky point (Lantern Lagoon's way), and far out on the horizon your own island, its lighthouse
+// winking at dusk (the map rule: the next places show in the view). All pale with distance.
+const HB_FACTOR = 0.05;
+// How high the town's hill stands at a spot along the far coast (parallax px), 0 past its end.
+const hbHill = (px) => (px < 140 ? 1 : px > 330 ? 0 : 0.5 + 0.5 * Math.cos(((px - 140) / 190) * Math.PI));
+export function drawPaintedHarborFar(ctx, t, cam, width, height, time, layerY, air, map = null) {
+  const sun = t.sun ?? '#fff6dc';
+  const off = cam.x * HB_FACTOR;
+  // The sea's horizon (where scenery's open sea begins).
+  const hz = layerY(50, 0.05) - 30;
+  // The town's hill: its crest, and its foot sunk in the water.
+  const crest = (sx) => {
+    const px = sx + off;
+    return hz - hbHill(px) * (78 + 12 * Math.sin(px * 0.017 + 0.7) + 6 * Math.sin(px * 0.043)) + 2;
+  };
+  const hc = mix(mix('#9fd0b0', t.far ?? '#9fd0b0', 0.2), air, 0.32);
+  const hillEnd = 340 - off;
+  if (hillEnd > 0) {
+    const right = Math.min(width + 8, hillEnd + 8);
+    ctx.fillStyle = mix(hc, sun, 0.35);
+    ctx.beginPath();
+    ctx.moveTo(-4, hz + 200);
+    for (let sx = -4; sx <= right; sx += 6) ctx.lineTo(sx, crest(sx) - 1.6);
+    ctx.lineTo(right, hz + 200);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = hc;
+    ctx.beginPath();
+    ctx.moveTo(-4, hz + 200);
+    for (let sx = -4; sx <= right; sx += 6) ctx.lineTo(sx, crest(sx) + 0.6);
+    ctx.lineTo(right, hz + 200);
+    ctx.closePath();
+    ctx.fill();
+    // Houses tumbling down the slope (staggered, every third gap a round tree), lit windows.
+    const roofs = ['#f29ab4', '#8fc8f2', '#f6c27a', '#c4a6f2', '#7fd8c0'].map((c) => mix(c, air, 0.4));
+    // (At night the walls fall into the hill's shadow and every window is lit: the town's lights.)
+    const nt = Math.min(1, map?.night ?? 0);
+    const walls = ['#fff4ec', '#fde8f0', '#eef6ff'].map((c) => mix(mix(c, air, 0.32), hc, nt * 0.6));
+    const tree = mix('#7fc49a', air, 0.35);
+    const lit = nt > 0.3 ? '#ffe28a' : mix('#ffe9a0', air, 0.15);
+    repeat(cam.x, HB_FACTOR, 22, width, (i, x) => {
+      const px = x + off;
+      const hgt = hbHill(px);
+      if (hgt < 0.25 || x > width + 10) return;
+      const top = crest(x);
+      const rows = Math.max(1, Math.floor((hz - top) / 17));
+      for (let r = 0; r < rows; r++) {
+        const s = hash(i * 13 + r * 7);
+        const hx = x + (r % 2) * 9 + s * 4;
+        const hy = top + 11 + r * 17 + hash(i * 5 + r) * 3;
+        if (hy > hz + 2) continue;
+        if (s > 0.64) {
+          ctx.fillStyle = tree;
+          ctx.beginPath();
+          ctx.arc(hx, hy - 5, 5 + s * 2, 0, Math.PI * 2);
+          ctx.fill();
+          continue;
+        }
+        const w = 10 + hash(i * 7 + r) * 5;
+        const h = 8 + hash(i * 9 + r) * 6;
+        ctx.fillStyle = walls[(i + r) % walls.length];
+        ctx.fillRect(hx - w / 2, hy - h, w, h);
+        ctx.fillStyle = roofs[(i * 2 + r * 3) % roofs.length];
+        ctx.beginPath();
+        ctx.moveTo(hx - w / 2 - 1.4, hy - h + 0.5);
+        ctx.lineTo(hx, hy - h - w * 0.55);
+        ctx.lineTo(hx + w / 2 + 1.4, hy - h + 0.5);
+        ctx.closePath();
+        ctx.fill();
+        if (s > 0.3 || nt > 0.3) {
+          ctx.fillStyle = lit;
+          ctx.fillRect(hx - 1.3, hy - h * 0.62, 2.6, 2.4);
+        }
+      }
+    });
+    haze(ctx, air, width, hz + 4, 0.25, 26);
+  }
+  // The lighthouse on its rocky point out in the bay.
+  const lx = 560 - off;
+  if (lx > -30 && lx < width + 30) {
+    const ly = hz + 1;
+    ctx.fillStyle = mix('#b8aac4', air, 0.4);
+    ctx.beginPath();
+    ctx.moveTo(lx - 30, ly);
+    ctx.quadraticCurveTo(lx - 14, ly - 9, lx, ly - 8);
+    ctx.quadraticCurveTo(lx + 14, ly - 9, lx + 22, ly);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = mix('#ffffff', air, 0.2);
+    ctx.fillRect(lx - 3.5, ly - 34, 7, 27);
+    ctx.fillStyle = mix('#ff8a8a', air, 0.3);
+    ctx.fillRect(lx - 3.5, ly - 26, 7, 4);
+    ctx.fillRect(lx - 3.5, ly - 16, 7, 4);
+    ctx.beginPath();
+    ctx.moveTo(lx - 5, ly - 34);
+    ctx.lineTo(lx, ly - 41);
+    ctx.lineTo(lx + 5, ly - 34);
+    ctx.fill();
+  }
+  // Your island far out on the horizon, a speck of a lighthouse on its peak.
+  const ix = 700 - off;
+  if (ix > -40 && ix < width + 40) {
+    const iy = hz + 1;
+    ctx.fillStyle = mix('#b8c8d8', air, 0.55);
+    ctx.beginPath();
+    ctx.moveTo(ix - 30, iy);
+    ctx.lineTo(ix - 18, iy - 8);
+    ctx.lineTo(ix - 8, iy - 10);
+    ctx.lineTo(ix - 4, iy - 22);
+    ctx.lineTo(ix + 6, iy - 22);
+    ctx.lineTo(ix + 10, iy - 11);
+    ctx.lineTo(ix + 24, iy - 6);
+    ctx.lineTo(ix + 34, iy);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = mix('#ffffff', air, 0.45);
+    ctx.fillRect(ix + 2, iy - 31, 3, 9);
+    if ((map?.night ?? 0) > 0.2 || (map?.dusk ?? 0) > 0.3) {
+      ctx.fillStyle = mix('#fff3a6', air, 0.1);
+      ctx.globalAlpha = 0.5 + 0.5 * Math.max(0, Math.sin(time * 1.4));
+      ctx.fillRect(ix + 1.5, iy - 33, 4, 3);
+      ctx.globalAlpha = 1;
+    }
+  }
+  // Sailboats crossing the bay, slowly, past the hill's foot.
+  for (let k = 0; k < 3; k++) {
+    const bx = 360 + ((time * (2 + k) + k * 150) % 460) - off;
+    if (bx < -10 || bx > width + 10) continue;
+    const by = hz + 7 + k * 5;
+    ctx.fillStyle = mix('#ffffff', air, 0.2);
+    ctx.beginPath();
+    ctx.moveTo(bx, by - 13);
+    ctx.lineTo(bx + 7, by - 1.5);
+    ctx.lineTo(bx, by - 1.5);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(bx - 1, by - 10);
+    ctx.lineTo(bx - 1, by - 1.5);
+    ctx.lineTo(bx - 5, by - 1.5);
+    ctx.fill();
+    ctx.fillStyle = mix(['#ff9ec0', '#8fc8f2', '#f6c27a'][k], air, 0.25);
+    ctx.fillRect(bx - 6, by - 1.5, 14, 2.4);
+  }
+}
+
 // ---------- The village ----------
 
 // Far behind the village: a painted hillside with a cluster of tiny rooftops in the haze, a clock

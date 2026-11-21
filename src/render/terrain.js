@@ -60,6 +60,9 @@ export const MATERIALS = {
   snow: { lip: '#ffffff', body: '#dfe8fa', deep: '#b6c4e8', stone: '#f4f8ff', style: 'slab', blades: false, drip: 'crystal', glow: '#e6f4ff' },
   // Pastel Harbor's quay: big cut harbour stones in sea-washed grey, a pale coping along the top.
   quay: { lip: '#efe2c8', body: '#b4b2c6', deep: '#86849e', stone: '#dcdae8', style: 'slab', blades: false, drip: 'weed' },
+  // Pastel Harbor's streets (its makeover, 2026-11-21): warm rose brick paving under a white kerb,
+  // in place of the heavy grey quay slabs.
+  harborpave: { lip: '#fff4ea', body: '#f2c8bc', deep: '#d8a4a0', stone: '#fde4dc', style: 'brick', blades: false, drip: null },
   // Windy Canyon: wind-carved layers of sandstone (the canyon's walls, not a mason's).
   canyon: { lip: '#ffe2b4', body: '#dc9e68', deep: '#a8643a', stone: '#fbdcae', style: 'strata', blades: false, drip: null },
   // The Moonlit Rooftop: blue-grey roof slates in overlapping courses, a lead flashing along the top.
