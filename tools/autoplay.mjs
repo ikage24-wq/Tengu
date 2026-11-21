@@ -39,6 +39,7 @@ const { ESCORTS } = await import(S + 'world/escort.js');
 const { groundAt } = await import(S + 'world/physics.js');
 const { cook } = await import(S + 'ui/cooking.js');
 const { DISH_BY_ID } = await import(S + 'data/cooking.js');
+const { nestBoss } = await import(S + 'world/nest.js');
 
 const JOB1 = process.argv[2] ?? 'warrior';
 const JOB2 = process.argv[3] ?? 'stormwall';
@@ -275,6 +276,18 @@ function doObjective(q, o) {
     if (!field && maps.length) {
       const d = dungeonOf(maps[0]);
       if (!runDungeon(d.id)) for (let k = 0; k < o.count; k++) Q.recordKill(c, o.mob);
+      return;
+    }
+    // (An area boss that wakes at its nest once enough has fallen on its map, world/nest.js: hunt
+    // there until it wakes, timed, then take it down.)
+    const nest = !field && Object.values(MAPS).find((m) => m.nest?.mob === o.mob);
+    if (nest) {
+      go(nest.id);
+      const t0 = simSecs;
+      const have = () => (c.quests[q.id]?.kills?.[o.mob] ?? 0) >= o.count;
+      if (!huntHere(null, () => nestBoss(w) || have(), 3600)) { note('STALL', `${q.id}: ${MOBS[o.mob].name} never woke on ${nest.name} in an hour of hunting`); for (let k = 0; k < o.count; k++) Q.recordKill(c, o.mob); return; }
+      note('ok', `${q.id}: ${MOBS[o.mob].name} woke after ${((simSecs - t0) / 60).toFixed(1)} game min of hunting on ${nest.name}`);
+      if (!huntHere((m) => m.def.id === o.mob, have, 600)) { note('STALL', `${q.id}: couldn't beat ${MOBS[o.mob].name} in 10 min`); for (let k = 0; k < o.count; k++) Q.recordKill(c, o.mob); }
       return;
     }
     if (!field) { note('BUG', `${q.id}: ${o.mob} spawns nowhere`); return; }
