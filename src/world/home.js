@@ -453,7 +453,7 @@ export function homeTick(world, dt) {
     pond.y += (want - pond.y) * Math.min(1, dt * 0.5);
   }
   if (rain && !map.guestOf) for (const p of world.char.home?.plots ?? []) if (p?.id && !p.wet) p.wet = true;
-  for (const a of map.animals ?? []) tickAnimal(a, dt, (map.night ?? 0) > 0.6);
+  for (const a of map.animals ?? []) tickAnimal(a, dt, (map.night ?? 0) > 0.6, Math.abs(world.body.y - G) < 40 ? world.body.x : null);
 }
 
 // Coming home with someone living with you: while you were away they picked whatever was ripe on
@@ -541,6 +541,8 @@ export function collectFarm(world, now = nowSecs()) {
   }
   takeFarm(entry, now);
   world.log(`You collect ${n} ${ITEMS[def.good].name}${n > 1 ? 's' : ''} from the ${def.name}.`, '#ffe9a6');
+  // (Its animals cheer: a happy little bounce each, one after another.)
+  (world.map.animals ?? []).filter((a) => a.building === def.id && a.state !== 'sleep').forEach((a, k) => (a.cheer = 1.4 + k * 0.15));
   world.lastGathered = { x: def.x, y: G - 30, items: [def.good], at: world.now };
   return true;
 }
@@ -556,8 +558,26 @@ function newAnimal(def, k) {
 }
 // (A tiny seeded random per animal, so they don't all move in step.)
 const rnd = (a) => ((a.rng = (a.rng * 9301 + 49297) % 233280) / 233280);
-export function tickAnimal(a, dt, night) {
+// (`px`: where you are on the beach, or null: they watch you when you're close, and greet you with a
+// happy bounce when you first come over.)
+const NEAR = 64;
+export function tickAnimal(a, dt, night, px = null) {
   a.t -= dt;
+  a.cheer = Math.max(0, (a.cheer ?? 0) - dt);
+  a.call = Math.max(0, (a.call ?? 0) - dt);
+  a.greetIn = Math.max(0, (a.greetIn ?? 0) - dt);
+  const near = px != null && !night && Math.abs(px - a.x) < NEAR;
+  a.watch = near && (a.state === 'idle' || a.state === 'graze');
+  if (near && !a.wasNear && !a.greetIn && a.state !== 'sleep') {
+    a.cheer = 1.1 + rnd(a) * 0.3;
+    a.greetIn = 25;
+  }
+  a.wasNear = near;
+  // Watching you: face your way (turning round first, like any turn).
+  if (a.watch && a.state === 'idle' && Math.sign(px - a.x) !== a.dir && Math.abs(px - a.x) > 6) {
+    Object.assign(a, { state: 'turn', t: 0.25, next: Math.sign(px - a.x), target: a.x });
+    return;
+  }
   // (Bedtime: home to their building, wherever they were off to.)
   if (night && a.state !== 'sleep' && a.state !== 'turn' && !(a.state === 'walk' && a.target === a.home)) Object.assign(a, { state: 'walk', target: a.home });
   if (a.state === 'walk') {
@@ -582,15 +602,21 @@ export function tickAnimal(a, dt, night) {
     return;
   }
   if (a.state === 'turn') {
-    if (a.t <= 0) Object.assign(a, { dir: a.next, state: 'walk' });
+    if (a.t <= 0) Object.assign(a, { dir: a.next, state: Math.abs(a.target - a.x) < 0.5 ? 'idle' : 'walk', t: 1.5 });
     return;
   }
   if (a.state === 'sleep') {
     if (!night) Object.assign(a, { state: 'idle', t: 1 + rnd(a) * 2 });
     return;
   }
-  if (a.t > 0) return;
+  if (a.t > 0 || a.watch) return;
   const r = rnd(a);
+  // Now and then a cluck, a baa or a moo.
+  if (r > 0.9) {
+    Object.assign(a, { state: 'idle', t: 1.6 + rnd(a) });
+    a.call = 0.9;
+    return;
+  }
   if (r < 0.5) {
     const [x1, x2] = a.yard;
     Object.assign(a, { state: 'walk', target: x1 + 8 + rnd(a) * (x2 - x1 - 16), t: 20 });
