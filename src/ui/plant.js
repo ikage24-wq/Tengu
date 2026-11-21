@@ -59,7 +59,7 @@ export function plantWindow(ui, state, world) {
         return;
       }
       world.log(`You plant ${ITEMS[e.id].name}. Shelly gives it a pat. Back in ${Math.round(GROW_SECS / 60)} minutes!`, '#d6f5b0');
-      sfx('pickup');
+      sfx('plantSeed');
       state.npc = null;
     }
   });

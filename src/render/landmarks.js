@@ -4051,10 +4051,11 @@ export const LANDMARKS = Object.fromEntries(Object.entries(KINDS).map(([k, { w, 
 
 // Draws landmark `kind` with its base centered at screen (x, y), y being the ground line.
 // `wx` is its place in the world, so a gust rolls across the map and reaches it in turn.
-export function drawLandmark(ctx, kind, x, y, time, seed = 0, wx = x, theme = 'meadow', night = 0) {
+// (`clock`: the time of day in minutes, world/daytime.js, for a clock face.)
+export function drawLandmark(ctx, kind, x, y, time, seed = 0, wx = x, theme = 'meadow', night = 0, clock = 0) {
   const k = KINDS[kind];
   if (!k) return;
   waterKey = theme;
   nightNow = night;
-  k.draw(ctx, x, y + SINK, time, seed, wx, night);
+  k.draw(ctx, x, y + SINK, time, seed, wx, night, clock);
 }

@@ -146,6 +146,17 @@ S = {
     'icecrack': 'BluezoneCorp - Ice Cracking/Bluezone_BC0278_ice_crack_break_078.wav',
     'icecracks': 'BluezoneCorp - Ice Cracking/Bluezone_BC0278_ice_crack_break_002.wav',
     'iceimpact': 'David Dumais Audio - Ice & Frost Magic 1/Magic_Spells_Impact_Ice13.wav',
+    # Your island (2026-11-21): its farm's hens, sheep and cow (the library has no cow, so hers is a
+    # farm pig's soft groan pitched down into a low moo), the zip line's pulley, planting, building;
+    # Pastel Harbor's clock tower bells.
+    'chicks': 'Mechanical Wave - Farm Animals/BIRDFowl_Chick Squawks-02_MWSFX_FA.wav',
+    'sheep': '344 Audio- UK Canals, Parks & Forests/Sheeps & Lamps.wav',
+    'piggroan': 'Articulated Sounds - Pig Farm Animal Groan/ANIMAL FARM Pig Groan 03, Martvili Georgia.wav',
+    'gondola': 'Rzpost - The Gondola Lift/Gondola,Snowboard,Ski,Lyft,Style,Small,Size,Mechanism,Pulley,Passing,By_V2.wav',
+    'towerbells': 'Ivo Vicic - Church Bells/04 Church Bells, Near Distance, In Church Tower-3 Different Bell 02.wav',
+    'dig': 'TheWorkRoom Audio Post - Digging/DIG043.wav',
+    'hammer': 'The Sound Pack Tree - Construction & Tools/176403 - Nail Hammering 03.wav',
+    'magiccreate': 'CB_Sounddesign - Applicable Sounds - Organic UI and Building Games SFX/GAMEMisc_Magic Creation 23_CB Sounddesign_APPlicable Sounds.wav',
 }
 
 # name: [(source, start s, length s, pitch x, gain dB, delay ms), ...]
@@ -592,6 +603,16 @@ B = {
     'freeze': [('icecrack', 0.4, 0.45, 1.0, 0, 0), ('iceimpact', 0.1, 0.8, 1.0, -6, 0)],
     'iceCreak': [('icecracks', 0.9, 0.8, 0.9, 0, 0)],
     'tanaStars': [('twinkle', 0.0, 1.8, 0.95, -2, 0), ('handbell', 0.28, 1.6, 1.6, -6, 200), ('handbell', 0.28, 1.6, 2.0, -8, 520)],
+    # Your island (2026-11-21): a hen's little clucks, a sheep's baa, the cow's low moo; the zip line's
+    # trolley whirring down the cable; a seed dug in; Shelly hammering a building together and its
+    # finishing sparkle. Pastel Harbor's clock tower ringing the hour.
+    'henCluck': [('chicks', 2.45, 0.7, 0.8, 0, 0)],
+    'sheepBaa': [('sheep', 23.15, 1.5, 1.0, 0, 0)],
+    'cowMoo': [('piggroan', 0.0, 0.8, 0.62, 0, 0, 0.05)],
+    'zipRide': [('gondola', 3.6, 2.9, 1.05, 0, 0, 0.3)],
+    'plantSeed': [('dig', 3.95, 0.4, 1.2, 0, 0)],
+    'buildHammer': [('hammer', 1.5, 1.3, 1.0, 0, 0), ('magiccreate', 0.0, 1.2, 1.0, -8, 950)],
+    'clockBells': [('towerbells', 1.5, 5.8, 1.12, 0, 0)],
 }
 
 

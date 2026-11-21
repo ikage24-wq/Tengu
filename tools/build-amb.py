@@ -38,6 +38,9 @@ LOOPS = {
     'mystic': ('Epic Stock Media - Strange Game Ambient Loops 3/DSGNSynth_Dark Loop Mystic Forest Tonal Steady Synth_ESM_SGA3.wav', 5, 40, 0),
     # Water flowing under the surface (the Sunken Aquarium Palace).
     'underwater': ('InMotionAudio - Submerge/WATRFlow_WaterFlow21_InMotionAudio_Submerge.wav', 1, 28, 0),
+    # A little waterfall splashing into its pool (2026-11-21: heard near every waterfall - your island's,
+    # the glade's, the springs' - louder the closer you are; src/audio/ambience.js nearLoops).
+    'waterfall': ('Bluezone - Wilderness - Flowing Water/Bluezone_BC0259_wilderness_flowing_water_waterfall_small_002.wav', 4, 30, 0),
     # A crowd far off, families laughing and squealing (the Clockwork Carnival).
     'fairground': ('Epic Stock Media - Public Spaces - Crowds Walla and Everyday Ambiences/AMBPubl_Cruise Ship Walla Distant Adults Children Laughing Screaming 4_ESM_CPS.wav', 30, 40, 0),
     # A shimmer of small bells and metal taps (the Star Observatory).

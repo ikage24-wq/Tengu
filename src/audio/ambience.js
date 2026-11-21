@@ -71,6 +71,20 @@ const PLACES = {
     day: [['waveWash', 3, 6], ['gull', 6, 14], ['woodCreak', 8, 16]],
     night: [['waveWash', 3, 6], ['woodCreak', 7, 14], ['cricket', 1, 3]],
   },
+  // Pastel Harbor (2026-11-21): the port's sounds without the far bells - its own clock tower rings
+  // the hour now (listen.js hearClock).
+  harbortown: {
+    bed: { lp: 420, hp: 80, db: -40, lfo: 0.05, depth: 0.3 }, rec: 'marina', recDb: -19,
+    day: [['chatter', 1.5, 4], ['gull', 5, 12]],
+    night: [['chatter', 5, 12], ['woodCreak', 6, 14]],
+  },
+  // Your island (2026-11-21): waves on its beach, gulls, a bird in the palms; crickets at night. No
+  // town chatter: it's just you (and Shelly).
+  isle: {
+    bed: { lp: 650, hp: 90, db: -31, lfo: 0.13, depth: 0.8 }, rec: 'shore', recDb: -17,
+    day: [['gull', 7, 16], ['waveWash', 9, 18], ['birdChirp', 6, 14]],
+    night: [['cricket', 1, 3], ['waveWash', 9, 18]],
+  },
   // A farm village (Sprout): a warm field's insects and breeze under the town's chatter.
   village: {
     bed: { lp: 420, hp: 80, db: -40, lfo: 0.05, depth: 0.3 }, rec: 'field', recDb: -21,
@@ -351,8 +365,58 @@ export function updateAmbience(map, quiet = 0) {
   }
 }
 
+// Water heard from where it is (2026-11-21): every waterfall on a map (the glade's and the springs'
+// deco, your island's own) splashes louder the closer you are, panned to its side, fading in and
+// out as you come and go. One loop, kept running (silent when there's none near).
+const NEAR_LEVEL = Math.pow(10, -9 / 20);
+const near = { src: null, gain: null, pan: null, loading: false, best: 0, side: 0 };
+function nearestFall(list, map, x, y) {
+  for (const d of list ?? []) {
+    if (d[0] !== 'waterfall') continue;
+    const k = Math.max(0, 1 - Math.hypot(d[1] - x, ((d[3] ?? map.groundY) - y) * 0.5) / 700);
+    if (k > near.best) {
+      near.best = k;
+      near.side = Math.max(-0.6, Math.min(0.6, (d[1] - x) / 500));
+    }
+  }
+}
+export function updateNearLoops(map, x, y) {
+  if (!audioReady() || !map) return;
+  near.best = 0;
+  near.side = 0;
+  nearestFall(map.deco, map, x, y);
+  nearestFall(map.townPieces, map, x, y);
+  const { best, side } = near;
+  const ac = context();
+  const out = busNode('amb');
+  if (!ac || !out) return;
+  if (best > 0 && !near.src && !near.loading) {
+    near.loading = true;
+    recording('waterfall').then((buf) => {
+      near.loading = false;
+      if (!buf || near.src) return;
+      const src = ac.createBufferSource();
+      src.buffer = buf;
+      src.loop = true;
+      const gain = ac.createGain();
+      gain.gain.value = 0;
+      const pan = ac.createStereoPanner();
+      src.connect(gain);
+      gain.connect(pan);
+      pan.connect(out);
+      src.start(ac.currentTime, Math.random() * buf.duration);
+      Object.assign(near, { src, gain, pan });
+    });
+  }
+  if (near.gain) {
+    near.gain.gain.setTargetAtTime(NEAR_LEVEL * best * best, ac.currentTime, 0.4);
+    near.pan.pan.setTargetAtTime(side, ac.currentTime, 0.3);
+  }
+}
+
 // Silence (the title, the menus): the bed fades away.
 export function stopAmbience() {
   stopBed();
   next.clear();
+  if (near.gain) near.gain.gain.setTargetAtTime(0, context().currentTime, 0.3);
 }

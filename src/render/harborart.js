@@ -1,7 +1,8 @@
 // Pastel Harbor (its makeover, 2026-11-21): a landmark for each district, nothing more (the town
 // rule: clean and spacious, no prop clutter). Behind the square, the Harbor Clock: a tall pastel
 // clock tower with a copper-green spire and a golden fish for a weather vane, its hands keeping the
-// game's own hour, its bells swinging on the hour. In the Fish Market, the market mast: a tall striped pole, a big painted wooden fish hanging
+// player's own clock (the one day and night follow), its bells swinging as they ring the hour
+// (audio/listen.js hearClock). In the Fish Market, the market mast: a tall striped pole, a big painted wooden fish hanging
 // from its yard and swinging in the sea breeze, bunting strung down from its top.
 import { E, T, F, sprite, blit, snap } from './pixel.js';
 import { band } from './propkit.js';
@@ -69,13 +70,13 @@ function clockArt() {
     return out;
   }, CT_K);
 }
-// Its hands (the game's hour: `time` here is the world's clock, its day 24 real minutes) and two
-// bells that swing and settle on the hour.
-function drawClock(ctx, x, y, time) {
+// Its hands (`clock`: the time of day in minutes, world/daytime.js) and two bells that swing and
+// settle as they ring the hour.
+function drawClock(ctx, x, y, time, seed, wx, night, clock = 0) {
   place(ctx, clockArt(), x, y);
   const k = CT_K;
   const fy = y - CT_FACE * k;
-  const hours = (time / 60) % 12;
+  const hours = (clock / 60) % 12;
   ctx.strokeStyle = HB.ink;
   ctx.lineCap = 'round';
   for (const [len, w, turn] of [[9, 2, hours / 12], [14, 1.3, hours % 1]]) {
@@ -91,7 +92,7 @@ function drawClock(ctx, x, y, time) {
   ctx.arc(x, fy, 1.8 * k, 0, Math.PI * 2);
   ctx.fill();
   // The bells: a peal for a few seconds as each hour comes round, easing to stillness.
-  const since = time % 60;
+  const since = (clock % 60) * 60;
   const swing = since < 6 ? Math.sin(since * 6) * 0.5 * (1 - since / 6) : 0;
   for (const [dx, s] of [[-7, k], [7, 0.8 * k]]) {
     ctx.save();

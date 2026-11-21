@@ -10,7 +10,7 @@
 
 import { sfx } from './sfx.js';
 import { updateMusic, setFight, setMuffle, musicNow } from './music.js';
-import { updateAmbience, dayPart } from './ambience.js';
+import { updateAmbience, updateNearLoops, dayPart } from './ambience.js';
 import { prepareSongs } from './bank.js';
 import { getMap } from '../data/maps.js';
 import { SKILLS } from '../data/skills.js';
@@ -525,6 +525,40 @@ function hearCanyon(world, m, cam) {
   m.gusting = gust;
 }
 
+// Your island (2026-11-21): the farm's hens clucking, sheep baaing and the cow mooing now and then,
+// a little brighter as they greet you, each from where it is and softer the further off; the zip
+// line's trolley whirring down the cable as you set off.
+const CALLS = { hen: 'henCluck', sheep: 'sheepBaa', cow: 'cowMoo' };
+function hearIsland(world, m, pan) {
+  const b = world.body;
+  for (const a of world.map.animals ?? []) {
+    const calling = (a.call ?? 0) > 0;
+    const greeting = (a.cheer ?? 0) > 0;
+    if ((calling && !a.heardCall) || (greeting && !a.heardCheer)) {
+      const dx = Math.abs(a.x - b.x);
+      if (dx < 640) sfx(CALLS[a.kind], { pan: pan(a.x), db: -dx / 40, rate: greeting ? 1.08 : 1 });
+    }
+    a.heardCall = calling;
+    a.heardCheer = greeting;
+  }
+  if (b.zip && !m.zipping) sfx('zipRide');
+  m.zipping = Boolean(b.zip);
+}
+
+// Pastel Harbor's clock tower rings the hour, by the player's own clock as its hands show
+// (world/daytime.js `clockMin`), from the tower: loud in the square, carrying across the town.
+function hearClock(world, m, pan) {
+  const map = world.map;
+  if (map.clockMin == null) return;
+  const hour = Math.floor(map.clockMin / 60);
+  if (m.clockMap === map && hour !== m.clockHour) {
+    const tower = (map.deco ?? []).find((d) => d[0] === 'harborclock');
+    if (tower) sfx('clockBells', { pan: pan(tower[1]), db: -Math.abs(tower[1] - world.body.x) / 120 });
+  }
+  m.clockHour = hour;
+  m.clockMap = map;
+}
+
 export function hearWorld(world, cam) {
   const m = memo.get(world) ?? memo.set(world, {}).get(world);
   hearFestival(world, m);
@@ -533,6 +567,8 @@ export function hearWorld(world, cam) {
   const char = world.char;
   const b = world.body;
   const pan = (x) => Math.max(-0.7, Math.min(0.7, (x - (cam?.x ?? b.x - 320) - 320) / 400));
+  hearIsland(world, m, pan);
+  hearClock(world, m, pan);
 
   // ----- Effects that just started -----
   for (const f of world.fx) {
@@ -747,6 +783,7 @@ export function hearWorld(world, cam) {
   }
   // (A cutscene can change the place's sound: festival night in the bedchamber. world/cast.js `amb`.)
   updateAmbience(world.cine?.amb ? { ...world.map, amb: world.cine.amb } : world.map, m.fightK);
+  updateNearLoops(world.map, b.x, b.y);
 }
 
 // Each summon: what it says when it starts a move, and now and then when it's idle.

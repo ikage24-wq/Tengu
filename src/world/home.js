@@ -155,7 +155,7 @@ export function homeMap(stage = 1) {
     ...(built(s, 'summit') ? [['terrace', 1262], ['isle_lighthouse', 1402], ['zipline', ZIP.x1]] : []),
   ];
   const map = {
-    id: 'home', name: 'Your Island', theme: 'harbor', isTown: true, private: true, home: true, town: 'harbor', music: 'lagoon',
+    id: 'home', name: 'Your Island', theme: 'harbor', isTown: true, private: true, home: true, town: 'harbor', music: 'lagoon', amb: 'isle',
     stage: s, layout: 2, width: WIDTH, height: HEIGHT, groundY: G,
     look: { sky: ['#9fd8ff', '#cdeeff', '#f2fbff'], far: '#a8e0f0', mid: '#bfe8d8', midTrim: '#8fd0c0', skyline: 'opensea', islands: 'planks', material: 'sand', propKeep: 1 },
     cottages: [],
@@ -270,7 +270,7 @@ export function homeGrotto() {
   return {
     // (A cave like the Crystal Cave, in sea-cave teal: no sky, no weather; not a room, and nothing
     // to decorate in it.)
-    id: 'home_cave', name: 'The Grotto', theme: 'cave', isTown: true, private: true, home: true, noDecor: true, town: 'harbor', music: 'lagoon',
+    id: 'home_cave', name: 'The Grotto', theme: 'cave', isTown: true, private: true, home: true, noDecor: true, town: 'harbor', music: 'lagoon', amb: 'cave',
     width: 900, height: 560, groundY: F,
     look: { sky: ['#123a4a', '#1d5662', '#2f7a80'], far: '#1e4e5a', mid: '#2a6670', midTrim: '#3f8a8a', skyline: 'crystals', underground: true, light: 'cave', stars: false, face: null, clouds: false, rainbow: 0, ceiling: true, material: 'searock', drift: 'sparkle', critters: [], props: [], propKeep: 1 },
     cottages: [],

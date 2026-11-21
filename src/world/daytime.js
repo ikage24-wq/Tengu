@@ -36,8 +36,13 @@ export function tickDaytime(world, dt) {
     world.dayT = 0;
     // (In sixteenths: each new shade of dusk restyles every backdrop picture, so the light steps
     // through a few shades rather than a new one every second.)
-    world.night = world.forceNight ?? Math.round(nightOf((world.dayClock ?? (() => new Date()))()) * 16) / 16;
+    const date = (world.dayClock ?? (() => new Date()))();
+    world.night = world.forceNight ?? Math.round(nightOf(date) * 16) / 16;
+    // (The time of day in minutes, for a clock face: Pastel Harbor's tower.)
+    world.clockBase = date.getHours() * 60 + date.getMinutes() + date.getSeconds() / 60;
   }
+  // (Between the once-a-second readings it runs on, so a clock's hands move smoothly.)
+  world.map.clockMin = ((world.clockBase ?? 0) + world.dayT / 60) % 1440;
   // (A map set at dusk whatever the clock, `map.dusk`, is never lighter than that: the Grand Mochi
   // Course's summer festival.)
   world.map.night = indoors(world.map) ? 0 : Math.max(world.night ?? 0, world.map.dusk ?? 0);

@@ -526,6 +526,14 @@ Object.assign(RECORDED, {
   mochiStep: { takes: 4, trim: 0 },
   bellRingers: { trim: 0 },
   iceCreak: { trim: 0 },
+  // Your island and Pastel Harbor's clock tower (2026-11-21).
+  henCluck: { trim: 0 },
+  sheepBaa: { trim: 0 },
+  cowMoo: { trim: 0 },
+  zipRide: { trim: 0 },
+  plantSeed: { trim: 0 },
+  buildHammer: { trim: 0 },
+  clockBells: { trim: 0 },
   kingFanfare: { trim: 0 },
 });
 

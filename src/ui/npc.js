@@ -762,6 +762,7 @@ function buildPage(ui, state, world, area) {
     const r = buildFarm(char, farm);
     if (r === n.def.name) {
       world.log(`Shelly built your ${r}! ${n.def.about}`, '#ffe36b');
+      sfx('buildHammer');
       say(world, 'shelly', ['Moo! Baa! Cluck! ...Sorry, I got excited.', 'Built it, and they moved right in!', "A farm! You're a real islander now."][FARM.findIndex((f) => f.id === farm) % 3]);
       if (world.map.id === 'home') {
         const x0 = world.body.x;
@@ -778,6 +779,7 @@ function buildPage(ui, state, world, area) {
     const r = buildRoom(char, room);
     if (r === n.def.name) {
       world.log(`Shelly built your ${r}! ${n.def.about}`, '#ffe36b');
+      sfx('buildHammer');
       say(world, 'shelly', ['A whole new room! Go on, have a look!', 'Done! I measured twice. Well, once. It\'s fine!', 'Your hut\'s getting fancy!'][char.home.rooms.length % 3]);
       // (Inside the hut, it opens round you.)
       if (world.map.id === 'home_in') {
@@ -795,6 +797,7 @@ function buildPage(ui, state, world, area) {
     const r = buildNext(char);
     if (typeof r === 'number') {
       world.log(`Shelly built ${HOME_STAGES[r].name}! ${HOME_STAGES[r].about}`, '#ffe36b');
+      sfx('buildHammer');
       // (The island grows round you: reloaded with you just where you stood.)
       const x0 = world.body.x;
       loadMap(world, 'home', 'dock');

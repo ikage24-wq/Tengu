@@ -647,6 +647,17 @@ const R = {
   // Folk bell-ringers clanging through the carnival far off; ice creaking far off in the snow.
   bellRingers: { db: -30, vary: 2, max: 1, gap: 20000, layers: [{ rec: 'bell', rate: 0.9 }] },
   iceCreak: { db: -30, vary: 6, max: 1, gap: 6000, layers: [{ rec: 'iceImpact', rate: 0.8, len: 500 }] },
+  // Your island (2026-11-21; recorded.js): the farm's hens, sheep and cow calling, heard from where
+  // each one is; the zip line's trolley whirring down the cable; a seed dug in; Shelly hammering a
+  // building together. Pastel Harbor's clock tower ringing the hour. (The layers here only stand in
+  // until the recordings load.)
+  henCluck: { db: -22, vary: 5, max: 2, gap: 500, layers: [{ wave: 'tri', f0: 620, slide: -0.5, env: { a: 4, s: 30, d: 70 }, lpf: [2000] }] },
+  sheepBaa: { db: -22, vary: 4, max: 2, gap: 700, layers: [{ wave: 'saw', f0: 300, vib: [7, 10], env: { a: 60, s: 500, d: 300 }, lpf: [1600] }] },
+  cowMoo: { db: -21, vary: 3, max: 1, gap: 900, layers: [{ wave: 'saw', f0: 120, slide: -0.3, env: { a: 150, s: 600, d: 300 }, lpf: [700] }] },
+  zipRide: { db: -16, vary: 2, max: 1, gap: 600, layers: [{ wave: 'noise', env: { a: 300, s: 1500, d: 800 }, lpf: [1800, 900] }] },
+  plantSeed: { db: -14, vary: 4, max: 2, gap: 120, layers: [{ rec: 'leather', len: 160, rate: 0.7 }] },
+  buildHammer: { db: -13, vary: 2, max: 1, gap: 1000, layers: [{ rec: 'leather', len: 120, rate: 0.6 }] },
+  clockBells: { db: -19, vary: 1, max: 1, gap: 20000, room: true, layers: [{ rec: 'bell', rate: 0.9 }] },
   // ---------- Weight under blows (sfx.js) ----------
   // What a blow lands on: stone cracks, crystal rings, bone and armour clank, wood knocks,
   // slime squelches, a spirit whooshes through.

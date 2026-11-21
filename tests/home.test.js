@@ -476,3 +476,39 @@ test('your party can be asked over, and a visitor sees the island as it is', () 
   assert.equal(MAPS.home_in.width, 900);
   refreshHome(w.char);
 });
+
+// ---------- The island's sounds and Pastel Harbor's clock (2026-11-21) ----------
+import { placeOf } from '../src/audio/ambience.js';
+import { hearWorld } from '../src/audio/listen.js';
+
+test('the island sounds like an island, its animals call from the farm, and the harbour clock tells the time', () => {
+  const w = islander();
+  const char = w.char;
+  char.home.stage = HOME_MAX;
+  for (const def of FARM) {
+    payFor(char, def);
+    assert.equal(buildFarm(char, def.id), def.name);
+  }
+  loadMap(w, 'home', 'dock');
+  assert.equal(placeOf(w.map), 'isle', 'waves and gulls, no town chatter');
+  assert.equal(placeOf(MAPS.home_cave ?? { amb: 'cave' }), 'cave');
+  assert.equal(placeOf(MAPS.harbor), 'harbortown', 'the harbour keeps its port sounds, its tower rings the hour');
+  // Each animal's call is heard once, from where it is.
+  const heard = [];
+  globalThis.__tengu = { onSound: (name) => heard.push(name) };
+  try {
+    w.body.x = 1700;
+    for (const a of w.map.animals) a.call = 0.9;
+    hearWorld(w);
+    hearWorld(w);
+    for (const call of ['henCluck', 'sheepBaa', 'cowMoo']) assert.ok(heard.includes(call), call);
+    assert.equal(heard.filter((n) => n === 'henCluck').length, w.map.animals.filter((a) => a.kind === 'hen').length, 'once each, not every frame');
+  } finally {
+    delete globalThis.__tengu;
+  }
+  // The clock's time of day follows the player's clock, smoothly between readings.
+  w.dayClock = () => new Date(2026, 10, 21, 15, 30, 0);
+  loadMap(w, 'harbor', 'start');
+  updateWorld(w, DT, keys());
+  assert.ok(Math.abs(w.map.clockMin - 930) < 0.1, `half past three: ${w.map.clockMin}`);
+});

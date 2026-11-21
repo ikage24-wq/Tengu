@@ -145,3 +145,7 @@ off), BluezoneCorp - Steampunk Mechanical Sounds (the faint alarm bell), Sonic B
 three music-box phrases).
 
 Windy Canyon's night rumble, Gnarlroot turning over in his sleep far below (tools/build-prologue-audio.py `canyonRumble`): a heavy creak and rumble of old wood (Bluezone - Forest Creature Sound Effects), low-passed with a little echo so it sounds far under the rock. Sonniss GDC bundles, royalty free inside the game.
+
+## Your island and Pastel Harbor's clock (tools/build-fight.py, build-amb.py, 2026-11-21)
+
+Cut from the Sonniss GDC bundles (royalty free inside the game): the hens' clucks (Mechanical Wave - Farm Animals, chick squawks slowed a little), the sheep's baa (344 Audio - UK Canals, Parks & Forests, Sheeps & Lamps), the cow's low moo (the bundles have no cow: Articulated Sounds - Pig Farm Animal Groan, pitched down), the zip line's trolley (Rzpost - The Gondola Lift, a pulley passing by), a seed dug in (TheWorkRoom Audio Post - Digging), Shelly building (The Sound Pack Tree - Construction & Tools, nail hammering, with CB_Sounddesign - Applicable Sounds' magic creation sparkle), the clock tower ringing the hour (Ivo Vicic - Church Bells, near, in the tower), and the waterfalls splashing as you come near (Bluezone - Wilderness - Flowing Water, a small waterfall).

@@ -256,7 +256,7 @@ export const MAPS = {
   // the Docks: a boardwalk pier with rowboats (fishing off its end) and the galleon, whose stern
   // deck, main deck and crow's nest you can climb, up its gangway ladder.
   harbor: {
-    id: 'harbor', plaza: 900, name: 'Pastel Harbor', theme: 'harbor', isTown: true, town: 'harbor', job: 'thief', world: { x: 222, y: 206 }, amb: 'port',
+    id: 'harbor', plaza: 900, name: 'Pastel Harbor', theme: 'harbor', isTown: true, town: 'harbor', job: 'thief', world: { x: 222, y: 206 }, amb: 'harbortown',
     // The town stove (data/cooking.js) and the craft bench (data/crafting.js) in its workshop.
     stove: 700,
     bench: 1180,
