@@ -16,6 +16,9 @@ import { createCamera, updateCamera, drawWorld } from '../src/render/scene.js';
 import { setHd, nextFrame } from '../src/render/pixel.js';
 import { preloadFxSprites } from '../src/render/fx-sprites.js';
 import { createInput, endFrame, VW, VH } from '../src/input.js';
+import { sceneInput, drawScene } from '../src/ui/cutscene.js';
+import { beginUi, endUi } from '../src/ui/kit.js';
+import { playScene, sceneStep, fillScene, isStaging } from '../src/world/story.js';
 
 const q = new URLSearchParams(location.search);
 const S = Number(q.get('s') ?? 2);
@@ -57,7 +60,9 @@ const frame = (now) => {
   acc += Math.min(0.1, (now - last) / 1000);
   last = now;
   while (acc >= 1 / 60) {
-    updateWorld(w, 1 / 60, input);
+    // (A story scene has the controls while it plays, as in the game: ui/manager.js.)
+    const locked = sceneInput(w, input);
+    updateWorld(w, 1 / 60, { held: input.held, pressed: input.pressed, locked });
     updateCamera(cam, w, 1 / 60);
     endFrame(input);
     t += 1 / 60;
@@ -68,6 +73,11 @@ const frame = (now) => {
   ctx.imageSmoothingEnabled = false;
   setHd(true, S);
   drawWorld(ctx, w, cam, t);
+  if (w.scene) {
+    const ui = beginUi(ctx, input);
+    drawScene(ui, w, cam);
+    endUi(ui);
+  }
   hud.textContent = `${w.map.name} (${w.map.id})  x ${Math.round(w.body.x)} y ${Math.round(w.body.y)}${w.body.rope ? '  on rope' : ''}  monsters ${w.mobs.filter((m) => m.hp > 0).length}`;
 };
 chan.port2.postMessage(0);
@@ -80,6 +90,80 @@ const frames = async (n) => { for (let i = 0; i < n; i++) await new Promise((res
 window.tap = async (code) => { key('keydown', code); await frames(4); key('keyup', code); };
 window.hold = async (code, ms) => { key('keydown', code); await frames(Math.round(ms / (1000 / 60))); key('keyup', code); return window.pos(); };
 window.holdAll = async (codes, ms) => { for (const c of codes) key('keydown', c); await frames(Math.round(ms / (1000 / 60))); for (const c of codes) key('keyup', c); return window.pos(); };
+// Story scenes: window.scene(id) plays one where she stands; window.watch({ name }) reads the
+// scene on screen the way a player would (each line typed out, a moment to read it, then Space),
+// recording it to an MP4 for the receiver when named. window.quest(id, state) sets a quest's
+// state (a trial starts by walking into its arena with its quest active).
+window.scene = (id) => playScene(w, id);
+window.quest = (id, state = 'active') => { w.char.quests[id] = { kills: {}, marks: {}, ...(w.char.quests[id] ?? {}), state }; };
+// Fights the trial boss with real key presses (walk up, face her, swing) for up to `secs`.
+window.fightBoss = async (secs) => {
+  const up = (c) => key('keyup', c);
+  const end = performance.now() + secs * 1000;
+  while (performance.now() < end) {
+    const m = w.trial?.queen;
+    if (!m || m.hp <= 0 || w.scene) break;
+    const dx = m.x - w.body.x;
+    up('ArrowLeft');
+    up('ArrowRight');
+    key('keydown', dx > 0 ? 'ArrowRight' : 'ArrowLeft');
+    if (Math.abs(dx) <= 60) {
+      await frames(2);
+      up('ArrowRight');
+      up('ArrowLeft');
+      key('keydown', 'KeyZ');
+    }
+    await frames(7);
+    up('KeyZ');
+  }
+  for (const c of ['ArrowLeft', 'ArrowRight', 'KeyZ']) up(c);
+  return w.trial?.queen?.hp;
+};
+window.watch = async ({ name = null, read = 1.1, perChar = 0.035, max = 400, tail = 1.5, bitrate = 4e6 } = {}) => {
+  let r = null;
+  const parts = [];
+  if (name) {
+    const type = ['video/mp4;codecs=avc1', 'video/mp4'].find((m) => MediaRecorder.isTypeSupported(m));
+    r = new MediaRecorder(canvas.captureStream(60), { mimeType: type, videoBitsPerSecond: bitrate });
+    r.ondataavailable = (e) => parts.push(e.data);
+    r.start();
+  }
+  const lines = [];
+  let waited = 0;
+  let lastKey = null;
+  for (let f = 0; f < max * 60 && w.scene; f++) {
+    await frames(1);
+    const sc = w.scene;
+    if (!sc) break;
+    const step = sceneStep(w);
+    const at = sc.id + ':' + sc.i;
+    if (at !== lastKey) {
+      lastKey = at;
+      waited = 0;
+      if (step?.text) lines.push(`${step.who ?? 'narrator'}: ${fillScene(w, step.text)}`);
+      if (step?.card) lines.push(`[card] ${step.card}${step.sub ? ' / ' + step.sub : ''}`);
+    }
+    if (!step || isStaging(step) || step.card) continue;
+    const words = fillScene(w, step.text);
+    if (sc.t * 55 < words.length) continue;
+    waited += 1 / 60;
+    if (waited >= read + words.length * perChar) {
+      waited = -99;
+      window.tap('Space');
+    }
+  }
+  await frames(Math.round(tail * 60));
+  let size = 0;
+  if (r) {
+    const done = new Promise((res) => (r.onstop = res));
+    r.stop();
+    await done;
+    const blob = new Blob(parts, { type: r.mimeType });
+    size = blob.size;
+    await fetch(`http://127.0.0.1:8001/${name}`, { method: 'POST', body: blob });
+  }
+  return (window.lastWatch = { ended: !w.scene, lines, size });
+};
 window.rec = async (secs, name) => {
   const stream = canvas.captureStream(60);
   const type = ['video/mp4;codecs=avc1', 'video/mp4', 'video/webm'].find((m) => MediaRecorder.isTypeSupported(m));

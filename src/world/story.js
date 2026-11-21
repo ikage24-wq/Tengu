@@ -259,6 +259,8 @@ export function tickStory(world, dt, hurt) {
   if (tr && !tr.won && tr.queen.hp <= 0) {
     tr.won = true;
     world.zones = [];
+    // (Her last move's name goes too: the clock stops for the scene, so it would hang over it.)
+    world.callout = null;
     // Her helpers slip away with her.
     for (const a of world.mobs) if (a.add && a.hp > 0) a.hp = 0;
     const q = QUESTS[TRIALS[tr.key].quest];

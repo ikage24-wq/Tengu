@@ -2303,7 +2303,8 @@ export const CRYSTAL_SCENES = {
   // His trial won: the Queen sleepwalks in and gives him a little star of his own; he gives her
   // clock back; Elder Shiratama goes home with the news.
   ch7_win: [
-    { together: [{ free: 'nightking', as: 'sad' }, { cam: ['nightking', 'player'], dur: 1.2 }] },
+    // (The fight can end with you right in front of him, over his clock: a step back.)
+    { together: [{ free: 'nightking', as: 'sad' }, { walk: 'player', to: 'nightking', gap: 110, speed: 90 }, { face: 'player', to: 'nightking' }, { cam: ['nightking', 'player'], dur: 1.2 }] },
     { who: 'nightking', text: "...Don't take it. Please. It was so dark down here before it fell.", mood: 'sad' },
     { cast: 'shiratama', x: 860, y: 480, facing: -1, ...SHIRATAMA_CAST },
     { who: 'shiratama', text: "He's been drinking every light on the island, you know. Just so the dark can't get him." },
@@ -2358,7 +2359,8 @@ export const FINALE_SCENES = {
   // Snoozed three times and still ringing: the Queen comes out, wide awake for once, chooses to
   // stay, and flicks it.
   alarm_win: [
-    { together: [{ free: 'alarm', as: 'angry' }, { cam: ['alarm', 'player'], dur: 1.2 }] },
+    // (A step back from it, so you aren't standing on its face.)
+    { together: [{ free: 'alarm', as: 'angry' }, { walk: 'player', to: 'alarm', gap: 130, speed: 90 }, { face: 'player', to: 'alarm' }, { cam: ['alarm', 'player'], dur: 1.2 }] },
     { who: 'alarm', text: "...ring. ...RING. You can't snooze me forever. Monday ALWAYS comes.", mood: 'angry' },
     { cast: 'hayate', kind: 'hayate', near: 'alarm', inward: 220, hidden: true, crown: true, sprout: true, awake: true, name: 'Hayate', color: '#5aa8c8' },
     { together: [{ show: 'hayate', dur: 1 }, { cam: ['hayate', 'alarm'], dur: 1.4 }] },

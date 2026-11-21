@@ -1144,6 +1144,8 @@ export const SCENES = {
     { who: 'selene', text: 'No. I am a knight, and this is a duel. Hold nothing back. I will not.', mood: 'angry' },
   ],
   ch6_win: [
+    // (She stands for her farewell, and the duel can end with you right on top of her: a step back.)
+    { together: [{ free: 'selene' }, { walk: 'player', to: 'selene', gap: 84, speed: 90 }, { face: 'player', to: 'selene' }] },
     { who: 'selene', text: 'You fight like someone with friends behind you. A glade, a shrine, a garden... I see them all.', mood: 'happy' },
     { who: 'selene', text: '...And yes. It is lonely up here. Do not make the face. The fox warned me about the face.' },
     { who: 'selene', text: 'Your ringing star fell into the Crystal Cave. I watched it fall. It was no star. Stars do not tick.' },
