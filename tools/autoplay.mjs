@@ -12,6 +12,8 @@
 //
 // Usage: node tools/autoplay.mjs [first job] [second job]     e.g. node tools/autoplay.mjs tidemage maelstrom
 //        DUNGEON=manor node tools/autoplay.mjs warrior        one dungeon only, with a trace
+//        STOP_LV=15 node tools/autoplay.mjs moonmoth eclipse  stop once every quest up to level 15 is done
+//        (the 2026-11-21 playthrough, played in chunks)
 const S = new URL('../src/', import.meta.url).href;
 const { createWorld, updateWorld, loadMap } = await import(S + 'world/world.js');
 const { createCharacter, gainExp, advanceJob, autoAssignAp } = await import(S + 'core/character.js');
@@ -33,10 +35,15 @@ const { SKILLS } = await import(S + 'data/skills.js');
 const { DUNGEONS } = await import(S + 'data/dungeons.js');
 const { sellJunk } = await import(S + 'ui/shop.js');
 const { bestWeaponId } = await import(S + 'data/items.js');
+const { ESCORTS } = await import(S + 'world/escort.js');
+const { groundAt } = await import(S + 'world/physics.js');
+const { cook } = await import(S + 'ui/cooking.js');
+const { DISH_BY_ID } = await import(S + 'data/cooking.js');
 
 const JOB1 = process.argv[2] ?? 'warrior';
 const JOB2 = process.argv[3] ?? 'stormwall';
-const WEAPON = { warrior: 'sword', tidemage: 'staff' };
+const WEAPON = { warrior: 'sword', tidemage: 'staff', moonmoth: 'dagger', sunfeather: 'bow' };
+const STOP = Number(process.env.STOP_LV ?? 50);
 let seed = 11;
 Math.random = () => ((seed = (seed * 1664525 + 1013904223) % 4294967296) / 4294967296);
 const DT = 1 / 60;
@@ -47,7 +54,7 @@ const err = (where, e) => {
   const key = e.message + (e.stack.split('\n')[1] ?? '');
   if (seenErr.has(key)) { seenErr.set(key, seenErr.get(key) + 1); return; }
   seenErr.set(key, 1);
-  note('ERROR', `${where}: ${e.message}  @ ${(e.stack.split('\n')[1] ?? '').trim().replace(/.*src\//, 'src/')}`);
+  note('ERROR', `${where}: ${e.message}  @ ${e.stack.split('\n').slice(1, 5).map((l) => l.trim().replace(/.*src\//, 'src/')).join(' < ')}`);
 };
 
 const c = createCharacter('Autoplay', {});
@@ -292,7 +299,29 @@ function doObjective(q, o) {
       addItem(c.inventory, o.item, o.count - countItem(c.inventory, o.item));
     }
   } else if (o.type === 'talk' || o.type === 'deliver') talkTo(o.npc);
-  else if (o.type === 'visit') {
+  // (An escort, 2026-11-21: the little Mochi. Up beside it where it hides, then walk it to its
+  // cushion: the escort marks its own visits off, world/escort.js.)
+  else if (o.type === 'visit' && o.escort && ESCORTS[q.id]) {
+    const idx = q.objectives.indexOf(o);
+    const spot = idx === 0 ? ESCORTS[q.id].hide : ESCORTS[q.id].home;
+    go(spot.map);
+    for (let i = 0; i < 5; i++) step();
+    Object.assign(w.body, { x: spot.x, y: groundAt(w.map, spot.x), vx: 0, vy: 0, onGround: true });
+    for (let i = 0; i < 20; i++) step();
+    if (idx === 0) step(new Set(), new Set(['ArrowUp']));
+    for (let i = 0; i < 120; i++) step();
+    if (!c.quests[q.id]?.marks?.[idx]) note('BUG', `${q.id}: the escort's ${idx ? 'way home' : 'finding it'} did not mark off (escort ${w.escort?.phase ?? 'none'} at ${Math.round(w.escort?.x ?? -1)}, you at ${Math.round(w.body.x)},${Math.round(w.body.y)})`);
+  } else if (o.type === 'visit' && o.manual && q.id === 'story_2_cake') {
+    // (A cake for the Queen: honeycomb from the Puffbees, wild strawberries (gathered), baked at a
+    // town stove, carried up to her bedchamber: world/story.js onStoryMap.)
+    doObjective(q, { type: 'collect', item: 'honeycomb', count: 1 });
+    doObjective(q, { type: 'collect', item: 'wild_strawberry', count: 2 });
+    go('sprout');
+    if (!cook(c, DISH_BY_ID.dish_shortcake, w)) note('BUG', `${q.id}: could not bake the shortcake (bag: ${bagNote()})`);
+    go('royal_bed');
+    for (let i = 0; i < 30; i++) step();
+    if (!c.quests[q.id]?.marks?.[0]) note('BUG', `${q.id}: the Queen got no cake`);
+  } else if (o.type === 'visit') {
     go(o.map);
     for (let i = 0; i < 30; i++) step();
     if (o.above != null) Q.noteVisit(c, o.map, { y: o.above - 1 });
@@ -347,10 +376,12 @@ const fam = JOBS[JOB1].family;
 while (c.level <= 50) {
   const open = Object.keys(QUESTS).filter((id) => !QUESTS[id].daily && Q.questState(c, id) === 'available' && (!QUESTS[id].family || QUESTS[id].family === fam));
   open.sort((a, b) => (QUESTS[b].story ? 1 : 0) - (QUESTS[a].story ? 1 : 0) || QUESTS[a].minLevel - QUESTS[b].minLevel);
+  // (Played in chunks: past the chunk's last level, stop once its quests are done.)
+  if (c.level >= STOP && !open.some((id) => QUESTS[id].minLevel <= STOP)) break;
   if (open.length) { doQuest(open[0]); continue; }
   // Nothing open: the next quest's level (skip the grind to it), or the end.
   const next = Object.values(QUESTS).filter((q) => !q.daily && Q.questState(c, q.id) === 'locked' && q.minLevel > c.level && (!q.family || q.family === fam)).sort((a, b) => a.minLevel - b.minLevel)[0];
-  if (!next || c.level >= 50) break;
+  if (!next || c.level >= 50 || next.minLevel > STOP) break;
   const before = c.level;
   while (c.level < next.minLevel) { const e = expToNext(c.level) - c.exp; skippedExp += e; gainExp(c, e); }
   note('skip', `nothing open, levelled ${before} -> ${c.level} for ${next.name}`);

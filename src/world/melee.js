@@ -1614,7 +1614,13 @@ export function basicCombo(world) {
   world.combo = flowing ? ((world.combo ?? -1) + 1) % steps.length : 0;
   // A path with a choice of swings draws a fresh string each time the combo starts over.
   const variants = PATH_VARIANTS[path];
-  if (variants && (world.combo === 0 || !world.comboPlan)) world.comboPlan = planCombo(variants, world.comboPlan);
+  // (And afresh when the path changes mid-string - a weapon swapped or put away between swings: the
+  // old path's plan is shorter than the Thunderguard's four swings, and its fourth read nothing and
+  // crashed, the 2026-11-21 playthrough.)
+  if (variants && (world.combo === 0 || !world.comboPlan || world.comboPath !== path)) {
+    world.comboPlan = planCombo(variants, world.comboPath === path ? world.comboPlan : null);
+    world.comboPath = path;
+  }
   playStep(world, variants ? variants[world.combo][world.comboPlan[world.combo]] : steps[world.combo], 100, `basic${world.combo}`);
 }
 

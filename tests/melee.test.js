@@ -1521,3 +1521,15 @@ test('Lullaby puts what it passes through to sleep; Grand Chorus needs a full Me
   run(v, 2);
   assert.ok(!(v.melody > 0), 'spent');
 });
+
+// (The 2026-11-21 playthrough: a string of swings planned on one path, then carried on with another
+// - a weapon swapped or put away mid-combo - read the old, shorter plan and crashed on the
+// Thunderguard's fourth swing.)
+test('a weapon swapped mid-combo gives the new path its own string of swings, never a crash', async () => {
+  const { basicCombo } = await import('../src/world/melee.js');
+  const w = arena('sword_0');
+  Object.assign(w, { combo: 2, comboPlan: [0, 0, 0], comboPath: 'fists', comboUntil: w.now + 5 });
+  assert.doesNotThrow(() => basicCombo(w));
+  assert.equal(w.combo, 3, 'on to the fourth swing');
+  assert.equal(w.comboPlan.length, PATH_VARIANTS.warrior.length, 'planned for the Thunderguard');
+});
