@@ -840,7 +840,8 @@ Object.assign(MAPS, {
     // The craft bench (data/crafting.js), on the plaza, under the moon tree's boughs.
     bench: 1000,
     width: 2400, height: 520, groundY: 480,
-    look: { islands: 'planks', edges: 'glowcaps', propKeep: 0.8 },
+    // (Its makeover, 2026-11-21: moonstone flagstones, the painted moonlit wood behind - render/painted.js.)
+    look: { islands: 'planks', edges: 'glowcaps', material: 'moonpath', painted: 'grovewood', propKeep: 0.8 },
     terrain: [[0, 480], [860, 480], [900, 456], [1340, 456], [1380, 480], [2400, 480]],
     homeStyle: 'treehome',
     // A tree home and a glowcap home on Lantern Lane, the moon tree, and the Starchime Tower

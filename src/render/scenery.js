@@ -12,7 +12,7 @@ import { drawLandmark, LANDMARKS } from './landmarks.js';
 import { ramp, foliage, lightUL, flagShapes, leanFrame, swing, pivoted, flicker, stones, planks, bark, windowPane, wallShade, beam, gable } from './propkit.js';
 import { MAPS } from '../data/maps.js';
 import { drawCat } from './critters.js';
-import { drawPaintedForest, drawPaintedForestFront, drawWoodlandLife, drawMossyAmbience, mossyFireflies, leafShape, drawPaintedMeadow, drawMeadowLife, drawPaintedTownFar, drawPaintedHarborFar, drawVillageLife, washingLine, drawPaintedTownFront } from './painted.js';
+import { drawPaintedForest, drawPaintedForestFront, drawWoodlandLife, drawMossyAmbience, mossyFireflies, leafShape, drawPaintedMeadow, drawMeadowLife, drawPaintedTownFar, drawPaintedHarborFar, drawPaintedGroveFar, drawVillageLife, washingLine, drawPaintedTownFront } from './painted.js';
 import { drawPortalGate, drawPortalSwirl } from './portals.js';
 import { drawPaintedCanyon, drawCanyonLife, drawCanyonFront } from './canyon.js';
 import { drawPaintedHollowGate } from './hollowgate.js';
@@ -6080,6 +6080,8 @@ export function drawSceneBack(ctx, map, cam, width, height, time, nearPortalId, 
         drawFar(g, far, cam, width, farY, time);
         drawPaintedHarborFar(g, t, cam, width, height, time, layerY, air, map);
       }
+      // (Moonleaf Grove's own: its misty ridge, giant moonleaf trees, lantern-hung moon birches.)
+      else if (t.painted === 'grovewood') drawPaintedGroveFar(g, t, cam, width, height, time, layerY, air, map);
       else drawFar(g, far, cam, width, farY, time);
       footHaze(g, air, width, height, farY + 24, 0.3 * aerial);
       veil = { color: air, k: 0.22 * aerial };

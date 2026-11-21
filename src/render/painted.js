@@ -1638,6 +1638,121 @@ export function drawPaintedHarborFar(ctx, t, cam, width, height, time, layerY, a
   }
 }
 
+// ---------- Moonleaf Grove ----------
+
+// Far behind Moonleaf Grove (its makeover, 2026-11-21), in place of the flat wall of round crowns:
+// a soft ridge deep in the moonlit mist; giant moonleaf trees on it, their crowns like clouds, a
+// little lit window or door in some of their trunks (the grove's far tree homes); then a closer
+// row of slim pale moon birches, paper lanterns hanging from their boughs and glowing (brighter
+// at night), swaying in the breeze. Each plane paler with distance, mist at its foot. (Its colours
+// are worked out against the grove's own air, not the zone's sky of the moment, so the leaf
+// pictures never need redrawing as you walk from one district into the next; the haze takes the
+// zone's tint. Night deepens it in four steps, so the trees fall into the dark with the sky.)
+const GROVE_AIR = '#b8a8e8';
+const groveColors = new Map();
+function groveColorsFor(t, nightStep) {
+  const key = `${t.sun ?? ''}|${nightStep}`;
+  let c = groveColors.get(key);
+  if (!c) {
+    const a = mix(GROVE_AIR, '#3e3878', nightStep * 0.75);
+    const giant = planeColors(t, '#6a5ab0', a, 0.6);
+    const birch = planeColors(t, mix('#7a62c4', '#6fc8b4', 0.45), a, 0.3);
+    birch.bark = mix('#ece6fa', a, 0.25 + nightStep * 0.35);
+    birch.barkLit = mix('#ffffff', a, 0.15 + nightStep * 0.35);
+    birch.barkDark = mix('#a698cc', a, 0.25);
+    c = { giant, birch, ridge: mix('#5a4aa0', a, 0.62), ridgeLit: mix(mix('#5a4aa0', a, 0.62), t.sun ?? '#fff6dc', 0.3) };
+    groveColors.set(key, c);
+  }
+  return c;
+}
+// A lantern's soft glow, drawn once.
+let groveGlow = null;
+function groveGlowArt() {
+  if (groveGlow || typeof document === 'undefined') return groveGlow;
+  groveGlow = document.createElement('canvas');
+  groveGlow.width = groveGlow.height = 64;
+  const g = groveGlow.getContext('2d');
+  const r = g.createRadialGradient(32, 32, 0, 32, 32, 32);
+  r.addColorStop(0, 'rgba(255,214,140,0.9)');
+  r.addColorStop(0.35, 'rgba(255,200,120,0.35)');
+  r.addColorStop(1, 'rgba(255,200,120,0)');
+  g.fillStyle = r;
+  g.fillRect(0, 0, 64, 64);
+  return groveGlow;
+}
+export function drawPaintedGroveFar(ctx, t, cam, width, height, time, layerY, air, map = null) {
+  const nt = Math.min(1, map?.night ?? 0);
+  const c = groveColorsFor(t, Math.round(nt * 4) / 4);
+  // 1. The far ridge.
+  hills(ctx, cam, 0.03, width, layerY(96, 0.03), 22, 1.7, c.ridge, c.ridgeLit);
+  haze(ctx, air, width, layerY(70, 0.03), 0.3, 60);
+  // 2. Giant moonleaf trees, far off, a lit window in some trunks.
+  const gy = layerY(40, 0.05);
+  const glowArt = groveGlowArt();
+  repeat(cam.x, 0.07, 210, width, (i, x) => {
+    if (hash(i + 41) < 0.35) return;
+    const xx = x + hash(i + 42) * 70;
+    const top = gy - 118 - hash(i + 43) * 40;
+    trunk(ctx, xx, gy, top + 16, 10 + hash(i + 44) * 4, c.giant, i + 300);
+    const sway = Math.sin(time * 0.4 + i * 1.7) * 1.2;
+    for (let k = 0; k < 4; k++) clump(ctx, xx + (k - 1.5) * 22 + hash(i * 3 + k) * 6, top + (k % 2) * 11, 24 + hash(i * 5 + k) * 9, c.giant, i * 4 + k + 300, sway);
+    if (hash(i + 45) > 0.45) {
+      const wy = gy - 34 - hash(i + 46) * 50;
+      if (glowArt) {
+        ctx.globalAlpha = 0.35 + 0.4 * nt;
+        ctx.drawImage(glowArt, xx - 12, wy - 12, 24, 24);
+        ctx.globalAlpha = 1;
+      }
+      ctx.fillStyle = mix('#ffe6a8', air, 0.2 - 0.15 * nt);
+      ctx.beginPath();
+      ctx.roundRect(xx - 2.5, wy - 3.5, 5, 7, [2.5, 2.5, 0, 0]);
+      ctx.fill();
+    }
+  });
+  haze(ctx, air, width, gy + 6, 0.42, 80);
+  // 3. Moon birches nearer, lanterns hanging from their boughs.
+  const by = layerY(14, 0.1);
+  repeat(cam.x, 0.14, 150, width, (i, x) => {
+    if (hash(i + 61) < 0.3) return;
+    const xx = x + hash(i + 62) * 50;
+    const top = by - 98 - hash(i + 63) * 40;
+    trunk(ctx, xx, by, top + 12, 6 + hash(i + 64) * 2, c.birch, i + 500, false);
+    const sway = Math.sin(time * 0.55 + (xx + cam.x * 0.14) * 0.012) * 1.6;
+    clump(ctx, xx, top, 19 + hash(i + 65) * 6, c.birch, i + 500, sway);
+    clump(ctx, xx - 14, top + 13, 14 + hash(i + 66) * 4, c.birch, i + 500.5, sway);
+    clump(ctx, xx + 15, top + 16, 13 + hash(i + 67) * 4, c.birch, i + 500.7, sway);
+    if (hash(i + 68) > 0.4) {
+      // A paper lantern on a short cord from the lower bough, swinging a little.
+      const side = hash(i + 69) > 0.5 ? 1 : -1;
+      const ax = xx + side * 16;
+      const ay = top + 24;
+      const len = 14 + hash(i + 70) * 10;
+      const sw = Math.sin(time * 1.1 + i * 2.3) * 0.12;
+      const lx = ax + Math.sin(sw) * len;
+      const ly = ay + Math.cos(sw) * len;
+      ctx.strokeStyle = c.birch.barkDark;
+      ctx.lineWidth = 0.8;
+      ctx.beginPath();
+      ctx.moveTo(ax, ay);
+      ctx.lineTo(lx, ly);
+      ctx.stroke();
+      if (glowArt) {
+        ctx.globalAlpha = 0.45 + 0.45 * nt;
+        ctx.drawImage(glowArt, lx - 16, ly - 10, 32, 32);
+        ctx.globalAlpha = 1;
+      }
+      ctx.fillStyle = ['#ffd27a', '#ffb0c8', '#c8e8ff'][i % 3];
+      ctx.beginPath();
+      ctx.ellipse(lx, ly + 6, 4.4, 5.6, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = mix('#ffffff', air, 0.1);
+      ctx.fillRect(lx - 2.6, ly, 5.2, 1.2);
+      ctx.fillRect(lx - 2.6, ly + 11, 5.2, 1.2);
+    }
+  });
+  haze(ctx, air, width, by + 4, 0.26, 60);
+}
+
 // ---------- The village ----------
 
 // Far behind the village: a painted hillside with a cluster of tiny rooftops in the haze, a clock

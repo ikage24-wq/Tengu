@@ -63,6 +63,9 @@ export const MATERIALS = {
   // Pastel Harbor's streets (its makeover, 2026-11-21): warm rose brick paving under a white kerb,
   // in place of the heavy grey quay slabs.
   harborpave: { lip: '#fff4ea', body: '#f2c8bc', deep: '#d8a4a0', stone: '#fde4dc', style: 'brick', blades: false, drip: null },
+  // Moonleaf Grove's lanes (its makeover, 2026-11-21): pale moonstone flagstones, moss in the joints
+  // and a soft mossy lip, in place of the heavy purple earth.
+  moonpath: { lip: '#b0e8c0', body: '#c4b6ec', deep: '#9c8ad4', stone: '#e6deff', style: 'flagstone', blades: true, drip: null, joint: '#9fe0b0', glow: '#bfe6ff' },
   // Windy Canyon: wind-carved layers of sandstone (the canyon's walls, not a mason's).
   canyon: { lip: '#ffe2b4', body: '#dc9e68', deep: '#a8643a', stone: '#fbdcae', style: 'strata', blades: false, drip: null },
   // The Moonlit Rooftop: blue-grey roof slates in overlapping courses, a lead flashing along the top.
