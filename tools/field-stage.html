@@ -18,7 +18,7 @@ import { preloadFxSprites } from '../src/render/fx-sprites.js';
 import { createInput, endFrame, VW, VH } from '../src/input.js';
 import { sceneInput, drawScene } from '../src/ui/cutscene.js';
 import { beginUi, endUi } from '../src/ui/kit.js';
-import { playScene, sceneStep, fillScene, isStaging } from '../src/world/story.js';
+import { playScene, sceneStep, fillScene } from '../src/world/story.js';
 
 const q = new URLSearchParams(location.search);
 const S = Number(q.get('s') ?? 2);
@@ -87,6 +87,8 @@ window.W = w;
 window.go = go;
 window.pos = () => ({ map: w.map.id, x: Math.round(w.body.x), y: Math.round(w.body.y), rope: !!w.body.rope, ground: !!w.body.onGround });
 const frames = async (n) => { for (let i = 0; i < n; i++) await new Promise((res) => frameWaiters.push(res)); };
+// (Waiting n of the stage's own frames, for scripts: timers crawl when the pane is in the background.)
+window.ticks = frames;
 window.tap = async (code) => { key('keydown', code); await frames(4); key('keyup', code); };
 window.hold = async (code, ms) => { key('keydown', code); await frames(Math.round(ms / (1000 / 60))); key('keyup', code); return window.pos(); };
 window.holdAll = async (codes, ms) => { for (const c of codes) key('keydown', c); await frames(Math.round(ms / (1000 / 60))); for (const c of codes) key('keyup', c); return window.pos(); };
@@ -143,12 +145,14 @@ window.watch = async ({ name = null, read = 1.1, perChar = 0.035, max = 400, tai
       if (step?.text) lines.push(`${step.who ?? 'narrator'}: ${fillScene(w, step.text)}`);
       if (step?.card) lines.push(`[card] ${step.card}${step.sub ? ' / ' + step.sub : ''}`);
     }
-    if (!step || isStaging(step) || step.card) continue;
+    // (Any step with words waits for a press, a speech bubble over staging too; cards and pure
+    // staging play out by themselves.)
+    if (!step || step.card || !step.text) continue;
     const words = fillScene(w, step.text);
     if (sc.t * 55 < words.length) continue;
     waited += 1 / 60;
     if (waited >= read + words.length * perChar) {
-      waited = -99;
+      waited = -1.5; // (and again in a moment if that press came too soon)
       window.tap('Space');
     }
   }

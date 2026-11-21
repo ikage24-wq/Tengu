@@ -525,7 +525,7 @@ export const SIDE_SCENES = {
     { who: null, text: 'Out of the clouds, the Sky Whale glides in low over the pier, lantern shining on her brow, and stops. Right there. Her great eye on the little sailor. She sings once, very softly, and waits.' },
     { together: [{ cam: ['nimbus', 'player'], dur: 1.2 }, { face: 'nimbus', to: 'player' }, { emote: 'nimbus', kind: 'heart', dur: 2 }] },
     { who: 'nimbus', text: "That's the come-aboard song. She hasn't sung that since I was a boy. She's not leaving me. She never was. She was waiting for me to stop being sad about it.", mood: 'happy' },
-    { who: 'nimbus', text: "Hat's going back on. Here, take these. Good legs for a long climb. And when you're ready to go up to the Moon Terrace, come and find us. Best ride in the sky. Free. Forever.", mood: 'happy' },
+    { who: 'nimbus', text: "Hat's going back on. Here, take these. Good legs for a long climb. And whenever you want the Moon Terrace again, or anywhere up high, come and find us. Best ride in the sky. Free. Forever.", mood: 'happy' },
   ],
   // Professor Lumen's fallen star (Observatory Steps; he stands at x 860, the tower door behind him).
   lumen_lens_done: [
