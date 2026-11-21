@@ -862,6 +862,10 @@ Object.assign(MAPS, {
       { id: 'start', x: 1240, y: 456, hidden: true },
       { id: 'west', x: 40, y: 480, to: 'woods', toPortal: 'east' },
       { id: 'east', x: 2340, y: 480, to: 'ruins', toPortal: 'west' },
+      // (The road on to the stars, 2026-11-21: under the crystal crown on the Starchime Tower's top
+      // deck, the way up to the Observatory Steps, so the canyon, the crag and the ridge come round
+      // to the Grove instead of ending at the observatory.)
+      { id: 'observatory', x: 2020, y: 250, to: 'observatory_steps', toPortal: 'grove', label: 'Observatory Steps' },
     ],
     npcs: [{ id: 'nim', x: 600 }, { id: 'posy', x: 1300 }, { id: 'elowen', x: 1500 }],
     // Its districts, left to right, each named as you walk in (the town rules).
@@ -2070,7 +2074,8 @@ Object.assign(MAPS, {
   // sweeping the sky; a brass orrery turning; the professor's stargazing tent and crate desk.)
   observatory_steps: {
     id: 'observatory_steps', name: 'Observatory Steps', theme: 'observatory', town: 'crag', world: { x: 232, y: 92 }, music: 'observatory',
-    width: 1200, height: 420, groundY: G,
+    // (A little wider since 2026-11-21: its far end is the way down to Moonleaf Grove.)
+    width: 1360, height: 420, groundY: G,
     look: { sky: ['#0e1440', '#2a2a7a', '#6a5ab0'], far: '#1e2a5a', mid: '#2e3a72', midTrim: '#fff3a6', ...STAR_OUT, painted: 'stargate', islands: 'starbalcony', props: [], ledgeProp: null },
     // The telescope's deck (drawn with it).
     platforms: [{ x: 346, y: G - 80, w: 148, bare: true }],
@@ -2081,6 +2086,7 @@ Object.assign(MAPS, {
       { id: 'start', x: 640, y: G, hidden: true },
       { id: 'west', x: 50, y: G, to: 'ridge', toPortal: 'observatory' },
       { id: 'door', x: 1070, y: G, to: 'observatory1', toPortal: 'start', label: 'Star Observatory', dungeon: 'observatory' },
+      { id: 'grove', x: 1310, y: G, to: 'grove', toPortal: 'observatory', label: 'Moonleaf Grove' },
     ],
     npcs: [{ id: 'lumen', x: 860 }],
     spawns: [],
