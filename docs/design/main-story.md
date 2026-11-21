@@ -230,6 +230,12 @@ normal player's pace (15 at a perfect one). Level 10 at about 40 minutes (the fi
 made quicker the same day), 20 at about 11 hours (the 10s are full of side stories), 30 at 16,
 40 at 23, 50 at 31.5. Starfall Heights' flyers now keep over its floors, with walkers added.
 
+2026-11-07 the player approved about 34 hours at a normal pace (16 at a perfect one). 2026-11-21:
+the pace tool had been timing levels 30+ with a jobless hero since the old jobs were retired
+(11-09), so the hours read too long; measured properly the game had become 30.2 hours, and
+levels 30-49 now ask up to 42% more EXP to bring it back: 34.1 hours (16.3 perfect), level 30 at
+14.7, 40 at 22.7, 50 at 33.9. Total EXP to 50 is about 28 million.
+
 **Target: about 30 hours to level 50 for a player who does the story and some side stories
 (recommended; the player confirms the number before the curve changes).** Roughly:
 

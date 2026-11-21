@@ -12,19 +12,19 @@ import { ITEMS } from '../src/data/items.js';
 
 const fresh = () => createCharacter('Tester', {});
 
-test('EXP curve: quick first levels, then a steady climb to about 30 hours at 50', () => {
+test('EXP curve: quick first levels, then a steady climb to about 34 hours at 50', () => {
   assert.equal(expToNext(1), 60);
   assert.equal(expToNext(10), 3900);
-  assert.equal(expToNext(30), 380000);
+  assert.equal(expToNext(30), 400000);
   // Every level asks more than the one before, never a sudden wall.
   for (let l = 2; l < MAX_LEVEL; l++) {
     assert.ok(expToNext(l) > expToNext(l - 1), `level ${l} asks more than ${l - 1}`);
     if (l > 10) assert.ok(expToNext(l) / expToNext(l - 1) < 1.5, `level ${l} is a step, not a wall`);
   }
-  // About 21 million EXP from 1 to 50 (the 30-hour pace, docs/design/main-story.md).
+  // About 28 million EXP from 1 to 50 (the 34-hour pace, timed by tools/playthrough.mjs).
   let total = 0;
   for (let l = 1; l < MAX_LEVEL; l++) total += expToNext(l);
-  assert.ok(total > 20e6 && total < 22e6, `total ${total}`);
+  assert.ok(total > 27e6 && total < 29e6, `total ${total}`);
   assert.equal(expToNext(MAX_LEVEL), Infinity);
 });
 
