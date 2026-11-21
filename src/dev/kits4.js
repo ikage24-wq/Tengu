@@ -287,12 +287,16 @@ export function installKits4(t) {
     return ok;
   }
   const closeTalk = async () => {
+    const had = ui().windows?.options?.open;
     for (let k = 0; k < 3 && ui().windows?.npc?.open; k++) {
       key('Escape', true);
       await sleep(80);
       key('Escape', false);
       await sleep(250);
     }
+    // (An Escape that lands after the talk has already closed opens Options over the game, which
+    // the 2026-11-21 playthrough kept finding left open: shut it again.)
+    if (!had && ui().windows?.options?.open) ui().windows.options.open = false;
   };
   // Waits out a cutscene, watching it like a player.
   const scenesSeen = { lines: 0 };
@@ -737,8 +741,16 @@ export function installKits4(t) {
   }
 
   Object.assign(t, {
-    autoQuest,
-    dungeonRun: (id = 'hollow') => dungeonRun(DUNGEONS[id]),
+    // (Each starts afresh after a stopPlay: its stop used to stay set, and a dungeon run then left
+    // at once, 'stopped inside after 0 rooms'.)
+    autoQuest: (id) => {
+      opts.stop = false;
+      return autoQuest(id);
+    },
+    dungeonRun: (id = 'hollow') => {
+      opts.stop = false;
+      return dungeonRun(DUNGEONS[id]);
+    },
     playReport: () => ({ ...report, trip, stuck: stuckLog.slice(-20), faints, notebook: book, read: read.length, gold: w()?.char.gold, level: w()?.char.level, job: w()?.char.job, map: w()?.map.id, log: report.log.slice(-40) }),
     walkTo,
     // Stops autoPlay where it is (after its current step), so a newer kit can carry on.
