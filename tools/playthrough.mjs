@@ -24,7 +24,9 @@ import { DUNGEONS } from '../src/data/dungeons.js';
 import { hunt, huntingMaps } from './hunt-rate.mjs';
 
 const FAMILY = 'warrior';
-const JOB_AT = (level) => (level < 30 ? 'warrior' : 'berserker');
+// (Level 30 on: the Thunderguard's damage branch, Tempest. The old 'berserker' is gone since 2026-11-09, and
+// asking for it gave a jobless beginner with no skills.)
+const JOB_AT = (level) => (level < 30 ? 'warrior' : 'tempest');
 
 const PACES = {
   perfect: { kill: 1, travel: 1.5, talk: 0.75, visit: 1, fish: 5, dungeon: 10, trial: 3, job: 3, gather: 0.5, extra: 1 },

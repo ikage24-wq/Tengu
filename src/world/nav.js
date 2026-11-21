@@ -173,7 +173,9 @@ const MOVE_COST = { jump: 0.5, drop: 0.4, walk: 0.3 };
 // steps { from, to, kind, x, land, rope }. Empty when already there; null when unreachable.
 export function findPath(nav, from, x, to, tx) {
   if (from < 0 || to < 0) return null;
-  if (from === to) return [];
+  // (A path knows the surface it ends on, so once it's walked, or when it was empty from the
+  // start, followPath can tell if they've since been lifted or knocked onto another one.)
+  if (from === to) return Object.assign([], { goal: to });
   const n = nav.surfaces.length;
   const cost = new Array(n).fill(Infinity);
   const at = new Array(n).fill(0);
@@ -192,7 +194,10 @@ export function findPath(nav, from, x, to, tx) {
       const land = e.land ?? sx;
       // (Onto or off a cloud: plus a wait for it to come round.)
       const move = (e.rope ? (e.rope.bottom - e.rope.top) / CLIMB_SPEED : MOVE_COST[e.kind]) + (e.wait ?? 0);
-      const c = cost[i] + Math.abs(sx - at[i]) / WALK_SPEED + move;
+      // (Onto the goal surface, the walk from where you land to the goal counts too: off the end of a
+      // ledge that's nearer the target, not the one nearer you, which can mean walking back over a
+      // bounce flower that throws you straight back up.)
+      const c = cost[i] + Math.abs(sx - at[i]) / WALK_SPEED + move + (e.to === to && tx != null ? Math.abs(land - tx) / WALK_SPEED : 0);
       if (c < cost[e.to]) {
         cost[e.to] = c;
         at[e.to] = land;
@@ -203,7 +208,7 @@ export function findPath(nav, from, x, to, tx) {
   }
   const steps = [];
   for (let k = to; k !== from; k = prev[k].from) steps.unshift(prev[k]);
-  return steps;
+  return Object.assign(steps, { goal: to });
 }
 
 // Intents that carry a body along a path toward (tx) on the last surface. Advances (shifts)
@@ -277,6 +282,9 @@ export function followPath(nav, body, path, tx, near = 4) {
     return followPath(nav, body, path, tx, near);
   }
   if (!step) {
+    // Done with the path but standing somewhere else (bounced or knocked up onto a ledge over the
+    // goal, say): plan again, rather than pace about up there over it forever.
+    if (path.goal != null && here >= 0 && here !== path.goal && !nav.surfaces[here].walkOn) return { intent, lost: true };
     toward(tx, near);
     // Heading down the bank of a pool on this same piece of ground: hold Down so a footbridge over
     // it doesn't carry them across (physics.js `walkOn`).
