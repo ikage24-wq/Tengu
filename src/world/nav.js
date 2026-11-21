@@ -4,11 +4,12 @@
 // left/right/up/down/jump intents for physics.js. Party members use it to reach monsters
 // anywhere on a field map.
 
-import { surfacesOf, ropeTop, driftOffset, CLIMB_SPEED, WALK_SPEED } from './physics.js';
+import { surfacesOf, ropeTop, driftOffset, CLIMB_SPEED, WALK_SPEED, GRAVITY } from './physics.js';
 
 const REACH_UP = 86; // how high a jump reliably lands (the full jump is ~100px)
 const JUMP_TOP = 104; // how high a jump goes, at most
 const REACH_SIDE = 44; // how wide a gap a running jump clears
+const DROP_ACROSS = 16; // how far down a running jump across a gap may land (a step down; further falls walk off)
 const INSET = 10; // keep landings this far inside a ledge's ends
 
 const cache = new WeakMap();
@@ -80,9 +81,12 @@ export function navOf(map) {
           continue;
         }
         // ...or a running jump across a small gap (or up a cliff wall from right below it).
+        // (Level or down onto a lower ledge too: a gap too wide to walk off onto, like Twilight
+        // Ruins' high middle ledges, each a little lower than the last, had no way across at all
+        // going down the line, and they went the long way round on the ground.)
         const across = (from, to, dir) => {
           const rise = a.yAt(from) - b.yAt(to);
-          if (rise > 0 && rise <= REACH_UP && clear(to + dir * 6, a.yAt(from)) && !springOn(view, j, to, to + dir * 6)) push(i, { to: j, kind: 'jump', lo: from, hi: from, land: to + dir * 6 });
+          if (rise >= -DROP_ACROSS && rise <= REACH_UP && clear(to + dir * 6, a.yAt(from)) && !springOn(view, j, to, to + dir * 6)) push(i, { to: j, kind: 'jump', lo: from, hi: from, land: to + dir * 6 });
         };
         if (b.x1 >= a.x2 && b.x1 - a.x2 <= REACH_SIDE) across(a.x2 - 6, b.x1 + INSET, 1);
         else if (a.x1 >= b.x2 && a.x1 - b.x2 <= REACH_SIDE) across(a.x1 + 6, b.x2 - INSET, -1);
@@ -108,7 +112,23 @@ export function navOf(map) {
       // or vent where you'd come down, carried on a little by your walk).
       for (const [x, from, dir] of [[a.x1 - 8, a.x1, -1], [a.x2 + 8, a.x2, 1]]) {
         if (x < 12 || x > map.width - 12) continue;
-        const j = under(x, a.yAt(from));
+        let j = under(x, a.yAt(from));
+        // (The walk carries you on a little as you fall: if the end of another ledge pokes into
+        // that path above where you'd land, that's where you come down. Crystal Cave's ledge by the
+        // drifting one ended 2px short of the spot, and they went round and round.)
+        if (j >= 0) {
+          const floor = view(j).yAt(x);
+          fall: for (let depth = 8; a.yAt(from) + depth < floor - 4; depth += 8) {
+            const px = x + dir * Math.min(12, 0.5 * WALK_SPEED * Math.sqrt((2 * depth) / GRAVITY));
+            for (const k of ids) {
+              if (k === i || k === j || !contains(view(k), px)) continue;
+              if (Math.abs(view(k).yAt(px) - (a.yAt(from) + depth)) <= 8) {
+                j = k;
+                break fall;
+              }
+            }
+          }
+        }
         if (j >= 0 && j !== i && !springOn(view, j, x, x + dir * 40)) push(i, { to: j, kind: 'walk', lo: x, hi: x });
       }
     }

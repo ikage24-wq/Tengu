@@ -505,7 +505,7 @@ export function updateBots(bots, world, dt) {
   deliverReplies(bots, world);
   news(bots, world, dt);
   for (const b of bots.list) if (b.gone) {
-    endChat(b);
+    endChat(b, bots.rng);
     if (b.buddy && !b.hunter && !b.party && !b.quietGone) world.log?.(`[Friend] ${b.name} logged off.`, '#9c86b8');
   }
   bots.list = bots.list.filter((b) => !b.gone);
@@ -609,7 +609,7 @@ function behave(bot, bots, world, map, dt) {
       break;
     case 'chatwait':
       bot.timer -= dt;
-      if (bot.timer <= 0 || !bot.chatWith || bot.chatWith.gone) endChat(bot);
+      if (bot.timer <= 0 || !bot.chatWith || bot.chatWith.gone) endChat(bot, bots.rng);
       break;
     case 'chat':
       tickChat(bot, bots, world, dt);
@@ -689,13 +689,13 @@ function pastime(bot, bots, world, map) {
 
 function startChat(bot, mate, bots, world) {
   if (mate.gone || mate.state !== 'chatwait' || mate.chatWith !== bot) {
-    endChat(bot);
+    endChat(bot, bots.rng);
     return;
   }
   const lines = conversation(contextOf(bot, bots, world), bots.rng);
   // (Something just said by someone else isn't how a chat starts.)
   if (stale(world, lines[0])) {
-    endChat(bot);
+    endChat(bot, bots.rng);
     return;
   }
   bot.facing = mate.x > bot.x ? 1 : -1;
@@ -712,13 +712,13 @@ function startChat(bot, mate, bots, world) {
 function tickChat(bot, bots, world, dt) {
   const c = bot.convo;
   const mate = bot.chatWith;
-  if (!mate || mate.gone) return endChat(bot);
+  if (!mate || mate.gone) return endChat(bot, bots.rng);
   if (!c) return;
   c.at -= dt;
   if (c.at > 0) return;
   if (c.i >= c.lines.length) {
     if (bots.rng() < 0.5) mate.emote = { pose: 'cheer', t: 0, dur: 1 };
-    return endChat(bot);
+    return endChat(bot, bots.rng);
   }
   const who = c.i % 2 ? mate : bot;
   // (The whole chat plays out; it's in your log when you're standing by them.)
@@ -728,15 +728,16 @@ function tickChat(bot, bots, world, dt) {
   c.at = between(2.6, 4, bots.rng);
 }
 
-function endChat(bot) {
+function endChat(bot, rng = null) {
   const mate = bot.chatWith;
   bot.chatWith = null;
   bot.convo = null;
   if (['chat', 'chatwait'].includes(bot.state)) {
     bot.state = 'idle';
-    bot.timer = 2 + Math.random() * 4;
+    // (The game's own seeded dice, so a run from one seed always plays out the same.)
+    bot.timer = 2 + (rng ? rng() : 0.5) * 4;
   }
-  if (mate?.chatWith === bot) endChat(mate);
+  if (mate?.chatWith === bot) endChat(mate, rng);
 }
 
 // Something of their own to say, about who they are, where, and what's going on (world/chatter.js).

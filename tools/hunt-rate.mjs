@@ -71,11 +71,24 @@ export function hunt(job, level, mapId, { secs = 300, seed = 7 } = {}) {
     let lastX = w.body.x;
     let ai = 0;
     const alive = new Set();
+    // (Chasing one that never takes a hit, a flyer hovering out of reach say: after a while a
+    // player gives up on it and goes for another, and leaves it be a bit.)
+    let chase = 0;
+    let chaseHp = 0;
+    const skip = new Map();
     while (t < secs) {
       const b = w.body;
       const held = new Set();
       const pressed = new Set();
-      const live = w.mobs.filter((m) => m.hp > 0 && !m.def.boss);
+      const live = w.mobs.filter((m) => m.hp > 0 && !m.def.boss && !(skip.get(m) > t));
+      if (target && target.hp > 0) {
+        chase = target.hp < chaseHp ? 0 : chase + DT;
+        chaseHp = target.hp;
+        if (chase > 12) {
+          skip.set(target, t + 20);
+          target = null;
+        }
+      }
       // A new target when the old one is gone (or we've been stuck on it a while).
       if (!target || target.hp <= 0 || stuck > 4) {
         // (A player goes for what they can reach: a flyer hovering high over its floor waits.)
@@ -88,6 +101,8 @@ export function hunt(job, level, mapId, { secs = 300, seed = 7 } = {}) {
         target = live.sort((p, q) => cost(p) - cost(q))[stuck > 4 ? Math.min(1, live.length - 1) : 0] ?? null;
         path = null;
         stuck = 0;
+        chase = 0;
+        chaseHp = target?.hp ?? 0;
       }
       if (target) {
         // (A flyer hovers over the floor it patrols: close enough when it's within a swing's height.)
