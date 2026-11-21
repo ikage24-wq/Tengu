@@ -6,6 +6,7 @@
 
 import { settleStall } from '../world/stall.js';
 import { wakeAtInn } from '../world/inn.js';
+import { settleHome } from '../world/home.js';
 import { setNextUid, makeEquip } from './items.js';
 import { createInventory } from './inventory.js';
 import { ITEMS, RENAMED_ITEMS, plainWeaponId } from '../data/items.js';
@@ -169,8 +170,6 @@ export function loadGame(slot = 0, file = 0) {
     repairSave(char);
     char.slot = slot;
     char.file = file;
-    // A night at the Gilded Kettle turns into rest (world/inn.js).
-    wakeAtInn(char);
     // Your stall kept selling while you were away (world/stall.js).
     settleStall(char, Date.now());
     // The world's shared parts: its island (with this character's own way back), its book.
@@ -179,7 +178,12 @@ export function loadGame(slot = 0, file = 0) {
     if (w.home) {
       w.home.back = char.homeBack ?? char.home?.back ?? null;
       char.home = w.home;
+      // (An island from before the tall rework: its outdoor furniture back in this hero's bag.)
+      const back = settleHome(char);
+      if (back) char.homeNews = `Shelly rebuilt the island! The ${back} piece${back > 1 ? 's' : ''} of furniture you had outside ${back > 1 ? 'are' : 'is'} back in your bag to place again.`;
     }
+    // A night at the Gilded Kettle (or in your own hut) turns into rest (world/inn.js).
+    wakeAtInn(char);
     if (char.garden && !w.garden) w.garden = { ...char.garden, back: null };
     if (w.garden) {
       w.garden.back = char.gardenBack ?? char.garden?.back ?? null;

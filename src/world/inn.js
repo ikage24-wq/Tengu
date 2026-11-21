@@ -9,6 +9,7 @@
 import { addRep, REP_FOR } from './rep.js';
 import { expToNext } from '../core/exp.js';
 import { FISH } from '../data/fishing.js';
+import { HOME_REST } from '../data/home.js';
 
 export const ROOM_GOLD = 300;
 const REST_PER_HOUR = 0.04;
@@ -27,16 +28,19 @@ export function checkIn(world) {
 }
 
 // On loading a saved character (core/save.js gives `savedAt`): a night at the inn turns into rest.
+// So does a night in your own hut on your island (logged off inside it: world/home.js), at
+// HOME_REST of the inn's rate, so a room here is still the better night.
 export function wakeAtInn(char, now = Date.now()) {
-  if (!char.inn?.checkedIn || !char.savedAt) return 0;
+  if (!char.savedAt) return 0;
   // (Only if you logged off at the inn: anywhere else, the room went unslept in.)
-  if (char.mapId !== 'coin_inn') {
-    char.inn = null;
-    return 0;
-  }
+  const atInn = Boolean(char.inn?.checkedIn) && char.mapId === 'coin_inn';
+  const atHome = !atInn && char.mapId === 'home_in' && Boolean(char.home);
+  if (char.inn?.checkedIn && !atInn) char.inn = null;
+  if (!atInn && !atHome) return 0;
+  const rate = atInn ? REST_PER_HOUR : REST_PER_HOUR * HOME_REST;
   const hours = Math.max(0, (now - char.savedAt) / 3600000);
   const need = expToNext(char.level);
-  const add = Math.round(Math.min(REST_CAP * need - (char.rested ?? 0), hours * REST_PER_HOUR * need));
+  const add = Math.round(Math.min(REST_CAP * need - (char.rested ?? 0), hours * rate * need));
   char.inn = null;
   if (add <= 0) return 0;
   char.rested = (char.rested ?? 0) + add;

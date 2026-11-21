@@ -91,6 +91,9 @@ export const MATERIALS = {
   beach: { lip: '#fff0cc', body: '#f2d29c', deep: '#d9ad72', stone: '#fbe6bf', style: 'slab', blades: false, drip: 'weed' },
   // Your island's cove: soft sand in wind-rippled layers, shells and pebbles in it.
   sand: { lip: '#fff6dc', body: '#f6dcae', deep: '#e0b886', stone: '#fff0d0', style: 'sand', blades: false, drip: null },
+  // Your island's rock tiers (the tall island, 2026-11-21): warm coral sandstone in wind-laid
+  // layers, a thick soft turf on top, vines trailing down the faces.
+  isle: { lip: '#8ee08a', body: '#efc59c', deep: '#cf966c', stone: '#fde6c8', style: 'strata', blades: true, drip: 'vine', cap: 'puffy' },
   // Moonlit Manor: violet brick and moonlit stone inside; clipped lawn over garden flagstones out.
   manor: { lip: '#e6d6ff', body: '#7a5aa8', deep: '#54407e', stone: '#a88ad8', style: 'brick', blades: false, drip: 'vine' },
   // Manor Hill's hillside: a lawn over dark plum earth, so the lilac stone of the terraces stands
@@ -1156,6 +1159,179 @@ function poly(g, pts) {
   g.closePath();
 }
 
+// ---------- Rock masses (your island's tiers, world/home.js `masses`) ----------
+// Each is an outline from its left foot, up and over its flat top, down to its right foot. It's
+// filled with its material (the strata pattern, anchored to the world), deepens and cools with
+// depth below its top, takes the light from the upper left (a shaded band down its right face, a
+// lit one down its left), is inked down both sides (never along the foot, which the ground or the
+// water hides), and wears the material's turf along its top, vines trailing over the corners. A
+// tier not open yet looks the same: it's there, only wild (render/island.js grows it over).
+function drawMasses(ctx, map, cam, width, time) {
+  camX = cam.x;
+  map.masses.forEach((ms, mi) => {
+    const pts = ms.pts.map(([x, y]) => [x - cam.x, y - cam.y]);
+    let x0 = Infinity;
+    let x1 = -Infinity;
+    let top = Infinity;
+    for (const [x, y] of pts) {
+      x0 = Math.min(x0, x);
+      x1 = Math.max(x1, x);
+      top = Math.min(top, y);
+    }
+    if (x1 < -40 || x0 > width + 40) return;
+    const theme = ms.material ?? 'isle';
+    const m = MATERIALS[theme] ?? MATERIALS.isle;
+    const bottom = ms.bottom - cam.y;
+    ctx.save();
+    poly(ctx, pts);
+    fillLand(ctx, theme, m, cam);
+    ctx.clip();
+    // Deeper and cooler below the top.
+    const g = ctx.createLinearGradient(0, top + 16, 0, top + 300);
+    g.addColorStop(0, hexA(m.deep, 0));
+    g.addColorStop(0.45, hexA(m.deep, 0.3));
+    g.addColorStop(1, hexA(mix(m.deep, INK, 0.2), 0.62));
+    ctx.fillStyle = g;
+    ctx.fillRect(x0, top, x1 - x0, bottom - top);
+    // The light from the upper left: the right face in shade, a lit edge down the left.
+    const sh = ctx.createLinearGradient(x1 - 46, 0, x1, 0);
+    sh.addColorStop(0, hexA(m.deep, 0));
+    sh.addColorStop(1, hexA(mix(m.deep, INK, 0.3), 0.5));
+    ctx.fillStyle = sh;
+    ctx.fillRect(x1 - 46, top, 46, bottom - top);
+    const lit = ctx.createLinearGradient(x0, 0, x0 + 26, 0);
+    lit.addColorStop(0, hexA(m.stone, 0.55));
+    lit.addColorStop(1, hexA(m.stone, 0));
+    ctx.fillStyle = lit;
+    ctx.fillRect(x0, top, 26, bottom - top);
+    // A rock set back (the cleft behind the pond, `back`) sits in shadow, cooler and darker.
+    if (ms.back) {
+      ctx.fillStyle = hexA(mix(m.deep, '#6a6aa0', 0.4), 0.42);
+      ctx.fillRect(x0, top - 20, x1 - x0, bottom - top + 20);
+    } else faceDetails(ctx, ms, m, cam, time);
+    ctx.restore();
+    // Inked down both sides (the foot is under the sand or the water).
+    ctx.strokeStyle = edge(m.body);
+    ctx.lineWidth = 1.6;
+    ctx.lineJoin = 'round';
+    ctx.beginPath();
+    pts.forEach(([x, y], i) => (i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)));
+    ctx.stroke();
+    const capD = m.cap === 'puffy' ? 13 : 10;
+    if (ms.back) {
+      // A sloping top: the turf follows it.
+      lip(ctx, m, pts.slice(1, -1), time, mi * 31 + 7, width, capD, null);
+      return;
+    }
+    // Vines trailing over the top corners, then the turf along the top.
+    const flat = pts.filter(([, y]) => y - top < 0.5);
+    const a = flat[0];
+    const b = flat[flat.length - 1];
+    drip(ctx, m, a[0] + 3, top + 6, Math.min(70, bottom - top - 40), time, mi * 17 + 3);
+    drip(ctx, m, b[0] - 3, top + 6, Math.min(54, bottom - top - 40), time, mi * 17 + 11);
+    for (const v of detailsOf(ms).vines) drip(ctx, m, v.x - cam.x, top + 6, Math.min(v.len, bottom - top - 40), time, mi * 17 + v.x);
+    strokeAlong(ctx, [[a[0], top], [b[0], top]], capD + 6, hexA(INK, 0.12), 9);
+    lip(ctx, m, [[a[0] - 6, top], [b[0] + 6, top]], time, mi * 31 + 7, width, capD, null);
+  });
+}
+
+// A rock face's own details, laid out once per mass from its size (never random): a few boulders
+// set into the rock, cracks, cushions of moss, little flower tufts in the cracks, and the vines
+// hanging off its top. Nothing that looks like a ledge you could stand on: you can't.
+const massDetails = new WeakMap();
+function detailsOf(ms) {
+  let d = massDetails.get(ms);
+  if (d) return d;
+  const xs = ms.pts.map((p) => p[0]);
+  const ys = ms.pts.map((p) => p[1]);
+  const x0 = Math.min(...xs) + 18;
+  const x1 = Math.max(...xs) - 18;
+  const top = Math.min(...ys);
+  const bot = ms.bottom - 50;
+  const s = ms.id.length * 13.7 + x0 * 0.013;
+  const w = Math.max(10, x1 - x0);
+  const h = Math.max(10, bot - top);
+  d = { rocks: [], cracks: [], moss: [], tufts: [], vines: [] };
+  const nRock = Math.max(2, Math.round((w * h) / 26000));
+  for (let k = 0; k < nRock; k++) d.rocks.push({ x: x0 + 14 + hash(s + k * 5.1) * (w - 28), y: top + 46 + ((k + hash(s + k * 9.3)) / nRock) * (h - 70), r: 8 + hash(s + k * 2.2) * 10 });
+  const nCrack = Math.max(2, Math.round((w * h) / 16000));
+  for (let k = 0; k < nCrack; k++) d.cracks.push({ x: x0 + 10 + hash(s + k * 4.4) * (w - 20), y: top + 30 + hash(s + k * 6.6) * (h - 50), len: 12 + hash(s + k) * 22, lean: hash(s + k * 8.8) - 0.5 });
+  const nMoss = Math.max(2, Math.round((w * h) / 22000));
+  for (let k = 0; k < nMoss; k++) d.moss.push({ x: x0 + hash(s + k * 3.7) * w, y: top + 20 + hash(s + k * 7.1) * (h - 30), r: 6 + hash(s + k * 1.9) * 8 });
+  for (const c of d.cracks) if (hash(c.x) > 0.55) d.tufts.push({ x: c.x + c.lean * c.len, y: c.y + c.len, c: ['#ffb3cf', '#fff0a0', '#c8b8ff'][Math.floor(hash(c.y) * 3)] });
+  for (let x = x0 + 40; x < x1 - 30; x += 64 + hash(s + x) * 56) d.vines.push({ x, len: 28 + hash(s + x * 1.3) * 64 });
+  massDetails.set(ms, d);
+  return d;
+}
+function faceDetails(ctx, ms, m, cam, time) {
+  const d = detailsOf(ms);
+  const line = edge(m.body);
+  const rock = mix(m.stone, m.body, 0.35);
+  // Moss cushions first, soft, in the rock's hollows.
+  ctx.fillStyle = hexA('#8fd39a', 0.55);
+  for (const p of d.moss) {
+    ctx.beginPath();
+    ctx.ellipse(p.x - cam.x, p.y - cam.y, p.r, p.r * 0.45, 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  // Cracks: a dark line, a lit lip just above it.
+  for (const c of d.cracks) {
+    const x = c.x - cam.x;
+    const y = c.y - cam.y;
+    ctx.strokeStyle = hexA(mix(m.deep, INK, 0.35), 0.75);
+    ctx.lineWidth = 1.4;
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.lineTo(x + c.lean * c.len * 0.4, y + c.len * 0.5);
+    ctx.lineTo(x + c.lean * c.len, y + c.len);
+    ctx.stroke();
+    ctx.strokeStyle = hexA(m.stone, 0.6);
+    ctx.lineWidth = 0.9;
+    ctx.beginPath();
+    ctx.moveTo(x - 1, y - 1);
+    ctx.lineTo(x - 1 + c.lean * c.len * 0.4, y + c.len * 0.5 - 1);
+    ctx.stroke();
+  }
+  // Boulders set into the face: shadow under, the stone, its outline, a highlight up-left.
+  for (const r of d.rocks) {
+    const x = r.x - cam.x;
+    const y = r.y - cam.y;
+    ctx.fillStyle = hexA(mix(m.deep, INK, 0.3), 0.45);
+    ctx.beginPath();
+    ctx.ellipse(x + 2, y + r.r * 0.55, r.r * 1.05, r.r * 0.45, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = rock;
+    ctx.strokeStyle = line;
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.ellipse(x, y, r.r, r.r * 0.72, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = hexA('#ffffff', 0.45);
+    ctx.beginPath();
+    ctx.ellipse(x - r.r * 0.35, y - r.r * 0.3, r.r * 0.38, r.r * 0.2, -0.4, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = hexA('#8fd39a', 0.8);
+    ctx.beginPath();
+    ctx.ellipse(x + r.r * 0.1, y - r.r * 0.62, r.r * 0.5, r.r * 0.16, 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  // Flower tufts at the foot of some cracks, nodding.
+  for (const t of d.tufts) {
+    const x = t.x - cam.x;
+    const y = t.y - cam.y;
+    const nod = Math.sin(time * 1.6 + t.x * 0.07) * 0.8;
+    ctx.fillStyle = '#6fc890';
+    ctx.fillRect(Math.round(x - 3), Math.round(y - 1), 6, 2);
+    ctx.fillStyle = t.c;
+    for (const dx of [-2.5, 0.5, 3]) {
+      ctx.beginPath();
+      ctx.arc(x + dx + nod, y - 3 - (dx === 0.5 ? 1.5 : 0), 1.5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+}
+
 // A material's texture as a pattern, baked at the screen's pixel density so it stays sharp.
 const patterns = new Map();
 function patternFor(ctx, theme, m) {
@@ -1195,6 +1371,8 @@ export function drawTerrain(ctx, theme, map, cam, width, height, time) {
   // A room whose picture paints its own floor (your hut, the Sweethearts' rooms) draws no ground
   // strip over it: you walk on the room's floor.
   if (map.look?.floor === 'painted') return;
+  // Rock tiers standing behind the ground (your island's): drawn first, so the sand lies in front.
+  if (map.masses) drawMasses(ctx, map, cam, width, time);
   // In a map zoned by height the ground is the lowest zone's floor (a cellar, a crypt), so it
   // takes that zone's material and edging when the zone has its own.
   const low = map.zonesBy !== 'x' ? map.zones?.[0]?.look : null;

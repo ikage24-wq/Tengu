@@ -136,6 +136,13 @@ export const FISH = [
   { id: 'fish_sunflyer', name: 'Sunbeam Flyer', color: '#ffe8a0', fin: '#fff8e0', pattern: 'stripes', price: 150, rarity: 2, react: 0.75, tier: 4, when: 'day', size: [25, 45] },
   { id: 'fish_thundereel', name: 'Thunder Eel', color: '#6a7ad8', fin: '#ffe86a', pattern: 'stripes', price: 260, rarity: 3, react: 0.6, tier: 4, when: 'night', size: [80, 200], big: true },
   { id: 'fish_driftjelly', name: 'Drift Jelly', color: '#e0f0ff', fin: '#ffd8f0', pattern: 'plain', price: 240, rarity: 3, react: 0.6, tier: 4, when: 'dusk', size: [20, 60] },
+  // ---------- Your island's own (the island rework, 2026-11-21: data/home.js) ----------
+  // Only in your island's waters: the sea off the beach, the pond under the falls, and the grotto
+  // behind them, where the island's legend glows in the dark.
+  { id: 'fish_shellwrasse', name: 'Seashell Wrasse', color: '#ffc8a8', fin: '#ff9ec0', pattern: 'stripes', price: 24, rarity: 2, react: 0.95, tier: 1, size: [8, 22] },
+  { id: 'fish_fallsdace', name: 'Waterfall Dace', color: '#c8ecff', fin: '#8fd8e8', pattern: 'spots', price: 20, rarity: 2, react: 0.95, tier: 1, size: [6, 18] },
+  { id: 'fish_glowloach', name: 'Grotto Glowloach', color: '#bff4e0', fin: '#7fe6d6', pattern: 'spots', price: 42, rarity: 3, react: 0.75, tier: 1, size: [8, 20] },
+  { id: 'fish_lampkoi', name: 'Lantern Koi', color: '#fff0b8', fin: '#ffb070', pattern: 'star', price: 600, rarity: 4, react: 0.5, tier: 1, when: 'night', size: [60, 110], big: true, legend: { title: 'Keeper of the Grotto', rumor: 'Shelly says a koi lights the pool behind the waterfall like a paper lantern, but only once the island is asleep.' } },
 ];
 
 // How long a fish can be (cm): its own range, or one from how rare it is.

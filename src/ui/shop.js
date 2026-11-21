@@ -91,16 +91,20 @@ export function shopWindow(ui, state, world) {
     win.y = Math.max(20, 326 - H - 8);
     dlg.placedShop = true;
   }
-  if (!windowFrame(ui, win, W, H, dlg.secret ? `${npc.name}'s Secret Stall` : `${npc.name}'s Shop`, { theme: dlg.secret ? 'lavender' : 'peach', icon: dlg.secret ? 'moon' : 'shop' })) {
+  // (The sell crate on your island's beach, world/home.js: selling only, at the shops' prices.)
+  const title = dlg.crate ? 'Sell Crate' : dlg.secret ? `${npc.name}'s Secret Stall` : `${npc.name}'s Shop`;
+  if (!windowFrame(ui, win, W, H, title, { theme: dlg.secret ? 'lavender' : 'peach', icon: dlg.secret ? 'moon' : 'shop' })) {
     state.npc = null;
     return;
   }
+  if (dlg.crate) dlg.tab = 1;
   const { ctx } = ui;
   const th = ui.theme;
   const char = world.char;
   const shift = ui.input.held.has('ShiftLeft') || ui.input.held.has('ShiftRight');
   const was = `${dlg.tab}|${dlg.sellTab}|${dlg.buyTab}`;
-  dlg.tab = tabs(ui, win.x + 9, win.y + 26, ['Buy', 'Sell'], dlg.tab ?? 0, { w: 40, h: 14 });
+  if (dlg.crate) tabs(ui, win.x + 9, win.y + 26, ['Sell'], 0, { w: 40, h: 14 });
+  else dlg.tab = tabs(ui, win.x + 9, win.y + 26, ['Buy', 'Sell'], dlg.tab ?? 0, { w: 40, h: 14 });
   if (dlg.tab === 0) dlg.buyTab = tabs(ui, win.x + 99, win.y + 26, ['All', 'Gear', 'Arms', 'Other'], dlg.buyTab ?? 0, { w: 30, h: 14 });
   else dlg.sellTab = tabs(ui, win.x + 99, win.y + 26, ['Equip', 'Use', 'Etc'], dlg.sellTab ?? 0, { w: 40, h: 14 });
   const entries = entriesOf(npc, char, dlg);
@@ -175,7 +179,10 @@ export function shopWindow(ui, state, world) {
         : [{ text: 'No junk to sell', bold: true }, { text: 'Monster drops your quests and recipes need are kept.', size: 7, color: COLORS.muted }]);
     }
   } else text(ctx, ui.input?.touch ? 'Double-tap: buy or sell one' : 'Double-click: buy or sell one · Shift: 10', win.x + W - 70, fy + 11.5, { size: 6.5, align: 'right', color: COLORS.muted });
-  if (button(ui, win.x + W - 62, fy, 54, 16, 'Back', { size: 8 })) dlg.mode = null;
+  if (button(ui, win.x + W - 62, fy, 54, 16, dlg.crate ? 'Close' : 'Back', { size: 8 })) {
+    if (dlg.crate) state.npc = null;
+    else dlg.mode = null;
+  }
 }
 
 // Junk: monster drops in your bag that no quest you're on wants and no recipe you know uses.

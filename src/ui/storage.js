@@ -51,7 +51,8 @@ export function storageWindow(ui, state, world) {
   const char = world.char;
   const t = (dlg.storeTab = tabs(ui, win.x + 9, win.y + 26, ['Equip', 'Use', 'Etc'], dlg.storeTab ?? 0, { w: 40, h: 14 }));
   const tab = STORAGE_TABS[t];
-  text(ctx, `${npc.name} keeps it safe for every hero in this world.`, win.x + W - 10, win.y + 36, { size: 6.5, align: 'right', color: COLORS.muted });
+  // (Your trunk at home, world/home.js, opens onto the same storage Pip and Marlo keep.)
+  text(ctx, dlg.trunk ? 'The same storage Pip and Marlo keep, from home.' : `${npc.name} keeps it safe for every hero in this world.`, win.x + W - 10, win.y + 36, { size: 6.5, align: 'right', color: COLORS.muted });
   const gy = win.y + 56;
   const note = (msg, color = COLORS.bad) => (dlg.storeNote = { at: world.now, msg, color });
   grid(ui, world, char.inventory[tab] ?? [], win.x + 10, gy, 'Your bag', 'Click to store it', (i) => {
@@ -84,5 +85,8 @@ export function storageWindow(ui, state, world) {
   const n = dlg.storeNote;
   if (n && world.now - n.at < 2) text(ctx, n.msg, win.x + 12, fy + 11, { size: 7.5, bold: true, color: n.color });
   else text(ctx, 'Click an item to move it across.', win.x + 12, fy + 11, { size: 7, color: COLORS.muted });
-  if (button(ui, win.x + W - 62, fy, 54, 16, 'Back', { size: 8 })) dlg.mode = null;
+  if (button(ui, win.x + W - 62, fy, 54, 16, dlg.trunk ? 'Close' : 'Back', { size: 8 })) {
+    if (dlg.trunk) state.npc = null;
+    else dlg.mode = null;
+  }
 }

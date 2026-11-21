@@ -57,6 +57,7 @@ const KINAKO_HELP = [
   "Short of gold? I'll buy your crops, cherries and sweets. And after dark... come and see my secret stall!",
 ];
 import { storageWindow } from './storage.js';
+import { plantWindow } from './plant.js';
 import { polishWindow } from './polish.js';
 import { canCurse, curseOfDay, layCurse } from '../world/malvina.js';
 import { teamOf } from '../world/teamwork.js';
@@ -253,6 +254,8 @@ export function npcWindow(ui, state, world) {
   if (dlg.mode === 'polish') return polishWindow(ui, state, world);
   if (dlg.mode !== 'storage') dlg.placedStore = false;
   if (dlg.mode === 'storage') return storageWindow(ui, state, world);
+  // A garden plot on your island (ui/plant.js).
+  if (dlg.mode === 'plant') return plantWindow(ui, state, world);
   const npc = NPCS[dlg.id];
   const win = state.windows.npc;
   const char = world.char;

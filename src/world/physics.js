@@ -114,6 +114,57 @@ function ride(body, map, intent, dt) {
   } else body.lifted = null;
 }
 
+// Zip lines (`ziplines`: [{ x1, y1, x2, y2, hang }], your island's summit down to its dock): a
+// cable from a high post to a low one. Up at the top post and you hang from it (`hang` px below
+// the cable, so you set off from the floor you stood on), roll off slowly, pick up speed, and
+// brake into the low post, where you step off. Jump lets go on the way.
+export const ZIP_SPEED = 520;
+const ZIP_GRAB = 22;
+const ZIP_BRAKE = 150;
+export function zipAt(map, body) {
+  return (map.ziplines ?? []).find((z) => Math.abs(body.x - z.x1) <= ZIP_GRAB && Math.abs(body.y - (z.y1 + z.hang)) < 4) ?? null;
+}
+// Where a rider is along a line, d px from its top: their feet.
+export const zipPoint = (z, d) => {
+  const len = Math.hypot(z.x2 - z.x1, z.y2 - z.y1);
+  const u = Math.max(0, Math.min(1, d / len));
+  return { x: z.x1 + (z.x2 - z.x1) * u, y: z.y1 + (z.y2 - z.y1) * u + z.hang, u, len };
+};
+function rideZip(body, map, intent, dt) {
+  const r = body.zip;
+  const z = r.line;
+  const len = Math.hypot(z.x2 - z.x1, z.y2 - z.y1);
+  const dir = z.x2 > z.x1 ? 1 : -1;
+  body.facing = dir;
+  if (intent.jump && r.d > 24) {
+    // Let go: fly on with what's left of the swing.
+    body.zip = null;
+    z.rideD = null;
+    body.vx = dir * Math.min(WALK_SPEED * 1.4, r.v * 0.5);
+    body.vy = 0;
+    return;
+  }
+  // Ease up to speed, then brake into the far post (never quite stopping short of it).
+  const left = len - r.d;
+  const target = left < ZIP_BRAKE ? Math.max(80, (ZIP_SPEED * left) / ZIP_BRAKE) : ZIP_SPEED;
+  r.v += (target - r.v) * Math.min(1, dt * (left < ZIP_BRAKE ? 7 : 1.5));
+  r.d = Math.min(len, r.d + Math.max(20, r.v) * dt);
+  const p = zipPoint(z, r.d);
+  body.x = p.x;
+  body.y = p.y;
+  body.vx = 0;
+  body.vy = 0;
+  body.onGround = false;
+  // (Where the handle is, for its trolley on the cable: render/island.js.)
+  z.rideD = r.d;
+  if (r.d >= len) {
+    body.zip = null;
+    z.rideD = null;
+    body.surface = surfacesOf(map).find((s) => body.x >= s.x1 && body.x <= s.x2 && Math.abs(s.yAt(body.x) - body.y) < 2) ?? null;
+    body.onGround = Boolean(body.surface);
+  }
+}
+
 // The ground piece under x (at a wall, the one on the right).
 export function groundPieceAt(map, x) {
   const pieces = surfacesOf(map).filter((s) => s.ground);
@@ -208,7 +259,13 @@ export function stepBody(body, map, intent, dt, { speed = 100, jump = 100, rider
   body.dropTimer = Math.max(0, body.dropTimer - dt);
   if (body.onGround && body.passAbove != null) body.passAbove = null;
   body.knockTimer = Math.max(0, body.knockTimer - dt);
-  if (rider && !body.rope) ride(body, map, intent, dt);
+  if (rider && !body.rope && !body.zip) ride(body, map, intent, dt);
+
+  // ----- On a zip line -----
+  if (body.zip) {
+    rideZip(body, map, intent, dt);
+    return;
+  }
 
   // ----- On a rope -----
   if (body.rope) {
@@ -239,6 +296,20 @@ export function stepBody(body, map, intent, dt, { speed = 100, jump = 100, rider
       body.surface = surfacesOf(map).find((s) => Math.abs(s.yAt(body.x) - r.bottom) < 2 && body.x >= s.x1 && body.x <= s.x2) ?? null;
     }
     return;
+  }
+
+  // ----- Grab a zip line (Up at its top post) -----
+  if (intent.up && body.onGround && !intent.jump) {
+    const z = zipAt(map, body);
+    if (z) {
+      body.zip = { line: z, d: 0, v: 0 };
+      body.x = z.x1;
+      body.vx = 0;
+      body.vy = 0;
+      body.onGround = false;
+      body.surface = null;
+      return;
+    }
   }
 
   // ----- Grab a rope -----
@@ -351,6 +422,7 @@ export function stepBody(body, map, intent, dt, { speed = 100, jump = 100, rider
 
 export function knockBack(body, fromX) {
   body.rope = null;
+  body.zip = null;
   // (A short hop back: enough to feel the hit, not enough to throw you out of a fight.)
   body.vx = (body.x >= fromX ? 1 : -1) * 70;
   body.vy = -150;

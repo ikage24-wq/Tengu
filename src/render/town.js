@@ -534,6 +534,9 @@ export function drawStreet(ctx, map, cam, width, time, hero = {}) {
     // Lit windows breathe a little light at night.
     if (style.startsWith('canal') || style === 'treehome' || style === 'mushhome') glowSoft(ctx, x, hy - s.h * 0.55, 46, '#ffe9a6', 0.16 + 0.04 * Math.sin(time * 1.3 + seed * 9));
   }
+  // Your hut's rooms (render/island.js) are its walls and floor: drawn first, so its stove (in the
+  // kitchen nook) stands in front of them.
+  if (map.home && map.indoor) for (const [kind, wx, extra] of map.townPieces ?? []) if (kind === 'hutroom') drawIslandPiece(ctx, map, kind, wx, extra, cam, width, time);
   // The town stove: the fire licking in its arch (three drawings flowing one into the next), the
   // pot's lid rattling on the boil now and then, and cel puffs of steam curling up and tearing
   // apart. Every beat is phased from the stove's own place in town.
@@ -584,6 +587,8 @@ export function drawStreet(ctx, map, cam, width, time, hero = {}) {
     if (x > -60 && x < width + 60) drawCraftBench(ctx, map.theme, x, ground(map.bench), time, map.bench, map.benchWork ?? null);
   }
   for (const [kind, wx, extra] of map.townPieces ?? []) {
+    // (Your hut's rooms went first, behind its stove: above.)
+    if (kind === 'hutroom') continue;
     // Lantern Lagoon's own buildings, and the harbor's quay for the Sea Biscuit (render/lagoon.js).
     if (drawLagoonPiece(ctx, map, kind, wx, extra, cam, width, time)) continue;
     // The prologue's rooms: Hayate's flat and the Queen's Bedchamber (render/prologue.js).

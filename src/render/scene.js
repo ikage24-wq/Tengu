@@ -219,7 +219,8 @@ export function playerPose(world) {
   }
   const blend = BLEND;
   if (world.pose) return { pose: world.pose.kind, progress: 1 - world.pose.t / world.pose.dur, dur: world.pose.dur, from: world.pose.from, blend: (world.now - (world.pose.since ?? -9)) / blend, hit: world.pose.hit, fin: world.pose.fin, flow: world.pose.flow };
-  if (b.rope) return { pose: 'climb' };
+  // (On your island's zip line she hangs from its handle, back to you, like on a rope.)
+  if (b.rope || b.zip) return { pose: 'climb' };
   if (!b.onGround) return { pose: 'jump', vy: b.vy };
   if (Math.abs(b.vx) > 8) return { pose: 'walk' };
   return { pose: 'idle' };

@@ -25,7 +25,7 @@ const SET_KEYS = [null, ...Object.keys(FURN_SETS)];
 
 export const decorating = (state) => Boolean(state.decor?.on);
 // (On your own island, or out in your own Mochi Garden.)
-export const canDecorate = (world) => Boolean((world.map.home && !world.map.guestOf && world.char.home) || (!world.gardenVisit && ownGarden(world.map, world.char)));
+export const canDecorate = (world) => Boolean((world.map.home && !world.map.noDecor && !world.map.guestOf && world.char.home) || (!world.gardenVisit && ownGarden(world.map, world.char)));
 
 export function toggleDecorate(state, world) {
   state.decor ??= { on: false, carry: null, undo: [], redo: [], tab: 0, scroll: 0, msg: null };

@@ -154,6 +154,11 @@ export function routeInput(state, world, input, dt) {
         }
         world.log(questState(world.char, done.id) === 'ready' ? `${q.name}: done! Report to ${NPCS[reportTo(done.id)].name}.` : `${q.name}: talked to ${NPCS[e.npc].name}.`, '#bff0dc');
       }
+    } else if (e.type === 'trunk' || e.type === 'sellcrate' || e.type === 'plant') {
+      // Your island's own (world/home.js): the trunk onto your storage, the sell crate, a plot.
+      // (Shelly stands in as the island's keeper; the windows name themselves.)
+      state.npc = e.type === 'trunk' ? { id: 'shelly', mode: 'storage', trunk: true } : e.type === 'sellcrate' ? { id: 'shelly', mode: 'shop', crate: true, tab: 1 } : { id: 'shelly', mode: 'plant', plot: e.plot };
+      state.windows.npc.open = true;
     } else if (e.type === 'cook') {
       state.windows.cook.open = true;
     } else if (e.type === 'mochi') {

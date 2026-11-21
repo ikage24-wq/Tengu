@@ -43,7 +43,7 @@ import { tickDaytime } from './daytime.js';
 import { tickVoyage, setSail } from './voyage.js';
 import { rideStep, rideAfter, dismount, toggleMount, giveMount, ownsMount } from './mount.js';
 import { WADE, MOUNTS } from '../data/mounts.js';
-import { refreshHome } from './home.js';
+import { refreshHome, tendPlot, crateHere, trunkHere, bedHere, G as HOME_BEACH } from './home.js';
 import { refreshGarden, grantGarden } from './garden.js';
 import { restoreCarried } from './decor.js';
 import { tickShow, showTentUp } from './mochi-show.js';
@@ -199,7 +199,12 @@ export function loadMap(world, mapId, portalId) {
   world.channel = null;
   world.events.push({ type: 'map', mapId: map.id });
   // Home to whoever lives with you: a welcome, and some mornings a dish (world/sweethearts.js).
-  if (map.home && !map.indoor) welcomeHome(world);
+  if (map.id === 'home') welcomeHome(world);
+  // (The island rebuilt tall, 2026-11-21: where your outdoor furniture went, said once.)
+  if (map.home && world.char.homeNews) {
+    world.log(world.char.homeNews, '#ffd6a0');
+    delete world.char.homeNews;
+  }
   onMapLoaded(world);
   onStoryMap(world);
 }
@@ -523,9 +528,24 @@ function interact(world) {
   // (The egg and clothes stalls, wherever they stand: the Mochi Market.)
   if (eggStallUp(world) || wearStallUp(world) || showTentUp(world) || sumoHallUp(world) || festStallUp(world)) return true;
   // Your skiff at your island's dock: Up to sail back to Pastel Harbor (world/voyage.js).
-  if (world.map.home && !world.map.indoor && b.x < 150 && b.y <= 530) {
+  if (world.map.id === 'home' && b.x < 150 && b.y <= HOME_BEACH - 10) {
     setSail(world);
     world.log('You cast off in your skiff, back toward Pastel Harbor.', '#9fe8ff');
+    return true;
+  }
+  // Your island's own (world/home.js): the garden plots, the sell crate on the beach, and in your
+  // hut the trunk (your storage) and the bed.
+  if (world.map.home && tendPlot(world)) return true;
+  if (crateHere(world)) {
+    world.events.push({ type: 'sellcrate' });
+    return true;
+  }
+  if (trunkHere(world)) {
+    world.events.push({ type: 'trunk' });
+    return true;
+  }
+  if (bedHere(world)) {
+    world.log('A cosy bed by the wall. Log off in your hut tonight and you\'ll wake up rested (double EXP for a while).', '#ffe9a6');
     return true;
   }
   // The little Mochi hiding in the meadow (world/escort.js): Up beside it and it follows you.

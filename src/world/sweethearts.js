@@ -152,9 +152,10 @@ export function moveIn(char, id) {
   char.livingWith = id;
   char.partner = id;
   const own = AT_HOME[id];
-  char.home ??= { stage: 1, back: null, placed: [], bag: {} };
+  char.home ??= { stage: 1, back: null, placed: [], plots: [], layout: 2 };
   if (own?.piece && !char.home.placed.some((p) => p.theirs === id)) {
-    const spots = { surface: [[150, 262], [490, 262]], wall: [[150, 200], [500, 200]], floor: [[560, 360], [90, 360]] };
+    // (Clear of the hut's own bed by the left wall, the door and the trunk: world/home.js IN.)
+    const spots = { surface: [[150, 262], [490, 262]], wall: [[150, 200], [500, 200]], floor: [[432, 360], [222, 360]] };
     const layer = { bake_cake: 'surface', star_globe: 'surface', sea_net: 'wall', trophy_plaque: 'wall', star_lamp: 'floor', bake_stool: 'floor' }[own.piece];
     const [x, y] = (spots[layer] ?? spots.floor).find(([sx]) => !char.home.placed.some((p) => p.map === 'home_in' && Math.abs(p.x - sx) < 24)) ?? spots.floor[0];
     char.home.placed.push({ uid: 9000 + Object.keys(SWEETHEARTS).indexOf(id), id: own.piece, map: 'home_in', x, y, flip: false, theirs: id });

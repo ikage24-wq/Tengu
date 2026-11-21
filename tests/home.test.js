@@ -100,7 +100,7 @@ test('the hut door goes inside and back out; the skiff sails you to the harbor',
   updateWorld(w, DT, keys([], ['ArrowUp']));
   assert.equal(w.map.id, 'home');
   loadMap(w, 'home', 'dock');
-  Object.assign(w.body, { x: 130, y: 528, onGround: true });
+  Object.assign(w.body, { x: 130, y: 1228, onGround: true });
   updateWorld(w, DT, keys([], ['ArrowUp']));
   assert.ok(w.map.voyage, 'at sea');
   assert.equal(w.map.voyage.to, 'harbor');
@@ -155,8 +155,8 @@ test('pieces snap to where they belong, and say why not', () => {
   assert.equal(pickUpPiece(w.char, t), t);
   // Outside: never in the water.
   loadMap(w, 'home', 'dock');
-  assert.match(placeAt(w.map, w.char, 'sea_chair', 1120, 560).why, /wet/);
-  assert.equal(typeof placePiece(w.map, w.char, 'sea_hammock', 430, 530), 'object');
+  assert.match(placeAt(w.map, w.char, 'sea_chair', 1046, 1270).why, /wet/);
+  assert.equal(typeof placePiece(w.map, w.char, 'sea_hammock', 1600, 1230), 'object');
   // A cap per map.
   assert.ok(PLACED_MAX >= 40);
 });
@@ -173,4 +173,126 @@ test("a visitor sees their friend's island, not their own", () => {
   loadMap(w, 'home', 'dock');
   assert.equal(w.map.guestOf, undefined);
   assert.equal(w.map.stage, 1);
+});
+
+// ---------- The tall island (the 2026-11-21 rework) ----------
+import { TIER_Y, TIER_X, PLOT_X, CRATE_X, IN, ZIP, plant, plotGrowth, plantables, settleHome, G as BEACH } from '../src/world/home.js';
+import { PLANTABLE, GROW_SECS, HOME_REST } from '../src/data/home.js';
+import { ropeTop } from '../src/world/physics.js';
+import { wakeAtInn } from '../src/world/inn.js';
+import { expToNext } from '../src/core/exp.js';
+import { ITEMS } from '../src/data/items.js';
+
+const run = (w, secs, held = [], pressed = []) => {
+  for (let t = 0; t < secs; t += DT) updateWorld(w, DT, keys(held, t === 0 ? pressed : []));
+};
+
+test('the island is tall: each stage opens a tier up the rock, every ladder reaching its top', () => {
+  const tops = (s) => homeMap(s).map.platforms.filter((p) => p.bare && !p.bridge).map((p) => p.y);
+  assert.deepEqual(tops(1), [TIER_Y.garden], 'the garden terrace from the start');
+  assert.ok(tops(3).includes(TIER_Y.rise) && !tops(2).includes(TIER_Y.rise), 'the rise opens at 3');
+  assert.ok(tops(5).includes(TIER_Y.summit) && !tops(4).includes(TIER_Y.summit), 'the summit at 5');
+  for (let s = 1; s <= HOME_MAX; s++) {
+    const { map } = homeMap(s);
+    assert.equal(map.height, homeMap(1).map.height, 'the same size every stage: tiers open, the island stays put');
+    for (const r of map.ropes) assert.ok(ropeTop(map, r), `stage ${s}: the ladder at ${r.x} reaches a floor`);
+    assert.equal(map.masses.length, 5, 'the rock is all there, open or wild');
+  }
+  assert.equal(homeMap(5).map.ziplines.length, 1);
+  assert.equal(homeMap(4).map.ziplines.length, 0);
+});
+
+test('the clam bounces you up onto the garden terrace', () => {
+  const w = islander();
+  loadMap(w, 'home', 'dock');
+  Object.assign(w.body, { x: 944, y: BEACH, onGround: true, vx: 0, vy: 0 });
+  run(w, 2);
+  assert.equal(w.body.y, TIER_Y.garden);
+  assert.ok(w.body.onGround);
+});
+
+test('the zip line takes you from the summit down to the dock', () => {
+  const w = islander();
+  w.char.home.stage = 5;
+  loadMap(w, 'home', 'dock');
+  Object.assign(w.body, { x: ZIP.x1 + 6, y: TIER_Y.summit, onGround: true, vx: 0, vy: 0 });
+  run(w, 0.1, ['ArrowUp'], ['ArrowUp']);
+  assert.ok(w.body.zip, 'Up at the post takes hold of the handle');
+  let peak = 0;
+  for (let t = 0; t < 8 && w.body.zip; t += DT) {
+    updateWorld(w, DT, keys());
+    peak = Math.max(peak, w.body.zip?.v ?? 0);
+  }
+  assert.equal(w.body.zip, null, 'off at the bottom');
+  assert.ok(w.body.onGround && Math.abs(w.body.y - (BEACH - 12)) < 1 && Math.abs(w.body.x - ZIP.x2) < 2, 'standing on the dock');
+  assert.ok(peak > 300, 'it picks up speed on the way');
+});
+
+test('a garden plot: plant something you gathered, it grows while you wait, and you pick more back', () => {
+  const w = islander();
+  loadMap(w, 'home', 'dock');
+  addItem(w.char.inventory, 'clover', 1);
+  addItem(w.char.inventory, 'starbloom', 1);
+  assert.ok(PLANTABLE.every((id) => ITEMS[id]?.gathered), 'only gathered things grow');
+  assert.deepEqual(plantables(w.char).map((p) => [p.id, p.ok]), [['clover', true], ['starbloom', false]]);
+  assert.match(plant(w.char, 0, 'starbloom'), /Gathering Lv/, 'a rare one needs the level');
+  assert.match(plant(w.char, 5, 'clover'), /no plot/, 'two plots to start');
+  assert.equal(plant(w.char, 0, 'clover'), null);
+  assert.equal(countItem(w.char.inventory, 'clover'), 0);
+  assert.ok(plotGrowth(w.char.home.plots[0]) < 0.01);
+  // Up at it while it grows only says how long.
+  Object.assign(w.body, { x: PLOT_X[0], y: TIER_Y.garden, onGround: true });
+  run(w, 2, [], ['ArrowUp']);
+  assert.equal(countItem(w.char.inventory, 'clover'), 0);
+  // Ripe (it grew while you were away), it's picked by hand: three back for the one.
+  w.char.home.plots[0].at -= GROW_SECS + 5;
+  run(w, 2.5, [], ['ArrowUp']);
+  assert.equal(countItem(w.char.inventory, 'clover'), 3);
+  assert.equal(w.char.home.plots[0], null, 'and the plot is free again');
+});
+
+test("the beach's sell crate and the hut's trunk open their windows; a visitor can't use them", () => {
+  const w = islander();
+  loadMap(w, 'home', 'dock');
+  Object.assign(w.body, { x: CRATE_X, y: BEACH, onGround: true });
+  updateWorld(w, DT, keys([], ['ArrowUp']));
+  assert.ok(w.events.some((e) => e.type === 'sellcrate'));
+  loadMap(w, 'home_in', 'door');
+  w.events.length = 0;
+  Object.assign(w.body, { x: IN.trunk, y: 360, onGround: true });
+  updateWorld(w, DT, keys([], ['ArrowUp']));
+  assert.ok(w.events.some((e) => e.type === 'trunk'));
+  assert.ok(typeof w.map.stove === 'number', 'a stove in the hut');
+  assert.equal(homeMap(1).map.bench > 0, true, "Shelly's craft bench on the beach");
+  // A friend's island: look, don't touch.
+  w.visiting = { ownerId: 'f1', name: 'Kai', home: { stage: 2, placed: [] } };
+  loadMap(w, 'home', 'dock');
+  w.events.length = 0;
+  Object.assign(w.body, { x: CRATE_X, y: BEACH, onGround: true });
+  updateWorld(w, DT, keys([], ['ArrowUp']));
+  assert.ok(!w.events.some((e) => e.type === 'sellcrate'));
+});
+
+test('a night in your own hut rests you, at half the inn\'s rate', () => {
+  const char = createCharacter('Isla', { hairStyle: 'bob' });
+  char.level = 20;
+  char.home = { stage: 1, placed: [], plots: [], layout: 2 };
+  const inn = { ...structuredClone(char), inn: { checkedIn: true }, mapId: 'coin_inn', savedAt: Date.now() - 4 * 3600000, rested: 0 };
+  const hut = { ...structuredClone(char), mapId: 'home_in', savedAt: Date.now() - 4 * 3600000, rested: 0 };
+  const field = { ...structuredClone(char), mapId: 'meadow1', savedAt: Date.now() - 4 * 3600000, rested: 0 };
+  const a = wakeAtInn(inn);
+  const b = wakeAtInn(hut);
+  assert.ok(a > 0 && Math.abs(b - a * HOME_REST) <= 1, `${b} is half of ${a}`);
+  assert.equal(wakeAtInn(field), 0);
+  assert.ok(b < expToNext(20), 'a small rest, never a level');
+});
+
+test('an island from before the rework moves in: outdoor furniture back to the bag, the hut untouched', () => {
+  const char = createCharacter('Isla', { hairStyle: 'bob' });
+  char.home = { stage: 3, back: null, bag: {}, placed: [{ uid: 1, id: 'sea_table', map: 'home', x: 500, y: 540 }, { uid: 2, id: 'sea_lamp', map: 'home_in', x: 200, y: 262 }] };
+  assert.equal(settleHome(char), 1);
+  assert.equal(countItem(char.inventory, 'sea_table'), 1);
+  assert.deepEqual(char.home.placed.map((p) => p.id), ['sea_lamp']);
+  assert.equal(char.home.layout, 2);
+  assert.equal(settleHome(char), 0, 'only once');
 });

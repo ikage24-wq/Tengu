@@ -125,7 +125,8 @@ test('some fish only bite at their hour or in their weather, and every region ha
   assert.ok(bitesNow(FISH.find((f) => f.id === 'fish_darter'), { ...noon, hour: 5 }) && !bitesNow(FISH.find((f) => f.id === 'fish_darter'), noon), 'the Daybreak Darter bites at dawn');
   assert.ok(FISH.length >= 100, 'a hundred fish to find');
   const legends = FISH.filter((f) => f.legend);
-  assert.equal(legends.length, 5);
+  // (One per region, and your island's own in its grotto.)
+  assert.equal(legends.length, 6);
   for (const f of legends) assert.ok(f.legend.title && f.legend.rumor && Object.values(SPOTS).flat().some((s) => s.pool[f.id]), `${f.name} has a title, a rumour and a home`);
 });
 
