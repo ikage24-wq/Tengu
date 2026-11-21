@@ -23,10 +23,14 @@ import { expToNext, MAX_LEVEL } from '../src/core/exp.js';
 import { DUNGEONS } from '../src/data/dungeons.js';
 import { hunt, huntingMaps } from './hunt-rate.mjs';
 
-const FAMILY = 'warrior';
-// (Level 30 on: the Thunderguard's damage branch, Tempest. The old 'berserker' is gone since 2026-11-09, and
-// asking for it gave a jobless beginner with no skills.)
-const JOB_AT = (level) => (level < 30 ? 'warrior' : 'tempest');
+// Which job family plays it (`--family mage`, or PT_FAMILY): its first job, then from level 30 its
+// damage branch. (The old 'berserker' is gone since 2026-11-09; asking for a job that no longer
+// exists gave a jobless beginner with no skills.)
+const FAMILIES = { warrior: ['warrior', 'tempest'], mage: ['tidemage', 'maelstrom'], thief: ['moonmoth', 'eclipse'], archer: ['sunfeather', 'phoenix'] };
+const argAt = typeof process !== 'undefined' ? process.argv.indexOf('--family') : -1;
+export const FAMILY = (argAt > 0 ? process.argv[argAt + 1] : null) ?? (typeof process !== 'undefined' ? process.env.PT_FAMILY : null) ?? 'warrior';
+if (!FAMILIES[FAMILY]) throw new Error(`no job family '${FAMILY}' (${Object.keys(FAMILIES).join(', ')})`);
+const JOB_AT = (level) => FAMILIES[FAMILY][level < 30 ? 0 : 1];
 
 const PACES = {
   perfect: { kill: 1, travel: 1.5, talk: 0.75, visit: 1, fish: 5, dungeon: 10, trial: 3, job: 3, gather: 0.5, extra: 1 },

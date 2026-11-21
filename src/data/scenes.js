@@ -1132,7 +1132,7 @@ export const SIDE_SCENES = {
   ],
   trial_elowen_done: [
     { who: 'elowen', text: "Twenty. And your staff is still dripping. Good. The surface water is yours now.", mood: 'happy' },
-    { who: 'elowen', text: "Under it is the deep: the pressure, the currents, the things that glow where the sun never reaches. The Maelstrom calls it up. Shall we go down?" },
+    { who: 'elowen', text: "Two ways on from here. The Tidecaller calls the tide in to mend everyone and carry them on the water. The Maelstrom goes down into the deep, where things glow that have never seen the sun. Which one's you?" },
   ],
 };
 

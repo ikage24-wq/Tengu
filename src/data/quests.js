@@ -173,21 +173,21 @@ export const QUESTS = {
     id: 'mage_trial', name: "The Tide Mage's Trial", giver: 'elowen', minLevel: 30, family: 'mage',
     text: "The water you've called so far is the friendly kind, the kind that sits on top. There is more under it. Go to the Crystal Cave and break 20 Gem Mimics: hard little things, so hit them with everything the sea has. Then come back, and I'll show you the deep.",
     objectives: [{ type: 'kill', mob: 'crystalslime', count: 20 }],
-    rewards: { exp: 44000, gold: 950, items: [{ id: 'elixir', qty: 5 }] },
+    rewards: { exp: 120000, gold: 3100, items: [{ id: 'elixir', qty: 5 }] },
   },
   // Kestrel's trial for a Sunfeather before her level 30 path (the Phoenix or the Songbird).
   archer_trial: {
     id: 'archer_trial', name: "The Sunfeather's Trial", giver: 'kestrel', minLevel: 30, family: 'archer',
     text: "Anyone can hit a scarecrow. Up past the stars the Comet Couriers zip about like they own the sky. Bring down 20 of them, from a good long way off, and I'll show you the two ways a sunbird can grow up.",
     objectives: [{ type: 'kill', mob: 'cometcourier', count: 20 }],
-    rewards: { exp: 46000, gold: 1000, items: [{ id: 'elixir', qty: 5 }] },
+    rewards: { exp: 76000, gold: 1900, items: [{ id: 'elixir', qty: 5 }] },
   },
   // Vex's trial for a Moon Moth before her level 30 path (the Eclipse).
   thief_trial: {
     id: 'thief_trial', name: "The Moon Moth's Trial", giver: 'vex', minLevel: 30, family: 'thief',
     text: "Moths fly in the dark, sweetie, but the dark has eyes too. Up at the Hot Spring Pools the Lamias watch for anything that moves. Take out 20 of them without letting them see you coming. Then come back, and I'll show you what happens when the moon puts out the sun.",
     objectives: [{ type: 'kill', mob: 'lamia', count: 20 }],
-    rewards: { exp: 46000, gold: 1000, items: [{ id: 'elixir', qty: 5 }] },
+    rewards: { exp: 88000, gold: 2200, items: [{ id: 'elixir', qty: 5 }] },
   },
 
   // ---------- Side quests: every town's people, every field ----------
@@ -794,7 +794,7 @@ export const QUESTS = {
     id: 'elowen_dance', name: 'Dance of the Owlets', giver: 'elowen', minLevel: 15, family: 'mage',
     text: "The Moss Owlets of Mossy Woods glide along the branches like they're dancing, but they've forgotten the steps. Now they just wobble, like uncles at a wedding. Calm 15 of them, and bring me 7 of their soft down to stitch into charms. Festival charms. Not that I'm going.",
     objectives: [{ type: 'kill', mob: 'mossowlet', count: 15 }, { type: 'collect', item: 'owl_down', count: 7 }],
-    rewards: { exp: 9700, gold: 320, items: [] },
+    rewards: { exp: 22000, gold: 580, items: [] },
   },
   // Vex's story (her Wind Dancers'): Tora's good hammer, which Vex "borrowed" to build a secret
   // stage on the harbor for its first dance festival, then lost to the Kitsune Miko's light
@@ -824,20 +824,20 @@ export const QUESTS = {
     id: 'elowen_wisps', name: 'Kettle Lights', giver: 'elowen', minLevel: 20, prereq: 'elowen_dance', family: 'mage',
     text: "Our teacher's teapot only sang when the lid and the pot were warmed in wisp-light together. Yes, a magic teapot. Every mage has one, it's in the handbook. If I'm ever to give the lid back, it should be ready. Bring me 8 Wisp Flames from the Will-o'-Wisps in the Twilight Ruins, next door.",
     objectives: [{ type: 'collect', item: 'wisp_flame', count: 8 }],
-    rewards: { exp: 16000, gold: 410, items: [] },
+    rewards: { exp: 32000, gold: 850, items: [] },
   },
   elowen_foxfire: {
     id: 'elowen_foxfire', name: 'A Fox-Fire Offering', giver: 'elowen', minLevel: 24, prereq: 'elowen_wisps', family: 'mage',
     text: "Past the Twilight Ruins, the Fox Shrine Path climbs to a little shrine on the top terrace. The foxes there grant courage, they say. Bring 10 of the little bells the Nekomata wear to hang at the shrine, and leave a prayer there for me. A long one. Use big words. I'll need it.",
     objectives: [{ type: 'collect', item: 'nekomata_bell', count: 10 }, { type: 'visit', map: 'shrine', above: 530, place: 'the shrine on the top terrace' }],
-    rewards: { exp: 24000, gold: 620, items: [{ id: 'white_potion', qty: 20 }] },
+    rewards: { exp: 77000, gold: 1900, items: [{ id: 'white_potion', qty: 20 }] },
   },
   elowen_lid: {
     id: 'elowen_lid', name: 'The Lid, Returned', giver: 'elowen', minLevel: 25, prereq: 'elowen_foxfire', family: 'mage',
     text: "I can't take it to her myself. My knees won't let me. My pride won't either, but mostly the knees. Will you carry the lid to Mira in Sprout Village? It's wrapped, so she can choose not to open it. Then come back and tell me what her face did. In detail.",
     gives: [{ id: 'parcel' }],
     objectives: [{ type: 'deliver', npc: 'mira', item: 'parcel', say: "The lid? She kept it, all these years? Oh, that silly, stubborn, dramatic witch. Go back and tell her to put the kettle on. I'm coming. I'm bringing biscuits, so she can't win." }],
-    rewards: { exp: 9000, gold: 300, items: [{ id: 'ear_25', qty: 1, variant: 'roll' }] },
+    rewards: { exp: 64000, gold: 1600, items: [{ id: 'ear_25', qty: 1, variant: 'roll' }] },
   },
   vex_stage: {
     id: 'vex_stage', name: 'Quick Feet, Quiet Hands', giver: 'vex', minLevel: 18, prereq: 'vex_shadows',

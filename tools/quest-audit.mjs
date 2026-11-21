@@ -4,8 +4,9 @@
 // player's call, "Match hunting"): from level 10 a side quest pays at least about what hunting
 // would, but never more than about 80% of a level at its own level (so one quest can't fling you
 // past your content); below 10, the opening hour keeps its hand-tuned pay.
-// `node tools/quest-audit.mjs [--all]` (--all lists the fine ones too).
-import { measure, playthrough } from './playthrough.mjs';
+// `node tools/quest-audit.mjs [--all] [--family mage]` (--all lists the fine ones too; --family plays as
+// another job: warrior, mage, thief or archer).
+import { measure, playthrough, FAMILY } from './playthrough.mjs';
 import { QUESTS } from '../src/data/quests.js';
 import { expToNext } from '../src/core/exp.js';
 
@@ -40,5 +41,5 @@ for (const [giver, list] of Object.entries(byGiver)) {
 }
 const done = new Set(run.audit.map((a) => a.id));
 const missed = Object.values(QUESTS).filter((q) => !q.daily && !q.story && q.giver && !done.has(q.id));
-console.log(`\n${run.audit.filter((a) => !a.story).length} side quests timed, ${flagged} flagged. Not reached by the warrior playthrough (other jobs, or locked): ${missed.length}`);
+console.log(`\n${run.audit.filter((a) => !a.story).length} side quests timed, ${flagged} flagged. Not reached by the ${FAMILY} playthrough (other jobs, or locked): ${missed.length}`);
 if (all) console.log('  ' + missed.map((q) => q.id).join(', '));

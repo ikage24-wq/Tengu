@@ -53,6 +53,10 @@ export function hunt(job, level, mapId, { secs = 300, seed = 7 } = {}) {
   try {
     const c = balanceChar(job, level);
     const w = createWorld(c);
+    // (A fixed noon: the world otherwise takes its day, night, weather and events from the real
+    // clock, and the same hunt read differently depending on the hour it was run.)
+    w.dayClock = () => new Date(2026, 5, 15, 12, 0, 0);
+    w.forceNight = 0;
     w.log = () => {};
     loadMap(w, mapId, 'start' in Object.fromEntries((MAPS[mapId].portals ?? []).map((p) => [p.id, 1])) ? 'start' : MAPS[mapId].portals[0].id);
     const nav = navOf(w.map);
