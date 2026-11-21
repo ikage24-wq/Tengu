@@ -43,4 +43,6 @@ export const COSTUME_LOOKS = [
   { key: 'kinakoday', name: "Kinako's Shop Apron", slot: 'top', style: 'costume', cash: 0, color: '#ff9ec0', covers: body, unsold: true },
   { key: 'kinakonight', name: "Kinako's Night Coat", slot: 'top', style: 'costume', cash: 0, color: '#3a2e4a', covers: body, unsold: true },
   { key: 'cbmoth', name: "The Moth's Wing Shawl", slot: 'top', style: 'costume', cash: 0, color: '#3a2a4a', covers: [...body, 'cape'], unsold: true },
+  // Twinkle, the fallen star at Starfall Heights (2026-11-21): her own, never sold.
+  { key: 'twinkle', name: "Twinkle's Starfall Dress", slot: 'top', style: 'costume', cash: 0, color: '#ffe3a0', covers: [...body, 'cape'], unsold: true },
 ];

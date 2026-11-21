@@ -322,6 +322,8 @@ const EYE_LOOK = {
   // A doll's: big and perfectly round, almost all iris, a glass ring for a pupil, barely a lash.
   // The redrawn hero's jewel eyes: big, the iris painted like a cut gem (heroine.js drawEye `jewel`).
   jewel: { rx: 2.4, ry: 2.95, tilt: 0.12, wing: 1.1, flicks: 2, iris: 1.36, jewel: true, sparkle: true },
+  // Twinkle's (2026-11-21, hers alone): big round eyes whose main shine is a four-point twinkle.
+  twinkle: { rx: 2.3, ry: 2.85, tilt: 0.06, wing: 0.7, flicks: 1, iris: 1.42, twinkle: true, sparkle: true },
   doll: { rx: 2.35, ry: 2.75, tilt: 0, wing: 0.15, flicks: 0, iris: 1.55, pupil: 'ring', sparkle: true },
   // Attitude eyes (2026-11-13): sharply slanted, the outer corners swept up with a long wing;
   // half-closed, the heavy lid lowered over the top of the iris, dreamy or unbothered; cheeky,
@@ -408,7 +410,7 @@ function eye(ex, out, style, color, mode, look, f = {}, cross = 0) {
     eye: {
       iris: color, pupil: f.heart ? 'heart' : f.shine && !st.pupil && !look.pupil ? 'star' : look.pupil ?? st.pupil, pupilC: f.heart ? '#ff4f86' : mix(shade(color, -62), hr.ink, 0.4), white: '#fffaf7', lashSh: mix('#fffaf7', hr.ink, 0.2),
       ink: st.lash ?? hr.ink, lashW: st.lashW ?? 0.85, wing: st.wing, flicks: st.flicks, lashLen: 0.95, crease: false, lower: mix(sk.lip, sk.base, 0.4),
-      sparkle: st.sparkle || f.shine, tilt: st.tilt, jewel: st.jewel,
+      sparkle: st.sparkle || f.shine, tilt: st.tilt, jewel: st.jewel, twinkle: st.twinkle,
     },
   };
   const k = wide ? 1.2 : 1;

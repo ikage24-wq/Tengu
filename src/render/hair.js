@@ -33,7 +33,7 @@ const RETIRED = {
 // Styles only one character wears (not offered in the creator or the salon).
 // (Styles only others wear: Malvina's, and the eight look-alikes taken out of the player's list on
 // 2026-11-13, still drawn for the townsfolk and any save already wearing one.)
-const OWN_HAIR = ['villainess', 'vampire', 'hexlong', 'idol', 'buzzcut', 'ribbonbuns', 'hearttails', 'sharpbob', 'sidecrop'];
+const OWN_HAIR = ['villainess', 'vampire', 'hexlong', 'idol', 'buzzcut', 'ribbonbuns', 'hearttails', 'sharpbob', 'sidecrop', 'comettail'];
 export const hairStyleOf = (look) => {
   const s = RETIRED[look.hairStyle] ?? look.hairStyle;
   return HAIR_STYLES.includes(s) || OWN_HAIR.includes(s) ? s : HAIR_STYLES[0];
@@ -1137,6 +1137,25 @@ Object.assign(STYLES, {
       front: bangs('soft', r, m, sideLocks(r, m, [[25.2, 11], [26.4, 16], [26, 20.6], [27.4, 22.6]], undefined, 3.2)),
       top: knots,
       tips: [20, 24],
+    };
+  },
+  // Twinkle's comet tail (2026-11-21, hers alone): all of it swept up into a high tie at the back
+  // that bursts into three trailing streams like a comet's tail, the top one streaming furthest
+  // back and lagging most, the lowest curling under; wispy bangs and a soft lock either side.
+  comettail(r, m) {
+    // (Three streams kept apart so each reads: the high one lifting back and out, the long one
+    // falling, the short one tucking under.)
+    const high = [[5.2, 4], [1.6, 1.8], [-3, 1.4], [-7.6, 3.2], [-11, 6.8], [-12.6, 11]];
+    const main = [[5.6, 4.6], [2, 5], [-1.4, 8.6], [-3.4, 14], [-3, 20], [-1.2, 25], [-2.4, 30]];
+    const low = [[5.8, 6], [4, 9.4], [3, 13.6], [3.6, 18], [5.4, 21.4]];
+    const light = [[5.2, 5.4], [2.2, 6.2], [-0.4, 10.2], [-1.6, 15.6]];
+    const tie = [F(E(5.6, 4.8, 1.8, 2.2, r.sh2))];
+    return {
+      head: [crown(r), ...tie],
+      hang: [lock(high, 4.8, r.base, m, 1.45, 0.08), lock(main, 6.8, r.sh1, m, 1.1, 0.1), lock(low, 4, r.sh2, m, 0.9, 0.2), lock(light, 2.8, r.base, m, 1.2), streak(-0.6, 9.4, -2.2, 18.4, 0.7, 0.6, r.hi, m, 1.2)],
+      front: bangs('wispy', r, m, sideLocks(r, m, [[25.2, 11], [26.2, 16], [25.4, 21]], [[5.8, 11], [5, 16], [5.6, 20.4]], 3)),
+      top: tie,
+      tips: [18, 26],
     };
   },
   // Heart twintails: twintails tied high that swing down and curl into a heart of hair at each end.

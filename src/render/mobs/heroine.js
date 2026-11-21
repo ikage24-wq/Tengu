@@ -443,7 +443,9 @@ function drawEye(pen, e, x, look) {
     cl(ell(ix + irx * 0.08, iy - iry * 0.3, bg * 0.42, bg * 0.42, 8), mix(irisLt, '#ffffff', 0.75));
   }
   const big = Math.max(0.62, irx * 0.3);
-  if (!E.jewel) cl(ell(ix - irx * 0.38, iy - iry * 0.36, big, big * 1.1, 8, 0.4), '#ffffff');
+  // (A twinkle eye's main shine is a four-point star.)
+  if (E.twinkle) cl(starPts(ix - irx * 0.32, iy - iry * 0.32, big * 2), '#ffffff');
+  else if (!E.jewel) cl(ell(ix - irx * 0.38, iy - iry * 0.36, big, big * 1.1, 8, 0.4), '#ffffff');
   cl(ell(ix + irx * 0.42, iy + iry * 0.44, 0.36, 0.36, 8), E.sparkle ? '#ffffff' : mix(irisLt, '#ffffff', 0.5));
   if (E.sparkle && !hot) cl(starPts(ix + irx * 0.1, iy + iry * 0.1, 0.55), mix(irisLt, '#ffffff', 0.7));
 

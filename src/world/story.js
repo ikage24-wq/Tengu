@@ -22,13 +22,13 @@ import { countItem, removeItem } from '../core/inventory.js';
 
 // `vars` fill in a line's {job} (and {name} is always the hero).
 // A scene with steps that play only once some quests are done (`when`: an id or a list of them),
-// or only on one map (`onMap`: where the scene starts), is played as its own copy holding just the
-// steps this hero has earned.
+// only while one isn't yet (`unless`), or only on one map (`onMap`: where the scene starts), is
+// played as its own copy holding just the steps this hero has earned.
 const done = (char, when) => [when].flat().every((q) => char.quests?.[q]?.state === 'done');
 function sceneFor(char, id, mapId = null) {
   const steps = SCENES[id];
-  const keep = (st) => (!st.when || done(char, st.when)) && (!st.onMap || st.onMap === mapId);
-  const picky = (st) => st.when || st.onMap;
+  const keep = (st) => (!st.when || done(char, st.when)) && (!st.unless || !done(char, st.unless)) && (!st.onMap || st.onMap === mapId);
+  const picky = (st) => st.when || st.unless || st.onMap;
   if (!steps.some((st) => picky(st) || st.together?.some(picky))) return id;
   const out = steps.filter(keep).map((st) => (st.together ? { ...st, together: st.together.filter(keep) } : st)).filter((st) => !st.together || st.together.length);
   const key = `${id}~${mapId}~${out.length}~${steps.map((st, i) => (keep(st) ? 1 : 0) + (st.together ? st.together.map((x) => (keep(x) ? 1 : 0)).join('') : '')).join('')}`;

@@ -271,6 +271,32 @@ test("Skipper Nimbus's last voyage plays through on Cloudcatch Pier", () => {
   }
 });
 
+test("Twinkle, the fallen star, plays through on Starfall Heights' West Rim (both ways her story can end)", () => {
+  for (const [id, before] of [['twinkle_glow_done'], ['twinkle_kite_done'], ['twinkle_feather_done'], ['twinkle_count_done'], ['twinkle_notice_done'], ['twinkle_light_done'], ['twinkle_light_done', 'story_7_2']]) {
+    const w = createWorld(createCharacter('Hana', {}));
+    // (Her last scene changes once Prismaris already has his star.)
+    if (before) w.char.quests[before] = { state: 'done' };
+    loadMap(w, 'starfall', 'west');
+    const twinkle = w.map.npcs.find((n) => n.id === 'twinkle');
+    assert.ok(twinkle, 'Twinkle sits on the West Rim');
+    w.body.x = twinkle.x - 60;
+    playScene(w, id);
+    const lines = [];
+    for (let k = 0; k < 200 && w.scene; k++) {
+      run(w, 0.5);
+      if (w.cine) w.cine.go = true;
+      const step = w.scene && SCENES[w.scene.id][w.scene.i];
+      if (step && (step.card || (typeof step.text === 'string' && step.say === undefined))) {
+        lines.push(step.text);
+        advanceScene(w);
+      }
+    }
+    assert.equal(w.scene, null, `${id} finished`);
+    assert.ok(w.map.npcs.every((n) => !n.cine), `${id}: everyone is back to themselves`);
+    if (id === 'twinkle_light_done') assert.ok(lines.some((l) => (before ? /palace/ : /coming/).test(l)), `${id}: the right ending`);
+  }
+});
+
 test("Professor Lumen's fallen star plays through on the Observatory Steps", () => {
   for (const id of ['lumen_lens_done', 'lumen_fallen_done', 'lumen_chips_done', 'lumen_home_done']) {
     const w = createWorld(createCharacter('Hana', {}));

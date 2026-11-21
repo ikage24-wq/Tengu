@@ -736,6 +736,53 @@ export const QUESTS = {
     rewards: { exp: 200000, gold: 3400, items: [{ id: 'mochi_egg', qty: 1 }] },
   },
 
+  // Twinkle, the fallen star on Starfall Heights' West Rim (2026-11-21, levels 45-48): she wants to
+  // get back up into the sky, finds out it never missed her, finds out three people down here did,
+  // and goes to be a light for the one who needs it most (Prismaris, scared of the dark).
+  twinkle_glow: {
+    id: 'twinkle_glow', name: 'A Star in the Crater', giver: 'twinkle', minLevel: 45,
+    text: "Oh! You can see me? Good. I'm a star. I fell. On festival night the wind went out, the whole sky wobbled, and I slipped. If I glow brighter, the sky will notice I'm gone and pull me back up. Bring me 12 Stardust from the Star Seraphs. Please. I'm very small up there.",
+    objectives: [{ type: 'collect', item: 'stardust', count: 12 }],
+    rewards: { exp: 88000, gold: 2000, items: [{ id: 'white_potion', qty: 10 }] },
+  },
+  twinkle_kite: {
+    id: 'twinkle_kite', name: 'Kite Lessons', giver: 'twinkle', minLevel: 45, prereq: 'twinkle_glow',
+    text: "Plan B: I go UP. The Kite Riders fly all day off the West Rim. Beat 20 of them and they'll HAVE to lend us a kite. That's how kites work. I think.",
+    objectives: [{ type: 'kill', mob: 'kiterider', count: 20 }],
+    rewards: { exp: 110000, gold: 3400, items: [] },
+  },
+  twinkle_feather: {
+    id: 'twinkle_feather', name: 'Light as a Feather', giver: 'twinkle', minLevel: 46, prereq: 'twinkle_kite',
+    text: "I was too heavy for the kite. Rude, but true. Harpy feathers are the lightest thing in the sky. Bring me 12 and I'll stick them on. All of them. Everywhere.",
+    objectives: [{ type: 'collect', item: 'feather', count: 12 }],
+    rewards: { exp: 88000, gold: 2000, items: [{ id: 'elixir', qty: 3 }] },
+  },
+  twinkle_count: {
+    id: 'twinkle_count', name: 'Counting Stars', giver: 'twinkle', minLevel: 47, prereq: 'twinkle_feather',
+    text: "New plan! The Cloud Shepherds keep the sky's tally: every star, every night. If I'm missing from it, somebody up there must be worried sick. They won't just hand the tally book over, so... beat 15 of them. Very politely.",
+    objectives: [{ type: 'kill', mob: 'shepherdess', count: 15 }],
+    rewards: { exp: 100000, gold: 3000, items: [] },
+  },
+  twinkle_notice: {
+    id: 'twinkle_notice', name: 'Somebody Noticed', giver: 'twinkle', minLevel: 47, prereq: 'twinkle_count',
+    text: "...You're still here? Even though the sky didn't miss me? ...Okay. Then do one thing for me. Ask Professor Lumen, Celeste and Nim if they saw a little star go out on festival night. Just ask.",
+    objectives: [
+      { type: 'talk', npc: 'lumen', say: "Saw it? I MEASURED it. A little one over the crater went out at eleven forty-two. I've left a gap in my star chart for it ever since. In pencil." },
+      { type: 'talk', npc: 'celeste', say: "The little one over the crater? I've left my window open for it every night. In case it wanted somewhere soft to land." },
+      { type: 'talk', npc: 'nim', say: "Every night one of my wish candles won't light. I thought it was me. I-I've been saving it. For whoever it's for." },
+    ],
+    rewards: { exp: 210000, gold: 4800, items: [{ id: 'elixir', qty: 3 }] },
+  },
+  twinkle_light: {
+    id: 'twinkle_light', name: 'The Darkest Place', giver: 'twinkle', minLevel: 48, prereq: 'twinkle_notice',
+    text: "Three people noticed me. That's more than the whole sky! I don't want to go back up any more. I want to be somebody's light, down here. Somebody who really needs one. Ask Captain Rook where the darkest place on the island is. And bring 8 Sky Silk, so you can carry me there in a sling. I'm very carryable.",
+    objectives: [
+      { type: 'talk', npc: 'rook', say: "Darkest place on the island? The Crystal Cave, kid. There's a big crystal fella down there so scared of the dark he drinks every light he can find. Poor lad." },
+      { type: 'collect', item: 'sky_silk', count: 8 },
+    ],
+    rewards: { exp: 140000, gold: 3600, items: [{ id: 'mochi_egg', qty: 1 }] },
+  },
+
   // Moonleaf Grove.
   nim_candles: {
     id: 'nim_candles', name: 'The Runaway Candles', giver: 'nim', minLevel: 20, prereq: 'nim_chimes',

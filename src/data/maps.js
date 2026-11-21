@@ -3299,6 +3299,9 @@ MAPS.springs.portals.push({ id: 'grotto', x: 1610, y: 580, to: 'grotto', toPorta
 // Cloud cotton on the high cloud by the Moon Terrace, a quiet spot above the busy east rim
 // (placed by hand: the rim's own floors are full of monsters).
 MAPS.starfall.portals.push({ id: 'terrace', x: 2140, y: 380, to: 'terrace', toPortal: 'west', label: 'Moon Terrace' });
+// Twinkle, the fallen star, on the lip of the West Rim looking down into the crater she fell into
+// (clear of the monsters, which keep to the crater and the ledges past x 500).
+MAPS.starfall.npcs.push({ id: 'twinkle', x: 300 });
 
 // The queens roam their regions as field bosses (from the start: the story is optional), back
 // every ten minutes or so after they fall.

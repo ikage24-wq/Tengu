@@ -166,6 +166,15 @@ export const NPCS = {
     greeting: "I've sailed that whale since I was knee-high to a kite, and the pirates are picking her clean. Bring a tank, a healer and two fighters, and hold onto your hat!",
     shop: ['red_potion', 'orange_potion', 'white_potion', 'blue_potion', 'mana_elixir', 'return_scroll'],
   },
+  // Twinkle (2026-11-21, levels 45-48): a little star who slipped out of the sky on festival night,
+  // when the wind went out, and landed in the Fallen Star Crater. She sits on the West Rim, looking
+  // down into it. Her own hair (the comet tail), eyes (a twinkle for a shine) and dress.
+  twinkle: {
+    id: 'twinkle', name: 'Twinkle', title: 'Fallen Star', role: 'guide', quests: ['twinkle_glow', 'twinkle_kite', 'twinkle_feather', 'twinkle_count', 'twinkle_notice', 'twinkle_light'],
+    look: { hairStyle: 'comettail', hairColor: '#ffe7a3', hairTip: '#ffb3c6', skinTone: '#fff0e6', eyeColor: '#5ab4f0', outfitColor: '#ffe3a0', eyeStyle: 'twinkle', face: 'excited', browStyle: 'soft', cheek: 'star' },
+    greeting: "Hello! I'm Twinkle. I'm a star. I fell. It's fine. It's mostly fine.",
+    chatter: ['The Kite Riders keep offering me a lift. I keep falling off.', "Up there I was one of a billion. Down here I'm the only one!", 'Do I look shiny today? Be honest. Be nice.'],
+  },
   // Posy keeps the Party Board in every town's plaza (world/partyquest.js): party quests for the
   // region at your level, shared by everyone in your party, and Party Tokens to trade.
   // Clover keeps the Puff Buns, marshmallow bunnies you can ride, in Sprout's Pond Garden. Soft
@@ -420,6 +429,7 @@ const OWN_LOOKS = {
   praline: { look: { hairStyle: 'halfup', eyeStyle: 'sparkle', face: 'excited', browStyle: 'round' }, gear: { top: piece('look_casual_chef_top'), bottom: piece('look_casual_tennis_bottom'), shoes: piece('look_casual_loafers_shoes'), hat: piece('look_casual_chefhat_hat') } },
   encore: { look: { hairStyle: 'princess', eyeStyle: 'jewel', face: 'ohoho', browStyle: 'arched' }, gear: costume('ballgown') },
   nimbus: { look: { hairStyle: 'sidecrop', eyeStyle: 'round', face: 'grin', browStyle: 'sharp' }, gear: costume('aviator') },
+  twinkle: { gear: costume('twinkle') },
   // Lantern Lagoon.
   brine: { look: { hairStyle: 'shavedside', eyeStyle: 'cat', face: 'hmph', browStyle: 'sharp' }, gear: { top: piece('look_casual_parka_top'), bottom: piece('look_casual_cargo_bottom'), shoes: piece('look_casual_rainboots_shoes'), hat: piece('look_casual_visor_hat') } },
   nori: { look: { hairStyle: 'sidetail', eyeStyle: 'sparkle', face: 'proud', browStyle: 'arched' }, gear: costume('cheer') },

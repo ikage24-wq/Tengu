@@ -91,7 +91,7 @@ const sceneLines = (qid) => {
 
 export function playthrough(kpm, paceName) {
   const pace = PACES[paceName];
-  const st = { level: 1, exp: 0, min: 0, done: new Set(), log: [], reached: {}, hunting: 0, questing: 0, audit: [] };
+  const st = { level: 1, exp: 0, min: 0, done: new Set(), log: [], reached: {}, hunting: 0, questing: 0, audit: [], huntAt: {} };
   const gain = (exp) => {
     st.exp += exp;
     while (st.level < MAX_LEVEL && st.exp >= expToNext(st.level)) {
@@ -117,6 +117,7 @@ export function playthrough(kpm, paceName) {
       const map = fits.sort((a, b) => rate(b.id) * avgExp(b.id) - rate(a.id) * avgExp(a.id))[0] ?? maps.at(-1);
       st.min += 1;
       st.hunting += 1;
+      st.huntAt[st.level] = (st.huntAt[st.level] ?? 0) + 1;
       gain(rate(map.id) * avgExp(map.id));
       continue;
     }
@@ -166,6 +167,8 @@ export function playthrough(kpm, paceName) {
     questHours: h(st.questing),
     quests: st.done.size,
     audit: st.audit,
+    // (Minutes of hunting with no quest open, by level: where the quest list runs thin.)
+    huntByLevel: Object.fromEntries(Object.entries(st.huntAt).map(([l, m]) => [l, Math.round(m * pace.extra)])),
     chapters: Object.values(st.log.reduce((a, x) => ((a[x.chapter] = x), a), {})).map((x) => ({ chapter: x.chapter, ends: x.name, level: x.level, hours: +(x.hours * pace.extra).toFixed(1) })),
   };
 }

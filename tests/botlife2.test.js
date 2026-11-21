@@ -20,6 +20,17 @@ function seeded(n) {
     return n / 4294967296;
   };
 }
+// The world's own dice (loot, a few choices) are Math.random: a test that waits on them gets its own
+// seeded dice for the length of the test, so it reads the same every run.
+const withDice = (seed, fn) => () => {
+  const real = Math.random;
+  Math.random = seeded(seed);
+  try {
+    return fn();
+  } finally {
+    Math.random = real;
+  }
+};
 function quiet(world) {
   const lines = [];
   world.log = (t) => lines.push(t);
@@ -106,7 +117,7 @@ test('goals come from the real game: a level and its map, a craft and its materi
   assert.ok(!kinds.has('set'), 'no set goals');
 });
 
-test('a goal moves along as they play, completes, and they move on to the next (an old set goal ends without a piece)', () => {
+test('a goal moves along as they play, completes, and they move on to the next (an old set goal ends without a piece)', withDice(11, () => {
   const world = createWorld(createCharacter('Me', {}));
   const lines = quiet(world);
   const bots = createBots(world, seeded(31), { clock: EVENING });
@@ -132,7 +143,7 @@ test('a goal moves along as they play, completes, and they move on to the next (
   for (let i = 0; i < 400 && !done; i++) done = workGoal(lv, 2, seeded(i), { hunting: true });
   assert.ok(done && c.level >= 13, 'reached it');
   void lines;
-});
+}));
 
 test('moods shift with what happens and show in how they talk', () => {
   const c = makeBotCharacter(seeded(4), { name: 'Moody', level: 20 });
@@ -153,7 +164,7 @@ test('moods shift with what happens and show in how they talk', () => {
   assert.ok(bots.list.some((b) => b.char.soul?.mood === 'tired'), 'someone got tired');
 });
 
-test('in town some go AFK: sat down with an AFK tag, quiet, and back after a while', () => {
+test('in town some go AFK: sat down with an AFK tag, quiet, and back after a while', withDice(11, () => {
   const world = createWorld(createCharacter('Me', {}));
   const lines = quiet(world);
   const bots = createBots(world, seeded(51), { clock: EVENING });
@@ -177,7 +188,7 @@ test('in town some go AFK: sat down with an AFK tag, quiet, and back after a whi
   }
   run(world, bots, 220);
   assert.ok(afk.afk !== away, 'back after a while');
-});
+}));
 
 test('players log in and out over the game day: busiest in the evening', () => {
   const at = (h) => new Date(Math.round((h / 24) * 24 * 60000));
