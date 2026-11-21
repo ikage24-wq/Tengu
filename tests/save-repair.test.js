@@ -33,3 +33,23 @@ test('spending a damaged number of stat points never hangs', () => {
   autoAssignAp(c);
   assert.equal(c.ap, 0);
 });
+
+// (The 2026-11-21 save fuzz: gear with its stats gone crashed working out your stats, and a tutorial
+// step that wasn't a number crashed the lessons.)
+test('gear that lost its stats gets its own back, broken hotkeys are cleared, and a broken tutorial step starts the lessons again', async () => {
+  const { makeEquip } = await import('../src/core/items.js');
+  const { computeStats } = await import('../src/core/stats.js');
+  const c = createCharacter('Tester', {});
+  c.equipment.weapon = makeEquip('sword_0', { variance: 0 });
+  c.equipment.weapon.stats = null;
+  c.inventory.equip = [{ ...makeEquip('sword_0', { variance: 0 }), stats: 'x' }];
+  c.tutorial = { step: true };
+  c.hotkeys = { KeyQ: { skill: 'pebble' }, KeyF: 'x', KeyA: null, KeyS: [1] };
+  repairSave(c);
+  assert.deepEqual(c.hotkeys, { KeyQ: { skill: 'pebble' } }, 'broken hotkeys cleared');
+  assert.equal(typeof c.equipment.weapon.stats, 'object');
+  assert.ok(Object.keys(c.equipment.weapon.stats).length > 0, 'its own base stats');
+  assert.equal(typeof c.inventory.equip[0].stats, 'object');
+  assert.equal(c.tutorial.step, 0);
+  assert.doesNotThrow(() => computeStats(c));
+});

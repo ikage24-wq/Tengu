@@ -257,6 +257,17 @@ export function repairSave(char) {
     if (!Array.isArray(list)) continue;
     char.inventory[tab] = list.filter(isItem).map((it) => (it.qty === undefined || (Number.isFinite(it.qty) && it.qty >= 1) ? it : { ...it, qty: 1 }));
   }
+  // (A piece of gear whose stats went missing, worn or in the bag, gets its own base stats back:
+  // without them working out your stats crashed, the 2026-11-21 save fuzz.)
+  const restats = (it) => {
+    if (isItem(it) && ITEMS[it.id]?.stats && kind(it.stats) !== 'object') it.stats = { ...ITEMS[it.id].stats };
+  };
+  for (const it of Object.values(char.equipment)) restats(it);
+  for (const list of Object.values(char.inventory)) if (Array.isArray(list)) list.forEach(restats);
+  // (A hotkey that isn't a skill or an item is cleared: one bad key lost the whole hero.)
+  for (const [k, v] of Object.entries(char.hotkeys)) if (!v || typeof v !== 'object' || Array.isArray(v) || (typeof v.skill !== 'string' && typeof v.item !== 'string')) delete char.hotkeys[k];
+  // (A tutorial whose step isn't a lesson's number starts its lessons again from the first.)
+  if (char.tutorial && typeof char.tutorial === 'object' && !(Number.isInteger(char.tutorial.step) && char.tutorial.step >= 0)) char.tutorial.step = 0;
   // (Parts only some heroes have: if one's there but isn't a record at all, it's let go, and the
   // game starts it afresh as it would for a hero who never had it.)
   for (const k of Object.keys(char)) {
