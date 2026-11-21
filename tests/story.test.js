@@ -156,7 +156,7 @@ test('important side quests and every job advancement have scenes, naming real s
 
 test('The Wind Returns: at level 50, a title, Hayate\'s Feather, and the wind back for good', () => {
   const char = createCharacter('Hana', {});
-  gainExp(char, 3e7);
+  gainExp(char, 4e7);
   for (const id of Object.keys(STORY_QUESTS)) if (id !== 'story_wind') char.quests[id] = { state: 'done' };
   acceptQuest(char, 'story_wind');
   for (const npc of ['pip', 'rook', 'tora', 'elowen']) noteTalk(char, npc);

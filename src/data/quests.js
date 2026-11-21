@@ -54,7 +54,7 @@ export const QUESTS = {
     id: 'island_deed', name: 'A Deed to a Little Island', giver: 'rook', minLevel: 10,
     text: "An old sailor left me the deed to a tiny beach cove out past the harbor. I'm too busy to ever go! Take it, and this Home Shell: hold it to your ear and it takes you home, wherever you are. There's a hermit crab carpenter living there who'll build it up for you. Oh, and your skiff's tied up at the end of the quay.",
     objectives: [],
-    rewards: { exp: 300, gold: 55, items: [{ id: 'home_shell', qty: 1 }], island: true },
+    rewards: { exp: 3100, gold: 90, items: [{ id: 'home_shell', qty: 1 }], island: true },
   },
   // The first mount (data/mounts.js): Clover's runaway Puff Buns.
   // Clover's story: the Puff Bun keeper who can't count her buns and writes a song about
@@ -75,7 +75,7 @@ export const QUESTS = {
     id: 'clover_golden', name: 'The Golden Bun', giver: 'clover', minLevel: 16, prereq: 'bun_buddy',
     text: "The whole island's gone bun-crazy! Someone saw the legendary Golden Bun in Mossy Woods. One in ten thousand! Adventurers have been camping there for days, shouting 'GOLDEN BUN SPAWN?' in every chat. The Moss Tortoises keep plodding right in front of it. Calm 20 of them so I can get a look. I'm writing a song. It's mostly the word 'golden'.",
     objectives: [{ type: 'kill', mob: 'mosstort', count: 20 }],
-    rewards: { exp: 9600, gold: 280, items: [{ id: 'orange_potion', qty: 10 }] },
+    rewards: { exp: 33000, gold: 840, items: [{ id: 'orange_potion', qty: 10 }] },
   },
   clover_parade: {
     id: 'clover_parade', name: 'One-Bun Parade', giver: 'clover', minLevel: 21, prereq: 'clover_golden',
@@ -84,7 +84,7 @@ export const QUESTS = {
       { type: 'collect', item: 'sylph_feather', count: 8 },
       { type: 'talk', npc: 'kestrel', say: "A parade? For a sticky bun? ...Fine. I'll carry the banner. NOT the drum. I have a reputation. And don't tell Clover I said yes the first time." },
     ],
-    rewards: { exp: 16000, gold: 430, items: [{ id: 'ear_20', qty: 1, variant: 'roll' }] },
+    rewards: { exp: 75000, gold: 2100, items: [{ id: 'ear_20', qty: 1, variant: 'roll' }] },
   },
 
   // Pip's story: the shopkeeper who has never once left her counter, because shopkeepers
@@ -110,7 +110,7 @@ export const QUESTS = {
     id: 'bramble_check', name: 'Gear Check', giver: 'bramble', minLevel: 10,
     text: "Nobody goes into the Hollow without a gear check. Nobody. Show me you can hold a fight together: calm 15 Basilisk Hatchlings in Windy Canyon, and never pull more than three at once. I'll know. I have a feeling for these things.",
     objectives: [{ type: 'kill', mob: 'pebblet', count: 15 }],
-    rewards: { exp: 2200, gold: 140, items: [{ id: 'red_potion', qty: 15 }] },
+    rewards: { exp: 3100, gold: 140, items: [{ id: 'red_potion', qty: 15 }] },
   },
   hollow_heart: {
     id: 'hollow_heart', name: 'Nobody Charges In', giver: 'bramble', minLevel: 10, prereq: 'bramble_check',
@@ -126,13 +126,13 @@ export const QUESTS = {
       { type: 'kill', mob: 'scorpip', count: 15 },
       { type: 'talk', npc: 'brann', say: "The Great Wipe? I was the tank that day. A young warden ran right past me into the Hollow, yelling his own name. 'BRAAAAMBLE!' The canyon shook for a month. Tell him I still hear it at night." },
     ],
-    rewards: { exp: 6000, gold: 200, items: [] },
+    rewards: { exp: 6900, gold: 200, items: [] },
   },
   bramble_charge: {
     id: 'bramble_charge', name: 'One Last Charge', giver: 'bramble', minLevel: 14, prereq: 'bramble_wipe',
     text: "Fine. It was me. I've been thinking. Ten years of rules and I can't remember the last time a fight was fun. Go to Mossy Woods and charge into the Moss Tortoises, 20 of them. Loud. Then come back, and bring a healer. Out of habit.",
     objectives: [{ type: 'kill', mob: 'mosstort', count: 20 }],
-    rewards: { exp: 9600, gold: 280, items: [{ id: 'hollow_acorn', qty: 5 }] },
+    rewards: { exp: 11000, gold: 320, items: [{ id: 'hollow_acorn', qty: 5 }] },
   },
 
   mush_menace: {
@@ -151,13 +151,13 @@ export const QUESTS = {
     id: 'tusk_trader', name: 'Scute Trader', giver: 'marlo', minLevel: 15, prereq: 'marlo_scales',
     text: "Mossy scutes sell like hotcakes. Hotcakes, meanwhile, sell like mossy scutes. The market is confusing. Bring me 15 from the Moss Tortoises in Mossy Woods and I'll share the profits. The jar's getting heavy, partner. Not that you've seen any jar.",
     objectives: [{ type: 'collect', item: 'moss_scute', count: 15 }],
-    rewards: { exp: 16000, gold: 480, items: [] },
+    rewards: { exp: 22000, gold: 570, items: [] },
   },
   restless_ruins: {
     id: 'restless_ruins', name: 'Restless Ruins', giver: 'rook', minLevel: 20, prereq: 'leaf_samples',
     text: 'Headless Dullahans ride the Twilight Ruins at night. Put 25 of them to rest.',
     objectives: [{ type: 'kill', mob: 'boneknight', count: 25 }],
-    rewards: { exp: 29000, gold: 750, items: [{ id: 'ear_20', qty: 1, variant: 'roll' }] },
+    rewards: { exp: 79000, gold: 2100, items: [{ id: 'ear_20', qty: 1, variant: 'roll' }] },
   },
   // A job trial: Brann asks it of a warrior before teaching either level 30 path (`family` keeps
   // it to warriors).
@@ -165,7 +165,7 @@ export const QUESTS = {
     id: 'warrior_trial', name: "The Warrior's Trial", giver: 'brann', minLevel: 30, family: 'warrior',
     text: "You've grown strong, but the next path asks more than strength. Go to the Crystal Cave and break 20 Crystal Golems. Stand your ground the whole time. If you step back, I'll know. I'll feel it in my shield arm. Then come back and I'll show you the Stormwall's way and the Tempest's way.",
     objectives: [{ type: 'kill', mob: 'rockgolem', count: 20 }],
-    rewards: { exp: 48000, gold: 1100, items: [{ id: 'elixir', qty: 5 }] },
+    rewards: { exp: 220000, gold: 5400, items: [{ id: 'elixir', qty: 5 }] },
   },
   // Elowen's trial for a Tide Mage before her level 30 path (the Maelstrom; the support path is
   // still to come).
@@ -282,7 +282,7 @@ export const QUESTS = {
     text: "Elowen and I were apprentices together, long ago. She keeps the spirits' grove now, in Moonleaf Grove past Mossy Woods. Would you take her this letter? It's been far too long.",
     gives: [{ id: 'letter' }],
     objectives: [{ type: 'deliver', npc: 'elowen', item: 'letter', say: "From Mira? Oh, she still dots her i's with hearts. Thank you, traveler." }],
-    rewards: { exp: 2000, gold: 180, items: [{ id: 'blue_potion', qty: 20 }] },
+    rewards: { exp: 3100, gold: 180, items: [{ id: 'blue_potion', qty: 20 }] },
   },
   daily_meadow: {
     id: 'daily_meadow', name: 'Daily: Hill Patrol', giver: 'mira', minLevel: 6, daily: true,
@@ -311,7 +311,7 @@ export const QUESTS = {
       { type: 'visit', map: 'canyon', above: 430, place: 'the top of Windy Canyon' },
       { type: 'talk', npc: 'bramble', say: "Roots moving under the rock? Then Gnarlroot's waking. Thank you: I'll need brave folk soon." },
     ],
-    rewards: { exp: 3200, gold: 240, items: [{ id: 'hollow_acorn', qty: 3 }, { id: 'orange_potion', qty: 20 }] },
+    rewards: { exp: 6900, gold: 240, items: [{ id: 'hollow_acorn', qty: 3 }, { id: 'orange_potion', qty: 20 }] },
   },
   // ----- Lantern Lagoon: Granny Kelp and the light on the point -----
   // The lighthouse has been flickering since the wind went quiet, and the fish are acting strange:
@@ -352,7 +352,7 @@ export const QUESTS = {
     id: 'kelp_5', name: 'Old Lumen', giver: 'kelp', minLevel: 10, prereq: 'kelp_4',
     text: "He's frightened, dearie. With no wind the currents have gone still, and the old fellow thinks the sea is dying. Cast off the point and he'll come. Reel him in, gently, let him see the light up close, and let him go. He'll understand. Mind: he's the biggest thing you'll ever hook.",
     objectives: [{ type: 'catch', fish: 'fish_lumen', count: 1, map: 'lagoon', place: 'the deep water off Lighthouse Point' }],
-    rewards: { exp: 1500, gold: 680, items: [{ id: 'rod_skywood', qty: 1 }, { id: 'lantern_bait', qty: 10 }] },
+    rewards: { exp: 3100, gold: 680, items: [{ id: 'rod_skywood', qty: 1 }, { id: 'lantern_bait', qty: 10 }] },
   },
   // Marlo's story: every coin goes in a jar marked THE DREAM, and the dream is the bathhouse at
   // Serpent Springs that was Marlo's grandmother's, lost to the Lamia long ago. The spa at the end
@@ -370,13 +370,13 @@ export const QUESTS = {
       { type: 'talk', npc: 'marlo', say: "Wisp Flames? Some kid from the Grove sold me a whole jar. Said they were 'escapees'." },
       { type: 'talk', npc: 'tora', say: "Buying? Not me. Nim from the Grove lost a box of candles, though. Poor thing hasn't slept." },
     ],
-    rewards: { exp: 4000, gold: 350, items: [] },
+    rewards: { exp: 15000, gold: 430, items: [] },
   },
   rook_harpies: {
     id: 'rook_harpies', name: 'Harpy Havoc', giver: 'rook', minLevel: 40, prereq: 'restless_ruins',
     text: "The Sky Harpies have started raiding our gulls' nests, all the way from the Sky Garden! Ground 30 of them.",
     objectives: [{ type: 'kill', mob: 'windbird', count: 30 }],
-    rewards: { exp: 120000, gold: 1800, items: [] },
+    rewards: { exp: 160000, gold: 2900, items: [] },
   },
   daily_harbor: {
     id: 'daily_harbor', name: 'Daily: Tortoise Traffic', giver: 'rook', minLevel: 14, daily: true,
@@ -394,25 +394,25 @@ export const QUESTS = {
     id: 'tora_handles', name: 'Heartwood Handles', giver: 'tora', minLevel: 17,
     text: "The best hilts are Heartwood. The Puddle Kids in the Whispering Glade keep fishing it out of their puddles, don't ask me how. Bring me 12. Why 12? Because 10 felt lazy and 15 felt mean. I'll put an edge on your gear, and maybe keep a couple back. Don't ask what for.",
     objectives: [{ type: 'collect', item: 'moss_stone', count: 12 }],
-    rewards: { exp: 22000, gold: 570, items: [] },
+    rewards: { exp: 22000, gold: 590, items: [] },
   },
   tora_bellows: {
     id: 'tora_bellows', name: 'Wings for the Old Girl', giver: 'tora', minLevel: 21, prereq: 'tora_handles',
     text: "Bellows need leather that breathes. Imp wings, from the Twilight Ruins: thin as paper, tough as boots, slightly judgy. Bring me 10. Yes, the Imps are using them. They'll walk. Builds character.",
     objectives: [{ type: 'collect', item: 'bat_wing', count: 10 }],
-    rewards: { exp: 21000, gold: 550, items: [] },
+    rewards: { exp: 110000, gold: 3100, items: [] },
   },
   tora_draught: {
     id: 'tora_draught', name: 'Follow the Lean', giver: 'tora', minLevel: 25, prereq: 'tora_bellows',
     text: "Every flame on Forge Row is leaning toward the Crystal Cave like it heard gossip. Go and see where my heat is going. Climb to the high crystal ledges where the air moves, and clear 20 Gem Mimics on the way. They look like treasure. They are not treasure. They bite.",
     objectives: [{ type: 'visit', map: 'cave', above: 450, place: 'the high crystal ledges of the Glowcap Terraces' }, { type: 'kill', mob: 'crystalslime', count: 20 }],
-    rewards: { exp: 25000, gold: 660, items: [] },
+    rewards: { exp: 140000, gold: 4000, items: [] },
   },
   tora_cores: {
     id: 'tora_cores', name: 'Hot Iron', giver: 'tora', minLevel: 30, prereq: 'tora_draught',
     text: "Geode Cores burn hotter than any coal and hold their heat like a grudge: nothing can slurp it out of them. 10 from the Crystal Golems. They'll say they need them. Everybody says that. Her first fire makes you a proper pair of gloves, made for your trade.",
     objectives: [{ type: 'collect', item: 'rock_core', count: 10 }],
-    rewards: { exp: 44000, gold: 990, items: [] },
+    rewards: { exp: 240000, gold: 6100, items: [] },
   },
   // Master Sencha's Ancient Tea Ceremony (the Tanuki Tea Terraces, levels 24-28): he sells a
   // "forty-seven step" ceremony he invented last Tuesday, and the leaves, the kettles and the
@@ -423,25 +423,25 @@ export const QUESTS = {
     id: 'tea_leaves', name: 'The Forty-Seven Steps', giver: 'sencha', minLevel: 24,
     text: "Step one of the Ancient Ceremony: the leaves must be picked by the tanuki of these terraces. Step two: the leaves must be taken FROM the tanuki. By you. Bring me 10 Fresh Tea Leaves. Steps three to forty-seven are mostly waiting. You'll love them.",
     objectives: [{ type: 'collect', item: 'tea_leaf', count: 10 }],
-    rewards: { exp: 26000, gold: 480, items: [{ id: 'white_potion', qty: 10 }] },
+    rewards: { exp: 42000, gold: 1200, items: [{ id: 'white_potion', qty: 10 }] },
   },
   tea_kettles: {
     id: 'tea_kettles', name: 'Kettle Discipline', giver: 'sencha', minLevel: 25, prereq: 'tea_leaves',
     text: "Bad news: my kettles have grown legs. And opinions. A kettle should whistle, not sulk on the Kettle Steps. Calm 15 Kettle Tanuki and bring me 5 of their lids. A kettle without a lid is a kettle that listens.",
     objectives: [{ type: 'kill', mob: 'kettletanuki', count: 15 }, { type: 'collect', item: 'kettle_lid', count: 5 }],
-    rewards: { exp: 28000, gold: 520, items: [] },
+    rewards: { exp: 44000, gold: 1200, items: [] },
   },
   tea_lanterns: {
     id: 'tea_lanterns', name: 'Notes in the Mist', giver: 'sencha', minLevel: 26, prereq: 'tea_kettles',
     text: "The lanterns in the Mist Hollow are covered in writing. Graffiti! On my lanterns! Go down there and bring me 8 sheets of Lantern Paper so I can see who's been, ahem, expressing themselves. Not because I'm worried. Grand Tea Masters don't worry. They steep.",
     objectives: [{ type: 'visit', map: 'tea', place: 'the Mist Hollow' }, { type: 'collect', item: 'lantern_paper', count: 8 }],
-    rewards: { exp: 30000, gold: 560, items: [] },
+    rewards: { exp: 130000, gold: 3100, items: [] },
   },
   tea_grandkettle: {
     id: 'tea_grandkettle', name: 'One Pot for Everyone', giver: 'sencha', minLevel: 28, prereq: 'tea_lanterns',
     text: "The Grand Kettle. My old master. He's been asleep in the teapot hut since I, um, took over the business. Hunt the terraces until he wakes, and he will, grumpy, then calm him down. Only he knows how to brew a pot big enough for everyone. Even interns.",
     objectives: [{ type: 'kill', mob: 'grandkettle', count: 1 }],
-    rewards: { exp: 60000, gold: 900, items: [{ id: 'elixir', qty: 3 }] },
+    rewards: { exp: 62000, gold: 1600, items: [{ id: 'elixir', qty: 3 }] },
   },
   daily_tea: {
     id: 'daily_tea', name: 'Daily: Tea Break', giver: 'sencha', minLevel: 24, daily: true, prereq: 'tea_grandkettle',
@@ -466,25 +466,25 @@ export const QUESTS = {
     id: 'lumen_lens', name: 'A Lens for the Old Eye', giver: 'lumen', minLevel: 29,
     text: "The wolves on Moonlit Ridge howl at the stars all night. Now that the stars have stopped, they howl louder, as if to start them again. Lovely sentiment. Terrible acoustics. They cracked my telescope's lens. A Moonhowl Fang ground fine makes the clearest glass there is. 12 should do. The wolves won't mind. Well. They'll mind a bit.",
     objectives: [{ type: 'collect', item: 'moon_fang', count: 12 }],
-    rewards: { exp: 38000, gold: 520, items: [{ id: 'white_potion', qty: 10 }] },
+    rewards: { exp: 62000, gold: 1600, items: [{ id: 'white_potion', qty: 10 }] },
   },
   lumen_fallen: {
     id: 'lumen_fallen', name: 'Where It Landed', giver: 'lumen', minLevel: 30, prereq: 'lumen_lens',
     text: "A star fell while the sky stood still. That shouldn't be possible. I adore it. It came down on Howling Rock, high on the ridge, and since then the rocks up there have been getting up and walking about. Climb up and have a look, and settle 15 of those Meteor Golems. Gently, if you can. I have a theory, and it's a sad one.",
     objectives: [{ type: 'visit', map: 'ridge', above: 520, place: 'the top of Howling Rock' }, { type: 'kill', mob: 'meteorgolem', count: 15 }],
-    rewards: { exp: 44000, gold: 600, items: [] },
+    rewards: { exp: 100000, gold: 2600, items: [] },
   },
   lumen_chips: {
     id: 'lumen_chips', name: 'Pieces of a Star', giver: 'lumen', minLevel: 32, prereq: 'lumen_fallen',
     text: "A telescope brings the sky down to you. Turned around, it should send something back up. In theory. I've never tried. I'm building one anyway. Bring me 10 Meteorite Chips and 2 Astral Shards from the golems: the warm ones, the ones that still hum. That's the star in them.",
     objectives: [{ type: 'collect', item: 'meteorite', count: 10 }, { type: 'collect', item: 'astral_shard', count: 2 }],
-    rewards: { exp: 52000, gold: 680, items: [{ id: 'elixir', qty: 3 }] },
+    rewards: { exp: 62000, gold: 1600, items: [{ id: 'elixir', qty: 3 }] },
   },
   lumen_home: {
     id: 'lumen_home', name: 'Send It Home', giver: 'lumen', minLevel: 33, prereq: 'lumen_chips',
     text: "The Star Sling is done. Possibly. It hums, which is either very good or very bad. Carry it up to the top of Howling Rock, where it fell, point it at the gap in the sky, and let go. Then come back and tell me everything. Everything. I'll be up here pretending I'm not worried.",
     objectives: [{ type: 'visit', map: 'ridge', above: 520, place: 'the top of Howling Rock, with the Star Sling' }],
-    rewards: { exp: 62000, gold: 900, items: [{ id: 'mochi_egg', qty: 1 }] },
+    rewards: { exp: 100000, gold: 2500, items: [{ id: 'mochi_egg', qty: 1 }] },
   },
 
   // Marina's story (Tidepool Pier, 2026-11-21): her bubble charm is leaking, the deep's gone dark
@@ -495,25 +495,25 @@ export const QUESTS = {
     id: 'marina_charm', name: 'A Leaky Bubble', giver: 'marina', minLevel: 22, prereq: 'story_tide',
     text: "My bubble charm's leaking. Not a lot. Just enough that I come up with one wet ear. A bubble wants to be warm to stay round, so: Will-o'-Wisps in Twilight Ruins burn without burning anything. Bring me 10 Wisp Flames and I'll tuck them in the charm. Don't sit on them.",
     objectives: [{ type: 'collect', item: 'wisp_flame', count: 10 }],
-    rewards: { exp: 21000, gold: 380, items: [{ id: 'orange_potion', qty: 15 }] },
+    rewards: { exp: 56000, gold: 1600, items: [{ id: 'orange_potion', qty: 15 }] },
   },
   marina_imps: {
     id: 'marina_imps', name: 'Light Fingers', giver: 'marina', minLevel: 23, prereq: 'marina_charm',
     text: "The Imps in Twilight Ruins flew off with the glass from my diving lamp. Shiny things. They can't help it. I can't dive in the dark either, so we're at an impasse. Shoo 15 of them and see if one drops it. If one's wearing it as a hat, let him keep the hat. Just get the glass.",
     objectives: [{ type: 'kill', mob: 'gloombat', count: 15 }],
-    rewards: { exp: 24000, gold: 420, items: [] },
+    rewards: { exp: 110000, gold: 2900, items: [] },
   },
   marina_tea: {
     id: 'marina_tea', name: 'Something Warm', giver: 'marina', minLevel: 24, prereq: 'marina_imps',
     text: "Since the tide stuck, the deep's gone cold. Not 'brr' cold. 'I can hear my teeth from up here' cold. The divers come up blue. The Tanuki Pickers on the Tea Terraces grow the best tea on the island, and they're very protective of it. Bring me 10 Fresh Tea Leaves. Ask nicely first. Then less nicely.",
     objectives: [{ type: 'collect', item: 'tea_leaf', count: 10 }],
-    rewards: { exp: 27000, gold: 460, items: [{ id: 'white_potion', qty: 10 }] },
+    rewards: { exp: 41000, gold: 1100, items: [{ id: 'white_potion', qty: 10 }] },
   },
   marina_bell: {
     id: 'marina_bell', name: 'The Bell Rings Twice', giver: 'marina', minLevel: 25, prereq: 'marina_tea',
     text: "That diving bell on the pier hasn't rung since my gran's day. She said it rang twice when the sea was happy. I tried everything. Hitting it. Asking it. Singing at it. Granny Kelp at the lighthouse dived with my gran. Ask her how it went. The song, not the hitting.",
     objectives: [{ type: 'talk', npc: 'kelp', say: "The bell? Oh, dearie. Your Marina's gran never rang it. She hummed to the fish, and the fish rang it for her, bumping it with their noses. Twice, when they were happy. Tell her to hum. Off key is fine. Fish are very forgiving." }],
-    rewards: { exp: 30000, gold: 520, items: [{ id: 'elixir', qty: 3 }] },
+    rewards: { exp: 62000, gold: 1700, items: [{ id: 'elixir', qty: 3 }] },
   },
 
   // Tock's story (Carnival Gates): a runaway tin soldier who has never once stopped. His key slips,
@@ -524,25 +524,25 @@ export const QUESTS = {
     id: 'tock_key', name: 'A Spare Key', giver: 'tock', minLevel: 26, prereq: 'story_fair',
     text: "Sir! My key, sir. It slips. Every turn, a little less tock in the tick. Brass, sir, that's what it wants, and the Kettle Tanuki on the Tea Terraces wear the finest brass on the island. As lids. Bring me 8 Little Kettle Lids and I'll make a spare. For emergencies, sir. Like now.",
     objectives: [{ type: 'collect', item: 'kettle_lid', count: 8 }],
-    rewards: { exp: 30000, gold: 480, items: [{ id: 'white_potion', qty: 10 }] },
+    rewards: { exp: 77000, gold: 1800, items: [{ id: 'white_potion', qty: 10 }] },
   },
   tock_bells: {
     id: 'tock_bells', name: 'Drum Practice', giver: 'tock', minLevel: 27, prereq: 'tock_key',
     text: "A soldier needs a march, sir, and a march needs bells! The fair's bells keep going missing, and every Nekomata on the Fox Shrine Path jingles when it walks. I'm not saying. I'm just saying. Bring me 10 Nekomata Bells and we'll have the finest march on the island!",
     objectives: [{ type: 'collect', item: 'nekomata_bell', count: 10 }],
-    rewards: { exp: 34000, gold: 520, items: [] },
+    rewards: { exp: 94000, gold: 2300, items: [] },
   },
   tock_watch: {
     id: 'tock_watch', name: 'On Patrol', giver: 'tock', minLevel: 28, prereq: 'tock_bells',
     text: "Sentry duty, sir! Climb to the top of the carousel by the gates. Best lookout at the fair. Then help me with the Lantern Tanuki on the Tea Terraces: they shine their lanterns at our sign all night, and it gets in the horses' eyes. 15 of them, sir. Politely!",
     objectives: [{ type: 'visit', map: 'carnival_gate', above: 230, place: 'the top of the carousel' }, { type: 'kill', mob: 'lantertanuki', count: 15 }],
-    rewards: { exp: 38000, gold: 580, items: [{ id: 'elixir', qty: 2 }] },
+    rewards: { exp: 120000, gold: 3000, items: [{ id: 'elixir', qty: 2 }] },
   },
   tock_rest: {
     id: 'tock_rest', name: 'At Ease, Soldier', giver: 'tock', minLevel: 29, prereq: 'tock_watch',
     text: "Sir. A confession, sir. I've never stopped. Not once. I'm afraid of what happens when the key runs down. It goes dark, sir. Everyone says the Queen sleeps beautifully. I'd like to try. Just a little. With a light. Bring me 8 Lantern Papers and I'll fold one. You can stay. If you like.",
     objectives: [{ type: 'collect', item: 'lantern_paper', count: 8 }],
-    rewards: { exp: 42000, gold: 640, items: [{ id: 'elixir', qty: 3 }] },
+    rewards: { exp: 89000, gold: 2100, items: [{ id: 'elixir', qty: 3 }] },
   },
 
   // Chef Praline's story (Sugar Trail): a new tasting menu for the island now the volcano's calm.
@@ -552,19 +552,19 @@ export const QUESTS = {
     id: 'praline_eggs', name: 'Onsen Eggs', giver: 'praline', minLevel: 36, prereq: 'story_dessert',
     text: "New menu, chef! Course one: eggs poached in the hot springs, wobbly as a jelly. The Lamias at Serpent Springs guard the hot pools and hiss at my egg basket. Calm 15 of them so I can get in. They're grumpy without their bath. I'm grumpy without my eggs. We understand each other.",
     objectives: [{ type: 'kill', mob: 'lamia', count: 15 }],
-    rewards: { exp: 56000, gold: 760, items: [{ id: 'white_potion', qty: 15 }] },
+    rewards: { exp: 85000, gold: 1900, items: [{ id: 'white_potion', qty: 15 }] },
   },
   praline_snow: {
     id: 'praline_snow', name: 'Snow Syrup', giver: 'praline', minLevel: 37, prereq: 'praline_eggs',
     text: "Course two: shaved ice! Not just any ice. The Yuki-onna on Frozen Peak carry Snow Gems that never melt, even in a pan. I checked. Accidentally. Bring me 8 and I'll shave them over strawberry syrup. It'll be the coldest dessert in history. Yes, chef!",
     objectives: [{ type: 'collect', item: 'snow_gem', count: 8 }],
-    rewards: { exp: 61000, gold: 820, items: [] },
+    rewards: { exp: 100000, gold: 2200, items: [] },
   },
   praline_sieve: {
     id: 'praline_sieve', name: 'Fine as Mist', giver: 'praline', minLevel: 38, prereq: 'praline_snow',
     text: "Course three: the softest cream on the island, but it wants a sieve finer than any sieve I own. A Wraith's shroud is woven of mist. You see where I'm going. Bring me 8 Wraith Shrouds from Serpent Springs. Clean ones, please. Well. As clean as a ghost's laundry gets.",
     objectives: [{ type: 'collect', item: 'shade_cloth', count: 8 }],
-    rewards: { exp: 66000, gold: 880, items: [{ id: 'elixir', qty: 3 }] },
+    rewards: { exp: 320000, gold: 7200, items: [{ id: 'elixir', qty: 3 }] },
   },
   praline_menu: {
     id: 'praline_menu', name: 'The Tasting Round', giver: 'praline', minLevel: 39, prereq: 'praline_sieve',
@@ -573,7 +573,7 @@ export const QUESTS = {
       { type: 'talk', npc: 'lumen', say: "A tasting box? For me? Oh my. *eats the shaved ice* It tastes like a clear night. How does it taste like a clear night? Tell the chef it's the best thing that's happened to my teeth in forty years." },
       { type: 'talk', npc: 'yuzu', say: "Is this a trick? It's a trick. *eats an egg* ...It's not a trick. It wobbles! Tell the chef my second tail likes it. My FIRST tail is reserving judgement." },
     ],
-    rewards: { exp: 72000, gold: 960, items: [{ id: 'elixir', qty: 4 }] },
+    rewards: { exp: 150000, gold: 3500, items: [{ id: 'elixir', qty: 4 }] },
   },
 
   // Madame Encore's story (Theatre Row): her comeback tour. A cloud gown, nerves on the poster
@@ -583,19 +583,19 @@ export const QUESTS = {
     id: 'encore_gown', name: 'A Gown of Cloud', giver: 'encore', minLevel: 41, prereq: 'story_encore',
     text: "Darling, a comeback needs a gown, and a gown on a cloud should be MADE of cloud. The Pegasus Foals in the Sky Garden have manes like whipped cream. Bring me 12 Cloud Manes. I'll sew all night. I always sewed all night. That's why I was always late for rehearsal.",
     objectives: [{ type: 'collect', item: 'wool', count: 12 }],
-    rewards: { exp: 74000, gold: 980, items: [{ id: 'white_potion', qty: 20 }] },
+    rewards: { exp: 130000, gold: 2400, items: [{ id: 'white_potion', qty: 20 }] },
   },
   encore_nerves: {
     id: 'encore_nerves', name: 'Stage Fright', giver: 'encore', minLevel: 42, prereq: 'encore_gown',
     text: "Forty years, and my knees still knock, darling. The trick is to find the highest place in the house and say your first line to the back row. Climb the poster column out here and say it for me: 'Good evening!' Then the Sky Harpies, who heckle every show I've ever done. Twenty of them. Exit, pursued by you.",
     objectives: [{ type: 'visit', map: 'theatre_row', above: 260, place: 'the top of the poster column' }, { type: 'kill', mob: 'windbird', count: 20 }],
-    rewards: { exp: 80000, gold: 1050, items: [] },
+    rewards: { exp: 190000, gold: 3700, items: [] },
   },
   encore_bouquet: {
     id: 'encore_bouquet', name: 'Flowers for the Leading Lady', giver: 'encore', minLevel: 43, prereq: 'encore_nerves',
     text: "A leading lady must be thrown flowers, darling. It's in the contract. Nothing flowers on a cloud, so we'll be clever: a bouquet of feathers. Bring me 10 Harpy Feathers from the Sky Garden. Pink, if they come in pink. They never do. I ask anyway. It keeps the harpies humble.",
     objectives: [{ type: 'collect', item: 'feather', count: 10 }],
-    rewards: { exp: 86000, gold: 1120, items: [{ id: 'elixir', qty: 4 }] },
+    rewards: { exp: 130000, gold: 2400, items: [{ id: 'elixir', qty: 4 }] },
   },
   encore_invites: {
     id: 'encore_invites', name: 'Opening Night', giver: 'encore', minLevel: 44, prereq: 'encore_bouquet',
@@ -604,7 +604,7 @@ export const QUESTS = {
       { type: 'talk', npc: 'nimbus', say: "Opening night? Front row? I'll wear my good hat. The one without the seagull in it. ...I'll wear the one with the seagull. He likes the theatre." },
       { type: 'talk', npc: 'praline', say: "Front row! For me? I'll bring dessert. Three courses. Four! An intermission course! Tell her yes, chef! Tell her YES!" },
     ],
-    rewards: { exp: 92000, gold: 1200, items: [{ id: 'elixir', qty: 5 }] },
+    rewards: { exp: 200000, gold: 4100, items: [{ id: 'elixir', qty: 5 }] },
   },
 
   // Yuzu's story (Moonleaf Grove, by the Moon Tree): she borrows Professor Lumen's star maps because
@@ -616,19 +616,19 @@ export const QUESTS = {
     id: 'yuzu_maps', name: 'The Rude Constellations', giver: 'yuzu', minLevel: 33, prereq: 'lumen_home',
     text: "Lumen sent you? Pfft. I BORROWED his maps. And the constellations aren't rude, they're a ROUTE. ...Okay, one of them is a bit rude. I need a lantern to read them by: Lamia Scales from Serpent Springs shine like the moon. Bring me 10 and I'll show you a secret. A fox secret!",
     objectives: [{ type: 'collect', item: 'lamia_scale', count: 10 }],
-    rewards: { exp: 55000, gold: 600, items: [{ id: 'white_potion', qty: 10 }] },
+    rewards: { exp: 62000, gold: 1600, items: [{ id: 'white_potion', qty: 10 }] },
   },
   yuzu_peak: {
     id: 'yuzu_peak', name: 'The Tail Star', giver: 'yuzu', minLevel: 34, prereq: 'yuzu_maps',
     text: "The route ends at the very top of Frozen Peak, at the Tail Star. A fox who touches it grows her second tail. The elders said so! But the snow women up there freeze anything with fur. Climb to the summit, chase off 15 Yuki-onna, and tell me what you see. I'd go myself. My paws get cold. That's the only reason.",
     objectives: [{ type: 'visit', map: 'peak', above: 360, place: 'the summit of Frozen Peak' }, { type: 'kill', mob: 'yukionna', count: 15 }],
-    rewards: { exp: 60000, gold: 680, items: [] },
+    rewards: { exp: 110000, gold: 2800, items: [] },
   },
   yuzu_tail: {
     id: 'yuzu_tail', name: 'A Tail of Her Own', giver: 'yuzu', minLevel: 36, prereq: 'yuzu_peak',
     text: "Fine. FINE. If there's no star, I'll make my own tail and wave it under their noses. It has to be the softest thing on the island: 8 Cloud Manes from the Pegasus Foals, and 6 Snow Gems to make it sparkle, from the Yuki-onna. Don't look at me like that. It's a GOOD plan.",
     objectives: [{ type: 'collect', item: 'wool', count: 8 }, { type: 'collect', item: 'snow_gem', count: 6 }],
-    rewards: { exp: 70000, gold: 760, items: [{ id: 'elixir', qty: 3 }] },
+    rewards: { exp: 97000, gold: 2200, items: [{ id: 'elixir', qty: 3 }] },
   },
   yuzu_loved: {
     id: 'yuzu_loved', name: 'Foxes Grow Tails', giver: 'yuzu', minLevel: 37, prereq: 'yuzu_tail',
@@ -638,7 +638,7 @@ export const QUESTS = {
       { type: 'talk', npc: 'elowen', say: "She took my teacups and gave them back washed. Twice. Tell her the kettle's always on. Don't tell her I said so. She'll get smug." },
       { type: 'talk', npc: 'celeste', say: "Mm... Yuzu? She tucks a blanket on me when I fall asleep under the stars. I pretend I'm still asleep. ...I'm always awake. Tell her thank you." },
     ],
-    rewards: { exp: 80000, gold: 1000, items: [{ id: 'mochi_egg', qty: 1 }] },
+    rewards: { exp: 200000, gold: 4500, items: [{ id: 'mochi_egg', qty: 1 }] },
   },
 
   // Rowan's story (Ember Crag, by the arena): every Crag knight stands one night's watch on the
@@ -650,13 +650,13 @@ export const QUESTS = {
     id: 'rowan_rope', name: 'A Very Long Rope', giver: 'rowan', minLevel: 37, prereq: 'yuzu_loved',
     text: "Could you help me make a rope? A long one. A very long one. Cloud Mane from the Pegasus Foals is the strongest thread there is. 10 should be enough. 12. Let's say 10 and I'll be brave about it. It's for... tying things. To other things. Like me, to the ground.",
     objectives: [{ type: 'collect', item: 'wool', count: 10 }],
-    rewards: { exp: 85000, gold: 700, items: [{ id: 'white_potion', qty: 10 }] },
+    rewards: { exp: 85000, gold: 1900, items: [{ id: 'white_potion', qty: 10 }] },
   },
   rowan_scout: {
     id: 'rowan_scout', name: 'Scout the Roost', giver: 'rowan', minLevel: 38, prereq: 'rowan_rope',
     text: "The way to the Starlit Terrace goes right through the Harpy Roost in the Sky Garden. Could you go up first? Climb to the high ledges where they nest and drive off 15 Sky Harpies, so it's safe. And tell me how high it is. Honestly. No. Don't tell me. Tell me a bit.",
     objectives: [{ type: 'visit', map: 'sky', above: 500, place: 'the high ledges of the Harpy Roost' }, { type: 'kill', mob: 'windbird', count: 15 }],
-    rewards: { exp: 90000, gold: 760, items: [] },
+    rewards: { exp: 130000, gold: 3000, items: [] },
   },
   rowan_courage: {
     id: 'rowan_courage', name: 'A Plume for Courage', giver: 'rowan', minLevel: 40, prereq: 'rowan_scout',
@@ -666,13 +666,13 @@ export const QUESTS = {
       { type: 'talk', npc: 'tora', say: "Tell Rowan to look at what's in front of him, not what's under him. That's how I climb the forge chimney. Also: don't look down. Also: if he looks down, don't scream. I screamed. Once." },
       { type: 'collect', item: 'feather', count: 8 },
     ],
-    rewards: { exp: 100000, gold: 840, items: [{ id: 'elixir', qty: 3 }] },
+    rewards: { exp: 230000, gold: 4400, items: [{ id: 'elixir', qty: 3 }] },
   },
   rowan_watch: {
     id: 'rowan_watch', name: "The Knight's Watch", giver: 'rowan', minLevel: 41, prereq: 'rowan_courage',
     text: "Plume on. Rope on. Daisies in the helmet, for luck. I'm ready. I'm not ready. Will you stand the watch with me? Climb all the way to the Starlit Terrace, the very top of the Sky Garden, and I'll be right behind you. Right behind. Holding your cape. Is that all right?",
     objectives: [{ type: 'visit', map: 'sky', above: 360, place: 'the Starlit Terrace at the top of the Sky Garden, with Rowan' }],
-    rewards: { exp: 115000, gold: 1100, items: [{ id: 'mochi_egg', qty: 1 }] },
+    rewards: { exp: 170000, gold: 3500, items: [{ id: 'mochi_egg', qty: 1 }] },
   },
 
   // Celeste's story (Moonleaf Grove, by her house): she keeps dreaming things that then happen. A
@@ -685,25 +685,25 @@ export const QUESTS = {
     id: 'celeste_pillow', name: 'A Pillow for Clear Dreams', giver: 'celeste', minLevel: 41, prereq: 'yuzu_loved',
     text: "Mm... I dreamed the Sky Harpies were carrying bits of sky away. Then they did. That's the third dream this week that came true. A pillow of Harpy Feathers makes dreams clearer. Everybody knows that. I just made it up, but everybody knows it now. 10, please. And a snack, if you see one.",
     objectives: [{ type: 'collect', item: 'feather', count: 10 }],
-    rewards: { exp: 110000, gold: 800, items: [{ id: 'white_potion', qty: 10 }] },
+    rewards: { exp: 130000, gold: 2400, items: [{ id: 'white_potion', qty: 10 }] },
   },
   celeste_kite: {
     id: 'celeste_kite', name: 'A Star in a Kite', giver: 'celeste', minLevel: 42, prereq: 'celeste_pillow',
     text: "I dreamed a star got tangled in a kite on Starfall Heights, and the Kite Riders wouldn't let it go. If it's true... could you go and see? And free it? 12 of them should be enough to make the rest let go. I'd come, but I'd fall asleep on the way. Twice.",
     objectives: [{ type: 'visit', map: 'starfall' }, { type: 'kill', mob: 'kiterider', count: 12 }],
-    rewards: { exp: 120000, gold: 860, items: [] },
+    rewards: { exp: 170000, gold: 3400, items: [] },
   },
   celeste_silk: {
     id: 'celeste_silk', name: 'A Net for Dreams', giver: 'celeste', minLevel: 43, prereq: 'celeste_kite',
     text: "If someone else is dreaming and I'm only catching the edges, I need a better net. Sky Silk, from the Cloud Shepherds on Starfall Heights. It's woven from the morning, so it holds onto dreams after you wake. 10, please. I'll weave it tonight. I'm good at nights.",
     objectives: [{ type: 'collect', item: 'sky_silk', count: 10 }],
-    rewards: { exp: 130000, gold: 920, items: [{ id: 'elixir', qty: 3 }] },
+    rewards: { exp: 130000, gold: 2100, items: [{ id: 'elixir', qty: 3 }] },
   },
   celeste_dreamer: {
     id: 'celeste_dreamer', name: 'Whoever Is Dreaming', giver: 'celeste', minLevel: 44, prereq: 'celeste_silk',
     text: "The net's done. It has to hang somewhere high, where the dreams drift past: the very top of Starfall Heights. Hang it, then come back and sit with me while I sleep. Not in a strange way. In a stargazer way. I'll tell you who's dreaming us. I think I already know.",
     objectives: [{ type: 'visit', map: 'starfall', above: 400, place: 'the top of Starfall Heights, to hang the dream net' }],
-    rewards: { exp: 145000, gold: 1200, items: [{ id: 'mochi_egg', qty: 1 }] },
+    rewards: { exp: 170000, gold: 3500, items: [{ id: 'mochi_egg', qty: 1 }] },
   },
 
   // Skipper Nimbus's story (Cloudcatch Pier): the Sky Whale is awake and flying again, and her old
@@ -715,25 +715,25 @@ export const QUESTS = {
     id: 'nimbus_sail', name: 'A New Sail', giver: 'nimbus', minLevel: 46, prereq: 'story_whale',
     text: "She's awake! Flying! Singing in her sleep, except she's not asleep! ...And her sail got torn to ribbons on the way up. Sky Silk off the Cloud Shepherds on Starfall Heights makes the best sail there is. 10 bolts of it, and she'll fly like she's twenty again. She's four hundred. Don't tell her I said.",
     objectives: [{ type: 'collect', item: 'sky_silk', count: 10 }],
-    rewards: { exp: 150000, gold: 900, items: [{ id: 'white_potion', qty: 10 }] },
+    rewards: { exp: 150000, gold: 2100, items: [{ id: 'white_potion', qty: 10 }] },
   },
   nimbus_storm: {
     id: 'nimbus_storm', name: 'Clear Skies', giver: 'nimbus', minLevel: 47, prereq: 'nimbus_sail',
     text: "New sail, and she still can't climb past the heights. The Storm Harpists up on Starfall Heights keep plucking thunder out of the clouds, and she won't fly through thunder. Never would. Quiet 15 of them for me, and the sky's ours again.",
     objectives: [{ type: 'kill', mob: 'harpist', count: 15 }],
-    rewards: { exp: 165000, gold: 980, items: [] },
+    rewards: { exp: 165000, gold: 2100, items: [] },
   },
   nimbus_lantern: {
     id: 'nimbus_lantern', name: 'A Lantern for the Dark', giver: 'nimbus', minLevel: 48, prereq: 'nimbus_storm',
     text: "One more thing for her, and then I'll stop fussing. When it's dark she can't see her way home, so she always waited for me to whistle. A star lantern on her brow would light the way for her. 8 Stardust from the Star Seraphs should make it. She'll be able to go wherever she likes. Without me.",
     objectives: [{ type: 'collect', item: 'stardust', count: 8 }],
-    rewards: { exp: 180000, gold: 1060, items: [{ id: 'elixir', qty: 3 }] },
+    rewards: { exp: 180000, gold: 2500, items: [{ id: 'elixir', qty: 3 }] },
   },
   nimbus_voyage: {
     id: 'nimbus_voyage', name: 'The Last Voyage', giver: 'nimbus', minLevel: 49, prereq: 'nimbus_lantern',
     text: "The lantern's ready. Take it up to the very top of Starfall Heights, where she passes closest, and hold it up so she sees it. Then come back and tell me she took it. I'll be here. Packing. Probably. Hat on the hook, and all that.",
     objectives: [{ type: 'visit', map: 'starfall', above: 400, place: 'the top of Starfall Heights, holding up the star lantern' }],
-    rewards: { exp: 200000, gold: 1500, items: [{ id: 'mochi_egg', qty: 1 }] },
+    rewards: { exp: 200000, gold: 3400, items: [{ id: 'mochi_egg', qty: 1 }] },
   },
 
   // Moonleaf Grove.
@@ -741,21 +741,21 @@ export const QUESTS = {
     id: 'nim_candles', name: 'The Runaway Candles', giver: 'nim', minLevel: 20, prereq: 'nim_chimes',
     text: "M-my floating candles ran away in the night. They left a note. It just says BYE. Now they're Will-o'-Wisps haunting the Twilight Ruins. Could you bring back 12 Wisp Flames? Gently, please. They're going through a phase.",
     objectives: [{ type: 'collect', item: 'wisp_flame', count: 12 }],
-    rewards: { exp: 24000, gold: 620, items: [{ id: 'mana_elixir', qty: 10 }, { id: 'ear_20', qty: 1, variant: 'roll' }] },
+    rewards: { exp: 31000, gold: 820, items: [{ id: 'mana_elixir', qty: 10 }, { id: 'ear_20', qty: 1, variant: 'roll' }] },
     scenes: { accept: 'candles_open', done: 'candles_done' },
   },
   nim_cape: {
     id: 'nim_cape', name: 'The Caped Candle', giver: 'nim', minLevel: 23, prereq: 'nim_candles',
     text: "One candle is still out there. The big one. Every night it climbs to the Temple Roof of the Twilight Ruins and just stands there, glowing, like the hero on the cover of the storybook I read them. I-I may have read it to them too many times. The Imps up there think it's their boss now. Clear 15 Imps on the roof and bring it home? Please don't tell it I said 'big'.",
     objectives: [{ type: 'visit', map: 'ruins', above: 440, place: 'the Temple Roof of the Twilight Ruins' }, { type: 'kill', mob: 'gloombat', count: 15 }],
-    rewards: { exp: 15000, gold: 380, items: [{ id: 'mana_elixir', qty: 10 }] },
+    rewards: { exp: 130000, gold: 3700, items: [{ id: 'mana_elixir', qty: 10 }] },
   },
 
   nim_stardust: {
     id: 'nim_stardust', name: 'Stardust Wishes', giver: 'nim', minLevel: 38, prereq: 'nim_cape',
     text: "I want to make a real wish candle, out of Stardust. Go up to the very top of the Sky Garden where the Star Seraphs sing, then bring me 10 Stardust? This time the candles and I make the wish together. As a team. Like in the books.",
     objectives: [{ type: 'visit', map: 'sky', above: 570, place: 'the top of the Sky Garden' }, { type: 'collect', item: 'stardust', count: 10 }],
-    rewards: { exp: 110000, gold: 1600, cash: 1000, items: [{ id: 'elixir', qty: 10 }] },
+    rewards: { exp: 140000, gold: 3100, cash: 1000, items: [{ id: 'elixir', qty: 10 }] },
     scenes: { done: 'stardust_done' },
   },
 
@@ -767,25 +767,25 @@ export const QUESTS = {
     id: 'brann_stand', name: 'Stand Your Ground', giver: 'brann', minLevel: 15, family: 'warrior',
     text: "A warrior holds the line. That's it. That's the whole class. The Moss Tortoises in Mossy Woods hit like falling logs: face 25 of them and don't take a step back. Sideways is fine. I checked the rules.",
     objectives: [{ type: 'kill', mob: 'mosstort', count: 25 }],
-    rewards: { exp: 12000, gold: 350, items: [] },
+    rewards: { exp: 22000, gold: 570, items: [] },
   },
   kestrel_canyon: {
     id: 'kestrel_canyon', name: 'The Arrow That Never Landed', giver: 'kestrel', minLevel: 12, prereq: 'kestrel_targets',
     text: "Fine, you heard the story. Everyone has. There's a song. It rhymes 'Kestrel' with 'never fell'. I shot it from the very top of Windy Canyon and it never came down. Climb up there and tell me what the wind does. Mind the Manticore Cubs nesting on the ledges: calm 15 of them.",
     objectives: [{ type: 'visit', map: 'canyon', above: 420, place: 'the very top of Windy Canyon' }, { type: 'kill', mob: 'scorpip', count: 15 }],
-    rewards: { exp: 5600, gold: 180, items: [] },
+    rewards: { exp: 6900, gold: 180, items: [] },
   },
   kestrel_glade: {
     id: 'kestrel_glade', name: 'Fairy Treasure', giver: 'kestrel', minLevel: 21, prereq: 'kestrel_canyon',
     text: "The wind up there blows east, all the way to the Whispering Glade. And the Blossom Fairies there steal anything shiny or clever, which explains my arrow AND my lunchbox. Go to the top of the Glade where they keep their hoard, and calm 15 of them so you can look. Please.",
     objectives: [{ type: 'visit', map: 'glade', above: 500, place: 'the fairies\' hoard at the top of the Glade' }, { type: 'kill', mob: 'blossomfairy', count: 15 }],
-    rewards: { exp: 13500, gold: 360, items: [{ id: 'mana_elixir', qty: 5 }] },
+    rewards: { exp: 76000, gold: 2100, items: [{ id: 'mana_elixir', qty: 5 }] },
   },
   kestrel_wings: {
     id: 'kestrel_wings', name: 'Wings in the Dark', giver: 'kestrel', minLevel: 22, prereq: 'kestrel_glade',
     text: "Its fletching's in tatters, but the shaft is straight as the day I made it. Imp Wings make the best feathers there are. Shoot down 15 Imps in the Twilight Ruins and bring me 7 of their wings. Only about half of them drop one. Where do the other wings go? Nobody knows. Science can't explain it. This time, it lands.",
     objectives: [{ type: 'kill', mob: 'gloombat', count: 15 }, { type: 'collect', item: 'bat_wing', count: 7 }],
-    rewards: { exp: 29000, gold: 780, items: [] },
+    rewards: { exp: 110000, gold: 3100, items: [] },
   },
   // Elowen's story: the teapot she and Mira broke as apprentices, each keeping
   // half (Mira the pot, Elowen the lid; data/scenes.js letter_open). The real quarrel was never
@@ -806,7 +806,7 @@ export const QUESTS = {
       { type: 'visit', map: 'canyon', above: 430, place: 'the top of Windy Canyon' },
       { type: 'talk', npc: 'tora', say: "Vex sent you? Ha. Tell that rascal I want my good hammer back. She thinks I didn't notice. I notice EVERYTHING. ...Have you seen my glasses?" },
     ],
-    rewards: { exp: 8000, gold: 410, items: [] },
+    rewards: { exp: 22000, gold: 590, items: [] },
   },
 
   // ---------- The far regions ----------
@@ -843,62 +843,62 @@ export const QUESTS = {
     id: 'vex_stage', name: 'Quick Feet, Quiet Hands', giver: 'vex', minLevel: 18, prereq: 'vex_shadows',
     text: "The hammer's for a good cause, and that's all I'm saying. A good cause also needs boards. Heartwood, from the Puddle Kids' puddles in the Whispering Glade: bring me 8. Don't tell anyone what it's for. You don't know what it's for. Nobody knows anything. Act natural.",
     objectives: [{ type: 'collect', item: 'moss_stone', count: 8 }],
-    rewards: { exp: 14600, gold: 380, items: [] },
+    rewards: { exp: 22000, gold: 580, items: [] },
   },
   vex_miko: {
     id: 'vex_miko', name: 'Miko Mischief', giver: 'vex', minLevel: 26, prereq: 'vex_stage',
     text: "Someone stole a hammer I stole. From ME. The audacity. Kitsune Miko, on the Fox Shrine Path: little fox ears, sticky fingers, no respect for professionals. Teach 25 of them some manners and get it back, before Tora counts her tools.",
     objectives: [{ type: 'kill', mob: 'kitsunemiko', count: 25 }],
-    rewards: { exp: 31000, gold: 830, items: [] },
+    rewards: { exp: 97000, gold: 2400, items: [] },
   },
   vex_festival: {
     id: 'vex_festival', name: 'Opening Night', giver: 'vex', minLevel: 27, prereq: 'vex_miko',
     text: "Stage built, hammer found, conscience... loud. Take it back to Tora in Ember Crag, wrapped nicely. Say it fell into a pond for a year. Then come straight back: the show starts tonight, and I want you in the front row.",
     gives: [{ id: 'parcel' }],
     objectives: [{ type: 'deliver', npc: 'tora', item: 'parcel', say: "My good hammer! Polished, even. That rascal. Tell her I'll be at her show, front row, and she's buying the snacks." }],
-    rewards: { exp: 9000, gold: 300, items: [{ id: 'ear_25', qty: 1, variant: 'roll' }] },
+    rewards: { exp: 93000, gold: 2300, items: [{ id: 'ear_25', qty: 1, variant: 'roll' }] },
   },
   brann_ruins: {
     id: 'brann_ruins', name: 'Where the Line Broke', giver: 'brann', minLevel: 22, prereq: 'brann_stand', family: 'warrior',
     text: "Twenty years ago I held the old gatehouse at the top of the Twilight Ruins, alone, all night. Picture it in black and white, with rain. By morning my shield was gone. Climb up there for me. The Dullahans still patrol that wall because nobody told them the war ended: put 15 of them to rest on the way.",
     objectives: [{ type: 'visit', map: 'ruins', above: 310, place: 'the old gatehouse at the top of the ruins' }, { type: 'kill', mob: 'boneknight', count: 15 }],
-    rewards: { exp: 17000, gold: 450, items: [{ id: 'white_potion', qty: 10 }] },
+    rewards: { exp: 120000, gold: 3300, items: [{ id: 'white_potion', qty: 10 }] },
   },
   brann_forge: {
     id: 'brann_forge', name: "The Smith's Secret", giver: 'tora', minLevel: 24, prereq: 'brann_ruins', family: 'warrior',
     text: "Shh! Don't tell him. That shield? I've got it. I was the scared recruit he held that gatehouse for. I went back for it years later, and it's been in pieces under my bench ever since, next to my feelings. Bring me 10 Bone Shards from the Dullahans for rivets, and I'll make it whole.",
     objectives: [{ type: 'collect', item: 'bone_shard', count: 10 }],
-    rewards: { exp: 23000, gold: 600, items: [] },
+    rewards: { exp: 130000, gold: 3500, items: [] },
   },
   brann_howl: {
     id: 'brann_howl', name: 'Howl at the Moon', giver: 'brann', minLevel: 28, prereq: 'brann_forge', family: 'warrior',
     text: "Tora told me. I can't hold it yet. Not after that night. I'd need a training montage first, and we don't have the budget. You carry it. Climb the howling rock on Moonlit Ridge with it raised, and calm 25 of Lupina's pack under it. If it still holds, maybe I can too.",
     objectives: [{ type: 'visit', map: 'ridge', above: 510, place: 'the top of the howling rock' }, { type: 'kill', mob: 'lupina', count: 25 }],
-    rewards: { exp: 34000, gold: 900, items: [] },
+    rewards: { exp: 100000, gold: 2500, items: [] },
   },
   marlo_key: {
     id: 'marlo_key', name: 'The Brass Key', giver: 'marlo', minLevel: 23, prereq: 'tusk_trader',
     text: "Grandma's bathhouse key went missing on the Fox Shrine Path the night we fled. Nekomata hoard anything that jingles, so it's in one of their bell piles. I'd bet my cart on it. Not the jar. Never the jar. Bring me 8 Nekomata Bells and let's see.",
     objectives: [{ type: 'collect', item: 'nekomata_bell', count: 8 }],
-    rewards: { exp: 18000, gold: 480, items: [] },
+    rewards: { exp: 54000, gold: 1500, items: [] },
   },
   marlo_spa: {
     id: 'marlo_spa', name: 'Spa Day', giver: 'marlo', minLevel: 31, prereq: 'marlo_key',
     text: "Serpent Springs, off the Crystal Cave. Hot pools, steam, Grandma's tiles. The Lamia still lounge in it like they own the place. They don't pay rent. I've asked. Clear them out and bring me 9 of their scales for new tiles. Then we open.",
     objectives: [{ type: 'collect', item: 'lamia_scale', count: 9 }, { type: 'kill', mob: 'lamia', count: 10 }],
-    rewards: { exp: 57000, gold: 1200, cash: 500, items: [{ id: 'mochi_egg', qty: 1 }, { id: 'cash_casual_towel', qty: 1 }] },
+    rewards: { exp: 62000, gold: 1600, cash: 500, items: [{ id: 'mochi_egg', qty: 1 }, { id: 'cash_casual_towel', qty: 1 }] },
   },
   lulu_winter: {
     id: 'lulu_winter', name: 'Winter Collection', giver: 'lulu', minLevel: 35, prereq: 'lulu_runway',
     text: "Snow season! For my winter line I need 8 Snow Gems from the Yuki-onna on Frozen Peak and 6 Cloud Manes from the Pegasus Foals up there. You'll get the first parka, of course!",
     objectives: [{ type: 'collect', item: 'snow_gem', count: 8 }, { type: 'collect', item: 'wool', count: 6 }],
-    rewards: { exp: 80000, gold: 1500, items: [{ id: 'cash_casual_parka', qty: 1 }, { id: 'cash_casual_mittens', qty: 1 }] },
+    rewards: { exp: 110000, gold: 2400, items: [{ id: 'cash_casual_parka', qty: 1 }, { id: 'cash_casual_mittens', qty: 1 }] },
   },
   rook_stars: {
     id: 'rook_stars', name: 'Wishing on Stars', giver: 'rook', minLevel: 45,
     text: "My old crew swears that at Starfall Heights, over the Sky Garden, you can catch a falling star. Calm 15 Star Seraphs up there and bring back 6 Stardust. A sailor never stops wishing!",
     objectives: [{ type: 'kill', mob: 'starspirit', count: 15 }, { type: 'collect', item: 'stardust', count: 6 }],
-    rewards: { exp: 140000, gold: 2000, items: [{ id: 'elixir', qty: 15 }] },
+    rewards: { exp: 140000, gold: 2400, items: [{ id: 'elixir', qty: 15 }] },
   },
 };
 

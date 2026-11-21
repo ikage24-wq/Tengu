@@ -46,6 +46,10 @@ const avgExp = (mapId) => {
   const sp = MAPS[mapId].spawns.filter((s) => MOBS[s.mob] && !MOBS[s.mob].boss);
   return sp.reduce((a, s) => a + MOBS[s.mob].exp, 0) / sp.length;
 };
+const avgGold = (mapId) => {
+  const sp = MAPS[mapId].spawns.filter((s) => MOBS[s.mob] && !MOBS[s.mob].boss);
+  return sp.reduce((a, s) => a + ((MOBS[s.mob].gold?.[0] ?? 0) + (MOBS[s.mob].gold?.[1] ?? 0)) / 2, 0) / sp.length;
+};
 const dungeonBoss = new Set();
 for (const d of Object.values(DUNGEONS)) for (const r of d.rooms ?? []) for (const s of MAPS[r]?.spawns ?? []) if (MOBS[s.mob]?.boss) dungeonBoss.add(s.mob);
 for (const [id, m] of Object.entries(MAPS)) if (m.dungeon) for (const s of m.spawns ?? []) if (MOBS[s.mob]?.boss) dungeonBoss.add(s.mob);
@@ -61,7 +65,7 @@ const dropper = (item) => {
 };
 
 // Kill speed on every hunting map, measured (kills a minute), with a hero of the map's level.
-function measure(secs) {
+export function measure(secs) {
   const out = {};
   for (const m of maps) {
     const level = Math.max(10, Math.min(49, Math.round(m.mid)));
@@ -83,7 +87,7 @@ const sceneLines = (qid) => {
 
 export function playthrough(kpm, paceName) {
   const pace = PACES[paceName];
-  const st = { level: 1, exp: 0, min: 0, done: new Set(), log: [], reached: {}, hunting: 0, questing: 0 };
+  const st = { level: 1, exp: 0, min: 0, done: new Set(), log: [], reached: {}, hunting: 0, questing: 0, audit: [] };
   const gain = (exp) => {
     st.exp += exp;
     while (st.level < MAX_LEVEL && st.exp >= expToNext(st.level)) {
@@ -97,6 +101,8 @@ export function playthrough(kpm, paceName) {
   const open = (q) => !q.daily && !st.done.has(q.id) && q.minLevel <= st.level && (!q.prereq || st.done.has(q.prereq)) && (!q.family || q.family === FAMILY)
     && QUESTS[q.id].giver;
   const order = (a, b) => (b.story ? 1 : 0) - (a.story ? 1 : 0) || a.minLevel - b.minLevel;
+  // The best map to hunt at a level (what a quest's time is weighed against).
+  const bestMap = (level) => maps.filter((m) => level >= m.lo - 3 && level <= m.hi + 4).sort((a, b) => rate(b.id) * avgExp(b.id) - rate(a.id) * avgExp(a.id))[0] ?? maps.at(-1);
   let guard = 0;
   while (!st.done.has('story_wind') && guard++ < 100000) {
     const q = Object.values(QUESTS).filter(open).sort(order)[0];
@@ -112,6 +118,7 @@ export function playthrough(kpm, paceName) {
     }
     let t = pace.travel;
     let exp = 0;
+    let gold = 0;
     const kills = {};
     for (const o of q.objectives) {
       if (o.type === 'kill') {
@@ -134,8 +141,12 @@ export function playthrough(kpm, paceName) {
       const all = n / Math.max(0.1, share(map, mob));
       t += all / rate(map);
       exp += all * avgExp(map);
+      gold += all * avgGold(map);
     }
     t += (sceneLines(q.id) * 4) / 60;
+    // (For tools/quest-audit.mjs: what the quest paid against hunting the same minutes.)
+    const alt = bestMap(q.minLevel);
+    st.audit.push({ id: q.id, giver: QUESTS[q.id].giver, story: !!q.story, level: q.minLevel, at: st.level, min: t, rewardExp: q.rewards.exp ?? 0, rewardGold: q.rewards.gold ?? 0, killExp: exp, killGold: gold, huntExp: t * rate(alt.id) * avgExp(alt.id), huntGold: t * rate(alt.id) * avgGold(alt.id), items: (q.rewards.items ?? []).map((i) => `${i.qty ?? 1} ${i.id}`).join(', ') });
     st.min += t;
     st.questing += t;
     gain(exp + (q.rewards.exp ?? 0));
@@ -150,6 +161,7 @@ export function playthrough(kpm, paceName) {
     huntingHours: h(st.hunting),
     questHours: h(st.questing),
     quests: st.done.size,
+    audit: st.audit,
     chapters: Object.values(st.log.reduce((a, x) => ((a[x.chapter] = x), a), {})).map((x) => ({ chapter: x.chapter, ends: x.name, level: x.level, hours: +(x.hours * pace.extra).toFixed(1) })),
   };
 }
