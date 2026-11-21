@@ -126,7 +126,7 @@ export const MOBS = {
   // with a lily-pad umbrella on the floor, and a flower fairy in the air (render/mobs/gladekidsrig.js).
   puddlekid: mob({
     id: 'puddlekid', name: 'Puddle Kid', level: 18, hp: 620, atk: 58, def: 20, acc: 40, eva: 4, exp: 420, gold: [6, 15],
-    speed: 30, w: 26, h: 38, art: 'puddlekid', leafPoof: true, drops: [{ id: 'moss_stone', chance: 0.45 }, { id: 'maple_log', chance: 0.08 }],
+    speed: 30, w: 26, h: 38, art: 'puddlekid', leafPoof: true, drops: [{ id: 'moss_stone', chance: 0.75 }, { id: 'maple_log', chance: 0.08 }],
   }),
   blossomfairy: mob({
     id: 'blossomfairy', name: 'Blossom Fairy', level: 21, hp: 700, atk: 64, def: 14, acc: 48, eva: 12, exp: 500, gold: [7, 17],
@@ -138,7 +138,7 @@ export const MOBS = {
   }),
   gloombat: mob({
     id: 'gloombat', name: 'Imp', level: 22, hp: 740, atk: 67, def: 15, acc: 50, eva: 8, exp: 540, gold: [7, 18],
-    speed: 86, gait: 'dart', w: 32, h: 30, art: 'gloombat', fly: true, drops: [{ id: 'bat_wing', chance: 0.45 }, { id: 'silver_ore', chance: 0.08 }],
+    speed: 86, gait: 'dart', w: 32, h: 30, art: 'gloombat', fly: true, drops: [{ id: 'bat_wing', chance: 0.65 }, { id: 'silver_ore', chance: 0.08 }],
   }),
   boneknight: mob({
     id: 'boneknight', name: 'Dullahan', level: 24, hp: 1120, atk: 78, def: 30, acc: 54, eva: 6, exp: 700, gold: [9, 21],

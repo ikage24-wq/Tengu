@@ -175,11 +175,14 @@ export const QUESTS = {
     objectives: [{ type: 'kill', mob: 'crystalslime', count: 20 }],
     rewards: { exp: 120000, gold: 3100, items: [{ id: 'elixir', qty: 5 }] },
   },
-  // Kestrel's trial for a Sunfeather before her level 30 path (the Phoenix or the Songbird).
+  // Kestrel's trial for a Sunfeather before her level 30 path (the Phoenix or the Songbird). (Out on
+  // the field like the other trials since the 2026-11-21 playthrough: its Comet Couriers only lived
+  // inside the Star Observatory, four group runs for one trial. Fifteen Meteor Golems are about the
+  // same work as twenty couriers, and Lumen wants them gone too.)
   archer_trial: {
     id: 'archer_trial', name: "The Sunfeather's Trial", giver: 'kestrel', minLevel: 30, family: 'archer',
-    text: "Anyone can hit a scarecrow. Up past the stars the Comet Couriers zip about like they own the sky. Bring down 20 of them, from a good long way off, and I'll show you the two ways a sunbird can grow up.",
-    objectives: [{ type: 'kill', mob: 'cometcourier', count: 20 }],
+    text: "Anyone can hit a scarecrow. Up on Moonlit Ridge the Meteor Golems come down with the falling stars, and they hit like them too. Bring down 15 of them, from a good long way off, and I'll show you the two ways a sunbird can grow up.",
+    objectives: [{ type: 'kill', mob: 'meteorgolem', count: 15 }],
     rewards: { exp: 76000, gold: 1900, items: [{ id: 'elixir', qty: 5 }] },
   },
   // Vex's trial for a Moon Moth before her level 30 path (the Eclipse).

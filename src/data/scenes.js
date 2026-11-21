@@ -1185,11 +1185,11 @@ export const SIDE_SCENES = {
     { who: 'vex', text: "Get behind them. Always behind. A moth at your back is a moth you never saw.", mood: 'happy' },
   ],
   trial_kestrel: [
-    { who: 'kestrel', text: "Twenty Comet Couriers. They're quick, they're shiny and they never look where they're going. Keep your distance and your aim true." },
+    { who: 'kestrel', text: "Fifteen Meteor Golems up on Moonlit Ridge. They're slow, they're heavy and they hit like a falling star. Keep your distance and your aim true." },
     { who: 'kestrel', text: "And if one comes at you, hop back. Always hop back. A sunbird doesn't stand there getting pecked.", mood: 'happy' },
   ],
   trial_kestrel_done: [
-    { who: 'kestrel', text: "Twenty! And not a scratch on you. I watched the last few from the roof. Lovely arcs.", mood: 'happy' },
+    { who: 'kestrel', text: "Fifteen! And not a scratch on you. I watched the last few from the top of the ridge. Lovely arcs.", mood: 'happy' },
     { who: 'kestrel', text: "So. A sunbird can catch fire and become a Phoenix, with a big heavy crossbow. Or it can sing, and keep everyone around it going: the Songbird. Which one's you?" },
   ],
   trial_vex_done: [
