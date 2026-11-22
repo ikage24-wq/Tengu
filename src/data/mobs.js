@@ -807,7 +807,7 @@ export const MOBS = {
   // The Tea Terraces' area boss (world/nest.js): wakes in the giant teapot hut.
   grandkettle: mob({
     id: 'grandkettle', name: 'The Grand Kettle', level: 28, hp: 24000, atk: 150, def: 30, acc: 70, eva: 2, exp: 22000,
-    gold: [420, 640], speed: 26, w: 84, h: 90, art: 'grandkettle', boss: true,
+    gold: [420, 640], speed: 26, w: 70, h: 100, art: 'grandkettle', boss: true,
     drops: [{ id: 'grand_brew', chance: 1, qty: 1 }, { id: 'tea_leaf', chance: 1, qty: 8 }, { id: 'kettle_lid', chance: 1, qty: 4 }, { id: 'white_potion', chance: 1, qty: 6 }],
     special: { kind: 'slam', every: 6, warn: 1.5, damage: 240, range: 260 },
   }),
