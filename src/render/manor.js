@@ -5,7 +5,7 @@
 // guard, the hostess floating out of reach). (x, y) is the bottom center on the floor; `time`
 // (seconds) animates.
 
-import { R, E, T, F, sprite, blit, mix } from './pixel.js';
+import { R, E, T, F, sprite, blit, mix, snap } from './pixel.js';
 import { art, place } from './scenery.js';
 import { trolleyArt } from './mobs/manorboss.js';
 import { CREST, doorOpen } from '../world/manor.js';
@@ -130,7 +130,7 @@ function drawPortrait(ctx, x, y, o, time) {
   place(ctx, portraitArt(o.face ?? 0, o.done, o.slot ?? 0), 0, 0);
   ctx.restore();
   ctx.fillStyle = GOLD_DK;
-  ctx.fillRect(Math.round(x) - 1, Math.round(y - 74), 2, 4);
+  ctx.fillRect(snap(x) - 1, snap(y - 74), 2, 4);
 }
 function crestArt(crest) {
   return art(`mn-crest|${crest.join('')}`, 76, 54, () => {
@@ -351,7 +351,7 @@ export function drawManorBack(ctx, world, cam, time) {
     // It hangs just under the ceiling (which stays at the top of the view), on a long chain.
     const hang = 96;
     ctx.fillStyle = GOLD_DK;
-    if (ch.state === 'up') ctx.fillRect(Math.round(x) - 1, 0, 2, hang - 50);
+    if (ch.state === 'up') ctx.fillRect(snap(x) - 1, 0, 2, hang - 50);
     if (ch.state === 'up') {
       glow(ctx, x, hang - 14, 60, '#ffe2a0', 0.35 + 0.05 * Math.sin(time * 3));
       ctx.save();

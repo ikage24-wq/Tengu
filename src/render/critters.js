@@ -7,7 +7,7 @@
 // Everything is drawn facing right, standing on the box's ground line, and mirrored to face left;
 // never squashed or stretched.
 
-import { sprite, blit, E, T, F } from './pixel.js';
+import { sprite, blit, E, T, F, snap } from './pixel.js';
 import { ik, limb, pawCycle, follow, eye, rot, blinkAt, INK, ss } from './quadruped.js';
 
 const TAU = Math.PI * 2;
@@ -43,7 +43,7 @@ function stateOf(id, wx, time) {
 }
 
 function place(ctx, s, x, gy, w, ground, flip) {
-  blit(ctx, s, Math.round(x - w / 2), Math.round(gy - ground), { flip });
+  blit(ctx, s, snap(x - w / 2), snap(gy - ground), { flip });
 }
 
 // ===================================================================================== The dog

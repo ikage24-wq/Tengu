@@ -13,7 +13,7 @@
 //                lines (beams of starlight), nova (a star bursting)
 //   Bonbon       sprinkles (rainbow sprinkles gathering overhead, then pouring down), cherry (the
 //                cherry off her crown, lobbed high, coming down in a splash)
-//   The Queen's dream's bosses (the Coffee Mug Boss, the Cup-Noodle Dragon, Monday) draw theirs
+//   The Queen's dream's bosses (the Night Manager, the Cup-Noodle Dragon, Monday) draw theirs
 //   in render/dreamfx.js.
 
 import { puff, shock, starFlash, easeOut, bloom } from './fxkit.js';

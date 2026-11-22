@@ -434,7 +434,7 @@ export function drawPaintedAquaGate(ctx, t, cam, width, height, time, layerY, ai
   ctx.fillStyle = bodyLit;
   ctx.fillRect(0, hallTop, width, 6);
   for (let i = -1; i < Math.ceil(width / 80) + 2; i++) {
-    const wx = Math.round(i * 80 - wrap(off, 80) + 40);
+    const wx = snap(i * 80 - wrap(off, 80) + 40);
     const wi = i + Math.floor(off / 80);
     const lit = h01(wi) > 0.35;
     const top = hallTop + 70;
@@ -450,7 +450,7 @@ export function drawPaintedAquaGate(ctx, t, cam, width, height, time, layerY, ai
     ctx.fillRect(wx - 0.5, top, 1, 70);
   }
   for (let i = -1; i < Math.ceil(width / 330) + 2; i++) {
-    const tx = Math.round(i * 330 - wrap(off, 330) + 165);
+    const tx = snap(i * 330 - wrap(off, 330) + 165);
     const ti = i + Math.floor(off / 330);
     const tw = 74 + h01(ti) * 26;
     const top = layerY(560 + h01(ti + 5) * 300, k);
@@ -574,7 +574,7 @@ export function drawPaintedAquaHall(ctx, t, cam, width, height, time, layerY, ai
   const span = 260;
   const off = cam.x * k;
   for (let i = -1; i < Math.ceil(width / span) + 2; i++) {
-    const cx = Math.round(i * span - wrap(off, span) + span / 2);
+    const cx = snap(i * span - wrap(off, span) + span / 2);
     const idx = i + Math.floor(off / span);
     // A tall arched window on the deep sea.
     const ww = 92;

@@ -3,7 +3,7 @@
 // sunlit and shadowed halves, and Folio's bookcases sliding in. (x, y) is the bottom center on the
 // floor; `time` (seconds) animates.
 
-import { R, E, T, F, mix } from './pixel.js';
+import { R, E, T, F, mix, snap } from './pixel.js';
 import { art, place } from './scenery.js';
 import { drawSpectator, SPECTATOR_BEATS } from './mochi-anim.js';
 import { rollMochi } from '../data/mochi-genes.js';
@@ -250,7 +250,7 @@ export function drawObsBack(ctx, world, cam, time) {
     else ctx.fillRect(-10, 0, mid + 10, 600);
     ctx.restore();
     ctx.fillStyle = '#fff3a6';
-    ctx.fillRect(Math.round(mid) - 1, 0, 2, 600);
+    ctx.fillRect(snap(mid) - 1, 0, 2, 600);
   }
 }
 
@@ -277,7 +277,7 @@ export function drawObsFront(ctx, world, cam, time) {
       }
     }
     ctx.fillStyle = '#ffd36b';
-    ctx.fillRect(Math.round(x) - 1, -10, 3, gy + 20);
+    ctx.fillRect(snap(x) - 1, -10, 3, gy + 20);
   }
 }
 

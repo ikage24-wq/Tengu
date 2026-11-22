@@ -13,7 +13,7 @@
 // height, turns are mirror flips. Each mount is drawn facing right in a 64x48 box whose ground line
 // is y 46, then flipped.
 
-import { sprite, blit, R, E, T, F } from './pixel.js';
+import { sprite, blit, R, E, T, F, snap } from './pixel.js';
 import { drawPosed } from './hero.js';
 import { ik, limb, pawCycle, bone } from './quadruped.js';
 import { MOUNTS } from '../data/mounts.js';
@@ -582,8 +582,8 @@ export function drawMount(ctx, who, mount, x, y, time, motion, rider = null) {
   const facing = m.facing < 0 ? -1 : 1;
   const flip = facing < 0;
   const lift = body.lift(P);
-  const left = Math.round(x - MW / 2);
-  const top = Math.round(y - GROUND - lift);
+  const left = snap(x - MW / 2);
+  const top = snap(y - GROUND - lift);
   // The pose is rounded (a quarter pixel, a twentieth of a radian) before it's drawn, so a gait
   // comes round to the same sprites every cycle; lift is applied when blitting, not in the shapes.
   // (Half steps: a mount's many springs each in quarters made new pictures every frame it moved.)

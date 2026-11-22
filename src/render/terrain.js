@@ -5,7 +5,7 @@
 // own material. Textures are small tiles baked once per theme and laid down as a pattern that
 // scrolls with the world.
 
-import { shade, mix, gfx } from './pixel.js';
+import { shade, mix, gfx, snap } from './pixel.js';
 import { surfacesOf, groundAt } from '../world/physics.js';
 import { drawRockShelf } from './canyon.js';
 import { drawTempleLedge } from './ruinsart.js';
@@ -2566,9 +2566,9 @@ export function drawIsland(ctx, theme, p, cam, time, pi, look = null, map = null
           const px = wx - cam.x;
           const bottom = wt.y - cam.y + 10;
           ctx.fillStyle = '#8a6a52';
-          ctx.fillRect(Math.round(px - 2.5), y + 4, 5, bottom - y - 4);
+          ctx.fillRect(snap(px - 2.5), y + 4, 5, bottom - y - 4);
           ctx.fillStyle = '#a8866a';
-          ctx.fillRect(Math.round(px - 2.5), y + 4, 1.5, bottom - y - 4);
+          ctx.fillRect(snap(px - 2.5), y + 4, 1.5, bottom - y - 4);
           const u = (time * 0.6 + wx * 0.013) % 1;
           ctx.save();
           ctx.globalAlpha = (1 - u) * 0.7;
@@ -2583,8 +2583,8 @@ export function drawIsland(ctx, theme, p, cam, time, pi, look = null, map = null
       // (On dry land, `posts`: a raised deck on two stout posts down to the floor under it.)
       if (p.posts && map) {
         for (const wx of [p.x + 12, p.x + w - 12]) {
-          const px = Math.round(wx - cam.x);
-          const bottom = Math.round(groundAt(map, wx) - cam.y);
+          const px = snap(wx - cam.x);
+          const bottom = snap(groundAt(map, wx) - cam.y);
           ctx.fillStyle = '#8a6a52';
           ctx.fillRect(px - 4, y + 4, 8, bottom - y - 4);
           ctx.fillStyle = '#a8866a';
@@ -2595,9 +2595,9 @@ export function drawIsland(ctx, theme, p, cam, time, pi, look = null, map = null
         }
         ctx.strokeStyle = '#7a5a44';
         ctx.lineWidth = 3;
-        const x1 = Math.round(p.x + 12 - cam.x);
-        const x2 = Math.round(p.x + w - 12 - cam.x);
-        const b1 = Math.round(groundAt(map, p.x + 12) - cam.y);
+        const x1 = snap(p.x + 12 - cam.x);
+        const x2 = snap(p.x + w - 12 - cam.x);
+        const b1 = snap(groundAt(map, p.x + 12) - cam.y);
         ctx.beginPath();
         ctx.moveTo(x1, y + 10);
         ctx.lineTo(x2, b1 - 10);

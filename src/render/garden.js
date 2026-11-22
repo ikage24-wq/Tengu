@@ -2386,7 +2386,7 @@ function drawBuiltin(ctx, def, p, sx, sy, time, { ghost = null, alpha = 1, map =
     g.globalAlpha = 1;
     ctx.save();
     ctx.globalAlpha *= alpha * 0.66;
-    ctx.drawImage(ghostCanvas, 0, 0, w, h, Math.round(sx - w / 2), Math.round(sy - (h - 10)), w, h);
+    ctx.drawImage(ghostCanvas, 0, 0, w, h, snap(sx - w / 2), snap(sy - (h - 10)), w, h);
     ctx.restore();
     return;
   }

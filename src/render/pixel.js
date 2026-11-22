@@ -713,7 +713,10 @@ export function blit(ctx, s, x, y, { flip = false, flash = 0, alpha = 1, scale =
   const h = (img.height / res) * scale;
   const smooth = (res > 1 && !s.crisp) || soft;
   const cell = scale / res;
-  const grid = (v) => (smooth ? snap(v) : s.crisp ? Math.round(v / cell) * cell : Math.round(v));
+  // (A low-resolution picture, res 1, lands on the screen's own pixels like everything else: rounded
+  // to whole world pixels it jumped two screen pixels at a time while the scene around it slid by
+  // one, so old-style props and scenery shimmered whenever the camera moved: 2026-11-22.)
+  const grid = (v) => (smooth ? snap(v) : s.crisp ? Math.round(v / cell) * cell : snap(v));
   const pad = s.pad ?? PAD;
   const px = grid(x - pad * scale);
   const py = grid(y - pad * scale);

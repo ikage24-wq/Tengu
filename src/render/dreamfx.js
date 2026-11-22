@@ -2,7 +2,7 @@
 // in the human world. render/bossfx.js hands these looks over to here: warn() draws the wind-up
 // over the floor warning (`p` 0..1 through it), hit() the landing (`u` 0..1 over DREAM_HOLD[look]
 // seconds). (x, y) is the zone's spot on screen (a band's left end); the screen is 640 x 360.
-//   Coffee Mug Boss    memo (a sticky note fluttering down), stamp (a rubber stamp: SEE ME),
+//   Night Manager      memo (a sticky note fluttering down), stamp (a rubber stamp: SEE ME),
 //                      coffee (a spill rolling out ahead of him), files (a wobbling stack of folders)
 //   Cup-Noodle Dragon  steam (steam bursting round him), noodle (a noodle whip), broth (a hot drop
 //                      and a fish-cake slice), chopsticks (snapping shut), boil (the floor boiling over)

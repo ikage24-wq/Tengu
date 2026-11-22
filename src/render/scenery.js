@@ -5442,8 +5442,8 @@ function drawPortals(ctx, map, cam, time, nearId, routeId = null) {
       ctx.font = '500 6px Nunito, "Trebuchet MS", "Segoe UI", system-ui, sans-serif';
       const lw = lv ? ctx.measureText(lv).width + 5 : 0;
       const w = nw + lw + 10 + (out ? 7 : 0) + (onRoute ? 8 : 0);
-      const bx = Math.round(x - w / 2);
-      const by = Math.round(y - top - (onRoute ? Math.abs(Math.sin(time * 4)) * 2 : 0));
+      const bx = snap(x - w / 2);
+      const by = snap(y - top - (onRoute ? Math.abs(Math.sin(time * 4)) * 2 : 0));
       ctx.fillStyle = onRoute ? '#ff6b9a' : 'rgba(255,255,255,0.92)';
       roundRect(ctx, bx, by, w, 12, 6);
       ctx.fill();

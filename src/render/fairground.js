@@ -692,7 +692,7 @@ function coasterTrack(ctx, x0, x1, base, trackAt, wash, air, time, step = 18) {
 function swags(ctx, cam, width, y, k, time, span = 220, sag = 26) {
   const off = cam.x * k;
   for (let i = -1; i < Math.ceil(width / span) + 2; i++) {
-    const x1 = Math.round(i * span - wrap(off, span));
+    const x1 = snap(i * span - wrap(off, span));
     ctx.strokeStyle = 'rgba(58,45,79,0.55)';
     ctx.lineWidth = 1;
     ctx.beginPath();
@@ -713,7 +713,7 @@ export function drawPaintedFairGate(ctx, t, cam, width, height, time, layerY, ai
   const off = cam.x * k;
   const span = 900;
   for (let i = -1; i < Math.ceil(width / span) + 2; i++) {
-    const ox = Math.round(i * span - wrap(off, span));
+    const ox = snap(i * span - wrap(off, span));
     // The coaster's hill, the big top, the wheel.
     coasterTrack(ctx, ox + 20, ox + 330, base, (x) => base - 40 - Math.max(0, Math.sin(((x - ox - 20) / 310) * Math.PI)) * 130 - Math.sin((x - ox) * 0.05) * 6, 0.45, air, time, 16);
     bigTop(ctx, ox + 470, base, 190, 0.38, air, time);
@@ -731,7 +731,7 @@ export function drawPaintedMidway(ctx, t, cam, width, height, time, layerY, air,
   const fb = layerY(60, kf);
   const offf = cam.x * kf;
   for (let i = -1; i < Math.ceil(width / 700) + 2; i++) {
-    const ox = Math.round(i * 700 - wrap(offf, 700));
+    const ox = snap(i * 700 - wrap(offf, 700));
     bigTop(ctx, ox + 180, fb, 230, 0.5, air, time);
     wheel(ctx, ox + 520, fb - 120, 90, time * 0.07, time, 0.5, air, 10);
   }
@@ -741,7 +741,7 @@ export function drawPaintedMidway(ctx, t, cam, width, height, time, layerY, air,
   const off = cam.x * k;
   const sw = 130;
   for (let i = -1; i < Math.ceil(width / sw) + 2; i++) {
-    const x = Math.round(i * sw - wrap(off, sw));
+    const x = snap(i * sw - wrap(off, sw));
     const si = i + Math.floor(off / sw);
     const h = 90 + h01(si) * 30;
     const c = BOOTH_C[Math.abs(si) % BOOTH_C.length][0];
@@ -831,7 +831,7 @@ export function drawPaintedFerrisWheel(ctx, t, cam, width, height, time, layerY,
   const kt = 0.1;
   const tb = layerY(10, kt);
   for (let i = -1; i < Math.ceil(width / 420) + 2; i++) {
-    const ox = Math.round(i * 420 - wrap(cam.x * kt, 420));
+    const ox = snap(i * 420 - wrap(cam.x * kt, 420));
     bigTop(ctx, ox + 90, tb, 120, 0.5, air, time);
   }
   // The wheel, centred on the plaza's middle.

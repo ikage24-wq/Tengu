@@ -2540,7 +2540,7 @@ function lakeBed(ctx, map, w, cam, time, x0, x1) {
   for (const [kind, wx, extra] of map.townPieces ?? []) {
     if (kind !== 'mr_pier') continue;
     const len = extra.to - wx;
-    const left = Math.round(wx - 2 - cam.x);
+    const left = snap(wx - 2 - cam.x);
     if (left > x1 - cam.x || left + len < x0 - cam.x) continue;
     const top = w.y - cam.y;
     ctx.fillStyle = 'rgba(110,84,64,0.32)';

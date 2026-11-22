@@ -382,7 +382,12 @@ function sealOpenArt() {
 
 // A wall of tangled thorny roots, about 48 wide and 76 tall, sealing a doorway, with a glowing
 // leaf-lock in the middle; it writhes a little. Open, only retracted stubs remain at the bottom.
-export function drawSeal(ctx, x, y, open, time) {
+// (Rootwood Hollow's: the other dungeons each close theirs their own way, `kind` the dungeon.)
+export function drawSeal(ctx, x, y, open, time, kind = 'hollow') {
+  if (THEMED_SEALS[kind]) {
+    drawThemedSeal(ctx, kind, x, y, open, time);
+    return;
+  }
   if (open) {
     place(ctx, sealOpenArt(), x, y + 1);
     return;
@@ -845,4 +850,204 @@ export function drawZoneHit(ctx, kind, x, y, w, t, time) {
     }
   }
   ctx.restore();
+}
+
+// ---------- Each dungeon's own seal (2026-11-22) ----------
+// The roots belong to Rootwood Hollow; every other dungeon closes its exit its own way, the same
+// size (48 wide, 76 tall), stirring a little over four drawings. Open, it's simply gone.
+
+const SEAL_GLOW = { manor: '#c9a6ff', aquarium: '#9ff0f0', carnival: '#ffe08a', observatory: '#bcc8ff', volcano: '#ffb3d9', theatre: '#ffd36b', skywhale: '#cde8ff' };
+const twinkle = (x, y, r, k = 0.34) => Array.from({ length: 8 }, (_, i) => {
+  const a = (i * Math.PI) / 4 - Math.PI / 2;
+  const rr = i % 2 ? r * k : r;
+  return [x + Math.cos(a) * rr, y + Math.sin(a) * rr];
+});
+// A board or rope from (x0, y0) to (x1, y1), `w` half wide, cut into `n` lengths coloured in turn.
+function segments(x0, y0, x1, y1, w, n, cols) {
+  const l = Math.hypot(x1 - x0, y1 - y0);
+  const nx = (-(y1 - y0) / l) * w;
+  const ny = ((x1 - x0) / l) * w;
+  const out = [];
+  for (let k = 0; k < n; k++) {
+    const a = k / n;
+    const b = (k + 1) / n;
+    const p = (u) => [x0 + (x1 - x0) * u, y0 + (y1 - y0) * u];
+    const [ax, ay] = p(a);
+    const [bx, by] = p(b);
+    out.push(T([[ax + nx, ay + ny], [bx + nx, by + ny], [bx - nx, by - ny], [ax - nx, ay - ny]], cols[k % cols.length]));
+  }
+  return out;
+}
+
+const THEMED_SEALS = {
+  // Moonlit Manor: a wrought-iron gate of spear-topped bars and a lilac padlock that sways.
+  manor(f) {
+    const iron = ramp('#4a3e66', 0.8);
+    const out = [];
+    for (const x of [6, 15, 24, 33, 42]) out.push(T([[x - 2.6, 10], [x, 2], [x + 2.6, 10]], iron.base), R(x - 1.2, 8, 2.4, 68, iron.base), F(R(x + 0.4, 8, 0.8, 68, iron.sh)));
+    for (const y of [14, 66]) out.push(R(3, y, 42, 3, iron.base), F(R(3, y + 2, 42, 1, iron.sh)));
+    for (const x of [10.5, 19.5, 28.5, 37.5]) out.push(T([[x, 19], [x + 2.6, 22], [x, 25], [x - 2.6, 22]], iron.base), T([[x, 58], [x + 2.6, 61], [x, 64], [x - 2.6, 61]], iron.base));
+    const s = [0, 0.7, 0, -0.7][f];
+    const lock = ramp('#c9a6ff', 0.8);
+    out.push(band([[20 + s, 37], [20 + s, 31], [24 + s, 27.4], [28 + s, 31], [28 + s, 37]], () => 1.2, '#b8a8d8'));
+    out.push(R(17.6 + s, 35, 12.8, 12, lock.base), F(R(27.4 + s, 35, 3, 12, lock.sh)), F(R(18.6 + s, 36, 1.2, 10, lock.hi)), F(E(24 + s, 39.6, 1.4, 1.4, '#3a3050')), F(T([[23.2 + s, 40.2], [24.8 + s, 40.2], [24 + s, 44], [24 + s, 44]], '#3a3050')));
+    return out;
+  },
+  // The Sunken Aquarium Palace: kelp grown across the doorway, swaying, bubbles rising, a closed
+  // clam holding its pearl in the middle.
+  aquarium(f) {
+    const ph = (f * Math.PI) / 2;
+    const w = (k) => Math.sin(k + ph) * 1.6;
+    const k1 = ramp('#5fc8a0', 0.8);
+    const k2 = ramp('#8fe0b0', 0.8);
+    const out = [];
+    const strands = [
+      [[5, 76], [3 + w(0), 56], [9 + w(1), 36], [5 + w(2), 16], [9, 2]],
+      [[43, 76], [45 + w(1), 56], [39 + w(2), 36], [43 + w(3), 16], [39, 2]],
+      [[2, 74], [16 + w(2), 58], [30 + w(3), 34], [46, 12]],
+      [[46, 74], [32 + w(3), 58], [18 + w(4), 34], [2, 12]],
+      [[24, 76], [22 + w(4), 60], [26 + w(5), 46], [22 + w(0), 24], [24, 4]],
+    ];
+    strands.forEach((p, i) => {
+      const r = i % 2 ? k2 : k1;
+      out.push(band(p, (u) => 2.6 - u * 1.2, r.base), F(band(p.map(([x, y]) => [x + 0.9, y]), (u) => 1 - u * 0.5, r.sh)));
+    });
+    for (const [x, y] of [[8, 66], [40, 60], [14, 22], [36, 26], [30, 70]]) {
+      const yy = y - ((f * 3 + x) % 12);
+      out.push(E(x, yy, 1.6, 1.6, '#e8fbff'), F(E(x - 0.5, yy - 0.5, 0.6, 0.6, '#ffffff')));
+    }
+    const P = Math.PI;
+    const shell = ramp('#ffd6e0', 0.8);
+    const arcPts = (y, r, a0, a1) => Array.from({ length: 9 }, (_, i) => [24 + Math.cos(a0 + ((a1 - a0) * i) / 8) * r, y + Math.sin(a0 + ((a1 - a0) * i) / 8) * r * 0.8]);
+    out.push(T([[24, 41], ...arcPts(41, 10, P, 2 * P)], shell.base), T([[24, 41], ...arcPts(41, 10, 0, P)], shell.sh));
+    for (let k = 1; k < 6; k++) {
+      const a = P + (k * P) / 6;
+      out.push(F(band([[24, 40.4], [24 + Math.cos(a) * 9, 41 + Math.sin(a) * 7.2]], () => 0.45, shell.sh)));
+    }
+    out.push(F(E(24, 41, 3.2 + (f % 2) * 0.3, 1.6, '#fbf6ff')), F(E(23.2, 40.6, 1, 0.6, '#ffffff')));
+    return out;
+  },
+  // The Clockwork Carnival: two striped boards nailed across in an X, a ticket hung on them that
+  // swings.
+  carnival(f) {
+    const red = '#ff6f7a';
+    const cream = '#fff6e8';
+    const out = [...segments(4, 8, 44, 70, 3.6, 8, [red, cream]), ...segments(44, 8, 4, 70, 3.6, 8, [cream, red])];
+    for (const [x, y] of [[6, 11], [42, 11], [6, 67], [42, 67]]) out.push(F(E(x, y, 0.9, 0.9, '#7a5a6a')));
+    const s = [0, 1, 0, -1][f];
+    out.push(band([[24, 22], [17 + s, 32]], () => 0.4, '#7a5a6a'), band([[24, 22], [31 + s, 32]], () => 0.4, '#7a5a6a'), E(24, 22, 1, 1, '#ffd36b'));
+    const t = [[14 + s, 32], [34 + s, 32], [34 + s, 35], [32.6 + s, 36.5], [34 + s, 38], [34 + s, 46], [14 + s, 46], [14 + s, 38], [15.4 + s, 36.5], [14 + s, 35]];
+    out.push(T(t, '#ffe9b0'), F(R(17 + s, 34, 14, 10, '#fff6dc')));
+    out.push(F(T(twinkle(24 + s, 39, 4.4, 0.45), '#ff6f7a')), F(E(24 + s, 39, 1.2, 1.2, '#ffd36b')));
+    for (let k = 0; k < 6; k++) out.push(F(R(15.4 + s + k * 3.3, 44, 1.4, 0.8, '#e8c890')));
+    return out;
+  },
+  // The Star Observatory: a net of starlight strung across the doorway, its stars twinkling in
+  // turn, a ringed star holding it shut.
+  observatory(f) {
+    const pts = [[5, 6], [24, 3], [43, 6], [9, 26], [39, 24], [24, 40], [5, 50], [43, 52], [14, 72], [34, 72]];
+    const links = [[0, 1], [1, 2], [0, 3], [2, 4], [3, 5], [4, 5], [1, 5], [3, 6], [4, 7], [5, 8], [5, 9], [6, 8], [7, 9], [8, 9], [3, 4]];
+    const out = [];
+    for (const [a, b] of links) out.push(F(band([pts[a], pts[b]], () => 0.55, '#9fb0ff')), F(band([pts[a], pts[b]], () => 0.22, '#e8eeff')));
+    pts.forEach(([x, y], i) => {
+      if (i === 5) return;
+      const big = (i + f) % 4 === 0;
+      out.push(T(twinkle(x, y, big ? 4 : 2.6), '#fff3a6'), F(E(x, y, 0.8, 0.8, '#ffffff')));
+    });
+    const brass = ramp('#e8b85a', 0.85);
+    out.push(E(24, 40, 8, 8, brass.base), F(E(24.6, 40.6, 6.4, 6.4, brass.sh)), F(E(24, 40, 5.8, 5.8, '#3a3a7a')), F(T(twinkle(24, 40, 4.6 + (f % 2) * 0.4, 0.4), '#fff3a6')), F(E(24, 40, 1, 1, '#ffffff')));
+    return out;
+  },
+  // The Candy Volcano: candy-cane bars, two licorice whips twisted across them, a wrapped sweet
+  // for a lock that sways.
+  volcano(f) {
+    const out = [];
+    for (const x of [8, 24, 40]) {
+      out.push(R(x - 3, 6, 6, 70, '#fffaf6'), F(R(x + 1.6, 6, 1.4, 70, '#efe2ec')), E(x, 6, 3, 2, '#fffaf6'));
+      for (let y = 8; y < 74; y += 7) out.push(F(T([[x - 3, y + 3], [x + 3, y], [x + 3, y + 3], [x - 3, y + 6]], '#ff6f8a')));
+    }
+    const lic = ['#7a3a5a', '#9a4a6a'];
+    out.push(...segments(2, 16, 46, 60, 2.4, 12, lic), ...segments(46, 16, 2, 60, 2.4, 12, lic));
+    const s = [0, 0.7, 0, -0.7][f];
+    const sweet = ramp('#ffb3d9', 0.8);
+    out.push(T([[15 + s, 34], [19 + s, 38], [15 + s, 42]], '#c9a6ff'), T([[33 + s, 34], [29 + s, 38], [33 + s, 42]], '#c9a6ff'));
+    out.push(E(24 + s, 38, 6.4, 5, sweet.base), F(E(25 + s, 39, 5, 3.6, sweet.sh)), F(E(23.6 + s, 37.4, 5, 3.4, sweet.base)), F(band([[20 + s, 36], [24 + s, 40], [28 + s, 36]], () => 0.6, '#ffffff')), F(E(21.6 + s, 35.8, 1.2, 0.8, '#ffffff')));
+    return out;
+  },
+  // The Dream Theatre: the curtain is down. Red velvet in deep folds that stir, a gold valance and
+  // fringe, a gold star where the two halves meet.
+  theatre(f) {
+    const velvet = ramp('#c8304e', 0.85);
+    const gold = ramp('#f2c14e', 0.8);
+    const ph = (f * Math.PI) / 2;
+    const out = [];
+    // Each half hangs inside the doorway, flaring a little to a scalloped hem at the floor.
+    for (const s of [-1, 1]) {
+      const X = (v) => 24 + s * v;
+      const hem = Array.from({ length: 7 }, (_, i) => [X(18.4 - i * 3.1), 73.4 + (i % 2) * 1.4]);
+      out.push(T([[X(0), 9], [X(16.4), 9], [X(16.8), 40], ...hem, [X(0), 74]], velvet.base));
+      for (let k = 0; k < 3; k++) {
+        const x = 3 + k * 5.4;
+        const sway = Math.sin(ph + k * 1.7 + (s > 0 ? 1 : 0)) * 0.8;
+        out.push(F(T([[X(x), 10], [X(x + 1.4), 10], [X(x + 2.2 + k * 0.4) + sway, 72], [X(x - 0.6) + sway, 72]], velvet.sh)));
+        out.push(F(T([[X(x + 3), 11], [X(x + 3.6), 11], [X(x + 4.4 + k * 0.4) + sway, 70], [X(x + 3.4) + sway, 70]], velvet.hi)));
+      }
+      for (let i = 0; i < 6; i++) {
+        const [hx, hy] = hem[i];
+        out.push(F(R(Math.min(hx, hem[i + 1][0]), hy - 0.6, 3.1, 1.2, gold.base)));
+      }
+    }
+    out.push(F(R(23.5, 9, 1, 65, velvet.deep)));
+    out.push(R(5, 4, 38, 6, gold.base), F(R(5, 8.6, 38, 1.4, gold.sh)), F(R(5, 4, 38, 1, gold.hi)));
+    for (let k = 0; k < 5; k++) out.push(E(8.8 + k * 7.6, 10.4, 3.8, 2.6, velvet.base), F(E(8.8 + k * 7.6, 11, 3, 1.6, velvet.sh)));
+    out.push(E(24, 38, 6, 6, gold.base), F(E(24.6, 38.6, 4.6, 4.6, gold.sh)), F(E(24, 38, 4.4, 4.4, gold.base)), F(T(twinkle(24, 38, 3.8, 0.45), '#fff3a6')));
+    return out;
+  },
+  // Cloudcatch Pier and the Sky Whale: a cargo net hooked across the doorway, its knots, a brass
+  // bell hung in the middle that swings.
+  skywhale(f) {
+    const rope = ramp('#e8d29a', 0.8);
+    const out = [];
+    const sag = (y) => Math.sin((y / 76) * Math.PI) * [1, 1.6, 1, 0.4][f];
+    const lines = [];
+    for (let c = -40; c <= 48; c += 11) for (const s of [0.6, -0.6]) {
+      const c0 = s > 0 ? c : c + 46;
+      let y0 = 4;
+      let y1 = 74;
+      const ya = (3 - c0) / s;
+      const yb = (45 - c0) / s;
+      y0 = Math.max(y0, Math.min(ya, yb));
+      y1 = Math.min(y1, Math.max(ya, yb));
+      if (y1 - y0 < 4) continue;
+      lines.push([c0, s, y0, y1]);
+      out.push(band([[c0 + s * y0 + sag(y0), y0], [c0 + s * y1 + sag(y1), y1]], () => 0.8, rope.base));
+    }
+    for (const [ca, sa] of lines) for (const [cb, sb] of lines) {
+      if (sa <= 0 || sb >= 0) continue;
+      const y = (cb - ca) / (sa - sb);
+      const x = ca + sa * y;
+      if (y > 5 && y < 73 && x > 3 && x < 45) out.push(E(x + sag(y), y, 1.3, 1.1, rope.sh));
+    }
+    out.push(R(1, 2, 46, 3, '#b48a6a'), F(R(1, 4, 46, 1, '#8a6a5a')));
+    const s = [0, 1.2, 0, -1.2][f];
+    const brass = ramp('#e8b85a', 0.85);
+    out.push(band([[24, 5], [24 + s * 0.4, 30]], () => 0.5, '#8a6a5a'));
+    out.push(T([[20 + s, 40], [21 + s, 32], [24 + s, 30], [27 + s, 32], [28 + s, 40], [29.4 + s, 42], [18.6 + s, 42]], brass.base), F(T([[24 + s, 30], [27 + s, 32], [28 + s, 40], [29.4 + s, 42], [24 + s, 42]], brass.sh)), F(R(21.6 + s, 33, 1, 7, brass.hi)), E(24 + s * 1.3, 43.4, 1.6, 1.4, brass.deep));
+    return out;
+  },
+};
+const themedSealArt = (kind, f) => art(`dg-seal-${kind}|${f}`, 48, 76, () => THEMED_SEALS[kind](f).filter(Boolean), false);
+
+function drawThemedSeal(ctx, kind, x, y, open, time) {
+  if (open) return;
+  const c = SEAL_GLOW[kind];
+  shadow(ctx, x, y, 24, 0.2);
+  const pulse = 0.5 + 0.5 * Math.sin(time * 2.2);
+  const f = Math.floor(time * 3.2) % 4;
+  glow(ctx, x, y - 38, 26 + pulse * 5, c, 0.4 + pulse * 0.25);
+  place(ctx, themedSealArt(kind, f), x, y);
+  glow(ctx, x, y - 38, 7 + pulse * 2, '#ffffff', 0.25 + pulse * 0.25);
+  ctx.globalAlpha = 0.6 + 0.4 * pulse;
+  sparkle(ctx, x + 6, y - 46, 1.6 + pulse, '#ffffff');
+  ctx.globalAlpha = 1;
 }

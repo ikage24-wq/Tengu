@@ -673,7 +673,7 @@ export const MOBS = {
   // (The Queen's dream's bosses, 2026-11-19: sized for about 1.5-2 minutes at the level-43 group's
   // ~6.5k a second (the bots alone do about half that); Monday's last 12% is the ending scene.)
   mugboss: mob({
-    id: 'mugboss', name: 'The Coffee Mug Boss', level: 42, hp: 620000, atk: 262, def: 62, acc: 132, eva: 8, exp: 62000, gold: [740, 1000],
+    id: 'mugboss', name: 'The Night Manager', level: 42, hp: 620000, atk: 262, def: 62, acc: 132, eva: 8, exp: 62000, gold: [740, 1000],
     speed: 34, w: 64, h: 100, art: 'mugboss', boss: true,
     drops: [{ id: 'encore_rose', chance: 1, qty: 3 }, { id: 'white_potion', chance: 1, qty: 18 }],
     fight: { every: 1.9, reach: 74, windup: 0.5 }, mech: 'mugboss',

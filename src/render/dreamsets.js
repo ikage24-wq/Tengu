@@ -144,7 +144,7 @@ export function drawPaintedDreamTrain(ctx, t, cam, width, height, time, layerY, 
   for (let x = -wrap(off, 150); x < width; x += 150) {
     glow(ctx, x + 50, base - 296, 60, '#fff8e0', 0.25);
     ctx.fillStyle = '#fffbe8';
-    ctx.fillRect(Math.round(x + 10), base - 300, 80, 6);
+    ctx.fillRect(snap(x + 10), base - 300, 80, 6);
   }
   // The lower wall, under the seats.
   ctx.fillStyle = '#c2bed6';
@@ -155,7 +155,7 @@ export function drawPaintedDreamTrain(ctx, t, cam, width, height, time, layerY, 
   const span = 250;
   for (let i = -1; i < Math.ceil(width / span) + 2; i++) {
     const si = i + Math.floor(off / span);
-    const cx = Math.round(i * span - wrap(off, span) + span / 2);
+    const cx = snap(i * span - wrap(off, span) + span / 2);
     if (((si % 4) + 4) % 4 === 0) {
       // A pair of sliding doors, little windows in them, yellow safety edges; a sign over them.
       ctx.fillStyle = '#a8acc4';
@@ -250,12 +250,15 @@ function officeWall(ctx, cam, width, height, time, layerY, map, night) {
   const offS = cam.x * ks;
   for (let i = -1; i < width / 46 + 2; i++) {
     const n = i + Math.floor(offS / 46);
-    const bx = Math.round(i * 46 - wrap(offS, 46));
+    const bx = snap(i * 46 - wrap(offS, 46));
     const bh = 50 + h01(n) * 110;
     ctx.fillStyle = night ? '#1a1e3e' : '#a8b8d8';
     ctx.fillRect(bx, bot - bh, 40, bh);
     ctx.fillStyle = night ? '#ffe08a' : '#d8e6f6';
-    for (let wy = bot - bh + 8; wy < bot - 6; wy += 10) for (let wx = bx + 5; wx < bx + 36; wx += 9) if (!night || h01(n * 13 + wx * 0.7 + wy) > 0.55) ctx.fillRect(wx, wy, 4, 5);
+    // (Which windows are lit is the tower's own, by each window's row and column in it: picked by
+    // where the window sat on the screen, they switched on and off as the skyline slid by while you
+    // walked, 2026-11-22.)
+    for (let r = 0, wy = bot - bh + 8; wy < bot - 6; wy += 10, r++) for (let c = 0, wx = bx + 5; wx < bx + 36; wx += 9, c++) if (!night || h01(n * 13 + c * 7.3 + r * 3.1) > 0.55) ctx.fillRect(wx, wy, 4, 5);
   }
   if (night) {
     ctx.fillStyle = '#fff6d0';
@@ -265,7 +268,7 @@ function officeWall(ctx, cam, width, height, time, layerY, map, night) {
   }
   // Mullions and the sill.
   ctx.fillStyle = night ? '#3a4060' : '#c8ccd8';
-  for (let x = -wrap(cam.x * k, 120); x < width; x += 120) ctx.fillRect(Math.round(x), top, 6, bot - top);
+  for (let x = -wrap(cam.x * k, 120); x < width; x += 120) ctx.fillRect(snap(x), top, 6, bot - top);
   ctx.fillRect(0, top - 6, width, 8);
   ctx.fillRect(0, bot - 2, width, 10);
   // The wall below, a skirting.
@@ -282,7 +285,7 @@ function officeWall(ctx, cam, width, height, time, layerY, map, night) {
   const bd = layerY(0, kd);
   for (let i = -1; i < width / 150 + 2; i++) {
     const n = i + Math.floor(offD / 150);
-    const x = Math.round(i * 150 - wrap(offD, 150));
+    const x = snap(i * 150 - wrap(offD, 150));
     blit(ctx, deskPic(night), snap(x - M), snap(bd - 70 - M));
     if (night && h01(n * 5) > 0.45) glow(ctx, x + 58, bd - 50, 40, '#8fd0ff', 0.22);
   }
@@ -361,7 +364,7 @@ export function drawPaintedDreamStore(ctx, t, cam, width, height, time, layerY, 
     const fl = h01(Math.floor(time * 7) + Math.round((x + cam.x * 0.6) / 160)) > 0.97 ? 0.4 : 1;
     glow(ctx, x + 60, base - 300, 70, '#ffffff', 0.3 * fl);
     ctx.fillStyle = hexA('#ffffff', fl);
-    ctx.fillRect(Math.round(x + 10), base - 304, 100, 5);
+    ctx.fillRect(snap(x + 10), base - 304, 100, 5);
   }
   // A coloured stripe round the walls, the shop's own.
   ctx.fillStyle = '#7fd0a8';
@@ -413,7 +416,7 @@ export function drawPaintedDreamStore(ctx, t, cam, width, height, time, layerY, 
   const offS = cam.x * k3;
   for (let i = -1; i < width / 190 + 2; i++) {
     const n = i + Math.floor(offS / 190);
-    const x = Math.round(i * 190 - wrap(offS, 190));
+    const x = snap(i * 190 - wrap(offS, 190));
     blit(ctx, shelfPic(((n % 3) + 3) % 3), snap(x - M), snap(b3 - 100 - M));
   }
   // The counter and the till at the far end, the hot food case glowing.
@@ -461,12 +464,14 @@ export function drawPaintedDreamFlat(ctx, t, cam, width, height, time, layerY, a
   ctx.fillStyle = '#cfc0e4';
   ctx.fillRect(0, 0, width, height);
   ctx.fillStyle = '#c4b4dc';
-  for (let x = -wrap(cam.x * k, 28); x < width; x += 28) ctx.fillRect(Math.round(x), 0, 12, height);
+  for (let x = -wrap(cam.x * k, 28); x < width; x += 28) ctx.fillRect(snap(x), 0, 12, height);
   ctx.fillStyle = '#e8e0f2';
   ctx.fillRect(0, base - 10, width, height);
   // The window: the city at night, rain running down it, Mr. Prickles on the sill.
-  const wx = sx(cam, width, mw * 0.5, k);
-  const top = base - 250;
+  // (On the screen's pixels as it slides, and its towers' lit windows are their own, by each
+  // window's place in its tower, never by where it sits on the screen: they twinkled as you walked.)
+  const wx = snap(sx(cam, width, mw * 0.5, k));
+  const top = snap(base - 250);
   ctx.save();
   ctx.beginPath();
   ctx.rect(wx - 110, top, 220, 150);
@@ -482,7 +487,7 @@ export function drawPaintedDreamFlat(ctx, t, cam, width, height, time, layerY, a
     ctx.fillStyle = '#1e2248';
     ctx.fillRect(bx, top + 150 - bh, 22, bh);
     ctx.fillStyle = '#ffe08a';
-    for (let wy = top + 156 - bh; wy < top + 146; wy += 9) for (let wx2 = bx + 4; wx2 < bx + 20; wx2 += 7) if (h01(wx2 * 3 + wy) > 0.6) ctx.fillRect(wx2, wy, 3, 4);
+    for (let r = 0, wy = top + 156 - bh; wy < top + 146; wy += 9, r++) for (let c = 0, wx2 = bx + 4; wx2 < bx + 20; wx2 += 7, c++) if (h01(i * 31 + c * 7.3 + r * 3.1 + 5) > 0.6) ctx.fillRect(wx2, wy, 3, 4);
   }
   rain(ctx, wx - 110, top, 220, 150, time, 7);
   ctx.restore();

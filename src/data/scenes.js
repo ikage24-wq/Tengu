@@ -2034,11 +2034,12 @@ export const THEATRE_SCENES = {
     { card: 'Dream Theatre', sub: 'Rank {grade}  ·  {time}' },
     { who: null, text: '{notes}. Rank bonus on your rewards: +{bonus}.' },
   ],
-  // The Coffee Mug Boss, staged: overtime, every desk empty but his; he spins round from his phone,
-  // delighted, "just one more thing", and slaps a stack of papers down.
+  // The Night Manager (the Coffee Mug Boss, redrawn as her human manager 2026-11-22), staged:
+  // overtime, every desk empty but his; he turns, delighted, "just one more thing", and swats his
+  // clipboard down so the memos fly.
   theatre_mugboss: [
     { together: [{ cam: 'mugboss', up: 20, dur: 1.2 }, { walk: 'player', to: 'mugboss', gap: 190, speed: 100 }] },
-    { who: null, text: 'Overtime. Every desk is empty but one. A coffee mug in a tie paces in front of it, tapping at his phone.' },
+    { who: null, text: 'Overtime. Every desk is empty but one. A man in a sweater vest paces in front of it, his travel mug steaming, his glasses fogged from one sip too many.' },
     { together: [{ face: 'mugboss', to: 'player' }, { emote: 'mugboss', kind: '!' }, { jump: 'mugboss', height: 10 }] },
     { who: 'mugboss', text: "Ah, good, you're still here! Got a minute? Just one more thing.", mood: 'happy' },
     { who: 'player', text: "It's ten at night." },
@@ -2140,7 +2141,7 @@ export const THEATRE_RADIO = {
   'enter:theatre1': ['Three tickets lost somewhere in the lobby, darlings. And step into the spotlights: everything looks better in the light. Even the monsters, who hurt more there.'],
   'enter:theatre2': ['Act One: her morning train! It sways, so lean into it. And when the bags tumble off the racks, MOVE.'],
   'enter:theatre3': ['Act Two: the office. Watch the phones light up, then answer them in order. Miss one and we start from the top!'],
-  'enter:theatre4': ['The Coffee Mug Boss. Spread out for his memos, step away from his stamp, and get behind him for his coffee break.'],
+  'enter:theatre4': ['The Night Manager. Spread out for his memos, step away from his stamp, and get behind him for his coffee break.'],
   'enter:theatre5': ['The Cup-Noodle Dragon. When he sets his timer, get up on the shelves before the broth boils over!'],
   'enter:theatre6': ['Monday himself, darlings. Find the gap in his invites, jump his Deadline, and hold on. Somebody up there is nearly awake.'],
   'clear:theatre1': ['Tickets found. Take your seats... I mean, on to the stage!'],
@@ -2153,7 +2154,7 @@ export const THEATRE_RADIO = {
   cut: ['CUT! Back to your marks, then out of her circle!'],
   curtain: ['The curtain! Jump it!'],
   twist: ['Plot twist! Swap sides when the stage turns!'],
-  caffeine: ['He refilled himself! Quicker now, darlings!'],
+  caffeine: ['He refilled his mug! Quicker now, darlings!'],
   boil: ['Three minutes! Up on the shelves!'],
   invites: ['Invites from both walls! Find the gap!'],
   deadline: ['The Deadline! Jump it, or get up on the furniture!'],

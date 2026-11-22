@@ -94,18 +94,22 @@ export function updateCamera(cam, world, dt) {
     if (cine.cam) {
       const sh = cine.shake ? cine.shake.amp * (cine.shake.left / cine.shake.dur) : 0;
       const t = performance.now() / 1000;
+      // (Its quake shakes the whole scene with drawWorld's shake, not just the camera the world's
+      // own layers follow: 2026-11-22.)
+      cam.quake = sh ? [Math.sin(t * 61) * sh, Math.cos(t * 53) * sh * 0.6] : null;
       // (`cine.zoom`: the scene's camera pushed in for a close shot; the view is that much smaller,
       // centred on the same point, and drawWorld scales it up to fill the screen.)
       const z = Math.max(1, cine.zoom ?? 1);
       const vw = VIEW_W / z;
       const vh = VIEW_H / z;
       cam.zoom = z;
-      cam.x = Math.max(0, Math.min(map.width - vw, cine.cam.x - vw / 2 + Math.sin(t * 61) * sh));
-      cam.y = Math.max(0, Math.min(map.height - vh + BAR_ROOM / z, cine.cam.y - vh * 0.55 + Math.cos(t * 53) * sh * 0.6));
+      cam.x = Math.max(0, Math.min(map.width - vw, cine.cam.x - vw / 2));
+      cam.y = Math.max(0, Math.min(map.height - vh + BAR_ROOM / z, cine.cam.y - vh * 0.55));
       return;
     }
     cine.view = { x: cam.x + VIEW_W / 2, y: cam.y + VIEW_H * 0.55 };
   }
+  cam.quake = null;
   // The Mochi Show (world/mochi-show.js): its shots, wide or close, the camera gliding from one to
   // the next - starting gently and settling gently (a critically damped spring) - and never past the
   // hall's edges. (The spring moves the view's edges and its width together, from one shot's frame -
@@ -387,7 +391,7 @@ function drawMobs(ctx, world, cam, time) {
     // Lowering on a thread in a cutscene: the thread runs up out of sight.
     if (m.cine?.thread && m.cine.lift > 1) {
       ctx.fillStyle = 'rgba(255,255,255,0.7)';
-      ctx.fillRect(Math.round(x) - 0.5, -10, 1, y - m.def.h + 10);
+      ctx.fillRect(snap(x) - 0.5, -10, 1, y - m.def.h + 10);
     }
     // Sunk into the floor in a cutscene (to rise out of it): drawn lower, cut off at the floor.
     const sink = m.cine?.sink ?? 0;
@@ -527,13 +531,23 @@ export function drawWorld(ctx, world, viewCam, time) {
   // (And the other players' at theirs, the ones in view.)
   if (world.bots) botLifeBeats(feel.fx, world, [...botsIn(world.bots, world.map.id), ...bodiedIn(world.bots, world.map.id)].filter((x) => x.life && Math.abs((x.body?.x ?? x.x) - viewCam.x - VIEW_W / 2) < VIEW_W), time);
   updateParticles(feel.fx, dt, world, viewCam, VIEW_W, VIEW_H);
-  const [ox, oy] = shakeOffset(feel.fx, time);
+  // Screen shake (and a cutscene's quake, updateCamera's `quake`).
+  const [sx, sy] = shakeOffset(feel.fx, time);
+  const ox = sx + (viewCam.quake?.[0] ?? 0);
+  const oy = sy + (viewCam.quake?.[1] ?? 0);
   // The camera sits on whole screen pixels: between them, every thin line (grass blades, the
   // spikes along a lip, outlines) was drawn half in two pixels and flickered as it slid across them
   // while you walked. On the pixel grid the whole scene steps together, crisp, every frame.
   // (In the Mochi Show's close shots, on the zoomed screen's pixels: render/show.js.)
   const zs = world.show || world.sumo || world.cine ? (viewCam.zoom ?? 1) : 1;
-  const cam = { x: snap((viewCam.x + ox) * zs) / zs, y: snap((viewCam.y + oy) * zs) / zs };
+  const cam = { x: snap(viewCam.x * zs) / zs, y: snap(viewCam.y * zs) / zs };
+  // The shake moves the whole scene as one, its far backdrops too (2026-11-22). It used to be added
+  // to the camera, which only the world's own layers follow: the stage, its props and everyone on it
+  // rattled while a sky or backdrop fixed to the screen stood still behind them, and in every fight
+  // the scenery seemed to flicker. The edge it uncovers is filled from the row beside it.
+  const shx = snap(ox * zs) / zs;
+  const shy = snap(oy * zs) / zs;
+  feel.shake = [shx, shy];
   // A race's closer camera (updateCamera): the whole scene drawn larger. (Anything a race draws in
   // screen space finds the unzoomed screen in `world.race.screenT`.)
   const zoom = (world.race || world.show || world.sumo || world.cine) && (viewCam.zoom ?? 1) !== 1 ? viewCam.zoom : 1;
@@ -542,14 +556,51 @@ export function drawWorld(ctx, world, viewCam, time) {
   if (world.sumo) world.sumo.zoom = zoom;
   ctx.save();
   if (zoom !== 1) ctx.scale(zoom, zoom);
+  if (shx || shy) ctx.translate(-shx, -shy);
   try {
     drawWorldLayers(ctx, world, cam, time, b, zoom);
   } finally {
     ctx.restore();
   }
+  if (shx || shy) fillShakeEdges(ctx, shx * zoom, shy * zoom);
   // (The Mochi Show's words and confetti: on the screen itself, over everything, crisp.)
   if (world.show) drawShowScreen(ctx, world.show, cam, time);
   if (world.sumo) drawSumoScreen(ctx, world.sumo, cam, time);
+}
+
+// The strip of screen a shake uncovers (the scene moved by (dx, dy) world pixels, drawn at the
+// context's own scale), filled by stretching the row or column of pixels next to it, so the edge of
+// the view never shows a gap or last frame's picture.
+function fillShakeEdges(ctx, dx, dy) {
+  const T = ctx.getTransform();
+  const x0 = Math.round(T.e);
+  const y0 = Math.round(T.f);
+  const W = Math.round(VIEW_W * T.a);
+  const H = Math.round(VIEW_H * T.d);
+  const mx = Math.round(dx * T.a);
+  const my = Math.round(dy * T.d);
+  ctx.save();
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.imageSmoothingEnabled = false;
+  const c = ctx.canvas;
+  // (The scene moved left by mx: the right edge is bare; moved right: the left edge.)
+  if (mx > 0 && mx < W) ctx.drawImage(c, x0 + W - mx - 1, y0, 1, H, x0 + W - mx, y0, mx, H);
+  else if (mx < 0 && -mx < W) ctx.drawImage(c, x0 - mx, y0, 1, H, x0, y0, -mx, H);
+  if (my > 0 && my < H) ctx.drawImage(c, x0, y0 + H - my - 1, W, 1, x0, y0 + H - my, W, my);
+  else if (my < 0 && -my < H) ctx.drawImage(c, x0, y0 - my, W, 1, x0, y0, W, -my);
+  ctx.restore();
+}
+// Draws `fn` still on the screen while the scene shakes (a callout, a fade over the whole view).
+function steady(ctx, fn) {
+  const [x, y] = feel.shake ?? [0, 0];
+  if (!x && !y) return fn();
+  ctx.save();
+  ctx.translate(x, y);
+  try {
+    fn();
+  } finally {
+    ctx.restore();
+  }
 }
 
 // Everything in the world, back to front, at the camera `cam` (drawWorld).
@@ -801,18 +852,21 @@ function drawWorldLayers(ctx, world, cam, time, b, zoom = 1) {
   else drawFx(ctx);
   lap('fx');
   if (settings.damageNumbers) drawNumbers(ctx, world, cam);
-  drawCallout(ctx, world);
+  // (A callout sits on the screen, not in the scene: it holds still through a shake.)
+  steady(ctx, () => drawCallout(ctx, world));
   if (settings.chatBubbles) drawBubbles(ctx, world, cam);
   // Every bubble queued this frame (yours, NPCs', the crowd's, your party's), laid out together.
   flushBubbles(ctx, Boolean(world.scene));
   // HD: a new map fades in from a soft glow instead of cutting straight in.
   const enter = time - (feel.enteredAt ?? -9);
   if (gfx.hd && enter < 0.5) {
-    ctx.save();
-    ctx.globalAlpha = (1 - enter / 0.5) ** 2;
-    ctx.fillStyle = '#fff6fb';
-    ctx.fillRect(0, 0, VIEW_W, VIEW_H);
-    ctx.restore();
+    steady(ctx, () => {
+      ctx.save();
+      ctx.globalAlpha = (1 - enter / 0.5) ** 2;
+      ctx.fillStyle = '#fff6fb';
+      ctx.fillRect(0, 0, VIEW_W, VIEW_H);
+      ctx.restore();
+    });
   }
 }
 
@@ -1021,7 +1075,7 @@ function drawDungeonBack(ctx, world, cam, time) {
   for (const p of world.map.portals) {
     if (!p.sealed) continue;
     const x = p.x - cam.x;
-    if (x > -40 && x < VIEW_W + 40) drawSeal(ctx, x, p.y - cam.y, room.cleared, time);
+    if (x > -40 && x < VIEW_W + 40) drawSeal(ctx, x, p.y - cam.y, room.cleared, time, world.map.dungeon);
   }
   for (const o of room.objects) {
     const x = o.x - cam.x;

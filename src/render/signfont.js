@@ -14,6 +14,8 @@
 // and room for the bowl of a B or an R to close.) Lower case is drawn as small capitals, because a
 // hand-painted sign is lettered that way anyway.
 
+import { snap } from './pixel.js';
+
 const G = {
   A: [0x0e, 0x11, 0x11, 0x1f, 0x11, 0x11, 0x11],
   B: [0x1e, 0x11, 0x11, 0x1e, 0x11, 0x11, 0x1e],
@@ -122,8 +124,8 @@ export function signText(ctx, str, x, y, { size = 1, color = '#4a3a52', align = 
 export function signBoard(ctx, str, x, y, { size = 1, color = '#4a3a52', board = '#fff4e2', rim = '#c08a52', pad = 4 } = {}) {
   const w = Math.round(signWidth(str, size) + pad * 2);
   const h = Math.round(signHeight(size) + pad + 1);
-  const bx = Math.round(x - w / 2);
-  const by = Math.round(y - h / 2);
+  const bx = snap(x - w / 2);
+  const by = snap(y - h / 2);
   // Its shadow on whatever it is hung on.
   ctx.fillStyle = 'rgba(70,40,30,0.22)';
   ctx.fillRect(bx, by + 2, w + 3, h + 1);

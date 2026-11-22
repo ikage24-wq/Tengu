@@ -18,7 +18,7 @@
 // Chapter 9 (2026-11-19): the theatre is the Queen's dream, and its last acts are her old life in
 // the human world. The Playwright stages it and isn't fought; three new bosses, built the FFXIV way
 // (world/bossfight.js):
-//   Act III: Overtime      the Coffee Mug Boss: memos, a stamp on the tank, coffee slopped ahead;
+//   Act III: Overtime      the Night Manager: memos, a stamp on the tank, coffee slopped ahead;
 //                          at half health a Caffeine Rush (files to share, a double shot).
 //   The Convenience Store  the Cup-Noodle Dragon: steam round him, a noodle whip, hot broth, a
 //                          chopstick snap; at 66% and 33% "Three Minutes!" (the broth boils over the
@@ -165,7 +165,7 @@ function holdCast(world, m, until) {
   return false;
 }
 
-// The Coffee Mug Boss. Her manager, who always has just one more thing: a memo over everyone, a
+// The Night Manager (once the Coffee Mug Boss). Her manager, who always has just one more thing: a memo over everyone, a
 // stamp on the tank, a coffee break slopped across the floor ahead of him. At half health, the
 // Caffeine Rush: he's quicker, hands out a stack of files to share, and pours a double shot.
 const MUG_MEMO = { gap: 2.6, look: 'memo', cast: 'Just One More Thing', dur: 2.8, pose: 'memo', sub: 'A memo over each of you: spread out', run: (w, m, up) => spread(w, m, up, 160, 2.8) };
@@ -182,7 +182,7 @@ function mugboss(world, m, up, dt) {
   const s = (m.mech ??= { rush: false });
   if (!s.rush && m.hp / m.def.hp <= 0.5) {
     s.rush = true;
-    callout(world, 'Caffeine Rush!', 'He refilled himself: quicker, and one more thing after another');
+    callout(world, 'Caffeine Rush!', 'He refilled his mug: quicker, and one more thing after another');
     radio(world, 'caffeine');
     m.rushAt = world.now;
   }

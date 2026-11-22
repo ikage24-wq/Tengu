@@ -595,7 +595,7 @@ function domes(ctx, cam, width, height, base, k, span, rMin, rMax, cols, seed, a
   const land = mix(cols[0], air, wash + 0.08);
   for (let i = -1; i < Math.ceil(width / span) + 2; i++) {
     const si = i + Math.floor(off / span);
-    const cx = Math.round(i * span - wrap(off, span) + h01(si + seed) * span * 0.5);
+    const cx = snap(i * span - wrap(off, span) + h01(si + seed) * span * 0.5);
     const r = rMin + h01(si * 3 + seed) * (rMax - rMin);
     const c = cols[((si % cols.length) + cols.length) % cols.length];
     ctx.fillStyle = mix(c, air, wash);
@@ -639,7 +639,7 @@ export function drawPaintedGumdropVale(ctx, t, cam, width, height, time, layerY,
   for (let i = -1; i < Math.ceil(width / span) + 2; i++) {
     const si = i + Math.floor(off / span);
     if (h01(si * 7 + 2) < 0.35) continue;
-    const x = Math.round(i * span - wrap(off, span) + 60 + h01(si + 5) * 120);
+    const x = snap(i * span - wrap(off, span) + 60 + h01(si + 5) * 120);
     const h = 46 + Math.round(h01(si * 5) * 3) * 8;
     blit(ctx, lolliPic(si & 7, h, air, 12), snap(x - 17 - M), snap(b2 - h + 14 - M));
   }
@@ -689,7 +689,7 @@ export function drawPaintedLicoriceMine(ctx, t, cam, width, height, time, layerY
   const fb = layerY(0, kf);
   for (let i = -1; i < Math.ceil(width / span) + 2; i++) {
     const si = i + Math.floor(offF / span);
-    const x = Math.round(i * span - wrap(offF, span));
+    const x = snap(i * span - wrap(offF, span));
     blit(ctx, frameW(air), snap(x - M), snap(fb - 300 - M));
     const lx = x + 100;
     const a = Math.sin(time * 1.1 + si) * 0.1;
@@ -792,12 +792,12 @@ export function drawPaintedCandyKitchen(ctx, t, cam, width, height, time, layerY
   ctx.fillStyle = mix('#ffd2e0', air, 0.15);
   const ts = 22;
   const tx0 = -wrap(off, ts * 2);
-  for (let y = base - 96, r = 0; y > -ts; y -= ts, r++) for (let x = tx0 + (r % 2) * ts; x < width; x += ts * 2) ctx.fillRect(Math.round(x), Math.round(y - ts), ts, ts);
+  for (let y = base - 96, r = 0; y > -ts; y -= ts, r++) for (let x = tx0 + (r % 2) * ts; x < width; x += ts * 2) ctx.fillRect(snap(x), snap(y - ts), ts, ts);
   // The wainscot: candy stripes under a wooden rail.
   ctx.fillStyle = mix(SW.frost, air, 0.15);
   ctx.fillRect(0, base - 96, width, 96 + height);
   ctx.fillStyle = mix(SW.pinkLit, air, 0.15);
-  for (let x = -wrap(off, 28); x < width; x += 28) ctx.fillRect(Math.round(x), base - 92, 12, 92 + height);
+  for (let x = -wrap(off, 28); x < width; x += 28) ctx.fillRect(snap(x), base - 92, 12, 92 + height);
   ctx.fillStyle = mix(SW.wood, air, 0.15);
   ctx.fillRect(0, base - 100, width, 7);
   // The round window, the volcano outside.
@@ -840,7 +840,7 @@ export function drawPaintedCandyKitchen(ctx, t, cam, width, height, time, layerY
     if (x < -100 || x > width + 100) continue;
     blit(ctx, jarShelfPic(air), snap(x - 80 - M), snap(base - 214 - M));
     ctx.fillStyle = mix(SW.copperSh, air, 0.2);
-    ctx.fillRect(Math.round(x - 60), base - 300, 120, 3);
+    ctx.fillRect(snap(x - 60), base - 300, 120, 3);
     for (const [dx, r] of [[-44, 10], [-14, 13], [16, 9], [44, 11]]) blit(ctx, panPic(r), snap(x + dx - r - 3 - M), snap(base - 300 - M));
   }
 }
@@ -904,7 +904,7 @@ export function drawPaintedCaramelForge(ctx, t, cam, width, height, time, layerY
   ctx.fillStyle = mix('#6a3420', air, 0.25);
   for (let y = base, r = 0; y > -20; y -= 18, r++) {
     ctx.fillRect(0, Math.round(y), width, 2);
-    for (let x = -wrap(off + (r % 2) * 22, 44); x < width; x += 44) ctx.fillRect(Math.round(x), Math.round(y - 18), 2, 18);
+    for (let x = -wrap(off + (r % 2) * 22, 44); x < width; x += 44) ctx.fillRect(snap(x), snap(y - 18), 2, 18);
   }
   // Caramel glow over everything near the furnace.
   const fx = sx(cam, width, mw / 2, k);
@@ -1006,7 +1006,7 @@ export function drawPaintedGingerWall(ctx, t, cam, width, height, time, layerY, 
   }
   const span = 300;
   for (let i = -1; i < Math.ceil(width / span) + 2; i++) {
-    const x = Math.round(i * span - wrap(off, span) + 120);
+    const x = snap(i * span - wrap(off, span) + 120);
     blit(ctx, farTowerPic(air), snap(x - 30 - M), snap(b2 - 170 - M));
   }
 }
@@ -1049,7 +1049,7 @@ export function drawPaintedCrater(ctx, t, cam, width, height, time, layerY, air,
   const offL = cam.x * k;
   for (let r = 0; r < 4; r++) {
     const y = lk + 8 + r * 16;
-    for (let x = -wrap(offL * (1 + r * 0.2) + time * (8 + r * 3), 90) - 90; x < width; x += 90) ctx.fillRect(Math.round(x + r * 23), Math.round(y + Math.sin(time + x * 0.01) * 1.5), 26 - r * 4, 1.4);
+    for (let x = -wrap(offL * (1 + r * 0.2) + time * (8 + r * 3), 90) - 90; x < width; x += 90) ctx.fillRect(snap(x + r * 23), snap(y + Math.sin(time + x * 0.01) * 1.5), 26 - r * 4, 1.4);
   }
   for (let j = 0; j < 6; j++) {
     const u = (time * 0.5 + j / 6) % 1;
@@ -1066,7 +1066,7 @@ export function drawPaintedCrater(ctx, t, cam, width, height, time, layerY, air,
   for (let i = -1; i < Math.ceil(width / span) + 2; i++) {
     const si = i + Math.floor(offL / span);
     if (h01(si * 3 + 1) < 0.3) continue;
-    const x = Math.round(i * span - wrap(offL, span) + h01(si) * 120);
+    const x = snap(i * span - wrap(offL, span) + h01(si) * 120);
     const mh = 26 + Math.round(h01(si * 5) * 2) * 12;
     blit(ctx, rockChunksPic(70, mh, ((si % 4) + 4) % 4), snap(x - 35 - M), snap(lk + 26 - mh - M), { alpha: 0.7 });
   }
