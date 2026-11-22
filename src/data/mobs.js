@@ -686,7 +686,7 @@ export const MOBS = {
   }),
   monday: mob({
     id: 'monday', name: 'Monday', level: 45, hp: 740000, atk: 280, def: 68, acc: 138, eva: 8, exp: 96000, gold: [1000, 1400],
-    speed: 28, w: 80, h: 140, art: 'monday', boss: true,
+    speed: 28, w: 66, h: 140, art: 'monday', boss: true,
     drops: [{ id: 'encore_rose', chance: 1, qty: 5 }],
     fight: { every: 2, reach: 92, windup: 0.6 }, mech: 'monday',
   }),

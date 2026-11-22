@@ -26,7 +26,7 @@
 //   Her Flat               Monday: emails, the red pen, the alarm clock; meeting invites closing in
 //                          from the walls from 75%, the Deadline over the whole floor from 50%. At
 //                          12% the Queen rolls over in her sleep, "five more minutes", and Monday
-//                          crumples.
+//                          yawns and falls asleep.
 
 import { addZone, callout } from './dungeon.js';
 import { navOf, surfaceBelow } from './nav.js';
@@ -229,7 +229,7 @@ function noodledragon(world, m, up, dt) {
 // Monday. The thing she dreaded most: emails over everyone, the red pen on the tank, the alarm
 // clock for the whole room. From 75%, meeting invites slide in from both walls and leave one gap;
 // from 50%, the Deadline comes down on the whole floor. And at 12%, the Queen rolls over in her
-// sleep and says the magic words (the scene theatre_monday_end), and Monday crumples.
+// sleep and says the magic words (the scene theatre_monday_end), and Monday yawns and falls asleep.
 const invites = (w, m, dur) => {
   const map = w.map;
   const gap = 150;
@@ -251,7 +251,7 @@ function monday(world, m, up, dt) {
   const s = (m.mech ??= { phase: 1, ending: false });
   const frac = m.hp / m.def.hp;
   if (s.ending) {
-    // After the scene: he crumples, and the dream's week is over.
+    // After the scene: she's fast asleep, and the dream's week is over.
     if (world.scene) return true;
     m.minHp = 0;
     run.zones = [];

@@ -2066,7 +2066,7 @@ export const THEATRE_SCENES = {
     { cam: 'player', dur: 0.7 },
   ],
   // Monday, staged: the Playwright announces the final act from his box, his one fan cheering;
-  // then the calendar page stomps up, red pen raised.
+  // then Monday, the Weekend-Eating Baku, stomps up, her giant red pen raised.
   theatre_monday: [
     { cast: 'playwright', ...PLAYWRIGHT_CAST },
     { cast: 'zunda', x: 184, y: 214, facing: 1, ...ZUNDA_CAST },
@@ -2085,7 +2085,8 @@ export const THEATRE_SCENES = {
     { cam: 'player', dur: 0.7 },
   ],
   // Monday held at the last (world/theatre.js): the Queen climbs down from her loft bed, fast
-  // asleep, and says the magic words; Monday crumples (render/mobs/dreamrigs.js `crumple`).
+  // asleep, and says the magic words; Monday yawns (yawns are catching) and falls asleep on her
+  // feet (render/mobs/mondaykidrig.js, `mood: 'crumple'`).
   theatre_monday_end: [
     { together: [{ cam: 'monday', up: 20, dur: 1 }, { jump: 'monday', height: 10 }, { emote: 'monday', kind: 'anger' }] },
     { who: 'monday', text: 'You cannot beat Monday! Monday ALWAYS comes back! Every week! FOREVER!', mood: 'angry' },
@@ -2098,9 +2099,9 @@ export const THEATRE_SCENES = {
     { emote: 'hayate', kind: 'zzz', dur: 2 },
     { who: 'hayate', text: '...mmn... five more minutes...', mood: 'sleepy' },
     { together: [{ walk: 'hayate', away: 'monday', by: 16, speed: 24 }, { emote: 'hayate', kind: 'zzz', dur: 2 }] },
-    { together: [{ mood: 'monday', as: 'crumple' }, { fx: 'pages', at: 'monday', top: true, n: 18 }, { shake: 2, dur: 0.6 }] },
-    { who: 'monday', text: 'F-five...? Nobody says five more minutes to MONDAY...' },
-    { who: null, text: 'Nobody ever has. Monday has no idea what to do. It crumples up like an old calendar page.' },
+    { who: 'monday', text: 'F-five...? Nobody says five more minutes to MONDAY...', mood: 'sad' },
+    { together: [{ mood: 'monday', as: 'crumple' }, { fx: 'pages', at: 'monday', top: true, n: 8 }] },
+    { who: null, text: 'Nobody ever has. Monday opens her mouth to shout... and yawns. Yawns are catching. Monday is fast asleep.' },
     { together: [{ walk: 'hayate', away: 'monday', by: 260, speed: 50 }, { emote: 'hayate', kind: 'zzz', dur: 3 }] },
     { hide: 'hayate', dur: 0.8 },
   ],

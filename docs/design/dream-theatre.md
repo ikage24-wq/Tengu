@@ -12,7 +12,8 @@ train, the office, overtime, noodles at 2 a.m., her flat and Monday), to an audi
 Zunda. Every morning the whole island wakes up feeling like it's Monday. Encore, a retired stage
 star, has a backstage pass. The Playwright isn't fought any more: he stands in a theatre box at the
 side of her flat, and Monday is the last boss. At 12% the Queen sleepwalks in and says "five more
-minutes", and Monday crumples (world/theatre.js; the fights are built on world/bossfight.js).
+minutes", and Monday (the Weekend-Eating Baku, a girl who ate her weekends) yawns and falls asleep
+(world/theatre.js; the fights are built on world/bossfight.js).
 
 The table below is the original 2026-11-02 run. Rooms 2-6 are now: Act I: The Morning Train (the
 carriage rocks, bags fall off the racks), Act II: The Office (answer the desk phones in order),
