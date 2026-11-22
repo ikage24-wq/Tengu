@@ -4,6 +4,53 @@ A pastel chibi 2D side-scroller RPG in vanilla JS canvas (no build step). `npm t
 `node:test` suites; `npm start` serves the game at http://localhost:8000. See README.md for the
 game itself and the source layout.
 
+## The game the player wants (the player's standing rules, 2026-11-22)
+
+A fun, cute, complete game with lots of side content. Nothing tedious or unfun. Everything good
+looking, smooth and HD. No clutter, no low quality, no lazy art, rigging or animation. Everything is
+looked at and rechecked so it matches what it really is. Every rule below and in the rest of this
+file serves that.
+
+- **Match the real thing.** Before animating anything (a walk, a creature, a tool, water, cloth),
+  write down 3-5 things the real motion always does, then check every frame against them. A human
+  walk: contact, down, passing and up poses; heel strike, then toe-off; the opposite arm forward;
+  hips and shoulders twisting against each other; the head rising at passing. A bird folds its
+  wings against its body and walks or hops bird-footed. A cat sits on its haunches with its tail
+  wrapped. A door swings on its hinges; water runs downhill. Style (chibi, bouncy, cute) goes on top
+  of the real motion, never instead of it (the player's earlier calls: a proper bird, not a
+  human-bird mix; the Mochi's realistic runs; the Mochi's real crawl).
+- **Things work the way they look.** You climb a ladder hand over hand on its rungs; a door opens
+  before you walk through it; a chair is sat in; a cup is held by its handle; a bowstring really
+  pulls back. A sound matches its source: footsteps match the ground, a big monster sounds big.
+- **Nothing tedious.** Before anything ships, ask what the player does, decides or enjoys in every
+  minute of it. No waiting with nothing to do, no walking back over empty ground, no clicking one
+  button over and over to progress, no more than two menu steps for something done often, no
+  progress lost to bad luck. Long goals are fine; dead time isn't. If a live play feels like a chore
+  anywhere, fix it: shorter, more varied, or rewarding along the way. (The Mochi garden clock that
+  only runs while you're in the garden stays as it is: the player's call, 2026-11-22.)
+- **Side content is complete or not in.** Every side activity has a start you find and learn in
+  play, a middle (goals, variety, rewards that matter on the money scale) and an end goal (a
+  trophy, title, collection or legendary look). It is played once from a fresh save before it's
+  called done. No half-built side modes.
+- **Side content links up.** Every side activity feeds at least one other (fish to dishes, dishes
+  to Mochi sweets, sweets to races; gathering to crafting to the island). Every region offers at
+  least one thing to do that isn't fighting.
+- **One HD standard, no old leftovers.** No old low-resolution or old-frame art sits next to HD art.
+  Keep a list of everything still drawn the old way and remake it to today's standard. Every piece is
+  judged at real size, in a real map, beside its neighbours.
+- **A new rule rechecks the old work.** When a rule is added, list the existing things that break
+  it and work down that list (for example, the Harbor gacha set still predates the legendary rule).
+  Never fix them silently, and never forget them.
+- **Every prop has a job:** a landmark, something usable, a district's one hero piece, or framing.
+  Otherwise it goes. Props come in small groups with open ground between them, and clutter is judged
+  live at real size, walking the floor.
+- **The newest word wins, the same day.** When the player changes their mind, the old rule text
+  is updated or retired that day. Each rule lives in one place (this file, the art guide, the job
+  recipe) and notes point to it, so a stale rule can't steer work again.
+- **Fun is checked live.** Each new feature gets one real play with a fresh character, with real
+  key presses, the way a new player would meet it. It isn't done until that play is fun, clear and
+  smooth.
+
 ## Combat rules (every job, every new skill)
 
 These hold for all jobs, current and future. Keep them when adding or reworking any skill.
@@ -134,8 +181,11 @@ effect, UI piece and map is held to it:
   angles), idle fidgets and the rig's poses whenever it makes the motion read better (the chakram
   was re-gripped on its rim and hung at the hip so it never covers the face). Never the weapon
   itself: its size, shape and look stay as equipped.
-- **Readable.** Nothing covers the face in any pose (standing, idle fidgets, ready, walk, jump,
-  every move); the silhouette says what the move is at game size.
+- **Readable.** Standing, idle fidgets, ready, walking, jumping, talking and scenes keep the face
+  clear. During a move, a hand or a held bow, crossbow, spear or staff may pass in front of the face
+  or head (the player's calls, 2026-11-09 and 2026-11-16: it reads better than cutting the weapon
+  out round her head), but no tip ever pokes out of her hair. The silhouette says what the move is
+  at game size.
 - **Its effects follow the moves**, in the job's own colour and shapes, never another job's
   defaults (no steel trails, pillars or emblems on a coral dancer).
 - **Checked moving, then shown.** Look at every move as a strip of moments (`tools/move-strip.html`)
@@ -145,17 +195,21 @@ effect, UI piece and map is held to it:
 If something reads as plain, rigid or "default", it isn't done: rework it before showing it.
 
 **Summons are built on a player character, with a new rig (the player's standing rule, for every
-summon and companion).** Every summon (a companion, a guardian, anything a job calls
-to fight beside it) starts from the player character (the hero's body, parts and drawing, so it
-belongs in the game's look), and then gets:
+summon and companion).** Every person-shaped summon (a companion, a guardian, a spirit in a
+person's shape like the kitsune guardian or an oni, anything humanoid a job calls to fight beside
+it) starts from the player character (the hero's body, parts and drawing, so it belongs in the
+game's look). A summon that is an animal or creature (a bird, a wolf, a phoenix) is never a person
+in a costume: it is built on the creature rig like every other animal, with its own face, body plan
+and gait (2026-11-22, matching "monsters never on the hero's body" and "creatures on the rig").
+Either way it gets:
 - a new rig of its own: its own skeleton, poses and joints on top of that base, never the
   player's moves and never another summon's;
 - new animations of its own: very, very smooth and expressive, with anticipation, overshoot,
   follow-through and overlap, idle life and personality in every move, unique to it;
 - a unique look: its own outfit, hair, ears, tail, face and props (draw new parts freely), and its
   own size and silhouette where the design calls for it (bigger or smaller, never stretched).
-Never take a shortcut by reusing another character's rig or animations, and never draw a summon
-from scratch outside the player-character base.
+Never take a shortcut by reusing another character's rig or animations, and never draw a
+person-shaped summon from scratch outside the player-character base.
 
 **Freedom for polish (the player's standing rule).** Small fixes and polish that are clearly better
 (smoother motion, a cleaner pose, a fixed effect, a re-rig so a move reads) don't need asking. Real
@@ -167,8 +221,7 @@ animation, no spam, never restyle a weapon) and show the result with pictures or
 
 Every character, monster, summon, NPC, move, prop, map, effect and UI piece meets all of these.
 "(test)" marks a rule a test checks: the rigs and motion in `tests/rig.test.js` (every frame of
-every move), placement and readability in `tests/placement.test.js`, sizes in `tests/assets.test.js`,
-map-change cleanup in `tests/session.test.js`, and silhouettes, faces, mouths, stamped props and
+every move), placement and readability in `tests/placement.test.js`, map-change cleanup in `tests/session.test.js`, and silhouettes, faces, mouths, stamped props and
 wind-ups in `tests/art-standard.test.js`. Moves or files that broke a rule when its check was
 written sit on that test's KNOWN list, to be fixed (a fixed one must come off it). Rules without a
 test are checked by eye on the strips, the hold sheet and a real map before showing anything.
@@ -267,8 +320,10 @@ test are checked by eye on the strips, the hold sheet and a real map before show
 - **Acting, not posing:** emotions use the whole body, each character in their own way.
 - **No twinning:** poses are never perfectly symmetrical (one shoulder higher, weight on one leg,
   hands doing different things).
-- **The world breathes:** grass sways, water ripples, lamps flicker, smoke drifts, signs creak. No new
-  critters (the player removed the town critters).
+- **The world breathes:** grass sways, water ripples, lamps flicker, smoke drifts, signs creak. No
+  filler critters (hopping birds, random bugs, scattered wildlife: the player removed the town
+  critters and the canyon's ground birds). An animal with a purpose (farm animals, pets, the Mochi)
+  is welcome, built as a live puppet on the creature rig with its own face.
 
 **Design**
 - **No overused defaults without a twist.** Banned as the core of a design: plain fire/ice/lightning
@@ -458,7 +513,8 @@ lookups that can miss.
   rule above). Stage scenes with care: only people who stand near the giver (others come in with
   `spawn`), fixed spots so nobody overlaps a person, a prop or water, the camera framing what the
   words describe, and new cutscene moves or effects when a moment needs them (`ride`, `trip`,
-  bursts at a place). Rewards pay about twice what hunting the same monsters would. Add a
+  bursts at a place). Rewards pay like hunting the same minutes at the quest's level (the player's
+  pick, 2026-11-21: "match hunting"; weigh it with the quest pay audit). Add a
   play-through test in `tests/director.test.js`, watch every scene in the game, fix what looks
   wrong, and send pictures or a video.
 - Bot and NPC chat must never read generic, spammy or repetitive (the player's standing ask).

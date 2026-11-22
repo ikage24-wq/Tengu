@@ -16,7 +16,7 @@ These points come from qfaces2, mfaces, q1, faces-a, faces-c and queens-sky, and
 6. **The hair is rigid slabs.** Tamamo's hime bangs are a rectangle with vertical stripes that look like window blinds, and her side locks are straight bars. Lilith's hair is flat panels with no clump tips. No queen has the band of highlight across the crown that anime hair has. Anime hair is grouped into clumps with pointed tips and shadows where clumps meet (AnimeOutline hair; Slynyrd #29 flow lines).
 7. **The pixel size is mixed and the line weight never varies.** The automatic silhouette outline is 2 real px everywhere, with the same darkness on top and bottom. Interior features are 1-px lines, and the bodies use 3-px logical blocks. The mix of resolutions ("mixels") reads as unprofessional (flowlab mixels thread). Also, there is no interior line between parts of similar value, such as face and bangs or Tamamo's sleeve and body.
 8. **The motion is stiff.** In q1, Tamamo's walk frames are almost identical: she slides, and her tails and hair don't lag behind. Lilith keeps one upright stance.
-9. **Every monster has the same face.** All creatures share `face()` from kit.js: two dot eyes, a white shine, a blush and a small mouth, plus the same `><` hurt face. The outline is a heavy, uniform near-black ring. Each monster reads as a template rather than a species.
+9. **Every monster has the same face.** All creatures share `face()` from kit.js: two dot eyes, a white shine, a blush and a small mouth, plus the same `><` hurt face. The outline is a heavy, uniform near-black ring. Each monster reads as a template rather than a species. *(Fixed 2026-11-20: every monster and boss now has its own face and expressions, and rigs outline only their outer edge. Never go back to a shared face.)*
 
 ---
 
@@ -61,7 +61,7 @@ These points come from qfaces2, mfaces, q1, faces-a, faces-c and queens-sky, and
 21. **Overlap.** Hair tips, tails, sleeves, capes and wings lag the body by **1 frame** on the walk and idle sine (`ph - 0.6`), and the lag grows toward the tip (tertiary parts drag most). A 2-px bob of the body becomes a 1–1.5-lpx swing at the tips.
 22. **The idle is never purely vertical.** Pair every vertical bob with a 0.33–0.67-lpx sideways sway or a shoulder rotation (Saint11 "Character Idle"). Move the face contents 1 frame after the silhouette.
 23. **Blink** every 2.5–5 s (each one's timing set from its own id, so they differ but never flicker: nothing drawn uses a random number). Hold closed for 1 frame (about 80 ms), with a half-closed frame on either side.
-24. **Smears.** On attack frames with fast arcs, add one frame with a smear shape: a crescent in a lighter version of the weapon colour with a hard leading edge that fades out at the trailing edge (Saint11 "Motion Blur"; lighter colours "bleed" over darker ones). Hold the impact frame 120–200 ms, keep wind-ups short at 60–80 ms (sprite-ai timing table), and squash or stretch by 1–3 real px on launches.
+24. **Smears.** On attack frames with fast arcs, add one frame with a smear shape: a crescent in a lighter version of the weapon colour with a hard leading edge that fades out at the trailing edge (Saint11 "Motion Blur"; lighter colours "bleed" over darker ones). Hold the impact frame 120–200 ms. The short 60–80 ms timing (sprite-ai timing table) is only for the smear on your own fast swings, which start on the frame you press. Monsters and bosses keep long, readable wind-ups that grow with the hit (CLAUDE.md, "Power shows in the wind-up" and "Every enemy attack has a visible wind-up"). Never squash or stretch, on launches or anywhere else: a launch shows in the pose (the player's standing rule, 2026-11-22 fix).
 25. **Readable expressions.** Each expression must read from the eye shape alone at 1x in-game. Brows and mouth only support it.
 
 ---
@@ -122,10 +122,12 @@ Head box about 14 w × 15 h. The eye line is at 58% from the crown.
 
 **Live faces (heroes, party, bots, NPCs).** From diives.md, fanart.md finding 8, ko.md 12 and 15, and
 en.md 16:
-- Expressions hold, then snap to the next beat; each loops with one acting moment (a sigh, a yawn,
+- Expressions hold, then ease to the next beat through an in-between, never snapping (CLAUDE.md,
+  "Expressions change through an in-between"); each loops with one acting moment (a sigh, a yawn,
   a sob, a laugh). Excited beats change every 0.125–0.25 s, calm ones hold 0.5 s or longer.
-- Symbol eyes and marks do half the acting: heart pupils, spirals, > <, welling tears, "!" that
-  pops in with an overshoot, "?", z's, steam, gloom lines, circling stars, a big sweat drop.
+- Symbol eyes and marks are for big moments only (CLAUDE.md, "Marks are rare"): heart pupils,
+  spirals, > <, welling tears, "!" that pops in with an overshoot, "?", z's, steam, gloom lines,
+  circling stars, a big sweat drop. Everyday feelings are acted by the eyes, brows and mouth.
 - At rest the eyes wander (a look aside, a look up), blinks take three beats (half, shut, half),
   and some characters blink twice.
 - The moment overrides the chosen expression: wind-up (narrowed eyes, gritted teeth), a shout on
@@ -211,7 +213,7 @@ Tamamo's hair moves from `#fff0d4` to `#ffe2a6`. This is the single biggest fix 
 - Thin the outline on top and light edges (sel-out) and keep the heavy line only at the bottom and back.
 - Add one hue-shifted form shadow on the shadow side (not a ring).
 - Vary the hurt face per species: swirl eyes, tears, or one eye shut.
-- Shape language by threat: friendly mobs are round, elite mobs get one triangle accent (horn, crest, tooth), and bosses are mostly triangles (rocketbrush).
+- Shape language by threat: friendly mobs are round, elite mobs get one triangle accent (horn, crest, tooth). Bosses stay cute and round like the ones the player approved (the Puffball Granny, the Sumo Champ): their menace comes from size, pose, acting and one bold signature accent, not from turning the body into spikes (2026-11-22; replaces "bosses are mostly triangles").
 
 ---
 

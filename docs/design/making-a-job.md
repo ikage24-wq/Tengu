@@ -2,9 +2,9 @@
 
 The recipe for every new job or path. The player approved how the Thunderguard and its paths
 (Stormwall, Tempest) and the Tide Mage and its paths (Tidecaller, Maelstrom) turned out and wants
-every future job made the same way. (The examples below that name the Archer and Thief lines are
-history: both lines were wiped on 2026-11-16.) Read this whole page before starting a job, follow it in order, and update it when something
-new is learned.
+every future job made the same way. (The examples below are today's jobs: the Thunderguard, the
+Tide Mage, the Moon Moth and the Sunfeather, updated 2026-11-22.) Read this whole page before
+starting a job, follow it in order, and update it when something new is learned.
 
 ## 1. Research and plan
 
@@ -16,11 +16,11 @@ new is learned.
   Save what you learn, with sources, in `docs/art/research/`.
 - Decide the job's identity before writing code: its fantasy, which weapon types it uses (shown
   exactly as equipped: a job never restyles the weapon, CLAUDE.md), its **colour**, and its
-  **shape language** (the Warrior's blue cross, the Paladin's gold star and pillars of light, the
-  Berserker's rose claws, fire, torn ground and jagged shockwaves, the Phantom Trickster's plum
-  smoke, cards and doves, the Blade Dancer's rose-gold rings). The shapes must be its own, not another
-  job's in a new colour: the Paladin and Berserker once shared pillars, rings and swings and read
-  as the same job twice. Pick a colour bold enough to read on every map (pale mint vanished on
+  **shape language** (the Thunderguard's slim, morphing lightning; the Tide Mage's whips of water,
+  waves and bubbles; the Moon Moth's round spirit moths in lilac and moon silver with little gold
+  eclipses; the Sunfeather's gold light arrows with two feathers at the tail). The shapes must be its
+  own, not another job's in a new colour: two old jobs once shared pillars, rings and swings and
+  read as the same job twice. Pick a colour bold enough to read on every map (pale mint vanished on
   purple maps).
 
 ## 2. Combat
@@ -32,16 +32,15 @@ blow).
 - **Basic combo** (`world/melee.js`): three steps with a finisher on the third, each a move, a
   duration and strikes timed with `at`.
 - **Command moves**: up + attack, attacking in the air, attacking out of a run.
-- **Its own gauge** (like the Warrior's Valor, the Acrobat Archer's Combo, the Wind Dancer's
-  Encore, the Berserker's Rage, the Paladin's Faith, the Blade Dancer's Ricochet, the Sky Dancer's
-  Tailwind in `world/melee.js`):
-  - It builds in a fight in the job's own way (Valor from blows, faster the more monsters one
-    blow catches; Combo from shots landing in a row, halved when hit; Rage from blows; Faith also
-    from hits taken).
+- **Its own gauge** (like the Thunderguard's Charge, the Tide Mage's Tide, the Moon Moth's
+  Moondust and the Sunfeather's Daybreak, in `world/melee.js`):
+  - It builds in a fight in the job's own way (Charge from blows, faster the more one blow
+    catches, and from hits taken; Tide from water that lands and from her heals and shields;
+    Moondust from cuts, more for each extra monster caught; Daybreak from shots landing in a row,
+    halved when she's hit).
   - It drains once the fighting stops.
   - The fuller it is, the stronger something gets.
-  - While it's full, something special happens (Unbroken, Showtime, Berserk, Sanctified,
-    Carousel, Tailwind).
+  - While it's full, something special happens (Overcharge, High Tide, Full Moon, Sunrise).
   - Show it on the HUD (`ui/hud.js` GAUGES) with an aura on the hero (`render/aura.js`).
 - **Skills** (`data/skills.js`): built as timed combo steps; limited by MP and their own
   animation, plus a cooldown where it fits (long buffs, big heals, strong utility).
@@ -58,8 +57,9 @@ blow).
     weight), and the pace test ("no job can mash out its attacks") passes for it;
   - any special behaviour is tested (e.g. the Blade Dancer's rings bounce on).
 
-- **A first job with two weapons** (like the Thief's dagger and gauntlet) is the base for both
-  2nd-job paths (the Blade Dancer and the Sky Dancer grew from the Wind Dancer's chakram and glove sets): one shared gauge and a few shared skills, then a set of skills for each weapon
+- **A first job with two weapons** (no job does this today; the Sunfeather's paths split by weapon
+  instead, the Phoenix taking the crossbow and the Songbird keeping the bow) is the base for both
+  2nd-job paths: one shared gauge and a few shared skills, then a set of skills for each weapon
   (each set with its own finisher and mastery, gated by `weapons`), so the player chooses where
   the points go, and its own basic combo and command moves for each weapon.
 
@@ -72,14 +72,17 @@ blow).
 - **Check names before using them on the world.** The world already keeps the player's key
   presses as `intent`, so a gauge can't be called that.
 
-- **A support job** (like the old Mage, removed to be rebuilt) builds its spells the same way: `magic` strikes hit with magic
+- **A support job or path** (like the Tidecaller or the Songbird) builds its spells the same way: `magic` strikes hit with magic
   attack, `heal` strikes mend you and the party in range when the spell lands (never on the
   press), and its gauge can build from healing as well as hits.
 
 ## 3. Animation
 
 Held to the quality bar (CLAUDE.md): every move is the job's own, drawn for its name
-(a dancer dances), re-rigged as freely as it needs, fluid, and never covering the face. Never
+(a dancer dances), re-rigged as freely as it needs, fluid, and readable (the face stays clear
+except where a hand or a held bow, crossbow, spear or staff passes in front during a move;
+CLAUDE.md, "Readable"). Every move is also checked against the real motion it shows (CLAUDE.md,
+"Match the real thing"). Never
 borrow another job's moves. Check it with strips (`tools/move-strip.html`), every pose for the
 face (`tools/hold-sheet.html`) and GIFs (`tools/make-gif.py`) before showing it.
 
@@ -116,8 +119,7 @@ Every effect is drawn for the game in `tools/fx-art.js` in the style the player 
   beam to its length); redraw the art larger (`grown()`) rather than stretching a small strip. A
   blow that hits all round her far (a finisher's big blow) shows its reach on the ground (the
   `shock` ring in her path's colour), and a blast that hits far away travels there and hits on
-  arrival (the Idol's concert blasts). The Idol's songs and stage, the Astronomer's well and the
-  shockwaves were all once a third of their reach.
+  arrival. (Several old jobs' effects were once drawn at a third of their reach: measure every one.)
 - **Ground effects go under everyone** (`GROUND_FX` in render/effects.js): rings, zones and stages
   on the floor never wash over a face.
 - **Each job needs**:
@@ -153,4 +155,4 @@ Every effect is drawn for the game in `tools/fx-art.js` in the style the player 
   alone with the page `move-frames`, the skills on the stage with `moves-stage`): the basic
   attacks first, then the skills, then the finisher. More only if the player asks.
 - Fix anything that looks wrong before calling the job done.
-- Commit and push, and report in plain words with pictures.
+- Report in plain words with pictures. Commit or push only when the player asks.
