@@ -76,12 +76,13 @@ export const MOBS = {
     id: 'lambkin', name: 'Lambkin', level: 8, hp: 130, atk: 24, def: 7, acc: 21, eva: 4, exp: 56, gold: [2, 6],
     speed: 26, w: 28, h: 30, art: 'lambkin', drops: [{ id: 'curly_wool', chance: 0.45 }, { id: 'honeycomb', chance: 0.08 }, { gear: 'earring', chance: 0.01 }],
   }),
-  // Windy Canyon (both remade from scratch 2026-11-18, render/mobs/basiliskrig.js and manticorerig.js).
-  // A round mint lizard still sitting in half its eggshell, the other half worn as a hat: it waddles
-  // the whole egg along at a steady little pace, and opens its frill like a kite in a gust.
+  // Windy Canyon (the Manticore Cub remade from scratch 2026-11-18, render/mobs/manticorerig.js).
+  // The Rockhound Kid (2026-11-22, replacing the Basilisk Hatchling; render/mobs/rockhoundrig.js): a
+  // canyon kid in a stone-lizard onesie sure she's a fearsome basilisk. She creeps along in a low
+  // waddle and pounces with a CHOMP of her hood's felt jaw. (The id stays for saves and quests.)
   pebblet: mob({
-    id: 'pebblet', name: 'Basilisk Hatchling', level: 9, hp: 150, atk: 28, def: 9, acc: 24, eva: 3, exp: 72, gold: [2, 7],
-    speed: 30, gait: 'steady', w: 24, h: 30, art: 'pebblet', drops: [{ id: 'pebble', chance: 0.5 }, { id: 'copper_ore', chance: 0.08 }],
+    id: 'pebblet', name: 'Rockhound Kid', level: 9, hp: 150, atk: 28, def: 9, acc: 24, eva: 3, exp: 72, gold: [2, 7],
+    speed: 20, w: 26, h: 36, art: 'rockhound', drops: [{ id: 'pebble', chance: 0.5 }, { id: 'copper_ore', chance: 0.08 }],
   }),
   // A chubby lion cub with a dandelion-puff mane, felt wings it can't fly with yet and a heart-tipped
   // tail (its "stinger"): it stalks, creeping low, then trots after you, and pounces.
@@ -132,15 +133,20 @@ export const MOBS = {
     id: 'blossomfairy', name: 'Blossom Fairy', level: 21, hp: 700, atk: 64, def: 14, acc: 48, eva: 12, exp: 500, gold: [7, 17],
     speed: 60, w: 26, h: 40, art: 'blossomfairy', fly: true, leafPoof: true, drops: [{ id: 'sylph_feather', chance: 0.45 }, { id: 'silkmoss', chance: 0.08 }, { id: 'fairy_wings', chance: 0.01 }],
   }),
+  // The Ruin Acolyte (2026-11-22, replacing the Will-o'-Wisp; render/mobs/acolyterig.js): a little
+  // hooded temple girl who floats through the halls she tends, swinging a censer with a wisp living
+  // in it. She glides slow and calm, and swings the censer so the wisp shoots out at you.
   wisp: mob({
-    id: 'wisp', name: "Will-o'-Wisp", level: 20, hp: 660, atk: 62, def: 18, acc: 46, eva: 7, exp: 480, gold: [7, 16],
-    speed: 40, w: 22, h: 39, art: 'wisp', fly: true, drops: [{ id: 'wisp_flame', chance: 0.45 }, { id: 'amethyst', chance: 0.08 }],
+    id: 'wisp', name: 'Ruin Acolyte', level: 20, hp: 660, atk: 62, def: 18, acc: 46, eva: 7, exp: 480, gold: [7, 16],
+    speed: 34, w: 26, h: 40, art: 'acolyte', fly: true, drops: [{ id: 'wisp_flame', chance: 0.45 }, { id: 'amethyst', chance: 0.08 }],
   }),
+  // The Gargoyle Kid (2026-11-22, replacing the Imp; render/mobs/gargoylerig.js): an impish little
+  // gargoyle from the temple's gutters, flying on heavy stone wings (two beats, then a sinking
+  // glide), who freezes into a statue for fun and dives at you horns first. A steady flier, easy to
+  // follow (the Imp's darting made it the slowest hunt in the game).
   gloombat: mob({
-    id: 'gloombat', name: 'Imp', level: 22, hp: 740, atk: 67, def: 15, acc: 50, eva: 8, exp: 540, gold: [7, 18],
-    // (A touch slower since the 2026-11-21 playthrough: darting at 86 it was the slowest hunt in the
-    // game for its three 'beat 15' quests.)
-    speed: 66, gait: 'dart', w: 32, h: 30, art: 'gloombat', fly: true, drops: [{ id: 'bat_wing', chance: 0.65 }, { id: 'silver_ore', chance: 0.08 }],
+    id: 'gloombat', name: 'Gargoyle Kid', level: 22, hp: 740, atk: 67, def: 15, acc: 50, eva: 8, exp: 540, gold: [7, 18],
+    speed: 50, w: 28, h: 38, art: 'gargoyle', fly: true, drops: [{ id: 'bat_wing', chance: 0.65 }, { id: 'silver_ore', chance: 0.08 }],
   }),
   boneknight: mob({
     id: 'boneknight', name: 'Dullahan', level: 24, hp: 1120, atk: 78, def: 30, acc: 54, eva: 6, exp: 700, gold: [9, 21],
@@ -496,9 +502,14 @@ export const MOBS = {
     speed: 44, w: 28, h: 34, art: 'mothlibrarian', drops: [{ id: 'moth_scale', chance: 0.4 }, { id: 'astral_shard', chance: 0.08 }],
     fight: { every: 1.9, reach: 38, windup: 0.4 },
   }),
+  // The Meteor Maiden (2026-11-22, replacing the Meteor Golem; render/mobs/meteorrig.js): a fallen-star
+  // tomboy with rock gauntlets and a comet for a ponytail. She strolls (an unhurried 22: her legs are
+  // short and quick steps looked frantic), and smashes the ground like a meteor. (The id stays for
+  // saves and quests.)
   meteorgolem: mob({
-    id: 'meteorgolem', name: 'Meteor Golem', level: 33, hp: 3800, atk: 150, def: 46, acc: 94, eva: 4, exp: 1600, gold: [18, 35],
-    speed: 30, w: 32, h: 34, art: 'meteorgolem', drops: [{ id: 'meteorite', chance: 0.45 }, { id: 'astral_shard', chance: 0.12 }],
+    id: 'meteorgolem', name: 'Meteor Maiden', level: 33, hp: 3800, atk: 150, def: 46, acc: 94, eva: 4, exp: 1600, gold: [18, 35],
+    speed: 22, w: 28, h: 38, art: 'meteormaiden', drops: [{ id: 'meteorite', chance: 0.45 }, { id: 'astral_shard', chance: 0.12 }],
+    // (Her smash winds up long and slow: the gauntlet raised high, sparks gathering.)
     fight: { every: 2.4, reach: 46, windup: 0.65 },
   }),
   geminighosts: mob({
@@ -747,7 +758,7 @@ export const MOBS = {
     // (Level 38, the player's call 2026-11-07: the Crystal Cave's own monsters are 27-35 and the quest
     // opens at 35, so a level-45 king was a ten-level wall. Sized beside Lilith, the other level-38 queen.)
     id: 'crystalking', name: 'Prismaris, the Crystal King', level: 38, hp: 125000, atk: 226, def: 50, acc: 96, eva: 12, exp: 95000,
-    gold: [600, 950], speed: 34, w: 100, h: 130, art: 'crystalking', boss: true,
+    gold: [600, 950], speed: 34, w: 70, h: 108, art: 'crystalking', boss: true,
     drops: [
       { id: 'king_crystal', chance: 1 },
       { id: 'seraphim_staff', chance: 0.08 },
@@ -763,17 +774,17 @@ export const MOBS = {
     // (Health raised 2026-11-21: tools/bossfair.mjs had a player at this level's gear down its in
     // under a minute, too short to see all its moves; now about a minute for it, two for most players.)
     id: 'nightking', name: 'Prismaris, the Crystal King', level: 49, hp: 360000, atk: 286, def: 64, acc: 116, eva: 12, exp: 140000,
-    gold: [800, 1150], speed: 34, w: 100, h: 130, art: 'crystalking', boss: true, setOf: 'crystalking',
+    gold: [800, 1150], speed: 34, w: 70, h: 108, art: 'crystalking', boss: true, setOf: 'crystalking',
     drops: [{ id: 'king_crystal', chance: 1 }, { id: 'elixir', chance: 1, qty: 5 }],
     special: { kind: 'slam', every: 5.5, warn: 1.2, damage: 440, range: 420 },
   }),
-  // The finale (Chapter 10, 2026-11-19): the Queen's alarm clock grown giant, ringing to send her
-  // back to Monday. A solo trial at dawn by the palace (world/story.js QUEENS.alarm), three snoozes.
+  // The finale (Chapter 10, 2026-11-19): the Queen's alarm clock grown into Madame Reveille (redrawn
+  // 2026-11-22), ringing to send her back to Monday. A solo trial at dawn by the palace (world/story.js QUEENS.alarm), three snoozes.
   alarm: mob({
     // (Health raised 2026-11-21: tools/bossfair.mjs had a player at this level's gear down its in
     // under a minute, too short to see all its moves; now about a minute for it, two for most players.)
-    id: 'alarm', name: 'The Alarm', level: 50, hp: 275000, atk: 300, def: 68, acc: 120, eva: 10, exp: 200000,
-    gold: [1000, 1500], speed: 30, w: 100, h: 130, art: 'alarm', boss: true,
+    id: 'alarm', name: 'Madame Reveille', level: 50, hp: 275000, atk: 300, def: 68, acc: 120, eva: 10, exp: 200000,
+    gold: [1000, 1500], speed: 30, w: 76, h: 118, art: 'alarm', boss: true,
     drops: [{ id: 'elixir', chance: 1, qty: 10 }],
     special: { kind: 'slam', every: 6, warn: 1.2, damage: 460, range: 420 },
   }),

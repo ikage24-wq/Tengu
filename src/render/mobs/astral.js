@@ -3,12 +3,13 @@
 // Astraea's thousand-year household, upright and chibi, no bugs):
 //   cometcourier   Comet Courier (a sparrow postman)   nebulawitch    Nebula Witch (a cloud puff)
 //   starcarto      Telescope Crab                      mothlibrarian  Owl Librarian (an owlet)
-//   meteorgolem    Meteor Golem                        geminighosts   Gemini Ghosts
+//   meteormaiden   Meteor Maiden                       geminighosts   Gemini Ghosts
 // (The id mothlibrarian stays so old saves and quest counts keep working.) Also two little star
 // helpers the sky bosses draw with.
 
 import { T, TAU, D2R, star } from './critter.js';
-import { cometRig, cometStill, nebulaRig, nebulaStill, crabRig, crabStill, owlRig, owlStill, golemRig, golemStill, twinsRig, twinsStill } from './astralrigs.js';
+import { meteorMaidenRig, meteorMaidenStill } from './meteorrig.js';
+import { cometRig, cometStill, nebulaRig, nebulaStill, crabRig, crabStill, owlRig, owlStill, twinsRig, twinsStill } from './astralrigs.js';
 
 // A five-point star.
 export function star5(x, y, r, c, deg = -90) {
@@ -36,7 +37,8 @@ export const ART = {
   nebulawitch: { pad: 8, walk: 8, idle: 6, attack: 4, stride: 20, atkMs: [80, 240, 180], draw: nebulaStill, rig: nebulaRig },
   starcarto: { pad: 6, walk: 8, idle: 6, attack: 4, stride: 20, atkMs: [70, 220, 170], draw: crabStill, rig: crabRig },
   mothlibrarian: { pad: 8, walk: 8, idle: 6, attack: 4, stride: 22, atkMs: [80, 240, 180], draw: owlStill, rig: owlRig },
-  meteorgolem: { pad: 8, walk: 8, idle: 6, attack: 4, stride: 18, atkMs: [100, 300, 220], draw: golemStill, rig: golemRig },
+  // (The Meteor Golem was wiped 2026-11-22; the Meteor Maiden took its place, meteorrig.js.)
+  meteormaiden: { pad: 6, walk: 8, idle: 6, attack: 4, stride: 15, atkMs: [80, 300, 260], draw: meteorMaidenStill, rig: meteorMaidenRig },
   geminighosts: { pad: 8, walk: 8, idle: 6, attack: 4, stride: 22, atkMs: [70, 220, 170], draw: twinsStill, rig: twinsRig },
 };
 export const INFO = {
@@ -44,6 +46,6 @@ export const INFO = {
   nebulawitch: { name: 'Nebula Witch', w: 26, h: 36 },
   starcarto: { name: 'Telescope Crab', w: 32, h: 30 },
   mothlibrarian: { name: 'Owl Librarian', w: 28, h: 34 },
-  meteorgolem: { name: 'Meteor Golem', w: 32, h: 34 },
+  meteormaiden: { name: 'Meteor Maiden', w: 28, h: 38 },
   geminighosts: { name: 'Gemini Ghosts', w: 32, h: 30 },
 };

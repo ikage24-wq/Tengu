@@ -323,7 +323,7 @@ export const SIDE_SCENES = {
     { together: [{ emote: 'nim', kind: 'sweat', dur: 1.4 }, { fx: 'pages', at: 'nim', n: 12 }, { jump: 'nim', height: 8 }] },
     { who: null, text: 'The cards slip out of her hands and scatter everywhere. She picks one up at random.' },
     { who: 'nim', text: "'...Thank you so much, see you soon!' No! That's the goodbye card! We haven't even started! I'm so sorry!", mood: 'surprised' },
-    { who: 'nim', text: "They're Will-o'-Wisps in the Ruins now, and they won't come home. Please bring them back. Card five says please. So, please.", mood: 'sad' },
+    { who: 'nim', text: "They're living in the Ruin Acolytes' censers now, and they won't come home. Please bring them back. Card five says please. So, please.", mood: 'sad' },
   ],
   candles_done: [
     { who: null, text: 'Nim lines the flames up on her shelf. One by one they settle back into little candles, sulking. They will not make eye contact.' },
@@ -611,7 +611,7 @@ export const SIDE_SCENES = {
   ],
   lumen_fallen_done: [
     { together: [{ walk: 'player', to: 790, speed: 90 }, { face: 'lumen', to: 'player' }] },
-    { who: 'player', text: 'No star up there. Just a crater on Howling Rock, and golems climbing out of it, warm as bread, all of them trying to walk uphill.' },
+    { who: 'player', text: 'No star up there. Just a crater on Howling Rock, and Meteor Maidens climbing out of it, warm as bread, all of them trying to punch their way back up to the sky.' },
     { together: [{ emote: 'lumen', kind: '?', dur: 1.4 }, { wait: 0.5 }] },
     { who: 'lumen', text: 'Uphill. Toward the sky.', mood: 'surprised' },
     { together: [{ wait: 0.6 }, { emote: 'lumen', kind: 'idea', dur: 1.6 }] },
@@ -989,7 +989,7 @@ export const SIDE_SCENES = {
   ],
   // ----- Bramble and the Great Wipe -----
   bramble_check_done: [
-    { who: 'bramble', text: 'Fifteen hatchlings, never more than three at once. Stand still. Inspection.', mood: 'happy' },
+    { who: 'bramble', text: 'Fifteen Rockhounds, never more than three at once. Stand still. Inspection.', mood: 'happy' },
     { together: [{ walk: 'bramble', to: 'player', gap: 34, speed: 60 }, { emote: 'bramble', kind: '?', dur: 1.4 }] },
     { who: null, text: 'Bramble walks round you twice, squints at your boots, taps your weapon, and writes something down on a very long scroll.' },
     { who: 'bramble', text: "Gear: adorable. Damage: acceptable. You stood in the bad stuff twice. I saw. Don't argue, I have a feeling for these things.", mood: 'angry' },
@@ -1102,7 +1102,7 @@ export const SIDE_SCENES = {
     { who: 'kestrel', text: "Ten years in a fairy's hoard. It went further than any arrow on this island. Nobody ever believed me.", mood: 'happy' },
   ],
   kestrel_wings_done: [
-    { who: 'kestrel', text: "Imp-wing fletching. Lighter than air. Everybody out here! I want witnesses this time! Clover, put the lute down.", mood: 'happy' },
+    { who: 'kestrel', text: "Gutter-feather fletching. Lighter than air. Everybody out here! I want witnesses this time! Clover, put the lute down.", mood: 'happy' },
     { together: [{ walk: 'clover', to: 'kestrel', gap: 105, speed: 90 }, { walk: 'posy', to: 'kestrel', gap: 145, speed: 140 }, { emote: 'clover', kind: '!', dur: 1 }, { emote: 'posy', kind: '!', dur: 1 }] },
     { together: [{ face: 'kestrel', to: 'player' }, { fx: 'wind', at: 'kestrel' }, { wait: 0.8 }] },
     { who: null, text: "Kestrel breathes out and looses it straight up. It climbs out of sight... and a long moment later drops, true as a plumb line, into her open hand. Somebody gasps. It's Kestrel." },
@@ -1185,7 +1185,7 @@ export const SIDE_SCENES = {
     { who: 'vex', text: "Get behind them. Always behind. A moth at your back is a moth you never saw.", mood: 'happy' },
   ],
   trial_kestrel: [
-    { who: 'kestrel', text: "Fifteen Meteor Golems up on Moonlit Ridge. They're slow, they're heavy and they hit like a falling star. Keep your distance and your aim true." },
+    { who: 'kestrel', text: "Fifteen Meteor Maidens up on Moonlit Ridge. Rock fists, comet hair, and they hit like a falling star. Keep your distance and your aim true." },
     { who: 'kestrel', text: "And if one comes at you, hop back. Always hop back. A sunbird doesn't stand there getting pecked.", mood: 'happy' },
   ],
   trial_kestrel_done: [
@@ -2320,6 +2320,7 @@ export const CRYSTAL_SCENES = {
     { walk: 'hayate', to: 'nightking', gap: 64, speed: 45 },
     { together: [{ fx: 'sparkle', at: 'hayate', top: true, n: 14 }, { emote: 'hayate', kind: 'zzz', dur: 1.6 }] },
     { who: 'hayate', text: '...mm... here... a nightlight... your own...', mood: 'sleepy', unless: 'twinkle_light' },
+    { act: 'nightking', move: 'getstar', dur: 0.4, unless: 'twinkle_light' },
     // (Twinkle's story done: the little star you carried down in the sling is his nightlight.)
     { who: 'hayate', text: '...mm... somebody... came all this way... to find you...', mood: 'sleepy', when: 'twinkle_light' },
     { spawn: 'twinkle', x: 120, facing: 1, when: 'twinkle_light' },
@@ -2329,6 +2330,7 @@ export const CRYSTAL_SCENES = {
     { who: 'twinkle', text: "It won't be dark. That's sort of the whole point of me.", mood: 'happy', when: 'twinkle_light' },
     { together: [{ mood: 'nightking', as: 'happy' }, { fx: 'sparkle', at: 'nightking', top: true, n: 18 }, { flash: '#fff3a6' }] },
     { who: 'nightking', text: 'A star. A real star. For ME?', mood: 'happy' },
+    { act: 'nightking', move: 'give', dur: 0.9 },
     { cast: 'clock', kind: 'clock', near: 'nightking', dx: 26 },
     { who: 'nightking', text: '...Then you can have your clock back. It rings SO loud. I kept putting socks on it.', mood: 'happy' },
     { toss: 'clock', to: 'hayate', dur: 1.1, height: 46 },
@@ -2355,11 +2357,11 @@ export const CRYSTAL_SCENES = {
 
 // ---------- The finale (Chapter 10) ----------
 export const FINALE_SCENES = {
-  // The lawn before the palace at dawn: the alarm clock, taller than the palace door, ringing her
+  // The lawn before the palace at dawn: the alarm clock, grown into a tall, prim lady, ringing her
   // back to Monday.
   dawnpalace_intro: [
     { together: [{ cam: 'alarm', up: 40, dur: 1.4 }, { walk: 'player', to: 'alarm', gap: 240, speed: 90 }] },
-    { who: null, text: "Dawn over the palace. On the lawn stands the Queen's alarm clock, taller than the palace door, ringing fit to burst." },
+    { who: null, text: "Dawn over the palace. On the lawn stands the Queen's alarm clock, grown into a tall, prim lady with bells for hair buns, ringing fit to burst." },
     { together: [{ face: 'alarm', to: 'player' }, { jump: 'alarm', height: 12 }, { shake: 3, dur: 0.6 }, { emote: 'alarm', kind: 'anger' }] },
     { who: 'alarm', text: 'RIIIING! Six a.m.! Up! Shower! Train! Office! MONDAY!', mood: 'angry' },
     { who: 'player', text: 'She lives here now.' },
@@ -2385,7 +2387,7 @@ export const FINALE_SCENES = {
     { who: 'hayate', text: "I've got a palace full of Mochi, a festival to finish, and friends who keep showing up. I'm staying.", mood: 'happy' },
     { cast: 'clock', kind: 'clock', near: 'alarm', dx: 0, hidden: true },
     { together: [{ shake: 5, dur: 0.5 }, { flash: '#fff3a6' }, { fx: 'sparkle', at: 'alarm', top: true, n: 24 }, { act: 'alarm', move: 'fade', dur: 1.6 }] },
-    { who: null, text: 'She flicks it. Once. Lazily. The giant alarm clock goes "...ding", shrinks back to bedside size, and is very quiet.' },
+    { who: null, text: "She flicks one of Madame Reveille's bells. Once. Lazily. \"...ding.\" The lady shrinks back into a bedside alarm clock, and is very quiet." },
     { show: 'clock', dur: 0.6 },
     { who: 'hayate', text: '...Five more minutes.', mood: 'sleepy' },
     { who: 'hayate', text: "...Then breakfast. Everyone's invited.", mood: 'happy' },

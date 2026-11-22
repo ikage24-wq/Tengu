@@ -10,8 +10,6 @@
 //                  rolled star chart; peers through it. Snaps a big claw.
 //   mothlibrarian  Owl Librarian: a little owlet in a scholar's cap and gown with a lantern;
 //                  flutters, reads, hoots. Bonks you with a book.
-//   meteorgolem    Meteor Golem: a round rock with glowing cracks on stubby legs, little fists;
-//                  stomps, smoulders. A heavy punch.
 //   geminighosts   Gemini Ghosts: two little star-tipped ghosts holding hands, bobbing in turn.
 //                  A twin spin.
 
@@ -89,8 +87,10 @@ const oStar = (x, y, r, c, n = 5, k = 0.45) => F(T(Array.from({ length: n * 2 },
   const rr = i % 2 ? r * k : r;
   return [x + Math.cos(a) * rr, y + Math.sin(a) * rr];
 }), c));
-const oX = (x, y, w, h, wd, c = INK) => [...oLn([[x - w * 0.7, y - h * 0.55], [x + w * 0.7, y + h * 0.55]], wd, c), ...oLn([[x - w * 0.7, y + h * 0.55], [x + w * 0.7, y - h * 0.55]], wd, c)];
-const oWave = (mx, my, hw, wd, c = INK) => oLn(Array.from({ length: 5 }, (_, i) => [mx - hw + (i * hw) / 2, my + (i % 2 ? -0.3 : 0.3)]), wd, c);
+const oX = (x, y, w, h, wd, c = INK) => [...oLn([[x - w * 0.7, y - h * 0.55], [x + w * 0.7, y + h * 0.55]], wd, c), ...oLn([[x - w * 0.7, y + h * 0.55], [x + w * 0.7, y - h * 0.55]], wd, c)];
+
+const oWave = (mx, my, hw, wd, c = INK) => oLn(Array.from({ length: 5 }, (_, i) => [mx - hw + (i * hw) / 2, my + (i % 2 ? -0.3 : 0.3)]), wd, c);
+
 const NOLID = () => -99;
 // The closed and knocked-about eyes every face has (each face draws its own open eyes).
 const oShut = (mood, x, y, s, w, h, lw, sc = INK) => {
@@ -524,106 +524,6 @@ export function owlStill(pose, f, mood) {
     ...put(olWing(true)(), [1, 1], -5, -16.4, 10), ...put(olFoot(true)(), [2.6, 2.6], -3, 0), ...put(olFoot(false)(), [2.6, 2.6], 3, 0), ...put(olBody(), [9, 17.6], 0, -2.4),
     ...put(olHead(), [9, 16.6], 0.4, -17.4), ...put(olOwnFace(fm), [9, 16.6], 0.4, -17.4), ...put(olLamp(), [4, 0.6], 9, -10), ...put(olWing(false)(), [1, 1], 3, -15.4, 50),
   ], 17, 43) };
-}
-
-// =====================================================================================
-// Meteor Golem
-// =====================================================================================
-const ROCK = ramp('#8a86a8', { step: 10, turn: 8, lift: 14 });
-const LAVA = '#ff9a4a';
-const mg = pairOf('mgol');
-// The body: a round rock, glowing cracks, little craters. Box 24 x 22; standing at (12, 21.6).
-const mgBody = () => [
-  E(12, 12, 11, 10, ROCK.base), crescent(12, 12, 11, 10, ROCK.sh, { k: 0.2, a0: 100, a1: 220 }), shine(12, 12, 11, 10, '#ffffff', 0, 0.6),
-  F(E(6, 15, 2, 1.4, ROCK.sh)), F(E(17, 17, 1.6, 1.2, ROCK.sh)), F(E(15, 5, 1.4, 1, ROCK.sh)),
-  ...stroke([[4, 10], [8, 12], [7, 16], [10, 19]], 0.9, LAVA), ...stroke([[18, 8], [15, 11], [17, 14]], 0.8, LAVA),
-];
-const mgFist = (far) => () => [E(4, 4, 4, 3.6, far ? ROCK.sh : ROCK.base), F(E(3, 3, 1.4, 1, ROCK.hi)), ...stroke([[2, 6], [5, 4.6]], 0.6, LAVA)];
-const mgFoot = (far) => () => [E(3.6, 2.6, 3.6, 2.6, far ? ROCK.sh : ROCK.base)];
-const MG_BODY = mg('body', 24, 22, mgBody, 2);
-const MG_FIST = [false, true].map((f) => mg(`fist${f ? 1 : 0}`, 8, 8, mgFist(f), 2));
-const MG_FOOT = [false, true].map((f) => mg(`foot${f ? 1 : 0}`, 8, 5, mgFoot(f), 2));
-// Its own face, a star-rock golem's: eyes that glow like a molten star core (a bright yellow middle in a
-// ring of orange glow, no glint) and a stony mouth with a chip out of it. Box 24 x 22.
-const MG_EYES = [[15.4, 10, 1, 1.7, 2.2], [9.6, 10.2, -1, 1.5, 2]];
-const mgOwnFace = (mood) => {
-  const out = [];
-  for (const [x, y, s, w, h] of MG_EYES) {
-    const shut = oShut(mood, x, y, s, w, h, 0.6, '#ff7a3a');
-    if (shut) { out.push(...shut); continue; }
-    const lid = mood === 'angry' ? (px) => y - h * 0.2 + (px - x) * -s * 0.6 : mood === 'shout' ? NOLID : () => y - h * 0.55;
-    out.push(F(T(oCut(oRing(x, y, w * 1.12, h * 1.08), lid), '#ffb070')), F(T(oCut(oRing(x, y, w, h), lid), '#2a1a28')), F(T(oCut(oRing(x, y + h * 0.1, w * 0.7, h * 0.72), lid), '#ff7a3a')), F(T(oCut(oRing(x, y + h * 0.15, w * 0.38, h * 0.4), lid), '#ffe060')));
-    out.push(...oLn(oCut(oArc(x, y, w * 1.05, h * 1.05, 190, 350, 10), (px) => lid(px) - 0.15), 0.6, '#3a3048'));
-  }
-  if (mood !== 'dead') out.push(F(E(7.6, 13.6, 1.4, 0.6, '#ff9a7a')), F(E(18.2, 13.2, 1.2, 0.5, '#ff9a7a')));
-  const [mx, my] = [13, 14.6];
-  if (mood === 'shout') out.push(F(T([[mx - 1.4, my - 0.6], [mx + 1.4, my - 0.6], [mx + 1, my + 1], [mx - 1, my + 1]], '#2a1a28')), F(T([[mx - 0.8, my - 0.2], [mx + 0.8, my - 0.2], [mx + 0.6, my + 0.6], [mx - 0.6, my + 0.6]], '#ff7a3a')));
-  else if (mood === 'happy') out.push(F(T(oArc(mx, my - 0.4, 1.4, 1.2, 0, 180, 8), '#2a1a28')), F(E(mx, my + 0.3, 0.7, 0.3, '#ff7a3a')));
-  else if (mood === 'hurt' || mood === 'dizzy') out.push(...oWave(mx, my, 1.2, 0.42, '#2a1a28'));
-  else if (mood === 'dead') out.push(...oLn([[mx - 1, my], [mx + 1, my]], 0.42, '#2a1a28'));
-  else out.push(...oLn([[mx - 1.3, my + (mood === 'angry' ? 0.3 : 0)], [mx - 0.3, my + 0.15], [mx, my - 0.25], [mx + 0.3, my + 0.15], [mx + 1.3, my + (mood === 'angry' ? 0.3 : -0.05)]], 0.45, '#2a1a28'));
-  if (mood === 'hurt') out.push(...oDrop(17.6, 10.8, 0.65));
-  return out;
-};
-const mgFace = (mood) => sm(`mgol|face|${mood}`, 24, 22, () => mgOwnFace(mood));
-const mgPass = (bare) => {
-  const i = bare ? 1 : 0;
-  const tag = bare ? 'b' : '';
-  const foot = (k, far) => ({ name: `foot${k}${tag}`, parent: null, s: MG_FOOT[far ? 1 : 0][i], pivot: [3.6, 4.6], at: (S, a) => { const [dx, l] = pawStep(a.mgU ?? 0, far ? 0.5 : 0, 8, 0.6, 2.6); return [S.x + (far ? -4 : 4) + dx * a.walkW, -l * a.walkW]; } });
-  return [
-    { name: `fistF${tag}`, parent: 'trunk', s: MG_FIST[1][i], pivot: [4, 4], at: (S) => [-11 + S.fistF * 0.1, -9 - S.fistFy] },
-    foot(1, true),
-    foot(0, false),
-    { name: `body${tag}`, parent: 'trunk', s: MG_BODY[i], pivot: [12, 21.6] },
-    { name: `fistN${tag}`, parent: 'trunk', s: MG_FIST[0][i], pivot: [4, 4], at: (S) => [9 + S.fistN, -8 - S.fistNy] },
-  ];
-};
-export const golemRig = makeRig({
-  w: 40, h: 40, soft: true, stride: 8, recover: 0.7,
-  springs: { x: [240, 18], lift: [240, 16], tilt: [180, 12], fistN: [260, 14], fistNy: [260, 14], fistF: [220, 12], fistFy: [220, 12] },
-  fast: ['x', 'fistN'],
-  kick: { tilt: -150 },
-  turnKick: { tilt: 120 },
-  pose(m, a) {
-    a.uidOff = (m.uid % 13) * 0.93;
-    const t = a.t + a.uidOff;
-    a.mgU = stepPhase(m, a, 'mg', 8);
-    const br = Math.sin(t * 1.8);
-    a.mgGlow = 0.5 + 0.5 * Math.sin(t * 3);
-    const idle = { x: 0, lift: br * 0.4, tilt: br * 2, fistN: 0, fistNy: br, fistF: 0, fistFy: -br };
-    const s1 = Math.sin(a.mgU * TAU);
-    const walk = { x: 0, lift: Math.abs(s1) * 1.2, tilt: s1 * 5, fistN: s1 * 3, fistNy: 0, fistF: -s1 * 3, fistFy: 0 };
-    const antic = { x: -3, lift: 1, tilt: -10, fistN: -8, fistNy: 6, fistF: -4, fistFy: 2 };
-    const strike = { x: 5, lift: 0, tilt: 14, fistN: 10, fistNy: 2, fistF: 0, fistFy: -2 };
-    return stateBlend(a, idle, walk, antic, strike);
-  },
-  parts: [
-    { name: 'trunk', parent: null, at: (S) => [S.x, -6 - S.lift], rot: (S) => S.tilt * D2R },
-    ...mgPass(false),
-    ...mgPass(true),
-    { name: 'face', parent: 'trunk', s: (a) => mgFace(moodOf(a)), pivot: [12, 21.6] },
-  ],
-  fx(ctx, m, a, S, mat) {
-    if (m.hp <= 0) return;
-    // Its cracks glow and smoulder.
-    const [bx, by] = at2(mat('trunk'), 0, -12);
-    ctx.globalAlpha = 1;
-    const g = ctx.createRadialGradient(bx, by, 0, bx, by, 16);
-    g.addColorStop(0, `rgba(255,154,74,${0.18 * a.alpha * a.mgGlow})`);
-    g.addColorStop(1, 'rgba(255,154,74,0)');
-    ctx.fillStyle = g;
-    ctx.fillRect(bx - 16, by - 16, 32, 32);
-    if (a.ph.strike > 0.2) {
-      const [fx, fy] = at2(mat('fistN'), 0, 0);
-      sparkle(ctx, a, fx + 6, fy, 6 * a.ph.strike, a.alpha * a.ph.strike, LAVA);
-    }
-  },
-});
-export function golemStill(pose, f, mood) {
-  const fm = MOODS.has(mood) ? mood : 'idle';
-  return { w: 40, h: 36, res: 3, shapes: shift([
-    ...put(mgFist(true)(), [4, 4], -11, -15), ...put(mgFoot(true)(), [3.6, 4.6], -4, 0), ...put(mgFoot(false)(), [3.6, 4.6], 4, 0), ...put(mgBody(), [12, 21.6], 0, -6), ...put(mgOwnFace(fm), [12, 21.6], 0, -6), ...put(mgFist(false)(), [4, 4], 9, -14),
-  ], 20, 35) };
 }
 
 // =====================================================================================

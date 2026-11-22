@@ -227,6 +227,10 @@ export function kidHead(hx, neck, mood, col, style, color, bangs = 'auto') {
     // The same front in two layers: the face (skull, the fringe's shade, the face) and the fringe
     // over it (bangs, side locks, anything on top), so the fringe can sway on its own.
     face: place([...skull(0, 0), ...shade, ...face(0, 0, mood, col)]),
+    // The shadow the bangs cast on the forehead, alone (for a kid with a face of its own).
+    shade: place(shade),
+    // Just the bangs (no crown of hair), for a kid whose hood covers the top of her head.
+    bangs: place(kid(p.front)),
     fringe: place([...kid(p.front), ...kid(p.top)]),
   };
 }
@@ -246,3 +250,20 @@ export function groups() {
   };
   return { G, use, out: { push: (...a) => cur.push(...a) } };
 }
+
+// A smooth closed shape through points (2026-11-22): each corner cut three times, so nothing is
+// sharp or boxy. Clothes, boots, tails and hoods are drawn with these, never raw polygons.
+export function soften(pts, n = 3) {
+  let q = pts;
+  for (let k = 0; k < n; k++) {
+    const out = [];
+    for (let i = 0; i < q.length; i++) {
+      const a = q[i];
+      const b = q[(i + 1) % q.length];
+      out.push([a[0] * 0.75 + b[0] * 0.25, a[1] * 0.75 + b[1] * 0.25], [a[0] * 0.25 + b[0] * 0.75, a[1] * 0.25 + b[1] * 0.75]);
+    }
+    q = out;
+  }
+  return q;
+}
+export const blob = (pts, c, n = 3) => T(soften(pts, n), c);

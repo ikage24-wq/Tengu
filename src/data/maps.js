@@ -445,7 +445,7 @@ export const MAPS = {
     }),
     // Its monsters, placed by hand, few and spread out, none near the ways in or out.
     spawns: [
-      // The Temple Roof. (Two more Imps since the 2026-11-21 playthrough: three quests want 15 each.)
+      // The Temple Roof. (Two more Gargoyle Kids since the 2026-11-21 playthrough: three quests want 15 each.)
       { mob: 'gloombat', x: 660, y: 330 }, { mob: 'gloombat', x: 1100, y: 350 }, { mob: 'gloombat', x: 1580, y: 360 },
       { mob: 'gloombat', x: 880, y: 340 }, { mob: 'gloombat', x: 1340, y: 360 },
       // The Collapsed Halls.
@@ -677,7 +677,7 @@ Object.assign(MAPS, {
   // Windy Canyon (remade 2026-11-18 for Chapter 3) is a tall canyon built out of its own rock
   // (data/climb.js lay(), zones by height; the art in render/canyon.js): a canyon wall at each end,
   // two rock spires and the Great Arch between them, and every ledge a sandstone shelf jutting out of
-  // one of them, so nothing floats. At the bottom the Dry Riverbed, where the Basilisk Hatchlings sun
+  // one of them, so nothing floats. At the bottom the Dry Riverbed, where the Rockhound Kids sun
   // themselves and the way into Rootwood Hollow opens at the east wall's foot; up the Cliff Shelves,
   // stepping round the spires (a ladder up each), where the Manticore Cubs start; and on the Windy
   // Top a walk across the whole canyon over the spires' caps, the arch and pennant-strung rope

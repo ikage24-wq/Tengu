@@ -199,6 +199,7 @@ function softSwing(p, base, x, y, pose, m, a, st, swung) {
 //   follow    (S, a) => goals for loose channels that trail the others (capes, ears, tails),
 //             sprung with `springs` too (default loose: [90, 7])
 //   kick      { channel: speed } given when a blow lands on it
+//   walkStiff { channel: [k, c] } the spring a channel blends to as the walk takes over
 //   stride    px walked per step cycle
 //   (a part may also be `soft`: a loose layer swinging on its own physics; see Soft layers above,
 //   and `paint: (ctx, a, S)` for live extras drawn on it in its own space)
@@ -230,7 +231,14 @@ export function makeRig(spec) {
       const fast = a.ph.strike > 0 || a.ph.antic > 0.8;
       const S = {};
       const sp = (name, goal, def) => {
-        const [k, c] = spec.springs?.[name] ?? def;
+        let [k, c] = spec.springs?.[name] ?? def;
+        // (`walkStiff`: a walk's beats come quicker than a soft idle spring can follow, which
+        // flattened every bounce and arm swing; those channels stiffen as the walk takes over.)
+        const ws = spec.walkStiff?.[name];
+        if (ws && a.walkW > 0) {
+          k += (ws[0] - k) * a.walkW;
+          c += (ws[1] - c) * a.walkW;
+        }
         const f = fast && spec.fast?.includes(name);
         S[name] = spring(st, name, goal, f ? Math.max(k, 800) : k, f ? Math.max(c, 44) : c, dt);
       };

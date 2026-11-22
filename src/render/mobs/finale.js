@@ -1,13 +1,13 @@
 // Monster art: the finale's boss (Chapter 10, docs/design/main-story.md):
-//   alarm   The Alarm: the Queen's golden alarm clock grown huge and cross, the Big Ring
-//           (alarmrig.js).
+//   alarm   The Alarm, as Madame Reveille: the Queen's alarm clock grown into a prim, bossy lady with
+//           alarm bells for hair buns and a conductor's baton (2026-11-22, reveillerig.js).
 
-import { alarmRig, alarmStill } from './alarmrig.js';
+import { reveilleRig, reveilleStill } from './reveillerig.js';
 
 export const ART = {
-  alarm: { pad: 14, walk: 8, idle: 8, attack: 5, stride: 8, atkMs: [110, 180, 340, 240], draw: alarmStill, rig: alarmRig },
+  alarm: { pad: 10, walk: 8, idle: 8, attack: 5, stride: 30, atkMs: [110, 180, 340, 240], draw: reveilleStill, rig: reveilleRig },
 };
 
 export const INFO = {
-  alarm: { name: 'The Alarm', w: 100, h: 130 },
+  alarm: { name: 'Madame Reveille', w: 76, h: 118 },
 };

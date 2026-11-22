@@ -349,9 +349,13 @@ function mushcap() {
 }
 
 
-function pebble(c = '#22a6a8', gloss = '#e8fff6', streak = '#b8fff0') {
-  // A basilisk scute: a glossy jade-teal hexagonal plate with a raised keel and growth ridges,
-  // nothing like a leaf (no point, no stem, no veins).
+// A Felt Scale off a Rockhound Kid's hood (2026-11-22): a soft sandstone-felt plate.
+function pebble() {
+  return scute('#c4ae94', '#fff6e8', '#f0dcc0');
+}
+function scute(c = '#22a6a8', gloss = '#e8fff6', streak = '#b8fff0') {
+  // A scute: a glossy hexagonal plate with a raised keel and growth ridges, nothing like a leaf
+  // (no point, no stem, no veins).
   const a = -12;
   const hex = (k, dy = 0) => turn([[8, 8 - 6.8 * k], [8 + 5.8 * k, 8 - 3.4 * k], [8 + 5.6 * k, 8 + 3.2 * k], [8, 8 + 6.8 * k], [8 - 5.6 * k, 8 + 3.2 * k], [8 - 5.8 * k, 8 - 3.4 * k]].map(([x, y]) => [x, y + dy]), a);
   const body = hex(1);
@@ -488,30 +492,13 @@ function wisp_flame() {
   return out;
 }
 
+// A Gutter Feather (2026-11-22): soft dove-grey, from a Gargoyle Kid's nest in the temple gutters,
+// a fleck of moss still on it.
 function bat_wing() {
-  const c = '#a08ad8';
-  const bone = '#5d4796';
-  const joint = [2.6, 4.4];
-  const tips = [[14.8, 2.4], [14, 9.8], [9.8, 13.2], [4.6, 15]];
-  const mem = [joint, ...bez(joint, [8.6, 0.6], tips[0], 8).slice(1), ...bez(tips[0], [13.2, 6.4], tips[1], 5).slice(1), ...bez(tips[1], [11, 9.4], tips[2], 5).slice(1), ...bez(tips[2], [7.6, 11.6], tips[3], 5).slice(1), ...bez(tips[3], [2.2, 10.8], joint, 6).slice(1)];
-  const out = [S(mem, c)];
-  // Each panel of membrane between two fingers takes its own tone, like a folded fan.
-  const tones = [lt(c), c, sh(c)];
-  const panel = (a, b) => [joint, a, b];
-  out.push(S(clip(mem, panel([30, -10], tips[1])), tones[0]));
-  out.push(S(clip(mem, panel([tips[1][0] + 4, tips[1][1] + 4], tips[2])), tones[1]));
-  out.push(S(clip(mem, panel([tips[2][0] + 1, tips[2][1] + 6], [-6, 30])), tones[2]));
-  // Finger bones.
-  out.push(S(tube(bez(joint, [8.6, 1.4], tips[0], 10), 1.3, 0.5), bone));
-  for (const t of tips.slice(1)) out.push(S(tube([joint, t], 0.8, 0.35), shade(bone, 6)));
-  out.push(S(tube(bez([3.4, 3.8], [8.6, 1.2], [13.4, 2.4], 8), 0.35), mix(bone, '#ffffff', 0.35)));
-  // The joint and its little claw.
-  out.push(...ball(oval(joint[0], joint[1], 1.4, 1.4, 0, 16), bone, { glow: 0.9 }));
-  out.push(S([[1.8, 3.4], [0.6, 0.8], [2.2, 1.6], [3, 3.2]], '#fff0e0'), S([[2.2, 3.3], [1.2, 1.4], [2.2, 1.6], [3, 3.2]], '#e6cfe0'));
-  out.push(...glint(6.2, 5.6, 0.7));
+  const out = feather('#cdc6e0', '#8f86b4', '#f0ecf8');
+  out.push(S(oval(5.6, 11.4, 1.1, 0.7, -30, 12), '#8cc46e'), S(oval(5.3, 11.1, 0.5, 0.3, -30, 8), '#bfe69a'));
   return out;
 }
-
 function bone_shard() {
   const c = '#f2ebdc';
   const out = [];
@@ -1021,7 +1008,7 @@ function bramble_claw() {
 
 // A Lamia's scale: a glossy rose-coral plate, keeled like a snake's.
 function lamia_scale() {
-  return pebble('#ff7f9e', '#fff0f4', '#ffd6e2');
+  return scute('#ff7f9e', '#fff0f4', '#ffd6e2');
 }
 
 // A Yuki-onna's snow gem: a clear ice-blue crystal holding a snowflake (no eye, no teeth: that's

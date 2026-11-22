@@ -108,7 +108,7 @@ export const QUESTS = {
   // yelling his own name and woke the whole canyon. At the end he charges once more, for fun.
   bramble_check: {
     id: 'bramble_check', name: 'Gear Check', giver: 'bramble', minLevel: 10,
-    text: "Nobody goes into the Hollow without a gear check. Nobody. Show me you can hold a fight together: calm 15 Basilisk Hatchlings in Windy Canyon, and never pull more than three at once. I'll know. I have a feeling for these things.",
+    text: "Nobody goes into the Hollow without a gear check. Nobody. Show me you can hold a fight together: calm 15 Rockhound Kids in Windy Canyon, and never pull more than three at once. I'll know. I have a feeling for these things.",
     objectives: [{ type: 'kill', mob: 'pebblet', count: 15 }],
     rewards: { exp: 3100, gold: 140, items: [{ id: 'red_potion', qty: 15 }] },
   },
@@ -177,11 +177,11 @@ export const QUESTS = {
   },
   // Kestrel's trial for a Sunfeather before her level 30 path (the Phoenix or the Songbird). (Out on
   // the field like the other trials since the 2026-11-21 playthrough: its Comet Couriers only lived
-  // inside the Star Observatory, four group runs for one trial. Fifteen Meteor Golems are about the
+  // inside the Star Observatory, four group runs for one trial. Fifteen Meteor Maidens are about the
   // same work as twenty couriers, and Lumen wants them gone too.)
   archer_trial: {
     id: 'archer_trial', name: "The Sunfeather's Trial", giver: 'kestrel', minLevel: 30, family: 'archer',
-    text: "Anyone can hit a scarecrow. Up on Moonlit Ridge the Meteor Golems come down with the falling stars, and they hit like them too. Bring down 15 of them, from a good long way off, and I'll show you the two ways a sunbird can grow up.",
+    text: "Anyone can hit a scarecrow. Up on Moonlit Ridge the Meteor Maidens come down with the falling stars, and they hit like them too. Bring down 15 of them, from a good long way off, and I'll show you the two ways a sunbird can grow up.",
     objectives: [{ type: 'kill', mob: 'meteorgolem', count: 15 }],
     rewards: { exp: 76000, gold: 1900, items: [{ id: 'elixir', qty: 5 }] },
   },
@@ -297,7 +297,7 @@ export const QUESTS = {
   // Pastel Harbor.
   canyon_eggs: {
     id: 'canyon_eggs', name: 'Scaly Situation', giver: 'rook', minLevel: 9,
-    text: "Basilisks are nesting in Windy Canyon, north of Petal Meadow, and the hatchlings are biting my sailors' boots. Defeat 15 of the little biters.",
+    text: "Rockhound Kids have moved into Windy Canyon, north of Petal Meadow, and they keep CHOMPING my sailors' boots with those felt hoods. Calm 15 of the little biters.",
     objectives: [{ type: 'kill', mob: 'pebblet', count: 15 }],
     rewards: { exp: 2200, gold: 140, items: [{ id: 'red_potion', qty: 20 }] },
   },
@@ -362,7 +362,7 @@ export const QUESTS = {
   // is that bathhouse, open again.
   marlo_scales: {
     id: 'marlo_scales', name: 'Shiny Scales', giver: 'marlo', minLevel: 9,
-    text: "Basilisk scales! Ladies in the capital sew them on their gloves. Next month it'll be something else. Fashion! Bring me 15 before the trend dies and I'll make it worth your while.",
+    text: "Felt scales! Off the Rockhound Kids' hoods. Ladies in the capital sew them on their gloves. Next month it'll be something else. Fashion! Bring me 15 before the trend dies and I'll make it worth your while.",
     objectives: [{ type: 'collect', item: 'pebble', count: 15 }],
     rewards: { exp: 4300, gold: 270, items: [] },
   },
@@ -401,7 +401,7 @@ export const QUESTS = {
   },
   tora_bellows: {
     id: 'tora_bellows', name: 'Wings for the Old Girl', giver: 'tora', minLevel: 21, prereq: 'tora_handles',
-    text: "Bellows need leather that breathes. Imp wings, from the Twilight Ruins: thin as paper, tough as boots, slightly judgy. Bring me 10. Yes, the Imps are using them. They'll walk. Builds character.",
+    text: "Bellows need a flap that breathes. Gutter Feathers, from the Twilight Ruins: the Gargoyle Kids line their nests in the temple gutters with them, light as air, tough as boots. Bring me 10. They'll pout. Gargoyles always pout. Builds character.",
     objectives: [{ type: 'collect', item: 'bat_wing', count: 10 }],
     rewards: { exp: 110000, gold: 3100, items: [] },
   },
@@ -461,7 +461,7 @@ export const QUESTS = {
 
   // Observatory Steps.
   // Professor Lumen's story: the night the sky stood still, one star fell anyway, onto Moonlit
-  // Ridge. Where it landed the rocks got up and walked: the Meteor Golems aren't guarding the star,
+  // Ridge. Where it landed, girls climbed out of the crater: the Meteor Maidens aren't guarding the star,
   // they ARE it, in pieces, trying to stand up and go home. He builds a telescope that works
   // backwards, and from the top of Howling Rock you send the star home (and he points you on to a
   // fox in the Grove who keeps borrowing his maps).
@@ -473,7 +473,7 @@ export const QUESTS = {
   },
   lumen_fallen: {
     id: 'lumen_fallen', name: 'Where It Landed', giver: 'lumen', minLevel: 30, prereq: 'lumen_lens',
-    text: "A star fell while the sky stood still. That shouldn't be possible. I adore it. It came down on Howling Rock, high on the ridge, and since then the rocks up there have been getting up and walking about. Climb up and have a look, and settle 15 of those Meteor Golems. Gently, if you can. I have a theory, and it's a sad one.",
+    text: "A star fell while the sky stood still. That shouldn't be possible. I adore it. It came down on Howling Rock, high on the ridge, and since then there have been girls up there with comets for ponytails, punching the rocks. Climb up and have a look, and settle 15 of those Meteor Maidens. Gently, if you can. I have a theory, and it's a sad one.",
     objectives: [{ type: 'visit', map: 'ridge', above: 520, place: 'the top of Howling Rock' }, { type: 'kill', mob: 'meteorgolem', count: 15 }],
     rewards: { exp: 100000, gold: 2600, items: [] },
   },
@@ -492,17 +492,17 @@ export const QUESTS = {
 
   // Marina's story (Tidepool Pier, 2026-11-21): her bubble charm is leaking, the deep's gone dark
   // and cold since the tide stuck, and the old diving bell hasn't rung since her grandmother's
-  // day. You patch the charm with wisp-fire, chase the Imps off her lamp glass, bring the divers
+  // day. You patch the charm with wisp-fire, chase the Gargoyle Kids off her lamp glass, bring the divers
   // something warm, and Granny Kelp remembers the bell's last song.
   marina_charm: {
     id: 'marina_charm', name: 'A Leaky Bubble', giver: 'marina', minLevel: 22, prereq: 'story_tide',
-    text: "My bubble charm's leaking. Not a lot. Just enough that I come up with one wet ear. A bubble wants to be warm to stay round, so: Will-o'-Wisps in Twilight Ruins burn without burning anything. Bring me 10 Wisp Flames and I'll tuck them in the charm. Don't sit on them.",
+    text: "My bubble charm's leaking. Not a lot. Just enough that I come up with one wet ear. A bubble wants to be warm to stay round, so: the wisps in the Ruin Acolytes' censers burn without burning anything. Bring me 10 Wisp Flames and I'll tuck them in the charm. Don't sit on them.",
     objectives: [{ type: 'collect', item: 'wisp_flame', count: 10 }],
     rewards: { exp: 56000, gold: 1600, items: [{ id: 'orange_potion', qty: 15 }] },
   },
   marina_imps: {
     id: 'marina_imps', name: 'Light Fingers', giver: 'marina', minLevel: 23, prereq: 'marina_charm',
-    text: "The Imps in Twilight Ruins flew off with the glass from my diving lamp. Shiny things. They can't help it. I can't dive in the dark either, so we're at an impasse. Shoo 15 of them and see if one drops it. If one's wearing it as a hat, let him keep the hat. Just get the glass.",
+    text: "The Gargoyle Kids in Twilight Ruins flew off with the glass from my diving lamp. Shiny things. They can't help it. I can't dive in the dark either, so we're at an impasse. Shoo 15 of them and see if one drops it. If one's wearing it as a hat, let her keep the hat. Just get the glass.",
     objectives: [{ type: 'kill', mob: 'gloombat', count: 15 }],
     rewards: { exp: 110000, gold: 2900, items: [] },
   },
@@ -789,14 +789,14 @@ export const QUESTS = {
   // Moonleaf Grove.
   nim_candles: {
     id: 'nim_candles', name: 'The Runaway Candles', giver: 'nim', minLevel: 20, prereq: 'nim_chimes',
-    text: "M-my floating candles ran away in the night. They left a note. It just says BYE. Now they're Will-o'-Wisps haunting the Twilight Ruins. Could you bring back 12 Wisp Flames? Gently, please. They're going through a phase.",
+    text: "M-my floating candles ran away in the night. They left a note. It just says BYE. Now they're wisps, living in the Ruin Acolytes' censers in the Twilight Ruins. The acolytes think they found them. Could you bring back 12 Wisp Flames? Gently, please. They're going through a phase.",
     objectives: [{ type: 'collect', item: 'wisp_flame', count: 12 }],
     rewards: { exp: 31000, gold: 820, items: [{ id: 'mana_elixir', qty: 10 }, { id: 'ear_20', qty: 1, variant: 'roll' }] },
     scenes: { accept: 'candles_open', done: 'candles_done' },
   },
   nim_cape: {
     id: 'nim_cape', name: 'The Caped Candle', giver: 'nim', minLevel: 23, prereq: 'nim_candles',
-    text: "One candle is still out there. The big one. Every night it climbs to the Temple Roof of the Twilight Ruins and just stands there, glowing, like the hero on the cover of the storybook I read them. I-I may have read it to them too many times. The Imps up there think it's their boss now. Clear 15 Imps on the roof and bring it home? Please don't tell it I said 'big'.",
+    text: "One candle is still out there. The big one. Every night it climbs to the Temple Roof of the Twilight Ruins and just stands there, glowing, like the hero on the cover of the storybook I read them. I-I may have read it to them too many times. The Gargoyle Kids up there think it's their boss now. Clear 15 Gargoyle Kids on the roof and bring it home? Please don't tell it I said 'big'.",
     objectives: [{ type: 'visit', map: 'ruins', above: 440, place: 'the Temple Roof of the Twilight Ruins' }, { type: 'kill', mob: 'gloombat', count: 15 }],
     rewards: { exp: 130000, gold: 3700, items: [{ id: 'mana_elixir', qty: 10 }] },
   },
@@ -833,7 +833,7 @@ export const QUESTS = {
   },
   kestrel_wings: {
     id: 'kestrel_wings', name: 'Wings in the Dark', giver: 'kestrel', minLevel: 22, prereq: 'kestrel_glade',
-    text: "Its fletching's in tatters, but the shaft is straight as the day I made it. Imp Wings make the best feathers there are. Shoot down 15 Imps in the Twilight Ruins and bring me 7 of their wings. Only about half of them drop one. Where do the other wings go? Nobody knows. Science can't explain it. This time, it lands.",
+    text: "Its fletching's in tatters, but the shaft is straight as the day I made it. Gutter Feathers make the best fletching there is. Shoot down 15 Gargoyle Kids in the Twilight Ruins and bring me 7 of their feathers. Only about half of them drop one. Where do the others go? Nobody knows. Science can't explain it. This time, it lands.",
     objectives: [{ type: 'kill', mob: 'gloombat', count: 15 }, { type: 'collect', item: 'bat_wing', count: 7 }],
     rewards: { exp: 110000, gold: 3100, items: [] },
   },

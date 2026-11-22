@@ -1,5 +1,5 @@
 // Monster art: wilds (Windy Canyon and Mossy Woods).
-//   pebblet    Basilisk Hatchling: remade 2026-11-18 as a live rig (basiliskrig.js)
+//   rockhound  Rockhound Kid: a canyon kid in a stone-lizard onesie (2026-11-22, rockhoundrig.js)
 //   scorpip    Manticore Cub: remade 2026-11-18 as a live rig (manticorerig.js)
 //   leafling   Dryad: a forest nymph with leaf hair, bark limbs, and a budding twig staff
 //   boarlet    Warg: a chibi wolf pup with a cream ruff and a red bandana; it pounces with a chomp
@@ -16,7 +16,7 @@ import { R, E, T, F, C, mix, sparkLine } from './kit.js';
 import { glowEye, brow, mouth, nose as snout, blush as cheek, sweat, vein, deadEye, band, LASH, easyEye } from './faces.js';
 import { ramp, hue, crescent, shine, smear, chain, wave as ripple, reach, breath, sway } from './meadow.js';
 import { manticoreRig, manticoreStill } from './manticorerig.js';
-import { basiliskRig, basiliskStill } from './basiliskrig.js';
+import { rockhoundRig, rockhoundStill } from './rockhoundrig.js';
 import { wolfPupRig, wolfPupStill } from './wolfpuprig.js';
 
 // ---------- Geometry helpers ----------
@@ -603,7 +603,8 @@ function mossgolem(pose, f, mood) {
 
 export const ART = {
   // (Windy Canyon's two, remade from scratch 2026-11-18: live rigs, their stills from the same shapes.)
-  pebblet: { walk: 8, idle: 6, attack: 4, stride: 13, atkMs: [80, 300, 220], draw: basiliskStill, rig: basiliskRig, pad: 4 },
+  // (The Basilisk Hatchling was wiped 2026-11-22; the Rockhound Kid took its place.)
+  rockhound: { walk: 8, idle: 6, attack: 4, stride: 14, atkMs: [80, 300, 220], draw: rockhoundStill, rig: rockhoundRig, pad: 4 },
   scorpip: { walk: 8, idle: 6, attack: 4, stride: 20, atkMs: [80, 300, 220], draw: manticoreStill, rig: manticoreRig, pad: 4 },
   leafling: { walk: 8, idle: 6, attack: 4, stride: 16, atkMs: [55, 230, 170], draw: leafling },
   // (Remade 2026-11-20 as the Wolf Pup: a live rig.)
@@ -613,7 +614,7 @@ export const ART = {
 
 // New display names, and the hitbox each design wants: { key: { name, w, h } }.
 export const INFO = {
-  pebblet: { name: 'Basilisk Hatchling', w: 24, h: 30 },
+  rockhound: { name: 'Rockhound Kid', w: 26, h: 36 },
   scorpip: { name: 'Manticore Cub', w: 30, h: 30 },
   leafling: { name: 'Dryad', w: 20, h: 34 },
   boarlet: { name: 'Warg', w: 38, h: 26 },

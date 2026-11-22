@@ -1,0 +1,245 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Mob stage</title></head><body style="margin:0;background:#1e1830">
+<canvas id="c"></canvas>
+<script type="module">
+// Dev tool (2026-11-22): one monster, big, acting out a script on a loop: its idle act, walking each
+// way, two wind-up attacks, a touch attack, two hits taken, a nap and its fall. For checking a live
+// rig's motion and filming it.
+// ?mob=pebblet (any monster id), &zoom=6, &idle=18 (seconds of idle first), &bg=canyon|ruins|night.
+// From outside: window.step(secs) plays and draws; window.sheet(times, name) posts a contact sheet;
+// window.rec(name, from, to) films [from, to) of the script to an MP4 on a fixed clock (WebCodecs)
+// and posts it to the picture receiver (127.0.0.1:8002).
+import { MOBS } from '../src/data/mobs.js';
+import { drawMonster } from '../src/render/monsters.js';
+import { setHd, nextFrame, gfx } from '../src/render/pixel.js';
+import { preloadFxSprites } from '../src/render/fx-sprites.js';
+const q = new URLSearchParams(location.search);
+const def = MOBS[q.get('mob') ?? 'pebblet'];
+const ZOOM = Number(q.get('zoom') ?? 6);
+const IDLE = Number(q.get('idle') ?? 18);
+const BG = { canyon: ['#ffcfa0', '#ffe8cc', '#d9a27a', '#b9805e'], ruins: ['#4a3f78', '#8a7ab8', '#6c5a8a', '#4c3e66'], night: ['#28244a', '#5a4a8a', '#3a3456', '#2a2440'], day: ['#bfe4ff', '#f2f8ff', '#a8c890', '#86a870'] }[q.get('bg') ?? 'day'];
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+const VW = 960;
+const VH = 540;
+canvas.width = VW;
+canvas.height = VH;
+gfx.noBudget = true;
+preloadFxSprites();
+const FLOOR = 450;
+const m = { def, x: 0, y: 0, hp: def.hp, dir: 1, state: 'idle', flash: 0, stagger: 0, phase: 0, age: 9, dying: 0, uid: 0, aggroUntil: 0, attackAt: -9, gloatAt: -9, windup: 0, odo: 0, spawn: { x: 0, y: 0 } };
+const small = { ...m, spawn: { x: 0, y: 0 } };
+// The script: [seconds, what, dir].
+// (A boss: its slam, each of its story moves (?moves=spikes:1.3,flare:1.5), and its cutscene beats.)
+const MOVES = (q.get('moves') ?? '').split(',').filter(Boolean).map((s) => s.split(':'));
+const SCRIPT = def.boss
+  ? [[IDLE, 'idle'], [2.6, 'walk', 1], [2.6, 'walk', -1], [0.8, 'idle'], [1.2, 'windup'], [1.6, 'blow'], ...MOVES.map(([id, w]) => [Number(w) + 0.9, `cast:${id}:${w}`]), ...(q.has('snooze') ? [[4, 'snooze'], [1.6, 'idle']] : []), [0.7, 'hit'], [0.9, 'hit'], [1, 'idle'], [3, 'freed:sad'], [2.6, 'freed:happy'], [1.6, 'give'], [2.4, 'after'], [2.2, 'die']]
+  : [[IDLE, 'idle'], [2.6, 'walk', 1], [2.6, 'walk', -1], [0.8, 'idle'], [0.6, 'windup'], [1.3, 'blow'], [0.6, 'windup'], [1.3, 'blow'], [1.2, 'touch'], [0.7, 'hit'], [0.9, 'hit'], [1.2, 'idle'], [4.5, 'nap'], [1, 'idle'], [2.2, 'die']];
+const length = SCRIPT.reduce((a, s) => a + s[0], 0);
+window.length = length;
+let t = 0;
+let last = 'idle';
+let lastI = -1;
+function act(now) {
+  let at = t % length;
+  let i = 0;
+  while (at > SCRIPT[i][0]) at -= SCRIPT[i++][0];
+  const [dur, what, dir] = SCRIPT[i];
+  const fresh = i !== lastI;
+  lastI = i;
+  m.state = what === 'walk' ? 'walk' : 'idle';
+  if (what === 'walk') {
+    m.dir = dir;
+    // (At its own speed, as it walks in the game.)
+    const span = def.speed * dur;
+    const nx = (dir > 0 ? -span / 2 : span / 2) + dir * at * def.speed;
+    m.odo += Math.abs(nx - m.x);
+    m.x = nx;
+  }
+  if (i === 0) m.x = 0;
+  m.windup = what === 'windup' ? Math.max(0.001, dur - at) : 0;
+  if ((what === 'blow' || what === 'touch') && fresh) m.attackAt = now;
+  if (what === 'hit' && fresh) m.flash = 0.15;
+  if (what === 'blow' && at > 0.4 && at < 0.45) m.gloatAt = now;
+  m.flash = Math.max(0, m.flash - 1 / 60);
+  m.habit = what === 'nap' ? { kind: 'nap', until: now + 1 } : null;
+  if (what.startsWith('cast:') && fresh) {
+    const [, id, w] = what.split(':');
+    m.castMove = { id, at: now, warn: Number(w) };
+    if (id === 'ring') m.ringAt = now + Number(w);
+  }
+  if (what === 'snooze' && fresh) {
+    m.snoozeUntil = now + dur;
+    m.loud = (m.loud ?? 0) + 1;
+  }
+  if (what.startsWith('freed') || what === 'give' || what === 'after') {
+    m.cine ??= {};
+    Object.assign(m.cine, { freed: true, alpha: 1, mood: what === 'freed:sad' ? 'sad' : 'happy' });
+    if (what === 'give' && fresh) m.cine.gave = now;
+    if (what === 'freed:happy' && fresh) m.cine.star = true;
+  } else if (m.cine && what !== 'die') m.cine = null;
+  m.hp = what === 'die' || m.cine?.freed ? 0 : def.hp;
+  m.dying = what === 'die' ? Math.min(at, 0.5) : 0;
+  m.aggroUntil = what === 'windup' || what === 'blow' || what === 'touch' || what === 'hit' ? now + 2 : 0;
+  last = what;
+  return what;
+}
+function draw() {
+  nextFrame();
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  setHd(true, ZOOM);
+  const g = ctx.createLinearGradient(0, 0, 0, VH);
+  g.addColorStop(0, BG[0]);
+  g.addColorStop(0.8, BG[1]);
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, VW, VH);
+  ctx.fillStyle = BG[2];
+  ctx.fillRect(0, FLOOR, VW, VH - FLOOR);
+  ctx.fillStyle = BG[3];
+  ctx.fillRect(0, FLOOR, VW, 4);
+  const now = t;
+  const what = act(now);
+  // (The camera follows the monster; pebbles on the ground show it walking.)
+  for (let k = -12; k <= 12; k++) {
+    const gx = VW / 2 + (k * 24 - m.x) * ZOOM;
+    const wx = ((gx % (24 * ZOOM * 25)) + 24 * ZOOM * 25) % (24 * ZOOM * 25) - 24 * ZOOM * 5;
+    ctx.fillRect(wx, FLOOR + 14 + (k & 1) * 10, ZOOM * 2, ZOOM);
+  }
+  ctx.save();
+  ctx.translate(VW / 2 - m.x * ZOOM, FLOOR);
+  ctx.scale(ZOOM, ZOOM);
+  ctx.imageSmoothingEnabled = false;
+  drawMonster(ctx, m, m.x, def.fly ? -6 : 0, t, now);
+  ctx.restore();
+  // The same monster at the game's own size (2x, as on a big screen), top right.
+  ctx.save();
+  ctx.fillStyle = 'rgba(255,255,255,0.35)';
+  ctx.fillRect(VW - 190, 12, 178, 120);
+  ctx.translate(VW - 101, 124);
+  ctx.scale(def.boss ? 0.8 : 2, def.boss ? 0.8 : 2);
+  // (Its own copy, so the two drawings never share one rig's springs.)
+  for (const k of ['x', 'dir', 'state', 'hp', 'windup', 'attackAt', 'flash', 'habit', 'odo', 'aggroUntil', 'gloatAt', 'dying', 'castMove', 'snoozeUntil', 'loud', 'ringAt']) small[k] = m[k];
+  small.cine = m.cine ? (small.cine?.src === m.cine ? small.cine : { src: m.cine }) : null;
+  if (small.cine) Object.assign(small.cine, m.cine, { src: m.cine, standing: small.cine.standing });
+  drawMonster(ctx, small, 0, def.fly ? -6 : 0, t, now);
+  ctx.restore();
+  ctx.fillStyle = 'rgba(40,30,60,0.55)';
+  ctx.font = 'bold 18px sans-serif';
+  ctx.fillText(`${def.name}  ·  ${what}`, 18, 30);
+}
+function step(secs) {
+  const n = Math.max(1, Math.round(secs * 60));
+  for (let k = 0; k < n; k++) {
+    t += 1 / 60;
+    if (k < n - 1) act(t);
+  }
+  draw();
+}
+window.step = step;
+window.seek = (to) => {
+  t = 0;
+  m.odo = 0;
+  lastI = -1;
+  // (A fresh start: nothing left over from where the script was.)
+  for (const o of [m, small]) Object.assign(o, { castMove: null, snoozeUntil: undefined, loud: 0, ringAt: -9, cine: null, attackAt: -9, flash: 0, habit: null });
+  while (t < to - 1e-6) {
+    t += 1 / 60;
+    act(t);
+    if (Math.round(t * 60) % 2 === 0) draw();
+  }
+  draw();
+};
+// A contact sheet of these moments (seconds into the script), cropped round the monster.
+window.sheet = async (times, name, { w = 420, h = 380, cols = 5 } = {}) => {
+  const c = document.createElement('canvas');
+  c.width = cols * w;
+  c.height = Math.ceil(times.length / cols) * h;
+  const g = c.getContext('2d');
+  window.seek(0);
+  for (let i = 0; i < times.length; i++) {
+    while (t < times[i] - 1e-6) step(1 / 60);
+    g.drawImage(canvas, VW / 2 - w / 2, FLOOR + 40 - h, w, h, (i % cols) * w, Math.floor(i / cols) * h, w, h);
+    g.fillStyle = '#3a2d4f';
+    g.font = 'bold 15px sans-serif';
+    g.fillText(`${times[i].toFixed(2)}s ${last}`, (i % cols) * w + 6, Math.floor(i / cols) * h + 18);
+  }
+  const blob = await new Promise((r) => c.toBlob(r, 'image/jpeg', 0.9));
+  return (await fetch(`http://127.0.0.1:8002/${name}`, { method: 'POST', body: blob })).status;
+};
+
+function mp4(chunks, desc, W, H, fps) {
+  const u32 = (n) => [(n >>> 24) & 255, (n >>> 16) & 255, (n >>> 8) & 255, n & 255];
+  const u16 = (n) => [(n >>> 8) & 255, n & 255];
+  const str = (s) => [...s].map((c) => c.charCodeAt(0));
+  const cat = (parts) => {
+    const len = parts.reduce((a, p) => a + p.length, 0);
+    const o = new Uint8Array(len);
+    let k = 0;
+    for (const p of parts) {
+      o.set(p, k);
+      k += p.length;
+    }
+    return o;
+  };
+  const box = (type, ...parts) => {
+    const body = cat(parts.map((p) => (p instanceof Uint8Array ? p : new Uint8Array(p))));
+    return cat([new Uint8Array([...u32(body.length + 8), ...str(type)]), body]);
+  };
+  const full = (type, v, f, ...parts) => box(type, [v, ...u32(f).slice(1)], ...parts);
+  const N = chunks.length;
+  const TS = fps * 1000;
+  const delta = 1000;
+  const dur = N * delta;
+  const matrix = [...u32(0x10000), ...u32(0), ...u32(0), ...u32(0), ...u32(0x10000), ...u32(0), ...u32(0), ...u32(0), ...u32(0x40000000)];
+  const ftyp = box('ftyp', str('isom'), u32(512), str('isom'), str('iso2'), str('avc1'), str('mp41'));
+  const moovOf = (off) => {
+    const mvhd = full('mvhd', 0, 0, u32(0), u32(0), u32(TS), u32(dur), u32(0x10000), u16(0x100), new Array(10).fill(0), matrix, new Array(24).fill(0), u32(2));
+    const tkhd = full('tkhd', 0, 3, u32(0), u32(0), u32(1), u32(0), u32(dur), new Array(8).fill(0), u16(0), u16(0), u16(0), u16(0), matrix, u32(W << 16), u32(H << 16));
+    const mdhd = full('mdhd', 0, 0, u32(0), u32(0), u32(TS), u32(dur), u16(0x55c4), u16(0));
+    const hdlr = full('hdlr', 0, 0, u32(0), str('vide'), new Array(12).fill(0), str('VideoHandler'), [0]);
+    const vmhd = full('vmhd', 0, 1, new Array(8).fill(0));
+    const dinf = box('dinf', full('dref', 0, 0, u32(1), full('url ', 0, 1)));
+    const avc1 = box('avc1', new Array(6).fill(0), u16(1), new Array(16).fill(0), u16(W), u16(H), u32(0x480000), u32(0x480000), u32(0), u16(1), new Array(32).fill(0), u16(0x18), u16(0xffff), box('avcC', desc));
+    const keys = chunks.map((c, i) => (c.key ? i + 1 : 0)).filter(Boolean);
+    const stbl = box('stbl', full('stsd', 0, 0, u32(1), avc1), full('stts', 0, 0, u32(1), u32(N), u32(delta)), full('stss', 0, 0, u32(keys.length), ...keys.map(u32)),
+      full('stsc', 0, 0, u32(1), u32(1), u32(N), u32(1)), full('stsz', 0, 0, u32(0), u32(N), ...chunks.map((c) => u32(c.data.length))), full('stco', 0, 0, u32(1), u32(off)));
+    return box('moov', mvhd, box('trak', tkhd, box('mdia', mdhd, hdlr, box('minf', vmhd, dinf, stbl))));
+  };
+  const moov = moovOf(ftyp.length + moovOf(0).length + 8);
+  const dataLen = chunks.reduce((a, c) => a + c.data.length, 0);
+  return new Blob([ftyp, moov, new Uint8Array([...u32(dataLen + 8), ...str('mdat')]), ...chunks.map((c) => c.data)], { type: 'video/mp4' });
+}
+// Films [from, to) seconds of the script at 30 fps (each frame drawn on its own clock, so it
+// doesn't matter if the pane is in the background).
+window.rec = async (name, from = 0, to = length, fps = 30) => {
+  const chunks = [];
+  let desc = null;
+  let err = null;
+  const enc = new VideoEncoder({
+    output: (chunk, meta) => {
+      if (meta?.decoderConfig?.description && !desc) desc = new Uint8Array(meta.decoderConfig.description);
+      const d = new Uint8Array(chunk.byteLength);
+      chunk.copyTo(d);
+      chunks.push({ data: d, key: chunk.type === 'key' });
+    },
+    error: (e) => (err = String(e)),
+  });
+  enc.configure({ codec: 'avc1.640028', width: VW, height: VH, bitrate: 3_000_000, framerate: fps, avc: { format: 'avc' } });
+  window.seek(from);
+  const n = Math.round((to - from) * fps);
+  for (let i = 0; i < n; i++) {
+    step(1 / fps);
+    const fr = new VideoFrame(canvas, { timestamp: Math.round((i * 1e6) / fps), duration: Math.round(1e6 / fps) });
+    enc.encode(fr, { keyFrame: i % (fps * 2) === 0 });
+    fr.close();
+    while (enc.encodeQueueSize > 6) await new Promise((r) => enc.addEventListener('dequeue', r, { once: true }));
+  }
+  await enc.flush();
+  enc.close();
+  const blob = mp4(chunks, desc, VW, VH, fps);
+  const st = (await fetch(`http://127.0.0.1:8002/${name}`, { method: 'POST', body: blob })).status;
+  return { st, frames: chunks.length, mb: +(blob.size / 1e6).toFixed(2), err };
+};
+step(0);
+</script>
+</body></html>

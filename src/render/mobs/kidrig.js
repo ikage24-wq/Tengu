@@ -14,6 +14,7 @@
 // themselves. `dir` (where the layer's middle is from its pivot) is worked out from the drawing.
 
 import { part, partBare, smooth } from './rig.js';
+import { sprite } from '../pixel.js';
 import { W, H, CX, G, mapShape } from './kidbase.js';
 
 export const D2R = Math.PI / 180;
@@ -80,7 +81,14 @@ export function twoPass(list) {
 }
 
 // The kit for one kid: `draw(mood)` returns { groups } (kidbase `groups()`), `joints` its pivots.
-export function kidKit(kind, draw, joints) {
+// `scale` draws the whole kid bigger (a boss on the kid base), each part re-rendered at that size,
+// never stretched.
+// `flat` (a set of layer names, or true for all but those in `cel`): those layers skip the
+// automatic shading, which gave every part a dark band along its own bottom edge, a seam wherever it
+// lay over another part; they're shaded by hand in the drawing instead.
+export function kidKit(kind, draw, joints, { scale = 1, flat = null, cel = null } = {}) {
+  const SC = scale / 3;
+  const isFlat = (name) => (flat === true ? !cel?.has(name) : Boolean(flat?.has?.(name)));
   const BW = Math.ceil(W * SC);
   const BH = Math.ceil(H * SC);
   const scaled = (shapes) => shapes.map((sh) => mapShape(sh, ([x, y]) => [x * SC, y * SC], SC));
@@ -107,6 +115,10 @@ export function kidKit(kind, draw, joints) {
   const piece = (name, mood, bare) => {
     const key = `kid|${kind}|${name}|${mood ?? ''}`;
     const shapes = () => scaled(groupsOf(mood)[name] ?? []);
+    // (A kit with `flat` also outlines in one even tone per part: the light-side outline flipped
+    // light and dark from row to row along a curve, striping every round edge.)
+    if (isFlat(name)) return sprite(`rig|${key}|flat${bare ? '|bare' : ''}`, () => ({ w: BW, h: BH, shapes: shapes(), res: 3, crisp: true, bare: Boolean(bare), pad: 4 }));
+    if (flat) return sprite(`rig|${key}|even${bare ? '|bare' : ''}`, () => ({ w: BW, h: BH, shapes: shapes(), res: 3, soft: 'cel', crisp: true, bare: Boolean(bare), pad: 4 }));
     return bare ? partBare(key, BW, BH, shapes, 4, 3) : part(key, BW, BH, shapes, 4, 3);
   };
   // Where a layer's middle sits from its pivot, in game pixels (its soft swing's `dir`).

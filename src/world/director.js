@@ -445,6 +445,10 @@ function runner(world, step) {
     const dur = step.dur ?? (step.move === 'attack' ? 0.9 : 1);
     let t = 0;
     if (step.move === 'attack') m.attackAt = world.now + (c.clock ?? 0);
+    // (Handing something over: the rig holds it out, then lets it go, e.g. Prismaris's clock.)
+    if (step.move === 'give') m.cine.gave = world.now + (c.clock ?? 0);
+    // (Given something to hold: Prismaris's little star of his own.)
+    if (step.move === 'getstar') m.cine.star = true;
     if (step.move === 'hoist' || (step.move === 'descend' && !m.cine.lift)) {
       m.cine.lift = step.from ?? 220;
       m.cine.thread = true;

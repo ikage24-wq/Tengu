@@ -754,7 +754,7 @@ const FACE_S = 2.15;
 const QUEEN_FACE = { at: 0.86, fit: 0.3, dx: -12 };
 const FACE_AT = {
   gnarlroot: { at: 0.58, fit: 0.5 }, sylvana: QUEEN_FACE, tamamo: QUEEN_FACE, lilith: QUEEN_FACE, selene: QUEEN_FACE,
-  crystalking: { at: 0.7, fit: 0.48, dx: -3 }, mothercapper: { at: 0.54, dx: -7 }, tuskar: { at: 0.94, dx: -4 }, moraymurri: { at: 0.58, dx: -5 }, morayena: { at: 0.58, dx: -5 },
+  crystalking: { at: 0.6, fit: 0.46, dx: 1 }, alarm: { at: 0.63, fit: 0.44, dx: 1 }, mothercapper: { at: 0.54, dx: -7 }, tuskar: { at: 0.94, dx: -4 }, moraymurri: { at: 0.58, dx: -5 }, morayena: { at: 0.58, dx: -5 },
   gearheart: { at: 0.58, fit: 0.62 }, astraea: { at: 0.62, dx: -22 }, bonbon: { at: 0.5 }, persona: { at: 0.78 }, directrice: { at: 0.7, dx: -4 }, playwright: { at: 0.6, fit: 0.5 }, gale: { at: 0.7, dx: -3 },
   matriarch: { at: 0.27, dx: -15, fit: 0.5 }, whaledream: { at: 0.52, dx: -23 }, marigold: { at: 0.86 }, velvet: { at: 0.74, fit: 0.66 },
   abyssia: { at: 0.6, fit: 0.62 }, coralie: { at: 0.62 }, leonie: { at: 0.66 }, marionetta: { at: 0.68 },

@@ -121,8 +121,8 @@ const QUEENS = {
     adds: { at: [], mob: null },
     enrage: 0.25,
   },
-  // The Alarm (Chapter 10's finale): the Queen's clock grown giant, ringing her back to Monday. A
-  // ring round it, the clock hands slamming down, a bell clang along the floor, and after its
+  // The Alarm (Chapter 10's finale): the Queen's clock grown into Madame Reveille, ringing her back to
+  // Monday. A ring round her, the clock hands conducted down, a bell clang along the floor, and after her
   // first snooze "IT'S MONDAY!" on the whole lawn. Three snoozes (snoozeTurn), louder each time.
   alarm: {
     color: '#ffc94a', light: '#fff6d8',
@@ -137,14 +137,14 @@ const QUEENS = {
     enrage: 0,
   },
   // Prismaris in his trial (Chapter 10): scared of the dark, hugging the Queen's alarm clock.
-  // Crystal spikes under you, his nightlight flaring round him, his tail swept along the floor,
+  // Crystal spikes under you, his nightlight flaring round him, his geode cape swept along the floor,
   // and from two thirds down, Lights Out: the room goes dark but for three pools of light.
   nightking: {
     color: '#b8a8ff', light: '#f4f0ff',
     moves: [
       { id: 'spikes', name: 'Crystal Spikes', sub: 'Step off the glowing cracks', every: 6, make: (q, p, map) => [p.x, ...spread(map, 3)].map((x) => ({ kind: 'circle', x, w: 64, warn: 1.3, k: 0.8, fx: 'celfissure' })) },
       { id: 'flare', name: 'Nightlight Flare', sub: 'His light flares: get away from him', every: 9, make: (q) => [{ kind: 'circle', x: q.x, w: 260, warn: 1.5, k: 1, high: true, fx: 'celquakegold' }] },
-      { id: 'sweep', name: 'Tail Sweep', sub: 'Jump it!', every: 8, make: (q, p) => [{ ...lane(q, p, 520, 1.1, 0.9, 'celfissure'), low: true }] },
+      { id: 'sweep', name: 'Cape Sweep', sub: 'Jump it!', every: 8, make: (q, p) => [{ ...lane(q, p, 520, 1.1, 0.9, 'celfissure'), low: true }] },
       { id: 'dark', name: 'Lights Out!', sub: 'Stand in a pool of light!', every: 15, from: 0.66, make: (q, p, map) => lightsOut(map) },
     ],
     adds: { at: [], mob: null },
@@ -322,7 +322,10 @@ function queenTurn(world, m, style, dt) {
   // (Louder after each snooze: quicker too.)
   s.next[mv.id] = mv.every * fast * (1 - 0.1 * (m.loud ?? 0));
   callout(world, m, mv.name, mv.sub);
-  addZones(world, m, mv.make(m, world.body, world.map), base);
+  const zones = mv.make(m, world.body, world.map);
+  addZones(world, m, zones, base);
+  // (Which move she's casting and when it goes off, for her rig to act it out.)
+  m.castMove = { id: mv.id, at: world.now, warn: Math.max(0.4, ...zones.map((z) => z.warn ?? 1)) };
   if (mv.chase) s.chase = { move: mv, left: mv.chase - 1, t: 0.8 };
 }
 
