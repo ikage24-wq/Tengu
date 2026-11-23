@@ -200,6 +200,7 @@ function softSwing(p, base, x, y, pose, m, a, st, swung) {
 //             sprung with `springs` too (default loose: [90, 7])
 //   kick      { channel: speed } given when a blow lands on it
 //   walkStiff { channel: [k, c] } the spring a channel blends to as the walk takes over
+//   fastNow   (m, a) => true while the rig plays a move of its own: its `fast` channels stiffen
 //   stride    px walked per step cycle
 //   (a part may also be `soft`: a loose layer swinging on its own physics; see Soft layers above,
 //   and `paint: (ctx, a, S)` for live extras drawn on it in its own space)
@@ -228,7 +229,8 @@ export function makeRig(spec) {
         st._hit = a.mo.hitT;
         if (m.hp > 0) for (const [k, v] of Object.entries(spec.kick ?? { tilt: -2 })) kick(st, k, v);
       }
-      const fast = a.ph.strike > 0 || a.ph.antic > 0.8;
+      // (`fastNow(m, a)`: the rig's own moves outside an attack, a jump or a dodge, snap as hard.)
+      const fast = a.ph.strike > 0 || a.ph.antic > 0.8 || Boolean(spec.fastNow?.(m, a));
       const S = {};
       const sp = (name, goal, def) => {
         let [k, c] = spec.springs?.[name] ?? def;
