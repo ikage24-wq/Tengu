@@ -393,6 +393,17 @@ export function callout(world, bot, kind, ctx = {}, rng = world.bots?.rng ?? Mat
   // (One call of a kind covers the moment: three patches at once get one shout, not three.)
   if (world.now - (c.kinds[kind] ?? -99) < 5) return false;
   if (!URGENT.has(kind) && world.now - c.at < GROUP_GAP) return false;
+  // (an adventurer says it their own way: world/adventurers/talk.js fightLine)
+  if (bot.adv && world.bots?.advFight) {
+    const line = world.bots.advFight(bot, kind, ctx);
+    if (line && botChat(world, bot, line, { prefix: '[Party] ', color: '#9fe0b0', important: true, voiced: true })) {
+      bot.callAt = world.now;
+      c.at = world.now;
+      c.kinds[kind] = world.now;
+      return true;
+    }
+    return false;
+  }
   const start = Math.floor(rng() * pool.length);
   for (let i = 0; i < pool.length; i++) {
     const line = pool[(start + i) % pool.length].replace(/\{(\w+)\}/g, (_, k) => ctx[k] ?? (k === 'boss' ? 'it' : ''));

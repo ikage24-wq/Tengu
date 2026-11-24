@@ -3,6 +3,7 @@
 // Mochi up late in a row watching the moon instead of going to bed; its pieces making way for yours;
 // and its stall in the Mochi Market, with Dango Stack and the prizes.
 
+import { startOf } from '../src/world/calendar.js';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createCharacter } from '../src/core/character.js';
@@ -201,9 +202,10 @@ test("the turning keeps time with the mallet: hands well out of the mortar as ea
   }
 });
 
-test('winter: the Snow Lantern Festival in December - snowball fights by day, lanterns lit at dusk, sat by them at night', async () => {
+test('winter: the Snow Lantern Festival in Winter - snowball fights by day, lanterns lit at dusk, sat by them at night', async () => {
   const { snowLanterns, litLanterns } = await import('../src/world/garden-life.js');
-  const dec = Math.ceil(Date.UTC(2026, 11, 10) / DAY_MS / EVERY) * EVERY + 1;
+  // (a festival day in the game's winter: world/calendar.js)
+  const dec = Math.ceil(startOf(3, 5, 1) / DAY_MS / EVERY) * EVERY + 1;
   assert.equal(festivalAt(new Date(dec * DAY_MS + DAY_MS / 2)).id, 'snow');
   const g = festGarden(6, { id: 'snow', eve: 0, hour: 12 });
   try {

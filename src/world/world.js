@@ -744,9 +744,12 @@ export function killMob(world, m, byParty = false) {
   world.juice.push({ type: 'kill', x: m.x, y: m.y, w: m.def.w, h: m.def.h, boss: Boolean(m.def.boss), mob: m.def.id, leaf: Boolean(m.def.leafPoof) });
   // A boss falls with a short stop; its weight comes from the slow motion and flash after (see
   // render/particles.js).
-  world.hitstop = Math.max(world.hitstop, m.def.boss ? 0.12 : 0.045);
+  // (A companion's everyday kill doesn't stop your screen: only yours do, and any boss falling.)
+  if (!byParty || m.def.boss) world.hitstop = Math.max(world.hitstop, m.def.boss ? 0.12 : 0.045);
   celebrateLevels(world, levels);
   if (m.def.boss) world.log(`${m.def.name} has been defeated!`, '#ffe36b');
+  // (the guild hears of it: world/adventurers/bodies.js)
+  if (m.def.boss) world.onBossKill?.(m);
 }
 
 // The set piece a boss drops for this hero (a slot they don't have yet, if any), or null.
@@ -1063,9 +1066,10 @@ export function updateWorld(world, dt, input) {
     // Spell shots burst where they land.
     if (h.burst === 'fire' || h.burst === 'holy') world.fx.push({ kind: 'impact', element: h.burst, x: m.x, y: m.y, h: m.def.h, t: 0, dur: 0.45, seed: Math.random() });
     else if (h.burst) world.fx.push({ kind: h.burst, x: m.x, y: m.y - (m.air ?? 0), h: m.def.h, mob: m, big: h.big, crit: h.crit, rank: h.rank, dir: h.dir ?? (Math.sign(m.x - h.fromX) || 1), t: 0, dur: 0.45, seed: Math.random() });
-    if (h.crit) world.hitstop = Math.max(world.hitstop, 0.03);
+    // (Other people's hits never shake or stop your screen: world/party.js land.)
+    if (h.crit && !h.party) world.hitstop = Math.max(world.hitstop, 0.03);
     // Heavy shots land with their own weight.
-    if (h.stop) world.hitstop = Math.max(world.hitstop, h.stop);
+    if (h.stop && !h.party) world.hitstop = Math.max(world.hitstop, h.stop);
     if (h.shake) world.juice.push({ type: 'shake', mag: h.shake, dur: 0.2 });
     // Online, a monster another player's game runs takes the real hit there.
     world.net?.hit(world, m, h);

@@ -17,6 +17,7 @@ export const PIECES = {
   log: 'Message log',
   minimap: 'Minimap',
   tracker: 'Quest card',
+  clock: 'Clock and date',
 };
 const SIZES = [0.75, 0.85, 1, 1.15, 1.3, 1.5];
 

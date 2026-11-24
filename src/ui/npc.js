@@ -64,6 +64,8 @@ import { teamOf } from '../world/teamwork.js';
 import { routeFrom, setSail, hasSailed } from '../world/voyage.js';
 import { derbyClock, standings, PRIZES } from '../world/derby.js';
 import { drawFawnellePhoto } from '../render/fawnelle/index.js';
+import { advTalkWindow } from './adventurer.js';
+import { guildBoardPage } from './guildboard.js';
 
 export function questMarker(char, npcId) {
   const ids = questsOf(char, npcId);
@@ -84,7 +86,7 @@ const ROLE_THEME = { guide: 'mint', shop: 'peach', stylist: 'pink', instructor: 
 // A visual-novel style dialog box along the bottom of the screen: the NPC stands large at the
 // left, their name on a ribbon, and their words type out. Returns the text area, or null if the
 // player closed it.
-function dialogFrame(ui, win, npc, H, world, talking = false) {
+export function dialogFrame(ui, win, npc, H, world, talking = false) {
   const { ctx } = ui;
   const th = THEMES[ROLE_THEME[npc.role] ?? 'pink'];
   const W = 440;
@@ -166,7 +168,7 @@ function dialogFrame(ui, win, npc, H, world, talking = false) {
 // Typewriter text: how many characters of the current page show. Clicking the text finishes it.
 // `text` is the page, so the NPC talks (mouth moving) only while words are still coming;
 // Space finishes the page at once, like clicking it.
-function typed(ui, dlg, page, world, area, text = '') {
+export function typed(ui, dlg, page, world, area, text = '') {
   const len = text.length;
   if (dlg.page !== page) {
     dlg.page = page;
@@ -206,14 +208,14 @@ function voiceOf(id = '') {
 }
 
 // Number keys pick dialog choices (the world ignores them while a dialog is open).
-const pressedNumber = (ui) => {
+export const pressedNumber = (ui) => {
   for (let i = 1; i <= 9; i++) if (ui.input.pressed?.has(`Digit${i}`) || ui.input.pressed?.has(`Numpad${i}`)) return i;
   return 0;
 };
 
 // A dialog choice: a row with a badge on the left (a quest's state, or an icon), a label and a
 // line under it, and its number key on the right. Returns true when picked.
-function choice(ui, x, y, w, c, n, th, key) {
+export function choice(ui, x, y, w, c, n, th, key) {
   const { ctx } = ui;
   const hot = hover(ui, x, y, w, 21);
   const down = hot && ui.mouse.down;
@@ -267,6 +269,8 @@ export function npcWindow(ui, state, world) {
   if (dlg.mode === 'storage') return storageWindow(ui, state, world);
   // A garden plot on your island (ui/plant.js).
   if (dlg.mode === 'plant') return plantWindow(ui, state, world);
+  // An adventurer of the guild (ui/adventurer.js).
+  if (dlg.adv) return advTalkWindow(ui, state, world);
   const npc = NPCS[dlg.id];
   const win = state.windows.npc;
   const char = world.char;
@@ -424,6 +428,11 @@ export function npcWindow(ui, state, world) {
     const board = char.guild?.joined ? bountyBoard(world) : [];
     const slain = board.filter((b) => b.state === 'slain').length;
     choices.push({ label: char.guild?.joined ? 'The bounty board' : 'Join the guild', sub: slain ? `${slain} to hand in!` : char.guild?.joined ? 'Elites to hunt, ranks to earn' : 'Free, and you get a cape', icon: 'star', primary: true, run: () => (dlg.bounty = true) });
+    // The guild's own notice board: its adventurers' news, who's where, and calls for help.
+    if (world.guild) {
+      const help = (world.guild.requests ?? []).filter((r) => r.open && !world.guild.adv[r.by]?.beaten?.[r.boss]).length;
+      choices.push({ label: 'The notice board', sub: help ? `${help} asking for help!` : "Guild news and who's where", icon: 'book', primary: help > 0, run: () => (dlg.guildBoard = true) });
+    }
   }
   // Madame Ledger's Auction House (world/auction.js).
   if (npc.role === 'auction') {
@@ -506,7 +515,7 @@ export function npcWindow(ui, state, world) {
   const rows = Math.ceil(choices.length / 2);
 
   const qStateNow = dlg.quest ? questState(char, dlg.quest) : null;
-  const H = dlg.quest ? (qStateNow === 'ready' ? 118 : 138) : dlg.dungeon ? 172 : dlg.board ? 172 : dlg.fishreq ? 206 : dlg.bounty ? 212 : dlg.rep ? 214 : dlg.night ? 196 : dlg.cards ? 214 : dlg.build ? 150 : dlg.gift ? 150 : dlg.breakup ? 110 : dlg.date ? 140 : dlg.job ? Math.max(104, 46 + jobOptions.length * 46) : Math.max(100, 50 + rows * 24);
+  const H = dlg.quest ? (qStateNow === 'ready' ? 118 : 138) : dlg.dungeon ? 172 : dlg.board ? 172 : dlg.fishreq ? 206 : dlg.bounty || dlg.guildBoard ? 212 : dlg.rep ? 214 : dlg.night ? 196 : dlg.cards ? 214 : dlg.build ? 150 : dlg.gift ? 150 : dlg.breakup ? 110 : dlg.date ? 140 : dlg.job ? Math.max(104, 46 + jobOptions.length * 46) : Math.max(100, 50 + rows * 24);
   const area = dialogFrame(ui, win, npc, H, world, dlg.talking);
   if (!area || dlg.bye) {
     state.npc = null;
@@ -547,6 +556,11 @@ export function npcWindow(ui, state, world) {
   if (dlg.rep) {
     dlg.talking = false;
     if (repPage(ui, state, world, area)) dlg.rep = false;
+    return;
+  }
+  if (dlg.guildBoard) {
+    dlg.talking = false;
+    if (guildBoardPage(ui, state, world, area)) dlg.guildBoard = false;
     return;
   }
   if (dlg.bounty) {

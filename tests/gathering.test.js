@@ -92,13 +92,13 @@ test("ore at Tora's makes a polish likelier to take, and is used up", () => {
 
 test('night follows the game clock, and night spots only open in the dark', async () => {
   const { nightOf, DAY_MINUTES } = await import('../src/world/daytime.js');
-  // (A game hour is a real minute: game hour h at h real minutes past a whole game day.)
+  // (Game hour h, h game hours past a whole game day.)
   const hourAt = (h, m = 0) => new Date((h + m / 60) * 60000 * (DAY_MINUTES / 24));
   const at = (h, m = 0) => nightOf(hourAt(h, m));
   assert.equal(at(12), 0);
   assert.equal(at(23), 1);
   assert.equal(at(2), 1);
-  assert.ok(at(19, 45) > 0 && at(19, 45) < 1, 'dusk falls gradually');
+  assert.ok(at(18, 45) > 0 && at(18, 45) < 1, 'dusk falls gradually');
   assert.ok(at(5, 30) > 0 && at(5, 30) < 1, 'dawn breaks gradually');
   const w = createWorld(createCharacter('Owl', {}));
   loadMap(w, 'meadow1', 'west');

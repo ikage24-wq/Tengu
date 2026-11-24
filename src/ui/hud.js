@@ -28,6 +28,7 @@ import { keyName, physOf } from '../core/keys.js';
 import { THEMES as SCENE_THEMES } from '../render/scenery.js';
 import { currentLesson, skipLesson } from '../world/tutorial.js';
 import { othersHere } from '../net/online.js';
+import { drawClock, CLOCK_BOX } from './clock.js';
 import { inParty } from '../net/together.js';
 import { drawMinimapPings } from './grouping.js';
 import { peekAlpha, peekSpots } from './peek.js';
@@ -448,6 +449,8 @@ export function drawHud(ui, state, world) {
       ctx.restore();
     });
   }
+  // The game's clock and date (ui/clock.js); click for the calendar.
+  piece(ui, 'clock', CLOCK_BOX, () => drawClock(ui, state, world));
   piece(ui, 'buffs', { x: 8, y: minimapBottom(world), w: Math.max(3, Object.keys(world.char.buffs).length) * 22, h: 28 }, () => drawBuffs(ui, world));
   if (world.dungeon) {
     drawDungeonTracker(ui, world);

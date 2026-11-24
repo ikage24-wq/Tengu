@@ -25,7 +25,7 @@ import { TYPE } from '../ui/cutscene.js';
 import { drawCast } from './cast.js';
 import { drawEscort } from './escort.js';
 import { drawHero, setLight, rimLightOf } from './hero.js';
-import { gameHour, isNight } from '../world/daytime.js';
+import { gameHour, isNight, indoors } from '../world/daytime.js';
 import { drawMonster } from './monsters.js';
 import { drawEffects, drawGroundFx, drawWarnings, drawNumbers, drawDrops } from './effects.js';
 import { questMarker } from '../ui/npc.js';
@@ -69,7 +69,7 @@ import { drawCoopBack, drawCoopFront, tagFade } from './coop.js';
 import { drawGlowcap, drawCage, drawSeal, drawRootKey, drawZone, drawZoneHit } from './dungeon.js';
 import { shock, starFlash, puff } from './fxkit.js';
 import { snap, gfx, footShadow, slopeAt } from './pixel.js';
-import { drawGlowing, drawLighting, drawNight } from './post.js';
+import { drawGlowing, drawLighting, drawNight, drawTimeTint } from './post.js';
 import { coopBosses } from '../world/coopboss.js';
 
 // Render-side state that persists between frames: the player's animation and the particles.
@@ -910,6 +910,8 @@ function drawWorldLayers(ctx, world, cam, time, b, zoom = 1) {
   lap('hero');
   drawSoured(ctx, world, VIEW_W, VIEW_H);
   if (hd && !gfx.noLight) drawLighting(ctx, world.map, cam, VIEW_W, VIEW_H, time, lights);
+  // The hour's colour over everything outdoors: dawn, golden hour, dusk, night (render/post.js).
+  if (!indoors(world.map) && !world.map.dusk) drawTimeTint(ctx, VIEW_W, VIEW_H, (world.map.clockMin ?? 720) / 60, world.map.night ?? 0);
   // Night: the map's lamps light up too.
   if (world.map.night > 0) {
     for (const l of world.map.lamps ?? []) lights.push({ x: l.x - cam.x, y: l.y - cam.y, r: 80, c: l.c });

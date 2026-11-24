@@ -147,7 +147,7 @@ function recruit(world, def, role) {
   // (A healer comes as a Tidecaller past level 30, the party's healer; before, while no first job
   // heals, a sturdy Warrior fills the seat.)
   const jobs = role === 'tank' ? ['warrior'] : role === 'healer' ? (level >= 30 ? pick([['tidemage', 'tidecaller'], ['sunfeather', 'songbird']], rng) : ['warrior']) : level >= 30 ? pick([['warrior', 'tempest'], ['tidemage', 'maelstrom'], ['moonmoth', 'eclipse'], ['moonmoth', 'silkweaver'], ['sunfeather', 'phoenix']], rng) : [pick(['warrior', 'tidemage', 'moonmoth', 'sunfeather'], rng)];
-  const bot = recruitBot(world.bots, world, { level, jobs });
+  const bot = recruitBot(world.bots, world, { level, jobs, role, lo, hi });
   joinParty(world.bots, bot, world);
   const ranged = bot.ai.weapon.ranged;
   bot.ai = makeAI(bot, rng, role === 'tank' ? 'guardian' : role === 'healer' ? 'healer' : ranged ? 'sniper' : 'rusher');
@@ -161,6 +161,11 @@ function recruit(world, def, role) {
 export function groupSay(world, bot, kind, extra = {}) {
   const bots = world.bots;
   if (!bots || !bot) return false;
+  // (an adventurer in their own words)
+  if (bot.adv && bots.advFight) {
+    const own = bots.advFight(bot, kind, extra);
+    return own ? botChat(world, bot, own, { prefix: '[Party] ', color: '#9fe0b0', voiced: true }) : false;
+  }
   const line = speak((bots.memory ??= new Set()), kind, { ...contextOf(bot, bots, world), ...extra }, bot.style ?? {}, bots.rng ?? Math.random);
   return line ? botChat(world, bot, line, { prefix: '[Party] ', color: '#9fe0b0' }) : false;
 }

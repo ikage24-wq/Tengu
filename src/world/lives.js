@@ -5,6 +5,7 @@
 //     gift (and remember it).
 //   - Weather: rain or snow comes and goes on each map.
 
+import { seasonOf } from './calendar.js';
 import { remember } from './botmemory.js';
 import { MOBS } from '../data/mobs.js';
 import { MAPS } from '../data/maps.js';
@@ -118,8 +119,8 @@ function weatherTick(L, bots, world, dt, hooks) {
   L.weatherIn -= dt;
   if (L.weatherIn <= 0) {
     L.weatherIn = between(120, 300, rng);
-    const month = hooks.now() ? new Date(hooks.now()).getMonth() : 0;
-    const snow = kind === 'snowy' || (kind === 'temperate' && (month === 11 || month === 0));
+    // (snow in the game's winter: world/calendar.js)
+    const snow = kind === 'snowy' || (kind === 'temperate' && hooks.now() && seasonOf(hooks.now()) === 'winter');
     const was = world.weather;
     world.weather = rng() < (kind === 'dry' ? 0.08 : 0.3) ? (snow ? 'snow' : 'rain') : null;
     if (world.weather && world.weather !== was) world.log?.(world.weather === 'snow' ? `Snow starts to fall on ${map.name}.` : `It starts to rain on ${map.name}.`, '#bfe0ff');
@@ -140,7 +141,8 @@ export function updateLives(bots, world, dt, hooks) {
     if (L.ask.bot.helpAsk === L.ask) L.ask.bot.helpAsk = null;
     L.ask = null;
   }
-  if (!world.map.isTown || world.dungeon) return;
+  // (With the guild here, nobody made up asks you for help: the adventurers post on the board.)
+  if (!world.map.isTown || world.dungeon || bots.guild) return;
   const tick = (key, lo, hi, fn) => {
     L[key] -= dt;
     if (L[key] > 0) return;

@@ -2583,6 +2583,212 @@ export function hairNape(style, r) {
   return [F(E(HX, 13.6 - big * 0.4, 12 + big, 11.2 + big, r.base)), F(E(HX, 20.4, 9.8, 4, r.sh1)), ...ring(r.hi, HX, 10, 9, 5.6, 210, 330)];
 }
 
+// ---------- The adventurers' own hair ----------
+// One signature style each for the sixteen adventurers of the guild (data/adventurers.js), from
+// who they are; not in the creator or the salon (OWN_HAIR). All soft, rounded shapes.
+Object.assign(STYLES, {
+  // Bram: a short back and sides, a soft rounded quiff combed up off his brow, and big fuzzy
+  // sideburns down to the jaw (a cook's, a grandad's).
+  bramcrop(r, m) {
+    const burn = (dir) => mass([[HX + dir * 9.2, 11.4], [HX + dir * 10.9, 13], [HX + dir * 11.2, 18.4], [HX + dir * 10.2, 22], [HX + dir * 8.6, 21.2], [HX + dir * 8.6, 15.4]], r.base, m, 0.2);
+    const quiff = [mass([[17.6, 5.6], [20.6, 2.8], [24.4, 3.4], [26.2, 6.6], [25, 9], [22.2, 7.6], [19.4, 7.8]], r.base, m, 0.2), streak(19.4, 5.4, 24.6, 4.4, 0.8, -0.5, r.hi)];
+    return {
+      head: [cropBack(r, m, 19)],
+      hang: [],
+      front: bangs('crew', r, m, [burn(1), burn(-1), streak(25.4, 14, 25.8, 19.6, 0.6, -0.2, r.hi), ...quiff]),
+      tips: [99, 99],
+    };
+  },
+  // Maribel: soft waves to her shoulders, parted in the middle, and one thick braid brought over
+  // her near shoulder, tied with a ribbon.
+  teabraid(r, m) {
+    const braid = [[23.4, 14.4], [25.8, 19.4], [26.2, 25.2], [25.2, 30.6]];
+    return {
+      head: [crown(r, 0.6)],
+      hang: [napeShadow(r, 19), ...sheet({ len: 26, flare: 14.2, wave: 0.8, ends: 'curls', n: 4, w0: 12.2 }, r, m, 0.7)],
+      front: bangs('part', r, m, [...plait(braid, 4.6, r, m, 0.9), ...hairBow(25.4, 30.8, 0.5, RIBBON), lock([[7.2, 12], [5.8, 17], [6.6, 21.4]], 3.2, r.base, m, 0.9, 0.3)]),
+      tips: [22, 26],
+    };
+  },
+  // Vesper: a sleek, exact bob, short at the nape and sweeping long on the near side down past the
+  // jaw, with one clean shine along it.
+  vesperbob(r, m) {
+    const near = mass([[21.6, 8.2], [25.8, 10.2], [27.6, 15.6], [27.6, 21.6], [26.6, 25.2], [24.4, 25.6], [23.2, 21.4], [23, 15.2]], r.base, m, 0.5);
+    return {
+      head: [crown(r, 0.3)],
+      hang: sheet({ len: 20, flare: 12.6, ends: 'level', n: 3, w0: 12 }, r, m, 0.4),
+      front: bangs('swept', r, m, [near, streak(24.2, 11, 26.2, 23, 0.9, -0.4, r.hi, m, 0.5), streak(23.6, 13, 24.6, 22, 0.5, -0.2, r.sh1, m, 0.5), lock([[7, 11.4], [5.8, 15.2], [6.4, 18.6]], 3, r.base, m, 0.7, 0.4)]),
+      tips: [18, 20],
+    };
+  },
+  // Lyra: two low pigtails that each end in a loop curl, like a treble clef, tied with gold bands,
+  // and soft bangs.
+  lyrawave(r, m) {
+    const tail = (dir) => {
+      const X = (x) => HX + dir * x;
+      return [lock([[X(10.2), 15.4], [X(12.6), 20.4], [X(12.4), 26.4], [X(10.4), 30.6], [X(11.4), 34], [X(14), 33.4], [X(13.8), 30.4]], 5.2, r.sh1, m, 1, 0.35), streak(X(11.6), 18, X(12), 27, 0.8, 0.3 * dir, r.hi, m), F(E(X(10.4), 15.6, 1.9, 1.7, '#ffcf5a')), F(E(X(10.1), 15.2, 0.8, 0.6, '#fff0b8'))];
+    };
+    return {
+      head: [crown(r)],
+      hang: [napeShadow(r, 19), ...tail(-1)],
+      front: bangs('soft', r, m, tail(1)),
+      tips: [26, 32],
+    };
+  },
+  // Ottilie: everything tidied into a neat low bun at the nape with a pencil pushed through it, shy
+  // curtain bangs, and two fine locks framing her face.
+  ottiebun(r, m) {
+    // (the bun sits out behind the head where it shows, the pencil through it, both ends peeking out)
+    const knot = bun(1.8, 16.6, 4.4, 4, r, -1);
+    const pencil = [poly([[-3.6, 12.6], [-2.6, 11.6], [5.4, 20.4], [4.4, 21.4]], '#ffcf5a'), F(E(-3.1, 12.1, 1, 0.9, '#ff9eb8')), poly([[5.4, 20.4], [4.4, 21.4], [6.2, 22.4]], '#f6dcb8')];
+    return {
+      head: [crown(r), ...knot, poly([[-3.6, 12.6], [-2.6, 11.6], [-0.6, 13.8], [-1.6, 14.8]], '#ffcf5a'), F(E(-3.1, 12.1, 1, 0.9, '#ff9eb8'))],
+      hang: [napeShadow(r, 19), ...pencil],
+      front: bangs('curtain', r, m, [lock([[24.6, 12], [25.4, 18], [24.8, 23.4]], 2.4, r.base, m, 1, 0.3), lock([[6.6, 12], [5.8, 18], [6.4, 22.6]], 2.2, r.base, m, 1, 0.3)]),
+      tips: [19, 22],
+    };
+  },
+  // Gideon: slicked back with a side part, smooth and shining, and one loose curl dropped just so on
+  // his brow (on purpose).
+  gideonslick(r, m) {
+    const curl = lock([[18.4, 7.4], [20.2, 10.4], [19.6, 13.2], [17.8, 12.6], [18.4, 11]], 2.4, r.base, m, 0.8, 0.45);
+    return {
+      head: [cropBack(r, m, 20)],
+      hang: [],
+      front: bangs('slick', r, m, [curl, streak(9.6, 7.6, 22, 4.6, 1, -0.7, r.hi), streak(10.4, 10, 20, 7.4, 0.5, -0.4, r.sh1)]),
+      tips: [99, 99],
+    };
+  },
+  // Arlo: cropped short like Bram's, but with a stubborn cowlick at the crown that curls up and will
+  // not lie down however much he combs it.
+  arlocrop(r, m) {
+    const tuft = [lock([[12.4, 2.6], [11.2, -1.4], [13.2, -3.8], [15, -2.4]], 3, r.base, m, 0.3, 0.45), lock([[14.6, 2.2], [16, -1.6], [18.4, -2.2], [19, -0.4]], 2.4, r.base, m, 0.3, 0.45), F(E(13.2, -2.8, 0.8, 0.5, r.hi))];
+    return {
+      head: [cropBack(r, m, 19), ...tuft],
+      hang: [],
+      front: bangs('crew', r, m, [mass([[24.2, 11.6], [25.8, 13], [26, 17.4], [24.8, 18.6], [24, 15]], r.base, m, 0.2)]),
+      top: tuft,
+      tips: [99, 99],
+    };
+  },
+  // Dulcie: fluffy bedhead, big soft waves gone every which way, a puff sticking out on each side
+  // where she slept on it, and one droopy sleepy curl on top.
+  dulciefluff(r, m) {
+    const puff = (x, y, rx, ry) => [F(E(x, y, rx, ry, r.base)), streak(x - rx * 0.5, y - ry * 0.4, x + rx * 0.3, y - ry * 0.75, 0.6, 0.2, r.hi)];
+    const ahoge = [lock([[15.6, 2], [16.8, -2.6], [20.2, -3.4], [21.6, -0.6], [20.4, 1.2]], 1.9, r.base, m, 0.4, 0.5)];
+    return {
+      head: [crown(r, 1.2), ...puff(4.6, 10.4, 4, 3.6), ...puff(26.4, 9.4, 3.4, 3.2), ...ahoge],
+      hang: [napeShadow(r, 20), ...sheet({ len: 27, flare: 16, wave: 1.4, ends: 'curls', n: 4, w0: 13 }, r, m, 0.6)],
+      front: bangs('mochimess', r, m, sideLocks(r, m, [[25.4, 11], [27.6, 16.6], [26.4, 21.6]], undefined, 4)),
+      top: ahoge,
+      tips: [22, 26],
+    };
+  },
+  // Scarlett: a sporty high ponytail, banded into round bubbles down its length so it bounces as she
+  // runs, and a swept fringe out of her eyes.
+  scarlettail(r, m) {
+    const spine = [[6.4, 2.4], [2.4, 3.8], [-1.6, 8.6], [-3, 14.6], [-2.6, 20.6], [-3.4, 26.6], [-2.4, 31.6]];
+    const mv = mover(m, 1.1);
+    const bands = [[0.2, 5.8], [-2.6, 13.2], [-2.8, 21.6]].map(([x, y]) => { const [bx, by] = mv([x, y]); return F(E(bx, by, 2.2, 1, '#ffcf5a')); });
+    return {
+      head: [crown(r), F(E(6.4, 2.6, 2, 1.8, r.sh2))],
+      hang: [lock(spine, 7.4, r.sh1, m, 1.1, 0.2), ...bands, streak(-0.6, 8, -2, 18, 0.9, 0.6, r.hi, m, 1.2)],
+      front: bangs('swept', r, m, sideLocks(r, m, [[25.2, 11], [26, 16], [25.6, 20]], undefined, 3)),
+      top: [F(E(6.4, 2.6, 2, 1.8, r.sh2))],
+      tips: [26, 31],
+    };
+  },
+  // Delphine: long rolling sea waves, a fishtail braid over her near shoulder, and a little seashell
+  // clip above her ear.
+  delphwave(r, m) {
+    const fish = [[23.2, 14], [25.6, 19.4], [25.8, 25.6], [24.8, 31.4], [25.6, 35]];
+    const shell = [poly(smooth([[23.4, 9.6], [24.6, 6.2], [26.6, 5.8], [28, 8.4], [26.4, 10.6]]), '#ffc4d0'), streak(24.6, 9.6, 25.2, 6.6, 0.4, 0, '#ff9ab0'), streak(25.4, 10, 26.6, 6.8, 0.4, 0, '#ff9ab0'), F(E(25.4, 10.2, 1.2, 0.7, '#ffdbe4'))];
+    return {
+      head: [crown(r, 0.8)],
+      hang: [napeShadow(r), ...sheet({ len: 40, flare: 16, wave: 2, ends: 'curls', n: 5, w0: 12.6 }, r, m)],
+      front: bangs('flippy', r, m, [...plait(fish, 3.6, r, m, 0.9), ...shell]),
+      tips: [34, 40],
+    };
+  },
+  // Milo: a soft mop of curls tumbling over his brow (never over his eyes), a little curl at each ear.
+  milofluff(r, m) {
+    const curl = (x, y, dir, s = 1) => [F(E(x, y, 2 * s, 1.8 * s, r.base)), poly(smooth([[x - 1.1 * dir * s, y], [x - 0.2 * dir * s, y - 1.1 * s], [x + 1 * dir * s, y - 0.3 * s], [x + 0.2 * dir * s, y + 0.3 * s]]), r.sh1)];
+    // (the curls sit in the hair's own outline, a soft bumpy edge, not bobbles on top)
+    return {
+      head: [crown(r, 0.9), ...curl(6.8, 4.6, -1, 0.9), ...curl(11.6, 2.4, 1, 0.85), ...curl(17.6, 2, 1, 0.85), ...curl(22.8, 3.8, 1, 0.9)],
+      hang: sheet({ len: 20, flare: 13.4, ends: 'curls', n: 4, w0: 12.4 }, r, m, 0.4),
+      front: bangs('curly', r, m, [...curl(25.2, 15.6, 1), ...curl(6, 15.4, -1)]),
+      tips: [18, 20],
+    };
+  },
+  // Hattie: two big bouncy puffs tied high on either side of her head, and a fringe she cut herself.
+  hattiepuffs(r, m) {
+    const puff = (x, y, s) => [F(E(x, y, 5.2 * s, 4.8 * s, r.base)), F(E(x + 0.6, y + 1.2, 4 * s, 3.4 * s, r.sh1)), F(E(x - 0.4, y - 0.6, 4 * s, 3.6 * s, r.base)), streak(x - 2.6 * s, y - 2, x + 1.4 * s, y - 3.6 * s, 0.8, 0.3, r.hi)];
+    const near = [...puff(24.6, 1.6, 1), F(E(22.4, 4.6, 1.8, 1.2, '#ff7a8a'))];
+    const far = [...puff(6.2, 2.2, 0.92), F(E(8.4, 5, 1.6, 1.1, '#e05a6a'))];
+    return {
+      head: [crown(r), ...far, ...near],
+      hang: [napeShadow(r, 18)],
+      front: bangs('dangoclump', r, m, sideLocks(r, m, [[25, 11.6], [26, 16.2], [25.4, 19.6]], undefined, 3)),
+      top: [...far, ...near],
+      tips: [18, 21],
+    };
+  },
+  // Thea: long loose waves, the top twisted up into a messy bun with a paintbrush stuck through it, a
+  // dab of pink paint on its bristles.
+  theabun(r, m) {
+    const knot = bun(13.6, -0.6, 5, 4.2, r);
+    const brush = [poly([[6.4, -5.4], [7.6, -6.2], [20.6, 3.6], [19.4, 4.4]], '#c8905a'), poly([[19.4, 4.4], [20.6, 3.6], [22.6, 5.4], [21.2, 6.4]], '#d0d4dc'), poly(smooth([[21.2, 6.4], [22.6, 5.4], [24.6, 7.6], [23.4, 9.2]]), '#ff7aa8')];
+    return {
+      head: [crown(r, 0.8), ...knot, ...brush],
+      hang: [napeShadow(r), ...sheet({ len: 38, flare: 16, wave: 1.6, ends: 'curls', n: 5, w0: 12.6 }, r, m)],
+      front: bangs('wispy', r, m, sideLocks(r, m, [[25.2, 10.6], [27, 16], [26, 21.6], [27.6, 26.4]], undefined, 3.6)),
+      top: [...knot, ...brush],
+      tips: [32, 38],
+    };
+  },
+  // Fennick: a shaggy layered cut swept to one side, and a skinny little tail tied at the nape
+  // (handy for hiding things in, Fennick says).
+  fennshag(r, m) {
+    const tail = [lock([[4.6, 18.4], [1.6, 21.6], [0.6, 26], [1.8, 29.6]], 2.8, r.sh1, m, 1.1, 0.3), F(E(4.4, 18.6, 1.3, 1.1, '#e0a020'))];
+    const layers = [lock([[24.4, 10.6], [26.4, 14.6], [25.6, 19]], 3.2, r.base, m, 0.9, 0.3), lock([[6.6, 11], [5, 14.6], [5.8, 18.6]], 3, r.base, m, 0.9, 0.3)];
+    return {
+      head: [crown(r, 0.4)],
+      hang: [...sheet({ len: 21, flare: 13.6, ends: 'curls', n: 4, w0: 12.2 }, r, m, 0.5), ...tail],
+      front: bangs('flop', r, m, layers),
+      tips: [18, 21],
+    };
+  },
+});
+export const ADVENTURER_HAIR = ['bramcrop', 'teabraid', 'vesperbob', 'rorycurls', 'jettwolf', 'lyrawave', 'ottiebun', 'gideonslick', 'arlocrop', 'dulciefluff', 'scarlettail', 'delphwave', 'milofluff', 'hattiepuffs', 'theabun', 'fennshag'];
+OWN_HAIR.push(...ADVENTURER_HAIR);
+
+// ---------- Jett's and Rory's (2026-11-24: their first styles were remade; the player picked these) ----------
+Object.assign(STYLES, {
+  // Jett: shaggy, tied in a low tail brought forward over his near shoulder with a red band, a few
+  // loose front locks blown across his brow.
+  jettwolf(r, m) {
+    const tail = [lock([[24.4, 19.4], [26.8, 22.8], [27.4, 27.2], [26.4, 31.4]], 4.6, r.base, m, 1, 0.3), streak(25.8, 22, 26.8, 29, 0.8, -0.3, r.hi, m), F(E(25.4, 21.2, 2, 1.3, '#d83a4a'))];
+    return {
+      head: [crown(r, 0.4)],
+      hang: sheet({ len: 20, flare: 13.2, ends: 'curls', n: 4, w0: 12.2 }, r, m, 0.4),
+      front: bangs('flop', r, m, [...tail, lock([[7, 11], [5.6, 15.4], [6.2, 19]], 3, r.base, m, 0.9, 0.3)]),
+      tips: [18, 20],
+    };
+  },
+  // Rory: a big bouncy cloud of curls, every one of them round, piled high.
+  rorycurls(r, m) {
+    const curl = (x, y, s = 1) => [F(E(x, y, 2.6 * s, 2.4 * s, r.base)), poly(smooth([[x - 1.4 * s, y + 0.2], [x - 0.2 * s, y - 1.4 * s], [x + 1.3 * s, y - 0.4 * s], [x + 0.2 * s, y + 0.4 * s]]), r.sh1)];
+    const ring = [[3.6, 10.4], [5, 5.4], [8.6, 1.8], [13.4, -0.2], [18.6, -0.2], [23, 1.8], [26.4, 5.4], [27.6, 10.4]];
+    return {
+      head: [crown(r, 1.4), ...ring.flatMap(([x, y]) => curl(x, y, 1.05))],
+      hang: sheet({ len: 22, flare: 15.4, ends: 'curls', n: 4, w0: 13.2 }, r, m, 0.4),
+      front: bangs('curly', r, m, [...curl(26.2, 15, 0.9), ...curl(5, 15, 0.9)]),
+      tips: [20, 22],
+    };
+  },
+});
+
 // ---------- The shop's mannequin ----------
 // A Mochi with no hair at all: the stall's dummies (render/shopmodel.js) are carved from the same
 // shape a Mochi is, so a piece hangs on one exactly as it will on yours, with nothing on the head

@@ -15,6 +15,7 @@
 // (a test, a scene) sets it outright.
 
 import { DAY_MINUTES } from './daytime.js';
+import { monthOf } from './calendar.js';
 import { seededRandom } from '../data/mochi-genes.js';
 
 const DAY_MS = DAY_MINUTES * 60000;
@@ -55,7 +56,7 @@ export function forecast(day, month) {
 // How hard a spell from `a` to `b` is at hour `h`: easing on and off.
 const strength = (h, a, b) => (h <= a || h >= b ? 0 : smooth(Math.min((h - a) / RAMP, (b - h) / RAMP, 1)));
 
-export function weatherAt(ms, month = new Date(ms).getMonth()) {
+export function weatherAt(ms, month = monthOf(ms)) {
   const day = Math.floor(ms / DAY_MS);
   const h = ((ms - day * DAY_MS) / DAY_MS) * 24;
   const out = { kind: null, k: 0, rainbow: 0, wet: 0, snow: 0 };
@@ -94,7 +95,7 @@ export const SKY = { now: null };
 // The garden's weather now, kept on the world (world/garden-life.js tickGarden calls it).
 export function gardenWeatherTick(world) {
   const date = (world.dayClock ?? (() => new Date()))();
-  const W = world.forceWeather ? { kind: null, k: 0, rainbow: 0, wet: 0, snow: 0, ...world.forceWeather } : weatherAt(date.getTime(), date.getMonth());
+  const W = world.forceWeather ? { kind: null, k: 0, rainbow: 0, wet: 0, snow: 0, ...world.forceWeather } : weatherAt(date.getTime(), monthOf(date.getTime()));
   world.gardenWeather = W;
   SKY.now = W;
   // (A grey sky dims the garden a little, like the start of dusk - in steps, as the light does, so the

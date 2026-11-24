@@ -40,8 +40,9 @@ export function partyMembers(bots) {
 
 // Everything they say goes through the chat gate (world/chatlog.js): no line twice in ten minutes.
 // `important` for answers to something you did (skips their own half-minute wait).
-function say(world, bot, text, important = false) {
-  if (text) sayOver(world, bot, text, { important });
+// `voiced`: an adventurer's own line (world/chatlog.js lets nothing else through for them).
+function say(world, bot, text, important = false, voiced = false) {
+  if (text) sayOver(world, bot, text, { important, voiced });
 }
 
 // Asks to come hunt (a friend, a pal, a group on the map) share one pace: at most one every few
@@ -93,6 +94,19 @@ function answer(bots, bot, world) {
     world.log(`${bot.name} couldn't join: your party is full.`, '#ffb3c6');
     return;
   }
+  // (An adventurer answers for real: asleep, hurt, worn out or not keen yet, they say no.)
+  if (bot.adv && bots.advAnswer) {
+    const r = bots.advAnswer(bot);
+    if (!r.yes) {
+      say(world, bot, r.line, true, true);
+      world.log(`${bot.name} can't join right now.`, '#ffb3c6');
+      return;
+    }
+    joinParty(bots, bot, world);
+    say(world, bot, r.line, true, true);
+    world.log(`${bot.name} joined your party!`, '#bff0dc');
+    return;
+  }
   joinParty(bots, bot, world);
   say(world, bot, speak(bots.memory, 'joined', ctx, bot.style, rng), true);
   world.log(`${bot.name} joined your party!`, '#bff0dc');
@@ -120,9 +134,10 @@ export function joinParty(bots, bot, world) {
 export function dismiss(bots, bot, world, { quiet = false } = {}) {
   if (!bot.party) return;
   bot.party = false;
+  if (bot.adv) bots.advLeft?.(bot);
   bot.body = null;
   bot.attack = null;
-  if (!quiet) say(world, bot, speak(bots.memory, 'leaving', { player: world.char.name }, bot.style, bots.rng));
+  if (!quiet) say(world, bot, bot.adv ? bots.advLine?.(bot, { aloud: false }) : speak(bots.memory, 'leaving', { player: world.char.name }, bot.style, bots.rng), false, Boolean(bot.adv));
   if (world.map.isTown && bot.map === world.map.id) {
     bot.state = 'idle';
     bot.timer = between(2, 5, bots.rng);
@@ -828,6 +843,7 @@ const touches = (a, b) => a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h 
 // a field monster by its kind ("that warg"), a boss or queen by her own name ("Tamamo got me").
 function fall(bot, world, rng, by = null) {
   bot.down = true;
+  if (bot.adv) world.bots?.advDown?.(bot);
   bot.tomb = true;
   bot.downAt = world.now;
   bot.attack = null;
@@ -838,8 +854,9 @@ function fall(bot, world, rng, by = null) {
   const lines = !by ? ['x_x', 'noooo', 'rip me', 'i died lol', 'how', 'brb dying']
     : named ? [`${k} got me x_x`, `rip me, ${k} wins`, `${k} hits so hard wtf`, `${k}: 1 me: 0`, `how is ${k} this strong`]
     : [`that ${k} hits hard wtf`, `${k} got me x_x`, `rip me, ${k} wins`, `how did the ${k} do that much`, `killed by a ${k} lol`];
-  say(world, bot, pick2(lines), true);
-  if (bot.party) world.log(`${bot.name} died! They'll be back in a bit.`, '#ff8fa8');
+  // (An adventurer is only ever knocked out, the guild's rule, and says so in their own words.)
+  say(world, bot, bot.adv ? world.bots?.advFight?.(bot, 'dgDown') ?? 'Ow...' : pick2(lines), true, Boolean(bot.adv));
+  if (bot.party) world.log(bot.adv ? `${bot.name} is knocked out! They'll be back on their feet in a bit.` : `${bot.name} died! They'll be back in a bit.`, '#ff8fa8');
 }
 
 // Down in the field: lying there under the tombstone, then off to town after a few seconds.
@@ -991,7 +1008,8 @@ function walkBackIn(bot, world) {
   bot.body = createBody(p ? p.x : b.x - b.facing * FOLLOW_GAP, p ? p.y : b.y);
   bot.appear = 1;
   Object.assign(bot.brain, { goal: null, target: null, path: null });
-  say(world, bot, pick2(['back!! sorry', 'im back, that was embarrassing', 'bought more pots this time', 'ok round 2', 'did u miss me']));
+  if (bot.adv) say(world, bot, world.bots?.advFight?.(bot, 'dgUp'), false, true);
+  else say(world, bot, pick2(['back!! sorry', 'im back, that was embarrassing', 'bought more pots this time', 'ok round 2', 'did u miss me']));
   world.log(`${bot.name} is back.`, '#9fe0b0');
 }
 
@@ -999,6 +1017,12 @@ function walkBackIn(bot, world) {
 export function shareKill(bots, world, mob) {
   for (const bot of partyMembers(bots)) {
     if (bot.map !== world.map.id) continue;
+    // (An adventurer's EXP goes to their own life in the guild, by its growth rules, and their
+    // body catches up with them: world/adventurers/bodies.js.)
+    if (bot.adv) {
+      bots.advExp?.(bot, Math.round(mob.def.exp * 0.5));
+      continue;
+    }
     const before = bot.char.level;
     gainExp(bot.char, Math.round(mob.def.exp * 0.5));
     if (bot.char.level > before) {
@@ -1115,8 +1139,8 @@ export function updateParty(bots, world, dt) {
     bot.nextLine -= dt;
     if (bot.nextLine <= 0 && !bot.bubble) {
       bot.nextLine = between(70, 150, rng) * Math.max(1, members.length / 2);
-      const line = speak(bots.memory, 'party', contextOf(bot, bots, world), bot.style, rng);
-      botChat(world, bot, line, { prefix: '[Party] ', color: '#9fe0b0' });
+      const line = bot.adv ? bots.advLine?.(bot, { aloud: false }) : speak(bots.memory, 'party', contextOf(bot, bots, world), bot.style, rng);
+      botChat(world, bot, line, { prefix: '[Party] ', color: '#9fe0b0', voiced: Boolean(bot.adv) });
     }
   });
   // Co-op life skills: helpers at your spot, and feasts wearing off (world/coop-life.js).

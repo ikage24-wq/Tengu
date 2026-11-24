@@ -38,6 +38,42 @@ const go = (map, portal = 'west') => {
   w.god = q.get('god') !== '0';
 };
 go(q.get('map') ?? 'shrine', q.get('portal') ?? 'west');
+// (&clock=1: the HUD's clock and calendar, ui/clock.js; window.hourAt(h) sets the game hour.)
+if (q.get('clock') === '1') {
+  const { drawClock } = await import('../src/ui/clock.js');
+  const { GAME_HOUR_MS, DAY_MS } = await import('../src/world/daytime.js');
+  w.clockUi = { calendar: false };
+  w.drawClockUi = (ui) => drawClock(ui, w.clockUi, w);
+  window.hourAt = (h, day = 0) => {
+    const base = Math.floor(Date.now() / DAY_MS) * DAY_MS + day * DAY_MS;
+    w.dayClock = () => new Date(base + h * GAME_HOUR_MS);
+    w.dayT = 1;
+  };
+}
+// (&guild=1: the Adventurers' Guild lives in this world, as in the game: world/adventurers/.)
+if (q.get('guild') === '1') {
+  const { createBots, updateBots } = await import('../src/world/bots.js');
+  const { attachGuild, updateAdventurers } = await import('../src/world/adventurers/bodies.js');
+  w.bots = createBots(w, Math.random, { guild: true });
+  attachGuild(w, w.bots);
+  w.guildTick = (dt) => {
+    updateBots(w.bots, w, dt);
+    updateAdventurers(w, w.bots, dt);
+  };
+  // (talk windows, as in the game: window.talk('bram') an adventurer here, window.halvard() the board)
+  const { npcWindow } = await import('../src/ui/npc.js');
+  w.ui = { npc: null, windows: { npc: { open: false } } };
+  w.drawUi = (ui) => { if (w.ui.npc) npcWindow(ui, w.ui, w); };
+  window.talk = (id) => {
+    const bot = w.bots.list.find((b) => b.adv === id && b.map === w.map.id);
+    if (bot) Object.assign(w.ui, { npc: { adv: id, bot: bot.id } }).windows.npc.open = true;
+    return Boolean(bot);
+  };
+  window.halvard = (page = 0) => {
+    w.ui.npc = { id: 'halvard', guildBoard: true, boardTab: page };
+    w.ui.windows.npc.open = true;
+  };
+}
 const hud = document.getElementById('hud');
 let t = 0;
 let last = performance.now();
@@ -63,8 +99,10 @@ const frame = (now) => {
     // (A story scene has the controls while it plays, as in the game: ui/manager.js.)
     const locked = sceneInput(w, input);
     updateWorld(w, 1 / 60, { held: input.held, pressed: input.pressed, locked });
+    w.guildTick?.(1 / 60);
     updateCamera(cam, w, 1 / 60);
-    endFrame(input);
+    // (with a talk window open, it reads this frame's keys and clicks first, as in the game)
+    if (!w.ui?.npc) endFrame(input);
     t += 1 / 60;
     acc -= 1 / 60;
   }
@@ -77,6 +115,17 @@ const frame = (now) => {
     const ui = beginUi(ctx, input);
     drawScene(ui, w, cam);
     endUi(ui);
+  }
+  if (w.drawClockUi) {
+    const ui = beginUi(ctx, input);
+    w.drawClockUi(ui);
+    endUi(ui);
+  }
+  if (w.drawUi && w.ui?.npc) {
+    const ui = beginUi(ctx, input);
+    w.drawUi(ui);
+    endUi(ui);
+    endFrame(input);
   }
   hud.textContent = `${w.map.name} (${w.map.id})  x ${Math.round(w.body.x)} y ${Math.round(w.body.y)}${w.body.rope ? '  on rope' : ''}  monsters ${w.mobs.filter((m) => m.hp > 0).length}`;
 };

@@ -1,5 +1,6 @@
 // The other players as people: what they remember of you, their friends and parties, their goals
 // and moods, and the little things real players do (world/botmemory.js, world/botsoul.js).
+import { GAME_HOUR_MS } from '../src/world/daytime.js';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
@@ -192,7 +193,7 @@ test('in town some go AFK: sat down with an AFK tag, quiet, and back after a whi
 }));
 
 test('players log in and out over the game day: busiest in the evening', () => {
-  const at = (h) => new Date(Math.round((h / 24) * 24 * 60000));
+  const at = (h) => new Date(Math.round(h * GAME_HOUR_MS));
   assert.ok(populationAt(at(18)) > populationAt(at(6)), 'evening over dawn');
   for (let h = 0; h < 24; h += 0.5) assert.ok(populationAt(at(h)) >= 22);
   let hour = 6;

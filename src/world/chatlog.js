@@ -32,9 +32,12 @@ export function stale(world, text) {
 // room. `important` skips the waits (an answer to you, party chat). `repeat` lets a line through
 // that was said lately (the middle of a little scripted chat between two). `log: false` keeps it
 // over their head only. Someone AFK says nothing. Returns whether it was said.
-export function botChat(world, bot, text, { color = '#e6dcff', prefix = '', important = false, repeat = false, log = true, t = 4.5 } = {}) {
+export function botChat(world, bot, text, { color = '#e6dcff', prefix = '', important = false, repeat = false, log = true, t = 4.5, voiced = false } = {}) {
   // (Nobody types while they're away from the keyboard.)
   if (!text || bot.afk) return false;
+  // (An adventurer only ever says lines written for them, in their own voice, `voiced`: a made-up
+  // player's line meant for a body that is now an adventurer is never said.)
+  if (bot.adv && !voiced) return false;
   const g = (world.chatGate ??= { last: -99, recent: [], said: new Map() });
   const key = shape(text, [world.char?.name, bot.name]);
   if (!key || (!repeat && g.said.has(key) && world.now - g.said.get(key) < SAME_FOR)) return false;

@@ -242,6 +242,31 @@ export function drawLighting(ctx, map, cam, w, h, time, lights = []) {
 // where the lights are and a warm glow round each ({ x, y, r, c? } in screen space). A light can
 // be a faint one (`hole` 0-1, how much of the dusk it lifts; `glow: false`, no warm glow), like the
 // one each monster carries so a dark one still reads on a dark map.
+// The hour's colour over the scene (2026-11-24, the player: "all daytime nighttime things just add
+// a filter"): a rosy dawn, a golden late afternoon, a violet dusk, a cool night, each easing in and
+// out over its hours and laid on softly (soft light), so the art underneath keeps its own colours.
+// `hour` is the game's (0-24), `night` how dark it is (world/daytime.js).
+const bump = (h, a, peak, b) => (h <= a || h >= b ? 0 : h < peak ? ((h - a) / (peak - a)) ** 2 * (3 - 2 * ((h - a) / (peak - a))) : 1 - ((h - peak) / (b - peak)) ** 2 * (3 - 2 * ((h - peak) / (b - peak))));
+export function timeTints(hour, night = 0) {
+  return [
+    ['#ff9a8a', 0.42 * bump(hour, 4.4, 5.6, 7.4)],
+    ['#ff9a30', 0.55 * bump(hour, 15.2, 17.2, 18.5)],
+    ['#c46ad8', 0.34 * bump(hour, 17.6, 18.8, 20.2)],
+    ['#4a66c8', 0.3 * night],
+  ].filter(([, a]) => a > 0.01);
+}
+export function drawTimeTint(ctx, w, h, hour, night = 0) {
+  const tints = timeTints(hour, night);
+  if (!tints.length) return;
+  ctx.save();
+  ctx.globalCompositeOperation = 'soft-light';
+  for (const [c, a] of tints) {
+    ctx.fillStyle = rgba(c, a);
+    ctx.fillRect(0, 0, w, h);
+  }
+  ctx.restore();
+}
+
 export function drawNight(ctx, w, h, k, lights = []) {
   if (k <= 0) return;
   const c = layer('night', LIGHT_W, LIGHT_H);

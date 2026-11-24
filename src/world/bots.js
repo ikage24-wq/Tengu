@@ -259,7 +259,7 @@ export function makeBotCharacter(rng = Math.random, { pro = rng() < PRO_RATE, na
 
 // `clock`: the real time by default (tests pin it).
 // `alts`: the other heroes in your save file, who walk the towns as themselves (see addAlts).
-export function createBots(world, rng = Math.random, { clock = () => new Date(), daily = false, alts = [] } = {}) {
+export function createBots(world, rng = Math.random, { clock = () => new Date(), daily = false, alts = [], guild = false } = {}) {
   const bots = { daily, list: [], names: new Set(), memory: new Set(), spawnIn: 6, waveIn: between(70, 140, rng), newsIn: between(40, 90, rng), replies: [], rng, clock };
   // Your friends' names are theirs: nobody else turns up with them.
   for (const b of buddiesOf(world.char)) bots.names.add(b.name.toLowerCase());
@@ -272,7 +272,8 @@ export function createBots(world, rng = Math.random, { clock = () => new Date(),
   delete world.char.photos;
   delete world.char.guild;
   // Everyone's already around when you log in.
-  const total = onlineNow(bots);
+  // (With the Adventurers' Guild, nobody made up is online: world/adventurers/bodies.js.)
+  const total = guild ? 0 : onlineNow(bots);
   for (let i = 0; i < total; i++) spawn(bots, world, { quiet: true });
   addAlts(bots, world, alts);
   return bots;
@@ -367,7 +368,8 @@ function dress(bot, color) {
 // What world/buddies.js needs to bring people in.
 function hooksFor(bots, world) {
   return {
-    logIn: (who, { here = false, map = null, x = null } = {}) => spawn(bots, world, { who, here, at: map ? { map, x } : null }),
+    // (with the guild here, nobody made up logs in: friends, merchants, GMs and raiders stay away)
+    logIn: (who, { here = false, map = null, x = null } = {}) => (bots.guild ? null : spawn(bots, world, { who, here, at: map ? { map, x } : null })),
     map: (id) => MAPS[id],
     now: () => bots.clock().getTime(),
     towns: () => TOWNS,
@@ -383,7 +385,7 @@ function hooksFor(bots, world) {
     },
     say: (b, text) => say(world, b, text),
     shout: (b, text) => shout(b, bots, world, text),
-    addHunter: (who) => (huntable(world) ? addHunter(bots, world, true, who) : null),
+    addHunter: (who) => (!bots.guild && huntable(world) ? addHunter(bots, world, true, who) : null),
     makeChar: makeBotCharacter,
     makeName: () => makeName(bots.names, bots.rng),
     makeStyle: () => makeStyle(bots.rng),
@@ -392,7 +394,12 @@ function hooksFor(bots, world) {
 
 // A player the group finder brings in: a level and job path to order, appearing right next to
 // you. They aren't in your party until joined.
-export function recruitBot(bots, world, { level, jobs }) {
+export function recruitBot(bots, world, { level, jobs, role = null, lo = level, hi = level }) {
+  // (With the guild here, the seat goes to an adventurer.)
+  if (bots.advRecruit) {
+    const adv = bots.advRecruit({ role, lo, hi, level });
+    if (adv) return adv;
+  }
   const rng = bots.rng;
   const name = makeName(bots.names, rng);
   const char = makeBotCharacter(rng, { name, pro: false, level, jobs });
@@ -426,7 +433,9 @@ export function updateBots(bots, world, dt) {
   // number.
   bots.spawnIn -= dt;
   const online = bots.list.length;
-  const total = onlineNow(bots);
+  // (With the Adventurers' Guild in the world, the people you meet are its sixteen adventurers, given
+  // bodies by world/adventurers/bodies.js: nobody made up logs in.)
+  const total = bots.guild ? 0 : onlineNow(bots);
   if (online < total - 2 || (bots.spawnIn <= 0 && online < total)) {
     bots.spawnIn = between(12, 30, rng);
     spawn(bots, world);
@@ -471,8 +480,8 @@ export function updateBots(bots, world, dt) {
       // The busier the town, the less each person talks, so chat stays readable.
       bot.nextLine = (bot.shop ? between(60, 120, rng) : between(70, 160, rng)) * crowd;
       // (Now and then, something about the time: a night owl, a kid home from school.)
-      const line = rng() < 0.12 ? timeLine(serverTime(bots.clock()), rng) : talk(bot, bots, world, rng);
-      botChat(world, bot, line);
+      const line = bot.adv && bots.advLine ? bots.advLine(bot) : rng() < 0.12 ? timeLine(serverTime(bots.clock()), rng) : talk(bot, bots, world, rng);
+      botChat(world, bot, line, { voiced: Boolean(bot.adv) });
     }
   }
   // Now and then someone comes over to say hi. Never often, and each player only once.
@@ -492,18 +501,24 @@ export function updateBots(bots, world, dt) {
   }
   updateParty(bots, world, dt);
   huntersHere(bots, world, dt);
-  updateBuddies(bots, world, dt, hooksFor(bots, world));
-  updateRaids(bots, world);
-  updateDrama(bots, world, dt, hooksFor(bots, world));
+  // (The made-up players' add-ons, friends logging in, raids, duels, LFG shouts, souls and their
+  // levelling, memories of you, replies, server news, stand down while the guild lives here: the
+  // adventurers have their own minds, world/adventurers/. The world's own goings-on, weather, Double
+  // EXP hours and festivals, carry on either way.)
+  const made = !bots.guild;
+  if (made) updateBuddies(bots, world, dt, hooksFor(bots, world));
+  if (made) updateRaids(bots, world);
+  if (made) updateDrama(bots, world, dt, hooksFor(bots, world));
   updateEvents(bots, world, dt, hooksFor(bots, world));
   updateLives(bots, world, dt, hooksFor(bots, world));
-  updateSocial(bots, world, dt);
-  updateSouls(bots, world, dt);
-  updateMemory(bots, world, dt, hooksFor(bots, world));
-  world.onLoot = (inst) => luckyDrop(bots, world, inst);
-  listen(bots, world);
+  if (made) updateSocial(bots, world, dt);
+  // (in town the adventurers still get their look-arounds and hops: townMoments)
+  updateSouls(bots, world, dt, { momentsOnly: !made });
+  if (made) updateMemory(bots, world, dt, hooksFor(bots, world));
+  world.onLoot = made ? (inst) => luckyDrop(bots, world, inst) : null;
+  if (made) listen(bots, world);
   deliverReplies(bots, world);
-  news(bots, world, dt);
+  if (made) news(bots, world, dt);
   for (const b of bots.list) if (b.gone) {
     endChat(b, bots.rng);
     if (b.buddy && !b.hunter && !b.party && !b.quietGone) world.log?.(`[Friend] ${b.name} logged off.`, '#9c86b8');
@@ -513,7 +528,7 @@ export function updateBots(bots, world, dt) {
   for (let i = 0; i < 4 && bots.list.length < total - 2; i++) spawn(bots, world);
 }
 
-function goToPortal(bot, map, why) {
+export function goToPortal(bot, map, why) {
   const portals = waysOf(map);
   if (!portals.length) {
     bot.gone = why === 'logout';
@@ -595,7 +610,11 @@ function behave(bot, bots, world, map, dt) {
       bot.timer -= dt;
       if (bot.timer <= 0 && !pastime(bot, bots, world, map)) {
         bot.state = 'walk';
-        bot.target = Math.max(spanOf(map)[0] - 20, Math.min(spanOf(map)[1] + 20, bot.x + between(-260, 260, rng)));
+        // (An adventurer keeps near what they're doing here: their anchor.)
+        if (bot.anchor != null) {
+          const [lo, hi] = bot.anchorSpan ?? [bot.anchor - 90, bot.anchor + 90];
+          bot.target = Math.max(lo, Math.min(hi, bot.anchor + between(-35, 35, rng)));
+        } else bot.target = Math.max(spanOf(map)[0] - 20, Math.min(spanOf(map)[1] + 20, bot.x + between(-260, 260, rng)));
       }
       break;
     case 'walk':
@@ -636,7 +655,7 @@ function behave(bot, bots, world, map, dt) {
         bot.facing = px < bot.x ? -1 : 1;
         bot.state = 'wave';
         bot.timer = 1.6;
-        botChat(world, bot, bot.hello ?? speak(bots.memory, 'greet', { player: world.char.name }, bot.style, rng) ?? 'hi!', { important: true });
+        botChat(world, bot, bot.hello ?? speak(bots.memory, 'greet', { player: world.char.name }, bot.style, rng) ?? 'hi!', { important: true, voiced: Boolean(bot.adv) });
         bot.hello = null;
       }
       break;
@@ -654,11 +673,42 @@ function behave(bot, bots, world, map, dt) {
 
 // ---------- Town life ----------
 
+// An adventurer's moment in town, from what their mind has them doing: at their hobby (the stove,
+// the bench, the fishing nook), over to a friend for a word (each in their own voice, about what's
+// really on their mind), or a little emote.
+function advPastime(bot, bots, world, map, here, r) {
+  const rng = bots.rng;
+  if (bot.advState === 'hobby' && r < 0.7 && townPastime(bot, bots, world, map)) return true;
+  if ((bot.advState === 'social' || bot.advState === 'eat') && r < 0.6) {
+    const mate = here.find((b) => b !== bot && b.adv && b.state === 'idle' && Math.abs(b.x - bot.x) < 300 && Math.abs(b.x - world.body.x) > 30);
+    if (mate) {
+      bot.state = 'walk';
+      bot.target = mate.x + (bot.x < mate.x ? -28 : 28);
+      mate.timer = Math.max(mate.timer, 6);
+      bot.then = () => {
+        bot.facing = mate.x < bot.x ? -1 : 1;
+        mate.facing = -bot.facing;
+        botChat(world, bot, bots.advLine?.(bot, { aloud: true }), { voiced: true });
+        queueReply(bots, world, mate, bots.advLine?.(mate, { aloud: true }), { delay: 1.5, voiced: true });
+      };
+      return true;
+    }
+  }
+  if (r < 0.75) {
+    const pose = bot.advState === 'train' ? pick(['showoff', 'cheer'], rng) : pick(['lookaround', 'wave', 'cheer'], rng);
+    bot.emote = { pose, t: 0, dur: pose === 'showoff' ? 1.3 : pose === 'lookaround' ? 1.4 : 1.2 };
+    bot.timer = between(4, 9, rng);
+    return true;
+  }
+  return false;
+}
+
 // Something to do instead of a stroll: go chat with someone, or a little emote. Returns whether they took one up.
 function pastime(bot, bots, world, map) {
   const rng = bots.rng;
   const r = rng();
   const here = botsIn(bots, map.id);
+  if (bot.adv) return advPastime(bot, bots, world, map, here, r);
   // Now and then: the stove, the craft bench, the town's own spot or its fishing nook.
   // (At Lantern Lagoon, the anglers are mostly there for its fishing.)
   if (r < (map.id === 'lagoon' ? 0.6 : 0.16) && townPastime(bot, bots, world, map)) return true;
@@ -771,21 +821,21 @@ function listeners(bots, world) {
     .map((e) => e.x);
 }
 
-function queueReply(bots, world, bot, text, { pose = null, delay = 0 } = {}) {
+function queueReply(bots, world, bot, text, { pose = null, delay = 0, voiced = false } = {}) {
   if (!text || bots.replies.some((r) => r.bot === bot)) return;
-  bots.replies.push({ bot, text, pose, at: world.now + delay + 1 + bots.rng() * 1.8 + Math.min(2, text.length * 0.035) });
+  bots.replies.push({ bot, text, pose, voiced, at: world.now + delay + 1 + bots.rng() * 1.8 + Math.min(2, text.length * 0.035) });
 }
 
 function deliverReplies(bots, world) {
   const due = bots.replies.filter((r) => r.at <= world.now);
   bots.replies = bots.replies.filter((r) => r.at > world.now && !r.bot.gone);
-  for (const { bot, text, pose } of due) {
+  for (const { bot, text, pose, voiced } of due) {
     if (bot.gone || bot.map !== world.map.id) continue;
     const bx = bot.body?.x ?? bot.x;
     if (bot.body) bot.body.facing = world.body.x < bx ? -1 : 1;
     else if (bot.state !== 'shop') bot.facing = world.body.x < bx ? -1 : 1;
     // (An answer to you: never held back, though never a repeat either.)
-    if (!botChat(world, bot, text, { prefix: bot.party ? '[Party] ' : '', color: bot.party ? '#9fe0b0' : '#e6dcff', important: true })) continue;
+    if (!botChat(world, bot, text, { prefix: bot.party ? '[Party] ' : '', color: bot.party ? '#9fe0b0' : '#e6dcff', important: true, voiced })) continue;
     if (pose) {
       if (bot.body) bot.attack ??= { pose, t: 0, dur: 1 };
       else bot.emote = { pose, t: 0, dur: 1.1 };
@@ -877,7 +927,7 @@ const huntCap = (map) => Math.max(2, Math.min(5, 1 + Math.floor(map.width / 700)
 
 // A player hunting here: built to the map's level, on a ledge away from you (walking in through
 // a portal when `walkIn`). `who` is someone back from town after dying here, as they were.
-function addHunter(bots, world, walkIn = false, who = null, { lifer = false } = {}) {
+export function addHunter(bots, world, walkIn = false, who = null, { lifer = false } = {}) {
   const rng = bots.rng;
   const map = world.map;
   const boss = raidBoss(world);
@@ -930,7 +980,7 @@ function huntersHere(bots, world, dt) {
     if (huntable(world)) {
       const cap = huntCap(map);
       // (A boss's own room fills up once the raid gathers.)
-      const n = bandOf(map) ? 2 + Math.floor(rng() * (cap - 1)) : 0;
+      const n = bots.guild ? 0 : bandOf(map) ? 2 + Math.floor(rng() * (cap - 1)) : 0;
       // (A map with spots to work usually has a life-skiller or two among them.)
       const spots = spotsOf(world);
       const lifers = spots >= 6 ? 1 + (rng() < 0.4 ? 1 : 0) : spots >= 3 && rng() < 0.7 ? 1 : 0;
@@ -949,7 +999,7 @@ function huntersHere(bots, world, dt) {
     const bot = hunters.find((b) => b.id === id);
     if (bot) bot.kills = (bot.kills ?? 0) + 1;
     // (Now and then, about what they just took down.)
-    if (bot && m && !bot.bubble && rng() < 0.03) {
+    if (bot && !bot.adv && m && !bot.bubble && rng() < 0.03) {
       const n = m.def.name;
       shout(bot, bots, world, pick([`another ${n} down`, bot.kills === 1 ? `my first ${n}!` : `${bot.kills} ${n}s so far`, `${n}s go down so fast now`, `that ${n} almost got me`, `${n}s give good exp here`], rng));
     }
@@ -971,7 +1021,7 @@ function huntersHere(bots, world, dt) {
   // Now and then someone walks in.
   bots.arriveIn -= dt;
   const cap = huntCap(map) + (queen ? 2 : 0);
-  if (bots.arriveIn <= 0) {
+  if (!bots.guild && bots.arriveIn <= 0) {
     bots.arriveIn = between(30, 80, rng);
     const lifers = hunters.filter((b) => b.lifer).length;
     if (hunters.length < cap) {
@@ -985,7 +1035,7 @@ function huntersHere(bots, world, dt) {
   }
   // Someone who died here logs back in after a while and comes back for more.
   bots.returns = (bots.returns ?? []).filter((r) => world.now - r.at < 600);
-  const back = bots.returns.find((r) => r.map === map.id && world.now >= r.at);
+  const back = bots.guild ? null : bots.returns.find((r) => r.map === map.id && world.now >= r.at);
   if (back && hunters.length < cap + 1) {
     bots.returns = bots.returns.filter((r) => r !== back);
     const b = addHunter(bots, world, true, back.who);

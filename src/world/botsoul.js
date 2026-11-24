@@ -504,6 +504,8 @@ function townMoments(bot, bots, world, map, dt, rng) {
   if (bot.state !== 'idle' || bot.emote || bot.crew) return;
   const r = rng();
   // Going AFK (much likelier when tired), with a word first now and then.
+  // (Adventurers live in the world: they never go AFK, swap cash outfits or wear a made-up mood.)
+  if (bot.adv) return;
   if (r < (s.mood === 'tired' ? 0.14 : 0.03) && world.now > (bot.afkAgain ?? 0) && Math.abs(bot.x - world.body.x) > 40) {
     if (rng() < 0.5) botChat(world, bot, pick(['brb', 'afk a sec', 'afk food', 'brb dinner', 'afk'], rng));
     bot.state = 'afk';
@@ -547,11 +549,12 @@ function bossCheers(bots, world, M, rng) {
 
 // ---------- Each frame (bots.js) ----------
 
-export function updateSouls(bots, world, dt) {
+export function updateSouls(bots, world, dt, { momentsOnly = false } = {}) {
   const rng = soulRng(bots);
   const M = (bots.soul ??= { tick: 3, cheered: new Set(), popIn: 20 });
   // Town players on your map: their little moments, every frame (just the ones here).
   if (world.map.isTown) for (const b of bots.list) if (!b.party && !b.hunter && !b.body && b.map === world.map.id && b.state !== 'transit') townMoments(b, bots, world, MAPS[b.map], dt, rng);
+  if (momentsOnly) return;
   bossCheers(bots, world, M, rng);
   // A party member or hunter going down tires them.
   for (const b of bots.list) {

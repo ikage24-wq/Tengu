@@ -1,4 +1,6 @@
 // The other players: generated characters that come and go without crowding the towns.
+import { startOf } from '../src/world/calendar.js';
+import { DAY_MS } from '../src/world/daytime.js';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
@@ -676,12 +678,14 @@ test('GM events: Double EXP doubles what you earn', async () => {
   assert.equal(kill(), plain, 'and back to normal after');
 });
 
-test('a festival by the calendar: Spooky Night in October, with fireworks and festive outfits', async () => {
+test('a festival by the calendar: Spooky Night at the end of Autumn, with fireworks and festive outfits', async () => {
   const { festivalOn } = await import('../src/world/events.js');
-  assert.equal(festivalOn(new Date(2026, 9, 31)).name, 'Spooky Night');
-  assert.equal(festivalOn(new Date(2026, 11, 24)).name, 'Snow Festival');
-  assert.equal(festivalOn(new Date(2026, 4, 10)), null);
+  const on = (season, day) => new Date(startOf(season, day, 1) + DAY_MS / 2);
+  assert.equal(festivalOn(on(2, 28)).name, 'Spooky Night');
+  assert.equal(festivalOn(on(3, 25)).name, 'Snow Festival');
+  assert.equal(festivalOn(on(1, 2)), null);
   const { world, bots, lines } = eventTown(205);
+  bots.clock = () => on(2, 28);
   townStep(world, bots, 12);
   assert.ok(lines.some((l) => /celebrating the Spooky Night/.test(l)));
   assert.ok(bots.list.some((b) => b.map === world.map.id && Object.values(b.char.outfit ?? {}).some((o) => o?.variant === 'dark')), 'dressed for it');
@@ -731,8 +735,8 @@ test('weather: rain comes and goes, and snow in winter', () => {
   roll('rain');
   assert.equal(world.weather, 'rain');
   assert.ok(lines.some((l) => /starts to rain/.test(l)));
-  // Snow in December.
-  bots.clock = () => new Date(2026, 11, 20, 18, 0);
+  // Snow in the game's winter.
+  bots.clock = () => new Date(startOf(3, 10, 1) + DAY_MS / 2);
   roll('snow');
   assert.equal(world.weather, 'snow');
 });

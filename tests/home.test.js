@@ -1,5 +1,6 @@
 // Your island (data/home.js, world/home.js): the deed, the Home Shell there and back, Shelly
 // building it up a stage at a time, and what each stage adds.
+import { DAY_MS, GAME_HOUR_MS } from '../src/world/daytime.js';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
@@ -506,8 +507,8 @@ test('the island sounds like an island, its animals call from the farm, and the 
   } finally {
     delete globalThis.__tengu;
   }
-  // The clock's time of day follows the player's clock, smoothly between readings.
-  w.dayClock = () => new Date(2026, 10, 21, 15, 30, 0);
+  // The clock tells the game's time of day (world/daytime.js), smoothly between readings.
+  w.dayClock = () => new Date((Math.floor(Date.UTC(2026, 10, 21) / DAY_MS) * 24 + 15.5) * GAME_HOUR_MS);
   loadMap(w, 'harbor', 'start');
   updateWorld(w, DT, keys());
   assert.ok(Math.abs(w.map.clockMin - 930) < 0.1, `half past three: ${w.map.clockMin}`);

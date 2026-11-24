@@ -34,16 +34,15 @@
 // festivalAt(date) -> { id, day, k (0-1: how far the garden's dressed for it), eve (0-1: the moon
 //   up), hour } or null. `world.forceFestival` (a test, a film) sets it outright - null for none.
 
-import { DAY_MINUTES, gameHour } from './daytime.js';
-
-const DAY_MS = DAY_MINUTES * 60000;
+import { DAY_MS, gameHour } from './daytime.js';
+import { monthOf } from './calendar.js';
 export const FESTIVALS = {
   moon: { name: 'Moon Viewing', months: [8, 9, 10], token: 'Moon Token', game: 'dango', stall: 'Moon Viewing Stall' },
   snow: { name: 'Snow Lantern Festival', months: [11, 0, 1], token: 'Snow Token', game: 'snowball', stall: 'Snow Lantern Stall' },
   blossom: { name: 'Blossom Day', months: [2, 3, 4], token: 'Blossom Token', game: 'petal', stall: 'Blossom Day Stall' },
   lantern: { name: 'Lantern Night', months: [5, 6, 7], token: 'Lantern Token', game: 'ring', stall: 'Lantern Night Stall' },
 };
-// (Every fourth game day: about once every hour and a half, for 24 minutes.)
+// (Every fourth game day: once every eight real hours, for the two hours of its day.)
 export const EVERY = 4;
 const smooth = (k) => (k <= 0 ? 0 : k >= 1 ? 1 : k * k * (3 - 2 * k));
 // The painter's copy (render/garden-festival.js), like the weather's SKY.
@@ -52,7 +51,8 @@ export const FEST = { now: null };
 export function festivalAt(date) {
   const day = Math.floor(date.getTime() / DAY_MS);
   if (((day % EVERY) + EVERY) % EVERY !== 1) return null;
-  const id = Object.keys(FESTIVALS).find((f) => FESTIVALS[f].months.includes(date.getMonth()));
+  // (the game's own seasons: world/calendar.js)
+  const id = Object.keys(FESTIVALS).find((f) => FESTIVALS[f].months.includes(monthOf(date.getTime())));
   if (!id) return null;
   const hour = gameHour(date);
   // (Dressed by breakfast, taken down at midnight; the moon up over the cliff from dusk.)
@@ -66,7 +66,7 @@ export function nextFestivalIn(date) {
   const day = Math.floor(ms / DAY_MS);
   for (let d = day + 1; d < day + 60; d++) {
     const at = new Date(d * DAY_MS);
-    if (((d % EVERY) + EVERY) % EVERY === 1 && Object.values(FESTIVALS).some((f) => f.months.includes(at.getMonth()))) return d * DAY_MS - ms;
+    if (((d % EVERY) + EVERY) % EVERY === 1 && Object.values(FESTIVALS).some((f) => f.months.includes(monthOf(at.getTime())))) return d * DAY_MS - ms;
   }
   return null;
 }

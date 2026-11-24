@@ -6,6 +6,7 @@
 //   - The wandering merchant: once in a long while a peddler sets up in a town for a few minutes
 //     with odd wares at odd prices; word spreads and players race there.
 
+import { dateOf, holidayOn } from './calendar.js';
 import { MAX_LEVEL } from '../core/exp.js';
 import { ITEMS } from '../data/items.js';
 import { botChat } from './chatlog.js';
@@ -46,24 +47,26 @@ function endGm(ev, bots, world) {
 
 // ---------- Festivals ----------
 
+// (On the game's calendar, each on its own days: world/calendar.js HOLIDAYS.)
 const FESTIVALS = {
-  0: { name: 'New Year Festival', color: 'gilded', fireworks: ['#ffd24f', '#ff6b6b', '#ffffff'], lines: ['happy new year!!', 'new year new grind', 'fireworks!!'] },
-  1: { name: 'Sweet Day', color: 'crimson', fireworks: ['#ff8fc1', '#ff6b8a'], lines: ['happy sweet day <3', 'who wants chocolate', 'love is in the air'] },
-  3: { name: 'Blossom Festival', color: 'white', fireworks: ['#ffc2d6', '#ffffff'], lines: ['the blossoms are so pretty', 'blossom festival!!', 'petals everywhere'] },
-  6: { name: 'Summer Beach Day', color: 'azure', fireworks: ['#8fd3ff', '#ffe36b'], lines: ['beach day!!', 'its so hot lol', 'summer vibes'] },
-  7: { name: 'Summer Beach Day', color: 'azure', fireworks: ['#8fd3ff', '#ffe36b'], lines: ['beach day!!', 'summer grind', 'summer vibes'] },
-  9: { name: 'Spooky Night', color: 'dark', fireworks: ['#ff9b3a', '#9b6cff', '#7ee081'], lines: ['happy spooky night!!', 'trick or treat', 'boo!', 'nice costume', 'spooky season :3'] },
-  11: { name: 'Snow Festival', color: 'white', fireworks: ['#bfe0ff', '#ffffff'], lines: ['snow festival!!', 'happy holidays', 'so cozy', 'who wants hot cocoa'] },
+  newyear: { name: 'New Year Festival', color: 'gilded', fireworks: ['#ffd24f', '#ff6b6b', '#ffffff'], lines: ['happy new year!!', 'new year new grind', 'fireworks!!'] },
+  sweet: { name: 'Sweet Day', color: 'crimson', fireworks: ['#ff8fc1', '#ff6b8a'], lines: ['happy sweet day <3', 'who wants chocolate', 'love is in the air'] },
+  blossom: { name: 'Blossom Festival', color: 'white', fireworks: ['#ffc2d6', '#ffffff'], lines: ['the blossoms are so pretty', 'blossom festival!!', 'petals everywhere'] },
+  beach: { name: 'Summer Beach Day', color: 'azure', fireworks: ['#8fd3ff', '#ffe36b'], lines: ['beach day!!', 'summer grind', 'summer vibes'] },
+  spooky: { name: 'Spooky Night', color: 'dark', fireworks: ['#ff9b3a', '#9b6cff', '#7ee081'], lines: ['happy spooky night!!', 'trick or treat', 'boo!', 'nice costume', 'spooky season :3'] },
+  snow: { name: 'Snow Festival', color: 'white', fireworks: ['#bfe0ff', '#ffffff'], lines: ['snow festival!!', 'happy holidays', 'so cozy', 'who wants hot cocoa'] },
 };
 
-export const festivalOn = (date) => FESTIVALS[date.getMonth()] ?? null;
+export const festivalOn = (date) => FESTIVALS[holidayOn(dateOf(date.getTime()))?.id] ?? null;
 
 function festivalTick(ev, bots, world, dt, hooks) {
   const f = festivalOn(bots.clock());
   if (!f || !world.map.isTown) return;
   const rng = bots.rng;
-  if (ev.festivalMap !== world.map.id) {
+  // (On arriving in town, or when a new festival begins while you're there.)
+  if (ev.festivalMap !== world.map.id || ev.festivalName !== f.name) {
     ev.festivalMap = world.map.id;
+    ev.festivalName = f.name;
     world.log?.(`${world.map.name} is celebrating the ${f.name}!`, '#ffe36b');
     ev.fireAt = world.now + 2;
   }

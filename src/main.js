@@ -19,6 +19,8 @@ import { settings, loadSettings } from './core/settings.js';
 import { setHd, gfx, nextFrame } from './render/pixel.js';
 import { VIVID } from './render/post.js';
 import { createBots, updateBots, botsIn, bodiedIn } from './world/bots.js';
+import { attachGuild, updateAdventurers } from './world/adventurers/bodies.js';
+import { openAdvTalk } from './ui/adventurer.js';
 import { updateGrouping } from './world/grouping.js';
 import { partyMembers, shareKill } from './world/party.js';
 import { openMenu } from './ui/party.js';
@@ -89,7 +91,10 @@ function startGame(char) {
   // (The crowd follows the game's day: world/botsoul.js populationAt.)
   // (Your other heroes in this save file are in town too.)
   const alts = worldChars(char.file ?? 0).filter((c) => c && c.slot !== char.slot);
-  world.bots = createBots(world, Math.random, { daily: true, alts });
+  // The people of the world are the Adventurers' Guild's sixteen (world/adventurers/), living
+  // their own lives on the game clock; nobody made up logs in.
+  world.bots = createBots(world, Math.random, { daily: true, alts, guild: true });
+  attachGuild(world, world.bots);
   world.onKill = (m) => shareKill(world.bots, world, m);
   uiState = createUiState();
   camera = createCamera();
@@ -318,6 +323,7 @@ function step(now) {
     autoPotion(world);
     timed('bots', () => {
       updateBots(world.bots, world, dt);
+      updateAdventurers(world, world.bots, dt);
       updateGrouping(world, dt);
     });
     for (const f of world.fx) if (!before.has(f)) f.ally = true;
@@ -442,6 +448,8 @@ function npcPointer(ui) {
     return;
   }
   if (npc) world.events.push({ type: 'talk', npc: npc.id });
+  // (An adventurer of the guild: a talk, not a profile; right-click still has their profile.)
+  else if (bot?.adv) openAdvTalk(uiState, world, bot);
   else if (bot) openProfile(uiState, { kind: 'bot', id: bot.id, shop: Boolean(bot.shop) });
   else if (friend) openProfile(uiState, { kind: 'ghost', id: friend.id });
   else if (self) openProfile(uiState, { kind: 'self' });
