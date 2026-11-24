@@ -1330,7 +1330,11 @@ function drawDateBuddy(ctx, world, cam, time) {
   if (npc.drawn === 'fawnelle') {
     const sight = d.sights?.find((s) => s.got == null);
     const feel = sight ? { emote: 'wonder', emoteT: d.t - sight.t0 } : { emote: 'neutral', emoteT: 0 };
-    drawFawnelle(ctx, bd.x, bd.y, bd.facing, cam.x, cam.y, time, { ...feel, talk: false, night: Boolean(world.fawnelle?.night), busy: false });
+    // (her hooves on the ground under her own spot, not at your height: beside a step or a slope she
+    // floated; eased so she walks down a rise rather than dropping)
+    const gy = groundAt(world.map, bd.x);
+    bd.gy = bd.gy == null || Math.abs(bd.gy - gy) > 60 ? gy : bd.gy + (gy - bd.gy) * 0.3;
+    drawFawnelle(ctx, bd.x, bd.gy, bd.facing, cam.x, cam.y, time, { ...feel, talk: false, night: Boolean(world.fawnelle?.night), busy: false });
     return;
   }
   footShadow(ctx, x, y, 12);
