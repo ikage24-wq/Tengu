@@ -6,6 +6,6 @@ export const MATERIAL = {
   crystalslime: 'matCrystal', starspirit: 'matCrystal',
   boneknight: 'matArmor', scorpip: 'matArmor', thornback: 'matArmor',
   sproutling: 'matWood', leafling: 'matWood', rootling: 'matWood', sapling: 'matWood', gnarlroot: 'matWood', pumpgob: 'matWood',
-  puffle: 'matSlime', sporecap: 'matSlime', sporeling: 'matSlime', mothercapper: 'matSlime', snailbun: 'matSlime',
+  puffle: 'matSlime', sporecap: 'matSlime', mothercapper: 'matSlime', snailbun: 'matSlime',
   shade: 'matSpirit', cloudsheep: 'matSpirit',
 };

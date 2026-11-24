@@ -19,8 +19,6 @@
 //              blanket. Ambles on mitten paws under its fringe; sniffs about, sits down and picks a
 //              berry off its own back to munch, yawns. Swing: rears up and slams both paws down.
 //              Bramble Roll: curls into a thorny ball, revs and rolls at you.
-//   sporeling  Spore Mite: a round pink puffball with a glowing tuft. Scoots on two hidden nubs;
-//              sneezes, does a happy roll. Bonks you; pops into spores when beaten.
 
 import { E, T, F, stroke } from './kit.js';
 import { simpleEye, deadEye, tear, vein } from './faces.js';
@@ -227,8 +225,10 @@ const oStar = (x, y, r, c, n = 5, k = 0.45) => F(T(Array.from({ length: n * 2 },
   const rr = i % 2 ? r * k : r;
   return [x + Math.cos(a) * rr, y + Math.sin(a) * rr];
 }), c));
-const oX = (x, y, w, h, wd, c = INK) => [...oLn([[x - w * 0.7, y - h * 0.55], [x + w * 0.7, y + h * 0.55]], wd, c), ...oLn([[x - w * 0.7, y + h * 0.55], [x + w * 0.7, y - h * 0.55]], wd, c)];
-const oWave = (mx, my, hw, wd, c = INK) => oLn(Array.from({ length: 5 }, (_, i) => [mx - hw + (i * hw) / 2, my + (i % 2 ? -0.3 : 0.3)]), wd, c);
+const oX = (x, y, w, h, wd, c = INK) => [...oLn([[x - w * 0.7, y - h * 0.55], [x + w * 0.7, y + h * 0.55]], wd, c), ...oLn([[x - w * 0.7, y + h * 0.55], [x + w * 0.7, y - h * 0.55]], wd, c)];
+
+const oWave = (mx, my, hw, wd, c = INK) => oLn(Array.from({ length: 5 }, (_, i) => [mx - hw + (i * hw) / 2, my + (i % 2 ? -0.3 : 0.3)]), wd, c);
+
 const NOLID = () => -99;
 // The closed and knocked-about eyes every face has (each face draws its own open eyes).
 const oShut = (mood, x, y, s, w, h, lw, sc = INK) => {
@@ -954,148 +954,6 @@ export function thornbackStill(pose, f, mood) {
       ],
       20,
       54,
-    ),
-  };
-}
-
-// =====================================================================================
-// Spore Mite (sporeling)
-// =====================================================================================
-
-const PUFFB = ramp('#fbd6e6', { step: 8, turn: 8, lift: 4 });
-const mp = pairOf('sm');
-// The puffball: round and soft, a few paler soft patches, a sheen. Box 16 x 14; its joint (bottom
-// middle) at (8, 13.4).
-const smBodyShapes = () => [
-  E(8, 7.6, 7.4, 6, PUFFB.base),
-  F(E(4.6, 6.4, 1.8, 1.2, '#fff0f6')),
-  F(E(10.6, 4.4, 1.4, 0.9, '#fff0f6')),
-  F(E(6.6, 10.6, 1.4, 0.8, '#fff0f6')),
-  crescent(8, 7.6, 7.4, 6, PUFFB.sh, { k: 0.2, a0: 30, a1: 170 }),
-  shine(8, 7.4, 7.4, 6, '#ffffff', 0, 0.8),
-];
-// The tuft on top: three soft spore wisps with glowing tips. Box 8 x 7; its root at (4, 6.6).
-const smTuftShapes = () => [
-  ...[[-28, 4.6], [0, 5.6], [26, 4.4]].flatMap(([d, l]) => {
-    const ex = 4 + Math.sin(d * D2R) * l;
-    const ey = 6.6 - Math.cos(d * D2R) * l;
-    return [F(taper([[4, 6.6], [(4 + ex) / 2 + d * 0.02, (6.6 + ey) / 2], [ex, ey]], 0.8, 0.4, PUFFB.sh)), E(ex, ey, 1.1, 1.1, PUFF)];
-  }),
-];
-const smFootShapes = (far) => () => [E(2.4, 1.4, 2.2, 1.3, far ? PUFFB.sh : PUFFB.base)];
-const SM_BODY = mp('body', 16, 14, smBodyShapes);
-const SM_TUFT = mp('tuft', 8, 7, smTuftShapes, 2);
-const SM_FOOT = [false, true].map((far) => mp(`foot${far ? 1 : 0}`, 5, 3, smFootShapes(far), 2));
-// Its own face, a sporeling's: bright pink eyes with two teal glints like its glowing spores, teal spore
-// freckles on its cheeks and a cheerful open smile. Box 16 x 14.
-const SM_EYES = [[8.8, 7.4, -1, 1.5, 2.1], [12.2, 7, 1, 1.2, 1.7]];
-const smOwnFace = (mood) => {
-  const out = [];
-  for (const [x, y, s, w, h] of SM_EYES) {
-    const shut = oShut(mood, x, y, s, w, h, 0.5, '#c0507a');
-    if (shut) { out.push(...shut); continue; }
-    const lid = mood === 'angry' ? (px) => y - h * 0.2 + (px - x) * -s * 0.6 : NOLID;
-    out.push(...oOpen(x, y, w, h, lid, '#a03a6a', '#ff9ac8'), oDot(x, y + h * 0.12, w * (mood === 'shout' ? 0.2 : 0.3), '#3a0a2a', lid), oDot(x + w * 0.3, y - h * 0.28, w * 0.24, '#bff8f0', lid), oDot(x - w * 0.3, y + h * 0.35, w * 0.13, '#8af0e8', lid), ...oLid(x, y, w, h, lid, 0.5));
-  }
-  if (mood !== 'dead') for (const [bx, by] of [[7.2, 9.8], [13.4, 9.4]]) for (const [dx, dy] of [[-0.45, 0], [0.15, -0.35], [0.4, 0.25]]) out.push(F(E(bx + dx, by + dy, 0.22, 0.22, '#6ae0d8')));
-  const [mx, my] = [11, 10.6];
-  if (mood === 'shout') out.push(F(E(mx, my + 0.3, 0.75, 0.9, '#7a1a4a')));
-  else if (mood === 'angry') out.push(...oLn([[mx - 0.8, my + 0.3], [mx, my], [mx + 0.8, my + 0.3]], 0.32));
-  else if (mood === 'hurt' || mood === 'dizzy') out.push(...oWave(mx, my, 0.8, 0.28));
-  else if (mood === 'dead') out.push(...oLn([[mx - 0.6, my], [mx + 0.6, my]], 0.28));
-  else {
-    const k = mood === 'happy' ? 1.2 : 1;
-    out.push(F(T(oArc(mx, my - 0.3, 1 * k, 0.9 * k, 0, 180, 8), '#7a1a4a')), F(E(mx, my + 0.3 * k, 0.5, 0.25, '#ff9ac0')));
-  }
-  if (mood === 'hurt') out.push(...oDrop(13.4, 7.4, 0.5));
-  return out;
-};
-const smFace = (mood) => faceSprite(`sm|face|${mood}`, 16, 14, () => smOwnFace(mood));
-const SM_LOOP = 9;
-const smPass = (bare) => {
-  const i = bare ? 1 : 0;
-  const tag = bare ? 'b' : '';
-  return [
-    { name: `footF${tag}`, parent: null, s: SM_FOOT[1][i], pivot: [2.4, 1.4], at: (S) => [S.x + 2.4 + S.footF, -1.2] },
-    { name: `tuft${tag}`, parent: 'ball', s: SM_TUFT[i], pivot: [4, 6.6], at: () => [-0.4, -11.8], rot: (S) => (S.tuft + S.tuftLag) * D2R },
-    { name: `body${tag}`, parent: 'ball', s: SM_BODY[i], pivot: [8, 13.4] },
-    { name: `footN${tag}`, parent: null, s: SM_FOOT[0][i], pivot: [2.4, 1.4], at: (S) => [S.x - 2.2 + S.footN, -0.9] },
-  ];
-};
-export const sporelingRig = makeRig({
-  w: 24,
-  h: 24,
-  soft: true,
-  stride: 12,
-  recover: 0.55,
-  springs: { x: [260, 20], lift: [200, 13], rock: [170, 11], tuft: [70, 6], footN: [400, 30], footF: [400, 30] },
-  fast: ['x', 'rock'],
-  kick: { rock: -420, tuft: 600 },
-  turnKick: { rock: 160, tuft: 400 },
-  pose(m, a) {
-    a.uidOff = (m.uid % 7) * 1.31;
-    const t = a.t + a.uidOff;
-    const u = stepPhase(m, a, 'sm', 12);
-    const p = u * TAU;
-    const lu = t % SM_LOOP;
-    const sneeze = hold(lu, 2, 2.6, 2.7, 3.2);
-    const roll = lu > 5.6 && lu < 6.6 ? smooth((lu - 5.6) / 1) : 0;
-    const still = 1 - a.walkW;
-    a.smSneeze = sneeze * still;
-    a.smRoll = roll > 0 && roll < 1 ? still : 0;
-    const br = Math.sin(t * 2.4);
-    const idle = { x: 0, lift: br * 1 + 1 + Math.sin(roll * Math.PI) * 3, rock: br * 2 - sneeze * 14 + (lu > 2.6 && lu < 3.1 ? 20 : 0) + roll * 360, tuft: br * 14 + sneeze * 30, footN: 0, footF: 0 };
-    // The scoot: quick little rocks forward and back on two hidden nubs.
-    const walk = { x: 0, lift: Math.abs(Math.sin(p)) * 1.4, rock: Math.sin(p) * 10 + 4, tuft: -Math.sin(p - 0.8) * 16 - 10, footN: Math.sin(p) * 2, footF: -Math.sin(p) * 2 };
-    const antic = { x: -1.5, lift: 0, rock: -18, tuft: 30, footN: 0, footF: 0 };
-    const strike = { x: 6, lift: 2.4, rock: 50, tuft: -30, footN: 2, footF: 2 };
-    return stateBlend(a, idle, walk, antic, strike);
-  },
-  follow: (S) => ({ tuftLag: -S.rock * 0.6 }),
-  parts: [
-    { name: 'ball', parent: null, at: (S) => [S.x, -1.6 - S.lift], rot: (S) => S.rock * D2R },
-    ...smPass(false),
-    ...smPass(true),
-    { name: 'face', parent: 'ball', s: (a) => smFace(moodOf(a, a.smSneeze > 0.5 ? 'sleep' : a.smRoll ? 'happy' : null)), pivot: [8, 13.4] },
-  ],
-  fx(ctx, m, a) {
-    // The sneeze, and the pop when it's beaten: a burst of spores.
-    const burst = (cx, cy, u, n, r) => {
-      if (!(u >= 0 && u < 1)) return;
-      for (let k = 0; k < n; k++) {
-        const ang = (k / n) * TAU + 0.3;
-        ctx.globalAlpha = a.alpha * (1 - u) * 0.9;
-        ctx.fillStyle = k % 2 ? '#ffffff' : SP_GLOW;
-        ctx.beginPath();
-        ctx.arc(cx + Math.cos(ang) * r * u, cy + Math.sin(ang) * r * u * 0.7, 1.2 * (1 - u) + 0.4, 0, TAU);
-        ctx.fill();
-      }
-    };
-    if (a.smSneeze > 0.4) burst(10, -8, ((a.t + a.uidOff) % SM_LOOP - 2.5) / 0.8, 6, 10);
-    if (m.hp <= 0) {
-      const st = a.mo.rig;
-      st.smPop ??= a.now;
-      const u = clamp((a.now - st.smPop) / 0.6, 0, 1);
-      if (u < 1) burst(0, -8, u, 10, 18);
-    }
-  },
-});
-export function sporelingStill(pose, f, mood) {
-  const fm = MOODS.has(mood) ? mood : 'idle';
-  return {
-    w: 24,
-    h: 24,
-    res: 3,
-    shapes: shift(
-      [
-        ...put(smFootShapes(true)(), [2.4, 1.4], 2.4, -1.2),
-        ...put(smTuftShapes(), [4, 6.6], -0.4, -1.6 - 11.8),
-        ...put(smBodyShapes(), [8, 13.4], 0, -1.6),
-        ...put(smOwnFace(fm), [8, 13.4], 0, -1.6),
-        ...put(smFootShapes(false)(), [2.4, 1.4], -2.2, -0.9),
-      ],
-      12,
-      22,
     ),
   };
 }

@@ -31,7 +31,7 @@ export const MOBS = {
   }),
   petalsprite: mob({
     id: 'petalsprite', name: 'Dandelion Puff', level: 3, hp: 30, atk: 10, def: 1, acc: 12, eva: 2, exp: 17, gold: [1, 3],
-    speed: 30, w: 22, h: 32, art: 'petalsprite', fly: true, aggro: false, drops: [{ id: 'sprite_petal', chance: 0.55 }, { id: 'rose_quartz', chance: 0.08 }, { id: 'pleated_skirt', chance: 0.01 }],
+    speed: 30, w: 24, h: 42, art: 'petalsprite', fly: true, aggro: false, drops: [{ id: 'sprite_petal', chance: 0.55 }, { id: 'rose_quartz', chance: 0.08 }, { id: 'pleated_skirt', chance: 0.01 }],
   }),
   // Petal Meadow's area boss: she bursts out of the giant hive once enough of the meadow has been
   // hunted (world/nest.js), and every few seconds brings her honey dipper down in a splash that
@@ -91,8 +91,10 @@ export const MOBS = {
     speed: 52, gait: 'stalk', w: 30, h: 30, art: 'scorpip', drops: [{ id: 'stinger', chance: 0.45 }, { id: 'iron_ore', chance: 0.08 }, { id: 'cargo_pants', chance: 0.01 }],
   }),
   leafling: mob({
-    id: 'leafling', name: 'Dryad', level: 11, hp: 210, atk: 33, def: 8, acc: 28, eva: 4, exp: 168, gold: [3, 8],
-    speed: 44, w: 20, h: 34, art: 'leafling', drops: [{ id: 'leaf_fragment', chance: 0.5 }, { id: 'maple_log', chance: 0.08 }, { id: 'sundress', chance: 0.01 }],
+    // (the Rootling Dryad, 2026-11-24: the Root Tendril's dryad as a field monster, on the serpent base;
+    // her attacks in turn: vine lash, petal gust, root snare)
+    id: 'leafling', name: 'Rootling Dryad', level: 11, hp: 210, atk: 33, def: 8, acc: 28, eva: 4, exp: 168, gold: [3, 8],
+    speed: 44, w: 30, h: 56, art: 'leafling', moves: ['vineLash', 'petalGust', 'rootSnare'], fight: { every: 1.6, reach: 30, windup: 0.5 }, drops: [{ id: 'leaf_fragment', chance: 0.5 }, { id: 'maple_log', chance: 0.08 }, { id: 'sundress', chance: 0.01 }],
   }),
   // Mossy Woods' canopy (new 2026-11-12, built from scratch): a fluffy red panda with a big ringed
   // tail that pads along the treetops (render/mobs/redpandarig.js).
@@ -239,12 +241,12 @@ export const MOBS = {
   }),
   sporeling: mob({
     id: 'sporeling', name: 'Spore Mite', level: 10, hp: 160, atk: 22, def: 2, acc: 28, eva: 4, exp: 40, gold: [1, 2],
-    speed: 72, gait: 'dart', w: 18, h: 19, art: 'sporeling', drops: [],
+    speed: 72, gait: 'dart', w: 22, h: 20, art: 'sporeling', drops: [],
     fight: { every: 1.2, reach: 22, windup: 0.25 },
   }),
   sapling: mob({
     id: 'sapling', name: 'Root Tendril', level: 12, hp: 700, atk: 0, def: 10, acc: 0, eva: 0, exp: 160, gold: [1, 3],
-    speed: 0, w: 18, h: 36, art: 'sapling', drops: [],
+    speed: 0, w: 30, h: 56, art: 'sapling', drops: [],
     // Saplings don't fight: they feed their life to Gnarlroot.
     fight: { mender: true },
   }),

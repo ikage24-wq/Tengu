@@ -207,7 +207,8 @@ function drawEmote(ctx, m, mood, x, top, t, now) {
       ctx.font = `800 ${6 + u * 5}px Nunito, "Trebuchet MS", "Segoe UI", system-ui, sans-serif`;
       ctx.fillText('z', hx + u * 7, top - 1 - u * 13);
     }
-  } else if (m.state === 'idle' && m.hp > 0) {
+  } else if (m.state === 'idle' && m.hp > 0 && !ARTS[m.def.art]?.noHop) {
+    // (An art with its own idle act (`noHop`) goes without these idle notes too.)
     const cyc = (t * 0.3) % 1;
     if (cyc > 0.55 && cyc < 0.8) {
       const u = (cyc - 0.55) / 0.25;
@@ -438,10 +439,13 @@ function drawMonsterNow(ctx, m, x, y, time, now = time) {
   // Body language: two happy hops while gloating, a little hop in an idle happy beat, and a
   // nervous tremble when nearly beaten (bosses keep their dignity).
   let act = 0;
+  // (`noHop` on an art: it shows these moments in its own moves and face instead; it also goes
+  // without the idle notes drawEmote floats over the others.)
   if (m.hp > 0 && !frozen && !boss) {
     const e = now - (m.gloatAt ?? -9);
-    if (e < 0.7) act = Math.abs(Math.sin((e / 0.35) * Math.PI)) * Math.max(3, m.def.h * 0.12);
-    else if (mood === 'happy' && !moving) act = Math.abs(Math.sin(t * 9)) * 1.5;
+    const hops = !ARTS[m.def.art]?.noHop;
+    if (hops && e < 0.7) act = Math.abs(Math.sin((e / 0.35) * Math.PI)) * Math.max(3, m.def.h * 0.12);
+    else if (hops && mood === 'happy' && !moving) act = Math.abs(Math.sin(t * 9)) * 1.5;
     if (lowOn(m)) x += Math.floor(time * 20) % 2 ? 0.5 : -0.5;
   }
   const air = (m.air > 0 && m.hp > 0 ? m.air : 0) + leap + lift + act;

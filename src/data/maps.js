@@ -1238,7 +1238,7 @@ Object.assign(MAPS, {
     ],
     objects: [{ kind: 'glowcap', x: 1660, y: 300 }, { kind: 'glowcap', x: 240, y: 580 }, { kind: 'glowcap', x: 1500, y: 860 }],
     npcs: [],
-    spawns: [...packAt('a', 1420, 300, 'rootling', 'sporecap'), ...packAt('b', 560, 580, 'rootling', 'rootling', 'rootling'), ...packAt('c', 1060, 860, 'rootling', 'sporecap', 'rootling', 'sporecap')],
+    spawns: [...packAt('a', 1420, 300, 'rootling', 'sporecap'), ...packAt('b', 560, 580, 'rootling', 'leafling', 'rootling'), ...packAt('c', 1060, 860, 'rootling', 'sporecap', 'rootling', 'sporecap')],
   },
 
   // Capper's Garden (remade 2026-11-18; art in render/hollowrooms.js): a root chamber under the trunk
@@ -1298,7 +1298,7 @@ Object.assign(MAPS, {
     ],
     objects: [{ kind: 'cage', x: 320, y: 420 }, { kind: 'cage', x: 880, y: 700 }, { kind: 'cage', x: 1780, y: 420 }, { kind: 'cage', x: 2160, y: 700 }],
     npcs: [],
-    spawns: [...packAt('a', 1000, 420, 'rootling', 'thornback', 'rootling'), ...packAt('b', 1340, 700, 'sporecap', 'rootling', 'sporecap'), ...packAt('c', 1880, 700, 'thornback', 'sporecap', 'rootling')],
+    spawns: [...packAt('a', 1000, 420, 'leafling', 'thornback', 'rootling'), ...packAt('b', 1340, 700, 'sporecap', 'rootling', 'sporecap'), ...packAt('c', 1880, 700, 'thornback', 'sporecap', 'rootling')],
   },
 
   // Boar Den (remade 2026-11-18): a long, low den dug in under the roots, warm and earthy, room for
@@ -1355,7 +1355,7 @@ Object.assign(MAPS, {
     objects: [],
     npcs: [],
     spawns: [
-      ...packAt('a', 800, 1000, 'rootling', 'thornback', 'sporecap'), ...packAt('b', 1240, 850, 'sporecap', 'thornback', 'rootling', 'rootling'),
+      ...packAt('a', 800, 1000, 'rootling', 'thornback', 'sporecap'), ...packAt('b', 1240, 850, 'sporecap', 'thornback', 'leafling', 'rootling'),
       ...packAt('c', 1740, 680, 'rootling', 'sporecap', 'thornback', 'sporecap'),
     ].map((sp) => (sp.mob === 'thornback' ? { ...sp, key: true } : sp)),
   },

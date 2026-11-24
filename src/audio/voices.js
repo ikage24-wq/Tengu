@@ -13,10 +13,10 @@
 //   Sea      sea folk and jellies: a gurgle, a squish, bubbles
 //   People   witches, ladies, captains: anime fight voices
 const FAMILIES = {
-  Critter: ['puffle', 'mosstort', 'redpanda', 'strawhog', 'snailbun', 'harvmouse', 'lambkin', 'scorpip', 'cloudsheep', 'nekomata', 'pearldiver', 'starcarto', 'cottoncandy', 'stagehand', 'sleepysheep'],
+  Critter: ['puffle', 'mosstort', 'redpanda', 'strawhog', 'snailbun', 'harvmouse', 'lambkin', 'scorpip', 'cloudsheep', 'nekomata', 'pearldiver', 'starcarto', 'cottoncandy', 'stagehand', 'sleepysheep', 'sporeling'],
   Beast: ['boarlet', 'thornback', 'lupina', 'teddystrong', 'tuskar', 'leonie', 'gummybear', 'primadonna', 'tanukipicker', 'kettletanuki', 'lantertanuki', 'grandkettle', 'whalestorm', 'noodledragon', 'monday'],
   Bird: ['mossowlet', 'windbird', 'chorusgirl', 'prompter', 'mothlibrarian', 'folio', 'paperdragon'],
-  Buzz: ['bumble', 'queenbee', 'sporeling'],
+  Buzz: ['bumble', 'queenbee'],
   Sprite: ['petalsprite', 'starspirit', 'sylph', 'lanternghost', 'stardancer', 'cometcourier', 'musicballerina', 'starpoint'],
   Goblin: ['gloombat', 'brownie', 'macgoblin', 'pumpgob', 'rootling', 'sporecap', 'jellyninja', 'jackbox', 'gearmole', 'teahatter', 'pumpkinbutler'],
   Plant: ['sproutling', 'leafling', 'mossgolem', 'sapling', 'mothercapper', 'gnarlroot', 'topiarydryad', 'sylvana'],

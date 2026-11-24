@@ -1,7 +1,7 @@
 // Monster art: wilds (Windy Canyon and Mossy Woods).
 //   rockhound  Rockhound Kid: a canyon kid in a stone-lizard onesie (2026-11-22, rockhoundrig.js)
 //   scorpip    Manticore Cub: remade 2026-11-18 as a live rig (manticorerig.js)
-//   leafling   Dryad: a forest nymph with leaf hair, bark limbs, and a budding twig staff
+//   (leafling, the Dryad, is the Rootling Dryad now: render/dryad/, listed in hollowfolk.js)
 //   boarlet    Warg: a chibi wolf pup with a cream ruff and a red bandana; it pounces with a chomp
 //              (a live rig of its own since 2026-11-20)
 //   mossgolem  Treant: a slow, wise walking tree with root feet and a bird's nest in its crown
@@ -190,187 +190,6 @@ function leaf(x, y, len, wid, a, R, bend = 0, vein = true) {
   if (wid > 2.4) out.push(F(tube(pts.map(([px, py]) => [px + wid * 0.08, py + wid * 0.2]), [0.3, wid * 0.5, 0.15], R.sh, 3)));
   if (vein && len > 4.5) out.push(band([pts[0], pts[1], [lerp(pts[1][0], pts[2][0], 0.6), lerp(pts[1][1], pts[2][1], 0.6)]], 0.35, R.deep));
   return out;
-}
-
-// ---------- Dryad (leafling) ----------
-
-// Attack: a vine whip cracked off the end of her staff. st: staff angle, sx/sy: hand shift,
-// lean: body lean, vine: the vine chain's [root angle, curl per link], crack: the snap.
-const DRY_ATK = [
-  // Wind-up: staff drawn back over her shoulder, the vine trailing behind, leaning back.
-  { st: -46, sx: -4.6, sy: -5, lean: -1.6, vine: [150, -12], crack: 0 },
-  // Whip: the staff swings over, the vine arcing high overhead.
-  { st: 6, sx: -3.4, sy: -3, lean: 0.8, vine: [-10, 26], crack: 0 },
-  // Crack: the vine lashes out straight and snaps at the tip.
-  { st: 22, sx: -5, sy: -1.4, lean: 1.4, vine: [66, -3], crack: 1 },
-  // Recover: the vine curls back toward the staff.
-  { st: 12, sx: -1.4, sy: -1, lean: 0.4, vine: [20, 46], crack: 0 },
-];
-
-function leafling(pose, f, mood) {
-  const W = 36;
-  const H = 46;
-  const G = H;
-  const walk = pose === 'walk';
-  const idle = pose === 'idle';
-  const A = pose === 'attack' ? DRY_ATK[f] : null;
-  const p = walk ? f / 8 : idle ? f / 6 : 0;
-  const dead = mood === 'dead';
-  const hurt = mood === 'hurt';
-  const angry = mood === 'angry';
-  const happy = mood === 'happy';
-  const wilt = (c) => (dead ? mix(c, '#c9a36a', 0.45) : c);
-  // Ramps: warm peach skin (apart from the green hair in hue and value), bark limbs, two leaf
-  // greens cooling to teal, the back hair one step darker, and the pink bud as the accent.
-  const SK = ramp('#f8dcc4', { step: 9, turn: 16, sat: -10 });
-  const BK = ramp('#b98a66', { step: 11, turn: 18, sat: -6 });
-  const LA = ramp(wilt('#74c46a'), { step: 11, turn: 20, sat: -8 });
-  const LB = ramp(wilt('#a2dc88'), { step: 10, turn: 20, sat: -8 });
-  const LD = { base: LA.sh, sh: LA.deep, deep: edge(LA.deep) };
-  const br = idle ? breath(p) : 0;
-  // A graceful glide: barely any bob, a sway from the hips, everything soft trailing after.
-  const bob = walk ? 0.35 * Math.cos(p * TAU * 2) - 0.2 : idle ? -br * 0.4 : 0;
-  const lean = hurt ? -1.6 : dead ? 1 : walk ? 0.8 + 0.4 * Math.sin(p * TAU) : A ? A.lean : 0.4 * sway(p);
-  const by = bob + (dead ? 2.4 : 0);
-  const out = [];
-  const hip = [16.6 + lean * 0.3, 37 + by];
-  const X = 17 + lean;
-  const Y = 16.6 + by * 0.9 + (dead ? 2.2 : 0) + (hurt ? -0.6 : 0);
-  // The head tips on the neck; idle, she tilts it as if listening to the woods.
-  const tip = idle ? bump(p, 0.5, 0.34) * 4 : walk ? Math.sin(p * TAU) * 1.5 : A ? [-4, 3, 5, 1][f] : dead ? 6 : 0;
-  const neck = [X, Y + 7];
-  // Soft parts share one travelling wave, each starting a little later than the one before.
-  const ph = walk ? p * TAU * 2 - 1.4 : p * TAU - 0.4;
-  const amp = dead ? 0 : walk ? 6 : idle ? 5 : 2;
-  const blow = (A ? [10, -14, -10, -2][f] : 0) + (dead ? 25 : 0) + (angry ? -8 : 0) + (walk ? -6 : 0);
-
-  // Legs: slim bark legs on two bones with root toes, gliding in small steps under the skirt.
-  const leg = (phs, near) => {
-    const [dx, lift] = dead ? [near ? 2 : -2, 0] : walk ? gait(p + phs, 8.8, 1.6, 0.55) : A ? [near ? [1.4, 2.6, 3, 1.6][f] : -1.6, 0] : [near ? 1.2 : -1.2, 0];
-    const hx = hip[0] + (near ? 1.2 : -1.2);
-    const fx = hx + dx;
-    const fy = G - 1.4 + lift;
-    const kn = reach([hx, hip[1]], [fx, fy], 4.4, 4.4, 1);
-    const c = near ? BK.base : BK.sh;
-    // Toes point down as the foot lifts, like a dancer's.
-    const toe = lift < -0.3 ? 0.8 : 0;
-    return [...tubeL([[hx, hip[1]], kn, [fx, fy]], [3, 2.4, 2], c, 4, 0.5), ...ovL(fx + 0.9, fy + 0.4 + toe * 0.3, 2, 1.1, toe * 20, c, 0.4), band([[fx + 1.8, fy + 0.8 + toe * 0.5], [fx + 3, fy + 1.1 + toe]], 0.6, c)];
-  };
-  out.push(...leg(0.5, false));
-
-  // Long leaf locks hanging behind the head, each a chain lagging the one before.
-  const back = [];
-  for (let i = 0; i < 5; i++) back.push(...leaf(X - 6 + i * 0.5, Y + 1 - i * 1.3, 9.4 - i * 0.6, 4.6, 100 + i * 14 + blow, i % 2 ? LD : LA, ripple(ph - i * 0.5, amp, 0.9, 0.3), false));
-  back.push(E(X - 0.6, Y - 0.8, 10.6, 9.8, LA.sh));
-  out.push(...spin(back, neck[0], neck[1], tip));
-
-  // The back arm on two bones, swinging softly opposite the near leg.
-  const swing = walk ? Math.cos(p * TAU) * 1.8 : sway(p) * 0.4;
-  const sh = [X - 3.4, 29 + by];
-  const fh = [sh[0] - 1.2 - swing, sh[1] + 6.2];
-  out.push(...tubeL([sh, reach(sh, fh, 3.2, 3.2, -1), fh], [2.2, 1.9, 1.7], BK.sh, 4, 0.5), E(fh[0], fh[1] + 0.4, 1.3, 1.2, BK.sh));
-
-  // Dress of layered leaves on chains, flowing back and swishing a beat behind her hips.
-  const sw = walk ? -3 : A ? [6, -6, -8, -2][f] : 0;
-  const sph = walk ? p * TAU * 2 - 1.6 : p * TAU - 0.9;
-  for (let i = 0; i < 6; i++) {
-    const a = 96 - (i - 2.5) * 16 + sw * (i % 2 ? 1 : -0.6) + (walk ? 6 : 0);
-    out.push(...leaf(X + (i - 2.5) * 1.3 - 0.4, 30.4 + by, 8.6 - Math.abs(i - 2.5) * 0.6, 5, a, i % 2 ? LB : LA, ripple(sph - i * 0.4, amp * 0.8, 0.9, 0.3)));
-  }
-  // Neck and bodice: a leaf bodice and a bark belt with a pink seed.
-  out.push(tube([[X - 0.2, 23.6 + by], [X - 0.4, 27 + by]], [2.4, 2.6], SK.base), F(band([[X - 1.1, 24 + by], [X - 1.1, 26.8 + by]], 0.8, SK.sh)));
-  out.push(...ovL(X - 0.4, 29.2 + by, 3.8, 3.4, 0, LA.base, 0.4), crescent(X - 0.4, 29.2 + by, 3.8, 3.4, LA.sh, { k: 0.4 }), shine(X - 0.4, 29.2 + by, 3.8, 3.4, LA.hi));
-  out.push(band([[X - 4, 31.2 + by], [X + 3.4, 31.2 + by]], 1.2, BK.base), F(E(X + 1, 31.2 + by, 0.9, 0.9, '#ffb3c8')));
-  for (let i = 0; i < 3; i++) out.push(...leaf(X - 1.6 + i * 1.8, 31.4 + by, 6.6, 3.6, 92 - (i - 1) * 22 + sw * 0.6 + (walk ? 4 : 0), i === 1 ? LB : LA, ripple(sph - 0.6 - i * 0.5, amp * 0.6, 0.9, 0.3)));
-  out.push(...leg(0, true));
-
-  // The twig staff, held out front and turned about her hand: knots, a curl, a little leaf, and
-  // a glowing bud.
-  const sx = X + 10.6 + (walk ? Math.sin(p * TAU) * 0.6 : 0) + (A ? A.sx : 0);
-  const sy = 31 + by + (A ? A.sy : 0);
-  const st = dead ? 14 : hurt ? -10 : A ? A.st : walk ? Math.sin(p * TAU - 0.6) * 3 + 2 : sway(p) * 1.4 - bump(p, 0.5, 0.25) * 4;
-  const staff = turn([[sx - 0.8, sy + 13], [sx, sy + 4], [sx - 0.2, sy - 6], [sx + 0.6, sy - 13], [sx + 0.1, sy - 16.4]], sx, sy, st);
-  out.push(...tubeL(staff, [1.2, 1.6, 1.6, 1.4, 1], BK.base, 4, 0.5), F(band(staff.slice(1, 4).map(([x, y]) => [x + 0.35, y]), 0.4, BK.hi)));
-  const top = staff[4];
-  const mid = staff[3];
-  out.push(...tubeL([mid, [mid[0] + 2, mid[1] - 1.4], [mid[0] + 2.4, mid[1] - 3]], [0.9, 0.7, 0.5], BK.base, 3, 0.4), ...leaf(mid[0] - 0.2, mid[1] + 1.6, 3.6, 2.2, 200 + st, LB, ripple(ph, amp * 2, 0.9, 0.3), false));
-  for (const k of [1, 2]) out.push(F(E(staff[k][0] + 0.2, staff[k][1] - 1.2, 0.5, 0.6, BK.deep)));
-  // The bud's glow breathes in and out.
-  const pulse = idle ? br * 0.8 : walk ? wave(p * 2) * 0.3 : A ? [1.2, 0.4, 0.8, 0][f] : 0;
-  const BU = ramp(angry || A ? '#ff5fa8' : dead ? '#c8a8a0' : '#ffb6d8', { step: 10, turn: 10, sat: -6 });
-  if (!dead) out.push(F(E(top[0], top[1] - 2, 3.6 + pulse + (angry ? 1 : 0), 3.6 + pulse + (angry ? 1 : 0), angry || A ? '#ffd0e8' : '#fff4c8')));
-  out.push(...leaf(top[0], top[1], 2.6, 2, 210 + st, LA, 0, false), ...leaf(top[0], top[1], 2.6, 2, 330 + st, LA, 0, false));
-  out.push(...ovL(top[0], top[1] - 2, 1.9, 2.6, st, BU.base, 0.4), crescent(top[0], top[1] - 2, 1.9, 2.6, BU.sh, { k: 0.4, rot: st }), F(ov(top[0] - 0.6, top[1] - 2.8, 0.6, 1, st, '#ffffff')));
-  // A twinkle drifts off the bud.
-  const tw = idle ? p : walk ? (p * 2) % 1 : -1;
-  if (!dead && tw >= 0 && tw < 0.6) out.push(...star(Math.min(top[0] + 3.6 + tw * 1.6, 34), top[1] - 4.4 - tw * 4, 1.3 - tw, '#fff6b0'));
-  // The vine: a chain sprouting from the bud that whips out link by link.
-  if (A && !dead) {
-    const vp = chain(top[0], top[1] - 1.4, A.vine[0], [3.6, 3.4, 3.2, 3, 2.8], (i) => (i ? A.vine[1] : 0)).map(([x, y]) => [Math.min(34.4, x), Math.min(G - 0.8, y)]);
-    out.push(...tubeL(vp, [1.4, 1.2, 1, 0.8, 0.7, 0.5], LA.sh, 4, 0.4));
-    for (const k of [1, 3]) out.push(...leaf(vp[k][0], vp[k][1], 2.4, 1.6, k === 1 ? -60 : 40, LB, 0, false));
-    const [ex, ey] = vp[5];
-    if (A.crack) out.push(...star(Math.min(33.4, ex), ey - 0.6, 2.6, '#fff6b0'), ...star(Math.min(33.4, ex) - 3, ey - 3.4, 1.2, '#ffd0e8'));
-    if (f === 1) out.push(smear(vp.slice(1), 2.4, mix(LB.hi, '#ffffff', 0.4)));
-  }
-
-  // Front arm on two bones, the hand wrapped around the staff.
-  const ns = [X + 2.6, 28.6 + by];
-  const hand = [sx - 0.1, sy];
-  out.push(...tubeL([ns, reach(ns, hand, 4, 4, -1), hand], [2.2, 2, 1.8], BK.base, 4, 0.5), ...ovL(hand[0], hand[1], 1.4, 1.3, 0, BK.base, 0.4));
-
-  // Head: the face, a chained leaf ear, a crown of leaves, the bangs, a sprout and a blossom.
-  const head = [];
-  head.push(F(E(X, Y, 8.6, 8.2, SK.sh)), ...ball(X, Y, 8.3, 7.9, SK.base, 0, { sh: SK.sh, light: SK.hi, k: 0.25, a0: 80, a1: 215 }));
-  const et = idle ? bump(p, 0.17, 0.2) * 14 : walk ? Math.sin(p * TAU * 2 - 2) * 5 : 0;
-  head.push(...leaf(X - 4.8, Y + 1.4, 4.6, 2.8, 200 + (angry ? -15 : 0) - et * 0.5, SK, (i) => (i ? -et : 0), false));
-  const rustle = (i) => ripple(ph - i * 0.45, amp * 0.8, 0.9, 0.3);
-  const crown = [[-8, -2, 150], [-7, -6, 165], [-4, -9, 200], [0, -10, 245], [4, -9.4, 285], [7, -7, 315], [8.6, -3, 345]];
-  crown.forEach(([dx, dy, a], i) => head.push(...leaf(X + dx * 0.6, Y + dy * 0.6, angry ? 7.4 : 6.4, 4.4, a + blow * 0.3, i % 2 ? LB : LA, rustle(i))));
-  head.push(blob([[X - 8.4, Y - 1.4], [X - 7, Y - 7], [X - 1, Y - 9.6], [X + 6, Y - 8], [X + 8.8, Y - 3.4], [X + 4, Y - 5.2], [X - 4, Y - 5]], LA.base));
-  // The bangs' shadow on the forehead, so the hair lifts off the skin by value.
-  head.push(F(blob([[X - 7.2, Y - 3.2], [X - 3, Y - 4.2], [X + 1, Y - 4.4], [X + 6, Y - 3.6], [X + 7.6, Y - 1.6], [X + 3.6, Y - 2.2], [X, Y - 2.4], [X - 4, Y - 2]], SK.sh)));
-  const fringe = [[-6.6, -4.6, 112, LD], [-3.4, -5.4, 100, LA], [-0.2, -5.8, 86, LB], [3, -5.4, 74, LA], [6, -4.6, 60, LB]];
-  fringe.forEach(([dx, dy, a, R], i) => head.push(...leaf(X + dx, Y + dy, 4.4 - Math.abs(i - 2) * 0.4, 3.2, a, R, rustle(i + 2), false).map((s) => C(s))));
-  head.push(F(ov(X - 1.4, Y - 7.2, 3.4, 0.9, -8, LA.hi)), F(E(X + 3.2, Y - 7.6, 1.2, 0.55, LA.hi)));
-  // A sprout curling up from the crown, a chain bobbing a beat behind each step.
-  const sp = chain(X + 0.4, Y - 9, dead ? -40 : -88, [1.6, 1.6, 1.4], (i) => (i ? -16 : 0) + ripple(ph - 1, amp * 1.6 + (A ? 10 : 0), 0.9, 0.3)(i));
-  const [spx, spy, spa] = sp[3];
-  head.push(...tubeL(sp.map(([x, y]) => [x, y]), [0.9, 0.7, 0.6, 0.5], LA.sh, 3, 0.4), ...leaf(spx, spy, 3.6, 2.4, spa - 70, LB, -10, false), ...leaf(spx, spy, 3.2, 2.2, spa + 60, LA, 10, false));
-  // A pink blossom tucked in the hair.
-  const bx = X - 5.4;
-  const bly = Y - 5.6;
-  for (let i = 0; i < 5; i++) {
-    const a = (i / 5) * TAU + (walk ? p : idle ? p * 0.5 : 0);
-    head.push(F(E(bx + Math.cos(a) * 1.4, bly + Math.sin(a) * 1.4, 1.2, 1.2, i < 2 ? '#ffd0e0' : dead ? '#d8b8a8' : '#ffb6d0')));
-  }
-  head.push(F(E(bx, bly, 0.8, 0.8, '#ffe36b')));
-
-  // Face: honey-amber eyes (they contrast the green hair) with a winged lash; angry, they burn
-  // pink like her bud.
-  const cx = X + 2.2;
-  const cy = Y + 1.8;
-  const glance = idle ? 0.35 * Math.sin(p * TAU + 1) : 0;
-  const hot = angry || (A && A.crack);
-  const de = { shape: 'almond', sclera: '#fffdf6', iris: hot ? ['#7a1040', '#ff5fa8', '#ffd0e8'] : ['#7a4410', '#e09a3a', '#ffe6a0'], pupil: 'round', pupilC: '#3a2210', lashC: '#2f4a28', lash: 1, flicks: 1, lower: 0.5, lowerC: SK.sh, look: [glance, 0.1] };
-  const act = { angry: { lid: 0.25, slant: 0.6 }, hurt: { closed: 'squeeze' }, happy: { closed: 'happy' }, blink: { closed: 'blink' } }[mood] ?? {};
-  if (dead) head.push(...deadEye(cx - 2.6, cy, 1.5, { c: '#2f4a28' }), ...deadEye(cx + 2.6, cy, 1.3, { c: '#2f4a28' }));
-  else head.push(...easyEye(cx - 2.6, cy, { ...de, ...act, s: -1, w: 1.75, h: 2.1 }), ...easyEye(cx + 2.6, cy, { ...de, ...act, s: 1, w: 1.45, h: 1.95 }));
-  if (angry || hurt || happy) for (const s of [-1, 1]) head.push(...brow(cx + s * 2.6, cy - 3, { s, len: 1.2, angle: angry ? 22 : hurt ? -20 : -8, th: 0.45, c: '#4f7a3e' }));
-  head.push(...snout(cx - 0.2, cy + 1.7, { type: 'tick', r: 0.6, c: SK.deep }));
-  if (!dead) head.push(...cheek(cx - 4.2, cy + 2.6, 1.3, { on: SK.base, lines: happy ? 2 : 0 }), ...cheek(cx + 4, cy + 2.7, 1, { on: SK.base }));
-  const mo = { s: 1, ink: '#a8505a' };
-  const my = cy + 3.2;
-  if (A && A.crack && !dead && !hurt) head.push(...mouth(cx, my, { ...mo, type: 'shout', w: 1, h: 1.6, open: 1, teeth: 'top' }));
-  else if (angry) head.push(...mouth(cx, my, { ...mo, type: 'snarl', w: 1.1, h: 1.2, open: 0.8, teeth: 'top' }));
-  else if (hurt) head.push(...mouth(cx, my, { ...mo, type: 'o', w: 0.6, h: 0.9, open: 1 }));
-  else if (dead) head.push(...mouth(cx, my, { ...mo, type: 'wavy', w: 0.9 }));
-  else if (happy) head.push(...mouth(cx, my - 0.2, { ...mo, type: 'grin', w: 1.1, h: 1.4, open: 1, teeth: 'none' }));
-  else head.push(...mouth(cx, my, { ...mo, type: 'smile', w: 0.9 }));
-  if (hurt) head.push(...sweat(X + 7.6, Y - 5, 0.9));
-  if (angry) head.push(...vein(X + 6.4, Y - 2.4, 0.7));
-  out.push(...spin(head, neck[0], neck[1], tip));
-  return { w: W, h: H, res: 3, shapes: shift(out, 1, 0) };
 }
 
 // ---------- Treant (mossgolem) ----------
@@ -606,7 +425,6 @@ export const ART = {
   // (The Basilisk Hatchling was wiped 2026-11-22; the Rockhound Kid took its place.)
   rockhound: { walk: 8, idle: 6, attack: 4, stride: 14, atkMs: [80, 300, 220], draw: rockhoundStill, rig: rockhoundRig, pad: 4 },
   scorpip: { walk: 8, idle: 6, attack: 4, stride: 20, atkMs: [80, 300, 220], draw: manticoreStill, rig: manticoreRig, pad: 4 },
-  leafling: { walk: 8, idle: 6, attack: 4, stride: 16, atkMs: [55, 230, 170], draw: leafling },
   // (Remade 2026-11-20 as the Wolf Pup: a live rig.)
   boarlet: { pad: 6, walk: 8, idle: 6, attack: 4, stride: 36, atkMs: [55, 290, 200], draw: wolfPupStill, rig: wolfPupRig },
   mossgolem: { pad: 8, walk: 8, idle: 6, attack: 4, stride: 16, atkMs: [75, 320, 230], draw: mossgolem },
@@ -616,7 +434,6 @@ export const ART = {
 export const INFO = {
   rockhound: { name: 'Rockhound Kid', w: 26, h: 36 },
   scorpip: { name: 'Manticore Cub', w: 30, h: 30 },
-  leafling: { name: 'Dryad', w: 20, h: 34 },
   boarlet: { name: 'Warg', w: 38, h: 26 },
   mossgolem: { name: 'Treant', w: 34, h: 58 },
 };
