@@ -20,11 +20,12 @@ function player() {
   return w;
 }
 
-test('six of them, each at home in a town, with their own tastes, lines and scenes', () => {
-  assert.equal(SWEETHEART_IDS.length, 6);
+test('seven of them, each at home in a town, with their own tastes, lines and scenes', () => {
+  assert.equal(SWEETHEART_IDS.length, 7);
   for (const id of SWEETHEART_IDS) {
     const s = SWEETHEARTS[id];
-    assert.ok(NPCS[id] && NPCS[id].role === 'sweetheart', id);
+    // (Fawnelle keeps her own place and her own painter: a special one, no house or outfit)
+    assert.ok(NPCS[id] && (NPCS[id].role === 'sweetheart' || (s.special && NPCS[id].drawn)), id);
     assert.ok(MAPS[s.map].isTown && MAPS[s.map].npcs.some((n) => n.id === id), `${id} lives in ${s.map}`);
     for (const it of [...s.loves, ...s.likes, ...s.dislikes]) assert.ok(ITEMS[it], `${id}: ${it}`);
     assert.equal(s.talk.length, 6);
@@ -32,7 +33,63 @@ test('six of them, each at home in a town, with their own tastes, lines and scen
   }
   // Nobody shares a love with everyone: tastes differ.
   const loves = SWEETHEART_IDS.map((id) => SWEETHEARTS[id].loves.join());
-  assert.equal(new Set(loves).size, 6);
+  assert.equal(new Set(loves).size, 7);
+});
+
+// ---------- Fawnelle (data/sweethearts.js `special`) ----------
+import { sweetheartOpen } from '../src/ui/sweetheart.js';
+
+
+test('Fawnelle opens up as a sweetheart only once her story is done; she has no house in town', () => {
+  const w = player();
+  const npc = NPCS.fawnelle;
+  assert.equal(sweetheartOpen(w, npc), false, 'shy until her four quests are done');
+  w.char.quests = { fawnelle_evening: { state: 'done' } };
+  assert.equal(sweetheartOpen(w, npc), true);
+  assert.ok(!MAPS.grove.portals.some((q) => q.id === 'swh_fawnelle') && !MAPS.swh_fawnelle, 'no house');
+  assert.equal(MAPS.grove.npcs.filter((n) => n.id === 'fawnelle').length, 1, 'in the Grove once');
+  assert.equal(SWEETHEARTS.fawnelle.date, 'watch');
+});
+
+test('a people-watching date with Fawnelle: note what she spots as the ring closes', () => {
+  const w = player();
+  loadMap(w, 'grove', 'start');
+  addHearts(w.char, 'fawnelle', 3 * HEART);
+  assert.equal(startDate(w, 'fawnelle', 'watch'), null);
+  w.rng = () => 0.5;
+  for (let i = 0; i < 60 * 50 && w.date; i++) {
+    const d = w.date;
+    const live = d.sights.find((x) => x.got == null);
+    const ready = live && Math.abs(d.t - live.t0 - 1.3) < 0.01;
+    tickDate(w, 1 / 60, ready ? new Set(['Space']) : new Set());
+  }
+  assert.equal(w.date, null);
+  assert.equal(w.dateEnded.rating, 'great');
+  assert.ok(heartsOf(w.char, 'fawnelle').pts >= 3 * HEART + 150, 'her favourite date, so even more');
+  // Pressing too early misses it.
+  const v = player();
+  loadMap(v, 'grove', 'start');
+  addHearts(v.char, 'fawnelle', 3 * HEART);
+  startDate(v, 'fawnelle', 'watch');
+  for (let i = 0; i < 60 * 3; i++) tickDate(v, 1 / 60, i === 60 * 1.5 ? new Set(['Space']) : new Set());
+  assert.equal(v.date.sights[0].got, false);
+  // Not in a private room or out in the wilds.
+  const wild = player();
+  loadMap(wild, 'woods', 'east');
+  assert.match(startDate(wild, 'fawnelle', 'watch') ?? '', /town/);
+});
+
+test('Fawnelle never comes adventuring, but moves in with you and greets you with a dish', () => {
+  const w = player();
+  w.char.partner = 'fawnelle';
+  assert.match(bringAlong(w), /notes/);
+  w.char.home = { stage: 2, placed: [], bag: {} };
+  addHearts(w.char, 'fawnelle', 10 * HEART);
+  addItem(w.char.inventory, RING, 1);
+  assert.equal(giveGift(w, 'fawnelle', RING).kind, 'ring');
+  assert.equal(w.char.livingWith, 'fawnelle');
+  loadMap(w, 'home', 'dock');
+  assert.ok(w.map.npcs.some((n) => n.id === 'fawnelle'), 'on the island');
 });
 
 test('a chat once a day brings you closer; a second one the same day does not', () => {

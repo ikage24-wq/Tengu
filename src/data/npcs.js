@@ -184,8 +184,10 @@ export const NPCS = {
   fawnelle: {
     id: 'fawnelle', name: 'Fawnelle', title: 'Moonlit Doe', role: 'guide', drawn: 'fawnelle', tall: 78, wide: 20,
     quests: ['fawnelle_charms', 'fawnelle_snow', 'fawnelle_letters', 'fawnelle_evening'],
-    greeting: "Oh! You can see me? I'm not hiding. I'm standing very close to a tree. ...Please don't look straight at me. Sideways is fine.",
-    chatter: ["The moon tree's lanterns are my favourite thing. Don't tell anyone.", 'Good ev... never mind.', 'I have been standing here for a hundred years. It is a very good tree.'],
+    // (From Mistmere, a hidden realm of mythical creatures beyond the mist, where humans are only a
+    // story; she came to study them, and keeps her Field Notes Beyond the Mist.)
+    greeting: "Oh! You can see me? I'm not hiding. I'm observing. From very close to a tree. ...You're a human, aren't you? A real one? Please don't look straight at me. Sideways is fine.",
+    chatter: ["The moon tree's lanterns are my favourite human invention. Don't tell anyone.", 'Good ev... never mind.', 'Field Notes Beyond the Mist, page forty: humans eat soup with a tiny shovel.', 'Back in Mistmere, nobody believes humans are real. I have notes. So many notes.'],
   },
   // Posy keeps the Party Board in every town's plaza (world/partyquest.js): party quests for the
   // region at your level, shared by everyone in your party, and Party Tokens to trade.
@@ -336,6 +338,7 @@ export function shopStock(npc, char) {
 // The six Sweethearts (data/sweethearts.js): townsfolk you can befriend or date, each in their own
 // outfit (data/outfits-costume.js, never sold).
 for (const h of Object.values(SWEETHEARTS)) {
+  if (h.special) continue;
   const covers = ['top', ...(COSTUME_LOOKS.find((c) => c.key === h.outfit)?.covers ?? [])];
   NPCS[h.id] = {
     id: h.id, name: h.name, title: h.title, role: 'sweetheart', look: h.look,

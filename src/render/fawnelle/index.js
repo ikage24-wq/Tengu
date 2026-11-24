@@ -210,9 +210,10 @@ export function drawFawnelleFace(ctx, x, y) {
 
 // Her waist-up photo for the talk window (ui/npc.js), its middle at x and its foot at `bottom`;
 // `talking` while her line types out (her mouth moves).
-export function drawFawnellePhoto(ctx, x, bottom, talking) {
+export function drawFawnellePhoto(ctx, x, bottom, talking, asTalk = true) {
   S.want.photo = S.time + 0.5;
-  S.talkWin = { until: S.time + 0.25, talking };
+  // (as her talk window, she turns to you shyly; a picture of her elsewhere leaves her be)
+  if (asTalk) S.talkWin = { until: S.time + 0.25, talking };
   const p = S.pics.photo;
   if (!p) return false;
   ctx.save();

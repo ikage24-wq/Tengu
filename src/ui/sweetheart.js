@@ -42,6 +42,14 @@ export function drawHearts(ctx, x, y, pts, { partner = false, size = 4 } = {}) {
   }
 }
 
+// Whether someone's sweetheart choices are open: the six always; one with `after` (Fawnelle) once that
+// quest is done.
+export function sweetheartOpen(world, npc) {
+  if (npc.role === 'sweetheart') return true;
+  const s = SWEETHEARTS[npc.id];
+  return Boolean(s?.after && world.char.quests?.[s.after]?.state === 'done');
+}
+
 // What they say when you walk up: a line for how close you are (no hearts for it: Chat gives those).
 export function greetingFor(world, id) {
   const s = SWEETHEARTS[id];
@@ -80,7 +88,7 @@ export function sweetheartChoices(world, state, npc) {
   const gifted = h.gifted === today();
   out.push({ label: 'Give a gift', sub: gifted ? 'One a day: come back tomorrow' : 'Something they love?', icon: 'gift', primary: !gifted, run: () => (dlg.gift = true) });
   if (heartLevel(char, id) >= 3) out.push({ label: 'Ask on a date', sub: `${SWEETHEARTS[id].name} loves a ${dateName(SWEETHEARTS[id].date)}`, icon: 'heart', run: () => (dlg.date = true) });
-  if (isPartner(char, id)) {
+  if (isPartner(char, id) && !SWEETHEARTS[id].special) {
     const with_ = alongside(world);
     out.push({ label: with_ ? 'Head home for now' : 'Come adventuring', sub: with_ ? 'They go back to waiting for you' : 'They join your party and fight beside you', icon: 'friends', run: () => {
       const why = bringAlong(world);
@@ -92,7 +100,7 @@ export function sweetheartChoices(world, state, npc) {
   if (isPartner(char, id)) out.push({ label: livesWith(char, id) ? 'Move back to town' : 'Say goodbye', sub: 'Stop being sweethearts (you can make up)', icon: 'door', run: () => (dlg.breakup = true) });
   return out;
 }
-export const dateName = (kind) => ({ fish: 'fishing date', ride: 'ride together', stars: 'night of stargazing', cook: 'cooking date', dance: 'lantern dance' })[kind] ?? 'date';
+export const dateName = (kind) => ({ fish: 'fishing date', ride: 'ride together', stars: 'night of stargazing', cook: 'cooking date', dance: 'lantern dance', watch: 'people-watching outing' })[kind] ?? 'date';
 
 // The hearts row over their dialogue.
 export function drawSweetheartHeader(ui, world, npc, area) {

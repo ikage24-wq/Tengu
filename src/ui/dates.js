@@ -8,8 +8,9 @@ import { COLORS, text, box, button, wrap, hover, tooltip, textFont } from './kit
 import { VW } from '../input.js';
 import { sfx } from '../audio/sfx.js';
 
-const ORDER = ['fish', 'ride', 'stars', 'cook', 'dance'];
-const ICON = { fish: 'drop', ride: 'paw', stars: 'star', cook: 'flame', dance: 'note' };
+// (Fawnelle's people-watching only with her: the others' dates are the shared five)
+const ORDER = ['fish', 'ride', 'stars', 'cook', 'dance', 'watch'];
+const ICON = { fish: 'drop', ride: 'paw', stars: 'star', cook: 'flame', dance: 'note', watch: 'sight' };
 
 export function datePage(ui, state, world, npc, area) {
   const dlg = state.npc;
@@ -17,7 +18,7 @@ export function datePage(ui, state, world, npc, area) {
   const { ctx } = ui;
   text(ctx, `A date with ${npc.name}`, area.x, area.y, { size: 9, bold: true });
   wrap(ctx, `${npc.name} loves a ${DATES[s.date].name.toLowerCase()} most.`, area.x, area.y + 11, area.w, { size: 7, color: COLORS.muted });
-  ORDER.forEach((kind, i) => {
+  ORDER.filter((kind) => kind !== 'watch' || s.date === 'watch').forEach((kind, i) => {
     const d = DATES[kind];
     const why = dateBlocker(world, npc.id, kind);
     const bx = area.x + (i % 3) * ((area.w + 4) / 3);
@@ -65,6 +66,49 @@ export function drawDateHud(ui, world) {
   box(ctx, x + w - 70, 64, 60 * Math.min(1, d.progress / d.goal), 6, { fill: '#ff8fc4', edge: null, r: 3 });
   if (d.kind === 'stars') drawStars(ctx, d);
   if (d.kind === 'dance') drawDance(ctx, d);
+  if (d.kind === 'watch') drawWatch(ctx, d);
+}
+
+// People-watching: what she spots, in a speech card, and a ring closing on a notebook; press as it
+// meets the notebook's edge.
+function drawWatch(ctx, d) {
+  const live = d.sights.find((s) => s.got == null) ?? d.sights.filter((s) => d.t - s.t0 < 2.4).at(-1);
+  if (!live) return;
+  const a = d.t - live.t0;
+  const y = 104;
+  ctx.save();
+  ctx.fillStyle = 'rgba(255,248,252,0.94)';
+  ctx.beginPath();
+  ctx.roundRect(VW / 2 - 120, y - 16, 240, 46, 12);
+  ctx.fill();
+  ctx.strokeStyle = '#c9b6ff';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+  ctx.fillStyle = '#5a4a8a';
+  ctx.font = textFont(7, true);
+  ctx.textAlign = 'center';
+  ctx.fillText(live.line, VW / 2, y - 4);
+  // (the notebook, and the ring closing on it)
+  const cx = VW / 2;
+  const cy = y + 15;
+  ctx.fillStyle = live.got === true ? '#ffe36b' : '#efe6ff';
+  ctx.fillRect(cx - 6, cy - 7, 12, 14);
+  ctx.strokeStyle = '#8f7fd0';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(cx - 6, cy - 7, 12, 14);
+  if (live.got == null) {
+    const r = 9 + 22 * Math.max(0, 1 - a / 1.6);
+    ctx.strokeStyle = a >= 1.05 ? '#ff8fc4' : '#b8a8e8';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.stroke();
+  } else {
+    ctx.fillStyle = live.got ? '#c84a7a' : '#9a92b8';
+    ctx.font = textFont(7, true);
+    ctx.fillText(live.got ? 'noted!' : 'missed it', cx + 34, cy + 3);
+  }
+  ctx.restore();
 }
 
 // Shooting stars streaking across the sky, a soft band marking the middle where the wish lands.

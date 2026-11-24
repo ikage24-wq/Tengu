@@ -337,15 +337,18 @@ function fawnelleFeel(world, n, time) {
 // walking past the tree is still in front of it. Her tags come with everyone's: drawNpcs.)
 function drawFawnelleBody(ctx, world, cam, time) {
   const n = world.map.npcs.find((q) => NPCS[q.id]?.drawn === 'fawnelle');
-  // (Off her map, her pictures go at once: leaving a map cleans up.)
+  // (Off her map, her pictures go at once: leaving a map cleans up; unless she's out on a date at your
+  // side, drawDateBuddy)
   if (!n) {
-    if (FAWN.map) {
+    if (FAWN.map && world.date?.id !== 'fawnelle') {
       FAWN.map = null;
       forgetFawnelle();
     }
     return;
   }
   if (awayNow(world, n)) return;
+  // (On a date she's at your side; living with you, she's on your island, not in the Grove.)
+  if (world.date?.id === 'fawnelle' || (!world.map.home && world.char.livingWith === 'fawnelle')) return;
   if (FAWN.map !== world.map) {
     FAWN.map = world.map;
     forgetFawnelle();
@@ -1323,6 +1326,13 @@ function drawDateBuddy(ctx, world, cam, time) {
   const bd = d.buddy;
   const x = bd.x - cam.x;
   const y = bd.y - cam.y;
+  // (Fawnelle walks beside you on her own painter; wide-eyed at each thing she spots)
+  if (npc.drawn === 'fawnelle') {
+    const sight = d.sights?.find((s) => s.got == null);
+    const feel = sight ? { emote: 'wonder', emoteT: d.t - sight.t0 } : { emote: 'neutral', emoteT: 0 };
+    drawFawnelle(ctx, bd.x, bd.y, bd.facing, cam.x, cam.y, time, { ...feel, talk: false, night: Boolean(world.fawnelle?.night), busy: false });
+    return;
+  }
   footShadow(ctx, x, y, 12);
   if (d.kind === 'ride' && world.riding) {
     drawMount(ctx, bd, 'bun', x, y, world.now, { facing: bd.facing, speed: Math.min(1, Math.abs(bd.vx) / 160) }, { look: npc.look });

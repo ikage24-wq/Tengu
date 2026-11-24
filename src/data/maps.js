@@ -3400,6 +3400,7 @@ const groundOf = (map, x) => {
 // Where each room's door stands (render/sweethouses.js draws it in the house's own style).
 const ROOM_DOOR = { poppy: 608, lark: 450, rowan: 605, yuzu: 60, celeste: 420, marlowe: 605 };
 for (const h of Object.values(SWEETHEARTS)) {
+  if (h.special) continue;
   const town = MAPS[h.map];
   town.npcs.push({ id: h.id, x: h.x });
   (town.townPieces ??= []).push([`swhouse_${h.id}`, h.house]);

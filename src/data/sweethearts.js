@@ -266,6 +266,43 @@ export const SWEETHEARTS = {
       '10r': [{ who: null, text: 'At sunset, Marlowe sails you past the lighthouse for the very first time.' }, { who: 'marlowe', text: "I always thought I'd be scared out here. Turns out I just needed the right crew.", mood: 'happy' }],
     },
   },
+  // Fawnelle, the Moonlit Doe (Moonleaf Grove; world/fawnelle.js, drawn by her own painter,
+  // render/fawnelle): from Mistmere beyond the mist, where humans are a bedtime story; she came to
+  // study them and writes it all in her Field Notes Beyond the Mist. `special`: she isn't a
+  // townsperson on the shared rig (no house, outfit or look; she keeps her own place under the moon
+  // tree and comes out at night). `after`: she opens up only once her story (her four quests) is done.
+  fawnelle: {
+    dateLines: { great: 'Seventeen new field notes! And every one of them is about you. ...I mean about humans. Mostly you.', good: 'That was very good research. We should do more research. Tomorrow?', okay: 'I only got three notes. But I liked the walking part. A lot.' },
+    id: 'fawnelle', name: 'Fawnelle', title: 'Moonlit Doe', map: 'grove', x: 1162, color: '#9d8fe0',
+    special: true, after: 'fawnelle_evening', date: 'watch',
+    about: 'Came through the mist from Mistmere to prove humans are real. Studies them from behind the moon tree, notebook in hand.',
+    loves: ['music_cylinder', 'lantern_paper', 'dish_milkpudding', 'moonlit_ribbon'],
+    likes: ['tea_leaf', 'dish_minttea', 'candle_wax', 'script_page', 'dish_herbbread'],
+    dislikes: ['moon_fang', 'dish_emberskewers', 'dish_inkpasta'],
+    gift: {
+      love: ['Oh! It makes music, like the little box that came through the mist. I have to sit down.', "For me? I'm writing this in my notes. In the big letters. The ones for important things."],
+      like: ['A human thing! Thank you. I will study it very gently.', "That's lovely. It's going in my satchel, next to my notes."],
+      neutral: ['Thank you. Humans give each other things for no reason at all. I like that about you.', 'Oh! A present. Field note: humans are generous.'],
+      dislike: ["Is this... a wolf's tooth? I'm a DEER. ...You didn't know. It's all right. I'm all right.", "Humans eat this? Field note: humans are very brave."],
+    },
+    talk: [
+      ["Field note: human approached the tree again. Human is very tall from down here. ...Oh, you can hear me.", 'In Mistmere, nobody believes in you. I keep a picture of you in my head to be sure.'],
+      ['Why do humans shake hands? Is it to check the other one is real? Because I understand that.', 'I wrote three pages about you yesterday. Research. Normal research.'],
+      ["I've stopped hiding when I hear your footsteps. I know them now. They're my favourite footsteps.", "Page ninety: the human called {name} hums when they think no one's listening. I listen."],
+      ['My notes used to be about humans. Now they are all about one human. That might be bad science.', 'If Orrin could see me now, standing right next to a human, he would fall off his cloud.'],
+      ["Conclusion: I like this human. I've checked it every day. It's still true.", 'Hold still. I want to write down the exact colour of your eyes tonight. For science.'],
+      ['Our island has more stars than the mist. I counted. Then I counted you twice.', 'Breakfast! I made it the human way. I think. Field note: toast is harder than it looks.'],
+    ],
+    scenes: {
+      2: [{ who: 'fawnelle', text: "Could you... hold still? Just there. Don't look at me. Look at the lanterns.", mood: 'shy' }, { who: null, text: 'She sketches you in her notebook, peeking over the top of it every few seconds.' }, { who: 'fawnelle', text: "Specimen Number One. ...That's you. It's an honour. Probably.", mood: 'happy' }],
+      4: [{ who: null, text: 'Fawnelle sits under the moon tree with a little wooden box in her lap.' }, { who: 'fawnelle', text: 'This drifted through the mist into Mistmere when I was small. Nobody there could have made it.', mood: 'shy' }, { who: null, text: 'She winds it. A soft lullaby plays.' }, { who: 'fawnelle', text: "It's why I came. I wanted to meet whoever makes music like this. ...I think I have.", mood: 'happy' }],
+      6: [{ who: 'fawnelle', text: 'I was reading my notes back. Every page from this week is about you.', mood: 'surprised' }, { who: 'fawnelle', text: "That's not how research is supposed to go. I need to think. Behind the tree. For a bit.", mood: 'nervous' }, { who: null, text: 'She hides behind the moon tree. Her ears are still showing.' }],
+      8: [{ who: 'fawnelle', text: "In Mistmere, best friends trade a page of their journals. Here. It's my best one.", mood: 'happy' }, { who: null, text: 'It says: "Humans are real. One of them is my friend."' }],
+      '8r': [{ who: null, text: 'Under the lanterns, Fawnelle tucks a ribbon into your hair, the way they do in Mistmere.' }, { who: 'fawnelle', text: "Now everyone beyond the mist would know you're mine. Not that they'd believe you're real.", mood: 'love' }],
+      10: [{ who: 'fawnelle', text: "When I go back to Mistmere someday, I'll tell them about you first. Before the music box. Before the lanterns.", mood: 'happy' }, { who: 'fawnelle', text: "They'll say I made you up. I'll say: no. Nobody could make up someone this kind." }],
+      '10r': [{ who: 'fawnelle', text: 'I wrote my last field note today. The one the whole notebook was leading up to.', mood: 'shy' }, { who: null, text: 'She shows you the page: "Conclusion: humans are real. One of them is mine."' }, { who: 'fawnelle', text: "...I'm going to need a new notebook. For us.", mood: 'love' }],
+    },
+  },
 };
 export const SWEETHEART_IDS = Object.keys(SWEETHEARTS);
 
@@ -281,6 +318,8 @@ export const AT_HOME = {
   yuzu: { x: 880, piece: 'bake_stool', job: 'warrior', dish: ['dish_koimochi', 'dish_foxfiretea', 'dish_onigiri'] },
   celeste: { x: 420, piece: 'star_globe', job: 'tidemage', dish: ['dish_moontea', 'dish_nebula', 'dish_clovertea'] },
   marlowe: { x: 410, piece: 'trophy_plaque', job: 'warrior', dish: ['dish_lanternskewer', 'dish_tunasteak', 'dish_twinnoodles'] },
+  // (Fawnelle brings no piece of furniture, only her notebooks; she never comes adventuring)
+  fawnelle: { x: 620, piece: null, job: null, dish: ['dish_milkpudding', 'dish_minttea', 'dish_herbbread'] },
 };
 
 // The two special gifts (crafted at a bench, data/crafting.js): a bouquet to start romance, a

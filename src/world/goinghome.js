@@ -47,7 +47,7 @@ const doorOn = (map, h) => map.portals.find((p) => p.id === (map === MAPS[h.map]
 // Puts everyone where they belong at once (arriving on a map, or the first look at the clock).
 export function settleSweethearts(world) {
   for (const h of Object.values(SWEETHEARTS)) {
-    if (world.date?.id === h.id) continue;
+    if (world.date?.id === h.id || h.special) continue;
     const want = whereNow(world, h);
     if (!want) continue;
     const n = entryFor(h);
@@ -64,7 +64,7 @@ export function tickGoingHome(world, dt) {
   else if (late !== world.swLate) {
     world.swLate = late;
     for (const h of Object.values(SWEETHEARTS)) {
-      if (world.date?.id === h.id) continue;
+      if (world.date?.id === h.id || h.special) continue;
       const want = whereNow(world, h);
       if (!want) continue;
       const n = entryFor(h);

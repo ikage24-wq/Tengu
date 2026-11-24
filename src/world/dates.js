@@ -9,6 +9,8 @@
 //   stars   watch for shooting stars: press Space as each one crosses the middle of the sky to wish
 //   cook    cook a dish together at a stove; one they love makes their day
 //   dance   a lantern dance: press the arrow that comes round, on the beat
+//   watch   people-watching in a town (Fawnelle's favourite): she spots something curious a human
+//           does; press Space as the ring closes to note it down with her
 
 import { SWEETHEARTS } from '../data/sweethearts.js';
 import { FISH_BY_ID } from '../data/fishing.js';
@@ -22,7 +24,19 @@ export const DATES = {
   stars: { name: 'Stargazing', goal: 6, max: 6, time: 40, hint: 'Press Space as each shooting star crosses the middle', moment: true },
   cook: { name: 'Cooking date', goal: 1, max: 5, time: 240, hint: 'Cook a dish together at a town stove' },
   dance: { name: 'Lantern dance', goal: 10, max: 10, time: 30, hint: 'Press the arrow that comes round, on the beat', moment: true },
+  watch: { name: 'People-watching', goal: 6, max: 6, time: 45, hint: 'Press Space as the ring closes to note down what she spots', moment: true },
 };
+// (What she spots, one line each time: something a human does that she finds astonishing.)
+export const WATCH_SIGHTS = [
+  "Look! That one is eating with a tiny shovel!",
+  "They're waving with a whole hand. Hello, hand!",
+  'That human laughed at nothing at all. Wonderful!',
+  'Two humans are holding hands. Why? Write it down!',
+  "That one is drinking leaves in hot water. On purpose!",
+  'He is counting coins. So many coins. Very serious.',
+  "She's humming a song with no words!",
+  'That one tripped and said sorry to the ground!',
+];
 const BEAT = 0.8;
 const ARROWS = ['ArrowLeft', 'ArrowUp', 'ArrowDown', 'ArrowRight'];
 
@@ -36,6 +50,7 @@ export function dateBlocker(world, id, kind) {
   if (kind === 'ride' && !char.mounts?.length) return 'You need a mount for that (Clover in Sprout has Puff Buns).';
   if (kind === 'fish' && !Object.values(char.lifeTools ?? {}).some(Boolean) && !(char.inventory.etc ?? []).some((e) => e.id === 'fishing_rod')) return 'You need a fishing rod for that.';
   if (kind === 'stars' && indoors(world.map)) return 'You need the open sky for that.';
+  if (kind === 'watch' && (!world.map.isTown || world.map.private)) return 'Somewhere with people around (a town).';
   return null;
 }
 
@@ -44,7 +59,7 @@ export function startDate(world, id, kind) {
   if (why) return why;
   const d = DATES[kind];
   const b = world.body;
-  world.date = { id, kind, t: 0, left: d.time, progress: 0, goal: d.goal, score: 0, max: d.max, caughtAt: world.now, cookedAt: world.now, buddy: { x: b.x - 30 * (b.facing || 1), y: b.y, vx: 0, facing: b.facing || 1 }, notes: [], stars: [], next: 1.2 };
+  world.date = { id, kind, t: 0, left: d.time, progress: 0, goal: d.goal, score: 0, max: d.max, caughtAt: world.now, cookedAt: world.now, buddy: { x: b.x - 30 * (b.facing || 1), y: b.y, vx: 0, facing: b.facing || 1 }, notes: [], stars: [], sights: [], next: 1.2 };
   world.log?.(`${d.name} with ${SWEETHEARTS[id].name}! ${d.hint}.`, '#ff8fc4');
   return null;
 }
@@ -113,6 +128,26 @@ export function tickDate(world, dt, pressed = new Set()) {
         }
       }
       d.progress = d.stars.filter((s) => s.got != null).length;
+      break;
+    }
+    case 'watch': {
+      // A sight every couple of seconds; its ring closes over 1.6 s, and the note lands in the last
+      // stretch of it (from 1.05 s to 1.6 s).
+      d.next -= dt;
+      if (d.next <= 0 && d.sights.length < d.goal) {
+        d.sights.push({ t0: d.t, line: WATCH_SIGHTS[Math.floor(rnd(world) * WATCH_SIGHTS.length)], got: null });
+        d.next = 2.6 + rnd(world) * 1.2;
+      }
+      for (const s of d.sights) if (s.got == null && d.t - s.t0 > 1.75) s.got = false;
+      if (pressed.has('Space')) {
+        const live = d.sights.find((s) => s.got == null);
+        if (live) {
+          const a = d.t - live.t0;
+          live.got = a >= 1.05 && a <= 1.75;
+          if (live.got) d.score += 1;
+        }
+      }
+      d.progress = d.sights.filter((s) => s.got != null).length;
       break;
     }
     case 'dance': {

@@ -809,36 +809,38 @@ export const QUESTS = {
     scenes: { done: 'stardust_done' },
   },
 
-  // Fawnelle, the Moonlit Doe under the moon tree (2026-11-23, levels 39-42): for a hundred years she
-  // has tried to walk up to someone in the Grove and say good evening, and run every time. Her charms
-  // give her away (Cloud Mane to hush them), then her racing heart (Snow Gems to calm it, which melt);
-  // then her hundred years of unsent letters, and the twist: Nim, Elowen and Posy have known all along
-  // and been quietly kind. With a feather quill for each of them, she says it.
+  // Fawnelle, the Moonlit Doe under the moon tree (2026-11-23, levels 39-42; her story reworked
+  // 2026-11-24): she comes from Mistmere, a hidden realm of mythical creatures beyond the mist where
+  // humans are only a story, and has come to study them, writing her Field Notes Beyond the Mist. She
+  // watches from behind the moon tree and runs whenever she creeps close. Her charms give her away
+  // (Cloud Mane to hush them), then her racing heart (Snow Gems to calm it, which melt); then her
+  // unsent letters of questions, and the twist: Nim, Elowen and Posy have seen her watching all along
+  // and been quietly kind. With a feather quill for each of them, she says good evening.
   fawnelle_charms: {
     id: 'fawnelle_charms', name: 'Hush, Little Charms', giver: 'fawnelle', minLevel: 39,
-    text: "For a hundred years I've tried to walk up to someone in the Grove and say good evening. Every time, the charms on my antlers jingle, everyone turns round, and I run. Pegasus Foals have the softest manes in the sky. Bring me 15 Cloud Mane from the Sky Garden or the Frozen Peak, and I'll tuck a wisp into every charm.",
+    text: "You're a human. A real one! I'm Fawnelle, from Mistmere, beyond the mist. Back home, everyone says humans are only a story, so I came to study you. But every time I creep close to watch, the charms on my antlers jingle, everyone turns round, and I run. Pegasus Foals have the softest manes in the sky; we have them at home too. Bring me 15 Cloud Mane from the Sky Garden or the Frozen Peak, and I'll hush every charm.",
     objectives: [{ type: 'collect', item: 'wool', count: 15 }],
     rewards: { exp: 90000, gold: 2200, items: [{ id: 'white_potion', qty: 10 }] },
   },
   fawnelle_snow: {
     id: 'fawnelle_snow', name: 'A Calm Heart', giver: 'fawnelle', minLevel: 40, prereq: 'fawnelle_charms',
-    text: "It wasn't the charms. It was me. My heart goes like a rabbit's. The Yuki-onna on the Frozen Peak walk right up to travellers, cool as snow, and they say a Snow Gem held to your chest keeps your heart slow. Bring me 12. I'll hold all of them.",
+    text: "It wasn't the charms. It was me. Whenever a human looks my way, my heart goes like a rabbit's and my notes turn into scribbles. The Yuki-onna on the Frozen Peak walk right up to travellers, cool as snow, and in Mistmere they say a Snow Gem held to your chest keeps your heart slow. Bring me 12. I'll hold all of them.",
     objectives: [{ type: 'collect', item: 'snow_gem', count: 12 }],
     rewards: { exp: 132000, gold: 3000, items: [{ id: 'mana_elixir', qty: 10 }] },
   },
   fawnelle_letters: {
-    id: 'fawnelle_letters', name: 'A Hundred Years of Letters', giver: 'fawnelle', minLevel: 41, prereq: 'fawnelle_snow',
-    text: "I write to them every year. To Nim, to Elowen, to Posy. 'Good evening. I like your candles.' That sort of thing. I've never sent one. There are a hundred of each in the moon tree's hollow. Would you take them this year's? Just this year's. Please don't read them out loud.",
+    id: 'fawnelle_letters', name: 'Letters to Humans', giver: 'fawnelle', minLevel: 41, prereq: 'fawnelle_snow',
+    text: "Humans talk to each other with little marks on paper. Letters! So I wrote some. To Nim, to Elowen, to Posy. Questions, for my research. 'Why do you light a candle every night?' That sort of thing. They've been in the moon tree's hollow for weeks; I've never sent one. Would you take them? Please don't read them out loud.",
     objectives: [
-      { type: 'talk', npc: 'nim', say: "F-for me? From the doe under the moon tree? ...I leave a candle lit on the plaza every night, so she has light to walk home by. I thought it was a silly thing to do. I-I'll keep doing it." },
-      { type: 'talk', npc: 'elowen', say: "The doe under the moon tree. I've known since I was a girl. When she passes, I keep my eyes on my book; it seemed the polite thing. Tell her the Grove would very much like to say good evening back." },
-      { type: 'talk', npc: 'posy', say: "A HUNDRED letters?! I've kept her a spot on the Party Board for years! It just says 'Doe?' with a heart. She's always welcome. Always!" },
+      { type: 'talk', npc: 'nim', say: "F-for me? From the doe under the moon tree? ...She asks why I light a candle on the plaza every night. I started when I saw her watching from the tree. So she'd have light to walk by. Tell her that." },
+      { type: 'talk', npc: 'elowen', say: "'Do humans read to remember, or to forget?' What a lovely question. I've seen her watching from the tree; I keep my eyes on my book so I don't frighten her. Tell her: both. And that the Grove would very much like to say good evening." },
+      { type: 'talk', npc: 'posy', say: "She wants to know what a PARTY is?! I've kept her a spot on the Party Board since the day she showed up! It just says 'Doe?' with a heart. Tell her she's invited. To ALL of them!" },
     ],
     rewards: { exp: 220000, gold: 5000, items: [{ id: 'elixir', qty: 3 }] },
   },
   fawnelle_evening: {
     id: 'fawnelle_evening', name: 'Good Evening, Moonleaf Grove', giver: 'fawnelle', minLevel: 42, prereq: 'fawnelle_letters',
-    text: "They knew. All this time, and they were kind about it. Then I'll say it, properly. But a doe shouldn't come empty-hoofed: Harpy feathers make the loveliest quills, one for each of them. Bring me 14 from the Sky Harpies, and stand next to me while I say it. Close. Closer than that.",
+    text: "They knew I was watching, and they were kind about it. Nobody in Mistmere would believe that. Then I'll do something very human: say good evening, properly. And humans bring gifts when they visit. Harpy feathers make the loveliest quills, one for each of them. Bring me 14 from the Sky Harpies, and stand next to me while I say it. Close. Closer than that.",
     objectives: [{ type: 'collect', item: 'feather', count: 14 }],
     rewards: { exp: 114000, gold: 2650, items: [{ id: 'mochi_egg', qty: 1 }] },
   },

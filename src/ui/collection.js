@@ -14,6 +14,7 @@ import { ownsMount, mountUp } from '../world/mount.js';
 import { SWEETHEARTS, SWEETHEART_IDS } from '../data/sweethearts.js';
 import { heartsOf, isPartner, livesWith } from '../world/sweethearts.js';
 import { drawHearts } from './sweetheart.js';
+import { drawFawnellePhoto } from '../render/fawnelle/index.js';
 import { drawHero } from '../render/hero.js';
 import { NPCS } from '../data/npcs.js';
 import { getMap } from '../data/maps.js';
@@ -210,7 +211,14 @@ function sweetheartsPage(ui, win, world, x, y, th) {
   const char = world.char;
   const cw = 107;
   const ch = 94;
-  SWEETHEART_IDS.forEach((id, i) => {
+  // (six cards a page; a second page when there are more: Fawnelle)
+  const pages = Math.ceil(SWEETHEART_IDS.length / 6);
+  win.swPage = Math.min(pages - 1, win.swPage ?? 0);
+  if (pages > 1) {
+    if (button(ui, x + 3 * cw - 46, y + 2 * ch - 2, 20, 12, '<', { size: 7, enabled: win.swPage > 0 })) win.swPage -= 1;
+    if (button(ui, x + 3 * cw - 24, y + 2 * ch - 2, 20, 12, '>', { size: 7, enabled: win.swPage < pages - 1 })) win.swPage += 1;
+  }
+  SWEETHEART_IDS.slice(win.swPage * 6, win.swPage * 6 + 6).forEach((id, i) => {
     const s = SWEETHEARTS[id];
     const h = heartsOf(char, id);
     const cx = x + (i % 3) * cw;
@@ -221,14 +229,27 @@ function sweetheartsPage(ui, win, world, x, y, th) {
     ctx.beginPath();
     ctx.rect(cx + 2, cy + 2, 40, ch - 9);
     ctx.clip();
-    ctx.translate(cx + 22, cy + 62);
-    ctx.scale(0.6, 0.6);
-    drawHero(ctx, s.look, NPCS[id].gear, 0, 0, { pose: 'idle', time: world.now + i, seed: i * 5, facing: 1 });
+    if (s.special) {
+      // (her own portrait, from her painter; a moon until it arrives)
+      ctx.translate(cx + 22, cy + ch - 8);
+      ctx.scale(0.62, 0.62);
+      if (!drawFawnellePhoto(ctx, 0, 0, false, false)) {
+        ctx.fillStyle = '#d6cbff';
+        ctx.beginPath();
+        ctx.arc(0, -70, 18, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    } else {
+      ctx.translate(cx + 22, cy + 62);
+      ctx.scale(0.6, 0.6);
+      drawHero(ctx, s.look, NPCS[id].gear, 0, 0, { pose: 'idle', time: world.now + i, seed: i * 5, facing: 1 });
+    }
     ctx.restore();
     text(ctx, s.name, cx + 44, cy + 12, { size: 8, bold: true, color: COLORS.ink });
     text(ctx, s.title, cx + 44, cy + 20, { size: 5.6, color: COLORS.muted });
     drawHearts(ctx, cx + 47, cy + 29, h.pts, { partner, size: 2.2 });
-    const where = livesWith(char, id) ? 'Lives with you' : getMap(s.map).name;
+    const locked = s.after && char.quests?.[s.after]?.state !== 'done';
+    const where = livesWith(char, id) ? 'Lives with you' : locked ? 'After her story' : getMap(s.map).name;
     text(ctx, where, cx + 44, cy + 40, { size: 5.8, bold: true, color: livesWith(char, id) ? '#c84a7a' : th.dark });
     const loved = Object.entries(h.known ?? {}).filter(([, k]) => k === 'love').map(([it]) => ITEMS[it]?.name).filter(Boolean);
     wrap(ctx, loved.length ? `Loves: ${loved.join(', ')}` : 'Try a gift to learn what they love.', cx + 44, cy + 50, cw - 52, { size: 5.4, lineHeight: 6.4, color: COLORS.muted });

@@ -188,6 +188,7 @@ export function welcomeHome(world, day = today()) {
 export function bringAlong(world) {
   const char = world.char;
   const id = char.partner;
+  if (id && SWEETHEARTS[id]?.special) return `${SWEETHEARTS[id].name} would rather stay and write up her notes. She'll be waiting.`;
   if (!id || !world.bots) return 'Only your sweetheart can come along.';
   const there = partyMembers(world.bots).find((b) => b.sweetheart === id);
   if (there) {

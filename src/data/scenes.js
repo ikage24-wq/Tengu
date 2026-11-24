@@ -601,7 +601,8 @@ export const SIDE_SCENES = {
     { who: 'twinkle', text: "Then the palace! The Queen's got a whole room of little Mochi who sleep with the door open a crack. I'll be the crack.", mood: 'happy', when: 'story_7_2' },
     { together: [{ emote: 'twinkle', kind: 'note', dur: 1.8 }, { fx: 'sparkle', at: 'twinkle', top: true, n: 14 }], when: 'story_7_2' },
   ],
-  // Fawnelle, the Moonlit Doe (Moonleaf Grove). Her place is x 1162, under the moon tree's lanterns;
+  // Fawnelle, the Moonlit Doe (Moonleaf Grove), from Mistmere beyond the mist, here to study humans.
+  // Her place is x 1162, under the moon tree's lanterns;
   // the trunk is at 1110 and she stands behind it by day, so each scene starts with her stepping out.
   // (Her faces are her own emotions: a line's mood picks one, `expr` holds one between lines.)
   fawnelle_charms_done: [
@@ -612,7 +613,7 @@ export const SIDE_SCENES = {
     { who: null, text: 'Fawnelle tucks a wisp of cloud mane into every charm on her antlers, one at a time, very carefully.' },
     { together: [{ expr: 'fawnelle', as: 'wonder' }, { emote: 'fawnelle', kind: 'note', dur: 1.2 }] },
     { who: 'fawnelle', text: '...Listen. Nothing! Not one jingle!', mood: 'surprised' },
-    { who: 'fawnelle', text: "Right. I'm going to walk up to Posy and say good evening. Watch me. No. Don't watch me.", mood: 'happy' },
+    { who: 'fawnelle', text: "Right. Time to observe a human up close. That one. Posy. Watch me. No. Don't watch me.", mood: 'happy' },
     { together: [{ walk: 'posy', to: 1030, speed: 46 }, { expr: 'fawnelle', as: 'neutral' }] },
     { together: [{ face: 'posy', to: -1 }, { cam: ['posy', 'player'], dur: 0.8 }] },
     { who: null, text: 'Posy wanders over to the craft bench. Fawnelle tiptoes after her, round behind the moon tree.' },
@@ -623,7 +624,8 @@ export const SIDE_SCENES = {
     { walk: 'fawnelle', to: 1124, speed: 62 },
     { who: null, text: 'A very quiet blur, and Fawnelle is behind the moon tree again. Not a single jingle.' },
     { together: [{ face: 'fawnelle', to: 'player' }, { expr: 'fawnelle', as: 'neutral' }] },
-    { who: 'fawnelle', text: "It wasn't the charms. It was me.", mood: 'sad' },
+    { who: null, text: 'She opens a little notebook and writes, very fast.' },
+    { who: 'fawnelle', text: "Field note: humans say hello. Loudly. ...It wasn't the charms. It was me.", mood: 'sad' },
   ],
   fawnelle_snow_done: [
     { together: [{ walk: 'fawnelle', to: 1150, speed: 26 }, { walk: 'player', to: 'fawnelle', gap: 50, speed: 90 }] },
@@ -639,19 +641,20 @@ export const SIDE_SCENES = {
     { who: 'fawnelle', text: "It's no good. I can't even say it to you, and you're easy.", mood: 'sad' },
     { together: [{ expr: 'fawnelle', as: 'flustered' }, { emote: 'fawnelle', kind: 'sweat', dur: 1 }] },
     { who: 'fawnelle', text: "...That came out wrong. You're NICE. You're easy to stand next to.", mood: 'shy' },
+    { who: 'fawnelle', text: 'Field note: a human said my name. Heart rate: could not be measured.', mood: 'shy' },
   ],
   fawnelle_letters_done: [
     { together: [{ walk: 'fawnelle', to: 1150, speed: 26 }, { walk: 'player', to: 'fawnelle', gap: 50, speed: 90 }] },
     { together: [{ face: 'fawnelle', to: 'player' }, { face: 'player', to: 'fawnelle' }] },
-    { who: 'player', text: 'Nim leaves a candle lit on the plaza for you every night. Elowen keeps her eyes on her book when you pass, to be polite. Posy saved you a spot on the Party Board.' },
+    { who: 'player', text: "Nim lights the candle so you have light to walk by. Elowen says people read to remember and to forget. And Posy says you're invited to every party." },
     { together: [{ emote: 'fawnelle', kind: '!', dur: 1.2 }, { expr: 'fawnelle', as: 'wonder' }] },
-    { who: 'fawnelle', text: 'They... knew? All this time?', mood: 'surprised' },
+    { who: 'fawnelle', text: 'They... knew I was watching? All this time?', mood: 'surprised' },
     { together: [{ expr: 'fawnelle', as: 'teary' }, { spot: 'fawnelle', r: 64, dur: 0.8 }] },
-    { who: null, text: 'A hundred years of letters, and every one of them answered without a word.' },
+    { who: null, text: 'Every question she was too shy to send had already been answered, kindly, without a word.' },
     { who: 'fawnelle', text: 'I thought I was the only one being careful.', mood: 'sad' },
     { spot: null, dur: 0.6 },
     { together: [{ expr: 'fawnelle', as: 'happy' }, { emote: 'fawnelle', kind: 'heart', dur: 1.8 }] },
-    { who: 'fawnelle', text: 'Then I will say it. Out loud. To all of them. Before I lose my nerve.', mood: 'happy' },
+    { who: 'fawnelle', text: "Then I'll do it the human way. Out loud. Good evening, to all of them. Before I lose my nerve.", mood: 'happy' },
     { who: 'fawnelle', text: '...Tomorrow. No! Soon. Very soon.', mood: 'shy' },
   ],
   // (The finale: that evening the Grove gathers under the moon tree, everyone politely not looking at
@@ -678,7 +681,8 @@ export const SIDE_SCENES = {
     { together: [{ expr: 'fawnelle', as: 'happy' }, { fx: 'hearts', at: 'fawnelle', top: true, n: 10 }] },
     { who: null, text: 'She gives each of them a feather quill, and does not run away once.' },
     { together: [{ face: 'fawnelle', to: 'player' }, { expr: 'fawnelle', as: 'wink' }, { wait: 1.4 }] },
-    { who: 'fawnelle', text: 'I said it. I really said it. ...You were standing very close. Thank you.', mood: 'happy' },
+    { who: 'fawnelle', text: 'I said it. I really said it.', mood: 'happy' },
+    { who: 'fawnelle', text: "The most important field note yet: humans are real. And they're kind. ...You were standing very close. Thank you.", mood: 'shy' },
   ],
   // Professor Lumen's fallen star (Observatory Steps; he stands at x 860, the tower door behind him).
   lumen_lens_done: [

@@ -29,7 +29,7 @@ import { bountyBoard } from '../world/bounties.js';
 import { checkIn, rumor, ROOM_GOLD } from '../world/inn.js';
 import { fishRequests, requestProgress } from '../world/fishrequests.js';
 import { say } from './chat.js';
-import { sweetheartChoices, drawSweetheartHeader, giftPage, breakupPage, greetingFor } from './sweetheart.js';
+import { sweetheartChoices, drawSweetheartHeader, giftPage, breakupPage, greetingFor, sweetheartOpen } from './sweetheart.js';
 import { datePage } from './dates.js';
 import { boardOffers } from '../world/partyquest.js';
 import { drawHero } from '../render/hero.js';
@@ -357,7 +357,7 @@ export function npcWindow(ui, state, world) {
   }
   if (npc.role === 'stylist') choices.push({ label: 'A new look', sub: `${npc.styleCost} gold a visit`, icon: 'wand', primary: true, run: () => Object.assign(dlg, { mode: 'style', look: fullLook(char.appearance) }) });
   // A Sweetheart: Chat, a gift, a date (ui/sweetheart.js).
-  if (npc.role === 'sweetheart') choices.push(...sweetheartChoices(world, state, npc));
+  if (sweetheartOpen(world, npc)) choices.push(...sweetheartChoices(world, state, npc));
   // Shelly builds your island up (world/home.js).
   if (npc.role === 'builder' && world.map.guestOf) {
     choices.push({ label: 'Lovely island!', sub: `This is ${world.map.guestOf.name}'s. I built it all!`, icon: 'heart', run: () => say(world, 'shelly', `Isn't it? ${world.map.guestOf.name} brings me the best bits. Come back any time!`) });
@@ -565,7 +565,7 @@ export function npcWindow(ui, state, world) {
     buildPage(ui, state, world, area);
     return;
   }
-  if (npc.role === 'sweetheart') drawSweetheartHeader(ui, world, npc, area);
+  if (sweetheartOpen(world, npc)) drawSweetheartHeader(ui, world, npc, area);
   if (dlg.gift) {
     dlg.talking = false;
     giftPage(ui, state, world, npc, area);
@@ -629,7 +629,7 @@ export function npcWindow(ui, state, world) {
   // The greeting, typed out, with a bouncing sparkle when it's done; then the choices in two
   // columns, each with its number key.
   // (A Sweetheart says something for how close you are, or what they just said to your chat.)
-  dlg.words ??= npc.role === 'sweetheart' ? greetingFor(world, npc.id) : null;
+  dlg.words ??= sweetheartOpen(world, npc) ? greetingFor(world, npc.id) : null;
   const hello = dlg.words ?? (npc.nightGreeting && isNight(world) ? npc.nightGreeting : npc.greeting);
   const chars = typed(ui, dlg, `hi:${dlg.id}:${hello.length}`, world, area, hello);
   // (A long greeting steps its text down a little so its last line never runs under the choices:
