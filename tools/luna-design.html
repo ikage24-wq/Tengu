@@ -426,26 +426,38 @@ function deerBody() {
   detail(poly(ribbon([[186, 128], [182, 138], [180, 148]], (u) => 1.6 * Math.sin(Math.PI * u) + 0.2, { n: 5 })), rgba(CO.sh, 0.4), { clip: barrel, blur: 0.5 });
   return barrel;
 }
-// The tail (redrawn 2026-11-23): a fluffy deer's tail held up: soft lavender-grey on top, its white
-// underside fanning out in layered rounded tufts round the tip, softly shaded where the tufts overlap.
+// The tail (2026-11-24, the player chose the pom-pom): a round pom-pom of fluff on a short stub held
+// up, snowy white below and soft lavender-grey on top, fine soft fur, a gloss and a little sparkle.
+// (a fluffy outline: a round shape with soft scallops of fur round its edge)
+function fluffy(cx, cy, rx, ry, n, bump, a0 = 0) {
+  const pts = [];
+  for (let k = 0; k < n * 4; k++) {
+    const t = (k / (n * 4)) * TAU + a0;
+    const b = 1 + bump * Math.abs(Math.sin(((t - a0) * n) / 2));
+    pts.push([cx + Math.cos(t) * rx * b, cy + Math.sin(t) * ry * b]);
+  }
+  return smooth(pts, 2);
+}
 function deerTail() {
   const [tx, ty] = [CX + DEER.tail.root[0], DEER.tail.root[1]];
   return withXF(rotAbout(tx, ty, POSE?.tail ?? 0), () => deerTailDraw(tx, ty));
 }
 function deerTailDraw(tx, ty) {
-  // (short and plump, held up: a soft teardrop, round at its end)
-  const line = [[tx + 1.4, ty + 1.2], [tx - 2.6, ty - 4.4], [tx - 6.6, ty - 9.2], [tx - 9, ty - 11.6]];
-  const tw = (u) => (u < 0.6 ? lerp(6.6, 10.4, smoothU(u / 0.6)) : lerp(10.4, 9, (u - 0.6) / 0.4));
-  const tail = poly(cr(ribbon(line, tw, { n: 8 }), true, 3));
-  add(tail, lin(tx, ty, tx - 10, ty - 13, [[0, CO.belly], [1, '#ffffff']]));
-  // (its top soft lavender-grey, the white underside showing below and at its round end)
-  const top = poly(ribbon(sideOf(line, tw, -0.45).slice(0, -6), (u) => tw(u) * 0.6, { n: 1 }));
-  detail(top, lin(tx, ty, tx - 8, ty - 11, [[0, CO.base], [1, CO.hi]]), { clip: tail, blur: 0.6 });
-  detail(poly(ribbon(sideOf(line, tw, -0.6).slice(4, -10), (u) => 1.1 * Math.sin(Math.PI * u) + 0.1, { n: 1 })), rgba('#ffffff', 0.7), { clip: tail, blur: 0.3 });
-  // (soft fur: a gentle shade under the fluff, two soft lines of fur toward the end; deeper at the root)
-  detail(poly(ribbon(sideOf(line, tw, 0.62), (u) => tw(u) * 0.34, { n: 1 })), rgba(LV.base, 0.45), { clip: tail, blur: 0.6 });
-  for (const k of [-0.15, 0.25]) detail(poly(ribbon(sideOf(line, tw, k).slice(14), (u) => 0.7 * Math.sin(Math.PI * u) + 0.05, { n: 1 })), rgba(LV.base, 0.35), { clip: tail, blur: 0.25 });
-  detail(ell(tx + 0.6, ty, 3.6, 2.8), rgba(CO.sh, 0.55), { clip: tail, blur: 0.7 });
+  const cx = tx - 7.4;
+  const cy = ty - 7.8;
+  add(poly(cr(ribbon([[tx + 1, ty + 1], [tx - 3, ty - 3], [cx, cy]], (u) => lerp(6, 8, u), { n: 4 }), true, 2)), CO.base);
+  const pom = fluffy(cx, cy, 8.4, 8.2, 14, 0.045, 0);
+  add(pom, rad(cx + 2, cy - 3, 12, [[0, '#ffffff'], [0.55, CO.belly], [1, CO.hi]]));
+  detail(ell(cx + 1.6, cy - 3.6, 6.6, 4.6), rgba(CO.base, 0.55), { clip: pom, blur: 1 });
+  detail(ell(cx - 1, cy + 4, 6, 3.4), rgba(LV.base, 0.35), { clip: pom, blur: 0.9 });
+  for (let k = 0; k < 6; k++) {
+    const a = -2.6 + k * 0.5;
+    const p0 = [cx + Math.cos(a) * 8.4 * 0.35, cy + Math.sin(a) * 8.4 * 0.35];
+    const p1 = [cx + Math.cos(a) * 8.4 * 0.85, cy + Math.sin(a) * 8.4 * 0.85];
+    detail(poly(ribbon([p0, L2(p0, p1, 0.5), p1], (u) => 0.55 * Math.sin(Math.PI * u) + 0.05, { n: 3 })), rgba(LV.base, 0.35), { clip: pom, blur: 0.2 });
+  }
+  detail(ell(cx - 2.6, cy - 4.4, 2.4, 1.3, -0.5), rgba('#ffffff', 0.9), { clip: pom, blur: 0.3 });
+  star4(cx - 5.4, cy - 6.4, 1.3, 'rgba(255,255,255,0.95)', 0.3);
 }
 // The navy velvet blanket over the deer's back: deep folds, a silver border with a thin gold line,
 // crescent moons stitched on it, silver tassels with gold caps.
@@ -555,8 +567,9 @@ const mixHex = (a, b, t) => {
 // No hairstyle taken from the game: every style is built here from her own pieces, shaded the same
 // way as her bangs (light from above and the upper right, soft-edged shade, a gloss near the crown, a
 // faint sheen down each lock), outlined only where the hair meets the air.
-// (2026-11-23, the player chose the crescent twin tails)
-let HAIR_LOOK = 'tails';
+// (2026-11-23, the player chose the crescent twin tails; 2026-11-24, from new options: "the side tail
+// without the side tail": long straight hair, both sides, with side-swept bangs)
+let HAIR_LOOK = 'sweep';
 window.setLook = (k) => {
   HAIR_LOOK = k;
 };
@@ -565,6 +578,7 @@ const HLOOKS = {
   moonfall: 'Moonfall (long, trimmed)',
   ringlets: 'Royal ringlets',
   tails: 'Crescent twin tails',
+  sweep: 'Long side sweep',
   waves: 'Long waves',
   buns: 'Moon buns',
   braids: 'Low braids',
@@ -748,11 +762,37 @@ function hairBow(x, y, s, size = 1) {
   crescent(x + s * 0.2, y + 2.2 * z, 1.15 * z, Math.PI / 2, GD.base);
 }
 
+// (a mass of hair from its outline points, filled the way her other hair is)
+function hairMass(pts, y0, y1, tone = 0.4) {
+  const r = HL();
+  const shape = smooth(pts, 5);
+  add(shape, lin(0, y0, 0, y1, [[0, mixHex(r.base, r.sh1, tone)], [1, mixHex(r.sh1, r.sh2, tone)]]));
+  return shape;
+}
+// (the back of her head, rounded, down to `bottom` and `wide` out to each side)
+function crownMass(bottom, wide = 27.6) {
+  const m = FR_MID;
+  const right = [[m + 25.4, HY - 6], [m + wide, HY + 8], [m + wide - 0.6, bottom - 6], [m + wide - 4, bottom - 1]];
+  const left = right.map(([x, y]) => [2 * m - x, y]).reverse();
+  return hairMass([...right, [m + 12, bottom + 0.6], [m, bottom - 1], [m - 12, bottom + 0.6], ...left, [m - 22.6, HY - 22], [m - 12.4, HY - 30.4], [m, HY - 32.2], [m + 12.4, HY - 30.4], [m + 22.6, HY - 22]], HY - 32, bottom, 0.5);
+}
 // Her back hair, in her chosen style (behind her body; her bangs and side locks come later).
 function hairBack() {
   const m = FR_MID;
   const look = HAIR_LOOK;
-  if (look === 'moonfall') {
+  if (look === 'sweep') {
+    // Long and straight down both sides to below her shoulders, soft-ended; walking, it sways and
+    // trails, more toward its ends (POSE.backHair).
+    const bh = POSE?.backHair ?? 0;
+    WARP = bh ? ([x, y]) => [x + bh * smoothU(clamp01((y - HY - 4) / 36)), y] : null;
+    crownMass(72, 27);
+    for (const s of [-1, 1]) {
+      const X = (dx) => m + s * dx;
+      hlock([[X(12), HY + 2], [X(17), HY + 18], [X(19.6), 66], [X(20), 76]], (u) => (u < 0.78 ? lerp(8, 7.4, u) : lerp(7.4, 1.6, smoothU((u - 0.78) / 0.22))), { shade: s > 0 ? 1 : -1, tone: s < 0 ? 0.06 : 0 });
+      hlock([[X(18), HY - 6], [X(23.4), HY + 14], [X(25.4), 66], [X(25.6), 80]], (u) => (u < 0.78 ? lerp(7.6, 6.8, u) : lerp(6.8, 1.6, smoothU((u - 0.78) / 0.22))), { shade: s > 0 ? 1 : -1, tone: s < 0 ? 0.08 : 0.02 });
+    }
+    WARP = null;
+  } else if (look === 'moonfall') {
     backMass(102.2);
     curtain(103.4, 'blunt');
   } else if (look === 'waves') {
@@ -947,7 +987,7 @@ const BANG_LOOKS = { hime: 'Moon hime', round: 'Round cut', roundSoft: 'Round cu
 const ROUND_RISE = { round: 5.8, roundSoft: 3.8, roundDeep: 8 };
 const isHimeCut = () => BANG_LOOK === 'hime' || BANG_LOOK === 'crescent' || ROUND_RISE[BANG_LOOK] != null;
 // (the player asked to try the round cut; it is hers for now)
-let BANG_LOOK = 'round';
+let BANG_LOOK = 'swept';
 window.setBangLook = (k) => {
   BANG_LOOK = k;
 };
@@ -1394,12 +1434,15 @@ const EYE_SPEC = {
   smug: { lid: 0.36, lift: 0.13, ik: 0.97, look: [-0.09, 0.02], bot: 0.08 },
   teary: { lid: 0.1, lift: -0.09, ik: 1.03, inner: 0.1, wet: true },
 };
+// (how narrowed her eyes are, on top of every expression: the upper lid lower and the lower lid a
+// little higher; 2026-11-24, the player: "lets try making her eyes more narrowed to test")
+let EYE_NARROW = 0;
 function eyeGeom(x, y, w, h, o, mood) {
   const sp = mood && typeof mood === 'object' ? mood : (EYE_SPEC[mood] ?? EYE_SPEC.idle);
   const { lid, lift, ik } = sp;
-  const L = lid * h;
+  const L = (lid + 0.13 * EYE_NARROW) * h;
   const inn = (sp.inner ?? 0) * h;
-  const b = (sp.bot ?? 0) * h;
+  const b = ((sp.bot ?? 0) + 0.07 * EYE_NARROW) * h;
   const inner = [x - o * w * 0.5, y + h * 0.13];
   const outer = [x + o * w * 0.52, y - h * (0.04 + lift)];
   const top = [inner, [x - o * w * 0.32, y - h * 0.3 + L * 0.7 - inn], [x - o * w * 0.02, y - h * 0.43 + L - inn * 0.4], [x + o * w * 0.3, y - h * 0.4 + L * 0.9], outer];
@@ -1409,6 +1452,7 @@ function eyeGeom(x, y, w, h, o, mood) {
 function eye(x, y, w, h, o, mood) {
   if (mood && typeof mood === 'object' && mood.closed) return closedEye(x, y, w, h, o, mood.closed);
   if (mood === 'happy' || mood === 'blink') return closedEye(x, y, w, h, o, mood);
+  if (EYE_D[EYE_STYLE]) return eyeDesign(x, y, w, h, o, mood, EYE_D[EYE_STYLE]);
   const { inner, outer, top, bot, ik, sp } = eyeGeom(x, y, w, h, o, mood);
   const topC = cr(top, false, 8);
   const botC = cr(bot, false, 8);
@@ -1483,7 +1527,228 @@ function eye(x, y, w, h, o, mood) {
   // one smooth shape. Thin at the inner corner, it thickens evenly along the lid to the outer corner
   // and sweeps on into a soft upturned wing; two short soft flicks rise from its outer part, grown
   // from the same outline (no seams, no bumps), every tip round. A soft sheen along it.
-  lash(topC, inner, outer, o);
+  drawLashes(topC, botC, inner, outer, o);
+}
+// Her lashes, upper and lower (2026-11-24, the player: "try redrawing the eyelashes and down lashes
+// to test"): 'now' (her one smooth lash with its wing and flicks, no lower lashes), 'flutter' (a slim
+// line with five separate curling lashes fanning out toward the outer corner; three little lower
+// lashes), 'doll' (a fuller line with three long doll lashes curling up at the corner; a row of tiny
+// lower lashes under a soft pink waterline), 'soft' (a fine natural line easing into a short wing; a
+// faint lower lid and two tiny lashes), 'wing' (a bold line sweeping out into a long elegant wing; a
+// fine lower line toward the corner with two flicks). Every lash round-tipped.
+let LASH_LOOK = 'now';
+const LASH_LOOKS = { now: 'Now', flutter: 'Flutter', doll: 'Doll', soft: 'Soft natural', wing: 'Winged' };
+function lidFrame(lid, i, o) {
+  const N = lid.length;
+  const a = lid[Math.max(0, i - 1)];
+  const b = lid[Math.min(N - 1, i + 1)];
+  const l = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1;
+  const t = [(b[0] - a[0]) / l, (b[1] - a[1]) / l];
+  return { t, n: [o * t[1], -o * t[0]] };
+}
+// (the line of the lash along the lid: thick(u) above the lid, then `wing` points past the outer corner)
+function lashBand(lid, inner, outer, o, thick, wing) {
+  const N = lid.length;
+  const top = [];
+  for (let i = N - 2; i >= 1; i--) {
+    const { n } = lidFrame(lid, i, o);
+    const u = i / (N - 1);
+    top.push([lid[i][0] + n[0] * thick(u), lid[i][1] + n[1] * thick(u)]);
+  }
+  const { t: tw } = lidFrame(lid, N - 1, o);
+  const W = wing.map(([a, b]) => [outer[0] + tw[0] * a, outer[1] + tw[1] * a - b]);
+  const shape = poly(cr([...lid, ...W, ...top], true, 3));
+  add(shape, lin(inner[0], inner[1], outer[0], outer[1], [[0, mixHex(LASH, EY.mid, 0.4)], [0.4, LASH], [1, LASH]]), false);
+  const sheen = [];
+  for (let i = Math.round(N * 0.25); i <= Math.round(N * 0.8); i += 2) {
+    const { n } = lidFrame(lid, i, o);
+    const u = i / (N - 1);
+    sheen.push([lid[i][0] + n[0] * thick(u) * 0.55, lid[i][1] + n[1] * thick(u) * 0.55]);
+  }
+  detail(poly(ribbon(sheen, (u) => 0.45 * Math.sin(Math.PI * u) + 0.05, { n: 3 })), rgba('#a49ce6', 0.5), { clip: shape, blur: 0.12 });
+  return shape;
+}
+// (one lash: from the lid at u, rising along the lid's outward normal tipped `tilt` toward the outer
+// corner, curling further outward toward its round tip)
+function lashStrand(lid, o, u, lift, len, tilt, curl, w0, col = LASH) {
+  const N = lid.length;
+  const i = Math.min(N - 1, Math.round((N - 1) * u));
+  const { t, n } = lidFrame(lid, i, o);
+  const b0 = [lid[i][0] + n[0] * lift, lid[i][1] + n[1] * lift];
+  const d = [n[0] * Math.cos(tilt) + t[0] * Math.sin(tilt), n[1] * Math.cos(tilt) + t[1] * Math.sin(tilt)];
+  const line = [b0, [b0[0] + d[0] * len * 0.55, b0[1] + d[1] * len * 0.55], [b0[0] + d[0] * len + t[0] * len * curl, b0[1] + d[1] * len + t[1] * len * curl]];
+  add(poly(cr(ribbon(line, (q) => w0 * (1 - q) + 0.22, { n: 4 }), true, 2)), col, false);
+}
+// (the lower lid: its line from the outer corner inward over `span`, an optional pink waterline just
+// above it, and little lashes at the given places, each leaning toward the outer corner)
+function lowerLid(bot, o, { span = 0.6, a = 0.5, water = 0, lashes = [], col = rgba(LASH, 0.8) } = {}) {
+  const N = bot.length;
+  const seg = bot.slice(0, Math.max(2, Math.round(N * span)));
+  if (water) lineOf(seg.map(([x, y]) => [x, y - 0.45]), rgba('#f7c3d4', water), 0.5);
+  lineOf(seg, rgba(LID, a), 0.5);
+  for (const [u, len] of lashes) {
+    const i = Math.round((N - 1) * u);
+    const { t } = lidFrame(bot, i, o);
+    const nn = [o * t[1], -o * t[0]];
+    const p0 = [bot[i][0] + nn[0] * 0.2, bot[i][1] + nn[1] * 0.2];
+    const line = [p0, [p0[0] + nn[0] * len * 0.6 - t[0] * len * 0.15, p0[1] + nn[1] * len * 0.6 - t[1] * len * 0.15], [p0[0] + nn[0] * len - t[0] * len * 0.42, p0[1] + nn[1] * len - t[1] * len * 0.42]];
+    add(poly(cr(ribbon(line, (q) => 0.4 * (1 - q) + 0.22, { n: 3 }), true, 2)), col, false);
+  }
+}
+function drawLashes(lid, bot, inner, outer, o) {
+  const L = LASH_LOOK;
+  if (L === 'flutter') {
+    lashBand(lid, inner, outer, o, (u) => 0.45 + 1.15 * smoothU(Math.min(1, u * 1.05)), [[0.8, 0.5], [1.3, 1.1]]);
+    for (const [u, len, tilt] of [[0.62, 1.5, 0.8], [0.78, 1.9, 1.0], [0.93, 2.1, 1.2]]) lashStrand(lid, o, u, 0.6, len, tilt, 0.5, 0.95);
+    lowerLid(bot, o, { span: 0.55, a: 0.5, lashes: [[0.1, 0.9], [0.26, 0.7]], col: rgba(LASH, 0.7) });
+  } else if (L === 'doll') {
+    lashBand(lid, inner, outer, o, (u) => 0.6 + 1.7 * smoothU(Math.min(1, u * 1.05)), [[0.9, 0.6], [1.6, 1.3], [1.5, 1.9]]);
+    for (const [u, len, tilt] of [[0.74, 2.0, 0.9], [0.88, 2.4, 1.1], [0.98, 2.6, 1.3]]) lashStrand(lid, o, u, 0.9, len, tilt, 0.55, 1.05);
+    lowerLid(bot, o, { span: 0.75, a: 0.45, water: 0.75, lashes: [[0.1, 0.85], [0.27, 0.75], [0.44, 0.6]], col: rgba(LASH, 0.6) });
+  } else if (L === 'twilight') {
+    lashBand(lid, inner, outer, o, (u) => 0.5 + 1.6 * smoothU(Math.min(1, u * 1.05)), [[1, 0.6], [1.8, 1.3], [2.2, 1.9], [2, 2.2], [1.4, 2.1], [0.7, 1.8]]);
+    lashStrand(lid, o, 0.86, 1.3, 1.3, 1.0, 0.45, 0.7);
+    lowerLid(bot, o, { span: 0.5, a: 0.6, water: 0.6, lashes: [[0.08, 0.85], [0.22, 0.65]], col: rgba(LASH, 0.7) });
+  } else if (L === 'scholar') {
+    lashBand(lid, inner, outer, o, (u) => 0.5 + 1.55 * smoothU(Math.min(1, u * 1.05)), [[1, 0.6], [1.9, 1.3], [1.6, 1.9]]);
+    for (const [u, len, tilt] of [[0.8, 1.5, 0.95], [0.94, 1.8, 1.2]]) lashStrand(lid, o, u, 0.8, len, tilt, 0.5, 0.9);
+    lowerLid(bot, o, { span: 0.7, a: 0.42, water: 0.7, lashes: [[0.12, 0.8], [0.28, 0.62]], col: rgba(LASH, 0.65) });
+  } else if (L === 'soft') {
+    lashBand(lid, inner, outer, o, (u) => 0.35 + 1.05 * smoothU(Math.min(1, u * 1.05)), [[1, 0.5], [1.7, 1.05], [1.4, 1.5]]);
+    lowerLid(bot, o, { span: 0.7, a: 0.32, water: 0.6, lashes: [[0.12, 0.7], [0.26, 0.55]], col: rgba(LASH, 0.55) });
+  } else if (L === 'wing') {
+    lashBand(lid, inner, outer, o, (u) => 0.5 + 1.75 * smoothU(Math.min(1, u * 1.05)), [[1.2, 0.7], [2.6, 1.8], [4.0, 3.2], [3.9, 3.7], [2.6, 3.1], [1.1, 2.4]]);
+    lashStrand(lid, o, 0.84, 1.4, 1.2, 0.95, 0.3, 0.55);
+    lowerLid(bot, o, { span: 0.45, a: 0.75, lashes: [[0.06, 0.9], [0.2, 0.7]] });
+  } else lash(lid, inner, outer, o);
+}
+// ---------- Her eyes redesigned (2026-11-24, the player: "can we redesign the eyes? To fit her look
+// more now? Heavy draw") ----------
+// Her look now: long soft lavender hair swept to one side, a pom-pom
+// tail, the moon on everything: a gentle, bookish, moonlit girl. Three eyes drawn for her, each in
+// full: the lid's soft colour and crease, the white shaded under the lid with a warm inner corner and
+// a pink waterline, an iris built in layers (its gradient, the lid's shadow across its top, fine
+// fibres of light, a ring of colour, a glow pooling low, a soft halo round the pupil), its own lights,
+// its own lashes above and below, and a soft light on the cheek beneath the lower lid.
+//  scholar: gentle, a little drooping at the outer corners; periwinkle blue with a pale ring; a
+//           crescent moon for a light; soft natural lashes.
+//  doe:     big and round; violet deepening to indigo, a few stars scattered low in the iris like a
+//           night sky; a big round light and a twinkle; fluttering curled lashes.
+//  twilight: almond, lifting softly at the corners; lilac above melting into a glow of aqua below;
+//           a soft oval pupil, a heart-shaped light; a gentle wing.
+// (2026-11-24, the player tried Dreamy twilight, then went back to her original eyes)
+let EYE_STYLE = 'now';
+const EYE_STYLES = { now: 'Original (hers)', scholar: 'Moonlit scholar', doe: 'Starry doe', twilight: 'Dreamy twilight' };
+const EYE_D = {
+  scholar: { s: 1.06, sh: 1.02, dl: 0.06, dlift: -0.09, ik: 1.04, lash: 'scholar', shadow: '#c7b6f2', pal: { dk: '#15165a', mid: '#2c3aa6', base: '#4f72e2', lt: '#a6c6ff', glow: '#e4f1ff', pupil: '#0d0b38', ring: '#9fbcff' } },
+  doe: { s: 1.1, sh: 1.12, dl: -0.05, dlift: -0.02, ik: 1.07, lash: 'flutter', shadow: '#e5b8d9', pal: { dk: '#22145a', mid: '#4a33a6', base: '#7b64df', lt: '#cbbbff', glow: '#f4eeff', pupil: '#140b37', ring: '#b8a7ff' } },
+  twilight: { s: 1.06, sh: 1.02, dl: 0.03, dlift: 0.08, ik: 1.02, lash: 'twilight', shadow: '#efb6d0', pal: { dk: '#1f1260', mid: '#5238b8', base: '#8a70e6', lt: '#86dcec', glow: '#e0faff', pupil: '#140c3a', ring: '#cdbaff' } },
+};
+function eyeDesign(x, y, w0, h0, o, mood, D) {
+  const b0 = mood && typeof mood === 'object' ? mood : (EYE_SPEC[mood] ?? EYE_SPEC.idle);
+  const sp = { ...b0, lid: b0.lid + D.dl, lift: b0.lift + D.dlift };
+  const w = w0 * D.s;
+  const h = h0 * D.sh;
+  const P = D.pal;
+  const { inner, outer, top, bot } = eyeGeom(x, y, w, h, o, sp);
+  const topC = cr(top, false, 8);
+  const botC = cr(bot, false, 8);
+  const N = topC.length;
+  const nrm = (i) => lidFrame(topC, i, o).n;
+  // the lid: a soft wash of colour above the lash, deepest toward the outer corner, and its crease
+  const wash = [];
+  for (let i = 2; i < N; i++) {
+    const n = nrm(i);
+    const u = i / (N - 1);
+    wash.push([topC[i][0] + n[0] * (1.4 + 1.2 * u), topC[i][1] + n[1] * (1.4 + 1.2 * u)]);
+  }
+  detail(poly(ribbon(wash, (u) => 1.2 + 2.4 * u, { n: 2 })), lin(inner[0], inner[1], outer[0], outer[1], [[0, rgba(D.shadow, 0.05)], [0.6, rgba(D.shadow, 0.35)], [1, rgba(D.shadow, 0.55)]]), { clip: HEAD, blur: 0.9 });
+  const crease = [];
+  for (let i = Math.round(N * 0.28); i < N - 1; i++) {
+    const n = nrm(i);
+    const u = i / (N - 1);
+    crease.push([topC[i][0] + n[0] * (2.6 + 0.9 * u), topC[i][1] + n[1] * (2.6 + 0.9 * u)]);
+  }
+  detail(poly(ribbon(crease, (u) => 0.42 * Math.sin(Math.PI * u) + 0.05, { n: 2 })), rgba(LID, 0.5), { clip: HEAD, blur: 0.1 });
+  // the white: cool under the lid, a warm inner corner, soft shade along the bottom
+  const white = poly([...topC, ...botC.slice(1, -1)]);
+  detail(white, lin(x, y - h * 0.45, x, y + h * 0.45, [[0, '#e2ddf5'], [0.45, '#fbfaff'], [1, '#ffffff']]));
+  detail(ell(inner[0] + o * 0.9, inner[1] - 0.2, 1.5, 1.2), rgba('#f2b0c2', 0.75), { clip: white, blur: 0.2 });
+  detail(poly(ribbon(botC.slice(1, -1), (u) => 0.9 * Math.sin(Math.PI * u) + 0.1, { n: 2 })), rgba('#d9d2f0', 0.6), { clip: white, blur: 0.3 });
+  // the iris
+  const ix = x + o * w * 0.04 + (sp.look?.[0] ?? 0) * w;
+  const iy = y + h * 0.05 + (sp.look?.[1] ?? 0) * h;
+  const ik = (sp.ik ?? 1) * D.ik;
+  const irx = w * 0.41 * ik;
+  const iry = h * 0.51 * ik;
+  const iris = ell(ix, iy, irx, iry);
+  const C = [white, iris];
+  const st = EYE_STYLE;
+  if (st === 'twilight') detail(iris, lin(ix, iy - iry, ix, iy + iry, [[0, P.dk], [0.3, P.mid], [0.62, P.base], [1, P.lt]]), { clip: white });
+  else detail(iris, rad(ix, iy + iry * 0.38, iry * 1.15, [[0, P.lt], [0.34, P.base], [0.7, P.mid], [1, P.dk]]), { clip: white });
+  // (the lid's shadow across its top)
+  detail(iris, lin(ix, iy - iry, ix, iy + iry, [[0, rgba(P.dk, 0.95)], [0.36, rgba(P.dk, 0.55)], [0.6, rgba(P.dk, 0)]]), { clip: white });
+  // (fine fibres of light from the pupil out through the lower iris)
+  for (let k = 0; k < 15; k++) {
+    const q = Math.PI * 0.05 + (k / 14) * Math.PI * 0.9;
+    const r1 = k % 2 ? 0.8 : 0.9;
+    detail(poly(ribbon([[ix + Math.cos(q) * irx * 0.34, iy + Math.sin(q) * iry * 0.34], [ix + Math.cos(q) * irx * r1, iy + Math.sin(q) * iry * r1]], (u) => 0.36 * (1 - u) + 0.1, { n: 2 })), rgba(P.glow, 0.32), { clip: C });
+  }
+  // (a ring of paler colour inside the rim)
+  items.push({ path: ell(ix, iy + iry * 0.03, irx * 0.72, iry * 0.72), line: false, strokeOnly: rgba(P.ring, st === 'doe' ? 0.3 : 0.5), slw: 0.5, clip: white, m: XF });
+  // (the glow pooling low)
+  const band = new Path2D();
+  band.ellipse(ix, iy + iry * 0.2, irx * 0.82, iry * 0.74, 0, Math.PI * 0.1, Math.PI * 0.9);
+  band.ellipse(ix, iy + iry * 0.04, irx * 0.78, iry * 0.62, 0, Math.PI * 0.88, Math.PI * 0.12, true);
+  band.closePath();
+  detail(band, lin(ix, iy + iry * 0.3, ix, iy + iry * 0.92, [[0, rgba(P.lt, 0.2)], [1, rgba(P.glow, 0.85)]]), { clip: C, blur: 0.25 });
+  if (st === 'doe') {
+    // (a night sky low in the iris: a scatter of tiny stars)
+    for (const [dx, dy, r, a] of [[-0.42, 0.42, 0.22, 0.85], [-0.18, 0.62, 0.16, 0.75], [0.12, 0.7, 0.2, 0.8], [0.38, 0.5, 0.14, 0.7], [0.5, 0.22, 0.18, 0.75], [-0.55, 0.1, 0.13, 0.6], [0.02, 0.48, 0.12, 0.6], [0.28, 0.66, 0.11, 0.55]]) detail(ell(ix + dx * irx, iy + dy * iry, r, r), rgba('#ffffff', a), { clip: C });
+    star4(ix - irx * 0.3, iy + iry * 0.55, w * 0.06, 'rgba(255,255,255,0.9)', 0.3);
+  }
+  // (the rim)
+  items.push({ path: iris, line: false, strokeOnly: rgba(P.dk, 0.8), slw: 0.6, clip: white, m: XF });
+  // the pupil and its soft halo
+  if (st === 'twilight') {
+    detail(ell(ix, iy + iry * 0.02, w * 0.12, h * 0.25), rgba(P.dk, 0.35), { clip: white, blur: 0.2 });
+    detail(ell(ix, iy + iry * 0.02, w * 0.08, h * 0.19), P.pupil, { clip: white });
+  } else {
+    const pr = st === 'doe' ? 0.17 : 0.14;
+    detail(ell(ix, iy + iry * 0.02, w * (pr + 0.05), h * (pr + 0.11)), rgba(P.dk, 0.38), { clip: white, blur: 0.2 });
+    detail(ell(ix, iy + iry * 0.02, w * pr, h * (pr + 0.07)), P.pupil, { clip: white });
+  }
+  // the lid's shadow across the top of the eye
+  detail(poly(ribbon(top, (u) => h * 0.24 * Math.sin(Math.PI * Math.min(1, u * 1.1 + 0.05)) + 0.4, { n: 8, caps: false })), rgba(HR.sh2, 0.45), { clip: white });
+  // the lights
+  const W = (k) => w * k;
+  if (st === 'scholar') {
+    const cx = ix + o * W(0.13);
+    const cy = iy - iry * 0.1;
+    const cres = new Path2D();
+    cres.arc(cx, cy, W(0.14), Math.PI * 0.55, Math.PI * 1.95);
+    cres.arc(cx + W(0.065), cy - W(0.035), W(0.11), Math.PI * 1.8, Math.PI * 0.7, true);
+    cres.closePath();
+    detail(cres, '#ffffff', { clip: white });
+    detail(ell(ix - o * W(0.15), iy + iry * 0.34, W(0.06), W(0.055)), 'rgba(255,255,255,0.95)', { clip: white });
+    detail(ell(ix + o * W(0.22), iy + iry * 0.24, W(0.028), W(0.028)), 'rgba(255,255,255,0.85)', { clip: white });
+  } else if (st === 'doe') {
+    detail(ell(ix + o * W(0.12), iy - iry * 0.3, W(0.15), W(0.13)), '#ffffff', { clip: white });
+    star4(ix + o * W(0.25), iy - iry * 0.05, W(0.1), 'rgba(255,255,255,0.95)');
+    detail(ell(ix - o * W(0.16), iy + iry * 0.34, W(0.06), W(0.055)), 'rgba(255,255,255,0.95)', { clip: white });
+  } else {
+    detail(ell(ix + o * W(0.12), iy - iry * 0.3, W(0.13), W(0.09), -0.5 * o), 'rgba(255,255,255,0.95)', { clip: white });
+    detail(heartShape(ix - o * W(0.15), iy + iry * 0.34, W(0.08)), '#ffffff', { clip: white });
+    star4(ix + o * W(0.22), iy + iry * 0.3, W(0.06), 'rgba(255,255,255,0.9)');
+  }
+  // a soft light on the cheek under the lower lid
+  const lowMid = botC[Math.round(botC.length * 0.45)];
+  detail(ell(lowMid[0], lowMid[1] + 1.6, w * 0.3, 0.9), rgba('#ffffff', 0.3), { clip: HEAD, blur: 0.6 });
+  // the lashes
+  const keep = LASH_LOOK;
+  LASH_LOOK = D.lash;
+  drawLashes(topC, botC, inner, outer, o);
+  LASH_LOOK = keep;
 }
 // (the lash along a lid line from the inner corner to the outer; o: which way is outward)
 function lash(lid, inner, outer, o) {
@@ -2635,6 +2900,116 @@ function rigStep(dt, move, emo = null) {
   return POSE;
 }
 // ---------- The sheet ----------
+window.eyeDesignSheet = async (name, keys = Object.keys(EYE_STYLES), K = 8, moods = ['idle']) => {
+  const [x, y, w, h] = [154, 30, 54, 32];
+  const cw = Math.round(w * K);
+  const ch = Math.round(h * K) + 40;
+  const cols = 2;
+  const cells = [];
+  for (const k of keys) for (const m of moods) cells.push([k, m]);
+  const cv = document.createElement('canvas');
+  cv.width = cols * (cw + 12) + 12;
+  cv.height = Math.ceil(cells.length / cols) * (ch + 12) + 12;
+  const c2 = cv.getContext('2d');
+  c2.fillStyle = '#fbf9fe';
+  c2.fillRect(0, 0, cv.width, cv.height);
+  setHd(true, Math.min(8, Math.max(0.5, K / 2)));
+  HAIR_SCALE = K;
+  const keep = EYE_STYLE;
+  cells.forEach(([k, m], i) => {
+    EYE_STYLE = k;
+    build(m);
+    const ox = 12 + (i % cols) * (cw + 12);
+    const oy = 12 + Math.floor(i / cols) * (ch + 12);
+    c2.fillStyle = '#2a2142';
+    c2.font = 'bold 26px sans-serif';
+    const idx = Object.keys(EYE_STYLES).indexOf(k);
+    c2.font = moods.length > 1 ? 'bold 19px sans-serif' : 'bold 26px sans-serif';
+    c2.fillText((idx ? `${idx}. ` : '') + EYE_STYLES[k] + (moods.length > 1 ? ` (${m})` : ''), ox + 6, oy + 30);
+    c2.save();
+    c2.beginPath();
+    c2.rect(ox, oy + 40, cw, ch - 40);
+    c2.clip();
+    c2.setTransform(K, 0, 0, K, ox - x * K, oy + 40 - y * K);
+    paint(c2);
+    c2.restore();
+  });
+  EYE_STYLE = keep;
+  const blob = await new Promise((r) => cv.toBlob(r, 'image/png'));
+  return (await fetch(`/save/${name}`, { method: 'POST', body: blob })).status;
+};
+window.setEyeStyle = (k) => {
+  EYE_STYLE = k;
+};
+window.lashSheet = async (name, keys = Object.keys(LASH_LOOKS), K = 9) => {
+  const [x, y, w, h] = [158, 36, 46, 26];
+  const cw = Math.round(w * K);
+  const ch = Math.round(h * K) + 40;
+  const cols = 3;
+  const cv = document.createElement('canvas');
+  cv.width = cols * (cw + 12) + 12;
+  cv.height = Math.ceil(keys.length / cols) * (ch + 12) + 12;
+  const c2 = cv.getContext('2d');
+  c2.fillStyle = '#fbf9fe';
+  c2.fillRect(0, 0, cv.width, cv.height);
+  setHd(true, Math.min(8, Math.max(0.5, K / 2)));
+  HAIR_SCALE = K;
+  const keep = LASH_LOOK;
+  keys.forEach((k, i) => {
+    LASH_LOOK = k;
+    build('idle');
+    const ox = 12 + (i % cols) * (cw + 12);
+    const oy = 12 + Math.floor(i / cols) * (ch + 12);
+    c2.fillStyle = '#2a2142';
+    c2.font = 'bold 26px sans-serif';
+    c2.fillText(i ? `${i}. ${LASH_LOOKS[k]}` : LASH_LOOKS[k], ox + 6, oy + 30);
+    c2.save();
+    c2.beginPath();
+    c2.rect(ox, oy + 40, cw, ch - 40);
+    c2.clip();
+    c2.setTransform(K, 0, 0, K, ox - x * K, oy + 40 - y * K);
+    paint(c2);
+    c2.restore();
+  });
+  LASH_LOOK = keep;
+  const blob = await new Promise((r) => cv.toBlob(r, 'image/png'));
+  return (await fetch(`/save/${name}`, { method: 'POST', body: blob })).status;
+};
+window.narrowSheet = async (name, levels = [0, 0.6, 1.1, 1.6], K = 7) => {
+  const [x, y, w, h] = [152, 22, 58, 42];
+  const cw = Math.round(w * K);
+  const ch = Math.round(h * K) + 40;
+  const cols = 2;
+  const cv = document.createElement('canvas');
+  cv.width = cols * (cw + 12) + 12;
+  cv.height = Math.ceil(levels.length / cols) * (ch + 12) + 12;
+  const c2 = cv.getContext('2d');
+  c2.fillStyle = '#fbf9fe';
+  c2.fillRect(0, 0, cv.width, cv.height);
+  setHd(true, Math.min(8, Math.max(0.5, K / 2)));
+  HAIR_SCALE = K;
+  const keep = EYE_NARROW;
+  const names = ['Now', 'A little narrower', 'Narrower', 'Most narrow'];
+  levels.forEach((lv, i) => {
+    EYE_NARROW = lv;
+    build('idle');
+    const ox = 12 + (i % cols) * (cw + 12);
+    const oy = 12 + Math.floor(i / cols) * (ch + 12);
+    c2.fillStyle = '#2a2142';
+    c2.font = 'bold 26px sans-serif';
+    c2.fillText(i ? `${i}. ${names[i]}` : names[0], ox + 6, oy + 30);
+    c2.save();
+    c2.beginPath();
+    c2.rect(ox, oy + 40, cw, ch - 40);
+    c2.clip();
+    c2.setTransform(K, 0, 0, K, ox - x * K, oy + 40 - y * K);
+    paint(c2);
+    c2.restore();
+  });
+  EYE_NARROW = keep;
+  const blob = await new Promise((r) => cv.toBlob(r, 'image/png'));
+  return (await fetch(`/save/${name}`, { method: 'POST', body: blob })).status;
+};
 const canvas = document.getElementById('c');
 const ctx = canvas.getContext('2d');
 const SW = 1900;
