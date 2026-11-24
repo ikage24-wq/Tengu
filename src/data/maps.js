@@ -868,7 +868,9 @@ Object.assign(MAPS, {
       // to the Grove instead of ending at the observatory.)
       { id: 'observatory', x: 2020, y: 250, to: 'observatory_steps', toPortal: 'grove', label: 'Observatory Steps' },
     ],
-    npcs: [{ id: 'nim', x: 600 }, { id: 'posy', x: 1300 }, { id: 'elowen', x: 1500 }],
+    // (Fawnelle's place is under the moon tree's lanterns, between its trunk and the moon dial; by day
+    // she stands behind the trunk instead: world/fawnelle.js.)
+    npcs: [{ id: 'nim', x: 600 }, { id: 'fawnelle', x: 1162 }, { id: 'posy', x: 1300 }, { id: 'elowen', x: 1500 }],
     // Its districts, left to right, each named as you walk in (the town rules).
     zonesBy: 'x',
     zones: [

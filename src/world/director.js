@@ -74,6 +74,7 @@ import { indoors } from './daytime.js';
 import { MOVE_MIN } from '../render/moves.js';
 import { castStep, castAt, tickCast, leaveSet } from './cast.js';
 import { easedPace } from './pace.js';
+import { NPCS } from '../data/npcs.js';
 
 const WALK = 72;
 const easeInOut = (u) => (u < 0.5 ? 4 * u * u * u : 1 - (-2 * u + 2) ** 3 / 2);
@@ -103,7 +104,8 @@ export function actorAt(world, who) {
   if (k) return k;
   if (who === 'player') return { x: world.body.x, y: world.body.y, h: 52 };
   const n = world.map.npcs.find((q) => q.id === who);
-  if (n) return { x: n.x, y: groundAt(world.map, n.x) - (n.cine?.lift ?? 0), h: 52 };
+  // (Someone not on the hero's body says how tall they stand: Fawnelle.)
+  if (n) return { x: n.x, y: groundAt(world.map, n.x) - (n.cine?.lift ?? 0), h: NPCS[n.id]?.tall ?? 52 };
   const m = mobActor(world, who);
   return m ? { x: m.x, y: m.y - (m.cine.lift ?? 0), h: m.def.h } : null;
 }
@@ -650,7 +652,8 @@ export function endScene(world) {
   // (A scene that ended somewhere off the map comes back to it: world/cast.js.)
   leaveSet(world);
   for (const [n, x] of c.moved) {
-    n.x = x;
+    // (Fawnelle walks back to her place herself, world/fawnelle.js, rather than jumping there.)
+    if (!NPCS[n.id]?.drawn) n.x = x;
     delete n.cine;
   }
   world.map.npcs = world.map.npcs.filter((n) => !c.spawned.includes(n));

@@ -16,7 +16,12 @@ import { moveAt, MOVES, streamHover } from './moves.js';
 import { wheelShape, wheelWisps } from '../world/foxwheel.js';
 import { settings } from '../core/settings.js';
 import { NPCS } from '../data/npcs.js';
-import { drawSceneBack, drawSceneFront, fireflyLights } from './scenery.js';
+import { drawSceneBack, drawSceneFront, fireflyLights, place } from './scenery.js';
+import { moonTreeArt } from './townhouses.js';
+import { drawFawnelle, keepFawnelle, talkWindowOn, forgetFawnelle } from './fawnelle/index.js';
+import { trustOf } from '../world/fawnelle.js';
+import { SCENES } from '../data/story.js';
+import { TYPE } from '../ui/cutscene.js';
 import { drawCast } from './cast.js';
 import { drawEscort } from './escort.js';
 import { drawHero, setLight, rimLightOf } from './hero.js';
@@ -288,6 +293,114 @@ function drawSwapPuff(ctx, x, y, k, toNight) {
   ctx.restore();
 }
 
+// Fawnelle is drawn all her own (render/fawnelle/): her picture from her painter, her feelings from
+// world/fawnelle.js or from the scene she's in (her line's mood, or the expression it holds on her),
+// talking while her line types out or her talk window's does. Where she stands behind the moon tree,
+// its trunk is drawn back over her (clipped to the trunk's own shape, its ink line included). Her
+// name tag, marker and prompts sit by her own height.
+const MOOD_EMOTE = { happy: 'happy', sad: 'teary', surprised: 'wonder', shy: 'shy', nervous: 'flustered', angry: 'pout', sleepy: 'dreamy', love: 'dreamy' };
+const FAWN = { name: null, seq: -1, at: 0, map: null };
+// (The moon tree's trunk in its picture, render/townhouses.js moonTreeArt, a pixel and a half wider
+// each side for its ink line.)
+const TRUNK = [[108.5, 240], [112.5, 190], [106.5, 140], [118.5, 109], [141.5, 109], [153.5, 140], [147.5, 190], [153.5, 240]];
+function fawnelleFeel(world, n, time) {
+  let name = 'neutral';
+  let talk = false;
+  let restart = false;
+  if (world.scene) {
+    const sc = world.scene;
+    const step = SCENES[sc.id]?.[sc.i];
+    if (step?.who === 'fawnelle' && step.text) {
+      name = MOOD_EMOTE[step.mood] ?? step.mood ?? 'neutral';
+      talk = sc.t * TYPE < step.text.length;
+    } else if (n.cine?.face) name = MOOD_EMOTE[n.cine.face] ?? n.cine.face;
+  } else {
+    const win = talkWindowOn(time);
+    const e = world.fawnelle?.emote;
+    if (win) {
+      name = trustOf(world.char) >= 4 ? 'happy' : 'shy';
+      talk = win.talking;
+    } else if (e) {
+      name = e.name;
+      restart = e.seq !== FAWN.seq;
+      FAWN.seq = e.seq;
+    }
+  }
+  if (name !== FAWN.name || restart) {
+    FAWN.name = name;
+    FAWN.at = time;
+  }
+  return { emote: name, emoteT: time - FAWN.at, talk };
+}
+// (Drawn before the passers-by, so where the trunk is drawn back over her it covers only her: anyone
+// walking past the tree is still in front of it. Her tags come with everyone's: drawNpcs.)
+function drawFawnelleBody(ctx, world, cam, time) {
+  const n = world.map.npcs.find((q) => NPCS[q.id]?.drawn === 'fawnelle');
+  // (Off her map, her pictures go at once: leaving a map cleans up.)
+  if (!n) {
+    if (FAWN.map) {
+      FAWN.map = null;
+      forgetFawnelle();
+    }
+    return;
+  }
+  if (awayNow(world, n)) return;
+  if (FAWN.map !== world.map) {
+    FAWN.map = world.map;
+    forgetFawnelle();
+  }
+  const c = n.cine;
+  const facing = c?.facing ?? n.facing ?? 1;
+  const gy = groundAt(world.map, n.x);
+  const x = n.x - cam.x;
+  const y = gy - cam.y;
+  const feel = fawnelleFeel(world, n, time);
+  // (Just off screen, her painter keeps her fresh, so she's ready as she comes into view.)
+  if (x < -60 || x > VIEW_W + 60) {
+    if (x > -360 && x < VIEW_W + 360) keepFawnelle(n.x, gy, facing, time, feel);
+    return;
+  }
+  drawFawnelle(ctx, n.x, gy, facing, cam.x, cam.y, time, { ...feel, alpha: c?.alpha ?? 1, lift: c?.lift ?? 0 });
+  const tree = world.map.townPieces?.find(([k]) => k === 'moontree')?.[1];
+  if (tree != null && Math.abs(n.x - tree) < 44) {
+    const tgy = groundAt(world.map, tree) - cam.y + 3;
+    const ox = tree - cam.x - 130;
+    const oy = tgy - 240;
+    ctx.save();
+    ctx.beginPath();
+    TRUNK.forEach(([lx, ly], i) => (i ? ctx.lineTo(ox + lx, oy + ly) : ctx.moveTo(ox + lx, oy + ly)));
+    ctx.closePath();
+    ctx.clip();
+    place(ctx, moonTreeArt(), snap(tree - cam.x), tgy);
+    ctx.restore();
+  }
+}
+
+// An NPC's name tag under their feet, the quest marker over their head and the prompts above it
+// (`top`: how tall they stand; the hero's body is 52).
+function npcTags(ctx, world, n, npc, x, y, near, time, top = 52) {
+  const up = top - 52;
+  ctx.font = '800 8px Nunito, "Trebuchet MS", "Segoe UI", system-ui, sans-serif';
+  const label = npc.name;
+  const w = ctx.measureText(label).width + 10;
+  const hovered = world.hoverNpc === n.id;
+  box(ctx, x - w / 2, y + 2, w, 11, { fill: hovered ? COLORS.accent : 'rgba(90,63,122,0.75)', edge: hovered ? '#ffffff' : null, r: 5 });
+  text(ctx, label, x, y + 10, { size: 8, bold: true, align: 'center', color: '#ffffff' });
+  if (hovered && near?.id !== n.id) {
+    box(ctx, x - 28, y - 70 - up, 56, 12, { fill: '#ffffff', edge: COLORS.accent, r: 6 });
+    text(ctx, 'Click to talk', x, y - 61 - up, { size: 7.5, bold: true, align: 'center', color: COLORS.accent });
+  }
+  const mark = questMarker(world.char, n.id);
+  if (mark) {
+    const bob = Math.sin(time * 4) * 2;
+    text(ctx, mark, x, y - 54 - up + bob, { size: 16, bold: true, align: 'center', color: mark === '?' ? '#7ee081' : '#ffe36b', outline: '#8f5cc4' });
+  }
+  if (near?.id === n.id) {
+    box(ctx, x - 22, y - 70 - up, 44, 12, { fill: '#ffffff', edge: COLORS.accent, r: 6 });
+    text(ctx, '▲ Talk', x, y - 61 - up, { size: 8, bold: true, align: 'center', color: COLORS.accent });
+  }
+}
+
 function drawNpcs(ctx, world, cam, time) {
   const near = nearbyNpc(world);
   for (const n of world.map.npcs) {
@@ -297,6 +410,12 @@ function drawNpcs(ctx, world, cam, time) {
     if (!world.map.home && world.char.livingWith === n.id) continue;
     // (Someone who keeps to the dark isn't there by day: the Masked Moth, world/nightmarket.js.)
     if (awayNow(world, n)) continue;
+    if (NPCS[n.id]?.drawn) {
+      // (Her body is drawn earlier, drawFawnelleBody; here only her tags, at her own height.)
+      const x = n.x - cam.x;
+      if (!world.scene && x > -60 && x < VIEW_W + 60) npcTags(ctx, world, n, NPCS[n.id], x, groundAt(world.map, n.x) - cam.y, near, time, NPCS[n.id].tall ?? 52);
+      continue;
+    }
     const npc = NPCS[n.id];
     const x = n.x - cam.x;
     const y = groundAt(world.map, n.x) - cam.y;
@@ -343,25 +462,7 @@ function drawNpcs(ctx, world, cam, time) {
     if (sw?.k != null) drawSwapPuff(ctx, x, y, sw.k, sw.toNight);
     // (During a cutscene, no name tags, markers or prompts: the scene has the stage.)
     if (world.scene) continue;
-    ctx.font = '800 8px Nunito, "Trebuchet MS", "Segoe UI", system-ui, sans-serif';
-    const label = npc.name;
-    const w = ctx.measureText(label).width + 10;
-    const hovered = world.hoverNpc === n.id;
-    box(ctx, x - w / 2, y + 2, w, 11, { fill: hovered ? COLORS.accent : 'rgba(90,63,122,0.75)', edge: hovered ? '#ffffff' : null, r: 5 });
-    text(ctx, label, x, y + 10, { size: 8, bold: true, align: 'center', color: '#ffffff' });
-    if (hovered && near?.id !== n.id) {
-      box(ctx, x - 28, y - 70, 56, 12, { fill: '#ffffff', edge: COLORS.accent, r: 6 });
-      text(ctx, 'Click to talk', x, y - 61, { size: 7.5, bold: true, align: 'center', color: COLORS.accent });
-    }
-    const mark = questMarker(world.char, n.id);
-    if (mark) {
-      const bob = Math.sin(time * 4) * 2;
-      text(ctx, mark, x, y - 54 + bob, { size: 16, bold: true, align: 'center', color: mark === '?' ? '#7ee081' : '#ffe36b', outline: '#8f5cc4' });
-    }
-    if (near?.id === n.id) {
-      box(ctx, x - 22, y - 70, 44, 12, { fill: '#ffffff', edge: COLORS.accent, r: 6 });
-      text(ctx, '▲ Talk', x, y - 61, { size: 8, bold: true, align: 'center', color: COLORS.accent });
-    }
+    npcTags(ctx, world, n, npc, x, y, near, time);
   }
 }
 
@@ -633,6 +734,7 @@ function drawWorldLayers(ctx, world, cam, time, b, zoom = 1) {
     const owner = world.map.guestOf ?? world.char;
     drawFurniture(ctx, world.map, owner.garden?.placed, cam, VIEW_W, time, owner);
   }
+  drawFawnelleBody(ctx, world, cam, time);
   drawTownsfolk(ctx, world.map, cam, VIEW_W, time, botsIn(world.bots, world.map.id), world.hoverBot, world.body);
   drawNpcs(ctx, world, cam, time);
   // A cutscene's own cast: Hayate, the Mochi, a crown on its way (render/cast.js).

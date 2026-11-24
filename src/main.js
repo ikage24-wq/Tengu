@@ -9,6 +9,7 @@ import { createUiState, routeInput, drawUi } from './ui/manager.js';
 import { createCharacter } from './core/character.js';
 import { addItem, countItem } from './core/inventory.js';
 import { ITEMS } from './data/items.js';
+import { NPCS } from './data/npcs.js';
 import { saveGame, loadGame, deleteSave, worldChars, loadWorld, createWorldFile, deleteWorld, copyWorld, addPlayTime, FILES } from './core/save.js';
 import { filesScreen } from './ui/files.js';
 import { createWorld, updateWorld, useItem } from './world/world.js';
@@ -405,7 +406,8 @@ function npcPointer(ui) {
   if (!uiState.npc && !uiState.death && !ui.used) {
     const wx = m.x + camera.x;
     const wy = m.y + camera.y;
-    npc = world.map.npcs.find((n) => !awayNow(world, n) && Math.abs(n.x - wx) < 14 && wy > groundAt(world.map, n.x) - 50 && wy < groundAt(world.map, n.x) + 14) ?? null;
+    // (Someone bigger than the hero's body, Fawnelle, is as big to click: NPCS `wide` and `tall`.)
+    npc = world.map.npcs.find((n) => !awayNow(world, n) && Math.abs(n.x - wx) < (NPCS[n.id]?.wide ?? 14) && wy > groundAt(world.map, n.x) - (NPCS[n.id]?.tall ?? 50) && wy < groundAt(world.map, n.x) + 14) ?? null;
     // Party members and other players hunting, wherever they are on the map.
     if (!npc) bot = bodiedIn(world.bots, world.map.id).find((b) => Math.abs(b.body.x - wx) < 13 && wy > b.body.y - 46 && wy < b.body.y + 13) ?? null;
     if (!npc && !bot && settings.showCrowd && world.map.isTown) {

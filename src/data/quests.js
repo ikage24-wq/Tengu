@@ -809,6 +809,40 @@ export const QUESTS = {
     scenes: { done: 'stardust_done' },
   },
 
+  // Fawnelle, the Moonlit Doe under the moon tree (2026-11-23, levels 39-42): for a hundred years she
+  // has tried to walk up to someone in the Grove and say good evening, and run every time. Her charms
+  // give her away (Cloud Mane to hush them), then her racing heart (Snow Gems to calm it, which melt);
+  // then her hundred years of unsent letters, and the twist: Nim, Elowen and Posy have known all along
+  // and been quietly kind. With a feather quill for each of them, she says it.
+  fawnelle_charms: {
+    id: 'fawnelle_charms', name: 'Hush, Little Charms', giver: 'fawnelle', minLevel: 39,
+    text: "For a hundred years I've tried to walk up to someone in the Grove and say good evening. Every time, the charms on my antlers jingle, everyone turns round, and I run. Pegasus Foals have the softest manes in the sky. Bring me 15 Cloud Mane from the Sky Garden or the Frozen Peak, and I'll tuck a wisp into every charm.",
+    objectives: [{ type: 'collect', item: 'wool', count: 15 }],
+    rewards: { exp: 90000, gold: 2200, items: [{ id: 'white_potion', qty: 10 }] },
+  },
+  fawnelle_snow: {
+    id: 'fawnelle_snow', name: 'A Calm Heart', giver: 'fawnelle', minLevel: 40, prereq: 'fawnelle_charms',
+    text: "It wasn't the charms. It was me. My heart goes like a rabbit's. The Yuki-onna on the Frozen Peak walk right up to travellers, cool as snow, and they say a Snow Gem held to your chest keeps your heart slow. Bring me 12. I'll hold all of them.",
+    objectives: [{ type: 'collect', item: 'snow_gem', count: 12 }],
+    rewards: { exp: 132000, gold: 3000, items: [{ id: 'mana_elixir', qty: 10 }] },
+  },
+  fawnelle_letters: {
+    id: 'fawnelle_letters', name: 'A Hundred Years of Letters', giver: 'fawnelle', minLevel: 41, prereq: 'fawnelle_snow',
+    text: "I write to them every year. To Nim, to Elowen, to Posy. 'Good evening. I like your candles.' That sort of thing. I've never sent one. There are a hundred of each in the moon tree's hollow. Would you take them this year's? Just this year's. Please don't read them out loud.",
+    objectives: [
+      { type: 'talk', npc: 'nim', say: "F-for me? From the doe under the moon tree? ...I leave a candle lit on the plaza every night, so she has light to walk home by. I thought it was a silly thing to do. I-I'll keep doing it." },
+      { type: 'talk', npc: 'elowen', say: "The doe under the moon tree. I've known since I was a girl. When she passes, I keep my eyes on my book; it seemed the polite thing. Tell her the Grove would very much like to say good evening back." },
+      { type: 'talk', npc: 'posy', say: "A HUNDRED letters?! I've kept her a spot on the Party Board for years! It just says 'Doe?' with a heart. She's always welcome. Always!" },
+    ],
+    rewards: { exp: 220000, gold: 5000, items: [{ id: 'elixir', qty: 3 }] },
+  },
+  fawnelle_evening: {
+    id: 'fawnelle_evening', name: 'Good Evening, Moonleaf Grove', giver: 'fawnelle', minLevel: 42, prereq: 'fawnelle_letters',
+    text: "They knew. All this time, and they were kind about it. Then I'll say it, properly. But a doe shouldn't come empty-hoofed: Harpy feathers make the loveliest quills, one for each of them. Bring me 14 from the Sky Harpies, and stand next to me while I say it. Close. Closer than that.",
+    objectives: [{ type: 'collect', item: 'feather', count: 14 }],
+    rewards: { exp: 114000, gold: 2650, items: [{ id: 'mochi_egg', qty: 1 }] },
+  },
+
 
   // The instructors: a short story each, between your first job and the trial at 30.
   // Brann's: the shield he lost holding a doorway in the Twilight Ruins, the scared recruit he

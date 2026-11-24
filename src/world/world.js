@@ -57,6 +57,7 @@ import { tickDate, DATES } from './dates.js';
 import { movedAway, welcomeHome } from './sweethearts.js';
 import { settleSweethearts, tickGoingHome } from './goinghome.js';
 import { tickDerby } from './derby.js';
+import { tickFawnelle } from './fawnelle.js';
 import { calmKill, tickCalm, isCalm, soothes, CALM_EXP } from './calm.js';
 import { tickHabits, napping } from './habits.js';
 import { teamHit, teamLanded, tickTeam } from './teamwork.js';
@@ -853,6 +854,8 @@ export function updateWorld(world, dt, input) {
   tickVoyage(world, dt);
   // The Fishing Derby at Lantern Lagoon, on the hour (world/derby.js).
   tickDerby(world);
+  // Fawnelle under Moonleaf Grove's moon tree, hiding or out (world/fawnelle.js).
+  tickFawnelle(world, dt);
   world.attackTimer = Math.max(0, world.attackTimer - dt);
   world.lockTimer = Math.max(0, (world.lockTimer ?? 0) - dt);
   world.invuln = Math.max(0, world.invuln - dt);

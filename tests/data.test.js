@@ -88,7 +88,8 @@ test('ropes hang from a surface and reach one below; ledges clear the ground', (
 
 test("town ledges stay clear of the NPCs' buildings", () => {
   for (const map of Object.values(MAPS).filter((m) => m.isTown)) {
-    for (const n of map.npcs) {
+    // (Only those with a stall or hall behind them: Fawnelle stands under the moon tree's bough.)
+    for (const n of map.npcs.filter((q) => NPCS[q.id]?.building)) {
       for (const p of map.platforms.filter((q) => !q.walkOn)) {
         const over = p.x < n.x + 75 && p.x + p.w > n.x - 75;
         assert.ok(!over || p.y + (p.thick ?? 40) < groundAt(map, n.x) - 170, `${map.id}: ledge at (${p.x}, ${p.y}) hides ${n.id}'s building`);

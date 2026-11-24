@@ -63,6 +63,7 @@ import { canCurse, curseOfDay, layCurse } from '../world/malvina.js';
 import { teamOf } from '../world/teamwork.js';
 import { routeFrom, setSail, hasSailed } from '../world/voyage.js';
 import { derbyClock, standings, PRIZES } from '../world/derby.js';
+import { drawFawnellePhoto } from '../render/fawnelle/index.js';
 
 export function questMarker(char, npcId) {
   const ids = questsOf(char, npcId);
@@ -128,7 +129,9 @@ function dialogFrame(ui, win, npc, H, world, talking = false) {
   // (Rasterized at the portrait's own size, so the big figure stays smooth in HD.)
   // (Kinako after dark: in his night coat here too, as he is out on the square.)
   const night = npc.nightGear && isNight(world);
-  withZoom(2, () => drawHero(ctx, night ? npc.nightLook ?? npc.look : npc.look, (night ? npc.nightGear : npc.gear) ?? null, px, y + H - 8, { pose: 'idle', time: world.now, seed: 3, scale: 2, job: npc.showJob, talking }));
+  // (Fawnelle isn't on the hero's body: her waist-up photo comes from her own painter.)
+  if (npc.drawn === 'fawnelle') drawFawnellePhoto(ctx, px, y + H - 8, talking);
+  else withZoom(2, () => drawHero(ctx, night ? npc.nightLook ?? npc.look : npc.look, (night ? npc.nightGear : npc.gear) ?? null, px, y + H - 8, { pose: 'idle', time: world.now, seed: 3, scale: 2, job: npc.showJob, talking }));
   ctx.restore();
 
   // The name on washi tape, the title written beside it.

@@ -175,6 +175,18 @@ export const NPCS = {
     greeting: "Hello! I'm Twinkle. I'm a star. I fell. It's fine. It's mostly fine.",
     chatter: ['The Kite Riders keep offering me a lift. I keep falling off.', "Up there I was one of a billion. Down here I'm the only one!", 'Do I look shiny today? Be honest. Be nice.'],
   },
+  // Fawnelle, the Moonlit Doe (2026-11-23, levels 39-42): Moonleaf Grove's shy deer, who has tried to
+  // say good evening to the Grove for a hundred years. By day she hides behind the moon tree, peeking
+  // round it; after dark she comes out under its lanterns, and darts back behind it if you rush at her
+  // (world/fawnelle.js). The first townsperson not drawn on the hero's body: `drawn` says she has her
+  // own drawing (a deertaur in soft painted shading, from her own painter: render/fawnelle/), `tall`
+  // and `wide` her size in game pixels (for her name tag, prompts, bubbles and clicks).
+  fawnelle: {
+    id: 'fawnelle', name: 'Fawnelle', title: 'Moonlit Doe', role: 'guide', drawn: 'fawnelle', tall: 78, wide: 20,
+    quests: ['fawnelle_charms', 'fawnelle_snow', 'fawnelle_letters', 'fawnelle_evening'],
+    greeting: "Oh! You can see me? I'm not hiding. I'm standing very close to a tree. ...Please don't look straight at me. Sideways is fine.",
+    chatter: ["The moon tree's lanterns are my favourite thing. Don't tell anyone.", 'Good ev... never mind.', 'I have been standing here for a hundred years. It is a very good tree.'],
+  },
   // Posy keeps the Party Board in every town's plaza (world/partyquest.js): party quests for the
   // region at your level, shared by everyone in your party, and Party Tokens to trade.
   // Clover keeps the Puff Buns, marshmallow bunnies you can ride, in Sprout's Pond Garden. Soft

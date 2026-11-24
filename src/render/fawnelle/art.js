@@ -1,0 +1,2680 @@
+// Fawnelle, the Moonlit Doe (2026-11-23): her whole drawing and her rig, from her design page
+// (tools/luna-design.html, where the player approved her look, her rig and her emotions). She isn't
+// built from the game's sprite shapes: she is drawn in smooth paths with soft gradient shading, in her
+// base's units (a third of a game pixel; the ground at y 204, her middle at x 180), two passes (the
+// outer outline, then the fills) so only her outer edge is outlined.
+//
+// One frame of her costs several milliseconds to build and paint, far past a frame's drawing budget,
+// so she is never drawn on the game's own thread: render/fawnelle/worker.js runs this, live, and hands
+// the pictures back (render/fawnelle/index.js). Nothing here touches the page.
+//
+// stepFawnelle(dt, dist, emote, emoteT, talk) moves her rig on: `dist` how far she walked (her units),
+// `emote` one of EMOTES and how far into it, `talk` while she speaks. paintFawnelle(ctx, k, upper) paints
+// her as built at k pixels to her unit (`upper`: from the waist up only, for a close portrait).
+import { BODIES, DEER } from '../mobs/blankbases.js';
+import { hairRamp } from '../hero.js';
+import { legDefs, legPhase, stepAt, lowAngle, sinks, placeLeg } from '../mobs/blankquad.js';
+
+const OUT = '#3a2d4f';
+const B = BODIES.deertaur;
+const CX = B.cx;
+const GY = B.g;
+const HX = CX + B.dx;
+const HY = B.head[0];
+const lerp = (a, b, u) => a + (b - a) * u;
+const L2 = (p, q, u) => [lerp(p[0], q[0], u), lerp(p[1], q[1], u)];
+const TAU = Math.PI * 2;
+const rotP = (pts, cx, cy, a) => pts.map(([x, y]) => [cx + (x - cx) * Math.cos(a) - (y - cy) * Math.sin(a), cy + (x - cx) * Math.sin(a) + (y - cy) * Math.cos(a)]);
+
+// ---------- Geometry ----------
+// A smooth line through the points (Catmull-Rom), `n` steps between each two; closed or open.
+function cr(pts, closed = true, n = 6) {
+  const out = [];
+  const N = pts.length;
+  const at = (i) => (closed ? pts[(i + N) % N] : pts[Math.max(0, Math.min(N - 1, i))]);
+  const last = closed ? N : N - 1;
+  for (let i = 0; i < last; i++) {
+    const [p0, p1, p2, p3] = [at(i - 1), at(i), at(i + 1), at(i + 2)];
+    for (let j = 0; j < n; j++) {
+      const t = j / n;
+      const t2 = t * t;
+      const t3 = t2 * t;
+      out.push([0, 1].map((k) => 0.5 * (2 * p1[k] + (p2[k] - p0[k]) * t + (2 * p0[k] - 5 * p1[k] + 4 * p2[k] - p3[k]) * t2 + (3 * p1[k] - p0[k] - 3 * p2[k] + p3[k]) * t3)));
+    }
+  }
+  if (!closed) out.push(pts[N - 1]);
+  return out;
+}
+// (a soft body: while WARP is set, every shape built passes its points through it, so a whole part
+// bends as one piece of flesh, its shading, fur and stitching with it; small round things move by
+// their middles)
+let WARP = null;
+const poly = (pts) => {
+  const p = new Path2D();
+  (WARP ? pts.map(WARP) : pts).forEach(([x, y], i) => (i ? p.lineTo(x, y) : p.moveTo(x, y)));
+  p.closePath();
+  return p;
+};
+const smooth = (pts, n = 6) => poly(cr(pts, true, n));
+const ell = (x, y, rx, ry, a = 0) => {
+  const p = new Path2D();
+  if (WARP) [x, y] = WARP([x, y]);
+  p.ellipse(x, y, Math.max(0.05, rx), Math.max(0.05, ry), a, 0, TAU);
+  return p;
+};
+const join = (...ps) => {
+  const p = new Path2D();
+  for (const q of ps) p.addPath(q);
+  return p;
+};
+// A band along a line, `w(u)` its width (u 0..1 along it), round at both ends: its outline points.
+function ribbon(line, w, { n = 8, caps = true } = {}) {
+  const c = cr(line, false, n);
+  const N = c.length;
+  const Lp = [];
+  const Rp = [];
+  const nrm = (i) => {
+    const a = c[Math.max(0, i - 1)];
+    const b = c[Math.min(N - 1, i + 1)];
+    const l = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1;
+    return [-(b[1] - a[1]) / l, (b[0] - a[0]) / l];
+  };
+  for (let i = 0; i < N; i++) {
+    const [nx, ny] = nrm(i);
+    const h = Math.max(0.05, w(i / (N - 1)) / 2);
+    Lp.push([c[i][0] + nx * h, c[i][1] + ny * h]);
+    Rp.push([c[i][0] - nx * h, c[i][1] - ny * h]);
+  }
+  const cap = (i, s) => {
+    const [nx, ny] = nrm(i);
+    const h = Math.max(0.05, w(i / (N - 1)) / 2);
+    const dx = ny * s;
+    const dy = -nx * s;
+    const o = [];
+    for (let k = 1; k < 6; k++) {
+      const a = (k / 6) * Math.PI;
+      o.push([c[i][0] + (nx * Math.cos(a) + dx * Math.sin(a)) * h, c[i][1] + (ny * Math.cos(a) + dy * Math.sin(a)) * h]);
+    }
+    return o;
+  };
+  if (!caps) return [...Lp, ...Rp.reverse()];
+  return [...Lp, ...cap(N - 1, 1), ...Rp.reverse(), ...cap(0, -1).reverse()];
+}
+// (the centre line of a band and its normal at u, for laying details along it)
+function along(line, u, n = 8) {
+  const c = cr(line, false, n);
+  const f = u * (c.length - 1);
+  const i = Math.min(c.length - 2, Math.floor(f));
+  const p = L2(c[i], c[i + 1], f - i);
+  const d = [c[i + 1][0] - c[i][0], c[i + 1][1] - c[i][1]];
+  const l = Math.hypot(...d) || 1;
+  return { p, d: [d[0] / l, d[1] / l], n: [-d[1] / l, d[0] / l] };
+}
+// A soft taper: full in the middle, narrowing to a soft rounded tip at the end.
+const taper = (w0, w1, tip = 0.2, bulge = 0) => (u) => {
+  const base = lerp(w0, w1, u) * (1 + bulge * Math.sin(Math.PI * u));
+  return u > 1 - tip ? base * (0.35 + 0.65 * Math.cos(((u - (1 - tip)) / tip) * Math.PI * 0.5)) : base;
+};
+const shift = (pts, dx, dy) => pts.map(([x, y]) => [x + dx, y + dy]);
+
+// ---------- The drawing list: outlines first (only the outer edge survives), then fills ----------
+let items = [];
+// (the rig: every item drawn while a joint's transform is set carries it, so a whole part (her head,
+// her upper body, an ear, the tail) is drawn as designed and then turned and moved as one)
+let XF = null;
+const withXF = (m, fn) => {
+  const prev = XF;
+  XF = m ? (prev ? prev.multiply(m) : m) : prev;
+  try {
+    return fn();
+  } finally {
+    XF = prev;
+  }
+};
+const rotAbout = (px, py, a) => (a ? new DOMMatrix().translate(px, py).rotate((a * 180) / Math.PI).translate(-px, -py) : new DOMMatrix());
+const xfPt = (m, [x, y]) => {
+  if (!m) return [x, y];
+  const q = m.transformPoint({ x, y });
+  return [q.x, q.y];
+};
+// add(path, fill, outlined, { clip, alpha, stroke, slw, rule, lw, draw })
+const add = (path, fill, line = true, o = {}) => items.push({ path, fill, line, ...o, m: XF });
+const detail = (path, fill, o = {}) => add(path, fill, false, o);
+const lineOf = (pts, c, w, o = {}) => {
+  const p = new Path2D();
+  (WARP ? pts.map(WARP) : pts).forEach(([x, y], i) => (i ? p.lineTo(x, y) : p.moveTo(x, y)));
+  items.push({ path: p, line: false, strokeOnly: c, slw: w, ...o, m: XF });
+};
+const applyM = (ctx, it) => {
+  if (it.m) ctx.transform(it.m.a, it.m.b, it.m.c, it.m.d, it.m.e, it.m.f);
+};
+// (from item `from` on: a close portrait skips the deer body below the waist)
+function paint(ctx, from = 0) {
+  ctx.lineJoin = 'round';
+  ctx.lineCap = 'round';
+  for (let i = from; i < items.length; i++) {
+    const it = items[i];
+    if (!it.line) continue;
+    ctx.save();
+    applyM(ctx, it);
+    if (it.lineClip) ctx.clip(it.lineClip);
+    ctx.lineWidth = it.lw ?? 2.1;
+    ctx.strokeStyle = it.lc ?? OUT;
+    ctx.stroke(it.path);
+    ctx.restore();
+  }
+  for (let i = from; i < items.length; i++) {
+    const it = items[i];
+    ctx.save();
+    applyM(ctx, it);
+    if (it.clip) for (const c of [].concat(it.clip)) ctx.clip(c);
+    if (it.alpha != null) ctx.globalAlpha = it.alpha;
+    if (it.blur) ctx.filter = `blur(${(it.blur * HAIR_SCALE).toFixed(2)}px)`;
+    if (it.draw) it.draw(ctx);
+    else if (it.strokeOnly) {
+      if (it.dash) ctx.setLineDash(it.dash);
+      ctx.strokeStyle = it.strokeOnly;
+      ctx.lineWidth = it.slw;
+      ctx.stroke(it.path);
+    } else {
+      ctx.fillStyle = typeof it.fill === 'function' ? it.fill(ctx) : it.fill;
+      ctx.fill(it.path, it.rule ?? 'nonzero');
+      if (it.stroke) {
+        ctx.strokeStyle = it.stroke;
+        ctx.lineWidth = it.slw ?? 0.6;
+        ctx.stroke(it.path);
+      }
+    }
+    ctx.restore();
+  }
+}
+const lin = (x0, y0, x1, y1, stops) => (ctx) => {
+  const g = ctx.createLinearGradient(x0, y0, x1, y1);
+  for (const [o, c] of stops) g.addColorStop(o, c);
+  return g;
+};
+const rad = (x, y, r, stops) => (ctx) => {
+  const g = ctx.createRadialGradient(x, y, 0, x, y, r);
+  for (const [o, c] of stops) g.addColorStop(o, c);
+  return g;
+};
+const rgba = (hex, a) => {
+  const n = parseInt(hex.slice(1), 16);
+  return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${a})`;
+};
+// a soft glow inside a clip
+const glow = (clip, x, y, r, col, a) => {
+  const [gx, gy] = WARP ? WARP([x, y]) : [x, y];
+  const w0 = WARP;
+  WARP = null;
+  detail(ell(gx, gy, r, r), rad(gx, gy, r, [[0, rgba(col, a)], [1, rgba(col, 0)]]), { clip });
+  WARP = w0;
+};
+
+// ---------- Small motifs ----------
+// A five-petal blossom (sakura: each petal notched at its tip), facing us, turned `a`.
+function blossom(x, y, r, a, petal, deep, centre) {
+  const pts = [];
+  for (let i = 0; i < 5; i++) {
+    const q = a + (i * TAU) / 5;
+    const w = (TAU / 5) * 0.5;
+    pts.push([x + Math.cos(q - w) * r * 0.42, y + Math.sin(q - w) * r * 0.42]);
+    pts.push([x + Math.cos(q - w * 0.55) * r * 1.0, y + Math.sin(q - w * 0.55) * r * 1.0]);
+    pts.push([x + Math.cos(q) * r * 0.82, y + Math.sin(q) * r * 0.82]);
+    pts.push([x + Math.cos(q + w * 0.55) * r * 1.0, y + Math.sin(q + w * 0.55) * r * 1.0]);
+  }
+  const p = smooth(pts, 3);
+  add(p, rad(x, y, r, [[0, deep], [0.45, petal], [1, petal]]), true, { lw: 1.3 });
+  for (let i = 0; i < 5; i++) {
+    const q = a + (i * TAU) / 5;
+    lineOf([[x + Math.cos(q) * r * 0.18, y + Math.sin(q) * r * 0.18], [x + Math.cos(q) * r * 0.5, y + Math.sin(q) * r * 0.5]], deep, r * 0.08);
+  }
+  detail(ell(x, y, r * 0.2, r * 0.2), centre);
+}
+const bud = (x, y, r, a, c, deep) => {
+  add(smooth(rotP([[x, y - r * 1.2], [x + r * 0.7, y - r * 0.2], [x + r * 0.5, y + r * 0.6], [x - r * 0.5, y + r * 0.6], [x - r * 0.7, y - r * 0.2]], x, y, a), 4), lin(x, y - r, x, y + r, [[0, c], [1, deep]]), true, { lw: 1.1 });
+};
+// A four-pointed twinkle.
+function star4(x, y, r, c, a = 0) {
+  const pts = [];
+  for (let i = 0; i < 8; i++) {
+    const q = a + (i * Math.PI) / 4;
+    const rr = i % 2 ? r * 0.28 : r;
+    pts.push([x + Math.cos(q) * rr, y + Math.sin(q) * rr]);
+  }
+  detail(poly(pts), c);
+}
+// A five-pointed star, plump.
+function star5(x, y, r, fill, line = true, a = -Math.PI / 2) {
+  const pts = [];
+  for (let i = 0; i < 10; i++) {
+    const q = a + (i * Math.PI) / 5;
+    const rr = i % 2 ? r * 0.5 : r;
+    pts.push([x + Math.cos(q) * rr, y + Math.sin(q) * rr]);
+  }
+  add(smooth(pts, 2), fill, line, { lw: 1.1 });
+}
+// A crescent moon (a disc with a disc taken out).
+function crescent(x, y, r, a, fill, line = true) {
+  if (WARP) [x, y] = WARP([x, y]);
+  const p = new Path2D();
+  p.arc(x, y, r, a + 0.35, a + TAU - 0.35);
+  p.arc(x + Math.cos(a) * r * 0.55, y + Math.sin(a) * r * 0.55, r * 0.78, a + TAU - 1.0, a + 1.0, true);
+  p.closePath();
+  add(p, fill, line, { lw: 1.1 });
+}
+// A maple leaf.
+function maple(x, y, r, a, c, deep) {
+  const raw = [[0, -1], [0.18, -0.55], [0.5, -0.78], [0.42, -0.3], [0.95, -0.38], [0.62, 0.02], [0.8, 0.28], [0.3, 0.26], [0.12, 0.62], [0, 0.42], [-0.12, 0.62], [-0.3, 0.26], [-0.8, 0.28], [-0.62, 0.02], [-0.95, -0.38], [-0.42, -0.3], [-0.5, -0.78], [-0.18, -0.55]];
+  const pts = rotP(raw.map(([u, v]) => [x + u * r, y + v * r]), x, y, a);
+  add(smooth(pts, 2), lin(x, y - r, x, y + r, [[0, c], [1, deep]]), true, { lw: 1.1 });
+  for (const t of [[0, -0.85], [0.75, -0.3], [-0.75, -0.3]]) lineOf(rotP([[x, y + r * 0.3], [x + t[0] * r, y + t[1] * r]], x, y, a), rgba(deep, 0.8), r * 0.07);
+}
+
+
+// ---------- Fawnelle, the Moonlit Doe: the full design ----------
+// Her colours: four tones a material at most, hue-shifted (cool toward violet in the shade).
+const SK = { hi: '#fffaf7', base: '#fff0ea', sh1: '#f1d4dc', sh2: '#d6b4cc', line: '#b98aa8', blush: '#f7a3c0', lip: '#e07a98', lipDk: '#a64d70' };
+const HR = { hi: '#ffffff', lt: '#f6f4ff', base: '#e8e4fb', sh1: '#cac3f1', sh2: '#9c93dc', deep: '#766dc0', lash: '#2e296c' };
+const EY = { dk: '#1c1a5a', mid: '#3a44b4', base: '#6a7ce6', lt: '#b6d0ff', glow: '#e6f1ff', pupil: '#110e3a' };
+const CO = { hi: '#f5f3fb', base: '#dbd6ea', sh: '#b8b2d0', deep: '#8e88ae', belly: '#fdfcff', hoof: '#5e5a80' };
+const AN = { hi: '#ffffff', base: '#e2f3fe', mid: '#c2e2f8', sh: '#95c1e4', edge: '#6e9fd0' };
+const NV = { lt: '#5157a0', base: '#363b7a', dk: '#22255a', deep: '#181a45' };
+const SV = { lt: '#ffffff', base: '#e4e8f7', dk: '#aab1d8' };
+const GD = { lt: '#fff1bd', base: '#f2c96a', dk: '#b98a3a' };
+const LV = { lt: '#efeeff', base: '#cfcbf6', dk: '#a29de2' };
+
+// ---------- The deer ----------
+// A deer leg, shaped like one: a foreleg's forearm thick under the body, a neat knee, a slim cannon,
+// the fetlock, a split hoof; a hind leg's gaskin full under the haunch, the hock's point behind. The
+// lower leg a deeper shade toward the hoof; a little pale feather behind the fetlock; silver rings
+// and a crescent charm above the hoof.
+// A soft tuft of fur: a teardrop from a round base to a rounded tip, pointing the way the fur lies.
+function furTuft(x, y, len, w, ang) {
+  const c = Math.cos(ang);
+  const sn = Math.sin(ang);
+  return poly(cr(ribbon([[x, y], [x + c * len * 0.5, y + sn * len * 0.5], [x + c * len, y + sn * len]], (u) => lerp(w, w * 0.34, u ** 1.1), { n: 4 }), true, 2));
+}
+// (redrawn 2026-11-23, the player: "heavily polish/redraw her body, tail, ears": soft shading in
+// place of drawn lines, gentle joints, a little white fluff at the fetlock, glossy split hooves, her
+// silver anklets with their gold crescents)
+function deerLeg(js, w, far, hind, tilt = 0) {
+  const [a, b, d, e] = js;
+  // (the rig: the hoof sits under its foot wherever the foot is, tilting with the lowest bone)
+  const gy = e[1] + 8;
+  const hoofTop = xfPt(rotAbout(e[0], e[1], tilt), [e[0] + 0.6, gy - 6.6]);
+  const line = [a, b, L2(b, d, 0.5), d, L2(d, e, 0.45), e, hoofTop];
+  const ws = hind ? [w[0] * 1.05, w[0] * 0.78, w[1] * 0.98, w[2] * 1.15, 4.2, 5, 4.4] : [w[0], w[0] * 0.74, w[1] * 0.95, w[2] * 1.06, 4.2, 5, 4.4];
+  const wl = (u) => {
+    const f = u * (ws.length - 1);
+    const i2 = Math.min(ws.length - 2, Math.floor(f));
+    return lerp(ws[i2], ws[i2 + 1], f - i2);
+  };
+  const leg = poly(cr(ribbon(line, wl, { n: 6 }), true, 2));
+  add(leg, far ? lin(a[0], a[1], a[0], gy, [[0, CO.sh], [0.6, CO.sh], [1, CO.deep]]) : lin(a[0], a[1], a[0], gy, [[0, CO.base], [0.5, CO.base], [0.8, CO.sh], [1, CO.deep]]));
+  // (a hind leg's hock: its point behind, rounded)
+  let hock = null;
+  if (hind) {
+    hock = ell(d[0] - 2.4, d[1] - 0.6, 3, 2.6);
+    add(hock, far ? CO.sh : CO.base);
+  }
+  // soft volume: shade down the back of the leg, light down its front (lit from the upper right)
+  detail(poly(ribbon(sideOf(line, wl, 0.62), (u) => wl(u) * 0.55, { n: 1 })), rgba(CO.deep, far ? 0.32 : 0.3), { clip: leg, blur: 0.7 });
+  if (!far) detail(poly(ribbon(sideOf(line, wl, -0.42).slice(4, -10), (u) => 1.6 * Math.sin(Math.PI * u) + 0.2, { n: 1 })), rgba('#ffffff', 0.55), { clip: leg, blur: 0.5 });
+  // the joints: a soft light on the knee, a soft shade beneath it
+  detail(ell(b[0] + 1, b[1] - 0.4, 2.6, 2), rgba('#ffffff', far ? 0.12 : 0.3), { clip: leg, blur: 0.5 });
+  detail(ell(b[0] + 0.4, b[1] + 2.6, 2.4, 1.4), rgba(CO.deep, 0.18), { clip: leg, blur: 0.5 });
+  if (hock) detail(ell(d[0] - 2.2, d[1] + 0.6, 2.4, 1.4), rgba(CO.deep, 0.3), { clip: hock, blur: 0.5 });
+  const hx = e[0] + 0.6;
+  withXF(rotAbout(e[0], e[1], tilt), () => {
+  // the hoof: glossy, split, deepest where it meets the ground
+  const hoof = smooth([[hx - 2.6, gy - 6.5], [hx + 2.2, gy - 6.8], [hx + 4.2, gy - 3.2], [hx + 5.4, gy - 0.7], [hx + 3.6, gy - 0.05], [hx + 1.9, gy - 1], [hx + 0.4, gy - 0.05], [hx - 3.4, gy - 0.1], [hx - 3.8, gy - 3]], 3);
+  add(hoof, lin(hx, gy - 7, hx, gy, [[0, far ? '#6c6890' : '#8a86ad'], [1, CO.hoof]]));
+  detail(poly(ribbon([[hx + 1.2, gy - 5.6], [hx + 1.6, gy - 3], [hx + 1.9, gy - 1]], (u) => 0.5 * Math.sin(Math.PI * u) + 0.1, { n: 4 })), rgba('#3e3a60', 0.5), { clip: hoof, blur: 0.12 });
+  detail(poly(ribbon([[hx - 2.4, gy - 5.6], [hx, gy - 6], [hx + 1, gy - 5.2]], (u) => 0.8 * Math.sin(Math.PI * u) + 0.1, { n: 4 })), rgba('#ffffff', far ? 0.25 : 0.5), { clip: hoof, blur: 0.15 });
+  // her silver anklet and its gold crescent
+  const ry = gy - 11.2;
+  const band = poly(cr(ribbon([[hx - 3, ry + 1.1], [hx + 0.4, ry + 1.9], [hx + 3.3, ry + 0.9]], () => 1.2, { n: 4 }), true, 2));
+  add(band, lin(hx, ry, hx, ry + 2.6, [[0, far ? SV.dk : SV.lt], [1, far ? '#8f95c0' : SV.dk]]), true, { lw: 0.7 });
+  withXF(rotAbout(hx + 0.6, ry + 2.6, -tilt), () => {
+    lineOf([[hx + 0.6, ry + 2.6], [hx + 0.6, ry + 4.4]], far ? GD.dk : GD.base, 0.45);
+    crescent(hx + 0.6, ry + 5.6, 1.3, 0, far ? GD.dk : GD.base);
+  });
+  });
+  return leg;
+}
+// (the rig: a near leg's lower part again, over the deer's body, fading in below the knee, a soft
+// shadow under it on the body, so a foot lifted and folded up crosses in front of the belly instead of
+// slipping behind it)
+function deerLegOver(js, w, hind, tilt, bodyW) {
+  const [a, b, d, e] = js;
+  const gy = e[1] + 8;
+  const hoofTop = xfPt(rotAbout(e[0], e[1], tilt), [e[0] + 0.6, gy - 6.6]);
+  const ws = hind ? [w[0] * 1.05, w[0] * 0.78, w[1] * 0.98, w[2] * 1.15, 4.2, 5, 4.4] : [w[0], w[0] * 0.74, w[1] * 0.95, w[2] * 1.06, 4.2, 5, 4.4];
+  const wl = (u) => {
+    const f = u * (ws.length - 1);
+    const i2 = Math.min(ws.length - 2, Math.floor(f));
+    return lerp(ws[i2], ws[i2 + 1], f - i2);
+  };
+  const line = [L2(b, d, 0.26), L2(b, d, 0.6), d, L2(d, e, 0.45), e, hoofTop];
+  const wl2 = (u) => wl(0.26 + 0.74 * u);
+  const leg = poly(cr(ribbon(line, wl2, { n: 6, caps: false }), true, 2));
+  detail(poly(ribbon(line.map(([x, y]) => [x - 0.6, y + 1.2]), wl2, { n: 6 })), rgba(CO.deep, 0.3), { clip: bodyW, blur: 0.8 });
+  detail(leg, lin(line[0][0], line[0][1], hoofTop[0], hoofTop[1], [[0, rgba(CO.base, 0)], [0.1, CO.base], [0.5, CO.base], [0.8, CO.sh], [1, CO.deep]]));
+  detail(poly(ribbon(sideOf(line, wl2, 0.62), (u) => wl2(u) * 0.55, { n: 1 })), lin(line[0][0], line[0][1], hoofTop[0], hoofTop[1], [[0, rgba(CO.deep, 0)], [0.2, rgba(CO.deep, 0.3)], [1, rgba(CO.deep, 0.3)]]), { clip: leg, blur: 0.7 });
+  detail(poly(ribbon(sideOf(line, wl2, -0.42).slice(6, -8), (u) => 1.6 * Math.sin(Math.PI * u) + 0.2, { n: 1 })), rgba('#ffffff', 0.5), { clip: leg, blur: 0.5 });
+  // (its hoof and anklet again, over everything)
+  const hx = e[0] + 0.6;
+  withXF(rotAbout(e[0], e[1], tilt), () => {
+    const hoof = smooth([[hx - 2.6, gy - 6.5], [hx + 2.2, gy - 6.8], [hx + 4.2, gy - 3.2], [hx + 5.4, gy - 0.7], [hx + 3.6, gy - 0.05], [hx + 1.9, gy - 1], [hx + 0.4, gy - 0.05], [hx - 3.4, gy - 0.1], [hx - 3.8, gy - 3]], 3);
+    add(hoof, lin(hx, gy - 7, hx, gy, [[0, '#8a86ad'], [1, CO.hoof]]));
+    detail(poly(ribbon([[hx + 1.2, gy - 5.6], [hx + 1.6, gy - 3], [hx + 1.9, gy - 1]], (u) => 0.5 * Math.sin(Math.PI * u) + 0.1, { n: 4 })), rgba('#3e3a60', 0.5), { clip: hoof, blur: 0.12 });
+    detail(poly(ribbon([[hx - 2.4, gy - 5.6], [hx, gy - 6], [hx + 1, gy - 5.2]], (u) => 0.8 * Math.sin(Math.PI * u) + 0.1, { n: 4 })), rgba('#ffffff', 0.5), { clip: hoof, blur: 0.15 });
+    const ry = gy - 11.2;
+    const band = poly(cr(ribbon([[hx - 3, ry + 1.1], [hx + 0.4, ry + 1.9], [hx + 3.3, ry + 0.9]], () => 1.2, { n: 4 }), true, 2));
+    add(band, lin(hx, ry, hx, ry + 2.6, [[0, SV.lt], [1, SV.dk]]), true, { lw: 0.7 });
+    withXF(rotAbout(hx + 0.6, ry + 2.6, -tilt), () => {
+      lineOf([[hx + 0.6, ry + 2.6], [hx + 0.6, ry + 4.4]], GD.base, 0.45);
+      crescent(hx + 0.6, ry + 5.6, 1.3, 0, GD.base);
+    });
+  });
+}
+const BARREL = DEER.barrel.map(([x, y]) => [CX + x, y]);
+const legJoints = (G, off) => {
+  const js = [[CX + G.top[0] + off[0], G.top[1] + off[1]]];
+  for (const b of G.bones) js.push([js[js.length - 1][0] + b[0], js[js.length - 1][1] + b[1]]);
+  return js;
+};
+const LEGS = { hindF: legJoints(DEER.hind, DEER.far), foreF: legJoints(DEER.fore, DEER.far), hindN: legJoints(DEER.hind, [0, 0]), foreN: legJoints(DEER.fore, [0, 0]) };
+// The deer's body (redrawn 2026-11-23): soft and round, lit along its back, shaded softly under the
+// barrel and behind the shoulder; a fluffy white chest ruff in layered rounded tufts; the white belly
+// with a soft edge of small fur tufts; pale dapples on the rump; soft creases where the legs come out.
+function deerBody() {
+  const barrel = smooth(BARREL, 5);
+  add(barrel, lin(140, 104, 140, 154, [[0, CO.hi], [0.3, CO.base], [0.75, CO.base], [1, CO.sh]]));
+  glow(barrel, 116, 124, 22, CO.hi, 0.8);
+  glow(barrel, 182, 124, 13, CO.hi, 0.5);
+  // (soft shade low along the barrel and behind the shoulder; the haunch's curve)
+  detail(ell(150, 151, 44, 7), rgba(CO.sh, 0.55), { clip: barrel, blur: 1.4 });
+  detail(poly(ribbon([[176, 130], [172, 140], [170, 150]], (u) => 5 * Math.sin(Math.PI * u) + 0.5, { n: 6 })), rgba(CO.sh, 0.35), { clip: barrel, blur: 1 });
+  detail(poly(ribbon([[118, 122], [126, 132], [128, 146]], (u) => 3.6 * Math.sin(Math.PI * u) + 0.4, { n: 6 })), rgba(CO.sh, 0.35), { clip: barrel, blur: 0.9 });
+  // the white belly, its edge a soft row of small fur tufts
+  const belly = smooth([[186, 138], [180, 149], [160, 152.4], [134, 152], [114, 147], [114, 156], [190, 156]], 4);
+  detail(belly, lin(150, 144, 150, 153, [[0, CO.base], [1, CO.belly]]), { clip: barrel });
+  const bw = [];
+  for (let k = 0; k <= 16; k++) {
+    const x = 118 + k * 4.4;
+    bw.push([x, 146.4 + Math.sin((k / 16) * Math.PI) * 3.2 + Math.sin(k * 1.7) * 0.45]);
+  }
+  detail(smooth([...bw, [190, 157], [116, 157]], 3), rgba(CO.belly, 0.9), { clip: barrel, blur: 0.5 });
+  // the chest ruff: fluffy white tufts in three layers, each softly shaded under the one above
+  const ruff = smooth([[184, 124], [194.4, 122], [198.4, 131], [196.6, 141], [190.6, 147], [184.6, 142], [182, 132]], 4);
+  detail(ruff, lin(190, 122, 190, 147, [[0, '#ffffff'], [1, CO.belly]]), { clip: barrel, blur: 0.4 });
+  for (const [x, y, len, w, ang] of [[188, 128, 6, 3.4, 1.75], [192.6, 127, 6.4, 3.4, 1.6], [186.4, 135, 6.4, 3.4, 1.85], [191.4, 134.6, 6.6, 3.6, 1.7], [189, 141, 5.6, 3, 1.9]]) {
+    detail(furTuft(x - 0.6, y + 1.2, len, w, ang), rgba(CO.sh, 0.3), { clip: barrel, blur: 0.45 });
+    detail(furTuft(x, y, len, w, ang), lin(x, y, x, y + len, [[0, '#ffffff'], [1, CO.belly]]), { clip: barrel, blur: 0.1 });
+  }
+  // pale dapples on the rump, soft-edged
+  for (const [x, y, r] of [[103, 124, 1.6], [106.4, 130.4, 1.4], [102, 133, 1.2], [109, 125.6, 1.2]]) detail(ell(x, y, r * 1.2, r), rgba('#ffffff', 0.8), { clip: barrel, blur: 0.35 });
+  // where the near legs come out: soft creases
+  detail(poly(ribbon([[126, 128], [131, 138], [130, 148]], (u) => 1.8 * Math.sin(Math.PI * u) + 0.2, { n: 5 })), rgba(CO.sh, 0.55), { clip: barrel, blur: 0.5 });
+  detail(poly(ribbon([[186, 128], [182, 138], [180, 148]], (u) => 1.6 * Math.sin(Math.PI * u) + 0.2, { n: 5 })), rgba(CO.sh, 0.4), { clip: barrel, blur: 0.5 });
+  return barrel;
+}
+// The tail (redrawn 2026-11-23): a fluffy deer's tail held up: soft lavender-grey on top, its white
+// underside fanning out in layered rounded tufts round the tip, softly shaded where the tufts overlap.
+function deerTail() {
+  const [tx, ty] = [CX + DEER.tail.root[0], DEER.tail.root[1]];
+  return withXF(rotAbout(tx, ty, POSE?.tail ?? 0), () => deerTailDraw(tx, ty));
+}
+function deerTailDraw(tx, ty) {
+  // (short and plump, held up: a soft teardrop, round at its end)
+  const line = [[tx + 1.4, ty + 1.2], [tx - 2.6, ty - 4.4], [tx - 6.6, ty - 9.2], [tx - 9, ty - 11.6]];
+  const tw = (u) => (u < 0.6 ? lerp(6.6, 10.4, smoothU(u / 0.6)) : lerp(10.4, 9, (u - 0.6) / 0.4));
+  const tail = poly(cr(ribbon(line, tw, { n: 8 }), true, 3));
+  add(tail, lin(tx, ty, tx - 10, ty - 13, [[0, CO.belly], [1, '#ffffff']]));
+  // (its top soft lavender-grey, the white underside showing below and at its round end)
+  const top = poly(ribbon(sideOf(line, tw, -0.45).slice(0, -6), (u) => tw(u) * 0.6, { n: 1 }));
+  detail(top, lin(tx, ty, tx - 8, ty - 11, [[0, CO.base], [1, CO.hi]]), { clip: tail, blur: 0.6 });
+  detail(poly(ribbon(sideOf(line, tw, -0.6).slice(4, -10), (u) => 1.1 * Math.sin(Math.PI * u) + 0.1, { n: 1 })), rgba('#ffffff', 0.7), { clip: tail, blur: 0.3 });
+  // (soft fur: a gentle shade under the fluff, two soft lines of fur toward the end; deeper at the root)
+  detail(poly(ribbon(sideOf(line, tw, 0.62), (u) => tw(u) * 0.34, { n: 1 })), rgba(LV.base, 0.45), { clip: tail, blur: 0.6 });
+  for (const k of [-0.15, 0.25]) detail(poly(ribbon(sideOf(line, tw, k).slice(14), (u) => 0.7 * Math.sin(Math.PI * u) + 0.05, { n: 1 })), rgba(LV.base, 0.35), { clip: tail, blur: 0.25 });
+  detail(ell(tx + 0.6, ty, 3.6, 2.8), rgba(CO.sh, 0.55), { clip: tail, blur: 0.7 });
+}
+// The navy velvet blanket over the deer's back: deep folds, a silver border with a thin gold line,
+// crescent moons stitched on it, silver tassels with gold caps.
+function caparison() {
+  const top = [[177, 103.6], [160, 105.4], [140, 107.4], [120, 110.6], [104, 116], [96.4, 122]];
+  const hem0 = [[98, 133.4], [110, 137], [126, 139.4], [142, 139.2], [156, 136.8], [168, 132.2], [177, 124]];
+  // (the hem draped: trailing and rippling, more in the middle than at the ends, where it's held at
+  // the rump and the chest)
+  const C = POSE?.cloth ?? { x: 0, y: 0, ph: 0, go: 0 };
+  const HOLD = [0.75, 1, 1, 1, 0.95, 0.75, 0.35];
+  const sway = (k) => C.x * (0.65 + 0.35 * Math.sin(C.ph * 2 - k * 0.9)) * HOLD[k];
+  const hemL = hem0.map(([x, y], k) => [x + sway(k), y + (C.y + C.go * 0.5 * Math.sin(C.ph * 2 - k * 0.9 + 1)) * HOLD[k]]);
+  const hemAt = (x) => {
+    for (let k = 0; k < hem0.length - 1; k++) if (x >= hem0[k][0] && x <= hem0[k + 1][0]) {
+      const f = (x - hem0[k][0]) / (hem0[k + 1][0] - hem0[k][0]);
+      return [lerp(hemL[k][0] - hem0[k][0], hemL[k + 1][0] - hem0[k + 1][0], f), lerp(hemL[k][1] - hem0[k][1], hemL[k + 1][1] - hem0[k + 1][1], f)];
+    }
+    return [0, 0];
+  };
+  const shape = smooth([...top, ...hemL], 4);
+  add(shape, lin(130, 104, 130, 140, [[0, NV.lt], [0.22, NV.base], [1, NV.dk]]));
+  for (let k = 0; k < 7; k++) {
+    const x = 104 + k * 11;
+    const [ex, ey] = hemAt(x + 1.4);
+    const [fx2, fy2] = hemAt(x + 5.6);
+    detail(poly(ribbon([[x, 110], [x - 1 + ex * 0.5, 124 + ey * 0.5], [x + 1.4 + ex, 138 + ey]], (u) => 2.6 * Math.sin(Math.PI * u) + 0.4, { n: 4 })), rgba(NV.deep, 0.5), { clip: shape });
+    detail(poly(ribbon([[x + 4.4, 110], [x + 3.4 + fx2 * 0.5, 124 + fy2 * 0.5], [x + 5.6 + fx2, 137 + fy2]], (u) => 1.6 * Math.sin(Math.PI * u) + 0.2, { n: 4 })), rgba(NV.lt, 0.45), { clip: shape });
+  }
+  const border = hemL.map(([x, y]) => [x, y - 2.6]);
+  detail(poly(ribbon(border, () => 2.6, { n: 6, caps: false })), SV.base, { clip: shape });
+  lineOf(cr(border.map(([x, y]) => [x, y - 2.4]), false, 6), rgba(GD.base, 0.95), 0.6, { clip: shape });
+  for (const u of [0.18, 0.42, 0.66, 0.88]) {
+    const q = along(border, u).p;
+    crescent(q[0], q[1] - 7.4, 2.6, -0.5, SV.base, false);
+    star4(q[0] + 4.4, q[1] - 9.4, 1.1, SV.lt);
+  }
+  for (let k = 0; k <= 8; k++) {
+    const q0 = along(hemL, k / 8).p;
+    const q = WARP ? WARP(q0) : q0;
+    const w0 = WARP;
+    WARP = null;
+    withXF(rotAbout(q[0], q[1], POSE?.tassels?.[k] ?? (POSE?.tassel ?? 0) * (1 + 0.12 * Math.sin(k * 2.1))), () => {
+    lineOf([q, [q[0] - 0.2, q[1] + 2.2]], SV.dk, 0.6);
+    const ts = smooth([[q[0] - 1, q[1] + 2.4], [q[0] + 0.9, q[1] + 2.4], [q[0] + 1.6, q[1] + 6.4], [q[0] + 0.8, q[1] + 7.2], [q[0] - 0.9, q[1] + 7.2], [q[0] - 1.7, q[1] + 6.4]], 2);
+    add(ts, lin(q[0], q[1] + 2, q[0], q[1] + 7, [[0, SV.lt], [1, SV.dk]]), true, { lw: 0.9 });
+    for (const dx of [-0.8, 0, 0.8]) lineOf([[q[0] + dx * 0.6, q[1] + 3.4], [q[0] + dx, q[1] + 7]], rgba(SV.dk, 0.7), 0.3, { clip: ts });
+    add(smooth([[q[0] - 1.1, q[1] + 1.4], [q[0] + 1, q[1] + 1.4], [q[0] + 1.2, q[1] + 3], [q[0] - 1.3, q[1] + 3]], 2), lin(q[0], q[1] + 1.4, q[0], q[1] + 3, [[0, GD.lt], [1, GD.dk]]), true, { lw: 0.8 });
+    });
+    WARP = w0;
+  }
+  return shape;
+}
+
+// ---------- Hair ----------
+// A lock: a band down its line, light at the root and through its middle, deepening, then catching
+// light again at the tips; its shade down one side, a sheen high on it, fine strands; long ones part
+// into two or three soft points at the end.
+function lock(line, w, { sheen = 1, tips = 1, outline = true, deep = false } = {}) {
+  const p = poly(ribbon(line, w, { n: 8 }));
+  const a = line[0];
+  const b = line[line.length - 1];
+  add(p, lin(a[0], a[1], b[0], b[1], [[0, deep ? HR.sh1 : HR.base], [0.5, deep ? HR.sh1 : HR.base], [0.86, deep ? HR.sh2 : HR.sh1], [1, HR.lt]]), outline, { stroke: rgba(HR.sh2, 0.65), slw: 0.75 });
+  const off = (d, k) => line.map((q, i) => {
+    const n = along(line, i / (line.length - 1)).n;
+    return [q[0] + n[0] * d * k, q[1] + n[1] * d * k];
+  });
+  detail(poly(ribbon(off(-1, w(0.5) * 0.32), (u) => w(u) * 0.36, { n: 8 })), rgba(HR.sh1, 0.75), { clip: p });
+  if (sheen) {
+    const top = [];
+    for (let k = 0.1; k <= 0.42; k += 0.04) {
+      const q = along(line, k);
+      top.push([q.p[0] + q.n[0] * w(k) * 0.16, q.p[1] + q.n[1] * w(k) * 0.16]);
+    }
+    detail(poly(ribbon(top, (u) => w(0.25) * 0.2 * Math.sin(Math.PI * u) * sheen, { n: 2 })), rgba(HR.hi, 0.85), { clip: p });
+  }
+  for (const s of [-0.2, 0.16]) {
+    const sl = [];
+    for (let k = 0.06; k < 0.94; k += 0.08) {
+      const q = along(line, k);
+      sl.push([q.p[0] + q.n[0] * w(k) * s, q.p[1] + q.n[1] * w(k) * s]);
+    }
+    lineOf(cr(sl, false, 3), rgba(HR.sh2, 0.26), 0.4, { clip: p });
+  }
+  // the end parting into soft points
+  for (let t = 0; t < 0; t++) {
+    const s = t ? -1 : 1;
+    const q = along(line, 0.82);
+    const e = along(line, 1);
+    const tip = [e.p[0] + q.n[0] * w(0.82) * 0.32 * s + e.d[0] * (t ? -1.2 : 1.6), e.p[1] + q.n[1] * w(0.82) * 0.32 * s + e.d[1] * (t ? -1.2 : 1.6)];
+    const sub = [[q.p[0] + q.n[0] * w(0.82) * 0.2 * s, q.p[1] + q.n[1] * w(0.82) * 0.2 * s], L2(q.p, tip, 0.6), tip];
+    const sp = poly(ribbon(sub, (u) => w(0.82) * 0.42 * (1 - u) + 0.5, { n: 4 }));
+    add(sp, lin(sub[0][0], sub[0][1], tip[0], tip[1], [[0, HR.sh1], [1, HR.lt]]), outline, { stroke: rgba(HR.sh2, 0.6), slw: 0.7 });
+  }
+  return p;
+}
+let HAIR_STYLE = 'own';
+const HAIR_COLOR = '#d3ccf5';
+let HAIR_SCALE = 1;
+// (two colours mixed)
+const mixHex = (a, b, t) => {
+  const pa = parseInt(a.slice(1), 16);
+  const pb = parseInt(b.slice(1), 16);
+  const ch = (sh2) => Math.round((((pa >> sh2) & 255) * (1 - t)) + (((pb >> sh2) & 255) * t));
+  return `#${[16, 8, 0].map((sh2) => ch(sh2).toString(16).padStart(2, '0')).join('')}`;
+};
+// ---------- Her own hair (2026-11-23, the player: "never reuse, make new super high quality ones") ----------
+// No hairstyle taken from the game: every style is built here from her own pieces, shaded the same
+// way as her bangs (light from above and the upper right, soft-edged shade, a gloss near the crown, a
+// faint sheen down each lock), outlined only where the hair meets the air.
+// (2026-11-23, the player chose the crescent twin tails)
+let HAIR_LOOK = 'tails';
+const HL = () => hairRamp(HAIR_COLOR);
+const HLOOKS = {
+  moonfall: 'Moonfall (long, trimmed)',
+  ringlets: 'Royal ringlets',
+  tails: 'Crescent twin tails',
+  waves: 'Long waves',
+  buns: 'Moon buns',
+  braids: 'Low braids',
+};
+// (a line, sampled densely, moved sideways by k half-widths: + to the line's left)
+function sideOf(line, w, k, n = 10) {
+  const c = cr(line, false, n);
+  const N = c.length;
+  return c.map((p, i) => {
+    const a = c[Math.max(0, i - 1)];
+    const b = c[Math.min(N - 1, i + 1)];
+    const l = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1;
+    const h = (w(i / (N - 1)) / 2) * k;
+    return [p[0] - ((b[1] - a[1]) / l) * h, p[1] + ((b[0] - a[0]) / l) * h];
+  });
+}
+// (a line with a gentle sideways wave, growing from nothing at its root)
+function waved(line, amp, period, phase = 0, n = 8) {
+  const c = cr(line, false, n);
+  const y0 = c[0][1];
+  return c.map(([x, y], i) => {
+    const u = i / (c.length - 1);
+    return [x + amp * Math.sin(((y - y0) / period) * TAU + phase) * Math.min(1, u * 2.5), y];
+  });
+}
+const hairFill = (y0, y1, tone = 0) => {
+  const r = HL();
+  return lin(0, y0, 0, y1, [[0, mixHex(r.base, r.hi, Math.max(0, 0.24 - tone))], [0.38, mixHex(r.base, r.sh1, 0.08 + tone)], [1, mixHex(r.base, r.sh1, 0.42 + tone)]]);
+};
+// A lock of hair down its line (root to tip), w(u) its width: cut straight with soft corners
+// ('blunt') or narrowing to a soft round tip ('soft'); its shade soft down one side (shade: +1 the
+// line's left, −1 its right), a deeper edge there, a gloss near the root and a faint sheen down it;
+// `tone` deeper for hair farther back.
+// (2026-11-23, the player: "it looks too disconnected": every lock now takes its colour from one light
+// for all her hair (the same shade at the same height on every lock), its shade and deeper edge fade
+// out toward its root so it grows out of the hair above, and its shine sits only inside one shared
+// band of height, so the lights of all the locks line up into one ring)
+function hlock(line, w, { end = 'soft', shade = 1, tone = 0, gloss = 1, outline = true, fill = null, gy = [HY + 3, HY + 16] } = {}) {
+  const r = HL();
+  const pts = ribbon(line, w, { n: 10, caps: end !== 'blunt' });
+  const shape = poly(cr(pts, true, 3));
+  const y1 = Math.max(...pts.map((q) => q[1]));
+  add(shape, fill ?? hairFill(HY - 30, 106, tone), outline);
+  const a = line[0];
+  const b = line[line.length - 1];
+  const grow = (c, al) => lin(a[0], a[1], b[0], b[1], [[0, rgba(c, 0)], [0.3, rgba(c, al)], [1, rgba(c, al)]]);
+  detail(poly(ribbon(sideOf(line, w, shade * 0.58), (u) => w(u) * 0.56, { n: 1 })), grow(r.sh1, 0.55), { clip: shape, blur: 0.6 });
+  detail(poly(ribbon(sideOf(line, w, shade * 0.9), (u) => w(u) * 0.16 + 0.2, { n: 1 })), grow(r.sh2, 0.3), { clip: shape, blur: 0.32 });
+  if (gloss) {
+    const seg = sideOf(line, w, -shade * 0.12).filter(([, y]) => y >= gy[0] && y <= gy[1]);
+    if (seg.length > 3) detail(poly(ribbon(seg, (u) => 1.7 * Math.sin(Math.PI * u) + 0.1, { n: 1 })), rgba('#ffffff', 0.5 * gloss), { clip: shape, blur: 0.35 });
+  }
+  if (end === 'blunt') {
+    const cut = new Path2D();
+    cut.rect(Math.min(...pts.map((q) => q[0])) - 1, y1 - 3.4, 60, 4);
+    detail(cut, lin(0, y1 - 3.4, 0, y1, [[0, rgba(r.sh1, 0)], [1, rgba(r.sh1, 0.4)]]), { clip: shape });
+  }
+  return shape;
+}
+// The hair behind it all: its deeper inner layer, from behind her crown down to `bottom`.
+function backMass(bottom, wide = 28.4) {
+  const r = HL();
+  const m = FR_MID;
+  const right = [[m + 25.4, HY - 6], [m + 27, HY + 10]];
+  if (bottom > 70) right.push([m + wide, 58], [m + wide + 0.3, Math.max(66, bottom - 16)]);
+  right.push([m + wide - 1, bottom - 1.5]);
+  const left = right.map(([x, y]) => [2 * m - x, y]).reverse();
+  const pts = [...right, [m + 13, bottom], [m, bottom - 3], [m - 13, bottom], ...left, [m - 22.6, HY - 22], [m - 12.4, HY - 30.4], [m, HY - 32.2], [m + 12.4, HY - 30.4], [m + 22.6, HY - 22]];
+  const shape = smooth(pts, 5);
+  add(shape, lin(0, HY - 32, 0, bottom, [[0, mixHex(r.base, r.sh1, 0.5)], [1, mixHex(r.sh1, r.sh2, 0.4)]]));
+  return shape;
+}
+// (the long straight curtain: three locks a side)
+function curtain(bottom, end = 'blunt', wave = 0) {
+  for (const s of [-1, 1]) {
+    const X = (dx) => FR_MID + s * dx;
+    const tone = s < 0 ? 0.06 : 0;
+    const L = [
+      [[[X(12), HY + 2], [X(17), HY + 24], [X(19.6), 72], [X(20.6), bottom - 0.2]], (u) => lerp(8, 7.4, u), 0.2],
+      [[[X(17), HY - 6], [X(22.2), HY + 14], [X(24.2), 64], [X(24.8), bottom + 0.3]], (u) => lerp(7.8, 7, u), 1.6],
+      [[[X(21), HY - 12], [X(25.8), HY + 4], [X(27.6), 50], [X(27.6), 80], [X(27.2), bottom - 0.1]], (u) => lerp(6.6, 5.8, u), 3.1],
+    ];
+    for (const [line, w, ph] of L) {
+      let ln = line;
+      if (wave) {
+        ln = waved(line, wave, 23, ph);
+        // (soft ends curl a little outward)
+        const e = ln[ln.length - 1];
+        ln = [...ln.slice(0, -2), [e[0] + s * 0.8, e[1] - 1.2], [e[0] + s * 1.9, e[1] + 0.4]];
+      }
+      hlock(ln, end === 'soft' ? (u) => (u < 0.82 ? w(u) : lerp(w(0.82), 1.6, smoothU((u - 0.82) / 0.18))) : w, { end, shade: s > 0 ? 1 : -1, tone });
+    }
+  }
+}
+// A ringlet: a tight spiral of hair hanging in turns, each turn lit on its upper face and deep where
+// it curls under, each casting a soft shadow on the turn below; a soft little curl at its tip.
+function ringlet(x0, y0, len, w0, s) {
+  const r = HL();
+  const n = 7;
+  const turns = [];
+  for (let k = 0; k < n; k++) {
+    const t = k / (n - 1);
+    turns.push({ x: x0 + s * (1.4 * t + 0.5 * Math.sin(k * 1.7)), y: y0 + len * 0.86 * t, w: lerp(w0, w0 * 0.5, t), h: (len / n) * 1.55 * lerp(1, 0.82, t) });
+  }
+  // the lock it hangs from
+  hlock([[FR_MID + s * 21.4, HY - 4], [x0 - s * 0.6, y0 - turns[0].h * 0.6], [x0, y0]], (u) => lerp(6.4, w0 * 0.8, u), { shade: s, gloss: 0.8 });
+  const last = turns[n - 1];
+  hlock([[last.x, last.y], [last.x + s * 0.9, last.y + last.h * 0.85], [last.x - s * 0.5, last.y + last.h * 1.3]], (u) => lerp(last.w * 0.6, 1.4, u), { shade: s, gloss: 0 });
+  let below = null;
+  for (let k = n - 1; k >= 0; k--) {
+    const { x, y, w, h } = turns[k];
+    const a = s * 0.42;
+    const shape = ell(x, y, w / 2, h / 2, a);
+    if (below) detail(ell(x - s * w * 0.04, y + h * 0.2, w / 2, h / 2, a), rgba(r.sh2, 0.5), { clip: below, blur: 0.45 });
+    add(shape, lin(x, y - h / 2, x, y + h / 2, [[0, mixHex(r.base, r.hi, 0.3)], [0.5, r.base], [1, mixHex(r.base, r.sh1, 0.55)]]));
+    detail(ell(x - s * w * 0.14, y + h * 0.22, w * 0.4, h * 0.24, a), rgba(r.sh1, 0.7), { clip: shape, blur: 0.4 });
+    const cs = Math.cos(a);
+    const sn = Math.sin(a);
+    const R = ([dx, dy]) => [x + dx * cs - dy * sn, y + dx * sn + dy * cs];
+    detail(poly(ribbon([[-w * 0.44, h * 0.02], [0, h * 0.3], [w * 0.44, h * 0.08]].map(R), (u) => 0.8 * Math.sin(Math.PI * u) + 0.05, { n: 6 })), rgba(r.sh2, 0.42), { clip: shape, blur: 0.22 });
+    detail(poly(ribbon([[-w * 0.26, -h * 0.22], [w * 0.04, -h * 0.32], [w * 0.3, -h * 0.2]].map(R), (u) => 0.9 * Math.sin(Math.PI * u) + 0.05, { n: 6 })), rgba('#ffffff', 0.6), { clip: shape, blur: 0.18 });
+    below = shape;
+  }
+}
+// A bun: hair wound into a soft ball, a little flattened and tilted outward; the wind shown by one
+// soft spiral crease from its heart outward, its underside deep, a gloss arc on its upper side.
+function bun(x, y, rr, s) {
+  const r = HL();
+  const a0 = s * 0.32;
+  const shape = ell(x, y, rr * 1.06, rr * 0.86, a0);
+  add(shape, rad(x + s * rr * 0.3, y - rr * 0.35, rr * 1.6, [[0, mixHex(r.base, r.hi, 0.35)], [0.55, r.base], [1, mixHex(r.base, r.sh1, 0.5)]]));
+  detail(ell(x - s * rr * 0.2, y + rr * 0.38, rr * 0.86, rr * 0.48, a0), rgba(r.sh1, 0.6), { clip: shape, blur: 0.6 });
+  const sp = [];
+  for (let k = 0; k <= 40; k++) {
+    const t = k / 40;
+    const a = 0.4 + t * Math.PI * 2.3;
+    const rk = rr * (0.12 + 0.8 * t);
+    sp.push([x + Math.cos(a) * rk * 1.06 * s, y + Math.sin(a) * rk * 0.86]);
+  }
+  detail(poly(ribbon(sp, (u) => 0.9 * Math.sin(Math.PI * Math.min(1, u * 1.1)) + 0.08, { n: 1 })), rgba(r.sh2, 0.42), { clip: shape, blur: 0.25 });
+  const g = [];
+  for (let k = 0; k <= 8; k++) {
+    const a = -2.35 + (k / 8) * 1.5;
+    g.push([x + Math.cos(a) * rr * 0.74 * s, y + Math.sin(a) * rr * 0.62]);
+  }
+  detail(poly(ribbon(g, (u) => 1.2 * Math.sin(Math.PI * u) + 0.05, { n: 2 })), rgba('#ffffff', 0.62), { clip: shape, blur: 0.2 });
+  return shape;
+}
+// A braid down its line: woven lobes leaning left and right in turn, each lit above and deep below,
+// each shadowing the lobe beneath it.
+function braid(line, n, w0, w1, lean = 0.78) {
+  const r = HL();
+  let below = null;
+  for (let k = n - 1; k >= 0; k--) {
+    const t = k / (n - 1);
+    const { p, d, n: nr } = along(line, t);
+    const side = k % 2 ? 1 : -1;
+    const w = lerp(w0, w1, t);
+    const cx = p[0] + nr[0] * side * w * 0.2;
+    const cy = p[1] + nr[1] * side * w * 0.2;
+    const a = Math.atan2(d[1], d[0]) - Math.PI / 2 + side * lean;
+    const shape = ell(cx, cy, w * 0.33, w * 0.64, a);
+    if (below) detail(ell(cx + d[0] * w * 0.2, cy + d[1] * w * 0.2, w * 0.33, w * 0.64, a), rgba(r.sh2, 0.5), { clip: below, blur: 0.45 });
+    add(shape, lin(cx, cy - w * 0.5, cx, cy + w * 0.5, [[0, mixHex(r.base, r.hi, 0.28)], [0.5, r.base], [1, mixHex(r.base, r.sh1, 0.55)]]));
+    detail(ell(cx + nr[0] * side * w * 0.05, cy + w * 0.2, w * 0.3, w * 0.22, a), rgba(r.sh1, 0.6), { clip: shape, blur: 0.35 });
+    detail(ell(cx - nr[0] * side * w * 0.06, cy - w * 0.2, w * 0.12, w * 0.24, a), rgba('#ffffff', 0.55), { clip: shape, blur: 0.18 });
+    below = shape;
+  }
+}
+// A small ribbon bow (navy silk, a silver edge) with a little gold crescent charm.
+function hairBow(x, y, s, size = 1) {
+  const z = size;
+  for (const side of [-1, 1]) {
+    const loop = smooth([[x, y], [x + side * 2.2 * z, y - 2.1 * z], [x + side * 3.6 * z, y - 1.2 * z], [x + side * 3.4 * z, y + 0.9 * z], [x + side * 1.8 * z, y + 1.1 * z]], 4);
+    add(loop, lin(x, y - 2 * z, x, y + 1.2 * z, [[0, NV.lt], [1, NV.base]]));
+    detail(poly(ribbon([[x + side * 1 * z, y - 0.4 * z], [x + side * 2.6 * z, y - 0.9 * z]], (u) => 0.5 * Math.sin(Math.PI * u) + 0.05, { n: 3 })), rgba('#ffffff', 0.4), { clip: loop, blur: 0.1 });
+    const tail = smooth([[x - side * 0.2 * z, y + 0.6 * z], [x + side * 1.1 * z, y + 3.4 * z], [x + side * 1.8 * z, y + 4.6 * z], [x + side * 0.7 * z, y + 4.4 * z], [x - side * 0.3 * z, y + 1.6 * z]], 3);
+    add(tail, NV.base);
+  }
+  add(ell(x, y, 1.05 * z, 0.95 * z), lin(x, y - 1, x, y + 1, [[0, NV.lt], [1, NV.dk]]));
+  crescent(x + s * 0.2, y + 2.2 * z, 1.15 * z, Math.PI / 2, GD.base);
+}
+
+// Her back hair, in her chosen style (behind her body; her bangs and side locks come later).
+function hairBack() {
+  const m = FR_MID;
+  const look = HAIR_LOOK;
+  if (look === 'moonfall') {
+    backMass(102.2);
+    curtain(103.4, 'blunt');
+  } else if (look === 'waves') {
+    backMass(99);
+    curtain(101.6, 'soft', 1.9);
+  } else if (look === 'ringlets') {
+    backMass(95);
+    for (const s of [-1, 1]) {
+      const X = (dx) => m + s * dx;
+      hlock([[X(12), HY + 2], [X(17), HY + 24], [X(19.6), 72], [X(20.2), 94]], (u) => (u < 0.8 ? lerp(8, 7.2, u) : lerp(7.2, 1.6, smoothU((u - 0.8) / 0.2))), { shade: s > 0 ? 1 : -1, tone: s < 0 ? 0.06 : 0 });
+      hlock([[X(17), HY - 6], [X(22.2), HY + 14], [X(24), 64], [X(24.2), 92]], (u) => (u < 0.8 ? lerp(7.6, 6.8, u) : lerp(6.8, 1.6, smoothU((u - 0.8) / 0.2))), { shade: s > 0 ? 1 : -1, tone: s < 0 ? 0.06 : 0 });
+      ringlet(X(28.4), HY + 13, 44, 10.4, s);
+    }
+  } else if (look === 'tails') {
+    // (the long hair behind her sways and trails, more toward its ends: POSE.backHair)
+    const bh = POSE?.backHair ?? 0;
+    const backWarp = bh ? ([x, y]) => [x + bh * smoothU(clamp01((y - HY - 4) / 36)), y] : null;
+    WARP = backWarp;
+    backMass(73, 27);
+    WARP = null;
+    for (const s of [-1, 1]) {
+      const X = (dx) => m + s * dx;
+      WARP = backWarp;
+      hlock([[X(12), HY + 2], [X(17), HY + 18], [X(19.6), 66], [X(20), 75]], (u) => (u < 0.78 ? lerp(8, 7.4, u) : lerp(7.4, 1.6, smoothU((u - 0.78) / 0.22))), { shade: s > 0 ? 1 : -1 });
+      WARP = null;
+      const T = [X(22.6), HY - 19];
+      // (the hair's deeper underside between her head and the tail, down to her shoulder, so no thin
+      // sliver of background shows between them)
+      add(smooth([[X(23), HY - 15], [X(31), HY - 13], [X(33.6), HY + 4], [X(32.6), 58], [X(29.4), 72], [X(25.4), 71], [X(25.6), HY + 6]].map(tailBend(s)), 4), lin(0, HY - 15, 0, 72, [[0, mixHex(HL().base, HL().sh1, 0.5)], [1, mixHex(HL().sh1, HL().sh2, 0.45)]]));
+      twinTail(s);
+    }
+  } else if (look === 'buns') {
+    backMass(102.2);
+    curtain(103.4, 'blunt');
+    for (const s of [-1, 1]) bun(m + s * 22.4, HY - 25, 7.4, s);
+  } else if (look === 'braids') {
+    backMass(73, 27);
+    for (const s of [-1, 1]) {
+      const X = (dx) => m + s * dx;
+      hlock([[X(12), HY + 2], [X(17), HY + 18], [X(19.6), 66], [X(20), 75]], (u) => (u < 0.78 ? lerp(8, 7.4, u) : lerp(7.4, 1.6, smoothU((u - 0.78) / 0.22))), { shade: s > 0 ? 1 : -1 });
+      const line = [[X(23.2), HY + 6], [X(26.6), HY + 24], [X(28.2), 80], [X(27.8), 93]];
+      hlock([[X(21), HY - 6], [X(23.4), HY + 4], [X(24), HY + 9]], (u) => lerp(6.4, 7.4, u), { shade: s });
+      // the tuft below the tie
+      for (const [dx, len, wd] of [[-1.2, 5.6, 2.6], [0, 7, 3], [1.3, 5.2, 2.4]]) hlock([[X(27.8 + dx * 0.4), 94], [X(27.8 + dx), 94 + len * 0.6], [X(27.8 + dx * 1.5), 94 + len]], (u) => lerp(wd, 1, u), { shade: s, gloss: 0 });
+      braid(line, 17, 7.6, 5.2);
+      hairBow(X(27.8), 94, s, 0.85);
+    }
+  }
+}
+// (the rig: a twin tail swings from its tie, its lower part lagging, so it bends and follows; the same
+// bend for the tail and for the darker hair joining it to her head, so the two never part)
+function tailBend(s) {
+  const [a1, a2, a3 = a2] = POSE ? POSE.tails[s > 0 ? 1 : 0] : [0, 0, 0];
+  const T = [FR_MID + s * 22.6, HY - 19];
+  return ([x, y]) => {
+    const u = Math.min(1, Math.max(0, (y - T[1]) / (100.6 - T[1])));
+    return xfPt(rotAbout(T[0], T[1], a1 * u + (a2 - a1) * u * u + (a3 - a2) * u * u * u), [x, y]);
+  };
+}
+// A crescent twin tail (redrawn 2026-11-23, the player: "heavily polish/redraw, improve it"): it
+// springs from its tie in a full soft puff, sweeps out and down in a gentle S, slims toward the end and
+// parts there into soft curling tips of different lengths. One soft mass with five locks over it, all
+// fanning from the tie (so it reads as one tail with real clumps, not separate tubes); the side toward
+// her deeper; a ring of shine across the puff; the bow's shadow under the tie; two ribbon streamers
+// fluttering down from the bow behind her ear.
+function twinTail(s) {
+  const r = HL();
+  const m = FR_MID;
+  const X = (dx) => m + s * dx;
+  const tone = s < 0 ? 0.05 : 0;
+  const C0 = [[X(22.6), HY - 19], [X(28.6), HY - 19.8], [X(33.6), HY - 11.4], [X(36.2), HY + 6], [X(35.4), 62], [X(32.4), 80], [X(31.8), 92], [X(33.4), 100.6]];
+  const C = C0.map(tailBend(s));
+  const W = (u) => (u < 0.2 ? lerp(5, 13, smoothU(u / 0.2)) : u < 0.5 ? lerp(13, 10.6, (u - 0.2) / 0.3) : lerp(10.6, 6.4, (u - 0.5) / 0.5));
+  // (the end: one smooth taper to a soft round tip, curling gently outward; no parting, no bumps)
+  const Wm = (u) => (u < 0.62 ? W(u) : lerp(W(0.62), 2.4, smoothU((u - 0.62) / 0.38) ** 0.9));
+  const mass = poly(cr(ribbon(C, Wm, { n: 10 }), true, 3));
+  add(mass, hairFill(HY - 30, 106, tone + 0.1));
+  const cc = cr(C, false, 10);
+  const N = cc.length;
+  // (each lock: across the tail (share of its half-width, + toward the line's left), its width (share
+  // of the tail's), where it ends along the tail, how its tip curls)
+  const L = [[0.42, 0.44, 0.7, 1], [-0.42, 0.46, 0.72, -1], [0.18, 0.5, 0.76, 0.5], [-0.2, 0.5, 0.76, -0.6], [0, 0.54, 0.8, 0.1]];
+  for (const [k, ws, uEnd, curl] of L) {
+    const line = [];
+    const iEnd = Math.round((N - 1) * uEnd);
+    for (let i = 0; i <= iEnd; i += 3) {
+      const u = i / (N - 1);
+      const a = cc[Math.max(0, i - 1)];
+      const b = cc[Math.min(N - 1, i + 1)];
+      const l = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1;
+      const off = k * W(u) * 0.5 * Math.min(1, u * 5);
+      line.push([cc[i][0] - ((b[1] - a[1]) / l) * off, cc[i][1] + ((b[0] - a[0]) / l) * off]);
+    }
+    const e = line[line.length - 1];
+    const lw = (u) => Wm(u * uEnd) * ws * (u > 0.7 ? lerp(1, 0.55, (u - 0.7) / 0.3) : 1);
+    const inner = k * s > 0;
+    hlock(line, lw, { shade: s, tone: tone + (inner ? 0.06 : 0), gloss: inner ? 0.6 : 1, gy: [HY - 14, HY - 2] });
+  }
+  // (down the tail into its tip: the side toward her soft in shade, a soft light down the other side)
+  detail(poly(ribbon(sideOf(C, Wm, s * 0.55), (u) => Wm(u) * 0.5, { n: 1 })), lin(0, HY, 0, 104, [[0, rgba(r.sh1, 0)], [0.4, rgba(r.sh1, 0.5)], [1, rgba(r.sh1, 0.6)]]), { clip: mass, blur: 0.6 });
+  const lit = sideOf(C, Wm, -s * 0.3);
+  const nL = lit.length;
+  detail(poly(ribbon(lit.slice(Math.round(nL * 0.45), Math.round(nL * 0.97)), (u) => 1.3 * Math.sin(Math.PI * u) + 0.1, { n: 1 })), rgba('#ffffff', 0.42), { clip: mass, blur: 0.35 });
+  // (the bow's shadow under the tie)
+  detail(ell(X(25.6), HY - 17.4, 4.6, 3.2), rgba(r.sh2, 0.5), { clip: mass, blur: 0.8 });
+  // (2026-11-23, the player: "could polish the hair more with shading and stuff". Deeper shade where
+  // the tail turns from the light and where it hangs beside her; a thin rim of light down its lit
+  // edge; a soft periwinkle bounce light on its shadowed edge; fine streaks of light across the puff;
+  // its ends lightening a little, moonlit; two tiny sparkles)
+  detail(poly(ribbon(sideOf(C, Wm, s * 0.5).slice(8), (u) => Wm(u) * 0.42, { n: 1 })), lin(0, HY - 10, 0, 100, [[0, rgba(r.sh2, 0)], [0.25, rgba(r.sh2, 0.26)], [1, rgba(r.sh2, 0.34)]]), { clip: mass, blur: 1 });
+  detail(poly(ribbon(sideOf(C, Wm, -s * 0.88).slice(6, -4), (u) => 0.9 * Math.sin(Math.PI * u) + 0.1, { n: 1 })), rgba('#ffffff', 0.6), { clip: mass, blur: 0.2 });
+  const inEdge = sideOf(C, Wm, s * 0.86);
+  detail(poly(ribbon(inEdge.slice(Math.round(inEdge.length * 0.35), -6), (u) => 1.1 * Math.sin(Math.PI * u) + 0.1, { n: 1 })), rgba('#cfdcff', 0.5), { clip: mass, blur: 0.3 });
+  for (const [k, u0, u1, a0] of [[-0.42, 0.13, 0.3, 0.7], [-0.18, 0.15, 0.27, 0.55], [0.08, 0.14, 0.31, 0.6], [0.3, 0.16, 0.25, 0.45]]) {
+    const st = sideOf(C, Wm, k * s);
+    const seg = st.slice(Math.round(st.length * u0), Math.round(st.length * u1));
+    detail(poly(cr(ribbon(seg, (u) => 0.4 + 0.55 * Math.sin(Math.PI * u), { n: 1 }), true, 2)), rgba('#ffffff', a0), { clip: mass, blur: 0.1 });
+  }
+  const tipGlow = new Path2D();
+  tipGlow.rect(m - 60, 78, 120, 30);
+  detail(tipGlow, lin(0, 78, 0, 104, [[0, rgba('#f6f0ff', 0)], [1, rgba('#f6f0ff', 0.42)]]), { clip: mass });
+  for (const [dx, y, rr] of [[35.4, HY - 4, 1.1], [33, 70, 0.8]]) star4(X(dx), y, rr, 'rgba(255,255,255,0.95)', 0.3);
+  // (two navy ribbon streamers from the bow, fluttering down behind her ear, round-ended)
+  const bx = X(23.6);
+  const by = HY - 17.6;
+  for (const [dx, len, ph, wd] of [[0.4, 13, 0, 2.6], [2.6, 10.5, 1.5, 2.3]]) {
+    const line = [];
+    for (let k = 0; k <= 8; k++) {
+      const t = k / 8;
+      const fl = POSE ? POSE.stream * t + Math.sin(t * Math.PI * 1.6 - POSE.t * 5 + ph) * 0.9 * POSE.go * t : 0;
+      line.push([bx + s * (dx + t * 3.6 + Math.sin(t * Math.PI * 1.7 + ph) * 1.1) + fl * len * 0.5, by + 1 + t * len]);
+    }
+    const rb = poly(cr(ribbon(line, (u) => lerp(wd, wd * 0.8, u), { n: 4 }), true, 2));
+    add(rb, lin(bx, by, bx, by + len, [[0, NV.lt], [1, NV.base]]));
+    detail(poly(ribbon(line.map(([x, y]) => [x + s * 0.35, y]), (u) => 0.45 * Math.sin(Math.PI * u) + 0.05, { n: 4 })), rgba('#ffffff', 0.35), { clip: rb, blur: 0.12 });
+  }
+}
+// The tie of a twin tail: a navy bow with full folded loops (deep inside the fold, a sheen along the
+// top), its knot clasped with a gold crescent and a little pearl.
+function tieBow(x, y, s) {
+  for (const side of [-1, 1]) {
+    const L = (dx, dy) => [x + side * dx, y + dy];
+    const loop = smooth([L(0.4, -0.2), L(2.4, -3.2), L(4.8, -3.4), L(5.6, -1), L(4.6, 1.2), L(2.2, 1.2)], 4);
+    add(loop, lin(x, y - 3.4, x, y + 1.2, [[0, NV.lt], [0.6, NV.base], [1, NV.dk]]));
+    detail(ell(x + side * 1.8, y - 0.6, 1.5, 1.1), rgba(NV.deep, 0.65), { clip: loop, blur: 0.25 });
+    detail(poly(ribbon([L(1.6, -2.4), L(3.4, -3.1), L(5, -2.4)], (u) => 0.6 * Math.sin(Math.PI * u) + 0.05, { n: 4 })), rgba('#ffffff', 0.45), { clip: loop, blur: 0.12 });
+  }
+  add(smooth([[x - 1.3, y - 1.3], [x + 1.3, y - 1.3], [x + 1.5, y + 1.1], [x - 1.5, y + 1.1]], 3), lin(x, y - 1.3, x, y + 1.1, [[0, NV.lt], [1, NV.dk]]));
+  crescent(x - s * 0.1, y - 0.1, 1.55, s > 0 ? Math.PI * 0.95 : Math.PI * 0.05, GD.base);
+  add(ell(x + s * 0.5, y - 0.15, 0.62, 0.62), lin(x, y - 0.8, x, y + 0.5, [[0, '#ffffff'], [1, '#c9d8f4']]), true, { lw: 0.6 });
+  detail(ell(x + s * 0.3, y - 0.4, 0.2, 0.2), '#ffffff');
+}
+// Her hair's ornaments that sit in front of her crown: moon clasps on her twin tails and buns.
+function hairTop() {
+  const m = FR_MID;
+  if (HAIR_LOOK === 'tails') {
+    for (const s of [-1, 1]) tieBow(m + s * 23.6, HY - 18.6, s);
+  } else if (HAIR_LOOK === 'buns') {
+    // (a gold pin through each bun, a crescent at its end)
+    for (const s of [-1, 1]) {
+      const a = [m + s * 17.4, HY - 21.4];
+      const b = [m + s * 29.4, HY - 30.2];
+      add(poly(ribbon([a, b], () => 0.95, { n: 2 })), lin(a[0], a[1], b[0], b[1], [[0, GD.dk], [0.5, GD.base], [1, GD.lt]]), true, { lw: 0.9 });
+      crescent(b[0] + s * 0.8, b[1] - 0.6, 1.7, s > 0 ? Math.PI * 0.85 : Math.PI * 0.15, GD.base);
+    }
+  }
+}
+
+// Her fringe (2026-11-23, the player: "no sharp hair, just make it an even blunt bangs", "it needs
+// to be multiple cut parts", "you can google how hairs are done", then "not bad, just smooth out the
+// hair and give me multiple examples"): a hime cut, built the way anime hair tutorials build one. One
+// even cut line following the curve of her forehead, just above her lashes; splits rising from it,
+// spread evenly but each a little different in width and depth, so the bangs fall in trimmed clumps
+// (narrower toward the sides, where her head turns away); every clump's end cut straight with soft
+// round corners. Behind the splits, the deeper inner layer of her hair. Shaded smoothly (every shade
+// soft-edged): light from above, soft shadows along each clump's sides at the splits, each split
+// carried on up toward her crown as a soft fading line, the sides deeper where her head turns away,
+// and a shine across the bangs. The variations (FR_LOOKS) differ in their splits and their shine.
+const FR_MID = HX + 1;
+// (the crown's outline, its right half from the side up to the top; mirrored for the left)
+const FR_CROWN = [[23.6, 2], [24.9, -8], [22, -19], [15, -26.6], [5.2, -29.6]];
+// (the even cut's height below HY: just above her brows (2026-11-23, the player: "brows ... rework":
+// the cut lifted so her brows show beneath it); it follows her forehead's roundness)
+const FR_CUT = -1;
+// Her bang styles (2026-11-23, the player: "now do the same with bangs": new ones drawn from scratch):
+// the moon hime (hers), a centre-parted moon curtain, a side sweep, airy see-through bangs, the crescent
+// cut (her hime cut arching up like a crescent moon), and a braid crown along her hairline.
+// (2026-11-23, the player drew the cut they want: curving like a U, longest in the middle just above
+// her brows, rising evenly to her temples beside her ears: the round cut, with a gentler and a deeper
+// curve beside it)
+const BANG_LOOKS = { hime: 'Moon hime', round: 'Round cut', roundSoft: 'Round cut, gentle', roundDeep: 'Round cut, deep', curtain: 'Moon curtain', swept: 'Side sweep', air: 'Air bangs', crescent: 'Crescent cut', braid: 'Braid crown' };
+const ROUND_RISE = { round: 5.8, roundSoft: 3.8, roundDeep: 8 };
+const isHimeCut = () => BANG_LOOK === 'hime' || BANG_LOOK === 'crescent' || ROUND_RISE[BANG_LOOK] != null;
+// (the player asked to try the round cut; it is hers for now)
+let BANG_LOOK = 'round';
+const frCutY = (dx) => {
+  if (BANG_LOOK === 'crescent') return HY - 6.2 + 8.4 * Math.min(1, (dx / 21.5) ** 2);
+  const rise = ROUND_RISE[BANG_LOOK];
+  // (the player: "a bit lower": the round cut sits one step lower on her forehead)
+  if (rise != null) return HY + 1.1 - rise * Math.min(1.05, (dx / 22) ** 2);
+  return HY + FR_CUT + 0.4 * (1 - Math.min(1, (dx / 21.5) ** 2));
+};
+const FR_END = 21.8;
+// The variations: the splits (right half from the middle out: where, how deep; mirrored on the left),
+// the shine, and how strongly the splits are shaded.
+const FR_LOOKS = {
+  soft: { name: 'Soft hime', splits: [[2.9, 4.8], [7.5, 2.6], [11.9, 5.2], [15.9, 2.4], [19.5, 4]], shine: 'lines' },
+  wide: { name: 'Wide clumps', splits: [[3.6, 3.4], [9.6, 2.4], [15.2, 3.6], [19.8, 2.2]], shine: 'band' },
+  layered: { name: 'Layered', splits: [[2.9, 6.6], [7.5, 3.4], [11.9, 7.2], [15.9, 3.2], [19.5, 5.6]], shine: 'lines', crease: 0.5, side: 0.5 },
+  airy: { name: 'Airy', splits: [[2.2, 3.2], [5.4, 2], [8.6, 3.8], [11.8, 2.2], [14.8, 3.4], [17.6, 2], [20.2, 2.8]], shine: 'lines', crease: 0.3 },
+  ring: { name: 'Angel ring', splits: [[2.9, 4.8], [7.5, 2.6], [11.9, 5.2], [15.9, 2.4], [19.5, 4]], shine: 'ring' },
+  plain: { name: 'Simple', splits: [[3.2, 2.6], [8.4, 1.8], [13.4, 2.8], [18.4, 1.8]], shine: 'band', crease: 0, side: 0.3 },
+};
+let FR_LOOK = 'soft';
+const frLook = () => ({ crease: 0.4, side: 0.42, ...FR_LOOKS[FR_LOOK] });
+function frShape(cutLift = 0) {
+  const P = (dx, dy) => [FR_MID + dx, HY + dy];
+  const right = FR_CROWN.map(([dx, dy]) => P(dx, dy));
+  const left = FR_CROWN.map(([dx, dy]) => P(-dx, dy)).reverse();
+  const cut = [];
+  for (let k = -5; k <= 5; k++) cut.push([FR_MID + k * 4.36, frCutY(k * 4.36) - cutLift]);
+  return poly(cr([...cut, ...right.slice(1, -1), P(0, -30), ...left.slice(1, -1)], true, 4));
+}
+function frBangs(splits) {
+  const mid = FR_MID;
+  const half = [];
+  for (const [xs, d0] of splits) {
+    const d = ROUND_RISE[BANG_LOOK] != null ? d0 * (1 - 0.35 * (xs / 22) ** 2) : d0;
+    const ax = xs - d * 0.1;
+    const y0 = frCutY(xs);
+    // (each clump's corner rounded softly into the split; the split's top round)
+    half.push(
+      [xs - 1.3, frCutY(xs - 1.3)],
+      [xs - 0.5, y0 - 0.85],
+      [ax - 0.32, y0 - d + 0.6],
+      [ax, y0 - d],
+      [ax + 0.32, y0 - d + 0.6],
+      [xs + 0.5, y0 - 0.85],
+      [xs + 1.3, frCutY(xs + 1.3)],
+    );
+  }
+  half.push([FR_END - 1.2, frCutY(FR_END - 1.2)], [FR_END - 0.15, frCutY(FR_END) - 1]);
+  const edge = [...half.map(([x, y]) => [mid - x, y]).reverse(), [mid, frCutY(0)], ...half.map(([x, y]) => [mid + x, y])];
+  const right = FR_CROWN.slice(1, -1).map(([dx, dy]) => [mid + dx, HY + dy]);
+  const left = FR_CROWN.slice(1, -1).map(([dx, dy]) => [mid - dx, HY + dy]).reverse();
+  return poly(cr([...edge, ...right, [mid, HY - 30], ...left], true, 5));
+}
+function hairFront() {
+  if (!isHimeCut()) return bangsNew(BANG_LOOK);
+  const ramp = hairRamp(HAIR_COLOR);
+  const mid = FR_MID;
+  const look = frLook();
+  castShade(frBangs(look.splits));
+  const fill = lin(mid, HY - 30, mid, HY + FR_CUT + 0.4, [[0, mixHex(ramp.base, ramp.hi, 0.35)], [0.45, ramp.base], [0.84, mixHex(ramp.base, ramp.sh1, 0.18)], [1, mixHex(ramp.base, ramp.sh1, 0.4)]]);
+  // the inner layer, seen only up inside the splits: deeper, ending a little above the cut
+  const inner = frShape(1.8);
+  add(inner, lin(mid, HY - 12, mid, HY + FR_CUT, [[0, mixHex(ramp.base, ramp.sh1, 0.4)], [1, mixHex(ramp.sh1, ramp.sh2, 0.3)]]));
+  // the bangs
+  const bangs = frBangs(look.splits);
+  add(bangs, fill);
+  const shade = (a) => (y0, y1) => lin(mid, y0, mid, y1, [[0, rgba(ramp.sh1, 0)], [1, rgba(ramp.sh1, a)]]);
+  for (const sd of [-1, 1]) {
+    for (const [xs, d0] of look.splits) {
+      const d = ROUND_RISE[BANG_LOOK] != null ? d0 * (1 - 0.35 * (xs / 22) ** 2) : d0;
+      const ax = xs - d * 0.1;
+      const y0 = frCutY(xs);
+      // soft shadows along the clumps' sides at the split
+      const sp = [[mid + sd * xs, y0 + 0.4], [mid + sd * (ax + (xs - ax) * 0.4), y0 - d * 0.6], [mid + sd * ax, y0 - d - 1.8]];
+      detail(poly(ribbon(sp, (u) => lerp(3.2, 1, u), { n: 6 })), shade(look.side)(y0 - d - 1.8, y0), { clip: bangs, blur: 0.55 });
+      // the split carried on up toward her crown, fading
+      if (look.crease > 0) {
+        const up = [[mid + sd * ax, y0 - d + 0.2], [mid + sd * ax * 0.93, y0 - d - 4.5], [mid + sd * ax * 0.72, HY - 17]];
+        detail(poly(ribbon(up, (u) => 1 * (1 - u) + 0.2, { n: 8 })), lin(mid, HY - 17, mid, y0 - d, [[0, rgba(ramp.sh1, 0)], [1, rgba(ramp.sh1, look.crease)]]), { clip: bangs, blur: 0.35 });
+      }
+    }
+  }
+  // the clumps' cut ends a touch deeper; the sides deeper where her head turns away
+  if (BANG_LOOK !== 'hime') {
+    // (each clump's end a clean, slightly deeper shade, crisp at the cut)
+    const cutL = [];
+    for (let k = -22; k <= 22; k += 2) cutL.push([mid + k, frCutY(k) - 0.9]);
+    detail(poly(ribbon(cutL, () => 2.4, { n: 2 })), rgba(ramp.sh1, 0.42), { clip: bangs, blur: 0.25 });
+    const cutL2 = [];
+    for (let k = -22; k <= 22; k += 2) cutL2.push([mid + k, frCutY(k) - 0.25]);
+    detail(poly(ribbon(cutL2, () => 0.9, { n: 2 })), rgba(ramp.sh2, 0.32), { clip: bangs, blur: 0.08 });
+  } else {
+    const low = new Path2D();
+    low.rect(mid - 30, HY - 6, 60, 10);
+    detail(low, shade(0.26)(HY - 2.6, HY + FR_CUT + 0.4), { clip: bangs });
+  }
+  const sides = new Path2D();
+  sides.rect(mid - 30, HY - 32, 60, 36);
+  detail(sides, lin(mid - 25, 0, mid + 25, 0, [[0, rgba(ramp.sh1, 0.3)], [0.24, rgba(ramp.sh1, 0)], [0.76, rgba(ramp.sh1, 0)], [1, rgba(ramp.sh1, 0.3)]]), { clip: bangs });
+  if (HAIR_LOOK === 'tails') {
+    // (her hair drawn up into each tie: soft lines across her crown sweeping to the ties, fading at
+    // both ends)
+    for (const sd of [-1, 1]) {
+      for (const [x0, y0, a] of [[3.4, -27.4, 0.42], [8, -25.6, 0.4], [12.6, -23, 0.34]]) {
+        const ln = [[mid + sd * x0, HY + y0], [mid + sd * (x0 + 5), HY + y0 + 0.6], [mid + sd * 15.6, HY - 20.6], [mid + sd * 20.6, HY - 19.6]];
+        detail(poly(ribbon(ln, (u) => 1 * Math.sin(Math.PI * u) + 0.05, { n: 6 })), rgba(ramp.sh1, a), { clip: bangs, blur: 0.3 });
+      }
+    }
+  }
+  // the shine: a soft band following her head's curve, fading at its ends; with fine lines of light
+  // on the clumps ('lines'), the band alone ('band'), or high on the crown as a ring ('ring')
+  const rise = ROUND_RISE[BANG_LOOK];
+  const sy = look.shine === 'ring' ? -15.4 : BANG_LOOK === 'crescent' ? -14.4 : rise != null ? -11.2 - rise * 0.25 : -9.6;
+  const arcY = (dx) => HY + sy + (look.shine === 'ring' ? 6.6 : rise != null ? 2.6 : 4.6) * (dx / 20) ** 2;
+  const band = [];
+  for (let k = 0; k <= 40; k++) band.push([mid - 20 + k, arcY(-20 + k)]);
+  const fade = (a, col) => lin(mid - 20, 0, mid + 20, 0, [[0, rgba(col, 0)], [0.18, rgba(col, a)], [0.82, rgba(col, a)], [1, rgba(col, 0)]]);
+  detail(poly(cr(ribbon(band, () => 4, { n: 1 }), true, 2)), fade(0.4, ramp.hi), { clip: bangs, blur: 0.8 });
+  if (look.shine === 'band' || look.shine === 'ring') detail(poly(cr(ribbon(band, () => 1.4, { n: 1 }), true, 2)), fade(0.5, '#ffffff'), { clip: bangs, blur: 0.35 });
+  if (look.shine === 'lines' || look.shine === 'ring') {
+    // (one fine line on each clump, a second on the wide ones, each a different length)
+    const xs = [0, ...look.splits.map(([x]) => x), FR_END];
+    const lens = [5.4, 3.8, 4.8, 3.4, 4.2, 3.2, 3.8, 3];
+    for (const sd of [-1, 1]) {
+      for (let i = 0; i < xs.length - 1; i++) {
+        const w = i === 0 ? xs[1] * 2 : xs[i + 1] - xs[i];
+        const cx = i === 0 ? 0 : (xs[i] + xs[i + 1]) / 2;
+        if (cx > 19) continue;
+        const marks = [[cx + (i === 0 ? -0.9 : 0), lens[i % lens.length], 0]];
+        if (w > 4.4) marks.push([cx + w * 0.26, lens[i % lens.length] * 0.62, 0.6]);
+        for (const [mx, len, dy] of marks) {
+          if (i === 0 && sd < 0 && mx < 0) continue;
+          const x = mid + sd * mx;
+          const y = arcY(mx) + dy;
+          const lean = sd * mx * 0.03;
+          const st = [[x - lean * len * 0.5, y - len * 0.45], [x + lean * len * 0.5, y + len * 0.55]];
+          detail(poly(cr(ribbon(st, (u) => 0.45 + 0.5 * Math.sin(Math.PI * u), { n: 4 }), true, 2)), rgba('#ffffff', 0.62), { clip: bangs, blur: 0.12 });
+        }
+      }
+    }
+  }
+  // (more shading: the tiara's soft shadow across her hair just below its band; the bows' shadows on
+  // her crown; a soft warm glow along the bangs' lower edge, light bouncing up from her face)
+  const tb = [[HX - 20.4, HY - 11.4], [HX - 13, HY - 20.6], [HX + 2, HY - 24.4], [HX + 16, HY - 20.6], [HX + 22, HY - 11.4]];
+  detail(poly(ribbon(cr(tb, false, 6).map(([x, y]) => [x - 0.4, y + 1.6]), () => 1.8, { n: 1 })), rgba(ramp.sh2, 0.32), { clip: bangs, blur: 0.5 });
+  if (HAIR_LOOK === 'tails') for (const sd of [-1, 1]) detail(ell(mid + sd * 22.4, HY - 15.8, 5.4, 2.6), rgba(ramp.sh2, 0.4), { clip: bangs, blur: 0.8 });
+  // moonlight along the crown's upper edge, toward the light
+  const rim = FR_CROWN.slice(1, 5).map(([dx, dy]) => [mid + dx - 1.6, HY + dy + 1.2]).reverse();
+  detail(poly(ribbon(rim, (u) => 1.4 * Math.sin(Math.PI * u), { n: 8 })), rgba('#ffffff', 0.5), { clip: bangs, blur: 0.4 });
+}
+// (a soft shadow on her face under a hair shape, a little below it)
+function castShade(path, dx = 0.3, dy = 1.3, a = 0.55) {
+  const p2 = new Path2D();
+  p2.addPath(path, new DOMMatrix().translate(dx, dy));
+  detail(p2, rgba(SK.sh1, a), { clip: HEAD, blur: 0.7 });
+}
+// (her crown's cap down to a hairline: `edge` from the left temple to the right)
+function capShape(edge) {
+  const m = FR_MID;
+  const right = FR_CROWN.slice(1, -1).map(([dx, dy]) => [m + dx, HY + dy]);
+  const left = FR_CROWN.slice(1, -1).map(([dx, dy]) => [m - dx, HY + dy]).reverse();
+  return poly(cr([...edge, ...right, [m, HY - 30], ...left], true, 5));
+}
+// (a lock narrowing from its root to a soft round end)
+const bangTaper = (w0, w1) => (u) => (u < 0.22 ? lerp(w0 * 0.82, w0, u / 0.22) : lerp(w0, w1, ((u - 0.22) / 0.78) ** 1.15));
+// The new bang styles: her crown's cap down to each style's hairline, then its locks (or braid), each
+// casting a soft shadow on her forehead; the cap lit from above, a band of shine round it, moonlight
+// along its upper edge.
+function bangsNew(look) {
+  const m = FR_MID;
+  const r = HL();
+  const locks = [];
+  let edge;
+  if (look === 'curtain') {
+    // parted in the middle; each side sweeping out and down to her temples, curving as it goes, the
+    // locks nearest the part lying on top; her forehead shows in a soft arch between them
+    edge = [[m - 21.8, HY + 1.5], [m - 17.5, HY - 5], [m - 10.5, HY - 12.5], [m - 4.2, HY - 17.2], [m, HY - 18.4], [m + 4.2, HY - 17.2], [m + 10.5, HY - 12.5], [m + 17.5, HY - 5], [m + 21.8, HY + 1.5]];
+    for (const s of [-1, 1]) {
+      const X = (dx) => m + s * dx;
+      locks.push([[[X(7.4), HY - 21], [X(15.2), HY - 13], [X(19.8), HY - 3.4], [X(21.2), HY + 5]], bangTaper(6.4, 2.6), s]);
+      locks.push([[[X(3.4), HY - 21.6], [X(10.6), HY - 13.2], [X(16.2), HY - 4.2], [X(18.6), HY + 4]], bangTaper(6.6, 2.6), s]);
+      locks.push([[[X(1), HY - 20.8], [X(5.8), HY - 13.6], [X(11), HY - 5.6], [X(14.8), HY + 1.4]], bangTaper(5.8, 2.4), s]);
+    }
+    locks.sort((a, b) => Math.abs(b[0][0][0] - m) - Math.abs(a[0][0][0] - m));
+  } else if (look === 'swept') {
+    // parted on her left: the hair sweeps across her forehead to the right in long soft locks, above
+    // her brows, its ends tucking by her right temple; a short lock falls by her left temple
+    edge = [[m - 21.8, HY + 2], [m - 18, HY - 6], [m - 12.4, HY - 13], [m - 8, HY - 15.8], [m - 4, HY - 13], [m + 4, HY - 9], [m + 12, HY - 5], [m + 18, HY - 1], [m + 21.8, HY + 2.5]];
+    locks.push([[[m - 10.6, HY - 18], [m - 15.6, HY - 10], [m - 19, HY - 2], [m - 20.2, HY + 4.4]], bangTaper(5.8, 2.4), -1]);
+    locks.push([[[m - 4, HY - 24.4], [m + 6, HY - 20.6], [m + 15, HY - 14], [m + 21, HY - 6], [m + 23, HY + 1]], bangTaper(6.4, 2.6), 1]);
+    locks.push([[[m - 7, HY - 22], [m + 2, HY - 17], [m + 11, HY - 10.4], [m + 18, HY - 4], [m + 21.4, HY + 3.6]], bangTaper(6.8, 2.6), 1]);
+    locks.push([[[m - 9, HY - 19], [m - 2, HY - 14], [m + 7, HY - 7.6], [m + 14.6, HY - 2.6], [m + 18.8, HY + 2.8]], bangTaper(6.6, 2.6), 1]);
+    locks.push([[[m - 10, HY - 16.4], [m - 4, HY - 10.6], [m + 3.6, HY - 4.8], [m + 10.4, HY - 1.4], [m + 14, HY + 0.6]], bangTaper(5.4, 2.2), 1]);
+  } else if (look === 'air') {
+    // light see-through bangs: seven soft clumps from her hairline to her brows, a little of her
+    // forehead showing between them, each ending in a soft round tip
+    edge = [[m - 21.8, HY + 1.5], [m - 18.5, HY - 3.6], [m - 12, HY - 6], [m, HY - 6.8], [m + 12, HY - 6], [m + 18.5, HY - 3.6], [m + 21.8, HY + 1.5]];
+    const cl = [[-16.4, 1.6, 6.2], [-11, 0.9, 6.4], [-5.5, 0.5, 6.4], [0, 1.0, 6.6], [5.5, 0.5, 6.4], [11, 0.9, 6.4], [16.4, 1.6, 6.2]];
+    for (const [dx, ty, w] of cl) {
+      const lean = Math.sign(dx) * 0.6;
+      locks.push([[[m + dx * 0.8, HY - 15], [m + dx * 0.96, HY - 6], [m + dx + lean, HY + ty]], (u) => (u < 0.5 ? w : lerp(w, 1.9, smoothU((u - 0.5) / 0.5))), 1]);
+    }
+  } else if (look === 'braid') {
+    // her front hair braided across her hairline like a circlet, just under her tiara; a short soft
+    // lock framing each temple
+    edge = [[m - 21.8, HY + 1], [m - 18, HY - 6.5], [m - 11, HY - 12], [m, HY - 13.6], [m + 11, HY - 12], [m + 18, HY - 6.5], [m + 21.8, HY + 1]];
+
+  }
+  const cap = capShape(edge);
+  // their shadows on her forehead
+  castShade(cap);
+  for (const [line, w] of locks) castShade(poly(ribbon(line, w, { n: 8 })), 0.4, 1.2, 0.5);
+  const fill = lin(m, HY - 30, m, HY + 6, [[0, mixHex(r.base, r.hi, 0.35)], [0.5, r.base], [1, mixHex(r.base, r.sh1, 0.34)]]);
+  add(cap, fill);
+  // (the cap's edge a touch deeper; its sides deeper where her head turns away)
+  detail(poly(cr(ribbon(edge, () => 3, { n: 4 }), true, 2)), rgba(r.sh1, 0.32), { clip: cap, blur: 0.6 });
+  const sides = new Path2D();
+  sides.rect(m - 30, HY - 32, 60, 36);
+  detail(sides, lin(m - 25, 0, m + 25, 0, [[0, rgba(r.sh1, 0.3)], [0.24, rgba(r.sh1, 0)], [0.76, rgba(r.sh1, 0)], [1, rgba(r.sh1, 0.3)]]), { clip: cap });
+  // the locks (or the braid) over it
+  for (const [line, w, sh] of locks) hlock(line, w, { shade: sh, gloss: 0, fill, outline: true });
+  // (a band of shine round the crown, fading at its ends)
+  const arcY = (dx) => HY - 17.2 + 6.4 * (dx / 20) ** 2;
+  const band = [];
+  for (let k = 0; k <= 40; k++) band.push([m - 20 + k, arcY(-20 + k)]);
+  const fade = (a, col) => lin(m - 20, 0, m + 20, 0, [[0, rgba(col, 0)], [0.18, rgba(col, a)], [0.82, rgba(col, a)], [1, rgba(col, 0)]]);
+  detail(poly(cr(ribbon(band, () => 4, { n: 1 }), true, 2)), fade(0.38, r.hi), { clip: cap, blur: 0.8 });
+  detail(poly(cr(ribbon(band, () => 1.4, { n: 1 }), true, 2)), fade(0.45, '#ffffff'), { clip: cap, blur: 0.35 });
+  const rim = FR_CROWN.slice(1, 5).map(([dx, dy]) => [m + dx - 1.6, HY + dy + 1.2]).reverse();
+  detail(poly(ribbon(rim, (u) => 1.4 * Math.sin(Math.PI * u), { n: 8 })), rgba('#ffffff', 0.5), { clip: cap, blur: 0.4 });
+  if (look === 'braid') braid([[m - 18.4, HY - 4.6], [m - 14.6, HY - 9.4], [m - 7.6, HY - 12.8], [m, HY - 13.6], [m + 7.6, HY - 12.8], [m + 14.6, HY - 9.4], [m + 18.4, HY - 4.6]], 25, 5.6, 5.6, 0.55);
+}
+function sideLocks() {
+  const ramp = hairRamp(HAIR_COLOR);
+  const mid = HX + 1;
+  for (const s2 of [-1, 1]) {
+    const X = (dx) => mid + s2 * dx;
+    // (the player: "this side of the face on both sides should be covered by hair": wide enough to
+    // cover her face's sides right up to her lashes' wings, clear of them and of her cheek mark)
+    const sw0 = POSE ? POSE.locks[s2 > 0 ? 1 : 0] : 0;
+    const line = [[X(19.2), HY - 9], [X(20.4), HY + 2], [X(20.2), HY + 13], [X(21), HY + 23], [X(21), 72], [X(20.4), 80]].map(([x, y]) => {
+      const u = Math.max(0, (y - HY) / 40);
+      return [x + sw0 * 45 * u * u, y];
+    });
+    const w = (u) => (u < 0.72 ? lerp(9.8, 7.6, u / 0.72) : 7.6 * Math.cos(((u - 0.72) / 0.28) * Math.PI * 0.5) ** 0.75 + 0.6);
+    const pts = ribbon(line, w, { n: 8 });
+    const shape = poly(cr(pts, true, 2));
+    add(shape, lin(X(20), HY - 8, X(20), 80, [[0, ramp.base], [0.7, ramp.base], [1, ramp.sh1]]));
+    // (the side toward her face in soft shade; a shine down the outside)
+    const inner = line.map(([x, y]) => [x - s2 * 2.6, y]);
+    detail(poly(ribbon(inner, (u) => w(u) * 0.42, { n: 8 })), rgba(ramp.sh1, 0.7), { clip: shape, blur: 0.6 });
+    const outer = line.slice(0, 4).map(([x, y]) => [x + s2 * 2.2, y + 3]);
+    detail(poly(ribbon(outer, (u) => 1.6 * Math.sin(Math.PI * u) + 0.2, { n: 8 })), rgba(ramp.hi, 0.75), { clip: shape, blur: 0.4 });
+    // (one soft line between its two clumps, fading at both ends)
+    const groove = line.slice(1).map(([x, y]) => [x - s2 * 0.4, y]);
+    detail(poly(ribbon(groove, (u) => 0.9 * Math.sin(Math.PI * u), { n: 8 })), rgba(ramp.sh2, 0.4), { clip: shape, blur: 0.35 });
+    // (more shading: deep where it tucks under the bangs, a thin rim of light down its outer edge, a
+    // periwinkle bounce light low on its inner edge, its ends lightening a little)
+    detail(ell(X(20.4), HY - 4, 6, 4), rgba(ramp.sh2, 0.35), { clip: shape, blur: 0.9 });
+    const sw = (u) => (u < 0.72 ? lerp(9.8, 7.6, u / 0.72) : 7.6 * Math.cos(((u - 0.72) / 0.28) * Math.PI * 0.5) ** 0.75 + 0.6);
+    const oe = sideOf(line, sw, -s2 * 0.86);
+    detail(poly(ribbon(oe.slice(Math.round(oe.length * 0.12), -6), (u) => 0.8 * Math.sin(Math.PI * u) + 0.1, { n: 1 })), rgba('#ffffff', 0.55), { clip: shape, blur: 0.2 });
+    const ie = sideOf(line, sw, s2 * 0.86);
+    detail(poly(ribbon(ie.slice(Math.round(ie.length * 0.45), -6), (u) => 1 * Math.sin(Math.PI * u) + 0.1, { n: 1 })), rgba('#cfdcff', 0.45), { clip: shape, blur: 0.3 });
+    const lt = new Path2D();
+    lt.rect(X(10) - 20, 64, 40, 20);
+    detail(lt, lin(0, 64, 0, 80, [[0, rgba('#f6f0ff', 0)], [1, rgba('#f6f0ff', 0.4)]]), { clip: shape });
+  }
+}
+function longHair() {}
+// (the fringe's shadow on her forehead, drawn with her face, under the fringe)
+function fringeShade() {}
+// The veil: sheer moonlight silk from her crown, down her back and over the deer to its rump, its
+// border stitched with silver and little stars.
+function veilPt([x, y]) {
+  if (!POSE) return [x, y];
+  // (near her head it moves with her head, low on the deer's back with the deer, between the two;
+  // a soft ripple runs down it)
+  const t = smoothU(Math.min(1, Math.max(0, (y - 40) / 72)));
+  const ph = xfPt(POSE.Mh, [x, y]);
+  const pb = xfPt(POSE.Mb, [x, y]);
+  const rip = POSE.veil * Math.sin((y - 40) * 0.09 - POSE.t * 2.4) * t;
+  return [lerp(ph[0], pb[0], t) + rip, lerp(ph[1], pb[1], t) + rip * 0.2 + (POSE.veilY ?? 0) * t];
+}
+function veil() {
+  const outer = [[HX - 8, HY - 18], [HX - 20, HY - 10], [HX - 32, HY + 10], [HX - 44, 66], [HX - 56, 84], [HX - 68, 99], [HX - 78, 111], [HX - 82, 121]].map(veilPt);
+  const hem = [[HX - 76, 127], [HX - 66, 124.6], [HX - 58, 128], [HX - 48, 125], [HX - 40, 128.4], [HX - 32, 124]].map(veilPt);
+  const inner = [[HX - 26, 104], [HX - 20, 80], [HX - 14, HY + 14], [HX - 2, HY - 12]].map(veilPt);
+  const shape = smooth([...outer, ...hem, ...inner], 5);
+  add(shape, lin(HX - 40, HY, HX - 60, 130, [[0, rgba(LV.lt, 0.28)], [1, rgba(LV.base, 0.46)]]), false);
+  // folds: long soft creases falling from the crown
+  for (let k = 0; k < 5; k++) {
+    const f = [[HX - 10 - k * 3, HY - 8 + k * 4], [HX - 24 - k * 6, 74 + k * 2], [HX - 38 - k * 8, 104 + k * 2], [HX - 40 - k * 8, 124]].map(veilPt);
+    detail(poly(ribbon(f, (u) => 1.8 * Math.sin(Math.PI * u) + 0.2, { n: 5 })), rgba('#ffffff', 0.4), { clip: shape });
+    detail(poly(ribbon(f.map(([x, y]) => [x + 2.6, y]), (u) => 1.2 * Math.sin(Math.PI * u) + 0.1, { n: 5 })), rgba(LV.dk, 0.25), { clip: shape });
+  }
+  // its hem: a stitched silver line, little stars
+  const hl = cr([outer[outer.length - 1], ...hem], false, 6);
+  lineOf(hl.map(([x, y]) => [x, y - 2]), rgba(SV.base, 0.95), 0.5, { clip: shape });
+  for (let k = 3; k < hl.length - 2; k += 7) star4(hl[k][0], hl[k][1] - 4.2, 1.2, 'rgba(255,255,255,0.95)', 0.3);
+  return shape;
+}
+
+// ---------- The antlers ----------
+// Crystal: a soft glow inside, a bright line down each tine, a cooler edge on the far side, small
+// facets; fine gold chains swinging between the tines with a little moon and a star.
+function antler(s) {
+  const far = s < 0;
+  const k = far ? 0.94 : 1;
+  const b = [HX + s * 8.4, HY - 22];
+  const X = (dx) => HX + s * dx * k;
+  const beam = [b, [X(10.6), HY - 33 * k], [X(16.4), HY - 43 * k], [X(24.6), HY - 50.6 * k], [X(33.6), HY - 54.4 * k]];
+  const tines = [
+    [along(beam, 0.24).p, [X(8.2), HY - 45 * k], [X(7.2), HY - 52.6 * k]],
+    [along(beam, 0.52).p, [X(18.6), HY - 55 * k], [X(17.4), HY - 63.4 * k]],
+    [along(beam, 0.78).p, [X(29.4), HY - 61 * k], [X(30.4), HY - 68.4 * k]],
+  ];
+  const shapes = [poly(ribbon(beam, (u) => lerp(5.2, 2.4, u) * k, { n: 8 })), ...tines.map((t) => poly(ribbon(t, (u) => lerp(3.2, 1.5, u) * k, { n: 6 })))];
+  for (const p of shapes) add(p, lin(b[0], b[1], X(30), HY - 66, [[0, far ? AN.mid : AN.base], [1, far ? AN.sh : AN.mid]]));
+  const all = join(...shapes);
+  glow(all, X(16), HY - 42, 16, '#ffffff', far ? 0.35 : 0.7);
+  for (const t of [beam, ...tines]) {
+    lineOf(cr(t, false, 6).slice(1, -2), rgba('#ffffff', far ? 0.55 : 0.95), 0.85, { clip: all });
+    lineOf(cr(t.map(([x, y]) => [x + s * 1.2, y + 0.4]), false, 6).slice(2, -1), rgba(AN.edge, far ? 0.4 : 0.55), 0.8, { clip: all });
+  }
+  for (const u of [0.16, 0.36, 0.6, 0.84]) {
+    const q = along(beam, u);
+    lineOf([[q.p[0] - q.n[0] * 1.8 - q.d[0] * 0.8, q.p[1] - q.n[1] * 1.8 - q.d[1] * 0.8], [q.p[0] + q.n[0] * 1.8 + q.d[0] * 0.8, q.p[1] + q.n[1] * 1.8 + q.d[1] * 0.8]], rgba('#ffffff', 0.7), 0.5, { clip: all });
+  }
+  for (const t of tines) star4(t[2][0], t[2][1] - 1.6, far ? 1.6 : 2.1, '#ffffff', 0.2);
+  // the chains
+  const chain = (p0, p1, sag, charm) => {
+    const mid = [(p0[0] + p1[0]) / 2 + (POSE?.chain ?? 0) * sag * 0.6, (p0[1] + p1[1]) / 2 + sag];
+    const line = cr([p0, mid, p1], false, 8);
+    lineOf(line, far ? '#9c7638' : GD.dk, 1.05);
+    lineOf(line, far ? '#d8b25c' : GD.lt, 0.5, { dash: [0.7, 0.7] });
+    const m = line[Math.floor(line.length / 2)];
+    withXF(rotAbout(m[0], m[1], POSE?.charm ?? 0), () => {
+    lineOf([m, [m[0], m[1] + 2.2]], GD.dk, 0.5);
+    if (charm === 'moon') {
+      crescent(m[0], m[1] + 4, 1.9, 0.5, far ? '#d8b25c' : GD.base);
+      detail(ell(m[0] - 0.4, m[1] + 3.6, 0.5, 0.5), '#ffffff');
+    } else {
+      star5(m[0], m[1] + 4, 1.9, far ? '#d8b25c' : GD.base);
+      detail(ell(m[0] - 0.3, m[1] + 3.6, 0.45, 0.45), '#ffffff');
+    }
+    });
+  };
+  const tp = (t, u) => along(t, u).p;
+  chain(tp(tines[0], 0.72), tp(tines[1], 0.6), 5, 'moon');
+  chain(tp(tines[1], 0.72), tp(tines[2], 0.62), 4.4, 'star');
+  chain(tp(beam, 0.34), tp(beam, 0.96), 8.6, far ? 'star' : 'moon');
+}
+
+// ---------- The deer ears ----------
+// (redrawn 2026-11-23): a soft leaf-shaped deer ear with a rounded tip; its inside pink, fluffy white
+// fur tufts along the inner edge and at its base, a soft rim of light along the top, a soft shade where
+// it meets her head; her crescent earring.
+function deerEar(s) {
+  return withXF(rotAbout(HX + s * 20.5, HY - 7, POSE ? POSE.ear[s > 0 ? 1 : 0] * s : 0), () => deerEarDraw(s));
+}
+function deerEarDraw(s) {
+  const base = [HX + s * 20.5, HY - 7];
+  const a = s > 0 ? -0.2 : Math.PI + 0.2;
+  const len = 17.4;
+  const wd = 9.8;
+  const far = s < 0;
+  const R = (u, v) => [base[0] + Math.cos(a) * len * u - Math.sin(a) * wd * v * s, base[1] + Math.sin(a) * len * u + Math.cos(a) * wd * v * s];
+  const ear = smooth([R(-0.05, -0.34), R(0.26, -0.56), R(0.58, -0.54), R(0.86, -0.32), R(1.01, -0.05), R(0.98, 0.12), R(0.78, 0.36), R(0.48, 0.52), R(0.18, 0.5), R(-0.05, 0.38)], 4);
+  add(ear, far ? lin(...R(0, -0.5), ...R(0, 0.5), [[0, CO.base], [1, CO.sh]]) : lin(...R(0, -0.5), ...R(0, 0.5), [[0, CO.hi], [1, CO.base]]));
+  // (the inside: pink, deepest toward the base)
+  const inner = smooth([R(0.1, -0.2), R(0.4, -0.32), R(0.72, -0.2), R(0.88, 0.02), R(0.66, 0.24), R(0.34, 0.3), R(0.1, 0.16)], 4);
+  detail(inner, lin(...R(0.08, 0), ...R(0.9, 0), [[0, far ? '#c9a0bd' : '#e6b6cf'], [1, far ? '#dcbdd2' : '#f9e4ef']]), { clip: ear, blur: 0.15 });
+  detail(ell(...R(0.2, 0.02), 3, 2.4), rgba(far ? '#b58aa9' : '#d99bbd', 0.5), { clip: inner, blur: 0.5 });
+  // (fluffy white fur tufts along the inner lower edge and at the base)
+  const along2 = Math.atan2(R(1, 0)[1] - R(0, 0)[1], R(1, 0)[0] - R(0, 0)[0]);
+  for (const [u, v, len, w] of [[0.06, 0.28, 7, 3.4], [0.24, 0.34, 6.4, 3], [0.42, 0.32, 5.4, 2.6]]) {
+    const [cx, cy] = R(u, v);
+    const tilt = s * -0.18;
+    detail(furTuft(cx, cy + 0.6, len, w, along2 + tilt), rgba(far ? CO.sh : '#d9b3c9', 0.45), { clip: ear, blur: 0.35 });
+    detail(furTuft(cx, cy, len, w, along2 + tilt), lin(cx, cy, cx + Math.cos(along2) * len, cy, [[0, far ? CO.hi : '#ffffff'], [1, far ? CO.base : '#fdf6fa']]), { clip: ear, blur: 0.1 });
+  }
+  // (a soft rim of light along its top, a soft shade where it meets her head)
+  detail(poly(ribbon([R(0.12, -0.44), R(0.45, -0.5), R(0.78, -0.34), R(0.95, -0.1)], (u) => 1.4 * Math.sin(Math.PI * u) + 0.1, { n: 6 })), rgba('#ffffff', far ? 0.3 : 0.75), { clip: ear, blur: 0.3 });
+  detail(ell(...R(-0.02, 0), 3.4, 4.4), rgba(CO.sh, 0.55), { clip: ear, blur: 0.7 });
+  // a crescent earring
+  const [x, y] = R(0.44, 0.42);
+  withXF(rotAbout(x, y, POSE ? POSE.earring[s > 0 ? 1 : 0] : 0), () => {
+    lineOf([[x, y], [x, y + 2.6]], GD.dk, 0.5);
+    crescent(x, y + 4.4, 1.9, 0.2, far ? '#d8b25c' : GD.base);
+    detail(ell(x - 0.5, y + 4, 0.45, 0.45), '#ffffff');
+  });
+}
+
+// ---------- The face ----------
+// (2026-11-23, the player: "polish the head to be more sharp and less round": an anime face's shape:
+// the skull and cheeks full at her eyes, then a cleaner, straighter jaw tapering to a smaller chin,
+// softly pointed but round at its very tip (no corner anywhere); the chin under her mouth)
+const HEAD_CTRL = (() => {
+  const upR = [[0, -23], [11.8, -20.2], [18.6, -13.8], [21, -4.6], [21, 3.6]];
+  const lowR = [[20.5, 9.2], [18.6, 13.6], [15.4, 17.3], [11.4, 20.4], [7.2, 22.8], [3.9, 24.2]];
+  const chin = [1, 24.7];
+  const lowL = lowR.map(([x, y]) => [2 - x, y]).reverse();
+  const upL = upR.slice(1).map(([x, y]) => [-x, y]).reverse();
+  return [...upR, ...lowR, chin, ...lowL, ...upL].map(([x, y]) => [HX + x, HY + y]);
+})();
+const HEAD_PTS = cr(HEAD_CTRL, true, 3);
+const HEAD = poly(HEAD_PTS);
+// ---------- Her face (reworked 2026-11-23, the player: "heavily rework the face, eyes, mouth to be
+// extremely well drawn, make lower eye lids and such, give the face personality") ----------
+// Who she is: serene, gentle and a little dreamy, a kind queen with a quiet smile. Her eyes are
+// relaxed (the upper lids eased down, the outer corners lifting a touch), the moon in them: a star
+// for a glint and a crescent of light in the lower iris. Every eye has its lid crease and a soft
+// shadow of colour on the lid, a heavy lash sweeping into a soft wing with rounded clumps, a real
+// lower lid with its waterline and two small lashes, and the soft little bulge beneath it. Her
+// mouth is a small closed smile lifting more on one side; a tiny silver crescent sits on her cheek.
+const EYE_W = 10.8;
+const EYE_H = 11.4;
+const EYE_Y = HY + 8.3;
+const EYES = [[HX - 7.1, -1], [HX + 9.1, 1]];
+const LASH = HR.lash;
+const LID = '#c68ba1';
+const smoothU = (u) => u * u * (3 - 2 * u);
+// The eye in each expression: lid (how far the upper lid is lowered, share of the height), lift (the
+// outer corner raised), ik (iris size), and optionally bot (the lower edge pushed up, as a smile
+// lifts the cheeks), inner (the upper lid raised at its inner end, as in sorrow), look (where she
+// looks: the iris moved, the same way for both eyes), star (starry eyes), wet (eyes brimming).
+const EYE_SPEC = {
+  idle: { lid: 0.14, lift: 0.05, ik: 1 },
+  serene: { lid: 0.14, lift: 0.05, ik: 1 },
+  neutral: { lid: 0.2, lift: 0, ik: 1 },
+  wonder: { lid: -0.03, lift: 0.02, ik: 0.86 },
+  hurt: { lid: 0.2, lift: -0.02, ik: 0.92 },
+  smile: { lid: 0.2, lift: 0.08, ik: 1, bot: 0.13 },
+  starry: { lid: -0.01, lift: 0.04, ik: 1.04, star: true },
+  dreamy: { lid: 0.32, lift: 0.07, ik: 1, look: [0.06, -0.06], bot: 0.06 },
+  shy: { lid: 0.22, lift: 0.03, ik: 0.95, look: [-0.13, 0.07], bot: 0.05 },
+  pout: { lid: 0.3, lift: -0.01, ik: 0.97, look: [0.1, 0] },
+  smug: { lid: 0.36, lift: 0.13, ik: 0.97, look: [-0.09, 0.02], bot: 0.08 },
+  teary: { lid: 0.1, lift: -0.09, ik: 1.03, inner: 0.1, wet: true },
+};
+function eyeGeom(x, y, w, h, o, mood) {
+  const sp = mood && typeof mood === 'object' ? mood : (EYE_SPEC[mood] ?? EYE_SPEC.idle);
+  const { lid, lift, ik } = sp;
+  const L = lid * h;
+  const inn = (sp.inner ?? 0) * h;
+  const b = (sp.bot ?? 0) * h;
+  const inner = [x - o * w * 0.5, y + h * 0.13];
+  const outer = [x + o * w * 0.52, y - h * (0.04 + lift)];
+  const top = [inner, [x - o * w * 0.32, y - h * 0.3 + L * 0.7 - inn], [x - o * w * 0.02, y - h * 0.43 + L - inn * 0.4], [x + o * w * 0.3, y - h * 0.4 + L * 0.9], outer];
+  const bot = [outer, [x + o * w * 0.38, y + h * 0.27 - b * 0.8], [x + o * w * 0.04, y + h * 0.43 - b], [x - o * w * 0.3, y + h * 0.37 - b * 0.9], inner];
+  return { inner, outer, top, bot, ik, sp };
+}
+function eye(x, y, w, h, o, mood) {
+  if (mood && typeof mood === 'object' && mood.closed) return closedEye(x, y, w, h, o, mood.closed);
+  if (mood === 'happy' || mood === 'blink') return closedEye(x, y, w, h, o, mood);
+  const { inner, outer, top, bot, ik, sp } = eyeGeom(x, y, w, h, o, mood);
+  const topC = cr(top, false, 8);
+  const botC = cr(bot, false, 8);
+  const white = poly([...topC, ...botC.slice(1, -1)]);
+  // the white: cool under the lid, warm toward the inner corner
+  detail(white, lin(x, y - h * 0.45, x, y + h * 0.45, [[0, '#e6e2f6'], [0.45, '#fbfaff'], [1, '#ffffff']]));
+  detail(ell(inner[0] + o * 0.8, inner[1] - 0.3, 1.3, 1.1), rgba('#f2b5c4', 0.7), { clip: white });
+  // the iris: deep at its rim, royal blue, lightening low; darkest under the lid
+  const ix = x + o * w * 0.04 + (sp.look?.[0] ?? 0) * w;
+  const iy = y + h * 0.05 + (sp.look?.[1] ?? 0) * h;
+  const irx = w * 0.4 * ik;
+  const iry = h * 0.5 * ik;
+  const iris = ell(ix, iy, irx, iry);
+  detail(iris, rad(ix, iy + iry * 0.35, iry * 1.12, [[0, EY.lt], [0.34, EY.base], [0.7, EY.mid], [1, EY.dk]]), { clip: white });
+  detail(iris, lin(ix, iy - iry, ix, iy + iry, [[0, rgba(EY.dk, 0.95)], [0.38, rgba(EY.dk, 0.6)], [0.6, rgba(EY.dk, 0)]]), { clip: white });
+  // fine light lines from the pupil out through the lower iris
+  for (let k = 0; k < 11; k++) {
+    const q = Math.PI * 0.08 + (k / 10) * Math.PI * 0.84;
+    detail(poly(ribbon([[ix + Math.cos(q) * irx * 0.34, iy + Math.sin(q) * iry * 0.34], [ix + Math.cos(q) * irx * 0.84, iy + Math.sin(q) * iry * 0.84]], (u) => 0.42 * (1 - u) + 0.12, { n: 2 })), rgba(EY.glow, 0.36), { clip: [white, iris] });
+  }
+  // the crescent of moonlight in the lower iris, her signature
+  const cres = new Path2D();
+  cres.ellipse(ix, iy + iry * 0.18, irx * 0.78, iry * 0.7, 0, Math.PI * 0.12, Math.PI * 0.88);
+  cres.ellipse(ix, iy + iry * 0.02, irx * 0.74, iry * 0.62, 0, Math.PI * 0.86, Math.PI * 0.14, true);
+  cres.closePath();
+  detail(cres, lin(ix, iy + iry * 0.3, ix, iy + iry * 0.9, [[0, rgba('#d8ecff', 0.25)], [1, rgba('#eaf5ff', 0.85)]]), { clip: [white, iris] });
+  // the limbal ring and the pupil, its edge soft
+  items.push({ path: iris, line: false, strokeOnly: rgba(EY.dk, 0.75), slw: 0.6, clip: white, m: XF });
+  detail(ell(ix, iy + iry * 0.02, w * 0.15, h * 0.23), rgba(EY.dk, 0.4), { clip: white });
+  detail(ell(ix, iy + iry * 0.02, w * 0.11, h * 0.18), EY.pupil, { clip: white });
+  // the lid's shadow across the top of the eye
+  detail(poly(ribbon(top, (u) => h * 0.24 * Math.sin(Math.PI * Math.min(1, u * 1.1 + 0.05)) + 0.4, { n: 8, caps: false })), rgba(HR.sh2, 0.5), { clip: white });
+  // glints: a star toward the light, a round one low on the other side, two fine sparkles
+  const gx = ix + w * 0.13;
+  const gy = iy - iry * 0.12;
+  const st = [];
+  for (let k = 0; k < 8; k++) {
+    const q = (k * Math.PI) / 4;
+    const rr = k % 2 ? w * 0.04 : w * (k % 4 === 0 ? 0.2 : 0.14);
+    st.push([gx + Math.cos(q) * rr, gy + Math.sin(q) * rr]);
+  }
+  if (sp.star) {
+    const sx = ix + w * 0.02;
+    const sy2 = iy - iry * 0.02;
+    const big = [];
+    for (let k = 0; k < 8; k++) {
+      const q = (k * Math.PI) / 4 - Math.PI / 2;
+      const rr = k % 2 ? w * 0.07 : w * 0.27;
+      big.push([sx + Math.cos(q) * rr, sy2 + Math.sin(q) * rr]);
+    }
+    detail(smooth(big, 3), '#ffffff', { clip: white });
+    detail(ell(sx, sy2, w * 0.09, w * 0.09), rgba('#fff6c9', 0.9), { clip: white });
+    star4(ix - w * 0.2, iy + iry * 0.42, w * 0.07, 'rgba(255,255,255,0.95)');
+    star4(ix + w * 0.21, iy - iry * 0.36, w * 0.05, 'rgba(255,255,255,0.9)');
+  } else {
+    detail(smooth(st, 2), '#ffffff', { clip: white });
+    detail(ell(ix - w * 0.15, iy + iry * 0.3, w * 0.065, w * 0.06), 'rgba(255,255,255,0.95)', { clip: white });
+    detail(ell(ix + w * 0.2, iy + iry * 0.36, w * 0.03, w * 0.03), 'rgba(255,255,255,0.85)', { clip: white });
+    detail(ell(gx - w * 0.14, gy - w * 0.08, w * 0.025, w * 0.025), 'rgba(255,255,255,0.9)', { clip: white });
+  }
+  if (sp.wet) {
+    const wc = new Path2D();
+    wc.ellipse(ix, iy + iry * 0.2, irx * 0.86, iry * 0.72, 0, Math.PI * 0.1, Math.PI * 0.9);
+    wc.ellipse(ix, iy + iry * 0.06, irx * 0.82, iry * 0.62, 0, Math.PI * 0.88, Math.PI * 0.12, true);
+    wc.closePath();
+    detail(wc, rgba('#ffffff', 0.6), { clip: white, blur: 0.15 });
+    detail(ell(ix - w * 0.05, iy + iry * 0.55, w * 0.05, w * 0.04), 'rgba(255,255,255,0.95)', { clip: white });
+    detail(poly(ribbon(bot.slice(1, 4).map(([px, py]) => [px, py - 0.5]), (u) => 1.1 * Math.sin(Math.PI * u) + 0.2, { n: 6 })), rgba('#cfe6ff', 0.75), { clip: white, blur: 0.2 });
+  }
+  if (mood === 'wonder' || sp.wonder) star4(ix - w * 0.04, iy + iry * 0.08, w * 0.08, 'rgba(255,255,255,0.8)');
+  // the upper lash (2026-11-23, the player: "rework the eye lashes to be smooth, perfect and nice"):
+  // one smooth shape. Thin at the inner corner, it thickens evenly along the lid to the outer corner
+  // and sweeps on into a soft upturned wing; two short soft flicks rise from its outer part, grown
+  // from the same outline (no seams, no bumps), every tip round. A soft sheen along it.
+  lash(topC, inner, outer, o);
+}
+// (the lash along a lid line from the inner corner to the outer; o: which way is outward)
+function lash(lid, inner, outer, o) {
+  const N = lid.length;
+  const thick = (u) => 0.5 + 2.15 * smoothU(Math.min(1, u * 1.04));
+  // (the outward normal and the outward tangent along the lid)
+  const frame = (i) => {
+    const a = lid[Math.max(0, i - 1)];
+    const b = lid[Math.min(N - 1, i + 1)];
+    const l = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1;
+    const t = [(b[0] - a[0]) / l, (b[1] - a[1]) / l];
+    return { t, n: [o * t[1], -o * t[0]] };
+  };
+  const topAt = (i) => {
+    const { n } = frame(i);
+    const u = i / (N - 1);
+    return [lid[i][0] + n[0] * thick(u), lid[i][1] + n[1] * thick(u)];
+  };
+  // (a soft flick from the top edge at lid point i: tilted outward, round-tipped)
+  const flick = (i, len, tilt) => {
+    const { t, n } = frame(i);
+    const base = topAt(i);
+    const d = [n[0] * Math.cos(tilt) + t[0] * Math.sin(tilt), n[1] * Math.cos(tilt) + t[1] * Math.sin(tilt)];
+    const pp = [-d[1], d[0]];
+    const tip = [base[0] + d[0] * len, base[1] + d[1] * len];
+    const r = 0.34;
+    return [
+      [tip[0] - d[0] * 0.45 + pp[0] * r * o, tip[1] - d[1] * 0.45 + pp[1] * r * o],
+      tip,
+      [tip[0] - d[0] * 0.45 - pp[0] * r * o, tip[1] - d[1] * 0.45 - pp[1] * r * o],
+    ];
+  };
+  // (the wing past the outer corner: its underside, its round tip, its top running back into the lash)
+  const { t: tw } = frame(N - 1);
+  const W = (a, b) => [outer[0] + tw[0] * a + o * 0 + 0, outer[1] + tw[1] * a - b];
+  const wing = [W(0.9, 0.55), W(1.7, 1.2), W(2.25, 1.85), W(2.2, 2.3), W(1.6, 2.55), W(0.7, 2.75)];
+  const f1 = Math.round((N - 1) * 0.7);
+  const f2 = Math.round((N - 1) * 0.88);
+  const top = [];
+  for (let i = N - 2; i >= 1; i--) {
+    if (i === f2) top.push(...flick(i, 1.25, 1.1));
+    else if (i === f1) top.push(...flick(i, 1.0, 0.95));
+    else if (Math.abs(i - f2) <= 1 || Math.abs(i - f1) <= 1) continue;
+    else top.push(topAt(i));
+  }
+  const outline = [...lid, ...wing, ...top];
+  const shape = poly(cr(outline, true, 3));
+  add(shape, lin(inner[0], inner[1], outer[0], outer[1], [[0, mixHex(LASH, EY.mid, 0.4)], [0.4, LASH], [1, LASH]]), false);
+  // a soft sheen along its middle
+  const sheen = [];
+  for (let i = Math.round(N * 0.22); i <= Math.round(N * 0.8); i += 2) {
+    const { n } = frame(i);
+    const u = i / (N - 1);
+    sheen.push([lid[i][0] + n[0] * thick(u) * 0.58, lid[i][1] + n[1] * thick(u) * 0.58]);
+  }
+  detail(poly(ribbon(sheen, (u) => 0.55 * Math.sin(Math.PI * u) + 0.05, { n: 3 })), rgba('#a49ce6', 0.55), { clip: shape, blur: 0.12 });
+  return shape;
+}
+// Eyes closed: happy, a soft ∩ with its lashes curling up and the cheek pushing up beneath; a blink,
+// a soft ∪ with its lashes down.
+function closedEye(x, y, w, h, o, mood) {
+  // (one smooth stroke: thin at the inner corner, full through the middle, easing out into a little
+  // curled tail at the outer corner, round at both ends)
+  const up = mood === 'happy';
+  const line = up
+    ? [[x - o * w * 0.5, y + h * 0.16], [x - o * w * 0.16, y - h * 0.12], [x + o * w * 0.26, y - h * 0.1], [x + o * w * 0.54, y + h * 0.12], [x + o * w * 0.68, y + h * 0.1]]
+    : [[x - o * w * 0.5, y + h * 0.06], [x - o * w * 0.12, y + h * 0.3], [x + o * w * 0.3, y + h * 0.26], [x + o * w * 0.56, y - h * 0.02], [x + o * w * 0.68, y - h * 0.12]];
+  const wd = (u) => (u < 0.72 ? lerp(0.7, 1.95, smoothU(u / 0.72)) : lerp(1.95, 0.75, smoothU((u - 0.72) / 0.28)));
+  add(poly(cr(ribbon(line, wd, { n: 10 }), true, 2)), LASH, false);
+}
+// Her expressions (2026-11-23, the player: "give her multiple expressions, I will choose one"): eyes
+// (one kind for both, or [far, near]), mouth, blush, and the touches some have.
+const EXPR = {
+  // (2026-11-23, the player: "make her default face emotionless": calm open eyes with level lids, a
+  // small flat mouth, lighter blush; her old calm smile is kept as Serene)
+  idle: { name: 'Emotionless (default)', eyes: 'neutral', mouth: 'flat', blush: 0.36 },
+  serene: { name: 'Serene', eyes: 'serene', mouth: 'rest', blush: 0.58 },
+  blink: { name: 'Blink', eyes: 'blink', mouth: 'flat', blush: 0.36, hide: true },
+  smile: { name: 'Gentle smile', eyes: 'smile', mouth: 'smile', blush: 0.66 },
+  peaceful: { name: 'Peaceful', eyes: 'blink', mouth: 'smile', blush: 0.62 },
+  happy: { name: 'Happy', eyes: 'happy', mouth: 'happy', blush: 0.8 },
+  starry: { name: 'Starry-eyed', eyes: 'starry', mouth: 'grin', blush: 0.78 },
+  wonder: { name: 'Wonder', eyes: 'wonder', mouth: 'wonder', blush: 0.58 },
+  dreamy: { name: 'Dreamy', eyes: 'dreamy', mouth: 'smile', blush: 0.8 },
+  shy: { name: 'Shy', eyes: 'shy', mouth: 'wavy', blush: 1, lines: 5 },
+  pout: { name: 'Pout', eyes: 'pout', mouth: 'pout', blush: 0.8, puff: true },
+  wink: { name: 'Wink', eyes: ['smile', 'happy'], mouth: 'tongue', blush: 0.72 },
+  smug: { name: 'Smug', eyes: 'smug', mouth: 'smirk', blush: 0.45 },
+  teary: { name: 'Teary', eyes: 'teary', mouth: 'frown', blush: 0.66, tear: true },
+};
+// A tear: a soft round drop, pale blue, with a shine.
+function tear(x, y) {
+  const d = smooth([[x, y - 2.1], [x + 0.75, y - 0.9], [x + 1.25, y + 0.35], [x + 0.95, y + 1.25], [x, y + 1.6], [x - 0.95, y + 1.25], [x - 1.25, y + 0.35], [x - 0.75, y - 0.9]], 4);
+  detail(d, lin(x, y - 2, x, y + 1.6, [[0, rgba('#eef7ff', 0.95)], [1, rgba('#a9cdf3', 0.95)]]), { stroke: rgba('#7fa3d6', 0.8), slw: 0.35 });
+  detail(ell(x - 0.4, y + 0.1, 0.35, 0.5), '#ffffff');
+}
+function face(mood = 'idle') {
+  const ex = mood && typeof mood === 'object' ? mood : (EXPR[mood] ?? { eyes: mood, mouth: mood, blush: mood === 'happy' ? 0.8 : 0.58 });
+  glow(HEAD, HX + 7, HY - 4, 22, SK.hi, 0.6);
+  // (2026-11-23, "shade it a bit": soft shade where her side locks frame her face, a gentle shade along
+  // the jaw and under the chin, a little warmth in the cheeks)
+  for (const sd of [-1, 1]) {
+    const ex0 = HX + 1 + sd * 15.4;
+    detail(poly(ribbon([[ex0, HY - 2], [ex0 + sd * 0.2, HY + 8], [ex0 - sd * 0.8, HY + 16], [ex0 - sd * 3, HY + 21]], (u) => 3.6 * Math.sin(Math.PI * Math.min(1, u * 1.2 + 0.1)) + 0.4, { n: 6 })), rgba(SK.sh1, sd < 0 ? 0.6 : 0.45), { clip: HEAD, blur: 1 });
+  }
+  detail(poly(ribbon([[HX - 10, HY + 21.2], [HX + 1, HY + 24.6], [HX + 12, HY + 21.2]], (u) => 2.4 * Math.sin(Math.PI * u) + 0.3, { n: 6 })), rgba(SK.sh1, 0.5), { clip: HEAD, blur: 0.8 });
+  for (const [bx] of [[HX + 12.2], [HX - 10.4]]) detail(ell(bx, HY + 13.6, 7, 4.6), rgba('#ffd9cf', 0.3), { clip: HEAD, blur: 1.4 });
+  // (2026-11-23, "shade and polish the head": the far side in a soft shadow shape that follows her
+  // temple, cheek and jaw round to her chin, deeper right at the edge; a soft light high on the near
+  // cheekbone; a touch of pink on the tip of her nose and on her chin)
+  const farShade = smooth([[HX - 15.6, HY - 4], [HX - 14.8, HY + 5], [HX - 13.6, HY + 12], [HX - 10.6, HY + 18], [HX - 5.6, HY + 22.4], [HX + 0.4, HY + 24.2], [HX - 6, HY + 30], [HX - 30, HY + 20], [HX - 30, HY - 6]], 4);
+  detail(farShade, rgba(SK.sh1, 0.55), { clip: HEAD, blur: 0.5 });
+  detail(poly(ribbon([[HX - 21.4, HY - 4], [HX - 20.8, HY + 6], [HX - 18, HY + 14], [HX - 12, HY + 20.6], [HX - 4, HY + 24.2]], (u) => 3 * Math.sin(Math.PI * Math.min(1, u * 1.1 + 0.08)) + 0.4, { n: 6 })), rgba(SK.sh2, 0.32), { clip: HEAD, blur: 0.8 });
+  detail(ell(HX + 11.6, HY + 10.4, 3.8, 2.4), rgba('#ffffff', 0.38), { clip: HEAD, blur: 0.9 });
+  const blush = ex.blush;
+  const nl = ex.lines ?? 3;
+  for (const [bx, o] of [[HX + 11.6, 1], [HX - 9.8, -1]]) {
+    const big = ex.puff && o > 0 ? 1.25 : 1;
+    // (2026-11-23, "polish the blush": a wide soft peachy flush, a rosier heart inside it, neat curved
+    // strokes with soft tapered ends, a tiny gloss of light high on the cheek)
+    detail(ell(bx, HY + 15.2, 5.6 * big, 2.9 * big), rgba('#f8b8c6', blush * 0.8), { clip: HEAD, blur: 1.1 });
+    detail(ell(bx + o * 0.2, HY + 15.2, 3.4 * big, 1.7 * big), rgba(SK.blush, blush * 0.95), { clip: HEAD, blur: 0.7 });
+    for (let k = 0; k < nl; k++) {
+      const kx = (k - (nl - 1) / 2) * (nl > 3 ? 1.2 : 1.45);
+      const len = k === Math.floor(nl / 2) ? 1 : 0.85;
+      detail(poly(cr(ribbon([[bx + kx - 0.55 * len, HY + 16.1 * 1 - 0 + (1 - len)], [bx + kx - 0.05, HY + 15.1], [bx + kx + 0.6 * len, HY + 14.1 + (1 - len) * 0.5]], (u) => 0.42 * Math.sin(Math.PI * u) + 0.06, { n: 3 }), true, 2)), rgba('#d9718f', 0.55), { clip: HEAD, blur: 0.05 });
+    }
+    detail(ell(bx - o * 0.4, HY + 14, 0.7, 0.42), rgba('#ffffff', 0.8), { clip: HEAD, blur: 0.12 });
+    // (a puffed cheek: round, with a soft light on its curve)
+    if (ex.puff && o > 0) detail(poly(ribbon([[bx - 2.6, HY + 12.4], [bx, HY + 11.6], [bx + 2.4, HY + 12.6]], (u) => 0.9 * Math.sin(Math.PI * u), { n: 5 })), rgba('#ffffff', 0.7), { clip: HEAD, blur: 0.2 });
+  }
+  const ek = Array.isArray(ex.eyes) ? ex.eyes : [ex.eyes, ex.eyes];
+  EYES.forEach(([exx, o], i) => eye(exx, EYE_Y, EYE_W, EYE_H, o, ek[i]));
+  // (a tear: welling up, it grows from nothing at the eye's corner)
+  const tk = ex.tear === true ? 1 : +ex.tear || 0;
+  if (tk > 0.04) withXF(new DOMMatrix().translate(HX - 11.4, EYE_Y + 3).scale(tk).translate(-(HX - 11.4), -(EYE_Y + 3)), () => tear(HX - 11.4, EYE_Y + 5.2 + (1 - tk) * -1));
+  nose();
+  mouth(ex.mouth);
+  // her mark: a little silver crescent on her near cheek, under the eye's outer corner
+  const cx = HX + 14.6;
+  const cy = HY + 14.6;
+  const cm = new Path2D();
+  cm.arc(cx, cy, 1.25, 0.9, 0.9 + Math.PI * 1.55);
+  cm.arc(cx + 0.55, cy - 0.35, 1.0, 0.9 + Math.PI * 1.45, 0.95, true);
+  cm.closePath();
+  detail(cm, lin(cx, cy - 1.2, cx, cy + 1.2, [[0, '#ffffff'], [1, '#c9c3f2']]), { clip: HEAD, stroke: rgba('#9d94dc', 0.7), slw: 0.35 });
+  detail(poly(ribbon([[HX + 20.2, HY + 6], [HX + 18.4, HY + 13.4], [HX + 15, HY + 17.6], [HX + 10.6, HY + 20.8]], (u) => 2 * Math.sin(Math.PI * u) + 0.3, { n: 6 })), rgba(SK.sh2, 0.45), { clip: HEAD, blur: 0.6 });
+  // (a soft light on the chin's tip)
+  detail(ell(HX + 1.2, HY + 23.2, 2.8, 1.2), rgba(SK.blush, 0.2), { clip: HEAD, blur: 0.6 });
+  detail(ell(HX + 1.6, HY + 22.4, 2.2, 1), rgba('#ffffff', 0.4), { clip: HEAD, blur: 0.5 });
+  fringeShade();
+  brows(mood);
+}
+// Her nose (reworked 2026-11-23, the player: "brows, mouth, nose shape rework"): small and soft,
+// lit from the upper right: a soft shade on its shaded side curling under the tip, a little light on
+// the tip. Styles: soft shade (hers), a fine line, a button.
+const NOSE_STYLES = { soft: 'Soft shade', line: 'Fine line', button: 'Button' };
+let NOSE_STYLE = 'soft';
+function nose() {
+  const nx = HX + 1.5;
+  const ny = HY + 13.7;
+  if (NOSE_STYLE === 'line') {
+    detail(poly(cr(ribbon([[nx - 0.7, ny - 1.1], [nx - 0.3, ny + 0.15], [nx + 0.7, ny + 0.4]], (u) => 0.12 + 0.5 * Math.sin(Math.PI * u), { n: 4 }), true, 2)), rgba(SK.sh2, 0.95));
+  } else if (NOSE_STYLE === 'button') {
+    detail(ell(nx - 0.1, ny + 0.35, 1.05, 0.48), rgba(SK.sh2, 0.6), { blur: 0.22 });
+  } else {
+    detail(smooth([[nx - 0.95, ny - 1.6], [nx - 0.35, ny - 0.35], [nx + 0.95, ny + 0.3], [nx - 0.3, ny + 0.62], [nx - 1.15, ny - 0.2]], 3), rgba(SK.sh2, 0.8), { blur: 0.22 });
+  }
+  detail(ell(nx + 0.2, ny + 0.1, 1.3, 0.85), rgba(SK.blush, 0.3), { blur: 0.4 });
+  detail(ell(nx + 0.45, ny - 0.75, 0.5, 0.38), rgba('#ffffff', 0.9), { blur: 0.08 });
+}
+// Her mouth (reworked 2026-11-23), on her face's centre line: one smooth stroke, full in the middle,
+// its corners curling softly up as part of the same stroke (no separate dimple marks), a soft rosy
+// lower lip with a little shine, a faint shade beneath. Open mouths: a soft round bowl under the
+// smile line, deep rose inside, a tongue, the lip line's corners curling up. Rest styles: soft smile
+// (hers), petite, rosy lips.
+const MOUTH_STYLES = { soft: 'Soft smile', petite: 'Petite', lips: 'Rosy lips' };
+let MOUTH_STYLE = 'soft';
+function mouthStroke(line, wmax) {
+  detail(poly(cr(ribbon(line, (u) => 0.28 + wmax * Math.sin(Math.PI * u) ** 1.2, { n: 8 }), true, 2)), lin(line[0][0], 0, line[line.length - 1][0], 0, [[0, rgba(SK.lipDk, 0.8)], [0.5, SK.lipDk], [1, rgba(SK.lipDk, 0.8)]]));
+}
+function lowerLip(cx, cy, rx, a) {
+  detail(ell(cx, cy, rx, rx * 0.42), rad(cx, cy, rx, [[0, rgba(SK.lip, a)], [1, rgba(SK.lip, 0)]]), { blur: 0.2 });
+  detail(ell(cx + rx * 0.3, cy - rx * 0.08, rx * 0.26, rx * 0.1), rgba('#ffffff', 0.75), { blur: 0.05 });
+}
+const MOUTH_LINES = {
+  rest: [[-3, -0.95], [-2.5, -0.25], [-1.3, 0.45], [0, 0.72], [1.4, 0.4], [2.6, -0.4], [3.05, -1.15]],
+  smile: [[-3.3, -1.45], [-2.8, -0.55], [-1.5, 0.35], [0, 0.78], [1.6, 0.32], [2.9, -0.7], [3.35, -1.6]],
+  tongue: [[-3.1, -1.2], [-2.6, -0.4], [-1.4, 0.38], [0, 0.66], [1.5, 0.4], [2.8, -0.55], [3.25, -1.35]],
+  smirk: [[-2.4, 0.15], [-1.2, 0.45], [0.2, 0.42], [1.5, 0.05], [2.6, -0.75], [3, -1.55]],
+  wavy: [[-2, 0.2], [-1, -0.3], [0, 0.15], [1, 0.45], [1.9, -0.05]],
+  flat: [[-1.7, 0.3], [-0.8, 0.38], [0.2, 0.4], [1.1, 0.36], [1.8, 0.28]],
+  frown: [[-2.4, 0.8], [-1.2, 0], [0.1, -0.2], [1.3, 0.05], [2.4, 0.8]],
+};
+const THIN_MOUTH = { wavy: 1, frown: 1, flat: 1 };
+// (a closed mouth's line resampled to 9 points, so any two can be blended)
+const mouthPts = (name) => {
+  const c = cr(MOUTH_LINES[name] ?? MOUTH_LINES.rest, false, 8);
+  return Array.from({ length: 9 }, (_, i) => c[Math.round((i / 8) * (c.length - 1))]);
+};
+function mouth(mood) {
+  if (mood && typeof mood === 'object') return mouthLive(mood);
+  const mx = HX + 1.2;
+  const my = HY + 18.2;
+  const TONGUE = '#f2899f';
+  const inside = (y0, y1) => lin(mx, y0, mx, y1, [[0, '#7a2a4a'], [1, '#ad4563']]);
+  const openMouth = (w, open, teeth) => {
+    const topE = [[mx - w, my - 0.5], [mx - w * 0.5, my + 0.12], [mx, my + 0.25], [mx + w * 0.5, my + 0.1], [mx + w, my - 0.62]];
+    const bowl = [[mx + w * 0.74, my + open * 0.6], [mx + w * 0.3, my + open * 0.98], [mx - w * 0.3, my + open * 0.98], [mx - w * 0.74, my + open * 0.6]];
+    const shape = poly(cr([...topE, ...bowl], true, 6));
+    add(shape, inside(my, my + open), false);
+    detail(ell(mx + 0.15, my + open * 0.95, w * 0.56, open * 0.42), TONGUE, { clip: shape, blur: 0.12 });
+    detail(ell(mx + 0.55, my + open * 0.8, w * 0.17, open * 0.11), rgba('#ffffff', 0.45), { clip: shape, blur: 0.08 });
+    if (teeth) detail(ell(mx, my - 0.1, w * 0.84, 0.66), '#ffffff', { clip: shape });
+    lineOf(cr([topE[4], ...bowl, topE[0]], false, 6), rgba(SK.lipDk, 0.55), 0.35);
+    mouthStroke([[mx - w - 0.6, my - 1.1], [mx - w, my - 0.5], [mx - w * 0.5, my + 0.12], [mx, my + 0.25], [mx + w * 0.5, my + 0.1], [mx + w, my - 0.62], [mx + w + 0.6, my - 1.25]], 0.32);
+    lowerLip(mx + 0.1, my + open + 0.55, w * 0.45, 0.32);
+  };
+  if (mood === 'happy') return openMouth(3, 2.7, false);
+  if (typeof mood === 'string' && mood.startsWith('happyOpen')) {
+    const k = Math.min(1, +mood.slice(9));
+    return openMouth(lerp(2.2, 3, k), lerp(0.5, 2.7, k), false);
+  }
+  if (mood === 'grin') return openMouth(2.7, 2.2, true);
+  if (mood === 'wonder') {
+    // a small soft round "o", a touch wider low
+    const o = smooth([[mx, my - 0.55], [mx + 1.15, my + 0.15], [mx + 1.3, my + 1.4], [mx + 0.7, my + 2.35], [mx, my + 2.55], [mx - 0.7, my + 2.35], [mx - 1.3, my + 1.4], [mx - 1.15, my + 0.15]], 4);
+    add(o, inside(my - 0.5, my + 2.5), false);
+    detail(ell(mx, my + 2.0, 0.9, 0.55), TONGUE, { clip: o, blur: 0.1 });
+    items.push({ path: o, line: false, strokeOnly: rgba(SK.lipDk, 0.75), slw: 0.4, m: XF });
+    lowerLip(mx, my + 3.05, 1.05, 0.3);
+    return;
+  }
+  if (mood === 'pout') {
+    // lips pursed: small and round, pushed a little to one side, a shine on the lower lip
+    const px = mx + 0.5;
+    const lips = smooth([[px - 1.4, my + 0.6], [px - 0.8, my - 0.2], [px, my - 0.05], [px + 0.8, my - 0.2], [px + 1.4, my + 0.6], [px + 0.9, my + 1.6], [px, my + 1.85], [px - 0.9, my + 1.6]], 4);
+    detail(lips, lin(px, my - 0.2, px, my + 1.9, [[0, rgba(SK.lipDk, 0.75)], [1, rgba(SK.lip, 0.95)]]));
+    lineOf(cr([[px - 0.9, my + 0.75], [px, my + 0.95], [px + 0.9, my + 0.75]], false, 4), SK.lipDk, 0.5);
+    detail(ell(px + 0.35, my + 1.35, 0.4, 0.18), rgba('#ffffff', 0.8));
+    detail(ell(px, my + 2.7, 1.1, 0.3), rgba(SK.sh1, 0.4), { blur: 0.15 });
+    return;
+  }
+  if (mood === 'tongue') {
+    // a playful smile with the tip of her tongue showing at one side
+    const t = smooth([[mx + 0.5, my + 0.3], [mx + 2, my + 0.15], [mx + 1.95, my + 1.15], [mx + 1.25, my + 1.6], [mx + 0.6, my + 1.15]], 4);
+    detail(t, lin(mx + 1.2, my + 0.2, mx + 1.2, my + 1.6, [[0, '#e0718a'], [1, TONGUE]]), { stroke: rgba(SK.lipDk, 0.45), slw: 0.3 });
+    lineOf([[mx + 1.25, my + 0.55], [mx + 1.28, my + 1.1]], rgba('#c4566f', 0.45), 0.3);
+    detail(ell(mx + 1.55, my + 0.95, 0.25, 0.17), rgba('#ffffff', 0.6));
+  }
+  // the closed mouths: one smooth stroke each, its ends curling as part of it
+  const LINES = MOUTH_LINES;
+  const _unused = {
+    rest: [[-3, -0.95], [-2.5, -0.25], [-1.3, 0.45], [0, 0.72], [1.4, 0.4], [2.6, -0.4], [3.05, -1.15]],
+    smile: [[-3.3, -1.45], [-2.8, -0.55], [-1.5, 0.35], [0, 0.78], [1.6, 0.32], [2.9, -0.7], [3.35, -1.6]],
+    tongue: [[-3.1, -1.2], [-2.6, -0.4], [-1.4, 0.38], [0, 0.66], [1.5, 0.4], [2.8, -0.55], [3.25, -1.35]],
+    smirk: [[-2.4, 0.15], [-1.2, 0.45], [0.2, 0.42], [1.5, 0.05], [2.6, -0.75], [3, -1.55]],
+    wavy: [[-2, 0.2], [-1, -0.3], [0, 0.15], [1, 0.45], [1.9, -0.05]],
+    flat: [[-1.7, 0.3], [-0.8, 0.38], [0.2, 0.4], [1.1, 0.36], [1.8, 0.28]],
+    frown: [[-2.4, 0.8], [-1.2, 0], [0.1, -0.2], [1.3, 0.05], [2.4, 0.8]],
+  };
+  const key = LINES[mood] ? mood : 'rest';
+  const pet = MOUTH_STYLE === 'petite' && (key === 'rest' || key === 'smile');
+  const line = LINES[key].map(([dx, dy]) => [mx + dx * (pet ? 0.74 : 1), my + dy * (pet ? 1.12 : 1)]);
+  const thin = key === 'wavy' || key === 'frown' || key === 'flat';
+  if (MOUTH_STYLE === 'lips' && (key === 'rest' || key === 'smile')) {
+    // a soft rosy lower lip, shaped
+    // (a soft rosy lower lip: shallow, close under the line, fading low, so it never reads as a tongue)
+    const lip = smooth([[mx - 1.7, my + 0.85], [mx, my + 1.05], [mx + 1.7, my + 0.8], [mx + 1.0, my + 1.6], [mx, my + 1.78], [mx - 1.0, my + 1.6]], 4);
+    detail(lip, lin(mx, my + 0.85, mx, my + 1.8, [[0, rgba(mixHex(SK.lip, SK.base, 0.25), 0.6)], [1, rgba(mixHex(SK.lip, SK.base, 0.45), 0.15)]]), { blur: 0.18 });
+    detail(ell(mx + 0.5, my + 1.28, 0.5, 0.15), rgba('#ffffff', 0.75), { blur: 0.05 });
+  }
+  mouthStroke(line, thin ? 0.38 : 0.55);
+  if (!(MOUTH_STYLE === 'lips' && (key === 'rest' || key === 'smile'))) lowerLip(mx + 0.1, my + (thin ? 1.5 : 1.75), thin ? 1.3 : 1.6, thin ? 0.35 : 0.48);
+  detail(ell(mx, my + 3.1, 1.25, 0.32), rgba(SK.sh1, 0.42), { blur: 0.2 });
+}
+// Her mouth, live: its closed line blended between shapes, opening into a smile, rounding into an "o",
+// pursing into a pout, or showing the tip of her tongue, each growing in from nothing.
+function mouthLive(M) {
+  const mx = HX + 1.2;
+  const my = HY + 18.2;
+  if (M.open > 0.03) return mouth('happyOpen' + M.open);
+  if (M.o > 0.03) {
+    const k = Math.min(1, 0.35 + M.o * 0.65);
+    return withXF(new DOMMatrix().translate(mx, my + 1).scale(k).translate(-mx, -(my + 1)), () => mouth('wonder'));
+  }
+  if (M.pout > 0.5) {
+    const k = Math.min(1, (M.pout - 0.5) * 2 * 0.6 + 0.4);
+    return withXF(new DOMMatrix().translate(mx + 0.5, my + 0.8).scale(k).translate(-(mx + 0.5), -(my + 0.8)), () => mouth('pout'));
+  }
+  if (M.tongue > 0.05) {
+    const k = Math.min(1, M.tongue);
+    withXF(new DOMMatrix().translate(mx + 1.2, my + 0.3).scale(k).translate(-(mx + 1.2), -(my + 0.3)), () => {
+      const t = smooth([[mx + 0.5, my + 0.3], [mx + 2, my + 0.15], [mx + 1.95, my + 1.15], [mx + 1.25, my + 1.6], [mx + 0.6, my + 1.15]], 4);
+      detail(t, lin(mx + 1.2, my + 0.2, mx + 1.2, my + 1.6, [[0, '#e0718a'], [1, '#f2899f']]), { stroke: rgba(SK.lipDk, 0.45), slw: 0.3 });
+      detail(ell(mx + 1.55, my + 0.95, 0.25, 0.17), rgba('#ffffff', 0.6));
+    });
+  }
+  const line = M.pts.map(([dx, dy]) => [mx + dx, my + dy]);
+  const thin = M.thin ?? 0;
+  mouthStroke(line, lerp(0.55, 0.38, thin));
+  lowerLip(mx + 0.1, my + lerp(1.75, 1.5, thin), lerp(1.6, 1.3, thin), lerp(0.48, 0.35, thin));
+  detail(ell(mx, my + 3.1, 1.25, 0.32), rgba(SK.sh1, 0.42), { blur: 0.2 });
+}
+// Her brows (reworked 2026-11-23): soft and kind, just beneath her bangs; fuller at the inner end,
+// arching gently and tapering to a round outer end, deep lavender fading outward. They move with her:
+// raised in joy and wonder, inner ends lifting in shyness and sorrow, drawn in for a pout, one up for
+// a smug look, one down over a wink. Styles: soft arch (hers), gentle straight, high arch.
+// (2026-11-23, the player: "just do round brows": round is hers now, short and full, the same
+// thickness all along, round at both ends, gently curved; also a longer round arch, and maro brows,
+// the small round ovals of the old Japanese court)
+const BROW_STYLES = {
+  round: { name: 'Round', arch: 0.75, w0: 1.32, w1: 1.18, even: true, len: [3.5, 4.3] },
+  roundArch: { name: 'Round arch', arch: 1.15, w0: 1.05, w1: 0.95, even: true, len: [4.5, 5.4] },
+  maro: { name: 'Maro (court ovals)', maro: true },
+  soft: { name: 'Soft arch', arch: 1, w0: 1.15, w1: 0.4 },
+  straight: { name: 'Gentle straight', arch: 0.45, w0: 1.3, w1: 0.48 },
+  high: { name: 'High arch', arch: 1.55, w0: 0.95, w1: 0.34 },
+};
+// (2026-11-23, the player chose to try the maro ovals)
+let BROW_STYLE = 'maro';
+// ([all of it up (−) or down, the inner end, the outer end] in each expression)
+const BROW_MOOD = {
+  idle: [0, 0, 0], serene: [0, 0, 0], smile: [-0.25, 0, 0], peaceful: [0.15, 0.1, 0], happy: [-0.55, 0, -0.2], starry: [-0.85, -0.2, -0.1],
+  wonder: [-1.3, -0.3, 0], dreamy: [-0.15, 0.15, 0.15], shy: [-0.15, -0.85, 0.45], pout: [0.25, 0.75, -0.4], wink: [-0.35, 0, 0],
+  smug: [0, 0.35, -0.45], teary: [-0.35, -1.25, 0.65], blink: [0.1, 0.1, 0], hurt: [-0.2, -0.8, 0.4],
+};
+function brows(mood) {
+  const st = BROW_STYLES[BROW_STYLE];
+  const col = mixHex(hairRamp(HAIR_COLOR).sh2, LASH, 0.42);
+  EYES.forEach(([ex, o]) => {
+    let [lift, inn, out] = mood && typeof mood === 'object' ? (mood.brow ?? [0, 0, 0]) : (BROW_MOOD[mood] ?? BROW_MOOD.idle);
+    if (mood && typeof mood === 'object' && mood.winkN && o > 0) lift += 0.75;
+    if (mood === 'wink' && o > 0) lift += 0.75;
+    if (mood === 'smug' && o > 0) lift -= 0.55;
+    const by = HY + 1.7 + lift;
+    if (st.maro) {
+      // a small soft oval over the inner half of the eye, tilting with her mood
+      // (soft-edged, deepest a little toward her nose, fading outward, a faint light on top)
+      const cx = ex - o * 1.3;
+      const cy = by - 0.05 + (inn + out) * 0.35;
+      const a = o * (out - inn) * 0.16;
+      const ov = ell(cx, cy, 2.05, 1.12, a);
+      detail(ov, rad(cx - o * 0.45, cy + 0.1, 2.4, [[0, rgba(col, 0.95)], [0.7, rgba(col, 0.88)], [1, rgba(col, 0.72)]]), { clip: HEAD, blur: 0.04 });
+      detail(ell(cx + o * 0.2, cy - 0.45, 1.1, 0.28, a), rgba('#ffffff', 0.22), { clip: ov, blur: 0.12 });
+      return;
+    }
+    const x0 = ex - o * (st.len?.[0] ?? 4.5);
+    const x1 = ex + o * (st.len?.[1] ?? 5.6);
+    const line = [[x0, by + 0.2 + inn], [lerp(x0, x1, 0.3), by - st.arch * 0.75 + inn * 0.5], [lerp(x0, x1, 0.62), by - st.arch + out * 0.3], [x1, by + 0.45 + out]];
+    const wd = st.even ? (u) => lerp(st.w0, st.w1, u) : (u) => lerp(st.w0, st.w1, smoothU(u)) * (1 + 0.12 * Math.sin(Math.PI * u));
+    const shape = poly(cr(ribbon(line, wd, { n: 8 }), true, 2));
+    detail(shape, lin(x0, by, x1, by, [[0, rgba(col, 0.92)], [1, rgba(col, st.even ? 0.75 : 0.58)]]), { clip: HEAD, blur: 0.05 });
+  });
+}
+
+// ---------- Her clothes ----------
+// Everything here follows her body's own outline (the base's): the bodice is her torso's shape a hair
+// larger, the collar wraps her neck, the sleeves wrap her arms, the skirt flares from her waist.
+const TORSO_R = [[185.8, 66.6], [188.5, 68.7], [192.3, 69.9], [194.7, 73.6], [193.4, 81], [193.4, 85.8], [190.4, 97], [193.6, 110], [192.5, 115.6], [185, 118]];
+const mirror = (pts) => pts.map(([x, y]) => [2 * CX - x, y]);
+const TORSO = smooth([...TORSO_R, ...mirror(TORSO_R).reverse()], 4);
+const ARM0 = { N: { sh: [193.2, 74], el: [195.3, 91.6], wr: [195.7, 108.6] }, F: { sh: [166.8, 74], el: [164.7, 91.6], wr: [164.3, 108.6] } };
+let ARM = ARM0;
+// (the rig: each arm turns at the shoulder and the elbow on the screen, `sa` and `ea`, and swings in
+// depth, toward you, `da` and `db`: her body faces you a little turned to the right, so a bone swung
+// toward her front tips its downward part toward you (shorter as it shows) and a little to the right)
+const FWD_X = 0.34;
+const turnV = ([x, y], a) => [x * Math.cos(a) - y * Math.sin(a), x * Math.sin(a) + y * Math.cos(a)];
+const depthV = ([x, y], a) => [x + y * Math.sin(a) * FWD_X, y * Math.cos(a)];
+function poseArms() {
+  if (!POSE) {
+    ARM = ARM0;
+    return;
+  }
+  ARM = {};
+  for (const k of ['N', 'F']) {
+    const A = ARM0[k];
+    const [sa, ea, hw = 0, rx = 0, ry = 0, da = 0, db = 0] = POSE.arm[k];
+    const sh = [A.sh[0] + rx, A.sh[1] + ry];
+    const up = depthV(turnV([A.el[0] - A.sh[0], A.el[1] - A.sh[1]], sa), da);
+    const el = [sh[0] + up[0], sh[1] + up[1]];
+    const f0 = [A.wr[0] - A.el[0], A.wr[1] - A.el[1]];
+    const fo = depthV(turnV(f0, sa + ea), da + db);
+    const wr = [el[0] + fo[0], el[1] + fo[1]];
+    // (the hand turns as its forearm shows, and tips forward a little as the forearm comes toward you)
+    const shown = Math.atan2(fo[1], fo[0]) - Math.atan2(f0[1], f0[0]);
+    ARM[k] = { sh, el, wr, turn: shown - (da + db) * 0.25 + hw, cuff: POSE.cuff?.[k] ?? 0 };
+  }
+}
+// (an outline grown outward a little about the body's middle)
+const grow = (pts, d, cx = CX, cy = 90) => pts.map(([x, y]) => {
+  const l = Math.hypot(x - cx, y - cy) || 1;
+  return [x + ((x - cx) / l) * d, y + ((y - cy) / l) * d * 0.4];
+});
+function armSkin(k) {
+  const A = ARM[k];
+  const far = k === 'F';
+  // (the hand comes out of the bell cuff: its wrist inside the sleeve, a little past the forearm's end)
+  const dl = Math.hypot(A.wr[0] - A.el[0], A.wr[1] - A.el[1]) || 1;
+  const hw = [A.wr[0] + ((A.wr[0] - A.el[0]) / dl) * 2, A.wr[1] + ((A.wr[1] - A.el[1]) / dl) * 2];
+  const arm = poly(ribbon([A.sh, A.el, hw], (u) => lerp(7.2, 4.8, u), { n: 6 }));
+  add(arm, far ? SK.sh1 : lin(A.sh[0] + 4, 0, A.sh[0] - 4, 0, [[0, SK.hi], [1, SK.base]]));
+  // the hand, hanging relaxed: fingers together, a little curled, the thumb in front
+  const [wx, wy] = hw;
+  const s = far ? -1 : 1;
+  return withXF(rotAbout(wx, wy, A.turn ?? 0), () => handDraw(arm, wx, wy, s, far));
+}
+// A hand (redrawn 2026-11-24, the player: "hands are kinda bad"): small and soft and relaxed, a
+// rounded palm narrowing a touch at the wrist, the fingers together and gently curled in toward her,
+// their tips round with a hint of pink, a little thumb lying along the front of the palm; lit on the
+// back of the hand, shaded on the palm side. `s` mirrors it for the far hand, which is in shade.
+function handDraw(arm, wx, wy, s, far) {
+  const P = (x, y) => [wx + x * s, wy + y];
+  const hand = smooth([P(2.35, -0.6), P(2.7, 1.8), P(2.6, 3.8), P(2.1, 5.25), P(1.1, 6.15), P(-0.1, 6.45), P(-1.2, 6.1), P(-1.9, 5.2), P(-2.25, 3.9), P(-2.4, 2.0), P(-2.3, -0.6)], 4);
+  const [ax, ay] = P(-2.4, 2);
+  const [bx, by] = P(2.7, 2);
+  // (its own fine edge, in a deeper skin tone: over her dress there is no outline round it)
+  add(hand, far ? lin(ax, ay, bx, by, [[0, SK.sh2], [1, SK.sh1]]) : lin(ax, ay, bx, by, [[0, SK.sh1], [0.5, SK.base], [1, SK.hi]]), true, { lw: 1.5, stroke: rgba(SK.line, far ? 0.7 : 0.85), slw: 0.55 });
+  // (the fingertips' blush, and the light on the knuckles)
+  detail(ell(...P(0, 5.6), 2.5, 1.1), rgba(SK.blush, far ? 0.18 : 0.32), { clip: hand, blur: 0.5 });
+  if (far) return { arm, hand };
+  detail(ell(...P(1.3, 3.2), 0.9, 1.8), rgba('#ffffff', 0.55), { clip: hand, blur: 0.5 });
+  // (the thumb lying along the front of the palm, and the fingers' soft partings)
+  lineOf(cr([P(-1.9, 1.4), P(-1.1, 2.6), P(-0.6, 4.1), P(-0.9, 4.9)], false, 4), rgba(SK.sh2, 0.75), 0.5, { clip: hand });
+  detail(poly(ribbon([P(-1.7, 2), P(-1.3, 3.3), P(-1.2, 4.5)], (u) => 0.9 * Math.sin(Math.PI * u) + 0.1, { n: 4 })), rgba(SK.sh1, 0.55), { clip: hand, blur: 0.35 });
+  lineOf(cr([P(0.05, 4.7), P(0.0, 5.6), P(-0.15, 6.2)], false, 3), rgba(SK.sh2, 0.6), 0.4, { clip: hand });
+  lineOf(cr([P(1.15, 4.5), P(1.15, 5.3), P(1.0, 5.9)], false, 3), rgba(SK.sh2, 0.5), 0.38, { clip: hand });
+  return { arm, hand };
+}
+// A sleeve: a navy puff gathered at the shoulder over a sheer sleeve down to a bell cuff with a
+// scalloped silver edge, little stars stitched near it; the arm shows faintly through.
+function sleeve(k) {
+  const A = ARM[k];
+  const dy = POSE?.sleeve?.[k] ?? 0;
+  // (soft below the elbow: the sheer sleeve and its bell bounce)
+  WARP = dy ? ([x, y]) => {
+    const w = smoothU(clamp01((y - A.el[1] + 4) / 18));
+    return [x, y + dy * w];
+  } : null;
+  try {
+    return sleeveDraw(k);
+  } finally {
+    WARP = null;
+  }
+}
+function sleeveDraw(k) {
+  const A = ARM[k];
+  const far = k === 'F';
+  const s = far ? -1 : 1;
+  const top = [A.sh[0] + s * 0.6, A.sh[1] + 7];
+  // (the bell's end trails the arm about the elbow, as cloth does)
+  const line = [top, A.el, xfPt(rotAbout(A.el[0], A.el[1], A.cuff ?? 0), [A.wr[0] + s * 0.4, A.wr[1] + 1.6])];
+  const sh = poly(ribbon(line, (u) => lerp(8.4, 13.4, u ** 1.6), { n: 8, caps: false }));
+  add(sh, lin(A.el[0], top[1], A.el[0], A.wr[1], [[0, rgba(far ? LV.dk : LV.base, 0.8)], [1, rgba(far ? LV.base : LV.lt, 0.72)]]), true, { lw: 1.6 });
+  for (const off of [-2.4, 0.4, 3]) lineOf(cr([[A.el[0] + off * 0.4 + s * 0.6, A.el[1] - 6], [A.el[0] + off * 0.8, A.el[1] + 4], [A.wr[0] + off * 1.4, A.wr[1] + 1]], false, 4), rgba(far ? LV.dk : '#ffffff', far ? 0.4 : 0.6), 0.5, { clip: sh });
+  // the cuff's lace: round scallops along the bell's edge, a stitched line above
+  const e0 = along(line, 0.995);
+  const half = 6.6;
+  for (let j = 0; j < 5; j++) {
+    const u = (j + 0.5) / 5;
+    const cx2 = e0.p[0] + e0.n[0] * lerp(-half, half, u) - e0.d[0] * 0.2;
+    const cy2 = e0.p[1] + e0.n[1] * lerp(-half, half, u) - e0.d[1] * 0.2;
+    const r = (half * 2) / 10 + 0.2;
+    const pth = new Path2D();
+    pth.arc(cx2, cy2, r, Math.atan2(e0.d[1], e0.d[0]) - Math.PI / 2, Math.atan2(e0.d[1], e0.d[0]) + Math.PI / 2);
+    pth.closePath();
+    add(pth, far ? SV.dk : SV.base, true, { lw: 1 });
+  }
+  if (!far) for (const [u, dx] of [[0.72, -2], [0.82, 2.2], [0.9, -0.4]]) {
+    const q = along(line, u).p;
+    star4(q[0] + dx, q[1], 1.1, '#ffffff');
+  }
+  // the puff: gathered pleats radiating from the seam at the top of the shoulder, a silver band
+  const pc = [A.sh[0] + s * 1.6, A.sh[1] + 2.6];
+  const puff = smooth([[pc[0] - 5.4, pc[1] - 3.4], [pc[0] - 1, pc[1] - 6.2], [pc[0] + 4.4 * 1, pc[1] - 4.6], [pc[0] + 6.6, pc[1] + 0.6], [pc[0] + 5, pc[1] + 5.4], [pc[0], pc[1] + 6.4], [pc[0] - 5, pc[1] + 5], [pc[0] - 6.6, pc[1] + 0.4]].map(([x, y]) => [pc[0] + (x - pc[0]) * s, y]), 4);
+  add(puff, far ? lin(pc[0], pc[1] - 6, pc[0], pc[1] + 6, [[0, NV.base], [1, NV.dk]]) : rad(pc[0] + 2, pc[1] - 2.4, 9, [[0, NV.lt], [0.6, NV.base], [1, NV.dk]]));
+  for (let j = -2; j <= 2; j++) lineOf(cr([[pc[0] + j * 0.6 * s, pc[1] - 5.6], [pc[0] + j * 2.2 * s, pc[1]], [pc[0] + j * 2.8 * s, pc[1] + 5.4]], false, 3), rgba(far ? NV.deep : NV.dk, 0.7), 0.6, { clip: puff });
+  if (!far) glow(puff, pc[0] + 2.4, pc[1] - 2.6, 4, NV.lt, 0.8);
+  lineOf(cr([[pc[0] - 6 * s, pc[1] + 4.4], [pc[0], pc[1] + 6.2], [pc[0] + 6.2 * s, pc[1] + 4.2]], false, 5), far ? SV.dk : SV.base, 1.2);
+}
+// The gown: a navy velvet bodice cut to her torso, a lavender silk panel down the front with a
+// constellation stitched in silver, silver piping down the princess seams, a waist dipping to a point;
+// a silver sash with a bow on her hip; a high standing collar with a gold crescent brooch.
+function bodice() {
+  const R = [[186.6, 66.2], [189.2, 68.2], [192.8, 69.4], [195.4, 73.4], [194.2, 81.2], [194.2, 86], [191.2, 97], [192.2, 100.6]];
+  const pts = [...R, [186, 102.4], [181, 105.4], [176, 102.4], ...mirror(R).reverse(), [176.4, 65.2], [181, 64.6], [185.6, 65.2]];
+  const body = smooth(pts, 4);
+  add(body, lin(166, 0, 196, 0, [[0, NV.dk], [0.35, NV.base], [0.72, NV.lt], [1, NV.base]]));
+  // the bust: a soft light on each curve, a shade beneath
+  glow(body, 187.6, 79.6, 6.4, '#7b82c8', 0.55);
+  glow(body, 175.4, 80.4, 4.6, '#6a70b8', 0.35);
+  for (const [x0, x1] of [[170, 178.6], [183.6, 192.2]]) detail(poly(ribbon([[x0, 86.4], [(x0 + x1) / 2, 88], [x1, 86.6]], (u) => 2 * Math.sin(Math.PI * u), { n: 5 })), rgba(NV.deep, 0.32), { clip: body });
+  detail(poly(ribbon([[168.8, 72], [168.2, 84], [170.4, 97]], () => 3.4, { n: 4 })), rgba(NV.deep, 0.5), { clip: body });
+  // the front panel
+  const panel = smooth([[177.2, 64.4], [184.8, 64.4], [184, 84], [182.6, 97], [181, 104.4], [179.4, 97], [178, 84]], 3);
+  detail(panel, lin(177, 69, 185, 104, [[0, LV.lt], [0.5, LV.base], [1, LV.dk]]), { clip: body });
+  glow(panel, 182.6, 78, 4, '#ffffff', 0.6);
+  const stars = [[179.6, 74.4], [182.6, 79.4], [180, 85.4], [182.2, 91], [180.6, 97.4]];
+  lineOf(stars, rgba('#ffffff', 0.85), 0.4, { clip: panel });
+  stars.forEach(([x, y], i) => star4(x, y, i === 1 ? 1.8 : 1.2, '#ffffff', 0.2));
+  lineOf(cr([[177, 65], [177.8, 84], [179.2, 97], [181, 104.6]], false, 5), SV.base, 0.9, { clip: body });
+  lineOf(cr([[185, 65], [184.2, 84], [182.8, 97], [181, 104.6]], false, 5), SV.base, 0.9, { clip: body });
+  // the princess seams' piping, over the bust to the waist
+  lineOf(cr([[190.8, 69.8], [189.6, 77], [189.2, 84], [188, 97], [186.2, 102.2]], false, 5), rgba(SV.base, 0.85), 0.6, { clip: body });
+  lineOf(cr([[171.2, 69.8], [172.4, 77], [172.8, 84], [174, 97], [175.8, 102.2]], false, 5), rgba(SV.dk, 0.7), 0.6, { clip: body });
+  // a velvet sheen down the near side
+  lineOf(cr([[193.4, 74], [192.8, 84], [190.4, 96]], false, 4), rgba('#8a90d4', 0.55), 1.4, { clip: body });
+  // the sash at her waist: a flat satin ribbon, a fold of light along it
+  const sashLine = [[170.4, 98.4], [176, 100.2], [181, 100.8], [186, 100.2], [191.8, 98.4]];
+  add(poly(ribbon(sashLine, () => 3, { n: 6, caps: false })), lin(181, 97, 181, 103, [[0, SV.lt], [0.5, SV.base], [1, SV.dk]]), true, { lw: 1.1 });
+  lineOf(cr(sashLine.map(([x, y]) => [x, y - 0.5]), false, 6), rgba('#ffffff', 0.9), 0.45);
+  lineOf(cr(sashLine.map(([x, y]) => [x, y + 1]), false, 6), rgba(SV.dk, 0.6), 0.4);
+  // its bow on her near hip, the tails falling over the skirt, cut in a V
+  const bx = CX + 1;
+  const by = 100.4;
+  for (const [i, [tx, ty, bend]] of [[CX + 5.4, 116, 1.2], [CX - 2.6, 118, -1]].entries()) {
+    // (each tail turns from the knot, more toward its end)
+    const sa = POSE?.sash?.[i] ?? 0;
+    WARP = sa ? ([x, y]) => {
+      const f = clamp01(Math.hypot(x - bx, y - by - 1) / 18);
+      const a = sa * f;
+      return [bx + (x - bx) * Math.cos(a) - (y - by - 1) * Math.sin(a), by + 1 + (x - bx) * Math.sin(a) + (y - by - 1) * Math.cos(a)];
+    } : null;
+    const tl = [[bx, by + 1], [lerp(bx, tx, 0.5) + bend, lerp(by, ty, 0.5)], [tx, ty]];
+    const pts = ribbon(tl, () => 2.6, { n: 6, caps: false });
+    const half = pts.length / 2;
+    const end = along(tl, 1);
+    const notch = [end.p[0] - end.d[0] * 1.4, end.p[1] - end.d[1] * 1.4];
+    add(poly([...pts.slice(0, half), notch, ...pts.slice(half)]), lin(bx, by, tx, ty, [[0, SV.base], [1, SV.dk]]), true, { lw: 1 });
+    lineOf(cr(tl, false, 4).slice(1, -2).map(([x, y]) => [x + 0.5, y]), rgba('#ffffff', 0.7), 0.4);
+    WARP = null;
+  }
+  for (const s2 of [1, -1]) {
+    const loop = smooth([[bx, by], [bx + s2 * 3, by - 3.6], [bx + s2 * 6.4, by - 3.4], [bx + s2 * 7, by + 0.4], [bx + s2 * 5, by + 3], [bx + s2 * 0.6, by + 1.2]], 4);
+    add(loop, lin(bx, by - 4, bx, by + 3, [[0, SV.lt], [1, SV.dk]]), true, { lw: 1 });
+    lineOf(cr([[bx + s2 * 1, by - 0.2], [bx + s2 * 3.6, by - 1.6], [bx + s2 * 5.6, by - 1]], false, 3), rgba(SV.dk, 0.8), 0.45);
+    lineOf(cr([[bx + s2 * 1, by + 0.6], [bx + s2 * 3.4, by + 1.6], [bx + s2 * 5, by + 1.8]], false, 3), rgba(SV.dk, 0.6), 0.4);
+  }
+  add(smooth([[bx - 1.4, by - 1.6], [bx + 1.4, by - 1.6], [bx + 1.8, by + 1.8], [bx - 1.6, by + 1.8]], 2), lin(bx, by - 2, bx, by + 2, [[0, SV.lt], [1, SV.dk]]), true, { lw: 1 });
+  return body;
+}
+// The skirt: a lavender tulle underskirt falling over the deer's chest, stars caught in it; a navy
+// velvet overskirt open at the front, its edges trimmed in silver, sweeping back along the deer.
+// (the skirt's soft warp: nothing moves at the waist, more toward the hem)
+function skirtWarp([x, y]) {
+  const S = POSE?.skirt;
+  if (!S) return [x, y];
+  const w = smoothU(clamp01((y - 103) / 26));
+  const rip = S.go * 0.9 * Math.sin(S.ph * 2 - (x - 160) * 0.12);
+  return [x + (S.x + rip) * w, y + S.y * w];
+}
+function skirt() {
+  WARP = POSE?.skirt ? skirtWarp : null;
+  try {
+    return skirtDraw();
+  } finally {
+    WARP = null;
+  }
+}
+function skirtDraw() {
+  const under = smooth([[170.4, 100], [191.6, 100], [197.4, 112], [201.6, 126], [196, 131], [189, 128.6], [182, 132.4], [175, 129], [167.6, 131.4], [162.4, 126], [165, 112]], 4);
+  add(under, lin(181, 100, 181, 132, [[0, LV.base], [1, LV.lt]]));
+  for (let k = 0; k < 6; k++) lineOf(cr([[172 + k * 3.6, 102], [170 + k * 5, 116], [166 + k * 6.4, 129]], false, 4), rgba(LV.dk, 0.5), 0.5, { clip: under });
+  for (const [x, y] of [[172, 118], [186, 121], [178, 126], [193, 115]]) star4(x, y, 1.2, '#ffffff');
+  const hemU = [[162.4, 126], [167.6, 131.4], [175, 129], [182, 132.4], [189, 128.6], [196, 131], [201.6, 126]];
+  lineOf(cr(hemU, false, 6).map(([x, y]) => [x, y - 1.2]), rgba('#ffffff', 0.8), 0.6, { clip: under });
+  // the overskirt's two panels, open over the underskirt
+  for (const s of [-1, 1]) {
+    const x0 = CX + s * 9.4;
+    const pts = [[x0 - s * 1.6, 100.4], [CX + s * 11.6, 100], [CX + s * 15, 108], [CX + s * 19.6, 118], [CX + s * 23.4, 126], [CX + s * 18.4, 130.6], [CX + s * 13.6, 128.2], [CX + s * 10, 118], [x0 - s * 0.4, 108]];
+    const pn = smooth(pts, 4);
+    add(pn, lin(CX + s * 9, 100, CX + s * 20, 130, s > 0 ? [[0, NV.lt], [0.5, NV.base], [1, NV.dk]] : [[0, NV.base], [1, NV.deep]]));
+    for (const off of [0.3, 0.6]) lineOf(cr([[lerp(x0, CX + s * 11.6, off), 101], [lerp(CX + s * 10, CX + s * 19.6, off), 118], [lerp(CX + s * 13.6, CX + s * 23.4, off), 128]], false, 4), rgba(NV.deep, 0.6), 0.7, { clip: pn });
+    // the silver trim down its front edge and along its hem
+    const trim = [[x0 - s * 0.6, 100.8], [x0 - s * 0.2, 108], [CX + s * 10.4, 118], [CX + s * 13.8, 127.4], [CX + s * 18.4, 130]];
+    lineOf(cr(trim, false, 5), s > 0 ? SV.base : SV.dk, 1.3, { clip: pn });
+    lineOf(cr(trim.map(([x, y]) => [x + s * 1.4, y]), false, 5), rgba(GD.base, 0.9), 0.4, { clip: pn });
+    const q = along(trim, 0.62).p;
+    crescent(q[0] + s * 4.2, q[1] - 1, 1.8, s > 0 ? -0.4 : Math.PI + 0.4, s > 0 ? SV.base : SV.dk, false);
+  }
+  return under;
+}
+// The high collar wraps her neck: its back stands up behind it (its lavender lining showing), its two
+// fronts come round to meet in a V, a gold crescent brooch where they meet.
+function collarBack() {
+  add(smooth([[171.6, 56.6], [176, 55.4], [186, 55.4], [190.4, 56.6], [191.6, 64], [190.2, 67.8], [171.8, 67.8], [170.4, 64]], 4), lin(181, 55, 181, 68, [[0, LV.base], [1, LV.dk]]));
+}
+function collarFront() {
+  const inner = smooth([[HX - 4.4, 59.6], [HX + 4.4, 59.6], [HX + 1.4, 69.4], [HX - 1.4, 69.4]], 2);
+  add(inner, lin(HX, 59, HX, 70, [[0, LV.base], [1, LV.lt]]));
+  star4(HX, 63.4, 1, '#ffffff');
+  for (const s of [-1, 1]) {
+    const pts = [[CX + s * 9.4, 56.4], [CX + s * 6.6, 57.6], [CX + s * 3.4, 61.4], [CX + s * 0.4, 65.6], [CX + s * 0.4, 69.6], [CX + s * 10.4, 68], [CX + s * 11.2, 62.6]].map(([x, y]) => [x + B.dx, y]);
+    const c = smooth(pts, 3);
+    add(c, lin(CX + s * 10, 56, CX, 69, s > 0 ? [[0, NV.lt], [1, NV.base]] : [[0, NV.base], [1, NV.dk]]));
+    lineOf(cr(pts.slice(0, 4), false, 4), s > 0 ? SV.base : SV.dk, 1.1);
+    for (let j = 0; j < 3; j++) star4(HX + s * (8 - j * 2.6), 61.4 + j * 1.6, 0.8, rgba('#ffffff', 0.85));
+  }
+  crescent(HX, 67, 3.2, -Math.PI / 2 - 0.3, GD.base);
+  add(ell(HX + 0.6, 67.6, 1.25, 1.25), lin(HX, 66.4, HX, 68.8, [[0, '#f0f7ff'], [1, '#a9c8f0']]), true, { lw: 0.9 });
+  detail(ell(HX + 0.2, 67.1, 0.4, 0.4), '#ffffff');
+}
+function neck() {
+  // (it ends inside the collar, so nothing of it shows below)
+  const nk = smooth([[176.2, 55], [185.8, 55], [186.6, 65.6], [175.4, 65.6]], 2);
+  add(nk, SK.base);
+  detail(smooth([[175.5, 58], [186.6, 58], [186.8, 64.6], [175.2, 64.6]], 2), rgba(SK.sh1, 0.85), { clip: nk });
+  detail(smooth([[175.5, 57.4], [186.6, 57.4], [186.6, 60.6], [175.5, 60.6]], 2), rgba(SK.sh2, 0.5), { clip: nk });
+}
+// The tiara: a fine gold circlet over her hair, a crescent with a moonstone where the fringe parts,
+// filigree curls beside it, a little crystal drop at each temple.
+function tiara() {
+  const band = [[HX - 20.4, HY - 11.4], [HX - 13, HY - 20.6], [HX + 2, HY - 24.4], [HX + 16, HY - 20.6], [HX + 22, HY - 11.4]];
+  lineOf(cr(band, false, 6), GD.dk, 1.2);
+  lineOf(cr(band, false, 6), GD.lt, 0.5);
+  for (const s of [-1, 1]) {
+    const c0 = [HX + 2 + s * 4.6, HY - 24.6];
+    lineOf(cr([c0, [c0[0] + s * 2, c0[1] - 2.2], [c0[0] + s * 3.8, c0[1] - 1.2], [c0[0] + s * 3.2, c0[1] + 0.4]], false, 4), GD.base, 0.7);
+    const t = [HX + 2 + s * 20, HY - 12.4];
+    withXF(rotAbout(t[0], t[1], POSE?.drop ?? 0), () => {
+      lineOf([t, [t[0], t[1] + 2.6]], GD.dk, 0.45);
+      add(smooth([[t[0], t[1] + 2.6], [t[0] + 1, t[1] + 4.4], [t[0], t[1] + 6.2], [t[0] - 1, t[1] + 4.4]], 2), lin(t[0], t[1] + 2.6, t[0], t[1] + 6.2, [[0, '#ffffff'], [1, AN.mid]]), true, { lw: 0.8 });
+    });
+  }
+  crescent(HX + 2, HY - 26.8, 4, Math.PI / 2, GD.base);
+  add(ell(HX + 2, HY - 25.6, 1.5, 1.5), lin(HX + 2, HY - 27, HX + 2, HY - 24, [[0, '#f0f7ff'], [1, '#a9c8f0']]), true, { lw: 0.9 });
+  detail(ell(HX + 1.5, HY - 26.1, 0.5, 0.5), '#ffffff');
+  for (const [x, y, r] of [[HX - 14, HY - 16, 1.6], [HX + 17.6, HY - 9, 1.4], [HX - 6, HY - 21, 1.2], [HX + 10, HY - 18, 1]]) star4(x, y, r, '#ffffff', 0.3);
+}
+
+// ---------- Her, whole ----------
+function build(mood = 'idle') {
+  items = [];
+  const P = POSE;
+  const Mb = P?.Mb ?? null;
+  const Mu = P?.Mu ?? null;
+  const Mh = P?.Mh ?? null;
+  poseArms();
+  const leg = (k, w, far, hind) => (P ? deerLeg(P.legs[k].js, w, far, hind, P.legs[k].tilt) : deerLeg(LEGS[k], w, far, hind));
+  leg('hindF', DEER.hind.w, true, true);
+  leg('foreF', DEER.fore.w, true, false);
+  withXF(P?.body ? Mb.multiply(shiftAt(P.body, [CX + DEER.tail.root[0], DEER.tail.root[1]])) : Mb, deerTail);
+  leg('hindN', DEER.hind.w, false, true);
+  leg('foreN', DEER.fore.w, false, false);
+  let barrelP = null;
+  withXF(Mb, () => {
+    // (the body and its blanket bend with the soft body)
+    WARP = warpOf(P?.body);
+    barrelP = deerBody();
+    caparison();
+    WARP = null;
+  });
+  if (P) {
+    const bodyW = new Path2D();
+    bodyW.addPath(barrelP, Mb);
+    deerLegOver(P.legs.foreN.js, DEER.fore.w, false, P.legs.foreN.tilt, bodyW);
+  }
+  LOW_END = items.length;
+  veil();
+  withXF(Mh, () => {
+    longHair();
+    hairBack();
+    antler(-1);
+    antler(1);
+  });
+  let faceEnd = 0;
+  withXF(Mu, () => {
+    armSkin('F');
+    sleeve('F');
+    add(TORSO, SK.base);
+    skirt();
+    bodice();
+    armSkin('N');
+    sleeve('N');
+    collarBack();
+    neck();
+    collarFront();
+    withXF(P?.Mhr ?? null, () => {
+      deerEar(-1);
+      deerEar(1);
+      detail(ell(HX + 1, HY + 25.4, 8.4, 2.2), rgba(NV.deep, 0.45), { blur: 0.7 });
+      add(HEAD, lin(HX + 12, HY - 20, HX - 14, HY + 22, [[0, SK.hi], [0.5, SK.base], [1, SK.base]]));
+      face(mood);
+      faceEnd = items.length;
+      sideLocks();
+      hairFront();
+      tiara();
+      hairTop();
+      drawFX(P?.fx);
+    });
+  });
+  // (every shadow cast on her skin goes under her hair)
+  const fs = items.filter((it) => it.faceShadow);
+  items = [...items.slice(0, faceEnd), ...fs, ...items.slice(faceEnd).filter((it) => !it.faceShadow)];
+}
+
+// Her emotions' little effects, drawn with her head: soft hearts floating up and fading, sparkles
+// twinkling round her, a nervous sweat drop at her temple.
+function heartShape(x, y, r) {
+  const pts = [];
+  for (let k = 0; k < 24; k++) {
+    const t = (k / 24) * TAU;
+    pts.push([x + (16 * Math.sin(t) ** 3 * r) / 16, y - ((13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t)) * r) / 16]);
+  }
+  return smooth(pts, 2);
+}
+function drawFX(fx) {
+  if (!fx) return;
+  const t = fx.t;
+  if (fx.hearts > 0.02) {
+    for (let i = 0; i < 3; i++) {
+      const ph = (t * 0.55 + i / 3) % 1;
+      const a = fx.hearts * Math.sin(Math.PI * ph) ** 0.8;
+      if (a < 0.02) continue;
+      const x = HX + 25 + i * 3.4 + Math.sin(ph * TAU + i) * 1.6;
+      const y = HY - 6 - ph * 24;
+      const r = 1.9 + 0.5 * Math.sin(ph * Math.PI);
+      const h = heartShape(x, y, r);
+      detail(h, lin(x, y - r, x, y + r, [[0, rgba('#ffd0e2', a)], [1, rgba('#ff8fb8', a)]]), { stroke: rgba('#d9658f', a * 0.8), slw: 0.35 });
+      detail(ell(x - r * 0.35, y - r * 0.35, r * 0.22, r * 0.15), rgba('#ffffff', a * 0.9));
+    }
+  }
+  if (fx.sparkle > 0.02) {
+    for (const [dx, dy, r0, ph] of [[-24, -8, 1.5, 0], [27, -14, 1.8, 1.7], [24, 8, 1.2, 3.1], [-20, 10, 1.1, 4.4]]) {
+      const tw = 0.5 + 0.5 * Math.sin(t * 7 + ph);
+      star4(HX + dx, HY + dy, r0 * (0.6 + 0.5 * tw) * fx.sparkle, `rgba(255,255,255,${(0.95 * fx.sparkle * (0.4 + 0.6 * tw)).toFixed(3)})`, 0.3);
+    }
+  }
+  if (fx.sweat > 0.02) {
+    const k = fx.sweat;
+    const x = HX + 22;
+    const y = HY - 8 + Math.min(2, t * 0.6);
+    withXF(new DOMMatrix().translate(x, y).scale(k).translate(-x, -y), () => {
+      const d = smooth([[x, y - 2.6], [x + 0.9, y - 1.1], [x + 1.6, y + 0.5], [x + 1.2, y + 1.6], [x, y + 2], [x - 1.2, y + 1.6], [x - 1.6, y + 0.5], [x - 0.9, y - 1.1]], 4);
+      detail(d, lin(x, y - 2.6, x, y + 2, [[0, rgba('#eef8ff', 0.95)], [1, rgba('#9fcaf5', 0.95)]]), { stroke: rgba('#6f9fd8', 0.85), slw: 0.4 });
+      detail(ell(x - 0.5, y + 0.1, 0.4, 0.6), '#ffffff');
+    });
+  }
+}
+
+// ---------- Her emotions, animated (2026-11-23, the player: "heavily polish her emotions animations,
+// she's very shy and cute") ----------
+// Each emotion is a little performance: keys in time, her face and body easing from one to the next
+// (lids, gaze, brows, the mouth's shape, the blush), never snapping, and her whole body joining in:
+// her ears perk or droop, her tail wags or tucks, her head tilts and dips, her hands come up to her
+// chest when she's shy, a little hop when she's happy; hearts, sparkles, a sweat drop, a welling tear.
+const NEUTRAL = {
+  lid: [0.2, 0.2], lift: 0, ik: 1, look: [0, 0], bot: 0, inner: 0, star: 0, wet: 0, wonder: 0, closed: ['', ''], mouth: 'flat', open: 0, o: 0, pout: 0, tongue: 0,
+  blush: 0.36, lines: 3, puff: 0, tear: 0, sweat: 0, brow: [0, 0, 0], head: 0, headDy: 0, ear: 0, tail: 0, wag: 0, armW: 0, armN: [0, 0], armF: [0, 0], lean: 0, hop: 0, hearts: 0, sparkle: 0,
+};
+const SHY_ARMS = { armW: 1, armN: [0.36, 2.1], armF: [-0.36, -2.1] };
+const EMOTES = {
+  neutral: { name: 'Calm', keys: [[0, {}]] },
+  shy: { name: 'Shy', keys: [
+    [0, {}],
+    [0.5, { lid: [0.12, 0.12], look: [0.05, -0.01], brow: [-0.25, 0, 0], ear: -0.12, blush: 0.5 }],
+    [1.1, { lid: [0.3, 0.3], look: [-0.15, 0.09], bot: 0.06, mouth: 'wavy', blush: 1.05, lines: 5, brow: [-0.15, -0.85, 0.45], head: 0.055, headDy: 1.1, ear: 0.38, tail: -0.35, lean: -0.015, ...SHY_ARMS }],
+    [2.2, { look: [-0.17, 0.1], blush: 1.15 }],
+    [2.8, { look: [0.04, 0.03], lid: [0.26, 0.26], mouth: 'smile', head: 0.03, ear: 0.3 }],
+    [3.5, { look: [-0.16, 0.1], lid: [0.32, 0.32], mouth: 'wavy', head: 0.065, ear: 0.42, blush: 1.2 }],
+    [4.3, { look: [-0.05, 0.04], blush: 0.7, armW: 0.3, ear: 0.15, tail: -0.1, head: 0.02, headDy: 0.4, mouth: 'flat' }],
+    [4.8, 'N'],
+  ] },
+  happy: { name: 'Happy', keys: [
+    [0, {}],
+    [0.35, { lid: [0.4, 0.4], bot: 0.2, mouth: 'smile', blush: 0.6, ear: -0.15 }],
+    [0.55, { closed: ['happy', 'happy'], open: 0.9, blush: 0.85, brow: [-0.55, 0, -0.2], ear: -0.28, tail: 0.3, wag: 1, hop: 1, hearts: 1, head: -0.035, lean: 0.015 }],
+    [3.0, { hearts: 0.9 }],
+    [3.4, { closed: ['', ''], open: 0, lid: [0.25, 0.25], bot: 0.05, hop: 0, wag: 0.3, hearts: 0 }],
+    [3.8, 'N'],
+  ] },
+  flustered: { name: 'Flustered', keys: [
+    [0, {}],
+    [0.3, { lid: [-0.02, -0.02], ik: 0.9, brow: [-0.45, -0.6, 0.3], blush: 0.9, ear: -0.3, look: [0.06, 0] }],
+    [0.75, { blush: 1.3, lines: 5, mouth: 'wavy', sweat: 1, look: [-0.13, 0.06], ear: 0.45, tail: -0.4, head: -0.05, ...SHY_ARMS }],
+    [1.3, { look: [0.12, 0.05] }],
+    [1.85, { look: [-0.13, 0.06] }],
+    [2.15, { lid: [0.45, 0.45], bot: 0.15 }],
+    [2.4, { closed: ['happy', 'happy'], head: 0.04 }],
+    [3.1, { closed: ['', ''], lid: [0.25, 0.25], bot: 0, look: [-0.06, 0.04], blush: 1, armW: 0.4, sweat: 0.6 }],
+    [3.8, 'N'],
+  ] },
+  pout: { name: 'Pout', keys: [
+    [0, {}],
+    [0.45, { lid: [0.3, 0.3], look: [0.11, 0], pout: 1, puff: 1, blush: 0.85, brow: [0.25, 0.75, -0.4], ear: 0.3, head: 0.04, tail: -0.12 }],
+    [1.6, { look: [0.13, 0.02] }],
+    [2.2, { look: [-0.02, 0], lid: [0.34, 0.34] }],
+    [2.8, { look: [0.12, 0.01], lid: [0.3, 0.3] }],
+    [3.4, 'N'],
+  ] },
+  wonder: { name: 'Wonder', keys: [
+    [0, {}],
+    [0.3, { lid: [-0.03, -0.03], ik: 0.86, wonder: 1, o: 1, brow: [-1.3, -0.3, 0], ear: -0.55, tail: 0.45, headDy: -0.9, lean: -0.025, sparkle: 1 }],
+    [2.5, { sparkle: 0.8 }],
+    [3.2, 'N'],
+  ] },
+  dreamy: { name: 'Dreamy', keys: [
+    [0, {}],
+    [0.6, { lid: [0.32, 0.32], lift: 0.07, look: [0.06, -0.06], bot: 0.06, mouth: 'smile', blush: 0.82, brow: [-0.15, 0.15, 0.15], head: -0.06, ear: 0.12, hearts: 0.6, tail: 0.1, wag: 0.3 }],
+    [1.9, { head: -0.02 }],
+    [2.9, { head: -0.065 }],
+    [3.8, 'N'],
+  ] },
+  wink: { name: 'Wink', keys: [
+    [0, {}],
+    [0.25, { lid: [0.2, 0.45], bot: 0.08, mouth: 'smile' }],
+    [0.4, { closed: ['', 'happy'], mouth: 'tongue', tongue: 1, blush: 0.75, brow: [-0.35, 0, 0], head: -0.05, sparkle: 1, ear: -0.15, tail: 0.3, wag: 0.7, lid: [0.2, 0.2] }],
+    [2.1, {}],
+    [2.4, { closed: ['', ''], tongue: 0, mouth: 'smile' }],
+    [2.8, 'N'],
+  ] },
+  teary: { name: 'Teary', keys: [
+    [0, {}],
+    [0.5, { lid: [0.1, 0.1], lift: -0.09, ik: 1.03, inner: 0.1, wet: 1, mouth: 'frown', brow: [-0.35, -1.25, 0.65], blush: 0.66, ear: 0.5, tail: -0.4, headDy: 0.9, look: [0, 0.04] }],
+    [1.6, { tear: 1 }],
+    [2.9, { tear: 1 }],
+    [3.3, { tear: 0, wet: 0 }],
+    [3.8, 'N'],
+  ] },
+  glance: { name: 'Shy glance', keys: [
+    [0, {}],
+    [0.6, { look: [0.07, 0], lid: [0.16, 0.16] }],
+    [1.0, { look: [-0.14, 0.07], blush: 0.75, lines: 4, head: 0.035, ear: 0.2, mouth: 'wavy', lid: [0.26, 0.26] }],
+    [2.4, { look: [-0.1, 0.05], blush: 0.6 }],
+    [3.4, 'N'],
+  ] },
+};
+// (each key's whole state: the one before with this key's changes; 'N' back to calm)
+const keyStates = (keys) => {
+  let st = { ...NEUTRAL };
+  return keys.map(([t, k]) => {
+    st = k === 'N' ? { ...NEUTRAL } : { ...st, ...k };
+    return [t, st];
+  });
+};
+const mixV = (a, b, u) => (Array.isArray(a) ? a.map((v, i) => (typeof v === 'number' ? lerp(v, b[i], u) : u < 0.4 ? v : b[i])) : typeof a === 'number' ? lerp(a, b, u) : u < 0.4 ? a : b);
+// The emotion's values at `tc` seconds into it, eased between its keys.
+function emoteAt(name, tc) {
+  const ks = keyStates(EMOTES[name].keys);
+  let i = 0;
+  while (i < ks.length - 1 && ks[i + 1][0] <= tc) i++;
+  const [t0, A] = ks[i];
+  const [t1, B] = ks[Math.min(ks.length - 1, i + 1)];
+  const u = t1 > t0 ? smoothU(Math.min(1, Math.max(0, (tc - t0) / (t1 - t0)))) : 1;
+  const out = {};
+  for (const k of Object.keys(NEUTRAL)) out[k] = mixV(A[k], B[k], u);
+  const pa = mouthPts(A.mouth);
+  const pb = mouthPts(B.mouth);
+  out.mouthPts = pa.map((q, j) => [lerp(q[0], pb[j][0], u), lerp(q[1], pb[j][1], u)]);
+  out.thin = lerp(THIN_MOUTH[A.mouth] ?? 0, THIN_MOUTH[B.mouth] ?? 0, u);
+  return out;
+}
+// Her face from an emotion's values (and a blink).
+function faceOf(e, blink, talk = 0) {
+  const eyes = [0, 1].map((i) => ({
+    lid: e.lid[i], lift: e.lift, ik: e.ik, look: e.look, bot: e.bot, inner: e.inner, star: e.star > 0.5, wet: e.wet > 0.5, wonder: e.wonder > 0.5,
+    closed: e.closed[i] || (blink && !e.closed[0] && !e.closed[1] ? 'blink' : null),
+  }));
+  return {
+    eyes,
+    mouth: { pts: e.mouthPts, thin: e.thin, open: e.open > 0.03 ? e.open * (0.72 + 0.28 * talk) : 0, o: e.open > 0.03 ? e.o : Math.max(e.o, talk * 0.62), pout: talk > 0.05 ? 0 : e.pout, tongue: e.tongue },
+    blush: e.blush, lines: Math.round(e.lines), puff: e.puff > 0.5, tear: e.tear, brow: e.brow, winkN: !!e.closed[1] && !e.closed[0],
+  };
+}
+
+// ---------- Her rig (2026-11-23, the player: "now she needs heavy rigging") ----------
+// Every part on its joint: the deer body rides on the game's own deer legs (blankquad.js: they walk
+// one foot at a time or trot in diagonal pairs, each foot planted, rolling and lifting, the body
+// rocking and bobbing over the planted feet); her upper body turns at the waist, her head at the
+// neck, her arms swing at the shoulders and bend at the elbows. Everything loose rides on springs
+// fed by how her head and body move: the twin tails swing from their ties and bend, their tips
+// lagging; the side locks sway; the bows' streamers flutter; the earrings, the tiara's drops and the
+// antlers' charms swing and hang plumb; the blanket's tassels swing; the veil ripples and follows her
+// head. Her ears twitch now and then, her tail flicks, she breathes and blinks. Nothing squashes or
+// stretches: every motion is a part turning or moving.
+let POSE = null;
+let LOW_END = 0;
+// Her deer body, soft (2026-11-24, the player: "i don't want 1 big moving object, it should jiggle,
+// be a bit realistic"): a warp every point of the body is drawn through (its outline, shading, fur,
+// belly, ruff, blanket and stitching alike), so the body bends as flesh does. Its parts each ride a
+// spring (rigStep `body`): the chest end and the rump end lift and settle as their legs land; the
+// spine flexes with the stride, the hind half turning a touch about the middle of the back; the low
+// belly hangs and swings a beat behind; the round of the haunch and the chest ruff jiggle. Parts only
+// shift and bend: nothing grows or shrinks, and it is subtle. Her measures: the rump at x ~100, the
+// chest at ~196, the back at y ~105, the belly at ~152.
+const clamp01 = (v) => Math.min(1, Math.max(0, v));
+function bodyWarp(B, [x, y]) {
+  if (!B) return [x, y];
+  const wF = smoothU(clamp01((x - 120) / 56));
+  const fa = B.flex * (1 - wF);
+  const c = Math.cos(fa);
+  const sn = Math.sin(fa);
+  let X = 148 + (x - 148) * c - (y - 112) * sn;
+  let Y = 112 + (x - 148) * sn + (y - 112) * c;
+  Y += B.chest * wF + B.rump * (1 - wF);
+  const mb = smoothU(clamp01((y - 130) / 18)) * Math.sin(Math.PI * clamp01((x - 110) / 82));
+  X += B.bellyX * mb;
+  Y += B.bellyY * mb;
+  const mr = smoothU(clamp01((126 - x) / 22)) * (1 - 0.5 * smoothU(clamp01((y - 140) / 12)));
+  X += B.rumpX * mr;
+  Y += B.rumpY * mr;
+  const mc = smoothU(clamp01((x - 176) / 16)) * smoothU(clamp01((y - 116) / 14));
+  Y += B.ruffY * mc;
+  return [X, Y];
+}
+const warpOf = (B) => (B ? (p) => bodyWarp(B, p) : null);
+// (how a point riding on the body has moved, as a transform: for her waist and her tail's root)
+const shiftAt = (B, p) => {
+  const q = bodyWarp(B, p);
+  return new DOMMatrix().translate(q[0] - p[0], q[1] - p[1]);
+};
+const LEGDEFS = legDefs({ fore: { ...DEER.fore, top: [CX + DEER.fore.top[0], DEER.fore.top[1]] }, hind: { ...DEER.hind, top: [CX + DEER.hind.top[0], DEER.hind.top[1]] }, far: DEER.far }, (v) => v);
+const LFORE = LEGDEFS.foreN.lens.reduce((a, b) => a + b, 0);
+const RIG = { t: 0, u: 0, x: 0, spr: {}, prev: null, move: 'idle' };
+function spr(name, goal, k, c, dt) {
+  const v = RIG.spr[name] ?? (RIG.spr[name] = { x: goal, v: 0 });
+  const steps = Math.max(1, Math.ceil(dt / (1 / 240)));
+  const h = dt / steps;
+  for (let i = 0; i < steps; i++) {
+    v.v += (-k * (v.x - goal) - c * v.v) * h;
+    v.x += v.v * h;
+  }
+  return v.x;
+}
+const kickSpr = (name, dv) => {
+  if (RIG.spr[name]) RIG.spr[name].v += dv;
+};
+// One step of the rig. She walks the way the base deertaur does (render/mobs/blankrigs.js horseGait,
+// the player's "the base deertaur animation is better"): a stride of a foreleg and a bit (shorter as
+// she ambles slowly, longer as she hurries into a trot), her pace from how fast she really goes (her
+// speed smoothed as the base's is), the walk easing in and out on the base's own spring; her feet
+// follow the ground she covers exactly (`dist`, her units), so a planted hoof never slides.
+const STRIDE = LFORE * 1.15;
+const WALK_SPEED = STRIDE * 1.4;
+function rigStep(dt, dist, emo = null) {
+  const E0 = emo ?? NEUTRAL;
+  RIG.t += dt;
+  const t = RIG.t;
+  const speed = dt > 0 ? dist / dt : 0;
+  RIG.speed = lerp(RIG.speed ?? 0, speed, Math.min(1, dt * 5));
+  const go = clamp01(spr('go', speed > 2 || RIG.speed > 6 ? 1 : 0, 60, 16, dt));
+  const R = clamp01((RIG.speed - WALK_SPEED) / (WALK_SPEED * 0.75));
+  const trot = smoothU(clamp01(R / 0.5));
+  const cycle = STRIDE * Math.min(1, 0.55 + (0.45 * RIG.speed) / WALK_SPEED) * (1 + 0.75 * R);
+  RIG.u = (RIG.u + dist / cycle) % 1;
+  RIG.x += dist;
+  const u = RIG.u;
+  // the legs: each foot's place through the step, the body over them
+  const steps = {};
+  for (const k of ['hindN', 'foreN', 'hindF', 'foreF']) {
+    const g = stepAt(u, legPhase(k, trot, 0), 0, cycle, LFORE);
+    steps[k] = { ...g, dx: g.dx * go, lift: g.lift * go };
+  }
+  const { fS, hS } = sinks(LEGDEFS, steps);
+  const breath = Math.sin((t / 3.6) * TAU);
+  const hopS = spr('hop', E0.hop, 40, 9, dt);
+  // (her body sinks a touch at each footfall, eased rather than following every hoof exactly: it
+  // jerked; the player's "her body looks extremely stiff", 2026-11-24)
+  const sinkS = spr('sinkS', (fS + hS) * 0.5, 260, 30, dt);
+  const bob = sinkS + trot * go * 0.9 * Math.abs(Math.sin(u * TAU * 2)) - hopS * 2.2 * Math.abs(Math.sin(t * TAU * 1.7));
+  // Her deer body walks with a deer's grace (2026-11-24, the player: "this body ... she should have
+  // some grace"): her back rocks gently and smoothly, the front dipping as her forelegs take her
+  // weight and the hind end as her hind legs do, rather than jerking with each hoof; she surges
+  // forward a touch with each step and eases back; her blanket's hem trails her and ripples, and each
+  // tassel swings on its own (caparison).
+  const fore = u * TAU * 2 - Math.PI;
+  const rock = go * (1 - trot * 0.5) * 0.03 * Math.cos(fore);
+  const pitch = spr('pitch', Math.atan2(fS - hS, 66) * (1 - 0.75 * go), 90, 16, dt) + rock;
+  const surge = go * 0.7 * Math.sin(fore - 0.4);
+  const Mb = new DOMMatrix().translate(surge, bob).multiply(rotAbout(CX - 30, 126, pitch));
+  // (the soft body's parts: each landing hoof jolts its end of the body, which settles with a small
+  // bounce; the belly hangs a little lower walking, bounces slower and swings against her surges, and
+  // breathes when she stands; the haunch and the ruff jiggle; last frame's push, RIG.bax, swings them)
+  const push = RIG.bax ?? 0;
+  const body = {
+    chest: spr('bChest', go * fS * 0.5, 230, 9, dt),
+    rump: spr('bRump', go * hS * 0.5, 210, 8.5, dt),
+    bellyY: spr('bBellyY', go * ((fS + hS) * 0.35 + 0.5) + (1 - go) * 0.35 * breath, 85, 4.6, dt),
+    bellyX: spr('bBellyX', -push * 0.0035, 55, 4, dt),
+    rumpX: spr('bRumpX', -push * 0.0025, 90, 5, dt),
+    rumpY: spr('bRumpY', go * hS * 0.35, 150, 5.5, dt),
+    ruffY: spr('bRuffY', go * fS * 0.3, 170, 5.5, dt),
+    flex: go * 0.014 * Math.sin(fore + 0.5),
+  };
+  // Everything she wears and carries is soft too (2026-11-24, the player: "can you do it to her whole
+  // stuff also?"): the moment a hoof lands (a foot's sink jumps), every loose thing gets a little jolt
+  // and swings or bounces on its own spring and settles: the twin tails flare out, the side locks,
+  // antler chains and charms, earrings, tiara drops and bow streamers swing, the skirt hem, sheer
+  // sleeves, sash bow tails and veil bounce, the tassels sway. Her own body above the waist stays as
+  // it is; only cloth, hair and trinkets move.
+  const land = go * Math.min(1.5, Math.max(0, fS - (RIG.lastFS ?? fS)) + Math.max(0, hS - (RIG.lastHS ?? hS)));
+  RIG.lastFS = fS;
+  RIG.lastHS = hS;
+  // (each landing's jolt goes the other way from the last, so loose things swing about where they
+  // hang and settle, never pushed out and held there; the hair is moved by her head's own bounce)
+  if (land > 0.05) {
+    RIG.landN = (RIG.landN ?? 0) + 1;
+    const j = land * (RIG.landN % 2 ? 1 : -1);
+    for (const sd of [-1, 1]) kickSpr(`lock${sd}`, -sd * 0.2 * j);
+    kickSpr('chain', 1.2 * j);
+    kickSpr('charm', 1.4 * j);
+    kickSpr('ringF', 1.2 * j);
+    kickSpr('ringN', -1.2 * j);
+    kickSpr('drop', 1.4 * j);
+    kickSpr('stream', 1.2 * j);
+    kickSpr('skY', 9 * j);
+    kickSpr('slvN', 7 * j);
+    kickSpr('slvF', -7 * j);
+    kickSpr('sash0', 1.4 * j);
+    kickSpr('sash1', -1.4 * j);
+    kickSpr('veilY', 6 * j);
+    for (let k = 0; k <= 8; k++) kickSpr(`tas${k}`, (k % 2 ? 0.9 : -0.9) * j);
+  }
+  const legs = {};
+  for (const [k, L] of Object.entries(LEGDEFS)) {
+    const g = steps[k];
+    const T = xfPt(Mb, bodyWarp(body, L.top));
+    const paw = [L.rest[3][0] + g.dx, L.rest[3][1] - g.lift];
+    const la = lowAngle(L, g);
+    const a3 = lerp(L.a3, L.a3 + (la - L.a3) * (L.hind ? 0.85 : 0.62), go);
+    const pl = placeLeg(L, T, paw, a3);
+    legs[k] = { js: [pl.T, pl.J1, pl.J2, pl.P], tilt: L.a3 - a3 };
+  }
+  // her upper body, head and arms
+  const glance = smoothU(Math.min(1, Math.max(0, (t % 9 - 5.2) / 0.7))) - smoothU(Math.min(1, Math.max(0, (t % 9 - 7.4) / 0.8)));
+  // Walking, she rides her own steps like a rider on a walking deer (2026-11-24, the player: "her body
+  // looks extremely stiff, there is very little motion"): as her forelegs take her weight (twice a
+  // stride) her upper body dips and rises a beat late, rocking forward and back with it; once a stride
+  // she sways a little from side to side, her weight going from one side to the other; her head nods
+  // and tilts a beat after her body rather than being held still. Standing, she breathes (her chest
+  // and shoulders rising), shifts her weight slowly and tilts her head now and then. Smooth, with a
+  // light bounce, never much.
+  // (2026-11-24, the player: "more grace and less hunched over and less wiggle, jiggle is nice tho":
+  // she rides upright and poised, her upper body balancing against the deer back's rocking (it no
+  // longer tips forward with it), a gentle rise and fall, the sway and rock only a touch; the soft
+  // body, cloth and hair keep their jiggle)
+  const rideY = go * (1 - trot * 0.4) * 0.9 * (0.5 + 0.5 * Math.cos(fore - 0.7));
+  const lean = -0.85 * pitch - 0.004 * go + 0.006 * trot * go * Math.sin(u * TAU * 2) + go * (0.005 * Math.sin(fore - 1.0) + 0.007 * Math.sin(u * TAU - 0.5)) + (1 - go) * (0.006 * breath + 0.01 * Math.sin((t / 6.1) * TAU)) + E0.lean;
+  const Mu = Mb.multiply(shiftAt(body, [CX + 1, 106])).multiply(rotAbout(CX + 1, 106, lean)).multiply(new DOMMatrix().translate(0, rideY - 0.9 * (breath * 0.5 + 0.5) * (1 - go)));
+  const head = spr('head', -0.85 * (pitch + lean) + 0.015 * Math.sin((t / 6.4) * TAU + 1) * (1 - go) + go * (0.008 * Math.sin(fore - 1.8) + 0.01 * Math.sin(u * TAU - 1.4)) + 0.03 * glance * (1 - go) * (emo ? 0 : 1) + E0.head, 70, 15, dt);
+  // (walking, she carries her head a touch higher, her neck long; only a soft nod with her steps)
+  const headDy = spr('headDy', E0.headDy + go * (0.25 * (0.5 + 0.5 * Math.cos(fore - 1.5)) - 0.4), 70, 15, dt);
+  const Mhr = new DOMMatrix().translate(0, headDy).multiply(rotAbout(HX, 64, head));
+  const Mh = Mu.multiply(Mhr);
+  // Her arms (2026-11-24, the player: "her hands just sway left and right while walking, so stiff"):
+  // her upper body faces you, so walking her arms swing toward you and away (in depth, drawn as they
+  // show from the front: poseArms), not across the screen: opposite each other, in time with her
+  // steps, about 22 degrees each way; each elbow bends forward as its arm comes toward you (the
+  // forearm rising and shortening as it points at you) and eases nearly straight as it swings back,
+  // a beat behind the shoulder; each shoulder reaches and lifts a touch with its arm; the relaxed
+  // hands trail the swing and catch up, and the sheer sleeves' bell cuffs trail behind like cloth.
+  // Standing, the arms hang soft, elbows bent a little inward, and breathe. (`sa`/`ea` turn the arm
+  // and the forearm on the screen, clockwise; `da`/`db` swing them in depth, toward you.)
+  const armW = Math.min(1, Math.max(0, spr('armW', E0.armW, 26, 9, dt)));
+  const fid = 0.06 * Math.sin(t * 5.2);
+  const arm = {};
+  const armTurn = {};
+  for (const [k, sd] of [['N', 1], ['F', -1]]) {
+    // (+1 at the front of its swing, -1 at the back)
+    const ph = sd * Math.cos(u * TAU - 0.15);
+    const da = spr(`da${k}`, 0.3 * ph * go, 120, 17, dt);
+    const fwd = Math.min(1, Math.max(0, 0.5 + da / 0.76));
+    const db = spr(`db${k}`, (0.1 + 0.32 * fwd ** 1.5) * go + 0.08 * (1 - go), 70, 9, dt);
+    const sa = 0.025 * breath * (1 - go);
+    const ea = sd * 0.06 * (1 - go);
+    const tv = (da + db - (RIG.turn?.[k] ?? da + db)) / Math.max(dt, 1e-3);
+    (RIG.turn ??= {})[k] = da + db;
+    armTurn[k] = tv;
+    const hw = spr(`hw${k}`, Math.max(-0.25, Math.min(0.25, tv * 0.045)), 90, 12, dt);
+    const em = sd > 0 ? E0.armN : E0.armF;
+    const off = 1 - armW;
+    arm[k] = [lerp(sa, em[0] + sd * fid * 0.3, armW), lerp(ea, em[1] + sd * fid, armW), hw * off, 1.1 * ph * go * off, -0.6 * Math.max(0, ph) * go * off, da * off, db * off];
+  }
+  // how her head is moving (its velocity and acceleration), to drive the springs
+  const hp = xfPt(Mh, [HX, HY - 18]);
+  const bp = xfPt(Mb, [CX - 40, 128]);
+  const prev = RIG.prev ?? { hp, bp, hv: [0, 0], bv: [0, 0] };
+  const hv = [(hp[0] - prev.hp[0]) / dt - RIG.x * 0, (hp[1] - prev.hp[1]) / dt];
+  const bv = [(bp[0] - prev.bp[0]) / dt, (bp[1] - prev.bp[1]) / dt];
+  const ha = [(hv[0] - prev.hv[0]) / dt, (hv[1] - prev.hv[1]) / dt];
+  const ba = [(bv[0] - prev.bv[0]) / dt, (bv[1] - prev.bv[1]) / dt];
+  RIG.prev = { hp, bp, hv, bv };
+  RIG.bax = Math.max(-400, Math.min(400, (bv[0] - prev.bv[0]) / dt)) + go * 60;
+  const clampA = (v) => Math.max(-400, Math.min(400, v));
+  const hax = clampA(ha[0]) + go * 60; // (moving forward, the air pushes loose things back)
+  const hay = clampA(ha[1]);
+  const bax = clampA(ba[0]) + go * 60;
+  const phH = pitch + lean + head;
+  // Her hair flows (2026-11-24, the player: "nothing changed much, hair also please"): walking, the
+  // twin tails swing like pendulums with her body's sway, flare out a little a beat after each
+  // forefoot lands, trail behind her as she goes, and their tips whip a beat later still; the side
+  // locks sway with them; the long hair down her back sways and trails (hairBack). Clockwise is +:
+  // a tail's lower part going back, the way the air pushes it as she walks to the right.
+  const hSway = go * Math.sin(u * TAU - 1.0);
+  const hDip = go * (0.5 + 0.5 * Math.cos(fore - 1.4));
+  const tails = [-1, 1].map((sd) => {
+    const g1 = -phH * 0.85 - hax * 0.0007 + sd * hay * 0.0006 + 0.03 * Math.sin((t / 3.1) * TAU + sd) + 0.09 * hSway - sd * 0.07 * hDip + go * 0.05;
+    const a1 = spr(`tail1${sd}`, g1, 30, 4.2, dt);
+    const a2 = spr(`tail2${sd}`, a1 + 0.05 * hSway - hax * 0.0005, 44, 5, dt);
+    const a3 = spr(`tail3${sd}`, a2 + sd * hay * 0.0003 - hax * 0.0003 + 0.06 * hSway, 58, 4.4, dt);
+    return [a1 * sd * sd, a2, a3];
+  });
+  const locks = [-1, 1].map((sd) => spr(`lock${sd}`, -phH * 0.5 - hax * 0.0004 + 0.008 * Math.sin((t / 2.7) * TAU + sd) + 0.05 * hSway - sd * 0.03 * hDip + go * 0.02, 40, 5, dt));
+  const backHair = spr('backHair', 1.6 * hSway + go * 0.8 - hax * 0.004, 34, 4.2, dt);
+  const drop = spr('drop', -phH - hax * 0.0016, 70, 3.5, dt);
+  const earT = Math.floor(t / 4.3);
+  if (RIG.earT !== earT) {
+    RIG.earT = earT;
+    if (t > 1) kickSpr(earT % 2 ? 'earN' : 'earF', earT % 3 ? -2.4 : 2);
+  }
+  // (her ears bob a little with her steps)
+  const earStep = go * 0.03 * Math.sin(fore - 2.2);
+  const ear = [spr('earF', E0.ear + earStep + 0.02 * Math.sin((t / 3.3) * TAU), 120, 9, dt), spr('earN', E0.ear + earStep + 0.02 * Math.sin((t / 3.7) * TAU + 1), 120, 9, dt)];
+  const earring = [spr('ringF', -phH + ear[0] - hax * 0.0016, 60, 3, dt), spr('ringN', -phH - ear[1] - hax * 0.0016, 60, 3, dt)];
+  const chain = spr('chain', -hax * 0.0025 - phH * 0.6, 40, 3.2, dt);
+  const charm = spr('charm', -phH - hax * 0.0018, 60, 3, dt);
+  const tassel = spr('tassel', -pitch - bax * 0.0016 + 0.12 * trot * go * Math.sin(u * TAU * 2), 50, 3.5, dt);
+  // (the blanket: its hem trails behind as she goes and swings back as she stops, bounces a little
+  // with her steps, and a slow ripple runs back along it; each tassel hangs from the hem on its own
+  // spring, so they swing out of step with each other)
+  const clothX = spr('clothX', -go * 2.2 - bax * 0.007, 30, 4, dt);
+  const clothY = spr('clothY', go * 0.9 * Math.cos(fore - 1.2), 60, 5.5, dt);
+  const tassels = [];
+  for (let k = 0; k <= 8; k++) tassels.push(spr(`tas${k}`, -pitch - bax * 0.0018 + go * 0.3 * Math.sin(fore - k * 0.55) + 0.1 * trot * go * Math.sin(u * TAU * 2), 44 + k * 5, 3.2, dt));
+  const flickT = Math.floor(t / 3.1);
+  if (RIG.flickT !== flickT) {
+    RIG.flickT = flickT;
+    if (t > 1) kickSpr('tailflick', 9);
+  }
+  const tail = spr('tailflick', -0.12 * go + 0.1 * go * Math.sin(u * TAU * 2) + 0.1 * go * Math.sin(u * TAU + 0.8) + E0.tail + E0.wag * 0.22 * Math.sin(t * 13), 90, 7, dt);
+  const stream = spr('stream', -phH * 0.6 - hax * 0.0008, 40, 4, dt);
+  // (the skirt's hem trails as she goes and bounces as she lands; the sheer sleeves bounce below the
+  // elbow; the sash bow's two tails swing from the knot; the veil bobs)
+  const sag = (k) => Math.max(-1.2, Math.min(1.2, -hay * k));
+  const skirtS = { x: spr('skX', -go * 1.6 - hax * 0.002 + go * 0.5 * Math.sin(u * TAU - 1.4), 40, 4.2, dt), y: spr('skY', sag(0.003), 85, 5, dt), ph: u * TAU, go };
+  const sleeveS = { N: spr('slvN', sag(0.0028), 76, 4.6, dt), F: spr('slvF', sag(0.0028), 72, 4.6, dt) };
+  const sash = [spr('sash0', -phH * 0.7 - hax * 0.002 + go * 0.2 + 0.15 * hSway, 46, 3.8, dt), spr('sash1', -phH * 0.7 - hax * 0.002 + go * 0.2 + 0.15 * hSway, 42, 3.8, dt)];
+  const veilY = spr('veilY', sag(0.003), 56, 4.2, dt);
+  // (the bell cuffs: trailing the arm's swing and the way she's going, swinging on a little)
+  const cuff = {};
+  for (const k of ['N', 'F']) cuff[k] = spr(`cf${k}`, Math.max(-0.35, Math.min(0.35, armTurn[k] * 0.08)) + hax * 0.0004, 50, 5, dt);
+  const blink = t % 3.7 > 3.55;
+  RIG.fxT = (RIG.fxT ?? 0) + dt;
+  const fx = { t: RIG.fxT, hearts: spr('fxH', E0.hearts, 20, 9, dt), sparkle: spr('fxS', E0.sparkle, 20, 9, dt), sweat: spr('fxW', E0.sweat, 30, 9, dt) };
+  POSE = { fx, t, go, trot, u, Mb, Mu, Mh, Mhr, legs, arm, cuff, body, skirt: skirtS, sleeve: sleeveS, sash, veilY, cloth: { x: clothX, y: clothY, ph: u * TAU, go }, tassels, tails, locks, backHair, drop, ear, earring, chain, charm, tassel, tail, stream, veil: 0.7 + 2.6 * go, blink };
+  return POSE;
+}
+
+// ---------- For the painter ----------
+// (her measures, shared with the game's side: render/fawnelle/box.js)
+export const EMOTE_NAMES = Object.keys(EMOTES);
+
+// (Switching from one feeling to another, her face and body blend over from where they were, never
+// snapping back to calm first: every emotion starts from calm on its own.)
+const BLEND = { from: null, t: 1, name: null, et: 0, last: null };
+function blended(name, emoteT, dt) {
+  const e = emoteAt(name, Math.max(0, emoteT));
+  if (BLEND.name !== null && (name !== BLEND.name || emoteT + 1e-6 < BLEND.et)) {
+    BLEND.from = BLEND.last;
+    BLEND.t = 0;
+  }
+  BLEND.name = name;
+  BLEND.et = emoteT;
+  let out = e;
+  if (BLEND.from && BLEND.t < 1) {
+    BLEND.t = Math.min(1, BLEND.t + dt / 0.4);
+    const u = smoothU(BLEND.t);
+    const f = BLEND.from;
+    out = {};
+    for (const k of Object.keys(e)) out[k] = k === 'mouthPts' ? e.mouthPts.map((q, j) => [lerp(f.mouthPts[j][0], q[0], u), lerp(f.mouthPts[j][1], q[1], u)]) : mixV(f[k], e[k], u);
+  }
+  BLEND.last = out;
+  return out;
+}
+
+export function resetFawnelle() {
+  BLEND.from = null;
+  BLEND.name = null;
+  BLEND.last = null;
+  BLEND.t = 1;
+  RIG.t = 0;
+  RIG.u = 0;
+  RIG.x = 0;
+  RIG.spr = {};
+  RIG.prev = null;
+  RIG.speed = 0;
+  RIG.turn = null;
+  POSE = null;
+}
+
+// One step: her rig moves on by `dt` seconds, having walked `dist` of her units, showing `emote`
+// `emoteT` seconds into it, talking by `talk` (0..1); then her drawing is built for this pose.
+export function stepFawnelle(dt, dist, emote = 'neutral', emoteT = 0, talk = 0) {
+  const step = Math.max(1 / 240, dt);
+  const e = blended(EMOTES[emote] ? emote : 'neutral', emoteT, step);
+  rigStep(step, dist, e);
+  // (her mouth moves with the syllables while she speaks)
+  const flap = talk > 0 ? Math.max(0, Math.sin(RIG.t * 15)) ** 0.7 : 0;
+  build(faceOf(e, POSE.blink, flap));
+}
+
+// Paints her as last built, at `k` pixels to her unit (her blur scales with it); `upper` paints only
+// from the waist up.
+export function paintFawnelle(ctx, k, upper = false) {
+  HAIR_SCALE = k;
+  paint(ctx, upper ? LOW_END : 0);
+}

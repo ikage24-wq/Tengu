@@ -19,10 +19,11 @@ import { MOCHI_SIZE } from '../render/wagashi.js';
 import { babbleAlong } from '../audio/babble.js';
 import { drawHero } from '../render/hero.js';
 import { drawMonster } from '../render/monsters.js';
+import { drawFawnelleFace } from '../render/fawnelle/index.js';
 import { COLORS, THEMES, text, wrap, box, softShadow, roundRect, sparkle, font } from './kit.js';
 
 const BAR = 34;
-const TYPE = 55; // characters a second
+export const TYPE = 55; // characters a second
 const CARD = 2.8; // how long a title card stays up on its own
 
 // Each face a line can carry, for heroes and NPCs.
@@ -772,6 +773,9 @@ function drawSpeaker(ctx, world, step, x, y, t, nod = false) {
   if (who === 'player') {
     const look = face ? { ...world.char.appearance, face } : world.char.appearance;
     drawHero(ctx, look, wornGear(world.char), x, feet, { pose: 'idle', time: world.now + t, seed: 1, scale: FACE_S, job: world.char.job, talking, facing: 1 });
+  } else if (NPCS[who]?.drawn === 'fawnelle') {
+    // (Fawnelle's face comes from her own painter, acting the line: render/fawnelle/; the bob is hers.)
+    drawFawnelleFace(ctx, x, y - lift);
   } else if (NPCS[who]) {
     const npc = NPCS[who];
     const look = face ? { ...npc.look, face } : npc.look;
