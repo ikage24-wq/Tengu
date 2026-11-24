@@ -330,7 +330,8 @@ function fawnelleFeel(world, n, time) {
     FAWN.name = name;
     FAWN.at = time;
   }
-  return { emote: name, emoteT: time - FAWN.at, talk };
+  // (her idles wait while a scene or a talk window is on; Moon gaze waits for the night)
+  return { emote: name, emoteT: time - FAWN.at, talk, night: Boolean(world.fawnelle?.night), busy: Boolean(world.scene || talkWindowOn(time)) };
 }
 // (Drawn before the passers-by, so where the trunk is drawn back over her it covers only her: anyone
 // walking past the tree is still in front of it. Her tags come with everyone's: drawNpcs.)

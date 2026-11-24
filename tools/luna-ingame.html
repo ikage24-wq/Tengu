@@ -2423,13 +2423,23 @@ function build(mood = 'idle') {
   });
   let faceEnd = 0;
   withXF(Mu, () => {
-    armSkin('F');
-    sleeve('F');
+    const farFront = !!POSE?.farFront;
+    const nearFront = !!POSE?.nearFront;
+    if (!farFront) {
+      armSkin('F');
+      sleeve('F');
+    }
     add(TORSO, SK.base);
     skirt();
     bodice();
-    armSkin('N');
-    sleeve('N');
+    if (farFront) {
+      armSkin('F');
+      sleeve('F');
+    }
+    if (!nearFront) {
+      armSkin('N');
+      sleeve('N');
+    }
     collarBack();
     neck();
     collarFront();
@@ -2446,6 +2456,10 @@ function build(mood = 'idle') {
       hairTop();
       drawFX(P?.fx);
     });
+    if (POSE?.nearFront) {
+      armSkin('N');
+      sleeve('N');
+    }
   });
   // (every shadow cast on her skin goes under her hair)
   const fs = items.filter((it) => it.faceShadow);
@@ -2504,9 +2518,10 @@ function drawFX(fx) {
 // chest when she's shy, a little hop when she's happy; hearts, sparkles, a sweat drop, a welling tear.
 const NEUTRAL = {
   lid: [0.2, 0.2], lift: 0, ik: 1, look: [0, 0], bot: 0, inner: 0, star: 0, wet: 0, wonder: 0, closed: ['', ''], mouth: 'flat', open: 0, o: 0, pout: 0, tongue: 0,
-  blush: 0.36, lines: 3, puff: 0, tear: 0, sweat: 0, brow: [0, 0, 0], head: 0, headDy: 0, ear: 0, tail: 0, wag: 0, armW: 0, armN: [0, 0], armF: [0, 0], lean: 0, hop: 0, hearts: 0, sparkle: 0,
+  blush: 0.36, lines: 3, puff: 0, tear: 0, sweat: 0, brow: [0, 0, 0], head: 0, headDy: 0, ear: 0, tail: 0, wag: 0, armW: 0, armN: [0, 0, 0, 0, 0], armF: [0, 0, 0, 0, 0], lean: 0, hop: 0, hearts: 0, sparkle: 0,
+  farFront: 0, nearFront: 0, paw: [0, 0], tuck: 0, skirtPat: 0,
 };
-const SHY_ARMS = { armW: 1, armN: [0.36, 2.1], armF: [-0.36, -2.1] };
+const SHY_ARMS = { armW: 1, armN: [0.36, 2.1, 0, 0, 0], armF: [-0.36, -2.1, 0, 0, 0] };
 const EMOTES = {
   neutral: { name: 'Calm', keys: [[0, {}]] },
   shy: { name: 'Shy', keys: [
@@ -2591,10 +2606,18 @@ const keyStates = (keys) => {
     return [t, st];
   });
 };
-const mixV = (a, b, u) => (Array.isArray(a) ? a.map((v, i) => (typeof v === 'number' ? lerp(v, b[i], u) : u < 0.4 ? v : b[i])) : typeof a === 'number' ? lerp(a, b, u) : u < 0.4 ? a : b);
+// (values mixed; lists of different lengths count a missing number as 0)
+const mixV = (a, b, u) => (Array.isArray(a) ? Array.from({ length: Math.max(a.length, b.length) }, (_, i) => {
+  const v = a[i] ?? (typeof b[i] === 'number' ? 0 : b[i]);
+  const w = b[i] ?? (typeof a[i] === 'number' ? 0 : a[i]);
+  return typeof v === 'number' ? lerp(v, w, u) : u < 0.4 ? v : w;
+}) : typeof a === 'number' ? lerp(a, b, u) : u < 0.4 ? a : b);
 // The emotion's values at `tc` seconds into it, eased between its keys.
 function emoteAt(name, tc) {
-  const ks = keyStates(EMOTES[name].keys);
+  return keysAt(EMOTES[name].keys, tc);
+}
+function keysAt(keys, tc) {
+  const ks = keyStates(keys);
   let i = 0;
   while (i < ks.length - 1 && ks[i + 1][0] <= tc) i++;
   const [t0, A] = ks[i];
@@ -2607,6 +2630,185 @@ function emoteAt(name, tc) {
   out.mouthPts = pa.map((q, j) => [lerp(q[0], pb[j][0], u), lerp(q[1], pb[j][1], u)]);
   out.thin = lerp(THIN_MOUTH[A.mouth] ?? 0, THIN_MOUTH[B.mouth] ?? 0, u);
   return out;
+}
+// ---------- Her idles (2026-11-24, the player: "now we need to build her idle animations. Crossed
+// arms. Any suggestions?", then "all ten") ----------
+// Little things she does on her own while she stands calm (not walking, not talking, no emotion
+// playing): every 7 to 13 seconds one of these, in a shuffled order that never repeats the last one.
+// Each eases in from calm and back to calm; if she sets off, is startled or starts talking in the
+// middle of one, she eases out of it in a third of a second. Moon gaze waits for the night. Her hair, skirt, sleeves and charms keep
+// reacting to every move. Arms: [shoulder, elbow, swing toward you, forearm toward you, hand's turn,
+// shoulder lifted];
+// farFront / nearFront draw that arm in front of her body / her head while it is there.
+const REST_N = [0.06, 0.2, 0, 0, 0];
+const REST_F = [-0.06, -0.2, 0, 0, 0];
+const IDLES = {
+  // Crossed arms: she folds her arms under her chest with a little sigh, shifts her weight, tilts her
+  // head and glances aside, taps a finger on her arm three times, then lets her arms down.
+  crossed: { dur: 6.4, keys: [
+    [0, { farFront: 1 }],
+    [0.7, { armW: 1, armN: [0.3, 1.32, 0, 0, 0], armF: [-0.2, -1.45, 0, 0, 0], headDy: 0.6, lean: -0.008, lid: [0.27, 0.27], look: [0.02, 0.03], ear: 0.15, tail: -0.1 }],
+    [1.2, { headDy: 0.1, lean: 0.003 }],
+    [1.7, { lean: 0.012, head: 0.035, look: [-0.09, 0.02], lid: [0.24, 0.24] }],
+    [2.2, { armN: [0.3, 1.32, 0, 0, 0.2] }],
+    [2.4, { armN: [0.3, 1.32, 0, 0, 0] }],
+    [2.6, { armN: [0.3, 1.32, 0, 0, 0.2] }],
+    [2.8, { armN: [0.3, 1.32, 0, 0, 0] }],
+    [3.0, { armN: [0.3, 1.32, 0, 0, 0.2] }],
+    [3.2, { armN: [0.3, 1.32, 0, 0, 0] }],
+    [4.4, { look: [0.04, 0.01], head: 0.015, lid: [0.22, 0.22] }],
+    [5.4, { armN: REST_N, armF: REST_F, lean: 0, head: 0, headDy: 0, ear: 0, tail: 0 }],
+    [6.4, 'N'],
+  ] },
+  // Tucking her hair: her near hand comes up and slides behind the long lock by her face, sweeping it
+  // back past her ear, and comes down; the lock springs softly back.
+  tuck: { dur: 4.2, keys: [
+    [0, {}],
+    [0.3, { armW: 1, armN: [-0.7, -0.5, 0, 0, 0.1] }],
+    [0.75, { nearFront: 1, armN: [-1.9, -1.47, 0, 0, 0.25], head: 0.04, look: [0.06, 0], ear: -0.1 }],
+    [1.25, { armN: [-2.0, -1.3, 0, 0, 0.3], tuck: 0.24, head: 0.05 }],
+    [1.8, { armN: [-1.75, -1.55, 0, 0, 0.2], tuck: 0.14 }],
+    [2.5, { armN: REST_N, tuck: 0, head: 0.01, look: [0.02, 0] }],
+    [3.2, { nearFront: 0 }],
+    [4.2, 'N'],
+  ] },
+  // Ear flick: her ears twitch twice, then perk as she lifts her head and listens toward a sound,
+  // still for a beat, her tail up; then she relaxes.
+  earflick: { dur: 3.4, keys: [
+    [0, {}],
+    [0.15, { ear: -0.55 }],
+    [0.3, { ear: 0.15 }],
+    [0.45, { ear: -0.5 }],
+    [0.7, { ear: -0.32, head: -0.045, headDy: -0.3, look: [0.15, -0.03], lid: [0.1, 0.1], tail: 0.35 }],
+    [2.2, { ear: -0.25, look: [0.13, -0.02] }],
+    [2.7, { ear: 0.05, head: 0, headDy: 0, look: [0.02, 0], lid: [0.2, 0.2], tail: 0 }],
+    [3.4, 'N'],
+  ] },
+  // Moon gaze: she looks up at the sky, hands clasped at her chest, and her eyes catch the starlight.
+  moongaze: { dur: 5.4, night: true, keys: [
+    [0, { farFront: 1 }],
+    [0.8, { armW: 1, armN: [0.36, 2.1, 0, 0, 0], armF: [-0.36, -2.1, 0, 0, 0], headDy: -0.6, head: -0.045, look: [0.05, -0.16], lid: [0.06, 0.06], brow: [-0.6, 0, 0], ear: -0.2, lean: -0.012 }],
+    [1.4, { star: 1, sparkle: 1, blush: 0.6, mouth: 'rest' }],
+    [3.8, { sparkle: 0.8, look: [0.07, -0.15] }],
+    [4.4, { star: 0, sparkle: 0, armN: REST_N, armF: REST_F, headDy: 0, head: 0, look: [0, 0], lid: [0.2, 0.2], brow: [0, 0, 0], lean: 0, mouth: 'flat', ear: 0, blush: 0.36 }],
+    [5.4, 'N'],
+  ] },
+  // A sleepy yawn: a soft stretch back with her arms easing out, then a yawn behind her hand, eyes
+  // closed, ears drooping; she blinks it away.
+  yawn: { dur: 4.4, keys: [
+    [0, {}],
+    [0.7, { lean: -0.022, headDy: -0.5, head: -0.03, armW: 1, armN: [-0.4, 0.15, 0, 0, 0], armF: [0.4, -0.15, 0, 0, 0], lid: [0.3, 0.3], ear: -0.2, tail: 0.2 }],
+    [1.25, { nearFront: 1, lean: -0.008, headDy: 0, armN: [0, 2.41, 1.2, -1.2, 0.3], armF: REST_F, closed: ['blink', 'blink'], o: 1, ear: 0.3, tail: 0 }],
+    [2.4, { o: 0.7 }],
+    [2.9, { o: 0, closed: ['', ''], lid: [0.34, 0.34], armN: REST_N, ear: 0.15, lean: 0, head: 0 }],
+    [3.6, { nearFront: 0 }],
+    [4.4, 'N'],
+  ] },
+  // Pom-pom flick: her tail flicks quickly a few times as she glances back at it.
+  tailflick: { dur: 2.6, keys: [
+    [0, {}],
+    [0.2, { tail: 0.5, wag: 1, ear: -0.1, look: [-0.12, 0.04], head: 0.02 }],
+    [1.4, { wag: 0.4 }],
+    [1.9, { tail: 0.1, wag: 0, look: [0, 0], head: 0 }],
+    [2.6, 'N'],
+  ] },
+  // Hoof shuffle: she lifts her near forehoof and paws the grass gently twice, looking down at it.
+  hoof: { dur: 3.6, keys: [
+    [0, {}],
+    [0.45, { paw: [6, 1.5], ear: 0.1, look: [0.05, 0.12], headDy: 0.4 }],
+    [0.8, { paw: [0.6, 3] }],
+    [1.15, { paw: [5, 1.2] }],
+    [1.5, { paw: [0.4, 2.4] }],
+    [1.9, { paw: [4, 0.6] }],
+    [2.35, { paw: [0, 0], look: [0.02, 0.02], headDy: 0 }],
+    [3.6, 'N'],
+  ] },
+  // Fixing her tiara: her near hand comes up to straighten it at her temple, a little adjusting wiggle,
+  // then a small proud nod with her eyes closed in a smile.
+  tiara: { dur: 3.8, keys: [
+    [0, {}],
+    [0.3, { armW: 1, armN: [-0.9, -0.4, 0, 0, 0.1, 1.5] }],
+    [0.8, { nearFront: 1, armN: [-2.3, -0.85, 0, 0, 0.3, 6], head: 0.09, look: [0.09, -0.06] }],
+    [1.25, { armN: [-2.25, -0.98, 0, 0, 0.1, 6.4] }],
+    [1.6, { armN: [-2.3, -0.85, 0, 0, 0.3, 6] }],
+    [2.15, { armN: REST_N, head: 0, headDy: -0.4, mouth: 'rest', lid: [0.3, 0.3], bot: 0.08 }],
+    [2.5, { headDy: 0.35, closed: ['happy', 'happy'] }],
+    [3.0, { headDy: 0, closed: ['', ''], lid: [0.22, 0.22], bot: 0, nearFront: 0 }],
+    [3.8, 'N'],
+  ] },
+  // Smoothing her skirt: she looks down and brushes her skirt flat with both hands, twice.
+  skirt: { dur: 3.4, keys: [
+    [0, { farFront: 1 }],
+    [0.6, { armW: 1, armN: [0.2, 0.25, 0, 0, 0.1], armF: [-0.2, -0.25, 0, 0, -0.1], look: [0.02, 0.16], headDy: 0.7, lean: 0.012, lid: [0.3, 0.3] }],
+    [1.1, { armN: [0.06, 0.06, 0, 0, -0.05], armF: [-0.06, -0.06, 0, 0, 0.05], skirtPat: 1.6, lean: 0.022 }],
+    [1.4, { armN: [0.2, 0.25, 0, 0, 0.1], armF: [-0.2, -0.25, 0, 0, -0.1], skirtPat: -0.6, lean: 0.012 }],
+    [1.9, { armN: [0.06, 0.06, 0, 0, -0.05], armF: [-0.06, -0.06, 0, 0, 0.05], skirtPat: 1.4, lean: 0.022 }],
+    [2.4, { skirtPat: 0, armN: REST_N, armF: REST_F, look: [0.05, 0.03], headDy: 0, lean: 0, lid: [0.22, 0.22], mouth: 'rest' }],
+    [3.4, 'N'],
+  ] },
+  // A quiet hum: eyes closed and a small smile, she sways gently side to side, a few sparkles round her.
+  hum: { dur: 5.4, keys: [
+    [0, {}],
+    [0.6, { closed: ['blink', 'blink'], mouth: 'rest', blush: 0.55, lean: -0.008, head: -0.03, sparkle: 0.6, ear: 0.1 }],
+    [1.6, { lean: 0.008, head: 0.03 }],
+    [2.6, { lean: -0.008, head: -0.03 }],
+    [3.6, { lean: 0.008, head: 0.03 }],
+    [4.5, { lean: 0, head: 0, closed: ['', ''], sparkle: 0, lid: [0.26, 0.26], mouth: 'flat', blush: 0.36, ear: 0 }],
+    [5.4, 'N'],
+  ] },
+};
+let CALM0 = null;
+const calmState = () => (CALM0 ??= keysAt([[0, {}]], 0));
+// (two emotion states mixed)
+function mixState(A, B, u) {
+  const out = {};
+  for (const k of Object.keys(NEUTRAL)) out[k] = mixV(A[k] ?? NEUTRAL[k], B[k] ?? NEUTRAL[k], u);
+  const pa = A.mouthPts ?? calmState().mouthPts;
+  out.mouthPts = pa.map((q, j) => [lerp(q[0], B.mouthPts[j][0], u), lerp(q[1], B.mouthPts[j][1], u)]);
+  out.thin = lerp(A.thin ?? 0, B.thin ?? 0, u);
+  return out;
+}
+// The idle player: picks and plays her idles while she stands calm; her state with the idle mixed in.
+function idleMix(E, dt, emo) {
+  const I = (RIG.idle ??= { name: null, t: 0, w: 0, next: 5, bag: [], last: null, seed: 7 });
+  const calm = RIG.calm ?? !emo;
+  const standing = (RIG.spr.go?.x ?? 0) < 0.03;
+  const ok = calm && standing;
+  if (!I.name) {
+    if (ok) I.next -= dt;
+    else I.next = Math.max(I.next, 2.5);
+    if (I.next <= 0) {
+      if (!I.bag.length) {
+        const names = Object.keys(IDLES);
+        for (let i = names.length - 1; i > 0; i--) {
+          I.seed = (I.seed * 9301 + 49297) % 233280;
+          const j = Math.floor((I.seed / 233280) * (i + 1));
+          [names[i], names[j]] = [names[j], names[i]];
+        }
+        if (names[0] === I.last) names.push(names.shift());
+        I.bag = names;
+      }
+      // (a night-only idle waits for the night: the next one plays instead)
+      const day = RIG.night === false;
+      const at = I.bag.findIndex((n) => !(day && IDLES[n].night));
+      I.name = at < 0 ? null : I.bag.splice(at, 1)[0];
+      I.t = 0;
+      I.w = 1;
+      if (!I.name) I.next = 4;
+    }
+  }
+  if (!I.name) return E;
+  I.t += dt;
+  if (!ok) I.w = Math.max(0, I.w - dt / 0.33);
+  if (I.t >= IDLES[I.name].dur || I.w <= 0) {
+    I.last = I.name;
+    I.name = null;
+    I.seed = (I.seed * 9301 + 49297) % 233280;
+    I.next = 7 + 6 * (I.seed / 233280);
+    return E;
+  }
+  const S = keysAt(IDLES[I.name].keys, I.t);
+  return I.w >= 1 ? S : mixState(E.mouthPts ? E : calmState(), S, smoothU(I.w));
 }
 // Her face from an emotion's values (and a blink).
 function faceOf(e, blink) {
@@ -2696,7 +2898,8 @@ window.rigRest = () => {
 };
 // One step of the rig: `move` idle, walk or trot.
 function rigStep(dt, move, emo = null) {
-  const E0 = emo ?? NEUTRAL;
+  const E0 = idleMix(emo ?? calmState(), dt, emo);
+  RIG.E = E0;
   RIG.t += dt;
   const t = RIG.t;
   const go = Math.min(1, Math.max(0, spr('go', move === 'idle' ? 0 : 1, 14, 7.5, dt)));
@@ -2776,9 +2979,11 @@ function rigStep(dt, move, emo = null) {
   for (const [k, L] of Object.entries(LEGDEFS)) {
     const g = steps[k];
     const T = xfPt(Mb, bodyWarp(body, L.top));
-    const paw = [L.rest[3][0] + g.dx, L.rest[3][1] - g.lift];
+    // (an idle's raised forefoot: lifted and set forward, the wrist folding as it lifts)
+    const pw = k === 'foreN' ? (E0.paw ?? [0, 0]) : [0, 0];
+    const paw = [L.rest[3][0] + g.dx + pw[1], L.rest[3][1] - g.lift - pw[0]];
     const la = lowAngle(L, g);
-    const a3 = lerp(L.a3, L.a3 + (la - L.a3) * (L.hind ? 0.85 : 0.62), go);
+    const a3 = lerp(L.a3, L.a3 + (la - L.a3) * (L.hind ? 0.85 : 0.62), go) - 0.75 * Math.min(1, pw[0] / 6);
     const pl = placeLeg(L, T, paw, a3);
     legs[k] = { js: [pl.T, pl.J1, pl.J2, pl.P], tilt: L.a3 - a3 };
   }
@@ -2830,7 +3035,7 @@ function rigStep(dt, move, emo = null) {
     const hw = spr(`hw${k}`, Math.max(-0.25, Math.min(0.25, tv * 0.045)), 90, 12, dt);
     const em = sd > 0 ? E0.armN : E0.armF;
     const off = 1 - armW;
-    arm[k] = [lerp(sa, em[0] + sd * fid * 0.3, armW), lerp(ea, em[1] + sd * fid, armW), hw * off, 1.1 * ph * go * off, -0.6 * Math.max(0, ph) * go * off, da * off, db * off];
+    arm[k] = [lerp(sa, em[0] + sd * fid * 0.3, armW), lerp(ea, em[1] + sd * fid, armW), hw * off + (em[4] ?? 0) * armW, 1.1 * ph * go * off, -0.6 * Math.max(0, ph) * go * off - (em[5] ?? 0) * armW, da * off + (em[2] ?? 0) * armW, db * off + (em[3] ?? 0) * armW];
   }
   // how her head is moving (its velocity and acceleration), to drive the springs
   const hp = xfPt(Mh, [HX, HY - 18]);
@@ -2861,7 +3066,7 @@ function rigStep(dt, move, emo = null) {
     const a3 = spr(`tail3${sd}`, a2 + sd * hay * 0.0003 - hax * 0.0003 + 0.06 * hSway, 58, 4.4, dt);
     return [a1 * sd * sd, a2, a3];
   });
-  const locks = [-1, 1].map((sd) => spr(`lock${sd}`, -phH * 0.5 - hax * 0.0004 + 0.008 * Math.sin((t / 2.7) * TAU + sd) + 0.05 * hSway - sd * 0.03 * hDip + go * 0.02, 40, 5, dt));
+  const locks = [-1, 1].map((sd) => spr(`lock${sd}`, -phH * 0.5 - hax * 0.0004 + 0.008 * Math.sin((t / 2.7) * TAU + sd) + 0.05 * hSway - sd * 0.03 * hDip + go * 0.02 + (sd > 0 ? E0.tuck ?? 0 : 0), 40, 5, dt));
   const backHair = spr('backHair', 1.6 * hSway + go * 0.8 - hax * 0.004, 34, 4.2, dt);
   const drop = spr('drop', -phH - hax * 0.0016, 70, 3.5, dt);
   const earT = Math.floor(t / 4.3);
@@ -2893,7 +3098,7 @@ function rigStep(dt, move, emo = null) {
   // (the skirt's hem trails as she goes and bounces as she lands; the sheer sleeves bounce below the
   // elbow; the sash bow's two tails swing from the knot; the veil bobs)
   const sag = (k) => Math.max(-1.2, Math.min(1.2, -hay * k));
-  const skirtS = { x: spr('skX', -go * 1.6 - hax * 0.002 + go * 0.5 * Math.sin(u * TAU - 1.4), 40, 4.2, dt), y: spr('skY', sag(0.003), 85, 5, dt), ph: u * TAU, go };
+  const skirtS = { x: spr('skX', -go * 1.6 - hax * 0.002 + go * 0.5 * Math.sin(u * TAU - 1.4) + (E0.skirtPat ?? 0), 40, 4.2, dt), y: spr('skY', sag(0.003), 85, 5, dt), ph: u * TAU, go };
   const sleeveS = { N: spr('slvN', sag(0.0028), 76, 4.6, dt), F: spr('slvF', sag(0.0028), 72, 4.6, dt) };
   const sash = [spr('sash0', -phH * 0.7 - hax * 0.002 + go * 0.2 + 0.15 * hSway, 46, 3.8, dt), spr('sash1', -phH * 0.7 - hax * 0.002 + go * 0.2 + 0.15 * hSway, 42, 3.8, dt)];
   const veilY = spr('veilY', sag(0.003), 56, 4.2, dt);
@@ -2903,7 +3108,7 @@ function rigStep(dt, move, emo = null) {
   const blink = t % 3.7 > 3.55;
   RIG.fxT = (RIG.fxT ?? 0) + dt;
   const fx = { t: RIG.fxT, hearts: spr('fxH', E0.hearts, 20, 9, dt), sparkle: spr('fxS', E0.sparkle, 20, 9, dt), sweat: spr('fxW', E0.sweat, 30, 9, dt) };
-  POSE = { fx, t, go, trot, u, Mb, Mu, Mh, Mhr, legs, arm, cuff, body, skirt: skirtS, sleeve: sleeveS, sash, veilY, cloth: { x: clothX, y: clothY, ph: u * TAU, go }, tassels, tails, locks, backHair, drop, ear, earring, chain, charm, tassel, tail, stream, veil: 0.7 + 2.6 * go, blink };
+  POSE = { farFront: (E0.farFront ?? 0) > 0.5, nearFront: (E0.nearFront ?? 0) > 0.5, fx, t, go, trot, u, Mb, Mu, Mh, Mhr, legs, arm, cuff, body, skirt: skirtS, sleeve: sleeveS, sash, veilY, cloth: { x: clothX, y: clothY, ph: u * TAU, go }, tassels, tails, locks, backHair, drop, ear, earring, chain, charm, tassel, tail, stream, veil: 0.7 + 2.6 * go, blink };
   return POSE;
 }
 // ---------- The sheet ----------

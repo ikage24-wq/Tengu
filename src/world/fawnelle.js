@@ -53,6 +53,7 @@ export function tickFawnelle(world, dt) {
   const b = world.body;
   const trust = trustOf(world.char);
   const night = clockNight(world);
+  if (world.fawnelle) world.fawnelle.night = night;
   // (Out in the open: at night, or any time once she's said her good evening.)
   const open = night || trust >= 4;
   let st = world.fawnelle;

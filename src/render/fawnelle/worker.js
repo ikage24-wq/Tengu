@@ -16,7 +16,7 @@ self.onmessage = ({ data: q }) => {
     }
     const dt = last == null ? 1 / 30 : Math.min(0.1, Math.max(0, q.t - last));
     last = q.t;
-    stepFawnelle(dt, q.dist, q.emote, q.emoteT, q.talk);
+    stepFawnelle(dt, q.dist, q.emote, q.emoteT, q.talk, q.night, q.busy);
     const pics = {};
     const moved = [];
     for (const v of q.views) {

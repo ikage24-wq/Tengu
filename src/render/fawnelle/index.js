@@ -78,7 +78,7 @@ function paintHere(q) {
   if (q.reset) L.art.resetFawnelle();
   const dt = L.last == null ? 1 / 30 : Math.min(0.25, Math.max(0, q.t - L.last));
   L.last = q.t;
-  L.art.stepFawnelle(dt, q.dist, q.emote, q.emoteT, q.talk);
+  L.art.stepFawnelle(dt, q.dist, q.emote, q.emoteT, q.talk, q.night, q.busy);
   const pics = {};
   for (const v of q.views) {
     const c = document.createElement('canvas');
@@ -143,7 +143,7 @@ function ask(x, y, facing, time, state, fps = FPS) {
   const w = painter();
   if (!w && (typeof document === 'undefined' || time - S.sentAt < 0.25)) return;
   const res = gfx.scale * gfx.zoom;
-  const q = { seq: ++S.seq, t: time + 1 / FPS, dist: walked, emote: state.emote ?? 'neutral', emoteT: state.emoteT ?? 0, talk: state.talk ? 1 : 0, views: viewsFor(res, time), reset: S.reset, res, x, y, facing };
+  const q = { seq: ++S.seq, t: time + 1 / FPS, dist: walked, emote: state.emote ?? 'neutral', emoteT: state.emoteT ?? 0, talk: state.talk ? 1 : 0, night: state.night === false ? 0 : 1, busy: state.busy ? 1 : 0, views: viewsFor(res, time), reset: S.reset, res, x, y, facing };
   S.reset = false;
   S.sentX = xp;
   S.sentAt = time;
