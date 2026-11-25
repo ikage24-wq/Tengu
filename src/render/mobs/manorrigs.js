@@ -7,8 +7,7 @@
 //   topiarydryad   Topiary Swan: a hedge clipped into a swan, a pink rose on its head. Waddles on its
 //                  round bottom, orange feet paddling under it; preens, shakes its leaves, looks
 //                  about. Pecks.
-//   lanternghost   Lantern Wisp: a little flame spirit living in an iron lantern that floats along
-//                  swaying. Rises up out of the lantern's top to look about; yawns. Flares and spits.
+//   (lanternghost: the Lantern Wisp was remade on the spirit base, 2026-11-24: render/wisp/.)
 //   porcelaindoll  Porcelain Doll: a china bunny doll in a pink frock and bonnet with a lace parasol,
 //                  a wind-up key in its back. Ticks along on tiny steps; twirls the parasol, curtsies,
 //                  winds down and slumps, then winds itself back up. Parasol jab.
@@ -98,8 +97,10 @@ const oStar = (x, y, r, c, n = 5, k = 0.45) => F(T(Array.from({ length: n * 2 },
   const rr = i % 2 ? r * k : r;
   return [x + Math.cos(a) * rr, y + Math.sin(a) * rr];
 }), c));
-const oX = (x, y, w, h, wd, c = INK) => [...oLn([[x - w * 0.7, y - h * 0.55], [x + w * 0.7, y + h * 0.55]], wd, c), ...oLn([[x - w * 0.7, y + h * 0.55], [x + w * 0.7, y - h * 0.55]], wd, c)];
-const oWave = (mx, my, hw, wd, c = INK) => oLn(Array.from({ length: 5 }, (_, i) => [mx - hw + (i * hw) / 2, my + (i % 2 ? -0.3 : 0.3)]), wd, c);
+const oX = (x, y, w, h, wd, c = INK) => [...oLn([[x - w * 0.7, y - h * 0.55], [x + w * 0.7, y + h * 0.55]], wd, c), ...oLn([[x - w * 0.7, y + h * 0.55], [x + w * 0.7, y - h * 0.55]], wd, c)];
+
+const oWave = (mx, my, hw, wd, c = INK) => oLn(Array.from({ length: 5 }, (_, i) => [mx - hw + (i * hw) / 2, my + (i % 2 ? -0.3 : 0.3)]), wd, c);
+
 const NOLID = () => -99;
 // The closed and knocked-about eyes every face has (each face draws its own open eyes).
 const oShut = (mood, x, y, s, w, h, lw, sc = INK) => {
@@ -215,128 +216,6 @@ export function swanStill(pose, f, mood) {
     h: 44,
     res: 3,
     shapes: shift([...put(tsNeck(), [5, 22], nx, ny), ...put(tsBody(), [16, 19], bx, by), ...put(tsHead(), [4.4, 11.4], hx, hy), ...put(tsOwnFace(fm), [4.4, 11.4], hx, hy), ...put(tsWing(), [3, 3], bx - 4, by - 12), ...put(tsFoot(false)(), [3.4, 1.4], -3, -0.8)], 18, 43),
-  };
-}
-
-// =====================================================================================
-// Lantern Wisp
-// =====================================================================================
-const IRON = ramp('#4a3e66', { step: 9, turn: 8, lift: 18 });
-const GLASS = '#ffe6b0';
-const FLAME = ramp('#ff9a5a', { step: 9, turn: 8 });
-const lw = pairOf('lw');
-// The ring the lantern hangs from. Box 8 x 8; its bottom at (4, 7.4).
-const lwRing = () => [...stroke(arcP(4, 3.6, 3, 3, 0, 360, 14), 1.2, IRON.base)];
-// The lantern behind the flame: roof, glass, base. Box 18 x 26; hung at (9, 1).
-const lwBack = () => [
-  T([[2, 7], [9, 1.4], [16, 7]], IRON.base), F(T([[5, 6], [9, 2.6], [10, 4]], IRON.hi)), E(9, 1.4, 1.2, 1.2, '#ffd36b'),
-  R(3, 7, 12, 15, GLASS), F(R(4, 8, 3, 13, '#fff6dc')),
-  R(2, 22, 14, 3, IRON.base), R(5, 25, 8, 1.4, IRON.base),
-];
-// Its bars, in front of the flame. Same box.
-const lwBars = () => [R(2.4, 6.4, 13.2, 1.4, IRON.base), R(2.4, 6.4, 1.4, 16, IRON.base), R(14.2, 6.4, 1.4, 16, IRON.base), ...stroke(arcP(9, 7.6, 4.4, 2.4, 0, 180, 8), 0.9, IRON.base), F(R(2.6, 7, 0.8, 14, IRON.hi))];
-// The wisp: a plump flame with a face. Box 12 x 15; its root at (6, 14).
-const lwFlame = () => [
-  T([[6, 0.6], [8.6, 4], [11, 8.6], [10.4, 12.4], [6, 14.6], [1.6, 12.4], [1, 8.6], [3.4, 4], [4.6, 2.6]], FLAME.base),
-  E(6, 10.6, 3.6, 3.4, '#ffd27a'),
-  F(E(6, 11.4, 2, 1.8, '#fff2c0')),
-  F(taper([[4, 4], [3, 8]], 0.8, 0.4, FLAME.hi)),
-];
-const LW_RING = lw('ring', 8, 8, lwRing, 2);
-const LW_BACK = lw('back', 18, 26, lwBack, 2);
-const LW_BARS = lw('bars', 18, 26, lwBars, 2);
-const LW_FLAME = lw('flame', 12, 15, lwFlame, 2);
-// Its own face, a flame spirit's: dark coal eyes with an ember glowing in each, two tiny sparks on its
-// cheeks and a flickering little mouth. Box 12 x 15.
-const LW_EYES = [[4.6, 8.4, -1, 1.3, 1.8], [7.8, 8.2, 1, 1.1, 1.6]];
-const lwOwnFace = (mood) => {
-  const out = [];
-  for (const [x, y, s, w, h] of LW_EYES) {
-    const shut = oShut(mood, x, y, s, w, h, 0.45, '#5a1a0a');
-    if (shut) { out.push(...shut); continue; }
-    const lid = mood === 'angry' ? (px) => y - h * 0.2 + (px - x) * -s * 0.6 : NOLID;
-    const k = mood === 'shout' ? 1.1 : 1;
-    out.push(F(T(oCut(oRing(x, y, w * k, h * k), lid), '#3a1408')), F(T(oCut(oRing(x, y + h * 0.15, w * 0.55, h * 0.5), lid), '#c8401a')), oDot(x, y + h * 0.2, w * 0.3, '#ffd23a', lid), oDot(x + w * 0.3, y - h * 0.3, w * 0.16, '#fff6c8', lid));
-  }
-  if (mood !== 'dead') for (const [bx, by] of [[3, 10.6], [9.2, 10.4]]) out.push(oStar(bx, by, 0.55, '#ffe060', 4, 0.4));
-  const [mx, my] = [6.3, 11.4];
-  if (mood === 'shout') out.push(F(E(mx, my + 0.3, 0.75, 0.95, '#5a1408')), F(T([[mx - 0.3, my + 0.7], [mx + 0.3, my + 0.7], [mx, my - 0.1]], '#ffb030')));
-  else if (mood === 'happy') out.push(F(T(oArc(mx, my - 0.2, 0.9, 0.8, 0, 180, 8), '#5a1408')));
-  else if (mood === 'angry') out.push(...oLn([[mx - 0.8, my + 0.2], [mx - 0.25, my - 0.15], [mx + 0.25, my + 0.15], [mx + 0.8, my - 0.15]], 0.32, '#5a1408'));
-  else if (mood === 'hurt' || mood === 'dizzy') out.push(...oWave(mx, my, 0.75, 0.28, '#5a1408'));
-  else if (mood === 'dead') out.push(...oLn([[mx - 0.5, my], [mx + 0.5, my]], 0.28, '#5a1408'));
-  else out.push(F(E(mx, my + 0.1, 0.45, 0.55, '#5a1408')), F(E(mx, my + 0.25, 0.22, 0.25, '#ff8a30')));
-  return out;
-};
-const lwFace = (mood) => sm(`lw|face|${mood}`, 12, 15, () => lwOwnFace(mood));
-const lwPass = (bare) => {
-  const i = bare ? 1 : 0;
-  const tag = bare ? 'b' : '';
-  return [
-    { name: `ring${tag}`, parent: 'hang', s: LW_RING[i], pivot: [4, 7.4], at: () => [0, 0] },
-    { name: `back${tag}`, parent: 'lantern', s: LW_BACK[i], pivot: [9, 1] },
-    { name: `flame${tag}`, parent: 'lantern', s: LW_FLAME[i], pivot: [6, 14], at: (S) => [S.fx, 21 - S.rise], rot: (S, a) => (Math.sin(a.t * 9) * 5 + S.flick) * D2R },
-    { name: `bars${tag}`, parent: 'lantern', s: LW_BARS[i], pivot: [9, 1] },
-  ];
-};
-export const wispRig = makeRig({
-  w: 26,
-  h: 40,
-  soft: true,
-  stride: 20,
-  recover: 0.6,
-  springs: { x: [200, 18], bob: [80, 8], sway: [60, 5], rise: [120, 11], fx: [140, 12], flick: [120, 8] },
-  fast: ['x', 'rise', 'fx'],
-  kick: { sway: 260, flick: 400 },
-  turnKick: { sway: 200 },
-  pose(m, a) {
-    a.uidOff = (m.uid % 9) * 1.3;
-    const t = a.t + a.uidOff;
-    const lu = t % 12;
-    const peek = hold(lu, 2, 2.6, 4.4, 5);
-    const yawn = hold(lu, 7.6, 8, 8.8, 9.2);
-    const still = 1 - a.walkW;
-    a.lwYawn = yawn * still;
-    a.lwPeek = peek * still;
-    const lean = a.walkW * 10;
-    const idle = { x: 0, bob: Math.sin(t * 2) * 2, sway: Math.sin(t * 1.4) * 5, rise: peek * 19, fx: peek * Math.sin(t * 2.2) * 3, flick: 0 };
-    const walk = { x: 0, bob: Math.sin(t * 3) * 1.4, sway: -lean + Math.sin(t * 2.2) * 4, rise: 0, fx: 0, flick: -8 };
-    // The spit: the flame swelling up bright, then thrown forward.
-    const antic = { x: -2, bob: -2, sway: 10, rise: 7, fx: -1, flick: 0 };
-    const strike = { x: 3, bob: 0, sway: -16, rise: 4, fx: 3, flick: -20 };
-    return stateBlend(a, idle, walk, antic, strike);
-  },
-  parts: [
-    { name: 'hang', parent: null, at: (S) => [S.x, -38 - S.bob] },
-    { name: 'lantern', parent: 'hang', at: () => [0, 0], rot: (S) => S.sway * D2R },
-    ...lwPass(false),
-    ...lwPass(true),
-    { name: 'face', parent: 'flame', s: (a) => lwFace(moodOf(a, a.lwYawn > 0.5 ? 'shout' : a.lwPeek > 0.6 ? 'happy' : null)), pivot: [6, 14] },
-  ],
-  fx(ctx, m, a, S, mat) {
-    if (m.hp <= 0) return;
-    const pow = Math.max(a.ph.antic, a.ph.strike);
-    inPart(ctx, mat, 'flame', () => {
-      const r = 12 + pow * 10;
-      const g = ctx.createRadialGradient(0, -6, 1, 0, -6, r);
-      g.addColorStop(0, `rgba(255,214,140,${(0.45 + pow * 0.4) * a.alpha})`);
-      g.addColorStop(1, 'rgba(255,154,90,0)');
-      ctx.fillStyle = g;
-      ctx.fillRect(-r, -6 - r, r * 2, r * 2);
-      for (let k = 0; k < 3; k++) {
-        const u = fr(a.t * 1.6 + k / 3);
-        dot(ctx, a, Math.sin(u * 6 + k) * 2, -14 - u * 10, 0.8 * (1 - u) + 0.3, (1 - u) * 0.9, k % 2 ? '#ffe36b' : '#ffb03a');
-      }
-    });
-  },
-});
-export function wispStill(pose, f, mood) {
-  const fm = MOODS.has(mood) ? mood : 'idle';
-  return {
-    w: 26,
-    h: 46,
-    res: 3,
-    shapes: shift([...put(lwRing(), [4, 7.4], 0, -40), ...put(lwBack(), [9, 1], 0, -40), ...put(lwFlame(), [6, 14], 0, -19), ...put(lwOwnFace(fm), [6, 14], 0, -19), ...put(lwBars(), [9, 1], 0, -40)], 13, 45),
   };
 }
 

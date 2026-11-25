@@ -125,7 +125,7 @@ function machineArt(theme, crank) {
     out.push(T([[gx - 12, cy], [gx - 12, cy - 8], [gx - 7, cy - 4], [gx - 3.4, cy - 11], [gx, cy - 5], [gx + 3.4, cy - 11], [gx + 7, cy - 4], [gx + 12, cy - 8], [gx + 12, cy]], gold));
     out.push(F(T([[gx - 12, cy - 1.6], [gx + 12, cy - 1.6], [gx + 12, cy], [gx - 12, cy]], goldSh)));
     for (const [x, y, c] of [[gx - 12, cy - 8.6, theme.gem], [gx - 3.4, cy - 11.6, '#8fd3ff'], [gx + 3.4, cy - 11.6, '#8fd3ff'], [gx + 12, cy - 8.6, theme.gem], [gx, cy - 3, theme.gem]]) out.push(E(x, y, 1.4, 1.4, c), F(E(x - 0.4, y - 0.4, 0.5, 0.5, '#ffffff')));
-    return { w: W, h: H, shapes: out, res: 2, soft: 'cel', crisp: true, selout: true };
+    return { w: W, h: H, shapes: out, res: 2, soft: 'cel', crisp: true, ink: 'dark', selout: true };
   });
 }
 
@@ -353,7 +353,7 @@ function capsuleArt(color, open) {
       top.push([8 + px * Math.cos(tip) - py * Math.sin(tip), 12 - lift + px * Math.sin(tip) + py * Math.cos(tip)]);
     }
     out.push(T(top, color), F(E(5 - open * 2, 8.4 - lift, 2, 1, '#ffffff')));
-    return { w: 16, h: 20, shapes: out, res: 3, soft: 'cel', crisp: true, selout: true };
+    return { w: 16, h: 20, shapes: out, res: 3, soft: 'cel', crisp: true, ink: 'dark', selout: true };
   });
 }
 

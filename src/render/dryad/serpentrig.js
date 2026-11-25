@@ -560,16 +560,21 @@ export function serpentRig(paint) {
       for (const k2 of ['drop', 'fxN', 'fyN', 'fxF', 'fyF']) base[k2] /= leg;
       const out = mv ? poseAt(mv, mt, anticW, base) : { ...base };
       // Her own idle act, on top of the base's sway (only while she's calm: not moving, fighting,
-      // hurt or beaten), an 18 s loop: a long yawn and stretch, arms up; tending the sprout at the end
-      // of her root (she reaches back and it blooms); nodding off, eyes closed, then catching herself
-      // with a start. (In move units: x, lift in body heights; angles in degrees.)
+      // hurt or beaten), a 30 s loop (2026-11-25 polish, the player: "more expressive"): a long yawn
+      // and stretch, arms up; tending the sprout at the end of her root (she reaches back and it
+      // blooms); a slow dance, arms raised and swaying, petals swirling round her; a shy little wave
+      // to you, then her hands up to her cheeks, peeking, blushing; nodding off, eyes closed, then
+      // catching herself with a start. (In move units: x, lift in body heights; angles in degrees.)
       {
         const calmK = (a.calm ?? 1) * (mv ? 0 : 1) * (1 - (a.walkW ?? 0)) * (m.hp > 0 ? 1 : 0);
-        const lu = (t + (m.uid % 5) * 3.1) % 18;
+        const lu = (t + (m.uid % 5) * 3.1) % 30;
+        const go = (pose, w) => {
+          if (w > 0.001) for (const [k2, v] of Object.entries(pose)) out[k2] = (out[k2] ?? 0) + (v - (out[k2] ?? 0)) * w;
+        };
         const yawn = hold(lu, 1.6, 2.4, 3.8, 4.8) * calmK;
         const tend = hold(lu, 6.6, 7.6, 10.2, 11.2) * calmK;
-        const nod = hold(lu, 12.4, 13.6, 15.4, 15.5) * calmK;
-        const start = hold(lu, 15.45, 15.55, 15.9, 16.6) * calmK;
+        const nod = hold(lu, 24.4, 25.6, 27.4, 27.5) * calmK;
+        const start = hold(lu, 27.45, 27.55, 27.9, 28.6) * calmK;
         const sw = Math.sin(t * 2.6);
         const add = {
           // (tending: she leans back toward the end of her root behind her and reaches back to it)
@@ -579,12 +584,24 @@ export function serpentRig(paint) {
           neckR: -4 * yawn + 6 * nod, shrugN: 12 * yawn, shrugF: 12 * yawn, tailW: 0.3 * tend,
         };
         for (const [k2, v] of Object.entries(add)) out[k2] = (out[k2] ?? 0) + v;
+        // the slow dance: arms raised, swaying, petals swirling round her
+        const dance = hold(lu, 12.6, 13.6, 17, 18) * calmK;
+        const ds = Math.sin((lu - 13) * 2.2);
+        go({ shN: -150 + ds * 14, elN: -40, shF: -140 - ds * 14, elF: -46, tilt: ds * 7, waist: -ds * 6, head: -6 + ds * 5, neckR: -ds * 4, tailW: ds * 0.5 }, dance);
+        a.dryPetals = dance;
+        // a shy wave, then hands to her cheeks, peeking
+        const wave = hold(lu, 19.4, 19.8, 21, 21.3) * calmK;
+        const wv = Math.sin((lu - 19.8) * 11);
+        go({ shN: -130, elN: -50 + wv * 26, head: 4, tilt: 3, neckR: 4 }, wave);
+        const shy = hold(lu, 21.2, 21.6, 22.9, 23.4) * calmK;
+        go({ shN: -60, elN: -130, shF: -60, elF: -130, head: 8, tilt: 4, neckR: 6, shrugN: 6, shrugF: 6, waist: 2 }, shy);
         // (what the painter shows with it: her face, and the sprout blooming on her root)
         // (it opens as she tends it and stays open until the act comes round again)
-        const bloomGoal = calmK > 0.5 ? (lu > 8.2 && lu < 17.4 ? 1 : 0) : (st.dryBloom ?? 0);
+        const bloomGoal = calmK > 0.5 ? (lu > 8.2 && lu < 29.4 ? 1 : 0) : (st.dryBloom ?? 0);
         st.dryBloom = (st.dryBloom ?? 0) + (bloomGoal - (st.dryBloom ?? 0)) * Math.min(1, a.dt * 1.5);
         a.dryBloom = st.dryBloom;
-        a.dryFace = yawn > 0.5 ? (lu < 3.6 ? 'wonder' : 'peaceful') : nod > 0.4 ? 'blink' : start > 0.4 ? 'wonder' : tend > 0.6 ? 'happy' : null;
+        a.dryFace = yawn > 0.5 ? (lu < 3.6 ? 'wonder' : 'peaceful') : nod > 0.4 ? 'blink' : start > 0.4 ? 'wonder' : tend > 0.6 ? 'happy'
+          : dance > 0.5 ? 'peaceful' : wave > 0.5 ? 'happy' : shy > 0.5 ? 'shy' : null;
       }
       // (her attacks' faces: each move's list of [face, from, to])
       if (mv?.face) for (const [fc, f0, f1] of mv.face) if (mt >= f0 && mt < f1) a.dryFace = fc;

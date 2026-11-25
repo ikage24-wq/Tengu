@@ -143,7 +143,7 @@ export function theatreBoss(world, m, up, dt) {
 }
 
 // ---------- The Queen's dream (Chapter 9) ----------
-// (Each boss's rig, render/mobs/dreamrigs.js, takes up a move of its own for each cast: m.castPose.)
+// (Each boss's rig takes up a move of its own for each cast: m.castPose.)
 
 // A cleave ahead of the boss and then one behind it, the second landing `late` seconds after.
 const frontBack = (w, m, len, damage, dur, late) => {

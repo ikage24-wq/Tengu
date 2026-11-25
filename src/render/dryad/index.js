@@ -110,6 +110,19 @@ function dryadFx(ctx, a, m) {
   const t = a.blMove?.t ?? 0;
   const H = 58;
   ctx.save();
+  // her slow dance: petals swirling round her, rising
+  const dp = a.mo?.rig?.dryPetals ?? a.dryPetals ?? 0;
+  if (dp > 0.05 && (m?.hp ?? 1) > 0) {
+    const c = onBone(matOf('head'), [151, 85], [151, 95]);
+    for (let i = 0; i < 8; i++) {
+      const u = (a.t * 0.35 + i / 8) % 1;
+      const an = (i / 8) * Math.PI * 2 + a.t * 1.6;
+      const r = H * (0.34 + 0.06 * Math.sin(a.t * 2 + i));
+      const x = c[0] + Math.cos(an) * r;
+      const y = c[1] + H * 0.5 - u * H * 0.9 + Math.sin(an) * r * 0.22;
+      petal(ctx, x, y, 1.7 + hash(i) * 0.6, an + u * 6, dp * Math.sin(Math.PI * u) * (Math.sin(an) > -0.2 ? 1 : 0.55));
+    }
+  }
   if (mv?.petals && t >= mv.petals[0] && t < mv.petals[1] + 0.7) {
     const mouth = onBone(matOf('head'), [151, 85], [152, 79]);
     for (let i = 0; i < 16; i++) {

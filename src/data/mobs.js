@@ -49,11 +49,11 @@ export const MOBS = {
   }),
   brownie: mob({
     id: 'brownie', name: 'Chickling', level: 7, hp: 105, atk: 22, def: 5, acc: 20, eva: 3, exp: 48, gold: [2, 5],
-    speed: 34, w: 22, h: 32, art: 'brownie', drops: [{ id: 'brownie_crumb', chance: 0.5 }, { id: 'honeycomb', chance: 0.08 }, { id: 'maid_dress', chance: 0.01 }],
+    speed: 34, w: 22, h: 33, art: 'brownie', moves: ['peck', 'wingSlap', 'call'], drops: [{ id: 'brownie_crumb', chance: 0.5 }, { id: 'honeycomb', chance: 0.08 }, { id: 'maid_dress', chance: 0.01 }],
   }),
   harvmouse: mob({
     id: 'harvmouse', name: 'Harvest Mouse', level: 9, hp: 148, atk: 27, def: 7, acc: 24, eva: 6, exp: 72, gold: [2, 7],
-    speed: 36, w: 26, h: 22, art: 'harvmouse', drops: [{ id: 'woven_nest', chance: 0.45 }, { id: 'oak_log', chance: 0.08 }],
+    speed: 36, w: 26, h: 23, art: 'harvmouse', moves: ['bite', 'chitter', 'tailWhip'], drops: [{ id: 'woven_nest', chance: 0.45 }, { id: 'oak_log', chance: 0.08 }],
   }),
   // Clover Hills' area boss (world/nest.js, render/mobs/farm.js): the Pumpkin Goblins' grumpy
   // old farmer chief bursts out of the big barn once enough of the hills has been hunted, and
@@ -84,11 +84,13 @@ export const MOBS = {
     id: 'pebblet', name: 'Rockhound Kid', level: 9, hp: 150, atk: 28, def: 9, acc: 24, eva: 3, exp: 72, gold: [2, 7],
     speed: 20, w: 26, h: 36, art: 'rockhound', drops: [{ id: 'pebble', chance: 0.5 }, { id: 'copper_ore', chance: 0.08 }],
   }),
-  // A chubby lion cub with a dandelion-puff mane, felt wings it can't fly with yet and a heart-tipped
-  // tail (its "stinger"): it stalks, creeping low, then trots after you, and pounces.
+  // The Sunset Manticub (2026-11-25): a chubby lion cub with a sunset ruff, little bat wings it can't fly
+  // with yet and a scorpion tail tipped with a heart (its "stinger"). Speed 16 with no creep-and-run:
+  // it walks the cat base's own walk at that pace, chasing too (faster, the walk, trot and bound swap
+  // about and the legs tangle).
   scorpip: mob({
     id: 'scorpip', name: 'Manticore Cub', level: 12, hp: 250, atk: 37, def: 10, acc: 30, eva: 5, exp: 190, gold: [3, 9],
-    speed: 52, gait: 'stalk', w: 30, h: 30, art: 'scorpip', drops: [{ id: 'stinger', chance: 0.45 }, { id: 'iron_ore', chance: 0.08 }, { id: 'cargo_pants', chance: 0.01 }],
+    speed: 16, w: 32, h: 42, art: 'scorpip', moves: ['swipe', 'stalk', 'bite'], drops: [{ id: 'stinger', chance: 0.45 }, { id: 'iron_ore', chance: 0.08 }, { id: 'cargo_pants', chance: 0.01 }],
   }),
   leafling: mob({
     // (the Rootling Dryad, 2026-11-24: the Root Tendril's dryad as a field monster, on the serpent base;
@@ -102,11 +104,11 @@ export const MOBS = {
     id: 'redpanda', name: 'Red Panda', level: 18, hp: 620, atk: 58, def: 18, acc: 42, eva: 6, exp: 420, gold: [6, 15],
     speed: 32, w: 32, h: 36, art: 'redpanda', drops: [{ id: 'panda_fluff', chance: 0.45 }, { id: 'maple_log', chance: 0.08 }],
   }),
-  // Mossy Woods' branches (new 2026-11-12, built from scratch): a round little owlet with mossy ear
-  // tufts that glides along the branches on spread wings (render/mobs/mossowletrig.js).
+  // Mossy Woods' branches (new 2026-11-12): since 2026-11-25 the Leaf Cloak Owlet, a snowy owlet in a
+  // maple-leaf cloak, on its own copy of the owl base (render/owlet/); moving, it takes off and glides.
   mossowlet: mob({
     id: 'mossowlet', name: 'Moss Owlet', level: 11, hp: 220, atk: 33, def: 8, acc: 29, eva: 7, exp: 168, gold: [3, 8],
-    speed: 38, w: 24, h: 28, art: 'mossowlet', drops: [{ id: 'owl_down', chance: 0.5 }, { id: 'silkmoss', chance: 0.08 }],
+    speed: 38, w: 22, h: 35, art: 'mossowlet', moves: ['swoop', 'wingSlap', 'call'], drops: [{ id: 'owl_down', chance: 0.5 }, { id: 'silkmoss', chance: 0.08 }],
   }),
   // Mossy Woods' forest floor (new 2026-11-12, built from scratch): a slow old tortoise with a little
   // moss garden growing on its shell (render/mobs/mosstortrig.js). Tough and slow.
@@ -116,8 +118,10 @@ export const MOBS = {
   }),
   boarlet: mob({
     id: 'boarlet', name: 'Warg', level: 14, hp: 330, atk: 43, def: 12, acc: 34, eva: 5, exp: 240, gold: [4, 10],
-    speed: 82, gait: 'stalk', w: 38, h: 37, art: 'boarlet', drops: [{ id: 'tusk', chance: 0.45 }, { id: 'silkmoss', chance: 0.08 }, { id: 'puffer_jacket', chance: 0.01 }],
+    speed: 26, w: 48, h: 43, art: 'boarlet', drops: [{ id: 'tusk', chance: 0.45 }, { id: 'silkmoss', chance: 0.08 }, { id: 'puffer_jacket', chance: 0.01 }],
     // (Tuskar calls them into his den in Rootwood Hollow, where they fight like its own.)
+    // (Speed 26, a steady walk with no creep-and-run: it walks the wolf base's own walk at that pace,
+    // chasing too, 2026-11-25; faster, it trots and gallops in a tangle of legs.)
     fight: { every: 1.6, reach: 30, windup: 0.4 },
   }),
   mossgolem: mob({
@@ -156,7 +160,8 @@ export const MOBS = {
   }),
   crystalslime: mob({
     id: 'crystalslime', name: 'Gem Mimic', level: 27, hp: 1320, atk: 88, def: 28, acc: 58, eva: 8, exp: 800, gold: [10, 23],
-    speed: 40, gait: 'bound', w: 28, h: 38, art: 'crystalslime', drops: [{ id: 'crystal_gel', chance: 0.5 }, { id: 'sapphire', chance: 0.08 }, { gear: 'earring', chance: 0.01 }],
+    // (the Chest Hermit, 2026-11-24: render/hermit/; it bites and slams its chest's lid)
+    speed: 40, w: 28, h: 33, art: 'crystalslime', moves: ['hermitChomp', 'lidSlam'], drops: [{ id: 'crystal_gel', chance: 0.5 }, { id: 'sapphire', chance: 0.08 }, { gear: 'earring', chance: 0.01 }],
   }),
   rockgolem: mob({
     id: 'rockgolem', name: 'Crystal Golem', level: 32, hp: 2450, atk: 112, def: 45, acc: 66, eva: 6, exp: 1280, gold: [13, 30],
@@ -270,7 +275,7 @@ export const MOBS = {
     // (Health sized from a live run, 2026-11-19: 16k took a level-14 group about 55 s, ten of them
     // cutting Yomogi free; 32k is a fight of about a minute and three quarters, the Hollow's last.)
     id: 'gnarlroot', name: 'Gnarlroot, the Oldest Tree', level: 14, hp: 32000, atk: 98, def: 20, acc: 44, eva: 2, exp: 9000, gold: [240, 360],
-    speed: 16, w: 100, h: 150, art: 'gnarlroot', boss: true,
+    speed: 16, w: 100, h: 150, art: 'gnarlroot', boss: true, moves: ['rootSlam', 'branchSweep'],
     drops: [{ id: 'hollow_acorn', chance: 1, qty: 5 }],
     fight: { every: 2, reach: 74, windup: 0.55 }, mech: 'gnarl',
   }),
@@ -289,8 +294,9 @@ export const MOBS = {
   }),
   candlebride: mob({
     id: 'candlebride', name: 'Candle Bride', level: 17, hp: 760, atk: 62, def: 12, acc: 50, eva: 5, exp: 300, gold: [6, 13],
-    speed: 30, w: 24, h: 38, art: 'candlebride', drops: [{ id: 'candle_wax', chance: 0.4 }, { id: 'moonlit_ribbon', chance: 0.08 }, { id: 'long_skirt', chance: 0.01 }],
-    fight: { every: 2.3, reach: 30, windup: 0.55, range: 170, shot: 'flame' },
+    // (the Candelabra Bride, 2026-11-24: her candelabra, render/bride/; a slow, stately walk)
+    speed: 16, w: 26, h: 46, art: 'candlebride', drops: [{ id: 'candle_wax', chance: 0.4 }, { id: 'moonlit_ribbon', chance: 0.08 }, { id: 'long_skirt', chance: 0.01 }],
+    moves: ['candleThrust', 'candleSweep'], fight: { every: 2.3, reach: 30, windup: 0.55, range: 170, shot: 'flame' },
   }),
   topiarydryad: mob({
     id: 'topiarydryad', name: 'Topiary Swan', level: 15, hp: 600, atk: 56, def: 14, acc: 46, eva: 6, exp: 230, gold: [5, 11],
@@ -299,8 +305,9 @@ export const MOBS = {
   }),
   lanternghost: mob({
     id: 'lanternghost', name: 'Lantern Wisp', level: 16, hp: 540, atk: 58, def: 8, acc: 50, eva: 9, exp: 250, gold: [5, 11],
-    speed: 40, w: 26, h: 34, art: 'lanternghost', drops: [{ id: 'wisp_flame', chance: 0.35 }, { id: 'moonlit_ribbon', chance: 0.06 }, { gear: 'earring', chance: 0.01 }],
-    fight: { every: 2.1, reach: 30, windup: 0.5, range: 150 },
+    // (the Lamplighter Wisp, 2026-11-24: her pole and lantern, render/wisp/)
+    speed: 40, w: 26, h: 44, art: 'lanternghost', drops: [{ id: 'wisp_flame', chance: 0.35 }, { id: 'moonlit_ribbon', chance: 0.06 }, { gear: 'earring', chance: 0.01 }],
+    moves: ['lanternFling', 'emberVolley'], fight: { every: 2.1, reach: 30, windup: 0.5, range: 150 },
   }),
   armourknight: mob({
     id: 'armourknight', name: 'Armour Knight', level: 18, hp: 1200, atk: 70, def: 26, acc: 52, eva: 3, exp: 420, gold: [8, 16],
@@ -516,7 +523,8 @@ export const MOBS = {
   }),
   geminighosts: mob({
     id: 'geminighosts', name: 'Gemini Ghosts', level: 30, hp: 2100, atk: 120, def: 22, acc: 90, eva: 16, exp: 1100, gold: [15, 30],
-    speed: 48, w: 32, h: 30, art: 'geminighosts', drops: [{ id: 'astral_shard', chance: 0.06 }, { id: 'mana_elixir', chance: 0.3 }, { gear: 'earring', chance: 0.01 }],
+    // (the Mirror Twins, 2026-11-24: render/gemini/; a star clap and a star dash)
+    speed: 48, w: 34, h: 48, art: 'geminighosts', moves: ['starClap', 'starDash'], drops: [{ id: 'astral_shard', chance: 0.06 }, { id: 'mana_elixir', chance: 0.3 }, { gear: 'earring', chance: 0.01 }],
     fight: { every: 1.7, reach: 40, windup: 0.35 },
   }),
   // (Folio, the Twins and Astraea fight a fixed FFXIV-style rotation now, world/observatory.js:
@@ -573,7 +581,7 @@ export const MOBS = {
   }),
   peppermint: mob({
     id: 'peppermint', name: 'Peppermint Spinner', level: 37, hp: 3400, atk: 170, def: 34, acc: 116, eva: 16, exp: 1850, gold: [21, 40],
-    speed: 52, w: 28, h: 30, art: 'peppermint', drops: [{ id: 'sugar_gem', chance: 0.08 }, { id: 'taffy_twist', chance: 0.3 }],
+    speed: 52, w: 28, h: 33, art: 'peppermint', moves: ['mintSpin', 'mintFlick'], drops: [{ id: 'sugar_gem', chance: 0.08 }, { id: 'taffy_twist', chance: 0.3 }],
     fight: { every: 1.8, reach: 44, windup: 0.35 },
   }),
   chocoknight: mob({
@@ -602,14 +610,15 @@ export const MOBS = {
   }),
   bonbon: mob({
     id: 'bonbon', name: 'Queen Bonbon', level: 40, hp: 400000, atk: 252, def: 62, acc: 126, eva: 6, exp: 72000, gold: [870, 1200],
-    speed: 26, w: 80, h: 100, art: 'bonbon', boss: true,
+    // (the Strawberry Shortcake Queen, 2026-11-25, on the queen base; her own attacks with her spoon)
+    speed: 26, w: 70, h: 109, art: 'bonbon', boss: true, moves: ['spoonBonk', 'spoonSweep'],
     drops: [{ id: 'sugar_gem', chance: 1, qty: 5 }],
     fight: { every: 2, reach: 86, windup: 0.55 }, mech: 'bonbon',
   }),
   // ---------- Dream Theatre (levels 40-45, docs/design/dream-theatre.md) ----------
   understudy: mob({
     id: 'understudy', name: 'Understudy Ghost', level: 40, hp: 4200, atk: 190, def: 40, acc: 126, eva: 16, exp: 2400, gold: [24, 44],
-    speed: 46, w: 26, h: 34, art: 'understudy', drops: [{ id: 'script_page', chance: 0.4 }, { id: 'encore_rose', chance: 0.06 }],
+    speed: 46, w: 30, h: 48, art: 'understudy', moves: ['divaAria', 'maskSwat'], drops: [{ id: 'script_page', chance: 0.4 }, { id: 'encore_rose', chance: 0.06 }],
     fight: { every: 1.9, reach: 42, windup: 0.4 },
   }),
   chorusgirl: mob({
@@ -668,7 +677,8 @@ export const MOBS = {
     drops: [{ id: 'encore_rose', chance: 1, qty: 5 }],
     fight: { every: 2, reach: 88, windup: 0.55 }, mech: 'playwright',
   }),
-  // The Queen's dream's own (Chapter 9, 2026-11-19, the player's picks; render/mobs/dreamrigs.js),
+  // The Queen's dream's own (Chapter 9, 2026-11-19, the player's picks; their rigs: nightmanagerrig.js,
+  // render/ryu, mondaykidrig.js),
   // standing in for the three above in the theatre's last acts: her manager at Overtime, the
   // all-night snack at the 2 a.m. store, and Monday in her flat. (Health carried over from the acts
   // they replace, to be checked in a live run.)
@@ -682,7 +692,9 @@ export const MOBS = {
   }),
   noodledragon: mob({
     id: 'noodledragon', name: 'The Cup-Noodle Dragon', level: 43, hp: 680000, atk: 268, def: 64, acc: 134, eva: 6, exp: 66000, gold: [770, 1100],
-    speed: 32, w: 64, h: 110, art: 'noodledragon', boss: true,
+    // (Ramen Ryu, 2026-11-25: on the serpent base; his own attacks: the noodle lash, the chopstick jab,
+    // the base serpent's tail whip)
+    speed: 32, w: 74, h: 100, art: 'noodledragon', boss: true, moves: ['noodleLash', 'stickJab', 'tailWhip'],
     drops: [{ id: 'encore_rose', chance: 1, qty: 3 }, { id: 'mana_elixir', chance: 1, qty: 9 }],
     fight: { every: 2, reach: 80, windup: 0.55 }, mech: 'noodledragon',
   }),
@@ -751,7 +763,7 @@ export const MOBS = {
   // (she sleeps behind it). Health as hers, from the same live run.
   whalestorm: mob({
     id: 'whalestorm', name: 'The Sulk', level: 50, hp: 440000, atk: 310, def: 76, acc: 156, eva: 8, exp: 130000, gold: [1300, 1700],
-    speed: 22, w: 96, h: 96, art: 'whalestorm', boss: true,
+    speed: 22, w: 68, h: 91, art: 'whalestorm', boss: true, moves: ['duvetSlap'],
     drops: [{ id: 'sky_scale', chance: 1, qty: 6 }],
     fight: { every: 2.1, reach: 96, windup: 0.6 }, mech: 'whalestorm',
   }),

@@ -449,8 +449,9 @@ export function drawHud(ui, state, world) {
       ctx.restore();
     });
   }
-  // The game's clock and date (ui/clock.js); click for the calendar.
-  piece(ui, 'clock', CLOCK_BOX, () => drawClock(ui, state, world));
+  // The game's clock and date (ui/clock.js); click for the calendar. (Not in a dungeon run: it has
+  // its own timer, and the root radio talks where the clock sits.)
+  if (!world.dungeon) piece(ui, 'clock', CLOCK_BOX, () => drawClock(ui, state, world));
   piece(ui, 'buffs', { x: 8, y: minimapBottom(world), w: Math.max(3, Object.keys(world.char.buffs).length) * 22, h: 28 }, () => drawBuffs(ui, world));
   if (world.dungeon) {
     drawDungeonTracker(ui, world);

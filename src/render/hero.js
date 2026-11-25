@@ -2602,9 +2602,9 @@ export function weaponSprite(w, time, unstrung = false) {
   const def = weaponShapes(w.type, w.tier, frame, w.theme, w.variant, unstrung, legacy);
   if (!def) return null;
   const key = `weapon|${w.type}|${w.tier}|${w.theme}|${w.variant}|${frame}|${unstrung}${legacy ? '|old' : ''}`;
-  const s = sprite(key, () => ({ w: def.w, h: def.h, shapes: def.shapes, res: RES, soft: 'cel', crisp: true }));
+  const s = sprite(key, () => ({ w: def.w, h: def.h, shapes: def.shapes, res: RES, soft: 'cel', crisp: true, ink: 'dark' }));
   // Its moving parts, each a picture the size of the weapon's (see weapons.js).
-  const parts = def.parts?.map((p) => ({ ...p, canvas: sprite(`${key}|${p.name}`, () => ({ w: def.w, h: def.h, shapes: p.shapes, res: RES, soft: 'cel', crisp: true })).canvas }));
+  const parts = def.parts?.map((p) => ({ ...p, canvas: sprite(`${key}|${p.name}`, () => ({ w: def.w, h: def.h, shapes: p.shapes, res: RES, soft: 'cel', crisp: true, ink: 'dark' })).canvas }));
   return { ...s, ...logical(s), grip: def.grip, blade: def.blade, live: def.live, anchors: def.anchors, parts };
 }
 
@@ -2612,7 +2612,7 @@ export function weaponSprite(w, time, unstrung = false) {
 function toolSprite(kind) {
   const def = toolShapes(kind);
   if (!def) return null;
-  const s = sprite(`tool|${kind}`, () => ({ w: def.w, h: def.h, shapes: def.shapes, res: RES, soft: 'cel', crisp: true }));
+  const s = sprite(`tool|${kind}`, () => ({ w: def.w, h: def.h, shapes: def.shapes, res: RES, soft: 'cel', crisp: true, ink: 'dark' }));
   return { ...s, ...logical(s), grip: def.grip, blade: def.blade, live: null, anchors: def.anchors, tool: kind, size: def.size };
 }
 
@@ -2960,7 +2960,7 @@ export function drawPosed(ctx, look, x, y, pose, { scale = 1, facing = 1, under 
     spriteSoon(key, { kind: 'hero', look, g, rig, light: LIGHT });
     return;
   }
-  const build = () => ({ w: W, h: H + BODY_BELOW, shapes: bodyShapes(look, g, rig), res: RES, soft: 'cel', crisp: true, selout: true, light: LIGHT, edge: BACK_EDGE });
+  const build = () => ({ w: W, h: H + BODY_BELOW, shapes: bodyShapes(look, g, rig), res: RES, soft: 'cel', crisp: true, ink: 'dark', selout: true, light: LIGHT, edge: BACK_EDGE });
   const body = slot ? spriteBudgeted(key, build, slot, () => ({ kind: 'hero', look, g, rig, light: LIGHT })) : sprite(key, build);
   if (!body) return;
   const flip = facing < 0;
@@ -2969,7 +2969,7 @@ export function drawPosed(ctx, look, x, y, pose, { scale = 1, facing = 1, under 
   const armOn = rig.armIn ? null : (() => {
     const skin = look.skinTone ?? '#fff0e6';
     const [ax, ay] = rig.frontArm;
-    const arm = sprite(`posedarm|${JSON.stringify(look)}|${ax},${ay},${rig.armSide}`, () => ({ w: W, h: H, shapes: move(squash(armShapes(FRONT_SHOULDER, ax, ay, sleeveOf(g.top, skin), longSleeves(g.top.design, g.top), g, skin, rig.armSide)), 0, 0), res: RES, soft: 'cel', crisp: true, selout: true }));
+    const arm = sprite(`posedarm|${JSON.stringify(look)}|${ax},${ay},${rig.armSide}`, () => ({ w: W, h: H, shapes: move(squash(armShapes(FRONT_SHOULDER, ax, ay, sleeveOf(g.top, skin), longSleeves(g.top.design, g.top), g, skin, rig.armSide)), 0, 0), res: RES, soft: 'cel', crisp: true, ink: 'dark', selout: true }));
     const at = [left + (flip ? -rig.tx : rig.tx) * KX * scale, top + (rig.by + hipDrop(rig)) * KY * scale];
     return () => blit(ctx, arm, at[0], at[1], { flip, scale, alpha });
   })();
@@ -3206,7 +3206,7 @@ const BACK_EDGE = [11.4, 13.2];
 // A hero's body sprite as plain data: what the sprite worker builds off the main thread for the
 // crowd (pixel.js spriteAsync, sprite-worker.js), and what drawHeroBody builds on the spot.
 export function heroBodySpec(look, g, rig, light = LIGHT) {
-  return { w: W, h: H + BODY_BELOW, shapes: bodyShapes(look, g, rig), res: RES, soft: 'cel', crisp: true, selout: true, light, edge: BACK_EDGE };
+  return { w: W, h: H + BODY_BELOW, shapes: bodyShapes(look, g, rig), res: RES, soft: 'cel', crisp: true, ink: 'dark', selout: true, light, edge: BACK_EDGE };
 }
 // The rim light's colour for a map at an hour: warm white by day (tinted by the place: green under
 // the trees, icy on the snow, gold on the crags, teal in caves), gold at dusk and dawn, a cool
@@ -3793,7 +3793,7 @@ function paintHero(ctx, look, gear, x, y, state, anim, mv) {
   // The weapon arm raised behind the big head for a wind-up (`armBack`): drawn before the body.
   const armBehind = attack && mv.armBack && over == null && rig.view !== 'back';
   const drawArm = () => {
-    const arm = sprite(`arm|${lookKey}|${gk}|${armKey}|${over != null ? 's' : 'c'}`, () => ({ w: W, h: H, shapes: move(squash(armShapesNow), 0, 0), res: RES, soft: 'cel', crisp: over == null, selout: true }));
+    const arm = sprite(`arm|${lookKey}|${gk}|${armKey}|${over != null ? 's' : 'c'}`, () => ({ w: W, h: H, shapes: move(squash(armShapesNow), 0, 0), res: RES, soft: 'cel', crisp: over == null, ink: 'dark', selout: true }));
     blit(ctx, arm, left + (flip ? -armDx : armDx) * KX * scale, top + armDy * KY * scale, { flip, flash: state.flash ?? 0, alpha, scale });
   };
   // Seen from behind (climbing), the weapon is slung across her back, swaying a little with the
@@ -3841,7 +3841,7 @@ function paintHero(ctx, look, gear, x, y, state, anim, mv) {
   if (!attack && over == null) {
     if (!wpn) return handsAt();
     if (!behind) drawWeapon();
-    const grip = sprite(`grip|${lookKey}|${gk}|${armKey}`, () => ({ w: W, h: H, shapes: move(squash(armShapesNow.slice(armShapesNow.handAt)), 0, 0), res: RES, soft: 'cel', crisp: true, selout: true }));
+    const grip = sprite(`grip|${lookKey}|${gk}|${armKey}`, () => ({ w: W, h: H, shapes: move(squash(armShapesNow.slice(armShapesNow.handAt)), 0, 0), res: RES, soft: 'cel', crisp: true, ink: 'dark', selout: true }));
     blit(ctx, grip, left + (flip ? -armDx : armDx) * KX * scale, top + armDy * KY * scale, { flip, flash: state.flash ?? 0, alpha, scale });
     if (idleW?.sparkle) idleSparkle(ctx, sx(hand[0]), sy(hand[1]), weaponAngle, (wpn.grip[1] - 4) * ws, flip, state.time ?? 0, scale);
     return handsAt();

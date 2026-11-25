@@ -10,13 +10,12 @@
 //                  rolled star chart; peers through it. Snaps a big claw.
 //   mothlibrarian  Owl Librarian: a little owlet in a scholar's cap and gown with a lantern;
 //                  flutters, reads, hoots. Bonks you with a book.
-//   geminighosts   Gemini Ghosts: two little star-tipped ghosts holding hands, bobbing in turn.
-//                  A twin spin.
+//   (geminighosts, the Gemini Ghosts, are the Mirror Twins since 2026-11-24: render/gemini/.)
 
-import { E, T, F, R, stroke } from './kit.js';
+import { E, T, F, R } from './kit.js';
 import { ramp, crescent, shine } from './meadow.js';
 import { makeRig, stateBlend, TAU } from './rig.js';
-import { D2R, INK, fr, arcP, taper, pairOf, faceSprite, hold, stepPhase, pawStep, put, shift, MOODS, moodOf, sparkle, puff } from './rigkit.js';
+import { D2R, INK, fr, taper, pairOf, faceSprite, hold, stepPhase, pawStep, put, shift, MOODS, moodOf, sparkle, puff } from './rigkit.js';
 
 const sm = (key, w, h, shapes) => faceSprite(key, w, h, shapes);
 const at2 = (M, x, y) => [M[0] * x + M[2] * y + M[4], M[1] * x + M[3] * y + M[5]];
@@ -524,93 +523,4 @@ export function owlStill(pose, f, mood) {
     ...put(olWing(true)(), [1, 1], -5, -16.4, 10), ...put(olFoot(true)(), [2.6, 2.6], -3, 0), ...put(olFoot(false)(), [2.6, 2.6], 3, 0), ...put(olBody(), [9, 17.6], 0, -2.4),
     ...put(olHead(), [9, 16.6], 0.4, -17.4), ...put(olOwnFace(fm), [9, 16.6], 0.4, -17.4), ...put(olLamp(), [4, 0.6], 9, -10), ...put(olWing(false)(), [1, 1], 3, -15.4, 50),
   ], 17, 43) };
-}
-
-// =====================================================================================
-// Gemini Ghosts
-// =====================================================================================
-const GHA = ramp('#f2eaff', { step: 7, turn: 8, lift: 3 });
-const GHB = ramp('#d8f0ff', { step: 7, turn: 8, lift: 3 });
-const gg = pairOf('gg');
-// One ghost: a round little sheet ghost, a wavy hem, a star on its head. Box 16 x 20; floating at (8, 19).
-const ggGhost = (C, tip) => () => {
-  const hem = [];
-  for (let k = 0; k <= 6; k++) hem.push([1 + k * 2.33, 17 + (k % 2 ? 2 : 0)]);
-  return [T([[1, 17], [1, 9], ...arcP(8, 9, 7, 7.4, 180, 360, 12), [15, 17], ...hem.reverse()], C.base), crescent(8, 10, 7, 7, C.sh, { k: 0.2, a0: 10, a1: 90 }), shine(8, 9, 7, 7.4, '#ffffff', 0, 0.8), star5(8, 1.6, 2.4, tip)];
-};
-const GG_A = gg('a', 16, 20, ggGhost(GHA, STARC), 2);
-const GG_B = gg('b', 16, 20, ggGhost(GHB, '#ffb8d8'), 2);
-// Their own face, the ghost twins': big dark eyes with a little four-point star of light, a round "boo"
-// of a mouth and pink cheeks; the second twin is always the cheerful one. Box 16 x 20.
-const GG_EYES = [[10, 10, 1, 1.2, 1.7], [6, 10, -1, 1.1, 1.6]];
-const ggOwnFace = (mood) => {
-  const out = [];
-  for (const [x, y, s, w, h] of GG_EYES) {
-    const shut = oShut(mood, x, y, s, w, h, 0.45, '#5a4a8a');
-    if (shut) { out.push(...shut); continue; }
-    const lid = mood === 'angry' ? (px) => y - h * 0.2 + (px - x) * -s * 0.6 : NOLID;
-    const k = mood === 'shout' ? 1.1 : 1;
-    out.push(F(T(oCut(oRing(x, y, w * 0.9 * k, h * 0.9 * k), lid), '#241a3a')), F(T(oCut(oRing(x, y + h * 0.35, w * 0.55, h * 0.3), lid), '#5a4a8a')), oStar(x + w * 0.25, y - h * 0.25, w * 0.42, '#ffffff', 4, 0.35));
-  }
-  if (mood !== 'dead') out.push(F(E(4.4, 12.2, 1, 0.45, '#ffa8c8')), F(E(11.6, 12.2, 1, 0.45, '#ffa8c8')));
-  const [mx, my] = [8, 13];
-  if (mood === 'shout') out.push(F(E(mx, my + 0.4, 0.75, 1, '#4a2a4a')));
-  else if (mood === 'happy') out.push(F(T(oArc(mx, my - 0.2, 0.9, 0.85, 0, 180, 8), '#4a2a4a')), F(E(mx, my + 0.35, 0.45, 0.22, '#ff9ab8')));
-  else if (mood === 'angry') out.push(...oLn([[mx - 0.7, my + 0.3], [mx, my], [mx + 0.7, my + 0.3]], 0.32));
-  else if (mood === 'hurt' || mood === 'dizzy') out.push(...oWave(mx, my, 0.7, 0.28));
-  else if (mood === 'dead') out.push(...oLn([[mx - 0.5, my], [mx + 0.5, my]], 0.28));
-  else out.push(F(E(mx, my + 0.15, 0.4, 0.5, '#4a2a4a')));
-  if (mood === 'hurt') out.push(...oDrop(11.4, 10, 0.5));
-  return out;
-};
-const ggFace = (mood) => sm(`gg|face|${mood}`, 16, 20, () => ggOwnFace(mood));
-export const twinsRig = makeRig({
-  w: 44, h: 40, soft: true, stride: 20, recover: 0.6,
-  springs: { x: [240, 16], spin: [200, 12], aY: [120, 7], bY: [120, 7], aR: [140, 8], bR: [140, 8] },
-  fast: ['x', 'spin'],
-  kick: { aR: 300, bR: -300 },
-  pose(m, a) {
-    a.uidOff = (m.uid % 13) * 0.93;
-    const t = a.t + a.uidOff;
-    const idle = { x: 0, spin: 0, aY: 6 + Math.sin(t * 2) * 2, bY: 6 + Math.sin(t * 2 + Math.PI) * 2, aR: Math.sin(t * 2) * 6, bR: Math.sin(t * 2 + 1) * 6 };
-    const walk = { x: 0, spin: 0, aY: 7 + Math.sin(t * 5) * 1.5, bY: 7 + Math.sin(t * 5 + 2) * 1.5, aR: 10, bR: 10 };
-    const antic = { x: -2, spin: -20, aY: 10, bY: 10, aR: -10, bR: -10 };
-    const strike = { x: 5, spin: 180, aY: 6, bY: 6, aR: 20, bR: 20 };
-    return stateBlend(a, idle, walk, antic, strike);
-  },
-  parts: [
-    { name: 'pair', parent: null, at: (S) => [S.x, -8] },
-    // (The twin spin: the two of them whirl round each other, holding hands.)
-    { name: 'ghA', parent: 'pair', s: (a, S) => GG_A[0](), pivot: [8, 19], at: (S) => [-7 * Math.cos(S.spin * D2R), 9 - S.aY], rot: (S) => S.aR * D2R },
-    { name: 'ghB', parent: 'pair', s: (a, S) => GG_B[0](), pivot: [8, 19], at: (S) => [7 * Math.cos(S.spin * D2R), 9 - S.bY], rot: (S) => S.bR * D2R },
-    { name: 'ghAb', parent: 'pair', s: (a, S) => GG_A[1](), pivot: [8, 19], at: (S) => [-7 * Math.cos(S.spin * D2R), 9 - S.aY], rot: (S) => S.aR * D2R },
-    { name: 'faceA', parent: 'ghAb', s: (a) => ggFace(moodOf(a)), pivot: [8, 19] },
-    { name: 'ghBb', parent: 'pair', s: (a, S) => GG_B[1](), pivot: [8, 19], at: (S) => [7 * Math.cos(S.spin * D2R), 9 - S.bY], rot: (S) => S.bR * D2R },
-    { name: 'faceB', parent: 'ghBb', s: (a) => ggFace(moodOf(a, 'happy')), pivot: [8, 19] },
-  ],
-  fx(ctx, m, a, S, mat) {
-    if (m.hp <= 0) return;
-    // Their joined hands, and a soft shadow under each.
-    const [ax, ay] = at2(mat('ghA'), 5.4, -6);
-    const [bx, by] = at2(mat('ghB'), -5.4, -6);
-    ctx.globalAlpha = a.alpha;
-    ctx.strokeStyle = '#ffffff';
-    ctx.lineWidth = 2.2;
-    ctx.lineCap = 'round';
-    ctx.beginPath();
-    ctx.moveTo(ax, ay);
-    ctx.quadraticCurveTo((ax + bx) / 2, (ay + by) / 2 + 2, bx, by);
-    ctx.stroke();
-    ctx.globalAlpha = a.alpha * 0.15;
-    ctx.fillStyle = '#2a1e4a';
-    ctx.beginPath();
-    ctx.ellipse(S.x, -1, 16, 2, 0, 0, TAU);
-    ctx.fill();
-  },
-});
-export function twinsStill(pose, f, mood) {
-  const fm = MOODS.has(mood) ? mood : 'idle';
-  return { w: 44, h: 36, res: 3, shapes: shift([
-    ...put(ggGhost(GHA, STARC)(), [8, 19], -7, -5), ...put(ggOwnFace(fm), [8, 19], -7, -5), ...put(ggGhost(GHB, '#ffb8d8')(), [8, 19], 7, -5), ...put(ggOwnFace('happy'), [8, 19], 7, -5),
-  ], 22, 35) };
 }

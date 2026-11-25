@@ -1,6 +1,6 @@
 // Gnarlroot's Root Tendrils, remade from scratch for Chapter 3 (2026-11-18): live puppets on the rig
 // (rig.js), every part drawn once and placed each frame, outer outline only. (Gnarlroot himself was
-// redrawn on 2026-11-19 as the Hollow Stump King: stumprig.js.)
+// redrawn on 2026-11-25 as Old Mossbeard on the brute base: render/gnarlroot/.)
 //
 //   sapling    Root Tendril (was the Corrupted Sapling): a thick root curling up out of the floor,
 //              a leaf or two and a pink bud at its tip, swaying; cut, it wilts.
@@ -63,7 +63,7 @@ const blossom = (x, y, k = 1) => [...[0, 1, 2, 3, 4].map((p) => F(E(x + Math.cos
 const acorn = (x, y) => [E(x, y + 1.6, 2, 2.4, ACORN.base), T([[x - 2.6, y + 0.4], [x - 2, y - 1.4], [x, y - 2.2], [x + 2, y - 1.4], [x + 2.6, y + 0.4]], '#8a5a3a'), F(E(x - 0.6, y + 1.4, 0.6, 0.9, ACORN.hi))];
 
 // Elder Yomogi, kept in Gnarlroot's roots: a Mochi elder (mugwort-green, in the palace's elder robe
-// and hat, a monocle and the famous fake beard), drawn by the Mochi renderer (render/mobs/stumprig.js).
+// and hat, a monocle and the famous fake beard), drawn by the Mochi renderer (render/gnarlroot/index.js).
 export const YOMOGI = { seed: 41, force: { dough: '#d8efc0', hairColor: 'yomogi' }, wear: { dress: 'elderrobe', hat: 'elderhat', eyes: 'monocle', face: 'fakebeard' } };
 
 // =====================================================================================

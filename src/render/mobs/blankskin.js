@@ -27,7 +27,7 @@
 //   skin.torso(ctx, a, mode, S), skin.neck, skin.arm(ctx, a, mode, S, 'F'|'N'), skin.hand, skin.leg,
 //   skin.foot   (`a.blMat`: the rig's matOf, the bones this frame; mode 'line' | 'fill')
 
-import { OUTLINE } from '../pixel.js';
+import { CHAR_LINE } from '../pixel.js';
 import { legDrawer } from './blankquad.js';
 
 const smoothstep = (u) => {
@@ -84,7 +84,7 @@ export function makeSkin({ J, SC, C, spec }) {
     pts.forEach(([x, y], i) => (i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)));
   };
   const edge = (ctx) => {
-    ctx.strokeStyle = OUTLINE;
+    ctx.strokeStyle = CHAR_LINE;
     ctx.lineWidth = OUT;
     ctx.lineJoin = 'round';
     ctx.lineCap = 'round';

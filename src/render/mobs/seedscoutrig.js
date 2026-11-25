@@ -20,7 +20,10 @@
 //   idle    a 16 s act: plays lookout (leans out into a glide, squints ahead, a startled look back);
 //           a gust tugs her up (swaying on the stalk, her free arm flung up, legs swinging, then a
 //           laugh); a seed drifts down onto her nose (wide-eyed, cross-eyed, a big sneeze that
-//           shakes seeds off the dome, a giggle).
+//           shakes seeds off the dome, a giggle); (2026-11-25 polish, the player: "more expressive",
+//           now 26 s) a big swing round on the stalk, legs kicking, seeds flying, laughing; then she
+//           plucks one seed from the dome, holds it up, eyes shut, makes a wish and blows it away,
+//           and watches it go with a sparkle.
 //   attack  a deep breath, cheeks puffed, the parachute hauled back; then she leans in and blows,
 //           a spray of seeds flying at you.
 //   nap     dozes hanging from the stalk, her head nodding, legs limp.
@@ -364,7 +367,7 @@ function seedScoutShapes(v = 'idle') {
 
 const K = kidKit(SS, seedScoutShapes, J, { flat: true, cel: new Set(['fringe']) });
 const { rel, through } = K;
-const LOOP = 16;
+const LOOP = 26;
 const hash = (n) => {
   const s = Math.sin(n * 127.1 + 311.7) * 43758.5453;
   return s - Math.floor(s);
@@ -456,30 +459,40 @@ export const seedScoutRig = makeRig({
     const sneeze = hold(lu, 13.18, 13.26, 13.5, 13.9) * cw;
     const giggle = hold(lu, 13.8, 14.1, 15, 15.6) * cw;
     const gig = giggle * Math.abs(Math.sin(t * 10));
+    // the big swing on the stalk
+    const swing = hold(lu, 16.6, 17, 19.4, 19.9) * cw;
+    const swa = Math.sin((lu - 16.6) * 4.2) * swing;
+    // the wish: a seed plucked, held up, eyes shut, blown away
+    const pluck = hold(lu, 20.8, 21.2, 21.6, 22) * cw;
+    const wish = hold(lu, 21.8, 22.2, 23.4, 23.6) * cw;
+    const blow = hold(lu, 23.5, 23.6, 23.9, 24.3) * cw;
+    const watch = hold(lu, 24, 24.3, 25.2, 25.7) * cw;
     const bob = Math.pow(Math.abs(Math.sin(t * 1.9)), 0.7);
     const sw = Math.sin(t * 1.7);
     const pad = t * 1.5;
-    a.ssAct = { lu, cw, gust, spot, tickle, sneeze, drift, nap };
+    a.ssAct = { lu, cw, gust, spot, tickle, sneeze, drift, nap, swing, wish, blow };
     const act = {
       nap,
-      face: sneeze > 0.3 ? 'sneeze' : tickle > 0.3 ? 'tickle' : spot > 0.3 ? 'wonder' : giggle > 0.3 || laugh > 0.4 ? 'happy' : gust > 0.4 ? 'surprised' : back > 0.4 ? 'surprised' : look > 0.4 ? 'focus' : null,
-      gaze: tickle > 0.3 ? 'x' : spot > 0.3 ? (lu < 11.4 ? 'u' : 'c') : back > 0.4 ? 'b' : look > 0.4 ? 'f' : gust > 0.4 ? 'u' : null,
+      face: sneeze > 0.3 ? 'sneeze' : tickle > 0.3 ? 'tickle' : spot > 0.3 ? 'wonder' : giggle > 0.3 || laugh > 0.4 ? 'happy' : gust > 0.4 ? 'surprised' : back > 0.4 ? 'surprised' : look > 0.4 ? 'focus'
+        : swing > 0.4 ? 'happy' : blow > 0.3 ? 'wonder' : wish > 0.4 ? 'happy' : pluck > 0.4 ? 'focus' : watch > 0.4 ? 'wonder' : null,
+      gaze: tickle > 0.3 ? 'x' : spot > 0.3 ? (lu < 11.4 ? 'u' : 'c') : back > 0.4 ? 'b' : look > 0.4 ? 'f' : gust > 0.4 ? 'u' : pluck > 0.4 ? 'u' : watch > 0.4 ? 'f' : null,
     };
     const idle = {
-      x: look * 1 + sneeze * 1.4,
-      lift: 1.2 + bob * 1.5 + gust * 4.5 + gs * 1.2 + gig * 0.8 - nap * 1.6,
-      tilt: sw * 1.5 + look * 8 - back * 7 + gs * 5 - tickle * 6 + sneeze * 10 + gig * 1.5 - nap * 3,
-      head: Math.sin(t * 0.7) * 2 + look * 3 + back * -6 - spot * 12 - tickle * 10 + sneeze * 16 + giggle * Math.sin(t * 9) * 4 - gust * 5 + nap * (14 + Math.sin(t * 0.9) * 3),
-      shF: 6 + sw * 3 + gust * 128 + gs * 10 - laugh * 30 + sneeze * 26 + giggle * 14 - nap * 4,
-      elF: 10 + gust * 34 + sneeze * 20 + nap * 6,
-      shN: sw * 2 + gust * (-8 + gs * 6) - tickle * 6 + sneeze * 8 + nap * 14,
-      elN: -gust * 10 + sneeze * 4 + nap * 12,
-      br: sw * 2.2 + look * 9 + gs * 16 - tickle * 5 + sneeze * 12 - nap * 9,
-      lF: -8 + Math.sin(pad) * 7 + gs * 24 + look * 12 + sneeze * 10 - nap * 6,
-      kF: 22 + Math.sin(pad + 0.8) * 9 + gust * 10 + look * 16 + gig * 18 - nap * 12,
-      lN: -4 + Math.sin(pad + 2.3) * 7 - gs * 18 + look * 18 + sneeze * 6 - nap * 6,
-      kN: 16 + Math.sin(pad + 3.1) * 9 + look * 22 + gig * 22 - nap * 8,
-      cl: sw * 2 + gust * (8 + gs * 6) + look * 5,
+      x: look * 1 + sneeze * 1.4 + swa * 2,
+      lift: 1.2 + bob * 1.5 + gust * 4.5 + gs * 1.2 + gig * 0.8 - nap * 1.6 + swing * (2 + Math.abs(swa) * 2) + blow * 0.8,
+      tilt: sw * 1.5 + look * 8 - back * 7 + gs * 5 - tickle * 6 + sneeze * 10 + gig * 1.5 - nap * 3 + swa * 22 - wish * 3 + blow * 6,
+      head: Math.sin(t * 0.7) * 2 + look * 3 + back * -6 - spot * 12 - tickle * 10 + sneeze * 16 + giggle * Math.sin(t * 9) * 4 - gust * 5 + nap * (14 + Math.sin(t * 0.9) * 3)
+        - swa * 8 - pluck * 14 - wish * 6 + blow * 8 - watch * 6,
+      shF: 6 + sw * 3 + gust * 128 + gs * 10 - laugh * 30 + sneeze * 26 + giggle * 14 - nap * 4 + swing * (40 + swa * 30) + pluck * 130 + wish * 70 + blow * 64,
+      elF: 10 + gust * 34 + sneeze * 20 + nap * 6 + swing * 20 + pluck * 30 + wish * 60 + blow * 10,
+      shN: sw * 2 + gust * (-8 + gs * 6) - tickle * 6 + sneeze * 8 + nap * 14 - swing * 10,
+      elN: -gust * 10 + sneeze * 4 + nap * 12 - swing * 6,
+      br: sw * 2.2 + look * 9 + gs * 16 - tickle * 5 + sneeze * 12 - nap * 9 - swa * 18,
+      lF: -8 + Math.sin(pad) * 7 + gs * 24 + look * 12 + sneeze * 10 - nap * 6 + swa * 34 + wish * 10,
+      kF: 22 + Math.sin(pad + 0.8) * 9 + gust * 10 + look * 16 + gig * 18 - nap * 12 + swing * (20 - swa * 20) + wish * 20,
+      lN: -4 + Math.sin(pad + 2.3) * 7 - gs * 18 + look * 18 + sneeze * 6 - nap * 6 - swa * 30 + wish * 14,
+      kN: 16 + Math.sin(pad + 3.1) * 9 + look * 22 + gig * 22 - nap * 8 + swing * (24 + swa * 20) + wish * 24,
+      cl: sw * 2 + gust * (8 + gs * 6) + look * 5 - swa * 14,
     };
     // Drifting: leaning into the breeze, the dome tipped forward like a sail, legs trailing behind
     // and paddling, the cloak streaming back.
@@ -521,7 +534,7 @@ export const seedScoutRig = makeRig({
     const tt = a.t + (m.uid % 9) * 1.13;
     // Now and then a seed comes loose from the dome's rim and floats off up and behind her (more
     // of them when she drifts or a gust tugs her).
-    const n = 2 + Math.round((ac.drift ?? 0) * 1 + (ac.gust ?? 0) * 3);
+    const n = 2 + Math.round((ac.drift ?? 0) * 1 + (ac.gust ?? 0) * 3 + (ac.swing ?? 0) * 3);
     for (let i = 0; i < n; i++) {
       const P = 3.6 + i * 0.7 - (ac.gust ?? 0) * 1.6;
       const k = (tt + i * 1.73) / P;
@@ -563,6 +576,22 @@ export const seedScoutRig = makeRig({
           seedFx(ctx, tx + Math.cos(ang) * d, ty + Math.sin(ang) * d * 0.7 + u * 6, 1.1, base * (1 - u) * ac.cw, ang);
         }
       }
+    }
+    // The wish: a seed plucked off the dome, held up in her hand, then blown away with a sparkle.
+    if ((ac.cw ?? 0) > 0.4 && lu > 21.1 && lu < 25.8) {
+      const [hx, hy] = through(matOf('handF'), 'wrF', 'wrF');
+      let x = hx;
+      let y = hy - 2;
+      let al = 1;
+      if (lu > 23.6) {
+        const u = (lu - 23.6) / 2.2;
+        x = hx + u * 30 + Math.sin(u * 7) * 3;
+        y = hy - 2 - u * 26;
+        al = 1 - u;
+        for (let i = 1; i < 4; i++) sparkle(ctx, a, x - i * 2.4, y + i * 2, 0.9 * (1 - i / 4), base * al * (1 - i / 4), '#ffe9a0');
+      }
+      seedFx(ctx, x, y, 1.2, base * al * Math.min(1, (lu - 21.1) * 4), lu > 23.6 ? -Math.PI / 2 - 0.6 : -Math.PI / 2);
+      if (lu > 22.2 && lu < 23.5) sparkle(ctx, a, hx + 3, hy - 6, 1.2, base * Math.sin(Math.PI * (lu - 22.2) / 1.3), '#fff6c8');
     }
     // The blow: a spray of seeds from her lips and the dome's rim, flying out at you.
     const since = a.ph.since;

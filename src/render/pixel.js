@@ -2,6 +2,9 @@
 // cache the result as a small canvas. Pixel sprites draw unsmoothed; smooth (res > 1) sprites filter.
 
 export const OUTLINE = '#3a2d4f';
+// The line for characters drawn live (skin, limbs, fur strokes on monsters and bosses): a soft deep
+// rose-plum, never near-black (the player, 2026-11-25: "the black outlines make it look ugly").
+export const CHAR_LINE = '#8a4f72';
 const PAD = 1;
 const cache = new Map();
 
@@ -98,11 +101,23 @@ const outlineCache = new Map();
 // Selective outlines ("sel-out") take `side`: -1 on edges facing the light (top and front), where
 // the line is a lighter shade of the part's own hue, +1 on the bottom and back, where it's the
 // darkest, and 0 between.
-function outlineFor(c, crisp, side = 0) {
-  const k = `${c}${crisp ? 1 : 0}${side}`;
+// Characters' crisp lines come in two inks: 'dark' (the hero, her outfits, icons: a near-black
+// line on the shaded side) and 'soft', the default for every other character since 2026-11-25 (the
+// player: "the black outlines make it look ugly"): each part outlined in a deeper tone of its own
+// colour, only a touch of plum, so a pink dress gets a deep rose line and cream lace a warm mauve.
+function outlineFor(c, crisp, side = 0, softInk = false) {
+  const k = `${c}${crisp ? 1 : 0}${side}${softInk ? 's' : ''}`;
   let v = outlineCache.get(k);
   if (!v) {
-    if (side < 0) v = shade(c, -34);
+    if (crisp && softInk) {
+      v = side < 0 ? mix(shade(c, -26), '#c07a9a', 0.22) : side > 0 ? mix(shade(c, -46), '#6e3a62', 0.3) : mix(shade(c, -38), '#7a3a66', 0.28);
+      // (never near-black: a part that is already dark, or a dark line drawn round a part, would
+      // darken again into a black ring; the line is lifted toward a deep rose-plum instead)
+      const [r, g, b] = rgb(v);
+      const lum = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+      if (lum < 0.3) v = mix(v, '#9a5a80', Math.min(0.75, ((0.3 - lum) / 0.3) * 0.9));
+    }
+    else if (side < 0) v = shade(c, -34);
     else if (side > 0) v = mix(shade(c, -62), '#2a2035', 0.6);
     else v = crisp ? mix(shade(c, -58), '#2a2035', 0.5) : mix(shade(c, -42), OUTLINE, 0.35);
     outlineCache.set(k, v);
@@ -122,7 +137,7 @@ function outlineFor(c, crisp, side = 0) {
 const EMPTY = -1;
 const NONE = -2;
 
-function rasterize(w, h, shapes, res = 1, soft = false, palette = {}, crisp = false, selout = false, pad = PAD, light = false, edge = null, bare = false, padB = PAD) {
+function rasterize(w, h, shapes, res = 1, soft = false, palette = {}, crisp = false, selout = false, pad = PAD, light = false, edge = null, bare = false, padB = PAD, ink = 'soft') {
   const gw = (w + pad * 2) * res;
   const gh = (h + pad + padB) * res;
   const colors = [];
@@ -363,15 +378,17 @@ function rasterize(w, h, shapes, res = 1, soft = false, palette = {}, crisp = fa
       }
     }
   }
-  const ink = soft ? null : idOf(OUTLINE);
+  // (one flat ink for sprites that aren't shaded, except characters' crisp lines in the soft ink:
+  // those still take each part's own deeper colour)
+  const flatInk = soft || (crisp && ink !== 'dark') ? null : idOf(OUTLINE);
   // Crisp outlines are smoothed: the outermost corner cells (a knight's move from the shape) are
   // drawn half transparent, which rounds off stair-steps like hand-antialiased pixel art.
   const softCorner = crisp ? reach * reach + 1 : Infinity;
   const inkFor = new Map();
   for (let t = 0; t < best.length; t++) {
     if (best[t] === Infinity) continue;
-    if (ink !== null) {
-      out[t] = ink;
+    if (flatInk !== null) {
+      out[t] = flatInk;
       continue;
     }
     const corner = best[t] >= softCorner;
@@ -382,7 +399,7 @@ function rasterize(w, h, shapes, res = 1, soft = false, palette = {}, crisp = fa
     let v = inkFor.get(key);
     if (v === undefined) {
       const own = lineOf.get(from[t]);
-      const line = own ? (side < 0 ? mix(own, colors[from[t]], 0.35) : own) : outlineFor(colors[from[t]], crisp, side);
+      const line = own ? (side < 0 ? mix(own, colors[from[t]], 0.35) : own) : outlineFor(colors[from[t]], crisp, side, ink !== 'dark');
       v = idOf(corner ? `${line}80` : line);
       inkFor.set(key, v);
     }
@@ -462,9 +479,9 @@ const bytesOf = (s) => s.canvas.width * s.canvas.height * 4;
 // sprite keeps its feet and centre where w x h puts them. `padB` is the margin below the box (the
 // sprite is placed by its top-left corner, so a deeper margin moves nothing).
 export function rasterOf(b, scale = gfx.scale) {
-  let { w, h, shapes, palette = {}, res = 1, soft = false, crisp = false, selout = false, pad = PAD, light = false, edge = null, bare = false, padB = PAD } = b;
+  let { w, h, shapes, palette = {}, res = 1, soft = false, crisp = false, selout = false, pad = PAD, light = false, edge = null, bare = false, padB = PAD, ink = 'soft' } = b;
   if (res > 1) res = Math.max(res, Math.round(scale));
-  return { w, h, res, crisp, pad, raster: rasterize(w, h, shapes, res, soft, palette, crisp, selout, pad, light, edge, bare, padB) };
+  return { w, h, res, crisp, pad, raster: rasterize(w, h, shapes, res, soft, palette, crisp, selout, pad, light, edge, bare, padB, ink) };
 }
 
 // A raster's colours, pixel by pixel (RGBA), so it can be handed from a worker to the page.

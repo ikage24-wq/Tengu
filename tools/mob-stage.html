@@ -67,6 +67,13 @@ function act(now) {
     const [, id, w] = what.split(':');
     m.castMove = { id, at: now, warn: Number(w) };
     if (id === 'ring') m.ringAt = now + Number(w);
+    // (a named cast too, for bosses that hold a pose through their casts: m.castPose, m.cast)
+    m.castPose = id;
+    m.cast = { name: id, t0: now, dur: Number(w) + 0.9 };
+  }
+  if (!what.startsWith('cast:') && m.castPose) {
+    m.castPose = null;
+    m.cast = null;
   }
   if (what === 'snooze' && fresh) {
     m.snoozeUntil = now + dur;

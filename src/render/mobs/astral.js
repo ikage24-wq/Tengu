@@ -9,7 +9,8 @@
 
 import { T, TAU, D2R, star } from './critter.js';
 import { meteorMaidenRig, meteorMaidenStill } from './meteorrig.js';
-import { cometRig, cometStill, nebulaRig, nebulaStill, crabRig, crabStill, owlRig, owlStill, twinsRig, twinsStill } from './astralrigs.js';
+import { cometRig, cometStill, nebulaRig, nebulaStill, crabRig, crabStill, owlRig, owlStill } from './astralrigs.js';
+import { TWIN_ART, TWIN_SIZE } from '../gemini/index.js';
 
 // A five-point star.
 export function star5(x, y, r, c, deg = -90) {
@@ -39,7 +40,8 @@ export const ART = {
   mothlibrarian: { pad: 8, walk: 8, idle: 6, attack: 4, stride: 22, atkMs: [80, 240, 180], draw: owlStill, rig: owlRig },
   // (The Meteor Golem was wiped 2026-11-22; the Meteor Maiden took its place, meteorrig.js.)
   meteormaiden: { pad: 6, walk: 8, idle: 6, attack: 4, stride: 15, atkMs: [80, 300, 260], draw: meteorMaidenStill, rig: meteorMaidenRig },
-  geminighosts: { pad: 8, walk: 8, idle: 6, attack: 4, stride: 22, atkMs: [70, 220, 170], draw: twinsStill, rig: twinsRig },
+  // (the Mirror Twins, 2026-11-24: a ghost girl and her night twin back to back, render/gemini/)
+  geminighosts: TWIN_ART,
 };
 export const INFO = {
   cometcourier: { name: 'Comet Courier', w: 26, h: 30 },
@@ -47,5 +49,5 @@ export const INFO = {
   starcarto: { name: 'Telescope Crab', w: 32, h: 30 },
   mothlibrarian: { name: 'Owl Librarian', w: 28, h: 34 },
   meteormaiden: { name: 'Meteor Maiden', w: 28, h: 38 },
-  geminighosts: { name: 'Gemini Ghosts', w: 32, h: 30 },
+  geminighosts: { name: 'Gemini Ghosts', ...TWIN_SIZE },
 };

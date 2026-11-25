@@ -1,9 +1,10 @@
 // Monster art: wilds (Windy Canyon and Mossy Woods).
 //   rockhound  Rockhound Kid: a canyon kid in a stone-lizard onesie (2026-11-22, rockhoundrig.js)
-//   scorpip    Manticore Cub: remade 2026-11-18 as a live rig (manticorerig.js)
+//   scorpip    Manticore Cub: the Sunset Manticub, a lion cub with bat wings and a scorpion tail, on its
+//              own copy of the cat base's tiger cub (render/manticore/, 2026-11-25)
 //   (leafling, the Dryad, is the Rootling Dryad now: render/dryad/, listed in hollowfolk.js)
-//   boarlet    Warg: a chibi wolf pup with a cream ruff and a red bandana; it pounces with a chomp
-//              (a live rig of its own since 2026-11-20)
+//   boarlet    Warg: Tuskar's Hound, a scrappy charcoal-blue wolf pup in a red bandana and a
+//              tusk-charm collar, on its own copy of the wolf base (render/warg/, 2026-11-25)
 //   mossgolem  Treant: a slow, wise walking tree with root feet and a bird's nest in its crown
 // Every design faces right with its feet on the bottom edge, and is built from small helpers
 // (rotated ovals, smooth blobs, tapered tubes, two-bone legs and a gait cycle) so the walk
@@ -15,9 +16,9 @@
 import { R, E, T, F, C, mix, sparkLine } from './kit.js';
 import { glowEye, brow, mouth, nose as snout, blush as cheek, sweat, vein, deadEye, band, LASH, easyEye } from './faces.js';
 import { ramp, hue, crescent, shine, smear, chain, wave as ripple, reach, breath, sway } from './meadow.js';
-import { manticoreRig, manticoreStill } from './manticorerig.js';
+import { MANTICUB } from '../manticore/index.js';
 import { rockhoundRig, rockhoundStill } from './rockhoundrig.js';
-import { wolfPupRig, wolfPupStill } from './wolfpuprig.js';
+import { WARG } from '../warg/index.js';
 
 // ---------- Geometry helpers ----------
 
@@ -424,16 +425,16 @@ export const ART = {
   // (Windy Canyon's two, remade from scratch 2026-11-18: live rigs, their stills from the same shapes.)
   // (The Basilisk Hatchling was wiped 2026-11-22; the Rockhound Kid took its place.)
   rockhound: { walk: 8, idle: 6, attack: 4, stride: 14, atkMs: [80, 300, 220], draw: rockhoundStill, rig: rockhoundRig, pad: 4 },
-  scorpip: { walk: 8, idle: 6, attack: 4, stride: 20, atkMs: [80, 300, 220], draw: manticoreStill, rig: manticoreRig, pad: 4 },
+  scorpip: MANTICUB.art,
   // (Remade 2026-11-20 as the Wolf Pup: a live rig.)
-  boarlet: { pad: 6, walk: 8, idle: 6, attack: 4, stride: 36, atkMs: [55, 290, 200], draw: wolfPupStill, rig: wolfPupRig },
+  boarlet: WARG.art,
   mossgolem: { pad: 8, walk: 8, idle: 6, attack: 4, stride: 16, atkMs: [75, 320, 230], draw: mossgolem },
 };
 
 // New display names, and the hitbox each design wants: { key: { name, w, h } }.
 export const INFO = {
   rockhound: { name: 'Rockhound Kid', w: 26, h: 36 },
-  scorpip: { name: 'Manticore Cub', w: 30, h: 30 },
-  boarlet: { name: 'Warg', w: 38, h: 26 },
+  scorpip: { name: 'Manticore Cub', w: MANTICUB.w, h: MANTICUB.h },
+  boarlet: { name: 'Warg', w: WARG.w, h: WARG.h },
   mossgolem: { name: 'Treant', w: 34, h: 58 },
 };

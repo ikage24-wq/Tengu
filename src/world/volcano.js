@@ -254,7 +254,7 @@ function bonbon(world, m, up, dt) {
     s.phase = 2;
     room.flood = { t: 2, state: 'calm', since: 0 };
     callout(world, 'The Frosting Flood!', 'Up on the rock-candy stacks when it comes!');
-    // (A scoop of frosting off the floor, flung high: render/mobs/bonbonrig.js.)
+    // (A scoop of frosting off the floor, flung high: render/bonbon.)
     m.bombAt = world.now + 0.6;
     radio(world, 'frosting');
   }
@@ -273,7 +273,7 @@ function bonbon(world, m, up, dt) {
     for (let k = 0; k < 2; k++) spots.push({ x: Math.max(60, Math.min(map.width - 60, m.x + (Math.random() - 0.5) * 700)), y: map.groundY });
     for (const p of spots) addZone(world, { kind: 'circle', x: p.x, y: p.y, w: 64, warn: 1.8, damage: 180, from: m, look: 'sprinkles' });
     m.cast = { name: 'Sprinkle Rain', t0: world.now, dur: 1.8 };
-    // (Her arms flung up, scattering sprinkles to the sky: render/mobs/bonbonrig.js.)
+    // (Her arms flung up, scattering sprinkles to the sky: render/bonbon.)
     m.floodAt = world.now + 0.8;
     callout(world, 'Sprinkle Rain!', 'Step off the marks');
   }
@@ -286,7 +286,7 @@ function bonbon(world, m, up, dt) {
       const g = up[Math.floor(Math.random() * up.length)];
       addZone(world, { kind: 'circle', x: g.body.x, y: floorY(world, g.body), w: 170, warn: 2.2, damage: 300, from: m, look: 'cherry', fromX: m.x, fromY: m.y - m.def.h });
       m.slamming = world.now + 2.2;
-      // (A cast bar, a crouch, a leap, and the cherry comes down: render/mobs/bonbonrig.js.)
+      // (A cast bar, a crouch, a leap, and the cherry comes down: render/bonbon.)
       m.cast = { name: 'Cherry Bomb', t0: world.now, dur: 2.2 };
       m.castPose = 'erupt';
       callout(world, 'Cherry Bomb!', 'Get out from under the cherry!');

@@ -10,8 +10,9 @@
 //                 pink shawl, a root cane and a basket of baby puffballs (myconidrig.js, 2026-11-19)
 //   tuskar        Tuskar: the Sumo Champ, an upright boar wrestler in a moss belt with a topknot
 //                 (tuskarrig.js, 2026-11-19)
-//   gnarlroot     Gnarlroot: the Hollow Stump King, a wide old stump on root legs with sprouts on his
-//                 top, a door in his hollow and a lantern; Elder Yomogi in his roots (stumprig.js)
+//   gnarlroot     Gnarlroot: Old Mossbeard, a huge gentle treeherd on the brute base: a canopy of leaves
+//                 for hair, knothole eyes glowing amber, a long moss beard; Elder Yomogi in his roots
+//                 (render/gnarlroot/, 2026-11-25)
 //   sapling       Root Tendril: the Rootling Dryad, a dreamy dryad on the serpent base whose lower body
 //                 is a living root along the floor (render/dryad/, 2026-11-24); she's also the
 //   leafling      field monster Rootling Dryad: the same rig, with her vine lash, petal gust and root snare
@@ -21,7 +22,7 @@ import { SPORE_MITE } from './sporemiterig.js';
 import { tuskarRig, tuskarStill } from './tuskarrig.js';
 import { myconidRig, myconidStill } from './myconidrig.js';
 import { DRYAD_ART, DRYAD_SIZE } from '../dryad/index.js';
-import { stumpRig, stumpStill } from './stumprig.js';
+import { GNARL_ART } from '../gnarlroot/index.js';
 
 export const ART = {
   rootling: { pad: 6, walk: 8, idle: 6, attack: 4, stride: 14, atkMs: [45, 190, 140], draw: rootlingStill, rig: rootlingRig },
@@ -32,7 +33,7 @@ export const ART = {
   leafling: DRYAD_ART,
   mothercapper: { pad: 12, walk: 8, idle: 8, attack: 5, stride: 16, atkMs: [80, 150, 420, 220], draw: myconidStill, rig: myconidRig },
   tuskar: { pad: 12, walk: 8, idle: 8, attack: 5, stride: 18, atkMs: [70, 150, 380, 220], draw: tuskarStill, rig: tuskarRig },
-  gnarlroot: { pad: 12, walk: 8, idle: 8, attack: 5, stride: 16, atkMs: [90, 160, 520, 260], draw: stumpStill, rig: stumpRig },
+  gnarlroot: GNARL_ART,
 };
 
 export const INFO = {

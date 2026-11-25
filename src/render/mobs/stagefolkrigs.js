@@ -1,11 +1,8 @@
-// The Dream Theatre's own folk, in its Grand Lobby (remade from scratch for Chapter 9, 2026-11-19):
+// The Dream Theatre's own folk, in its Grand Lobby (remade from scratch for Chapter 9, 2026-11-19;
+// the Understudy Ghost since remade on the spirit base as the Masquerade Diva, render/diva/):
 // the theatre's company, still putting on the show. Live puppets on the rig (rig.js): every part
 // drawn once and placed each frame, outer outline only, faces bare; upright and chibi.
 //
-//   understudy  Understudy Ghost: a little sheet ghost in a red bow tie, floating, its script in
-//               one hand and a gold comedy mask on a stick in the other (held up beside its face,
-//               never over it). Reads its lines, rehearses with a flourish, takes a bow. Lunges
-//               dramatically, swatting with the script.
 //   chorusgirl  Chorus Flamingo: a pink flamingo showgirl in a feather tutu, a plumed headdress
 //               and white leg warmers, a feather fan in one wing. Fans herself, does the can-can.
 //               Her attack is a high kick.
@@ -24,35 +21,7 @@ const line = (pts, w, c) => stroke(pts, w, c).map(F);
 const stillOf = (a) => !(a.ph.antic > 0.02 || a.ph.strike > 0.02) && (a.walkW ?? 0) < 0.05;
 const GOLD = '#ffd36b';
 
-// =====================================================================================
-// Understudy Ghost
-// =====================================================================================
-const SHEET = ramp('#f4f0ff', { step: 8, turn: 8 });
-const ug = pairOf('ug');
-// The sheet: a round dome falling to a scalloped hem, a red bow tie. Box 24 x 26; floating at its
-// hem's middle (12, 25.4).
-const ugBody = () => [
-  E(12, 11, 9.6, 10, SHEET.base), T([[2.4, 11], [21.6, 11], [22.6, 21.6], [1.4, 21.6]], SHEET.base),
-  ...[[3.4, 22.2], [8.2, 23], [13, 23.2], [17.8, 22.8], [21.4, 22]].map(([x, y]) => E(x, y, 2.8, 2.4, SHEET.base)),
-  crescent(12, 14, 10.4, 11.4, SHEET.sh, { k: 0.18, a0: 120, a1: 230 }), shine(12, 10, 9.6, 9, '#ffffff', 0, 0.8),
-  F(T([[11.6, 15.4], [14.2, 16.6], [11.6, 17.8]], '#e8404e')), F(T([[16.8, 15.4], [14.2, 16.6], [16.8, 17.8]], '#e8404e')), F(E(14.2, 16.6, 1.1, 1, '#b82a3a')),
-];
-// A little sheet arm. Box 6 x 8; the shoulder at (3, 1).
-const ugArm = (far) => () => [taper([[3, 1], [3, 6.2]], 4.2, 3.4, far ? SHEET.sh : SHEET.base)];
-// The comedy mask on its stick, held at the stick's foot. Box 14 x 17; the grip at (7, 16).
-const ugMask = () => [
-  ...line([[7, 16], [7, 8]], 1, '#c99a3b'),
-  T([[1, 4], [3.6, 1.4], [7, 2.4], [10.4, 1.4], [13, 4], [12, 8], [7, 7.2], [2, 8]], GOLD),
-  F(T([[1.6, 4.2], [3.6, 2], [7, 2.8], [10.4, 2], [12.4, 4.2], [7, 3.6]], '#fff0b0')),
-  ...line(arcP(4.6, 5, 1.6, 1, 200, 340, 5), 0.8, '#5a3a1a'), ...line(arcP(9.4, 5, 1.6, 1, 200, 340, 5), 0.8, '#5a3a1a'),
-  F(E(13, 3.6, 1.2, 1.2, '#ff7aa8')),
-];
-// The script: a red cover, a gold star, white page edges. Box 9 x 11; held at (4.5, 2).
-const ugScript = () => [R(0.5, 0.6, 8, 10, '#c8304a'), F(R(7, 1, 1.4, 9.2, '#fff8ee')), F(R(0.5, 0.6, 8, 1.4, '#e85a6a')), F(E(4, 5.4, 1.6, 1.6, GOLD))];
-const UG_BODY = ug('body', 24, 26, ugBody, 2);
-const UG_ARM = [false, true].map((f) => ug(`arm${f ? 1 : 0}`, 6, 8, ugArm(f), 2));
-const UG_MASK = ug('mask', 14, 17, ugMask, 2);
-const UG_SCRIPT = ug('script', 9, 11, ugScript, 2);
+// (shared face drawing, for the company's own faces)
 const oLn = (pts, w, c = INK) => {
   const l = [];
   const r = [];
@@ -86,8 +55,10 @@ const oStar = (x, y, r, c, n = 5, k = 0.45) => F(T(Array.from({ length: n * 2 },
   const rr = i % 2 ? r * k : r;
   return [x + Math.cos(a) * rr, y + Math.sin(a) * rr];
 }), c));
-const oX = (x, y, w, h, wd, c = INK) => [...oLn([[x - w * 0.7, y - h * 0.55], [x + w * 0.7, y + h * 0.55]], wd, c), ...oLn([[x - w * 0.7, y + h * 0.55], [x + w * 0.7, y - h * 0.55]], wd, c)];
-const oWave = (mx, my, hw, wd, c = INK) => oLn(Array.from({ length: 5 }, (_, i) => [mx - hw + (i * hw) / 2, my + (i % 2 ? -0.3 : 0.3)]), wd, c);
+const oX = (x, y, w, h, wd, c = INK) => [...oLn([[x - w * 0.7, y - h * 0.55], [x + w * 0.7, y + h * 0.55]], wd, c), ...oLn([[x - w * 0.7, y + h * 0.55], [x + w * 0.7, y - h * 0.55]], wd, c)];
+
+const oWave = (mx, my, hw, wd, c = INK) => oLn(Array.from({ length: 5 }, (_, i) => [mx - hw + (i * hw) / 2, my + (i % 2 ? -0.3 : 0.3)]), wd, c);
+
 const NOLID = () => -99;
 // The closed and knocked-about eyes every face has (each face draws its own open eyes).
 const oShut = (mood, x, y, s, w, h, lw, sc = INK) => {
@@ -102,100 +73,6 @@ const oShut = (mood, x, y, s, w, h, lw, sc = INK) => {
 const oOpen = (x, y, w, h, lid, top, low) => [F(T(oCut(oRing(x, y, w, h), lid), INK)), F(T(oCut(oRing(x, y + h * 0.08, w * 0.82, h * 0.84), lid), top)), F(T(oCut(oRing(x, y + h * 0.45, w * 0.62, h * 0.4), lid), low))];
 const oLid = (x, y, w, h, lid, lw) => oLn(oCut(oArc(x, y, w * 1.02, h * 1.02, 190, 350, 10), (px) => lid(px) - lw * 0.25), lw);
 const oDot = (x, y, r, c, lid = NOLID) => F(T(oCut(oRing(x, y, r, r, 0, 8), lid), c));
-// Its own face, a stage ghost's, made up like Pierrot: melancholy half-lowered lids over violet eyes with
-// winged liner, a painted dark teardrop under one eye and a small round mouth. Box 24 x 26.
-const UG_EYES = [[12.6, 10, -1, 1.5, 2], [16.6, 9.8, 1, 1.6, 2.1]];
-const ugOwnFace = (mood) => {
-  const out = [];
-  if (mood !== 'dead') out.push(F(E(12.4, 13.2, 0.42, 0.65, '#3a3a6a')), F(T([[12.1, 13], [12.7, 13], [12.4, 12.2]], '#3a3a6a')));
-  for (const [x, y, s, w, h] of UG_EYES) {
-    const shut = oShut(mood, x, y, s, w, h, 0.5, '#6a5aa8');
-    if (shut) out.push(...shut);
-    else {
-      const lid = mood === 'angry' ? (px) => y - h * 0.2 + (px - x) * -s * 0.6 : mood === 'shout' ? NOLID : (px) => y - h * 0.4 + (px - x) * s * 0.2;
-      out.push(...oOpen(x, y, w, h, lid, '#5a4a98', '#a898e0'), oDot(x, y + h * 0.15, w * (mood === 'shout' ? 0.2 : 0.3), '#1e1838', lid), oDot(x + w * 0.3, y - h * 0.05, w * 0.18, '#ffffff', lid), ...oLid(x, y, w, h, lid, 0.5));
-    }
-    if (mood !== 'dead' && mood !== 'hurt' && mood !== 'dizzy') out.push(...oLn([[x + s * w * 0.9, y - h * 0.15], [x + s * w * 1.5, y - h * 0.45]], 0.4));
-  }
-  if (mood !== 'dead') out.push(F(E(18.4, 12.6, 1, 0.45, '#ffb0c8')));
-  const [mx, my] = [15, 13.6];
-  if (mood === 'shout') out.push(F(E(mx, my + 0.3, 0.85, 1, '#5a2a4a')));
-  else if (mood === 'happy') out.push(F(T(oArc(mx, my - 0.2, 0.95, 0.85, 0, 180, 8), '#5a2a4a')));
-  else if (mood === 'angry') out.push(...oLn([[mx - 0.8, my + 0.3], [mx, my], [mx + 0.8, my + 0.3]], 0.34));
-  else if (mood === 'hurt' || mood === 'dizzy') out.push(...oWave(mx, my, 0.8, 0.3));
-  else if (mood === 'dead') out.push(...oLn([[mx - 0.6, my], [mx + 0.6, my]], 0.3));
-  else out.push(F(E(mx, my + 0.1, 0.42, 0.45, '#c84a6a')));
-  if (mood === 'hurt') out.push(...oDrop(18.6, 10.4, 0.6));
-  return out;
-};
-const ugFace = (mood) => sm(`ug|face|${mood}`, 24, 26, () => ugOwnFace(mood));
-const ugPass = (bare) => {
-  const i = bare ? 1 : 0;
-  const tag = bare ? 'b' : '';
-  return [
-    { name: `armF${tag}`, parent: 'trunk', s: UG_ARM[1][i], pivot: [3, 1], at: () => [-6, -14], rot: (S) => S.aF * D2R },
-    { name: `script${tag}`, parent: 'armF', s: UG_SCRIPT[i], pivot: [4.5, 2], at: () => [0, 5.6], rot: (S) => -S.aF * 0.6 * D2R },
-    { name: `body${tag}`, parent: 'trunk', s: UG_BODY[i], pivot: [12, 25.4] },
-    { name: `armN${tag}`, parent: 'trunk', s: UG_ARM[0][i], pivot: [3, 1], at: () => [6, -13], rot: (S) => S.aN * D2R },
-    { name: `mask${tag}`, parent: 'armN', s: UG_MASK[i], pivot: [7, 16], at: () => [0, 5.6], rot: (S) => (S.mk - S.aN) * D2R },
-  ];
-};
-export const ghostRig = makeRig({
-  w: 46, h: 52, soft: true, stride: 8, recover: 0.6,
-  springs: { x: [260, 18], lift: [160, 12], tilt: [180, 12], aN: [220, 12], aF: [220, 12], mk: [200, 12] },
-  fast: ['x', 'tilt', 'aN', 'aF'],
-  kick: { tilt: -200 },
-  turnKick: { tilt: 140 },
-  pose(m, a) {
-    a.uidOff = (m.uid % 13) * 0.93;
-    const t = a.t + a.uidOff;
-    stepPhase(m, a, 'ug', 8);
-    const still = stillOf(a);
-    const lu = t % 10;
-    // Its act: reading its lines, then rehearsing them with the mask held up high, then a bow.
-    const read = still ? hold(lu, 0.4, 0.9, 3.4, 3.9) : 0;
-    const rehearse = still ? hold(lu, 4.4, 4.8, 6.4, 6.9) : 0;
-    const bow = still ? hold(lu, 7.4, 7.8, 8.6, 9.1) : 0;
-    const bob = Math.sin(t * 2);
-    a.ugMood = rehearse > 0.5 ? 'shout' : bow > 0.5 ? 'happy' : read > 0.5 ? 'blink' : null;
-    // (The mask is held out in front, its stick leaning forward, so it never hides its face.)
-    const idle = { x: 0, lift: 3 + bob * 1.5, tilt: bob * 2 + read * 6 - rehearse * 10 + bow * 26, aN: -40 - rehearse * 110 + bow * 20 + bob * 4, aF: 8 - read * 70 - bow * 30 - bob * 4, mk: 30 - rehearse * 20 + bow * 30 };
-    // Drifting along, leaning into it, the script trailing.
-    const walk = { x: 0, lift: 3 + bob * 1.2, tilt: 10, aN: -20, aF: 46, mk: 40 };
-    // A dramatic lunge: leaning back, mask up high, then swooping in with the script.
-    const antic = { x: -3, lift: 5, tilt: -14, aN: -160, aF: 30, mk: 10 };
-    const strike = { x: 10, lift: 1, tilt: 20, aN: -40, aF: -80, mk: 50 };
-    return stateBlend(a, idle, walk, antic, strike);
-  },
-  under(ctx, m, a, S) {
-    ctx.globalAlpha = 0.18 * a.alpha;
-    ctx.fillStyle = '#2a1a3a';
-    ctx.beginPath();
-    ctx.ellipse(S.x, -0.6, Math.max(4, 9 - S.lift * 0.5), 2, 0, 0, TAU);
-    ctx.fill();
-    ctx.globalAlpha = 1;
-  },
-  parts: [
-    { name: 'trunk', parent: null, at: (S) => [S.x, -4 - S.lift], rot: (S) => S.tilt * D2R },
-    ...ugPass(false),
-    ...ugPass(true),
-    { name: 'face', parent: 'trunk', s: (a) => ugFace(moodOf(a, a.ugMood)), pivot: [12, 25.4] },
-  ],
-  fx(ctx, m, a, S, mat) {
-    if (m.hp <= 0 || a.ph.strike < 0.2) return;
-    // A glint off the mask as it swoops.
-    const [mx, my] = at2(mat('mask'), 7, 4);
-    for (let k = 0; k < 3; k++) sparkle(ctx, a, mx + 3 + k * 4, my - 2 + k * 3, 2 * a.ph.strike, a.alpha * a.ph.strike, k % 2 ? '#ffffff' : '#fff3a6');
-  },
-});
-export function ghostStill(pose, f, mood) {
-  const fm = MOODS.has(mood) ? mood : 'idle';
-  return { w: 44, h: 48, res: 3, shapes: shift([
-    ...put(ugArm(true)(), [3, 1], -6, -21, 8), ...put(ugScript(), [4.5, 2], -6.8, -15.4, -5), ...put(ugBody(), [12, 25.4], 0, -7), ...put(ugOwnFace(fm), [12, 25.4], 0, -7),
-    ...put(ugArm(false)(), [3, 1], 6, -20, -40), ...put(ugMask(), [7, 16], 9.6, -15.7, 30),
-  ], 22, 47) };
-}
-
 // =====================================================================================
 // Chorus Flamingo
 // =====================================================================================

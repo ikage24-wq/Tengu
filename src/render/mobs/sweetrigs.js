@@ -8,8 +8,7 @@
 //                 nibbles its own fleece. Rears back and puffs floss at you.
 //   lollipopwitch Lollipop Witch: a lemon-drop witch in a starry robe and pointed hat, a big swirl
 //                 lollipop for a staff; sneaks a lick of it. Points it and casts a sugar swirl.
-//   peppermint    Peppermint Spinner: a round mint in its wrapper, the twists for arms, its red
-//                 stripes always turning, faster as it runs. Spins up and dashes into you.
+//   (peppermint, the Peppermint Spinner, is now the Mint Wrapper on the kid base: render/mintwrap/)
 //   chocoknight   Chocolate Knight: a chocolate-bar knight in a bonbon helm with a gold foil plume
 //                 and cape, a wafer sword and a cookie shield; stomps, salutes. Raises it and chops.
 //   jellyninja    Jelly Bean Ninja: a glossy jelly bean (four flavours) in a red headband whose
@@ -104,8 +103,10 @@ const oStar = (x, y, r, c, n = 5, k = 0.45) => F(T(Array.from({ length: n * 2 },
   const rr = i % 2 ? r * k : r;
   return [x + Math.cos(a) * rr, y + Math.sin(a) * rr];
 }), c));
-const oX = (x, y, w, h, wd, c = INK) => [...oLn([[x - w * 0.7, y - h * 0.55], [x + w * 0.7, y + h * 0.55]], wd, c), ...oLn([[x - w * 0.7, y + h * 0.55], [x + w * 0.7, y - h * 0.55]], wd, c)];
-const oWave = (mx, my, hw, wd, c = INK) => oLn(Array.from({ length: 5 }, (_, i) => [mx - hw + (i * hw) / 2, my + (i % 2 ? -0.3 : 0.3)]), wd, c);
+const oX = (x, y, w, h, wd, c = INK) => [...oLn([[x - w * 0.7, y - h * 0.55], [x + w * 0.7, y + h * 0.55]], wd, c), ...oLn([[x - w * 0.7, y + h * 0.55], [x + w * 0.7, y - h * 0.55]], wd, c)];
+
+const oWave = (mx, my, hw, wd, c = INK) => oLn(Array.from({ length: 5 }, (_, i) => [mx - hw + (i * hw) / 2, my + (i % 2 ? -0.3 : 0.3)]), wd, c);
+
 const NOLID = () => -99;
 // The closed and knocked-about eyes every face has (each face draws its own open eyes).
 const oShut = (mood, x, y, s, w, h, lw, sc = INK) => {
@@ -480,134 +481,6 @@ export function witchStill(pose, f, mood) {
     ...put(lwHand(true)(), [3.5, 3.5], -7, -17), ...put(lwShoe(true)(), [3, 3.6], -2.6, 0), ...put(lwShoe(false)(), [3, 3.6], 3.4, 0), ...put(lwRobe(), [10, 19.6], 0, -4), ...put(lwHem(), [11, 0.4], 0, -4.4),
     ...put(lwHead(), [8, 14], 0, -23), ...put(lwHat(), [11, 17.4], 0, -34.6), ...put(lwOwnFace(fm), [8, 14], 0, -23), ...put(lwStaff(), [7, 24], 10, -17, 14), ...put(lwHand(false)(), [3.5, 3.5], 10, -17),
   ], 22, 51) };
-}
-
-// =====================================================================================
-// Peppermint Spinner
-// =====================================================================================
-const MINT_R = '#ee4a5e';
-const pm = pairOf('pm');
-// The mint's ring: white, six red stripes curling round it (the ring turns live). Box 24 x 24; its
-// middle at (12, 12).
-const pmRing = () => {
-  const out = [E(12, 12, 11, 11, '#fff8f8')];
-  for (let i = 0; i < 6; i++) {
-    const a0 = (i / 6) * TAU;
-    const pts = [];
-    for (let k = 0; k <= 5; k++) pts.push([12 + Math.cos(a0 + k * 0.1) * 10.6, 12 + Math.sin(a0 + k * 0.1) * 10.6]);
-    for (let k = 5; k >= 0; k--) pts.push([12 + Math.cos(a0 - 0.42 + k * 0.08) * 6.2, 12 + Math.sin(a0 - 0.42 + k * 0.08) * 6.2]);
-    out.push(F(T(pts, MINT_R)));
-  }
-  return out;
-};
-// Its white middle, where its face is. Box 14 x 14; its middle at (7, 7).
-const pmMiddle = () => [E(7, 7, 6.2, 6.2, '#ffffff'), F(E(7, 7.4, 5.6, 5.4, '#fff4f6'))];
-// A wrapper twist: cellophane pinched by the mint, flaring out in a crinkly fan. Box 12 x 12;
-// pinched at (1, 6) (the far one mirrored, at (11, 6)).
-const pmTwist = (far) => () => {
-  const mx = (pts) => (far ? pts.map(([x, y]) => [12 - x, y]) : pts);
-  const c = far ? '#c8dcf0' : '#e8f4ff';
-  return [
-    E(far ? 10.4 : 1.6, 6, 1.8, 2.2, c),
-    T(mx([[2, 5], [10, 0.6], [11.6, 3.6], [10.6, 6], [11.6, 8.4], [10, 11.4], [2, 7]]), c),
-    ...stroke(mx([[4, 5.6], [9.6, 2.4]]), 0.5, '#ffffff'), ...stroke(mx([[4, 6.4], [9.6, 9.6]]), 0.5, '#ffffff'), ...stroke(mx([[4, 6], [10.4, 6]]), 0.4, '#b8d0ec'),
-  ];
-};
-const pmFoot = (far) => () => [E(3, 2, 2.8, 1.8, far ? '#b8344a' : '#e8505e'), F(E(2.2, 1.4, 0.8, 0.5, '#ffffff'))];
-const PM_RING = pm('ring', 24, 24, pmRing, 2);
-const PM_MID = pm('mid', 14, 14, pmMiddle, 2);
-const PM_TWIST = [false, true].map((f) => pm(`twist${f ? 1 : 0}`, 12, 12, pmTwist(f), 2));
-const PM_FOOT = [false, true].map((f) => pm(`foot${f ? 1 : 0}`, 6, 4, pmFoot(f), 2));
-const pmGloss = () => sm('pm|gloss', 24, 24, () => [F(ov(7.4, 5.4, 3.4, 1.6, -35, '#ffffff')), F(E(4.4, 9.4, 0.9, 0.9, '#ffffff'))]);
-// Its own face, a peppermint's: round red eyes with a candy stripe of light across them, red candy
-// stripes on its cheeks, and a little "o" breathing out a cool minty puff. Box 14 x 14.
-const PM_EYES = [[5.2, 6.6, -1, 1.2, 1.6], [9.2, 6.4, 1, 1.3, 1.7]];
-const PM_MOUTH = '#8a1a2e';
-const pmOwnFace = (mood) => {
-  const out = [];
-  for (const [x, y, s, w, h] of PM_EYES) {
-    const shut = oShut(mood, x, y, s, w, h, 0.45, '#c8203a');
-    if (shut) { out.push(...shut); continue; }
-    const lid = mood === 'angry' ? (px) => y - h * 0.2 + (px - x) * -s * 0.6 : NOLID;
-    out.push(...oOpen(x, y, w, h, lid, '#c8203a', '#ff7a8a'), oDot(x, y + h * 0.12, w * (mood === 'shout' ? 0.2 : 0.3), INK, lid));
-    out.push(F(T(oCut([[x - w * 0.15, y - h * 0.6], [x + w * 0.35, y - h * 0.6], [x + w * 0.75, y - h * 0.05], [x + w * 0.3, y + h * 0.05]], lid), '#ffffff')));
-    out.push(...oLid(x, y, w, h, lid, 0.45));
-  }
-  if (mood !== 'dead') for (const [bx, by] of [[3.6, 8.8], [10.8, 8.6]]) for (const dx of [-0.45, 0.45]) out.push(...oLn([[bx + dx - 0.3, by + 0.4], [bx + dx + 0.3, by - 0.4]], 0.32, '#e8304a'));
-  const [mx, my] = [7.4, 9.6];
-  if (mood === 'shout') out.push(F(E(mx, my + 0.3, 0.75, 0.85, PM_MOUTH)));
-  else if (mood === 'happy') out.push(F(T(oArc(mx, my - 0.2, 0.95, 0.85, 0, 180, 8), PM_MOUTH)));
-  else if (mood === 'angry') out.push(...oLn([[mx - 0.8, my + 0.3], [mx, my - 0.05], [mx + 0.8, my + 0.3]], 0.32));
-  else if (mood === 'hurt' || mood === 'dizzy') out.push(...oWave(mx, my, 0.8, 0.3));
-  else if (mood === 'dead') out.push(...oLn([[mx - 0.6, my + 0.1], [mx + 0.6, my + 0.1]], 0.3));
-  else out.push(F(E(mx, my + 0.1, 0.42, 0.45, PM_MOUTH)), F(E(mx + 1.5, my + 0.4, 0.55, 0.4, '#d8f4ff')), F(E(mx + 2.2, my + 0.2, 0.4, 0.32, '#d8f4ff')));
-  if (mood === 'hurt') out.push(...oDrop(10.8, 6.4, 0.5));
-  return out;
-};
-const pmFace = (mood) => sm(`pm|face|${mood}`, 14, 14, () => pmOwnFace(mood));
-const pmPass = (bare) => {
-  const i = bare ? 1 : 0;
-  const tag = bare ? 'b' : '';
-  const foot = (k, far) => ({ name: `foot${k}${tag}`, parent: null, s: PM_FOOT[far ? 1 : 0][i], pivot: [3, 3.6], at: (S, a) => { const [dx, l] = pawStep(a.pmU ?? 0, far ? 0.5 : 0, 6, 0.55, 2); return [S.x + (far ? -3.6 : 3.6) + dx * a.walkW, -l * a.walkW]; } });
-  return [
-    { name: `twistF${tag}`, parent: 'trunk', s: PM_TWIST[1][i], pivot: [11, 6], at: () => [-10.4, 0], rot: (S) => -S.tw * D2R, soft: { key: 'twistF', dir: [-1, 0], k: 120, c: 7, gain: 1.2, max: 32, flutter: 6, hz: 1.1 } },
-    foot(1, true),
-    foot(0, false),
-    { name: `ring${tag}`, parent: 'trunk', s: PM_RING[i], pivot: [12, 12], rot: (S, a) => a.pmSpin },
-    { name: `mid${tag}`, parent: 'trunk', s: PM_MID[i], pivot: [7, 7], at: (S) => [S.look, 0] },
-    { name: `twistN${tag}`, parent: 'trunk', s: PM_TWIST[0][i], pivot: [1, 6], at: () => [10.4, 0], rot: (S) => S.tw * D2R, soft: { key: 'twistN', dir: [1, 0], k: 120, c: 7, gain: 1.2, max: 32, flutter: 6, hz: 1.3 } },
-  ];
-};
-export const mintRig = makeRig({
-  w: 44, h: 36, soft: true, stride: 6, recover: 0.5,
-  springs: { x: [300, 18], lift: [260, 14], tilt: [200, 12], look: [160, 12], tw: [200, 10] },
-  fast: ['x', 'tilt'],
-  kick: { tilt: -220, tw: 300 },
-  turnKick: { tilt: 160, tw: 260 },
-  pose(m, a) {
-    a.uidOff = (m.uid % 13) * 0.93;
-    const t = a.t + a.uidOff;
-    a.pmU = stepPhase(m, a, 'pm', 6);
-    // Its stripes turn all the time: lazily at rest, rolling with its speed as it runs, a blur as
-    // it spins up and dashes.
-    const st = (a.mo.rig ??= {});
-    const roll = (st.pmV ?? 0) / 11;
-    st.pmA = ((st.pmA ?? 0) + Math.min(0.2, a.dt) * (0.9 + roll + a.ph.antic * 9 + a.ph.strike * 18)) % TAU;
-    a.pmSpin = st.pmA;
-    const lu = t % 6;
-    const hop = hold(lu, 3, 3.25, 3.45, 3.8);
-    const idle = { x: 0, lift: Math.abs(Math.sin(t * 3.2)) * 0.8 + hop * 4, tilt: Math.sin(t * 1.6) * 6, look: Math.sin(t * 0.7) * 0.8, tw: Math.sin(t * 2.4) * 10 + hop * 24 };
-    const s1 = Math.sin(a.pmU * TAU);
-    const walk = { x: 0, lift: Math.abs(s1) * 1.2, tilt: 8, look: 1, tw: -14 };
-    const antic = { x: -3, lift: -1.6, tilt: -14, look: -0.6, tw: 24 };
-    const strike = { x: 9, lift: 1, tilt: 16, look: 1.2, tw: -30 };
-    return stateBlend(a, idle, walk, antic, strike);
-  },
-  parts: [
-    { name: 'trunk', parent: null, at: (S) => [S.x, -15 - S.lift], rot: (S) => S.tilt * D2R },
-    ...pmPass(false),
-    ...pmPass(true),
-    { name: 'gloss', parent: 'trunk', s: () => pmGloss(), pivot: [12, 12] },
-    { name: 'face', parent: 'trunk', s: (a) => pmFace(moodOf(a)), pivot: [7, 7], at: (S) => [S.look, 0] },
-  ],
-  fx(ctx, m, a, S, mat) {
-    if (m.hp <= 0) return;
-    const k = Math.max(a.ph.antic * 0.6, a.ph.strike);
-    if (k < 0.1) return;
-    // Spinning up: a whirl of red and white sparkles round the mint.
-    const [cx, cy] = at2(mat('trunk'), 0, 0);
-    for (let i = 0; i < 6; i++) {
-      const ang = a.pmSpin * 1.5 + (i * TAU) / 6;
-      sparkle(ctx, a, cx + Math.cos(ang) * 14, cy + Math.sin(ang) * 14, 1.6, a.alpha * k, i % 2 ? '#ffffff' : '#ff8a96');
-    }
-  },
-});
-export function mintStill(pose, f, mood) {
-  const fm = MOODS.has(mood) ? mood : 'idle';
-  return { w: 44, h: 34, res: 3, shapes: shift([
-    ...put(pmTwist(true)(), [11, 6], -10.4, -15), ...put(pmFoot(true)(), [3, 3.6], -3.6, 0), ...put(pmFoot(false)(), [3, 3.6], 3.6, 0), ...put(pmRing(), [12, 12], 0, -15),
-    ...put(pmMiddle(), [7, 7], 0, -15), ...put(pmOwnFace(fm), [7, 7], 0, -15), ...put(pmTwist(false)(), [1, 6], 10.4, -15),
-  ], 22, 33) };
 }
 
 // =====================================================================================

@@ -59,7 +59,7 @@
 import { makeRig, clamp, TAU } from './rig.js';
 import { hold } from './kidrig.js';
 import { E } from './kit.js';
-import { OUTLINE, sprite } from '../pixel.js';
+import { CHAR_LINE, sprite } from '../pixel.js';
 import { legDefs as legDefsOf, placeLeg, legDrawer } from './blankquad.js';
 
 const D2R = Math.PI / 180;
@@ -646,7 +646,7 @@ function mouseRig(look = {}) {
     return `rgba(${f(r)},${f(g)},${f(b)},${al})`;
   };
   const edge = (ctx) => {
-    ctx.strokeStyle = OUTLINE;
+    ctx.strokeStyle = CHAR_LINE;
     ctx.lineWidth = 2;
     ctx.lineJoin = 'round';
     ctx.lineCap = 'round';
@@ -1038,7 +1038,7 @@ function mouseRig(look = {}) {
     ctx.translate(x, y);
     ctx.rotate(spin);
     ctx.lineWidth = 1.2;
-    ctx.strokeStyle = OUTLINE;
+    ctx.strokeStyle = CHAR_LINE;
     ctx.lineJoin = 'round';
     if (P.nut === 'acorn') {
       ctx.beginPath();
@@ -1082,7 +1082,7 @@ function mouseRig(look = {}) {
       ctx.beginPath();
       ctx.moveTo(0, -r);
       ctx.quadraticCurveTo(r * 0.3, -r * 1.5, r * 0.7, -r * 1.4);
-      ctx.strokeStyle = OUTLINE;
+      ctx.strokeStyle = CHAR_LINE;
       ctx.stroke();
     }
     ctx.restore();
@@ -1157,6 +1157,8 @@ function mouseRig(look = {}) {
     if (!mv && ia && ia.w > 0.5 && m.hp > 0 && !m.pose) {
       const pk = since([4.72], ia.lu, 0.9);
       if (pk >= 0) sporeCloud(ctx, sporeSpot(sk, 'tail'), -Math.PI / 2, 2.4, pk, 7, 0.7, 1);
+      const hl = since([21.55, 22.25, 22.95], ia.lu, 0.7);
+      if (hl >= 0) sporeCloud(ctx, sporeSpot(sk, 'sprout'), -Math.PI / 2, 1.6, hl, 5, 0.6, 1);
       const sn = since([6.2], ia.lu, 0.8);
       if (sn >= 0) {
         sporeCloud(ctx, sporeSpot(sk, 'teeth'), -0.1, 1, sn, 9, 0.95, 2);
@@ -1394,7 +1396,7 @@ function mouseRig(look = {}) {
       // (a nap in the game is a habit: curled up asleep, as the base's sleep pose)
       const nap = m.habit?.kind === 'nap' && a.now < m.habit.until && !mv0 && m.hp > 0;
       const iw = m.hp > 0 && !m.pose && !nap ? 1 : 0;
-      const lu = t % 15;
+      const lu = t % 26;
       const tailPuff = hold(lu, 3.9, 4.35, 4.95, 5.4) * iw;
       const tickle = hold(lu, 5.15, 5.4, 6.08, 6.18) * iw;
       const sneeze = hold(lu, 6.16, 6.22, 6.4, 6.8) * iw;
@@ -1416,8 +1418,29 @@ function mouseRig(look = {}) {
       idle.ears += tailPuff * 0.3 + tickle * 0.5 - sneeze * 1.6 + shake * sh * 0.4 + pat * 0.2;
       idle.crouch += sneeze * 0.25;
       idle.x += sneeze * 0.6;
+      // (2026-11-25 polish, the player: "more expressive": the loop now 26 s) chasing its own puffball
+      // tail round and round; plonked down on its bottom, giddy, head wobbling; then three
+      // bouncy hops, ears flapping, a puff of spores off its sprout at each landing.
+      const chase = hold(lu, 15.4, 15.6, 17.4, 17.6) * iw;
+      const cp = (lu - 15.6) / 0.28;
+      if (chase > 0.5 && cp >= 0 && Math.floor(cp) % 2 === 1) a.flip = !a.flip;
+      const flop = hold(lu, 17.5, 17.8, 19.4, 19.8) * iw;
+      const hops = hold(lu, 21, 21.2, 23.3, 23.5) * iw;
+      const hp = Math.abs(Math.sin(((lu - 21.2) / 0.7) * Math.PI));
+      idle.crouch += chase * 0.3;
+      idle.curl += chase * 0.8;
+      idle.head += chase * 20 + flop * Math.sin(t * 4) * 6 - hops * 8;
+      idle.tailUp += chase * 40 + hops * 30;
+      idle.swish += chase * 1 + flop * 0.6;
+      idle.ears += chase * 0.6 + flop * 0.3 + hops * hp * 0.8;
+      idle.hop += chase * 0.8 * Math.abs(Math.sin(cp * Math.PI)) + hops * hp * 8;
+      idle.sit += flop;
+      idle.hold += flop * 0.4;
+      idle.jaw += flop * 0.5 + hops * 0.3;
+      idle.pitch += -hops * hp * 6;
       a.smIdle = { lu, w: (1 - a.walkW) * iw };
-      a.smFace = tickle > 0.4 ? 'tickle' : sneeze > 0.3 ? 'sneeze' : pat > 0.5 || wash > 0.5 ? 'happy' : tailPuff > 0.5 ? 'look' : null;
+      a.smFace = tickle > 0.4 ? 'tickle' : sneeze > 0.3 ? 'sneeze' : pat > 0.5 || wash > 0.5 ? 'happy' : tailPuff > 0.5 ? 'look'
+        : chase > 0.4 ? 'look' : flop > 0.4 ? 'happy' : hops > 0.4 ? 'happy' : null;
       const walk = { ...idle, sit: 0, hold: 0, wash: 0, throwArm: 0, jaw: 0, reach: 0, crouch: 0, pitch: 0, head: look * 3, ears: 0.1, nose: 0.3, curl: 0, tailUp: 0, x: 0 };
       const [mv, mt, anticW] = moveNow(m, a, st);
       const base = {};

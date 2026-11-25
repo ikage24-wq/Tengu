@@ -4,10 +4,11 @@
 // the rig itself stays for the other dungeons that still use it).
 //   porcelaindoll  Porcelain Doll: a wind-up china bunny with a parasol (manorrigs.js, remade 2026-11-18)
 //   ghostmaid      Ghost Maid: a little ghost cat maid with a feather duster (manorrigs.js, 2026-11-18)
-//   candlebride    Candle Bride: the Melty Bride, a chubby candle whose melting wax makes her dress
-//                  ruffles, in a lace veil; she flares up and throws a flame (meltybriderig.js, 2026-11-20)
+//   candlebride    Candle Bride: the Candelabra Bride, a gothic bride in black lace with a brass
+//                  candelabra, on the maiden base; she thrusts it and throws a flame (render/bride/, 2026-11-24)
 //   topiarydryad   Topiary Swan: a hedge clipped into a swan, a rose on its head (manorrigs.js, 2026-11-18)
-//   lanternghost   Lantern Wisp: a flame spirit living in an iron lantern (manorrigs.js, 2026-11-18)
+//   lanternghost   Lantern Wisp: the Lamplighter Wisp, a little ghost lamplighter with her pole and
+//                  lantern, on the spirit base (render/wisp/, 2026-11-24)
 //   armourknight   Armour Knight: a small empty suit of armour, its helm too big, eyes glowing
 //                  inside; clanks along and slashes.
 //   teahatter      Tea Party Hatter: a round teapot in a top hat on a saucer (manorrigs.js, 2026-11-18)
@@ -16,8 +17,9 @@
 // wind-up (the tell), strike, impact, recover.
 
 import { E, T, F, R, ramp, smear, chain, wave, TAU, D2R, O, limb, spin, strand, star, blob } from './critter.js';
-import { swanRig, swanStill, wispRig, wispStill, dollRig, dollStill, maidRig, maidStill, teapotRig, teapotStill, butlerRig, butlerStill } from './manorrigs.js';
-import { meltyBrideRig, meltyBrideStill } from './meltybriderig.js';
+import { swanRig, swanStill, dollRig, dollStill, maidRig, maidStill, teapotRig, teapotStill, butlerRig, butlerStill } from './manorrigs.js';
+import { WISP_ART, WISP_SIZE } from '../wisp/index.js';
+import { BRIDE_ART, BRIDE_SIZE } from '../bride/index.js';
 
 const frames = (pose) => (pose === 'walk' ? 8 : pose === 'attack' ? 4 : 6);
 const phase = (pose, f) => f / frames(pose);
@@ -73,9 +75,9 @@ function armour(pose, f, mood) {
 export const ART = {
   porcelaindoll: { pad: 6, walk: 8, idle: 6, attack: 4, stride: 18, atkMs: [70, 220, 180], draw: dollStill, rig: dollRig },
   ghostmaid: { pad: 6, walk: 8, idle: 6, attack: 4, stride: 26, atkMs: [60, 210, 170], draw: maidStill, rig: maidRig },
-  candlebride: { pad: 8, walk: 8, idle: 6, attack: 4, stride: 22, atkMs: [80, 260, 200], draw: meltyBrideStill, rig: meltyBrideRig },
+  candlebride: BRIDE_ART,
   topiarydryad: { pad: 6, walk: 8, idle: 6, attack: 4, stride: 24, atkMs: [60, 200, 160], draw: swanStill, rig: swanRig },
-  lanternghost: { pad: 8, walk: 8, idle: 6, attack: 4, stride: 20, atkMs: [60, 220, 170], draw: wispStill, rig: wispRig },
+  lanternghost: WISP_ART,
   armourknight: { pad: 6, walk: 8, idle: 6, attack: 4, stride: 18, atkMs: [80, 260, 200], draw: armour },
   teahatter: { pad: 6, walk: 8, idle: 6, attack: 4, stride: 22, atkMs: [70, 240, 180], draw: teapotStill, rig: teapotRig },
   pumpkinbutler: { pad: 6, walk: 8, idle: 6, attack: 4, stride: 12, atkMs: [70, 240, 180], draw: butlerStill, rig: butlerRig },
@@ -84,9 +86,9 @@ export const ART = {
 export const INFO = {
   porcelaindoll: { name: 'Porcelain Doll', w: 24, h: 36 },
   ghostmaid: { name: 'Ghost Maid', w: 26, h: 32 },
-  candlebride: { name: 'Candle Bride', w: 24, h: 38 },
+  candlebride: { name: 'Candle Bride', ...BRIDE_SIZE },
   topiarydryad: { name: 'Topiary Swan', w: 28, h: 34 },
-  lanternghost: { name: 'Lantern Wisp', w: 26, h: 34 },
+  lanternghost: { name: 'Lantern Wisp', ...WISP_SIZE },
   armourknight: { name: 'Armour Knight', w: 28, h: 36 },
   teahatter: { name: 'Tea Party Hatter', w: 28, h: 36 },
   pumpkinbutler: { name: 'Pumpkin Butler', w: 28, h: 40 },

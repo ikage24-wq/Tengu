@@ -385,7 +385,7 @@ export function drawManorFront(ctx, world, cam, time) {
     const x = c.x - cam.x;
     const y = map.groundY - cam.y;
     const f = Math.floor(time * 10) % 4;
-    const s = sprite(`mn-trolley|${f}`, () => ({ soft: 'cel', crisp: true, selout: true, pad: 4, ...trolleyArt(f) }));
+    const s = sprite(`mn-trolley|${f}`, () => ({ soft: 'cel', crisp: true, ink: 'dark', selout: true, pad: 4, ...trolleyArt(f) }));
     blit(ctx, s, x - s.w / 2, y - s.h + 2 + (c.state === 'rolling' ? (f % 2) : 0));
     if (c.state === 'rolling') {
       // Dust kicked up behind, and rattling teacups.

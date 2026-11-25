@@ -11,7 +11,7 @@
 import { personaRig, personaStill } from './personarig.js';
 import { directriceRig, directriceStill } from './directricerig.js';
 import { playwrightRig, playwrightStill } from './playwrightrig.js';
-import { noodleRig, noodleStill } from './dreamrigs.js';
+import { RYU_ART, RYU_SIZE } from '../ryu/index.js';
 import { mondayKidRig, mondayKidStill } from './mondaykidrig.js';
 import { nightManagerRig, nightManagerStill } from './nightmanagerrig.js';
 
@@ -19,10 +19,11 @@ export const ART = {
   persona: { pad: 12, walk: 8, idle: 8, attack: 5, stride: 32, atkMs: [100, 180, 320, 220], draw: personaStill, rig: personaRig },
   directrice: { pad: 12, walk: 8, idle: 8, attack: 5, stride: 30, atkMs: [100, 180, 320, 220], draw: directriceStill, rig: directriceRig },
   playwright: { pad: 12, walk: 8, idle: 8, attack: 5, stride: 30, atkMs: [110, 180, 340, 240], draw: playwrightStill, rig: playwrightRig },
-  // The Queen's dream's (Chapter 9: dreamrigs.js).
+  // The Queen's dream's (Chapter 9).
   // (The Night Manager, 2026-11-22: the Coffee Mug Boss redrawn as a human, her manager.)
   mugboss: { pad: 12, walk: 8, idle: 8, attack: 5, stride: 30, atkMs: [100, 180, 320, 220], draw: nightManagerStill, rig: nightManagerRig },
-  noodledragon: { pad: 12, walk: 8, idle: 8, attack: 5, stride: 30, atkMs: [100, 180, 320, 220], draw: noodleStill, rig: noodleRig },
+  // (Ramen Ryu, 2026-11-25: the Cup-Noodle Dragon redrawn on the serpent base, render/ryu.)
+  noodledragon: RYU_ART,
   // (Monday, 2026-11-22: the Calendar Beast redrawn as the Weekend-Eating Baku, a girl on the kid base.)
   monday: { pad: 10, walk: 8, idle: 8, attack: 5, stride: 32, atkMs: [110, 180, 340, 240], draw: mondayKidStill, rig: mondayKidRig },
 };
@@ -32,6 +33,6 @@ export const INFO = {
   directrice: { name: 'Madame Directrice', w: 64, h: 100 },
   playwright: { name: 'The Phantom Playwright', w: 70, h: 120 },
   mugboss: { name: 'The Night Manager', w: 64, h: 100 },
-  noodledragon: { name: 'The Cup-Noodle Dragon', w: 64, h: 110 },
+  noodledragon: { name: 'The Cup-Noodle Dragon', w: RYU_SIZE.w, h: RYU_SIZE.h },
   monday: { name: 'Monday', w: 66, h: 140 },
 };
