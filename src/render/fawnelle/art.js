@@ -13,7 +13,9 @@
 // her as built at k pixels to her unit (`upper`: from the waist up only, for a close portrait).
 import { BODIES, DEER } from '../mobs/blankbases.js';
 import { hairRamp } from '../hero.js';
-import { legDefs, legPhase, stepAt, lowAngle, sinks, placeLeg } from '../mobs/blankquad.js';
+import { legDefs, legPhase, QUAD_V1 } from '../mobs/blankquad.js';
+// (the legs exactly as they were: the shared ones were smoothed on 2026-11-26, she is kept as she is)
+const { stepAt, lowAngle, sinks, placeLeg } = QUAD_V1;
 
 const OUT = '#3a2d4f';
 const B = BODIES.deertaur;

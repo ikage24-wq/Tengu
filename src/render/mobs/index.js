@@ -27,33 +27,35 @@ import { ART as SKYFOLK } from './skyfolk.js';
 import { ART as SKYBOSS } from './skyboss.js';
 import { ART as FINALE } from './finale.js';
 import { ART as TEA } from './tea.js';
-import { turnipRig } from './turniprig.js';
 import { CHICK } from '../chick/index.js';
-import { strawhogRig, strawhogStill } from './strawhogrig.js';
-import { pumpgobRig, pumpgobStill } from './pumpgobrig.js';
-import { lambkinRig, lambkinStill } from './lambkinrig.js';
+import { STRAWHOG } from '../strawhog/index.js';
+import { PUMPGOB } from '../pumpgob/index.js';
+import { LAMBKIN } from '../lambkin/index.js';
 import { HARV_MOUSE } from '../harvest/index.js';
-import { mosstortRig, mosstortStill } from './mosstortrig.js';
+import { MOSSTORT } from '../mosstort/index.js';
 import { OWLET } from '../owlet/index.js';
 import { redpandaRig, redpandaStill } from './redpandarig.js';
 import { puddleKidRig, puddleKidStill, blossomFairyRig, blossomFairyStill } from './gladekidsrig.js';
 
-// (The Turnip Tot is a live rig, rebuilt 2026-11-11: its still frames stay for portraits.)
-MEADOW.sproutling.rig = turnipRig;
 // (The Chickling replaced the Kitchen Brownie, 2026-11-11; since 2026-11-25 the Cellar Scout, on its
 // own copy of the bird base, reshaped into a round chick: render/chick/.)
 FARM.brownie = CHICK.art;
-// (The Strawhog, new for Clover Hills 2026-11-11: its own live rig, its stills from the same parts.)
-FARM.strawhog = { walk: 8, idle: 6, attack: 4, stride: 30, atkMs: [80, 300, 220], draw: strawhogStill, rig: strawhogRig, pad: 4 };
-// (The Pumpkin Goblin, new for Clover Hills 2026-11-11: its own live rig, its stills from the same shapes.)
-FARM.pumpgob = { walk: 8, idle: 6, attack: 4, stride: 16, atkMs: [80, 300, 220], draw: pumpgobStill, rig: pumpgobRig, pad: 4 };
-// (The Lambkin, new for Clover Hills 2026-11-11: its own live rig, its stills from the same shapes.)
-FARM.lambkin = { walk: 8, idle: 6, attack: 4, stride: 14, atkMs: [80, 300, 220], draw: lambkinStill, rig: lambkinRig, pad: 4 };
+// (The Strawhog, new for Clover Hills 2026-11-11; since 2026-11-25 the Scarebun, a bunny dressed as a
+// scarecrow on its own copy of the bunny base: render/strawhog/.)
+FARM.strawhog = STRAWHOG.art;
+// (The Pumpkin Goblin, new for Clover Hills 2026-11-11; since 2026-11-25 Honkers, the farm's guard
+// goose, on its own copy of the bird base, grown from the duck into a goose that never flies:
+// render/pumpgob/.)
+FARM.pumpgob = PUMPGOB.art;
+// (The Lambkin, new for Clover Hills 2026-11-11; since 2026-11-25 Loftle, a slow tortoise whose shell
+// is his own little red hayloft barn, on his own copy of the shell crawler base: render/lambkin/.)
+FARM.lambkin = LAMBKIN.art;
 // (The Harvest Mouse, new for Clover Hills 2026-11-11; since 2026-11-25 the Nest Weaver, on its own
 // copy of the mouse base: render/harvest/.)
 FARM.harvmouse = HARV_MOUSE.art;
-// (The Moss Tortoise, new for Mossy Woods 2026-11-12: its own live rig, its stills from the same shapes.)
-FARM.mosstort = { walk: 8, idle: 6, attack: 4, stride: 22, atkMs: [80, 300, 220], draw: mosstortStill, rig: mosstortRig, pad: 4 };
+// (The Moss Tortoise, new for Mossy Woods 2026-11-12; since 2026-11-26 Tumble the Moss Piglet, a
+// tardigrade on its own copy of the veggie base: render/mosstort/.)
+FARM.mosstort = MOSSTORT.art;
 // (The Moss Owlet, new for Mossy Woods 2026-11-12; since 2026-11-25 the Leaf Cloak Owlet, on its own
 // copy of the owl base: render/owlet/.)
 FARM.mossowlet = OWLET.art;

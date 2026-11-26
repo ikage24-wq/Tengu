@@ -3,9 +3,11 @@
 // render/hollow.js.
 //
 //   Hollow Entrance   pitch dark: only the group and the glowcaps they light give any light.
-//   Capper's Garden   the Myconid Queen: spore rain, then lights out while she hides in her spore
-//                     fog and mushrooms sprout where her spores land, then the Spore Tide floods
-//                     the floor (jump on a bounce mushroom to reach the high ledges, or time a jump).
+//   Capper's Garden   the Myconid Queen (Hazel Hoardwell, the Pantry Hamster): Seed Spit, then
+//                     lights out while she sneaks about curled in a ball, the garden's lamp glowing
+//                     in her cheek, and her seeds sprout Spore Mites where they land; then her Pouch
+//                     Burst floods the floor with seed-fluff (jump on a bounce mushroom to reach the
+//                     high ledges, or time a jump).
 //   Bramble Tunnels   roots fall from the low ceiling during fights; every Sprout you free cheers
 //                     the group on (more damage) for the rest of the run.
 //   Boar Den          Tuskar charges; a stone pillar in his way stops him cold (dazed, and the
@@ -145,7 +147,7 @@ export const floodComing = (world) => ['rising', 'flooded'].includes(world.dunge
 
 // ---------- The bosses' phases ----------
 
-// The Myconid Queen. Returns nothing; moves go on the floor as zones.
+// The Myconid Queen (Hazel Hoardwell). Returns nothing; moves go on the floor as zones.
 export function capperPhases(world, m, dt) {
   const s = m.mech;
   const frac = m.hp / m.def.hp;
@@ -155,13 +157,13 @@ export function capperPhases(world, m, dt) {
     s.phase = 2;
     room.darkUntil = world.now + 10;
     s.darkIn = 22;
-    callout(world, 'Lights Out!', 'She hides in her spores. Stay together near the light!');
+    callout(world, 'Lights Out!', "She's stuffed the lamp in her cheek! Follow the pink glow, and stay near the light!");
     radio(world, 'lightsout');
   }
   if (s.phase === 2 && frac <= 0.35) {
     s.phase = 3;
     s.tide = 4;
-    callout(world, 'Spore Tide!', 'The floor floods with spores: the bounce mushrooms throw you up high!');
+    callout(world, 'Pouch Burst!', 'She fills her pouches, then blows a flood of seed-fluff over the floor: the bounce mushrooms throw you up high!');
     radio(world, 'tide');
   }
   if (s.phase >= 2) {
@@ -169,21 +171,24 @@ export function capperPhases(world, m, dt) {
     if (s.darkIn <= 0) {
       s.darkIn = 22;
       room.darkUntil = world.now + 8;
-      callout(world, 'Lights Out!', 'Stay together near the light!');
+      callout(world, 'Lights Out!', 'Follow her glowing cheek! Stay together near the light!');
     }
   }
   if (s.phase === 3) {
     s.tide -= dt;
     if (s.tide <= 0 && !world.dungeon.zones.some((z) => !z.hit && z.kind === 'floor')) {
       s.tide = 13;
-      addZone(world, { kind: 'floor', x: 0, w: world.map.width, warn: 2.4, damage: 170, from: m });
-      // (Her rig, render/mobs/myconidrig.js: a deep breath, then a great puff of spores.)
+      addZone(world, { kind: 'floor', x: 0, w: world.map.width, warn: 2.4, damage: 170, from: m, look: 'pouchburst' });
+      // (Her rig, render/mothercapper/: both pouches stuffed till her eyes water, "mmmff!", then
+      // "PFFFT!": the golden tide is the zone's look, render/mothercapper/fx.js.)
       m.tideAt = world.now;
+      m.cast = { name: 'Pouch Burst', t0: world.now, dur: 2.4 };
     }
   }
 }
 
-// When a spore circle lands in her garden after the lights first go out, a mushroom sprouts there.
+// When one of her Seed Spit seeds lands in her garden after the lights first go out, it sprouts
+// (its look, 'seedsprout': render/mothercapper/fx.js) and a Spore Mite pops out of it.
 export function sporeSprout(world, z) {
   const m = z.from;
   if (m?.def.mech !== 'capper' || (m.mech?.phase ?? 1) < 2 || m.hp <= 0 || Math.random() > 0.45) return;
@@ -213,13 +218,13 @@ export function boarPhases(world, m) {
     s.wargs = true;
     adds(world, m, 'boarlet', [m.x - 300, m.x + 300], null);
     m.callAt = world.now;
-    callout(world, 'Tuskar calls his Wargs!', 'Tank, grab them! Damage, bring them down!');
+    callout(world, 'Tuskar bugles for his Wargs!', 'Tank, grab them! Damage, bring them down!');
     radio(world, 'wargs');
   }
   if (!s.stampede && frac <= 0.3) {
     s.stampede = true;
     s.charge = Math.min(s.charge, 2);
-    callout(world, 'STAMPEDE!', 'He charges there and back now. Watch both ways!');
+    callout(world, 'STAMPEDE!', 'He charges there and back now, trumpeting at every turn. Watch both ways!');
     radio(world, 'stampede');
   }
 }

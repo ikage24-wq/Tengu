@@ -73,7 +73,7 @@ export const QUESTS = {
     rewards: { exp: 900, gold: 120, items: [], mount: 'bun' },
   },  clover_golden: {
     id: 'clover_golden', name: 'The Golden Bun', giver: 'clover', minLevel: 16, prereq: 'bun_buddy',
-    text: "The whole island's gone bun-crazy! Someone saw the legendary Golden Bun in Mossy Woods. One in ten thousand! Adventurers have been camping there for days, shouting 'GOLDEN BUN SPAWN?' in every chat. The Moss Tortoises keep plodding right in front of it. Calm 20 of them so I can get a look. I'm writing a song. It's mostly the word 'golden'.",
+    text: "The whole island's gone bun-crazy! Someone saw the legendary Golden Bun in Mossy Woods. One in ten thousand! Adventurers have been camping there for days, shouting 'GOLDEN BUN SPAWN?' in every chat. The Moss Tortoises keep waddling right in front of it. Calm 20 of them so I can get a look. I'm writing a song. It's mostly the word 'golden'.",
     objectives: [{ type: 'kill', mob: 'mosstort', count: 20 }],
     rewards: { exp: 33000, gold: 840, items: [{ id: 'orange_potion', qty: 10 }] },
   },

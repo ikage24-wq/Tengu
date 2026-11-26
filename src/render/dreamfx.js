@@ -13,11 +13,14 @@
 import { puff, shock, starFlash, easeOut } from './fxkit.js';
 // (Chapter 10's storm looks live in render/stormfx.js and are handed out from here too.)
 import { STORM_FX, STORM_HOLD } from './stormfx.js';
+import { SHAMAN_FX, SHAMAN_HOLD, shamanShot } from './shaman/fx.js';
+import { HAZEL_FX, HAZEL_HOLD } from './mothercapper/fx.js';
+import { TUSKAR_FX, TUSKAR_HOLD } from './tuskar/fx.js';
 
 const TAU = Math.PI * 2;
 const SW = 640;
 const clamp01 = (v) => Math.max(0, Math.min(1, v));
-export const DREAM_HOLD = { ...STORM_HOLD, memo: 0.7, stamp: 0.8, coffee: 0.8, files: 0.9, steam: 0.9, noodle: 0.7, broth: 0.7, chopsticks: 0.6, boil: 1.1, email: 0.7, redpen: 0.8, alarm: 1, invite: 0.8, deadline: 1.1 };
+export const DREAM_HOLD = { ...STORM_HOLD, ...SHAMAN_HOLD, ...HAZEL_HOLD, ...TUSKAR_HOLD, memo: 0.7, stamp: 0.8, coffee: 0.8, files: 0.9, steam: 0.9, noodle: 0.7, broth: 0.7, chopsticks: 0.6, boil: 1.1, email: 0.7, redpen: 0.8, alarm: 1, invite: 0.8, deadline: 1.1 };
 
 // ---------- Little things ----------
 function shadow(ctx, x, y, rx, a, c = '#2a2240') {
@@ -832,6 +835,8 @@ export const DREAM_FX = {
 // its flight, `d` the way it flies): the Sticky Note Bird's note, spinning; the Stapler Croc's staple;
 // the Candle Bride's flame.
 export function dreamShot(ctx, shot, x, y, p, d) {
+  // (the Myconid Shaman's acorn: render/shaman/fx.js)
+  if (shamanShot(ctx, shot, x, y, p, d)) return true;
   if (shot === 'note') {
     ctx.save();
     ctx.translate(x, y);
@@ -881,7 +886,7 @@ export function dreamShot(ctx, shot, x, y, p, d) {
 }
 
 // (render/bossfx.js calls these.)
-const ALL_FX = () => (ALL ??= { ...DREAM_FX, ...STORM_FX });
+const ALL_FX = () => (ALL ??= { ...DREAM_FX, ...STORM_FX, ...SHAMAN_FX, ...HAZEL_FX, ...TUSKAR_FX });
 let ALL = null;
 export function dreamWarn(ctx, z, x, y, p, time) {
   const fx = ALL_FX()[z.look];

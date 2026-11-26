@@ -10,6 +10,8 @@
 // its rooms (any dungeon's: the run restarts for that dungeon), window.fade(a) a black fade over the
 // picture (for montages, tools/record-dungeons.cjs).
 import { makeBotCharacter, createBots, updateBots } from '../src/world/bots.js';
+const of = window.fetch;
+window.fetch = (u, o) => of(String(u).replace(/^https?:\/\/127\.0\.0\.1:8002\/(save\/)?/, '/save/'), o);
 import { createWorld, updateWorld } from '../src/world/world.js';
 import { startRun, groupOf, isUp } from '../src/world/dungeon.js';
 import { MAPS } from '../src/data/maps.js';

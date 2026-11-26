@@ -152,7 +152,8 @@ function twinFx(ctx, m, a, S, matOf, K, H) {
         const u = ((t * 3 + i / 8) % 1);
         const x = S.x - H * 0.1 - u * H * 0.6;
         const y = -H * (0.35 + 0.3 * hash(i)) + Math.sin(u * 5 + i) * 2;
-        star(ctx, x, y, 2 * (1 - u), k * (1 - u), i % 2 ? '#ffd86a' : '#fff6c8', u * 4);
+        // (each one fading in as it's shed, not popping in whole at the head of the trail, 2026-11-26)
+        star(ctx, x, y, 2 * (1 - u), k * (1 - u) * Math.min(1, u * 6), i % 2 ? '#ffd86a' : '#fff6c8', u * 4);
       }
     }
   }

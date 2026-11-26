@@ -1,5 +1,7 @@
 // Monster art: wilds (Windy Canyon and Mossy Woods).
-//   rockhound  Rockhound Kid: a canyon kid in a stone-lizard onesie (2026-11-22, rockhoundrig.js)
+//   rockhound  Rockhound Kid: Yodel, a cliff goat kid in a woven sunset poncho with a brass bell who
+//              yodels for the canyon's echo, on its own copy of the hoofed base's goat kid
+//              (render/pebblet/, 2026-11-25)
 //   scorpip    Manticore Cub: the Sunset Manticub, a lion cub with bat wings and a scorpion tail, on its
 //              own copy of the cat base's tiger cub (render/manticore/, 2026-11-25)
 //   (leafling, the Dryad, is the Rootling Dryad now: render/dryad/, listed in hollowfolk.js)
@@ -17,7 +19,7 @@ import { R, E, T, F, C, mix, sparkLine } from './kit.js';
 import { glowEye, brow, mouth, nose as snout, blush as cheek, sweat, vein, deadEye, band, LASH, easyEye } from './faces.js';
 import { ramp, hue, crescent, shine, smear, chain, wave as ripple, reach, breath, sway } from './meadow.js';
 import { MANTICUB } from '../manticore/index.js';
-import { rockhoundRig, rockhoundStill } from './rockhoundrig.js';
+import { PEBBLET } from '../pebblet/index.js';
 import { WARG } from '../warg/index.js';
 
 // ---------- Geometry helpers ----------
@@ -423,8 +425,9 @@ function mossgolem(pose, f, mood) {
 
 export const ART = {
   // (Windy Canyon's two, remade from scratch 2026-11-18: live rigs, their stills from the same shapes.)
-  // (The Basilisk Hatchling was wiped 2026-11-22; the Rockhound Kid took its place.)
-  rockhound: { walk: 8, idle: 6, attack: 4, stride: 14, atkMs: [80, 300, 220], draw: rockhoundStill, rig: rockhoundRig, pad: 4 },
+  // (The Basilisk Hatchling was wiped 2026-11-22; the Rockhound Kid took its place, remade 2026-11-25
+  // as Yodel, the cliff goat kid.)
+  rockhound: PEBBLET.art,
   scorpip: MANTICUB.art,
   // (Remade 2026-11-20 as the Wolf Pup: a live rig.)
   boarlet: WARG.art,
@@ -433,7 +436,7 @@ export const ART = {
 
 // New display names, and the hitbox each design wants: { key: { name, w, h } }.
 export const INFO = {
-  rockhound: { name: 'Rockhound Kid', w: 26, h: 36 },
+  rockhound: { name: 'Rockhound Kid', w: PEBBLET.w, h: PEBBLET.h },
   scorpip: { name: 'Manticore Cub', w: MANTICUB.w, h: MANTICUB.h },
   boarlet: { name: 'Warg', w: WARG.w, h: WARG.h },
   mossgolem: { name: 'Treant', w: 34, h: 58 },

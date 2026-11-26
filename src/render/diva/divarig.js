@@ -767,7 +767,7 @@ export function divaRig(opts) {
       // (the stick stays upright in her hand whatever her arm does, a touch of follow for life, and
       // tips only as a pose asks: maskR)
       K.layer('mask', { parent: 'armNf', pivot: 'wrN', from: 'elN', rot: (S) => (-(chestAng(S) + S.shN + S.elN) * 0.9 + (S.maskR ?? 0)) * D2R }),
-      K.layer('plume', { parent: 'mask', pivot: 'plumeJ', from: 'wrN', soft: { ...SOFT.HAIR, k: 80, max: 16, gain: 0.7 } }),
+      K.layer('plume', { parent: 'mask', pivot: 'plumeJ', from: 'wrN', soft: { ...SOFT.HAIR, k: 60, c: 9, max: 16, gain: 0.05, turn: 0.3, hang: 0 } }),
       K.layer('handN', { joint: true, parent: 'armNf', pivot: 'wrN', rot: (S) => (S.hwN ?? 0) * D2R }),
       live('handNskin', (ctx, a, mode, S) => skin.hand(ctx, a, mode, S, 'N')),
       K.layer('gloveN', { parent: 'armNf', pivot: 'elN', from: 'elN' }),

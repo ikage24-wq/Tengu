@@ -18,7 +18,7 @@ import { drawMochiAnim } from '../render/mochi-anim.js';
 import { MOCHI_SIZE } from '../render/wagashi.js';
 import { babbleAlong } from '../audio/babble.js';
 import { drawHero } from '../render/hero.js';
-import { drawMonster } from '../render/monsters.js';
+import { drawMonster, rigTop, ARTS } from '../render/monsters.js';
 import { drawFawnelleFace } from '../render/fawnelle/index.js';
 import { COLORS, THEMES, text, wrap, box, softShadow, roundRect, sparkle, font } from './kit.js';
 
@@ -145,7 +145,17 @@ const hexA = (hex, a) => `rgba(${parseInt(hex.slice(1, 3), 16)},${parseInt(hex.s
 
 // Where an actor's feet are and how tall they stand (the hero, an NPC on the map, a monster in the
 // scene or one of the scene's own cast, lifted while they hop): world/director.js.
-const actorAt = stageActor;
+// (A rigged monster stands in a roomy box and its data height is only a guess at its size: emotes,
+// bubbles and the spotlight go by its drawn body, measured (render/monsters.js rigTop), over the
+// middle of its head, 2026-11-25.)
+const actorAt = (world, who) => {
+  const a = stageActor(world, who);
+  const m = a?.mob;
+  const rig = m && ARTS[m.def.art]?.rig;
+  const b = rig ? rigTop(m.def.art, rig, m.def) : null;
+  if (!b) return a;
+  return { ...a, h: b.h, x: a.x + ((m.heading ?? m.dir) < 0 ? -1 : 1) * b.hc };
+};
 
 const easeOutBack = (u) => 1 + 2.7 * (u - 1) ** 3 + 1.7 * (u - 1) ** 2;
 
@@ -755,7 +765,7 @@ const FACE_S = 2.15;
 const QUEEN_FACE = { at: 0.86, fit: 0.3, dx: -12 };
 const FACE_AT = {
   gnarlroot: { at: 0.58, fit: 0.5 }, sylvana: QUEEN_FACE, tamamo: QUEEN_FACE, lilith: QUEEN_FACE, selene: QUEEN_FACE,
-  crystalking: { at: 0.6, fit: 0.46, dx: 1 }, alarm: { at: 0.63, fit: 0.44, dx: 1 }, mothercapper: { at: 0.54, dx: -7 }, tuskar: { at: 0.94, dx: -4 }, moraymurri: { at: 0.58, dx: -5 }, morayena: { at: 0.58, dx: -5 },
+  crystalking: { at: 0.6, fit: 0.46, dx: 1 }, alarm: { at: 0.63, fit: 0.44, dx: 1 }, mothercapper: { at: 0.74, fit: 0.5, dx: -24 }, tuskar: { at: 0.66, fit: 0.56, dx: 2 }, moraymurri: { at: 0.58, dx: -5 }, morayena: { at: 0.58, dx: -5 },
   gearheart: { at: 0.58, fit: 0.62 }, astraea: { at: 0.62, dx: -22 }, bonbon: { at: 0.5 }, persona: { at: 0.78 }, directrice: { at: 0.7, dx: -4 }, playwright: { at: 0.6, fit: 0.5 }, gale: { at: 0.7, dx: -3 },
   matriarch: { at: 0.27, dx: -15, fit: 0.5 }, whaledream: { at: 0.52, dx: -23 }, marigold: { at: 0.86 }, velvet: { at: 0.74, fit: 0.66 },
   abyssia: { at: 0.6, fit: 0.62 }, coralie: { at: 0.62 }, leonie: { at: 0.66 }, marionetta: { at: 0.68 },

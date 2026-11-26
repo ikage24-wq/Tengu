@@ -1341,35 +1341,39 @@ export const HOLLOW_SCENES = {
 
 // The bosses meet the group (each once a run), before the fight.
 export const HOLLOW_BOSS_SCENES = {
-  // The Myconid Queen, staged: you step up as the camera finds her fuming among her mushrooms,
-  // she stamps so the garden shakes and puffs spores, you hop back, the two of you square up, and
-  // she sets her spores on you.
+  // The Myconid Queen (Hazel Hoardwell, the Pantry Hamster), staged: the camera finds her counting
+  // her seeds; she spots you and dives into her hoard; the heap wobbles while you wonder; she bursts
+  // up out of the top of it, cheeks stuffed, and spits a stream of seeds at you (PTOO! PTOO!) as you
+  // hop back; the two of you square up, and she sets her pocket pests on you.
   hollow_capper: [
-    { together: [{ cam: 'mothercapper', dur: 1.1 }, { walk: 'player', to: 'mothercapper', gap: 96, speed: 110 }] },
-    { together: [{ emote: 'mothercapper', kind: 'anger', dur: 2.4 }, { fx: 'spores', at: 'mothercapper', n: 10 }] },
-    { who: 'mothercapper', text: 'Who is TRAMPLING my garden? My darlings were sleeping!', mood: 'angry' },
-    { jump: 'mothercapper', height: 26 },
-    { together: [{ shake: 4, dur: 0.5 }, { fx: 'spores', at: 'mothercapper' }, { emote: 'player', kind: '!' }] },
-    { walk: 'player', away: 'mothercapper', by: 28, speed: 120 },
+    { together: [{ cam: 'mothercapper', dur: 1.1 }, { walk: 'player', to: 'mothercapper', gap: 110, speed: 110 }] },
+    { together: [{ face: 'mothercapper', to: 'player' }, { emote: 'mothercapper', kind: '!', dur: 0.9 }] },
+    { who: 'mothercapper', text: 'Eep! Feet! In my PANTRY!', mood: 'angry' },
+    { act: 'mothercapper', move: 'dive', dur: 0.7 },
+    { together: [{ emote: 'player', kind: '?', dur: 1.2 }, { wait: 1.2 }] },
+    { together: [{ act: 'mothercapper', move: 'burst', dur: 0.8 }, { shake: 4, dur: 0.5 }, { fx: 'crumbs', at: 'mothercapper', n: 16 }, { emote: 'player', kind: '!' }] },
+    { who: 'mothercapper', text: 'Mmf! Who is TRAMPLING my garden? My darlings were SLEEPING! And every seed in here is COUNTED!', mood: 'angry' },
+    { together: [{ act: 'mothercapper', move: 'ptoo', dur: 1.4 }, { jump: 'player', height: 16 }, { walk: 'player', away: 'mothercapper', by: 30, speed: 120 }] },
     { together: [{ cam: ['player', 'mothercapper'], dur: 0.8 }, { face: 'player', to: 'mothercapper' }] },
     { emote: 'player', kind: 'sweat', dur: 1.2, hold: true },
     { who: 'player', text: "We're sorry! We're here to help Gnarlroot sleep." },
-    { face: 'mothercapper', to: 'player' },
     { emote: 'mothercapper', kind: '?', dur: 1, hold: true },
-    { who: 'mothercapper', text: 'Help? Nobody HELPS anymore. Out, out, out! Spores, my sweets!', mood: 'angry' },
-    { together: [{ jump: 'mothercapper', height: 18 }, { fx: 'spores', at: 'mothercapper', n: 30 }, { shake: 3, dur: 0.4 }] },
+    { who: 'mothercapper', text: 'Help? HELP? The last helper ate three of my acorns. THREE. Out, out, out! Pocket pests, get them!', mood: 'angry' },
+    { together: [{ jump: 'mothercapper', height: 18 }, { fx: 'crumbs', at: 'mothercapper', n: 24 }, { shake: 3, dur: 0.4 }] },
     { cam: 'player', dur: 0.7 },
   ],
-  // Tuskar, staged: you come up on him bristling in his den; he paws the floor till the old
-  // pillars shake loose rubble, winds up, and charges, skidding to a stop nose to nose with you.
+  // Tuskar, staged: you come up on the young mammoth standing guard in his den. He salutes himself,
+  // sniffs you out, and gives his Trumpet Call (reared back, trunk high, one foot up: BWAAOOO!) till
+  // dust, bark and leaves rain from the roof; then he lowers his tusks and charges, skidding to a
+  // stop nose to nose with you.
   hollow_boar: [
     { together: [{ cam: 'tuskar', dur: 1.1 }, { walk: 'player', to: 'tuskar', gap: 150, speed: 110 }, { mood: 'tuskar', as: 'angry' }] },
-    { together: [{ face: 'tuskar', to: 'player' }, { emote: 'tuskar', kind: 'anger', dur: 2.2 }, { fx: 'dust', at: 'tuskar', n: 6 }] },
-    { who: 'tuskar', text: 'GRUNT. You smell like trouble. And acorns. Mostly trouble.', mood: 'angry' },
-    { together: [{ act: 'tuskar', move: 'windup', dur: 1.6 }, { fx: 'dust', at: 'tuskar' }, { shake: 2, dur: 1.4 }, { fx: 'rubble', at: 'tuskar' }] },
-    { who: null, text: 'Tuskar paws the ground. The stone pillars of his den tremble.' },
+    { together: [{ face: 'tuskar', to: 'player' }, { emote: 'tuskar', kind: '!', dur: 1.2 }, { act: 'tuskar', move: 'salute', dur: 1.4 }] },
+    { who: 'tuskar', text: 'HALT! *sniff sniff* You smell like trouble. And acorns. Mostly trouble.', mood: 'angry' },
+    { together: [{ act: 'tuskar', move: 'trumpet', dur: 1.8 }, { shake: 3, dur: 1.5 }, { fx: 'dust', at: 'tuskar', n: 10 }, { fx: 'leaves', at: 'tuskar', top: true, n: 14 }, { fx: 'rubble', at: 'tuskar' }] },
+    { who: null, text: 'Tuskar rears back and lifts his trunk. BWAAOOO! Dust, bark and leaves rain down from the roof of the den.' },
     { together: [{ emote: 'player', kind: 'sweat', dur: 1.2 }, { walk: 'player', away: 'tuskar', by: 20, speed: 60 }] },
-    { who: 'tuskar', text: "Nobody gets past Tuskar! I'm the GATE. Well. The gate's guard. CHARGE!", mood: 'angry' },
+    { who: 'tuskar', text: "Nobody gets past Tuskar! I'm the GATE. Well. The gate's guard. The BEST one. CHARGE!", mood: 'angry' },
     { act: 'tuskar', move: 'windup', dur: 0.5 },
     { together: [{ walk: 'tuskar', to: 'player', gap: 46, speed: 340 }, { act: 'tuskar', move: 'attack', dur: 0.45 }, { fx: 'dust', at: 'tuskar' }] },
     { together: [{ shake: 5, dur: 0.5 }, { fx: 'dust', at: 'tuskar', n: 16 }, { jump: 'player', height: 22 }, { emote: 'player', kind: '!' }] },
@@ -1404,23 +1408,23 @@ export const HOLLOW_BOSS_SCENES = {
 // Each key has a few lines; one is picked.
 export const HOLLOW_RADIO = {
   'enter:hollow1': ["It's dark in there. Light the glowcaps and stick together.", 'Hear me? Good. The roots carry my voice. Mind the dark.'],
-  'enter:hollow2': ['The Myconid Queen keeps a garden there. She is... very protective of it.'],
+  'enter:hollow2': ['The Myconid Queen keeps a garden there. A pantry, she calls it. She counts every seed.'],
   'enter:hollow3': ['Little Sprouts are trapped in those cages. Free them and they will cheer you on!', 'Low ceiling in the tunnels. Watch for falling roots.'],
-  'enter:hollow4': ["Tuskar's den. Those stone pillars are older than me: let him crash into them, not you!"],
+  'enter:hollow4': ["Tuskar's den. He's a young mammoth who thinks he's a gate. Those stone pillars are older than me: let him crash into them, not you!"],
   'enter:hollow5': ['The sap rises from the floor in that chamber. When it bubbles, climb!', 'Bramble Bears hold the Root Keys. Take them, gently.'],
   'enter:hollow6': ['This is it. The Heart of the Hollow. Gnarlroot is just... tired. Be kind, be strong.'],
   'clear:hollow1': ['Lovely light! On you go.', 'The entrance glows again. Well done.'],
-  'clear:hollow2': ["The garden's quiet. She'll forgive you. Probably."],
+  'clear:hollow2': ["The garden's quiet. She'll forgive you. Once she's counted everything twice."],
   'clear:hollow3': ['Listen to those Sprouts cheer! They will follow you all the way down.'],
-  'clear:hollow4': ['Tuskar is snoring already. Ha! On to the Root Gate.'],
+  'clear:hollow4': ["Tuskar's sniffling into his wool. He'll be fine. On to the Root Gate."],
   'clear:hollow5': ['The Root Gate is open. The Heart is just ahead...'],
   wipe: ["Up you get! Everyone stumbles in the dark. Try again.", "That's alright. Catch your breath and go again."],
   flood: ['Sap rising! Get up high!', 'Here comes the sap! Ledges, now!'],
-  lightsout: ["She's put the lights out! Stay close to each other's light!"],
-  tide: ['Spores all over the floor! Use the bounce mushrooms!'],
-  pillar: ['HA! Right into the pillar! Hit him while he sees stars!'],
-  wargs: ['He called his Wargs! Tank, catch them!'],
-  stampede: ["He's stampeding! Watch both ways!"],
+  lightsout: ["She's stuffed the lamp in her cheek! Follow the pink glow, and stay close!"],
+  tide: ['Seed-fluff all over the floor! Use the bounce mushrooms!'],
+  pillar: ['CLONK! Right into the pillar! Hit him while he sees stars!'],
+  wargs: ['He bugled for his Wargs! Tank, catch them!'],
+  stampede: ["He's stampeding, trumpeting at every turn! Watch both ways!"],
   hug: ["He's going in for a hug! When he says it, find the gap!"],
   yomogi: ["That's Elder Yomogi in his roots! Cut the tendrils. Gently!"],
   cheer: ['Another Sprout! Hear them cheering?', 'Free! Look at it go!'],

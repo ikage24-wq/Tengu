@@ -1,15 +1,18 @@
 // The two-person boss mechanics on screen (world/coopboss.js) and a defend quest's calm stone
 // (world/partyquest.js). The telegraphs are Tengu's own effect art (tools/fx-art.js, the `celco*`
 // strips), each in its boss's own colour and shapes: the shared blow's gold ring with the Queen
-// Bee's honeycomb and bees, the Myconid Queen's mushroom caps and spores, or Tuskar's stomping
-// rocks, with a gold star pip over it for each player standing in it; the two-sided guard built of
-// pieces laid round the boss (Old MacGoblin's barn-door planks, Tuskar's flame bulwark,
-// Gnarlroot's bark plates) that crack when a side is struck and break apart; Gnarlroot's Root Seal,
+// Bee's honeycomb and bees, the Myconid Queen's Biggest Acorn (seeds round the rim and her prize
+// acorn dropping onto it, drawn live by render/mothercapper/fx.js), or Tuskar's stomping rocks, with a gold star pip over it for each player standing in it; the two-sided guard built of
+// pieces laid round the boss (Old MacGoblin's barn-door planks, Tuskar's Woolly Wall of soft wool
+// clouds, drawn live by render/tuskar/fx.js, Gnarlroot's bark plates) that crack when a side is struck and break apart; Gnarlroot's Root Seal,
 // a rune circle of roots with its stone, and the ribbon of light chained from it to him while it's
-// held; and the twin puffballs' spore tether, fraying red once one falls. Everything eases in and
+// held; and the twins' tether, fraying red once one falls (the Myconid Queen's Pantry Twins pass a
+// seed along theirs, and feed it to the fallen one). Everything eases in and
 // out on time; nothing pops.
 
 import { fxSprite } from './fx-sprites.js';
+import { acornRing, acornCrash, pantrySeed } from './mothercapper/fx.js';
+import { woolPiece, woolBurst } from './tuskar/fx.js';
 import { coopBosses, inRing, membersHere } from '../world/coopboss.js';
 
 const TAU = Math.PI * 2;
@@ -17,11 +20,13 @@ const smooth = (u) => (u <= 0 ? 0 : u >= 1 ? 1 : u * u * (3 - 2 * u));
 const ease = (v, to, k) => v + (to - v) * k;
 
 // Each boss's look: the motif of its share ring and the pieces of its guard.
-const RING_OF = { queenbee: 'celcohoney', mothercapper: 'celcospore', tuskar: 'celcostomp' };
+const RING_OF = { queenbee: 'celcohoney', tuskar: 'celcostomp' };
+// (bosses whose ring is drawn live in their own shapes)
+const LIVE_RING = { mothercapper: { ring: acornRing, hit: acornCrash } };
 const HIT_OF = { celcohoney: 'celcohoneyhit', celcospore: 'celcosporehit', celcostomp: 'celcostomphit' };
 const GUARD_OF = {
   macgoblin: { idle: 'celcobarn', crack: 'celcobarncrack', broke: 'celcobarnbreak', gap: 21, brace: true },
-  tuskar: { idle: 'celcoflame', crack: 'celcoflamecrack', broke: 'celcoflamebreak', gap: 20, upright: true },
+  tuskar: { live: { piece: woolPiece, burst: woolBurst }, gap: 20, upright: true },
   gnarlroot: { idle: 'celcobark', crack: 'celcobarkcrack', broke: 'celcobarkbreak', gap: 22 },
 };
 const ringOf = (id) => RING_OF[id] ?? 'celcohoney';
@@ -122,6 +127,12 @@ function drawRing(ctx, world, m, r, cam, time) {
   const born = smooth(r.t / 0.35);
   const scale = (r.w / RING_W) * (0.8 + 0.2 * born);
   ringsOnScreen.push({ x, y, w: r.w });
+  const live = LIVE_RING[m.def.id];
+  if (live) {
+    live.ring(ctx, x, y, r.w * (0.8 + 0.2 * born), p, born, time);
+    fxSprite(ctx, 'celcosharefill', x, y, { p: p * 0.999, scale, alpha: born * (p > 0.8 ? 0.75 + 0.25 * Math.sin(time * 18) : 1) });
+    return;
+  }
   // A deep rim under the ring (its own drawing, darkened and a touch wider) so the gold reads on any
   // ground, even gold-brown earth.
   ctx.save();
@@ -209,14 +220,15 @@ export function drawCoopFront(ctx, world, cam, time) {
       if (s.def.kind === 'sides') drawGuard(ctx, world, m, s, bx, by, time, 'pips');
       if (s.def.kind === 'split' && s.ring) ringPips(ctx, world, m, s.ring, cam, time);
       if (s.def.kind === 'seal' && s.x != null) drawSealBeam(ctx, s, bx, by - m.def.h * 0.55, cam, time);
-      if (s.def.kind === 'twins' && s.pair && !s.done) drawTether(ctx, world, s, cam, time);
+      if (s.def.kind === 'twins' && s.pair && !s.done) drawTether(ctx, world, s, cam, time, m.def.id);
     }
   }
   for (const f of world.coopFx ?? []) {
     const p = Math.min(0.999, f.t / f.dur);
     const x = f.x - cam.x;
     const y = f.y - cam.y;
-    if (f.kind === 'split') {
+    if (f.kind === 'split' && LIVE_RING[f.boss]) LIVE_RING[f.boss].hit(ctx, x, y, p, f.w ?? RING_W);
+    else if (f.kind === 'split') {
       // The blow coming down in the boss's own shapes.
       fxSprite(ctx, HIT_OF[ringOf(f.boss)], x, y, { p, scale: (f.w ?? RING_W) / RING_W });
     } else if (f.kind === 'crack') {
@@ -225,6 +237,10 @@ export function drawCoopFront(ctx, world, cam, time) {
       const { rx, ry } = guardSize({ w: f.w, h: f.h ?? f.w });
       for (const q of guardPieces(x, y, rx, ry, look.gap)) {
         const out = smooth(p) * 26;
+        if (look.live) {
+          look.live.burst(ctx, q.x + q.side * out * Math.cos(q.th), q.y + out * Math.sin(q.th) * 0.6, p);
+          continue;
+        }
         fxSprite(ctx, look.broke, q.x + q.side * out * Math.cos(q.th), q.y + out * Math.sin(q.th) * 0.6, { p, flip: q.side < 0, rot: look.upright ? 0 : q.rot });
       }
     } else if (f.kind === 'seal') {
@@ -257,6 +273,11 @@ function drawGuard(ctx, world, m, s, bx, by, time, part) {
     const waiting = s.guard && lit[-q.side] > 0 && lit[q.side] === 0;
     const a = e * (waiting ? 0.75 + 0.25 * Math.sin(time * 12) : 1);
     const o = { t: time + q.j * 0.17 + (q.side > 0 ? 0.5 : 0), flip: q.side < 0, rot: look.upright ? 0 : q.rot, scale: 0.7 + 0.3 * e, sy: look.brace && q.j % 2 ? -1 : 1 };
+    // (a guard drawn live in the boss's own shapes: Tuskar's wool, fraying as its side is struck)
+    if (look.live) {
+      look.live.piece(ctx, q.x, q.y, { ...o, alpha: a }, L);
+      continue;
+    }
     if (L < 0.98) fxSprite(ctx, look.idle, q.x, q.y, { ...o, alpha: a * (1 - L) });
     if (L > 0.02) fxSprite(ctx, look.crack, q.x, q.y, { ...o, alpha: a * L });
   }
@@ -282,7 +303,7 @@ function drawSealBeam(ctx, s, bx, by, cam, time) {
 
 // The twins' tether: a pink spore-thread sagging between them; once one falls it frays red, and
 // the fray takes over as its twin's call-back nears.
-function drawTether(ctx, world, s, cam, time) {
+function drawTether(ctx, world, s, cam, time, boss) {
   const [a, b] = s.pair;
   const ax = a.x - cam.x;
   const ay = a.y - a.def.h * 0.5 - cam.y;
@@ -297,4 +318,6 @@ function drawTether(ctx, world, s, cam, time) {
     if (s.fray < 0.98) fxSprite(ctx, 'celcotether', q.x, q.y, { ...o, alpha: 1 - s.fray });
     if (s.fray > 0.02) fxSprite(ctx, 'celcotetherfray', q.x, q.y, { ...o, alpha: s.fray * (0.8 + 0.2 * Math.sin(time * 16 + i)) });
   });
+  // (the Pantry Twins share a seed along it, and take it to a fallen twin)
+  if (boss === 'mothercapper') pantrySeed(ctx, pts, time, s.alone != null ? alone : -1, a.hp <= 0 ? 0 : 1);
 }

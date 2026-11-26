@@ -19,6 +19,17 @@ import { ramp, crescent, shine } from './meadow.js';
 import { makeRig, stateBlend, TAU } from './rig.js';
 import { D2R, INK, ov, arcP, taper, pairOf, faceSprite, hold, stepPhase, pawStep, put, shift, MOODS, moodOf, sparkle, puff, dot } from './rigkit.js';
 
+// The Lollipop Witch's and the Jelly Bean Ninja's feet (2026-11-26): pawStep's own step, the same
+// stride, timing and height, but each foot leaving the ground and landing with no speed (pawStep's lift
+// starts and stops on a sine's slope, a kink at every lift and landing).
+function easedStep(u, ph, stride, duty, lift) {
+  const [dx] = pawStep(u, ph, stride, duty, lift);
+  const q = (((u + ph) % 1) + 1) % 1;
+  if (q < duty) return [dx, 0];
+  const s = (q - duty) / (1 - duty);
+  return [dx, Math.sin(Math.PI * s * s * (3 - 2 * s)) * lift];
+}
+
 const sm = (key, w, h, shapes) => faceSprite(key, w, h, shapes);
 const at2 = (M, x, y) => [M[0] * x + M[2] * y + M[4], M[1] * x + M[3] * y + M[5]];
 const star5 = (x, y, r, c, deg = -90) => {
@@ -417,7 +428,7 @@ const lwFace = (mood) => sm(`lpw|face|${mood}`, 16, 15, () => lwOwnFace(mood));
 const lwPass = (bare) => {
   const i = bare ? 1 : 0;
   const tag = bare ? 'b' : '';
-  const shoe = (k, far) => ({ name: `shoe${k}${tag}`, parent: null, s: LW_SHOE[far ? 1 : 0][i], pivot: [3, 3.6], at: (S, a) => { const [dx, l] = pawStep(a.lwU ?? 0, far ? 0.5 : 0, 6, 0.6, 1.4); return [S.x + (far ? -2.6 : 3.4) + dx * a.walkW, -l * a.walkW]; } });
+  const shoe = (k, far) => ({ name: `shoe${k}${tag}`, parent: null, s: LW_SHOE[far ? 1 : 0][i], pivot: [3, 3.6], at: (S, a) => { const [dx, l] = easedStep(a.lwU ?? 0, far ? 0.5 : 0, 6, 0.6, 1.4); return [S.x + (far ? -2.6 : 3.4) + dx * a.walkW, -l * a.walkW]; } });
   return [
     { name: `handF${tag}`, parent: 'trunk', s: LW_HAND[1][i], pivot: [3.5, 3.5], at: (S) => [-7, -13 - S.fy], rot: (S) => S.fr * D2R },
     shoe(1, true),
@@ -682,7 +693,7 @@ const STAR_C = ['#ff8ab8', '#9ae6ff', '#fff3a6', '#b8f0a0'];
 const jnPass = (bare) => {
   const i = bare ? 1 : 0;
   const tag = bare ? 'b' : '';
-  const foot = (k, far) => ({ name: `foot${k}${tag}`, parent: null, s: JN_FOOT[far ? 1 : 0][i], pivot: [3, 3.6], at: (S, a) => { const [dx, l] = pawStep(a.jnU ?? 0, far ? 0.5 : 0, 8, 0.5, 2.6); return [S.x + (far ? -3.4 : 3.4) + dx * a.walkW, -l * a.walkW]; } });
+  const foot = (k, far) => ({ name: `foot${k}${tag}`, parent: null, s: JN_FOOT[far ? 1 : 0][i], pivot: [3, 3.6], at: (S, a) => { const [dx, l] = easedStep(a.jnU ?? 0, far ? 0.5 : 0, JN_STRIDE, 0.5, 2.6); return [S.x + (far ? -3.4 : 3.4) + dx * a.walkW, -l * a.walkW]; } });
   return [
     { name: `tails${tag}`, parent: 'trunk', s: JN_TAILS[i], pivot: [15, 3], at: () => [-6.4, -19.4], rot: (S) => S.tails * D2R, soft: { key: 'tails', dir: [-1, 0], k: 110, c: 7, gain: 0.7, max: 22, flutter: 8, hz: 1.6 } },
     { name: `handF${tag}`, parent: 'trunk', s: (a) => JN_HAND[a.jnK ?? 0][1][i](), pivot: [2.5, 2.5], at: (S) => [-6 + S.fx, -9 - S.fy] },
@@ -693,8 +704,12 @@ const jnPass = (bare) => {
     { name: `handN${tag}`, parent: 'trunk', s: (a) => JN_HAND[a.jnK ?? 0][0][i](), pivot: [2.5, 2.5], at: (S) => [7 + S.hx, -9 - S.hy] },
   ];
 };
+// (The Ninja's walk, 2026-11-26: a stride of 20 px a step cycle, not 8. At its roaming 60 px a
+// second its feet stepped 7.5 times a second each, a blur of legs; now 3 a second, a walk. Each foot
+// travels the same 20 px it's carried, so a planted foot still never slides.)
+const JN_STRIDE = 20;
 export const ninjaRig = makeRig({
-  w: 40, h: 40, soft: true, stride: 8, recover: 0.5,
+  w: 40, h: 40, soft: true, stride: JN_STRIDE, recover: 0.5,
   springs: { x: [320, 20], lift: [280, 16], tilt: [240, 14], tails: [120, 8], hx: [320, 16], hy: [320, 16], fx: [260, 14], fy: [260, 14] },
   fast: ['x', 'tilt', 'hx', 'hy'],
   kick: { tilt: -220, tails: 300 },
@@ -703,7 +718,10 @@ export const ninjaRig = makeRig({
     a.uidOff = (m.uid % 13) * 0.93;
     a.jnK = m.uid % 4;
     const t = a.t + a.uidOff;
-    a.jnU = stepPhase(m, a, 'jn', 8);
+    a.jnU = stepPhase(m, a, 'jn', JN_STRIDE);
+    // (its pace, for the walk-pace check: it only walks, a step of each foot per cycle)
+    const jv = a.mo.rig?.jnV ?? 0;
+    a.gait = { run: 0, v: jv, walkSpeed: m.def?.speed ?? jv, cadence: jv / JN_STRIDE };
     const lu = t % 6;
     // Ready on its toes, and every so often a quick look one way, then the other.
     const peekB = hold(lu, 2, 2.2, 2.8, 3);
@@ -711,7 +729,8 @@ export const ninjaRig = makeRig({
     const bounce = Math.abs(Math.sin(t * 3.6));
     const idle = { x: 0, lift: bounce * 1, tilt: -peekB * 12 + peekF * 10 + 4, tails: -48 + Math.sin(t * 2) * 6, hx: 1, hy: 2 + bounce * 0.5, fx: -1, fy: 2 };
     const s1 = Math.sin(a.jnU * TAU);
-    const walk = { x: 0, lift: Math.abs(s1) * 1.4, tilt: 16, tails: -8, hx: -4, hy: 0, fx: -5, fy: 1 };
+    // (its bob rounded at the bottom, not bouncing off a sine's hard corner at every step)
+    const walk = { x: 0, lift: s1 * s1 * 1.4, tilt: 16, tails: -8, hx: -4, hy: 0, fx: -5, fy: 1 };
     const antic = { x: -2, lift: -1.4, tilt: -8, tails: -30, hx: -9, hy: 6, fx: 3, fy: 3 };
     const strike = { x: 4, lift: 0, tilt: 18, tails: -6, hx: 10, hy: 4, fx: -4, fy: 1 };
     return stateBlend(a, idle, walk, antic, strike);

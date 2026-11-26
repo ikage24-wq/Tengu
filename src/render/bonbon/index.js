@@ -865,6 +865,8 @@ const draw0 = rig.draw;
 rig.draw = (ctx, m, a) => {
   ctx.save();
   ctx.scale(BIG, BIG);
+  // (drawn BIG: its steps measured in its own units, so its planted feet keep still on the ground)
+  a.gaitScale = BIG;
   draw0(ctx, m, a);
   ctx.restore();
 };

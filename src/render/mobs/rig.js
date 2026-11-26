@@ -114,7 +114,7 @@ export function attackPhase(m, now, recover = 0.55) {
 //   gain     how hard the body's moves push it (1)
 //   turn     how much it lags its parent's turning (0..1, 0.8)
 //   hang     how much it keeps hanging straight down as its parent tilts (0..1, 0)
-//   max      the most it swings, degrees (32)
+//   max      the most it swings, degrees (32): eased into, never hit (a soft stop)
 //   flutter  a slow drift of its own in the air, degrees (0), at `hz` (0.7)
 // (Integrated once per frame per layer, in small steps; the outlined and bare twins of a layer
 // share one swing.)
@@ -161,28 +161,51 @@ function softSwing(p, base, x, y, pose, m, a, st, swung) {
   const turn = o.turn ?? 0.8;
   const max = ((o.max ?? 32) * Math.PI) / 180;
   const flutter = (((o.flutter ?? 0) * Math.PI) / 180) * Math.sin((a.t ?? 0) * TAU * (o.hz ?? 0.7) + (key.length * 1.7) % TAU);
-  const goal = -(o.hang ?? 0) * wrapAngle(pa + pose) + flutter;
+  // (The hang kept a little inside the limit, eased toward it, never past it: a layer whose hang
+  // asked for more than its limit used to rest pressed on its stop and slam off it at every push,
+  // 2026-11-26.)
+  const goal = softGoal(-(o.hang ?? 0) * wrapAngle(pa + pose) + flutter, max);
   // Small steps, so a slow frame never throws a layer about.
   const n = Math.max(1, Math.ceil(dt / (1 / 240)));
   const h = dt / n;
+  const z = max * SOFT_ZONE;
   for (let i = 0; i < n; i++) {
-    const ang = pa + pose + s.th;
+    const ang = pa + pose + softStop(s.th, max);
     const ux = (Math.cos(ang) * dx - Math.sin(ang) * dy) / len;
     const uy = (Math.sin(ang) * dx + Math.cos(ang) * dy) / len;
     // The body's push on the layer (it is left behind as its attach point speeds up), and its
     // parent turning under it.
     const push = (gain * (uy * ax - ux * ay)) / len;
-    const acc = -k * (s.th - goal) - c * s.w + push - turn * aa;
+    let acc = -k * (s.th - goal) - c * s.w + push - turn * aa;
+    // A soft stop: in the zone near its limit a stiffening spring and extra damping ease the layer to
+    // a halt, and the angle drawn eases toward the limit and never reaches it, so it never hits a
+    // wall and bounces off (it used to be clamped there, its speed reversed: a snap every time).
+    const over = Math.abs(s.th) - z;
+    if (over > 0) acc -= Math.sign(s.th) * k * 4 * over + c * 8 * Math.min(1, over / (max - z)) * s.w;
     s.w += acc * h;
     s.th += s.w * h;
-    // (A soft stop at the limit, never a hard clamp.)
-    if (Math.abs(s.th) > max) {
-      s.th = Math.sign(s.th) * max;
-      s.w *= -0.3;
+    // (a last guard far past the limit, where the angle drawn has long since eased to the limit)
+    if (Math.abs(s.th) > max * 3) {
+      s.th = Math.sign(s.th) * max * 3;
+      s.w = 0;
     }
   }
   if (!Number.isFinite(s.th)) Object.assign(s, { th: 0, w: 0 });
-  return (swung[key] = s.th);
+  return (swung[key] = softStop(s.th, max));
+}
+// The soft stop's shape: the angle drawn follows the swing up to SOFT_ZONE of the limit, then eases
+// toward the limit with no corner and never reaches it; a hang goal is kept a little inside it.
+const SOFT_ZONE = 0.7;
+function softStop(th, max) {
+  const z = max * SOFT_ZONE;
+  const a = Math.abs(th);
+  return a <= z ? th : Math.sign(th) * (z + (max - z) * Math.tanh((a - z) / (max - z)));
+}
+function softGoal(g, max) {
+  const m = max * 0.97;
+  const z = m * SOFT_ZONE;
+  const a = Math.abs(g);
+  return a <= z ? g : Math.sign(g) * (z + (m - z) * Math.tanh((a - z) / (m - z)));
 }
 
 // ---------- A rig from a spec ----------

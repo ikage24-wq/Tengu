@@ -54,7 +54,8 @@ import { blit, sprite } from '../pixel.js';
 import { blankBase, blankSkinSpec } from '../mobs/blankbase.js';
 import { blankBody, BODIES, skinSpec } from '../mobs/blankbases.js';
 import { makeSkin } from '../mobs/blankskin.js';
-import { blankGait } from '../mobs/blankgait.js';
+// (their own copy of the blank legs: the reach eased at full stretch, 2026-11-26)
+import { blankGait } from './gait.js';
 import { weaponOf, weaponSprite, inSprite } from '../mobs/blankprops.js';
 import { MOVES as BASE_MOVES, HOLDS, POOLS, LEGLESS, poseAt, lengthOf, inWindow, since } from '../mobs/blankmoves.js';
 import { legDefs, legPhase, stepAt, lowAngle, sinks, placeLeg } from '../mobs/blankquad.js';

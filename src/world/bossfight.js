@@ -39,6 +39,10 @@ export const cleave = (world, m, len, damage, dur) => (m.dir < 0 ? band(world, m
 export const LOOK_HOLD = { overdue: 0.9, books: 0.8, study: 0.9, bookmark: 0.7, comet: 0.75, crescentsweep: 0.75, eclipse: 1.3, total: 1.3, night: 1.3, shush: 0.9, nova: 0.9, lines: 0.8, starfall: 0.7,
   // (The Queen's dream: render/dreamfx.js.)
   drizzle: 0.7, bolt: 0.6, downpour: 0.8, grumble: 1, forked: 0.6, cloudburst: 1.1, umbrella: 0.9,
+  // (the Myconid Shaman's Feather Flurry: render/shaman/fx.js)
+  feathers: 1.4,
+  // (the Myconid Queen's Seed Spit, Hoarder's Whirl and Pouch Burst: render/mothercapper/fx.js HAZEL_HOLD)
+  seedspit: 0.7, seedsprout: 1, whirl: 0.8, pouchburst: 1.3,
   memo: 0.7, stamp: 0.8, coffee: 0.8, files: 0.9, steam: 0.9, noodle: 0.7, broth: 0.7, chopsticks: 0.6, boil: 1.1, email: 0.7, redpen: 0.8, alarm: 1, invite: 0.8, deadline: 1.1 };
 
 // ---------- Who ----------

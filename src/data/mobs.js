@@ -18,16 +18,25 @@ const mob = (def) => ({ fly: false, aggro: true, boss: false, ...def });
 export const MOBS = {
   puffle: mob({
     id: 'puffle', name: 'Blossom Kit', level: 1, hp: 12, atk: 6, def: 0, acc: 8, eva: 0, exp: 8, gold: [1, 2],
-    speed: 46, gait: 'dart', w: 30, h: 32, art: 'puffle', aggro: false, drops: [{ id: 'fluff', chance: 0.6 }, { id: 'cotton', chance: 0.08 }, { id: 'kitty_ears', chance: 0.01 }],
+    // (Speed 18 with no dart: it ambles the fox base's own walk and eases into a playful trot when it
+    // gives chase; a creep-then-run gait makes a four-legged base flip between gaits.)
+    speed: 18, w: 33, h: 32, art: 'puffle', aggro: false, drops: [{ id: 'fluff', chance: 0.6 }, { id: 'cotton', chance: 0.08 }, { id: 'kitty_ears', chance: 0.01 }],
   }),
   snailbun: mob({
     id: 'snailbun', name: 'Bud Snail', level: 2, hp: 22, atk: 8, def: 0, acc: 10, eva: 0, exp: 12, gold: [1, 2],
-    speed: 16, w: 32, h: 29, art: 'snailbun', aggro: false, drops: [{ id: 'shell', chance: 0.55 }, { id: 'copper_ore', chance: 0.08 }, { id: 'hoodie', chance: 0.01 }],
+    // (Speed 7, the shell crawler snail's own glide (render/budsnail/): its foot's ripples run from
+    // the distance it glides, so any faster and they blur into a scuttle; no 'dart' gait, a snail
+    // never bursts. Moves: the runaway-bun roll, the bun bonk, the icing splat.)
+    speed: 7, w: 32, h: 29, art: 'snailbun', aggro: false, moves: ['spin', 'bonk', 'splat'], drops: [{ id: 'shell', chance: 0.55 }, { id: 'copper_ore', chance: 0.08 }, { id: 'hoodie', chance: 0.01 }],
   }),
   // Petal Meadow's hive and clouds (render/mobs/bees.js).
   bumble: mob({
     id: 'bumble', name: 'Puffbee', level: 2, hp: 20, atk: 8, def: 0, acc: 10, eva: 1, exp: 13, gold: [1, 2],
-    speed: 40, gait: 'dart', w: 24, h: 24, art: 'bumble', fly: true, drops: [{ id: 'bee_fuzz', chance: 0.55 }, { id: 'honeycomb', chance: 0.08 }, { id: 'cozy_sweater', chance: 0.01 }],
+    // (Speed 24 with no 'dart': the round bug base's bee leans into its travel up to 34 px a second,
+    // so at 24 it drifts at an easy lean with its hover bob still showing; a dart's quick 1.7x bursts
+    // and short pauses snapped its lean about and never left it hovering long enough for its act.
+    // Moves: the letter dart, the satchel swing, the special delivery.)
+    speed: 24, w: 24, h: 24, art: 'bumble', fly: true, moves: ['letter', 'satchel', 'buzz'], drops: [{ id: 'bee_fuzz', chance: 0.55 }, { id: 'honeycomb', chance: 0.08 }, { id: 'cozy_sweater', chance: 0.01 }],
   }),
   petalsprite: mob({
     id: 'petalsprite', name: 'Dandelion Puff', level: 3, hp: 30, atk: 10, def: 1, acc: 12, eva: 2, exp: 17, gold: [1, 3],
@@ -45,7 +54,11 @@ export const MOBS = {
   // Clover Hills' farm folk (render/mobs/farm.js), one more in each zone.
   strawhog: mob({
     id: 'strawhog', name: 'Strawhog', level: 5, hp: 70, atk: 15, def: 4, acc: 15, eva: 3, exp: 30, gold: [1, 4],
-    speed: 24, w: 26, h: 22, art: 'strawhog', drops: [{ id: 'hay_quill', chance: 0.5 }, { id: 'cotton', chance: 0.06 }, { id: 'cozy_sweater', chance: 0.01 }],
+    // (Speed 24 with no 'dart': the bunny base's own hop (render/strawhog/), each hop's phase from the
+    // distance hopped, carries it about 24.9 px a second at an easy hop; any faster and it breaks into
+    // long running leaps, and a dart's bursts would blur its hops. Moves: the Boo, the hat boomerang,
+    // the thump.)
+    speed: 24, w: 23, h: 28, art: 'strawhog', moves: ['boo', 'hatthrow', 'thump'], drops: [{ id: 'hay_quill', chance: 0.5 }, { id: 'cotton', chance: 0.06 }, { id: 'cozy_sweater', chance: 0.01 }],
   }),
   brownie: mob({
     id: 'brownie', name: 'Chickling', level: 7, hp: 105, atk: 22, def: 5, acc: 20, eva: 3, exp: 48, gold: [2, 5],
@@ -55,34 +68,53 @@ export const MOBS = {
     id: 'harvmouse', name: 'Harvest Mouse', level: 9, hp: 148, atk: 27, def: 7, acc: 24, eva: 6, exp: 72, gold: [2, 7],
     speed: 36, w: 26, h: 23, art: 'harvmouse', moves: ['bite', 'chitter', 'tailWhip'], drops: [{ id: 'woven_nest', chance: 0.45 }, { id: 'oak_log', chance: 0.08 }],
   }),
-  // Clover Hills' area boss (world/nest.js, render/mobs/farm.js): the Pumpkin Goblins' grumpy
-  // old farmer chief bursts out of the big barn once enough of the hills has been hunted, and
-  // every few seconds slams his pitchfork down, hurting anyone on his floor near him.
+  // Clover Hills' area boss (world/nest.js): the farm's grumpy old foreman bursts out of the big
+  // barn once enough of the hills has been hunted, and every few seconds stomps the ground,
+  // hurting anyone on his floor near him.
+  // (Big Barnaby the Clydesdale since 2026-11-25, render/macgoblin/: speed 24, his own heavy walk on
+  // his chibi copy of the brute base, about 24 px a second, so at his roaming pace he plods and
+  // never jogs; w/h his drawn body. The slam is his Clover Quake, his touches the Hay Bale Heave
+  // and the Lucky Shoe in turn.)
   macgoblin: mob({
     id: 'macgoblin', name: 'Old MacGoblin', level: 10, hp: 3200, atk: 40, def: 8, acc: 26, eva: 1, exp: 1600, gold: [110, 170],
-    speed: 30, w: 70, h: 84, art: 'macgoblin', boss: true,
+    speed: 24, w: 56, h: 88, art: 'macgoblin', boss: true,
     drops: [{ id: 'mushcap', chance: 1, qty: 6 }, { id: 'clover', chance: 1, qty: 5 }, { id: 'orange_potion', chance: 1, qty: 8 }],
     special: { kind: 'slam', every: 6, warn: 1.3, damage: 90, range: 180 },
   }),
   sproutling: mob({
     id: 'sproutling', name: 'Turnip Tot', level: 4, hp: 45, atk: 13, def: 2, acc: 14, eva: 1, exp: 22, gold: [1, 3],
-    speed: 34, w: 18, h: 37, art: 'sproutling', drops: [{ id: 'sprout_leaf', chance: 0.5 }, { id: 'clover', chance: 0.08 }, { id: 'overalls', chance: 0.01 }],
+    // (Speed 10, the veggie critter base's own waddle (render/turniptot/): each foot's step comes from
+    // the distance walked on an 8 px stride, so any faster and its stubby legs blur into a scurry.
+    // Moves: the sneeze blast, the scarf whip, the bonk.)
+    speed: 10, w: 20, h: 33, art: 'sproutling', moves: ['achoo', 'scarfwhip', 'bonk'], drops: [{ id: 'sprout_leaf', chance: 0.5 }, { id: 'clover', chance: 0.08 }, { id: 'overalls', chance: 0.01 }],
   }),
   pumpgob: mob({
     id: 'pumpgob', name: 'Pumpkin Goblin', level: 6, hp: 88, atk: 18, def: 5, acc: 18, eva: 3, exp: 40, gold: [2, 5],
-    speed: 32, w: 22, h: 34, art: 'pumpgob', drops: [{ id: 'pumpkin_seed', chance: 0.5 }, { id: 'clover', chance: 0.08 }],
+    // (Honkers the guard goose since 2026-11-25. Speed 12 with no 'dart': the bird base's own waddle
+    // (render/pumpgob/), each step from the distance walked on a 9 px stride, about 1.3 steps a second
+    // each foot; any faster and its short legs blur, and it never takes off. Moves: the honk blast,
+    // the neck-out charge, the wing slap.)
+    speed: 12, w: 26, h: 34, art: 'pumpgob', moves: ['honk', 'charge', 'wingSlap'], drops: [{ id: 'pumpkin_seed', chance: 0.5 }, { id: 'clover', chance: 0.08 }],
   }),
   lambkin: mob({
     id: 'lambkin', name: 'Lambkin', level: 8, hp: 130, atk: 24, def: 7, acc: 21, eva: 4, exp: 56, gold: [2, 6],
-    speed: 26, w: 28, h: 30, art: 'lambkin', drops: [{ id: 'curly_wool', chance: 0.45 }, { id: 'honeycomb', chance: 0.08 }, { gear: 'earring', chance: 0.01 }],
+    // (Loftle, the hayloft-barn tortoise, since 2026-11-25. Speed 9, the shell crawler tortoise's own
+    // plod (render/lambkin/): each stubby foot planted from the distance walked, so any faster and the
+    // feet slide and blur; slow is part of him, and he never darts. Moves: the barn bash, the hay-bale
+    // toss, the weathervane spin.)
+    speed: 9, w: 34, h: 30, art: 'lambkin', moves: ['bash', 'toss', 'whirl'], drops: [{ id: 'curly_wool', chance: 0.45 }, { id: 'honeycomb', chance: 0.08 }, { gear: 'earring', chance: 0.01 }],
   }),
   // Windy Canyon (the Manticore Cub remade from scratch 2026-11-18, render/mobs/manticorerig.js).
-  // The Rockhound Kid (2026-11-22, replacing the Basilisk Hatchling; render/mobs/rockhoundrig.js): a
-  // canyon kid in a stone-lizard onesie sure she's a fearsome basilisk. She creeps along in a low
-  // waddle and pounces with a CHOMP of her hood's felt jaw. (The id stays for saves and quests.)
+  // The Rockhound Kid (2026-11-22, replacing the Basilisk Hatchling; the id stays for saves and
+  // quests): since 2026-11-25 Yodel, a cliff goat kid in a woven sunset poncho with a brass bell who
+  // yodels and listens for the canyon's echo (render/pebblet/, its own copy of the hoofed base).
+  // (Speed 19 with no 'dart': the goat kid's own walk runs about 23 px a second and it breaks into a
+  // trot from about 28, so at 19 it ambles, and chasing (x1.35, about 26) it still walks, a little
+  // brisker, never flipping between walk and trot; each hoof is planted from the distance walked, so
+  // a dart's bursts would blur its legs. Moves: the headbutt, the yodel blast, the buck.)
   pebblet: mob({
     id: 'pebblet', name: 'Rockhound Kid', level: 9, hp: 150, atk: 28, def: 9, acc: 24, eva: 3, exp: 72, gold: [2, 7],
-    speed: 20, w: 26, h: 36, art: 'rockhound', drops: [{ id: 'pebble', chance: 0.5 }, { id: 'copper_ore', chance: 0.08 }],
+    speed: 19, w: 29, h: 37, art: 'rockhound', moves: ['headbutt', 'yodel', 'buck'], drops: [{ id: 'pebble', chance: 0.5 }, { id: 'copper_ore', chance: 0.08 }],
   }),
   // The Sunset Manticub (2026-11-25): a chubby lion cub with a sunset ruff, little bat wings it can't fly
   // with yet and a scorpion tail tipped with a heart (its "stinger"). Speed 16 with no creep-and-run:
@@ -110,11 +142,12 @@ export const MOBS = {
     id: 'mossowlet', name: 'Moss Owlet', level: 11, hp: 220, atk: 33, def: 8, acc: 29, eva: 7, exp: 168, gold: [3, 8],
     speed: 38, w: 22, h: 35, art: 'mossowlet', moves: ['swoop', 'wingSlap', 'call'], drops: [{ id: 'owl_down', chance: 0.5 }, { id: 'silkmoss', chance: 0.08 }],
   }),
-  // Mossy Woods' forest floor (new 2026-11-12, built from scratch): a slow old tortoise with a little
-  // moss garden growing on its shell (render/mobs/mosstortrig.js). Tough and slow.
+  // Mossy Woods' forest floor (new 2026-11-12; since 2026-11-26 Tumble the Moss Piglet, a cuddly
+  // tardigrade with a moss cushion on its back, on its own copy of the veggie base: render/mosstort/).
+  // Tough and slow: it curls into its hard "tun" to drop on you. (Speed 20: its own waddle.)
   mosstort: mob({
     id: 'mosstort', name: 'Moss Tortoise', level: 14, hp: 380, atk: 40, def: 17, acc: 33, eva: 3, exp: 240, gold: [4, 10],
-    speed: 22, w: 34, h: 30, art: 'mosstort', drops: [{ id: 'moss_scute', chance: 0.45 }, { id: 'silkmoss', chance: 0.08 }],
+    speed: 20, w: 30, h: 31, art: 'mosstort', moves: ['tundrop', 'flurry', 'snoutbump'], drops: [{ id: 'moss_scute', chance: 0.45 }, { id: 'silkmoss', chance: 0.08 }],
   }),
   boarlet: mob({
     id: 'boarlet', name: 'Warg', level: 14, hp: 330, atk: 43, def: 12, acc: 34, eva: 5, exp: 240, gold: [4, 10],
@@ -203,7 +236,7 @@ export const MOBS = {
   // steps, the lanterns down in the misty hollow (and out at night).
   tanukipicker: mob({
     id: 'tanukipicker', name: 'Tanuki Picker', level: 24, hp: 900, atk: 78, def: 18, acc: 55, eva: 12, exp: 640, gold: [9, 20],
-    speed: 54, w: 26, h: 34, art: 'tanukipicker', drops: [{ id: 'tea_leaf', chance: 0.45 }, { id: 'cedar_log', chance: 0.08 }],
+    speed: 36, w: 26, h: 36, art: 'tanukipicker', moves: ['teaSplash', 'tailWhip'], drops: [{ id: 'tea_leaf', chance: 0.45 }, { id: 'cedar_log', chance: 0.08 }],
   }),
   kettletanuki: mob({
     id: 'kettletanuki', name: 'Kettle Tanuki', level: 26, hp: 1150, atk: 82, def: 26, acc: 56, eva: 6, exp: 740, gold: [10, 22],
@@ -231,17 +264,27 @@ export const MOBS = {
   // spit from `range` away). Bosses add their own moves (`mech`, see world/dungeon.js).
   rootling: mob({
     id: 'rootling', name: 'Root Imp', level: 10, hp: 300, atk: 36, def: 8, acc: 30, eva: 3, exp: 130, gold: [3, 7],
-    speed: 58, gait: 'dart', w: 22, h: 30, art: 'rootling', drops: [{ id: 'oak_log', chance: 0.4 }, { id: 'hollow_acorn', chance: 0.12 }],
+    // (Plotter the garden crab since 2026-11-25, on the crab base (render/rootimp/). Speed 20 with no
+    // 'dart': its own sideways scuttle, each step from the distance walked on an 11 px stride, its
+    // feet planted; about one step a second each foot as it potters about a room, three chasing.
+    // Moves: Snip, Prune Prune; its burrow digs in backwards, only its garden gliding over the floor.)
+    speed: 20, w: 34, h: 29, art: 'rootling', moves: ['snip', 'prune'], drops: [{ id: 'oak_log', chance: 0.4 }, { id: 'hollow_acorn', chance: 0.12 }],
     fight: { every: 1.5, reach: 28, windup: 0.35, move: { kind: 'burrow', every: 9, first: 2.2, warn: 0.8, w: 48, mul: 1.5 } },
   }),
   sporecap: mob({
     id: 'sporecap', name: 'Myconid Shaman', level: 10, hp: 240, atk: 30, def: 5, acc: 30, eva: 2, exp: 120, gold: [3, 7],
-    speed: 28, w: 22, h: 34, art: 'sporecap', drops: [{ id: 'mushcap', chance: 0.4 }, { id: 'hollow_acorn', chance: 0.08 }],
-    fight: { every: 2.2, reach: 26, windup: 0.5, range: 170, move: { kind: 'cloud', every: 11, first: 2.6, warn: 1.6, w: 70, mul: 1.4 } },
+    // (Jaxby the blue jay since 2026-11-26, on the bird base (render/shaman/). Speed 28, its own hop,
+    // each hop from the distance walked. Moves: Acorn Flick from afar (its shot an acorn), Peck up
+    // close; its own move, Feather Flurry, lands blue and white feathers on its target's spot.)
+    speed: 28, w: 40, h: 38, art: 'sporecap', moves: ['flick', 'peck'], drops: [{ id: 'mushcap', chance: 0.4 }, { id: 'hollow_acorn', chance: 0.08 }],
+    fight: { every: 2.2, reach: 26, windup: 0.5, range: 170, shot: 'acorn', move: { kind: 'cloud', every: 11, first: 2.6, warn: 1.6, w: 70, mul: 1.4, look: 'feathers' } },
   }),
   thornback: mob({
     id: 'thornback', name: 'Bramble Bear', level: 12, hp: 900, atk: 52, def: 14, acc: 34, eva: 3, exp: 420, gold: [5, 13],
-    speed: 36, w: 34, h: 46, art: 'thornback', drops: [{ id: 'hollow_acorn', chance: 0.4 }, { id: 'bramble_claw', chance: 0.4 }, { id: 'silkmoss', chance: 0.08 }],
+    // (Varro the moss-stone guardian since 2026-11-26, on the dog base (render/thornback/). Speed 27,
+    // the base's own walk, each step from the distance walked, its ball dribbled by the same distance.
+    // Moves: Stone Paw and Mane Butt in turn; its own move, Temple Ball, rides its ball along the floor.)
+    speed: 27, w: 54, h: 48, art: 'thornback', moves: ['pound', 'butt'], drops: [{ id: 'hollow_acorn', chance: 0.4 }, { id: 'bramble_claw', chance: 0.4 }, { id: 'silkmoss', chance: 0.08 }],
     fight: { every: 1.8, reach: 32, windup: 0.45, move: { kind: 'roll', every: 10, first: 3, warn: 0.9, dist: 200, speed: 260, mul: 1.6 } },
   }),
   sporeling: mob({
@@ -258,16 +301,23 @@ export const MOBS = {
   mothercapper: mob({
     // (Health sized from a live run, 2026-11-19: a level-13 group does about 220 a second to her;
     // 18k is a fight of about a minute and a half.)
+    // (Hazel Hoardwell the Pantry Hamster since 2026-11-26, on the rodent base (render/mothercapper/):
+    // sat up she's 90 x 100 as drawn; she scurries on all fours at 44, her steps from the distance
+    // walked, about 1.3 a second each foot. Her swings in turn: Nibble, Hoard Toss, Seed Spit, Bowl Roll.)
     id: 'mothercapper', name: 'Myconid Queen', level: 12, hp: 18000, atk: 84, def: 16, acc: 40, eva: 2, exp: 3000, gold: [120, 190],
-    speed: 34, w: 70, h: 100, art: 'mothercapper', boss: true,
+    speed: 44, w: 90, h: 100, art: 'mothercapper', boss: true,
     drops: [{ id: 'hollow_acorn', chance: 1, qty: 2 }, { id: 'orange_potion', chance: 1, qty: 10 }],
     fight: { every: 1.8, reach: 52, windup: 0.5 }, mech: 'capper',
   }),
   tuskar: mob({
     // (Health sized from a live run, 2026-11-19: about 215 a second from a level-14 group, his
     // dizzy spells included; 20k is a fight of about a minute and a half.)
+    // (Tuskar the woolly mammoth calf since 2026-11-26, on the creature base (render/tuskar/):
+    // standing he's 80 x 107 as drawn; he walks at his base's own pace, 28, his steps from the
+    // distance walked; the Charge is 520 (world/dungeon.js). His swings in turn: Tusk Toss, Trunk
+    // Slap, Shoulder Barge; the Gore a two-tusk lunge.)
     id: 'tuskar', name: 'Tuskar the Behemoth', level: 13, hp: 20000, atk: 94, def: 18, acc: 42, eva: 2, exp: 4500, gold: [150, 240],
-    speed: 44, w: 72, h: 92, art: 'tuskar', boss: true,
+    speed: 28, w: 80, h: 107, art: 'tuskar', boss: true,
     drops: [{ id: 'hollow_acorn', chance: 1, qty: 3 }, { id: 'white_potion', chance: 1, qty: 10 }],
     fight: { every: 2, reach: 56, windup: 0.5 }, mech: 'boar',
   }),
@@ -282,9 +332,12 @@ export const MOBS = {
 
 
   // ---------- Moonlit Manor (levels 15-20, docs/design/moonlit-manor.md) ----------
+  // (Pinsworth, the pincushion duellist, 2026-11-26: a velvet pincushion in a china thimble fencing
+  // with a sewing needle, on its own copy of the veggie base: render/porcelaindoll/. Its box is its
+  // drawn body and thimble; the needle reaches past it.)
   porcelaindoll: mob({
     id: 'porcelaindoll', name: 'Porcelain Doll', level: 15, hp: 640, atk: 58, def: 18, acc: 46, eva: 4, exp: 240, gold: [5, 11],
-    speed: 34, w: 24, h: 36, art: 'porcelaindoll', drops: [{ id: 'porcelain_shard', chance: 0.4 }, { id: 'moonlit_ribbon', chance: 0.08 }],
+    speed: 34, w: 25, h: 30, art: 'porcelaindoll', moves: ['lunge', 'flurry', 'cut'], drops: [{ id: 'porcelain_shard', chance: 0.4 }, { id: 'moonlit_ribbon', chance: 0.08 }],
     fight: { every: 1.9, reach: 38, windup: 0.45 },
   }),
   ghostmaid: mob({

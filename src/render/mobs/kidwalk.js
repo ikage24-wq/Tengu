@@ -40,7 +40,11 @@ export function kidWalk(K, { stride = 15, duty = 0.52, kick = 3, key = 'kw', str
       return [reach - 2 * reach * s, 0.6 * pl * (kick / 3), s < 0.15 ? -strike * (1 - s / 0.15) : peel * pl];
     }
     const v = (q - duty) / (1 - duty);
-    return [-reach + 2 * reach * (0.5 - 0.5 * Math.cos(Math.PI * v)), kick * Math.sin(Math.PI * v ** 0.7), peel * (1 - v) ** 2 - strike * 0.9 * v ** 3];
+    // (2026-11-26, smoothed: the lift leaves and lands with no speed, its top at the same moment and
+    // height; it starts from the height the heel's peel left the ankle at, fading that out, instead of
+    // dropping it in one frame; and the swing lands at the heel strike's own roll.)
+    const peeled = 0.6 * (kick / 3) * (1 - smooth(v / 0.25));
+    return [-reach + 2 * reach * (0.5 - 0.5 * Math.cos(Math.PI * v)), kick * Math.sin(Math.PI * smooth(v ** 0.7)) + peeled, peel * (1 - v) ** 2 - strike * v ** 3];
   }
   const bobAt = (u, lag = 0) => {
     const w = (((2 * u - 0.08 - lag) % 1) + 1) % 1;
@@ -76,7 +80,10 @@ export function kidWalk(K, { stride = 15, duty = 0.52, kick = 3, key = 'kw', str
     const dx = goal[0] - hip[0];
     const dy = goal[1] - hip[1];
     const d0 = Math.hypot(dx, dy) || 1;
-    const d = Math.min(L - 0.001, Math.max(0.4, d0));
+    // (the last of its reach eased: within 4% of straight the leg straightens ever more slowly, never
+    // snapping straight; a planted foot stays put within a hair, 2026-11-26)
+    const s0 = L * 0.96;
+    const d = Math.max(0.4, d0 <= s0 ? d0 : s0 + (L - 0.001 - s0) * (1 - Math.exp(-(d0 - s0) / (L - s0))));
     const ankle = [hip[0] + (dx / d0) * d, hip[1] + (dy / d0) * d];
     const phi = Math.atan2(dy, dx);
     const ang = Math.acos(clamp((LT * LT + d * d - LS * LS) / (2 * LT * d), -1, 1));

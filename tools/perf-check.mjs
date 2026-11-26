@@ -34,9 +34,12 @@ const { JOBS } = await import('../src/data/jobs.js');
 // How many fresh paintings a second, once warmed up, count as a problem.
 // (Offscreen work a second: canvases made, pixels read back, tint passes.)
 // (Canvases here are spare ones beyond the sprites painted, which the painting counts already
-// cover; reads allow the glow pass's one a frame; tints allow the hazed backdrop's and new
+// cover; reads allow the glow pass's one a frame (60) plus the one-off head measures of rigged
+// monsters (render/monsters.js rigTop: on this stand-in screen, with no pixels, each retries up to 8
+// times a second apart, and the Collection window's previews hold a dozen rigs, 6-8 a second), still
+// well below a second read every frame (120); tints allow the hazed backdrop's and new
 // afterimages', far below a tint every frame for everything.)
-export const LIMITS = { characters: 200, other: 20, canvases: 30, reads: 70, tints: 120 };
+export const LIMITS = { characters: 200, other: 20, canvases: 30, reads: 80, tints: 120 };
 // (`posed`: a figure on the hero's rig in a pose of its own: a Mochi, a summon.)
 const CHARACTER = new Set(['you', 'hero', 'grip', 'arm', 'weapon', 'mob', 'mount', 'rig', 'critter', 'posed']);
 const AHEAD = 'ahead';

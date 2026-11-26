@@ -5949,7 +5949,7 @@
   // Each boss's telegraphs in its own colour and shapes. A shared blow is a gold ring on the floor
   // with the boss's motif round its rim (the Queen Bee's honeycomb and bees, the Myconid Queen's
   // little mushroom caps and spores, Tuskar's stomp: rocks and cracks); a two-sided guard is built
-  // of pieces the game lays round the boss (Old MacGoblin's red barn-door planks, Tuskar's flame
+  // of pieces the game lays round the boss (Old MacGoblin's red barn-door planks, Tuskar's (old) flame
   // bulwark, Gnarlroot's bark plates), each with an idle drawing, a cracked one for a struck half
   // and a break; the Root Seal is a rune circle of roots with its stone, and its ribbon of light
   // (and the twins' spore tether) is a short piece the game chains along the curve. Art units:

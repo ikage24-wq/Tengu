@@ -346,8 +346,11 @@ function beastRig(kindName) {
     // The body's outline points follow the spine, and near the near legs those legs' upper bones:
     // the chest's bottom by the elbow turns with the upper arm about the shoulder, the haunch with
     // the thigh about the hip.
-    const dF = (Lg.foreN.up - (legDefs.foreN.up + thC)) * 0.55;
-    const dH = (Lg.hindN.up - (legDefs.hindN.up + thH)) * 0.55;
+    // (the bone's turn from its rest the short way round: a leg raised past straight up crossed the
+    // angle's wrap and swung the chest a whole turn in one frame, 2026-11-26)
+    const wrapT = (v) => Math.atan2(Math.sin(v), Math.cos(v));
+    const dF = wrapT(Lg.foreN.up - (legDefs.foreN.up + thC)) * 0.55;
+    const dH = wrapT(Lg.hindN.up - (legDefs.hindN.up + thH)) * 0.55;
     const turnAbout = (q, c, ang) => add(c, rot([q[0] - c[0], q[1] - c[1]], ang));
     const bodyPt = (p) => {
       let q = spinePt(p);

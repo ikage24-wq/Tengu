@@ -33,7 +33,9 @@
 //                                 sight into the floor at once), 'emerge' (rises back out of it),
 //                                 'hoist' (up on a thread `from` px at once), 'descend' (lowers
 //                                 on it to the floor), 'float' (drifts up and down, `height` px,
-//                                 easing in and out)
+//                                 easing in and out); a rig may act out moves of its own from
+//                                 m.cine.act { move, at, dur } (the Myconid Queen: 'dive' into her
+//                                 hoard, 'burst' up out of it, 'ptoo' a stream of seeds)
 //   { free: monster, as }         a beaten boss stands back up for its farewell (no longer falling),
 //                                 wearing the face `as`; then it can act like any actor, and leave
 //                                 with 'fade' (fades where it stands), 'ascend' (rises `height` px
@@ -107,7 +109,7 @@ export function actorAt(world, who) {
   // (Someone not on the hero's body says how tall they stand: Fawnelle.)
   if (n) return { x: n.x, y: groundAt(world.map, n.x) - (n.cine?.lift ?? 0), h: NPCS[n.id]?.tall ?? 52 };
   const m = mobActor(world, who);
-  return m ? { x: m.x, y: m.y - (m.cine.lift ?? 0), h: m.def.h } : null;
+  return m ? { x: m.x, y: m.y - (m.cine.lift ?? 0), h: m.def.h, mob: m } : null;
 }
 
 function npcOf(world, who) {
@@ -447,6 +449,8 @@ function runner(world, step) {
     const dur = step.dur ?? (step.move === 'attack' ? 0.9 : 1);
     let t = 0;
     if (step.move === 'attack') m.attackAt = world.now + (c.clock ?? 0);
+    // (Any move, for a rig that acts it out itself: the Myconid Queen's dive, burst and ptoo.)
+    m.cine.act = { move: step.move, at: world.now + (c.clock ?? 0), dur };
     // (Handing something over: the rig holds it out, then lets it go, e.g. Prismaris's clock.)
     if (step.move === 'give') m.cine.gave = world.now + (c.clock ?? 0);
     // (Given something to hold: Prismaris's little star of his own.)

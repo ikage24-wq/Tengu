@@ -3,7 +3,7 @@
 //   - everyone in the group has HP; monsters swing at whoever they're angriest at (threat, which
 //     damage builds, a tank's five times over; healing builds a little too) instead of hurting on
 //     touch, and packs fight together;
-//   - bosses have moves the group has to answer (spore patches to step out of, a charge to dodge,
+//   - bosses have moves the group has to answer (seed patches to step out of, a charge to dodge,
 //     a slam to jump over, adds to kill), telegraphed on the floor first;
 //   - a room's exit stays sealed until its monsters are down and its task is done;
 //   - fallen members get back up once the fight is over; if everyone falls, the room resets and
@@ -597,8 +597,8 @@ function engage(world, m, by = null) {
 }
 
 const BOSS_LINES = {
-  capper: '"Who is trampling my garden?!"',
-  boar: '"GRUNT! You smell like trouble!"',
+  capper: '"Who is trampling my garden?! Those seeds are COUNTED!"',
+  boar: '"HALT! Who goes there?! ...You smell like acorns."',
   gnarl: '"Hrrmm... too noisy... far too noisy..."',
   waltz: '"May we have this dance? We insist."',
   moray: '"Sister, guests! Shall we share them?"',
@@ -987,6 +987,9 @@ function fight(world, m, up, dt) {
     m.windup = f.windup;
     m.atkT = f.every;
     m.swingAt = target.id;
+    // (whether this one will be a shot from afar, as swing() decides it: so the rig winds up the
+    // right move)
+    m.swingFar = Boolean(f.range) && Math.abs(dx) > reach - f.range + f.reach + 10;
     m.swingMul = 1;
   }
 }
@@ -994,7 +997,8 @@ function fight(world, m, up, dt) {
 // A dungeon monster's own move (`fight.move`), every so often instead of a swing (Chapter 3's
 // Hollow, 2026-11-18). Each warns with a zone on the floor first, so the party can step out of it:
 //   burrow  (Root Imp) dives into the floor, tunnels over under its target and bursts up there.
-//   cloud   (Myconid Shaman) a drowsy spore cloud gathers on its target, then puffs.
+//   cloud   (Myconid Shaman) something drowsy gathers on its target's spot, then lands there (its
+//           look its own: `move.look`, the Shaman's 'feathers').
 //   roll    (Bramble Bear) curls into a bramble ball, revs, then rolls along the floor, bowling
 //           over whoever is still in its path.
 // Returns true while the monster is busy with it.
@@ -1028,7 +1032,7 @@ function mobMove(world, m, target, up, dt) {
     if (Math.abs(dx) > 230 || Math.abs(target.body.y - m.y) > 140) return later();
     const nav = navOf(world.map);
     const surf = nav.surfaces[Math.max(0, surfaceBelow(nav, target.body.x, target.body.y))];
-    const zone = { kind: 'circle', x: target.body.x, y: surf?.yAt ? surf.yAt(target.body.x) : target.body.y, w: mv.w, warn: mv.warn, damage: Math.round(m.def.atk * mv.mul), from: m, noSprout: true };
+    const zone = { kind: 'circle', x: target.body.x, y: surf?.yAt ? surf.yAt(target.body.x) : target.body.y, w: mv.w, warn: mv.warn, damage: Math.round(m.def.atk * mv.mul), from: m, noSprout: true, ...(mv.look ? { look: mv.look } : {}) };
     addZone(world, zone);
     m.dir = Math.sign(dx) || m.dir;
     m.move = { kind: 'cloud', t: 0, at: world.now, zone };
@@ -1172,11 +1176,14 @@ function bossMove(world, m, up, dt) {
   if (THEATRE_MECHS.has(m.def.mech)) return theatreBoss(world, m, up, dt);
   if (WHALE_MECHS.has(m.def.mech)) return whaleBoss(world, m, up, dt);
   if (m.def.mech === 'capper') {
+    // (The Myconid Queen, Hazel Hoardwell the Pantry Hamster: render/mothercapper/. Each named move
+    // shows on the cast bar while it gathers; its zones carry her own looks, render/mothercapper/fx.js.)
     const s = (m.mech ??= { rain: 7, adds: [0.85, 0.5], twirl: 5 });
     capperPhases(world, m, dt);
     m.hideUntil = world.dungeon.room.darkUntil ?? 0;
-    // Cap Twirl: she spins on the spot (turning to face one way, then the other), flinging a ring of
-    // spores off her brim all round her.
+    if (m.cast && world.now > m.cast.t0 + m.cast.dur) m.cast = null;
+    // Hoarder's Whirl: she curls up into a ball and whirls on the spot (turning to face one way,
+    // then the other), flinging seeds off all round her.
     if (m.move?.kind === 'spin') {
       const mv = m.move;
       mv.t += dt;
@@ -1191,35 +1198,42 @@ function bossMove(world, m, up, dt) {
     s.twirl = (s.twirl ?? 5) - dt;
     if (s.twirl <= 0 && !m.windup && up.length) {
       s.twirl = 15;
-      addZone(world, { kind: 'circle', x: m.x, y: m.y, w: 190, warn: 1.5, damage: 150, from: m, noSprout: true });
+      addZone(world, { kind: 'circle', x: m.x, y: m.y, w: 190, warn: 1.5, damage: 150, from: m, noSprout: true, look: 'whirl' });
       m.move = { kind: 'spin', t: 0, at: world.now, warn: 1.5, dir0: m.dir || 1 };
-      callout(world, 'Cap Twirl!', 'Step away from the Queen!');
+      m.cast = { name: "Hoarder's Whirl", t0: world.now, dur: 1.5 };
+      callout(world, "Hoarder's Whirl!", 'Step away from the Queen!');
       return true;
     }
     s.rain -= dt;
     if (s.rain <= 0 && up.length) {
       s.rain = 10;
       m.castAt = world.now;
+      // (after the lights first go out, the seeds sprout where they land: world/hollow.js sporeSprout)
+      const look = (m.mech.phase ?? 1) >= 2 ? 'seedsprout' : 'seedspit';
       const victims = [...(nonTanks.length ? nonTanks : up)].sort(() => Math.random() - 0.5).slice(0, 3);
       for (const g of victims) {
         const surf = navOf(map).surfaces[Math.max(0, surfaceBelow(navOf(map), g.body.x, g.body.y))];
-        addZone(world, { kind: 'circle', x: g.body.x, y: surf.y, w: 66, warn: 1.7, damage: 135, from: m });
+        addZone(world, { kind: 'circle', x: g.body.x, y: surf.y, w: 66, warn: 1.7, damage: 135, from: m, look });
       }
-      callout(world, 'Spore Rain!', 'Step out of the pink patches');
+      if (!m.cast) m.cast = { name: 'Seed Spit', t0: world.now, dur: 1.7 };
+      callout(world, 'Seed Spit!', 'Step out of the patches before the seeds come down');
     }
     if (s.adds.length && frac <= s.adds[0]) {
       s.adds.shift();
       const healer = up.find((g) => g.role === 'healer') ?? pick(nonTanks.length ? nonTanks : up);
       adds(world, m, 'sporeling', [m.x - 90, m.x + 90, m.x - 150], healer?.id);
       m.callAt = world.now;
-      callout(world, 'Spore Mites!', 'They swarm the healer: Tank, War Cry! DPS, kill them!');
+      callout(world, 'Pocket Pests!', 'Spore Mites tumble out of her pocket and swarm the healer: Tank, War Cry! DPS, kill them!');
     }
     return false;
   }
   if (m.def.mech === 'boar') {
+    // (Tuskar the Behemoth, the woolly mammoth calf: render/tuskar/. Each named move shows on the cast
+    // bar while it gathers; its zones carry his own looks, render/tuskar/fx.js.)
     const s = (m.mech ??= { charge: 8, gore: 5, flop: 4 });
     boarPhases(world, m);
-    // Belly Flop: a wiggle, a jump, and down on his belly, the floor shaking round him.
+    if (m.cast && world.now > m.cast.t0 + m.cast.dur) m.cast = null;
+    // Belly Flop: a wiggle, a starfish leap, and down on his belly, the floor shaking round him.
     if (m.move?.kind === 'flop') {
       const mv = m.move;
       const was = mv.t;
@@ -1244,7 +1258,7 @@ function bossMove(world, m, up, dt) {
         m.vulnUntil = world.now + 4;
         world.juice.push({ type: 'shake', mag: 8, dur: 0.6 });
         run.vfx.push({ kind: 'crash', x: pillar.x, y: m.y, t: 0, dur: 0.6 });
-        callout(world, 'Tuskar smashed into a pillar!', "He's seeing stars: hit him hard!");
+        callout(world, 'CLONK! Tuskar hit a pillar!', "He's seeing stars: hit him hard!");
         radio(world, 'pillar');
         return true;
       }
@@ -1269,7 +1283,7 @@ function bossMove(world, m, up, dt) {
         m.vulnUntil = world.now + 3;
         world.juice.push({ type: 'shake', mag: 6, dur: 0.5 });
         run.vfx.push({ kind: 'crash', x: m.x + c.dir * m.def.w / 2, y: m.y, t: 0, dur: 0.6 });
-        callout(world, 'Tuskar hit the wall!', "He's dazed: hit him hard!");
+        callout(world, 'CLONK! Tuskar hit the wall!', "He's dazed: hit him hard!");
       }
       return true;
     }
@@ -1279,8 +1293,9 @@ function bossMove(world, m, up, dt) {
     s.flop = (s.flop ?? 4) - dt;
     if (s.flop <= 0 && s.charge > 2.5 && !m.windup && up.length) {
       s.flop = 17;
-      addZone(world, { kind: 'circle', x: m.x, y: m.y, w: 210, warn: 1.4, damage: 160, from: m, noSprout: true });
+      addZone(world, { kind: 'circle', x: m.x, y: m.y, w: 210, warn: 1.4, damage: 160, from: m, noSprout: true, look: 'bellyflop' });
       m.move = { kind: 'flop', t: 0, at: world.now, warn: 1.4 };
+      m.cast = { name: 'Belly Flop', t0: world.now, dur: 1.4 };
       callout(world, 'Belly Flop!', 'Get clear of Tuskar!');
       return true;
     }
@@ -1293,7 +1308,8 @@ function bossMove(world, m, up, dt) {
       m.aim = { dir };
       m.dir = dir;
       m.state = 'idle';
-      addZone(world, { kind: 'lane', x, w, warn: 1.6, from: m, dir });
+      addZone(world, { kind: 'lane', x, w, warn: 1.6, from: m, dir, look: 'tuskcharge' });
+      m.cast = { name: s.stampede ? 'Stampede' : 'Tusk Charge', t0: world.now, dur: 1.6 };
       callout(world, `Tuskar lowers his tusks at ${victim.bot ? victim.name : 'you'}!`, 'Get out of the lane!');
       return true;
     }
@@ -1306,6 +1322,7 @@ function bossMove(world, m, up, dt) {
         m.swingAt = g.id;
         m.swingMul = 2.3;
         m.big = world.now + 0.9;
+        m.cast = { name: 'Gore', t0: world.now, dur: 0.9 };
       }
     }
     return false;

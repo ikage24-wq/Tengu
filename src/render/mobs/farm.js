@@ -1,10 +1,10 @@
 // Monster art: Clover Hills' farm (the player's picks, 2026-11-01).
-//   macgoblin  Old MacGoblin, the Pumpkin Goblins' farmer chief and Clover Hills' area boss,
-//              redrawn 2026-11-19 as the Pumpkin-Hat Farmer: his rig is in macgoblinrig.js.
+//   macgoblin  Old MacGoblin, Clover Hills' area boss: since 2026-11-25 Big Barnaby, the Clydesdale
+//              foreman (render/macgoblin/, on his own chibi copy of the brute base).
 //   brownie    (Now the Chickling, render/mobs/chickrig.js: these old Kitchen Brownie frames are unused.)
 // Faces use the simple eyes and mouths (faces.js). Faces right; see kit.js for the shapes.
 
-import { macGoblinRig, macGoblinStill } from './macgoblinrig.js';
+import { MACGOBLIN_ART, MACGOBLIN_SIZE } from '../macgoblin/index.js';
 import { E, T, F, mix, shade, stroke } from './kit.js';
 import { simpleEye, simpleMouth, deadEye, sweat, vein } from './faces.js';
 import { ramp, crescent, shine, smear, breath, sway, chain, wave } from './meadow.js';
@@ -125,11 +125,11 @@ function rotate(shapes, cx, cy, deg) {
 }
 
 export const ART = {
-  macgoblin: { walk: 8, idle: 6, attack: 5, stride: 26, atkMs: [120, 460, 220, 260], draw: macGoblinStill, rig: macGoblinRig },
+  macgoblin: MACGOBLIN_ART,
   brownie: { walk: 8, idle: 6, attack: 4, stride: 16, atkMs: [70, 260, 200], draw: brownie },
 };
 
 export const INFO = {
-  macgoblin: { name: 'Old MacGoblin', w: 70, h: 84 },
+  macgoblin: { name: 'Old MacGoblin', w: MACGOBLIN_SIZE.w, h: MACGOBLIN_SIZE.h },
   brownie: { name: 'Chickling', w: 22, h: 26 },
 };

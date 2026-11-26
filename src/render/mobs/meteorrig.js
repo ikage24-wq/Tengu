@@ -400,7 +400,11 @@ function footAt(u, ph) {
     return [REACH - 2 * REACH * s, 0.6 * peel, roll];
   }
   const v = (q - DUTY) / (1 - DUTY);
-  return [-REACH + 2 * REACH * (0.5 - 0.5 * Math.cos(Math.PI * v)), KICK * Math.sin(Math.PI * v ** 0.7), 30 * (1 - v) ** 2 - 14 * v ** 3];
+  // (2026-11-26, smoothed: the lift leaves and lands with no speed, its top at the same moment and
+  // height; it starts from the height the heel's peel left the ankle at, fading that out, instead of
+  // dropping it in one frame; and the swing lands at the heel strike's own roll.)
+  const peeled = 0.6 * (1 - smooth(v / 0.25));
+  return [-REACH + 2 * REACH * (0.5 - 0.5 * Math.cos(Math.PI * v)), KICK * Math.sin(Math.PI * smooth(v ** 0.7)) + peeled, 30 * (1 - v) ** 2 - 16 * v ** 3];
 }
 // A walk's bob as a sharpened triangle (a sine reads floaty): 0 just after each foot lands, 1 at the
 // passing pose; twice a stride. (`lag` for the head, a beat behind.)
@@ -439,7 +443,9 @@ function legOf(S, a, k) {
   const dx = goal[0] - hip[0];
   const dy = goal[1] - hip[1];
   const d0 = Math.hypot(dx, dy) || 1;
-  const d = Math.min(LT + LS - 0.001, Math.max(0.4, d0));
+  // (the last of its reach eased, never snapped straight: 2026-11-26)
+  const s0 = (LT + LS) * 0.96;
+  const d = Math.max(0.4, d0 <= s0 ? d0 : s0 + (LT + LS - 0.001 - s0) * (1 - Math.exp(-(d0 - s0) / (LT + LS - s0))));
   const ankle = [hip[0] + (dx / d0) * d, hip[1] + (dy / d0) * d];
   const phi = Math.atan2(dy, dx);
   const ang = Math.acos(clamp((LT * LT + d * d - LS * LS) / (2 * LT * d), -1, 1));

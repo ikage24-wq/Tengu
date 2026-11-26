@@ -70,13 +70,13 @@ export const COOP_MECHS = {
   macgoblin: [{ kind: 'sides', name: 'Barn-Door Guard', guard: 0.4, broken: 1.25, window: 1.6, open: 7 }],
   grandkettle: [{ kind: 'split', name: 'Boiling Over', every: 15, first: 9, warn: 3.3, w: 140, hit: 5.4 }],
   // Rootwood Hollow (world/dungeon.js).
-  mothercapper: [{ kind: 'split', name: 'Spore Bloom', every: 16, first: 9, warn: 3.4, w: 130, hit: 4.6 }],
-  tuskar: [{ kind: 'sides', name: 'Bark Hide', guard: 0.45, broken: 1.25, window: 1.8, open: 7 }],
+  mothercapper: [{ kind: 'split', name: 'Biggest Acorn', every: 16, first: 9, warn: 3.4, w: 130, hit: 4.6 }],
+  tuskar: [{ kind: 'sides', name: 'Woolly Wall', guard: 0.45, broken: 1.25, window: 1.8, open: 7 }],
   gnarlroot: [{ kind: 'seal', name: 'Root Seal', armour: 0.4, off: 170, move: 16 }],
 };
 // Hard mode's extra mechanic for each dungeon boss.
 export const HARD_MECHS = {
-  mothercapper: { kind: 'twins', name: 'Twin Puffballs', mob: 'sporeling', at: 0.6, revive: 4, hp: 3 },
+  mothercapper: { kind: 'twins', name: 'Pantry Twins', mob: 'sporeling', at: 0.6, revive: 4, hp: 3 },
   tuskar: { kind: 'split', name: 'Earthquake Stomp', every: 18, first: 12, warn: 3.4, w: 140, hit: 4.4 },
   gnarlroot: { kind: 'sides', name: 'Bark Ward', guard: 0.5, broken: 1.2, window: 1.8, open: 8 },
 };

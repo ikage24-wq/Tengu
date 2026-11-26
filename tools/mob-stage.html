@@ -53,7 +53,7 @@ function act(now) {
     // (At its own speed, as it walks in the game.)
     const span = def.speed * dur;
     const nx = (dir > 0 ? -span / 2 : span / 2) + dir * at * def.speed;
-    m.odo += Math.abs(nx - m.x);
+    // (its walked distance is counted by the game itself as it draws it: render/monsters.js)
     m.x = nx;
   }
   if (i === 0) m.x = 0;

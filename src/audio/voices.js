@@ -13,16 +13,16 @@
 //   Sea      sea folk and jellies: a gurgle, a squish, bubbles
 //   People   witches, ladies, captains: anime fight voices
 const FAMILIES = {
-  Critter: ['puffle', 'mosstort', 'redpanda', 'strawhog', 'snailbun', 'harvmouse', 'lambkin', 'scorpip', 'cloudsheep', 'nekomata', 'pearldiver', 'starcarto', 'cottoncandy', 'stagehand', 'sleepysheep', 'sporeling'],
-  Beast: ['boarlet', 'thornback', 'lupina', 'teddystrong', 'tuskar', 'leonie', 'gummybear', 'primadonna', 'tanukipicker', 'kettletanuki', 'lantertanuki', 'grandkettle', 'whalestorm', 'noodledragon', 'monday'],
-  Bird: ['mossowlet', 'windbird', 'chorusgirl', 'prompter', 'mothlibrarian', 'folio', 'paperdragon'],
+  Critter: ['puffle', 'mosstort', 'redpanda', 'strawhog', 'snailbun', 'harvmouse', 'lambkin', 'scorpip', 'cloudsheep', 'nekomata', 'pearldiver', 'starcarto', 'cottoncandy', 'stagehand', 'sleepysheep', 'sporeling', 'mothercapper'],
+  Beast: ['boarlet', 'thornback', 'macgoblin', 'lupina', 'teddystrong', 'tuskar', 'leonie', 'gummybear', 'primadonna', 'tanukipicker', 'kettletanuki', 'lantertanuki', 'grandkettle', 'whalestorm', 'noodledragon', 'monday'],
+  Bird: ['sporecap', 'mossowlet', 'windbird', 'chorusgirl', 'prompter', 'mothlibrarian', 'folio', 'paperdragon'],
   Buzz: ['bumble', 'queenbee'],
   Sprite: ['petalsprite', 'starspirit', 'sylph', 'lanternghost', 'stardancer', 'cometcourier', 'musicballerina', 'starpoint'],
-  Goblin: ['gloombat', 'brownie', 'macgoblin', 'pumpgob', 'rootling', 'sporecap', 'jellyninja', 'jackbox', 'gearmole', 'teahatter', 'pumpkinbutler'],
-  Plant: ['sproutling', 'leafling', 'mossgolem', 'sapling', 'mothercapper', 'gnarlroot', 'topiarydryad', 'sylvana'],
+  Goblin: ['porcelaindoll', 'gloombat', 'brownie', 'pumpgob', 'jellyninja', 'jackbox', 'gearmole', 'teahatter', 'pumpkinbutler'],
+  Plant: ['sproutling', 'leafling', 'mossgolem', 'sapling', 'gnarlroot', 'topiarydryad', 'sylvana'],
   Stone: ['boneknight', 'crystalslime', 'rockgolem', 'armourknight', 'waltzrondo', 'waltzminuet', 'tindrummer', 'gearheart', 'chocoknight', 'alarm', 'gretel'],
-  Ghost: ['shade', 'porcelaindoll', 'ghostmaid', 'candlebride', 'marionette', 'geminighosts', 'understudy', 'yukionna', 'marionetta', 'persona', 'playwright'],
-  Sea: ['keepsake', 'jellymaid', 'anglerlamp', 'octoscholar', 'moraymurri', 'morayena', 'seahorseknight', 'barnacleknight', 'matriarch', 'whaledream'],
+  Ghost: ['shade', 'ghostmaid', 'candlebride', 'marionette', 'geminighosts', 'understudy', 'yukionna', 'marionetta', 'persona', 'playwright'],
+  Sea: ['rootling', 'keepsake', 'jellymaid', 'anglerlamp', 'octoscholar', 'moraymurri', 'morayena', 'seahorseknight', 'barnacleknight', 'matriarch', 'whaledream'],
   People: ['pebblet', 'wisp', 'meteorgolem', 'crystalking', 'nightking', 'kitsunemiko', 'lamia', 'velvet', 'marigold', 'puddlekid', 'blossomfairy', 'abyssia', 'coralie', 'nebulawitch', 'lollipopwitch', 'peppermint', 'balloonseller', 'eclipsesol', 'eclipseluna', 'astraea', 'toffee', 'bonbon', 'directrice', 'kiterider', 'shepherdess', 'gunner', 'harpist', 'monk', 'gale', 'tamamo', 'lilith', 'selene', 'mugboss'],
 };
 const OF = new Map();

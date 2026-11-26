@@ -241,8 +241,9 @@ export const MAPS = {
     deco: [['cloverscarecrow', 1570, 0, 700], ['cloverbarn', 920, 0, 700], ['cloveroak', 860, 0, 460]],
     lamps: [{ x: 110, y: 930 }, { x: 920, y: 650 }, { x: 860, y: 420 }],
     spirit: { x: 1100, y: 440 },
-    // The area boss (world/nest.js): after enough hunting, Old MacGoblin storms out of the barn.
-    nest: { mob: 'macgoblin', x: 920, y: 700, kills: 150, name: 'The big barn', wake: 'GET OFF MY LAND! Everyone to the barn!', stirs: ['Something is stomping around in the big barn...', 'The barn doors rattle! Someone is VERY grumpy.'] },
+    // The area boss (world/nest.js): after enough hunting, Old MacGoblin (Big Barnaby, the
+    // Clydesdale foreman) kicks the barn doors open and stomps out.
+    nest: { mob: 'macgoblin', x: 920, y: 700, kills: 150, name: 'The big barn', wake: "WHO'S TROMPING ON MY CLOVER?! Everyone to the barn!", stirs: ['Heavy hooves clop back and forth in the big barn... someone is pacing.', 'A loud SNORT shakes the barn doors! Someone big is VERY grumpy.'] },
     habitats: { sproutling: { naps: true, home: { x: 900, y: 1000 } }, brownie: { home: { x: 900, y: 1000 } }, strawhog: { naps: true }, pumpgob: { naps: true, home: { x: 920, y: 700 } }, lambkin: { play: true, naps: true }, harvmouse: { play: true } },
   },
 
@@ -1244,7 +1245,7 @@ Object.assign(MAPS, {
   // Capper's Garden (remade 2026-11-18; art in render/hollowrooms.js): a root chamber under the trunk
   // where the Myconid Queen keeps her garden, lit pink by it. Root shelves step up both earthen walls
   // (the high ones hang from the roots above), and her great mushroom stands in the middle, its broad
-  // cap the middle ledge; bounce caps throw you up out of her Spore Tide.
+  // cap the middle ledge; bounce caps throw you up out of her Pouch Burst.
   hollow2: {
     id: 'hollow2', name: "Capper's Garden", theme: 'hollow', town: 'crag', dungeon: 'hollow',
     ...lay({

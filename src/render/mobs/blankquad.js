@@ -80,15 +80,29 @@ export function stepAt(u, ph, r, cycle, LF) {
     return { dx: reach - 2 * reach * t, lift: 0, s: t, v: -1 };
   }
   const v = (q - duty) / (1 - duty);
-  return { dx: -reach + 2 * reach * (0.5 - 0.5 * Math.cos(Math.PI * v)), lift: kk * Math.sin(Math.PI * v ** 0.75), s: -1, v };
+  // (eased off the ground and back onto it: the foot leaves and lands with no speed, the top of its
+  // lift at the same moment and height as before, 2026-11-26)
+  return { dx: -reach + 2 * reach * (0.5 - 0.5 * Math.cos(Math.PI * v)), lift: kk * Math.sin(Math.PI * smoothstep(v ** 0.75)), s: -1, v };
 }
 
 // The slant of a leg's lowest bone through the step: planted, it tips back as the body passes over
 // the foot; lifting, a foreleg's wrist folds the foot up and back under it, then the leg reaches it
 // out ahead to land; a hind leg's hock flexes as the foot lifts behind, then swings it forward.
+// (2026-11-26: the planted slant eases in and out of its sweep, and starts where the swing landed it,
+// settling into the planted slant: it used to jump 6 degrees on the forelegs at every landing and
+// change speed in one frame at every lift and landing, a kink up the whole leg.)
+const EDGE = 0.15;
+const easeEnds = (s) => {
+  const u = Math.min(1, Math.max(0, s));
+  const e = u < EDGE ? (u * u) / (2 * EDGE) : u > 1 - EDGE ? 1 - EDGE - ((1 - u) * (1 - u)) / (2 * EDGE) : u - EDGE / 2;
+  return e / (1 - EDGE);
+};
 export function lowAngle(L, g) {
   const r0 = L.a3;
-  if (g.v < 0) return r0 + (L.hind ? lerp(0.12, -0.5, g.s) : lerp(0.18, -0.48, g.s));
+  if (g.v < 0) {
+    const land = (L.hind ? 0.04 : 0.1) * (1 - smoothstep(g.s / 0.25));
+    return r0 + (L.hind ? lerp(0.12, -0.5, easeEnds(g.s)) : lerp(0.18, -0.48, easeEnds(g.s))) + land;
+  }
   const v = g.v;
   if (!L.hind) return v < 0.5 ? lerp(r0 - 0.48, -1.95, smoothstep(v / 0.5)) : lerp(-1.95, r0 + 0.28, smoothstep((v - 0.5) / 0.5));
   return v < 0.4 ? lerp(r0 - 0.5, -1.1, smoothstep(v / 0.4)) : lerp(-1.1, r0 + 0.16, smoothstep((v - 0.4) / 0.6));
@@ -96,15 +110,18 @@ export function lowAngle(L, g) {
 
 // How much lower each end of the body is held by its planted legs slanting (px), and whether any
 // foot is down at all (a gallop's flight has none).
+// (2026-11-26: a foot just lifted or about to land still counts, fading out and in over a fifth of
+// its swing, so the body never drops or rises in one frame as the lowest leg changes.)
 export function sinks(defs, steps) {
   let fS = 0;
   let hS = 0;
   let down = false;
   for (const [k, L] of Object.entries(defs)) {
     const g = steps[k];
-    if (g.v >= 0) continue;
-    down = true;
-    const sink = L.reach - Math.sqrt(Math.max(0, L.reach * L.reach - g.dx * g.dx));
+    const w = g.v < 0 ? 1 : Math.max(1 - smoothstep(g.v / 0.2), smoothstep((g.v - 0.8) / 0.2));
+    if (g.v < 0) down = true;
+    if (w <= 0) continue;
+    const sink = (L.reach - Math.sqrt(Math.max(0, L.reach * L.reach - g.dx * g.dx))) * w;
     if (L.hind) hS = Math.max(hS, sink);
     else fS = Math.max(fS, sink);
   }
@@ -120,6 +137,60 @@ export function placeLeg(L, T, paw, a3) {
   const gx = J2t[0] - T[0];
   const gy = J2t[1] - T[1];
   const d0 = Math.hypot(gx, gy) || 1;
+  // (the last of its reach eased, never snapped straight: 2026-11-26)
+  const LL = l1 + l2;
+  const s0 = LL * 0.96;
+  const d = Math.max(0.5, d0 <= s0 ? d0 : s0 + (LL - 0.001 - s0) * (1 - Math.exp(-(d0 - s0) / (LL - s0))));
+  const phi = Math.atan2(gy, gx);
+  const ang = Math.acos(clamp((l1 * l1 + d * d - l2 * l2) / (2 * l1 * d), -1, 1));
+  const kn = phi + (L.hind ? -ang : ang);
+  const J1 = add(T, [Math.cos(kn) * l1, Math.sin(kn) * l1]);
+  const J2 = add(T, [(gx / d0) * d, (gy / d0) * d]);
+  const P = [J2[0] + Math.sin(a3) * l3, J2[1] + Math.cos(a3) * l3];
+  return { T, J1, J2, P, up: Math.atan2(J1[1] - T[1], J1[0] - T[0]) };
+}
+
+// The legs as they were before the 2026-11-26 smoothing, kept for Fawnelle (the player's "perfect"
+// deer, never changed unasked): her rig imports these by name.
+function stepAtV1(u, ph, r, cycle, LF) {
+  const duty = 0.6 - 0.24 * r;
+  const reach = (cycle * duty) / 2;
+  const kk = LF * (0.24 + 0.2 * r);
+  const q = (((u + ph) % 1) + 1) % 1;
+  if (q < duty) {
+    const t = q / duty;
+    return { dx: reach - 2 * reach * t, lift: 0, s: t, v: -1 };
+  }
+  const v = (q - duty) / (1 - duty);
+  return { dx: -reach + 2 * reach * (0.5 - 0.5 * Math.cos(Math.PI * v)), lift: kk * Math.sin(Math.PI * v ** 0.75), s: -1, v };
+}
+function lowAngleV1(L, g) {
+  const r0 = L.a3;
+  if (g.v < 0) return r0 + (L.hind ? lerp(0.12, -0.5, g.s) : lerp(0.18, -0.48, g.s));
+  const v = g.v;
+  if (!L.hind) return v < 0.5 ? lerp(r0 - 0.48, -1.95, smoothstep(v / 0.5)) : lerp(-1.95, r0 + 0.28, smoothstep((v - 0.5) / 0.5));
+  return v < 0.4 ? lerp(r0 - 0.5, -1.1, smoothstep(v / 0.4)) : lerp(-1.1, r0 + 0.16, smoothstep((v - 0.4) / 0.6));
+}
+function sinksV1(defs, steps) {
+  let fS = 0;
+  let hS = 0;
+  let down = false;
+  for (const [k, L] of Object.entries(defs)) {
+    const g = steps[k];
+    if (g.v >= 0) continue;
+    down = true;
+    const sink = L.reach - Math.sqrt(Math.max(0, L.reach * L.reach - g.dx * g.dx));
+    if (L.hind) hS = Math.max(hS, sink);
+    else fS = Math.max(fS, sink);
+  }
+  return { fS, hS, down };
+}
+function placeLegV1(L, T, paw, a3) {
+  const [l1, l2, l3] = L.lens;
+  const J2t = [paw[0] - Math.sin(a3) * l3, paw[1] - Math.cos(a3) * l3];
+  const gx = J2t[0] - T[0];
+  const gy = J2t[1] - T[1];
+  const d0 = Math.hypot(gx, gy) || 1;
   const d = Math.min(l1 + l2 - 0.001, Math.max(0.5, d0));
   const phi = Math.atan2(gy, gx);
   const ang = Math.acos(clamp((l1 * l1 + d * d - l2 * l2) / (2 * l1 * d), -1, 1));
@@ -129,6 +200,7 @@ export function placeLeg(L, T, paw, a3) {
   const P = [J2[0] + Math.sin(a3) * l3, J2[1] + Math.cos(a3) * l3];
   return { T, J1, J2, P, up: Math.atan2(J1[1] - T[1], J1[0] - T[0]) };
 }
+export const QUAD_V1 = { stepAt: stepAtV1, lowAngle: lowAngleV1, sinks: sinksV1, placeLeg: placeLegV1 };
 
 // The drawing, in the body's palette `C` (lt, base, sh, deep) with its outline `edge(ctx)`.
 export function legDrawer({ C, edge }) {

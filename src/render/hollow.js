@@ -1,7 +1,7 @@
 // Rootwood Hollow's rooms on screen (world/hollow.js): the bounce mushrooms, Tuskar's stone
 // pillars, the sap flooding the Root Gate, Gnarlroot's closing root walls and his open heart, the
 // roots dropping from the tunnel ceiling, the Sprouts cheering behind the group, and the dark (the
-// Hollow Entrance, and the Myconid Queen's lights-out) with light only around the group, the lit
+// Hollow Entrance, and the Myconid Queen's lights-out, her cheek glowing through it) with light only around the group, the lit
 // glowcaps, the warnings, and the doors.
 
 import { R, E, T, F, mix } from './pixel.js';
@@ -181,7 +181,7 @@ function bounceArt(squash) {
 
 // A stone pillar holding up the den's roof, or its tumbled pieces once Tuskar has hit it.
 // The Boar Den's pillars are the den's own: a column of packed earth and stones bound in great
-// twisting roots, moss on the ledges of it and glowcaps sprouting from the cracks (a charging boar
+// twisting roots, moss on the ledges of it and glowcaps sprouting from the cracks (a charging mammoth
 // brings one down in a heap of clods and snapped root ends).
 function pillarArt(broken) {
   return art(`hl-pillar|${broken}`, 44, 120, () => {
@@ -428,14 +428,29 @@ export function drawDarkness(ctx, world, cam, time) {
   }
   for (const z of world.dungeon.zones) if (!z.hit && z.kind === 'circle') hole(z.x - cam.x, z.y - cam.y, z.w / 2 + 26, 0.8);
   for (const p of world.map.portals) if (!p.hidden) hole(p.x - cam.x, p.y - 30 - cam.y, 60, 0.7);
-  // The Myconid Queen's eyes glint in the dark.
+  // A boss's eyes glint in the dark; the Myconid Queen's stuffed cheek glows pink through it, the
+  // garden's lamp in her pouch (her rig tells where: render/mothercapper/, m.mcGlow).
+  const glows = [];
   for (const m of world.mobs) {
-    if (m.hp <= 0) continue;
-    const x = m.x - cam.x;
-    const y = m.y - m.def.h * 0.7 - cam.y;
-    if (m.def.boss) hole(x, y, 40, 0.5);
+    if (m.hp <= 0 || !m.def.boss) continue;
+    const g = m.mcGlow && world.now - m.mcGlow.at < 0.3 ? m.mcGlow : null;
+    if (g) {
+      hole(g.x - cam.x, g.y - cam.y, 30, 0.7);
+      glows.push([g.x - cam.x, g.y - cam.y]);
+    } else hole(m.x - cam.x, m.y - m.def.h * 0.7 - cam.y, 40, 0.5);
   }
   ctx.save();
   ctx.drawImage(c, 0, 0, W, H);
+  ctx.globalCompositeOperation = 'lighter';
+  for (const [x, y] of glows) {
+    const pu = 0.85 + 0.15 * Math.sin(time * 3.2);
+    const r = 34 * pu;
+    const gr = ctx.createRadialGradient(x, y, 0, x, y, r);
+    gr.addColorStop(0, `rgba(255,190,225,${0.75 * k})`);
+    gr.addColorStop(0.35, `rgba(255,140,200,${0.35 * k})`);
+    gr.addColorStop(1, 'rgba(255,140,200,0)');
+    ctx.fillStyle = gr;
+    ctx.fillRect(x - r, y - r, r * 2, r * 2);
+  }
   ctx.restore();
 }

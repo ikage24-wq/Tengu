@@ -128,13 +128,68 @@ const lowOn = (m) => m.hp > 0 && m.hp < m.def.hp * 0.25;
 // Pop-in with overshoot: 0 -> 1.3 -> 1 over about a fifth of a second.
 const pop = (e) => (e <= 0 ? 0 : e >= 0.2 ? 1 : e < 0.1 ? (e / 0.1) * 1.3 : 1.3 - ((e - 0.1) / 0.1) * 0.3);
 
+// Where a rigged monster's head really is (2026-11-25). A rig's box is roomy (a raised arm, a swing,
+// a hop must fit), so its top is well above the head: for a 40 px tanuki, 23 px over it. Marks over
+// the head (emotes, dizzy stars, a lullaby's z's, dazzle dust) go by its drawn body instead: its
+// calm pose drawn once off screen, its top found (its height above the feet) and the middle of its
+// head (from its middle, toward the way it faces). Until measured, or with no canvas: the box.
+const rigTops = new Map();
+const rigTries = new Map();
+export function rigTop(art, rig, def) {
+  if (rigTops.has(art)) return rigTops.get(art);
+  // (nothing drawn yet, its pieces still on their way: a few more tries, a second apart)
+  const tr = (rigTries.get(art) ?? { n: 0, at: -9 });
+  const now = performance.now() / 1000;
+  if (tr.n > 0 && now - tr.at < 1) return null;
+  tr.n++;
+  tr.at = now;
+  rigTries.set(art, tr);
+  let top = null;
+  try {
+    const W = Math.ceil(rig.w * 3);
+    const Hc = Math.ceil(rig.h * 2 + 20);
+    const cv = typeof OffscreenCanvas !== 'undefined' ? new OffscreenCanvas(W, Hc) : null;
+    const c = cv?.getContext('2d');
+    if (c) {
+      const gy = Hc - 10;
+      c.translate(W / 2, gy);
+      const m = { def, hp: def.hp, uid: 0, x: 0, y: 0, dir: 1, state: 'idle', attackAt: -99, gloatAt: -99, aggroUntil: 0, odo: 0, flash: 0, phase: 0 };
+      rig.draw(c, m, { t: 0, now: 0, dt: 0, mood: 'calm', moving: false, mo: {}, hurtAgo: 9, flip: false, flash: 0, alpha: 1 });
+      const px = c.getImageData(0, 0, W, Hc).data;
+      const solid = (x, y) => px[(y * W + x) * 4 + 3] > 140;
+      let y0 = -1;
+      for (let y = 0; y < gy && y0 < 0; y++) {
+        let n = 0;
+        for (let x = 0; x < W; x++) if (solid(x, y)) n++;
+        if (n >= 2) y0 = y;
+      }
+      if (y0 >= 0) {
+        const h = gy - y0;
+        // (the head: the top quarter of the body, its left and right edges)
+        let lo = W;
+        let hi = -1;
+        for (let y = y0; y < y0 + h * 0.25; y++) for (let x = 0; x < W; x++) if (solid(x, y)) {
+          lo = Math.min(lo, x);
+          hi = Math.max(hi, x);
+        }
+        // (hx: a mark's spot, a little toward the way it faces; hc: the middle of its head)
+        top = { h, hx: (lo + hi) / 2 - W / 2 + (hi - lo) * 0.2, hc: (lo + hi) / 2 - W / 2 };
+      }
+    }
+  } catch {
+    top = null;
+  }
+  if (top || tr.n >= 8) rigTops.set(art, top);
+  return top;
+}
+
 // Emote bubbles over the head: "!" right after it gets angry, a pulsing anger mark while it
 // chases, a sweat drop when hit, and music notes or z's while it lazes about.
-function drawEmote(ctx, m, mood, x, top, t, now) {
+function drawEmote(ctx, m, mood, x, top, t, now, headX = null) {
   ctx.save();
   ctx.font = '800 9px Nunito, "Trebuchet MS", "Segoe UI", system-ui, sans-serif';
   ctx.textAlign = 'center';
-  const hx = x + ((m.heading ?? m.dir) < 0 ? -1 : 1) * m.def.w * 0.32;
+  const hx = x + ((m.heading ?? m.dir) < 0 ? -1 : 1) * (headX ?? m.def.w * 0.32);
   // A bubble that pops in with an overshoot and holds.
   const bubble = (mark, color, e) => {
     const k = pop(e);
@@ -354,7 +409,15 @@ function drawMonsterNow(ctx, m, x, y, time, now = time) {
   const dx = m.x - (m.seenX ?? m.x);
   const step = Math.abs(dx);
   m.seenX = m.x;
-  if (step < 40) m.odo = (m.odo ?? 0) + step;
+  // (A jump counted as walking is paid out at no more than a quick walk's pace, so a short slide or
+  // a nudge never shows as a one-frame burst of speed in its legs and its loose parts, 2026-11-26.)
+  if (step < 40) mo.odoDue = Math.min(40, (mo.odoDue ?? 0) + step);
+  // (never below a dash's pace, 360 px/s, so a charge or a fast mover keeps its legs in step and only
+  // sudden jumps are spread out)
+  const fdt = Math.max(mo.dt ?? 0, 1 / 240);
+  const pay = Math.min(mo.odoDue ?? 0, Math.max(1, (m.def.speed || 40) * 3 * fdt, 360 * fdt));
+  mo.odoDue = (mo.odoDue ?? 0) - pay;
+  m.odo = (m.odo ?? 0) + pay;
   const [pose, frame, rawFrame] = poseOf(m, fr, moving, t, now, mo);
   // A rigged boss (render/mobs/rig.js) is posed live from its parts; its box stands in for a sprite.
   // Everyone else: in-between poses are drawn in the background; until one is ready, its whole frame
@@ -366,6 +429,10 @@ function drawMonsterNow(ctx, m, x, y, time, now = time) {
   const art = m.def.art;
   const whole = Math.floor(frame);
   const s = rig ? { w: rig.w, h: rig.h } : (frame % 1 && spriteLater(mobKey(art, frame, mood, pose), { kind: 'mob', art, pose, frame, mood })) || (pose === 'attack' || mood === 'hurt' || mood === 'dead' ? monsterSprite(art, whole, mood, pose) : spriteAsync(mobKey(art, whole, mood, pose), () => mobBuild(art, pose, whole, mood), `mob|${art}|${pose}`, () => ({ kind: 'mob', art, pose, frame: whole, mood })));
+
+  // (a rig's drawn body, for the marks over its head: its box is taller than it)
+  const body = rig ? rigTop(art, rig, m.def) : null;
+  const bh = body?.h ?? s.h;
 
   // Squash (+ wide and short, - tall and thin) follows its pose on a jelly spring.
   let sqGoal = 0;
@@ -484,33 +551,33 @@ function drawMonsterNow(ctx, m, x, y, time, now = time) {
   ctx.restore();
   if (puff >= 0) poofCloud(ctx, x, y, s.w, puff);
   if (m.poison && m.hp > 0) (m.poison.kind === 'bleed' ? bleedDrops : poisonBubbles)(ctx, x, y, s, time + m.uid);
-  if (frozen && m.hold === 'stun') dizzyStars(ctx, x, y - s.h * sy - 2, time + m.uid);
+  if (frozen && m.hold === 'stun') dizzyStars(ctx, x, y - bh * sy - 2, time + m.uid);
   // The Silkweaver's cocoon: wrapped in pearl silk, swaying a little, loosening as it runs out.
   // (Fitted to its shape: as wide as it and as tall, kept a cocoon's shape between those; fading in as
   // the threads wind round it.)
   else if (frozen && m.hold === 'silk') {
-    const ch = Math.min(2.2, Math.max(0.5, (s.h * sy * 1.1) / 56));
+    const ch = Math.min(2.2, Math.max(0.5, (bh * sy * 1.1) / 56));
     const cw = Math.min(ch * 1.35, Math.max(ch * 0.8, (s.w * 1.1) / 40));
-    fxSprite(ctx, 'celsvcocoon', x, y - (s.h * sy) / 2, { t: time + m.uid, sx: cw, sy: ch, alpha: Math.min(1, (m.frozenUntil - now) / 0.3, (now - (m.cocoonAt ?? now - 1)) / 0.28) });
+    fxSprite(ctx, 'celsvcocoon', x, y - (bh * sy) / 2, { t: time + m.uid, sx: cw, sy: ch, alpha: Math.min(1, (m.frozenUntil - now) / 0.3, (now - (m.cocoonAt ?? now - 1)) / 0.28) });
   }
   // A Pin Feather: a gold feather of light stuck in it, pinning it where it stands, fading as it frees.
-  else if (frozen && m.hold === 'pin') fxSprite(ctx, `cel${m.pinLook ?? 'sf'}pinned`, x, y - (s.h * sy) * 0.55, { t: time + m.uid, scale: Math.min(1.4, Math.max(0.6, (s.h * sy) / 50)), alpha: Math.min(1, (m.frozenUntil - now) / 0.25) });
+  else if (frozen && m.hold === 'pin') fxSprite(ctx, `cel${m.pinLook ?? 'sf'}pinned`, x, y - (bh * sy) * 0.55, { t: time + m.uid, scale: Math.min(1.4, Math.max(0.6, (bh * sy) / 50)), alpha: Math.min(1, (m.frozenUntil - now) / 0.25) });
   // A Lullaby: asleep on its feet, little notes and a Zz drifting up off it.
-  else if (frozen && m.hold === 'sleep') fxSprite(ctx, 'celsbsleep', x, y - s.h * sy - 6, { t: time + m.uid, scale: Math.min(1, Math.max(0.5, s.w / 50)), alpha: Math.min(1, (m.frozenUntil - now) / 0.25) });
+  else if (frozen && m.hold === 'sleep') fxSprite(ctx, 'celsbsleep', x, y - bh * sy - 6, { t: time + m.uid, scale: Math.min(1, Math.max(0.5, s.w / 50)), alpha: Math.min(1, (m.frozenUntil - now) / 0.25) });
   // A Wing Feint: it stands turned away, watching one of her moths flutter off behind it.
   else if (frozen && m.hold === 'feint') {
     const away = (m.dir || 1) < 0 ? -1 : 1;
     const bob = Math.sin((time + m.uid) * 5) * 3;
-    fxSprite(ctx, `cel${m.feintLook ?? 'mm'}moth`, x + away * (s.w * 0.45 + 14), y - s.h * sy - 6 + bob, { t: time + m.uid, flip: away < 0, scale: 0.3, alpha: Math.min(1, (m.frozenUntil - now) / 0.25) });
+    fxSprite(ctx, `cel${m.feintLook ?? 'mm'}moth`, x + away * (s.w * 0.45 + 14), y - bh * sy - 6 + bob, { t: time + m.uid, flip: away < 0, scale: 0.3, alpha: Math.min(1, (m.frozenUntil - now) / 0.25) });
   }
   // A Snare Arrow's net over it (Tengu's own art), slipping off as the hold runs out.
-  else if (frozen && m.hold === 'snare' && m.holdLook === 'ribbon') fxSprite(ctx, 'celacribbon', x, y - (s.h * sy) / 2, { t: time + m.uid, scale: Math.max(0.35, s.w / 70), alpha: Math.min(1, (m.frozenUntil - now) / 0.25) });
-  else if (frozen && m.hold === 'snare') fxSprite(ctx, 'celnet', x, y - (s.h * sy) / 2, { t: time + m.uid, scale: Math.max(0.7, s.w / 30), alpha: Math.min(1, (m.frozenUntil - now) / 0.25) });
+  else if (frozen && m.hold === 'snare' && m.holdLook === 'ribbon') fxSprite(ctx, 'celacribbon', x, y - (bh * sy) / 2, { t: time + m.uid, scale: Math.max(0.35, s.w / 70), alpha: Math.min(1, (m.frozenUntil - now) / 0.25) });
+  else if (frozen && m.hold === 'snare') fxSprite(ctx, 'celnet', x, y - (bh * sy) / 2, { t: time + m.uid, scale: Math.max(0.7, s.w / 30), alpha: Math.min(1, (m.frozenUntil - now) / 0.25) });
   // (Up in the air with it, if it's been lifted while frozen.)
   else if (frozen) iceBlock(ctx, x, y - (m.air > 0 && m.hp > 0 ? m.air : 0), s, m.frozenUntil - now, time + m.uid);
   // Dazzled (Dazzle Dust): glittering dust circling its head while it lasts.
-  if (m.dazzleUntil > now && m.hp > 0) fxSprite(ctx, `cel${m.dazzleLook ?? 'mm'}dazzled`, x, y - s.h * sy - 4, { t: time + m.uid, scale: Math.min(0.9, Math.max(0.5, s.w / 60)), alpha: Math.min(1, (m.dazzleUntil - now) / 0.3) });
-  if (alpha > 0.5 && !frozen) drawEmote(ctx, m, mood, x, y - s.h * sy, t, now);
+  if (m.dazzleUntil > now && m.hp > 0) fxSprite(ctx, `cel${m.dazzleLook ?? 'mm'}dazzled`, x, y - bh * sy - 4, { t: time + m.uid, scale: Math.min(0.9, Math.max(0.5, s.w / 60)), alpha: Math.min(1, (m.dazzleUntil - now) / 0.3) });
+  if (alpha > 0.5 && !frozen) drawEmote(ctx, m, mood, x, y - bh * sy, t, now, body?.hx);
 }
 
 // A clear block of ice around a frozen monster, with frosty edges, glints, and cracks as it thaws.
