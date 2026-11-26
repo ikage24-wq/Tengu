@@ -10,8 +10,8 @@
 //   (lanternghost: the Lantern Wisp was remade on the spirit base, 2026-11-24: render/wisp/.)
 //   (porcelaindoll: the Porcelain Doll was remade on the veggie base, 2026-11-26: Pinsworth the
 //   pincushion duellist, render/porcelaindoll/.)
-//   ghostmaid      Ghost Maid: a little ghost cat in a maid's dress, apron and cap, a wisp for a tail,
-//                  a feather duster. Floats about dusting the air; sneezes. Swats.
+//   (ghostmaid: the Ghost Maid was remade on the jellyfish base, 2026-11-26: Lacey the moon-jelly
+//   parlourmaid, render/ghostmaid/.)
 //   teahatter      Tea Party Hatter: a round teapot in a top hat, riding a saucer. Glides; tips its
 //                  hat, its lid pops with a whistle of steam. Tips over and pours a splash of tea.
 
@@ -215,140 +215,6 @@ export function swanStill(pose, f, mood) {
     h: 44,
     res: 3,
     shapes: shift([...put(tsNeck(), [5, 22], nx, ny), ...put(tsBody(), [16, 19], bx, by), ...put(tsHead(), [4.4, 11.4], hx, hy), ...put(tsOwnFace(fm), [4.4, 11.4], hx, hy), ...put(tsWing(), [3, 3], bx - 4, by - 12), ...put(tsFoot(false)(), [3.4, 1.4], -3, -0.8)], 18, 43),
-  };
-}
-
-// =====================================================================================
-// Ghost Maid
-// =====================================================================================
-const GHOST = ramp('#f2eaff', { step: 8, turn: 8, lift: 3 });
-const DRESS = ramp('#5a4a7a', { step: 9, turn: 8, lift: 14 });
-const gm = pairOf('gm');
-// The ghost cat: a round head and body in one, narrowing to where the wisp tail starts, a maid's
-// dress over the lower half with a white apron and collar. Box 22 x 24; its tail root at (11, 23).
-const gmBody = () => [
-  E(11, 9.6, 9.6, 8.8, GHOST.base),
-  T([[3, 12], [19, 12], [15, 23], [7, 23]], GHOST.base),
-  T([[3.4, 13], [18.6, 13], [16.4, 21], [11, 23.4], [5.6, 21]], DRESS.base),
-  T([[8, 13.4], [15, 13.4], [14.6, 20], [11.6, 21.6], [8.4, 20]], '#ffffff'),
-  ...[0, 1, 2, 3].map((k) => F(E(8.6 + k * 2, 20.2 + (k % 2) * 0.6, 1.2, 0.9, '#ffffff'))),
-  T([[6, 12.4], [11, 15], [16, 12.4], [11, 11.4]], '#ffffff'), E(11, 13.6, 1, 1, '#ff8fb8'),
-  crescent(11, 9.6, 9.6, 8.8, GHOST.sh, { k: 0.2, a0: 90, a1: 220 }),
-  shine(11, 9, 9.6, 8.8, '#ffffff', 0, 0.8),
-];
-const gmEar = (far) => () => [T([[0.6, 6], [2.6, 0.6], [5.4, 6]], far ? GHOST.sh : GHOST.base), F(T([[1.8, 5.2], [2.8, 2.4], [4, 5.2]], '#ffc8d8'))];
-const gmCap = () => [T([[1, 4], [3, 0.8], [11, 0.8], [13, 4]], '#ffffff'), ...[0, 1, 2, 3, 4].map((k) => E(2 + k * 2.5, 4, 1.4, 1.2, '#ffffff')), F(R(3, 2, 8, 1, '#ff8fb8'))];
-const gmArm = (far) => () => [taper([[1, 2], [5, 2.2]], 3, 2.4, far ? GHOST.sh : GHOST.base), E(5.4, 2.2, 1.6, 1.5, far ? GHOST.sh : GHOST.base)];
-// A segment of the wisp tail, round at the joints (the last one ends in a point). Box 13 x 8; its
-// root at (3.4, 4), the next segment 5.6 along.
-const GM_TW = [6, 4.6, 3, 0.8];
-const gmTail = (k) => () => [E(3.4, 4, GM_TW[k] / 2, GM_TW[k] / 2, GHOST.base), taper([[3.4, 4], [9, 4]], GM_TW[k], GM_TW[k + 1], GHOST.base), ...(k < 2 ? [E(9, 4, GM_TW[k + 1] / 2, GM_TW[k + 1] / 2, GHOST.base)] : [])];
-// The feather duster. Box 8 x 22; held at (4, 17).
-const gmDuster = () => [taper([[4, 21], [4, 9]], 1.4, 1.2, '#8a6a5a'), E(4, 6, 4, 5.4, '#ffc8d8'), E(2.6, 4, 2.6, 3, '#ffffff'), E(5.8, 3.4, 2.4, 2.8, '#ff9fc0'), F(E(3, 3, 1, 0.8, '#ffffff'))];
-const GM_BODY = gm('body', 22, 24, gmBody, 2);
-const GM_EAR = [false, true].map((f) => gm(`ear${f ? 1 : 0}`, 6, 6, gmEar(f), 2));
-const GM_CAP = gm('cap', 14, 5, gmCap, 2);
-const GM_ARM = [false, true].map((f) => gm(`arm${f ? 1 : 0}`, 7, 4, gmArm(f), 2));
-const GM_TAIL = [0, 1, 2].map((k) => gm(`tail${k}`, 13, 8, gmTail(k), 2));
-const GM_DUSTER = gm('duster', 8, 22, gmDuster, 2);
-// Her own face, a ghost cat maid's: bright round blue eyes with two glints, little whisker marks, and a
-// ":3" cat mouth with a fang peeking out. Box 22 x 24.
-const GM_EYES = [[11.6, 8.4, -1, 1.5, 2], [15.4, 8, 1, 1.2, 1.7]];
-const gmOwnFace = (mood) => {
-  const out = [];
-  for (const [x, y, s, w, h] of GM_EYES) {
-    const shut = oShut(mood, x, y, s, w, h, 0.5, '#6a8ad8');
-    if (shut) { out.push(...shut); continue; }
-    const lid = mood === 'angry' ? (px) => y - h * 0.25 + (px - x) * -s * 0.6 : NOLID;
-    out.push(...oOpen(x, y, w, h, lid, '#3a6ad8', '#9ad0ff'), oDot(x, y + h * 0.1, w * (mood === 'shout' ? 0.2 : 0.3), '#18284a', lid), oDot(x + w * 0.32, y - h * 0.28, w * 0.24, '#ffffff', lid), oDot(x - w * 0.3, y + h * 0.35, w * 0.12, '#ffffff', lid), ...oLid(x, y, w, h, lid, 0.5));
-  }
-  if (mood !== 'dead') out.push(F(E(10, 10.8, 1.2, 0.55, '#ffb0d0')), F(E(16.6, 10.4, 0.85, 0.42, '#ffb0d0')));
-  for (const [bx, by, s] of [[9, 10.4, -1], [17.6, 10, 1]]) for (const dy of [-0.4, 0.4]) out.push(...oLn([[bx, by + dy], [bx + s * 0.9, by + dy * 1.4]], 0.2, '#8a7aa8'));
-  const [mx, my] = [13.8, 11.4];
-  if (mood === 'shout') out.push(F(E(mx, my + 0.3, 0.9, 1, '#6a2a4a')), F(T([[mx - 0.55, my - 0.45], [mx - 0.15, my - 0.45], [mx - 0.35, my + 0.15]], '#ffffff')));
-  else if (mood === 'happy') out.push(F(T(oArc(mx, my - 0.2, 1, 0.9, 0, 180, 8), '#6a2a4a')), F(E(mx, my + 0.4, 0.5, 0.25, '#ff9ab8')));
-  else if (mood === 'angry') out.push(...oLn([[mx - 0.9, my + 0.3], [mx, my - 0.05], [mx + 0.9, my + 0.3]], 0.32), F(T([[mx - 0.5, my + 0.05], [mx - 0.15, my + 0.1], [mx - 0.35, my + 0.6]], '#ffffff')));
-  else if (mood === 'hurt' || mood === 'dizzy') out.push(...oWave(mx, my, 0.8, 0.28));
-  else if (mood === 'dead') out.push(...oLn([[mx - 0.6, my], [mx + 0.6, my]], 0.28));
-  else out.push(...oLn([[mx - 0.9, my - 0.15], [mx - 0.45, my + 0.25], [mx, my - 0.05], [mx + 0.45, my + 0.25], [mx + 0.9, my - 0.15]], 0.3), F(T([[mx + 0.15, my + 0.1], [mx + 0.5, my + 0.15], [mx + 0.32, my + 0.6]], '#ffffff')));
-  if (mood === 'hurt') out.push(...oDrop(17, 8.2, 0.55));
-  return out;
-};
-const gmFace = (mood) => sm(`gm|face|${mood}`, 22, 24, () => gmOwnFace(mood));
-const gmPass = (bare) => {
-  const i = bare ? 1 : 0;
-  const tag = bare ? 'b' : '';
-  return [
-    ...[0, 1, 2].map((k) => ({ name: `tail${k}${tag}`, parent: k ? `tail${k - 1}${tag}` : 'float', s: GM_TAIL[k][i], pivot: [3.4, 4], at: k ? () => [5.6, 0] : () => [-1, -2], rot: (S, a) => ((k ? 48 : 118) + Math.sin(a.t * 3 - k * 0.9) * 12 + S.tail * (k + 1) * 0.5) * D2R })),
-    { name: `earF${tag}`, parent: 'float', s: GM_EAR[1][i], pivot: [3, 5.6], at: () => [-5, -19], rot: (S) => (-14 + S.ear) * D2R },
-    { name: `armF${tag}`, parent: 'float', s: GM_ARM[1][i], pivot: [1, 2], at: () => [2, -9], rot: (S) => (60 + S.armF) * D2R },
-    { name: `body${tag}`, parent: 'float', s: GM_BODY[i], pivot: [11, 23] },
-    { name: `earN${tag}`, parent: 'float', s: GM_EAR[0][i], pivot: [3, 5.6], at: () => [3.4, -20], rot: (S) => (10 + S.ear) * D2R },
-    { name: `cap${tag}`, parent: 'float', s: GM_CAP[i], pivot: [7, 4], at: () => [0, -19], rot: (S) => S.cap * D2R },
-    { name: `duster${tag}`, parent: 'hand', s: GM_DUSTER[i], pivot: [4, 17], rot: (S) => (S.duster - (50 + S.armN)) * D2R },
-    { name: `armN${tag}`, parent: 'float', s: GM_ARM[0][i], pivot: [1, 2], at: () => [-1, -8], rot: (S) => (50 + S.armN) * D2R },
-  ];
-};
-export const maidRig = makeRig({
-  w: 30,
-  h: 40,
-  soft: true,
-  stride: 26,
-  recover: 0.55,
-  springs: { x: [220, 18], bob: [80, 8], lean: [120, 10], tail: [60, 6], ear: [120, 7], cap: [90, 6], armN: [150, 10], armF: [140, 10], duster: [140, 9] },
-  fast: ['x', 'armN', 'duster', 'lean'],
-  kick: { lean: -260, ear: 500, cap: 400, tail: 300 },
-  turnKick: { tail: 300, ear: 260 },
-  pose(m, a) {
-    a.uidOff = (m.uid % 11) * 1.17;
-    const t = a.t + a.uidOff;
-    const lu = t % 10;
-    const dusting = hold(lu, 1, 1.4, 3.6, 4);
-    const sneeze = hold(lu, 4.3, 4.6, 4.8, 5.4);
-    const tidy = hold(lu, 7, 7.3, 8, 8.4);
-    const still = 1 - a.walkW;
-    a.gmDust = dusting * still;
-    a.gmSneeze = sneeze * still;
-    const br = Math.sin(t * 2.2);
-    const wig = Math.sin(t * 16);
-    const idle = {
-      x: 0, bob: br * 2, lean: -sneeze * 14 + (lu > 4.6 && lu < 5 ? 18 : 0), tail: br * 6, ear: br * 4 - sneeze * 20, cap: tidy * Math.sin(t * 10) * 10 + sneeze * 10,
-      armN: dusting * (-100 + wig * 15), armF: -tidy * 120, duster: 60 - dusting * 15 + dusting * wig * 25,
-    };
-    const walk = { x: 0, bob: Math.sin(t * 3) * 1.4, lean: 10, tail: -12, ear: -8, cap: -4, armN: 10, armF: -10, duster: 70 };
-    // The swat: duster raised high, then down hard.
-    const antic = { x: -2, bob: 1, lean: -10, tail: 10, ear: -16, cap: 0, armN: -130, armF: -20, duster: -20 };
-    const strike = { x: 5, bob: 0, lean: 14, tail: -16, ear: 20, cap: 6, armN: 20, armF: 10, duster: 110 };
-    return stateBlend(a, idle, walk, antic, strike);
-  },
-  parts: [
-    { name: 'float', parent: null, at: (S) => [S.x, -14 - S.bob], rot: (S) => S.lean * D2R },
-    { name: 'hand', parent: 'armN', at: () => [4.4, 0.2] },
-    ...gmPass(false),
-    ...gmPass(true),
-    { name: 'face', parent: 'float', s: (a) => gmFace(moodOf(a, a.gmSneeze > 0.5 ? 'sleep' : a.gmDust > 0.5 ? 'happy' : null)), pivot: [11, 23] },
-  ],
-  fx(ctx, m, a, S, mat) {
-    // Dust puffing off the duster, and feathers flying off it in a swat.
-    if (a.gmDust > 0.3 || a.ph.since >= 0) inPart(ctx, mat, 'duster', () => {
-      for (let k = 0; k < 3; k++) {
-        const u = fr(a.t * 2.4 + k / 3);
-        dot(ctx, a, Math.sin(u * 7 + k) * 5, -12 - u * 8, 1.2 + u * 2.4, (1 - u) * 0.6 * Math.max(a.gmDust, a.ph.strike));
-      }
-    });
-    if (a.gmSneeze > 0.6) dot(ctx, a, 14, -24, 4, 0.5);
-  },
-});
-export function maidStill(pose, f, mood) {
-  const fm = MOODS.has(mood) ? mood : 'idle';
-  return {
-    w: 34,
-    h: 44,
-    res: 3,
-    shapes: shift([
-      ...put(gmTail(0)(), [3.4, 4], -1, -16, 118), ...put(gmEar(true)(), [3, 5.6], -5, -33, -14), ...put(gmArm(true)(), [1, 2], 2, -23, 60), ...put(gmBody(), [11, 23], 0, -14),
-      ...put(gmEar(false)(), [3, 5.6], 3.4, -34, 10), ...put(gmCap(), [7, 4], 0, -33), ...put(gmOwnFace(fm), [11, 23], 0, -14), ...put(gmDuster(), [4, 17], 1.8, -18.6, 60), ...put(gmArm(false)(), [1, 2], -1, -22, 50),
-    ], 18, 42),
   };
 }
 

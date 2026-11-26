@@ -4,7 +4,9 @@
 // the rig itself stays for the other dungeons that still use it).
 //   porcelaindoll  Porcelain Doll: Pinsworth, a crimson velvet pincushion in a china thimble who fences
 //                  with a sewing needle, on its own copy of the veggie base (render/porcelaindoll/, 2026-11-26)
-//   ghostmaid      Ghost Maid: a little ghost cat maid with a feather duster (manorrigs.js, 2026-11-18)
+//   ghostmaid      Ghost Maid: Lacey, a moon-jelly parlourmaid whose frilled bell is her lace mob cap, a
+//                  feather duster and a silver service bell in her ribbon arms, on her own copy of the
+//                  jellyfish (render/ghostmaid/, 2026-11-26)
 //   candlebride    Candle Bride: the Candelabra Bride, a gothic bride in black lace with a brass
 //                  candelabra, on the maiden base; she thrusts it and throws a flame (render/bride/, 2026-11-24)
 //   topiarydryad   Topiary Swan: a hedge clipped into a swan, a rose on its head (manorrigs.js, 2026-11-18)
@@ -18,10 +20,11 @@
 // wind-up (the tell), strike, impact, recover.
 
 import { E, T, F, R, ramp, smear, chain, wave, TAU, D2R, O, limb, spin, strand, star, blob } from './critter.js';
-import { swanRig, swanStill, maidRig, maidStill, teapotRig, teapotStill, butlerRig, butlerStill } from './manorrigs.js';
+import { swanRig, swanStill, teapotRig, teapotStill, butlerRig, butlerStill } from './manorrigs.js';
 import { WISP_ART, WISP_SIZE } from '../wisp/index.js';
 import { BRIDE_ART, BRIDE_SIZE } from '../bride/index.js';
 import { PORCELAIN_DOLL } from '../porcelaindoll/index.js';
+import { GHOST_MAID } from '../ghostmaid/index.js';
 
 const frames = (pose) => (pose === 'walk' ? 8 : pose === 'attack' ? 4 : 6);
 const phase = (pose, f) => f / frames(pose);
@@ -76,7 +79,7 @@ function armour(pose, f, mood) {
 
 export const ART = {
   porcelaindoll: PORCELAIN_DOLL.art,
-  ghostmaid: { pad: 6, walk: 8, idle: 6, attack: 4, stride: 26, atkMs: [60, 210, 170], draw: maidStill, rig: maidRig },
+  ghostmaid: GHOST_MAID.art,
   candlebride: BRIDE_ART,
   topiarydryad: { pad: 6, walk: 8, idle: 6, attack: 4, stride: 24, atkMs: [60, 200, 160], draw: swanStill, rig: swanRig },
   lanternghost: WISP_ART,
@@ -87,7 +90,7 @@ export const ART = {
 
 export const INFO = {
   porcelaindoll: { name: 'Porcelain Doll', w: PORCELAIN_DOLL.w, h: PORCELAIN_DOLL.h },
-  ghostmaid: { name: 'Ghost Maid', w: 26, h: 32 },
+  ghostmaid: { name: 'Ghost Maid', w: GHOST_MAID.w, h: GHOST_MAID.h },
   candlebride: { name: 'Candle Bride', ...BRIDE_SIZE },
   topiarydryad: { name: 'Topiary Swan', w: 28, h: 34 },
   lanternghost: { name: 'Lantern Wisp', ...WISP_SIZE },

@@ -340,9 +340,14 @@ export const MOBS = {
     speed: 34, w: 25, h: 30, art: 'porcelaindoll', moves: ['lunge', 'flurry', 'cut'], drops: [{ id: 'porcelain_shard', chance: 0.4 }, { id: 'moonlit_ribbon', chance: 0.08 }],
     fight: { every: 1.9, reach: 38, windup: 0.45 },
   }),
+  // (Lacey, the moon-jelly parlourmaid, 2026-11-26: a moon jellyfish whose frilled bell is her lace mob
+  // cap, a feather duster and a silver service bell in her ribbon arms, on her own copy of the
+  // jellyfish: render/ghostmaid/. She floats a hand's height over the floor and keeps to it, like the
+  // Lantern Wisp (not a flyer: she fights on the manor's floors with her pack). Her box is her bell and
+  // the ribbons under it.)
   ghostmaid: mob({
     id: 'ghostmaid', name: 'Ghost Maid', level: 15, hp: 520, atk: 52, def: 10, acc: 48, eva: 8, exp: 220, gold: [5, 10],
-    speed: 52, w: 26, h: 32, art: 'ghostmaid', drops: [{ id: 'shade_cloth', chance: 0.3 }, { id: 'moonlit_ribbon', chance: 0.06 }],
+    speed: 52, w: 26, h: 38, art: 'ghostmaid', moves: ['swat', 'bell', 'lash'], drops: [{ id: 'shade_cloth', chance: 0.3 }, { id: 'moonlit_ribbon', chance: 0.06 }],
     fight: { every: 1.5, reach: 34, windup: 0.3 },
   }),
   candlebride: mob({
