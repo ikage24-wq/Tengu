@@ -22,8 +22,11 @@ export const HAPPI = { lt: '#6a78c8', base: '#4a56a6', sh: '#3a4488', deep: '#2e
 export const OBI = { lt: '#ff7a86', base: '#e8394e', sh: '#bd2a40', ink: '#9e2236' };
 // his kamaboko horns: white, a pink swirl
 export const KAMA = { lt: '#ffffff', base: '#fff6f6', sh: '#f0dede', ink: '#d0a8b0', swirl: '#ff8aa8', swirlSh: '#e86a8c' };
-// his fin ears: pale gold, a peach glow
-export const FIN = { lt: '#fff8de', base: '#ffe9b4', sh: '#f2cc86', ink: '#d0a464' };
+// his fin ears, his crest and his tail's fin (2026-11-27: a soft peachy coral, so they read apart from his gold
+// hair and say dragon; pale gold before)
+export const FIN = { lt: '#fff0e8', base: '#ffc8b4', sh: '#f4a08e', ink: '#d07a6a' };
+// his horns (2026-11-27): a warm cream-gold dragon horn, the kamaboko's pink swirl kept at the root
+export const HORN = { lt: '#fff6dc', base: '#ffdc98', sh: '#eab464', ink: '#c08a4e' };
 // his chopsticks: red lacquer, gold bands, pale tips
 export const STICK = { base: '#d8344a', lt: '#ff6a78', sh: '#a82438', gold: '#f2c14e', tip: '#f6e6cc', ink: '#8e1e30' };
 export const STEAM = { lt: '#ffffff', base: '#f2f2fa', sh: '#dcdcec' };

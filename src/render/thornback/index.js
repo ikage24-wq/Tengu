@@ -84,14 +84,16 @@ function follow(st, key, goal, k, c, dt) {
 }
 
 // Stone and moss, the bib, the ball.
-const C = { lt: '#dfe6d6', base: '#bcc7b4', sh: '#a0ad99', deep: '#86947f', guide: '#aab6a3', nose: '#5e6d5a' };
-const INK = '#58694f';
-const MANE = { lt: '#cdd7c3', base: '#a5b29c', sh: '#8c9a85', line: '#7f8d79', swirl: '#7a8975' };
-const MOSS = { lt: '#a9c97c', base: '#86a95e', sh: '#6a8d4b' };
-const BIB = { lt: '#ec8b6c', base: '#d6674c', sh: '#b24f3b', line: '#9a4434' };
-const BALL = { lt: '#d9e0d0', base: '#b5c0ad', sh: '#949f8c', groove: '#7b8975' };
-const BROW = '#6b7a66';
-const EYE = { white: '#f6f4e6', iris0: '#b9781f', iris1: '#f3c65a', ring: '#8c5a17', pupil: '#3b3523', line: '#4c5c45' };
+// (2026-11-27, the player: murky grey-green, reads dull. Now a fresh spring sage stone, bright young
+// moss, and a bramble-berry bib and nose: the same guardian, sunnier.)
+const C = { lt: '#f1f8e2', base: '#d3e4b8', sh: '#b5cd98', deep: '#96b37c', guide: '#bfd6a4', nose: '#8a4f74' };
+const INK = '#5f8f57';
+const MANE = { lt: '#e2f0c8', base: '#bcd89a', sh: '#9fc17f', line: '#88ac6c', swirl: '#81a667' };
+const MOSS = { lt: '#c6ea8c', base: '#9bd162', sh: '#77b24a' };
+const BIB = { lt: '#f8a2c0', base: '#e76f9b', sh: '#c8547f', line: '#a9466c' };
+const BALL = { lt: '#e9f2da', base: '#c8dab0', sh: '#a6bf8f', groove: '#86a872' };
+const BROW = '#7f9e68';
+const EYE = { white: '#fffdf2', iris0: '#c0801c', iris1: '#ffd36a', ring: '#97611a', pupil: '#3b3127', line: '#5a6e4c' };
 
 const SCALE = 1.15;
 const BR = 7; // the ball's radius, game px
@@ -746,7 +748,7 @@ function face(ctx, a, sk, K) {
   ell(ctx, -rx * 0.25, -ry * 1.04, rx * 0.17, ry * 0.08, -0.2);
   ctx.fillStyle = tone(MOSS.lt);
   ctx.fill();
-  blush(ctx, sc(4.2), sc(4.8), sc(2.6), sc(1.7), 'rgba(232,150,126,A)', 0.32);
+  blush(ctx, sc(4.2), sc(4.8), sc(2.8), sc(1.8), 'rgba(246,140,160,A)', 0.55);
   ctx.restore();
   mouth(ctx, a, sk, K, st);
   // the far eye, a sliver round the front of the face; then the near eye
@@ -762,8 +764,10 @@ function eye(ctx, a, K, x, y, R, st, side, w) {
   const lx = clamp(zz.lookX ?? 0, -1, 1);
   const ly = clamp(zz.lookY ?? 0, -1, 1);
   // the brow: carved rounded curls over the eye, set by the mood
-  const browUp = st === 'play' || st === 'roar' ? 0.55 : st === 'proud' || st === 'content' ? 0.2 : st === 'focus' ? -0.35 : st === 'squeeze' ? -0.3 : st === 'sad' ? 0.3 : 0;
-  const browTilt = st === 'focus' || st === 'stern' ? 0.28 : st === 'sad' ? -0.3 : st === 'play' ? -0.12 : 0;
+  // (2026-11-27: its resting 'stern' face softened to a mild, proud little frown: the brow a touch
+  // higher and only just tilted, the eye wide open under a rounded lid; the fight face keeps its knit)
+  const browUp = st === 'play' || st === 'roar' ? 0.55 : st === 'proud' || st === 'content' ? 0.2 : st === 'focus' ? -0.35 : st === 'squeeze' ? -0.3 : st === 'sad' ? 0.3 : 0.14;
+  const browTilt = st === 'focus' ? 0.28 : st === 'stern' ? 0.12 : st === 'sad' ? -0.3 : st === 'play' ? -0.12 : 0;
   // (a bold carved brow: a thick arch over the eye that rolls into a curl at its back end)
   const brow = () => {
     const up = browUp * R * 0.32;
@@ -802,9 +806,11 @@ function eye(ctx, a, K, x, y, R, st, side, w) {
     }
   } else {
     // open: a carved socket, the round bulging eye, the amber iris and its crescent glint
-    const lid = st === 'roar' ? 0.12 : st === 'play' ? 0.2 : st === 'focus' ? 0.5 : st === 'sad' ? 0.46 : 0.36;
-    const low = st === 'focus' ? 0.62 : st === 'roar' ? 0.95 : st === 'play' ? 0.85 : 0.78;
-    const tilt = st === 'focus' ? 0.32 : st === 'stern' ? 0.1 : st === 'sad' ? -0.28 : 0;
+    const lid = st === 'roar' ? 0.12 : st === 'play' ? 0.16 : st === 'focus' ? 0.46 : st === 'sad' ? 0.42 : 0.2;
+    const low = st === 'focus' ? 0.66 : st === 'roar' ? 0.95 : st === 'play' ? 0.88 : 0.86;
+    const tilt = st === 'focus' ? 0.3 : st === 'stern' ? 0.05 : st === 'sad' ? -0.28 : 0;
+    // (the lid's lower edge arched, rounder the calmer it is)
+    const arch = st === 'focus' ? 0.08 : 0.3;
     ell(ctx, x, y + R * 0.06, rx * 1.12, R * 1.1);
     ctx.fillStyle = tone(C.sh);
     ctx.globalAlpha *= 0.6;
@@ -817,7 +823,7 @@ function eye(ctx, a, K, x, y, R, st, side, w) {
     ctx.save();
     ball();
     ctx.clip();
-    const ir = R * 0.66;
+    const ir = R * 0.72;
     const gx = x + (lx * 0.3 + 0.08) * R * (side > 0 ? 1 : 0.5);
     const gy = y + (ly * 0.26 + 0.08) * R;
     ell(ctx, gx, gy, ir * (side > 0 ? 1 : 0.55), ir);
@@ -851,8 +857,8 @@ function eye(ctx, a, K, x, y, R, st, side, w) {
     ctx.beginPath();
     ctx.moveTo(x - rx * 1.4, y - R * 1.6);
     ctx.lineTo(x + rx * 1.4, y - R * 1.6);
-    ctx.lineTo(x + rx * 1.4, ly0 + tilt * R * 0.6);
-    ctx.lineTo(x - rx * 1.4, ly0 - tilt * R * 0.6);
+    ctx.lineTo(x + rx * 1.4, ly0 + tilt * R * 0.6 + arch * R * 0.5);
+    ctx.quadraticCurveTo(x, ly0 - arch * R, x - rx * 1.4, ly0 - tilt * R * 0.6 + arch * R * 0.5);
     ctx.closePath();
     ctx.fillStyle = tone(C.base);
     ctx.fill();
@@ -870,9 +876,9 @@ function eye(ctx, a, K, x, y, R, st, side, w) {
     stroke(ctx, tone(C.deep), sc(0.3));
     // (the lid's heavy line, a soft tick at its outer corner; the lower lid a lighter line)
     ctx.beginPath();
-    ctx.moveTo(x - rx * 1.02, ly0 - tilt * R * 0.6 * 0.73 + R * 0.08);
-    ctx.lineTo(x + rx * 0.98, ly0 + tilt * R * 0.6 * 0.7);
-    stroke(ctx, tone(EYE.line), sc(0.62));
+    ctx.moveTo(x - rx * 1.02, ly0 - tilt * R * 0.6 * 0.73 + R * 0.08 + arch * R * 0.28);
+    ctx.quadraticCurveTo(x, ly0 - arch * R * 0.62, x + rx * 0.98, ly0 + tilt * R * 0.6 * 0.7 + arch * R * 0.28);
+    stroke(ctx, tone(EYE.line), sc(0.55));
     ctx.beginPath();
     ctx.moveTo(x - rx * 0.78, lo + R * 0.1);
     ctx.quadraticCurveTo(x, lo - R * 0.12, x + rx * 0.78, lo + R * 0.1);
@@ -933,10 +939,10 @@ function mouth(ctx, a, sk, K, st) {
     const i = f < 0.5 ? 0 : 1;
     const p = [mix(L[i][0], L[i + 1][0], 0.6), mix(L[i][1], L[i + 1][1], 0.6) + 0.1];
     ctx.beginPath();
-    ctx.moveTo(p[0] - sc(0.6), p[1]);
-    ctx.lineTo(p[0] - sc(0.55), p[1] - sc(0.7));
-    ctx.arc(p[0], p[1] - sc(0.7), sc(0.55), Math.PI, 0);
-    ctx.lineTo(p[0] + sc(0.6), p[1]);
+    ctx.moveTo(p[0] - sc(0.46), p[1]);
+    ctx.lineTo(p[0] - sc(0.42), p[1] - sc(0.45));
+    ctx.arc(p[0], p[1] - sc(0.45), sc(0.42), Math.PI, 0);
+    ctx.lineTo(p[0] + sc(0.46), p[1]);
     ctx.closePath();
     ctx.fillStyle = tone('#f1f1e4');
     ctx.fill();

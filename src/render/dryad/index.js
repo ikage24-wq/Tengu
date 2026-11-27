@@ -164,7 +164,8 @@ function dryadFx(ctx, a, m) {
       [...L, ...Rr.reverse()].forEach(([x, y], k) => (k ? shape.lineTo(x, y) : shape.moveTo(x, y)));
       shape.closePath();
       ctx.lineJoin = 'round';
-      ctx.strokeStyle = '#3a2d4f';
+      // (outlined in the bark's own deeper brown, as her root is: 2026-11-27)
+      ctx.strokeStyle = '#7a543e';
       ctx.lineWidth = 0.8;
       ctx.stroke(shape);
       const gr = ctx.createLinearGradient(dx - 2, 0, dx + 2, 0);
@@ -197,7 +198,7 @@ function dryadFx(ctx, a, m) {
       for (let k = 1; k <= 5; k++) pts.push([e[0] + Math.sin(k * 0.7) * 2.4, e[1] - (1 - Math.cos(k * 0.7)) * 2.4]);
       ctx.lineCap = 'round';
       ctx.lineJoin = 'round';
-      for (const [w, c] of [[2.2, '#2e4a26'], [1.4, '#6ab04c'], [0.5, '#a8dc7c']]) {
+      for (const [w, c] of [[2.2, '#4a7d3c'], [1.4, '#6ab04c'], [0.5, '#a8dc7c']]) {
         ctx.strokeStyle = c;
         ctx.lineWidth = w;
         ctx.beginPath();

@@ -15,7 +15,8 @@
 import { E, T, F, R, stroke } from './kit.js';
 import { ramp, crescent, shine } from './meadow.js';
 import { makeRig, stateBlend, clamp, inPart, TAU } from './rig.js';
-import { D2R, INK, fr, arcP, taper, pairOf, faceSprite, hold, window1, put, shift, MOODS, moodOf, dot, puff, sparkle, note } from './rigkit.js';
+import { D2R, INK, fr, arcP, taper, faceSprite, hold, window1, put, shift, MOODS, moodOf, dot, puff, sparkle, note } from './rigkit.js';
+import { sprite } from '../pixel.js';
 
 const sm = (key, w, h, shapes) => faceSprite(key, w, h, shapes);
 // A closed shape through these points, its corners rounded (corner cutting).
@@ -50,7 +51,13 @@ const spinWrap = (rig, spinning) => {
 // =====================================================================================
 const PLUM = ramp('#8a4a9a', { step: 9, turn: 8, lift: 12 });
 const GHOSTV = ramp('#f0eaff', { step: 8, turn: 8, lift: 3 });
-const vv = pairOf('vv');
+// (2026-11-27, the player: her edge read as a crunchy near-black pixel step beside the soft remakes.
+// Her own pair maker, not the shared one: the outlined pass draws a smooth anti-aliased ring in a
+// deeper shade of each part's own colour (`ink: 'own'`), the bare pass as before.)
+const vv = (key, w, h, shapes, pad = 3) => [
+  () => sprite(`rig|vv|${key}|own`, () => ({ w: Math.ceil(w), h: Math.ceil(h), shapes: shapes(), res: 2, soft: 'cel', crisp: true, selout: true, pad, ink: 'own' })),
+  () => sprite(`rig|vv|${key}|bare`, () => ({ w: Math.ceil(w), h: Math.ceil(h), shapes: shapes(), res: 2, soft: 'cel', crisp: true, bare: true, pad })),
+];
 // Below the waist (redrawn 2026-11-19, the player's pick "A, Ghost Cat Housekeeper": her long dress
 // became this): a short velvet peplum with a lace edge and a short apron over her ghost body, which
 // tapers away into the wisp her tail curls from. Box 62 x 40; the waist at (31, 1).

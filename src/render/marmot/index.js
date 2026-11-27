@@ -459,8 +459,11 @@ function belly(ctx, a, mode, D) {
 // The cloud ruff: ONE soft closed cloud round its neck, fuller under its chin, a few broad lobes on its
 // lower edge (never a row of beads), lilac in its shade, white on top. `puff` fluffs the lobes out (their
 // own shape grows, nothing is scaled); `flat` presses it down.
-const RUFF = [[-16, -1.4], [-12.6, -7.4], [-4, -9.4], [5, -8.8], [12.4, -7.2], [17.4, -2.6], [18.6, 3.6], [15.4, 9], [9, 11.4], [2.6, 9.4], [-3.6, 11], [-10, 9.2], [-15, 5.2]];
-const LOBES = new Set([6, 7, 8, 10, 11, 12]);
+// (2026-11-27, the player: the cloud mane barely showed, a plain beige blob. Now the star of the
+// design: a big soft cumulus ruff round its shoulders and chest, broad lobes of different sizes down
+// its lower edge and out to each side, puffed out over its shoulders.)
+const RUFF = [[-23, -4], [-21.4, -12.4], [-14, -17.4], [-4, -19], [7, -18.4], [16, -15.6], [23, -10.6], [27.6, -4], [30, 2.6], [27, 7.4], [28, 12.6], [22.6, 17.8], [16.4, 16.6], [10, 21], [3, 18.4], [-4, 20.8], [-10.4, 17], [-16.6, 18.4], [-21.4, 13], [-26.6, 8.2], [-27, 1.6]];
+const LOBES = new Set([8, 10, 11, 13, 15, 17, 19]);
 function ruff(ctx, a, mode, D) {
   const q = a.gl ?? {};
   const st = D.J.stern;
@@ -479,20 +482,41 @@ function ruff(ctx, a, mode, D) {
   ctx.save();
   smooth(ctx, pts);
   ctx.clip();
-  const lo = C([st[0] + 3, st[1] + 11]);
-  glow(ctx, lo[0], lo[1], 11, CLOUD[3], 0.6);
-  const sideB = C([st[0] - 13, st[1] + 6]);
-  glow(ctx, sideB[0], sideB[1], 7, CLOUD[2], 0.65);
-  const hi = C([st[0] + 5, st[1] - 4]);
-  glow(ctx, hi[0], hi[1], 9, CLOUD[0], 0.95);
-  // two soft inner curls where the cloud folds (thin, fading, fewer than the lobes)
-  for (const [p0, p1, p2] of [[[5, 5.4], [7.4, 3.2], [10.8, 4.2]], [[-7.6, 4.2], [-5.4, 2.6], [-2.4, 3.6]]]) {
+  const lo = C([st[0] + 3, st[1] + 18]);
+  glow(ctx, lo[0], lo[1], 16, CLOUD[3], 0.6);
+  const sideB = C([st[0] - 21, st[1] + 9]);
+  glow(ctx, sideB[0], sideB[1], 10, CLOUD[2], 0.65);
+  const hi = C([st[0] + 7, st[1] - 7]);
+  glow(ctx, hi[0], hi[1], 14, CLOUD[0], 0.95);
+  const hi2 = C([st[0] + 21, st[1] + 4]);
+  glow(ctx, hi2[0], hi2[1], 7, CLOUD[0], 0.8);
+  // three soft inner curls where the cloud folds (thin, fading, fewer than the lobes)
+  for (const [p0, p1, p2] of [[[9, 10], [12.6, 6.6], [17.6, 8.2]], [[-11.6, 8], [-8.2, 5.4], [-3.4, 6.8]], [[-1.6, 14.4], [2, 12], [6.2, 13.6]]]) {
     ctx.beginPath();
     ctx.moveTo(...C([st[0] + p0[0], st[1] + p0[1] - lift]));
     ctx.quadraticCurveTo(...C([st[0] + p1[0], st[1] + p1[1] - lift]), ...C([st[0] + p2[0], st[1] + p2[1] - lift]));
     pen(ctx, tone(a, CLOUD[2], 0.8), 0.55);
     ctx.stroke();
   }
+  ctx.restore();
+}
+// A little cloud cuff round a wrist (its winter coat coming in as cloud there too): one soft puff of
+// three broad lobes, matching the ruff and the tail.
+const CUFF = [[-4.6, -1.6], [-2.4, -4.4], [1.4, -4.6], [4.4, -2.2], [5, 1.4], [2.4, 3.8], [-1, 3], [-3.8, 3.6], [-5.4, 1.2]];
+function cuff(ctx, a, mode, D, k) {
+  const w = D.J[`wr${k}`];
+  if (!w) return;
+  const pts = CUFF.map(([x, y]) => ptOf(a, D, `hand${k}`, [w[0] + x, w[1] + y - 1.4]));
+  smooth(ctx, pts);
+  paint(ctx, a, mode, CLOUD[1]);
+  if (mode !== 'fill') return;
+  ctx.save();
+  smooth(ctx, pts);
+  ctx.clip();
+  const lo = ptOf(a, D, `hand${k}`, [w[0], w[1] + 3]);
+  glow(ctx, lo[0], lo[1], 2.6, k === 'F' ? CLOUD[3] : CLOUD[2], 0.6);
+  const hi = ptOf(a, D, `hand${k}`, [w[0] + 1, w[1] - 4]);
+  glow(ctx, hi[0], hi[1], 2.4, CLOUD[0], 0.95);
   ctx.restore();
 }
 // The cloud tail: one soft plume, its root inside the rump, three broad lobes, a curled tip.
@@ -1006,6 +1030,8 @@ const DRESS = {
   over: {
     torsoSkin: (ctx, a, mode, S, D) => belly(ctx, a, mode, D),
     neckSkin: (ctx, a, mode, S, D) => ruff(ctx, a, mode, D),
+    handFskin: (ctx, a, mode, S, D) => cuff(ctx, a, mode, D, 'F'),
+    handNskin: (ctx, a, mode, S, D) => cuff(ctx, a, mode, D, 'N'),
     head: (ctx, a, mode, S, D) => head(ctx, a, mode, D),
   },
   pose,

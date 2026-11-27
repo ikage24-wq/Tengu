@@ -14,7 +14,7 @@
 //   - her fight: the Sugar Bomb (a great dollop of frosting with a cherry flung up off her spoon), and
 //     Sprinkle Rain (sprinkles bursting up from her hands to the sky).
 import { bonbonRig } from './queenrig.js';
-import { bonbonDesign, SKIN_COLORS, SHEET_ROOT, DRILL_F, DRILL_N, SIDE_F, SIDE_N, CROWN_ROOT, FLAMES, SKIRT_ROOT, SPOON_GRIP, SPOON_BOWL, MOUTH } from './art.js';
+import { bonbonDesign, SKIN_COLORS, SHEET_ROOT, DRILL_F, DRILL_N, SIDE_F, SIDE_N, CROWN_ROOT, FLAMES, SKIRT_ROOT, TIER_MID, TIER_LOW, SPOON_GRIP, SPOON_BOWL, MOUTH } from './art.js';
 import { clamp } from '../mobs/rig.js';
 
 const TAU = Math.PI * 2;
@@ -851,7 +851,7 @@ const R = bonbonRig({
   design: bonbonDesign,
   skin: SKIN_COLORS,
   J: {
-    sheetJ: SHEET_ROOT, drillFJ: DRILL_F, drillNJ: DRILL_N, sideFJ: SIDE_F, sideNJ: SIDE_N, crownJ: CROWN_ROOT, skirtJ: SKIRT_ROOT,
+    sheetJ: SHEET_ROOT, drillFJ: DRILL_F, drillNJ: DRILL_N, sideFJ: SIDE_F, sideNJ: SIDE_N, crownJ: CROWN_ROOT, skirtJ: SKIRT_ROOT, tierMidJ: TIER_MID, tierLowJ: TIER_LOW,
     spoonJ: SPOON_GRIP, bowlJ: SPOON_BOWL, mouthB: MOUTH, cherryJ: [CROWN_ROOT[0], CROWN_ROOT[1] - 9],
     flame0: FLAMES[0], flame1: FLAMES[1], flame2: FLAMES[2], flame3: FLAMES[3],
   },

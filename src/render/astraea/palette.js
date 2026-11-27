@@ -1,22 +1,24 @@
 // Astraea, the Star Keeper's colours (2026-11-27): the sky at the edges of the night. Her hair the pale
 // aqua of starlight on a dawn sky (periwinkle in its shade), her long cloak a deep plum night lined with a
-// dusk that runs from rose to apricot and is sown with little gold stars, her dress the warm peach of
-// first light, the tower's soft gold for her clasp, trims and star beads, the cherry wood of her star
-// abacus, and the pale gold starlight of the stars she keeps. Every part outlined in a deeper shade of its
+// dusk that runs from rose to apricot and is sown with little gold stars, her dress a starry periwinkle
+// lilac (2026-11-27 polish: it was peach like her skin, and her arms vanished into it), the tower's soft
+// gold for her clasp, trims and star beads, the cherry wood of her star abacus, and the pale gold starlight of the stars she keeps. Every part outlined in a deeper shade of its
 // own colour, never near-black; her face bare.
 
 // her skin: warm and fair, a peach blush in its shade
 export const SKIN = ['#fffaf6', '#ffefe6', '#f6d8cf', '#e2b6ae'];
 export const SKIN_INK = '#cc8c8a';
-// her hair: pale starlight aqua, periwinkle in its shade, one pearly shine band; its ends warming to a
-// faint apricot glow, as if dawn lit them
-export const HAIR = { lt: '#f2fffd', base: '#c4ece8', sh: '#93cdd6', deep: '#7aa6cc', ink: '#6a90bc', tip: '#ffe6cc' };
+// her hair: pale starlight aqua, periwinkle in its shade, one pearly shine band; its ends warming through a
+// soft sage (`fade`) to an apricot glow (`tip`), as if dawn lit them
+export const HAIR = { lt: '#f2fffd', base: '#c4ece8', sh: '#93cdd6', deep: '#7aa6cc', ink: '#6a90bc', fade: '#dcebd6', tip: '#ffcca6' };
 // her cloak: a deep plum night outside, gold along its edge
 export const PLUM = { lt: '#9a74b8', base: '#74539a', sh: '#5c4284', deep: '#46336c', ink: '#46336c' };
 // its lining: dusk, rose at the top to apricot at the hem
 export const DUSK = { top: '#e88aa8', mid: '#f6a69c', low: '#ffcf9e', ink: '#c46a86' };
-// her dress: the warm peach of first light
-export const PEACH = { lt: '#fff4ec', base: '#ffdcca', sh: '#f6bfa8', deep: '#e29e8a', ink: '#d08a7e' };
+// her dress: a soft starry periwinkle-lilac, the sky just before the stars come out (cool against her
+// warm skin, so her arms and face read clearly against it); `sl` the lighter lilac of her sleeves, so
+// an arm across her bodice still reads as an arm
+export const GOWN = { lt: '#eee8ff', sl: '#ddd4fb', base: '#c9bdf2', sh: '#ab9ce0', deep: '#8f80c8', ink: '#7c6cb8' };
 // her collar, cuffs, petticoat and tights: soft cream
 export const CREAM = { lt: '#ffffff', base: '#fff8ee', sh: '#f2e2d2', deep: '#dcc6b0', ink: '#c8ac94' };
 // the soft gold of her clasp, trims, buckles and star beads

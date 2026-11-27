@@ -2,13 +2,14 @@
 // is cut from her body's own outline or wraps her limbs (never a flat panel pasted on, never over her face
 // or her arms), each piece in both of the rig's passes (mode 'line' its outline, 'fill' itself) so only her
 // outer edge is outlined, in a deeper shade of its own colour.
-//   cloak     a long night-sky cloak worn on her shoulders, tied at her throat with a gold star clasp and
-//             two plum cords, falling behind her to the floor in a soft train: its inside a plum night sown
+//   cloak     a long night-sky cloak worn on her shoulders, pinned at her throat with a gold star clasp,
+//             its front edges turned back over both shoulders (from the front, plum bands edged in gold), falling
+//             behind her past both sides to a hem that just brushes the floor: its inside a plum night sown
 //             with little gold stars and the faint lines of the Little Mochi, its outside the rose-to-apricot
 //             of dusk (seen as a warm band where it wraps round her back edge and turns up at the hem), a
 //             thin gold edge; its hood lowered in a soft roll behind her neck. Three parts on their own
-//             springs: the hood, the main fall, the train (behind her)
-//   bodice    her dress, the warm peach of first light, cut from her torso's own outline: a round cream
+//             springs: the hood, the main fall, its back hem (a beat later)
+//   bodice    her dress, a soft starry periwinkle lilac, cut from her torso's own outline: a round cream
 //             collar in two soft lobes, a plum sash at her waist embroidered with gold tally marks (she
 //             counts even on her clothes), its bow at the back
 //   skirt     from her hips to her knees, its hem spanning wherever her knees are (so it moves with her
@@ -20,7 +21,7 @@
 //             each (every bead a star she has counted), hanging from her hand by its top bar
 import { TAU, mix, tone, ell, pen, glow, clamp, sstep } from './fx.js';
 import { poly, chaikin, starBead } from './head.js';
-import { PLUM, DUSK, PEACH, CREAM, GOLD, SHOE, WOOD, STAR } from './palette.js';
+import { PLUM, DUSK, GOWN, CREAM, GOLD, SHOE, WOOD, STAR } from './palette.js';
 
 // ---------- The kit ----------
 export function enter(ctx, a, D, bone) {
@@ -101,7 +102,7 @@ function twinkle(ctx, x, y, s, col) {
 }
 
 // ---------- Her cloak (behind her; rig space, base px, feet at 0, facing +x) ----------
-// a.asCloak: { sw (its fall's swing), tr (the train's, later), op (thrown open 0..1), hood (the hood's bob) }
+// a.asCloak: { sw (its fall's swing), tr (its back hem's, later), op (thrown open 0..1), hood (the hood's bob) }
 function cloakGeom(a, D) {
   const C = a.asCloak ?? { sw: 0, tr: 0, op: 0, hood: 0 };
   const st = D.J.stern;
@@ -112,14 +113,16 @@ function cloakGeom(a, D) {
   const op = clamp(C.op, 0, 1.3);
   const sw = C.sw;
   const tr = C.tr;
-  // (the hem rests on the floor; sitting down, it pools there)
-  const hemY = Math.min(0.4, hip[1] + 24.6);
+  // (2026-11-27 polish: it hangs from her shoulders as a cloak, both its sides falling past her to a
+  // hem that only brushes the floor, never a train spread on the floor behind her (it read as a rug);
+  // its front edge drops from her near shoulder past her skirt, so the night inside shows beside her)
+  const hemY = Math.min(-0.4, hip[1] + 24.2);
   const lift = op * 6;
-  const back = [hip[0] - 15 - op * 12 + sw * 3, hemY - 0.6 - lift * 0.8];
-  const tip = [hip[0] - 22 - op * 13 + sw * 4.4 + tr * 5, hemY - 0.2 - lift * 1.4 - Math.max(0, tr) * 1.2];
-  const front = [hip[0] + 6.4 + op * 4 + sw * 1.6, hemY - 0.8 - lift * 0.3];
-  const midB = [mix(sF[0], back[0], 0.5) - 3.2 - op * 6 + sw * 1.4, mix(sF[1], back[1], 0.5)];
-  const midF = [mix(sN[0], front[0], 0.55) + 0.6 + op * 1.6 + sw * 0.6, mix(sN[1], front[1], 0.55)];
+  const back = [hip[0] - 16.5 - op * 12 + sw * 3, hemY - 1.2 - lift * 0.8];
+  const tip = [hip[0] - 18.5 - op * 13 + sw * 3.6 + tr * 3.2, hemY - 2.2 - lift * 1.4 - Math.max(0, tr) * 1.2];
+  const front = [hip[0] + 11.5 + op * 4 + sw * 1.4, hemY - 0.6 - lift * 0.3];
+  const midB = [mix(sF[0], back[0], 0.5) - 3 - op * 6 + sw * 1.4, mix(sF[1], back[1], 0.5)];
+  const midF = [mix(sN[0], front[0], 0.5) + 2.6 + op * 1.6 + sw * 0.7, mix(sN[1], front[1], 0.5)];
   return { sF, sN, nb, hip, back, tip, front, midB, midF, hemY, op, sw, tr, hood: C.hood ?? 0 };
 }
 function cloakPts(G, grow = 0) {
@@ -131,7 +134,7 @@ function cloakPts(G, grow = 0) {
     [sN[0] + 0.4, sN[1] + 1], [mix(sN[0], nb[0], 0.5), nb[1] - 0.6],
   ], 3);
 }
-// The fall and the train: the dusk outside first (a little bigger, so it shows as a warm band round the
+// The fall and its hem: the dusk outside first (a little bigger, so it shows as a warm band round the
 // back edge and the hem), then the night inside over it, its stars, its gold edge.
 export function cloak(ctx, a, mode, D, lw) {
   const G = cloakGeom(a, D);
@@ -239,22 +242,63 @@ export function hood(ctx, a, mode, D, lw) {
     ctx.stroke();
   }
 }
-// The clasp at her throat: a gold star, two plum cords running back over her shoulders to the cloak.
-export function clasp(ctx, a, mode, D, lw) {
+// Where the cloak lies over her shoulders (2026-11-27 polish, so it reads as worn from the front): its
+// front edges turned back from the clasp across her collarbones and over her shoulders' round, showing
+// the night inside (plum, a little gold star sown on each), a thin gold edge along the fold. In the
+// chest's frame (it rides her shoulders), bobbing a touch on the hood's spring; drawn with the clasp,
+// over her body and under her head and near arm.
+export function mantle(ctx, a, mode, D, lw, k) {
   ctx.save();
   enter(ctx, a, D, 'chest');
   const st = D.J.stern;
   const cx = st[0] + 1;
   const cy = st[1] + 0.6;
-  for (const [sx, k] of [[D.J.shF[0] + 1.5, -1], [D.J.shN[0] - 1.6, 1]]) {
-    ctx.beginPath();
-    ctx.moveTo(cx, cy - 0.9);
-    ctx.quadraticCurveTo((cx + sx) / 2, cy - 2.6, sx, st[1] - 1.2 + (k < 0 ? 0.4 : 0));
-    ctx.lineTo(sx + k * 0.2, st[1] + 0.5);
-    ctx.quadraticCurveTo((cx + sx) / 2, cy - 0.8, cx, cy + 0.9);
-    ctx.closePath();
-    paint(ctx, a, mode, PLUM.base, PLUM.ink, lw / D.SC);
+  const sh = k === 'N' ? D.J.shN : D.J.shF;
+  const s = Math.sign(sh[0] - cx) || (k === 'N' ? 1 : -1);
+  const b = clamp((a.asCloak?.hood ?? 0) * 0.35, -0.5, 0.5);
+  const x0 = cx + s * 2.4;
+  const top = [[x0, cy - 2.2], [cx + s * 4.6, st[1] - 3.4], [mix(cx, sh[0], 0.75), sh[1] - 3.5], [sh[0] + s * 1.8, sh[1] - 3.3], [sh[0] + s * 4.3, sh[1] - 0.9], [sh[0] + s * 4.8, sh[1] + 3.4 + b]];
+  const low = [[sh[0] + s * 2.4, sh[1] + 4.4 + b], [sh[0] - s * 0.4, sh[1] + 2.6 + b * 0.8], [mix(cx, sh[0], 0.5), cy + 1.2 + b * 0.5], [x0, cy + 0.4]];
+  const pts = chaikin([...top, ...low], 2);
+  poly(ctx, pts);
+  if (mode === 'line') {
+    pen(ctx, tone(a, PLUM.ink), lw / D.SC);
+    ctx.stroke();
+    ctx.restore();
+    return;
   }
+  const g = ctx.createLinearGradient(0, sh[1] - 3.5, 0, cy + 1.2);
+  g.addColorStop(0, tone(a, PLUM.lt));
+  g.addColorStop(1, tone(a, PLUM.base));
+  ctx.fillStyle = g;
+  ctx.fill();
+  ctx.save();
+  poly(ctx, pts);
+  ctx.clip();
+  // (its round over the shoulder catches the light; a soft edge of its own deeper plum inside it, so it
+  // reads against her dress where the rig draws no line)
+  glow(ctx, sh[0] + s * 0.4, sh[1] - 2.2, 3.2, '#b896d0', 0.6);
+  pen(ctx, tone(a, PLUM.deep, 0.7), 0.7);
+  poly(ctx, pts);
+  ctx.stroke();
+  const t = a.t ?? 0;
+  twinkle(ctx, mix(cx, sh[0], 0.7), sh[1] - 0.6, 0.7, tone(a, GOLD.lt, 0.7 + 0.25 * Math.sin(t * 1.7 + s)));
+  ctx.restore();
+  // (its gold edge along the fold)
+  pen(ctx, tone(a, GOLD.sh), 0.4);
+  ctx.beginPath();
+  chaikin(low, 1, true).forEach((p, i) => (i ? ctx.lineTo(p[0], p[1] - 0.5) : ctx.moveTo(p[0], p[1] - 0.5)));
+  ctx.stroke();
+  ctx.restore();
+}
+// The clasp at her throat: a gold star pinning the cloak's two sides together (its far side with it).
+export function clasp(ctx, a, mode, D, lw) {
+  mantle(ctx, a, mode, D, lw, 'F');
+  ctx.save();
+  enter(ctx, a, D, 'chest');
+  const st = D.J.stern;
+  const cx = st[0] + 1;
+  const cy = st[1] + 0.6;
   if (mode === 'fill') {
     glow(ctx, cx, cy, 4.4, STAR.glow, 0.45);
     star5(ctx, cx, cy, 3, tone(a, GOLD.base), tone(a, GOLD.ink), 0.5);
@@ -274,16 +318,16 @@ export function bodice(ctx, a, D) {
   ctx.save();
   poly(ctx, T);
   ctx.clip();
-  ctx.fillStyle = tone(a, PEACH.base);
+  ctx.fillStyle = tone(a, GOWN.base);
   ctx.fillRect(-200, -200, 400, 400);
   enter(ctx, a, D, 'chest');
   const st = D.J.stern;
   const rb = D.J.ribs;
   const cx = st[0] + 1;
-  glow(ctx, cx + 6, st[1] + 8, 11, PEACH.lt, 0.7);
-  glow(ctx, cx - 12, rb[1] + 4, 11, PEACH.sh, 0.7);
+  glow(ctx, cx + 6, st[1] + 8, 11, GOWN.lt, 0.7);
+  glow(ctx, cx - 12, rb[1] + 4, 11, GOWN.sh, 0.7);
   // (soft gathers down from the collar)
-  pen(ctx, tone(a, PEACH.sh, 0.8), 0.5);
+  pen(ctx, tone(a, GOWN.sh, 0.8), 0.5);
   for (const dx of [-3.4, 3.8]) {
     ctx.beginPath();
     ctx.moveTo(cx + dx, st[1] + 4);
@@ -390,7 +434,7 @@ export function skirt(ctx, a, mode, D, lw) {
   poly(ctx, under);
   paint(ctx, a, mode, CREAM.base, CREAM.ink, lw);
   poly(ctx, pts);
-  if (mode === 'line') return paint(ctx, a, mode, null, PEACH.ink, lw);
+  if (mode === 'line') return paint(ctx, a, mode, null, GOWN.ink, lw);
   let ymin = Infinity;
   let ymax = -Infinity;
   let xmin = Infinity;
@@ -402,23 +446,27 @@ export function skirt(ctx, a, mode, D, lw) {
     xmax = Math.max(xmax, x);
   }
   const g = ctx.createLinearGradient(0, ymin, 0, ymax);
-  g.addColorStop(0, tone(a, PEACH.sh));
-  g.addColorStop(0.3, tone(a, PEACH.base));
-  g.addColorStop(1, tone(a, PEACH.sh));
+  g.addColorStop(0, tone(a, GOWN.sh));
+  g.addColorStop(0.3, tone(a, GOWN.base));
+  g.addColorStop(1, tone(a, GOWN.sh));
   ctx.fillStyle = g;
   ctx.fill();
   ctx.save();
   poly(ctx, pts);
   ctx.clip();
-  glow(ctx, xmin + (xmax - xmin) * 0.64, ymin + (ymax - ymin) * 0.4, (xmax - xmin) * 0.4, PEACH.lt, 0.6);
-  glow(ctx, xmin + 2, ymax - 3, (xmax - xmin) * 0.35, PEACH.deep, 0.45);
+  glow(ctx, xmin + (xmax - xmin) * 0.64, ymin + (ymax - ymin) * 0.4, (xmax - xmin) * 0.4, GOWN.lt, 0.6);
+  glow(ctx, xmin + 2, ymax - 3, (xmax - xmin) * 0.35, GOWN.deep, 0.45);
   // (soft folds falling from the hips toward the hem)
-  pen(ctx, tone(a, PEACH.deep, 0.5), 0.45);
+  pen(ctx, tone(a, GOWN.deep, 0.5), 0.45);
   for (const u of [0.3, 0.56, 0.8]) {
     ctx.beginPath();
     ctx.moveTo(xmin + (xmax - xmin) * (0.35 + u * 0.3), ymin + 2);
     ctx.quadraticCurveTo(xmin + (xmax - xmin) * (0.25 + u * 0.5), ymin + (ymax - ymin) * 0.6, xmin + (xmax - xmin) * u, ymax);
     ctx.stroke();
+  }
+  // (a few faint stars sown on it, pale, placed from the skirt's own box so they ride with it)
+  for (const [u, v, s] of [[0.3, 0.34, 0.7], [0.62, 0.22, 0.55], [0.78, 0.52, 0.65], [0.46, 0.6, 0.5], [0.2, 0.7, 0.45]]) {
+    twinkle(ctx, xmin + (xmax - xmin) * u, ymin + (ymax - ymin) * v, s, tone(a, GOWN.lt, 0.75));
   }
   // (the plum band at the hem, a little gold constellation along it)
   ctx.beginPath();
@@ -448,16 +496,23 @@ export function sleeve(ctx, a, mode, D, k, lw) {
   const pts = [sh, lerp2(sh, el, 0.5), el, lerp2(el, wr, 0.45), lerp2(el, wr, 0.8)];
   const W = [A.aw0 * 1.5, A.aw0 * 1.4, A.ew * 1.62, A.ew * 1.85, A.aw1 * 1.95].map((v) => v * D.SC);
   tubePath(ctx, pts, W);
-  paint(ctx, a, mode, near ? PEACH.base : PEACH.sh, PEACH.ink, lw);
+  paint(ctx, a, mode, near ? GOWN.sl : GOWN.sh, GOWN.ink, lw);
   if (mode === 'fill') {
     ctx.save();
     tubePath(ctx, pts, W);
     ctx.clip();
-    glow(ctx, ...lerp2(sh, el, 0.3), W[0] * 0.9, near ? PEACH.lt : PEACH.base, 0.6);
-    glow(ctx, ...lerp2(el, wr, 0.6), W[3] * 0.8, PEACH.deep, 0.35);
+    glow(ctx, ...lerp2(sh, el, 0.3), W[0] * 0.9, near ? GOWN.lt : GOWN.base, 0.6);
+    // (a soft edge of its own deeper lilac all round inside it, so the near arm reads even across her
+    // bodice, where the rig draws no line)
+    if (near) {
+      tubePath(ctx, pts, W);
+      pen(ctx, tone(a, GOWN.sh, 0.85), 0.55);
+      ctx.stroke();
+    }
+    glow(ctx, ...lerp2(el, wr, 0.6), W[3] * 0.8, GOWN.deep, 0.35);
     // (the fullness gathering toward the cuff)
     const an = Math.atan2(wr[1] - el[1], wr[0] - el[0]);
-    pen(ctx, tone(a, PEACH.deep, 0.5), 0.35);
+    pen(ctx, tone(a, GOWN.deep, 0.5), 0.35);
     for (const s of [-0.5, 0.3]) {
       const p0 = lerp2(el, wr, 0.25);
       const p1 = lerp2(el, wr, 0.76);

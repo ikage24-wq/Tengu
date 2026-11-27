@@ -479,7 +479,8 @@ function whaleRig(look = {}) {
     const f = (v) => Math.round(v + (255 - v) * k);
     return al >= 1 ? `rgb(${f(r)},${f(g)},${f(b)})` : `rgba(${f(r)},${f(g)},${f(b)},${al})`;
   };
-  const edge = (ctx, col = INKD, w = 2) => {
+  // (look.lineW: a dress's own outline weight, the base's 2)
+  const edge = (ctx, col = INKD, w = look.lineW ?? 2) => {
     ctx.strokeStyle = col;
     ctx.lineWidth = w;
     ctx.lineJoin = 'round';

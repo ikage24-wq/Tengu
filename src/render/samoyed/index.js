@@ -40,10 +40,13 @@ import { fightState, pickPiece, settleFace, easeKeys, bubble, zee, ribbon } from
 const BIG = 1.12;
 const LW = 1.6 / BIG;
 const ID = 'cloudsamoyed';
-const INK = '#9a8cb2';
-const FUR = ['#ffffff', '#f4f1f8', '#dcd6e8', '#bdb4d0'];
-const EARIN = ['#ffdfe6', '#f4b8c8'];
-const SMOCK = ['#eef4ff', '#c6daf8', '#a0bae6', '#7c94c4'];
+// (2026-11-27, the player: very pale and plain. Its white fur now warms to cream in the light and cools
+// to a gentle sky blue-grey in the shade, its outline a touch deeper, its smock a clearer periwinkle,
+// its ears pinker, its muzzle and cheeks cream, so its face reads at a glance.)
+const INK = '#8b80b2';
+const FUR = ['#ffffff', '#fbf6ee', '#d8def0', '#b2bcdc'];
+const EARIN = ['#ffd4de', '#f2a4ba'];
+const SMOCK = ['#e8f0ff', '#b4cdf6', '#8eaae6', '#6d86c4'];
 const STITCH = '#fff8ec';
 const BRASS = ['#fff0b0', '#f2c860', '#c8963a'];
 const CORD = '#8a6a9a';
@@ -325,10 +328,13 @@ function head(ctx, a, mode, D) {
     pen(ctx, tone(a, FUR[2], 0.7), 0.7);
     ctx.stroke();
     glow(ctx, 20, 3, 7, FUR[0], 0.9);
+    // (a warm cream muzzle and cheek fluff)
+    glow(ctx, 19, 5.4, 7.6, '#fff0d8', 0.85);
+    glow(ctx, -10, 9, 6, '#fff0dc', 0.55);
     ctx.restore();
     for (const [cx, cy, k] of [[-7.4, 6.4, 0.6], [9.4, 7.4, 1]]) {
       ell(ctx, cx, cy, 2.7, 1.6);
-      ctx.fillStyle = tone(a, '#ffa6bc', 0.42 * k + (q.blush ?? 0) * 0.3);
+      ctx.fillStyle = tone(a, '#ff9fb6', 0.55 * k + (q.blush ?? 0) * 0.3);
       ctx.fill();
     }
     eye(ctx, a, -2.6, -2.4, -1, f);

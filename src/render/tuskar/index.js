@@ -6,10 +6,10 @@
 // head drawn here from scratch over the mannequin's (the shared face never used).
 //   look    snowy wool shaded lilac, a peach face and trunk; three round wool puffs on his crown
 //           (each on its own spring, rooted inside it); round ears with rosy insides; a long trunk (a
-//           chain of five sprung pieces, curling at the tip, a soft rim of its own colour so it reads
-//           over his face); two ivory tusks curving up beside it, a woven root band and a leaf (on a
-//           spring) round the near one; a shaggy wool collar over his shoulders (its scalloped hem on
-//           springs), a green root sash with a gold acorn badge (GATE GUARD) and a hanging sash end
+//           chain of five sprung pieces from his snout below his eyes, curling at the tip, never across
+//           his eyes or cheeks, a soft rim of its own colour); two ivory tusks curving up beside it,
+//           a woven root band and a leaf (on a spring) round the near one; a shaggy wool collar over
+//           his shoulders (its scalloped hem on springs), a green root sash with a gold acorn badge (GATE GUARD) and a hanging sash end
 //           (sprung), a pale belly, shaggy wool cuffs over big round feet with toenails, a tail tuft
 //           (sprung); his own soft lilac-grey outline on the outer edge only, his face bare.
 //   eyes    tall drop eyes: a frosty teal iris (paler low in it), a navy pupil, a big rounded-square
@@ -23,10 +23,10 @@
 //           sniffing about for acorns; shaking the dust out of his wool (a twist this way and that,
 //           dust puffing off him).
 //   fight   (world/dungeon.js `boar`, world/hollow.js) his swings in turn: Tusk Toss (head down,
-//           then up through you, "HUP!"), Trunk Slap (the trunk swung back over his shoulder and
+//           then up through you, "HUP!"), Trunk Slap (the trunk swung back under his chin and
 //           whipped down), Shoulder Barge (a lunge, shoulder first); the Gore (m.big): a two-tusk
 //           lunge from a deep crouch. Lowering his tusks (m.aim): a deep crouch, tusks level, trunk
-//           curled up out of the way, a foot pawing dust, a steam snort ("hrrmph"). The Charge
+//           curled under out of the way, a foot pawing dust, a steam snort ("hrrmph"). The Charge
 //           (m.charging): leaning right in, legs pounding, a dust trail; stampeding, he trumpets at
 //           each turn. A pillar or the wall (m.hold 'stun'): CLONK, his head snaps back, stars and
 //           rubble; then he sits down hard, spiral eyes, his trunk limp, stars wheeling. The Belly
@@ -271,13 +271,17 @@ function mouth(ctx, a, mo, x, y) {
     ctx.fill();
   }
 }
-// The trunk: a chain of five sprung segments from between his eyes, tapering, the tip curling.
+// The trunk: a chain of five sprung segments, tapering, the tip curling. (2026-11-27, the player: it
+// lay across his face in every frame. It grows from his snout now, below his eyes and between his
+// cheeks, a little slimmer and shorter; it hangs below his chin, and every pose that lifts it curls it
+// under his chin (a J, the tip up for a toot) or out in front past his cheek, never up over his eyes,
+// brows or cheeks; his mouth shows beside its root.)
 function trunkPts(a) {
   const q = a.tkQ ?? {};
-  const tr = a.tkTrunk ?? [92, 88, 76, 50, 14];
+  const tr = a.tkTrunk ?? [92, 96, 84, 56, 20];
   const tx = (q.turn ?? 0.35) * 5;
-  const pts = [[tx, 3.8]];
-  const L = [5.8, 5.6, 5.2, 4.6, 3.8];
+  const pts = [[tx - 0.6, 8.6]];
+  const L = [4.8, 4.6, 4.4, 4, 3.4];
   for (let i = 0; i < 5; i++) {
     const an = (tr[i] * Math.PI) / 180;
     const p = pts[pts.length - 1];
@@ -287,7 +291,7 @@ function trunkPts(a) {
 }
 function trunk(ctx, a, mode) {
   const pts = trunkPts(a);
-  const W = [7.4, 6.6, 5.8, 5, 4.4, 4.1];
+  const W = [6, 5.6, 5.2, 4.6, 4, 3.8];
   const L = [];
   const Rt = [];
   for (let i = 0; i < pts.length; i++) {
@@ -351,7 +355,8 @@ function tusk(ctx, a, mode, side, near) {
   const q = a.tkQ ?? {};
   const tx = (q.turn ?? 0.35) * 5;
   const sx = side * (near ? 1 : 0.8);
-  const r = [tx * 0.5 + side * 10.5, 11];
+  // (rooted a little wider since 2026-11-27, so his mouth shows between the trunk and the near tusk)
+  const r = [tx * 0.7 + side * 12, 11];
   const up = q.tuskUp ?? 0;
   const pts = [r, [r[0] + sx * 4.6, r[1] + 9], [r[0] + sx * 10, r[1] + 14.6 - up * 2], [r[0] + sx * 16, r[1] + 11.4 - up * 5], [r[0] + sx * 18.6, r[1] + 3 - up * 8]];
   const W = [5.4, 5, 4.2, 3.2, 1.8];
@@ -508,7 +513,7 @@ function head(ctx, a, mode, D, part) {
     // cheeks
     const bl = { hurt: 0.75, shout: 0.7, happy: 0.75, sad: 0.65, teary: 0.7, sniffly: 0.75, angry: 0.65, proud: 0.6 }[face] ?? 0.5;
     for (const s of [-1, 1]) {
-      ell(ctx, tx + s * 15.2, 7.6, 3.6, 2.2);
+      ell(ctx, tx + s * 15.6, 6.2, 3.6, 2.2);
       ctx.fillStyle = tone(a, '#ff9e9a', bl * (s > 0 ? 1 : 0.8));
       ctx.fill();
     }
@@ -518,7 +523,7 @@ function head(ctx, a, mode, D, part) {
     if (q.tears) for (const s of [-1, 1]) tear(ctx, tx + s * 12.5, 5 + (((a.t ?? 0) * 1.4) % 1) * 3, 1.1, 0.9);
   }
   // the trunk, then the near tusk over it; his mouth tucked under the trunk's root
-  if (mode === 'fill') mouth(ctx, a, q.mouth ?? 'proud', tx + 6.4 + turn * 1.4, 13.6);
+  if (mode === 'fill') mouth(ctx, a, q.mouth ?? 'proud', tx + 5.6 + turn * 0.6, 13.4);
   trunk(ctx, a, mode);
   tusk(ctx, a, mode, 1, true);
   ctx.restore();
@@ -682,7 +687,7 @@ function pose(m, a, out, c) {
       if (mo) q.mouth = mo;
     }
   };
-  const HANG = [92, 88, 76, 50, 14];
+  const HANG = [92, 96, 84, 56, 20];
   let trunkGoal = HANG.map((v, i) => v + (i < 3 ? Math.sin(t * 1.1) * 4 : 0));
   const trunkTo = (g, k = 1) => {
     if (k > 0.001) trunkGoal = trunkGoal.map((v, i) => v + (g[i] - v) * k);
@@ -733,7 +738,7 @@ function pose(m, a, out, c) {
     out.shN = (out.shN ?? 0) - 18 * walkW;
     out.shF = (out.shF ?? 0) + 18 * walkW;
     out.head = (out.head ?? 0) - 2 * walkW;
-    trunkTo([94 + Math.sin(t * 6) * 8, 86 + Math.sin(t * 6 - 0.8) * 10, 70, 44, 10], walkW);
+    trunkTo([94 + Math.sin(t * 6) * 8, 90 + Math.sin(t * 6 - 0.8) * 10, 76, 48, 14], walkW);
     q.turn = mix(q.turn, 0.6, walkW);
   }
   if (m.engaged || (m.aggroUntil ?? 0) > now) say('angry', 'grit');
@@ -742,7 +747,7 @@ function pose(m, a, out, c) {
     // after landing a hit: chest out, a proud little toot
     const k = win(gloat, 0, 0.2, 1, 1.4);
     go({ tilt: -6, chest: -8, head: -10 }, k);
-    trunkTo([40, 0, -30, -50, -70], k);
+    trunkTo([84, 34, 0, -40, -85], k);
     say('happy', 'grin', k);
     if (k > 0.3) q.fx = { kind: 'toot', u: gloat };
   }
@@ -767,7 +772,7 @@ function pose(m, a, out, c) {
         const u = sstep(stunU / 0.1);
         const back = 1 - sstep((stunU - 0.25) / 0.25);
         go({ tilt: 24 - 44 * u, head: 18 - 44 * u, x: -0.06 * u, drop: 0.1, shN: -80 * u, elN: -20, shF: 80 * u, elF: 20, fxN: 0.2, fxF: -0.3, hop: 0.03 * u * back });
-        trunkTo([40, -10, -60, -100, -150]);
+        trunkTo([60, 20, 0, -20, -40]);
         q.face = 'hurt';
         q.mouth = 'shout';
         q.turn = 1;
@@ -798,7 +803,7 @@ function pose(m, a, out, c) {
         const k = sstep(flop / 0.25);
         const wig = Math.sin(flop * 16);
         go({ drop: 0.3 * k, tilt: 4, pelvis: wig * 6 * k, waist: -wig * 4 * k, head: -6, shN: -70, elN: -20, shF: 70, elF: 20, fxN: 0.2, fxF: -0.2 }, 1);
-        trunkTo([60, 20, -10, -40, -70], k);
+        trunkTo([70, 30, 0, -30, -60], k);
         q.face = 'smug';
         q.mouth = 'grin';
         q.turn = 0.7;
@@ -807,7 +812,7 @@ function pose(m, a, out, c) {
         // WHEEE: the starfish leap, up and over, coming down belly first as the warning ends
         const u = (flop - lift0) / (warn - lift0);
         go({ hop: 0.34 * Math.sin(Math.PI * u), tilt: mix(-6, 64, sstep((u - 0.25) / 0.75)), head: -14, shN: -112, elN: -10, shF: 112, elF: 10, fxN: -0.2, fyN: -0.26, fxF: -0.4, fyF: -0.22, drop: 0 });
-        trunkTo([30, -6, -36, -60, -86]);
+        trunkTo([70, 20, -5, -15, -30]);
         q.face = 'shout';
         q.mouth = 'shout';
         q.turn = 0.9;
@@ -818,7 +823,7 @@ function pose(m, a, out, c) {
         const u = flop - warn;
         const up = sstep((u - 0.5) / 0.3);
         go({ tilt: 70, drop: 1, head: -30, shN: -100, elN: -20, shF: 100, elF: 20, fxN: -0.4, fxF: -0.6 }, 1 - up);
-        trunkTo([0, -10, -20, -40, -70], 1 - up);
+        trunkTo([40, 10, 0, -10, -30], 1 - up);
         q.face = up > 0.5 ? 'proud' : 'happy';
         q.mouth = 'grin';
         q.turn = 0.9;
@@ -828,7 +833,7 @@ function pose(m, a, out, c) {
     } else if (ch) {
       // the rush: leaning right in, head down, legs pounding, wool and ears streaming
       go({ tilt: 30, head: 24, shN: 40, elN: -70, shF: -40, elF: 70, drop: 0.12 }, 0.85);
-      trunkTo([70, 40, 0, -40, -80]);
+      trunkTo([70, 40, 10, -20, -50]);
       q.face = 'focus';
       q.mouth = 'grit';
       q.look = [1, 0.3];
@@ -836,10 +841,10 @@ function pose(m, a, out, c) {
       q.earOut = 1;
       q.fx = { kind: 'rush', u: now };
       if (turnU >= 0 && turnU < 0.8) {
-        // stampeding: a trumpet at each turn, trunk flung up
+        // stampeding: a trumpet at each turn, trunk flung out in front
         const k = win(turnU, 0, 0.12, 0.55, 0.8);
         go({ tilt: 10, head: -12 }, k);
-        trunkTo([20, -10, -40, -62, -84], k);
+        trunkTo([70, 20, -5, -15, -30], k);
         if (k > 0.4) {
           q.face = 'shout';
           q.mouth = 'shout';
@@ -847,11 +852,11 @@ function pose(m, a, out, c) {
         }
       }
     } else if (m.aim || sceneAim) {
-      // lowering his tusks down the lane: a deep crouch, head down, tusks level, trunk curled up
+      // lowering his tusks down the lane: a deep crouch, head down, tusks level, trunk curled under
       // out of the way, his near foot pawing the floor, snorting steam
       const paw = Math.sin(now * 9);
       go({ drop: 0.46, tilt: 22, head: 18, shN: -14, elN: 40, shF: 10, elF: -30, fxN: 0.32 + paw * 0.12, fyN: -0.08 + Math.min(0, paw) * 0.1, fxF: -0.3 });
-      trunkTo([50, 10, -30, -70, -110]);
+      trunkTo([96, 120, 150, 190, 230]);
       q.face = 'focus';
       q.mouth = 'grit';
       q.look = [1, 0.2];
@@ -862,7 +867,7 @@ function pose(m, a, out, c) {
       // his Wargs: reared back, a short bugle blast from his trunk
       const k = win(call, 0, 0.2, 1.2, 1.6);
       go({ tilt: -12, chest: -8, head: -16, shN: -120, elN: -60, shF: 40, elF: 30, fyF: -0.1 }, k);
-      trunkTo([10, -24, -52, -70, -96], k);
+      trunkTo([72, 22, -3, -13, -28], k);
       say('shout', 'shout', k);
       q.turn = 0.8;
       q.earOut = k;
@@ -873,7 +878,7 @@ function pose(m, a, out, c) {
       const s = since >= 0 && since < 0.8 ? since : -1;
       const hitK = s >= 0 ? sstep(s / 0.08) * (1 - sstep((s - 0.35) / 0.4)) : 0;
       go({ drop: 0.5 * sstep(wind / 0.6) * (1 - hitK * 0.6), tilt: 14 + 22 * hitK, head: 22, x: -0.03 * (1 - hitK) + 0.12 * hitK, shN: 30 - 60 * hitK, elN: -40, shF: -30, elF: 40, fxN: 0.3, fxF: -0.35 });
-      trunkTo([40, 0, -40, -80, -120]);
+      trunkTo([65, 20, 0, -20, -40]);
       q.face = hitK > 0.3 ? 'shout' : 'angry';
       q.mouth = hitK > 0.3 ? 'shout' : 'grit';
       q.turn = 1;
@@ -887,20 +892,20 @@ function pose(m, a, out, c) {
         // Tusk Toss: head down and drawn back, then flung up through you, HUP!
         go({ drop: 0.38, tilt: 16, head: 20, shN: 34, elN: -30, shF: -30, elF: 30, fxN: 0.3, fxF: -0.25, x: -0.02 }, wK);
         go({ drop: 0, tilt: -8, head: -24, shN: -46, elN: -30, shF: 40, elF: 30, fxN: 0.3, fxF: -0.25, x: 0.05, hop: 0.03 }, hitK);
-        trunkTo([40, 10, -20, -50, -80], wK);
-        trunkTo([20, -20, -50, -70, -90], hitK);
+        trunkTo([80, 50, 20, -10, -40], wK);
+        trunkTo([70, 20, -5, -15, -30], hitK);
         q.tuskUp = 0.8 * hitK;
       } else if (kind === 'slap') {
-        // Trunk Slap: the trunk swung back over his shoulder, then whipped down in front
+        // Trunk Slap: the trunk swung back under his chin to the far side, then whipped out in front
         go({ tilt: -6, head: -8, turnC: -0.4, shN: -40, elN: -40, shF: 30, elF: 20 }, wK);
         go({ tilt: 14, head: 14, turnC: 0.4, x: 0.04, shN: -20, elN: -10, shF: 40, elF: 30 }, hitK);
-        trunkTo([-60, -120, -160, -190, -210], wK);
-        trunkTo([10, 20, 40, 70, 100], hitK);
+        trunkTo([100, 140, 175, 210, 245], wK);
+        trunkTo([30, 10, 20, 40, 70], hitK);
       } else {
         // Shoulder Barge: drawn back, then a lunge, shoulder first
         go({ tilt: -10, head: -4, x: -0.03, turnC: -0.5, shN: 20, elN: -60, shF: -20, elF: 60 }, wK);
         go({ tilt: 22, head: 10, x: 0.1, turnC: 0.6, hop: 0.03, shN: 40, elN: -80, shF: -40, elF: 60, fxN: 0.35, fxF: -0.35 }, hitK);
-        trunkTo([70, 40, 0, -40, -80]);
+        trunkTo([70, 40, 10, -20, -50]);
       }
       q.face = hitK > 0.3 ? (kind === 'toss' ? 'shout' : 'hurt') : 'angry';
       if (kind !== 'toss' && hitK > 0.3) q.face = 'shout';
@@ -913,7 +918,7 @@ function pose(m, a, out, c) {
       const last = (wall.hits?.[1] ?? -9) > (wall.hits?.[-1] ?? -9) ? 1 : -1;
       const lit = now - Math.max(wall.hits?.[1] ?? -9, wall.hits?.[-1] ?? -9) < 1.2 ? 1 : 0;
       go({ drop: 0.2, tilt: 8 + last * 4 * lit, head: 14, shN: 20, elN: 110, shF: -20, elF: -110, fxN: 0.3, fxF: -0.3 });
-      trunkTo([60, 30, -10, -50, -90]);
+      trunkTo([80, 50, 10, -30, -70]);
       q.face = 'angry';
       q.mouth = 'grit';
       q.turn = 0.8;
@@ -926,16 +931,16 @@ function pose(m, a, out, c) {
       const pump = Math.sin(now * 8) * (1 - sstep((u - 0.6) / 0.15));
       const hopU = clamp((u - 0.72) / 0.24, 0, 1);
       go({ drop: 0.25 + 0.1 * pump, tilt: 4, head: -6, shN: -80 + pump * 20, elN: -60, shF: 80 - pump * 20, elF: 60, hop: 0.16 * Math.sin(Math.PI * hopU), fyN: -0.15 * Math.sin(Math.PI * hopU), fyF: -0.15 * Math.sin(Math.PI * hopU) });
-      trunkTo([40, 0, -30, -60, -90]);
+      trunkTo([70, 30, 0, -30, -60]);
       q.face = u > 0.9 ? 'shout' : 'angry';
       q.mouth = u > 0.9 ? 'shout' : 'grit';
       q.turn = 0.6;
       q.fx = { kind: 'stomp', u };
     } else if (sceneTrumpet) {
-      // the Trumpet Call: reared back, trunk up high, one foot up, a blast that shakes the roots
+      // the Trumpet Call: reared back, trunk thrust out like a bugle, one foot up, a blast that shakes the roots
       const k = win(actU, 0, 0.3, (act.dur ?? 1.8) - 0.1, (act.dur ?? 1.8) + 0.3);
       go({ tilt: -12, chest: -8, head: -14, shN: -150, elN: -40, shF: 30, elF: 30, fyN: -0.32, fxN: 0.2, fxF: -0.1 }, k);
-      trunkTo([20, -10, -40, -62, -84], k);
+      trunkTo([72, 22, -3, -13, -28], k);
       say('shout', 'shout', k);
       q.turn = 1;
       q.earOut = k;
@@ -998,7 +1003,7 @@ function idleAct(m, a, out, go, trunkTo, q, w, t) {
   if (pol > 0.01) {
     const rub = Math.sin(t * 9) * sstep((lu - 2) / 0.4);
     go({ shN: -98 + rub * 8, elN: -118 - rub * 6, hwN: 10, tilt: -4, head: -8, chest: -5 }, pol * w);
-    trunkTo([70, 40, 10, -16, -40], pol * w);
+    trunkTo([80, 50, 20, -5, -30], pol * w);
     if (at(pol)) {
       q.face = lu < 2 ? 'happy' : 'proud';
       q.mouth = lu < 2 ? 'oh' : 'grin';
@@ -1010,7 +1015,7 @@ function idleAct(m, a, out, go, trunkTo, q, w, t) {
   const toot = win(lu, 6.4, 7, 10.6, 11.2);
   if (toot > 0.01) {
     go({ tilt: -6, chest: -6, head: -12 }, toot * w);
-    trunkTo([20, -10, -40, -62, -84], toot * w);
+    trunkTo([84, 34, 0, -40, -85], toot * w);
     if (at(toot)) {
       q.face = lu < 9 ? 'shut' : 'happy';
       q.mouth = 'grin';
@@ -1034,7 +1039,7 @@ function idleAct(m, a, out, go, trunkTo, q, w, t) {
   if (sn > 0.01) {
     const look = Math.sin(t * 1.4);
     go({ head: -10 + look * 4, tilt: -2, turnC: look * 0.15 }, sn * w);
-    trunkTo([40 + look * 20, 0 + look * 20, -30 + Math.sin(t * 7) * 10, -50, -70 + Math.sin(t * 9) * 16], sn * w);
+    trunkTo([62 + look * 14, 27 + look * 13, 1 + Math.sin(t * 7) * 6, -24, -44 + Math.sin(t * 9) * 8], sn * w);
     if (at(sn)) {
       q.face = 'shut';
       q.mouth = 'pout';
@@ -1047,7 +1052,7 @@ function idleAct(m, a, out, go, trunkTo, q, w, t) {
   if (sh > 0.01) {
     const tw = Math.sin(t * 13);
     go({ turnC: tw * 0.5, turnP: -tw * 0.3, head: tw * 6, tilt: 2, shN: -60, shF: 60 }, sh * w);
-    trunkTo([92 + tw * 30, 80 - tw * 30, 60, 40, 10], sh * w);
+    trunkTo([92 + tw * 30, 90 - tw * 30, 70, 45, 15], sh * w);
     if (at(sh)) {
       q.face = 'shut';
       q.mouth = 'grin';
@@ -1077,7 +1082,7 @@ function fxIn(ctx, m, a, D, q) {
   const hd = B(headAt(a, D, [8, 4]));
   const crown = B(headAt(a, D, [0, -22]));
   const tip = B(headAt(a, D, trunkPts(a).pop()));
-  const tuskTip = B(headAt(a, D, [(q.turn ?? 0.35) * 2.5 + 29, 14 - (q.tuskUp ?? 0) * 8]));
+  const tuskTip = B(headAt(a, D, [(q.turn ?? 0.35) * 3.5 + 30.6, 14 - (q.tuskUp ?? 0) * 8]));
   const foot = B(D.at(a, 'footN', [0, 0]));
   const chest = B(D.at(a, 'chest', [0, 0]));
   if (X.kind === 'polish') {

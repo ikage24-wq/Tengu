@@ -13,7 +13,8 @@
 //           brows, a little round goatee; his own eyes ("ember eyes": round and dark, lit warm from
 //           below like coals under a kettle, a big rounded glint and a small one, a strong upper
 //           lash with a short flick, a soft lower lid, two smile creases at the corners); the
-//           huge black iron tetsubin hanging from his paw, studded, a gold knob, steam at its spout.
+//           huge copper tetsubin hanging from his paw (warm, a soft sheen, one embossed tea-blossom crest; it
+//           was black iron studded in rows until 2026-11-27), a gold knob, steam at its spout.
 //           His own soft plum-grey outline, outer edge only, face bare.
 //   walk    slow and dignified, his hakama swinging, the kettle swaying from his paw.
 //   idle    a 27 s act in four pieces, each the next one that fits the time he has (data `rest`):
@@ -56,7 +57,10 @@ const HAKAMA = ['#d4d6e4', '#aeb0c4', '#8e90a8', '#6c6e88'];
 const OBI = ['#5a4a6a', '#3a2e48'];
 const FAN = ['#ff9a8a', '#d8483e', '#9a2e2a'];
 const GOLD = ['#fff2b4', '#f2c14e', '#b8862a'];
-const IRON = ['#7c7c96', '#4e4e66', '#34344a', '#222234'];
+// (2026-11-27, the player: the kettle read near-black under a grid of dots. Now warm copper with a soft
+// sheen, a darker bronze for the handle and lid rim, a soft own-colour outline, one embossed crest.)
+const COPPER = ['#ffe2bc', '#e8a066', '#c47444', '#9a5236', '#7a4232'];
+const BRONZE = ['#f0c48a', '#c08a52', '#946238', '#6e4630'];
 const CORD = ['#ff8a7a', '#d8463c'];
 const ZORI = ['#f0dca0', '#c8a86a', '#987a44'];
 const LASH = '#2a2028';
@@ -724,37 +728,85 @@ function kettle(ctx, a, mode, D) {
   ctx.rotate(K.ang);
   const [rx, ry] = KR;
   const line = mode === 'line';
-  // the handle (behind the lid, arching up to his paw)
+  // the handle (behind the lid, arching up to his paw): bronze
   ctx.beginPath();
   ctx.moveTo(-rx * 0.62, -ry * 0.62);
   ctx.bezierCurveTo(-rx * 0.7, -ry - KH * 1.2, rx * 0.7, -ry - KH * 1.2, rx * 0.62, -ry * 0.62);
-  pen(ctx, line ? IRON[3] : tone(a, IRON[2]), line ? 1.4 + LW * 2 : 1.4);
+  pen(ctx, line ? BRONZE[3] : tone(a, BRONZE[1]), line ? 1.4 + LW * 2 : 1.4);
   ctx.stroke();
+  if (!line) {
+    // (a thin light along its top)
+    ctx.beginPath();
+    ctx.moveTo(-rx * 0.5, -ry - KH * 0.55);
+    ctx.bezierCurveTo(-rx * 0.3, -ry - KH * 0.92, rx * 0.1, -ry - KH * 0.95, rx * 0.3, -ry - KH * 0.82);
+    pen(ctx, tone(a, BRONZE[0], 0.8), 0.45);
+    ctx.stroke();
+  }
   // the spout, rooted inside the body, curving up and out
   smooth(ctx, [[rx * 0.6, -ry * 0.05], [rx + 1.8, -ry * 0.45], [rx + 3.3, -ry * 0.98], [rx + 2.6, -ry * 1.2], [rx + 1, -ry * 0.92], [rx * 0.45, -ry * 0.66]]);
-  paint(ctx, a, mode, IRON[2], IRON[3]);
-  // the body: a squat round iron pot
+  paint(ctx, a, mode, COPPER[2], COPPER[4]);
+  if (!line) {
+    ctx.save();
+    ctx.clip();
+    glow(ctx, rx + 1.2, -ry * 0.75, 2.2, COPPER[0], 0.55);
+    ctx.restore();
+  }
+  // the body: a squat round copper pot
   smooth(ctx, [[-rx, -ry * 0.2], [-rx * 0.82, -ry * 0.8], [0, -ry], [rx * 0.82, -ry * 0.8], [rx, -ry * 0.2], [rx * 0.9, ry * 0.5], [rx * 0.5, ry * 0.92], [0, ry], [-rx * 0.5, ry * 0.92], [-rx * 0.9, ry * 0.5]]);
-  if (line) paint(ctx, a, 'line', null, IRON[3]);
+  if (line) paint(ctx, a, 'line', null, COPPER[4]);
   else {
-    ctx.fillStyle = tone(a, IRON[1]);
+    ctx.fillStyle = tone(a, COPPER[1]);
     ctx.fill();
     ctx.save();
     ctx.clip();
-    glow(ctx, -rx * 0.4, -ry * 0.4, rx * 0.8, IRON[0], 0.75);
-    glow(ctx, rx * 0.5, ry * 0.6, rx * 0.7, IRON[3], 0.7);
+    // round form: a warm shade wrapping the lower back, the light from upper front
+    glow(ctx, rx * 0.45, ry * 0.7, rx * 1.05, COPPER[3], 0.75);
+    glow(ctx, -rx * 0.35, -ry * 0.35, rx * 0.85, COPPER[0], 0.7);
     // red-hot from inside when he heats it
     if ((q.hot ?? 0) > 0.02) glow(ctx, 0, ry * 0.3, rx * 1.1, '#ff7a3a', 0.7 * q.hot);
-    // the hail studs (arare), in rows round it
-    for (let r = 0; r < 3; r++) {
-      for (let i = 0; i < 7; i++) {
-        const px = -rx * 0.75 + i * rx * 0.25 + (r % 2) * rx * 0.12;
-        const py = -ry * 0.45 + r * ry * 0.38;
-        ell(ctx, px, py, 0.42, 0.42);
-        ctx.fillStyle = tone(a, IRON[0], 0.9);
-        ctx.fill();
-      }
+    // a soft bronze band under the shoulder
+    ctx.beginPath();
+    ctx.ellipse(0, -ry * 0.42, rx * 1.05, ry * 0.26, 0, 0.08, Math.PI - 0.08);
+    pen(ctx, tone(a, BRONZE[2], 0.75), 0.9);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.ellipse(0, -ry * 0.5, rx * 1.02, ry * 0.24, 0, 0.25, Math.PI - 0.25);
+    pen(ctx, tone(a, COPPER[0], 0.45), 0.4);
+    ctx.stroke();
+    // one embossed crest on the belly: a round tea-blossom mon of five soft petals, lit from above
+    ctx.save();
+    ctx.translate(-rx * 0.08, ry * 0.2);
+    for (let i = 0; i < 5; i++) {
+      const an = -Math.PI / 2 + (i * TAU) / 5;
+      ell(ctx, Math.cos(an) * 1.15, Math.sin(an) * 1.15, 0.95, 0.95);
+      ctx.fillStyle = tone(a, COPPER[2], 0.85);
+      ctx.fill();
     }
+    for (let i = 0; i < 5; i++) {
+      const an = -Math.PI / 2 + (i * TAU) / 5;
+      ell(ctx, Math.cos(an) * 1.1 - 0.12, Math.sin(an) * 1.1 - 0.16, 0.62, 0.62);
+      ctx.fillStyle = tone(a, COPPER[0], 0.55);
+      ctx.fill();
+    }
+    ell(ctx, 0, 0, 0.62, 0.62);
+    ctx.fillStyle = tone(a, GOLD[1]);
+    ctx.fill();
+    ctx.restore();
+    // the sheen: a soft curved highlight on the upper front, and a rim light below
+    ctx.save();
+    ctx.translate(-rx * 0.56, ry * 0.02);
+    ctx.rotate(0.28);
+    ell(ctx, 0, 0, rx * 0.13, ry * 0.36);
+    ctx.fillStyle = tone(a, '#fff6ea', 0.55);
+    ctx.fill();
+    ctx.restore();
+    ell(ctx, -rx * 0.42, -ry * 0.68, rx * 0.16, ry * 0.09);
+    ctx.fillStyle = tone(a, '#fffaf2', 0.8);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.ellipse(0, ry * 0.12, rx * 0.86, ry * 0.8, 0, 0.35, Math.PI - 0.6);
+    pen(ctx, tone(a, COPPER[1], 0.6), 0.45);
+    ctx.stroke();
     ctx.restore();
   }
   // its lid (rattling, or lifted off on its own) and gold knob
@@ -763,7 +815,12 @@ function kettle(ctx, a, mode, D) {
   ctx.translate(0, -ry * 0.92 - lift * 3);
   ctx.rotate((q.lidRattle ?? 0) + lift * 0.3);
   ell(ctx, 0, 0, rx * 0.55, ry * 0.2);
-  paint(ctx, a, mode, IRON[2], IRON[3]);
+  paint(ctx, a, mode, BRONZE[1], BRONZE[3]);
+  if (!line) {
+    ell(ctx, -rx * 0.12, -ry * 0.05, rx * 0.3, ry * 0.08);
+    ctx.fillStyle = tone(a, BRONZE[0], 0.7);
+    ctx.fill();
+  }
   ell(ctx, 0, -ry * 0.22, 1.1, 0.8);
   paint(ctx, a, mode, GOLD[1], GOLD[2]);
   ctx.restore();
@@ -1232,9 +1289,12 @@ function flyingLid(ctx, a, x, y, spin, al) {
   ctx.beginPath();
   ctx.ellipse(0, 0, 3.6, 1.4, 0, 0, TAU);
   ctx.lineWidth = 0.8;
-  ctx.strokeStyle = IRON[3];
+  ctx.strokeStyle = BRONZE[3];
   ctx.stroke();
-  ctx.fillStyle = IRON[1];
+  ctx.fillStyle = BRONZE[1];
+  ctx.fill();
+  ell(ctx, -0.8, -0.3, 1.6, 0.4);
+  ctx.fillStyle = BRONZE[0];
   ctx.fill();
   ell(ctx, 0, -1, 0.7, 0.5);
   ctx.fillStyle = GOLD[1];

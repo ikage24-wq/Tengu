@@ -208,7 +208,7 @@ export function brideRig(opts) {
   const dressed = {};
   const design = (mood) => (dressed[mood] ??= Object.fromEntries(Object.entries(opts.design(mood)).map(([n, list]) => [n, list.map((sh) => mapShape(sh, toKid, 1 / f))])));
   for (const [n, p] of Object.entries(opts.flames)) J[n] = toKid(p);
-  const K = kidKit('candlebride', (mood) => ({ groups: design(mood) }), J, { scale: f, flat: true });
+  const K = kidKit('candlebride', (mood) => ({ groups: design(mood) }), J, { scale: f, flat: true, ink: 'own' });
   const { rel, SC } = K;
   const skin = makeSkin({ J, SC, C: opts.skin, spec });
   const legs = B.legs !== false;

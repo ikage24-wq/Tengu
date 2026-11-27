@@ -56,8 +56,9 @@ const CREAM = ['#fff6dc', '#ffe6b4', '#f4cc8c'];
 const DRIZ = ['#e09050', '#b8622c', '#8a4420'];
 const MINT = ['#d8fff0', '#8ee0c8', '#5ab8a2', '#3a8a7a'];
 const MINT_INK = '#2e7266';
-const LEATH = ['#b07a52', '#8a5636', '#6a3e26', '#4e2c1c'];
-const LEATH_INK = '#5a3420';
+// (2026-11-27: a lighter tan leather, so the apron reads as an apron, not a dark blob on her chest)
+const LEATH = ['#e0aa78', '#c08250', '#9a6238', '#744628'];
+const LEATH_INK = '#7e4a2a';
 const RED = ['#ff9a9a', '#e8505a', '#b8303e'];
 const BRASS = ['#fff0b0', '#f0c860', '#c49234', '#8a6420'];
 const IRON = ['#b4b8d4', '#8c90b2', '#6a6e92', '#50547a'];
@@ -547,8 +548,9 @@ function shirt(ctx, a, mode, D) {
   poly(ctx, chaikin([C([st[0] - 6, st[1] - 3]), C([st[0] + 8, st[1] - 3]), C([st[0] + 1.4, st[1] + 6])], 1));
   ctx.fillStyle = tone(a, CREAM[1]);
   ctx.fill();
-  // the bib: from her chest down over her tummy, the skirt below it (drawn on its own)
-  const bib = chaikin([C([st[0] - 9, st[1] + 6]), C([st[0] + 12, st[1] + 6]), T([hp[0] + 14, hp[1] + 2]), T([hp[0] - 11, hp[1] + 2])], 1);
+  // the bib: a short one over her tummy (2026-11-27: it covered her whole chest and read as a dark
+  // blob, taken for her anvil), the skirt below it (drawn on its own)
+  const bib = chaikin([T([hp[0] - 10, hp[1] - 13]), T([hp[0] + 13, hp[1] - 13]), T([hp[0] + 14, hp[1] + 2]), T([hp[0] - 11, hp[1] + 2])], 1);
   poly(ctx, bib);
   ctx.fillStyle = tone(a, LEATH[1]);
   ctx.fill();
@@ -562,8 +564,8 @@ function shirt(ctx, a, mode, D) {
   // stitching along its top edge
   ctx.setLineDash([0.7, 0.8]);
   ctx.beginPath();
-  ctx.moveTo(...C([st[0] - 8, st[1] + 7.6]));
-  ctx.lineTo(...C([st[0] + 11, st[1] + 7.6]));
+  ctx.moveTo(...T([hp[0] - 9, hp[1] - 11.6]));
+  ctx.lineTo(...T([hp[0] + 12, hp[1] - 11.6]));
   pen(ctx, tone(a, LEATH[0], 0.9), 0.3);
   ctx.stroke();
   ctx.setLineDash([]);
@@ -595,15 +597,20 @@ function shirt(ctx, a, mode, D) {
   pen(ctx, tone(a, LEATH[0], 0.8), 0.35);
   ctx.stroke();
   ctx.restore();
-  // the straps up over her shoulders
-  for (const [x0, x1] of [[st[0] - 7.6, st[0] - 12], [st[0] + 10.6, st[0] + 15]]) {
+  // the straps up over her shoulders (her anvil's rucksack straps too), a brass rivet at each end
+  for (const [x0, x1, x2] of [[hp[0] - 7.6, st[0] - 9, st[0] - 12.4], [hp[0] + 10.6, st[0] + 12.6, st[0] + 15]]) {
     ctx.beginPath();
-    ctx.moveTo(...C([x0, st[1] + 7]));
-    ctx.lineTo(...C([x1, st[1] - 6]));
+    ctx.moveTo(...T([x0, hp[1] - 12]));
+    ctx.quadraticCurveTo(...C([x1, st[1] + 4]), ...C([x2, st[1] - 6]));
     ctx.lineCap = 'round';
-    pen(ctx, tone(a, LEATH[2]), 2.2);
+    pen(ctx, tone(a, LEATH[3]), 2.2);
     ctx.stroke();
-    ell(ctx, ...C([x0, st[1] + 7.2]), 0.75, 0.75);
+    ctx.beginPath();
+    ctx.moveTo(...T([x0 - 0.5, hp[1] - 12.4]));
+    ctx.quadraticCurveTo(...C([x1 - 0.5, st[1] + 3.6]), ...C([x2 - 0.5, st[1] - 6.4]));
+    pen(ctx, tone(a, LEATH[1], 0.7), 0.5);
+    ctx.stroke();
+    ell(ctx, ...T([x0, hp[1] - 11.8]), 0.8, 0.8);
     ctx.fillStyle = tone(a, BRASS[1]);
     ctx.fill();
   }
@@ -843,17 +850,35 @@ function anvilArt(ctx, a, mode, x, y, sc = 1, rot = 0, hot = 0) {
   }
   ctx.restore();
 }
-// The anvil on her back like a rucksack (behind her, the horn poking out behind).
+// The anvil on her back like a rucksack (2026-11-27, the player: it hid behind her and only showed as
+// a blob): it rides high on her back, its flat face level with her shoulders and its horn poking out
+// behind her, strapped on with a leather band round its waist; the band's shoulder strap comes over
+// her shoulder in front (drawn with her shirt).
 function anvilBack(ctx, a, mode, D) {
   const q = a.tfQ ?? {};
   if ((q.anvilBack ?? 1) < 0.5) return;
   ctx.save();
   enter(ctx, a, D, 'chest');
   const st = D.J.stern;
-  ctx.translate(st[0] - 15, st[1] + 13);
-  ctx.rotate(q.anvilJig ?? 0);
+  ctx.translate(st[0] - 15.5, st[1] + 2);
+  ctx.rotate(0.22 + (q.anvilJig ?? 0));
   ctx.scale(-1, 1);
-  anvilArt(ctx, a, mode, 0, 0, 1.45, 0, 0);
+  anvilArt(ctx, a, mode, 0, 0, 1.75, 0, 0);
+  // the leather band round its waist, buckled
+  ctx.scale(1.75, 1.75);
+  ctx.beginPath();
+  ctx.roundRect(-3.4, -4.3, 7.4, 1.5, 0.6);
+  if (mode === 'line') {
+    pen(ctx, LEATH_INK, LW * 1.2);
+    ctx.stroke();
+  } else {
+    ctx.fillStyle = tone(a, LEATH[2]);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.roundRect(-0.4, -4.5, 1.6, 1.9, 0.4);
+    ctx.fillStyle = tone(a, BRASS[1]);
+    ctx.fill();
+  }
   ctx.restore();
 }
 // Her caramel hammer: a wooden handle, the head a block of hard-crack caramel, glassy amber in brass

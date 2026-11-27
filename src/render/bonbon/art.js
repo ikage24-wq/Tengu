@@ -13,9 +13,9 @@
 //   - Her eyes her own (the player: no two monsters share eyes), Velvet: sleepy, drooping at the
 //     outer corner, lined all round with a soft tail, a candy-pink jewel iris and a heart glint,
 //     shaped anew by every face (see FACES); full painted lips.
-//   - Her gown a big puffed Victorian ball gown: a wide crinoline skirt in strawberry pink, a cream
-//     underskirt showing down the front, two tiers of cream garland swags caught up with bows and
-//     strawberries, a ruffled lace petticoat at the hem; a corseted bodice
+//   - Her gown a big puffed Victorian ball gown: since 2026-11-27 a skirt of three soft tiers stacked
+//     like a shortcake (pink, cream caught up with bows and strawberries, pink with a lace ruffle), little
+//     satin slippers peeking under it; a corseted bodice
 //     with lace and a strawberry cameo; huge puffed gigot sleeves, lace cuffs.
 //   - A crown of birthday candles and a cherry; her sceptre the great spoon, heaped with cream.
 // Each piece in the queen base's own drawing units (blankBody('queen'), read only), named for the
@@ -419,73 +419,106 @@ const ribbonBow = (x, y, s, c = ROSE) => [
   F(blob([[x - 1, y - 0.6], [x - 7 * s, y - 4 * s], [x - 7.4 * s, y - 1 * s]], c[0], 1)), F(blob([[x + 1, y - 0.6], [x + 7 * s, y - 4 * s], [x + 7.4 * s, y - 1 * s]], c[0], 1)),
   E(x, y, 2.6 * s, 2.4 * s, c[2]), F(E(x - 0.6 * s, y - 0.6 * s, 1 * s, 0.8 * s, c[0])),
 ];
-// The crinoline: a great dome of strawberry-pink skirt from her waist to the floor, even on both sides
-// (the player, 2026-11-25: "the dress looks uneven"): a sheen down each side of its front and a shade
-// round each edge like a real dome, the folds falling in matching pairs; an inverted V opening down
-// the front showing the cream underskirt, its folds and strawberries down the middle.
+// (The one-piece crinoline, its petticoat and its two swag tiers were replaced on 2026-11-27 by the
+// tiered skirt below.)
 const CX = 151;
 const SKIRT_TOP = 206;
-const HEM = 372;
-const skirtSide = (o) => [[CX + 28 * o, SKIRT_TOP], [CX + 58 * o, 226], [CX + 92 * o, 262], [CX + 112 * o, 306], [CX + 120 * o, 344], [CX + 118 * o, HEM]];
-function crinoline() {
-  const hem = [];
-  for (let k = 0; k <= 14; k++) {
-    const u = k / 14;
-    hem.push([CX - 118 + u * 236, HEM + Math.sin(u * Math.PI) * 4]);
+// ---------- The tiered skirt (2026-11-27) ----------
+// The player: her big bell gown never moved at all, she slid along like a stiff bell (no rigid bell
+// gowns for bosses). Rebuilt as three soft tiers stacked like the layers of a strawberry shortcake,
+// each its own piece hung from the seam under the tier above on its own spring (queenrig.js), so the
+// gown sways, swings and settles tier by tier: a pink tier at her waist, a cream tier caught up with
+// bows and strawberries, a wide pink tier with a lace ruffle at the hem, lifted a touch at the front so
+// her little satin slippers peek out as she steps. Every edge a soft round scallop, every trim a
+// continuous piped rope (never rows of dots).
+const TIERS = {
+  top: { y0: 203, y1: 266, w0: 31, w1: 84, n: 5, sc: 6.5 },
+  mid: { y0: 252, y1: 320, w0: 70, w1: 106, n: 6, sc: 7 },
+  low: { y0: 305, y1: 366, w0: 94, w1: 120, n: 7, sc: 6, lift: 10 },
+};
+export const TIER_MID = [CX, 258];
+export const TIER_LOW = [CX, 311];
+// (the low tier's hem lifted at the front, so her toes peek out)
+const lift = (x, t) => (t.lift ?? 0) * Math.max(0, 1 - ((x - CX) / 46) ** 2);
+// The hem's scallops, left to right: `n` soft round bumps hanging below y1 - sc.
+function hemPts(t, inset = 0, steps = 5) {
+  const out = [];
+  const x0 = CX - t.w1 + inset;
+  const x1 = CX + t.w1 - inset;
+  for (let i = 0; i < t.n; i++) {
+    for (let k = 0; k <= steps; k++) {
+      if (i && !k) continue;
+      const u = (i + k / steps) / t.n;
+      const x = x0 + (x1 - x0) * u;
+      const y = t.y1 - t.sc + Math.sin((k / steps) * Math.PI) * t.sc + Math.sin(u * Math.PI) * 3 - lift(x, t) - inset * 0.6;
+      out.push([x, y]);
+    }
   }
-  const out = [mass([...skirtSide(-1), ...hem, ...skirtSide(1).reverse()], ROSE[1])];
+  return out;
+}
+const sidePts = (t, o) => [[CX + t.w0 * o, t.y0], [CX + (t.w0 + (t.w1 - t.w0) * 0.62) * o, t.y0 + (t.y1 - t.y0) * 0.3], [CX + t.w1 * 0.985 * o, t.y0 + (t.y1 - t.y0) * 0.7], [CX + t.w1 * o, t.y1 - t.sc]];
+const tierPts = (t) => [...sidePts(t, -1), ...hemPts(t), ...sidePts(t, 1).reverse()];
+// One tier: its body in `c` (light, base, shade, deep), lit down the front, shaded round its sides, two
+// soft folds a side falling to the scallops' joins, a piped rope along its hem in `trim`.
+function tier(t, c, trim) {
+  const out = [mass(tierPts(t), c[1])];
+  const h = t.y1 - t.y0;
   for (const o of [-1, 1]) {
-    // the shade round the edge, the sheen inside it
-    out.push(fill([[CX + 40 * o, 222], [CX + 90 * o, 268], [CX + 116 * o, 330], [CX + 114 * o, HEM - 4], [CX + 102 * o, HEM - 4], [CX + 94 * o, 316], [CX + 72 * o, 262]], ROSE[2]));
-    out.push(fill([[CX + 30 * o, SKIRT_TOP + 6], [CX + 52 * o, 236], [CX + 76 * o, 290], [CX + 86 * o, HEM - 8], [CX + 74 * o, HEM - 8], [CX + 62 * o, 292], [CX + 40 * o, 236]], ROSE[0]));
-    for (const k of [0.5, 0.8]) out.push(...band(curve([[CX + 26 * k * o, SKIRT_TOP + 6], [CX + 70 * k * o, 280], [CX + 106 * k * o, HEM - 6]], 3), 0.8, 2.4, ROSE[3], true));
+    // the shade round its side, the sheen inside it
+    out.push(fill([[CX + (t.w0 + 6) * o, t.y0 + 4], [CX + (t.w0 + (t.w1 - t.w0) * 0.62 - 2) * o, t.y0 + h * 0.32], [CX + (t.w1 - 3) * o, t.y1 - t.sc - 2], [CX + (t.w1 - 18) * o, t.y1 - t.sc - 1], [CX + (t.w0 + (t.w1 - t.w0) * 0.4) * o, t.y0 + h * 0.4]], c[2]));
+    out.push(fill([[CX + (t.w0 * 0.35) * o, t.y0 + 5], [CX + (t.w0 * 0.75) * o, t.y0 + 5], [CX + (t.w1 * 0.5) * o, t.y1 - t.sc - 4], [CX + (t.w1 * 0.32) * o, t.y1 - t.sc - 4]], c[0]));
+    for (const k of [0.42, 0.72]) out.push(...band(curve([[CX + t.w0 * k * o, t.y0 + 6], [CX + (t.w0 + t.w1) * 0.5 * k * o, t.y0 + h * 0.55], [CX + t.w1 * k * o, t.y1 - t.sc - 2]], 3), 0.7, 2.2, c[3], true));
   }
-  // the cream underskirt down the front, its own soft folds, piped cream at its edges
-  out.push(mass([[CX - 10, SKIRT_TOP + 2], [CX + 10, SKIRT_TOP + 2], [CX + 46, 300], [CX + 62, HEM], [CX - 62, HEM], [CX - 46, 300]], CREAM[1]));
-  for (const o of [-1, 1]) out.push(fill([[CX + 4 * o, SKIRT_TOP + 8], [CX + 9 * o, SKIRT_TOP + 8], [CX + 40 * o, HEM - 4], [CX + 26 * o, HEM - 4]], CREAM[0]));
-  for (const k of [-0.5, 0, 0.5]) out.push(...band(curve([[CX + 8 * k, SKIRT_TOP + 10], [CX + 30 * k, 300], [CX + 54 * k, HEM - 4]], 3), 0.6, 1.6, CREAM[3], true));
-  out.push(...piping([[CX - 10, SKIRT_TOP + 4], [CX - 46, 300], [CX - 62, HEM - 2]], 3.4), ...piping([[CX + 10, SKIRT_TOP + 4], [CX + 46, 300], [CX + 62, HEM - 2]], 3.4));
-  // strawberries down the underskirt's middle, clear of the swags' bows
-  for (const [y, r] of [[240, -0.15], [292, 0.15], [352, -0.15]]) out.push(...strawberry(CX, y, 1.5, r));
+  // the piped rope along the hem: a soft round rope, lit along its top, a shade under it
+  const rope = hemPts(t, 3, 4).map(([x, y]) => [x, y - 2.6]);
+  out.push(...band(rope, 4.2, 4.2, trim[1], false));
+  out.push(...band(rope.map(([x, y]) => [x, y - 1.1]), 1.4, 1.4, trim[0], false).map(F));
+  out.push(...band(rope.map(([x, y]) => [x, y + 1.6]), 0.8, 0.8, trim[2], false).map(F));
   return out;
 }
-// The lace petticoat peeking below the hem (behind the crinoline): a continuous ruffle of even
-// scallops, an eyelet in each, a second paler ruffle above it; kept inside the skirt's width.
-function ruffle(y, halfw, sag, r, c, sh, n) {
-  const out = [];
-  const at = (u) => [CX - halfw + 2 * halfw * u, y + Math.sin(u * Math.PI) * sag];
-  out.push(...band(curve([at(0), at(0.5), at(1)], 4), r * 1.2, r * 1.2, c, false));
-  for (let i = 0; i <= n; i++) {
-    const [x, yy] = at(i / n);
-    out.push(E(x, yy + r * 0.5, r, r * 0.9, c));
-  }
-  for (let i = 0; i <= n; i++) {
-    const [x, yy] = at(i / n);
-    out.push(F(E(x, yy + r * 0.45, r * 0.24, r * 0.24, sh)), F(E(x, yy + r * 1.05, r * 0.5, r * 0.14, sh)));
+// The lace ruffle under the low tier: one soft white scalloped frill, its own fine fold lines.
+function laceRuffle() {
+  const t = { ...TIERS.low, y1: TIERS.low.y1 + 6, sc: 4.5, n: 12, w1: TIERS.low.w1 - 3 };
+  const pts = [[CX - t.w1 + 2, TIERS.low.y1 - 12], ...hemPts(t, 0, 4), [CX + t.w1 - 2, TIERS.low.y1 - 12]];
+  const out = [mass(pts, '#ffffff')];
+  for (let i = 1; i < t.n; i++) {
+    const x = CX - t.w1 + (2 * t.w1 * i) / t.n;
+    out.push(...band(curve([[x, TIERS.low.y1 - 4 - lift(x, t)], [x, t.y1 - 3 - lift(x, t)]], 2), 0.5, 0.9, '#f0dce6', true).map(F));
   }
   return out;
 }
-const petticoat = () => [
-  ...ruffle(HEM - 1, 112, 6, 4.6, '#ffffff', '#f0dce6', 22),
-  ...ruffle(HEM - 7, 108, 6, 3.6, '#fff4f8', '#f2d8e4', 22),
-];
-// A tier of cream garland swags across the skirt: soft scalloped drapes hung between points, each
-// point caught up with a little bow and a strawberry.
-function swags(y, halfw, n, drop) {
-  const out = [];
-  const pts = Array.from({ length: n + 1 }, (_, i) => [CX - halfw + (2 * halfw * i) / n, y + Math.abs(i - n / 2) * 2.4]);
-  for (let i = 0; i < n; i++) {
-    const [a, b] = [pts[i], pts[i + 1]];
-    const mid = [(a[0] + b[0]) / 2, Math.max(a[1], b[1]) + drop];
-    const top = curve([a, [mid[0], mid[1] - drop * 0.5], b], 6);
-    const bot = curve([b, [mid[0] + 2, mid[1] + 3], a], 6);
-    out.push(mass([...top, ...bot], CREAM[1]), fill([...curve([[a[0] + 2, a[1] + 3], [mid[0], mid[1]], [b[0] - 2, b[1] + 3]], 6), [mid[0], mid[1] + 3]], CREAM[2]));
-    out.push(...arc([[a[0] + 3, a[1] + 2], [mid[0], mid[1] - drop * 0.3], [b[0] - 3, b[1] + 2]], 0.7, CREAM[3]));
-    out.push(...piping(curve([[a[0], a[1] + 3], [mid[0], mid[1] + 3.6], [b[0], b[1] + 3]], 4), 2.6));
+const tierTop = () => tier(TIERS.top, ROSE, [CREAM[0], CREAM[1], CREAM[3]]);
+function tierMid() {
+  const t = TIERS.mid;
+  const out = tier(t, CREAM, ['#ffd0e0', ROSE[1], ROSE[3]]);
+  // caught up at two of the scallops' joins with a bow, a strawberry at the front between them
+  for (const i of [2, 4]) {
+    const x = CX - t.w1 + (2 * t.w1 * i) / t.n;
+    const y = t.y1 - t.sc - 3 + Math.sin((i / t.n) * Math.PI) * 3;
+    out.push(...ribbonBow(x, y - 4, 0.85));
   }
-  pts.slice(1, -1).forEach(([x, py], i) => out.push(...ribbonBow(x, py, 0.9), ...strawberry(x, py + 12, 1.3, i % 2 ? 0.2 : -0.2)));
+  out.push(...strawberry(CX, t.y1 - 4, 1.4, 0.12));
   return out;
 }
+function tierLow() {
+  const t = TIERS.low;
+  const out = [...laceRuffle(), ...tier(t, ROSE, [CREAM[0], CREAM[1], CREAM[3]])];
+  for (const [x, r] of [[CX - 72, -0.2], [CX + 72, 0.2]]) out.push(...strawberry(x, t.y1 - 18, 1.3, r));
+  return out;
+}
+// Her little satin slippers (on the gait's feet; only the toes show under the hem): rose satin, a
+// cream bow on the toe, the far one a shade deeper.
+function slipper(k) {
+  const [ax, ay] = k === 'N' ? [162.6, 360] : [137.4, 360];
+  const c = k === 'N' ? [ROSE[0], ROSE[1], ROSE[2]] : [ROSE[1], ROSE[2], ROSE[3]];
+  return [
+    mass([[ax - 7, ay - 4], [ax + 3, ay - 3], [ax + 11, ay + 4], [ax + 15, ay + 10], [ax + 13, 376], [ax - 5, 376], [ax - 8, ay + 9]], c[1]),
+    fill([[ax + 2, ay + 1], [ax + 9, ay + 5], [ax + 12, ay + 10], [ax + 7, ay + 9]], c[0]),
+    fill([[ax - 6, 372], [ax + 13, 372], [ax + 12, 376], [ax - 5, 376]], c[2]),
+    E(ax + 9, ay + 4.6, 2.2, 1.7, CREAM[1]), F(E(ax + 8.4, ay + 4, 0.8, 0.6, '#ffffff')),
+  ];
+}
+
 // The bodice, in two pieces so it stays on her as she bends (the player, 2026-11-25: "her dress isn't
 // covering her torso, it's showing, and it's not locked to it"): cut a little wider than her body
 // everywhere, and no bare torso drawn under it at all.
@@ -579,8 +612,8 @@ const cache = new Map();
 //   sheet       the long hair down her back (on a spring); drillF/N: the drill ringlets (springs)
 //   head        her face, the fringe's top, its lines, the forehead shade, her brows
 //   sideF/N     the side hair over her ears (on springs); crown: the crown (a small spring)
-//   petticoat   the lace ruffles below the hem
-//   skirt       the crinoline and the cream underskirt; swagsLow/High: the garland tiers (springs)
+//   tierTop/Mid/Low  the skirt's three tiers, each on its own spring from the seam above (the low one
+//               with its lace ruffle); footF/N: her slippers, on the gait's feet
 //   bodiceTop   her neckline and the bodice to the waist ribbon (on her chest); bodiceLow: the
 //               pointed corset waist and the peplum (on her waist)
 //   puffF/N     the gigot sleeves' puffs; foreF/N: the fitted forearms and lace cuffs; spoon
@@ -596,10 +629,12 @@ export function bonbonDesign(mood = 'idle') {
     sideF: inHead(sideHair(-1)),
     sideN: inHead(sideHair(1)),
     crown: crown(),
-    petticoat: petticoat(),
-    skirt: crinoline(),
-    swagsLow: swags(318, 104, 4, 12),
-    swagsHigh: swags(262, 80, 3, 10),
+    // (the tiered skirt since 2026-11-27, in place of the one-piece crinoline, petticoat and swags)
+    tierLow: tierLow(),
+    tierMid: tierMid(),
+    tierTop: tierTop(),
+    footF: slipper('F'),
+    footN: slipper('N'),
     bodiceTop: bodiceTop(),
     bodiceLow: bodiceLow(),
     puffF: puff('F'),

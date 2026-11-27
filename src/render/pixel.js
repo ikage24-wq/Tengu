@@ -125,6 +125,38 @@ function outlineFor(c, crisp, side = 0, softInk = false) {
   return v;
 }
 
+// The 'own' ink (opt-in per sprite, 2026-11-27, for kid-kit monsters that read as dark dotted
+// stickers beside the live-drawn remakes): a deeper shade of the part's own hue, about two thirds
+// of its lightness, a little less saturated for pale parts, never below a soft floor (never
+// near-black). Drawn as a smooth anti-aliased ring (see `rasterize`).
+function ownLine(c) {
+  const k = `own${c}`;
+  let v = outlineCache.get(k);
+  if (v) return v;
+  const [r, g, b] = rgb(c).map((n) => n / 255);
+  const mx = Math.max(r, g, b);
+  const mn = Math.min(r, g, b);
+  const L = (mx + mn) / 2;
+  const d = mx - mn;
+  let H = 0;
+  if (d > 0) H = mx === r ? ((g - b) / d + (g < b ? 6 : 0)) : mx === g ? (b - r) / d + 2 : (r - g) / d + 4;
+  H /= 6;
+  const S = d === 0 ? 0 : d / (1 - Math.abs(2 * L - 1));
+  const S2 = Math.min(0.62, Math.max(0.16, S * 0.8));
+  const L2 = Math.max(0.24, L * 0.64);
+  const q = L2 < 0.5 ? L2 * (1 + S2) : L2 + S2 - L2 * S2;
+  const p = 2 * L2 - q;
+  const hue = (t) => {
+    const u = t < 0 ? t + 1 : t > 1 ? t - 1 : t;
+    return u < 1 / 6 ? p + (q - p) * 6 * u : u < 1 / 2 ? q : u < 2 / 3 ? p + (q - p) * (2 / 3 - u) * 6 : p;
+  };
+  const hx = (n) => Math.round(Math.max(0, Math.min(1, n)) * 255).toString(16).padStart(2, '0');
+  // (a whisper of violet in the shade, like the game's shadows)
+  v = mix(`#${hx(hue(H + 1 / 3))}${hx(hue(H))}${hx(hue(H - 1 / 3))}`, '#7a5a9a', 0.1);
+  outlineCache.set(k, v);
+  return v;
+}
+
 // Shapes use literal colors (strings starting with '#') or palette keys. `res` rasterizes at
 // res x res cells per art pixel (for smooth sprites); the outline then grows into a rounded
 // ring about two thirds of an art pixel wide, so corners soften instead of stair-stepping.
@@ -336,7 +368,10 @@ function rasterize(w, h, shapes, res = 1, soft = false, palette = {}, crisp = fa
   // Outline: every empty cell within `reach` cells of the silhouette (a disc, so it's round),
   // grown outward from the filled cells and colored after the nearest one.
   // (`bare`: no outline at all, for a part laid over an outlined one, a face on a body.)
-  const reach = bare ? 0 : res === 1 ? 1 : crisp ? res : Math.max(1, Math.round(res * 0.67));
+  // (`ink: 'own'`: a smooth ring about 0.85 art px wide, its outer edge anti-aliased in quarters.)
+  const ownInk = ink === 'own' && res > 1;
+  const ownW = res * 0.85;
+  const reach = bare ? 0 : ownInk ? Math.ceil(ownW + 1) : res === 1 ? 1 : crisp ? res : Math.max(1, Math.round(res * 0.67));
   const ring = [];
   for (let dy = -reach; dy <= reach; dy++) {
     for (let dx = -reach; dx <= reach; dx++) {
@@ -387,6 +422,19 @@ function rasterize(w, h, shapes, res = 1, soft = false, palette = {}, crisp = fa
   const inkFor = new Map();
   for (let t = 0; t < best.length; t++) {
     if (best[t] === Infinity) continue;
+    if (ownInk) {
+      const cover = Math.round(Math.min(1, Math.max(0, 1 + ownW - Math.sqrt(best[t]))) * 4);
+      if (!cover) continue;
+      const key = from[t] * 5 + cover;
+      let v = inkFor.get(key);
+      if (v === undefined) {
+        const line = lineOf.get(from[t]) ?? ownLine(colors[from[t]]);
+        v = idOf(cover === 4 ? line : `${line}${(cover * 64 - 1).toString(16)}`);
+        inkFor.set(key, v);
+      }
+      out[t] = v;
+      continue;
+    }
     if (flatInk !== null) {
       out[t] = flatInk;
       continue;

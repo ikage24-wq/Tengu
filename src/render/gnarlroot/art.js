@@ -24,8 +24,11 @@ const hash = (n) => {
 };
 const lerp = (a, b, t) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
 
-export const BARK = ['#c49a70', '#9c6e4c', '#7a5238', '#563826'];
+// (2026-11-27, the player: very busy dark bark stripes, heavier and more realistic than everyone else.
+// Warmer, lighter browns now, and the bark in a few broad rounded planes instead of rows of ridges.)
+export const BARK = ['#e8bc8c', '#c48e5e', '#9c6840', '#7c5034'];
 const HEART = ['#f2d4ae', '#e2b88e', '#c89870'];
+const FAR = '#b07e52';
 export const LEAF = ['#c4e894', '#86c864', '#529a48', '#3c7a3c'];
 export const MOSS = ['#cdeca6', '#94ca72', '#62a056'];
 const GLOW = { amber: ['#ffae3a', '#ffd27a', '#fff6d8'], angry: ['#ff7a2a', '#ffb050', '#fff0c0'], soft: ['#ffc860', '#ffe4a0', '#fffbe8'] };
@@ -42,50 +45,65 @@ export const H = ([x, y]) => [HC[0] + (x - HC[0]) * HK, HC[1] + (y - HC[1]) * HK
 const big = (list) => list.map((sh) => mapShape(sh, H, HK));
 
 // ---------- shared bits ----------
-// Bark: long vertical ridges with dark cracks between them (the part's darkest tone beneath), each
-// ridge broken here and there and tapering at its ends, wandering a little; lit on his left, shaded
-// on his right, a pale line of light down the lit ridges.
+// Bark (2026-11-27): a few broad rounded planes over the part's mid brown, never rows of stripes: a lit
+// plane down his left, a soft shade down his right, and two or three long soft grooves wandering down
+// between them, rounded at their ends, in a gentle mid-dark brown.
 function ridges(cx, y0, y1, hw, seed, pw = 11, cols = 0) {
   const out = [];
-  const wMax = Math.max(...Array.from({ length: 12 }, (_, i) => hw(y0 + ((y1 - y0) * i) / 11)));
-  const n = cols || Math.max(2, Math.round((2 * wMax) / pw));
-  for (let i = 0; i < n; i++) {
-    const u = (i + 0.5) / n;
-    // (a long run is broken in two or three; a short one stays whole)
-    const cuts = y1 - y0 < 70 ? [y0, y1] : [y0, y0 + (y1 - y0) * (0.3 + hash(seed + i) * 0.25), y0 + (y1 - y0) * (0.62 + hash(seed * 2 + i) * 0.22), y1].filter((v, k, arr) => k === 0 || k === arr.length - 1 || hash(seed + i * 3 + k) > 0.3);
-    for (let k = 0; k < cuts.length - 1; k++) {
-      const ya = cuts[k] + 2;
-      const yb = cuts[k + 1] - 2;
-      if (yb - ya < 10) continue;
-      const pts = [];
-      for (let j = 0; j <= 4; j++) {
-        const y = ya + ((yb - ya) * j) / 4;
-        const w = hw(y) - 2;
-        pts.push([cx - w + 2 * w * u + Math.sin(j * 1.1 + i * 2.3) * 0.9, y]);
-      }
-      const side = (pts[2][0] - cx) / (hw(pts[2][1]) || 1);
-      const c = side < -0.4 ? BARK[0] : side > 0.45 ? BARK[2] : BARK[1];
-      const ww = pw * 0.36 * (0.85 + hash(seed + i * 5 + k) * 0.3);
-      out.push(...band(curve(pts, 3), ww * 0.9, ww, c, true).map(F));
-      if (side < 0.45) out.push(...band(curve(pts.slice(1, 4).map(([x, y]) => [x - ww * 0.4, y]), 3), ww * 0.22, ww * 0.12, side < -0.4 ? '#fff0d8' : BARK[0], true).map(F));
+  const N = 6;
+  const at = (u) => y0 + ((y1 - y0) * u) / N;
+  const edge = (f, inset = 0) => Array.from({ length: N + 1 }, (_, j) => {
+    const y = at(j);
+    return [cx + f * (hw(y) - 2 - inset), y];
+  });
+  const span = (fa, fb, ya, yb) => {
+    const pts = [];
+    for (let j = 0; j <= N; j++) {
+      const y = ya + ((yb - ya) * j) / N;
+      pts.push([cx + fa * (hw(y) - 3), y]);
     }
+    for (let j = N; j >= 0; j--) {
+      const y = ya + ((yb - ya) * j) / N;
+      pts.push([cx + fb * (hw(y) - 3), y]);
+    }
+    return pts;
+  };
+  const tall = y1 - y0;
+  // the lit plane, its edge wandering a little
+  // (the planes run the part's whole height, so where pieces overlap they carry on without a seam)
+  out.push(F(blob(span(-0.94, -0.42 - hash(seed) * 0.08, y0 - 1, y1 + 2), BARK[0], 2)));
+  // the shade plane
+  out.push(F(blob(span(0.36 + hash(seed + 1) * 0.08, 0.94, y0 - 1, y1 + 2), BARK[2], 2)));
+  // a few long soft grooves (fewer on a short or narrow part)
+  const wMax = Math.max(...Array.from({ length: 6 }, (_, i) => hw(y0 + ((y1 - y0) * i) / 5)));
+  const n = cols ? Math.min(3, Math.max(1, Math.round(cols / 3.5))) : Math.max(1, Math.min(3, Math.round(wMax / 16)));
+  for (let i = 0; i < n; i++) {
+    const f = n === 1 ? 0.1 : -0.45 + (0.95 * i) / (n - 1);
+    const ya = y0 + 4 + hash(seed + i * 7) * tall * 0.12;
+    const yb = y1 - 4 - hash(seed + i * 11) * tall * 0.18;
+    if (yb - ya < 8) continue;
+    const pts = [0, 0.33, 0.66, 1].map((u, j) => {
+      const y = ya + (yb - ya) * u;
+      return [cx + f * (hw(y) - 2) + Math.sin(j * 1.7 + i * 2.1 + seed) * 1.6, y];
+    });
+    out.push(...band(curve(pts, 3), 1.1, 1.8, f < -0.3 ? BARK[1] : BARK[2], true).map(F));
+    // (a soft light along the groove's lit lip)
+    if (f < 0.4) out.push(...band(curve(pts.slice(0, 3).map(([x, y]) => [x - 2, y + 2]), 3), 0.9, 0.5, f < -0.3 ? '#fff0d8' : BARK[0], true).map(F));
   }
   return out;
 }
-// Ridges along a limb from a to b (half-widths wa, wb), lit on the outer side o.
+// A limb's bark from a to b (half-widths wa, wb), lit on the outer side o: one broad lit plane along it
+// and one soft groove (2026-11-27: four ridges a limb read busy).
 function limbRidges(a, b, wa, wb, o, seed) {
-  const out = [];
-  for (let r = 0; r < 4; r++) {
-    const f = -0.75 + r * 0.5;
-    const pts = [0.1, 0.5, 0.9].map((t, j) => {
-      const p = lerp(a, b, t);
-      return [p[0] + f * (wa + (wb - wa) * t) * o + Math.sin(j + r + seed) * 1.2, p[1]];
-    });
-    const lit = f * o < 0;
-    out.push(...band(curve(pts, 3), 3.4, 3, lit ? BARK[0] : r === 3 ? BARK[2] : BARK[1], true).map(F));
-    if (lit) out.push(...band(curve(pts.map(([x, y]) => [x - 0.8 * o, y]), 3), 0.7, 0.4, '#fff0d8', true).map(F));
-  }
-  return out;
+  const at = (t, f) => {
+    const p = lerp(a, b, t);
+    return [p[0] + f * (wa + (wb - wa) * t) * o, p[1]];
+  };
+  return [
+    ...band(curve([at(0.08, -0.55), at(0.5, -0.5), at(0.92, -0.55)], 3), wa * 0.7, wb * 0.6, BARK[0], true).map(F),
+    ...band(curve([at(0.12, 0.62), at(0.5, 0.6), at(0.88, 0.62)], 3), wa * 0.5, wb * 0.45, BARK[2], true).map(F),
+    ...band(curve([at(0.2, 0.1 + Math.sin(seed) * 0.08), at(0.55, 0.15), at(0.85, 0.08)], 3), 1.1, 1.6, BARK[2], true).map(F),
+  ];
 }
 export function leaf(x, y, s, a, c, rib) {
   const [dx, dy] = [Math.cos(a), Math.sin(a)];
@@ -93,26 +111,24 @@ export function leaf(x, y, s, a, c, rib) {
   const P = (u, v) => [x + dx * u * s + nx * v * s, y + dy * u * s + ny * v * s];
   return [blob([P(0, 0), P(0.5, 0.42), P(1.2, 0.3), P(1.7, 0), P(1.2, -0.3), P(0.5, -0.42)], c, 2), ...arc([P(0.15, 0), P(1.4, 0)], 0.5 * s * 0.4, rib)];
 }
-// A cloud of foliage: a soft mass, its shade below, its light above, leaves all round its edge.
+// A cloud of foliage (2026-11-27: calmer, soft rounded clumps instead of a fringe of pointed leaves):
+// a round soft mass with a scalloped edge of a few big round bumps, a soft shade along its bottom, a
+// soft light on its upper left, one curl of shade between clumps.
 function foliage(cx, cy, r, seed, n = 14, dark = false) {
   const p = dark ? [LEAF[1], LEAF[2], LEAF[3]] : [LEAF[0], LEAF[1], LEAF[2]];
-  const out = [blob(Array.from({ length: 12 }, (_, i) => {
-    const a = (i / 12) * Math.PI * 2;
-    const rr = r * (0.86 + hash(i + seed) * 0.22);
-    return [cx + Math.cos(a) * rr, cy + Math.sin(a) * rr * 0.82];
-  }), p[1], 3)];
-  out.push(F(blob([[cx - r * 0.8, cy + r * 0.1], [cx, cy + r * 0.3], [cx + r * 0.85, cy + r * 0.05], [cx + r * 0.6, cy + r * 0.62], [cx - r * 0.5, cy + r * 0.66]], p[2], 2)));
-  out.push(F(blob([[cx - r * 0.6, cy - r * 0.3], [cx - r * 0.1, cy - r * 0.62], [cx + r * 0.4, cy - r * 0.5], [cx + r * 0.1, cy - r * 0.2]], p[0], 2)));
-  // (veins of shade between the leaf clumps inside it)
-  for (let i = 0; i < 3; i++) {
-    const a = hash(seed + i * 9) * Math.PI * 2;
-    out.push(...arc([[cx + Math.cos(a) * r * 0.2, cy + Math.sin(a) * r * 0.2], [cx + Math.cos(a + 0.3) * r * 0.55, cy + Math.sin(a + 0.3) * r * 0.45]], 1.2, p[2]).map(F));
+  const out = [];
+  const bumps = Math.max(5, Math.round(n / 2.4));
+  for (let i = 0; i < bumps; i++) {
+    const a = (i / bumps) * Math.PI * 2 + hash(seed + i) * 0.3;
+    const rr = r * 0.62;
+    const br = r * (0.38 + hash(seed * 3 + i) * 0.1);
+    out.push(E(cx + Math.cos(a) * rr, cy + Math.sin(a) * rr * 0.8, br, br * 0.9, p[1]));
   }
-  for (let i = 0; i < n; i++) {
-    const a = (i / n) * Math.PI * 2 + hash(seed + i) * 0.4;
-    const rr = r * (0.72 + hash(seed * 3 + i) * 0.32);
-    out.push(...leaf(cx + Math.cos(a) * rr, cy + Math.sin(a) * rr * 0.8, r * 0.2, a + 0.4, i % 3 ? p[1] : p[0], p[2]).map(F));
-  }
+  out.push(E(cx, cy, r * 0.72, r * 0.62, p[1]));
+  out.push(F(blob([[cx - r * 0.82, cy + r * 0.12], [cx - r * 0.2, cy + r * 0.38], [cx + r * 0.5, cy + r * 0.3], [cx + r * 0.86, cy + r * 0.1], [cx + r * 0.62, cy + r * 0.62], [cx, cy + r * 0.8], [cx - r * 0.6, cy + r * 0.62]], p[2], 3)));
+  out.push(F(E(cx - r * 0.28, cy - r * 0.3, r * 0.42, r * 0.3, p[0])));
+  out.push(F(E(cx - r * 0.36, cy - r * 0.4, r * 0.16, r * 0.1, dark ? p[0] : '#e8f8c8')));
+  out.push(...band(curve([[cx + r * 0.05, cy + r * 0.05], [cx + r * 0.3, cy + r * 0.12], [cx + r * 0.45, cy + r * 0.02]], 3), 1.4, 0.8, p[2], true).map(F));
   return out;
 }
 export const acorn = (x, y, s, rot = 0) => {
@@ -151,8 +167,8 @@ const canopy = () => big([
   ...foliage(124, 42, 24, 13), ...foliage(178, 42, 24, 15), ...foliage(151, 32, 22, 17),
   ...foliage(104, 58, 18, 19, 10), ...foliage(198, 58, 18, 21, 10),
   ...ivy([[96, 70], [92, 84], [96, 98]], 1), ...ivy([[206, 70], [210, 86], [205, 100]], 2),
-  ...acorn(118, 52, 1.5, -0.3), ...acorn(184, 46, 1.4, 0.4), ...acorn(160, 26, 1.3, 0.1), ...acorn(102, 64, 1.3, -0.2), ...acorn(200, 66, 1.2, 0.3),
-  ...[[134, 30], [196, 56], [108, 54], [170, 30], [150, 20]].flatMap(([x, y]) => blossom(x, y, 3.2)),
+  ...acorn(118, 52, 1.5, -0.3), ...acorn(186, 48, 1.4, 0.4),
+  ...[[136, 30], [170, 30], [198, 60]].flatMap(([x, y]) => blossom(x, y, 3.4)),
 ]);
 export const CANOPY_ROOT = H([151, 50]);
 
@@ -243,7 +259,7 @@ const shutEye = (x, o, kind) => {
 // The stump of a head grown out of his trunk: bark ridges over the brow and sides, a face of pale
 // heartwood with its grain, the knotholes, the brows, the nose, the mustache, the mouth.
 function head(f) {
-  const out = [blob([[112, 110], [110, 72], [118, 48], [134, 40], [151, 36], [168, 40], [184, 48], [192, 72], [190, 110]], BARK[3], 3)];
+  const out = [blob([[112, 110], [110, 72], [118, 48], [134, 40], [151, 36], [168, 40], [184, 48], [192, 72], [190, 110]], BARK[1], 3)];
   out.push(...ridges(151, 38, 64, (y) => 30 + (y - 36) * 0.5, 41, 10));
   out.push(...ridges(116, 64, 108, () => 5, 43, 6), ...ridges(186, 64, 108, () => 5, 47, 6));
   out.push(blob([[120, 66], [134, 58], [151, 56], [168, 58], [182, 66], [184, 88], [174, 104], [151, 110], [128, 104], [118, 88]], HEART[1], 3));
@@ -266,14 +282,16 @@ function head(f) {
 }
 // The long soft moss beard, hanging in waves from his chin (on its own spring).
 const beard = () => big([
-  ...[-26, -17, -8, 1, 10, 19, 27].flatMap((dx, i) => {
+  // (2026-11-27: softer: five broad soft locks, rounded tips, close tones, instead of seven thin
+  // stripy strands)
+  ...[-22, -11, 0, 11, 22].flatMap((dx, i) => {
     const x = 151 + dx;
-    const top = Math.abs(dx) < 12 ? 107 : 100 - (Math.abs(dx) - 12) * 0.2;
-    const len = 38 + hash(i + 2) * 16 - Math.abs(dx) * 0.5;
-    const sw = (hash(i) - 0.5) * 5;
+    const top = Math.abs(dx) < 12 ? 106 : 100 - (Math.abs(dx) - 12) * 0.2;
+    const len = 36 + hash(i + 2) * 12 - Math.abs(dx) * 0.45;
+    const sw = (hash(i) - 0.5) * 4;
     return [
-      ...taper([[x, top], [x + sw, top + len * 0.35], [x - sw, top + len * 0.7], [x + sw * 0.5, top + len]], 11, 2.4, i % 2 ? MOSS[1] : MOSS[2]),
-      ...taper([[x - 2, top + 2], [x - 2 + sw, top + len * 0.35], [x - 2 - sw, top + len * 0.6]], 2, 0.6, MOSS[0]).map(F),
+      ...taper([[x, top], [x + sw, top + len * 0.35], [x - sw, top + len * 0.7], [x + sw * 0.5, top + len]], 15, 6, i % 2 ? MOSS[1] : '#80bc66'),
+      ...taper([[x - 2.6, top + 3], [x - 2.6 + sw, top + len * 0.35], [x - 2.6 - sw, top + len * 0.58]], 3.2, 1.2, MOSS[0]).map(F),
     ];
   }),
   ...moss([[124, 98], [136, 100], [142, 108], [151, 110], [160, 108], [166, 100], [178, 98], [172, 112], [151, 116], [130, 112]], 1.4),
@@ -290,7 +308,7 @@ function trunkBand(y0, y1, seed) {
     L.push([151 - TRUNK_HW(y), y]);
     R.push([151 + TRUNK_HW(y), y]);
   }
-  return [blob([...L, [151, y1 + 4], ...R.reverse(), [151, y0 - 4]], BARK[3], 2), ...ridges(151, y0, y1, TRUNK_HW, seed, 12, 9)];
+  return [blob([...L, [151, y1 + 4], ...R.reverse(), [151, y0 - 4]], BARK[1], 2), ...ridges(151, y0, y1, TRUNK_HW, seed, 12, 9)];
 }
 // On his chest: the trunk's top, the knothole with its mushrooms, the moss mantle and its strands.
 const trunkTop = () => [
@@ -316,8 +334,10 @@ const trunkLow = () => [
 function upperArm(k) {
   const [sh, el] = [J[`sh${k}`], J[`el${k}`]];
   const o = k === 'N' ? 1 : -1;
-  const out = [...taper([[sh[0], sh[1] - 4], el], 34, 27, BARK[3]), ...limbRidges(sh, el, 15, 12, o, k === 'N' ? 7 : 3)];
-  out.push(blob([[sh[0] - 18, sh[1] + 4], [sh[0] - 14, sh[1] - 12], [sh[0], sh[1] - 18], [sh[0] + 14, sh[1] - 12], [sh[0] + 18, sh[1] + 4], [sh[0], sh[1] + 12]], BARK[1], 3));
+  // (the far arm a shade deeper, so it sits behind him)
+  const base = k === 'F' ? FAR : BARK[1];
+  const out = [...taper([[sh[0], sh[1] - 4], el], 34, 27, base), ...limbRidges(sh, el, 15, 12, o, k === 'N' ? 7 : 3)];
+  out.push(blob([[sh[0] - 18, sh[1] + 4], [sh[0] - 14, sh[1] - 12], [sh[0], sh[1] - 18], [sh[0] + 14, sh[1] - 12], [sh[0] + 18, sh[1] + 4], [sh[0], sh[1] + 12]], base, 3));
   out.push(F(blob([[sh[0] - 12, sh[1] - 6], [sh[0] - 6, sh[1] - 14], [sh[0] + 4, sh[1] - 14], [sh[0] - 2, sh[1] - 4]], BARK[0], 2)));
   out.push(...moss([[sh[0] - 16, sh[1] - 2], [sh[0] - 8, sh[1] - 14], [sh[0] + 6, sh[1] - 16], [sh[0] + 16, sh[1] - 6], [sh[0] + 8, sh[1] - 2], [sh[0] - 6, sh[1] + 2]]));
   out.push(...strand(sh[0] + 10 * o, sh[1], 16, 2 * o, 1));
@@ -328,8 +348,8 @@ function foreArm(k) {
   const [el, wr] = [J[`el${k}`], J[`wr${k}`]];
   const o = k === 'N' ? 1 : -1;
   return [
-    ...taper([el, wr], 26, 20, BARK[3]), ...limbRidges(el, wr, 12, 9, o, k === 'N' ? 11 : 5),
-    blob([[el[0] - 14, el[1]], [el[0] - 10, el[1] - 11], [el[0] + 4, el[1] - 14], [el[0] + 14, el[1] - 4], [el[0] + 12, el[1] + 10], [el[0] - 4, el[1] + 13]], BARK[1], 3),
+    ...taper([el, wr], 26, 20, k === 'F' ? FAR : BARK[1]), ...limbRidges(el, wr, 12, 9, o, k === 'N' ? 11 : 5),
+    blob([[el[0] - 14, el[1]], [el[0] - 10, el[1] - 11], [el[0] + 4, el[1] - 14], [el[0] + 14, el[1] - 4], [el[0] + 12, el[1] + 10], [el[0] - 4, el[1] + 13]], k === 'F' ? FAR : BARK[1], 3),
     F(blob([[el[0] - 10, el[1] - 2], [el[0] - 6, el[1] - 9], [el[0] + 2, el[1] - 10], [el[0] - 2, el[1] - 2]], BARK[0], 2)), F(E(el[0] + 4 * o, el[1] + 4, 3, 2.4, BARK[2])),
     ...leaf(el[0] + 12 * o, el[1] + 2, 5, o > 0 ? -0.4 : Math.PI + 0.4, LEAF[1], LEAF[2]),
   ];
@@ -350,7 +370,7 @@ function hand(k) {
 function thigh(k) {
   const [hp, kn] = [J[`hip${k}`], J[`knee${k}`]];
   return [
-    ...taper([[hp[0], hp[1] - 8], kn], 40, 38, BARK[3]), ...ridges(hp[0], hp[1] - 6, kn[1] + 2, () => 17, k === 'N' ? 9 : 5, 11),
+    ...taper([[hp[0], hp[1] - 8], kn], 40, 38, BARK[1]), ...ridges(hp[0], hp[1] - 6, kn[1] + 2, () => 17, k === 'N' ? 9 : 5, 11),
     blob([[kn[0] - 17, kn[1] - 2], [kn[0] - 12, kn[1] - 10], [kn[0] + 12, kn[1] - 10], [kn[0] + 17, kn[1] - 2], [kn[0] + 12, kn[1] + 8], [kn[0] - 12, kn[1] + 8]], BARK[1], 3),
     F(blob([[kn[0] - 13, kn[1] - 3], [kn[0] - 9, kn[1] - 8], [kn[0] - 1, kn[1] - 8], [kn[0] - 6, kn[1] - 2]], BARK[0], 2)),
   ];
@@ -358,7 +378,7 @@ function thigh(k) {
 // The shin: from under the knee's knob to the ankle, flaring into the foot.
 function shin(k) {
   const [kn, an] = [J[`knee${k}`], J[`ank${k}`]];
-  return [...taper([kn, [an[0], an[1] + 2]], 37, 40, BARK[3]), ...ridges(kn[0], kn[1] + 2, an[1], (y) => 17 + (y - kn[1]) * 0.08, k === 'N' ? 13 : 7, 11)];
+  return [...taper([kn, [an[0], an[1] + 2]], 37, 40, BARK[1]), ...ridges(kn[0], kn[1] + 2, an[1], (y) => 17 + (y - kn[1]) * 0.08, k === 'N' ? 13 : 7, 11)];
 }
 // The foot: a stout stump with roots spreading out on the floor, moss and a mushroom on it.
 function foot(k) {

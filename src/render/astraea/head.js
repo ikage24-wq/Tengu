@@ -17,13 +17,17 @@
 //          worried even at rest.
 //   mouth  small and soft: a closed line that rests level (never a stuck smile), lifting at both corners
 //          only when she's happy; a counting mouth (vowel shapes), a round "o", a wobble when she's sad.
-//   hair   starlight aqua, warming to a faint dawn apricot at its ends: an even blunt fringe of four
-//          sections (the third the widest) cut in a gentle U that stops above her lashes, a deeper layer
-//          seen in its splits, its soft shadow on her forehead; a long side lock each side outside her
-//          eyes, down just past her chin, each bound near its end with one of her star beads; and
-//          the rest falling straight down her back behind her body to the backs of her knees, its end one
-//          soft round. One light from above for all of it, one pearly shine band across it all.
-import { TAU, mix, sstep, win, tone, ell, pen, glow, sweat, tear } from './fx.js';
+//   hair   starlight aqua, warming through a soft sage to dawn apricot at its ends (2026-11-27 polish,
+//          after the bangs checklist: the fringe was straight blocks, the side locks flat sheets): a soft
+//          fringe of rounded locks in three chunks (the middle the widest and shortest, each chunk one
+//          thick lock and thinner ones leaning in to it, a triangle of the deeper layer between chunks),
+//          stopping above her lashes, its soft shadow on her forehead, her brows drawn over its tips; a
+//          long side lock each side outside her eyes (a thick lock and a thinner one before it), down just
+//          past her chin, bound near its end with one of her star beads; and the rest falling down her
+//          back behind her body to the backs of her knees, parting into three soft round ends. One light
+//          from above for all of it, one pearly shine band across it all.
+import { TAU, mix, sstep, win, tone, ell, pen, glow, sweat, tear, clamp } from './fx.js';
+import { curve } from '../mobs/kidbase.js';
 import { SKIN, SKIN_INK, HAIR, GOLD, BEAD, LASH, BROW, IRIS, RING, PUPIL, LIP, BLUSH } from './palette.js';
 
 export function chaikin(pts, n = 2, open = false) {
@@ -48,7 +52,7 @@ export function poly(ctx, pts) {
 }
 
 // ---------- Her moods (every part eased toward them) ----------
-// lid (0 open .. 1 shut: closed moods only), shut (which closed shape), bt (brow tilt: + knit, - worried),
+// lid (0 open .. 1 shut; a little in a set, determined face: the lid lowered over the iris's top), shut (which closed shape), bt (brow tilt: + knit, - worried),
 // by (raise), mw/ms/mo (the mouth's width, smile, open), ro (a round "o"), wob (a wobbly line), bl (blush),
 // sp (the falling-star glints turned to sparkles: wonder), wet (tears brimming), sm (small irises: a
 // fright), wk (a wink).
@@ -63,9 +67,10 @@ export const FACES = {
   joy: fc({ bt: -0.35, by: 0.7, mw: 1, ms: 1, mo: 0.55, bl: 0.9, sp: 1 }),
   bliss: fc({ lid: 1, shut: 'happy', bt: -0.3, by: 0.4, mw: 0.85, ms: 0.75, bl: 0.8 }),
   sleepy: fc({ lid: 1, shut: 'calm', bt: -0.15, by: 0, mw: 0.5, ms: 0, mo: 0.15, bl: 0.5 }),
-  focus: fc({ bt: 0.45, by: 0, mw: 0.55, ms: -0.05, bl: 0.4 }),
-  brave: fc({ bt: 0.7, by: -0.05, mw: 0.62, ms: -0.15, bl: 0.5 }),
-  cross: fc({ bt: 0.95, by: -0.1, mw: 0.7, ms: -0.35, mo: 0.3, bl: 0.75 }),
+  focus: fc({ lid: 0.2, bt: 0.45, by: 0, mw: 0.55, ms: -0.05, bl: 0.4 }),
+  tally: fc({ lid: 0.14, bt: 0.5, by: 0.05, mw: 0.6, mo: 0.25, bl: 0.5 }),
+  brave: fc({ lid: 0.22, bt: 0.7, by: -0.05, mw: 0.62, ms: -0.15, bl: 0.5 }),
+  cross: fc({ lid: 0.26, bt: 0.95, by: -0.1, mw: 0.7, ms: -0.35, mo: 0.3, bl: 0.75 }),
   awe: fc({ bt: -0.4, by: 0.9, mw: 0.5, ro: 0.8, bl: 0.6, sp: 1 }),
   lost: fc({ bt: -0.55, by: 1, mw: 0.5, ro: 1, sm: 0.85, bl: 0.5 }),
   fluster: fc({ bt: -0.7, by: 0.6, mw: 0.75, ms: -0.15, mo: 0.3, wob: 0.8, bl: 1.15 }),
@@ -100,6 +105,10 @@ function eye(ctx, a, x, y, side, f, look, shutK) {
   const blink = shutK < 0.6 ? win((t + (a.asUid ?? 0) * 1.7) % 5.9, 5.3, 5.42, 5.5, 5.66) : 0;
   const L = Math.max(shutK, blink);
   const closedW = sstep((L - 0.7) / 0.3);
+  // (closing, a real lid comes down over the open eye, its lash with it, so an eye shutting never shows
+  // as a see-through eye under a closed one: only the lash fades into the closed shape at the very end)
+  const lidK = sstep(L / 0.85);
+  const dy = lidK * h * 1.6;
   const inner = eyeAt(x, y, side, 0.02);
   const outer = eyeAt(x, y, side, 0.98);
   if (closedW > 0.01) {
@@ -159,12 +168,18 @@ function eye(ctx, a, x, y, side, f, look, shutK) {
     }
     ctx.restore();
   }
-  const openW = 1 - closedW;
+  const openW = 1 - sstep((L - 0.78) / 0.22);
   if (openW <= 0.01) return;
   ctx.save();
   ctx.globalAlpha *= openW;
   // a soft rose wash over the lid
-  glow(ctx, x + side * 0.6, y - h * 0.9, 4.4, '#f6b6c8', 0.32);
+  glow(ctx, x + side * 0.6, y - h * 0.9 + dy * 0.5, 4.4, '#f6b6c8', 0.32);
+  if (dy > 0.01) {
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(x - w * 2, y - h * 1.05 + dy, w * 4, h * 3);
+    ctx.clip();
+  }
   // the white: an oval turned down at its outer corner
   const shape = () => ell(ctx, x, y, w, h, side * droop);
   shape();
@@ -254,6 +269,9 @@ function eye(ctx, a, x, y, side, f, look, shutK) {
     ctx.fill();
   }
   ctx.restore();
+  if (dy > 0.01) ctx.restore();
+  ctx.save();
+  ctx.translate(0, dy);
   // the upper lash: one closed outline, thin at the inner corner, thickening outward, curling down round
   // the outer corner to a small round end
   const N = 14;
@@ -292,11 +310,12 @@ function eye(ctx, a, x, y, side, f, look, shutK) {
   for (let i = 3; i <= N - 2; i++) (i === 3 ? ctx.moveTo : ctx.lineTo).call(ctx, up[i][0], up[i][1] + 0.22);
   ctx.stroke();
   ctx.restore();
+  ctx.restore();
 }
 // Brows: round brows, short, full, even, round at both ends.
 function brow(ctx, a, x, y, side, f) {
-  const yi = y - f.by * 0.5 + f.bt * 0.6;
-  const yo = y - f.by * 0.5 - f.bt * 0.2;
+  const yi = y - f.by * 0.5 + f.bt * 1.1;
+  const yo = y - f.by * 0.5 - f.bt * 0.35;
   const xi = x - side * 1.3;
   const xo = x + side * 1.5;
   ctx.save();
@@ -366,13 +385,23 @@ export function skullPts(tx) {
 // pale at the crown, deeper down her back, its ends warming to dawn.
 const HY0 = -22;
 const HY1 = 76;
-function hairFill(ctx, a) {
-  const g = ctx.createLinearGradient(0, HY0, 0, HY1);
+// `end`: where this piece of hair ends (down her back, past her chin): over its last stretch it warms
+// through a pale cream to dawn apricot, so every long lock's end glows (2026-11-27 polish: the fade ran
+// over the one span for all of it and only the last pixels of her back hair ever reached it).
+function hairFill(ctx, a, end = HY1) {
+  const g = ctx.createLinearGradient(0, HY0, 0, end);
+  const u = (y) => clamp((y - HY0) / (end - HY0), 0, 1);
   g.addColorStop(0, tone(a, HAIR.lt));
-  g.addColorStop(0.16, tone(a, HAIR.base));
-  g.addColorStop(0.5, tone(a, HAIR.sh));
-  g.addColorStop(0.8, tone(a, HAIR.deep));
-  g.addColorStop(0.93, tone(a, HAIR.sh));
+  g.addColorStop(u(-6), tone(a, HAIR.base));
+  if (end > 40) {
+    g.addColorStop(0.45, tone(a, HAIR.sh));
+    g.addColorStop(0.64, tone(a, HAIR.deep));
+    g.addColorStop(0.79, tone(a, HAIR.sh));
+    g.addColorStop(0.9, tone(a, HAIR.fade));
+  } else {
+    g.addColorStop(Math.max(u(-6) + 0.1, 0.6), tone(a, HAIR.sh));
+    g.addColorStop(0.83, tone(a, HAIR.fade));
+  }
   g.addColorStop(1, tone(a, HAIR.tip));
   return g;
 }
@@ -393,14 +422,14 @@ function shineBand(ctx, y = -9.4) {
     ctx.stroke();
   }
 }
-function hairShape(ctx, a, mode, pts, shade, lw) {
+function hairShape(ctx, a, mode, pts, shade, lw, end) {
   poly(ctx, pts);
   if (mode === 'line') {
     pen(ctx, tone(a, HAIR.ink), lw);
     ctx.stroke();
     return;
   }
-  ctx.fillStyle = hairFill(ctx, a);
+  ctx.fillStyle = hairFill(ctx, a, end);
   ctx.fill();
   if (shade) {
     ctx.save();
@@ -412,47 +441,97 @@ function hairShape(ctx, a, mode, pts, shade, lw) {
 }
 // (her hair's shade: periwinkle, never grey)
 const SHADE = (al) => `rgba(96,120,190,${al})`;
-// The fringe's cut: one even gentle U across her forehead, lowest in the middle just above her lashes.
-const CUT = { y: -3.0, rise: 2.6, half: 14.6 };
-const cutY = (x, cx) => CUT.y + CUT.rise * Math.min(1, ((x - cx) / CUT.half) ** 2);
-// Its four sections (the third the widest), each split [where, how deep, how wide the gap].
-const SPLITS = [[0.21, 2.7, 0.95], [0.45, 3.5, 1.15], [0.76, 3.0, 1.0]];
-function fringeGeom(tx, sw) {
-  const cx = 0.6 + tx * 0.6;
-  const x0 = cx - CUT.half - 0.9;
-  const x1 = cx + CUT.half + 0.9;
-  const W = x1 - x0;
-  const topY = (x) => -16.8 + 0.02 * (x - cx) ** 2;
-  const xs = [x0, ...SPLITS.map(([u]) => x0 + W * u), x1];
-  const secs = [];
-  for (let i = 0; i < xs.length - 1; i++) {
-    const L = xs[i];
-    const R = xs[i + 1];
-    const sl = i > 0 ? SPLITS[i - 1] : null;
-    const sr = i < SPLITS.length ? SPLITS[i] : null;
-    const dx = (sw?.[i % 3] ?? 0) * 2.6 * (i % 2 ? -1 : 1);
-    const lb = sl ? L + sl[2] / 2 : L + 0.4;
-    const rb = sr ? R - sr[2] / 2 : R - 0.4;
-    const pts = [[L, topY(L)], [R, topY(R)]];
-    if (sr) pts.push([R, cutY(R, cx) - sr[1]]);
-    const n = 6;
-    for (let k = 0; k <= n; k++) {
-      const x = rb + (lb - rb) * (k / n);
-      // (each section's end trimmed flat with soft corners, the cut even across them)
-      pts.push([x + dx * (1 - Math.abs(k / n - 0.5) * 2) * 0.3 + dx * 0.4, cutY(x, cx) + 0.45 * Math.sin(Math.PI * (k / n))]);
-    }
-    if (sl) pts.push([L, cutY(L, cx) - sl[1]]);
-    secs.push({ pts: chaikin(pts, 2), L, R, mid: (L + R) / 2 });
+
+// ---------- Her locks (2026-11-27 polish: the fringe was cut in straight blocks and the side locks were
+// flat sheets; now every piece is a soft rounded lock, after the bangs checklist) ----------
+// One lock: a centre line from `start` (up in the hair over her crown) through its root on her hairline,
+// bowing by `bend`, to its tip; `w` wide down to the root, then tapering to a round cap `tw` wide, a
+// little swell along it so no edge runs straight.
+function lockOf(start, root, tip, bend, w, tw) {
+  const mid = [(root[0] + tip[0]) / 2, (root[1] + tip[1]) / 2];
+  const dx = tip[0] - root[0];
+  const dy = tip[1] - root[1];
+  const L = Math.hypot(dx, dy) || 1;
+  const ctrl = [mid[0] - (dy / L) * bend, mid[1] + (dx / L) * bend];
+  const line = curve([start, root, ctrl, tip], 6);
+  const n = line.length;
+  const left = [];
+  const right = [];
+  for (let i = 0; i < n; i++) {
+    const u = i / (n - 1);
+    const p = line[Math.max(0, i - 1)];
+    const q = line[Math.min(n - 1, i + 1)];
+    const d = Math.hypot(q[0] - p[0], q[1] - p[1]) || 1;
+    const nx = -(q[1] - p[1]) / d;
+    const ny = (q[0] - p[0]) / d;
+    const ww = u < 0.3 ? w : mix(w, tw, ((u - 0.3) / 0.7) ** 1.2) * (1 + Math.sin(Math.PI * u) * 0.07);
+    left.push([line[i][0] + nx * ww * 0.5, line[i][1] + ny * ww * 0.5]);
+    right.push([line[i][0] - nx * ww * 0.5, line[i][1] - ny * ww * 0.5]);
   }
-  return { cx, x0, x1, secs, topY };
+  const [ex, ey] = line[n - 1];
+  const [px, py] = line[n - 2];
+  const an = Math.atan2(ey - py, ex - px);
+  const cap = [];
+  for (let k = 1; k < 7; k++) {
+    const a = an - Math.PI / 2 + (k / 7) * Math.PI;
+    cap.push([ex + Math.cos(a) * tw * 0.5, ey + Math.sin(a) * tw * 0.5]);
+  }
+  const pts = [...left, ...cap.reverse(), ...right.reverse()];
+  // (its lower edge, both sides and round the tip, from `k0` of the way down: where the lock lies over
+  // her face, so it gets a fine edge of its own there)
+  const edgeFrom = (k0) => {
+    const i0 = Math.round(n * k0);
+    const N = pts.length;
+    return [...pts.slice(i0, n), ...pts.slice(n - 1, N - n + 1), ...pts.slice(N - n, N - i0)];
+  };
+  return { pts, line, edgeFrom };
+}
+// (a lock's own fine edge over her face: its hair's shade, thin, never a dark line)
+function lockEdge(ctx, a, L, k0 = 0.5) {
+  const e = L.edgeFrom(k0);
+  ctx.save();
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  pen(ctx, tone(a, HAIR.sh, 0.95), 0.42);
+  ctx.beginPath();
+  e.forEach((p, i) => (i ? ctx.lineTo(...p) : ctx.moveTo(...p)));
+  ctx.stroke();
+  ctx.restore();
+}
+// The fringe: a cute three-chunk cut, the middle chunk the widest and the shortest (her eyes stay clear),
+// each chunk one thick lock and thinner ones whose tips lean in to it; neighbours differ in width and tip
+// height, one lock curls back the other way, a triangle of the deeper layer opening between the chunks,
+// every tip a round cap, all of it springing from her part like a fountain. [x of the root on her
+// hairline, tip [x, y], width, tip width, bow, chunk, thick] (x about the face's middle).
+const LOCKS = [
+  [-11.6, [-12.0, -0.3], 8.4, 3.4, 1.2, 0, 1],
+  [-7.6, [-9.5, -1.5], 5.2, 2.5, 0.9, 0, 0],
+  [-4.4, [-3.3, -2.2], 4.2, 2.2, -0.9, 1, 0],
+  [0.2, [-0.5, -3.1], 9.6, 3.9, 0.6, 1, 1],
+  [3.8, [2.7, -2.4], 4.8, 2.3, -1.0, 1, 0],
+  [8.6, [9.3, -0.4], 8.7, 3.6, -1.3, 2, 1],
+  [12.4, [11.4, -1.3], 5.6, 2.6, -0.6, 2, 0],
+];
+const hairlineY = (x) => -8.6 + (x / 15) ** 2 * 3.2;
+function fringeLocks(tx, sw) {
+  const cx = 0.6 + tx * 0.6;
+  const part = [cx + 2.5, -18.5];
+  return LOCKS.map(([rx, [tx0, ty], w, tw, bend, c, thick]) => {
+    const root = [cx + rx, hairlineY(rx) - 1];
+    const start = [mix(root[0], part[0], 0.55), mix(root[1], part[1], 0.55)];
+    // (each chunk on its own spring, the thin locks a touch freer; never far enough to cross her eyes)
+    const s = clamp((sw?.[c] ?? 0) * 14 * (thick ? 0.8 : 1.1), -0.7, 0.7);
+    const L = lockOf(start, root, [cx + tx0 + s, ty], bend, w, tw);
+    L.thick = thick;
+    L.tip = [cx + tx0 + s, ty];
+    return L;
+  });
 }
 function fringe(ctx, a, mode, tx, sw, lw) {
-  const G = fringeGeom(tx, sw);
-  // (the deeper layer seen up inside the splits)
-  const inner = chaikin([[G.x0 + 0.6, G.topY(G.x0) + 1], [G.x1 - 0.6, G.topY(G.x1) + 1], ...Array.from({ length: 9 }, (_, k) => {
-    const x = G.x1 - 0.8 - (G.x1 - G.x0 - 1.6) * (k / 8);
-    return [x, cutY(x, G.cx) - 0.3];
-  })], 2);
+  const cx = 0.6 + tx * 0.6;
+  const locks = fringeLocks(tx, sw);
+  // (the deeper layer behind it, seen up inside the gaps between the chunks; forehead below that)
+  const inner = chaikin([[cx - 14.4, -4.6], [cx - 6, -6.4], [cx + 6, -6.4], [cx + 14.4, -4.0], [cx + 14.0, -2.4], [cx + 6, -3.6], [cx, -4.4], [cx - 6, -3.6], [cx - 14.0, -2.4]], 2);
   poly(ctx, inner);
   if (mode === 'line') {
     pen(ctx, tone(a, HAIR.ink), lw);
@@ -461,36 +540,18 @@ function fringe(ctx, a, mode, tx, sw, lw) {
     ctx.fillStyle = tone(a, HAIR.deep);
     ctx.fill();
   }
-  for (const s of G.secs) {
-    hairShape(ctx, a, mode, s.pts, () => {
-      const cy = cutY(s.mid, G.cx);
-      const g = ctx.createLinearGradient(0, cy - 4.4, 0, cy + 0.6);
+  // (thin locks first, the thick ones over them: nearer, thicker)
+  for (const L of [...locks.filter((l) => !l.thick), ...locks.filter((l) => l.thick)]) {
+    hairShape(ctx, a, mode, L.pts, () => {
+      // (its shade gathers toward the tip: the deepest tone on the overhang above her eyes)
+      const g = ctx.createLinearGradient(0, L.tip[1] - 6, 0, L.tip[1] + 0.6);
       g.addColorStop(0, SHADE(0));
-      g.addColorStop(1, SHADE(0.42));
+      g.addColorStop(1, SHADE(L.thick ? 0.3 : 0.24));
       ctx.fillStyle = g;
-      ctx.fillRect(s.L - 2, -22, s.R - s.L + 4, 26);
-      // (thin soft shadows down each side at the splits, fading toward the crown)
-      for (const [ex, k] of [[s.L, 1], [s.R, -1]]) {
-        const sg = ctx.createLinearGradient(0, -12, 0, cutY(ex, G.cx));
-        sg.addColorStop(0, SHADE(0));
-        sg.addColorStop(1, SHADE(0.36));
-        ctx.strokeStyle = sg;
-        ctx.lineWidth = 0.7;
-        ctx.beginPath();
-        ctx.moveTo(ex + k * 0.3, -12);
-        ctx.quadraticCurveTo(ex + k * 0.5, (cutY(ex, G.cx) - 12) / 2, ex + k * 0.4, cutY(ex, G.cx));
-        ctx.stroke();
-      }
-      // (a small soft shadow cutting into the widest section, so it isn't one flat slab)
-      if (s.R - s.L > 8) {
-        pen(ctx, SHADE(0.22), 0.6);
-        ctx.beginPath();
-        ctx.moveTo(s.mid + 0.8, cutY(s.mid, G.cx) - 2.6);
-        ctx.quadraticCurveTo(s.mid + 1.1, cutY(s.mid, G.cx) - 1.2, s.mid + 0.9, cutY(s.mid, G.cx) - 0.2);
-        ctx.stroke();
-      }
+      ctx.fillRect(L.tip[0] - 6, L.tip[1] - 7, 12, 9);
       shineBand(ctx);
     }, lw);
+    if (mode === 'fill') lockEdge(ctx, a, L, 0.52);
   }
 }
 function capPts(tx) {
@@ -502,45 +563,46 @@ function capPts(tx) {
   }
   return chaikin([[-17.6, 4], ...pts, [17.8, 1], [12, -5], [tx, -8], [-9, -6], [-15.8, -1]], 2);
 }
-// A long side lock: from under the fringe outside her eye, down just past her chin, a gentle
-// taper to one soft round end, bound near it with a star bead; its end swaying on its own spring.
-const LOCK_E = 24;
-function sideLockPts(side, tx, sway) {
+// A long side lock each side: one thick lock from under her fringe outside her eye, bowing softly round
+// her cheek and turning in to a round end just past her chin, bound near it with a star bead; a thinner
+// lock in front of it, shorter, its end tucked in toward the thick one's; both warming to dawn at their
+// ends; their ends swaying on its spring.
+const LOCK_E = 24.5;
+function sideLocks(side, tx, sway) {
   const shift = side > 0 ? tx * 0.75 : tx * 0.15;
-  const inX = side > 0 ? 11.8 : -11.2;
-  const outX = side > 0 ? 17.6 : -17.8;
-  const sx = (v) => v + shift;
+  const X = (v) => side * v + shift;
   const s = sway * 3.2;
-  const E = LOCK_E;
-  // (it hugs the cheek, narrows a little at the bead, and ends in one soft round)
-  const pts = chaikin([
-    [sx(outX - side * 0.4), -9.8], [sx(inX - side * 1.3), -9.4], [sx(inX), -2], [sx(inX + side * 0.3) + s * 0.2, 8],
-    [sx(inX + side * 0.9) + s * 0.45, 16], [sx(inX + side * 1.6) + s * 0.7, E - 7], [sx(inX + side * 1.9) + s * 0.85, E - 2.6],
-    [sx((inX + outX) / 2 + side * 0.4) + s, E + 0.8],
-    [sx(outX - side * 1.6) + s * 0.85, E - 2.6], [sx(outX - side * 1.5) + s * 0.7, E - 7], [sx(outX - side * 0.4) + s * 0.45, 16],
-    [sx(outX + side * 0.3) + s * 0.2, 7], [sx(outX + side * 0.3), -3],
-  ], 3);
-  const bead = [sx((inX + outX) / 2 + side * 0.2) + s * 0.72, E - 6.2];
-  return { pts, bead, inX: sx(inX), outX: sx(outX), s };
+  const main = lockOf([X(10.6), -11], [X(14.9), -4], [X(13.8) + s, LOCK_E], -side * 1.2, 5.9, 2.7);
+  const thin = lockOf([X(10), -10], [X(13.1), -3], [X(12.6) + s * 0.8, 18.6], -side * 0.8, 3.4, 1.9);
+  // (the bead binds the thick lock a little above its end)
+  const by = LOCK_E - 6.6;
+  const ln = main.line;
+  let bead = ln[ln.length - 1];
+  for (let i = 1; i < ln.length; i++) {
+    if (ln[i][1] >= by) {
+      const u = (by - ln[i - 1][1]) / Math.max(0.01, ln[i][1] - ln[i - 1][1]);
+      bead = [mix(ln[i - 1][0], ln[i][0], u), by];
+      break;
+    }
+  }
+  return { main, thin, bead, s };
 }
 function sideLock(ctx, a, mode, side, tx, sway, lw) {
-  const P = sideLockPts(side, tx, sway);
-  hairShape(ctx, a, mode, P.pts, () => {
-    const g = ctx.createLinearGradient(0, -10, 0, -4);
-    g.addColorStop(0, SHADE(0.45));
-    g.addColorStop(1, SHADE(0));
-    ctx.fillStyle = g;
-    ctx.fillRect(Math.min(P.outX, P.inX) - 4, -11, 14, 7);
-    // (a soft shade along the face side, and where it tucks under the fringe)
-    glow(ctx, P.inX + side * 0.8, 10, 3.2, HAIR.deep, 0.35);
-    // (one soft split down its length, fading before the end)
-    pen(ctx, SHADE(0.28), 0.5);
-    ctx.beginPath();
-    ctx.moveTo((P.inX + P.outX) / 2 + side * 0.4, 4);
-    ctx.quadraticCurveTo((P.inX + P.outX) / 2 + side * 0.7 + P.s * 0.4, 14, (P.inX + P.outX) / 2 + side * 0.4 + P.s * 0.65, LOCK_E - 8);
-    ctx.stroke();
-    shineBand(ctx);
-  }, lw);
+  const P = sideLocks(side, tx, sway);
+  for (const [L, end] of [[P.main, LOCK_E], [P.thin, 18.6]]) {
+    hairShape(ctx, a, mode, L.pts, () => {
+      // (shaded where it tucks under the fringe, and along the face side)
+      const g = ctx.createLinearGradient(0, -10, 0, -3);
+      g.addColorStop(0, SHADE(0.45));
+      g.addColorStop(1, SHADE(0));
+      ctx.fillStyle = g;
+      ctx.fillRect(-30, -12, 60, 9);
+      const mid = L.line[Math.round(L.line.length * 0.6)];
+      glow(ctx, mid[0] - side * 1.4, mid[1], 3, HAIR.deep, L === P.main ? 0.35 : 0.2);
+      shineBand(ctx);
+    }, lw, end);
+    if (mode === 'fill') lockEdge(ctx, a, L, 0.42);
+  }
   // the star bead that binds it: a round gold bead with a little star on it
   starBead(ctx, a, mode, P.bead[0], P.bead[1], 1.55, lw);
 }
@@ -595,29 +657,37 @@ function backHair(ctx, a, mode, tx, sw, lean, lw, sit = 0) {
   const W = (u) => 19 + Math.sin(u * Math.PI * 0.9) * 5 + u * 3;
   const back = [];
   const front = [];
-  for (let i = 0; i <= 10; i++) {
+  for (let i = 0; i <= 9; i++) {
     const u = i / 10;
     back.push(at(u, -W(u) * 0.55));
     front.push(at(u, W(u) * 0.45));
   }
-  const end = at(1.035, -0.6);
-  const pts = chaikin([[-17.4, -9], [-12, -16], [4, -16], [13, -9], ...front, end, ...back.reverse()], 3);
+  // (its end in three soft round locks of their own lengths, the middle one longest, the splits between
+  // them of different depths: never an even scalloped hem)
+  const W1 = W(1);
+  const ends = [at(0.985, W1 * 0.31), at(0.925, W1 * 0.14), at(1.05, -W1 * 0.07), at(0.965, -W1 * 0.29), at(1.015, -W1 * 0.46)];
+  const tipEnd = top + L * 1.05;
+  const pts = chaikin([[-17.4, -9], [-12, -16], [4, -16], [13, -9], ...front, ...ends, ...back.reverse()], 3);
   hairShape(ctx, a, mode, pts, () => {
-    // (deeper where it falls behind her, a few soft long locks down it, the shine band at the crown)
+    // (deeper where it falls behind her, a soft fullness where it turns toward the light, the long locks
+    // it parts into running down into the splits at its end, the shine band at the crown)
     const mid = at(0.55, 0);
     glow(ctx, mid[0], mid[1], 18, HAIR.deep, 0.35);
-    pen(ctx, SHADE(0.22), 0.7);
-    for (const off of [-4, 1.5, 5.5]) {
+    const full = at(0.34, W(0.34) * 0.2);
+    glow(ctx, full[0], full[1], 9, HAIR.base, 0.3);
+    pen(ctx, SHADE(0.24), 0.7);
+    ctx.lineCap = 'round';
+    for (const [u0, o0, o1, u1] of [[0.2, 0.2, 0.14, 0.93], [0.3, -0.3, -0.29, 0.96], [0.14, -0.04, -0.08, 0.62]]) {
       ctx.beginPath();
-      const p0 = at(0.12, off);
-      const p1 = at(0.6, off * 1.1);
-      const p2 = at(0.94, off * 0.7);
+      const p0 = at(u0, W(u0) * o0);
+      const p1 = at((u0 + u1) / 2, W((u0 + u1) / 2) * (o0 + o1) * 0.55);
+      const p2 = at(u1, W1 * o1);
       ctx.moveTo(...p0);
       ctx.quadraticCurveTo(...p1, ...p2);
       ctx.stroke();
     }
     shineBand(ctx);
-  }, lw);
+  }, lw, tipEnd);
 }
 
 // ---------- The whole head ----------
@@ -644,18 +714,12 @@ export function drawHead(ctx, a, mode, part, q, f, R, lw) {
     glow(ctx, -12.6, 5, 6, SKIN[2], 0.5);
     glow(ctx, 13.6 + tx * 0.7, 5, 5, SKIN[2], 0.4);
     glow(ctx, tx * 0.5, 15.6, 8, SKIN[2], 0.28);
-    // the fringe's soft shadow on her forehead, in her skin's own shade
-    const G = fringeGeom(tx, R.fr);
+    // the fringe's soft shadow on her forehead, in her skin's own shade: a copy of its locks a little
+    // lower, filled once (so where they overlap it never doubles), moving with them
     ctx.beginPath();
-    ctx.moveTo(G.x0, -22);
-    ctx.lineTo(G.x1, -22);
-    for (let k = 0; k <= 20; k++) {
-      const x = G.x1 - (G.x1 - G.x0) * (k / 20);
-      ctx.lineTo(x, cutY(x, G.cx) + 0.9);
-    }
-    ctx.closePath();
-    ctx.fillStyle = tone(a, SKIN[2], 0.7);
-    ctx.fill();
+    for (const L of fringeLocks(tx, R.fr)) L.pts.forEach((p, i) => (i ? ctx.lineTo(p[0] + 0.35, p[1] + 1.25) : ctx.moveTo(p[0] + 0.35, p[1] + 1.25)));
+    ctx.fillStyle = tone(a, SKIN[2], 0.75);
+    ctx.fill('nonzero');
     ctx.restore();
     // the blush: a wide peachy flush low on her round cheeks, a rosier core, two neat tapered strokes
     for (const s of [-1, 1]) {
@@ -674,7 +738,6 @@ export function drawHead(ctx, a, mode, part, q, f, R, lw) {
       ctx.restore();
     }
     for (const s of [-1, 1]) eye(ctx, a, tx + s * EYE.dx, EYE.y, s, f, q.look, s < 0 ? Math.max(f.lid, f.wk) : f.lid);
-    for (const s of [-1, 1]) brow(ctx, a, tx + s * EYE.dx + s * 0.3, -1.55, s, f);
     // the nose: a soft shade and a tip light
     glow(ctx, tx + 1.5, 8.4, 1.2, SKIN[3], 0.5);
     ell(ctx, tx + 1.1, 8.1, 0.3, 0.22);
@@ -691,5 +754,13 @@ export function drawHead(ctx, a, mode, part, q, f, R, lw) {
   sideLock(ctx, a, mode, -1, tx, R.slN ?? 0, lw);
   sideLock(ctx, a, mode, 1, tx, R.slF ?? 0, lw);
   fringe(ctx, a, mode, tx, R.fr, lw);
+  // her brows, drawn over the fringe's tips (as anime faces do), a little see-through and in a colour
+  // close to her hair's shade, so her brows still act when the fringe falls over them
+  if (mode === 'fill' && f) {
+    ctx.save();
+    ctx.globalAlpha *= 0.88;
+    for (const s of [-1, 1]) brow(ctx, a, tx + s * EYE.dx + s * 0.3, -1.55, s, f);
+    ctx.restore();
+  }
 }
-export { fringeGeom, cutY, sideLockPts };
+export { fringeLocks, sideLocks };

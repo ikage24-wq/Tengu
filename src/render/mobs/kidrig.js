@@ -86,7 +86,7 @@ export function twoPass(list) {
 // `flat` (a set of layer names, or true for all but those in `cel`): those layers skip the
 // automatic shading, which gave every part a dark band along its own bottom edge, a seam wherever it
 // lay over another part; they're shaded by hand in the drawing instead.
-export function kidKit(kind, draw, joints, { scale = 1, flat = null, cel = null } = {}) {
+export function kidKit(kind, draw, joints, { scale = 1, flat = null, cel = null, ink = null } = {}) {
   const SC = scale / 3;
   const isFlat = (name) => (flat === true ? !cel?.has(name) : Boolean(flat?.has?.(name)));
   const BW = Math.ceil(W * SC);
@@ -117,8 +117,12 @@ export function kidKit(kind, draw, joints, { scale = 1, flat = null, cel = null 
     const shapes = () => scaled(groupsOf(mood)[name] ?? []);
     // (A kit with `flat` also outlines in one even tone per part: the light-side outline flipped
     // light and dark from row to row along a curve, striping every round edge.)
-    if (isFlat(name)) return sprite(`rig|${key}|flat${bare ? '|bare' : ''}`, () => ({ w: BW, h: BH, shapes: shapes(), res: 3, crisp: true, bare: Boolean(bare), pad: 4 }));
-    if (flat) return sprite(`rig|${key}|even${bare ? '|bare' : ''}`, () => ({ w: BW, h: BH, shapes: shapes(), res: 3, soft: 'cel', crisp: true, bare: Boolean(bare), pad: 4 }));
+    // (`ink`: a kit's own line, opt-in: 'own' is a smooth anti-aliased ring in a deeper shade of each
+    // part's own colour, for a kit that read as a dark dotted sticker, 2026-11-27.)
+    const ik = ink ? { ink } : {};
+    const ikey = ink ? `|${ink}` : '';
+    if (isFlat(name)) return sprite(`rig|${key}|flat${ikey}${bare ? '|bare' : ''}`, () => ({ w: BW, h: BH, shapes: shapes(), res: 3, crisp: true, bare: Boolean(bare), pad: 4, ...ik }));
+    if (flat) return sprite(`rig|${key}|even${ikey}${bare ? '|bare' : ''}`, () => ({ w: BW, h: BH, shapes: shapes(), res: 3, soft: 'cel', crisp: true, bare: Boolean(bare), pad: 4, ...ik }));
     return bare ? partBare(key, BW, BH, shapes, 4, 3) : part(key, BW, BH, shapes, 4, 3);
   };
   // Where a layer's middle sits from its pivot, in game pixels (its soft swing's `dir`).

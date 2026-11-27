@@ -234,9 +234,18 @@ function brow(ctx, a, x, y, o, b) {
   ctx.stroke();
 }
 // A slice of toast (local units: its middle at 0, 0): a soft crust, a golden middle, a pat of butter.
+// (2026-11-27, the player: a black dot on the toast read as a fly. The bite was cut out with
+// 'destination-out', which punched a hole through everything under it, the map too, showing black.
+// Now the bite is clipped out of the slice itself, with a soft toasted edge round it.)
 function toastShape(ctx, a, s, bite = 0) {
   ctx.save();
   ctx.scale(s, s);
+  if (bite > 0) {
+    ctx.beginPath();
+    ctx.rect(-8, -8, 16, 16);
+    ctx.ellipse(3.6, -2.6, 1.6 * bite, 1.6 * bite, 0, 0, Math.PI * 2);
+    ctx.clip('evenodd');
+  }
   smooth(ctx, [[-3.6, 3], [-3.8, -1.4], [-2.6, -3.4], [0, -3.8], [2.6, -3.4], [3.8, -1.4], [3.6, 3]]);
   pen(ctx, tone(a, TOAST[3]), 0.7);
   ctx.stroke();
@@ -249,10 +258,11 @@ function toastShape(ctx, a, s, bite = 0) {
   ctx.fillStyle = tone(a, '#fff6b8');
   ctx.fill();
   if (bite > 0) {
-    ctx.globalCompositeOperation = 'destination-out';
-    ell(ctx, 3.6, -2.6, 1.6 * bite, 1.6 * bite);
-    ctx.fill();
-    ctx.globalCompositeOperation = 'source-over';
+    // the bite's edge: the crumb showing toasted round it
+    ctx.beginPath();
+    ctx.ellipse(3.6, -2.6, 1.6 * bite + 0.25, 1.6 * bite + 0.25, 0, Math.PI * 0.45, Math.PI * 1.25);
+    pen(ctx, tone(a, TOAST[3]), 0.6);
+    ctx.stroke();
   }
   ctx.restore();
 }

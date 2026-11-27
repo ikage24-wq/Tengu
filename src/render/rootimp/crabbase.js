@@ -447,6 +447,8 @@ function crabRig(look = {}) {
   const C = { ...C0, ...(look.C ?? {}) };
   // (the claws' and legs' own colours, over the body's)
   const CC = { ...C, ...(look.CC ?? {}) };
+  // (the legs' own colours, over the claws': look.CL, 2026-11-27 the Root Imp's root feet)
+  const CLEG = { ...CC, ...(look.CL ?? {}) };
   const CRAB_MOVES = { ...BASE_MOVES, ...(look.moves ?? {}) };
   const s = P.scale;
   const sc = (v) => v * s;
@@ -486,6 +488,8 @@ function crabRig(look = {}) {
     }
     const [ux, uz] = rimAt(q, sc(K.under[0]), sc(K.under[1]), K.fw);
     SOLID.push([ux, sc(K.under[2]), uz]);
+    // (a bulb: its underside rounded off too, rings curving in below the rim to its root end)
+    if (K.bulb) for (const th of [20, 40, 58, 74]) SOLID.push([x * Math.cos(th * D2R), -sc(K.bulb) * Math.sin(th * D2R), z * Math.cos(th * D2R)]);
   }
   SOLID.push([0, DOME, 0]);
   // (a point on the dome above x, z)
@@ -606,8 +610,9 @@ function crabRig(look = {}) {
     const flip = clamp(S.flip, -0.2, 1.2);
     const hide = SH ? clamp(S.hide, 0, 1) : 0;
     const shift = SH ? times(minus(SH.apC, [sc(1.2), sc(-0.4)]), ease(hide)) : [0, 0];
-    const bob = w * sc(0.3) * Math.cos(2 * TAU * (u - G.duty / 2));
-    const sway = w * 1.1 * Math.sin(TAU * (u - G.duty / 2));
+    // (P.gait.bob / sway: a dress's own toddle, px and degrees; the base's 0.3 and 1.1)
+    const bob = w * sc(P.gait.bob ?? 0.3) * Math.cos(2 * TAU * (u - G.duty / 2));
+    const sway = w * (P.gait.sway ?? 1.1) * Math.sin(TAU * (u - G.duty / 2));
     const roll = (S.tilt + sway) * D2R - flip * Math.PI;
     let gy = mix(GY, GY_LOW, clamp(S.crouch, -0.3, 1.1)) + S.lift + bob;
     if (SH) gy = mix(gy, SH.bottom + sc(0.2), ease(hide));
@@ -835,8 +840,10 @@ function crabRig(look = {}) {
   };
 
   // A leg's shape: its three segments, chunky, the tip a soft point.
+  // (P.legs.soft: a dress's soft nub legs instead, every segment as full as its joints, the tip round)
   const legShape = (g) => {
     const [R, J1, J2, T] = g.pts;
+    if (LG.soft) return [segment(R, J1, LW[0] / 2, LW[0] * 0.5, LW[1] / 2), segment(J1, J2, LW[1] / 2, LW[1] * 0.5, LW[2] / 2), segment(J2, T, LW[2] / 2, LW[2] * 0.5, LW[3] / 2)];
     return [segment(R, J1, LW[0] / 2, LW[0] * 0.54, LW[1] / 2), segment(J1, J2, LW[1] / 2, LW[1] * 0.52, LW[2] / 2), segment(J2, T, LW[2] / 2, LW[2] * 0.4, LW[3] / 2)];
   };
   // Where a leg crosses in front of the legs already drawn: no line, only a soft shade it casts on them.
@@ -862,8 +869,8 @@ function crabRig(look = {}) {
       pathOf(ctx, sh);
       if (mode === 'line') outline(ctx);
       else {
-        contact(ctx, a, sh, done, CC.deep);
-        rimShade(ctx, a, sh, CC.sh, CC.deep, sc(0.7));
+        contact(ctx, a, sh, done, CLEG.deep);
+        rimShade(ctx, a, sh, CLEG.sh, CLEG.deep, sc(0.7));
         done.push(...sh);
       }
     }
@@ -887,8 +894,8 @@ function crabRig(look = {}) {
     const done = [];
     for (const g of sk.legsTrail) {
       const sh = legShape(g);
-      contact(ctx, a, sh, done, CC.sh);
-      rimShade(ctx, a, sh, CC.base, CC.sh, sc(0.75));
+      contact(ctx, a, sh, done, CLEG.sh);
+      rimShade(ctx, a, sh, CLEG.base, CLEG.sh, sc(0.75));
       done.push(...sh);
     }
     ctx.restore();
@@ -899,7 +906,7 @@ function crabRig(look = {}) {
       ctx.clip('nonzero');
       ctx.beginPath();
       addPoly(ctx, sk.hull);
-      ctx.strokeStyle = tone(a, CC.base);
+      ctx.strokeStyle = tone(a, CLEG.base);
       ctx.lineWidth = 2.4;
       ctx.stroke();
       ctx.restore();
@@ -932,7 +939,14 @@ function crabRig(look = {}) {
     outside(ctx, sk.rim);
     glow(ctx, sk.under, A * 1.05, C.sh, 0.7);
     ctx.restore();
-    // guides: the front rim, the dome's middle line
+    // guides: the front rim, the dome's middle line (P.cara.bulb, 2026-11-27: the Root Imp's round root
+    // bulb shows none, no crab's rim or carapace seam)
+    if (K.bulb) {
+      ctx.restore();
+      if (DRESS.mouth) DRESS.mouth(ctx, a, sk, KIT);
+      ctx.restore();
+      return;
+    }
     ctx.strokeStyle = tone(a, C.guide);
     ctx.lineCap = 'round';
     ctx.lineWidth = Math.max(0.45, sc(0.5));
@@ -984,6 +998,11 @@ function crabRig(look = {}) {
   };
   function drawEyes(ctx, a, mode) {
     const sk = a.bk;
+    // (P.eyes.flat, 2026-11-27: no stalks at all, the dress draws its eyes right on the body's face)
+    if (EY.flat) {
+      sk.eyeShapes = [];
+      return;
+    }
     ctx.save();
     inShell(ctx, sk);
     const done = [];
@@ -1017,6 +1036,26 @@ function crabRig(look = {}) {
   const handShapes = (cw) => {
     const { L, W } = cw.c;
     const to = (p) => plus(cw.W, turnBy(p, cw.ang));
+    // (CL.mitt, 2026-11-27, the Root Imp: no pincer. A soft round leaf mitt on the twig wrist, and a
+    // leaf blade hinged at the back of its top: shut, it lies along the mitt like a leaf wrapped round
+    // a bud; open, it lifts like garden shears and snips down)
+    if (CL.mitt) {
+      const palm = sameWay(ellipsePts([0, 0], 1, 1, 0, 22).map(([x, y]) => to([(0.44 + x * 0.5) * L, (0.06 + y * 0.44) * W])));
+      const hinge = [0.08 * L, -0.26 * W];
+      const op = -cw.open * 0.85;
+      const leaf = [];
+      for (let i = 0; i <= 10; i++) {
+        const u = i / 10;
+        leaf.push([hinge[0] + u * 1.0 * L, hinge[1] - 0.04 * W * u + 0.34 * W * Math.sin(Math.PI * Math.min(1, u * 1.04)) ** 0.85]);
+      }
+      for (let i = 10; i >= 0; i--) {
+        const u = i / 10;
+        leaf.push([hinge[0] + u * 1.0 * L, hinge[1] - 0.04 * W * u - 0.2 * W * Math.sin(Math.PI * Math.min(1, u * 1.04)) ** 0.85]);
+      }
+      const fing = sameWay(smoothLoop(leaf.filter((_, i) => i % 2 === 0), 3).map((p) => to(plus(hinge, turnBy(minus(p, hinge), op)))));
+      const rib = [0.12, 0.5, 0.86].map((u) => to(plus(hinge, turnBy([u * L, 0.06 * W - 0.04 * W * u], op))));
+      return { palm, fing, to, rib };
+    }
     // (the palm, round and chunky, running on into the fixed finger along its lower side; the notch\n    // between the fingers comes well back into the palm, so the pincer reads even shut)
     const palm = sameWay(smoothLoop([[-0.04 * L, 0.02 * W], [0.02 * L, -0.36 * W], [0.2 * L, -0.5 * W], [0.4 * L, -0.46 * W], [0.5 * L, -0.26 * W], [0.55 * L, -0.03 * W], [0.74 * L, 0.02 * W], [0.92 * L, 0.04 * W], [1.0 * L, 0.12 * W], [0.95 * L, 0.24 * W], [0.78 * L, 0.32 * W], [0.56 * L, 0.44 * W], [0.3 * L, 0.52 * W], [0.08 * L, 0.42 * W]], 4).map(to));
     const hinge = [0.47 * L, -0.24 * W];
@@ -1032,9 +1071,60 @@ function crabRig(look = {}) {
     const sk = a.bk;
     const cw = sk.claws[k];
     const arm = armShapes(cw);
-    const { palm, fing, to } = handShapes(cw);
+    const { palm, fing, to, rib } = handShapes(cw);
     ctx.save();
     inShell(ctx, sk);
+    if (CL.mitt) {
+      // (the twig arm in root colours, the mitt and its leaf blade in leaf greens, each outlined in its
+      // own deeper shade)
+      const LF = DRESS.LF;
+      if (mode === 'line') {
+        pathOf(ctx, arm);
+        outline(ctx);
+        pathOf(ctx, [palm, fing]);
+        ctx.strokeStyle = LF.ink;
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        ctx.restore();
+        return;
+      }
+      const over = [sk.hull, ...(sk.trailShapes ?? []), ...sk.legsLead.flatMap(legShape), ...(sk.clawShapes ?? [])];
+      const shoulder = segment(cw.S, cw.E, cw.c.w[0] / 2 + sc(1.2), cw.c.w[0] * 0.52 + sc(1.2), cw.c.w[1] / 2 + sc(0.4));
+      seam(ctx, a, arm, over, [shoulder]);
+      rimShade(ctx, a, arm, CLEG.base, CLEG.sh, sc(0.5));
+      seam(ctx, a, [palm], [...over, ...arm]);
+      rimShade(ctx, a, [palm], LF.base, LF.sh, sc(0.7));
+      ctx.save();
+      pathOf(ctx, [palm]);
+      ctx.clip('nonzero');
+      glow(ctx, to([0.36 * cw.c.L, -0.05 * cw.c.W]), cw.c.W * 0.5, LF.lt, 0.9);
+      ctx.restore();
+      // the blade: a seam where it lies over the mitt, its own lighter green, a soft midrib
+      ctx.save();
+      pathOf(ctx, [palm]);
+      ctx.clip('nonzero');
+      pathOf(ctx, [fing]);
+      ctx.strokeStyle = tone(a, LF.deep);
+      ctx.lineWidth = 1.2;
+      ctx.stroke();
+      ctx.restore();
+      rimShade(ctx, a, [fing], LF.bl, LF.base, sc(0.5));
+      ctx.save();
+      pathOf(ctx, [fing]);
+      ctx.clip('nonzero');
+      glow(ctx, rib[1], cw.c.W * 0.4, LF.lt, 0.8);
+      ctx.restore();
+      ctx.strokeStyle = tone(a, LF.sh);
+      ctx.lineWidth = Math.max(0.4, sc(0.45));
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(...rib[0]);
+      ctx.quadraticCurveTo(...rib[1], ...rib[2]);
+      ctx.stroke();
+      ctx.restore();
+      (sk.clawShapes ??= []).push(...arm, palm, fing);
+      return;
+    }
     if (mode === 'line') {
       pathOf(ctx, [...arm, palm, fing]);
       outline(ctx);

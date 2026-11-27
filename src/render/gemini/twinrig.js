@@ -210,7 +210,7 @@ export function twinRig(opts) {
   const kitOf = (name, fn) => {
     const dressed = {};
     const design = (mood) => (dressed[mood] ??= Object.fromEntries(Object.entries(fn(mood)).map(([n, list]) => [n, list.map((sh) => mapShape(sh, toKid, 1 / f))])));
-    return kidKit(name, (mood) => ({ groups: design(mood) }), J, { scale: f, flat: true });
+    return kidKit(name, (mood) => ({ groups: design(mood) }), J, { scale: f, flat: true, ink: 'own' });
   };
   J.mouthT = toKid(opts.mouth);
   J.lockFJ = toKid(opts.lockF);

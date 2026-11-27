@@ -210,7 +210,7 @@ export function wispRig(opts) {
   J.crook = toKid(opts.crook);
   J.flame = toKid(opts.flame);
   J.mouthW = toKid(opts.mouth);
-  const K = kidKit('lampwisp', (mood) => ({ groups: design(mood) }), J, { scale: f, flat: true });
+  const K = kidKit('lampwisp', (mood) => ({ groups: design(mood) }), J, { scale: f, flat: true, ink: 'own' });
   const { rel, SC } = K;
   const skin = makeSkin({ J, SC, C: opts.skin, spec });
   const legs = B.legs !== false;

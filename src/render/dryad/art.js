@@ -14,6 +14,19 @@ import { hairRamp } from '../hero.js';
 import { legDefs, legPhase, stepAt, lowAngle, sinks, placeLeg } from '../mobs/blankquad.js';
 
 const OUT = '#3a2d4f';
+// (2026-11-27, second pass: her outline in each part's own deeper colour, never the old dark plum:
+// INK is the colour every outlined shape built takes, set round each part as it's built)
+const INKS = { hair: '#5f9150', skin: '#b67f76', bark: '#7a543e', leaf: '#558f44' };
+let INK = null;
+const inked = (c, fn) => {
+  const prev = INK;
+  INK = c;
+  try {
+    return fn();
+  } finally {
+    INK = prev;
+  }
+};
 const B = BODIES.deertaur;
 const CX = B.cx;
 const GY = B.g;
@@ -138,7 +151,7 @@ const xfPt = (m, [x, y]) => {
   return [q.x, q.y];
 };
 // add(path, fill, outlined, { clip, alpha, stroke, slw, rule, lw, draw })
-const add = (path, fill, line = true, o = {}) => items.push({ path, fill, line, ...o, m: XF });
+const add = (path, fill, line = true, o = {}) => items.push({ path, fill, line, lc: INK ?? undefined, ...o, m: XF });
 const detail = (path, fill, o = {}) => add(path, fill, false, o);
 const lineOf = (pts, c, w, o = {}) => {
   const p = new Path2D();
@@ -669,6 +682,64 @@ function curtain(bottom, end = 'blunt', wave = 0) {
     }
   }
 }
+// Her leafy locks (2026-11-27, second pass, the lead reviewer: from a distance the first pass still
+// read as one bumpy green block). Now a few big soft locks a side, each one smooth (no wave along its
+// edge), wide, round-tipped, of its own length and its own tone, lying one over another: each casts a
+// soft shadow on the locks beneath it and shows a fine deeper line where its edge crosses them, so they
+// read as separate locks even at game size; a soft light down its outer side, its shade toward her.
+// (a polygon turned the same way round as every lock's, so the locks beneath can be one clip)
+const clockwise = (pts) => {
+  let area = 0;
+  for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) area += pts[j][0] * pts[i][1] - pts[i][0] * pts[j][1];
+  return area < 0 ? pts.slice().reverse() : pts;
+};
+function softLock(line, w, { shade = 1, tone = 0, under = [], lit = 1 } = {}) {
+  const r = HL();
+  const pts = clockwise(cr(ribbon(line, w, { n: 10, caps: true }), true, 3));
+  const shape = poly(pts);
+  let below = null;
+  if (under.length) {
+    below = new Path2D();
+    for (const q of under) below.addPath(poly(q));
+    // its soft shadow on the locks beneath, down and toward her
+    const cast = new Path2D();
+    cast.addPath(shape, new DOMMatrix().translate(shade * -1.1, 1.6));
+    detail(cast, rgba(r.sh2, 0.65), { clip: below, blur: 0.9 });
+  }
+  add(shape, hairFill(HY - 30, 106, tone));
+  const a = line[0];
+  const b = line[line.length - 1];
+  const grow = (c, al) => lin(a[0], a[1], b[0], b[1], [[0, rgba(c, 0)], [0.25, rgba(c, al)], [1, rgba(c, al)]]);
+  // its shade down the side toward her, a deeper edge there
+  detail(poly(ribbon(sideOf(line, w, shade * 0.55), (u) => w(u) * 0.5, { n: 1 })), grow(r.sh1, 0.6), { clip: shape, blur: 0.7 });
+  detail(poly(ribbon(sideOf(line, w, shade * 0.88), (u) => w(u) * 0.14 + 0.3, { n: 1 })), grow(r.sh2, 0.4), { clip: shape, blur: 0.35 });
+  // a soft light down its outer side, from its gloss band to above its tip
+  const lt = sideOf(line, w, -shade * 0.4);
+  const n = lt.length;
+  detail(poly(ribbon(lt.slice(Math.round(n * 0.08), Math.round(n * 0.78)), (u) => (w(0.4) * 0.2 + 0.4) * Math.sin(Math.PI * u) + 0.1, { n: 1 })), rgba('#ffffff', 0.32 * lit), { clip: shape, blur: 0.6 });
+  // a gloss in the shared band of shine near her crown
+  const seg = sideOf(line, w, -shade * 0.15).filter(([, y]) => y >= HY + 3 && y <= HY + 16);
+  if (seg.length > 3) detail(poly(ribbon(seg, (u) => 1.6 * Math.sin(Math.PI * u) + 0.1, { n: 1 })), rgba('#ffffff', 0.45 * lit), { clip: shape, blur: 0.35 });
+  // the fine deeper line where its edge crosses the locks beneath (only there)
+  if (below) detail(shape, 'rgba(0,0,0,0)', { clip: below, stroke: rgba(r.sh2, 0.75), slw: 0.75 });
+  return pts;
+}
+// (a lock's width: full from its root, swelling a touch through its middle, rounding off to its tip)
+const lockW = (w0, w1, tip = 0.24) => (u) => {
+  const base = lerp(w0, w1, u) * (1 + 0.1 * Math.sin(Math.PI * u));
+  return u > 1 - tip ? base * (0.3 + 0.7 * Math.cos(((u - (1 - tip)) / tip) * Math.PI * 0.5) ** 0.8) : base;
+};
+function leafyLocks(s, X) {
+  const sh = s > 0 ? 1 : -1;
+  const done = [];
+  // (each lock a long soft S: out over her shoulder, in a little, out again, its tip turning)
+  // the outer lock, behind: its tip flicking out
+  done.push(softLock([[X(21.6), HY - 12], [X(28.4), HY + 6], [X(31.8), HY + 22], [X(30), HY + 34], [X(30.8), HY + 42], [X(33), HY + 47]], lockW(10, 11.6), { shade: sh, tone: 0.3, lit: 0.7 }));
+  // the longest, in the middle: down past her waist, its tip turning in
+  done.push(softLock([[X(17.6), HY - 10], [X(24.4), HY + 10], [X(27.4), HY + 26], [X(25), HY + 42], [X(25.4), HY + 54], [X(23.2), HY + 60]], lockW(11, 12.2), { shade: sh, tone: 0.12, under: done.slice() }));
+  // the inner one, in front: shorter, its tip turning out
+  softLock([[X(14), HY + 2], [X(19.6), HY + 18], [X(22.4), HY + 30], [X(20.8), HY + 39], [X(22.6), HY + 45]], lockW(9.4, 10.2, 0.3), { shade: sh, tone: 0, under: done.slice() });
+}
 // A ringlet: a tight spiral of hair hanging in turns, each turn lit on its upper face and deep where
 // it curls under, each casting a soft shadow on the turn below; a soft little curl at its tip.
 function ringlet(x0, y0, len, w0, s) {
@@ -794,6 +865,12 @@ function hairBack() {
   } else if (look === 'waves') {
     backMass(99);
     curtain(101.6, 'soft', 1.9);
+  } else if (look === 'leafy') {
+    // (2026-11-27, the player: her ringlets read as a bumpy block, like dreadlocks or cornrows. Now
+    // soft leafy locks: big, smooth, separate locks of different lengths, see leafyLocks.)
+    // (second pass: the deep inner layer behind, then three big soft locks a side over it)
+    backMass(88, 27);
+    for (const s of [-1, 1]) leafyLocks(s, (dx) => m + s * dx);
   } else if (look === 'ringlets') {
     backMass(95);
     for (const s of [-1, 1]) {
@@ -1223,7 +1300,9 @@ function sideLocks() {
     // (the player: "this side of the face on both sides should be covered by hair": wide enough to
     // cover her face's sides right up to her lashes' wings, clear of them and of her cheek mark)
     const sw0 = POSE ? POSE.locks[s2 > 0 ? 1 : 0] : 0;
-    const line = [[X(19.2), HY - 9], [X(20.4), HY + 2], [X(20.2), HY + 13], [X(21), HY + 23], [X(21), 72], [X(20.4), 80]].map(([x, y]) => {
+    // (her leafy look, 2026-11-27: the same gentle S as her other locks, its tip turning out)
+    const base = HAIR_LOOK === 'leafy' ? [[X(19.2), HY - 9], [X(20.4), HY + 2], [X(20.6), HY + 13], [X(22.2), HY + 24], [X(21.2), 72], [X(22.6), 80]] : [[X(19.2), HY - 9], [X(20.4), HY + 2], [X(20.2), HY + 13], [X(21), HY + 23], [X(21), 72], [X(20.4), 80]];
+    const line = base.map(([x, y]) => {
       const u = Math.max(0, (y - HY) / 40);
       return [x + sw0 * 45 * u * u, y];
     });
@@ -1247,9 +1326,12 @@ function sideLocks() {
     detail(poly(ribbon(oe.slice(Math.round(oe.length * 0.12), -6), (u) => 0.8 * Math.sin(Math.PI * u) + 0.1, { n: 1 })), rgba('#ffffff', 0.55), { clip: shape, blur: 0.2 });
     const ie = sideOf(line, sw, s2 * 0.86);
     detail(poly(ribbon(ie.slice(Math.round(ie.length * 0.45), -6), (u) => 1 * Math.sin(Math.PI * u) + 0.1, { n: 1 })), rgba('#cfdcff', 0.45), { clip: shape, blur: 0.3 });
-    const lt = new Path2D();
-    lt.rect(X(10) - 20, 64, 40, 20);
-    detail(lt, lin(0, 64, 0, 80, [[0, rgba('#f6f0ff', 0)], [1, rgba('#f6f0ff', 0.4)]]), { clip: shape });
+    // (its ends lightening a little; not on her leafy locks, where it read as glassy)
+    if (HAIR_LOOK !== 'leafy') {
+      const lt = new Path2D();
+      lt.rect(X(10) - 20, 64, 40, 20);
+      detail(lt, lin(0, 64, 0, 80, [[0, rgba('#f6f0ff', 0)], [1, rgba('#f6f0ff', 0.4)]]), { clip: shape });
+    }
   }
 }
 function longHair() {}
@@ -3099,7 +3181,7 @@ const MS = { lt: '#b8e08a', base: '#86c062', sh: '#5f9a48' };
 const PK = { petal: '#ffc2d6', deep: '#f088ac', centre: '#ffe27a' };
 // (her chosen look, 2026-11-24: ringlets, centre-parted bangs, the leaf wreath, the short skirt; a dreamy
 // face with her eyes a little narrowed)
-let DRY = { hair: 'ringlets', bangs: 'curtain', crown: true, flower: 'near', skirt: 'short', ears: true, mood: 'dreamy', narrow: 0.5 };
+let DRY = { hair: 'leafy', bangs: 'curtain', crown: true, flower: 'near', skirt: 'short', ears: true, mood: 'dreamy', narrow: 0.5 };
 
 // A leaf: from its stalk at (x, y) out along angle `a`, `len` long and `w` wide, a soft point, its
 // midrib and two veins, lit toward its tip.
@@ -3217,6 +3299,15 @@ function hairFlower() {
 // Little leaves woven through the hair, here and there down her locks.
 function hairLeaves() {
   for (const [dx, y, a, len] of [[-24.6, HY + 20, 2.2, 5.6], [25.6, HY + 30, 0.9, 5.2], [-26.4, HY + 44, 2.5, 4.8], [24.4, HY + 52, 0.6, 4.6]]) leaf(FR_MID + dx, y, a, len, 2.8, {});
+  // (her leafy look, 2026-11-27: one blossom tucked into the locks on her near side, two leaves under
+  // it, so the eye finds a soft pink accent in the green)
+  if (HAIR_LOOK === 'leafy') {
+    const x = FR_MID + 26.4;
+    const y = HY + 15;
+    leaf(x, y, 0.5, 7, 3.6);
+    leaf(x, y, 2.3, 6, 3.2);
+    flower(x, y, 3.8, 0.4);
+  }
 }
 // Leaf armlets round her upper arms.
 function armlet(k) {
@@ -3445,7 +3536,7 @@ function armUpper(k) {
   const A = ARM0[k];
   const far = k === 'F';
   add(poly(ribbon([A.sh, L2(A.sh, A.el, 0.5), A.el], (u) => lerp(7.2, 6.2, u), { n: 6 })), far ? SK.sh1 : lin(A.sh[0] + 4, 0, A.sh[0] - 4, 0, [[0, SK.hi], [1, SK.base]]));
-  armlet(k);
+  inked(INKS.leaf, () => armlet(k));
 }
 function armLower(k) {
   const A = ARM0[k];
@@ -3465,31 +3556,41 @@ function partItems(name, mood) {
   ARM = ARM0;
   withXF(UPPER(), () => {
     if (name === 'hairBack') {
-      longHair();
-      hairBack();
-      if (DRY.ears) {
-        leafEar(-1);
-        leafEar(1);
-      }
-    } else if (name === 'armFu') armUpper('F');
-    else if (name === 'armFf') armLower('F');
-    else if (name === 'armNu') armUpper('N');
-    else if (name === 'armNf') armLower('N');
-    else if (name === 'skirt') leafSkirt();
-    else if (name === 'skin') dryShoulders();
-    else if (name === 'chest') barkBodice(); else if (name === 'neck') {
-      dryNeck();
+      inked(INKS.hair, () => {
+        longHair();
+        hairBack();
+      });
+      if (DRY.ears)
+        inked(INKS.skin, () => {
+          leafEar(-1);
+          leafEar(1);
+        });
+    } else if (name === 'armFu') inked(INKS.skin, () => armUpper('F'));
+    else if (name === 'armFf') inked(INKS.skin, () => armLower('F'));
+    else if (name === 'armNu') inked(INKS.skin, () => armUpper('N'));
+    else if (name === 'armNf') inked(INKS.skin, () => armLower('N'));
+    else if (name === 'skirt') inked(INKS.leaf, () => leafSkirt());
+    else if (name === 'skin') inked(INKS.skin, () => dryShoulders());
+    else if (name === 'chest') inked(INKS.bark, () => barkBodice());
+    else if (name === 'neck') {
+      inked(INKS.skin, () => dryNeck());
       detail(ell(HX + 1, HY + 25.4, 8.4, 2.2), rgba('#5f4132', 0.4), { blur: 0.7 });
     } else if (name === 'head') {
-      add(HEAD, lin(HX + 12, HY - 20, HX - 14, HY + 22, [[0, SK.hi], [0.5, SK.base], [1, SK.base]]));
-      face(mood);
+      inked(INKS.skin, () => {
+        add(HEAD, lin(HX + 12, HY - 20, HX - 14, HY + 22, [[0, SK.hi], [0.5, SK.base], [1, SK.base]]));
+        face(mood);
+      });
       const faceEnd = items.length;
-      sideLocks();
-      hairFront();
-      hairTop();
-      if (DRY.crown) wreath();
-      else hairFlower();
-      hairLeaves();
+      inked(INKS.hair, () => {
+        sideLocks();
+        hairFront();
+        hairTop();
+      });
+      inked(INKS.leaf, () => {
+        if (DRY.crown) wreath();
+        else hairFlower();
+        hairLeaves();
+      });
       const fs = items.filter((it) => it.faceShadow);
       items = [...items.slice(0, faceEnd), ...fs, ...items.slice(faceEnd).filter((it) => !it.faceShadow)];
     }
@@ -3520,7 +3621,7 @@ export function rootItems(T, bloom = 0) {
   items = [];
   ROOT_T = T;
   try {
-    serpentRoot();
+    inked(INKS.bark, () => serpentRoot());
   } finally {
     ROOT_T = null;
   }

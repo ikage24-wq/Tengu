@@ -3,8 +3,10 @@
 // gentleman. A little rose-pink hermit crab who has moved into a fine porcelain teacup (tipped up on
 // its side, its mouth facing forward and up: a blue band with rosebuds, a gold rim that catches the
 // light, a round ear of a handle up top, a sugar cube kept on it for later, a curl of steam now and
-// then) and is terribly proud of it. A gold monocle on one eye stalk, its fine chain pinned to his
-// shell, soft cream brows and a curly cream moustache. Prim, dignified, easily startled.
+// then) and is terribly proud of it. A thin gold monocle on one eye, soft arched cream brows and a
+// cream handlebar moustache; his face sits big and clear in the cup's mouth (2026-11-27, second pass:
+// no eye stalks, no chain, the cup's pattern cut down to a blue band and two rosebuds). Prim,
+// dignified, easily startled.
 // He moves on his own copy of the crab base (crabbase.js, its hermit), dressed here; the cup, the
 // face and every prop are drawn here from scratch.
 //   going   a dainty sideways scuttle on tiptoe: short quick steps lifted high, the body held level,
@@ -27,7 +29,7 @@
 //           sugarShot below). Tong Pinch: a claw drawn back wide, a lunge and a snap like sugar
 //           tongs. Cup Clonk: half into his cup, rocked back, then the whole cup tipped forward in a
 //           bump, rim first, and back out.
-//   faces   his own: soft oval cocoa eyes on the stalk caps with a big round glint and a small one;
+//   faces   his own: soft oval cocoa eyes right on his face with a big round glint and a small one;
 //           dignified upper lids and a soft lower lid, a lash flick at the outer corner; floating
 //           cream brows; the moustache that does half the acting (up when pleased, down when sad,
 //           puffing when cross); a mouth from width, smile and openness. Calm (warm, a soft smile),
@@ -127,7 +129,8 @@ const PB = {
   CC: { lt: '#fff4ec', base: '#ffdcd0', sh: '#f6b3a8', deep: '#dc8e8a' },
   ink: '#b0637a',
   seam: '#e98ea2',
-  cup: { lt: '#ffffff', base: '#fbf7fd', sh: '#e2daf0', deep: '#c7bbdf', inner: '#f3ecf8', innerSh: '#d2c5e5', ink: '#8f84b4' },
+  // (the inside a deeper lilac than the porcelain outside, so his pink face reads against it)
+  cup: { lt: '#ffffff', base: '#fbf7fd', sh: '#e2daf0', deep: '#c7bbdf', inner: '#ddd0ee', innerSh: '#bba9d8', ink: '#8f84b4' },
   band: '#8fb0ea',
   bandSh: '#6f8fd6',
   rose: '#f7a6c1',
@@ -210,9 +213,9 @@ const HANDLE = (() => {
 // where the shell's frame sits in the body's, as the base has it
 const shellC = (K) => times(K.P.shell.c, K.sc(1));
 const toW = (sk, K, p) => sk.shell.sw(plus(shellC(K), times(p, K.sc(1))));
-// (the sugar cube's place: on the cup's lower lip, at his doorstep, in easy reach of his claw)
-const CUBE_PH = 0.72;
-const cubeHome = (sk, K) => plus(toW(sk, K, ring(CUP.rim, CUBE_PH, CUP.R)), turn([K.sc(0.6), -K.sc(2.1)], sk.shell.rot));
+// (the sugar cube's place: on top of his cup, by its rim, kept for later; 2026-11-27, second pass:
+// moved up off the lower lip, where it sat over his moustache)
+const cubeHome = (sk, K) => plus(toW(sk, K, ring(CUP.rim - 1.6, -Math.PI / 2, CUP.R)), turn([K.sc(0.2), -K.sc(1.9)], sk.shell.rot));
 
 // The cup's shapes in the world this frame (kept on a.pbCup for the clip and the drawing).
 function cupNow(a, K) {
@@ -260,11 +263,11 @@ function lip(ctx, a, mode, K) {
     ctx.ellipse(M[0], M[1], rx, ry, rot, a0, a1);
     ctx.stroke();
   };
-  arc(1.9 * s, K.tone(a, PB.cup.sh));
-  arc(1.35 * s, K.tone(a, PB.cup.base));
-  arc(0.62 * s, K.tone(a, PB.goldSh), -0.05, 2.25);
-  arc(0.38 * s, K.tone(a, PB.gold), -0.05, 2.25);
-  arc(0.2 * s, K.tone(a, PB.goldLt), 0.3, 1.1);
+  // (2026-11-27, the player: cup, monocle and face muddled together. Only the lower lip, under his
+  // chin, now crosses in front of him; the rim's front edge stays behind his face and moustache.)
+  arc(1.9 * s, K.tone(a, PB.cup.sh), 0.95, 2.35);
+  arc(1.35 * s, K.tone(a, PB.cup.base), 0.95, 2.35);
+  arc(0.4 * s, K.tone(a, PB.gold), 1.1, 2.2);
   ctx.restore();
 }
 
@@ -295,10 +298,6 @@ function cup(ctx, a, mode, K) {
   ctx.strokeStyle = K.tone(a, PB.cup.base);
   ctx.lineWidth = hw;
   ctx.stroke();
-  line(ctx, hp.slice(3, 16));
-  ctx.strokeStyle = K.tone(a, PB.gold);
-  ctx.lineWidth = hw * 0.3;
-  ctx.stroke();
   // the bowl: porcelain, lit on top, a lilac moonlit shade underneath and toward the back
   poly(ctx, out);
   ctx.fillStyle = K.tone(a, PB.cup.base);
@@ -323,31 +322,20 @@ function cup(ctx, a, mode, K) {
   K.glow(ctx, W(ring(B1, 1.7)), 9 * s, PB.bandSh, 0.95);
   K.glow(ctx, W(ring(B0, -1.9)), 6 * s, '#c8d8ff', 0.8);
   ctx.restore();
-  ctx.strokeStyle = K.tone(a, PB.gold);
-  ctx.lineWidth = 0.55 * s;
-  for (const k of [B0 + 0.5, B1 - 0.5]) {
-    line(ctx, back(k).map(W));
-    ctx.stroke();
-  }
-  for (const ph of [2.0, 2.65, 3.3, 3.95]) {
+  // (2026-11-27, second pass, simplified hard: no gold lines round the band or the foot; two
+  // rosebuds on the band, one big and one small, each a soft pink round with a leaf)
+  for (const [ph, r] of [[2.35, 1.25], [3.55, 0.95]]) {
     const p = W(ring((B0 + B1) / 2, ph));
     ctx.fillStyle = K.tone(a, PB.leaf);
-    ell(ctx, p[0] - 0.95 * s, p[1] + 0.5 * s, 0.8 * s, 0.42 * s, -0.5);
+    ell(ctx, p[0] - 1.1 * r * s, p[1] + 0.55 * r * s, 0.85 * r * s, 0.45 * r * s, -0.5);
     ctx.fill();
     ctx.fillStyle = K.tone(a, PB.rose);
-    ell(ctx, p[0], p[1], 0.95 * s, 0.88 * s);
+    ell(ctx, p[0], p[1], r * s, 0.92 * r * s);
     ctx.fill();
-    ctx.strokeStyle = K.tone(a, PB.roseSh);
-    ctx.lineWidth = 0.3 * s;
-    ctx.beginPath();
-    ctx.arc(p[0] + 0.1 * s, p[1] + 0.05 * s, 0.44 * s, 0.4, 4.6);
-    ctx.stroke();
+    ctx.fillStyle = K.tone(a, '#ffd6e4');
+    ell(ctx, p[0] - 0.3 * r * s, p[1] - 0.3 * r * s, 0.4 * r * s, 0.32 * r * s);
+    ctx.fill();
   }
-  // the foot ring, a gold line round its back
-  ctx.strokeStyle = K.tone(a, PB.goldSh);
-  ctx.lineWidth = 0.6 * s;
-  line(ctx, back(CUP.bottom - 0.4).map(W));
-  ctx.stroke();
   ctx.restore();
   // the mouth: the inside of the cup (lit high at the back, deeper down low, a ring of old tea)
   ctx.fillStyle = K.tone(a, PB.cup.innerSh);
@@ -358,26 +346,16 @@ function cup(ctx, a, mode, K) {
   ctx.clip();
   K.glow(ctx, W(ring(CUP.rim - 3, -2.2, 7)), 9 * s, PB.cup.inner, 1);
   K.glow(ctx, W(ring(CUP.rim - 4, 1.4, 6)), 8 * s, PB.cup.deep, 0.5);
-  ctx.strokeStyle = K.tone(a, PB.tea, 0.45);
-  ctx.lineWidth = 0.6 * s;
-  ctx.beginPath();
-  const tc = W([CUP.rim - 6, 0]);
-  ctx.ellipse(tc[0], tc[1], rx * 0.55, ry * 0.6, rot, 0.5, 2.6);
-  ctx.stroke();
   ctx.restore();
   // the rim: the porcelain's thin edge all round, and a fine gold line on it; soft and pale round the
   // top and the back (where it passes behind his head), a warmer gold coming round the front
   ctx.lineCap = 'round';
   ctx.strokeStyle = K.tone(a, PB.cup.sh);
-  ctx.lineWidth = 1.0 * s;
+  ctx.lineWidth = 1.1 * s;
   ell(ctx, M[0], M[1], rx, ry, rot);
   ctx.stroke();
   ctx.strokeStyle = K.tone(a, PB.cup.base);
-  ctx.lineWidth = 0.6 * s;
-  ell(ctx, M[0], M[1], rx, ry, rot);
-  ctx.stroke();
-  ctx.strokeStyle = K.tone(a, PB.rimSoft);
-  ctx.lineWidth = 0.32 * s;
+  ctx.lineWidth = 0.7 * s;
   ell(ctx, M[0], M[1], rx, ry, rot);
   ctx.stroke();
   ctx.strokeStyle = K.tone(a, PB.gold);
@@ -619,63 +597,48 @@ function eyes(ctx, a, K) {
     }
     // the brow: a soft cream tuft above, lifted, knit or worried
     ctx.save();
-    ctx.translate(0, -3.25 - (f.browUp ?? 0) * 0.6);
+    // (2026-11-27, second pass: a soft arched cream brow close over the eye, never a bar)
+    ctx.translate(0, -2.95 - (f.browUp ?? 0) * 0.6);
     ctx.rotate(f.brow * (near ? -0.35 : 0.35));
     ctx.fillStyle = K.tone(a, PB.cream);
     ctx.strokeStyle = PB.creamSh;
     ctx.lineWidth = 0.3;
-    ell(ctx, 0, 0, 1.6, 0.62);
+    ctx.beginPath();
+    ctx.moveTo(-1.5, 0.35);
+    ctx.quadraticCurveTo(0, -1.05, 1.5, 0.35);
+    ctx.quadraticCurveTo(0, -0.2, -1.5, 0.35);
+    ctx.closePath();
     ctx.fill();
     ctx.stroke();
-    ell(ctx, near ? 1.2 : -1.2, -0.3, 0.6, 0.45);
-    ctx.fill();
     ctx.restore();
     // the monocle on the near eye: a small clear lens over the iris, a thin gold rim, a soft sheen
     // across the glass (his eye and its lids show through it)
     if (near) {
-      const mx = 0.1;
-      const my = 0.35;
-      ctx.fillStyle = 'rgba(255,255,255,0.12)';
-      ell(ctx, mx, my, 1.55, 1.68);
-      ctx.fill();
-      ctx.fillStyle = 'rgba(255,255,255,0.3)';
+      // (2026-11-27: a size smaller, set low on the eye, the glass all but clear: only a thin sheen
+      // in its top corner, so the eye and its glints read through it)
+      const mx = 0.3;
+      const my = 0.55;
+      const mr = 1.28;
+      ctx.fillStyle = 'rgba(255,255,255,0.22)';
       ctx.beginPath();
-      ctx.ellipse(mx, my, 1.4, 1.52, 0, 3.7, 4.5);
+      ctx.ellipse(mx, my, mr * 0.88, mr * 0.94, 0, 3.8, 4.4);
       ctx.lineTo(mx, my);
       ctx.closePath();
       ctx.fill();
       ctx.strokeStyle = K.tone(a, PB.goldSh);
-      ctx.lineWidth = 0.46;
-      ell(ctx, mx, my, 1.55, 1.68);
+      ctx.lineWidth = 0.38;
+      ell(ctx, mx, my, mr, mr * 1.06);
       ctx.stroke();
       ctx.strokeStyle = K.tone(a, PB.gold);
-      ctx.lineWidth = 0.24;
-      ell(ctx, mx, my, 1.55, 1.68);
+      ctx.lineWidth = 0.2;
+      ell(ctx, mx, my, mr, mr * 1.06);
       ctx.stroke();
       // (a glint flashing across it now and then, and as he takes aim)
       const gk = a.pb?.monoGlint ?? 0;
-      if (gk > 0.02) sparkle(ctx, mx + 0.95, my - 1.0, 0.95 * gk, '#ffffff');
+      if (gk > 0.02) sparkle(ctx, mx + 0.8, my - 0.85, 0.95 * gk, '#ffffff');
     }
     ctx.restore();
   });
-  // the monocle's chain: a fine drooping gold line from the ring down to a little pin on his shell
-  const e0 = sk.eyes[0];
-  if (e0) {
-    const p0 = plus(e0.tip, [cap * 0.22, cap * 0.67]);
-    const p1 = plus(sk.mouth, turn([K.sc(5.4), -K.sc(1.4)], sk.roll));
-    const sag = K.sc(2.6) + Math.sin((a.t ?? 0) * 1.3) * K.sc(0.3);
-    ctx.strokeStyle = K.tone(a, PB.goldSh);
-    ctx.lineWidth = K.sc(0.34);
-    ctx.setLineDash([K.sc(0.5), K.sc(0.32)]);
-    ctx.beginPath();
-    ctx.moveTo(...p0);
-    ctx.quadraticCurveTo((p0[0] + p1[0]) / 2 + K.sc(1.2), Math.max(p0[1], p1[1]) + sag, ...p1);
-    ctx.stroke();
-    ctx.setLineDash([]);
-    ctx.fillStyle = K.tone(a, PB.gold);
-    ell(ctx, p1[0], p1[1], K.sc(0.45), K.sc(0.45));
-    ctx.fill();
-  }
   ctx.restore();
 }
 // His moustache, cheeks and mouth on the front of the carapace.
@@ -715,28 +678,30 @@ function mouth(ctx, a, sk, K) {
     ctx.quadraticCurveTo(0, (0.95 + 0.9 * sm) * s, 0.95 * s, (0.95 - 0.15 * sm) * s);
     ctx.stroke();
   }
-  // the moustache: two soft cream curls, the tips turned up (down when sad, twitching as he huffs)
+  // the moustache (2026-11-27, second pass: one simple soft shape): a cream handlebar, its two
+  // rounded tips turned up (down when sad, one twitching as he huffs), one soft light along its top
   const up = f.stache ?? 0;
   const tw = a.pb?.stTwitch ?? 0;
-  for (const d of [-1, 1]) {
-    ctx.save();
-    ctx.scale(d, 1);
-    ctx.rotate(-up * 0.22 - tw * (d > 0 ? 0.12 : 0.06));
-    const pts = [[0.2, -0.25], [1.6, -0.8], [3.0, -0.4], [3.8, 0.4], [3.65, -0.6 - up * 0.45], [4.35, -1.1 - up * 0.3], [4.0, 1.05], [2.6, 0.8], [1.2, 0.9], [0.1, 0.5]].map(([x, y]) => [x * s, y * s]);
-    poly(ctx, loop(pts, 3));
-    ctx.strokeStyle = PB.creamSh;
-    ctx.lineWidth = 0.6 * s;
-    ctx.stroke();
-    ctx.fillStyle = K.tone(a, PB.cream);
-    ctx.fill();
-    ctx.strokeStyle = 'rgba(255,255,255,0.9)';
-    ctx.lineWidth = 0.3 * s;
-    ctx.beginPath();
-    ctx.moveTo(0.8 * s, -0.25 * s);
-    ctx.quadraticCurveTo(2 * s, -0.6 * s, 3 * s, -0.15 * s);
-    ctx.stroke();
-    ctx.restore();
-  }
+  const half = (d) => {
+    const ty = -0.85 - up * 0.75 - tw * (d > 0 ? 0.5 : 0.25);
+    return [[0.6, -0.55], [1.9, -0.75], [3.1, -0.45], [3.9, ty], [4.35, ty + 0.55], [3.9, 0.55 - up * 0.2], [2.7, 0.95], [1.3, 0.85], [0.4, 0.6]].map(([x, y]) => [d * x * s, y * s]);
+  };
+  const R = half(1);
+  const Lh = half(-1).reverse();
+  const shape = loop([[0, -0.3 * s], ...R, [0, 0.35 * s], ...Lh], 3);
+  poly(ctx, shape);
+  ctx.strokeStyle = PB.creamSh;
+  ctx.lineWidth = 0.6 * s;
+  ctx.lineJoin = 'round';
+  ctx.stroke();
+  ctx.fillStyle = K.tone(a, PB.cream);
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(255,255,255,0.9)';
+  ctx.lineWidth = 0.35 * s;
+  ctx.beginPath();
+  ctx.moveTo(-2.4 * s, -0.25 * s);
+  ctx.quadraticCurveTo(0, -0.75 * s, 2.4 * s, -0.25 * s);
+  ctx.stroke();
   ctx.restore();
 }
 // The sugar cube in his lead claw, while he has it (the act, a lob's wind-up).
@@ -1261,14 +1226,20 @@ const look = {
   P: {
     // (a size up from the base's hermit: his cup must read at the game's own zoom)
     scale: 1.15,
-    eyes: { x: 3.0, z: 0.5, len: 5.6, w: 2.3, cap: 3.3, splay: 15 },
-    mouth: [2.4, 0.98],
+    // (2026-11-27, second pass, the lead reviewer: still a muddle at game size. His face now sits
+    // big and clear in the cup's mouth: no eye stalks, his eyes right on a clean dome, no shell lines)
+    // (his dome a size fuller than the base's hermit, so his face fills the cup's mouth; the rest of it
+    // stays hidden behind the cup's wall)
+    cara: { a: 9.2, b: 7.4, dome: 8.2, plain: true },
+    eyes: { x: 3.2, z: 0.7, len: 0.01, w: 0.1, cap: 4.4, splay: 0, flat: true },
+    mouth: [1.6, 0.98],
     // (the cup in the shell's place: the base's shell outline and its opening laid over the cup's
     // bowl and mouth, so the base's seams and its hide-in-your-shell curtain fit the cup)
-    shell: { c: [-3.4, -4.4], r: [11, 10.2, 0], coil: [-1.4, -1.6], ap: { c: [CUP.rim, 0], rx: CUP.sq * CUP.R, ry: CUP.R, rot: 0 } },
+    shell: { c: [-3.4, -2.4], r: [11, 10.2, 0], coil: [-1.4, -1.6], ap: { c: [CUP.rim, 0], rx: CUP.sq * CUP.R, ry: CUP.R, rot: 0 } },
     claws: {
-      lead: { root: [6.2, -1, 4], rest: [9.4, -0.6, 6.2], arm: [2.8, 2.6], w: [3, 2.7, 3], hand: [5.8, 4.4], ang: -30 },
-      trail: { root: [-6.2, -1, 4], rest: [-9.8, -1.2, 6.6], arm: [2.6, 2.4], w: [2.7, 2.4, 2.7], hand: [5, 3.8], ang: -46 },
+      // (second pass: smaller, simpler claws, so his face leads)
+      lead: { root: [6.2, -1, 4], rest: [9, -0.8, 6.2], arm: [2.6, 2.4], w: [2.7, 2.4, 2.6], hand: [4.8, 3.7], ang: -30 },
+      trail: { root: [-6.2, -1, 4], rest: [-9.2, -1.4, 6.6], arm: [2.4, 2.2], w: [2.5, 2.2, 2.4], hand: [4.2, 3.2], ang: -46 },
       reach: [5.5, 1.2],
       up: [0, 5, -1],
     },
@@ -1301,6 +1272,9 @@ const look = {
   fx,
 };
 export const TEACUP_HERMIT = dressedCrab(look);
+// (his size as it was before the 2026-11-27 second pass, 24 by 26: a fuller dome, not a bigger him)
+TEACUP_HERMIT.w = 24;
+TEACUP_HERMIT.h = 26;
 // (`noHop`: none of the monster drawer's little hops or idle notes over him; he shows his moods in his
 // own act and face)
 TEACUP_HERMIT.art.noHop = true;

@@ -198,7 +198,7 @@ export function tanukiRig(opts) {
   const dressed = {};
   const design = (mood) => (dressed[mood] ??= Object.fromEntries(Object.entries(opts.design(mood)).map(([n, list]) => [n, list.map((sh) => mapShape(sh, toKid, 1 / f))])));
   for (const [n, p] of Object.entries(opts.J)) J[n] = toKid(p);
-  const K = kidKit('tanukipicker', (mood) => ({ groups: design(mood) }), J, { scale: f, flat: true });
+  const K = kidKit('tanukipicker', (mood) => ({ groups: design(mood) }), J, { scale: f, flat: true, ink: 'own' });
   // (a piece of his, the same in every face)
   const D = (name, o) => ({ ...K.layer(name, o), s: (a, S, bare) => K.piece(name, null, bare) });
   const { rel, SC } = K;
@@ -218,12 +218,14 @@ export function tanukiRig(opts) {
   const QL = horse ? legDefs(horse, (v) => v * SC) : null;
   const hLF = QL ? QL.foreN.lens.reduce((x, y) => x + y, 0) : 0;
   // (his gait: short legs, so small steps, low feet; he ambles up to his roaming pace, runs past it)
-  const stride = leg * 1.6;
+  // (2026-11-27: his feet lifted barely a whisker under the apron and he read as sliding; a longer,
+  // rounder step now, each foot lifted clear and set down eased, a soft bob and rock with it)
+  const stride = leg * 1.85;
   const key = `bl${kind}`;
   // (he is drawn `opts.size` tall: his roaming pace, in his own units)
   const gk = opts.size ? opts.size / H : 1;
   const walkSpeed = 36 / gk;
-  const WK = blankGait(K, { stride, kick: leg * 0.12, key, walkSpeed, lean: rootAng });
+  const WK = blankGait(K, { stride, kick: leg * 0.24, key, walkSpeed, lean: rootAng });
   const TH = Object.fromEntries(WK.parts().map((p) => [p.name, p]));
   const tail = Boolean(groups.tail);
   const dist = (p, q) => Math.hypot(J[q][0] - J[p][0], J[q][1] - J[p][1]) * SC;
@@ -532,7 +534,7 @@ export function tanukiRig(opts) {
       {
         const gs = Math.sin(p);
         const gc = Math.cos(p);
-        Object.assign(walk, { tilt: (walk.tilt ?? 0) + 1, head: 1 + (walk.head ?? 0) * 0.5, neckR: (walk.neckR ?? 0) * 0.5, shN: TK_STANCE.shN + gs * 2, elN: TK_STANCE.elN - gc * 2, shF: TK_STANCE.shF - gs * 2, elF: TK_STANCE.elF + gc * 2, hwN: 0, hwF: 0, turnC: (walk.turnC ?? 0) * 0.4, reachN: 0, reachF: 0, shrugN: 1, shrugF: 1, tailW: gs * 9 });
+        Object.assign(walk, { tilt: (walk.tilt ?? 0) + 1 + roll * 1.4, pelvis: (walk.pelvis ?? 0) * 1.5, head: 1 + (walk.head ?? 0) * 0.5, neckR: (walk.neckR ?? 0) * 0.5, shN: TK_STANCE.shN + gs * 2, elN: TK_STANCE.elN - gc * 2, shF: TK_STANCE.shF - gs * 2, elF: TK_STANCE.elF + gc * 2, hwN: 0, hwF: 0, turnC: (walk.turnC ?? 0) * 0.4, reachN: 0, reachF: 0, shrugN: 1, shrugF: 1, tailW: gs * 9 });
         Object.assign(idle, { shN: TK_STANCE.shN - breath, elN: TK_STANCE.elN - breath, shF: TK_STANCE.shF + breath, elF: TK_STANCE.elF + breath, hwF: 0, hwN: 0 });
       }
       // Holding a weapon: the near arm keeps it ready (swinging a little on the walk), and the far

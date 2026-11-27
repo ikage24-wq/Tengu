@@ -7,10 +7,10 @@
 //             a rounded rim; it rocks with him (the base's `lower` bone). Drawn in two halves: its back wall,
 //             rim and broth behind him, its front and the near half of the broth in front of him; noodles
 //             looping over its front rim, swinging on a spring (a.ndCup.spill)
-//   tail      his noodle tail: a rope of wavy golden strands that comes up out of the broth, arches over
-//             the back rim, down to the floor and away behind him along the base's tail bones, its end
-//             curling up; every strand waves on its own
-//   lid       the peeled foil lid, still stuck at the back rim, standing up behind him like a little shell,
+//   tail      his noodle dragon's tail: a rope of wavy golden strands that comes up out of the broth, arches
+//             over the back rim and curls away behind him in the air in a soft S, a little dragon fin at its
+//             tip, every joint on its own spring (2026-11-27; it lay in a stiff L along the floor before)
+//   lid       the peeled foil lid, still stuck at the back rim, hanging back down behind the cup, round with its tab,
 //             swaying on its spring (a.ndCup.lid), hauled up behind his head for the Lid Flip
 //   happi     his ramen-shop happi coat: indigo, cut from his torso's outline, a white collar band down the
 //             front, white waves along the hem, a cherry obi tied at his waist with its knot at the side
@@ -18,7 +18,7 @@
 //   sticks    his red lacquered chopsticks in his near hand (a.ndSticks: { rot, open })
 import { TAU, mix, tone, ell, pen, glow, clamp, sstep } from './fx.js';
 import { poly, chaikin } from './head.js';
-import { NOOD, BROTH, CUP, FOIL, HAPPI, OBI, STICK, KAMA } from './palette.js';
+import { NOOD, BROTH, CUP, FOIL, HAPPI, OBI, STICK, KAMA, FIN } from './palette.js';
 import { G } from '../mobs/kidbase.js';
 
 // ---------- The kit ----------
@@ -246,26 +246,64 @@ function noodleLoop(ctx, a, mode, pts, w) {
 }
 
 // ---------- His noodle tail (rig space) ----------
-// From up out of the broth, over the back rim, down to the floor and away behind along the tail's bones, its
-// end curling up; a rope of five strands, each waving on its own.
-export function noodleTail(ctx, a, mode, D, lw) {
+// (2026-11-27, the player: the noodles hung in a stiff L to the floor and never moved, and nothing read as
+// a dragon.) A noodle dragon's tail: a rope of wavy golden strands up out of the broth, arched over the back
+// rim, then curling away behind him in the air in a soft S, its tip turned up with a little dragon fin.
+// Every joint rides its own spring (a.ndTail: each segment's turn, in degrees, from the dress's pose: a wave
+// running down it to the tip, swung on by his hops, his turns and the Noodle Lash), so it sways, wiggles and
+// settles late; drawn in the cup's own frame, so it rocks with the cup.
+export const TAIL_L = [7, 7, 6.6, 6, 5.4, 4.6];
+export const TAIL_REST = [150, 110, 140, 195, 245, 285];
+export function tailPts(a, D) {
   const C = cupGeom(D);
-  const t = a.t ?? 0;
   const P = (p) => ptAt(a, D, 'lower', 'serp0', p);
-  const rim = P([C.cx - C.rw + 3, C.rimY - 0.6]);
-  const arch = P([C.cx - C.rw - 6, C.rimY - 8]);
-  const wall = P([C.cx - C.rw - 14, mix(C.rimY, C.bot, 0.35)]);
-  const foot = P([C.cx - C.rw - 13, C.bot - 3.4]);
-  const s1 = orig(a, 'tailB');
-  const s2 = orig(a, 'tailC');
-  const mid = ptAt(a, D, 'tailC', 'serp2', [D.J.serp2[0] - 10, D.J.serp2[1] - 1]);
-  const tip = ptAt(a, D, 'tailC', 'serp2', D.J.tailTip);
-  const curl = ptAt(a, D, 'tailC', 'serp2', [D.J.tailTip[0] + 5, D.J.tailTip[1] + 2]);
-  const lift = (p, k) => [p[0], p[1] - k];
-  const spine = [rim, arch, wall, foot, lift(s1, 2.6 * D.SC), lift(s2, 2 * D.SC), lift(mid, 1.4 * D.SC), tip, curl];
-  const W = [5.4, 5.8, 5.8, 5.6, 5, 4.2, 3.3, 2.4, 1.8].map((v) => v * D.SC);
+  const ang = a.ndTail ?? TAIL_REST;
+  const local = [[C.cx - C.rw + 4, C.rimY - 0.4], [C.cx - C.rw - 3, C.rimY - 8.6]];
+  for (let i = 0; i < TAIL_L.length; i++) {
+    const [x, y] = local[local.length - 1];
+    const r = (ang[i] * Math.PI) / 180;
+    // (never below the cup's foot: a low curl rests on the floor's air, never through it)
+    local.push([x + Math.cos(r) * TAIL_L[i], Math.min(C.bot - 3.2, y + Math.sin(r) * TAIL_L[i])]);
+  }
+  return local.map(P);
+}
+export function noodleTail(ctx, a, mode, D, lw) {
+  const t = a.t ?? 0;
+  const spine = tailPts(a, D);
+  const W = [5.6, 5.8, 5.4, 5, 4.4, 3.7, 3, 2.4].map((v) => v * D.SC);
+  // the fin at its tip: a soft fan of three round lobes, pale gold, along the last segment
+  const n = spine.length;
+  const tip = spine[n - 1];
+  const prev = spine[n - 2];
+  const fa = Math.atan2(tip[1] - prev[1], tip[0] - prev[0]);
+  ctx.save();
+  ctx.translate(...tip);
+  ctx.rotate(fa);
+  ctx.scale(D.SC, D.SC);
+  const fin = chaikin([[-2.4, -1.4], [1, -4.6], [3.8, -3.6], [5.4, -5], [7.6, -2.4], [6.4, 0], [7.6, 2.4], [5.4, 5], [3.8, 3.6], [1, 4.6], [-2.4, 1.4]], 3);
+  poly(ctx, fin);
+  if (mode === 'line') {
+    pen(ctx, tone(a, FIN.ink), lw / D.SC);
+    ctx.stroke();
+  } else {
+    ctx.fillStyle = tone(a, FIN.base);
+    ctx.fill();
+    ctx.save();
+    poly(ctx, fin);
+    ctx.clip();
+    glow(ctx, 3, -1.6, 4, FIN.lt, 0.9);
+    pen(ctx, tone(a, FIN.sh, 0.8), 0.4);
+    for (const y1 of [-3.8, 0, 3.8]) {
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.quadraticCurveTo(3, y1 * 0.5, 6.4, y1);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+  ctx.restore();
   // (the rope's body: a soft deep-gold tube so the strands read as one tail)
-  tubePath(ctx, spine.slice(0, -1), W.slice(0, -1));
+  tubePath(ctx, spine, W);
   if (mode === 'line') {
     pen(ctx, tone(a, NOOD.ink), lw);
     ctx.stroke();
@@ -273,9 +311,9 @@ export function noodleTail(ctx, a, mode, D, lw) {
     ctx.fillStyle = tone(a, NOOD.sh);
     ctx.fill();
     // the strands along it, each its own wave
-    const n = 5;
-    for (let k = 0; k < n; k++) {
-      const off = (k / (n - 1) - 0.5) * 0.7;
+    const N = 5;
+    for (let k = 0; k < N; k++) {
+      const off = (k / (N - 1) - 0.5) * 0.7;
       const pts = spine.map((p, i) => {
         const q = spine[Math.min(spine.length - 1, i + 1)];
         const r = spine[Math.max(0, i - 1)];
@@ -303,10 +341,14 @@ export function lid(ctx, a, mode, D, lw) {
   ctx.save();
   enterLower(ctx, a, D);
   const w = lw / D.SC;
-  ctx.translate(C.cx - C.rw + 1.6, C.rimY - 0.4);
-  ctx.rotate(-1.05 + (L.lid ?? 0) + flip * 0.95);
-  const R = 15;
-  const pts = chaikin([[0, 1], [-1, -10], [3, -24], [12, -30], [22, -26], [27, -14], [24, -2], [16, 2]], 3);
+  // (2026-11-27: peeled right back and hanging down behind the cup, out of sight, round like a real lid with
+  // its pull tab, so it never reads as a wing at his shoulder; the Lid Flip hauls it up behind him by its
+  // old hinge at the back rim and over, ending where it did)
+  const up = clamp(flip, 0, 1);
+  const hk = sstep(up / 0.35);
+  ctx.translate(mix(C.cx + 11, C.cx - C.rw + 1.6, hk), C.rimY - 0.4 - C.rh * 0.6 * (1 - hk));
+  ctx.rotate(-Math.PI + (L.lid ?? 0) + up ** 0.3 * (Math.PI - 0.1));
+  const pts = chaikin([[0, 1], [-1.6, -7], [0.6, -16], [6, -22.4], [10.4, -24], [11, -27.4], [14.6, -27.6], [15, -24], [20, -20], [23.4, -12], [22.4, -4], [16, 1]], 3);
   poly(ctx, pts);
   paint(ctx, a, mode, FOIL.base, FOIL.ink, w);
   if (mode === 'fill') {

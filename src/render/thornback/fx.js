@@ -33,14 +33,14 @@ export function pebble(ctx, x, y, r, an, al) {
   ctx.rotate(an);
   ctx.beginPath();
   ctx.ellipse(0, 0, r * 1.25, r * 0.9, 0, 0, TAU);
-  ctx.fillStyle = '#a9b3a0';
+  ctx.fillStyle = '#bccfa8';
   ctx.fill();
   ctx.lineWidth = 0.4;
-  ctx.strokeStyle = '#6f7d68';
+  ctx.strokeStyle = '#7f9e6c';
   ctx.stroke();
   ctx.beginPath();
   ctx.ellipse(-r * 0.35, -r * 0.3, r * 0.45, r * 0.25, 0, 0, TAU);
-  ctx.fillStyle = '#d3dacb';
+  ctx.fillStyle = '#e4eed6';
   ctx.fill();
   ctx.restore();
 }

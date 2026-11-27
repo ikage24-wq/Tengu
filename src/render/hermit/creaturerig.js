@@ -218,7 +218,7 @@ export function hermitRig(opts) {
   J.gem = toKid(opts.gem);
   J.mouthH = toKid(opts.mouth);
   J.boxTop = toKid(opts.boxTop);
-  const K = kidKit('chesthermit', (mood) => ({ groups: design(mood) }), J, { scale: f, flat: true });
+  const K = kidKit('chesthermit', (mood) => ({ groups: design(mood) }), J, { scale: f, flat: true, ink: 'own' });
   const { rel, SC } = K;
   const skin = makeSkin({ J, SC, C: opts.skin, spec });
   const legs = B.legs !== false;

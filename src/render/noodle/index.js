@@ -40,7 +40,7 @@
 import { dressRig } from './rig.js';
 import { TAU, clamp, mix, sstep, hash, win, ell, pen, glow, sparkle, cue, spring, dizzy, steam, note } from './fx.js';
 import { drawHead, FACES, SHUTS, FKEYS, VOWELS } from './head.js';
-import { cupBack, cupFront, noodleTail, lid, happi, obiKnot, sleeve, chopsticks, sticksGeom, drawSticks, CS, cupGeom, ptAt, enter, ptOf } from './dress.js';
+import { cupBack, cupFront, noodleTail, lid, happi, obiKnot, sleeve, chopsticks, sticksGeom, drawSticks, CS, cupGeom, ptAt, enter, ptOf, TAIL_REST } from './dress.js';
 import { SKIN, SKIN_INK, NOOD, BROTH, CHILI, FOIL, CUP } from './palette.js';
 
 const BIG = 1.75;
@@ -233,6 +233,22 @@ function pose(m, a, out, c) {
     knot: spring(st, 'knt', Math.sin(t * 1.3) * 0.08 - lean * 1.2 - walkW * 0.3, 110, 10, dt, kick * 0.01),
   };
   a.ndSticks = { rot: spring(st, 'srot', q.stick, 150, 17, dt), open: spring(st, 'sopn', q.open, 200, 18, dt) };
+  // His noodle dragon tail (2026-11-27): each segment's turn on its own spring, looser toward the tip; a
+  // wave running down it to the tip (livelier as he hops along), swung by his lean and each hop's landing,
+  // coiled back and whipped up and over for the Noodle Lash, limp when he's beaten.
+  {
+    const whip = out.tailW ?? 0;
+    const hopK = a.ndHopK ?? 0;
+    const dead = m.hp <= 0 ? 1 : 0;
+    const LIMP = [120, 100, 96, 104, 125, 160];
+    const N = TAIL_REST.length;
+    a.ndTail = TAIL_REST.map((r, i) => {
+      const u = (i + 1) / N;
+      const wave = Math.sin(t * (2.3 + walkW * 1.6) - i * 0.85) * (4 + 12 * u) * (1 + walkW * 0.5);
+      const goal = mix(r + wave + whip * (22 + 60 * u) - lean * 57 * 0.6 * u + hopK * 18 * u, LIMP[i], dead);
+      return spring(st, `tl${i}`, goal, 110 - i * 13, 9 - i * 0.8, dt, kick * 0.6 * u);
+    });
+  }
   const headLean = ((out.head ?? 0) + (out.tilt ?? 0) + (out.chest ?? 0) * 0.5) * (Math.PI / 180);
   a.ndHair = {
     fr: [0, 1, 2].map((i) => spring(st, `fr${i}`, Math.sin(t * 1.6 + i * 1.9) * 0.025 + headLean * 0.1, 200 + i * 30, 15, dt, kick * 0.003 * (i % 2 ? 1 : -1))),
@@ -802,8 +818,24 @@ const DRESS = {
 const R = dressRig('noodle', DRESS);
 const rig = R.rig;
 const draw0 = rig.draw;
+// His walk (2026-11-27, the player: nearly frozen, his cup just slid along): little hops in his cup, the
+// cup and all of him lifting off the floor (above his shadow) and landing, run on by the distance he
+// travels (never the clock, so it never slides), rocking forward as he takes off and back as he lands;
+// the weight eased in and out with his walk, never a snap. (A hop, a rock: never a squash or a stretch.)
+const HOP_LEN = 15;
+const HOP_H = 4.2;
 rig.draw = (ctx, m, a) => {
   ctx.save();
+  const w = clamp(a.mo?.rig?._walk?.x ?? 0, 0, 1);
+  if (w > 0.001 && m.hp > 0 && !m.cine) {
+    const ph = ((m.odo ?? 0) / HOP_LEN) * TAU;
+    // (eased off and onto the floor: no kink at the landing)
+    const up = Math.max(0, Math.sin(ph)) ** 1.6;
+    const hop = w * HOP_H * up;
+    a.ndHopK = w * Math.max(0, -Math.sin(ph));
+    ctx.translate(0, -hop);
+    ctx.rotate(w * 0.07 * Math.cos(ph) * (a.flip ? -1 : 1));
+  } else a.ndHopK = 0;
   ctx.scale(BIG, BIG);
   a.gaitScale = BIG;
   draw0(ctx, m, a);

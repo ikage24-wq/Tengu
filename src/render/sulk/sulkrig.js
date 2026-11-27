@@ -299,7 +299,9 @@ export function sulkRig(opts) {
   J.boltJ = toKid(opts.bolt);
   J.hemJ = toKid(opts.hem);
   J.plushC = toKid(opts.plush);
-  const K = kidKit('blanketsulk', (mood) => ({ groups: design(mood) }), J, { scale: f, flat: true });
+  // (2026-11-27, the player: his edge read as a crunchy near-black pixel step; his pieces now take the
+  // kit's own soft line, a smooth ring in a deeper shade of each piece's own colour, his copy only.)
+  const K = kidKit('blanketsulk', (mood) => ({ groups: design(mood) }), J, { scale: f, flat: true, ink: 'own' });
   // (a piece in the coat of the moment: white once the storm has cleared)
   const D = (name, o) => ({ ...K.layer(name, o), s: (a, S, bare) => K.piece(name, a.sulkClear ? 'clear' : null, bare) });
   const { rel, SC } = K;

@@ -960,7 +960,14 @@ function crabRig(look = {}) {
     outside(ctx, sk.rim);
     glow(ctx, sk.under, A * 1.05, C.sh, 0.7);
     ctx.restore();
-    // guides: the front rim, the dome's middle line
+    // guides: the front rim, the dome's middle line (none for P.cara.plain, 2026-11-27: Pemberton's
+    // face sits on a clean dome, no shell lines across it)
+    if (K.plain) {
+      ctx.restore();
+      if (DRESS.mouth) DRESS.mouth(ctx, a, sk, KIT);
+      ctx.restore();
+      return;
+    }
     ctx.strokeStyle = tone(a, C.guide);
     ctx.lineCap = 'round';
     ctx.lineWidth = Math.max(0.45, sc(0.5));
@@ -1012,6 +1019,11 @@ function crabRig(look = {}) {
   };
   function drawEyes(ctx, a, mode) {
     const sk = a.bk;
+    // (P.eyes.flat, 2026-11-27: no stalks, the dress draws its eyes right on the face)
+    if (EY.flat) {
+      sk.eyeShapes = [];
+      return;
+    }
     ctx.save();
     inShell(ctx, sk);
     const done = [];

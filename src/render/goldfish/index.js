@@ -42,10 +42,13 @@ import { dressedGoldfish } from './fishbase.js';
 import { TAU, clamp, mix, sstep, win, pulse, tone, ell, smooth, pen, glow, sparkle, dizzy, sweat, cue } from './fx.js';
 import { fightState, pickPiece, settleFace, easeKeys, bubble } from './act.js';
 
-const C = { lt: '#fff3e2', base: '#ffc690', sh: '#f4a06c', deep: '#d88058' };
-const CF = { lt: '#fff2f4', base: '#ffd2c2', sh: '#f2aeb2', deep: '#d88c9c' };
-const CV = ['#ffc8a0', '#ffe2e8', '#e8e2ff'];
-const INK = '#c98068';
+// (2026-11-27, the player: very pale and plain, the tail not reading as a comet. A richer goldfish gold,
+// and the double tail now runs from warm gold through rose into a starry twilight lilac, with a few
+// twinkling stars inside it, a soft comet glow off its tips and a little trail of stars behind.)
+const C = { lt: '#fff0d4', base: '#ffb874', sh: '#f58f55', deep: '#d66e42' };
+const CF = { lt: '#fff0f2', base: '#ffc8b6', sh: '#f0a0a8', deep: '#d4808f' };
+const CV = ['#ffb478', '#ff9ebf', '#a99cf0'];
+const INK = '#c66a4c';
 const FIN_INK = '#cc8e9e';
 const CREAM = '#fff6ea';
 const LASH = '#4a2a3e';
@@ -530,6 +533,18 @@ function tinyStar(ctx, x, y, s, al, tail = [0, 0]) {
   ctx.stroke();
   ctx.restore();
 }
+// Inside each lobe of the comet tail: two little stars twinkling in turn along it, toward the tip.
+function veilPaint(ctx, a, lobe, W, k) {
+  const t = a.gl?.t ?? a.t ?? 0;
+  for (let i = 0; i < 2; i++) {
+    const u = 0.55 + i * 0.28;
+    const j = Math.min(2, Math.floor(u * 3));
+    const f = u * 3 - j;
+    const p = [mix(lobe[j][0], lobe[j + 1][0], f), mix(lobe[j][1], lobe[j + 1][1], f)];
+    const tw = 0.5 + 0.5 * Math.sin(t * 2.4 + i * 2.2 + k * 1.3);
+    sparkle(ctx, p[0], p[1] + (i ? 0.6 : -0.6) * (k ? -1 : 1), 0.7 + 0.5 * tw, 0.55 + 0.45 * tw, STAR[1]);
+  }
+}
 function fx(ctx, m, a, K) {
   const q = a.gl;
   const sk = a.fk;
@@ -543,13 +558,21 @@ function fx(ctx, m, a, K) {
     dizzy(ctx, top[0], top[1] - 2, 6, a.now ?? 0, 3);
     return;
   }
-  // its comet tail's tips: a few soft sparkles shed as it swims
+  // its comet tail's tips: a soft comet glow off each, and a little trail of stars streaming on
+  // behind them, each star drifting back along the tail's line and fading (three a lobe, out of step)
   if (sk.veil) {
     for (let i = 0; i < 2; i++) {
       const lobe = sk.veil[i];
       const tip = lobe[3];
-      const u = (t * 0.7 + i * 0.5 + (m.uid ?? 0) * 0.13) % 1;
-      sparkle(ctx, tip[0] - u * 4, tip[1] + (i ? 1 : -1) * u * 2, 0.9 * Math.sin(Math.PI * u), 0.85, STAR[1]);
+      const dx = tip[0] - lobe[2][0];
+      const dy = tip[1] - lobe[2][1];
+      const dl = Math.hypot(dx, dy) || 1;
+      glow(ctx, tip[0] + (dx / dl) * 1.5, tip[1] + (dy / dl) * 1.5, 6.5, '#fff0c0', 0.32);
+      for (let j = 0; j < 3; j++) {
+        const u = (t * 0.55 + j / 3 + i * 0.17 + (m.uid ?? 0) * 0.13) % 1;
+        const d = 1.5 + u * 9;
+        sparkle(ctx, tip[0] + (dx / dl) * d, tip[1] + (dy / dl) * d + (i ? 1 : -1) * u * 1.6, (1.1 - j * 0.15) * Math.sin(Math.PI * u), 0.9, j % 2 ? '#ffffff' : STAR[1]);
+      }
     }
   }
   // star snack: the tiny star drifting down to it, then spat out and floating off
@@ -684,7 +707,8 @@ const look = {
   CF,
   CS: CF,
   CV,
-  veilGlow: '#fff4cc',
+  veilGlow: '#fff2b8',
+  veilPaint,
   inks: { body: [INK, INK], fin: FIN_INK, sail: FIN_INK },
   ink: INK,
   fxC: { fill: 'rgba(240,236,255,0.4)', edge: '#c8bee8', glint: '#ffffff', spark: '#f2c870' },

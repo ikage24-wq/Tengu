@@ -95,6 +95,7 @@ const TW = {
   murri: {
     C: { lt: '#e6faee', base: '#8fdcb0', sh: '#62bd92', deep: '#3f9a76' },
     back: '#4fae84', stripe: '#3d9a74', belly: '#e9fbef', bellySh: '#c4ead6',
+    pat: '#4aaa80', pat2: '#e6fbf0',
     CF: { lt: '#d6f6e4', base: '#7fd0a4', sh: '#58b48a', deep: '#3a9472' },
     CS: { lt: '#e2f8ea', base: '#9bdcb8', sh: '#6cc09a', deep: '#47a07e' },
     inks: { body: ['#2f8466', '#7cb8a0'], fin: '#3a8c6e', sail: '#3a8c6e' },
@@ -104,12 +105,14 @@ const TW = {
     mark: { edge: '#4fae84', glyph: '#2c7a5e', fill: 'rgba(236,252,244,0.96)' },
   },
   ena: {
-    C: { lt: '#fff8de', base: '#ffd57a', sh: '#f4b552', deep: '#da8f38' },
-    back: '#f6b04a', stripe: '#ee9c3e', belly: '#fff4dc', bellySh: '#f8dcb4',
+    // (2026-11-27: peach-orange, her own colour, in place of honey gold)
+    C: { lt: '#fff2e2', base: '#ffc48e', sh: '#f8a066', deep: '#de7a44' },
+    back: '#f7a462', stripe: '#ef8e4c', belly: '#fff6ea', bellySh: '#fbdcc2',
+    pat: '#ec8448', pat2: '#fff0dc',
     CF: { lt: '#ffe2d4', base: '#ffad8e', sh: '#f08c72', deep: '#d46e5c' },
     CS: { lt: '#ffe6d8', base: '#ffb496', sh: '#f39478', deep: '#d87660' },
-    inks: { body: ['#c77a2c', '#d4a874'], fin: '#c9685a', sail: '#c9685a' },
-    ink: '#c77a2c',
+    inks: { body: ['#c8683a', '#d8a07a'], fin: '#c9685a', sail: '#c9685a' },
+    ink: '#c8683a',
     iris: ['#6a3410', '#d0842a', '#ffe2a2'], pupil: '#43200a', lash: '#5a2e14', brow: '#c98a52',
     blush: '#ff8fa4', line: '#7a3e1c', mouth: '#b04c64', tongue: '#ffa8b4',
     mark: { edge: '#f0a040', glyph: '#b86a24', fill: 'rgba(255,250,236,0.96)' },
@@ -346,7 +349,8 @@ function actAt(name, u, sis) {
 // ---------- Their faces ----------
 // targets: sh (shut 0..1), kind (the shut shape), bt brow knit (+) / worried (-), by brow raise, ms
 // smile, mw mouth width, mo open, te felt teeth, bl blush, gl a bright glint
-const F0 = { sh: 0, kind: 'blink', bt: 0, by: 0.1, ms: 0.35, mw: 1, mo: 0, te: 0, bl: 0.5, gl: 0 };
+// (a soft moray grin at rest since 2026-11-27: the long mouth line turned up at its corner)
+const F0 = { sh: 0, kind: 'blink', bt: 0, by: 0.1, ms: 0.6, mw: 1.12, mo: 0, te: 0, bl: 0.5, gl: 0 };
 const FACES = {
   calm: { ...F0 },
   smug: { ...F0, bt: 0.25, by: 0.3, ms: 0.85, mw: 1.05, bl: 0.6 },
@@ -609,7 +613,77 @@ function bodyFill(T) {
       ctx.stroke();
     }
     ctx.restore();
+    pattern(ctx, a, sk, T);
   };
+}
+// Each twin's own markings (2026-11-27: they read as plain fish), clipped to the body, riding the spine so
+// they bend and wave with it; never round spots in rows, never eye spots.
+//   Murri  soft jade marbling: long leaf-shaped dapples of two sizes, laid along the body at uneven
+//          places down her back and flank, a pale glint along a few of them.
+//   Ena    soft wavy bands across her back, a little chevron, wide on the back and tapering away
+//          down her flank, a cream line along each band's front edge.
+function pattern(ctx, a, sk, T) {
+  const N = sk.pos.length;
+  const at = (j, f) => {
+    const q = Math.min(N - 1, Math.max(0, j));
+    const i0 = Math.floor(q);
+    const i1 = Math.min(N - 1, i0 + 1);
+    const u = q - i0;
+    const px = mix(sk.pos[i0][0], sk.pos[i1][0], u);
+    const py = mix(sk.pos[i0][1], sk.pos[i1][1], u);
+    const nx = mix(sk.nrm[i0][0], sk.nrm[i1][0], u);
+    const ny = mix(sk.nrm[i0][1], sk.nrm[i1][1], u);
+    const g = f >= 0 ? mix(sk.back[i0], sk.back[i1], u) : mix(sk.belly[i0], sk.belly[i1], u);
+    return [px + nx * g * f, py + ny * g * f];
+  };
+  ctx.save();
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  if (T === TW.murri) {
+    // Murri's marbling: soft irregular jade blotches, each its own wobbly shape, size and tilt, staggered
+    // up and down her back and flank (never a row): [where along (joints), how high (1 back .. -1 belly), size]
+    const BLOTS = [[2.35, 0.55, 0.8], [2.95, -0.2, 0.5], [3.5, 0.62, 0.58], [4.1, 0.12, 0.74], [4.75, 0.68, 0.5], [5.2, -0.25, 0.46], [5.75, 0.38, 0.64], [6.45, 0.72, 0.42], [6.85, -0.02, 0.48], [7.45, 0.5, 0.4]];
+    const mid = (p, q) => [(p[0] + q[0]) / 2, (p[1] + q[1]) / 2];
+    BLOTS.forEach(([j, f, k], i) => {
+      if (j > N - 1.3) return;
+      const c = at(j, f);
+      const g = mix(sk.back[Math.floor(j)], sk.back[Math.min(N - 1, Math.ceil(j))], j % 1);
+      const r = g * 0.8 * k;
+      const fw = at(j + 0.2, f);
+      const an = Math.atan2(fw[1] - c[1], fw[0] - c[0]) + Math.sin(i * 2.3) * 0.5;
+      const pts = [];
+      for (let q = 0; q < 6; q++) {
+        const th = (q / 6) * TAU;
+        const rr = r * (1 + Math.sin(i * 3.1 + q * 2.2) * 0.22);
+        pts.push([c[0] + Math.cos(th + an) * rr * 1.35, c[1] + Math.sin(th + an) * rr * 0.85]);
+      }
+      ctx.beginPath();
+      ctx.moveTo(...mid(pts[5], pts[0]));
+      for (let q = 0; q < 6; q++) ctx.quadraticCurveTo(...pts[q], ...mid(pts[q], pts[(q + 1) % 6]));
+      ctx.closePath();
+      ctx.fillStyle = lit(a, T.pat, 0.5);
+      ctx.fill();
+    });
+  } else {
+    // Ena's bands: soft brush-stroke chevrons, unevenly spaced, each its own width and reach down her
+    // flank: [where along (joints), width, how far down (1 back .. -1 belly), bend]
+    const BANDS = [[2.6, 1, -0.3, 0.2], [3.5, 0.62, 0.15, 0.14], [4.55, 0.92, -0.2, 0.22], [5.4, 0.55, 0.25, 0.12], [6.4, 0.8, -0.05, 0.18], [7.35, 0.5, 0.2, 0.1]];
+    for (const [j, k, lo, bend] of BANDS) {
+      if (j > N - 1.3) continue;
+      const pts = [at(j - bend, 1.15), at(j + bend * 0.6, 0.7), at(j + bend * 0.2, (0.7 + lo) / 2), at(j + bend * 0.5, lo)];
+      const w = mix(sk.back[Math.floor(j)], sk.back[Math.min(N - 1, Math.ceil(j))], j % 1) * 0.42 * k;
+      // (a brush stroke: wide on the back, narrowing to a soft point down the flank)
+      for (const [f, al] of [[1, 0.5], [0.55, 0.35]]) {
+        ctx.strokeStyle = lit(a, T.pat, al);
+        ctx.lineWidth = w * f;
+        ctx.beginPath();
+        ctx.moveTo(...pts[0]);
+        ctx.bezierCurveTo(...pts[1], ...pts[2], ...(f < 1 ? pts[3] : pts[2]));
+        ctx.stroke();
+      }
+    }
+  }
+  ctx.restore();
 }
 // Ena's pearl ribbon: a coral band round her neck, just behind the head (clipped to the body)
 function enaRibbon(ctx, a, sk, K) {
@@ -763,9 +837,10 @@ function murriCrown(ctx, a, mode, K) {
 }
 
 // Her face (in the head's frame: x ahead, y down, units).
+// (2026-11-27: bigger, more expressive eyes for a boss, set a little higher on the head)
 const EYES = {
-  murri: { n: { x: 0.9, y: -2.9, rx: 2.3, ry: 2.6 }, f: { x: 5.1, y: -3.2, rx: 1.45, ry: 2.25 } },
-  ena: { n: { x: 0.8, y: -2.8, rx: 2.6, ry: 2.75 }, f: { x: 5.15, y: -3.1, rx: 1.65, ry: 2.4 } },
+  murri: { n: { x: 0.6, y: -3.2, rx: 2.9, ry: 3.3 }, f: { x: 4.95, y: -3.5, rx: 1.75, ry: 2.85 } },
+  ena: { n: { x: 0.5, y: -3.0, rx: 3.2, ry: 3.4 }, f: { x: 4.85, y: -3.3, rx: 1.9, ry: 2.95 } },
 };
 function face(sis) {
   const T = TW[sis];
@@ -916,7 +991,7 @@ function face(sis) {
     // the brows: Murri's short thick round ones, Ena's thin arched ones
     const brow = (e, side, w, len) => {
       const lift = f.by * 0.8;
-      const yb = e.y - e.ry - 1.7 - lift;
+      const yb = e.y - e.ry - 1.3 - lift;
       const yi = yb + f.bt * 0.7;
       const yo = yb - f.bt * 0.25 - 0.15;
       const xi = e.x - e.rx * len * 0.6;
@@ -1269,7 +1344,8 @@ function dress(sis) {
   const T = TW[sis];
   const look = {
     P: {
-      scale: 1.9,
+      // (2026-11-27: drawn a touch bigger for bosses, 1.9 before; the game box stays as it was)
+      scale: 2.25,
       // (a moray: a big round head, a long soft body tapering to the tail)
       spine: [[13, 0, 9.0, 8.2], [8.0, 0, 9.6, 8.6], [3.0, 0.3, 6.8, 6.1], [-1.6, 0.5, 5.8, 5.2], [-6.2, 0.4, 5.2, 4.6], [-10.6, 0.2, 4.5, 3.9], [-14.8, 0, 3.7, 3.2], [-18.6, 0, 2.9, 2.5], [-22, 0, 2.1, 1.8], [-25, 0, 1.5, 1.3]],
       pivot: 2,
@@ -1277,9 +1353,11 @@ function dress(sis) {
       front: { pts: [[1.4, 8.0], [3.6, 7.0], [5.6, 5.3], [6.9, 3.0], [7.5, 0.4], [7.3, -2.4], [6.4, -5.0], [4.7, -7.2], [2.3, -8.8]], tip: 4 },
       pec: { at: [8.6, 3.4], len: 3.2, w: 2.4, ang: 130, scull: 20, tuck: 160, out: 96 },
       // (the moray's long low frill down the whole back)
-      sail: { s0: 9.5, s1: 37.5, h: 3.4, prof: [0.7, 0.9, 1, 1, 0.98, 0.95, 0.9, 0.86, 0.8, 0.74, 0.66, 0.58], up: 6, fan: 18, flat: 62, foldLen: 0.6, flutter: 8, inset: 1.2, scallop: 0.12 },
+      // (2026-11-27: a taller flowing frill in broad soft round scallops, rippling more along its length)
+      sail: { s0: 8.5, s1: 38.5, h: 5.2, prof: [0.66, 0.98, 1, 0.97, 0.94, 0.88, 0.8, 0.7, 0.58], up: 8, fan: 20, flat: 62, foldLen: 0.62, flutter: 13, inset: 1.2, scallop: 0.2 },
       tail: { kind: 'fan', len: 5.2, w: 1.5, spread: 34, notch: 0.86 },
-      swim: { amp: 18, fin: 1.6, lag: 0.6, beats: 1.7, idle: 0.45, scull: 0.9, paddle: 18, recoil: 3, bob: 0.6, flutter: 4 },
+      // (2026-11-27: an eel's swim: a deeper wave run along her whole length, about one full S at a time)
+      swim: { amp: 27, fin: 1.7, lag: 0.95, beats: 1.5, idle: 0.6, scull: 0.9, paddle: 18, recoil: 3, bob: 0.7, flutter: 3.4 },
       speed: 44,
       lean: 1,
       swimFins: -0.2,
@@ -1311,6 +1389,10 @@ function dress(sis) {
     fx: fx(sis),
   };
   const D = dressedEel(look);
+  // (her game box as it was before she was drawn bigger: only the drawing grew)
+  const kb = 1.9 / look.P.scale;
+  D.w = Math.round(D.w * kb);
+  D.h = Math.round(D.h * kb);
   const rig = D.art.rig;
   const draw0 = rig.draw;
   // In her burrow (and the scene's hide and peekaboo), only the hole's mouth shows her: a clip the

@@ -17,11 +17,12 @@
 //          wavy noodle lines inside each, a deeper layer in its splits, its soft shadow on his forehead; a long
 //          wavy side lock each side outside his eyes down past his chin; the rest behind him to his shoulder
 //          blades, one soft wavy end. One light from above, one buttery shine band.
-//   horns  two little dragon horns curving back, kamaboko white blushing pink at the tip, a pink swirl band at
-//          the root, growing from inside his head behind the fringe.
-//   fins   soft fin ears, pale gold fans peeking out behind his side locks.
+//   horns  two dragon horns curving back, rising clear of his hair, kamaboko white blushing pink at the tip, a
+//          pink swirl band at the root, growing from inside his head behind the fringe (a size up 2026-11-27).
+//   fins   fin ears, pale gold, three soft spines, swept up and out past his side locks; a soft fin crest on
+//          the back of his head (2026-11-27: so he reads as a dragon).
 import { TAU, mix, sstep, win, tone, ell, pen, glow, sweat, tear, clamp } from './fx.js';
-import { SKIN, SKIN_INK, HAIR, LASH, BROW, IRIS, RING, PUPIL, LIP, BLUSH, KAMA, FIN } from './palette.js';
+import { SKIN, SKIN_INK, HAIR, LASH, BROW, IRIS, RING, PUPIL, LIP, BLUSH, KAMA, FIN, HORN } from './palette.js';
 
 export function chaikin(pts, n = 2, open = false) {
   let q = pts;
@@ -530,29 +531,34 @@ function sideLock(ctx, a, mode, side, tx, sway, lw) {
 }
 // His horns: two little dragon horns growing from inside his head behind the fringe, curving back in a soft
 // crescent to a round tip, kamaboko white blushing to pink at the tip, a pink swirl band at the root.
-function horns(ctx, a, mode, tx, lw) {
+// (2026-11-27, the player: nothing read as a dragon: they hid behind his fringe. Now a size up, rising
+// clear of his hair, so his silhouette says dragon.)
+function horns(ctx, a, mode, tx, lw0) {
+  const lw = lw0 / 2.1;
   for (const s of [-1, 1]) {
-    const bx = tx * 0.4 + s * 6.6 - 1.2;
-    const by = -14.6;
+    const bx = tx * 0.4 + s * 7.4 - 1.2;
+    const by = -18.2;
     ctx.save();
     ctx.translate(bx, by);
-    ctx.rotate(-0.35 + s * 0.12);
-    const pts = chaikin([[-2.6, 2.6], [-2.8, -2.2], [-3.6, -5.8], [-5.6, -8.4], [-6.8, -8.8], [-6.4, -7.6], [-4.6, -5.6], [-0.8, -2.8], [1.2, 0.2], [2.4, 2.6]], 3);
+    ctx.rotate(-0.28 + s * 0.14);
+    ctx.scale(2.1, 2.1);
+    // (a chunky horn: a wide root, tapering as it sweeps back, a round tip)
+    const pts = chaikin([[-3.6, 2.6], [-4.2, -0.6], [-4.8, -3.2], [-6, -5.2], [-7.4, -5.8], [-7.2, -4.4], [-5.4, -2.4], [-1.6, -0.2], [2.4, 1.2], [3.2, 2.6]], 3);
     poly(ctx, pts);
     if (mode === 'line') {
-      pen(ctx, tone(a, KAMA.ink), lw);
+      pen(ctx, tone(a, HORN.ink), lw);
       ctx.stroke();
     } else {
       const g = ctx.createLinearGradient(0, 2, -6, -11);
-      g.addColorStop(0, tone(a, KAMA.sh));
-      g.addColorStop(0.5, tone(a, KAMA.base));
-      g.addColorStop(1, tone(a, KAMA.lt));
+      g.addColorStop(0, tone(a, HORN.sh));
+      g.addColorStop(0.5, tone(a, HORN.base));
+      g.addColorStop(1, tone(a, HORN.lt));
       ctx.fillStyle = g;
       ctx.fill();
       ctx.save();
       poly(ctx, pts);
       ctx.clip();
-      glow(ctx, 1, -2, 2.4, KAMA.sh, 0.5);
+      glow(ctx, 1, -2, 2.4, HORN.sh, 0.5);
       pen(ctx, tone(a, KAMA.swirl), 0.65);
       ctx.beginPath();
       ctx.moveTo(-3, -1.4);
@@ -566,15 +572,19 @@ function horns(ctx, a, mode, tx, lw) {
   }
 }
 // His fin ears: soft pale gold fans behind his side locks, three soft ribs each.
-function fins(ctx, a, mode, tx, flap, lw) {
+// (2026-11-27: a size up and swept up and out past his side locks, three soft spines with round scallops
+// between them, like a little dragon's fin ears.)
+function fins(ctx, a, mode, tx, flap, lw0) {
+  const lw = lw0 / 1.7;
   for (const s of [-1, 1]) {
-    const bx = s > 0 ? 15.6 + tx * 0.7 : -15.4 + tx * 0.1;
-    const by = 0.6;
+    const bx = s > 0 ? 15.4 + tx * 0.7 : -15.2 + tx * 0.1;
+    const by = -1.4;
     ctx.save();
     ctx.translate(bx, by);
-    ctx.scale(s, 1);
-    ctx.rotate(-0.2 + (flap ?? 0) * 0.12);
-    const pts = chaikin([[-1.4, -2.6], [3, -6.4], [6.4, -5.2], [6.8, -2], [5.6, 1.6], [2.4, 3.4], [-1.4, 2.8]], 3);
+    ctx.scale(s * 1.7, 1.7);
+    ctx.rotate(-0.42 + (flap ?? 0) * 0.14);
+    // (three soft spines, round-tipped, with deep round notches between: a fin, not a round ear)
+    const pts = chaikin([[-1.6, -2.4], [1.6, -4.4], [3.6, -8.8], [5, -8.8], [5, -5], [7, -6.6], [8.6, -6], [7.6, -2.4], [9.8, -1], [9.8, 0.8], [6.6, 2], [3, 3.4], [-1.4, 2.8]], 2);
     poly(ctx, pts);
     if (mode === 'line') {
       pen(ctx, tone(a, FIN.ink), lw);
@@ -588,7 +598,7 @@ function fins(ctx, a, mode, tx, flap, lw) {
       glow(ctx, 2.6, -3, 3, FIN.lt, 0.9);
       glow(ctx, 0, 1.6, 3, FIN.sh, 0.5);
       pen(ctx, tone(a, FIN.sh, 0.8), 0.4);
-      for (const [x1, y1] of [[5.6, -4.6], [6.2, -1.2], [4.8, 1.8]]) {
+      for (const [x1, y1] of [[4.2, -7.6], [7.6, -5.2], [8.8, -0.2]]) {
         ctx.beginPath();
         ctx.moveTo(0, -0.2);
         ctx.quadraticCurveTo(x1 * 0.5, y1 * 0.5 - 0.6, x1, y1);
@@ -598,6 +608,35 @@ function fins(ctx, a, mode, tx, flap, lw) {
     }
     ctx.restore();
   }
+}
+// His crest (2026-11-27): a soft dragon's fin along the top and back of his head behind his horns, three
+// round lobes in his fin ears' pale gold, ribbed, swaying a little with his fins.
+function crest(ctx, a, mode, tx, flap, lw) {
+  ctx.save();
+  ctx.translate(tx * 0.2 - 4, -15);
+  ctx.rotate(-0.5 + (flap ?? 0) * 0.08);
+  const pts = chaikin([[3, 3], [1, -2.6], [-1.4, -6], [-3.2, -4.2], [-5.4, -6.6], [-7.6, -4], [-9.8, -5.4], [-11.4, -2], [-10.4, 1.6], [-6, 3.4]], 3);
+  poly(ctx, pts);
+  if (mode === 'line') {
+    pen(ctx, tone(a, FIN.ink), lw);
+    ctx.stroke();
+  } else {
+    ctx.fillStyle = tone(a, FIN.base);
+    ctx.fill();
+    ctx.save();
+    poly(ctx, pts);
+    ctx.clip();
+    glow(ctx, -4, -3, 4, FIN.lt, 0.9);
+    pen(ctx, tone(a, FIN.sh, 0.8), 0.4);
+    for (const [x1, y1] of [[-1.4, -5], [-5.4, -5.6], [-9.6, -4.2]]) {
+      ctx.beginPath();
+      ctx.moveTo(-4.6, 2.6);
+      ctx.quadraticCurveTo((x1 - 4.6) / 2, (y1 + 2.6) / 2, x1, y1);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+  ctx.restore();
 }
 // Behind his head: the rest of his noodle hair, down to his shoulder blades, wavy, one soft end; it swings.
 function backHair(ctx, a, mode, tx, sw, lean, lw) {
@@ -640,6 +679,7 @@ export function drawHead(ctx, a, mode, part, q, f, R, lw) {
   const turn = q.turn ?? 0.35;
   const tx = turn * 4;
   if (part === 'back') {
+    crest(ctx, a, mode, tx, R.fin ?? 0, lw);
     backHair(ctx, a, mode, tx, R.back ?? 0, R.lean ?? 0, lw);
     horns(ctx, a, mode, tx, lw);
     fins(ctx, a, mode, tx, R.fin ?? 0, lw);

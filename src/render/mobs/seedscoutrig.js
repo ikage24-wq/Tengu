@@ -281,22 +281,24 @@ function seedScoutShapes(v = 'idle') {
     const a = Math.PI + (i / 7) * Math.PI;
     out.push(...band([[tx, ty], [tx + Math.cos(a) * 20, ty + 1 + Math.sin(a) * 15.4]], 0.9, 0.6, C.rib, true));
   }
-  for (const p of ring(tx, ty + 1, 21, 4, 11, Math.PI, TAU)) out.push(E(p[0], p[1] + 1.2, 3.2, 2.8, '#f7f4ec'));
+  // (2026-11-27: fewer, broader puffs round the rim and the hood, so the edge reads as soft fluff,
+  // never a beaded row of dots)
+  for (const p of ring(tx, ty + 1, 20, 4, 7, Math.PI, TAU)) out.push(E(p[0], p[1] + 1.2, 4.6, 3.4, '#f7f4ec'));
   out.push(F(E(tx - 7, ty - 9, 6, 2.8, '#ffffff')), F(E(tx, ty + 0.6, 2.2, 1.6, C.rib)));
 
   // The cloak's back, falling to her knees, its hem a row of seed puffs.
   use('cloakBack');
   out.push(blob([[58, 84], [104, 84], [110, 108], [112, 123], [50, 123], [52, 108]], C.cl));
-  for (let i = 0; i < 8; i++) {
-    const x = 53 + i * 8.2;
-    out.push(E(x, 123.4 + (i % 2) * 0.6, 4.8, 3.6, i % 2 ? C.cl : C.clSh));
+  for (let i = 0; i < 6; i++) {
+    const x = 54.5 + i * 10.6;
+    out.push(E(x, 123 + (i % 2) * 0.6, 6.4, 4.2, i % 2 ? C.cl : C.clSh));
   }
   out.push(F(blob([[58, 88], [66, 88], [62, 110], [56, 121], [52, 118], [54, 106]], C.clSh, 2)), F(E(81, 119, 26, 3.4, C.clSh)));
 
   // The hood behind her head: a clock of soft scallops round a fluffy dome, shaded low and back.
   use('hoodBack');
   const H = [];
-  for (const [x, y] of ring(0, -2, 40, 40, 19, 0, TAU - TAU / 19)) H.push(E(x, y, 8.2, 8, y > 18 ? C.hoodSh : '#ffffff'));
+  for (const [x, y] of ring(0, -2, 39, 39, 14, 0, TAU - TAU / 14)) H.push(E(x, y, 10.4, 10, y > 18 ? C.hoodSh : '#ffffff'));
   H.push(E(0, -2, 40, 39, C.hood), F(T(ovalPts(0, -2, 39, 38, 0, Math.PI * 0.55, Math.PI * 1.25, 14).concat(ovalPts(-4, 2, 33, 33, 0, Math.PI * 1.25, Math.PI * 0.55, 14)), C.hoodSh)));
   H.push(F(E(14, -26, 9, 4.6, '#ffffff')));
   out.push(...place(H));
@@ -365,7 +367,7 @@ function seedScoutShapes(v = 'idle') {
 
 // ---------- The rig ----------
 
-const K = kidKit(SS, seedScoutShapes, J, { flat: true, cel: new Set(['fringe']) });
+const K = kidKit(SS, seedScoutShapes, J, { flat: true, cel: new Set(['fringe']), ink: 'own' });
 const { rel, through } = K;
 const LOOP = 26;
 const hash = (n) => {

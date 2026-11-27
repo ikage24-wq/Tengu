@@ -101,8 +101,10 @@ const lerp2 = (p, q, u) => [mix(p[0], q[0], u), mix(p[1], q[1], u)];
 
 // ---------- Its colours ----------
 const BL = {
-  C: { lt: '#ffffff', base: '#f1f4fb', sh: '#d2daee', deep: '#b3bfdf', fin: '#d6def2' },
-  ink: '#8290c0',
+  // (2026-11-27, the player: so pale it almost vanished on light maps. Still white and soft, with a
+  // gentle blue-grey shade under the belly and fins and a stronger soft blue outline.)
+  C: { lt: '#ffffff', base: '#eef2fa', sh: '#c3cee8', deep: '#9fadd4', fin: '#cdd7ef' },
+  ink: '#6372aa',
   fxC: { fill: 'rgba(232,248,255,0.62)', edge: '#86c2d9', glint: '#ffffff', spark: 'rgba(120,176,206,0.85)' },
   coral: { lt: '#ffd9d4', base: '#ff9f9a', sh: '#ea8089', deep: '#cf6b7d', ink: '#c56478' },
   pearl: { lt: '#ffffff', base: '#fbf6ef', sh: '#e6dcef', ink: '#b3a6cd' },
@@ -1447,6 +1449,7 @@ const look = {
   },
   C: BL.C,
   ink: BL.ink,
+  lineW: 2.4,
   fxC: BL.fxC,
   moves: MOVES,
   pleased: 'clap',

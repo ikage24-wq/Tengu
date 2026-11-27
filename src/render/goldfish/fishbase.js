@@ -815,6 +815,11 @@ function sailRig(look = {}) {
         }
         ctx.stroke();
       }
+      // (look.veilPaint: the dress's own touches inside a lobe, its centre line and widths)
+      if (look.veilPaint) {
+        ctx.globalAlpha /= 0.55;
+        look.veilPaint(ctx, a, lobe, W, lobe === sk.veil[0] ? 0 : 1);
+      }
       ctx.restore();
     }
   }

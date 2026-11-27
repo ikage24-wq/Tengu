@@ -213,8 +213,22 @@ export function bonbonRig(opts) {
   const K = kidKit('queenbonbon', (mood) => ({ groups: design(mood) }), J, { scale: f, flat: true });
   // (a piece of hers, the same in every face)
   const D = (name, o) => ({ ...K.layer(name, o), s: (a, S, bare) => K.piece(name, null, bare) });
-  // (the gown's one spring: heavy, slow, swinging well out on a twirl)
-  const SKIRT_SOFT = { ...SOFT.CLOTH, k: 70, max: 7, gain: 0.55 };
+  // (the skirt's three tiers, 2026-11-27: each hung from the seam under the one above on its own spring,
+  // looser and slower down the stack, so a move runs down the gown tier by tier and settles late)
+  const TIER_SOFT = {
+    top: { ...SOFT.CLOTH, k: 80, max: 5, gain: 0.5 },
+    mid: { ...SOFT.CLOTH, k: 60, max: 7, gain: 0.65 },
+    low: { ...SOFT.CLOTH, k: 46, max: 9, gain: 0.8 },
+  };
+  // (and a sway of their own, on top of the springs: with each glide-step the hem swings toward the
+  // stepping foot and lifts on the far side, each tier a beat behind the one above; at rest a slow
+  // breath of a sway; in degrees, each tier's turn on the one above)
+  const tierSway = (a, amp, lag, rest) => {
+    const w = clamp(a.walkW ?? 0, 0, 1);
+    const p = (a[`${key}U`] ?? 0) * TAU;
+    const t = (a.t ?? 0) + (a.uidOff ?? 0);
+    return (w * amp * Math.sin(p - lag) + (1 - w) * rest * Math.sin(t * 1.05 - lag * 0.6)) * D2R;
+  };
   const { rel, SC } = K;
   const skin = makeSkin({ J, SC, C: opts.skin, spec });
   const legs = B.legs !== false;
@@ -541,7 +555,9 @@ export function bonbonRig(opts) {
       // side, her free hand swinging a little; only a faint sway of the hips.)
       {
         const gs = Math.sin(p);
-        Object.assign(walk, { x: 0.04 * sz, lift: -WK.sink(a) * 0.4 - 0.15 * sz + WK.bob(a) * 0.25 * sz, tilt: 1, pelvis: gs * 1.6, waist: -gs * 1, chest: -gs * 0.5, neckR: 0, head: 0, shF: 12 - gs * 8, elF: -30, shN: BB_STANCE.shN, elN: BB_STANCE.elN, shrugN: 1, shrugF: 1, reachN: 0, reachF: 0, hwN: 0, hwF: 0, turnC: gs * 0.05, turnP: -gs * 0.04 });
+        // (2026-11-27: a gentle glide-step: a soft rise and fall on each step and a little more sway of the
+        // hips, the skirt's tiers swinging after them, her slippers peeking out under the hem)
+        Object.assign(walk, { x: 0.04 * sz, lift: -WK.sink(a) * 0.4 - 0.15 * sz + WK.bob(a) * 0.55 * sz, tilt: 1 + roll * 0.5, pelvis: gs * 2.4, waist: -gs * 1.4, chest: -gs * 0.7, neckR: 0, head: 0, shF: 12 - gs * 8, elF: -30, shN: BB_STANCE.shN, elN: BB_STANCE.elN, shrugN: 1, shrugF: 1, reachN: 0, reachF: 0, hwN: 0, hwF: 0, turnC: gs * 0.05, turnP: -gs * 0.04 });
         Object.assign(idle, { shN: BB_STANCE.shN - breath * 1.2, elN: BB_STANCE.elN - breath, shF: BB_STANCE.shF + breath * 1.2, elF: BB_STANCE.elF + breath, hwF: BB_STANCE.hwF, hwN: 0 });
       }
       // Holding a weapon: the near arm keeps it ready (swinging a little on the walk), and the far
@@ -825,15 +841,15 @@ export function bonbonRig(opts) {
       live('handFskin', (ctx, a, mode, S) => skin.hand(ctx, a, mode, S, 'F')),
       D('foreF', { parent: 'armFf', pivot: 'elF', from: 'elF' }),
       D('puffF', { parent: 'armFu', pivot: 'shF', from: 'shF' }),
-      // Her legs: the gait's bones only (they walk unseen under the crinoline).
-      ...WK.parts().map((p) => ({ ...p, s: undefined })),
+      // Her legs: the gait's bones only (they walk unseen under her skirt); on her feet, her little
+      // slippers, whose toes peek out under the hem as she steps.
+      ...WK.parts().map((p) => ({ ...p, s: p.name.startsWith('foot') ? p.s : undefined })),
       // (no bare torso: the gown covers it all, and her neckline is drawn on the bodice)
-      // The gown: the petticoat's lace, the crinoline and its two tiers of swags all hung from the
-      // waist seam on one spring (so they swing together, never apart).
-      D('petticoat', { parent: 'torso', pivot: 'skirtJ', from: 'hip', soft: SKIRT_SOFT }),
-      D('skirt', { parent: 'torso', pivot: 'skirtJ', from: 'hip', soft: SKIRT_SOFT }),
-      D('swagsLow', { parent: 'torso', pivot: 'skirtJ', from: 'hip', soft: SKIRT_SOFT }),
-      D('swagsHigh', { parent: 'torso', pivot: 'skirtJ', from: 'hip', soft: SKIRT_SOFT }),
+      // The skirt: three tiers, the top one hung from her waist seam, each lower one from the seam
+      // under the tier above (drawn bottom first, so each tier's scalloped hem lies over the next).
+      D('tierLow', { parent: 'tierMid', pivot: 'tierLowJ', from: 'tierMidJ', soft: TIER_SOFT.low, rot: (S, a) => tierSway(a, 2.6, 1.7, 0.9) }),
+      D('tierMid', { parent: 'tierTop', pivot: 'tierMidJ', from: 'skirtJ', soft: TIER_SOFT.mid, rot: (S, a) => tierSway(a, 2.2, 1.1, 0.7) }),
+      D('tierTop', { parent: 'torso', pivot: 'skirtJ', from: 'hip', soft: TIER_SOFT.top, rot: (S, a) => tierSway(a, 1.6, 0.5, 0.5) }),
       // (the bodice in two: the corset waist on her waist bone, the bodice above on her chest, a ribbon
       // over the seam, so it bends with her and never slides off her)
       D('bodiceLow', { parent: 'waistB', pivot: 'navel', from: 'navel' }),

@@ -6,17 +6,18 @@
 // stitched on her sash. She walks on her own copy of the maiden base (rig.js; body.js `starkeeper`: small,
 // a round head a touch big for her, short legs), her head, hair, cloak, clothes and abacus drawn here
 // (head.js, dress.js), never the shared face or the hero's body or hair, nothing of Folio's or the twins'.
-//   look    warm fair skin; starlight-aqua hair warming to dawn at its ends (an even blunt fringe of four
-//           sections above her lashes, a long side lock each side bound with a star bead, the rest straight
-//           down her back to her knees); a long night-sky cloak tied at her throat with a gold star clasp,
-//           its hood lowered, falling to the floor behind her in a soft train (a plum night inside sown with
-//           gold stars and the Little Mochi's faint lines, dusk rose outside); a peach dress cut to her with
+//   look    warm fair skin; starlight-aqua hair warming to dawn at its ends (a soft fringe of rounded
+//           locks above her lashes, a long side lock each side bound with a star bead, the rest down her
+//           back to her knees); a long night-sky cloak pinned at her throat with a gold star clasp, its front
+//           edges turned back over her shoulders, its hood lowered, hanging behind her to a hem that brushes
+//           the floor (a plum night inside sown with
+//           gold stars and the Little Mochi's faint lines, dusk rose outside); a periwinkle-lilac dress cut to her with
 //           a round cream collar, full bishop sleeves into cream cuffs, a plum sash stitched with gold tally
 //           marks and bowed at the back, a skirt to her knees with a plum constellation band and a cream
 //           petticoat; cream tights and plum Mary-Janes with star buckles; her star abacus in her near hand.
 //           Her own soft outlines in each part's deeper colour; her face bare.
 //   faces   (head.js) tareme dusk eyes with a falling-star glint, the whole iris always clear; round brows;
-//           a small soft mouth that rests level. Moods: keep (rest), still, count, focus, brave, cross,
+//           a small soft mouth that rests level. Moods: keep (rest), still, count, tally (counting in a fight, brows set), focus, brave, cross,
 //           hope, happy, joy, bliss, awe, sleepy, lost, fluster, sad, pout, hurt (> <), dizzy, talk, wink.
 //   idle    a 30 s act, only while calm, in pieces that fit her pauses: counting (the abacus held up, a
 //           bead flicked over for each star, her lips counting, eyes on the sky: "...998, 999..."); lost
@@ -24,7 +25,7 @@
 //           a sigh: "...one."); polishing (a breath on her sleeve, one bead polished till it twinkles, held
 //           up, a pleased little smile); dozing (her head nods, her eyes close, the abacus droops; a bead
 //           clicks, she jolts awake, looks round and counts again, quickly).
-//   walk    small careful steps, the abacus held close, her cloak's train sweeping after her.
+//   walk    small careful steps, the abacus held close, her cloak's hem swinging after her.
 //   fight   between casts, three swings at the tank in turn: Bead Flick (a star bead flicked off the abacus
 //           with her thumb, zipping out: pop), Abacus Swat (swung over her shoulder and down: clack!), Cloak
 //           Swirl (a swirl of her night-sky cloak, a crescent of stars swept low at their feet). Her casts
@@ -49,9 +50,9 @@
 import { dressRig } from './rig.js';
 import { TAU, clamp, mix, sstep, hash, win, ell, pen, glow, sparkle, cue, spring, dizzy } from './fx.js';
 import { drawHead, FACES, SHUTS, FKEYS, VOWELS } from './head.js';
-import { cloak, hood, clasp, bodice, sashBow, skirt, sleeve, stocking, shoe, abacus, abacusGeom, drawAbacus, AB, enter, ptOf } from './dress.js';
+import { cloak, hood, clasp, mantle, bodice, sashBow, skirt, sleeve, stocking, shoe, abacus, abacusGeom, drawAbacus, AB, enter, ptOf } from './dress.js';
 import { softStar } from './looks.js';
-import { SKIN, SKIN_INK, PEACH, PLUM, STAR, GOLD } from './palette.js';
+import { SKIN, SKIN_INK, GOWN, PLUM, STAR, GOLD } from './palette.js';
 
 const BIG = 2.25;
 const LWR = 2 / BIG;
@@ -147,7 +148,9 @@ function pose(m, a, out, c) {
     go({ tilt: 2, head: -1, shN: -26, elN: -70, shF: 10 }, walkW);
     q.look = [0.5, 0];
   }
-  if ((m.engaged || (m.aggroUntil ?? 0) > now) && !busy && walkW < 0.5) say('brave');
+  // (in a fight her face sets, eased in and out with every other mood: focused as she closes in on you,
+  // determined while she stands her ground; calm again once she lets you go)
+  if ((m.engaged || (m.aggroUntil ?? 0) > now) && !busy) say(walkW > 0.3 ? 'focus' : 'brave');
   if (m.hp <= 0) {
     // beaten: sat down on the floor, dizzy, the abacus fallen beside her, its beads rolled away
     const u = now - (st.asDeadAt ??= now);
@@ -245,15 +248,18 @@ function pose(m, a, out, c) {
   const F = FACES[q.mood] ?? FACES.keep;
   const f = (st.asF ??= { ...FACES.keep, shut: { happy: 0, calm: 0, squeeze: 0, dizzy: 0 } });
   let tgt = F;
-  if (q.mood === 'talk' || q.mood === 'count') {
-    const v = VOWELS[Math.floor(t * (q.mood === 'count' ? 5 : 7)) % VOWELS.length];
-    tgt = { ...F, mw: v[0], ms: v[1], mo: v[2] * (q.mood === 'count' ? 0.6 : 1) };
+  if (q.mood === 'talk' || q.mood === 'count' || q.mood === 'tally') {
+    const v = VOWELS[Math.floor(t * (q.mood === 'talk' ? 7 : 5)) % VOWELS.length];
+    tgt = { ...F, mw: v[0], ms: v[1], mo: v[2] * (q.mood === 'talk' ? 1 : 0.6) };
   }
   const kf = 1 - Math.exp(-dt * 14);
-  for (const key of FKEYS) f[key] = mix(f[key] ?? 0, tgt[key] ?? 0, key === 'lid' || key === 'wk' ? 1 - Math.exp(-dt * (tgt[key] > f[key] ? 40 : 18)) : kf);
+  // (her lids come down over her eyes now, so they ease like a lid: quick to shut, never in a frame;
+  // squeezed shut in pain, a snap quicker)
+  const shutR = F.shut === 'squeeze' ? 34 : 17;
+  for (const key of FKEYS) f[key] = mix(f[key] ?? 0, tgt[key] ?? 0, key === 'lid' || key === 'wk' ? 1 - Math.exp(-dt * (tgt[key] > f[key] ? shutR : 13)) : kf);
   for (const s of SHUTS) f.shut[s] = mix(f.shut[s], s === F.shut ? 1 : 0, 1 - Math.exp(-dt * 12));
   a.asF = f;
-  // Springs: her cloak (its fall, its train a beat later, how open, the hood), her skirt, the abacus's
+  // Springs: her cloak (its fall, its back hem a beat later, how open, the hood), her skirt, the abacus's
   // swing and its beads, her hair.
   const kick = ((st.asLast ?? out.head ?? 0) - (out.head ?? 0) + ((st.asLastT ?? out.tilt ?? 0) - (out.tilt ?? 0)) * 0.7);
   st.asLast = out.head;
@@ -368,7 +374,7 @@ function castPoseOf(cp, u, castK, wind, go, q, t, say) {
     q.count = REST_COUNT + Math.min(3, Math.floor(u + 0.15));
     q.lit = 0.5 + 0.5 * wind;
     q.look = [0.8, 0.2];
-    say(castK < 0.9 ? 'count' : 'brave', k);
+    say(castK < 0.9 ? 'tally' : 'brave', k);
     q.fx = { kind: 'castTally', u };
   } else if (cp === 'head' || cp === 'recount') {
     // Head Count: pointing at each of you in turn, counting aloud (Recount: flustered, quicker)
@@ -379,7 +385,7 @@ function castPoseOf(cp, u, castK, wind, go, q, t, say) {
     q.turn = 0.35 + Math.sin(u * rate * 0.5) * 0.15;
     q.abRot = -0.15;
     q.count = REST_COUNT + Math.min(4, Math.floor(u * rate / Math.PI));
-    say(cp === 'recount' ? 'fluster' : 'count', k);
+    say(cp === 'recount' ? 'fluster' : 'tally', k);
     q.fx = { kind: cp === 'recount' ? 'castRecount' : 'castHead', u };
   } else if (cp === 'catch') {
     // Catch a Falling Star: arms up and open to the sky, the abacus held up out of the way
@@ -395,7 +401,7 @@ function castPoseOf(cp, u, castK, wind, go, q, t, say) {
     q.lit = k;
     q.count = REST_COUNT + castK * 7;
     q.look = [0.2, -1];
-    say('count', k);
+    say('tally', k);
     q.fx = { kind: 'castLights', u };
   } else if (cp === 'chart') {
     // Star Chart: the abacus swept across the sky, its beads drawing the constellation
@@ -793,12 +799,15 @@ const DRESS = {
         ctx.beginPath();
         a.blTorsoPts.forEach((p, i) => (i ? ctx.lineTo(...p) : ctx.moveTo(...p)));
         ctx.closePath();
-        pen(ctx, PEACH.ink, LWR);
+        pen(ctx, GOWN.ink, LWR);
         ctx.stroke();
       }
       skirt(ctx, a, mode, D, LWR);
     },
-    neckSkin: (ctx, a, mode, S, D) => clasp(ctx, a, mode, D, LWR),
+    neckSkin: (ctx, a, mode, S, D) => {
+      mantle(ctx, a, mode, D, LWR, 'N');
+      clasp(ctx, a, mode, D, LWR);
+    },
     head: (ctx, a, mode, S, D) => {
       ctx.save();
       headIn(ctx, a, D);

@@ -209,7 +209,9 @@ export function gnarlRig(opts) {
   const dressed = {};
   const design = (mood) => (dressed[mood] ??= Object.fromEntries(Object.entries(opts.design(mood)).map(([n, list]) => [n, list.map((sh) => mapShape(sh, toKid, 1 / f))])));
   for (const [n, p] of Object.entries(opts.J)) J[n] = toKid(p);
-  const K = kidKit('gnarlroot', (mood) => ({ groups: design(mood) }), J, { scale: f, flat: true });
+  // (2026-11-27: his own soft line, a smooth ring in a deeper shade of each piece's own colour, in place
+  // of the jagged dark pixel edge; his copy only)
+  const K = kidKit('gnarlroot', (mood) => ({ groups: design(mood) }), J, { scale: f, flat: true, ink: 'own' });
   // (a piece of his, the same in every face)
   const D = (name, o) => ({ ...K.layer(name, o), s: (a, S, bare) => K.piece(name, null, bare) });
   // (his canopy: heavy, slow, rustling; his beard: soft, hanging, swinging after his head)

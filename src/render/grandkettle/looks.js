@@ -30,6 +30,8 @@ const TEA = ['#fff0c4', '#f0bc62', '#c8843a', '#8e5426'];
 const WATER = ['#ffffff', '#e4f4ff', '#a8d4ee', '#6aa4c8'];
 const STEAM = ['#ffffff', '#f2f0f8', '#d4cee4'];
 const IRON = ['#8a8aa4', '#5a5a74', '#3a3a50', '#24243a'];
+// (his kettle's lid, bronze like the kettle since 2026-11-27)
+const LID = ['#f6d4a2', '#c88e56', '#9a663c', '#6e4630'];
 const CUP = ['#fffaf0', '#f2e6d2', '#d8c4a8'];
 const RIM = '#3e4e8a';
 const ease = (u) => 1 - (1 - clamp(u, 0, 1)) ** 3;
@@ -72,7 +74,7 @@ function leaf(ctx, x, y, s, ang, al = 1) {
   ctx.stroke();
   ctx.restore();
 }
-// The iron kettle lid: a low rounded dome with its knob, seen tilting as it spins.
+// The kettle lid: a low rounded dome with its knob, seen tilting as it spins.
 function lid(ctx, x, y, s, spin, al = 1) {
   if (al <= 0.01) return;
   ctx.save();
@@ -82,19 +84,19 @@ function lid(ctx, x, y, s, spin, al = 1) {
   const sq = 0.45 + 0.55 * Math.abs(Math.cos(spin * 0.5));
   ctx.beginPath();
   ctx.ellipse(0, 0, s, s * 0.3 * sq + s * 0.12, 0, 0, TAU);
-  pen(ctx, IRON[3], 1.4);
+  pen(ctx, LID[3], 1.4);
   ctx.stroke();
-  ctx.fillStyle = IRON[2];
+  ctx.fillStyle = LID[2];
   ctx.fill();
   ctx.beginPath();
   ctx.ellipse(0, -s * 0.1, s * 0.82, s * 0.5 * sq, 0, Math.PI, TAU);
   ctx.closePath();
-  pen(ctx, IRON[3], 1.2);
+  pen(ctx, LID[3], 1.2);
   ctx.stroke();
-  ctx.fillStyle = IRON[1];
+  ctx.fillStyle = LID[1];
   ctx.fill();
   ell(ctx, -s * 0.3, -s * 0.3 * sq, s * 0.3, s * 0.12);
-  ctx.fillStyle = IRON[0];
+  ctx.fillStyle = LID[0];
   ctx.fill();
   ell(ctx, 0, -s * 0.5 * sq - s * 0.1, s * 0.22, s * 0.16);
   ctx.fillStyle = '#e8b84a';

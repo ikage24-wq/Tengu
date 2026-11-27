@@ -802,23 +802,59 @@ function fx(ctx, m, a, S, matOf, D) {
     if (!a.mo.gkMouth || s < 0.03) a.mo.gkMouth = headAt(a, D, [8, 28]);
     const [ox, oy] = a.mo.gkMouth;
     const flow = s < 0.55 ? 1 : 1 - sstep((s - 0.55) / 0.3);
-    // the stream: beads along an arc from her lips to the floor ahead of her
-    for (let i = 0; i < 24; i++) {
-      const u = ((s * 3 + i / 24) % 1);
-      const age = Math.min(s, u);
-      if (age < 0) continue;
-      const x = ox + u * 28;
-      const y = oy + u * 6 + u * u * (-oy - 6) * 1.0;
-      if (y > -0.4) continue;
-      bead(ctx, x, Math.min(-0.4, y), 1.05 - u * 0.25, flow * (1 - sstep((u - 0.9) / 0.1)) * (u < s * 3 ? 1 : 0));
+    // the stream (2026-11-27, the player: a string of beads read as a row of dots): one soft
+    // continuous ribbon of rainwater arcing from her lips to the floor ahead, its front running out,
+    // its tail drawn in after her as she runs dry, a gentle ripple travelling down it, a light core
+    // along its top; only a few loose droplets fly off it
+    const at = (u) => [ox + u * 28, Math.min(-0.4, oy + u * 6 + u * u * (-oy - 6))];
+    const u1 = Math.min(1, s * 3);
+    const u0 = s < 0.55 ? 0 : sstep((s - 0.55) / 0.3);
+    if (u1 - u0 > 0.02) {
+      const pts = [];
+      const N = 22;
+      for (let i = 0; i <= N; i++) {
+        const u = lerp(u0, u1, i / N);
+        const [x, y] = at(u);
+        pts.push([x, y + Math.sin(u * 15 - s * 22) * 0.35 * u]);
+      }
+      const path = () => {
+        ctx.beginPath();
+        pts.forEach(([x, y], i) => (i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)));
+      };
+      ctx.save();
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.globalAlpha *= Math.max(0.35, flow);
+      path();
+      ctx.strokeStyle = WATER_INK;
+      ctx.lineWidth = 2.5;
+      ctx.stroke();
+      path();
+      ctx.strokeStyle = WATER[2];
+      ctx.lineWidth = 1.7;
+      ctx.stroke();
+      // (the light core, along its upper side, thinning out toward the front)
+      ctx.beginPath();
+      pts.slice(0, Math.max(2, Math.round(N * 0.8))).forEach(([x, y], i) => (i ? ctx.lineTo(x, y - 0.32) : ctx.moveTo(x, y - 0.32)));
+      ctx.strokeStyle = WATER[1];
+      ctx.lineWidth = 0.6;
+      ctx.stroke();
+      ctx.restore();
+      // a couple of loose droplets peeling off its top, each on its own loop
+      for (let i = 0; i < 2; i++) {
+        const v = (s * 2.2 + i * 0.5) % 1;
+        const base = lerp(u0, u1, 0.35 + i * 0.3);
+        const [bx, by] = at(base);
+        bead(ctx, bx + v * 3, by - 1.2 - Math.sin(Math.PI * v) * 2.6, 0.55, flow * Math.sin(Math.PI * v) * (u1 > base ? 1 : 0));
+      }
     }
-    // where it lands: ripples and a splash of beads
-    if (s > 0.15) {
+    // where it lands: ripples and a little splash of three drops
+    if (s > 0.15 && u1 >= 1) {
       const lx = ox + 28;
       ripple(ctx, lx, -0.3, ((s - 0.15) * 2.2) % 1, 6, flow);
-      for (let i = 0; i < 4; i++) {
-        const u = ((s * 2.6 + i / 4) % 1);
-        bead(ctx, lx + (i - 1.5) * 2.4 * (1 + u), -Math.sin(Math.PI * u) * 4 - 0.4, 0.5, flow * (1 - u));
+      for (let i = 0; i < 3; i++) {
+        const u = ((s * 2.6 + i / 3) % 1);
+        drop(ctx, lx + (i - 1) * 2.8 * (1 + u), -Math.sin(Math.PI * u) * 4.2 - 0.6, 0.5, flow * (1 - u), (i - 1) * 0.5);
       }
     }
   } else a.mo.gkMouth = null;

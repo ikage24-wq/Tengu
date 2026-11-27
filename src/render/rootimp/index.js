@@ -1,22 +1,24 @@
-// The Root Imp (2026-11-25, remade on the crab base, the player's pick "C" of three, Plotter the
-// garden crab): Rootwood Hollow's level 10 digger, a round terracotta-clay crab with a tiny garden
-// growing on its back (a cushion of moss, a curl of fern, a clover and one proud daisy that turns to
-// follow the light and closes up when it naps). It fusses over its garden like a prize allotment.
-// It moves on its own copy of the crab base (crabbase.js: its bones, sideways scuttle, springs and
-// moves), dressed here; everything else drawn here from scratch (the face too).
-//   look    terracotta shell, cream claws and legs held low and out to the sides (never in front of
-//           its face at rest), big glossy plum dome eyes on short stalks with a four-point star glint
-//           and the stalk-cap's skin for eyelids, a small 'w' mouth, peachy cheeks on the rim.
+// The Root Imp (2026-11-25, remade on the crab base, the player's pick "C" of three, Plotter; reshaped
+// 2026-11-27 so nothing of a crab is left): Rootwood Hollow's level 10 digger, a round terracotta root
+// bulb with a tiny garden growing on its head (a cushion of moss, a curl of fern, a clover and one
+// proud daisy that turns to follow the light and closes up when it naps). It fusses over its garden
+// like a prize allotment. It moves on its own copy of the crab base (crabbase.js: its bones, springs
+// and moves, with a bulb's body, flat eyes and leaf mitts added), dressed here; everything else drawn
+// here from scratch (the face too).
+//   look    a round root bulb standing up on two soft root feet, a little root tail curling out
+//           behind; short twig arms ending in round leaf mitts, each with a leaf blade along its top
+//           (garden shears), held low at its sides; big glossy plum eyes right on its face with a
+//           four-point star glint and lids of its own skin, a small 'w' mouth, peachy cheeks.
 //   idle    a 30 s act while it stands about (see its pose below): trimming its garden snip-snip; the
 //           daisy turned to the light; a pollen sneeze; a claw-clack dance; patting the moss flat;
 //           watering the garden with a bubble it blows; a proud look at the finished bed.
-//   moves   (def.moves order) Snip (one claw drawn back wide, a lunge and a snap), Prune Prune (both
-//           claws in turn), each wound up over the fight's own wind-up.
-//   burrow  (the dungeon's move, world/dungeon.js) it digs in backwards, as crabs do, throwing soil
+//   moves   (def.moves order) Snip (one mitt drawn back, its blade open wide, a lunge and a snip),
+//           Prune Prune (both mitts in turn), each wound up over the fight's own wind-up.
+//   burrow  (the dungeon's move, world/dungeon.js) it digs in backwards, throwing soil
 //           out to both sides; under the floor only its garden shows, gliding along over a furrow;
 //           at the spot it trembles; then it bursts up, claws high, a daisy petal flying.
 //   faces   calm, happy, focused (cross) for a fight, hurt (squeezed), sad, worried when nearly
-//           beaten (its daisy drooping), wide (popping up, a sneeze coming), asleep (stalks folded,
+//           beaten (its daisy drooping), wide (popping up, a sneeze coming), asleep (eyes shut,
 //           daisy closed, a slow bubble), soft spirals when beaten (flipped on its back, legs waving,
 //           then still, its garden drooped).
 import { dressedCrab } from './crabbase.js';
@@ -112,10 +114,11 @@ function garden(ctx, a, mode, K) {
   const x1 = Math.max(...xs);
   const tufts = [];
   loc.forEach((p, i) => {
-    if (p[1] <= cut - s * 0.6 && i % 2 === 0) tufts.push([p[0], p[1] + s * 0.3, s * 1.25]);
+    if (p[1] <= cut - s * 0.6 && i % 5 === 0) tufts.push([p[0], p[1] + s * 0.6, s * 1.55]);
   });
-  const n = 7;
-  for (let i = 0; i <= n; i++) tufts.push([mix(x0 + s * 0.8, x1 - s * 0.8, i / n), cut - s * 0.6 + (i % 2 ? s * 0.4 : 0), s * 1.45]);
+  // (its lower edge in a few big soft lobes of different sizes, never a row of beads)
+  const lobes = [[0.06, 1.7, 0.2], [0.33, 2.3, 0.5], [0.62, 1.9, 0.1], [0.9, 2.1, 0.4]];
+  for (const [u, r, dy] of lobes) tufts.push([mix(x0 + s * 1.2, x1 - s * 1.2, u), cut - s * 1.1 + dy * s, s * r]);
   const path = () => {
     ctx.beginPath();
     for (const [x, y, r] of tufts) {
@@ -152,11 +155,15 @@ function garden(ctx, a, mode, K) {
     ell(ctx, mix(x0, x1, 0.42), top + s * 0.6, (x1 - x0) * 0.32, s * 1.7);
     ctx.fill();
     ctx.restore();
+    // (a soft shade under the cushion's lower lobes, where it tucks over the bulb)
+    ctx.save();
+    path();
+    ctx.clip();
     ctx.fillStyle = K.tone(a, PL.moss[2]);
-    for (let i = 0; i < 4; i++) {
-      ell(ctx, mix(x0, x1, 0.18 + i * 0.22), cut - s * 0.2 - (i % 2) * s * 0.7, s * 0.6, s * 0.38);
-      ctx.fill();
-    }
+    ctx.globalAlpha = 0.45;
+    ell(ctx, mix(x0, x1, 0.5), cut + s * 1.2, (x1 - x0) * 0.6, s * 1.4);
+    ctx.fill();
+    ctx.restore();
   }
   // (the plants: hidden under it while it lies on its back)
   if (g.upside > 0.5) {
@@ -271,6 +278,58 @@ function garden(ctx, a, mode, K) {
   }
   ctx.restore();
 }
+// Its rootlet (2026-11-27): a little tapering root tail out of the back of its bulb, curling up at
+// the tip and swaying softly as it goes; drawn behind the bulb, so it grows out of it with no seam.
+function rootlet(ctx, a, mode, K) {
+  const sk = a.bk;
+  if (!sk?.body || (a.ri?.upside ?? 0) > 0.5) return;
+  const s = K.sc(1);
+  const [x0, y0] = sk.body([-K.sc(6.2), -K.sc(4.6), -K.sc(1.6)]);
+  const sway = Math.sin((a.t ?? 0) * 2.1) * 0.12;
+  ctx.save();
+  ctx.translate(x0, y0);
+  ctx.rotate(sk.roll + sway);
+  // (a quadratic from inside the bulb, out and back, its tip curling up)
+  const P0 = [s * 1.5, -s * 0.5];
+  const P1 = [-s * 5.6, s * 2.6];
+  const P2 = [-s * 7.6, -s * 1.6];
+  const at = (u) => [(1 - u) ** 2 * P0[0] + 2 * (1 - u) * u * P1[0] + u * u * P2[0], (1 - u) ** 2 * P0[1] + 2 * (1 - u) * u * P1[1] + u * u * P2[1]];
+  const L = [];
+  const R = [];
+  for (let i = 0; i <= 12; i++) {
+    const u = i / 12;
+    const p = at(u);
+    const q = at(Math.min(1, u + 0.04));
+    const o = at(Math.max(0, u - 0.04));
+    const d = Math.hypot(q[0] - o[0], q[1] - o[1]) || 1;
+    const n = [-(q[1] - o[1]) / d, (q[0] - o[0]) / d];
+    const w = s * (1.5 * (1 - u) + 0.45);
+    L.push([p[0] + n[0] * w, p[1] + n[1] * w]);
+    R.push([p[0] - n[0] * w, p[1] - n[1] * w]);
+  }
+  const tip = at(1);
+  ctx.beginPath();
+  [...L, ...R.reverse()].forEach(([x, y], i) => (i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)));
+  ctx.closePath();
+  ctx.moveTo(tip[0] + s * 0.55, tip[1]);
+  ctx.arc(tip[0], tip[1], s * 0.55, 0, TAU);
+  if (mode === 'line') K.outline(ctx);
+  else {
+    ctx.fillStyle = K.tone(a, look.CL.base);
+    ctx.fill();
+    ctx.strokeStyle = K.tone(a, look.CL.lt);
+    ctx.lineWidth = s * 0.5;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    for (let i = 2; i <= 9; i++) {
+      const p = at(i / 12);
+      if (i === 2) ctx.moveTo(p[0], p[1] - s * 0.5 * (1 - i / 14));
+      else ctx.lineTo(p[0], p[1] - s * 0.5 * (1 - i / 14));
+    }
+    ctx.stroke();
+  }
+  ctx.restore();
+}
 // (the daisy's heart, where the garden last drew it)
 const daisyPt = (ctx, a) => a.ri?.daisyAt ?? null;
 
@@ -349,7 +408,7 @@ function eyes(ctx, a, K) {
         ctx.lineTo(r * 1.3, edge + sl);
         ctx.quadraticCurveTo(0, edge + 0.4, -r * 1.3, edge - sl);
         ctx.closePath();
-        ctx.fillStyle = K.tone(a, PL.C.lt);
+        ctx.fillStyle = K.tone(a, K.P.eyes.flat ? '#eeb08a' : PL.C.lt);
         ctx.fill();
         ctx.strokeStyle = PL.ink;
         ctx.lineWidth = 0.45;
@@ -457,28 +516,45 @@ function burrowOf(m, a) {
 }
 
 // ---------- the dress ----------
-// (the claws held low and out to the sides, the hands pointing ahead, so its face stays clear)
+// (2026-11-27, second pass: no crab claws. Two short twig arms from the bulb's sides, each ending in a
+// soft round leaf mitt with a leaf blade along its top that lifts and snips like garden shears; held
+// low at its sides so its face stays clear)
 const CLAWS = {
-  lead: { root: [9.6, -0.8, 5.2], rest: [13.2, -0.6, 7.4], arm: [3.4, 3.2], w: [4.2, 3.6, 3.9], hand: [8.4, 6.4], ang: -26 },
-  trail: { root: [-9.6, -0.8, 5.2], rest: [-14.6, -0.8, 7.6], arm: [3.4, 3.2], w: [4.2, 3.6, 3.9], hand: [8.4, 6.4], ang: -34 },
+  mitt: true,
+  lead: { root: [8.2, 3.2, 4.4], rest: [11.4, 1.4, 6.6], arm: [2.8, 2.6], w: [2.6, 2.2, 2.4], hand: [6, 5.4], ang: -18 },
+  trail: { root: [-8.2, 3.2, 4.4], rest: [-12, 1.2, 6.2], arm: [2.8, 2.6], w: [2.6, 2.2, 2.4], hand: [5.6, 5], ang: -36 },
   reach: [7, 1.5],
   up: [0, 6, -1.2],
 };
 const look = {
   C: PL.C,
   CC: PL.CC,
+  CL: { lt: '#f2d2ac', base: '#dcae80', sh: '#bf8e62', deep: '#a0714c' },
+  // (its leaf mitts: the mitt, the lighter blade 'bl', their own deeper green outline)
+  LF: { lt: '#d6f2b4', base: '#9dd27a', sh: '#78b25a', deep: '#5e9446', bl: '#bde596', ink: '#5c8a48' },
   ink: PL.ink,
   seam: PL.seam,
   P: {
-    eyes: { x: 3, z: 0.62, len: 3.4, w: 2.4, cap: 2.9, splay: 18 },
+    // (2026-11-27, second pass, the lead reviewer: it still read as a crab, wide and flat. Now a round
+    // root bulb standing up on its root feet, seen more from the side; no carapace rim or seam; its
+    // face right on the bulb, no eye stalks)
+    pitch: 9,
+    hb: 10.4,
+    cara: { a: 10, b: 8.6, dome: 11.6, fw: 0.03, under: [4, 3.4, -6.7], bulb: 6.8 },
+    eyes: { x: 3.5, z: 0.84, len: 0.01, w: 0.1, cap: 2.9, splay: 0, flat: true },
+    mouth: [1.9, 0.98],
     claws: CLAWS,
-    // (a longer sideways step than the base's: a brisk scuttle with its feet planted, about two
-    // steps a second each foot at its roaming pace)
-    gait: { half: 3.2, lift: 2.8, duty: 0.56 },
+    // (2026-11-27, the player: its pointed jointed legs read as big crab claws, creepy-crawly. Second
+    // pass: one soft round root foot a side, tucked right under the bulb, in root brown: a toddle)
+    legs: { n: [[0.8, 8, 1]], root: [0.36, -4.8], bones: [2.4, 2.2, 1.4], w: [4.6, 4.4, 4.2, 4], reach: 1.4, soft: true },
+    // (a gentle root-toddle: each nub lifted clear and set down eased, the body bobbing and rocking
+    // softly from side to side with the steps, its feet planted)
+    gait: { half: 1.9, lift: 2.4, duty: 0.5, bob: 0.8, sway: 3.2 },
     moves: ['snip', 'prune'],
   },
   moves: { snip: SNIP, prune: PRUNE },
   mouth,
+  under: { body: rootlet },
   over: {
     body: garden,
     eyes(ctx, a, mode, K) {
@@ -527,7 +603,7 @@ const look = {
         g.lost = b.u > 0.15 ? 1 : 0;
         g.face = b.u < 0.7 ? 'wide' : 'happy';
       }
-      a.sink = b.sink * K.sc(15.5);
+      a.sink = b.sink * K.sc(18);
       return;
     }
     a.sink = 0;
@@ -859,7 +935,7 @@ function soil(ctx, m, a, b) {
 }
 // Its rig: the crab, clipped at the floor while it's down in its burrow, the soil over it.
 const rig = {
-  w: Math.round(ROOT.w * 1.05),
+  w: 29,
   h: base.h,
   draw(ctx, m, a) {
     const b = m.hp > 0 && !(m.air > 0) ? burrowOf(m, a) : null;
@@ -879,4 +955,5 @@ const rig = {
 };
 
 // Its art entry, size (its body and garden as drawn) and roaming pace.
-export const ROOTIMP = { art: { ...ROOT.art, rig, noHop: true }, w: ROOT.w, h: Math.round(ROOT.h * 1.45), speed: ROOT.speed };
+// (its size kept as it was before the 2026-11-27 reshape, 28 by 29, and its pace)
+export const ROOTIMP = { art: { ...ROOT.art, rig, noHop: true }, w: 28, h: 29, speed: 21.84 };
