@@ -1,25 +1,25 @@
-// Monster art: sky. The Sky Garden's creatures, all three live rigs of their own since 2026-11-20 (the
-// player's picks from concept sheets); this file just lists them.
-//   cloudsheep  Pegasus Foal: a chibi cream foal with a pastel mane, little white wings and cloud
-//               hooves; it grazes, hops, and rears up to kick.
-//   windbird    Sky Harpy: a swift courier in a green postie cap with a satchel of letters; it loops
-//               the loop and dive-bombs you in a flurry of letters.
-//   starspirit  Star Seraph: a sky jellyfish of starlight with a halo and stardust ribbons; it pulses
-//               and sends a shower of little stars.
+// Monster art: sky. The Sky Garden's creatures. Since 2026-11-27 each is a new creature on its own copy
+// of a base in its own folder:
+//   cloudsheep  the Whistledown Marmot (marmot/): an alpine marmot whose winter coat grows in as cloud, a
+//               cloud ruff and a cloud tail; the meadow's lookout, it whistles at everything.
+//   windbird    the Windsock Albatross (albatross/): a chibi albatross in a knitted windsock cap that
+//               glides the roost's winds; it stoops on you, buffets you with a wingbeat and clacks its bill.
+//   starspirit  the Comet Goldfish (goldfish/): a plump fancy goldfish swimming the night sky, its long
+//               double tail streaming like a comet's; it snacks on falling stars and blows wish bubbles.
 
-import { pegasusFoalRig, pegasusFoalStill } from './pegasusfoalrig.js';
-import { swiftCourierRig, swiftCourierStill } from './swiftcourierrig.js';
-import { starJellyRig, starJellyStill } from './starjellyrig.js';
+import { WHISTLE_MARMOT_ART, WHISTLE_MARMOT_SIZE } from '../marmot/index.js';
+import { WINDSOCK_ALBATROSS_ART, WINDSOCK_ALBATROSS_SIZE } from '../albatross/index.js';
+import { COMET_GOLDFISH_ART, COMET_GOLDFISH_SIZE } from '../goldfish/index.js';
 
 export const ART = {
-  cloudsheep: { walk: 8, idle: 6, attack: 4, stride: 16, atkMs: [60, 250, 180], draw: pegasusFoalStill, rig: pegasusFoalRig },
-  windbird: { walk: 8, idle: 6, attack: 4, stride: 45, atkMs: [45, 200, 140], draw: swiftCourierStill, rig: swiftCourierRig },
-  starspirit: { walk: 8, idle: 6, attack: 4, stride: 60, atkMs: [60, 240, 180], draw: starJellyStill, rig: starJellyRig },
+  cloudsheep: WHISTLE_MARMOT_ART,
+  windbird: WINDSOCK_ALBATROSS_ART,
+  starspirit: COMET_GOLDFISH_ART,
 };
 
 // New display names, and the hitbox each design wants: { key: { name, w, h } }.
 export const INFO = {
-  cloudsheep: { name: 'Pegasus Foal', w: 40, h: 32 },
-  windbird: { name: 'Sky Harpy', w: 36, h: 30 },
-  starspirit: { name: 'Star Seraph', w: 34, h: 36 },
+  cloudsheep: { name: 'Whistledown Marmot', w: WHISTLE_MARMOT_SIZE.w, h: WHISTLE_MARMOT_SIZE.h },
+  windbird: { name: 'Windsock Albatross', w: WINDSOCK_ALBATROSS_SIZE.w, h: WINDSOCK_ALBATROSS_SIZE.h },
+  starspirit: { name: 'Comet Goldfish', w: COMET_GOLDFISH_SIZE.w, h: COMET_GOLDFISH_SIZE.h },
 };

@@ -1,31 +1,36 @@
-// Monster art: the Candy Volcano's sweets-folk (the levels 35-40 group dungeon, see
-// docs/design/candy-volcano.md), all live rigs in sweetrigs.js (remade from scratch 2026-11-19 for
-// Chapter 8: Queen Bonbon's bakery household, upright and chibi):
-//   gummybear     Gummy Bear Brawler (a see-through gummy cub in boxing gloves)
-//   cottoncandy   Cotton Candy Sheep (a lamb in a cloud of floss)
-//   lollipopwitch Lollipop Witch (a lemon drop with a swirl-lollipop staff)
-//   peppermint    Peppermint Spinner: the Mint Wrapper (mintwrap/, a kid still in their sweet
-//                 wrapper, on the kid base, 2026-11-25)
-//   chocoknight   Chocolate Knight (a chocolate bar with a wafer sword and a cookie shield)
-//   jellyninja    Jelly Bean Ninja (a jelly bean in a headband, four flavours)
+// Monster art: the Candy Volcano's regulars (the levels 35-40 group dungeon, see
+// docs/design/candy-volcano.md), Queen Bonbon's sweet country, remade from scratch on 2026-11-27 as new
+// creatures, each on its own copy of a blank base (the old sweet rigs retired):
+//   gummybear     Strawberry Calf (a strawberry-milk calf with a gumdrop cowbell; render/calf/)
+//   cottoncandy   Floss Chinchilla (a chinchilla whose fur is spun sugar; render/chinchilla/)
+//   lollipopwitch Swirl Chameleon (a chameleon with a swirl lollipop for a tail; render/chameleon/)
+//   peppermint    Mint Wrapper (a kid still in their sweet wrapper, on the kid base, 2026-11-25,
+//                 rebuilt where it fell short 2026-11-27; render/mintwrap/)
+//   chocoknight   Cocoa Badger (the Licorice Mine's digger with a candle on its helmet; render/badger/)
+//   jellyninja    Jelly Bean Meerkat (the mine's lookout with a slingshot; render/meerkat/)
+// (The old ids stay so old saves and quest counts keep working.)
 
-import { gummyRig, gummyStill, sheepRig, sheepStill, witchRig, witchStill, knightRig, knightStill, ninjaRig, ninjaStill } from './sweetrigs.js';
 import { MINT_ART, MINT_SIZE } from '../mintwrap/index.js';
+import { STRAWBERRY_CALF_ART, STRAWBERRY_CALF_SIZE } from '../calf/index.js';
+import { FLOSS_CHINCHILLA_ART, FLOSS_CHINCHILLA_SIZE } from '../chinchilla/index.js';
+import { SWIRL_CHAMELEON_ART, SWIRL_CHAMELEON_SIZE } from '../chameleon/index.js';
+import { COCOA_BADGER_ART, COCOA_BADGER_SIZE } from '../badger/index.js';
+import { JELLY_MEERKAT_ART, JELLY_MEERKAT_SIZE } from '../meerkat/index.js';
 
 export const ART = {
-  gummybear: { pad: 8, walk: 8, idle: 6, attack: 4, stride: 22, atkMs: [70, 220, 170], draw: gummyStill, rig: gummyRig },
-  cottoncandy: { pad: 8, walk: 8, idle: 6, attack: 4, stride: 22, atkMs: [80, 240, 180], draw: sheepStill, rig: sheepRig },
-  lollipopwitch: { pad: 8, walk: 8, idle: 6, attack: 4, stride: 18, atkMs: [80, 240, 180], draw: witchStill, rig: witchRig },
+  gummybear: STRAWBERRY_CALF_ART,
+  cottoncandy: FLOSS_CHINCHILLA_ART,
+  lollipopwitch: SWIRL_CHAMELEON_ART,
   peppermint: MINT_ART,
-  chocoknight: { pad: 8, walk: 8, idle: 6, attack: 4, stride: 18, atkMs: [100, 300, 220], draw: knightStill, rig: knightRig },
-  jellyninja: { pad: 8, walk: 8, idle: 6, attack: 4, stride: 30, atkMs: [60, 210, 160], draw: ninjaStill, rig: ninjaRig },
+  chocoknight: COCOA_BADGER_ART,
+  jellyninja: JELLY_MEERKAT_ART,
 };
 
 export const INFO = {
-  gummybear: { name: 'Gummy Bear Brawler', w: 24, h: 34 },
-  cottoncandy: { name: 'Cotton Candy Sheep', w: 30, h: 30 },
-  lollipopwitch: { name: 'Lollipop Witch', w: 24, h: 36 },
-  peppermint: { name: 'Peppermint Spinner', ...MINT_SIZE },
-  chocoknight: { name: 'Chocolate Knight', w: 26, h: 36 },
-  jellyninja: { name: 'Jelly Bean Ninja', w: 24, h: 34 },
+  gummybear: { name: 'Strawberry Calf', w: STRAWBERRY_CALF_SIZE.w, h: STRAWBERRY_CALF_SIZE.h },
+  cottoncandy: { name: 'Floss Chinchilla', w: FLOSS_CHINCHILLA_SIZE.w, h: FLOSS_CHINCHILLA_SIZE.h },
+  lollipopwitch: { name: 'Swirl Chameleon', w: SWIRL_CHAMELEON_SIZE.w, h: SWIRL_CHAMELEON_SIZE.h },
+  peppermint: { name: 'Mint Wrapper', ...MINT_SIZE },
+  chocoknight: { name: 'Cocoa Badger', w: COCOA_BADGER_SIZE.w, h: COCOA_BADGER_SIZE.h },
+  jellyninja: { name: 'Jelly Bean Meerkat', w: JELLY_MEERKAT_SIZE.w, h: JELLY_MEERKAT_SIZE.h },
 };

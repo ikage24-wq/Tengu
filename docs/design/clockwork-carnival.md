@@ -30,32 +30,62 @@ fairground, ride to ride, ending back at the gates.
 | 5 | The Toy Workshop | Floors of conveyor belts | **Conveyors** carry you along; **mid-boss: Madame Marionette** pulls strings | |
 | 6 | The Ferris Wheel | The plaza under the wheel | **Final boss: Queen Gearheart, the Grand Automaton** | |
 
-## Monsters (levels 25-29), on a new rig
+## Monsters (levels 25-29): Queen Gearheart's wind-up troupe
 
-The **toy rig** (render/mobs/toy.js): the manor rig's skeleton driven by clockwork timing. Poses
-tick from key to key with a quick move and a little overshoot that settles (never a snap: the
-overshoot is eased), a wind-up key turns in every toy's back, and it slows when hurt.
+Remade from scratch on 2026-11-26 (see the section at the end), each on its own copy of a blank
+base, wired in render/mobs/toy.js. One carnival troupe, each its own act: every toy but the puppet
+has a brass wind-up key turning in its back (faster in a fight, slower when hurt, still when beaten),
+every one has a ~30 s idle act and, true to the story, a moment in it where it would really rather
+rest, until someone is watching.
 
-- **Music Box Ballerina**: twirls on a pin atop a music box she rides like a cart; a spinning kick.
-- **Tin Drummer Girl**: a marching drummer in a shako, knees high; a drumstick flurry.
-- **Jack-in-the-Box Jester**: a jester on a spring coming out of her box; boings forward and bonks.
-- **Marionette Dancer**: hangs from strings off a cross-bar above her, dangling, toes trailing;
-  jerky kicks.
-- **Teddy Strongwoman**: a girl in a teddy-bear suit with a barbell; a heavy overhead slam.
-- **Balloon Seller**: floats on a bunch of balloons; pops one at you.
+- **Giraffe Ballerina** (`musicballerina`, the Midway): Clara, the music box's prima, in a pink
+  leotard and tutu on her pointe shoes. Grand Jeté, Fouetté (a full turn), Arabesque Headbutt (her
+  long neck swung down).
+- **Koala Balloonist** (`balloonseller`, the Midway and the Funhouse): Mabel, a sleepy koala in mint
+  dungarees and a boater, five balloons bobbing over her. From afar a balloon let go at you
+  (Balloon Pop); up close Bunch Bonk and Dozy Headbutt.
+- **Cymbal Monkey** (`tindrummer`, the Midway and the Coaster Yard): Bingo, the band's wind-up cymbal
+  man in a fez and a teal vest. From afar a CRASH that rolls a ring of sound; up close Cymbal Clap
+  and Cymbal Spin.
+- **Boxing Kangaroo** (`jackbox`, the Funhouse and the Coaster Yard): Jacky in satin shorts and red
+  gloves, and her joey who pops out of her pouch like a jack-in-the-box. One-Two, Tail Kick, Pop
+  Goes the Joey.
+- **Harlequin Puppet** (`marionette`, the Funhouse; Madame Marionette's adds): Dot, a wooden
+  harlequin danced on strings from a cross floating over her. String Kick, Pirouette Slap, Bell Bonk.
+- **Hippo Strongman** (`teddystrong`, the Coaster Yard): Hugo in a striped strongman suit, a barbell
+  in both paws. Barbell Slam (the troupe's longest wind-up), Belly Bump, Big Yawn.
 
 ## Bosses
 
-- **Leonie, the Lioness Acrobat** (Big Top): a lion-girl acrobat. She leaps up to the trapezes and
-  pounces down on a marked spot, sets fire hoops in a line along the ring, and roars (everyone is
-  pushed back).
-- **Madame Marionette** (Workshop): a tall puppeteer with a cross-bar in each hand. She marks a
-  player with her strings and yanks them across the floor to her; she cuts loose puppets (adds) on
-  the conveyors; at half health she dances the strings across the floor (lines to jump).
-- **Queen Gearheart, the Grand Automaton** (Ferris Wheel): a clockwork queen with a great key in her
-  back. Phase 1 gear saws roll across the plaza; phase 2 the wheel's cars drop on marked spots; phase
-  3 Overwound, she spins faster and faster (sweeps). Wound down at the end, not destroyed: she
-  finally rests, and the carnival plays one last slow tune.
+- **Leonie, the Lioness Acrobat** (Big Top; remade 2026-11-27, render/leonie/): the troupe's star,
+  a honey lioness in a scarlet spangled leotard, a gold-lined cape and a feathered tiara, with the
+  troupe's brass key in her back. Her entrance: swinging high over the ring by her knees on a
+  trapeze, a triple somersault down into the spotlight, ta-da. Her act in three parts, every cast
+  named on the cast bar with its own look: the Warm-Up (Juggling Pins, a spread; Flying Leap, a
+  tank buster; Human Pyramid!, a stack; Cartwheel Run, a band from her to the wall she's facing),
+  the Trapeze at 66% (The Big Swing, a ring to stand inside; Spotlights, one on each of you), and
+  the Grand Finale at 33% (Human Cannonball, three marks in turn; Standing Ovation, the whole room).
+- **Madame Marionette** (Workshop; remade 2026-11-27, render/marionetta/): the first of the Workshop's
+  harlequins, a tall porcelain puppeteer who worked her own strings loose: plum hair in a high
+  ponytail, a tiny top hat, a harlequin tailcoat in the harlequins' mint, lilac and cream, striped
+  stockings, a wooden cross in each hand, a brass key in her back. Her entrance: slumped like a
+  lifeless puppet among the half-built ones, her old strings pull her up limb by limb, and she snips
+  them away herself. Her fight: the Rehearsal (Strings Attached, a spread; Crossbar Rap, a tank buster;
+  Snip Snip!, get out of her scissors; Tie a Bow, a stack), the Puppet Show at 66% (she cuts two
+  Harlequin Puppets loose on the belts, again with Cut Loose! whenever they're down: bring them all
+  down and their strings snap back on her, open to a hit; Jump Rope!, the whole floor twice: jump it),
+  and Dance for Me! at 33% (Tug of War, one side of the floor then the other; Curtain Call, everyone;
+  Double Dutch!, the rope three times).
+- **Queen Gearheart, the Grand Automaton** (Ferris Wheel; remade 2026-11-27, render/gearheart/): a tin
+  wind-up mouse queen in cream enamel, a gold cog crown, a teal bodice with a ticking clock face at her
+  heart, a rose ruffled skirt, heel wheels, a pinwheel sceptre and the great brass key that winds the
+  whole troupe. Her entrance: still performing for Elder Kuri, she spots more audience and cranks her
+  own key. Her fight: Wind-Up (Cog Toss, a spread; Royal Tap, a tank buster; Twelve O'Clock, a clock
+  face round her: get out; Wind Me Up!, three Brass Moles (render/gearmole/, little tin moles) pop up
+  from the plaza's holes to wind her: bop them all and she runs down, open to a hit; miss one and she's
+  overwound, everything harder for a while), the Music Box at 66% (Music Box Melody, the floor a strip
+  at a time; Duet, a stack) and the Last Waltz at 33% (Springs Loose!, the whole room; a longer, faster
+  melody). Wound down at the end, not destroyed: she sits down beside Elder Kuri and her key stops.
 
 ## Rewards and music
 
@@ -71,3 +101,13 @@ jack-in-the-box clown, a wooden puppy marionette, Teddy Strongbear with his barb
 balloon-animal poodle under her balloons. Leonie is a chubby lion on a circus ball with a flaming
 hoop, Madame Marionette a velvet spider puppeteer with puppets on her strings, and Queen Gearheart a
 grand clockwork owl with a crown of gears and a clock-face belly. Every toy has a turning wind-up key.
+
+## The 2026-11-26 troupe
+
+The six regular monsters were remade from scratch as new creatures and characters (the old toy
+rigs, render/mobs/toyrigs.js, retired), each on its own copy of a blank base in its own folder
+(render/musicballerina/, balloonseller/, tindrummer/, jackbox/, marionette/, teddystrong/): the
+Giraffe Ballerina, the Koala Balloonist, the Cymbal Monkey, the Boxing Kangaroo, the Harlequin
+Puppet and the Hippo Strongman. Their own faces and eyes, worn clothes cut from their own outlines,
+an idle act each and two or three real moves. The bosses followed from 2026-11-27, one at a time, each
+with a brand-new fight (Leonie, Madame Marionette, then Queen Gearheart and her Brass Moles).

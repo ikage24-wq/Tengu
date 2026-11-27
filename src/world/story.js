@@ -17,6 +17,9 @@ import { spawnMob } from './mobs.js';
 import { startCine, skipScene, endScene, isStaging } from './director.js';
 import { escortOnMap } from './escort.js';
 import { countItem, removeItem } from '../core/inventory.js';
+import { GRAND_KETTLE } from './grandkettle.js';
+import { CRYSTAL_THRONE, DARK_THRONE } from './prismaris.js';
+import { REVEILLE } from './reveille.js';
 
 // ---------- Scenes ----------
 
@@ -121,47 +124,17 @@ const QUEENS = {
     adds: { at: [], mob: null },
     enrage: 0.25,
   },
-  // The Alarm (Chapter 10's finale): the Queen's clock grown into Madame Reveille, ringing her back to
-  // Monday. A ring round her, the clock hands conducted down, a bell clang along the floor, and after her
-  // first snooze "IT'S MONDAY!" on the whole lawn. Three snoozes (snoozeTurn), louder each time.
-  alarm: {
-    color: '#ffc94a', light: '#fff6d8',
-    snooze: { at: [0.75, 0.5, 0.25], dur: 5, back: ["RIIING! It's back!", 'RIIIIING! Even louder!', 'RIIIIIIIIING!!!'] },
-    moves: [
-      { id: 'ring', name: 'Wake-Up Ring', sub: 'Get away from it!', every: 7, make: (q) => { q.ringSoon = 1.5; return [{ kind: 'circle', x: q.x, w: 240 + 40 * (q.loud ?? 0), warn: 1.5, k: 1, high: true, fx: 'celquakegold' }]; } },
-      { id: 'hands', name: 'Tick, Tock', sub: 'The clock hands come down: move!', every: 6, make: (q, p, map) => [p.x, ...spread(map, 2 + (q.loud ?? 0))].map((x) => ({ kind: 'pillar', x, w: 54, warn: 1.3, k: 0.8, fx: 'celpillarrage' })) },
-      { id: 'clang', name: 'Bell Clang', sub: 'Jump it!', every: 8, make: (q, p) => [{ ...lane(q, p, 560, 1.1, 0.9, 'celfissure'), low: true }] },
-      { id: 'monday', name: "IT'S MONDAY!", sub: 'Ledges! Now!', every: 12, loud: 1, make: (q, p, map) => [{ kind: 'floor', warn: 2, k: 1.1, fx: 'celquakegold' }, ...spread(map, 2 + (q.loud ?? 0)).map((x) => ({ kind: 'circle', x, w: 60, warn: 2, k: 0.8, high: true, fx: 'celfissure' }))] },
-    ],
-    adds: { at: [], mob: null },
-    enrage: 0,
-  },
-  // Prismaris in his trial (Chapter 10): scared of the dark, hugging the Queen's alarm clock.
-  // Crystal spikes under you, his nightlight flaring round him, his geode cape swept along the floor,
-  // and from two thirds down, Lights Out: the room goes dark but for three pools of light.
-  nightking: {
-    color: '#b8a8ff', light: '#f4f0ff',
-    moves: [
-      { id: 'spikes', name: 'Crystal Spikes', sub: 'Step off the glowing cracks', every: 6, make: (q, p, map) => [p.x, ...spread(map, 3)].map((x) => ({ kind: 'circle', x, w: 64, warn: 1.3, k: 0.8, fx: 'celfissure' })) },
-      { id: 'flare', name: 'Nightlight Flare', sub: 'His light flares: get away from him', every: 9, make: (q) => [{ kind: 'circle', x: q.x, w: 260, warn: 1.5, k: 1, high: true, fx: 'celquakegold' }] },
-      { id: 'sweep', name: 'Cape Sweep', sub: 'Jump it!', every: 8, make: (q, p) => [{ ...lane(q, p, 520, 1.1, 0.9, 'celfissure'), low: true }] },
-      { id: 'dark', name: 'Lights Out!', sub: 'Stand in a pool of light!', every: 15, from: 0.66, make: (q, p, map) => lightsOut(map) },
-    ],
-    adds: { at: [], mob: null },
-    enrage: 0.25,
-  },
+  // Madame Reveille (Chapter 10's finale, rebuilt 2026-11-27): the Queen's alarm clock as a brisk
+  // morning governess, a set rotation of named casts in three phases (world/reveille.js; rotationTurn below).
+  alarm: REVEILLE,
+  // Prismaris (rebuilt 2026-11-27): the Crystal Throne's field boss and his Chapter 10 trial, each a
+  // set rotation of named casts (world/prismaris.js; rotationTurn below).
+  crystalking: CRYSTAL_THRONE,
+  nightking: DARK_THRONE,
+  // The Grand Kettle, the Tea Terraces' area boss: a set rotation of named casts in three phases,
+  // each on his cast bar, in his own looks (world/grandkettle.js; rotationTurn below).
+  grandkettle: GRAND_KETTLE,
 };
-
-// Prismaris's Lights Out: the floor everywhere but three pools of light. Each lane carries the pools
-// (render/trial.js darkens the room round them).
-function lightsOut(map) {
-  const pools = spread(map, 3);
-  const r = 52;
-  const cuts = [0, ...pools.flatMap((x) => [x - r, x + r]), map.width];
-  const out = [];
-  for (let k = 0; k < cuts.length; k += 2) if (cuts[k + 1] - cuts[k] > 8) out.push({ kind: 'lane', x: cuts[k], w: cuts[k + 1] - cuts[k], warn: 3, k: 1.3, fx: 'celshadowhit', dark: true, pools });
-  return out;
-}
 
 export const isQueen = (m) => Boolean(QUEENS[m?.def?.id]);
 export const queenStyle = (id) => QUEENS[id];
@@ -229,18 +202,23 @@ export function tickStory(world, dt, hurt) {
       // Only once she's in the fight (hurt, or the hero close: near her along her floor and no
       // more than a floor or so above or below it, so someone fishing or passing on a
       // ledge of their own high over her isn't picked out).
-      if (!(m.aggroUntil > world.now) && (Math.abs(world.body.x - m.x) > 420 || Math.abs(world.body.y - m.y) > NOTICE_DY)) continue;
-      // (The Alarm's snoozes: knocked quiet a while, then back louder.)
-      if (style.snooze && snoozeTurn(world, m, style)) continue;
-      queenTurn(world, m, style, dt);
-      if (m.ringSoon) {
-        m.ringAt = world.now + m.ringSoon;
-        m.ringSoon = 0;
+      const near = m.aggroUntil > world.now || (Math.abs(world.body.x - m.x) <= 420 && Math.abs(world.body.y - m.y) <= NOTICE_DY);
+      // (A boss with a set rotation runs it, finishing a cast even if you step away.)
+      if (style.rotation) {
+        rotationTurn(world, m, style, dt, near);
+        continue;
       }
+      if (!near) continue;
+      queenTurn(world, m, style, dt);
     }
   }
   for (const z of world.zones) {
     z.t += dt;
+    // (A marker follows its member until a beat before it lands: Prismaris's, world/prismaris.js.)
+    if (z.follow && !z.hit && z.t < z.warn - (z.lock ?? 0.6)) {
+      z.x = world.body.x;
+      if (world.body.onGround) z.y = world.body.y;
+    }
     if (z.hit) {
       z.after += dt;
       continue;
@@ -248,12 +226,17 @@ export function tickStory(world, dt, hurt) {
     if (z.t < z.warn) continue;
     z.hit = true;
     if (z.from && z.from.hp <= 0) continue;
+    // (A stack's hit is shared by everyone standing in it.)
+    if (z.stack) {
+      const n = (inZone(world, z, world.body) ? 1 : 0) + (world.bots?.list ?? []).filter((b) => (b.hunter || b.party) && !b.gone && !b.down && b.body && b.map === world.map.id && inZone(world, z, b.body)).length;
+      z.damage = Math.round(z.damage / Math.max(1, n));
+    }
     world.juice.push({ type: 'shake', mag: z.kind === 'floor' ? 7 : 3, dur: z.kind === 'floor' ? 0.6 : 0.25 });
     if (!world.dead && inZone(world, z, world.body)) hurt(world, z.damage, z.from?.x ?? z.x);
     // (The other players fighting her get caught too: world/raids.js.)
     world.onZoneHit?.(z);
   }
-  world.zones = world.zones.filter((z) => !z.hit || z.after < 0.6);
+  world.zones = world.zones.filter((z) => !z.hit || z.after < (z.hold ?? 0.6));
   // A queen's trial won: her words, then back to whoever sent you.
   const tr = world.trial;
   if (tr && !tr.won && tr.queen.hp <= 0) {
@@ -312,15 +295,13 @@ function queenTurn(world, m, style, dt) {
   if (world.zones.some((z) => !z.hit && z.from === m)) return;
   for (const mv of style.moves) {
     if (mv.from && frac > mv.from) continue;
-    if (mv.loud && (m.loud ?? 0) < mv.loud) continue;
     s.next[mv.id] ??= mv.every * (0.4 + Math.random() * 0.5);
     s.next[mv.id] -= dt;
   }
-  const ready = style.moves.filter((mv) => (!mv.from || frac <= mv.from) && (!mv.loud || (m.loud ?? 0) >= mv.loud) && s.next[mv.id] <= 0);
+  const ready = style.moves.filter((mv) => (!mv.from || frac <= mv.from) && s.next[mv.id] <= 0);
   if (!ready.length) return;
   const mv = ready[Math.floor(Math.random() * ready.length)];
-  // (Louder after each snooze: quicker too.)
-  s.next[mv.id] = mv.every * fast * (1 - 0.1 * (m.loud ?? 0));
+  s.next[mv.id] = mv.every * fast;
   callout(world, m, mv.name, mv.sub);
   const zones = mv.make(m, world.body, world.map);
   addZones(world, m, zones, base);
@@ -329,31 +310,52 @@ function queenTurn(world, m, style, dt) {
   if (mv.chase) s.chase = { move: mv, left: mv.chase - 1, t: 0.8 };
 }
 
-// The Alarm's snoozes (Chapter 10's finale): at each mark it's knocked quiet for a few seconds
-// (nothing takes it lower, it does nothing, its warnings are called off), then it comes back louder:
-// bigger rings, more clock hands, quicker, and from the first snooze on, "IT'S MONDAY!".
-function snoozeTurn(world, m, style) {
-  const s = (m.snooze ??= { at: [...style.snooze.at], until: 0 });
-  if (s.until) {
-    if (world.now < s.until) return true;
-    s.until = 0;
-    m.minHp = 0;
-    m.loud = (m.loud ?? 0) + 1;
-    m.ringAt = world.now;
-    callout(world, m, style.snooze.back[Math.min(style.snooze.back.length - 1, m.loud - 1)], "It's back, and LOUDER");
-    world.juice.push({ type: 'shake', mag: 4, dur: 0.6 });
-    return false;
+// A boss with a set rotation (the Grand Kettle, world/grandkettle.js), the way the dungeon bosses
+// fight: its entrance cast first, then each phase's casts in order, round and round, the phase
+// changing at its health mark with a word from it. Each cast shows on its cast bar (m.cast) for its
+// `dur`, its telegraphs laid out as it starts and landing as it ends; in the cast's last half second
+// it winds up (m.windup) and lets fly as it ends (m.attackAt), `m.castPose` telling its rig which.
+function rotationTurn(world, m, style, dt, near) {
+  const R = style.rotation;
+  const s = (m.rot ??= { phase: -1, i: 0, wait: 0.6, end: null, intro: false, step: null });
+  if (s.end != null) {
+    const left = s.end - world.now;
+    m.windup = left > 0 && left < 0.5 ? left : 0;
+    if (left > 0) return;
+    m.cast = null;
+    m.castPose = null;
+    m.windup = 0;
+    m.attackAt = world.now;
+    s.end = null;
+    s.wait = s.step.after ?? 1.6;
+    if (s.step !== R.intro) s.i = (s.i + 1) % s.list.length;
+    return;
   }
-  if (s.at.length && m.hp / m.def.hp <= s.at[0]) {
-    s.at.shift();
-    s.until = world.now + style.snooze.dur;
-    m.snoozeUntil = s.until;
-    m.minHp = m.hp;
-    world.zones = world.zones.filter((z) => z.from !== m || z.hit);
-    callout(world, m, 'SNOOZE!', '...it drifts off. For now.');
-    return true;
+  if (!near) return;
+  const frac = m.hp / m.def.hp;
+  let ph = 0;
+  R.phases.forEach((p, i) => {
+    if (frac <= p.at) ph = i;
+  });
+  if (ph !== s.phase) {
+    if (s.phase >= 0 && R.phases[ph].line) callout(world, m, R.phases[ph].line, R.phases[ph].lineSub);
+    s.phase = ph;
+    s.list = R.phases[ph].list;
+    s.i = 0;
+    s.wait = Math.max(s.wait, s.phase > 0 ? 1.4 : 0);
   }
-  return false;
+  s.wait -= dt;
+  if (s.wait > 0) return;
+  const step = R.intro && !s.intro ? R.intro : s.list[s.i];
+  s.intro = true;
+  s.step = step;
+  m.cast = { name: step.name, t0: world.now, dur: step.dur };
+  m.castPose = step.pose ?? step.id;
+  m.castMove = { id: step.id, at: world.now, warn: step.dur };
+  callout(world, m, step.name, step.sub);
+  const zones = step.make ? step.make(m, world.body, world.map) : [];
+  addZones(world, m, zones.map((z) => ({ warn: step.dur, ...z })), style.damage ?? m.def.special?.damage ?? 200);
+  s.end = world.now + step.dur;
 }
 
 function addZones(world, m, zones, base) {
@@ -368,7 +370,7 @@ function addZonesHere(world, m, zones, base) {
     // Circles land on whatever the hero is standing on; everything else on her own floor (a field
     // queen may walk a plateau or a crag, not the map's ground line).
     const floor = m.def.fly ? world.map.groundY : Math.round(m.y);
-    const y = z.kind === 'circle' ? (z.high ? floor : world.body.onGround ? world.body.y : floor) : floor;
+    const y = z.kind === 'circle' || z.kind === 'mark' ? (z.high ? floor : world.body.onGround ? world.body.y : floor) : floor;
     world.zones.push({ t: 0, hit: false, after: 0, y, from: m, damage: Math.round(base * z.k), color: QUEENS[m.def.id].color, light: QUEENS[m.def.id].light, ...z });
   }
 }
@@ -379,6 +381,9 @@ function callout(world, m, title, sub) {
 
 // Whether `body` is standing where zone `z` goes off.
 export function inZone(world, z, body) {
+  // (the whole room: no dodging it; a member's marker: a column round them, no jumping it)
+  if (z.kind === 'raid') return true;
+  if (z.kind === 'mark') return Math.abs(body.x - z.x) < z.w / 2 + 6;
   if (z.kind === 'circle') return Math.abs(body.x - z.x) < z.w / 2 + 6 && Math.abs(body.y - z.y) < 16;
   const floor = z.y ?? world.map.groundY;
   if (z.kind === 'floor') return body.onGround && Math.abs(body.y - floor) < 2;

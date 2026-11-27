@@ -1,13 +1,14 @@
 // Monster art: the finale's boss (Chapter 10, docs/design/main-story.md):
-//   alarm   The Alarm, as Madame Reveille: the Queen's alarm clock grown into a prim, bossy lady with
-//           alarm bells for hair buns and a conductor's baton (2026-11-22, reveillerig.js).
+//   alarm   The Alarm, as Madame Reveille: the Queen's alarm clock grown into a brisk, prim morning governess
+//           with a rooster's pride, the clock's two brass bells on her bonnet and a handbell in her hand
+//           (remade 2026-11-27 from scratch on her own copy of the blank bases' rig, render/reveille/).
 
-import { reveilleRig, reveilleStill } from './reveillerig.js';
+import { REVEILLE_ART, REVEILLE_SIZE } from '../reveille/index.js';
 
 export const ART = {
-  alarm: { pad: 10, walk: 8, idle: 8, attack: 5, stride: 30, atkMs: [110, 180, 340, 240], draw: reveilleStill, rig: reveilleRig },
+  alarm: REVEILLE_ART,
 };
 
 export const INFO = {
-  alarm: { name: 'Madame Reveille', w: 76, h: 118 },
+  alarm: { name: 'Madame Reveille', w: REVEILLE_SIZE.w, h: REVEILLE_SIZE.h },
 };

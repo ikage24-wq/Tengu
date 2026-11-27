@@ -416,7 +416,7 @@ function barnacle_shell() {
   return out;
 }
 
-// (Kept its id; 2026-11-18 it became the Owl Librarian's Starlit Quill: a long writing feather,
+// (Kept its id; 2026-11-18 it became the Owl Librarian's Starlit Quill (since 2026-11-26 the Raven Scribe's): a long writing feather,
 // moon-white vanes edged in lilac, a gold nib, a little star twinkling at its tip.)
 function moth_scale() {
   const c = '#eeeaff';

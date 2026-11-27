@@ -9,6 +9,7 @@ import { text } from '../ui/kit.js';
 import { drawMochiAnim } from './mochi-anim.js';
 import { rollMochi } from '../data/mochi-genes.js';
 import { SHIRATAMA } from '../data/scenes.js';
+import { castWarn, castHit, OWN_WARN } from './bossfx.js';
 
 const TAU = Math.PI * 2;
 
@@ -22,6 +23,11 @@ export function drawZonesBack(ctx, world, cam, time) {
   for (const z of world.zones ?? []) {
     if (z.hit) continue;
     const p = Math.min(1, z.t / z.warn);
+    // (A boss's own look draws its whole telegraph: the Grand Kettle's, render/grandkettle/looks.js.)
+    if (z.look && OWN_WARN.has(z.look)) {
+      castWarn(ctx, z, z.kind === 'floor' ? 0 : z.x - cam.x, z.y - cam.y, p, time);
+      continue;
+    }
     const pulse = 0.5 + 0.5 * Math.sin(time * (8 + p * 14));
     const y = z.y - cam.y;
     ctx.save();
@@ -119,38 +125,9 @@ export function drawTrialSet(ctx, world, cam, time) {
   ctx.fill();
 }
 
-// Lights Out (Prismaris): the room goes dark round three pools of light while it counts down.
-function lightsOut(ctx, world, cam, time) {
-  const z = (world.zones ?? []).find((q) => q.dark && !q.hit);
-  if (!z) return;
-  const p = Math.min(1, z.t / z.warn);
-  const y = z.y - cam.y;
-  ctx.save();
-  ctx.globalAlpha = 0.3 + 0.45 * p;
-  ctx.fillStyle = '#08061c';
-  ctx.beginPath();
-  ctx.rect(-10, -10, 660, 380);
-  for (const px of z.pools) {
-    const x = px - cam.x;
-    ctx.moveTo(x + 56, y - 40);
-    ctx.ellipse(x, y - 40, 56, 76, 0, 0, TAU);
-  }
-  ctx.fill('evenodd');
-  for (const px of z.pools) {
-    const x = px - cam.x;
-    const g = ctx.createRadialGradient(x, y - 4, 0, x, y - 4, 60);
-    g.addColorStop(0, 'rgba(255,236,170,0.5)');
-    g.addColorStop(1, 'rgba(255,236,170,0)');
-    ctx.globalAlpha = 0.5 + 0.3 * Math.sin(time * 3 + px);
-    ctx.fillStyle = g;
-    ctx.fillRect(x - 60, y - 64, 120, 70);
-  }
-  ctx.restore();
-}
-
 export function drawZonesFront(ctx, world, cam, time) {
-  lightsOut(ctx, world, cam, time);
   for (const z of world.zones ?? []) {
+    if (z.hit && z.look && castHit(ctx, z, z.kind === 'floor' ? 0 : z.x - cam.x, z.y - cam.y, z.after / (z.hold ?? 0.6), time)) continue;
     if (!z.hit || !z.fx) continue;
     const p = Math.min(1, z.after / 0.6);
     const y = z.y - cam.y;

@@ -18,11 +18,26 @@ minutes", and Monday (the Weekend-Eating Baku, a girl who ate her weekends) yawn
 The table below is the original 2026-11-02 run. Rooms 2-6 are now: Act I: The Morning Train (the
 carriage rocks, bags fall off the racks), Act II: The Office (answer the desk phones in order),
 Act III: Overtime (the Coffee Mug Boss), The Convenience Store, 2 a.m. (the Cup-Noodle Dragon), The
-Final Curtain: Her Flat (Monday). The train's monsters are the Rush-Hour Penguin and the Sleepy
-Commuter Sheep, the office's the Sticky Note Bird and the Stapler Croc (render/mobs/commuterigs.js;
-mob ids paperdragon, sleepysheep, prompter, primadonna). The lobby keeps its theatre folk (the
-Understudy Ghost, Chorus Flamingo and Stagehand Mole), remade as live rigs the same day
-(render/mobs/stagefolkrigs.js).
+Final Curtain: Her Flat (Monday). Since 2026-11-27 every regular is remade from scratch on its own
+copy of a blank base (render/mobs/stage.js wires them; the mob ids stay for saves): the train's
+monsters are the Toast-Dash Stoat (paperdragon, render/stoat/) and the Travel-Pillow Sloth
+(sleepysheep, render/sloth/), the office's the Intern Quokka (prompter, render/quokka/, paper planes)
+and the Red-Tape Raccoon (primadonna, render/raccoon/, red tape and a DENIED stamp). The lobby keeps
+its theatre folk: the Masquerade Diva (understudy, render/diva/, rebuilt with her idea kept), the
+Usher Otter (chorusgirl, render/usher/) and the Backdrop Beaver (stagehand, render/beaver/). (Before
+that they were the Rush-Hour Penguin, Sleepy Commuter Sheep, Sticky Note Bird, Stapler Croc, Chorus
+Flamingo and Stagehand Mole.)
+
+The three bosses of her dream were remade from scratch on 2026-11-27, each on its own copy of a blank
+base with a brand-new FFXIV-style fight (world/theatre.js; their looks in each folder's looks.js):
+the Night Manager (render/manager/, grown-up base: a lanky manager in round glasses with a cardigan
+over his shoulders, his travel mug and clipboard; Nine to Five, Overtime, One More Thing: Circle Back
+in-then-out, Clock Watching TICK-then-TOCK; 700k), the Cup-Noodle Dragon (render/noodle/, serpent base:
+a noodle dragon boy rising out of his own cup in a ramen-shop happi; Just Add Water, Three Minutes,
+Extra Spicy: SLUUURP pulls you in then he burps, Chopstick Drop: stand where they fell; 680k) and
+Monday (render/monday/, kid base: the Weekend-Eating Baku in a navy bolero with the cream baku saddle,
+her giant red pen and Saturday's cookie; Good Morning, Rush Hour, Always Monday: the Calendar, stand on
+the weekend; 740k, her ending kept at 12%).
 
 (Original premise: its writer, the Phantom Playwright, was writing the island into his play, and
 every night the audience forgot a little more of who they were.)

@@ -48,7 +48,12 @@ const COATS = {
 };
 
 // ---------- Faces ----------
-// e the eyes, m the mouth, b the brows, t tears: sulky, every one but the cleared one.
+// e the eyes, m the mouth, b the brows, t tears: sulky, every one but the cleared ones. (2026-11-27, his
+// fight rebuilt: seven more in the same family, so every cast and swing has its own: sob (big wet eyes
+// brimming over, a wobbly open cry), tantrum (squeezed shut, teeth gritted, cheeks red), side (a sulky
+// half-lidded side-eye, looking anywhere but at you), peek (one eye open, checking if anyone noticed),
+// shy (soft eyes, a small uneven smile, extra pink: cheering up, embarrassed), giggle (laughing despite
+// himself), grumble (cross eyes over a tight wobbly grumble, cheeks puffed).)
 const FACES = {
   idle: { e: 'open', m: 'pout', b: 'worry', t: 1 }, blink: { e: 'blink', m: 'pout', b: 'worry', t: 1 },
   o: { e: 'wide', m: 'o', b: 'up', t: 1 }, angry: { e: 'cross', m: 'grump', b: 'cross', t: 0, cheeks: 1 },
@@ -57,24 +62,29 @@ const FACES = {
   huff: { e: 'shut', m: 'grump', b: 'cross', t: 0, cheeks: 1 }, happy: { e: 'happy', m: 'smile', b: 'up', t: 0 },
   sleep: { e: 'shut', m: 'small', b: 'worry', t: 0 },
   sniff: { e: 'squeeze', m: 'wobble', b: 'worry', t: 1 }, yawn: { e: 'shut', m: 'yawn', b: 'soft', t: 0 },
+  sob: { e: 'wet', m: 'sob', b: 'worry', t: 2 }, tantrum: { e: 'squeeze', m: 'teeth', b: 'cross', t: 0, cheeks: 2 },
+  side: { e: 'side', m: 'pout', b: 'flat', t: 0, cheeks: 1 }, peek: { e: 'peek', m: 'small', b: 'worry', t: 1 },
+  shy: { e: 'soft', m: 'shy', b: 'up', t: 0, blush: 1 }, giggle: { e: 'happy', m: 'laugh', b: 'up', t: 0, blush: 1 },
+  grumble: { e: 'cross', m: 'wobble', b: 'cross', t: 0, cheeks: 1 },
 };
 export const MOODS = Object.keys(FACES);
 const EYE = { ring: '#1a3a6a', iris: '#5a9ae8', light: '#cfe8ff', dark: '#2a5aa8', ink: '#2a2a40', low: '#a8b4d8', crease: '#e0e4f4' };
 // A big teary eye (head units): the white, a ring, the iris in three tones, the pupil, glints and a
 // star, a welling tear along the bottom; the lid line with three lashes (lowered by `lid`), a lower
-// lid with two little lashes.
-function eye(x, y, o, lid = 0, big = 0, tear = 1) {
+// lid with two little lashes. `look` slides the iris, pupil and glints sideways (a side-eye).
+function eye(x, y, o, lid = 0, big = 0, tear = 1, look = 0) {
   const k = EYE;
   const w = 7.8 + big;
   const h = 7.2 + big;
   const r = 5.4 + big * 0.6;
   const P = (u, v) => [x + u * o, y + v];
+  const ix = x + look;
   const out = [];
   out.push(...arc([P(-w * 0.7, -h - 2.6 + lid * 0.4), P(0, -h - 3.6 + lid * 0.4), P(w * 0.8, -h - 2.4 + lid * 0.4)], 0.8, k.crease));
   out.push(blob([P(-w, 0.6), P(-w * 0.55, -h), P(w * 0.4, -h - 0.4), P(w, -h * 0.4), P(w * 0.75, h * 0.8), P(0, h + 0.6), P(-w * 0.75, h * 0.7)], '#ffffff', 2));
-  out.push(F(E(x, y + 0.4, r, r * 1.15, k.ring)), F(E(x, y + 0.8, r - 0.9, r * 1.15 - 0.9, k.iris)), F(E(x, y + r * 0.62, r - 1.8, r * 0.46, k.light)), F(E(x, y - r * 0.5, r - 1.2, r * 0.4, k.dark)));
-  out.push(F(E(x, y + 0.6, 1.8, 2.3, '#1a1a2e')), F(E(x - 2 * o, y - 2.3, 2.2, 1.9, '#ffffff')), F(E(x + 2.1 * o, y + 2.8, 1.1, 1.1, '#ffffff')));
-  out.push(F(T([P(1.6, -3.8), P(2.1, -2.8), P(3.1, -2.4), P(2.1, -2), P(1.6, -1), P(1.1, -2), P(0.1, -2.4), P(1.1, -2.8)], '#ffffff')));
+  out.push(F(E(ix, y + 0.4, r, r * 1.15, k.ring)), F(E(ix, y + 0.8, r - 0.9, r * 1.15 - 0.9, k.iris)), F(E(ix, y + r * 0.62, r - 1.8, r * 0.46, k.light)), F(E(ix, y - r * 0.5, r - 1.2, r * 0.4, k.dark)));
+  out.push(F(E(ix, y + 0.6, 1.8, 2.3, '#1a1a2e')), F(E(ix - 2 * o, y - 2.3, 2.2, 1.9, '#ffffff')), F(E(ix + 2.1 * o, y + 2.8, 1.1, 1.1, '#ffffff')));
+  out.push(F(T([P(1.6, -3.8), P(2.1, -2.8), P(3.1, -2.4), P(2.1, -2), P(1.6, -1), P(1.1, -2), P(0.1, -2.4), P(1.1, -2.8)].map(([px, py]) => [px + look, py]), '#ffffff')));
   if (tear) out.push(...arc([P(-w * 0.55, h * 0.62), P(0, h * 0.86), P(w * 0.55, h * 0.62)], 1.1, '#d8f2ff'), F(E(x + 2.4 * o, y + h * 0.66, 1.1, 0.55, '#ffffff')));
   if (lid > 0) out.push(F(blob([P(-w - 0.8, -0.2), P(-w * 0.5, -h - 2.2), P(w * 0.5, -h - 2.6), P(w + 0.8, -h * 0.6), P(w * 0.4, -h + lid), P(-w * 0.5, -h + lid + 0.4)], SK.base, 2)));
   out.push(...band(curve([P(-w - 0.4, 0.4), P(-w * 0.5, -h - 0.4 + lid), P(w * 0.45, -h - 0.8 + lid), P(w + 0.6, -h * 0.4)], 3), 1.6, 2.8, k.ink, true));
@@ -82,6 +92,8 @@ function eye(x, y, o, lid = 0, big = 0, tear = 1) {
   out.push(...arc([P(-w * 0.7, h * 0.75), P(0, h + 1.2), P(w * 0.7, h * 0.7)], 0.7, k.low));
   return out;
 }
+// (sob: the eye brimming: two extra glints wobbling low in the iris; no band under the eye)
+const brim = (x, y, o) => [F(E(x - 2.2 * o, y + 3.4, 1.4, 0.9, '#ffffff')), F(E(x + 1.6 * o, y + 4.4, 0.8, 0.55, '#e6f6ff'))];
 const shut = (x, o, kind) => {
   const ink = EYE.ink;
   if (kind === 'happy') return [...band(curve([[x - 7.2, 14], [x, 7], [x + 7.2, 14]], 3), 1.8, 2.4, ink, true), ...arc([[x + 6.2 * o, 12.6], [x + 9.4 * o, 10.8]], 0.9, ink)];
@@ -93,6 +105,7 @@ const brows = (b, c) => {
     const P = (u, v) => [14 * o + u * o, v];
     if (b === 'up') return arc([P(-6, -3), P(0, -5.4), P(6, -4)], 1.6, c);
     if (b === 'cross') return arc([P(-6, -4.6), P(0, -2.8), P(6, -0.4)], 1.8, c);
+    if (b === 'flat') return arc([P(-6, -2.2), P(0, -2.8), P(6, -2.4)], 1.7, c);
     return arc([P(-6, -1), P(0, -2.6), P(6, -5.6)], 1.6, c);
   };
   return [...one(-1), ...one(1)];
@@ -105,6 +118,14 @@ function mouth(m) {
   if (m === 'yawn') return [blob([[-3.4, 23], [3.4, 23], [4, 28], [0, 31], [-4, 28]], '#6a1a3a', 2), F(E(0, 28.6, 2.2, 1, '#ff9ab0'))];
   if (m === 'wobble') return [...arc([[-4.4, 25.4], [-2.2, 24.2], [0, 25.4], [2.2, 24.2], [4.4, 25.4]], 1.2, '#7a2a48')];
   if (m === 'smile') return [blob([[-4.6, 23.6], [4.6, 23.6], [3.4, 27.4], [0, 28.6], [-3.4, 27.4]], '#8a2a4a', 2), F(E(0, 27.2, 2, 0.9, '#ff9ab0'))];
+  // (a sob: open, its top a wobbly little wave, its corners pulled down)
+  if (m === 'sob') return [blob([[-5.2, 27], [-3.4, 24.2], [-1.6, 24.8], [0, 23.8], [1.6, 24.8], [3.4, 24.2], [5.2, 27], [3.6, 29.6], [0, 30.4], [-3.6, 29.6]], '#6a1a3a', 2), F(E(0, 28.6, 2.4, 1, '#ff8aa8'))];
+  // (teeth gritted: a wide flat mouth, the top teeth and the bottom with a little gap, corners down)
+  if (m === 'teeth') return [blob([[-6.2, 26.6], [-4.6, 24], [4.6, 24], [6.2, 26.6], [4.4, 29], [-4.4, 29]], '#6a1a3a', 2), F(blob([[-4.6, 24.6], [4.6, 24.6], [5, 26.2], [-5, 26.2]], '#ffffff', 1)), F(blob([[-4, 27], [4, 27], [3.8, 28.4], [-3.8, 28.4]], '#ffffff', 1))];
+  // (shy: a small uneven smile, one corner up more than the other)
+  if (m === 'shy') return [...arc([[-3.6, 25.8], [-1.6, 26.6], [0.4, 26.4], [2.2, 25.6], [3.6, 24.6]], 1.1, '#7a2a48')];
+  // (a giggle: a wide open laugh, its top straight, a pink tongue)
+  if (m === 'laugh') return [blob([[-5, 23.6], [5, 23.6], [4, 28.2], [0, 30.2], [-4, 28.2]], '#8a2a4a', 2), F(E(0, 28.2, 2.6, 1.2, '#ff9ab0')), F(blob([[-4, 23.8], [4, 23.8], [3.6, 24.8], [-3.6, 24.8]], '#ffffff', 1))];
   return [...arc([[-2.4, 25.4], [0, 26], [2.4, 25.4]], 1.1, '#7a2a48')];
 }
 function face(f, Hc) {
@@ -113,9 +134,16 @@ function face(f, Hc) {
   out.push(F(E(-24, 18, 8, 6, f.cheeks ? '#ffe0e8' : SK.lt)), F(E(24, 18, 8, 6, f.cheeks ? '#ffe0e8' : SK.lt)));
   out.push(...brows(f.b, Hc[3]));
   if (f.e === 'open' || f.e === 'wide' || f.e === 'cross') out.push(...eye(-14, 12, -1, f.e === 'cross' ? 3.2 : 0, f.e === 'wide' ? 1.2 : 0.5, f.t), ...eye(14, 12, 1, f.e === 'cross' ? 3.2 : 0, f.e === 'wide' ? 1.2 : 0.5, f.t));
+  // (sob: big eyes brimming, an extra glint wobbling low in each; the tears run in streams, never a welled band under the eye)
+  else if (f.e === 'wet') out.push(...eye(-14, 12, -1, 1.2, 1, 1), ...eye(14, 12, 1, 1.2, 1, 1), ...brim(-14, 12, -1), ...brim(14, 12, 1));
+  // (a side-eye: both looking off the way he isn't facing, the lids half down)
+  else if (f.e === 'side') out.push(...eye(-14, 12, -1, 4.6, 0.3, 0, -2.4), ...eye(14, 12, 1, 4.6, 0.3, 0, -2.4));
+  else if (f.e === 'soft') out.push(...eye(-14, 12, -1, 2.2, 0.3, 0), ...eye(14, 12, 1, 2.2, 0.3, 0));
+  // (peeking: the near eye open, the far one squeezed shut)
+  else if (f.e === 'peek') out.push(...shut(-14, -1, 'shut'), ...eye(14, 12, 1, 1, 0.8, 1));
   else out.push(...shut(-14, -1, f.e), ...shut(14, 1, f.e));
   for (const o of [-1, 1]) {
-    out.push(F(E(21 * o, 21, 5.4, 3, f.cheeks ? '#ff8aa0' : '#ffb0c4')));
+    out.push(F(E(21 * o, 21, 5.4 + (f.blush ? 1.2 : 0) + (f.cheeks === 2 ? 0.8 : 0), 3 + (f.blush ? 0.6 : 0), f.cheeks === 2 ? '#ff7890' : f.cheeks ? '#ff8aa0' : f.blush ? '#ff9cb6' : '#ffb0c4')));
     for (let i = 0; i < 3; i++) out.push(...arc([[21 * o + (i - 1) * 2.6 - 0.8, 22.2], [21 * o + (i - 1) * 2.6 + 0.8, 20]], 0.5, SK.lt));
   }
   out.push(...arc([[0.6, 18.6], [1.2, 19.6]], 0.7, SK.deep));
@@ -280,13 +308,15 @@ const flips = (Hc) => [-1, 1].flatMap((o) => [
 
 // ---------- His pieces ----------
 const cache = new Map();
-// mood: a face (storm coat), or 'clear' (the white coat, the cleared face).
+// mood: a face (storm coat), or 'clear' (the white coat, the cleared face), or 'clear:<face>' (the white
+// coat with that face: shy, giggle, as he's cheered up in his ending).
 export function sulkDesign(mood = 'idle') {
-  const clear = mood === 'clear';
-  const key = clear ? 'clear' : mood in FACES ? mood : 'idle';
+  const clear = mood === 'clear' || String(mood).startsWith('clear:');
+  const cf = clear && mood !== 'clear' ? mood.slice(6) : 'happy';
+  const key = clear ? (cf in FACES ? `clear:${cf}` : 'clear') : mood in FACES ? mood : 'idle';
   if (cache.has(key)) return cache.get(key);
   const P = COATS[clear ? 'clear' : 'storm'];
-  const f = FACES[clear ? 'happy' : key];
+  const f = FACES[clear ? (cf in FACES ? cf : 'happy') : key];
   const body = blankBody('spirit', { tpose: false, guides: false });
   const recolor = (list, pal) => list.map((sh) => ({ ...sh, c: { [BLANK.lt]: pal[0], [BLANK.base]: pal[1], [BLANK.sh]: pal[2], [BLANK.deep]: pal[3] }[sh.c] ?? sh.c }));
   const groups = {

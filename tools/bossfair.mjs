@@ -70,6 +70,10 @@ function hero(family, level, trialQuest) {
 
 // Whether standing (or being in the air) as now, zone z would catch you when it goes off.
 function catches(z, b, map) {
+  // (a column across the floor, Madame Reveille's: walk out of it like a lane)
+  if (z.kind === 'mark' && z.col) return Math.abs(b.x - z.x) < z.w / 2 + 10;
+  // (the whole room, or a marker on you: nothing to walk out of)
+  if (z.kind === 'raid' || z.kind === 'mark') return false;
   if (z.kind === 'circle') return Math.abs(b.x - z.x) < z.w / 2 + 10;
   if (z.kind === 'floor') return true;
   if (z.kind === 'pillar') return Math.abs(b.x - z.x) < z.w / 2 + 8;
@@ -112,7 +116,11 @@ function fight(family, trialId) {
     if (w.scene) w.scene = null;
     for (const z of w.zones ?? []) if (!seen.has(z)) seen.set(z, w.now);
     // What's about to go off that you've noticed, and would catch you here.
-    const live = (w.zones ?? []).filter((z) => !z.hit && w.now - seen.get(z) >= REACT);
+    // (a marker still following you isn't dodged until it stops; a stack's spot is where you go, not a threat;
+    // only what lands next is dealt with, so two waves one after the other are taken one at a time)
+    const noticed = (w.zones ?? []).filter((z) => !z.hit && w.now - seen.get(z) >= REACT && !z.stack && !(z.follow && z.t < z.warn - (z.lock ?? 0.6)));
+    const first = noticed.length ? Math.min(...noticed.map((z) => z.warn - z.t)) : 0;
+    const live = noticed.filter((z) => z.warn - z.t <= first + 0.5);
     const threats = live.filter((z) => catches(z, b, w.map));
     const soon = threats.length ? Math.min(...threats.map((z) => z.warn - z.t)) : Infinity;
     let busy = false;

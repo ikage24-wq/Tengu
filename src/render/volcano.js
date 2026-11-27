@@ -1,6 +1,7 @@
 // The Candy Volcano's rooms (world/volcano.js runs them), in the scenery's outlined chibi style:
 // the valley's sugar crystals and sticky taffy, the mine's hot caramel pit, the kitchen's dispensers
-// and cauldron (with the recipe on its chalkboard), the forge's pools of hot caramel and bellows.
+// and cauldron (with the recipe on its chalkboard), the smith's anvil out in the forge and the
+// knight's cookie cutters on the ramparts.
 // (x, y) is the bottom center on the floor; `time` (seconds) animates.
 
 import { R, E, T, F, mix } from './pixel.js';
@@ -8,6 +9,8 @@ import { art, place } from './scenery.js';
 import { drawMochiAnim } from './mochi-anim.js';
 import { rollMochi } from '../data/mochi-genes.js';
 import { ICHIGO } from '../data/scenes.js';
+import { drawToffeeAnvil } from './toffee/looks.js';
+import { drawGretelCutters } from './gretel/looks.js';
 
 const TAU = Math.PI * 2;
 const CANDY_C = { red: '#ff5a6a', yellow: '#ffd36b', green: '#9ae66a', blue: '#7fd8ff' };
@@ -153,15 +156,10 @@ export function drawVolcanoBack(ctx, world, cam, time) {
       ctx.globalAlpha = 1;
     }
   }
-  // The smith's pools of hot caramel where her sparks landed, cooling as they fade.
-  for (const p of room.pools ?? []) {
-    const left = p.until - world.now;
-    if (left > 9.5) continue;
-    const x = p.x - cam.x;
-    ctx.globalAlpha = Math.min(1, left / 1.5);
-    caramel(ctx, x - p.w / 2, x + p.w / 2, p.y - cam.y - 2, 4, time, cam.x);
-    ctx.globalAlpha = 1;
-  }
+  // The smith's anvil, out in the forge (render/toffee/looks.js).
+  drawToffeeAnvil(ctx, world, cam, time);
+  // The knight's cookie cutters, standing on the wall-walk (render/gretel/looks.js).
+  drawGretelCutters(ctx, world, cam, time);
   // The kitchen's cauldron with the recipe chalked on a board above it.
   if (map.cauldron && room.recipe) {
     const x = map.cauldron.x - cam.x;
@@ -200,23 +198,8 @@ export function drawVolcanoBack(ctx, world, cam, time) {
   }
 }
 
-export function drawVolcanoFront(ctx, world, cam, time) {
-  const room = world.dungeon.room;
-  const map = world.map;
-  if (map.dungeon !== 'volcano') return;
-  // The bellows' blast: streaks of hot air racing out from the smith.
-  const w = room.bellows;
-  if (w && world.now < w.until) {
-    for (let k = 0; k < 16; k++) {
-      const u = (time * 1.6 + k * 0.07) % 1;
-      const s = k % 2 ? 1 : -1;
-      ctx.globalAlpha = 0.5 * (1 - u);
-      ctx.fillStyle = '#ffd08a';
-      ctx.fillRect(w.x - cam.x + s * (30 + u * 300), map.groundY - cam.y - 10 - ((k * 17) % 70), s * 18, 2);
-    }
-    ctx.globalAlpha = 1;
-  }
-}
+// (nothing in front of the rooms since the smith's 2026-11-27 remake: her bellows are gone)
+export function drawVolcanoFront(ctx, world, cam, time) {}
 
 export function drawVolcanoObject(ctx, o, x, y, time, now) {
   if (o.kind === 'crystal') {

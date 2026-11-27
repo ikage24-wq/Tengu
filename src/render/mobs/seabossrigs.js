@@ -1,5 +1,5 @@
 // The Sunken Aquarium Palace's Keepsake Bubble (the bosses themselves were redrawn 2026-11-19 and
-// live in their own modules: morayrig.js, abyssiarig.js, coralierig.js).
+// live in their own folders: the Twin Morays in render/moray/, Lady Abyssia in render/abyssia/, Queen Coralie in render/coralie/).
 
 import { E, T, F, stroke } from './kit.js';
 import { arcP, shift } from './rigkit.js';

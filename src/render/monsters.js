@@ -102,6 +102,12 @@ export function monsterSprite(art, frame, mood = 'idle', pose = 'walk') {
   return sprite(mobKey(art, frame, mood, pose), () => mobBuild(art, pose, frame, mood));
 }
 
+// (gloating over a hit it landed, for `secs` after it: a gloat still to come, as when a stage replays
+// from the start with the last one remembered, is none)
+const gloating = (m, now, secs) => {
+  const e = now - (m.gloatAt ?? -9);
+  return e >= 0 && e < secs;
+};
 // How a monster feels right now.
 // Right after landing a hit on the hero it gloats (a happy face); nearly beaten, it blinks fast
 // and nervously.
@@ -112,7 +118,7 @@ function moodOf(m, t, now, held) {
   if (m.flash > 0 || m.stagger > 0) return 'hurt';
   if (m.special?.warn > 0) return 'angry';
   if (held) return 'hurt';
-  if (now - (m.gloatAt ?? -9) < 0.9) return 'happy';
+  if (gloating(m, now, 0.9)) return 'happy';
   if (now < m.aggroUntil && m.def.aggro) return 'angry';
   // Napping (world/habits.js): eyes shut; playing chase: happy.
   if (m.habit?.kind === 'nap' && now < m.habit.until) return 'blink';
@@ -186,6 +192,9 @@ export function rigTop(art, rig, def) {
 // Emote bubbles over the head: "!" right after it gets angry, a pulsing anger mark while it
 // chases, a sweat drop when hit, and music notes or z's while it lazes about.
 function drawEmote(ctx, m, mood, x, top, t, now, headX = null) {
+  // (`ownEmotes` on an art: its rig draws every one of these marks itself, in its own style, on its
+  // drawn head: the Puddle Kid, 2026-11-26)
+  if (ARTS[m.def.art]?.ownEmotes) return;
   ctx.save();
   ctx.font = '800 9px Nunito, "Trebuchet MS", "Segoe UI", system-ui, sans-serif';
   ctx.textAlign = 'center';
@@ -215,7 +224,7 @@ function drawEmote(ctx, m, mood, x, top, t, now, headX = null) {
   em.angry = angryNow;
   if (mood === 'angry' && m.aggroUntil - now > 5.4 && !m.def.boss) {
     bubble('!', '#ff5b7f', 6 - (m.aggroUntil - now));
-  } else if (mood === 'happy' && now - (m.gloatAt ?? -9) < 0.9) {
+  } else if (mood === 'happy' && gloating(m, now, 0.9)) {
     // Gloating after a hit: a bouncing note.
     const e = now - m.gloatAt;
     ctx.globalAlpha = Math.min(1, (0.9 - e) * 4);
@@ -280,6 +289,12 @@ function drawEmote(ctx, m, mood, x, top, t, now, headX = null) {
 function motionOf(m, time) {
   const mo = (m.motion ??= { t: time, sq: 0, sqV: 0, lean: 0, leanV: 0, shear: 0, shearV: 0, vs: 0, flash: 0, hitT: -9, hurtUntil: -9, push: 0, ledAt: -9, impactAt: -9, fast: 1 });
   mo.dt = Math.max(0, Math.min(0.1, time - mo.t));
+  // (a clock gone back, as when a stage or a film replays from the start, forgets a hit still to
+  // come: without it every frame up to that hit drew flashed white with a hurt face)
+  if (time < mo.hitT) {
+    mo.hitT = -9;
+    mo.hurtUntil = -9;
+  }
   mo.t = time;
   return mo;
 }
@@ -511,7 +526,7 @@ function drawMonsterNow(ctx, m, x, y, time, now = time) {
   if (m.hp > 0 && !frozen && !boss) {
     const e = now - (m.gloatAt ?? -9);
     const hops = !ARTS[m.def.art]?.noHop;
-    if (hops && e < 0.7) act = Math.abs(Math.sin((e / 0.35) * Math.PI)) * Math.max(3, m.def.h * 0.12);
+    if (hops && e >= 0 && e < 0.7) act = Math.abs(Math.sin((e / 0.35) * Math.PI)) * Math.max(3, m.def.h * 0.12);
     else if (hops && mood === 'happy' && !moving) act = Math.abs(Math.sin(t * 9)) * 1.5;
     if (lowOn(m)) x += Math.floor(time * 20) % 2 ? 0.5 : -0.5;
   }

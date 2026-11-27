@@ -6,7 +6,10 @@
 //   - a shine on the peppermint once it's polished;
 //   - spinning: red and white swirls whirling round them, sugar sparkles flung off;
 //   - Mint Flick: a little peppermint in their hand as they wind up, then spinning along the ground
-//     at you like a top, a puff of sugar where it skids.
+//     at you like a top, a puff of sugar where it skids;
+//   - Crinkle Clap (2026-11-27): a burst of red and white candy sparkles where their hands meet;
+//   - their own marks over their head (2026-11-27, `ownEmotes`): a cellophane bubble with a ! or a ?,
+//     mint z's for a nap, a soft drop of sweat when low on health.
 import { mintRig } from './kidrig.js';
 import { mintDesign, SKIN_COLORS, MOUTH, CAPE, CAPE_TWIST, MINT_C, TWIST_F, TWIST_N } from './art.js';
 import { clamp } from '../mobs/rig.js';
@@ -75,6 +78,81 @@ function peppermint(ctx, x, y, r, rot, sy = 1, al = 1) {
   ctx.fill();
   ctx.restore();
   ctx.globalAlpha = 1;
+}
+
+// Their own marks (`ownEmotes`): a round cellophane bubble with a cherry-red ! or a mint ?, popping in
+// with a little bounce; soft mint z's; a soft drop of sweat.
+function markBubble(ctx, [x, y], mark, e, dur, fl) {
+  const k = Math.max(0, 1 - Math.exp(-9 * e) * Math.cos(18 * e)) * (1 - ease(Math.max(0, Math.min(1, (e - dur + 0.25) / 0.25))));
+  if (k <= 0.02 || e < 0) return;
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.scale(fl ? -k : k, k);
+  ctx.beginPath();
+  ctx.ellipse(0, -0.6, 5.4, 4.8, 0, 0, Math.PI * 2);
+  ctx.moveTo(-1.6, 3.6);
+  ctx.quadraticCurveTo(-1.4, 6.4, -2.8, 7.4);
+  ctx.quadraticCurveTo(0.6, 6.6, 1.4, 3.8);
+  ctx.lineWidth = 1.4;
+  ctx.strokeStyle = '#58bc94';
+  ctx.stroke();
+  ctx.fillStyle = '#f2fbff';
+  ctx.fill();
+  ctx.strokeStyle = mark === '!' ? '#e8304a' : '#3a9474';
+  ctx.fillStyle = ctx.strokeStyle;
+  ctx.lineWidth = 1.5;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  if (mark === '!') {
+    ctx.moveTo(0, -3.4);
+    ctx.lineTo(0, 0);
+  } else {
+    ctx.moveTo(-1.5, -2.2);
+    ctx.quadraticCurveTo(-1.2, -4, 0.4, -3.8);
+    ctx.quadraticCurveTo(2, -3.4, 1.4, -1.8);
+    ctx.quadraticCurveTo(0.4, -1, 0.2, 0.2);
+  }
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(mark === '!' ? 0 : 0.2, 2, 0.85, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+}
+function zed(ctx, x, y, s, al, fl) {
+  if (al <= 0.01) return;
+  ctx.save();
+  ctx.globalAlpha = al;
+  ctx.translate(x, y);
+  ctx.scale(fl ? -s : s, s);
+  ctx.beginPath();
+  ctx.moveTo(-1.6, -1.6);
+  ctx.quadraticCurveTo(0, -1.9, 1.6, -1.6);
+  ctx.quadraticCurveTo(0, 0, -1.6, 1.6);
+  ctx.quadraticCurveTo(0, 1.3, 1.7, 1.6);
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  ctx.lineWidth = 1.5;
+  ctx.strokeStyle = '#3a9474';
+  ctx.stroke();
+  ctx.lineWidth = 0.7;
+  ctx.strokeStyle = '#e8fff4';
+  ctx.stroke();
+  ctx.restore();
+}
+function drop(ctx, x, y, s, al) {
+  if (al <= 0.01) return;
+  ctx.save();
+  ctx.globalAlpha = al;
+  ctx.beginPath();
+  ctx.moveTo(x, y - s * 1.4);
+  ctx.quadraticCurveTo(x + s, y + s * 0.2, x, y + s);
+  ctx.quadraticCurveTo(x - s, y + s * 0.2, x, y - s * 1.4);
+  ctx.fillStyle = '#d8f4ff';
+  ctx.fill();
+  ctx.lineWidth = s * 0.25;
+  ctx.strokeStyle = '#8ac4dc';
+  ctx.stroke();
+  ctx.restore();
 }
 
 function mintFx(ctx, m, a, S, matOf, K, H) {
@@ -162,6 +240,47 @@ function mintFx(ctx, m, a, S, matOf, K, H) {
       twinkle(ctx, c[0] + Math.cos(ang) * R * (0.8 + u), c[1] + Math.sin(ang) * R * 0.5 * (0.8 + u), 1.4 * (1 - u), 1 - u, i % 2 ? '#ffd0d8' : '#ffffff');
     }
   }
+  // Crinkle Clap: a burst of red and white candy sparkles where their hands meet, crinkle rays
+  if (mv?.clap && t >= mv.clap[0] && t < mv.clap[1] && !dead) {
+    const u = (t - mv.clap[0]) / (mv.clap[1] - mv.clap[0]);
+    const hand = K.through(matOf('handN'), 'handN', 'wrN');
+    ctx.globalAlpha = 0.5 * (1 - u);
+    ctx.fillStyle = '#ffd0d8';
+    ctx.beginPath();
+    ctx.arc(hand[0] + 1, hand[1], 3 + u * 6, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+    ctx.lineCap = 'round';
+    for (let i = 0; i < 6; i++) {
+      const ang = -Math.PI * 0.75 + (i / 5) * Math.PI * 1.5;
+      const r0 = 3 + u * 6;
+      ctx.globalAlpha = 1 - u;
+      ctx.strokeStyle = i % 2 ? '#e8304a' : '#ffffff';
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(hand[0] + Math.cos(ang) * r0, hand[1] + Math.sin(ang) * r0);
+      ctx.lineTo(hand[0] + Math.cos(ang) * (r0 + 3), hand[1] + Math.sin(ang) * (r0 + 3));
+      ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
+    for (let i = 0; i < 3; i++) twinkle(ctx, hand[0] + 4 + u * (6 + i * 3), hand[1] - 3 + i * 3 - u * 3, 2 * Math.sin(Math.PI * u), 1 - u * 0.5, i % 2 ? '#ffd0d8' : '#ffffff');
+  }
+  // their own marks over their head: !, ?, z's and a bead of sweat, in mint and cellophane
+  if (!dead) {
+    const top = [head[0] + H * 0.14, head[1] - H * 0.66];
+    if ((a.mintBang ?? 9) >= 0 && a.mintBang < 1.1) markBubble(ctx, top, '!', a.mintBang, 1.1, a.flip);
+    else if ((a.mintHuh ?? 9) >= 0 && a.mintHuh < 1.4) markBubble(ctx, top, '?', a.mintHuh, 1.4, a.flip);
+    if ((a.mintZz ?? 0) > 0.05) {
+      for (let i = 0; i < 2; i++) {
+        const f = ((a.now ?? a.t) * 0.42 + i * 0.5) % 1;
+        zed(ctx, top[0] - 2 + f * 6, top[1] + 8 - f * 9, 0.6 + f * 0.5, a.mintZz * Math.sin(Math.PI * f), a.flip);
+      }
+    }
+    if ((a.mintSweat ?? -1) >= 0) {
+      const u = a.mintSweat % 1;
+      drop(ctx, head[0] - H * 0.2, head[1] - H * 0.42 + u * 3, 1, Math.sin(Math.PI * u));
+    }
+  }
   // Mint Flick: the mint in their hand, then spinning along the ground at you
   if (mv?.flick) {
     const [t0, t1] = mv.flick;
@@ -185,5 +304,6 @@ function mintFx(ctx, m, a, S, matOf, K, H) {
 }
 
 const R = mintRig({ design: mintDesign, skin: SKIN_COLORS, mouth: MOUTH, cape: CAPE, capeTwist: CAPE_TWIST, mintC: MINT_C, twistF: TWIST_F, twistN: TWIST_N, fx: mintFx });
-export const MINT_ART = { pad: 12, walk: 8, idle: 8, attack: 5, stride: R.stride, atkMs: [100, 180, 300, 220], draw: R.still, rig: R.rig, noHop: true };
+// (`ownEmotes`: their marks over their head drawn here, in their own style)
+export const MINT_ART = { pad: 12, walk: 8, idle: 8, attack: 5, stride: R.stride, atkMs: [100, 180, 300, 220], draw: R.still, rig: R.rig, noHop: true, ownEmotes: true };
 export const MINT_SIZE = { w: 28, h: Math.round(R.H * 0.92) };

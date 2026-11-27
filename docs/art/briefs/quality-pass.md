@@ -49,7 +49,7 @@ collected here, worst first within each part. Tick items off as they're fixed. I
 - [x] Lady Marigold sinks 14 px into the floor (Marionette puppets, Tuskar, Myconid Queen a few px). (fixed)
 - [x] Boss props cross their faces in attacks (Coralie, Toffee, Bonbon, Captain Gale, Folio, Dame Minuet). (fixed)
 - [x] Turret head clicks through 4 poses without blending. (fixed)
-- [x] Reused monsters out of theme: Wraith in Serpent Springs, Pegasus Foal on Frozen Peak, Crystal Golem on Moonlit Ridge. (partly: Moonlit Ridge now has Meteor Golems, fallen stars from the observatory's road; no existing monster fits the hot springs or the snowfield at their level, so the Wraiths and Pegasus Foals stay until new ones are drawn for them)
+- [x] Reused monsters out of theme: Wraith in Serpent Springs, Pegasus Foal on Frozen Peak, Crystal Golem on Moonlit Ridge. (partly: Moonlit Ridge now has Meteor Golems, fallen stars from the observatory's road; no existing monster fits the hot springs or the snowfield at their level, so the Wraiths and Pegasus Foals stay until new ones are drawn for them) (2026-11-26/27: the Wraith is now the Steam Capybara; the Pegasus Foal is now the Whistledown Marmot, an alpine marmot at home on Frozen Peak too)
 - [x] Leftover unused monster art tables (hollow.js, manor.js, old Hollow frames in bosses.js). (fixed)
 
 ## D. Maps and themes

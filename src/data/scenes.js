@@ -290,7 +290,7 @@ export const SIDE_SCENES = {
     { who: 'lulu', text: "The very first piece is yours, darling. Wear it everywhere. That's free advertising!" },
   ],
   winter_done: [
-    { who: 'lulu', text: 'A parka made of Pegasus mane and snow gems! It sparkles when you shiver!', mood: 'happy' },
+    { who: 'lulu', text: 'A parka made of marmot cloud fluff and snow gems! It sparkles when you shiver!', mood: 'happy' },
     { who: 'lulu', text: "The winter line is going to be the talk of the island. I've already sold forty. I haven't made them yet. That's called demand, darling.", mood: 'happy' },
     { who: 'lulu', text: 'Limited time only! One season, then gone forever. Then back next winter for twice the price. That is fashion.', mood: 'happy' },
     { together: [{ walk: 'player', to: 1040, speed: 90 }, { walk: 'pip', to: 'lulu', gap: 44, speed: 90 }, { emote: 'pip', kind: '?', dur: 1.4 }] },
@@ -427,7 +427,7 @@ export const SIDE_SCENES = {
     { spawn: 'rowan', at: 'player', by: 90 },
     { together: [{ walk: 'player', to: 'rowan', gap: 70, speed: 90 }, { face: 'rowan', to: 'player' }] },
     { who: 'rowan', text: "You're back! Was it high? Don't tell me. Was it very high?", mood: 'surprised' },
-    { who: 'player', text: "It's high. But the harpies weren't attacking for fun. Every ledge up there has a nest on it, full of fluffy little chicks. They were guarding them." },
+    { who: 'player', text: "It's high. But the albatrosses weren't attacking for fun. Every ledge up there has a nest on it, full of fluffy little chicks. They were guarding them." },
     { together: [{ emote: 'rowan', kind: '!', dur: 1.4 }, { wait: 0.4 }] },
     { who: 'rowan', text: "Guarding. They were standing in front of the little ones.", mood: 'surprised' },
     { who: 'rowan', text: "That's all a knight is, really. Somebody who stands in front of the little ones. I've always been good at that part. It's the up part I'm bad at.", mood: 'happy' },
@@ -440,7 +440,7 @@ export const SIDE_SCENES = {
     { who: 'player', text: "Brann says pick the thing you love more than the thing you're scared of, and walk toward it. Tora says look at what's in front of you, and don't scream." },
     { who: 'rowan', text: "Brann said that? Brann? He once told me feelings were a kind of rust.", mood: 'surprised' },
     { together: [{ fx: 'sparkle', at: 'rowan', n: 14 }, { shake: 1, dur: 0.3 }, { emote: 'player', kind: 'sweat', dur: 1.2 }] },
-    { who: null, text: "He sets the harpy feathers into his old helmet, around the daisies, and puts it on. It is the biggest, fluffiest plume anyone has ever worn. The daisies peek out underneath." },
+    { who: null, text: "He sets the albatross feathers into his old helmet, around the daisies, and puts it on. It is the biggest, fluffiest plume anyone has ever worn. The daisies peek out underneath." },
     { who: 'rowan', text: "How do I look? Brave? Say brave.", mood: 'happy' },
     { who: 'player', text: "Brave." },
     { together: [{ emote: 'rowan', kind: 'heart', dur: 1.6 }, { jump: 'rowan', height: 12 }] },
@@ -452,7 +452,7 @@ export const SIDE_SCENES = {
     { who: 'rowan', text: "I did it. I did it! I stood the whole night on top of the sky, and I only cried twice, and once was because the stars were so pretty.", mood: 'happy' },
     { together: [{ jump: 'rowan', height: 16 }, { fx: 'sparkle', at: 'rowan', n: 20 }, { shake: 2, dur: 0.4 }] },
     { who: 'player', text: "And the nests?" },
-    { who: 'rowan', text: "Safe. Every one. The harpies came back at dawn and found a big knight sitting very still beside their chicks, with a daisy left at every nest. One of them sat on my helmet.", mood: 'happy' },
+    { who: 'rowan', text: "Safe. Every one. The albatrosses came back at dawn and found a big knight sitting very still beside their chicks, with a daisy left at every nest. One of them sat on my helmet.", mood: 'happy' },
     { together: [{ wait: 0.5 }, { face: 'rowan', to: 1 }, { cam: 'rowan', up: 160, dur: 1.4 }] },
     { who: 'rowan', text: "It's not so scary, up there. Not when you're standing in front of something you love.", mood: 'happy' },
     { together: [{ cam: ['rowan', 'player'], dur: 1 }, { face: 'rowan', to: 'player' }, { emote: 'rowan', kind: 'heart', dur: 1.8 }] },
@@ -466,7 +466,7 @@ export const SIDE_SCENES = {
     { together: [{ emote: 'celeste', kind: 'zzz', dur: 3 }, { expr: 'celeste', as: 'sleepy' }, { wait: 2.4 }] },
     { who: null, text: 'She is asleep before her head finishes landing on the pillow. Three seconds later she sits bolt upright.' },
     { together: [{ expr: 'celeste', as: null }, { emote: 'celeste', kind: '!', dur: 1.2 }, { jump: 'celeste', height: 8 }] },
-    { who: 'celeste', text: "A star! Tangled in a kite! Up on Starfall Heights, and the Kite Riders won't let it go. It was so clear. The pillow works. I invented a thing.", mood: 'surprised' },
+    { who: 'celeste', text: "A star! Tangled in a kite! Up on Starfall Heights, and the Kite Pikas won't let it go. It was so clear. The pillow works. I invented a thing.", mood: 'surprised' },
   ],
   celeste_kite_done: [
     { spawn: 'celeste', at: 'player', by: 90 },
@@ -511,7 +511,7 @@ export const SIDE_SCENES = {
   ],
   nimbus_storm_done: [
     { together: [{ walk: 'player', to: 'nimbus', gap: 70, speed: 90 }, { face: 'nimbus', to: 'player' }] },
-    { who: 'player', text: "The harpists are quiet. The sky over the heights is clear all the way up." },
+    { who: 'player', text: "The frogs have stopped singing up storms. The sky over the heights is clear all the way up." },
     { together: [{ face: 'nimbus', to: 1 }, { cam: 'nimbus', up: 150, dur: 1.4 }, { fx: 'clouds', at: 'nimbus', n: 8 }] },
     { who: null, text: 'Far out past the pier, the Sky Whale climbs higher than she has in a hundred years, new sail full, turning slow and happy in the sunlight.' },
     { together: [{ cam: ['nimbus', 'player'], dur: 1 }, { face: 'nimbus', to: 'player' }, { wait: 0.6 }] },
@@ -542,7 +542,7 @@ export const SIDE_SCENES = {
     { together: [{ walk: 'player', to: 'twinkle', gap: 70, speed: 90 }, { face: 'twinkle', to: 'player' }] },
     { who: 'twinkle', text: 'Twelve! Okay. Here goes. Maximum twinkle.', mood: 'happy' },
     { together: [{ flash: '#fff6c8' }, { fx: 'sparkle', at: 'twinkle', top: true, n: 26 }, { jump: 'twinkle', height: 8 }] },
-    { who: null, text: 'Twinkle glows so bright the Kite Riders shade their eyes. Far above, the sky goes on being the sky.' },
+    { who: null, text: 'Twinkle glows so bright the Kite Pikas shade their eyes. Far above, the sky goes on being the sky.' },
     { together: [{ cam: 'twinkle', up: 150, dur: 1.6 }, { emote: 'twinkle', kind: '?', dur: 1.6 }] },
     { who: 'twinkle', text: '...Nothing. Not even a wave.', mood: 'sad' },
     { together: [{ cam: ['twinkle', 'player'], dur: 1 }, { emote: 'twinkle', kind: 'idea', dur: 1.4 }, { jump: 'twinkle', height: 10 }] },
@@ -569,7 +569,7 @@ export const SIDE_SCENES = {
   // (The twist: the sky never missed her.)
   twinkle_count_done: [
     { together: [{ walk: 'player', to: 'twinkle', gap: 70, speed: 90 }, { face: 'twinkle', to: 'player' }] },
-    { who: 'player', text: "I've got the Cloud Shepherds' tally book." },
+    { who: 'player', text: "I've got the Cloudherd Samoyeds' tally book." },
     { together: [{ emote: 'twinkle', kind: '!', dur: 1.2 }, { jump: 'twinkle', height: 8 }] },
     { who: null, text: 'Every star in the sky, counted every night, in tidy little lines. The count for festival night is complete. Not one missing.' },
     { together: [{ spot: 'twinkle', r: 54, dur: 0.8 }, { emote: 'twinkle', kind: 'sweat', dur: 1.6 }] },
@@ -814,7 +814,7 @@ export const SIDE_SCENES = {
   ],
   praline_sieve_done: [
     { together: [{ walk: 'player', to: 790, speed: 90 }, { face: 'praline', to: 'player' }] },
-    { who: 'praline', text: "Wraith Shrouds! Light as a sigh. Stretch, stretch, and... the finest sieve in the world!", mood: 'happy' },
+    { who: 'praline', text: "Mist Veils! Light as a sigh. Stretch, stretch, and... the finest sieve in the world!", mood: 'happy' },
     { together: [{ fx: 'clouds', at: 'praline', n: 12 }, { emote: 'praline', kind: 'heart', dur: 1.4 }] },
     { who: 'praline', text: "Course three: cream so soft it's basically a rumour. The menu's done, chef. Now comes the frightening part.", mood: 'surprised' },
   ],
@@ -844,7 +844,7 @@ export const SIDE_SCENES = {
   ],
   encore_bouquet_done: [
     { together: [{ walk: 'player', to: 790, speed: 90 }, { face: 'encore', to: 'player' }] },
-    { who: 'encore', text: "Feathers! White! Not one pink. The harpies remain unhumbled. Never mind, darling.", mood: 'surprised' },
+    { who: 'encore', text: "Feathers! White! Not one pink. The albatrosses remain unhumbled. Never mind, darling.", mood: 'surprised' },
     { together: [{ fx: 'petals', at: 'encore', n: 14 }, { emote: 'encore', kind: 'heart', dur: 1.6 }] },
     { who: null, text: 'She ties them into a bouquet with a velvet ribbon, sniffs it out of habit, and sneezes. It is a very theatrical sneeze.' },
     { who: 'encore', text: "Throw it at me on opening night. Aim for the knees. They need the encouragement.", mood: 'happy' },
@@ -935,7 +935,7 @@ export const SIDE_SCENES = {
     { who: 'player', text: 'Frost all over the crystals. And a warm draught sneaking east toward Serpent Springs, like it was late for something.' },
     { together: [{ emote: 'tora', kind: '?', dur: 1.4 }, { wait: 0.4 }] },
     { who: 'tora', text: "A draught? With no wind? That's not weather. That's somebody slurping.", mood: 'surprised' },
-    { who: 'player', text: 'The only warm things left down there are the Crystal Golems. Their cores glow like coals.' },
+    { who: 'player', text: 'The only warm things left down there are the Geode Bears. Their bellies glow like coals.' },
     { together: [{ emote: 'tora', kind: 'idea', dur: 1.4 }, { jump: 'tora', height: 14 }, { fx: 'sparks', at: 'tora', n: 16 }] },
     { who: 'tora', text: "Of course they do! Geode Cores hold heat like a grudge. Nobody can slurp what's locked inside a rock.", mood: 'happy' },
     { who: 'tora', text: "So the plan is: we beat up some rocks, take their warm feelings, and put them in my oven. Very heroic. Don't tell Brann, he'll want to make a speech about it.", mood: 'happy' },
@@ -957,8 +957,8 @@ export const SIDE_SCENES = {
   ],
   // ----- Captain Rook's last job -----
   rook_harpies_done: [
-    { who: 'rook', text: "Thirty Harpies grounded! The gulls are back on their nests, and they've forgiven nobody.", mood: 'happy' },
-    { who: 'rook', text: 'Did I ever tell you about the time I wrestled a Harpy off the mainmast one-handed, in a storm, during my tea break?', mood: 'happy' },
+    { who: 'rook', text: "Thirty albatrosses grounded! The gulls are back on their nests, and they've forgiven nobody.", mood: 'happy' },
+    { who: 'rook', text: 'Did I ever tell you about the time an albatross landed on my mainmast in a storm and refused to leave? I made it first mate. Best sailor I ever had.', mood: 'happy' },
     { who: 'player', text: 'Four times. It was a different bird each time.' },
     { who: 'rook', text: 'It was a very busy storm.', mood: 'happy' },
     { cam: ['rook', 'vex'], dur: 0.9 },
@@ -971,7 +971,7 @@ export const SIDE_SCENES = {
     { who: 'rook', text: '...This calls for a song. And this time I will sing it. One verse.', mood: 'happy' },
     { together: [{ emote: 'rook', kind: 'note', dur: 2 }, { fx: 'notes', at: 'rook', n: 14 }, { fx: 'feathers', at: 'rook', n: 8 }] },
     { who: null, text: 'Captain Rook sings one verse of a sea shanty. It is about a crab. It is unexpectedly sad. The whole harbor claps, mostly out of relief when it ends.' },
-    { who: 'rook', text: "The Harpies came down from the Sky Garden. Above that is Starfall Heights, where the stars fall slow.", mood: 'happy' },
+    { who: 'rook', text: "The albatrosses came down from the Sky Garden. Above that is Starfall Heights, where the stars fall slow.", mood: 'happy' },
     { who: 'rook', text: "Go on up. And if you see a falling star, my crew swears you can catch one.", mood: 'happy' },
   ],
   // ----- Granny Kelp and Old Lumen -----
@@ -1126,7 +1126,7 @@ export const SIDE_SCENES = {
   ],
   // ----- The instructors' trials -----
   trial_brann: [
-    { who: 'brann', text: "The Crystal Golems are slow, heavy, and they never back down. Neither should you. Neither do I. It's my whole personality." },
+    { who: 'brann', text: "The Geode Bears are slow, heavy, and they never back down. Neither should you. Neither do I. It's my whole personality." },
     { who: 'brann', text: "Twenty of them. Stand your ground the whole time. Then we talk about your future. I've prepared a speech. It's short." },
   ],
   // ----- Brann's shield -----
@@ -1138,7 +1138,7 @@ export const SIDE_SCENES = {
     { who: 'brann', text: "...That's where my shield hung. Lost it a long time ago. It's a long story. It has a flashback in it. Another day.", mood: 'sad' },
   ],
   brann_ruins_done: [
-    { who: 'player', text: "I climbed to the gatehouse. Claw marks, old scratches on the wall, and a Dullahan who asked me if the war was over yet." },
+    { who: 'player', text: "I climbed to the gatehouse. Claw marks, old scratches on the wall, and a little pangolin in a dented helmet who saluted me and asked if the war was over yet." },
     { who: 'brann', text: "Tally marks. One for every hour I held that door. I stopped counting at nine. Numbers were never my class.", mood: 'sad' },
     { who: 'brann', text: "A recruit was behind me that night. Shaking like a leaf. I told her to run, and she ran. Fastest anyone has ever run. Genuinely impressive.", mood: 'sad' },
     { together: [{ emote: 'tora', kind: '!', dur: 1.4 }, { fx: 'sparks', at: 'tora', n: 8 }] },
@@ -1442,25 +1442,35 @@ export const MANOR_SCENES = {
     { card: 'Moonlit Manor', sub: 'Rank {grade}  ·  {time}' },
     { who: null, text: '{notes}. Rank bonus on your rewards: +{bonus}.' },
   ],
-  // The Armours, staged: a music box starts up, the two suits glide together, bow, and waltz
-  // past each other and back in three-four time trailing music notes, then turn on you as one;
-  // Rondo lunges with her rapier.
+  // Dame Rondo and Dame Minuet, staged (2026-11-26, the penguin and the bat): the ballroom dark and
+  // still; from far across the polished floor the penguin belly-slides in and spins to a perfect
+  // stop in the middle, then straightens her bow tie; the bat drops from the chandelier on her rose
+  // ribbon and hangs upside-down, nose to beak with her; they bow to each other, one up and one down,
+  // and the chandelier blazes into light. (Their rigs act out 'slidein', 'spinstop', 'bowtie', 'bow',
+  // 'perch', 'ribbondrop' and 'flipdown': render/waltzrondo/, render/waltzminuet/.)
   manor_waltz: [
-    { together: [{ cam: ['waltzrondo', 'waltzminuet'], up: 20, dur: 1.2 }, { walk: 'player', to: 'waltzrondo', gap: 170, speed: 110 }] },
-    { who: null, text: 'The ballroom. A music box somewhere starts a waltz, and two suits of armour turn to face the door.' },
-    { together: [{ fx: 'notes', at: 'waltzrondo', top: true }, { walk: 'waltzrondo', to: 'waltzminuet', gap: 34, speed: 50 }, { walk: 'waltzminuet', to: 'waltzrondo', gap: 34, speed: 50 }] },
-    { together: [{ face: 'waltzrondo', to: 'waltzminuet' }, { face: 'waltzminuet', to: 'waltzrondo' }, { act: 'waltzrondo', move: 'sway', dur: 0.9, amp: 0.12, speed: 3.5 }, { act: 'waltzminuet', move: 'sway', dur: 0.9, amp: 0.12, speed: 3.5 }, { emote: 'waltzminuet', kind: 'heart', dur: 1.4 }] },
-    { together: [{ walk: 'waltzrondo', by: 70, speed: 80 }, { walk: 'waltzminuet', by: -70, speed: 80 }, { act: 'waltzrondo', move: 'sway', dur: 0.9, amp: 0.1, speed: 7 }, { act: 'waltzminuet', move: 'sway', dur: 0.9, amp: 0.1, speed: 7 }, { fx: 'notes', at: 'waltzminuet', top: true }] },
-    { together: [{ walk: 'waltzrondo', by: -70, speed: 80 }, { walk: 'waltzminuet', by: 70, speed: 80 }, { act: 'waltzrondo', move: 'sway', dur: 0.9, amp: 0.1, speed: 7 }, { act: 'waltzminuet', move: 'sway', dur: 0.9, amp: 0.1, speed: 7 }, { fx: 'notes', at: 'waltzrondo', top: true }] },
-    { together: [{ face: 'waltzrondo', to: 'player' }, { face: 'waltzminuet', to: 'player' }, { mood: 'waltzrondo', as: 'happy' }, { mood: 'waltzminuet', as: 'happy' }] },
-    { who: 'waltzrondo', text: 'Guests! At last. My lady, shall we show them how it is done?' },
-    { together: [{ emote: 'player', kind: 'sweat', dur: 1.2 }, { mood: 'waltzrondo', as: 'angry' }, { mood: 'waltzminuet', as: 'angry' }] },
-    { who: 'waltzminuet', text: 'Oh, we shall. One, two, three... one, two, THREE!', mood: 'happy' },
+    { together: [{ place: 'waltzrondo', x: 1330 }, { place: 'waltzminuet', x: 754 }, { act: 'waltzminuet', move: 'perch', dur: 0.1 }, { face: 'waltzrondo', to: -1 }, { face: 'waltzminuet', to: -1 }, { cam: { x: 760, y: 300 }, dur: 1.2 }, { walk: 'player', to: 560, speed: 110 }] },
+    { who: null, text: 'The ballroom, dark and still. Then, from far across the polished floor: a squeak... and a swish...' },
+    { together: [{ walk: 'waltzrondo', to: 724, speed: 300 }, { act: 'waltzrondo', move: 'slidein', dur: 2 }, { fx: 'sparkle', at: 'waltzrondo' }] },
+    { act: 'waltzrondo', move: 'spinstop', dur: 0.9 },
+    { together: [{ act: 'waltzrondo', move: 'bowtie', dur: 1 }, { emote: 'waltzrondo', kind: 'sparkle', dur: 1 }] },
+    { who: 'waltzrondo', text: 'And... STOP. Perfect. As always.', mood: 'happy' },
+    { together: [{ act: 'waltzminuet', move: 'ribbondrop', dur: 1.8 }, { face: 'waltzrondo', to: 1 }] },
+    { together: [{ emote: 'waltzrondo', kind: '!' }, { jump: 'waltzrondo' }] },
+    { who: 'waltzminuet', text: 'Boo! Hello, my dear. You counted without me again.', mood: 'happy' },
+    { who: 'waltzrondo', text: 'One does not wait for the ceiling, Minuet. Now: guests. Positions!' },
+    { together: [{ act: 'waltzrondo', move: 'bow', dur: 1.4 }, { act: 'waltzminuet', move: 'bow', dur: 1.4 }, { fx: 'hearts', at: { x: 740, y: 322 } }] },
+    { together: [{ flash: '#fff2c8' }, { fx: 'sparkle', at: { x: 750, y: 170 }, n: 16 }] },
+    { who: null, text: 'One bows up, one bows down, and the chandelier blazes into light.' },
+    { together: [{ face: 'waltzrondo', to: 'player' }, { act: 'waltzminuet', move: 'flipdown', dur: 0.9 }, { mood: 'waltzrondo', as: 'angry' }] },
+    { face: 'waltzminuet', to: 'player' },
+    { who: 'waltzrondo', text: 'Muddy feet on MY dance floor? Then you shall dance. One, two...', mood: 'angry' },
+    { who: 'waltzminuet', text: '...THREE! Do try to keep up, darlings!', mood: 'happy' },
     { act: 'waltzrondo', move: 'attack', dur: 0.9, async: true },
     { wait: 0.3 },
-    { together: [{ flash: '#e6f8ff' }, { shake: 3, dur: 0.3 }, { fx: 'notes', at: 'waltzrondo', top: true, n: 14 }, { walk: 'player', away: 'waltzrondo', by: 30, speed: 160 }, { emote: 'player', kind: '!' }] },
-    { wait: 0.5 },
-    { cam: 'player', dur: 0.7 },
+    { together: [{ shake: 3, dur: 0.3 }, { fx: 'notes', at: 'waltzrondo', top: true, n: 10 }, { walk: 'player', away: 'waltzrondo', by: 30, speed: 160 }, { emote: 'player', kind: '!' }] },
+    { wait: 0.4 },
+    { together: [{ mood: 'waltzrondo', as: null }, { mood: 'waltzminuet', as: null }, { cam: 'player', dur: 0.7 }] },
   ],
   // Madame Velvet, staged: she glares down at the mud on her runner, wags a finger of a sleeve at
   // you, jingles her ring of keys, and hurls a teacup that bursts into china at your feet.
@@ -1480,13 +1490,20 @@ export const MANOR_SCENES = {
     { wait: 0.6 },
     { cam: 'player', dur: 0.7 },
   ],
-  // Lady Marigold, staged (rewritten 2026-11-18, Chapter 4): the roof under a moon far too big, and
-  // at a little tea table her one guest since festival night, Elder Sakura, dozing on her feet.
+  // Lady Marigold, staged (rewritten 2026-11-18, Chapter 4; her entrance remade 2026-11-26 with her new
+  // look, render/marigold/): the roof under a moon far too big, and at a little tea table her one
+  // guest since festival night, Elder Sakura, dozing on her feet. Nobody is waiting... then a marigold
+  // petal drifts down out of the moonlight, and another, and the hostess comes down the moon's beam,
+  // turning slowly as she comes, her ghostly train unfurling, and lands in a deep curtsey. (Her rig
+  // acts out 'away', 'arrive' and 'curtsey'.)
   manor_marigold: [
     { cast: 'sakura', x: 1460, facing: -1, ...SAKURA_CAST },
-    { together: [{ cam: 'marigold', up: 30, dur: 2.2 }, { walk: 'player', to: 'marigold', gap: 170, speed: 100 }, { mood: 'marigold', as: 'happy' }] },
+    { together: [{ act: 'marigold', move: 'away', dur: 0.1 }, { cam: { x: 800, y: 230 }, dur: 2.2 }, { walk: 'player', to: 'marigold', gap: 170, speed: 100 }] },
     { who: null, text: 'The roof, under a moon far too big. A table laid for two. One tiny guest, asleep on her feet.' },
-    { together: [{ face: 'marigold', to: 'player' }, { jump: 'marigold', height: 12 }, { emote: 'marigold', kind: 'heart', dur: 1.6 }, { fx: 'petals', at: 'marigold', top: true }] },
+    { who: null, text: 'A marigold petal drifts down out of the moonlight. Then another. Then a hundred.' },
+    { together: [{ act: 'marigold', move: 'arrive', dur: 3.4 }, { cam: 'marigold', up: 50, dur: 3 }, { mood: 'marigold', as: 'happy' }] },
+    { together: [{ act: 'marigold', move: 'curtsey', dur: 1.4 }, { face: 'marigold', to: 'player' }, { fx: 'petals', at: 'marigold', top: true }] },
+    { together: [{ jump: 'marigold', height: 12 }, { emote: 'marigold', kind: 'heart', dur: 1.6 }, { cam: 'marigold', up: 30, dur: 0.8 }] },
     { who: 'marigold', text: 'GUESTS! Sakura, look! More guests!' },
     { together: [{ cam: 'sakura', up: 16, dur: 1 }, { emote: 'sakura', kind: 'zzz', dur: 1.4 }] },
     { who: 'sakura', text: "...that's nice, dear. May I go home now?" },
@@ -1543,7 +1560,7 @@ export const MANOR_SCENES = {
 export const MANOR_RADIO = {
   'enter:manor1': ['Lanterns! Three of them in the garden. Light them so I can see you!', 'Mind the fountains: they spout when they please. Use them to get up the terraces!'],
   'enter:manor2': ["The gallery. Her Ladyship's family, all four of them, and none of them ever smiled. Set them to the crest!", 'Each portrait turns. Match them to the crest on the wall and they click into place.'],
-  'enter:manor3': ["The ballroom! Those two suits of armour have been dancing since before I was born. Don't get between them."],
+  'enter:manor3': ["The ballroom! Dame Rondo and Dame Minuet have been dancing since before I was born. The penguin has the floor, the bat has the ceiling. Don't get between them."],
   'enter:manor4': ['Books flying about again. Catch the three lost ones. And hold on to something when the pages blow!'],
   'enter:manor5': ["The long hall. Madame Velvet's trolley... when it starts rolling, you RUN. Levers open the doors!"],
   'enter:manor6': ["The roof. She's up there, with poor Elder Sakura. Be gentle... she's only lonely."],
@@ -1555,9 +1572,11 @@ export const MANOR_RADIO = {
   wipe: ["Up you get! Even I trip on those rugs.", "That's alright. Dust yourselves off and try again."],
   chase: ['RUN! Levers, levers, LEVERS!', "That's the trolley! Don't let it catch you!"],
   alone: ['Oh no, the other one is dancing alone now. Faster, and cross about it!'],
+  partners: ['Change partners! The bat leads now, so it all comes the other way round: up there first, then down here!'],
+  lift: ["She's lifted her! The penguin's FLYING! Low across the floor, then high past the balconies: low, then high!"],
   bell: ["She's rung for the maids! They'll go for whoever's healing!"],
-  guests: ["My butlers are cutting in! Sorry! She won't come down till they've sat down!"],
-  lastwaltz: ['The Last Waltz! Up on a chimney when the moonlight sweeps! On the ONE!'],
+  butlers: ["Her butlers, with the pumpkin tarts! Stop them before they reach her, or she'll get her second wind!"],
+  midnight: ["Midnight! Every clock in the house just started up again! Stand where a chime's already rung, or up on a chimney!"],
 };
 
 
@@ -1572,76 +1591,89 @@ export const AQUA_SCENES = {
     { card: 'Sunken Aquarium Palace', sub: 'Rank {grade}  ·  {time}' },
     { who: null, text: '{notes}. Rank bonus on your rewards: +{bonus}.' },
   ],
-  // The Twin Morays, staged: the grotto goes still, both sisters gone into their holes; Murri pops
-  // up out of the floor in her eel hood in a gush of bubbles and peeks about, Ena rises on the far
-  // side, they skip together delighted, and both wind up and chomp at you.
+  // The Twin Morays, staged (2026-11-26, the sisters remade as two moray eels: render/moray/): the
+  // grotto is still, and something giggles in two of its holes. Murri peeks out of hers and ducks
+  // back, then Ena out of hers; they burst out of both at once, swim to the middle, loop the loop
+  // round each other and touch noses (their signature: the game of peekaboo they have played alone
+  // for a hundred years), then notice you, and decide to keep you.
   aquarium_moray: [
     { fade: 'out', dur: 0.35, color: '#0e2a40' },
-    { together: [{ act: 'moraymurri', move: 'sink' }, { act: 'morayena', move: 'sink' }, { cam: 'moraymurri', dur: 0.1 }] },
+    { together: [{ act: 'moraymurri', move: 'hide' }, { act: 'morayena', move: 'hide' }, { cam: ['moraymurri', 'morayena'], dur: 0.1 }] },
     { fade: 'in', dur: 0.6 },
-    { who: null, text: 'A grotto full of holes. Out of one pops a little girl in a spotted green eel hood; from another, one in a golden hood watches.' },
-    { together: [{ fx: 'bubbles', at: 'moraymurri', n: 18 }, { act: 'moraymurri', move: 'emerge', dur: 1.2 }, { mood: 'moraymurri', as: 'happy' }] },
-    { together: [{ face: 'moraymurri', to: 'player' }, { emote: 'moraymurri', kind: '!' }] },
+    { who: null, text: 'A grotto full of holes, and quiet. Then, from two of the holes, a giggle.' },
+    { together: [{ cam: 'moraymurri', dur: 0.8 }, { fx: 'bubbles', at: 'moraymurri', n: 12 }, { act: 'moraymurri', move: 'peekaboo', dur: 1.2 }] },
+    { together: [{ cam: 'morayena', dur: 0.9 }, { fx: 'bubbles', at: 'morayena', n: 12 }, { act: 'morayena', move: 'peekaboo', dur: 1.2 }] },
+    { together: [{ cam: ['moraymurri', 'morayena'], dur: 1 }, { act: 'moraymurri', move: 'emerge', dur: 0.9 }, { act: 'morayena', move: 'emerge', dur: 0.9 }, { fx: 'bubbles', at: 'moraymurri', n: 18 }, { fx: 'bubbles', at: 'morayena', n: 18 }] },
+    { together: [{ walk: 'moraymurri', to: 700, speed: 300 }, { walk: 'morayena', to: 790, speed: 300 }, { cam: ['moraymurri', 'morayena'], dur: 1.2 }] },
+    { together: [{ act: 'moraymurri', move: 'loop', dur: 1.2 }, { act: 'morayena', move: 'loop', dur: 1.2 }, { fx: 'sparkle', at: 'moraymurri', n: 8 }, { fx: 'sparkle', at: 'morayena', n: 8 }] },
+    { together: [{ face: 'moraymurri', to: 'morayena' }, { face: 'morayena', to: 'moraymurri' }] },
+    { together: [{ act: 'moraymurri', move: 'boop', dur: 0.9 }, { act: 'morayena', move: 'boop', dur: 0.9 }, { emote: 'morayena', kind: 'heart', dur: 1.2 }] },
+    { together: [{ face: 'moraymurri', to: 'player' }, { face: 'morayena', to: 'player' }, { emote: 'moraymurri', kind: '!' }, { walk: 'player', to: 'moraymurri', gap: 170, speed: 120 }] },
     { who: 'moraymurri', text: "Sister! Visitors! Nobody's visited since the palace went down.", mood: 'happy' },
-    { together: [{ cam: 'morayena', dur: 1 }, { fx: 'bubbles', at: 'morayena', n: 18 }, { act: 'morayena', move: 'emerge', dur: 1.2 }, { mood: 'morayena', as: 'happy' }] },
-    { together: [{ walk: 'morayena', to: 1110, speed: 120 }, { walk: 'moraymurri', to: 1030, speed: 120 }, { cam: ['moraymurri', 'morayena'], dur: 1.2 }] },
-    { together: [{ emote: 'morayena', kind: 'heart', dur: 1.4 }, { act: 'moraymurri', move: 'sway', dur: 1.2, amp: 0.08, speed: 6 }, { act: 'morayena', move: 'sway', dur: 1.2, amp: 0.08, speed: 6 }] },
-    { together: [{ face: 'morayena', to: 'player' }, { face: 'moraymurri', to: 'player' }, { walk: 'player', to: 'moraymurri', gap: 150, speed: 120 }] },
     { who: 'morayena', text: "Then let's keep them. One for you, one for me... and two to share.", mood: 'happy' },
-    { together: [{ act: 'moraymurri', move: 'attack', dur: 0.9 }, { act: 'morayena', move: 'attack', dur: 0.9 }, { fx: 'bubbles', at: 'player', n: 16 }, { jump: 'player', height: 20 }, { emote: 'player', kind: '!' }] },
+    { together: [{ act: 'moraymurri', move: 'chomp', dur: 0.95 }, { act: 'morayena', move: 'chomp', dur: 0.95 }, { fx: 'bubbles', at: 'player', n: 16 }, { jump: 'player', height: 20 }, { emote: 'player', kind: '!' }] },
     { cam: 'player', dur: 0.7 },
   ],
-  // Lady Abyssia, staged: the witch sways in her bubbling cauldron and giggles at the little
-  // air-breathers, then raises her ladle, and ink floods the room in a dark swirl.
+  // Lady Abyssia, staged (restaged 2026-11-26 for her remake, render/abyssia/): the bottom of the
+  // shaft is dark but for a pool of ink, swirling. Up out of it she rises, the nautilus of her hat
+  // first, then her sly face, then all of her, her arms unfurling one by one and her lanterns winking
+  // alight; a twirl of her crook and a kiss blown. At "Ink, my darlings!" she pinches her lantern dark.
   aquarium_abyssia: [
-    { together: [{ cam: 'abyssia', up: 20, dur: 1.2 }, { walk: 'player', to: 'abyssia', gap: 170, speed: 110 }, { mood: 'abyssia', as: 'happy' }] },
-    { together: [{ act: 'abyssia', move: 'sway', dur: 1.6, amp: 0.07, speed: 5 }, { fx: 'sparkle', at: 'abyssia', top: true, n: 10 }, { fx: 'bubbles', at: 'abyssia', n: 8 }] },
+    { together: [{ act: 'abyssia', move: 'away', dur: 0.1 }, { cam: 'abyssia', up: 20, dur: 1.2 }, { walk: 'player', to: 'abyssia', gap: 170, speed: 110 }] },
+    { who: null, text: 'The bottom of the shaft, and dark. In the middle of the floor, a pool of ink, slowly swirling.' },
+    { together: [{ act: 'abyssia', move: 'rise', dur: 3.4 }, { cam: 'abyssia', up: 34, dur: 3 }, { mood: 'abyssia', as: 'happy' }] },
+    { together: [{ act: 'abyssia', move: 'pose', dur: 2.6 }, { face: 'abyssia', to: 'player' }] },
     { who: 'abyssia', text: 'Oh, little air-breathers, all the way down here? The wards are failing, you know. I am making sure of it.', mood: 'happy' },
-    { together: [{ jump: 'abyssia', height: 10 }, { emote: 'abyssia', kind: 'note', dur: 1.2 }] },
     { together: [{ emote: 'player', kind: 'anger', dur: 1.2 }, { face: 'player', to: 'abyssia' }] },
     { who: 'player', text: "You're the one draining the wards? The whole palace is drowning!" },
-    { together: [{ mood: 'abyssia', as: 'angry' }, { act: 'abyssia', move: 'windup', dur: 0.9 }, { fx: 'sparkle', at: 'abyssia', top: true, n: 14 }] },
+    { together: [{ mood: 'abyssia', as: 'angry' }, { act: 'abyssia', move: 'windup', dur: 0.9 }] },
     { who: 'abyssia', text: 'And when it does, the deep is mine. Ink, my darlings!', mood: 'angry' },
-    { act: 'abyssia', move: 'attack', dur: 1, async: true },
-    { wait: 0.3 },
-    { together: [{ fx: 'ink', at: 'abyssia', n: 30 }, { shake: 3, dur: 0.4 }, { fade: 'out', dur: 0.35, color: '#1a1030' }] },
+    { act: 'abyssia', move: 'snuff', dur: 1.3 },
+    { together: [{ shake: 3, dur: 0.4 }, { fade: 'out', dur: 0.35, color: '#1a1030' }] },
     { together: [{ fade: 'in', dur: 0.8 }, { walk: 'player', away: 'abyssia', by: 30, speed: 150 }, { emote: 'player', kind: 'sweat', dur: 1.2 }] },
     { cam: 'player', dur: 0.7 },
   ],
-  // Queen Coralie, staged (rewritten 2026-11-18, Chapter 5): her throne room full of tanks, and in
-  // the biggest, behind the throne, Elder Warabi, kept since festival night.
+  // Queen Coralie, staged (rewritten 2026-11-18, Chapter 5; restaged 2026-11-26 for her remake,
+  // render/coralie/): her throne room full of tanks, and in the biggest, behind the throne, Elder Warabi,
+  // kept since festival night. The queen herself stands in a glass case of her own, perfectly still, her
+  // collection's finest exhibit, till she winks, the case lifts away in bubbles and she presents it all.
   aquarium_coralie: [
     { cast: 'warabi', x: 740, y: 340, hidden: true, ...WARABI_CAST },
-    { together: [{ cam: 'coralie', up: 40, dur: 1.8 }, { walk: 'player', to: 'coralie', gap: 170, speed: 90 }, { mood: 'coralie', as: 'happy' }] },
+    { together: [{ act: 'coralie', move: 'exhibit', dur: 0.1 }, { cam: 'coralie', up: 40, dur: 1.8 }, { walk: 'player', to: 'coralie', gap: 170, speed: 90 }] },
     { who: null, text: 'The throne room. Tanks everywhere. In the biggest one, behind the throne, a little Mochi elder waves.' },
     { who: 'warabi', text: "Hello! Don't mind me. I'm being kept." },
-    { together: [{ face: 'coralie', to: 'player' }, { jump: 'coralie', height: 14 }, { fx: 'bubbles', at: 'coralie', top: true, n: 12 }] },
+    { who: null, text: 'In the middle of the room stands a glass case with a queen in it, perfectly still. The little plaque reads: "Exhibit No. 1: Me!"' },
+    { together: [{ act: 'coralie', move: 'alive', dur: 2.6 }, { cam: 'coralie', up: 40, dur: 1 }, { mood: 'coralie', as: 'happy' }] },
+    { together: [{ face: 'coralie', to: 'player' }, { act: 'coralie', move: 'present', dur: 2.2 }] },
     { who: 'coralie', text: 'Visitors! Look! My fish, my pearls, my elder. All safe in glass. Nobody ever leaves!', mood: 'happy' },
     { together: [{ cam: ['player', 'coralie'], up: 20, dur: 0.9 }, { face: 'player', to: 'coralie' }] },
     { who: 'player', text: 'Let them go, your majesty.' },
     { who: 'coralie', text: 'If I let them go, they swim away. Everyone swims away.', mood: 'sad' },
-    { together: [{ mood: 'coralie', as: 'happy' }, { emote: 'coralie', kind: 'idea', dur: 1.2 }] },
+    { mood: 'coralie', as: 'happy' },
     { who: 'coralie', text: "...Oh! I'll keep YOU too!", mood: 'happy' },
-    { act: 'coralie', move: 'attack', dur: 1, async: true },
+    { act: 'coralie', move: 'keep', dur: 1.2, async: true },
     { wait: 0.32 },
-    { together: [{ flash: '#bff0ff' }, { shake: 4, dur: 0.4 }, { fx: 'bubbles', at: 'coralie', n: 36 }, { fx: 'sparkle', at: 'coralie', n: 12 }, { jump: 'player', height: 18 }, { emote: 'player', kind: '!' }] },
+    { together: [{ flash: '#bff0ff' }, { shake: 4, dur: 0.4 }, { jump: 'player', height: 18 }, { emote: 'player', kind: '!' }] },
     { wait: 0.5 },
     { cam: 'player', dur: 0.7 },
   ],
-  // She opens the last tank herself; Elder Warabi goes home; the tide turns.
+  // She opens the last tank herself (a tap of her scepter on its glass); Elder Warabi goes home; the
+  // tide turns. Her own signature at the very end (2026-11-26): the last keepsake she has, the little
+  // fish in the globe on her scepter, let go with her own hands, and she swims up after it.
   aquarium_freed: [
     { together: [{ free: 'coralie', as: 'sad' }, { cam: ['coralie', 'player'], dur: 1.2 }, { walk: 'player', to: 'coralie', gap: 80, speed: 70 }] },
     { together: [{ face: 'player', to: 'coralie' }, { face: 'coralie', to: 'player' }] },
     { who: 'coralie', text: "...They'd stay. If they wanted to. Wouldn't they?", mood: 'sad' },
     { who: 'player', text: "They'd visit. That's better." },
-    { together: [{ walk: 'coralie', to: 860, speed: 50 }, { fx: 'bubbles', at: 'coralie', top: true, n: 8 }] },
+    { walk: 'coralie', to: 860, speed: 50 },
     { who: null, text: 'Queen Coralie swims to the biggest tank, and opens it herself.' },
+    { together: [{ face: 'coralie', to: -1 }, { act: 'coralie', move: 'open', dur: 1.6 }] },
     { cast: 'warabi', x: 790, y: 380, facing: -1, ...WARABI_CAST },
     { together: [{ fx: 'bubbles', at: { x: 800, y: 300 }, n: 30 }, { flash: '#e8fcff' }] },
     { together: [{ jump: 'warabi', height: 14 }, { emote: 'warabi', kind: 'heart' }] },
     { who: 'warabi', text: 'Ahh. Room to wiggle.' },
     { who: 'warabi', text: "We'll come back, dear. Friends come back. That's the whole trick." },
-    { together: [{ mood: 'coralie', as: 'happy' }, { jump: 'coralie', height: 12 }, { emote: 'coralie', kind: 'heart', dur: 1.6 }] },
+    { together: [{ mood: 'coralie', as: 'happy' }, { face: 'coralie', to: 'player' }, { jump: 'coralie', height: 12 }] },
     { who: 'coralie', text: "...Then I'll leave the gate open.", mood: 'happy' },
     { who: null, text: 'One by one, the fish swim out of every tank in the palace, and on up into the open sea.' },
     { together: [{ walk: 'warabi', to: 'player', gap: 16, speed: 40 }, { fx: 'bubbles', at: 'warabi', top: true }] },
@@ -1659,9 +1691,11 @@ export const AQUA_SCENES = {
     { who: 'hayate', text: '...mmn... fishies...', mood: 'sleepy' },
     { who: 'translator', text: 'Her Majesty says: "fishies".' },
     { set: null },
-    { together: [{ cam: 'coralie', up: 40, dur: 1.2 }, { mood: 'coralie', as: 'happy' }, { emote: 'coralie', kind: 'heart', dur: 1.6 }] },
-    { who: null, text: 'Down in the palace, Queen Coralie swims up after her fish. She wants to see the sun.' },
-    { together: [{ act: 'coralie', move: 'swimup', height: 220, dur: 3.2 }, { fx: 'bubbles', at: 'coralie' }, { emote: 'player', kind: 'sparkle', dur: 1.4 }] },
+    { together: [{ cam: 'coralie', up: 40, dur: 1.2 }, { mood: 'coralie', as: 'happy' }] },
+    { who: null, text: 'Down in the palace, one keepsake is left: the little fish in the globe on her scepter.' },
+    { act: 'coralie', move: 'release', dur: 3.8 },
+    { who: 'coralie', text: 'You too, little one. Go and see the sun. ...Wait for me!', mood: 'happy' },
+    { together: [{ act: 'coralie', move: 'swimup', height: 220, dur: 3.2 }, { emote: 'player', kind: 'sparkle', dur: 1.4 }] },
   ],
 };
 
@@ -1681,9 +1715,9 @@ export const AQUA_RADIO = {
   wipe: ['Up you come, breathe, and try again!', 'Shake it off. The sea is big, and so is your heart.'],
   flood: ['The tide! Get up on a ledge!', 'Here it comes, climb!'],
   moraymad: ["The other sister's angry now! Watch her!"],
-  anglers: ['Lights in the dark: anglers! Bring them down!'],
-  tanks: ["She's hugging her tanks! Let the fish out, one tank at a time!"],
-  wave: ['The Great Wave! Jump, or get up high!'],
+  anglers: ['Little lamps in the dark: her lamplighters! When the lights go out, stay close to one.'],
+  portrait: ["A royal portrait? Squeeze into the frame with her, everyone, or she'll sulk!"],
+  walls: ['Glass from both walls! Keep to the middle of the room!'],
 };
 
 
@@ -1698,15 +1732,18 @@ export const CARNIVAL_SCENES = {
     { card: 'Clockwork Carnival', sub: 'Rank {grade}  ·  {time}' },
     { who: null, text: '{notes}. Rank bonus on your rewards: +{bonus}.' },
   ],
-  // Leonie, staged: the Big Top goes dark, a drumroll, and a spotlight finds the lioness on her
-  // star-print ball; she leaps sky-high in a shower of confetti, rolls up to you, bows to the
-  // crowd and pounces.
+  // Leonie, staged (2026-11-27, her redraw): the Big Top goes dark, a drumroll, and high over the ring
+  // the lioness is swinging from a trapeze by her knees, waving; she lets go, a triple somersault
+  // down into a spotlight, lands, and flings her arms up to the crowd in a shower of confetti; then
+  // she struts up to you and makes you the act.
   carnival_leonie: [
-    { together: [{ cam: 'leonie', up: 20, dur: 1.2 }, { walk: 'player', to: 'leonie', gap: 180, speed: 110 }, { spot: 'leonie', r: 46, dur: 0.8 }, { mood: 'leonie', as: 'happy' }] },
-    { together: [{ shake: 1.5, dur: 1.2 }, { act: 'leonie', move: 'windup', dur: 1.2 }] },
-    { who: null, text: 'The Big Top. A drumroll from nowhere. A spotlight swings round and finds a lioness in a red lion tamer jacket, hoop held high, grinning.' },
-    { together: [{ jump: 'leonie', height: 70 }, { fx: 'confetti', at: 'leonie', top: true, n: 30 }, { emote: 'player', kind: '!' }] },
-    { together: [{ fx: 'confetti', at: 'leonie', n: 20 }, { shake: 2, dur: 0.3 }, { spot: null, dur: 0.6 }] },
+    { act: 'leonie', move: 'trapeze', dur: 30, async: true },
+    { together: [{ cam: 'leonie', up: 200, dur: 1.4 }, { walk: 'player', to: 'leonie', gap: 190, speed: 110 }, { mood: 'leonie', as: 'happy' }] },
+    { together: [{ shake: 1.2, dur: 1.4 }, { wait: 1.4 }] },
+    { who: null, text: 'The Big Top goes dark. A drumroll from nowhere. High over the ring, a lioness in scarlet and gold swings from a trapeze by her knees... and waves.' },
+    { together: [{ act: 'leonie', move: 'somersault', dur: 1.5 }, { cam: 'leonie', up: 20, dur: 1.5 }, { emote: 'player', kind: '!' }] },
+    { together: [{ act: 'leonie', move: 'tada', dur: 1.8, async: true }, { spot: 'leonie', r: 54, dur: 0.6 }, { fx: 'confetti', at: 'leonie', top: true, n: 30 }, { shake: 2, dur: 0.3 }] },
+    { together: [{ fx: 'confetti', at: 'leonie', n: 20 }, { wait: 1.2 }, { spot: null, dur: 0.6 }] },
     { who: 'leonie', text: 'Ladies and gentlemen! Tonight, for one night only... YOU get to be the act!', mood: 'happy' },
     { together: [{ walk: 'leonie', to: 'player', gap: 110, speed: 140 }, { cam: ['player', 'leonie'], up: 20, dur: 1 }] },
     { together: [{ act: 'leonie', move: 'sway', dur: 0.9, amp: 0.15, speed: 3.5 }, { emote: 'leonie', kind: 'heart', dur: 1.2 }, { fx: 'sparkle', at: 'leonie', top: true }] },
@@ -1717,14 +1754,17 @@ export const CARNIVAL_SCENES = {
     { wait: 0.4 },
     { cam: 'player', dur: 0.7 },
   ],
-  // Madame Marionette, staged: she lowers herself on her thread from the rafters, her little
-  // puppets dancing beneath her, coos over your lack of strings, then yanks hers.
+  // Madame Marionette, staged (redrawn 2026-11-27): a life-size puppet slumped among the half-built ones,
+  // her old strings slack in the dark; they go taut and pull her up limb by limb, she snips them away
+  // herself and catches her crosses, coos over your lack of strings, then makes you dance.
   carnival_marionetta: [
-    { fade: 'out', dur: 0.3, color: '#1e1430' },
-    { together: [{ act: 'marionetta', move: 'hoist', from: 200 }, { mood: 'marionetta', as: 'happy' }] },
-    { cam: 'marionetta', dur: 0 },
-    { together: [{ fade: 'in', dur: 0.7 }, { act: 'marionetta', move: 'descend', dur: 2.4 }, { cam: { x: 760, y: 640 }, dur: 2.4 }, { walk: 'player', to: 'marionetta', gap: 170, speed: 100 }] },
-    { together: [{ act: 'marionetta', move: 'sway', dur: 1.6, amp: 0.1, speed: 4 }, { fx: 'notes', at: 'marionetta' }, { fx: 'sparkle', at: 'marionetta', n: 8 }] },
+    { act: 'marionetta', move: 'slump', dur: 30, async: true },
+    { together: [{ cam: 'marionetta', up: 40, dur: 1.6 }, { walk: 'player', to: 'marionetta', gap: 170, speed: 100 }] },
+    { who: null, text: 'Among the half-built puppets on the workshop floor sits a life-size one, slumped, its strings slack in the dark. Painted lashes. A little brass key in its back.' },
+    { together: [{ emote: 'player', kind: '?' }, { wait: 0.8 }] },
+    { together: [{ act: 'marionetta', move: 'jerk', dur: 2.6 }, { shake: 1.5, dur: 0.4 }, { emote: 'player', kind: '!' }] },
+    { together: [{ act: 'marionetta', move: 'snip', dur: 1.8 }, { fx: 'sparkle', at: 'marionetta', top: true, n: 10 }] },
+    { together: [{ act: 'marionetta', move: 'curtsy', dur: 1.2 }, { mood: 'marionetta', as: 'happy' }] },
     { who: 'marionetta', text: 'Oh, visitors. With arms and legs and everything. How... unfinished you look without strings.', mood: 'happy' },
     { together: [{ cam: ['player', 'marionetta'], up: 30, dur: 0.9 }, { emote: 'player', kind: 'sweat', dur: 1.2 }, { face: 'player', to: 'marionetta' }] },
     { who: 'player', text: "We're here to wind the Queen down. Let your toys rest." },
@@ -1737,21 +1777,24 @@ export const CARNIVAL_SCENES = {
     { wait: 0.4 },
     { cam: 'player', dur: 0.7 },
   ],
-  // Queen Gearheart, staged (rewritten 2026-11-18, Chapter 6): still performing under the great
-  // wheel for her one faithful fan, Elder Kuri, cheering in the front row; then more audience: you.
+  // Queen Gearheart, staged (rewritten 2026-11-18, Chapter 6; restaged 2026-11-27 with her remake): still
+  // performing under the great wheel for her one faithful fan, Elder Kuri, cheering in the front row;
+  // then more audience: you. She cranks her own key to keep going.
   carnival_gearheart: [
     { cast: 'kuri', x: 1250, hidden: true, facing: -1, ...KURI_CAST },
+    { act: 'gearheart', move: 'perform', dur: 30, async: true },
     { together: [{ cam: 'gearheart', up: 40, dur: 1.6 }, { walk: 'player', to: 'gearheart', gap: 180, speed: 100 }, { mood: 'gearheart', as: 'happy' }] },
-    { together: [{ act: 'gearheart', move: 'sway', dur: 2.4, amp: 0.06, speed: 6.28 }, { fx: 'gears', at: 'gearheart', top: true, n: 8 }] },
-    { who: null, text: 'Under the great wheel, a clockwork queen is performing. Twirling. Bowing. Her key spins so fast it hums. Her whole audience: one little Mochi elder.' },
+    { together: [{ fx: 'gears', at: 'gearheart', top: true, n: 8 }, { wait: 1.6 }] },
+    { who: null, text: 'Under the great wheel, a little clockwork queen is performing. Twirling. Bowing. Her key spins so fast it hums. Her whole audience: one little Mochi elder.' },
     { who: 'kuri', text: 'Bravo! BRAVO! Encore!' },
-    { together: [{ emote: 'gearheart', kind: 'sweat', dur: 1.4 }, { act: 'gearheart', move: 'sway', dur: 1.6, amp: 0.06, speed: 6.28 }] },
+    { together: [{ emote: 'gearheart', kind: 'sweat', dur: 1.4 }, { wait: 1.2 }] },
     { who: 'gearheart', text: 'An encore. Of course. While anyone is watching, the show must go on... tick... tock...', mood: 'sad' },
-    { together: [{ cam: ['player', 'gearheart'], up: 30, dur: 0.9 }, { face: 'gearheart', to: 'player' }, { emote: 'gearheart', kind: '!' }] },
-    { who: 'gearheart', text: 'More audience! Step right up! Three games, three prizes, and nobody leaves before the finale!', mood: 'happy' },
+    { together: [{ act: 'gearheart', move: 'notice', dur: 1 }, { cam: ['player', 'gearheart'], up: 30, dur: 0.9 }, { face: 'gearheart', to: 'player' }, { emote: 'gearheart', kind: '!' }] },
+    { together: [{ act: 'gearheart', move: 'present', dur: 3.2, async: true }, { mood: 'gearheart', as: 'happy' }] },
+    { who: 'gearheart', text: 'More audience! Step right up! One show, three acts, and nobody leaves before the finale!', mood: 'happy' },
     { who: 'player', text: 'Your majesty... you look exhausted.' },
-    { together: [{ mood: 'gearheart', as: 'angry' }, { act: 'gearheart', move: 'windup', dur: 0.9 }, { fx: 'gears', at: 'gearheart', n: 10 }] },
-    { who: 'gearheart', text: 'Toys do not get TIRED! Game one: whack-a-mole! TICK! TOCK!', mood: 'angry' },
+    { together: [{ mood: 'gearheart', as: 'angry' }, { act: 'gearheart', move: 'selfwind', dur: 2.2 }, { fx: 'gears', at: 'gearheart', n: 10 }] },
+    { who: 'gearheart', text: 'Toys do not get TIRED! Wind me up, my moles! TICK! TOCK!', mood: 'angry' },
     { act: 'gearheart', move: 'attack', dur: 1, async: true },
     { wait: 0.32 },
     { together: [{ flash: '#ffe8a0' }, { shake: 5, dur: 0.5 }, { fx: 'gears', at: 'gearheart', top: true, n: 24 }, { walk: 'player', away: 'gearheart', by: 30, speed: 160 }, { emote: 'player', kind: '!' }] },
@@ -1812,9 +1855,10 @@ export const CARNIVAL_RADIO = {
   wipe: ['Wind yourselves back up and try again!', 'Oof. Even toys fall over. Up you get!'],
   roar: ['She roared! Here comes the real act!'],
   puppets: ['Puppets on the belts! Get them!'],
-  moles: ['Whack-a-mole! Bop them all before they duck!'],
-  rings: ['Rings coming down! Off the marks!'],
-  finale: ['The coaster! Up on the parked cars, quick!'],
+  dance: ['She took up every string in the room! Jump when they swing!'],
+  moles: ['Brass moles! Bop them all before they wind her up!'],
+  musicbox: ['A music box! Step in behind the tune!'],
+  finale: ["She's winding down... hold on, nearly there!"],
 };
 
 
@@ -1829,80 +1873,91 @@ export const OBS_SCENES = {
     { card: 'Star Observatory', sub: 'Rank {grade}  ·  {time}' },
     { who: null, text: '{notes}. Rank bonus on your rewards: +{bonus}.' },
   ],
-  // Folio, staged: the archivist is curled up reading, eyes shut, rocking gently on her huge
-  // book; she turns very slowly, shushes you as pages flutter up, then rears and slams the book
-  // shut in a gust that sends pages everywhere.
+  // Folio, staged (remade 2026-11-27, render/folio/): she is up on the top of a tall rolling ladder,
+  // reading the Great Catalogue by starlight; her eyes come up over the page; she shuts the book with a
+  // snap and glides down on her owl's wings while the ladder rolls away; a library card held out; a
+  // stamp of starlight ink in the air, OVERDUE; her wings flung wide in a gust of pages.
   observatory_folio: [
-    { together: [{ cam: 'folio', up: 20, dur: 1.4 }, { walk: 'player', to: 'folio', gap: 180, speed: 100 }, { mood: 'folio', as: 'blink' }, { act: 'folio', move: 'sway', dur: 2.6, amp: 0.04, speed: 2.4 }] },
-    { who: null, text: 'The Archive. A thousand shelves, and a librarian with an enormous book who turns very slowly to look at you.' },
-    { together: [{ fx: 'pages', at: 'folio', n: 4 }, { wait: 0.6 }] },
-    { together: [{ face: 'folio', to: 'player' }, { mood: 'folio', as: 'angry' }, { emote: 'folio', kind: 'anger', dur: 1.8 }] },
-    { who: 'folio', text: 'Shhh. SHHHHH. You are stamping. In MY archive. Do you have a library card?', mood: 'angry' },
+    { together: [{ act: 'folio', move: 'perch', dur: 0.1 }, { cam: 'folio', up: 60, dur: 1.6 }, { walk: 'player', to: 'folio', gap: 190, speed: 100 }] },
+    { who: null, text: 'The Archive. A thousand shelves to the ceiling, and up on a rolling ladder, a librarian reading by starlight.' },
+    { together: [{ act: 'folio', move: 'notice', dur: 0.1 }, { face: 'folio', to: 'player' }, { wait: 1.2 }] },
+    { who: 'folio', text: 'Shhh. SHHHHH. You are stamping. In MY Archive.', mood: 'angry' },
+    { together: [{ act: 'folio', move: 'glide', dur: 2.6 }, { cam: 'folio', up: 24, dur: 2.4 }] },
+    { act: 'folio', move: 'card', dur: 3.2, async: true },
+    { who: 'folio', text: 'Do you have a library card?', mood: 'angry' },
     { emote: 'player', kind: 'sweat', dur: 1.2, hold: true },
     { who: 'player', text: "We're going up to see Astraea." },
-    { together: [{ act: 'folio', move: 'windup', dur: 0.9 }, { fx: 'pages', at: 'folio', top: true, n: 8 }] },
+    { act: 'folio', move: 'overdue', dur: 1.8 },
     { who: 'folio', text: 'Then your books are overdue. ALL of them. Fines are payable at once!', mood: 'angry' },
-    { act: 'folio', move: 'attack', dur: 0.9, async: true },
+    { act: 'folio', move: 'attack', dur: 1, async: true },
     { wait: 0.3 },
-    { together: [{ shake: 4, dur: 0.4 }, { fx: 'pages', at: 'folio', n: 24 }, { fx: 'wind', at: 'player' }, { walk: 'player', away: 'folio', by: 34, speed: 170 }, { emote: 'player', kind: '!' }] },
-    { wait: 0.5 },
+    { together: [{ shake: 4, dur: 0.4 }, { walk: 'player', away: 'folio', by: 34, speed: 170 }, { emote: 'player', kind: '!' }] },
+    { wait: 0.6 },
     { cam: 'player', dur: 0.7 },
   ],
-  // The Eclipse Twins, staged: in the orrery the sun-fox flares gold and the moon-rabbit glows
-  // silver; Luna glides in front of Sol, the room darkens to an eclipse with a ring of fire round
-  // them, and they spring apart and pounce from both sides.
+  // The Eclipse Twins, staged (remade 2026-11-27, render/eclipse/): Sol waves the group in with a shout;
+  // Luna gives a shy little wave from behind her; Luna slides in close and turns, back to back with her
+  // sister, her mallet raised before Sol's ring of sun: an eclipse, a ring of light round them both; they
+  // spring apart, ready.
   observatory_eclipse: [
-    { together: [{ cam: ['eclipsesol', 'eclipseluna'], up: 20, dur: 1.4 }, { walk: 'player', to: 'eclipsesol', gap: 180, speed: 100 }, { mood: 'eclipsesol', as: 'happy' }, { mood: 'eclipseluna', as: 'happy' }] },
-    { who: null, text: 'The Orrery. Brass planets wheel slowly round a sun of glass. Two sisters float at its heart, one gold, one silver.' },
-    { together: [{ jump: 'eclipsesol', height: 18 }, { fx: 'sparkle', at: 'eclipsesol', top: true, n: 14 }, { face: 'eclipsesol', to: 'player' }] },
-    { who: 'eclipsesol', text: 'Visitors, Luna! On the one night our lady stopped the sky.', mood: 'happy' },
-    { together: [{ jump: 'eclipseluna', height: 22 }, { fx: 'hearts', at: 'eclipseluna', n: 6 }, { face: 'eclipseluna', to: 'player' }] },
-    { who: 'eclipseluna', text: "Then let's show them an eclipse they won't forget, Sol. Light and dark!", mood: 'happy' },
-    { together: [{ walk: 'eclipseluna', to: 'eclipsesol', gap: 6, speed: 90 }, { fade: 'out', dur: 1.4, to: 0.62, color: '#0e0a24' }] },
-    { together: [{ flash: '#ffd36b' }, { fx: 'sparkle', at: 'eclipsesol', n: 24 }, { shake: 2, dur: 0.6 }, { emote: 'player', kind: '!' }] },
-    { wait: 0.6 },
-    { together: [{ fade: 'in', dur: 0.6 }, { walk: 'eclipseluna', by: 120, speed: 200 }, { walk: 'eclipsesol', by: -40, speed: 120 }] },
+    { together: [{ cam: ['eclipsesol', 'eclipseluna'], up: 20, dur: 1.4 }, { walk: 'player', to: 'eclipsesol', gap: 190, speed: 100 }, { act: 'eclipsesol', move: 'wave', dur: 2.6 }] },
+    { who: null, text: 'The Orrery. Brass planets wheel slowly round a sun of glass. Two sisters wind them, one gold, one silver.' },
+    { together: [{ face: 'eclipsesol', to: 'player' }, { act: 'eclipsesol', move: 'wave', dur: 2.2, async: true }] },
+    { who: 'eclipsesol', text: 'Visitors, Luna! On the one night our lady stopped the sky!', mood: 'happy' },
+    { together: [{ face: 'eclipseluna', to: 'player' }, { act: 'eclipseluna', move: 'wave', dur: 2.4 }] },
+    { who: 'eclipseluna', text: '...hello. Are you here to make the sky move again?', mood: 'happy' },
+    { who: 'eclipsesol', text: 'Then you have to get past the sun AND the moon!', mood: 'angry' },
+    { together: [{ walk: 'eclipseluna', to: 'eclipsesol', gap: 6, speed: 90 }, { fade: 'out', dur: 1.4, to: 0.5, color: '#0e0a24' }] },
+    { together: [{ act: 'eclipsesol', move: 'eclipse', dur: 0.1 }, { act: 'eclipseluna', move: 'eclipse', dur: 0.1 }, { wait: 0.8 }] },
+    { together: [{ flash: '#ffd36b' }, { shake: 2, dur: 0.6 }, { emote: 'player', kind: '!' }] },
+    { who: 'eclipseluna', text: 'Light and dark...', mood: 'happy' },
+    { who: 'eclipsesol', text: 'Sun and moon!', mood: 'happy' },
+    { together: [{ fade: 'in', dur: 0.6 }, { act: 'eclipsesol', move: 'spring', dur: 1 }, { act: 'eclipseluna', move: 'spring', dur: 1 }, { walk: 'eclipseluna', by: 120, speed: 200 }, { walk: 'eclipsesol', by: -40, speed: 120 }] },
     { together: [{ act: 'eclipsesol', move: 'attack', dur: 0.9 }, { act: 'eclipseluna', move: 'attack', dur: 0.9 }, { walk: 'player', away: 'eclipsesol', by: 26, speed: 150 }] },
     { cam: 'player', dur: 0.7 },
   ],
-  // Astraea, staged (reworked 2026-11-18): the camera looks down from the stuck stars to the
-  // moon-fawn counting them, star by star, with her pointer; Elder Goma counts along from a gantry
-  // by the telescope. She hushes you, rears, and stamps a starburst.
+  // Astraea, staged (remade 2026-11-27, render/astraea/): the camera looks down from the stuck stars to the
+  // little star keeper counting them on her star abacus, each flick of a bead answered by a twinkle
+  // overhead; Elder Goma counts along from a gantry by the telescope. She hushes you, hugging her
+  // abacus; then throws her cloak open, its night spreading out behind her with every star in it alight,
+  // and sweeps every bead across at once: CLACK, a ring of stars.
   observatory_astraea: [
-    { together: [{ cam: 'astraea', up: 150, dur: 0.01 }] },
+    { together: [{ cam: 'astraea', up: 150, dur: 0.01 }, { act: 'astraea', move: 'count', dur: 0.1 }] },
     { together: [{ cam: 'astraea', up: 30, dur: 2.6 }, { walk: 'player', to: 'astraea', gap: 200, speed: 90 }] },
     { who: null, text: 'The crown of the tower, open to the sky. Not one star is moving. Somebody is counting them.' },
-    { together: [{ fx: 'sparkle', at: 'astraea', top: true, n: 8 }, { act: 'astraea', move: 'sway', dur: 2, amp: 0.03, speed: 2 }] },
+    { together: [{ cam: 'astraea', up: 20, dur: 1.2, zoom: 1.3 }, { wait: 1.6 }] },
     { who: 'astraea', text: '...nine hundred and ninety-nine thousand, nine hundred and ninety-seven... ninety-eight...' },
     { cast: 'goma', x: 1092, y: 300, facing: -1, ...GOMA_CAST },
     { together: [{ cam: ['astraea', 'goma'], up: 10, dur: 1 }, { emote: 'goma', kind: 'note', dur: 1.2 }] },
     { who: 'goma', text: '...and ninety-nine! Same as last night, dear. Well done.' },
     { who: null, text: 'Up on a gantry by the great telescope, a little Mochi elder is counting along with her.' },
-    { together: [{ face: 'astraea', to: 'player' }, { emote: 'astraea', kind: '!' }, { cam: ['player', 'astraea'], up: 30, dur: 0.9 }] },
+    { together: [{ face: 'astraea', to: 'player' }, { act: 'astraea', move: 'hush', dur: 2.4 }, { cam: ['player', 'astraea'], up: 30, dur: 0.9 }] },
     { who: 'astraea', text: 'Hush! If I lose count, I lose one. A thousand years I have kept them, and every night one falls and is gone.', mood: 'sad' },
     { who: 'astraea', text: 'On festival night the brightest one fell. So I stopped them all. Now not one of them can fall.', mood: 'sad' },
     { who: 'player', text: "Now nothing can go anywhere. Not the night, not the wishes. Let them move." },
-    { together: [{ mood: 'astraea', as: 'angry' }, { act: 'astraea', move: 'windup', dur: 1 }, { fx: 'sparkle', at: 'astraea', top: true, n: 16 }] },
+    { together: [{ mood: 'astraea', as: 'angry' }, { act: 'astraea', move: 'cloak', dur: 6, async: true }, { cam: 'astraea', up: 30, dur: 0.8 }, { wait: 1.2 }] },
     { who: 'astraea', text: '...Then show me a sky worth losing them for!', mood: 'angry' },
     { act: 'astraea', move: 'attack', dur: 1, async: true },
     { wait: 0.32 },
-    { together: [{ flash: '#fff6c8' }, { shake: 5, dur: 0.5 }, { fx: 'sparkle', at: 'astraea', n: 26 }, { fx: 'starfall', at: 'astraea' }, { walk: 'player', away: 'astraea', by: 30, speed: 160 }, { emote: 'player', kind: '!' }] },
+    { together: [{ flash: '#fff0b8' }, { shake: 5, dur: 0.5 }, { walk: 'player', away: 'astraea', by: 30, speed: 160 }, { emote: 'player', kind: '!' }] },
     { wait: 1 },
     { hide: 'goma', dur: 0.01 },
     { cam: 'player', dur: 0.7 },
   ],
   // Freed: she has lost count for the first time in a thousand years, and Goma says that's all right.
   // She gives you her record of festival night (the twist, story_astraea's hand-in). Goma goes home;
-  // the Queen mumbles in her sleep.
+  // the Queen mumbles in her sleep. (Restaged 2026-11-27 for her new look: she looks down at her abacus as
+  // its count runs away; lifts her face to the falling stars, a hand up to catch one; and at the last sits
+  // down by the telescope to watch them fall, her abacus set down beside her, and fades.)
   observatory_freed: [
-    { together: [{ free: 'astraea', as: 'sad' }, { cam: ['astraea', 'player'], dur: 1.2 }, { walk: 'player', to: 'astraea', gap: 80, speed: 70 }] },
+    { together: [{ free: 'astraea', as: 'sad' }, { act: 'astraea', move: 'lost', dur: 9, async: true }, { cam: ['astraea', 'player'], dur: 1.2 }, { walk: 'player', to: 'astraea', gap: 80, speed: 70 }] },
     { together: [{ face: 'player', to: 'astraea' }, { face: 'astraea', to: 'player' }] },
     { who: 'astraea', text: "...I've lost count. For the first time in a thousand years, I've lost count.", mood: 'sad' },
     { cast: 'goma', x: 1092, y: 300, facing: -1, ...GOMA_CAST },
     { together: [{ cam: ['astraea', 'goma'], up: 10, dur: 1 }, { jump: 'goma', height: 8 }] },
     { who: 'goma', text: "That's all right, dear. I counted too. Every one of them is still up there." },
     { who: 'goma', text: "And the ones that fall don't go anywhere bad. They go wherever somebody wished them." },
-    { together: [{ mood: 'astraea', as: 'happy' }, { fx: 'starfall', at: 'astraea' }, { cam: ['astraea', 'player'], up: 40, dur: 1 }] },
+    { together: [{ mood: 'astraea', as: 'happy' }, { act: 'astraea', move: 'stargaze', dur: 0.1 }, { fx: 'starfall', at: 'astraea' }, { cam: ['astraea', 'player'], up: 40, dur: 1 }] },
     { who: null, text: 'Overhead the whole sky begins to turn again, and stars fall like rain.' },
     { who: 'astraea', text: '...A little Mochi, and a little boat. A thousand years of looking, and I never once saw those.', mood: 'happy' },
     { who: 'astraea', text: 'Take my record of festival night. I wrote down everything the wind did. It may mean more to you than to me.' },
@@ -1923,8 +1978,9 @@ export const OBS_SCENES = {
     { who: 'hayate', text: '...mmn... nobody should be alone...', mood: 'sleepy' },
     { who: 'translator', text: 'Her Majesty says: "nobody should be alone". ...That is the clearest thing she has ever said.', mood: 'surprised' },
     { set: null },
-    { who: null, text: 'Up in the tower, a fawn in a starry gown sits by the telescope to watch the stars fall, and does not count a single one.' },
-    { together: [{ mood: 'astraea', as: 'happy' }, { fx: 'starfall', at: 'astraea' }, { act: 'astraea', move: 'fade', dur: 2.6 }, { fx: 'sparkle', at: 'astraea', top: true, n: 12 }] },
+    { together: [{ mood: 'astraea', as: 'happy' }, { act: 'astraea', move: 'sitwatch', dur: 1.4 }, { cam: 'astraea', up: 30, dur: 0.8 }] },
+    { who: null, text: 'Up in the tower, a star keeper in a starry cloak sits by the telescope to watch the stars fall, and does not count a single one.' },
+    { together: [{ fx: 'starfall', at: 'astraea' }, { act: 'astraea', move: 'fade', dur: 2.6 }] },
   ],
 };
 
@@ -1934,7 +1990,7 @@ export const OBS_RADIO = {
   'enter:observatory2': ["The Constellation Hall. Each lamp flips its neighbours too. Think before you light!", 'Five lamps. Light them all. It is a puzzle older than I am.'],
   'enter:observatory3': ['The reading room has no weight to it. Jump gently... or not, it is rather fun!'],
   'enter:observatory4': ["Folio's archive. Whatever you do, don't make a sound. ...Too late."],
-  'enter:observatory5': ["The Orrery! Sol is hurt only in shadow, Luna only in light. Drag them across!"],
+  'enter:observatory5': ["The Orrery! Sol and Luna. Never once apart, those two. Watch where they stand!"],
   'enter:observatory6': ["The crown. Astraea is up there. She's not cruel, you know. She's afraid."],
   'clear:observatory1': ['Lovely lamps. Onward and upward!'],
   'clear:observatory2': ['The constellation! I have waited forty years to see it lit.'],
@@ -1942,12 +1998,13 @@ export const OBS_RADIO = {
   'clear:observatory4': ['You got past Folio? Return your books on time, next time.'],
   'clear:observatory5': ['The eclipse is over! The crown is right above you!'],
   wipe: ['Dust yourselves off, stargazers. Try again!', 'The stars will wait. Up you get.'],
-  moths: ['Owls! Protect your healer!'],
-  shelves: ["The shelves are closing in! Stay in the middle!"],
-  lines: ['The constellations! Find the dark between the stars!'],
-  sky: ['She is moving the stars! Strike them in order: one, two, three!', 'Follow the numbers! The sky is a dot-to-dot!'],
-  struck: ['Look at her face! She has never seen that one before!'],
-  nova: ["Supernova! Jump when it flares!"],
+  moths: ['Her Raven Scribes! They are after your healer!', 'Ravens! Catch them before they reach your healer!'],
+  shelves: ["Closing time! The stacks fall from both ends. Find the reading nook!"],
+  charts: ['Her star charts! When the dark falls, stand on a star!', 'A constellation! The stars are the safe bits, I promise!'],
+  letgo: ['She is letting them go... Watch the count, and step in where the last ones fell!'],
+  faster: ['She is counting faster! Keep up with her!', 'Faster and faster! Nearly there!'],
+  season: ['Eclipse season! When they meet, get in under them. When they cross, get out of the way!'],
+  alone: ['One of them is down... the other is fighting for both now. Steady!'],
 };
 
 
@@ -1962,22 +2019,17 @@ export const VOLCANO_SCENES = {
     { card: 'Candy Volcano', sub: 'Rank {grade}  ·  {time}' },
     { who: null, text: '{notes}. Rank bonus on your rewards: +{bonus}.' },
   ],
-  // Toffee, staged: the forge rings to her hammer, three strokes on the anvil in a spray of
-  // sparks; she looks up through the steam and grins, then tests her new hammer on the floor in a
-  // great splash of caramel.
+  // Toffee, staged (2026-11-27, her remake): the forge rings to her hammer, the caramel salamander at her
+  // anvil on the floor, beating a glowing bar in a spray of sparks; she looks up through the steam and
+  // grins, heaves the whole anvil up onto her back like a rucksack (hers alone: she carries it into the
+  // fight), and tests her new caramel hammer on the floor in a great splash of caramel.
   volcano_toffee: [
-    { together: [{ cam: 'toffee', up: 20, dur: 1.2 }, { walk: 'player', to: 'toffee', gap: 190, speed: 100 }, { face: 'toffee', to: 1 }, { mood: 'toffee', as: 'happy' }] },
-    { act: 'toffee', move: 'attack', dur: 0.75, async: true },
-    { wait: 0.28 },
-    { together: [{ fx: 'sparks', at: 'toffee' }, { shake: 1.5, dur: 0.2 }, { wait: 0.5 }] },
-    { act: 'toffee', move: 'attack', dur: 0.75, async: true },
-    { wait: 0.28 },
-    { together: [{ fx: 'sparks', at: 'toffee' }, { shake: 1.5, dur: 0.2 }, { wait: 0.5 }] },
-    { act: 'toffee', move: 'attack', dur: 0.75, async: true },
-    { wait: 0.28 },
-    { together: [{ fx: 'sparks', at: 'toffee', n: 24 }, { shake: 2, dur: 0.25 }, { wait: 0.5 }] },
+    { act: 'toffee', move: 'forge', dur: 30, async: true },
+    { together: [{ cam: 'toffee', up: 20, dur: 1.2 }, { walk: 'player', to: 'toffee', gap: 190, speed: 100 }, { mood: 'toffee', as: 'happy' }] },
+    { together: [{ shake: 1.5, dur: 0.2 }, { wait: 0.9 }] },
     { who: null, text: 'The forge rings. A smith with a caramel hammer looks up from her anvil and grins through the steam.' },
-    { together: [{ face: 'toffee', to: 'player' }, { emote: 'toffee', kind: '!' }, { jump: 'toffee', height: 12 }] },
+    { together: [{ act: 'toffee', move: 'heave', dur: 1.4 }, { emote: 'player', kind: '!' }] },
+    { together: [{ shake: 2, dur: 0.25 }, { fx: 'sparks', at: 'toffee', n: 16 }, { face: 'toffee', to: 'player' }, { emote: 'toffee', kind: '!' }, { jump: 'toffee', height: 12 }] },
     { who: 'toffee', text: "Visitors! You're just in time. I need something to test my new hammer on!", mood: 'happy' },
     { together: [{ cam: ['player', 'toffee'], up: 20, dur: 0.9 }, { emote: 'player', kind: 'sweat', dur: 1.4 }, { face: 'player', to: 'toffee' }] },
     { who: 'toffee', text: "Hold still. Or don't. Moving targets are more fun!", mood: 'happy' },
@@ -1988,18 +2040,21 @@ export const VOLCANO_SCENES = {
     { wait: 0.5 },
     { cam: 'player', dur: 0.7 },
   ],
-  // Gretel, staged: the gingerbread knight bars the way, beats her cookie shield three times in a
-  // shower of crumbs, salutes with her candy-cane lance, backs off to the end of the lists like a
-  // joust, and charges.
+  // Gretel, staged (2026-11-27, her remake): the gingerbread knight bars the way, drums her heart cookie
+  // cutter with her icing spatula three times in a shower of crumbs, then (hers alone) pipes a line of
+  // icing along the wall-walk between you, the line you shall not cross; backs off to the end of the
+  // lists and charges over it.
   volcano_gretel: [
     { together: [{ cam: 'gretel', up: 20, dur: 1.2 }, { walk: 'player', to: 'gretel', gap: 190, speed: 100 }, { mood: 'gretel', as: 'angry' }] },
     { together: [{ face: 'gretel', to: 'player' }, { emote: 'gretel', kind: '!' }] },
     { who: 'gretel', text: 'Halt! I am Gretel, Knight of the Gingerbread Wall. None shall pass to the crater!', mood: 'angry' },
-    { together: [{ jump: 'gretel', height: 8 }, { fx: 'crumbs', at: 'gretel', n: 8 }, { shake: 1, dur: 0.15 }] },
-    { together: [{ jump: 'gretel', height: 8 }, { fx: 'crumbs', at: 'gretel', n: 8 }, { shake: 1, dur: 0.15 }] },
-    { together: [{ jump: 'gretel', height: 8 }, { fx: 'crumbs', at: 'gretel', n: 12 }, { shake: 1.5, dur: 0.2 }] },
+    { act: 'gretel', move: 'drum', dur: 2.1, async: true },
+    { wait: 0.38 },
+    { together: [{ fx: 'crumbs', at: 'gretel', n: 8 }, { shake: 1, dur: 0.15 }, { wait: 0.7 }] },
+    { together: [{ fx: 'crumbs', at: 'gretel', n: 8 }, { shake: 1, dur: 0.15 }, { wait: 0.7 }] },
+    { together: [{ fx: 'crumbs', at: 'gretel', n: 12 }, { shake: 1.5, dur: 0.2 }, { wait: 0.4 }] },
     { who: 'player', text: "The Queen's going to bury the whole island in caramel. Let us through." },
-    { together: [{ act: 'gretel', move: 'sway', dur: 0.8, amp: -0.12, speed: 4 }, { fx: 'sparkle', at: 'gretel', top: true }] },
+    { together: [{ act: 'gretel', move: 'pipe', dur: 1.6 }, { fx: 'sparkle', at: 'gretel', top: true }] },
     { together: [{ walk: 'gretel', away: 'player', by: 110, speed: 120 }, { cam: ['player', 'gretel'], up: 20, dur: 1 }] },
     { face: 'gretel', to: 'player' },
     { who: 'gretel', text: 'Then you will have to go through ME. En garde!', mood: 'angry' },
@@ -2096,8 +2151,8 @@ export const VOLCANO_RADIO = {
   'enter:volcano1': ['Three sugar crystals in the valley! And mind the taffy, it sticks like nothing else.'],
   'enter:volcano2': ["The mine! Don't touch the caramel pit: ride the carts across!"],
   'enter:volcano3': ['My old kitchen! Follow the recipe exactly. One candy too many and it all boils over!'],
-  'enter:volcano4': ["Toffee's forge. When she raises that hammer, JUMP."],
-  'enter:volcano5': ["Gretel's wall. When her icing shield is up, get round behind her!"],
+  'enter:volcano4': ["Toffee's forge. If that anvil comes off her back, stay close to it... or don't. Ugh, just watch the floor!"],
+  'enter:volcano5': ["Gretel's wall. Mind her cookie cutters: in when the dough rolls, out when they press!"],
   'enter:volcano6': ['The crater! Cool her down, gently... she means well, really.'],
   'clear:volcano1': ['Lovely crystals. Onward!'],
   'clear:volcano2': ['Out of the mine! Not a single burnt toe, I hope.'],
@@ -2105,8 +2160,10 @@ export const VOLCANO_RADIO = {
   'clear:volcano4': ["The forge has gone quiet. Toffee's sulking. Ha!"],
   'clear:volcano5': ['The wall is open! The crater is just above!'],
   wipe: ['Up you get, sugar! Try again.', 'Everyone falls in the taffy sometimes.'],
-  bellows: ['The bellows! Hold on to something!'],
-  shield: ['Shield up! Go round behind her!'],
+  anvil: ['Her anvil! When it lands, keep off the spot. When it rings, hug it!'],
+  crack: ['Hard crack stage! That is the hottest sugar gets. Hold on!'],
+  cutters: ['Cookie cutters! In when the dough rolls, out when they press!'],
+  oven: ['Into the oven? Oh, she will be lovely and crisp. Careful!'],
   frosting: ['The frosting! Up on the rock candy, now!'],
   cherry: ['Her cherry! When it comes down, get out from under it!'],
 };
@@ -2125,39 +2182,43 @@ export const THEATRE_SCENES = {
     { card: 'Dream Theatre', sub: 'Rank {grade}  ·  {time}' },
     { who: null, text: '{notes}. Rank bonus on your rewards: +{bonus}.' },
   ],
-  // The Night Manager (the Coffee Mug Boss, redrawn as her human manager 2026-11-22), staged:
-  // overtime, every desk empty but his; he turns, delighted, "just one more thing", and swats his
-  // clipboard down so the memos fly.
+  // The Night Manager (remade 2026-11-27, render/manager/), staged: overtime, every desk empty but his; a
+  // sip that fogs his glasses; he turns, delighted, a finger up: one more thing; a tower of folders hauled up
+  // beside him out of nowhere; one swat of his clipboard and it topples onto you.
   theatre_mugboss: [
-    { together: [{ cam: 'mugboss', up: 20, dur: 1.2 }, { walk: 'player', to: 'mugboss', gap: 190, speed: 100 }] },
-    { who: null, text: 'Overtime. Every desk is empty but one. A man in a sweater vest paces in front of it, his travel mug steaming, his glasses fogged from one sip too many.' },
-    { together: [{ face: 'mugboss', to: 'player' }, { emote: 'mugboss', kind: '!' }, { jump: 'mugboss', height: 10 }] },
+    { together: [{ cam: 'mugboss', up: 20, dur: 1.2 }, { walk: 'player', to: 'mugboss', gap: 190, speed: 100 }, { act: 'mugboss', move: 'sip', dur: 3.2, async: true }] },
+    { who: null, text: 'Overtime. Every desk is empty but one. A man with a cardigan over his shoulders paces in front of it, his travel mug steaming, his glasses fogged from one sip too many.' },
+    { together: [{ face: 'mugboss', to: 'player' }, { emote: 'mugboss', kind: '!' }, { act: 'mugboss', move: 'keen', dur: 2.6, async: true }] },
     { who: 'mugboss', text: "Ah, good, you're still here! Got a minute? Just one more thing.", mood: 'happy' },
     { who: 'player', text: "It's ten at night." },
-    { together: [{ fx: 'pages', at: 'mugboss', top: true, n: 10 }, { emote: 'mugboss', kind: 'anger' }] },
+    { together: [{ act: 'mugboss', move: 'stack', dur: 0.6, async: true }, { fx: 'pages', at: 'mugboss', top: true, n: 6 }] },
     { who: 'mugboss', text: 'Exactly! The night is young. Like this report. Which was due yesterday.', mood: 'angry' },
-    { act: 'mugboss', move: 'attack', dur: 0.9, async: true },
-    { wait: 0.3 },
+    { act: 'mugboss', move: 'attack', dur: 1.2, async: true },
+    { wait: 0.5 },
     { together: [{ shake: 3, dur: 0.4 }, { fx: 'pages', at: 'player', n: 12 }, { walk: 'player', away: 'mugboss', by: 30, speed: 160 }, { emote: 'player', kind: '!' }] },
     { cam: 'player', dur: 0.7 },
   ],
-  // The Cup-Noodle Dragon, staged: two in the morning, the fridges humming; the lid peels back
-  // in a puff of steam and the noodle dragon uncurls out of its broth.
+  // The Cup-Noodle Dragon (remade 2026-11-27, render/noodle/), staged: two in the morning, the fridges humming;
+  // a cup of noodles waits by the hot water, the lid down on top of somebody's head, two eyes peeking out; the
+  // lid shoved up and flipped back in a burst of steam, a big stretch, a huge slurp; then his chopsticks SNAP.
   theatre_noodledragon: [
-    { together: [{ cam: 'noodledragon', up: 20, dur: 1.2 }, { walk: 'player', to: 'noodledragon', gap: 190, speed: 100 }] },
+    { together: [{ cam: 'noodledragon', up: 20, dur: 1.2 }, { walk: 'player', to: 'noodledragon', gap: 190, speed: 100 }, { act: 'noodledragon', move: 'hidden', dur: 0.4, async: true }] },
     { who: null, text: 'The convenience store, two in the morning. The fridges hum. By the hot water, a cup of noodles waits out its three minutes.' },
-    { together: [{ fx: 'clouds', at: 'noodledragon', top: true, n: 6 }, { jump: 'noodledragon', height: 12 }, { emote: 'noodledragon', kind: '!' }] },
+    { together: [{ act: 'noodledragon', move: 'peel', dur: 2.4, async: true }, { fx: 'clouds', at: 'noodledragon', top: true, n: 6 }, { emote: 'noodledragon', kind: '!' }] },
+    { wait: 1.2 },
+    { act: 'noodledragon', move: 'slurp', dur: 1.8, async: true },
     { who: 'noodledragon', text: 'SLUUURP. Dinner again? At this hour? Same as every night?', mood: 'happy' },
     { who: 'player', text: "I'm not here for dinner." },
     { together: [{ fx: 'clouds', at: 'noodledragon', top: true }, { emote: 'noodledragon', kind: 'anger' }] },
     { who: 'noodledragon', text: 'Everyone is here for dinner. Three minutes. Then YOU are dinner.', mood: 'angry' },
-    { act: 'noodledragon', move: 'attack', dur: 0.9, async: true },
-    { wait: 0.3 },
+    { act: 'noodledragon', move: 'attack', dur: 1, async: true },
+    { wait: 0.45 },
     { together: [{ shake: 3, dur: 0.4 }, { fx: 'bubbles', at: 'player', n: 10 }, { walk: 'player', away: 'noodledragon', by: 30, speed: 160 }, { emote: 'player', kind: '!' }] },
     { cam: 'player', dur: 0.7 },
   ],
-  // Monday, staged: the Playwright announces the final act from his box, his one fan cheering;
-  // then Monday, the Weekend-Eating Baku, stomps up, her giant red pen raised.
+  // Monday (remade 2026-11-27, render/monday/), staged: the Playwright announces the final act from his box,
+  // his one fan cheering; then Monday, the Weekend-Eating Baku, nibbling the last of Saturday as you walk in;
+  // she stamps her foot, draws a big red circle round today in the air ("UP!") and swings her pen down: a red X.
   theatre_monday: [
     { cast: 'playwright', ...PLAYWRIGHT_CAST },
     { cast: 'zunda', x: 184, y: 214, facing: 1, ...ZUNDA_CAST },
@@ -2165,21 +2226,22 @@ export const THEATRE_SCENES = {
     { who: 'playwright', text: 'Ladies, gentlemen, Mochi! The final act. Her flat, two in the morning. And the villain she fears most of all...' },
     { together: [{ play: 'zunda', as: 'cheer' }, { emote: 'zunda', kind: 'heart' }] },
     { who: 'zunda', text: 'Ooh, this is my favourite bit!' },
-    { together: [{ cam: 'monday', up: 30, dur: 1.2 }, { walk: 'player', to: 'monday', gap: 200, speed: 100 }, { fx: 'pages', at: 'monday', top: true }] },
-    { together: [{ face: 'monday', to: 'player' }, { jump: 'monday', height: 14 }, { shake: 3, dur: 0.5 }, { emote: 'monday', kind: 'anger' }] },
+    { together: [{ cam: 'monday', up: 30, dur: 1.2 }, { walk: 'player', to: 'monday', gap: 200, speed: 100 }, { act: 'monday', move: 'nibble', dur: 2.6, async: true }] },
+    { together: [{ face: 'monday', to: 'player' }, { act: 'monday', move: 'stomp', dur: 0.8, async: true }, { shake: 3, dur: 0.5 }, { emote: 'monday', kind: 'anger' }] },
     { who: 'monday', text: 'Good MORNING. It is Monday. It is ALWAYS Monday.', mood: 'angry' },
     { who: 'player', text: "It's two in the morning." },
+    { act: 'monday', move: 'circle', dur: 1.6 },
     { who: 'monday', text: 'Then it is VERY early Monday. Up you get!', mood: 'angry' },
-    { act: 'monday', move: 'attack', dur: 0.9, async: true },
-    { wait: 0.3 },
+    { act: 'monday', move: 'attack', dur: 1, async: true },
+    { wait: 0.5 },
     { together: [{ shake: 4, dur: 0.4 }, { fx: 'pages', at: 'player', n: 14 }, { walk: 'player', away: 'monday', by: 30, speed: 160 }, { emote: 'player', kind: '!' }] },
     { cam: 'player', dur: 0.7 },
   ],
   // Monday held at the last (world/theatre.js): the Queen climbs down from her loft bed, fast
   // asleep, and says the magic words; Monday yawns (yawns are catching) and falls asleep on her
-  // feet (render/mobs/mondaykidrig.js, `mood: 'crumple'`).
+  // feet, leaning on her pen (render/monday/index.js, `mood: 'crumple'`).
   theatre_monday_end: [
-    { together: [{ cam: 'monday', up: 20, dur: 1 }, { jump: 'monday', height: 10 }, { emote: 'monday', kind: 'anger' }] },
+    { together: [{ cam: 'monday', up: 20, dur: 1 }, { act: 'monday', move: 'stomp', dur: 0.8, async: true }, { emote: 'monday', kind: 'anger' }] },
     { who: 'monday', text: 'You cannot beat Monday! Monday ALWAYS comes back! Every week! FOREVER!', mood: 'angry' },
     { cast: 'hayate', kind: 'hayate', near: 'monday', inward: 240, hidden: true, crown: true, sprout: true, name: 'Hayate', color: '#5aa8c8', sleepwalk: true },
     { together: [{ show: 'hayate', dur: 0.8 }, { cam: ['hayate', 'monday'], up: 10, dur: 1.2 }, { emote: 'hayate', kind: 'zzz', dur: 2.4 }] },
@@ -2233,9 +2295,9 @@ export const THEATRE_RADIO = {
   'enter:theatre1': ['Three tickets lost somewhere in the lobby, darlings. And step into the spotlights: everything looks better in the light. Even the monsters, who hurt more there.'],
   'enter:theatre2': ['Act One: her morning train! It sways, so lean into it. And when the bags tumble off the racks, MOVE.'],
   'enter:theatre3': ['Act Two: the office. Watch the phones light up, then answer them in order. Miss one and we start from the top!'],
-  'enter:theatre4': ['The Night Manager. Spread out for his memos, step away from his stamp, and get behind him for his coffee break.'],
-  'enter:theatre5': ['The Cup-Noodle Dragon. When he sets his timer, get up on the shelves before the broth boils over!'],
-  'enter:theatre6': ['Monday himself, darlings. Find the gap in his invites, jump his Deadline, and hold on. Somebody up there is nearly awake.'],
+  'enter:theatre4': ['The Night Manager. When he circles back, get IN his circle, then OUT. And spread for his sticky notes, darlings!'],
+  'enter:theatre5': ['The Cup-Noodle Dragon. When he slurps, walk away from him, then get clear of his burp. Darling, the manners!'],
+  'enter:theatre6': ['Monday herself, darlings. When she brings out her calendar, stand on the weekend. And hold on: somebody up there is nearly awake.'],
   'clear:theatre1': ['Tickets found. Take your seats... I mean, on to the stage!'],
   'clear:theatre2': ['Land ho! Lovely sea legs, darlings.'],
   'clear:theatre3': ['Every cue, perfectly timed. Bravo!'],
@@ -2246,10 +2308,12 @@ export const THEATRE_RADIO = {
   cut: ['CUT! Back to your marks, then out of her circle!'],
   curtain: ['The curtain! Jump it!'],
   twist: ['Plot twist! Swap sides when the stage turns!'],
-  caffeine: ['He refilled his mug! Quicker now, darlings!'],
-  boil: ['Three minutes! Up on the shelves!'],
-  invites: ['Invites from both walls! Find the gap!'],
-  deadline: ['The Deadline! Jump it, or get up on the furniture!'],
+  nmOvertime: ['Overtime! Watch his watch: TICK on one side, TOCK on the other!'],
+  nmOneMore: ['One more thing, he says. There is ALWAYS one more thing. Step away when he says it!'],
+  ndTimer: ['Three minutes! Dodge his chopsticks, then stand right where they fell!'],
+  ndSpicy: ['Extra spicy! He will want seconds. Do NOT be seconds.'],
+  mnRush: ['Next week starts on Sunday! The weekend is at BOTH ends now!'],
+  mnAlways: ['She ate Saturday! Only Sunday left, darlings. Find it!'],
 };
 
 // ---------- Sky Whale's Back ----------
@@ -2267,44 +2331,46 @@ export const WHALE_SCENES = {
     { card: "Sky Whale's Back", sub: 'Rank {grade}  ·  {time}' },
     { who: null, text: '{notes}. Rank bonus on your rewards: +{bonus}.' },
   ],
-  // Captain Gale, staged: the red panda captain stands with her back to you on the deck of the
-  // whale, laughing into the wind as it snaps past her cape; she whirls round, swaggers up, draws
-  // her cutlass back, and sweeps it over the top in a scatter of gold (render/mobs/galerig.js).
+  // Captain Gale, staged (2026-11-27, her new look: render/gale/): becalmed. Her airship's sails hang limp
+  // over the blowhole, and the captain has her back to you, pumping her ship's bellows up at them, puffing
+  // harder than the bellows (her signature: no wind of her own, so she makes it). She hears you, whirls
+  // round, swaggers up with the bellows on her shoulder, pumps it full, and blows you clean across the deck.
   skywhale_gale: [
-    { together: [{ cam: 'gale', up: 20, dur: 1.3 }, { walk: 'player', to: 'gale', gap: 200, speed: 100 }, { face: 'gale', to: 'player' }, { mood: 'gale', as: 'happy' }] },
-    { face: 'gale', to: 1 },
-    { together: [{ fx: 'wind', at: 'gale', top: true }, { act: 'gale', move: 'sway', dur: 1.6, amp: 0.05, speed: 3 }] },
-    { who: null, text: "A pirate airship is moored over the great blowhole, its sails snapping. On its rail a red panda in an admiral's hat laughs into the wind, her cape streaming." },
-    { together: [{ face: 'gale', to: 'player' }, { emote: 'gale', kind: '!' }, { jump: 'gale', height: 12 }] },
+    { act: 'gale', move: 'pump', dur: 30, async: true },
+    { together: [{ cam: 'gale', up: 20, dur: 1.3 }, { walk: 'player', to: 'gale', gap: 220, speed: 100 }, { face: 'gale', to: 1 }] },
+    { together: [{ fx: 'wind', at: 'gale', top: true }, { wait: 1.2 }] },
+    { who: null, text: "A pirate airship is moored over the great blowhole, its sails hanging limp in the still air. A sky-pirate captain in a big tricorn is pumping a ship's bellows up at them, puffing harder than the bellows." },
+    { together: [{ face: 'gale', to: 'player' }, { emote: 'gale', kind: '!' }, { jump: 'gale', height: 10 }, { mood: 'gale', as: 'happy' }, { act: 'gale', move: 'swagger', dur: 30, async: true }] },
     { who: 'gale', text: "Well, well. Stowaways on MY whale? I'll have you know salvage rights are first come, first served.", mood: 'happy' },
-    { together: [{ walk: 'gale', to: 'player', gap: 130, speed: 70 }, { act: 'gale', move: 'sway', dur: 1.2, amp: 0.08, speed: 6 }, { cam: ['player', 'gale'], up: 20, dur: 1 }] },
+    { together: [{ walk: 'gale', to: 'player', gap: 140, speed: 60 }, { cam: ['player', 'gale'], up: 20, dur: 1 }] },
     { who: 'player', text: "She's not salvage. She's asleep, and she's sinking." },
-    { together: [{ mood: 'gale', as: 'angry' }, { act: 'gale', move: 'windup', dur: 0.8 }, { fx: 'sparkle', at: 'gale', top: true, n: 6 }, { fx: 'coins', at: 'gale', n: 6 }] },
+    { together: [{ mood: 'gale', as: 'angry' }, { act: 'gale', move: 'windup', dur: 30, async: true }, { fx: 'sparkle', at: 'gale', top: true, n: 6 }, { fx: 'coins', at: 'gale', n: 6 }] },
     { who: 'gale', text: 'All the more reason to take what we can before she drops! Crew, cutlasses out!', mood: 'angry' },
-    { act: 'gale', move: 'attack', dur: 0.9, async: true },
-    { wait: 0.3 },
-    { together: [{ shake: 4, dur: 0.4 }, { fx: 'wind', at: 'player' }, { fx: 'coins', at: 'gale', n: 18 }, { walk: 'player', away: 'gale', by: 32, speed: 170 }, { emote: 'player', kind: '!' }] },
-    { wait: 0.4 },
+    { act: 'gale', move: 'gust', dur: 1.1, async: true },
+    { wait: 0.42 },
+    { together: [{ shake: 4, dur: 0.4 }, { fx: 'wind', at: 'player' }, { fx: 'clouds', at: 'player', n: 8 }, { walk: 'player', away: 'gale', by: 46, speed: 190 }, { emote: 'player', kind: '!' }] },
+    { wait: 0.5 },
     { cam: 'player', dur: 0.7 },
   ],
-  // The Barnacle Matriarch, staged: a great barnacled whelk sits on the deck, shut; it hops, and the
-  // hermit crab queen pops out of it (render/mobs/matriarchrig.js); she taps her coral staff and
-  // her barnacle children rattle in a scatter of shells; she trundles toward you under her heavy
-  // shell, very slowly, while you wait; then she swings the staff and a wave of shells rolls out.
+  // The Barnacle Matriarch, staged (2026-11-27, her new look: render/matriarch/): holding court. The grand
+  // old walrus fans herself with her back to you; her barnacle children notice you first (her signature:
+  // every lid on her capelet pops open and they all point); she turns, very slowly waddles up to you while you
+  // wait, and slaps the deck so a wave rolls out at you.
   skywhale_matriarch: [
-    { together: [{ cam: 'matriarch', up: 20, dur: 1.3 }, { walk: 'player', to: 'matriarch', gap: 200, speed: 100 }, { mood: 'matriarch', as: 'angry' }] },
-    { who: null, text: "Walls of shell and coral have grown right over the whale's back. In a great whelk shell crusted with barnacles, something stirs." },
-    { together: [{ jump: 'matriarch', height: 5 }, { fx: 'shells', at: 'matriarch', n: 6 }, { shake: 1, dur: 0.15 }] },
-    { together: [{ jump: 'matriarch', height: 5 }, { fx: 'shells', at: 'matriarch', n: 6 }, { shake: 1, dur: 0.15 }] },
-    { together: [{ face: 'matriarch', to: 'player' }, { emote: 'matriarch', kind: 'anger', dur: 1.8 }] },
+    { act: 'matriarch', move: 'fan', dur: 30, async: true },
+    { together: [{ cam: 'matriarch', up: 20, dur: 1.3 }, { walk: 'player', to: 'matriarch', gap: 210, speed: 100 }, { face: 'matriarch', to: 1 }] },
+    { who: null, text: "Walls of shell and coral have grown right over the whale's back. In the middle of it all, a grand old walrus in a barnacled lace shawl is fanning herself." },
+    { together: [{ act: 'matriarch', move: 'children', dur: 30, async: true }, { fx: 'bubbles', at: 'matriarch', top: true, n: 6 }, { wait: 1.2 }] },
+    { together: [{ face: 'matriarch', to: 'player' }, { mood: 'matriarch', as: 'angry' }, { emote: 'matriarch', kind: 'anger', dur: 1.8 }] },
     { who: 'matriarch', text: 'We were here first, little landlubbers. Every barnacle on this whale is one of my children.', mood: 'angry' },
-    { together: [{ walk: 'matriarch', to: 'player', gap: 140, speed: 14 }, { cam: ['player', 'matriarch'], up: 20, dur: 1.2 }, { emote: 'player', kind: 'sweat', dur: 2.6 }, { wait: 2.6 }] },
+    { together: [{ act: 'matriarch', move: 'fan', dur: 30, async: true }, { walk: 'matriarch', to: 'player', gap: 140, speed: 14 }, { cam: ['player', 'matriarch'], up: 20, dur: 1.2 }, { emote: 'player', kind: 'sweat', dur: 2.6 }, { wait: 2.6 }] },
     { together: [{ emote: 'player', kind: '?', dur: 1.2 }, { face: 'player', to: 'matriarch' }] },
     { who: 'matriarch', text: 'If she sinks, we sink with her, and we LIKE it here. Go away.', mood: 'angry' },
-    { act: 'matriarch', move: 'windup', dur: 0.8 },
-    { act: 'matriarch', move: 'attack', dur: 1, async: true },
+    { act: 'matriarch', move: 'windup', dur: 30, async: true },
+    { wait: 0.6 },
+    { act: 'matriarch', move: 'splash', dur: 1.2, async: true },
     { wait: 0.32 },
-    { together: [{ shake: 4, dur: 0.5 }, { fx: 'shells', at: 'matriarch', n: 24 }, { fx: 'bubbles', at: 'matriarch', n: 10 }, { jump: 'player', height: 22 }, { emote: 'player', kind: '!' }] },
+    { together: [{ shake: 4, dur: 0.5 }, { fx: 'shells', at: 'matriarch', n: 12 }, { fx: 'bubbles', at: 'player', n: 10 }, { jump: 'player', height: 22 }, { walk: 'player', away: 'matriarch', by: 30, speed: 160 }, { emote: 'player', kind: '!' }] },
     { wait: 0.5 },
     { cam: 'player', dur: 0.7 },
   ],
@@ -2329,18 +2395,21 @@ export const WHALE_SCENES = {
   ],
   // The Sulk, staged: rain from one small, very grumpy cloud; Elder Ohagi whispers from the sleeping
   // whale's head; the cloud huffs, tells everyone to go away, and slaps a gust of rain at you.
+  // (2026-11-27, his fight rebuilt: his own mood swing on the way: he turns his back in a huff, sinks into
+  // a sob at "nobody visits", then throws his Tantrum Flail, rain flying, at you.)
   skywhale_whalestorm: [
     { cast: 'ohagi', x: 1350, y: 310, facing: -1, ...OHAGI_CAST },
     { together: [{ cam: 'whalestorm', up: 30, dur: 1.4 }, { walk: 'player', to: 'whalestorm', gap: 200, speed: 90 }, { fx: 'clouds', at: 'whalestorm', top: true }] },
     { who: null, text: "The whale's brow. Rain is falling out of one small, very grumpy cloud." },
     { together: [{ cam: 'ohagi', up: 10, dur: 1.2 }, { emote: 'ohagi', kind: '!' }] },
     { who: 'ohagi', text: "Psst! Up here. On her head. She's been asleep for weeks, and HE won't let her wake up." },
-    { together: [{ cam: 'whalestorm', up: 30, dur: 1 }, { face: 'whalestorm', to: 'player' }, { emote: 'whalestorm', kind: 'anger' }, { shake: 2, dur: 0.4 }] },
+    { together: [{ cam: 'whalestorm', up: 30, dur: 1 }, { face: 'whalestorm', to: 'player' }, { emote: 'whalestorm', kind: 'anger' }, { shake: 2, dur: 0.4 }, { act: 'whalestorm', move: 'huff', dur: 30, async: true }] },
     { who: 'whalestorm', text: 'Go AWAY. Everybody goes away anyway. She is too BIG. Everyone is scared of her.', mood: 'angry' },
     { who: 'player', text: "We're not scared. We came to visit." },
+    { act: 'whalestorm', move: 'sob', dur: 30, async: true },
     { who: 'whalestorm', text: '...Nobody visits. NOBODY. Go away before I rain on you!', mood: 'angry' },
-    { act: 'whalestorm', move: 'attack', dur: 1, async: true },
-    { wait: 0.3 },
+    { act: 'whalestorm', move: 'flail', dur: 1.4, async: true },
+    { wait: 0.56 },
     { together: [{ fx: 'bubbles', at: 'player', n: 10 }, { shake: 4, dur: 0.4 }, { walk: 'player', away: 'whalestorm', by: 30, speed: 160 }, { emote: 'player', kind: '!' }] },
     { cam: 'player', dur: 0.7 },
   ],
@@ -2348,11 +2417,15 @@ export const WHALE_SCENES = {
   // Ohagi goes home to the palace.
   skywhale_woken: [
     { together: [{ free: 'whalestorm', as: 'happy' }, { cam: ['whalestorm', 'player'], dur: 1.4 }, { face: 'player', to: 'whalestorm' }] },
+    // (2026-11-27: white and fluffy, a rainbow arching over him; then embarrassed, his plush hugged tight and
+    // a shy little smile, until the whale wakes)
+    { wait: 0.8 },
+    { mood: 'whalestorm', as: 'shy' },
     { who: null, text: 'The rain stops. The grumpy grey cloud goes white and fluffy, and very, very embarrassed.' },
     { who: 'whalestorm', text: '...You stayed. Even when I rained on you. Even the healer. ESPECIALLY the healer.', mood: 'happy' },
     { cast: 'whaledream', ...PUP_CAST },
     { cast: 'ohagi', x: 1350, y: 310, facing: -1, ...OHAGI_CAST },
-    { together: [{ cam: ['whaledream', 'ohagi'], up: 20, dur: 1.4 }, { fx: 'notes', at: 'whaledream', top: true }, { emote: 'whaledream', kind: 'sparkle', dur: 1.6 }] },
+    { together: [{ cam: ['whaledream', 'ohagi'], up: 20, dur: 1.4 }, { fx: 'notes', at: 'whaledream', top: true }, { emote: 'whaledream', kind: 'sparkle', dur: 1.6 }, { mood: 'whalestorm', as: 'happy' }] },
     { who: 'whaledream', text: "...Oh! Oh my. I was dreaming I was a pebble at the bottom of the sea. Have I been asleep long?", mood: 'happy' },
     { who: 'ohagi', text: 'Weeks! I brought a parasol. I did not bring enough snacks.' },
     { together: [{ fx: 'notes', at: 'whaledream', top: true, n: 12 }, { fx: 'sparkle', at: 'whaledream', top: true, n: 10 }] },
@@ -2394,9 +2467,12 @@ export const CRYSTAL_SCENES = {
     { who: 'nightking', text: "N-no! It's MINE! It fell out of the sky and it's warm and it glows and it's MINE!", mood: 'angry' },
     { who: 'player', text: "That's the Queen's alarm clock." },
     { who: 'nightking', text: "If you take it, it'll be dark again. ALL dark. I'll put out every light first!", mood: 'angry' },
-    { act: 'nightking', move: 'attack', dur: 1, async: true },
+    // (His signature, 2026-11-27: a royal tantrum, a stamp of each foot with the crown bouncing, then
+    // his sceptre's prism jabbed at you in a flash of rainbow: render/prismaris/ 'tantrum'.)
+    { act: 'nightking', move: 'tantrum', dur: 2.3, async: true },
+    { together: [{ shake: 3, dur: 1.2 }, { emote: 'player', kind: '!' }] },
     { wait: 0.3 },
-    { together: [{ shake: 4, dur: 0.4 }, { walk: 'player', away: 'nightking', by: 30, speed: 160 }, { emote: 'player', kind: '!' }] },
+    { together: [{ walk: 'player', away: 'nightking', by: 30, speed: 160 }, { fx: 'sparkle', at: 'nightking', top: true, n: 8 }] },
     { cam: 'player', dur: 0.7 },
   ],
   // His trial won: the Queen sleepwalks in and gives him a little star of his own; he gives her
@@ -2451,21 +2527,23 @@ export const CRYSTAL_SCENES = {
 // ---------- The finale (Chapter 10) ----------
 export const FINALE_SCENES = {
   // The lawn before the palace at dawn: the alarm clock, grown into a tall, prim lady, ringing her
-  // back to Monday.
+  // back to Monday. (Restaged 2026-11-27 for her new look: she's tapping her toe at the late sun as
+  // you come up; she rings her handbell high over her head, bonnet bells and all; and her CLANG
+  // throws you back.)
   dawnpalace_intro: [
-    { together: [{ cam: 'alarm', up: 40, dur: 1.4 }, { walk: 'player', to: 'alarm', gap: 240, speed: 90 }] },
-    { who: null, text: "Dawn over the palace. On the lawn stands the Queen's alarm clock, grown into a tall, prim lady with bells for hair buns, ringing fit to burst." },
-    { together: [{ face: 'alarm', to: 'player' }, { jump: 'alarm', height: 12 }, { shake: 3, dur: 0.6 }, { emote: 'alarm', kind: 'anger' }] },
+    { together: [{ cam: 'alarm', up: 40, dur: 1.4 }, { walk: 'player', to: 'alarm', gap: 240, speed: 90 }, { act: 'alarm', move: 'tap', dur: 3, async: true }] },
+    { who: null, text: "Dawn over the palace. On the lawn, tapping her toe at the sun for being late, stands the Queen's alarm clock: grown into a tall, prim lady with its two brass bells on her bonnet and a handbell in her fist." },
+    { together: [{ face: 'alarm', to: 'player' }, { act: 'alarm', move: 'ring', dur: 1.8 }, { shake: 3, dur: 0.6 }, { mood: 'alarm', as: 'angry' }] },
     { who: 'alarm', text: 'RIIIING! Six a.m.! Up! Shower! Train! Office! MONDAY!', mood: 'angry' },
     { who: 'player', text: 'She lives here now.' },
     { who: 'alarm', text: 'NOBODY lives in a dream! Wake her UP and send her BACK!', mood: 'angry' },
-    { act: 'alarm', move: 'attack', dur: 1, async: true },
-    { wait: 0.3 },
+    { act: 'alarm', move: 'clang', dur: 1, async: true },
+    { wait: 0.45 },
     { together: [{ shake: 4, dur: 0.4 }, { walk: 'player', away: 'alarm', by: 30, speed: 160 }, { emote: 'player', kind: '!' }] },
     { cam: 'player', dur: 0.7 },
   ],
-  // Snoozed three times and still ringing: the Queen comes out, wide awake for once, chooses to
-  // stay, and flicks it.
+  // Beaten and still ringing: the Queen comes out, wide awake for once, chooses to stay, and flicks
+  // it.
   alarm_win: [
     // (A step back from it, so you aren't standing on its face.)
     { together: [{ free: 'alarm', as: 'angry' }, { walk: 'player', to: 'alarm', gap: 130, speed: 90 }, { face: 'player', to: 'alarm' }, { cam: ['alarm', 'player'], dur: 1.2 }] },
@@ -2503,20 +2581,22 @@ export const WHALE_RADIO = {
   'enter:skywhale1': ["The tail docks! Tie down three moorings. And when she lifts her tail, grab a rope or you'll slide right off!"],
   'enter:skywhale2': ['The spine market. Mind the gusts, and the blowholes: stand on one when it blows and up you go!'],
   'enter:skywhale3': ["Her lungs. Feel that? She's breathing. The air-blooms only open on the breath out."],
-  'enter:skywhale4': ["Gale's ship. When she calls a broadside, get off that side of the deck, or ride the blowhole over it!"],
-  'enter:skywhale5': ['The Matriarch. When she shells up, hit her hard and fast. If the shell holds, it bursts: jump!'],
-  'enter:skywhale6': ["The brow. That's her dream, asleep, and that's a very cross little cloud. Spread out for the drizzle, and stay off the lightning!"],
+  'enter:skywhale4': ["Gale's ship. She's got no wind of her own, so she blows it out of that bellows! When the gale comes, hide behind a sail, on the side away from the wind!"],
+  'enter:skywhale5': ['The Matriarch. Mind your manners! And when she gets her clams out, watch the one with the pearl in it!'],
+  'enter:skywhale6': ["The brow. That's her dream, asleep, and that's a very cross little cloud. Watch his face: when he's sad, get in close; when he's cross, get away!"],
   'clear:skywhale1': ["Moorings fast! She won't shake us off now."],
   'clear:skywhale2': ['Through the market! The lungs are just ahead.'],
   'clear:skywhale3': ["Listen to her breathe. She's calmer already."],
   'clear:skywhale4': ["Gale's ship is cast off. Good riddance!"],
   'clear:skywhale5': ['The fortress is open! Up to the brow!'],
   wipe: ["Up you get! She's a big whale, there's room to try again.", 'Hold on tighter this time!'],
-  broadside: ['Broadside! Off that side, quick!'],
-  encrust: ['Shell up! Hit her with everything!'],
+  squall: ['Sails up! Get on the far side of one when she blows!'],
+  fullgale: ["The wind's swinging round! Watch which end it comes from!"],
+  risingtide: ["The tide's coming in! Keep your eye on that pearl!"],
+  springtide: ['Spring tide! The shells go faster now, follow that pearl!'],
   song: ["She's singing in her sleep. Watch which side the wind takes!"],
-  thunderhead: ['Thunderhead! Stand in the dry lanes when the lightning comes!'],
-  cloudburst: ["Cloudburst! Up on something high, and huddle under the healer's umbrella!"],
+  fiveminutes: ['Pillows! Mind where they bounce, and slip in right behind them!'],
+  sunshower: ["Is that a rainbow? He's cheering up! Two moods in a row now, read them both!"],
 };
 
 // Taking a job: the instructor sends you off. `first` for a first job (by family), `path` for a

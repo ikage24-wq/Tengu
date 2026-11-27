@@ -1,27 +1,29 @@
 // Monster art: the Sunken Aquarium Palace's bosses (docs/design/aquarium-palace.md), all live rigs
-// (redrawn 2026-11-19: morayrig.js, abyssiarig.js, coralierig.js; the bubble in seabossrigs.js):
-//   moraymurri / morayena  The Twin Morays
+// (the bubble in seabossrigs.js; remade from scratch 2026-11-26: the Twin Morays as two moray eel sisters,
+// render/moray/; Lady Abyssia as a little octopus sea witch, render/abyssia/; Queen Coralie as a young
+// mermaid queen in her livery, render/coralie/):
+//   moraymurri / morayena  The Twin Morays, Murri and Ena
 //   abyssia                Lady Abyssia, the Sea Witch
 //   coralie                Queen Coralie, the Drowned Queen
 //   keepsake               a Keepsake Bubble Coralie blows
 
-import { murriRig, enaRig, morayStill } from './morayrig.js';
-import { abyssiaRig, abyssiaStill } from './abyssiarig.js';
-import { coralieRig, coralieStill } from './coralierig.js';
+import { MURRI, ENA } from '../moray/index.js';
+import { ABYSSIA_ART, ABYSSIA_SIZE } from '../abyssia/index.js';
+import { CORALIE_ART, CORALIE_SIZE } from '../coralie/index.js';
 import { keepsakeRig, keepsakeStill } from './seabossrigs.js';
 
 export const ART = {
-  moraymurri: { pad: 10, walk: 8, idle: 8, attack: 5, stride: 34, atkMs: [90, 160, 280, 220], draw: morayStill('murri'), rig: murriRig },
-  morayena: { pad: 10, walk: 8, idle: 8, attack: 5, stride: 34, atkMs: [90, 160, 280, 220], draw: morayStill('ena'), rig: enaRig },
-  abyssia: { pad: 10, walk: 8, idle: 8, attack: 5, stride: 26, atkMs: [100, 200, 300, 240], draw: abyssiaStill, rig: abyssiaRig },
-  coralie: { pad: 12, walk: 8, idle: 8, attack: 5, stride: 34, atkMs: [110, 180, 300, 240], draw: coralieStill, rig: coralieRig },
+  moraymurri: MURRI.art,
+  morayena: ENA.art,
+  abyssia: ABYSSIA_ART,
+  coralie: CORALIE_ART,
   keepsake: { pad: 6, walk: 8, idle: 6, attack: 4, stride: 30, atkMs: [80, 200, 160], draw: keepsakeStill, rig: keepsakeRig },
 };
 
 export const INFO = {
-  moraymurri: { name: 'Murri, the Twin Moray', w: 56, h: 96 },
-  morayena: { name: 'Ena, the Twin Moray', w: 56, h: 96 },
-  abyssia: { name: 'Lady Abyssia, the Sea Witch', w: 80, h: 100 },
-  coralie: { name: 'Queen Coralie, the Drowned Queen', w: 64, h: 124 },
+  moraymurri: { name: 'Murri, the Twin Moray', w: MURRI.w, h: MURRI.h },
+  morayena: { name: 'Ena, the Twin Moray', w: ENA.w, h: ENA.h },
+  abyssia: { name: 'Lady Abyssia, the Sea Witch', w: ABYSSIA_SIZE.w, h: ABYSSIA_SIZE.h },
+  coralie: { name: 'Queen Coralie, the Drowned Queen', w: CORALIE_SIZE.w, h: CORALIE_SIZE.h },
   keepsake: { name: 'Keepsake Bubble', w: 36, h: 44 },
 };

@@ -1,14 +1,14 @@
 // Moonlit Manor's rooms (world/manor.js runs them), in the scenery's outlined chibi style: garden
 // lanterns to light, the gallery's turning portraits and the family crest, the lost books
 // fluttering along the shelves, door levers and the doors they open, the garden fountains, the
-// ballroom chandelier, the hallway's tea trolley, page storms, and the bosses' tells (the Armours'
-// guard, the hostess floating out of reach). (x, y) is the bottom center on the floor; `time`
-// (seconds) animates.
+// ballroom chandelier, the hallway's tea trolley, page storms, and the bosses' tells (the hostess
+// floating out of reach; the Ballroom pair's casts draw their own looks: render/waltzrondo/looks.js).
+// (x, y) is the bottom center on the floor; `time` (seconds) animates.
 
 import { R, E, T, F, sprite, blit, mix, snap } from './pixel.js';
 import { art, place } from './scenery.js';
 import { trolleyArt } from './mobs/manorboss.js';
-import { CREST, doorOpen } from '../world/manor.js';
+import { CREST, doorOpen, HAND_IN_HAND } from '../world/manor.js';
 import { drawMochiAnim } from './mochi-anim.js';
 import { rollMochi } from '../data/mochi-genes.js';
 import { SAKURA } from '../data/scenes.js';
@@ -420,46 +420,41 @@ export function drawManorFront(ctx, world, cam, time) {
     }
     ctx.restore();
   }
-  // Lady Marigold's Three Steps: each mark shows its beat (1, 2, 3), and swells as its beat comes.
-  for (const z of run.zones) {
-    if (!z.steps || z.hit) continue;
-    const x = z.x - cam.x;
-    const y = z.y - cam.y;
-    const left = z.warn - (z.t ?? 0);
-    const near = Math.max(0, 1 - left / 0.35);
-    ctx.save();
-    ctx.globalAlpha = 0.75 + near * 0.25;
-    ctx.fillStyle = near > 0 ? '#ff8a2a' : '#fff6e0';
-    ctx.strokeStyle = '#5a3e86';
-    ctx.lineWidth = 2.4;
-    ctx.font = `bold ${Math.round(11 + near * 5)}px sans-serif`;
-    ctx.textAlign = 'center';
-    ctx.strokeText(String(z.count), x, y - 16);
-    ctx.fillText(String(z.count), x, y - 16);
-    ctx.restore();
-  }
   for (const m of world.mobs) {
     if (m.hp <= 0) continue;
     const x = m.x - cam.x;
     const y = m.y - cam.y;
-    // The Armours' guard: a ring of light linking the pair while they hold each other.
-    if (m.def.mech === 'waltz' && m.holdUntil > world.now) {
-      ctx.save();
-      ctx.globalAlpha = 0.5 + 0.2 * Math.sin(time * 6);
-      ctx.strokeStyle = '#ffe9a0';
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.ellipse(x, y - 4, m.def.w * 0.7, 8, 0, 0, TAU);
-      ctx.stroke();
-      ctx.restore();
-      if (world.now - (m.guardAt ?? -9) < 0.3) sparkle(ctx, x, y - m.def.h * 0.6, 8, '#fff6c8');
-    }
-    // The hostess floating out of reach above her guests: a bubble of moonlight.
-    if (m.def.mech === 'marigold' && m.mech?.aloft) {
-      glow(ctx, x, y - 140, 84, '#fff6d8', 0.35 + 0.1 * Math.sin(time * 2));
-      for (let k = 0; k < 5; k++) {
-        const a = time * 1.2 + (k / 5) * TAU;
-        sparkle(ctx, x + Math.cos(a) * 52, y - 140 + Math.sin(a) * 70, 2.4, '#ffe9a0');
+    // The Ballroom's pair hand in hand (world/manor.js manorShare): a rose ribbon looped between
+    // them while they dance close, glowing as a blow is shared along it.
+    if (m.def.id === 'waltzrondo') {
+      const n = world.mobs.find((o) => o.def.id === 'waltzminuet' && o.hp > 0);
+      const d = n ? Math.abs(n.x - m.x) : 1e9;
+      if (n && d <= HAND_IN_HAND.reach && !m.lift && !n.lift && !(n.fly?.y > 20)) {
+        const nx = n.x - cam.x;
+        const ny = n.y - cam.y - 26;
+        const y0 = y - 30;
+        const shared = Math.max(0, 1 - (world.now - (m.sharedAt ?? -9)) / 0.4);
+        const fade = Math.min(1, (HAND_IN_HAND.reach - d) / 30);
+        const mx = (x + nx) / 2;
+        const my = Math.max(y0, ny) + 10 + d * 0.06;
+        ctx.save();
+        ctx.lineCap = 'round';
+        ctx.globalAlpha = fade * (0.45 + 0.4 * shared);
+        ctx.strokeStyle = '#c8527e';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(x, y0);
+        ctx.quadraticCurveTo(mx, my, nx, ny);
+        ctx.stroke();
+        ctx.strokeStyle = shared > 0 ? '#ffe0ec' : '#ff9ec2';
+        ctx.lineWidth = 1.6;
+        ctx.stroke();
+        // a glint running along it
+        const u = (time * 0.6) % 1;
+        const gx = (1 - u) * (1 - u) * x + 2 * u * (1 - u) * mx + u * u * nx;
+        const gy = (1 - u) * (1 - u) * y0 + 2 * u * (1 - u) * my + u * u * ny;
+        ctx.restore();
+        sparkle(ctx, gx, gy, 1.6 + shared * 2, '#fff2f6');
       }
     }
   }

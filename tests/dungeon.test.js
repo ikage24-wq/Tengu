@@ -240,7 +240,7 @@ test('a group clears Rootwood Hollow from the first room to the last', () => {
   }
 });
 
-test('a group clears Moonlit Manor: lanterns, the portrait puzzle, the Armours, the books, the chase, the hostess', () => {
+test('a group clears Moonlit Manor: lanterns, the portrait puzzle, the penguin and the bat, the books, the chase, the hostess', () => {
   const random = Math.random;
   const rng = seeded(17);
   Math.random = rng;

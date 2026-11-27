@@ -31,7 +31,7 @@ import { botChat, sayOneOf } from './chatlog.js';
 import { placeInGroup, focusOf, behindSide, shared, callout as callOut } from './botfight.js';
 import { loadMap, killMob } from './world.js';
 import { radio, roomSetup, tickRoom, cheerOf, capperPhases, sporeSprout, pillarHit, boarPhases, gnarlPhases, GNARL_WORDS, hollowCalmed, floodComing, onFloor } from './hollow.js';
-import { MANOR_MECHS, MANOR_CHANNEL, manorSetup, tickManor, manorBoss, manorHitMul, manorKilled, turnPortrait, crestWords, CREST } from './manor.js';
+import { MANOR_MECHS, MANOR_CHANNEL, manorSetup, tickManor, manorBoss, manorHitMul, manorShare, manorKilled, turnPortrait, crestWords, CREST } from './manor.js';
 import { AQUA_MECHS, AQUA_CHANNEL, aquaSetup, tickAqua, aquaBoss, aquaHitMul, aquaKilled, openClam, bellWords } from './aquarium.js';
 import { CARNIVAL_MECHS, CARNIVAL_CHANNEL, carnivalSetup, tickCarnival, carnivalBoss, carnivalHitMul, carnivalKilled } from './carnival.js';
 import { OBS_MECHS, OBS_CHANNEL, obsSetup, tickObs, obsBoss, obsHitMul, obsKilled, pressLamp, lampsLit } from './observatory.js';
@@ -306,6 +306,7 @@ function reset(m) {
   Object.assign(m, {
     hp: m.def.hp, engaged: false, threat: {}, taunt: null, windup: 0, mech: null, shield: false, vulnUntil: 0,
     frozenUntil: 0, poison: null, x: m.home ?? m.x, state: 'idle', stagger: 0, knockVx: 0, aggroUntil: 0, charging: null,
+    cast: null, castPose: null, castEnd: null, goto: null, fly: null, lift: null, swoop: null, skim: null, hang: false, ringsAt: null, alone: false, back: false,
   });
   settle(m);
 }
@@ -600,7 +601,7 @@ const BOSS_LINES = {
   capper: '"Who is trampling my garden?! Those seeds are COUNTED!"',
   boar: '"HALT! Who goes there?! ...You smell like acorns."',
   gnarl: '"Hrrmm... too noisy... far too noisy..."',
-  waltz: '"May we have this dance? We insist."',
+  waltz: '"One, two, THREE! Do keep up, darlings."',
   moray: '"Sister, guests! Shall we share them?"',
   abyssia: '"Down here, darlings, the light is MINE."',
   coralie: '"Who disturbs the drowned court?"',
@@ -610,7 +611,7 @@ const BOSS_LINES = {
   folio: '"SHHH! This is a library!"',
   eclipse: '"Light and dark, sister. Shall we?"',
   astraea: '"Nothing will fall. Nothing will ever fall again."',
-  toffee: '"Mind the sparks! Ha!"',
+  toffee: '"Hold still! This hammer needs testing!"',
   gretel: '"Halt! None shall pass the gingerbread wall!"',
   bonbon: '"Nobody leaves before dessert!"',
   velvet: '"Shoes OFF in my hallway!"',
@@ -638,6 +639,8 @@ export function noteHit(world, m, h) {
   // (Gnarlroot can't be beaten, only calmed: blows bring him down to a third, no further, until the
   // tendrils holding Yomogi are cut.)
   if (m.def.mech === 'gnarl' && !m.mech?.freed) damage = Math.max(0, Math.min(damage, Math.ceil(m.hp - m.def.hp * 0.3)));
+  // (The Ballroom's pair share a blow while they dance hand in hand: world/manor.js.)
+  damage = manorShare(world, m, damage);
   engage(world, m, who);
   m.threat[who] = (m.threat[who] ?? 0) + Math.max(1, damage) * (run.roles[who] === 'tank' ? TANK_THREAT : 1);
   return damage;
@@ -933,6 +936,13 @@ function fight(world, m, up, dt) {
   if (tickYank(m, dt) || tickAir(m, dt) || tickHop(m, dt)) return;
   if (m.frozenUntil > now) {
     m.stagger = 0;
+    return;
+  }
+  // (Held where it is by a boss's cast, awake and drawn as itself, not frozen: Lady Abyssia's darlings
+  // holding their lanterns up in her Lights Out!, world/aquarium.js.)
+  if (m.heldUntil > now) {
+    m.state = 'idle';
+    m.windup = 0;
     return;
   }
   m.phase += dt;
@@ -1400,6 +1410,9 @@ function inZone(world, z, body) {
   if (z.kind === 'raid') return true;
   if (z.kind === 'buster' || z.kind === 'stack' || z.kind === 'spread') return Math.abs(body.x - z.x) < z.w / 2 + 4 && Math.abs(body.y - z.y) < 30;
   if (z.kind === 'donut') return Math.abs(body.x - z.x) > z.inner - 4 && Math.abs(body.x - z.x) < z.w / 2 + 6 && Math.abs(body.y - z.y) < 34;
+  // (A band up in the air, the Ballroom bat's swoop: anyone well off the floor in it, on a balcony,
+  // a landing or mid-jump; the floor under it is safe.)
+  if (z.high) return body.x >= z.x - 6 && body.x <= z.x + z.w + 6 && body.y < world.map.groundY - 36;
   return body.x >= z.x - 6 && body.x <= z.x + z.w + 6 && Math.abs(body.y - world.map.groundY) < 34;
 }
 

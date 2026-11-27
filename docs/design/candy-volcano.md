@@ -67,3 +67,41 @@ with sugar-glass wings, a living lollipop in a witch hat, a peppermint whose wra
 arms, a chocolate-bar knight with a wafer sword, and a jelly bean ninja. Toffee is a chubby beaver
 smith with a caramel-dripping hammer, Gretel a gingerbread knight with a candy-cane lance and an
 iced cookie shield, and Queen Bonbon a giant three-tier cake with a face, a crown and a cherry.
+
+## The 2026-11-27 remake
+
+The regulars were remade from scratch as new creatures of Queen Bonbon's sweet country, each on its own
+copy of a blank base (render/calf/, chinchilla/, chameleon/, badger/, meerkat/; the old sweet rigs
+retired), each with its own face, a themed idle act and three moves:
+
+- **Strawberry Calf** (gummybear): a strawberry-milk calf with a gumdrop cowbell. Grazes candy flowers,
+  frolics, rings its bell, practises its tiny moo. Head Butt, Hoof Stamp, Bell Clang.
+- **Floss Chinchilla** (cottoncandy): fur of spun sugar; bathes in powdered sugar, nibbles sugar
+  crystals, popcorns. Floss Puff (thrown), Popcorn Pop, Sugar Shake. A spoiled pot in the Candy
+  Kitchen boils over into floss and one climbs out.
+- **Swirl Chameleon** (lollipopwitch): its tail a swirl lollipop, its candy stripes rippling colour, two
+  turret eyes. Gumdrop Fling (thrown), Tongue Snap, Tail Whip.
+- **Mint Wrapper** (peppermint): kept from 2026-11-25 (a kid still in their sweet wrapper); new even blunt
+  bangs, clean lashes, an idle act in pieces, its own marks and a third move, the Crinkle Clap.
+- **Cocoa Badger** (chocoknight): the Licorice Mine's digger in a cocoa coverall, a cupcake-case helmet
+  with a birthday candle for a lamp, a rock-candy pick. Pick Chop, Shoulder Barge, Lamp Flare.
+- **Jelly Bean Meerkat** (jellyninja): the mine's lookout with a candy-cane slingshot and a bandolier of
+  jelly beans. Slingshot (thrown), Gravel Kick, Lookout Pounce.
+
+The forge's and the ramparts' bosses were remade the same day, from scratch, with brand-new fights
+(world/volcano.js; their cast looks in render/toffee/looks.js and render/gretel/looks.js):
+
+- **Toffee, the Caramel Smith** (render/toffee/): a chubby caramel salamander smith in a mint work shirt and
+  a cocoa apron, her hammer's head a block of hard-crack caramel, her little anvil carried on her back.
+  Idle: polishing the hammer, tasting a strand of caramel, a caramel bubble, practice taps. Swings: Bonk,
+  Scoop, Tail Swat. Phases named for the sugar's stages: Soft Ball (Hot Off the Anvil buster, Caramel
+  Drizzle spread, Sugar Glass stack, Quench! get-out), Hard Ball (her anvil comes off her back: Anvil Toss,
+  Ring the Anvil (hug the anvil), Taffy Pull (out of its path), Hard Crack! raid-wide), Hard Crack (faster,
+  doubled). Entrance: hammering a glowing bar at her anvil, then heaving the anvil onto her back.
+- **Gretel, the Gingerbread Knight** (render/gretel/): a living gingerbread cookie in mint fondant armour,
+  an icing spatula for a sword and a heart cookie cutter for a shield, gumdrop buttons. Idle: polishing the
+  cutter, sword drill, a fallen crumb iced back on, sentry march. Swings: Thrust, Shield Bash, Overhead
+  Chop. Phases: Rolled Out (Spatula Smack buster, Gumdrop Buttons spread, Royal Icing stack, Heartcutter
+  Bash (get behind her)), Cut Out (her cookie cutters come down: Roll Out! (get inside one), Press! (get
+  out), Preheat! raid-wide), Into the Oven! (in, out and in again, faster). Entrance: drumming on her
+  cutter, then piping a line of icing between you.

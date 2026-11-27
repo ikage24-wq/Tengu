@@ -25,7 +25,7 @@ Entry from level 15; the finder brings players of 15-19.
 |---|---|---|---|---|
 | 1 | The Moonlit Garden | Hedges and topiaries climbing to the front steps, fountains, lanterns | Light the garden lanterns (3) | |
 | 2 | The Portrait Gallery | A tall hall on three floors, portraits on every wall | **Puzzle:** turn the four portraits to match the family crest, shown by candles; the group splits across the floors | Puzzle room |
-| 3 | The Ballroom | A grand round floor under a chandelier, balconies | **Mid-boss: the Waltzing Armours** (two suits of armour dancing as a pair) | |
+| 3 | The Ballroom | A grand round floor under a chandelier, balconies | **Mid-boss: Dame Rondo and Dame Minuet** (a tailcoat penguin and an upside-down bat dancing as a pair) | |
 | 4 | The Library | Shelves to the ceiling, rolling ladders, floating books | Return the lost books (3) to their shelves | |
 | 5 | The Endless Hallway | A long corridor | **Chase:** Madame Velvet's tea trolley rumbles after the group; run, jump the flying plates, pull the door levers; at the end, **mid-boss: Madame Velvet** | Chase room |
 | 6 | The Moonlit Rooftop | The roof under a huge moon, chimneys and weathervanes | **Final boss: Lady Marigold, the Eternal Hostess** | |
@@ -43,22 +43,36 @@ own), and the bosses at the quality of the queens or better (render/mobs/queens.
 - **Candle Bride**: a ghostly bride with a candelabra, veil drifting, wax-drip lace; leaves wax
   puddles.
 - **Topiary Dryad**: a garden spirit of trimmed hedge with rose-bud hair and shears (the garden).
+  (Now the Topiary Hedgehog: Topsy, a round little hedgehog whose prickles are a clipped box
+  hedge, who rolls about like a topiary ball; render/topiarydryad/, 2026-11-26.)
 - **Lantern Ghost Girl**: a little ghost girl with a lantern of cold blue fire, hood, bare feet.
 - **Armour Knight Girl**: a dullahan-style knight girl in pastel armour, her helmet floating beside
   her (the ballroom's guards).
-- **Tea Party Hatter**: a tea-mad hostess with a giant top hat and a teapot that pours scalding tea.
+- **Teacup Hermit** (was the Tea Party Hatter; remade 2026-11-26): Pemberton, a little rose-pink hermit crab
+  living in a porcelain teacup, monocle and moustache; lobs sugar cubes, pinches, clonks with his cup.
 
 ## Bosses
 
-- **The Waltzing Armours** (ballroom): two armours dancing as a pair. They spin across the floor
-  together (a sweep shown on the floor first); hit one and the other guards it; part them (the tank
-  pulls one away) and they stagger. If one falls, the other dances alone, faster.
+- **Dame Rondo, the Tailcoat Penguin, and Dame Minuet, the Upside-down Bat** (ballroom; remade
+  2026-11-26 from the Waltzing Armours, the player's pick "A, Black Tie & Bat Wings"): the penguin
+  can't fly and the bat can't really stand, so the penguin has the floor and the bat the air.
+  Whatever the lead dances, her partner echoes a beat later, mirrored across the chandelier's chain.
+  See the boss fights below.
 - **Madame Velvet, the head housekeeper** (hallway; was the Grand Butler): a tall, elegant ghost with a ring of keys and a tea trolley. She serves tea that scalds (circles to step out of), throws a stack
   of plates across the hall (jump them), and rings the bell to call Teacup Mimics.
-- **Lady Marigold, the Eternal Hostess** (rooftop): phase 1, Tea for Two (teacups rain on marked
-  spots); phase 2, the Guests Arrive (ghost dancers to clear while she floats out of reach); phase 3,
-  the Last Waltz (she sweeps the roof in a moonlit spin, the group jumps the chimneys). At the end she
-  is freed, not slain: the guests come home and she thanks the group, at peace.
+- **Lady Marigold, the Eternal Hostess** (rooftop; remade 2026-11-26, render/marigold/): a lonely
+  ghost hostess who floats, her marigold-petal gown melting into a long glowing train, a plum chignon
+  with a marigold in it, her dance card (every line blank) at her wrist and a pocket watch stopped at
+  midnight at her hip. She makes her entrance down the moon's beam. A new fight on a cast bar: Welcome,
+  Guests! (Invitations: spread; Don't Leave!: come in close; A Toast!: stack; May I Have This Dance?:
+  the tank), Second Helpings below 65% (her Basset Butlers walk in with pumpkin tarts: stop them before
+  they reach her, or she eats one and heals; Give Me Room!, then at once Don't Leave!), and Midnight
+  below 30% (Midnight Chimes strike the roof in four stretches in turn; Not Yet!; the Hundred-Year
+  Waltz on everyone). At the end she is freed, not slain: the guests come home and she thanks the
+  group, at peace.
+- **Basset Butler** (her adds; the Pumpkin Butler remade 2026-11-26, render/pumpkinbutler/): Humphrey,
+  a little red-and-white basset hound in a plum waistcoat and white gloves, carrying a silver tray
+  and cloche with a pumpkin tart under it; Cloche Clang, Ear Swat and Deep Bow.
 
 ## Rewards
 
@@ -72,10 +86,11 @@ more. Its own gear set, **Moonlit Masquerade** (a masquerade outfit), like the H
   in-betweens), art in render/mobs/manor.js: the Porcelain Doll (stiff doll steps, parasol jab),
   Ghost Maid (floats on a mist curl, duster flick), Candle Bride (glides, veil streaming,
   candelabra gout), Topiary Dryad (skipping, shears snap), Lantern Ghost (tiptoes on air, cold-fire
-  ring), Armour Knight (marching, floating helmet beside her, heavy slash), Tea Party Hatter (jaunty
-  skip, giant hat, flung tea).
+  ring), Armour Knight (marching, floating helmet beside her, heavy slash), Teacup Hermit (a prim
+  tiptoe scuttle, a lobbed sugar cube).
 - **Bosses** drawn on the same rig scaled up (render/mobs/manorboss.js, `grand` scales the figure,
-  its strokes and its face together): Dame Rondo and Dame Minuet (the Waltzing Armours), Madame
+  its strokes and its face together): Dame Rondo and Dame Minuet (now on their own base copies:
+  render/waltzrondo/, render/waltzminuet/), Madame
   Velvet with her trolley, Lady Marigold in her gown of marigold petals.
 - (2026-11-03/04: the monsters and bosses were redrawn as chibi creatures in render/mobs/manorfolk.js
   and manorfolkboss.js on the boss rig; the first art and its rig were removed, and
@@ -83,14 +98,24 @@ more. Its own gear set, **Moonlit Masquerade** (a masquerade outfit), like the H
 - **Rooms** (data/maps.js, world/manor.js, render/manor.js): the gate is Manor Hill, off the top
   bough of Mossy Woods, with Mr. Pumpkins. Garden fountains spout on a beat and throw you up the
   terraces; the gallery's portraits turn and lock on the crest's picture (a new crest each run);
-  the ballroom's chandelier falls mid-fight (its chain is the climb to the room's secret); the
+  the ballroom's chandelier is the middle the pair's echoes mirror across (its chain is the climb to
+  the room's secret); the
   library's lost books flutter along the shelves and page storms push one floor at a time; the
   hallway trolley chases the group, doors open by their levers, plates fly ahead; the rooftop has
   chimneys to stand on and the weathervane's secret.
 - **Boss fights**, changed from the plan where it played better:
-  - The Armours take hold now and then (side by side they guard each other, a gold ring shows it),
-    then break into the Grand Waltz, sweeping the floor wall to wall. One down, the other dances
-    alone, faster.
+  - Rondo and Minuet (world/manor.js), three phases by their health together, every move on the
+    cast bar ("Belly Slide", then "Echo: Belly Slide"):
+    - Lead and Echo (to 60%): Belly Slide (a polished lane, she slides it: jump her or get up high),
+      echoed by the bat's swoop at balcony height on the other side (get down); Count of Three (stack
+      in the gold marker), echoed by Three Kisses (hearts on three: spread); Tailcoat Twirl (tank).
+    - Change Partners (to 25%): the bat leads, so the order flips (her swoop, then Rondo's slide; her
+      kisses, then Rondo's count); Echo Rings (out, in, out); Crossing Slides (from both walls, one gap).
+    - The Lift (below 25%): the bat lifts the penguin, who flies at last: the Grand Lift sweeps the room
+      low then high, its path drawn ahead; then the count and kisses, the twirl, and the Final Bow.
+    - Hand in hand: while they dance close, a blow on one is shared with the other (a rose ribbon
+      links them), so they wear down together. One down, the other dances alone (the bat both parts
+      herself; the penguin sliding twice as often).
   - Madame Velvet rings for her Ghost Maids (not Teacup Mimics: the maids are already in the house
     and read better), serves scalding tea circles, and sends plates skimming the floor (jump).
   - Lady Marigold: Tea for Two, then the Guests Arrive (Candle Brides and Armour Knights; she can't be
@@ -114,8 +139,8 @@ more. Its own gear set, **Moonlit Masquerade** (a masquerade outfit), like the H
 The residents and bosses were redrawn creature-first (render/mobs/manorfolk.js and
 manorfolkboss.js), retiring the costumed girls on the manor rig (the rig stays for the dungeons
 that still use it): a china bunny doll with a parasol, a ghost-cat maid with a feather duster, a
-living candle bride, a topiary swan, a flame wisp in an iron lantern, a little empty suit of armour
-with a too-big helm, and a teapot in a top hat who pours hot tea. The waltzing armours are big
-chibi suits (Rondo slim and plumed with a rapier, Minuet bell-skirted with a fan-shield), Madame
+living candle bride, a topiary swan (remade 2026-11-26 as the Topiary Hedgehog), a flame wisp in an iron lantern, a little empty suit of armour
+with a too-big helm, and a teapot in a top hat who pours hot tea. The ballroom's pair are a stiff
+little penguin in her own tailcoat and a dreamy fruit bat in a fur ruff (2026-11-26), Madame
 Velvet a plump plum ghost in a mob cap who hurls plates, and Lady Marigold a giant marigold
 blossom spirit who sweeps a storm of petals with her fan.

@@ -169,9 +169,26 @@ const MINT_MOVES = {
     flick: [0.04, 0.9],
     face: [['wink', -9, 0.04], ['happy', 0.04, 0.66]],
   },
+  // Crinkle Clap (2026-11-27): arms flung wide and back, chest out, up on their toes; then both hands
+  // slammed together in front of them, the cellophane on their sleeves crinkling in a burst of red and
+  // white candy sparkles (`clap`).
+  mintClap: {
+    anticT: 0.45,
+    keys: [
+      [0, { tilt: -8, x: -0.02, drop: -0.02, chest: -6, head: -6, shN: 70, elN: -30, hwN: 10, shF: 66, elF: -30, turnC: -0.2, toeN: 10, toeF: 10 }],
+      [0.06, { tilt: 10, x: 0.06, drop: 0.06, chest: 4, head: 6, shN: -84, elN: -14, hwN: -20, shF: -80, elF: -16, turnC: 0.2 }, 'out'],
+      [0.34, { tilt: 7, x: 0.05, drop: 0.05, shN: -80, elN: -18, shF: -76, elF: -20 }],
+      [0.7, {}],
+    ],
+    clap: [0.04, 0.55],
+    face: [['angry', -9, 0.04], ['shout', 0.04, 0.4], ['proud', 0.4, 0.7]],
+  },
 };
 const MOVES = { ...BASE_MOVES, ...MINT_MOVES };
-export const MINT_POOL = ['mintSpin', 'mintFlick'];
+export const MINT_POOL = ['mintSpin', 'mintFlick', 'mintClap'];
+// (their idle act's pieces: [where each starts on the act's timeline, how long it lasts])
+const MW_PIECES = { spin: [0.6, 5.4], polish: [6.2, 5.3], toss: [11.8, 3.3], tug: [15.6, 5.0], hops: [20.8, 3.2] };
+const MW_ORDER = ['spin', 'polish', 'toss', 'tug', 'hops'];
 
 const DEAD = { drop: 0.35, tilt: 18, waist: 12, head: 22, shN: 8, elN: -5, shF: -8, elF: 5, fxN: 0.1, fxF: -0.05, wing: -10, wisp: 10 };
 const isBow = (w) => w === 'bow' || w === 'bowDrawn';
@@ -557,7 +574,9 @@ export function mintRig(opts) {
       for (const k2 of ['drop', 'fxN', 'fyN', 'fxF', 'fyF']) base[k2] /= leg;
       const out = mv ? poseAt(mv, mt, anticW, base) : { ...base };
       // Their own idle act, on top of the base's stance (only while calm: not moving, fighting, hurt
-      // or beaten), a 24 s loop (2026-11-25 polish, the player: "more expressive"):
+      // or beaten), in five pieces (2026-11-25 polish, the player: "more expressive"; 2026-11-27 each
+      // piece played whole as the next one that fits the time they have before they move on, data
+      // `rest`, world/mobs.js `m.restUntil`, instead of a clock loop that walking cut off mid-piece):
       //   - a practice spin (round and round on the spot, arms out), then dizzy: a big wobble, a
       //     stumble sideways, arms windmilling, caught just in time;
       //   - polishing the peppermint on their tunic with a sleeve until it shines, chest puffed, proud;
@@ -567,8 +586,33 @@ export function mintRig(opts) {
       //   - three happy hops, arms up.
       // (Degrees.)
       {
-        const calmK = (a.calm ?? 1) * (mv ? 0 : 1) * (1 - (a.walkW ?? 0)) * (m.hp > 0 ? 1 : 0);
-        const lu = (t + (m.uid % 5) * 3.1) % 24;
+        const now = a.now ?? t;
+        const dt = clamp(a.dt ?? 0, 0, 0.05);
+        const fighting = (m.aggroUntil ?? 0) > now && m.hp > 0;
+        const napping = m.hp > 0 && (m.pose === 'sleep' || (m.habit?.kind === 'nap' && (m.habit.until ?? 0) > now));
+        const calmGoal = !mv && !fighting && !napping && !m.cine && !m.pose && (a.walkW ?? 0) < 0.05 && m.hp > 0 && (a.hurtAgo ?? 9) > 0.6 ? 1 : 0;
+        st.mwCalm = (st.mwCalm ?? 0) + (calmGoal - (st.mwCalm ?? 0)) * (1 - Math.exp(-dt * (calmGoal ? 2 : 8)));
+        const calmK = smoothstep(st.mwCalm);
+        // (the piece now: where it sits on the act's old timeline, `lu`; -1 between pieces)
+        let PC = st.mwPiece ?? null;
+        if (PC && (now < PC.t0 - 0.25 || (calmK < 0.03 && !calmGoal))) PC = null;
+        if (PC && PC.name && now - PC.t0 > MW_PIECES[PC.name][1] + 1.2) PC = null;
+        if (PC && !PC.name && now >= PC.until) PC = null;
+        if (!PC && calmGoal) {
+          const left = typeof m.restUntil === 'number' ? m.restUntil - now : Infinity;
+          st.mwOrd ??= (m.uid ?? 0) % MW_ORDER.length;
+          for (let i = 0; i < MW_ORDER.length; i++) {
+            const nm = MW_ORDER[(st.mwOrd + i) % MW_ORDER.length];
+            if (MW_PIECES[nm][1] + 0.4 <= left) {
+              PC = { name: nm, t0: now + 0.2 };
+              st.mwOrd = (st.mwOrd + i + 1) % MW_ORDER.length;
+              break;
+            }
+          }
+          if (!PC) PC = { name: null, t0: now, until: now + Math.max(0.5, Math.min(left, 3)) };
+        }
+        st.mwPiece = PC;
+        const lu = PC?.name ? MW_PIECES[PC.name][0] + (now - PC.t0) : -1;
         const go = (pose, w) => {
           if (w > 0.001) for (const [k2, v] of Object.entries(pose)) out[k2] = (out[k2] ?? 0) + (v - (out[k2] ?? 0)) * w;
         };
@@ -627,6 +671,38 @@ export function mintRig(opts) {
         st.mintAng = ((st.mintAng ?? 0) + Math.max(0, a.dt ?? 0) * rate) % TAU;
         a.mintAng = st.mintAng;
         a.mintSpinning = spinning >= 0;
+      }
+      // Hunting you: leaning in, fists up, a fierce face; low on health: worried, a bead of sweat;
+      // a nap (habitat): sat down, head nodding, z's. Their own marks over their head (`ownEmotes`).
+      {
+        const now = a.now ?? t;
+        const dt = clamp(a.dt ?? 0, 0, 0.05);
+        const alive = m.hp > 0;
+        const hunting = (m.aggroUntil ?? 0) > now && alive;
+        const hurt = alive && (a.hurtAgo ?? 9) < 0.6;
+        const go = (pose, w) => {
+          if (w > 0.001) for (const [k2, v] of Object.entries(pose)) out[k2] = (out[k2] ?? 0) + (v - (out[k2] ?? 0)) * w;
+        };
+        if (hunting && !mv && !hurt) {
+          go({ tilt: 6, head: 4, drop: 0.04, shN: -60, elN: -100, hwN: -10, shF: -50, elF: -104 }, 1 - (a.walkW ?? 0) * 0.5);
+          a.mintFace = 'angry';
+        }
+        if (hunting && !st.mwHunt) st.mwBangAt = now;
+        if (!hunting && st.mwHunt && alive) st.mwLostAt = now;
+        st.mwHunt = hunting;
+        a.mintBang = now - (st.mwBangAt ?? -9);
+        a.mintHuh = now - (st.mwLostAt ?? -9);
+        const low = alive && m.hp < m.def.hp * 0.25 && !m.cine;
+        a.mintSweat = low && !mv ? (t * 0.5) % 1 : -1;
+        if (low && !mv && !hurt && !hunting) a.mintFace = 'worry';
+        const napping = alive && !mv && (m.pose === 'sleep' || (m.habit?.kind === 'nap' && (m.habit.until ?? 0) > now));
+        st.mwNap = (st.mwNap ?? 0) + ((napping ? 1 : 0) - (st.mwNap ?? 0)) * (1 - Math.exp(-dt * (napping ? 2.2 : 6)));
+        const nw = smoothstep(st.mwNap);
+        if (nw > 0.001) {
+          go({ drop: 0.3, tilt: 6, head: 16 + Math.sin(now * 1.4) * 3, neckR: 4, shN: -20, elN: -60, shF: -16, elF: -60, fxN: 0.3, fxF: 0.2 }, nw);
+          if (nw > 0.6) a.mintFace = 'sleep';
+        }
+        a.mintZz = nw > 0.6 ? nw : 0;
       }
       // (their attacks' faces: each move's list of [face, from, to])
       if (mv?.face) for (const [fc, f0, f1] of mv.face) if (mt >= f0 && mt < f1) a.mintFace = fc;

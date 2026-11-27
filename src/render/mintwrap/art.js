@@ -1,13 +1,13 @@
 // The Mint Wrapper's design (2026-11-25, the Peppermint Spinner remade on the kid base, the player's
 // pick "B" of three): a cheeky little kid of Queen Bonbon's bakery who never took their sweet wrapper
 // off. A clear crinkly cellophane hood twisted shut at both sides into two frilly wrapper twists
-// (like ears), messy mint-green hair under it; the round peppermint itself worn as a tunic, its red
+// (like ears), mint-green hair under it (an even blunt fringe since 2026-11-27); the round peppermint itself worn as a tunic, its red
 // swirl turning as they go; the wrapper's crinkly cape behind, twisted at its tail; mint shorts,
 // candy-stripe socks, red sneakers; cherry-red eyes, a fang grin.
 // Each piece, in the kid base's own units (blankbase.js, read only), named for the bone it rides on:
 //   capeB      the wrapper cape behind them (on a spring); capeTwist its twisted tail (a spring)
 //   hoodB      the hood behind the head; hairB the hair under it
-//   head       the face (each expression), the messy bangs
+//   head       the face (each expression), the even blunt bangs
 //   hoodF      the hood's crinkled front edge, framing the face
 //   twistF/N   the hood's two wrapper twists, at the sides of the head (on springs)
 //   sleeveFu/Nu  short mint puff sleeves with a red trim
@@ -88,6 +88,7 @@ const FACES = {
   angry: { e: 'fierce', m: 'snarl', b: 'cross' }, hurt: { e: 'squeeze', m: 'wobble', b: 'worry' }, dead: { e: 'squeeze', m: 'wobble', b: 'worry' },
   shout: { e: 'fierce', m: 'shout', b: 'cross' }, sleep: { e: 'sleepy', m: 'small', b: 'soft' }, dizzy: { e: 'dizzy', m: 'wobble', b: 'worry' },
   wink: { e: 'wink', m: 'grin', b: 'cheek' }, o: { e: 'wide', m: 'o', b: 'up' }, proud: { e: 'happy', m: 'grin', b: 'up' },
+  worry: { e: 'open', m: 'wobble', b: 'worry' },
 };
 export const MOODS = Object.keys(FACES);
 const EYE = { ring: '#5a0e1a', iris: '#f0405a', light: '#ffd0d8', dark: '#a81a32', ink: '#3a2430', low: '#e8b8b0', crease: '#f4d8d0' };
@@ -106,9 +107,8 @@ function eye(x, y, o, lid = 0, big = 0) {
   out.push(F(T([P(1.6, -3.8), P(2.1, -2.8), P(3.1, -2.4), P(2.1, -2), P(1.6, -1), P(1.1, -2), P(0.1, -2.4), P(1.1, -2.8)], '#ffffff')));
   if (lid > 0) out.push(F(blob([P(-w - 0.8, -0.2), P(-w * 0.5, -h - 2.2), P(w * 0.5, -h - 2.6), P(w + 0.8, -h * 0.6), P(w * 0.4, -h + lid), P(-w * 0.5, -h + lid + 0.4)], SK.base, 2)));
   out.push(...band(curve([P(-w - 0.4, 0.4), P(-w * 0.5, -h - 0.4 + lid), P(w * 0.45, -h - 0.8 + lid), P(w + 0.6, -h * 0.4)], 3), 1.6, 2.8, k.ink, true));
-  for (let i = 0; i < 3; i++) out.push(...band(curve([P(w * (0.55 + i * 0.2), -h * (0.9 - i * 0.2) + lid * 0.5), P(w * (0.85 + i * 0.25), -h * (1.2 - i * 0.15)), P(w * (1.05 + i * 0.25), -h * (1.15 - i * 0.18))], 3), 1, 0.4, k.ink, true));
-  out.push(...arc([P(-w * 0.7, h * 0.75), P(0, h + 1.2), P(w * 0.7, h * 0.7)], 0.7, k.low));
-  out.push(...arc([P(w * 0.5, h * 0.9), P(w * 0.62, h * 1.3)], 0.6, k.low), ...arc([P(w * 0.2, h + 1), P(w * 0.26, h + 1.6)], 0.6, k.low));
+  // (two short round-tipped flicks at the outer corner, grown from the lash line; no lower lid)
+  for (let i = 0; i < 2; i++) out.push(...band(curve([P(w * (0.7 + i * 0.22), -h * (0.78 - i * 0.3) + lid * 0.5), P(w * (0.98 + i * 0.22), -h * (0.98 - i * 0.26)), P(w * (1.14 + i * 0.2), -h * (1.08 - i * 0.24))], 3), 1.1, 0.9, k.ink, true));
   return out;
 }
 const shut = (x, o, kind) => {
@@ -169,29 +169,45 @@ function face(f) {
 }
 
 // ---------- Hair (head units) ----------
-// The hair under the hood, behind the face: short and messy, rounded ends.
+// The hair under the hood, behind the face: short, rounded ends.
 const hairBack = () => [
   blob([[0, -46], [-32, -36], [-42, -14], [-46, 10], [-42, 18], [-38, 26], [-31, 22], [-26, 28], [26, 28], [31, 22], [38, 26], [42, 18], [46, 10], [42, -14], [32, -36]], Hc[1], 3),
   F(blob([[-20, 6], [-24, 22], [0, 28], [24, 22], [20, 6], [0, 14]], Hc[2], 4)),
   lens([-42, -6], [-43, 16], 2.6, 1.6, Hc[0]), lens([42, -6], [43, 16], 2.6, -1.6, Hc[0]),
 ];
-// Messy bangs: big rounded tips going every which way from a part on the far side; the shadow on the
-// brow, a shaded rim, dark gaps toward the part, shines, the angel ring.
-const PART = [-6, -48];
-const BANG_EDGE = [[-36, -8], [-30, 4], [-25, -8], [-17, 0], [-13, -12], [-6, 2], [-1, -12], [6, 0], [11, -14], [18, 0], [24, -10], [31, 2], [36, -10]];
+// The bangs (2026-11-27, rebuilt to the player's hair rules: the old messy spiky bangs went): an even
+// blunt cut in five sections, the middle one the widest, curving like a U from just above the brows in
+// the middle up toward the temples, stopping well above the lashes; each section's end trimmed flat with
+// soft round corners, a deeper tone up in the little gaps between them; a soft shadow on the brow; one
+// shared light from the crown and one broken shine band across them all; short side locks outside the
+// eyes, curling in at the cheeks.
+const PART = [-4, -50];
+const CUT = (x) => -2.6 - 5.6 * (x / 34) ** 2;
+const SECTIONS = [[-35, -21], [-21, -8], [-8, 9], [9, 22], [22, 35]];
 function bangs() {
-  const L = BANG_EDGE[0];
-  const R = BANG_EDGE[BANG_EDGE.length - 1];
-  const crown = [[R[0], R[1] - 14], [26, -42], [0, -50], [-26, -42], [L[0], L[1] - 14]];
-  const out = [F(blob([...BANG_EDGE.map(([x, y]) => [x + 0.6, y + 2]), [R[0], R[1] - 6], [L[0], L[1] - 6]], SK.sh, 2)), blob([...BANG_EDGE, ...crown], Hc[1], 2)];
-  out.push(...band(curve(BANG_EDGE.slice(1, -1).map(([x, y]) => [x, y - 0.7]), 4), 0.9, 0.9, Hc[2], true));
-  BANG_EDGE.forEach((p, i) => {
-    if (i === 0 || i === BANG_EDGE.length - 1) return;
-    if (i % 2 === 0) out.push(lens(toward(p, PART, 0.06), toward(p, PART, 0.6), 1.7, -0.8, Hc[3]));
-    else out.push(lens(toward(p, PART, 0.2), toward(p, PART, 0.55), 1.6, -0.6, Hc[0]));
-  });
-  out.push(lens([-29, -30], [-15, -39], 3.2, -1.3, Hc[0]), lens([-10, -41], [5, -41.6], 3.2, -1.5, Hc[0]), lens([10, -40.6], [24, -34], 3, -1.3, Hc[0]), lens([-7, -42], [2, -42.4], 1.2, -0.6, '#ffffff'));
-  // side locks, short, curling in at the cheeks
+  const out = [];
+  // the shadow the cut casts on the brow (the skin's own shade, offset down)
+  out.push(F(blob([[-34, CUT(-34) - 4], [-17, CUT(-17) + 1.4], [0, CUT(0) + 2.2], [17, CUT(17) + 1.4], [34, CUT(34) - 4], [34, -16], [-34, -16]], SK.sh, 2)));
+  // the crown: one smooth cap of hair down to the cut
+  out.push(blob([[36, -12], [30, -38], [12, -50], [-12, -50], [-30, -38], [-36, -12], [-34, CUT(-34) - 1], [0, CUT(0) - 1], [34, CUT(34) - 1]], Hc[1], 3));
+  // the deeper tone seen up in the gaps between sections
+  out.push(...band(curve([-30, -15, 0, 15, 30].map((x) => [x, CUT(x) - 1.4]), 4), 2.6, 2.6, Hc[2], true));
+  // the five sections, each trimmed flat with soft corners
+  for (const [x0, x1] of SECTIONS) {
+    const mx = (x0 + x1) / 2;
+    out.push(blob([[x0 + 0.6, -30], [x1 - 0.6, -30], [x1 - 0.2, CUT(x1) - 0.8], [mx + (x1 - x0) * 0.3, CUT(mx) + 0.2], [mx - (x1 - x0) * 0.3, CUT(mx) + 0.2], [x0 + 0.2, CUT(x0) - 0.8]], Hc[1], 2));
+  }
+  // one shared light from the crown, fading down; a soft deeper rim along the cut
+  out.push(F(blob([[-26, -38], [-10, -47], [10, -47], [26, -38], [18, -31], [0, -34], [-18, -31]], '#a8e8ca', 3)));
+  for (const [x0, x1] of SECTIONS) {
+    const mx = (x0 + x1) / 2;
+    out.push(...arc([[x0 + 1.4, CUT(x0 + 1.4) - 0.6], [mx, CUT(mx) - 0.4], [x1 - 1.4, CUT(x1 - 1.4) - 0.6]], 0.8, Hc[2]));
+  }
+  // each split carried up toward the crown as a fading line
+  for (const [x0] of SECTIONS.slice(1)) out.push(lens(toward([x0, CUT(x0) - 1], PART, 0.04), toward([x0, CUT(x0) - 1], PART, 0.42), 1.1, -0.3, Hc[2]));
+  // the shine: a broken band of a few soft slivers across the sections
+  for (const [x0, x1] of [[-26, -16], [-11, 2], [7, 16], [21, 28]]) out.push(lens([x0, -21 + Math.abs(x0) * 0.08], [x1, -21.6 + Math.abs(x1) * 0.08], 1.5, -0.5, '#f4fffa'));
+  // side locks, short, curling in at the cheeks (outside the eyes)
   for (const o of [-1, 1]) {
     const sp = [[31, -14], [36, -2], [36, 10], [33, 18], [29, 22]].map(([x, y]) => [x * o, y]);
     out.push(...lockOf(sp.map(([x, y]) => [x + 1.4 * o, y + 1.6]), 8.6, 2.6, Hc[2]), ...lockOf(sp, 9, 2.6, Hc[1]), lens(sp[1], sp[3], 1.4, -0.8 * o, Hc[0]));

@@ -26,7 +26,7 @@ export const DUNGEONS = {
   // Mossy Woods, spooky-cute, six rooms with a puzzle room and a chase.
   manor: {
     id: 'manor', name: 'Moonlit Manor', minLevel: 15,
-    blurb: "Lady Marigold's midnight party never ends, and her guests never go home. Light the garden, solve the gallery, outdance the Armours, outrun the trolley, and set the hostess free.",
+    blurb: "Lady Marigold's midnight party never ends, and her guests never go home. Light the garden, solve the gallery, outdance the penguin and the bat, outrun the trolley, and set the hostess free.",
     gate: 'manor_gate', warden: 'pumpkins',
     rooms: ['manor1', 'manor2', 'manor3', 'manor4', 'manor5', 'manor6'],
     recruit: { tank: [16, 18], healer: [16, 18], dps: [15, 18] },

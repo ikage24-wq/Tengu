@@ -46,9 +46,9 @@ A wind-up fairground where the toys never stopped playing.
   (mirror puzzle: copies of the group, hit the real ones), the Roller Coaster (a chase where the
   floor itself moves), the Big Top (mid-boss), the Wind-up Workshop (gears you ride and stop with
   keys), the Ferris Wheel (final boss on the turning wheel's cars).
-- **Monsters ("tin" rig: jointed, wind-up keys, ratcheting motion):** Ballerina Music Box, Tin
-  Drummer Girl, Jack-in-the-Box Jester, Marionette (strings visible, jerky dance), Teddy Strongman,
-  Balloon Seller.
+- **Monsters (Queen Gearheart's wind-up troupe, remade 2026-11-26; docs/design/clockwork-carnival.md):**
+  Giraffe Ballerina, Koala Balloonist, Cymbal Monkey, Boxing Kangaroo, Harlequin Puppet (strings
+  visible, from a floating cross), Hippo Strongman.
 - **Bosses:** the Ringmaster's Lion (whip-cracks, hoop jumps the group must make); Madame Marionette
   (cuts and re-ties party members' "strings", controls swapped briefly); the Grand Automaton
   (assembled from the carnival's rides, a part per phase).
@@ -96,7 +96,7 @@ A whole town on a giant whale flying above the island.
 - **Rooms:** the Tail Docks (the whale flips its tail: the floor tilts), the Spine Market, the Blowhole
   (an updraft geyser on a beat), the Lung Gardens (breathing rooms that expand and shrink), the
   Barnacle Fortress, the Whale's Brow (final boss in the wind at the top of the sky).
-- **Monsters ("sky" rig, wind-blown cloth and hair, gliders):** Kite Rider, Cloud Shepherdess, Sky
-  Pirate Gunner, Barnacle Knight, Storm Harpist, Feather Monk.
+- **Monsters (remade 2026-11-27, docs/design/sky-whale.md):** the Kite Pika, the Cloudherd Samoyed,
+  Blunderpuss, the Turtle Squire, the Stormsong Frog, the Mantra Lemur.
 - **Bosses:** Captain Gale of the sky pirates; the Barnacle Matriarch; the Whale's Dream (the whale's
   own spirit, a gentle giant to be woken, not killed).

@@ -477,9 +477,9 @@ const ETC = [
   ['bone_shard', 'Bone Shard', 13, '#efe8d8'],
   ['crystal_gel', 'Mimic Gem', 15, '#9fe8ff'],
   ['rock_core', 'Geode Core', 18, '#a898c8'],
-  ['shade_cloth', 'Wraith Shroud', 20, '#5d5285'],
+  ['shade_cloth', 'Mist Veil', 20, '#5d5285'],
   ['wool', 'Cloud Mane', 22, '#ffffff'],
-  ['feather', 'Harpy Feather', 24, '#9fd8ff'],
+  ['feather', 'Albatross Feather', 24, '#9fd8ff'],
   ['stardust', 'Stardust', 28, '#ffe36b'],
   ['king_crystal', 'King Crystal', 1250, '#c9a6ff'],
   // Each monster its own drop, named for what it is.

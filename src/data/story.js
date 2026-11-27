@@ -248,7 +248,7 @@ export const STORY_QUESTS = {
   }),
   story_dessert: s('story_dessert', 8, {
     name: 'Dessert Emergency', giver: 'praline', minLevel: 35, prereq: 'story_5_2',
-    text: "Welcome to the kitchen! Today's challenge: stop a queen burying the island in cake. Queen Bonbon bakes a bigger cake every day, and the volcano is boiling over. I need a cold meringue the size of a house. Calm 15 Pegasus Foals on Frozen Peak and bring me 6 Cloud Manes. Yes, chef!",
+    text: "Welcome to the kitchen! Today's challenge: stop a queen burying the island in cake. Queen Bonbon bakes a bigger cake every day, and the volcano is boiling over. I need a cold meringue the size of a house. Calm 15 Whistledown Marmots on Frozen Peak and bring me 6 Cloud Manes. Yes, chef!",
     objectives: [{ type: 'kill', mob: 'cloudsheep', count: 15 }, { type: 'collect', item: 'wool', count: 6 }],
     rewards: { exp: 33000, gold: 700, items: [{ id: 'white_potion', qty: 20 }] },
     scenes: { accept: 'dessert_open', done: 'dessert_done' },
@@ -272,14 +272,14 @@ export const STORY_QUESTS = {
   // ---------- Chapter 9: The Queen's Dream (40-44) ----------
   story_6_1: s('story_6_1', 9, {
     name: 'The Monday Feeling', giver: 'elowen', minLevel: 40, prereq: 'story_5_3',
-    text: "Every morning this week has felt like Monday. Every single one. It's the Queen's dreams: they drift out of the palace at night and float up past the Sky Garden. Climb to the top and see where they go. And calm 20 Sky Harpies on the way. They're having a very Monday sort of week.",
+    text: "Every morning this week has felt like Monday. Every single one. It's the Queen's dreams: they drift out of the palace at night and float up past the Sky Garden. Climb to the top and see where they go. And calm 20 Windsock Albatrosses on the way. They're having a very Monday sort of week.",
     objectives: [{ type: 'visit', map: 'sky', above: 570, place: 'the top of the Sky Garden' }, { type: 'kill', mob: 'windbird', count: 20 }],
     rewards: { exp: 91000, gold: 1500, items: [{ id: 'elixir', qty: 10 }] },
     scenes: { accept: 'ch6_open', done: 'ch6_sky' },
   }),
   story_encore: s('story_encore', 9, {
     name: 'Opening Night', giver: 'encore', minLevel: 41, prereq: 'story_6_1',
-    text: "Darling! A Phantom Playwright has taken my theatre, and every night he puts on the same sad little show. A train. An office. Noodles. No songs! No costumes! I am making a comeback to fix it, and one cannot make a comeback without a boa. Bring me 8 Sky Harpy feathers. Pink, if they come in pink.",
+    text: "Darling! A Phantom Playwright has taken my theatre, and every night he puts on the same sad little show. A train. An office. Noodles. No songs! No costumes! I am making a comeback to fix it, and one cannot make a comeback without a boa. Bring me 8 albatross feathers. Pink, if they come in pink.",
     objectives: [{ type: 'collect', item: 'feather', count: 8 }],
     rewards: { exp: 48000, gold: 800, items: [{ id: 'white_potion', qty: 25 }] },
     scenes: { accept: 'encore_open', done: 'encore_done' },
@@ -1069,7 +1069,7 @@ export const SCENES = {
     { who: 'elowen', text: "You've noticed, haven't you? Every morning this week felt like Monday. Every. Single. Morning." },
     { who: 'elowen', text: "It's the Queen. Her dreams drift out of the palace at night, and they've gone sour. I can smell it. Like old coffee.", mood: 'sad' },
     { together: [{ emote: 'elowen', kind: 'sweat', dur: 1.4 }, { fx: 'clouds', at: 'elowen', n: 6 }] },
-    { who: 'elowen', text: 'They float up past the Sky Garden. Follow them. And mind the Harpies. They hate Mondays.' },
+    { who: 'elowen', text: 'They float up past the Sky Garden. Follow them. And mind the albatrosses. They hate Mondays.' },
   ],
   ch6_sky: [
     { who: 'player', text: "From the top of the garden there's a theatre on a cloud. The dreams go in at the stage door." },

@@ -1,39 +1,34 @@
 // Monster art: the folk of the Sky Whale's Back (the levels 45-50 group dungeon, see
-// docs/design/sky-whale.md). All six are live rigs of their own since 2026-11-20 (the player's picks
-// from concept sheets); this file just lists them.
-//   kiterider       Kite Rider: a duckling in a flying cap hanging under a kite; a diving kick.
-//   shepherdess     Cloud Shepherd: a cloud-wool lamb with a crook and a bell, herding three tiny
-//                   rain clouds that rush over you and rain.
-//   gunner          Sky Pirate Gunner: a seagull pirate in a red tricorn with a brass blunderbuss;
-//                   the kick hops it back.
-//   barnacleknight  Barnacle Knight: a round penguin in a barnacle-shell helm with a coral-tipped
-//                   lance; it flops on its belly and toboggans in, lance first.
-//   harpist         Storm Harpist: a little thundercloud with gold bolt horns and a golden harp,
-//                   drizzling; it strums and a bolt of lightning snaps out.
-//   monk            Feather Monk: a puffin in saffron robes with prayer beads, meditating off the
-//                   ground; a palm push that rolls out rings of wind.
+// docs/design/sky-whale.md), who also live on Starfall Heights. Since 2026-11-27 each is a new creature on its
+// own copy of the creature base in its own folder:
+//   kiterider       the Kite Pika (pika/): a pika in a flight jacket, a paper diamond kite strapped to its back.
+//   shepherdess     the Cloudherd Samoyed (samoyed/): a sheepdog pup in a smock who herds one small cloud.
+//   gunner          Blunderpuss (blunderpuss/): Captain Gale's kitten gunner, a blunderbuss loaded with cloud.
+//   barnacleknight  the Turtle Squire (turtlesquire/): the Barnacle Matriarch's sea-turtle squire, a scallop shield.
+//   harpist         the Stormsong Frog (treefrog/): a tree frog busker in a rain slicker with a storm harp.
+//   monk            the Mantra Lemur (lemur/): a ring-tailed lemur monk with a singing bowl.
 
-import { kiteDuckRig, kiteDuckStill } from './kiteduckrig.js';
-import { lambShepherdRig, lambShepherdStill } from './lambshepherdrig.js';
-import { gullGunnerRig, gullGunnerStill } from './gullgunnerrig.js';
-import { penguinLancerRig, penguinLancerStill } from './penguinlancerrig.js';
-import { thundercloudRig, thundercloudStill } from './thundercloudrig.js';
-import { puffinMonkRig, puffinMonkStill } from './puffinmonkrig.js';
+import { KITE_PIKA_ART, KITE_PIKA_SIZE } from '../pika/index.js';
+import { CLOUD_SAMOYED_ART, CLOUD_SAMOYED_SIZE } from '../samoyed/index.js';
+import { BLUNDERPUSS_ART, BLUNDERPUSS_SIZE } from '../blunderpuss/index.js';
+import { TURTLE_SQUIRE_ART, TURTLE_SQUIRE_SIZE } from '../turtlesquire/index.js';
+import { STORM_FROG_ART, STORM_FROG_SIZE } from '../treefrog/index.js';
+import { MANTRA_LEMUR_ART, MANTRA_LEMUR_SIZE } from '../lemur/index.js';
 
 export const ART = {
-  kiterider: { pad: 8, walk: 8, idle: 6, attack: 4, stride: 26, atkMs: [80, 240, 180], draw: kiteDuckStill, rig: kiteDuckRig },
-  shepherdess: { pad: 8, walk: 8, idle: 6, attack: 4, stride: 20, atkMs: [80, 240, 180], draw: lambShepherdStill, rig: lambShepherdRig },
-  gunner: { pad: 8, walk: 8, idle: 6, attack: 4, stride: 22, atkMs: [70, 220, 170], draw: gullGunnerStill, rig: gullGunnerRig },
-  barnacleknight: { pad: 6, walk: 8, idle: 6, attack: 4, stride: 18, atkMs: [100, 280, 200], draw: penguinLancerStill, rig: penguinLancerRig },
-  harpist: { pad: 8, walk: 8, idle: 6, attack: 4, stride: 18, atkMs: [90, 260, 190], draw: thundercloudStill, rig: thundercloudRig },
-  monk: { pad: 8, walk: 8, idle: 6, attack: 4, stride: 22, atkMs: [70, 220, 170], draw: puffinMonkStill, rig: puffinMonkRig },
+  kiterider: KITE_PIKA_ART,
+  shepherdess: CLOUD_SAMOYED_ART,
+  gunner: BLUNDERPUSS_ART,
+  barnacleknight: TURTLE_SQUIRE_ART,
+  harpist: STORM_FROG_ART,
+  monk: MANTRA_LEMUR_ART,
 };
 
 export const INFO = {
-  kiterider: { name: 'Kite Rider', w: 28, h: 30 },
-  shepherdess: { name: 'Cloud Shepherd', w: 26, h: 34 },
-  gunner: { name: 'Sky Pirate Gunner', w: 26, h: 34 },
-  barnacleknight: { name: 'Barnacle Knight', w: 30, h: 36 },
-  harpist: { name: 'Storm Harpist', w: 28, h: 32 },
-  monk: { name: 'Feather Monk', w: 26, h: 34 },
+  kiterider: { name: 'Kite Pika', w: KITE_PIKA_SIZE.w, h: KITE_PIKA_SIZE.h },
+  shepherdess: { name: 'Cloudherd Samoyed', w: CLOUD_SAMOYED_SIZE.w, h: CLOUD_SAMOYED_SIZE.h },
+  gunner: { name: 'Blunderpuss', w: BLUNDERPUSS_SIZE.w, h: BLUNDERPUSS_SIZE.h },
+  barnacleknight: { name: 'Turtle Squire', w: TURTLE_SQUIRE_SIZE.w, h: TURTLE_SQUIRE_SIZE.h },
+  harpist: { name: 'Stormsong Frog', w: STORM_FROG_SIZE.w, h: STORM_FROG_SIZE.h },
+  monk: { name: 'Mantra Lemur', w: MANTRA_LEMUR_SIZE.w, h: MANTRA_LEMUR_SIZE.h },
 };

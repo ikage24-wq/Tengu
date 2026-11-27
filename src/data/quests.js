@@ -155,7 +155,7 @@ export const QUESTS = {
   },
   restless_ruins: {
     id: 'restless_ruins', name: 'Restless Ruins', giver: 'rook', minLevel: 20, prereq: 'leaf_samples',
-    text: 'Headless Dullahans ride the Twilight Ruins at night. Put 25 of them to rest.',
+    text: "The Pangolin Sentries in the Twilight Ruins are still on patrol for a war that ended twenty years ago. Relieve 25 of them of duty.",
     objectives: [{ type: 'kill', mob: 'boneknight', count: 25 }],
     rewards: { exp: 79000, gold: 2100, items: [{ id: 'ear_20', qty: 1, variant: 'roll' }] },
   },
@@ -163,7 +163,7 @@ export const QUESTS = {
   // it to warriors).
   warrior_trial: {
     id: 'warrior_trial', name: "The Warrior's Trial", giver: 'brann', minLevel: 30, family: 'warrior',
-    text: "You've grown strong, but the next path asks more than strength. Go to the Crystal Cave and break 20 Crystal Golems. Stand your ground the whole time. If you step back, I'll know. I'll feel it in my shield arm. Then come back and I'll show you the Stormwall's way and the Tempest's way.",
+    text: "You've grown strong, but the next path asks more than strength. Go to the Crystal Cave and face down 20 Geode Bears. Stand your ground the whole time. If you step back, I'll know. I'll feel it in my shield arm. Then come back and I'll show you the Stormwall's way and the Tempest's way.",
     objectives: [{ type: 'kill', mob: 'rockgolem', count: 20 }],
     rewards: { exp: 220000, gold: 5400, items: [{ id: 'elixir', qty: 5 }] },
   },
@@ -376,8 +376,8 @@ export const QUESTS = {
     rewards: { exp: 15000, gold: 430, items: [] },
   },
   rook_harpies: {
-    id: 'rook_harpies', name: 'Harpy Havoc', giver: 'rook', minLevel: 40, prereq: 'restless_ruins',
-    text: "The Sky Harpies have started raiding our gulls' nests, all the way from the Sky Garden! Ground 30 of them.",
+    id: 'rook_harpies', name: 'Albatross Ahoy', giver: 'rook', minLevel: 40, prereq: 'restless_ruins',
+    text: "The Windsock Albatrosses have been gliding down from the Sky Garden and borrowing our gulls' nests. Borrowing! Ground 30 of them.",
     objectives: [{ type: 'kill', mob: 'windbird', count: 30 }],
     rewards: { exp: 160000, gold: 2900, items: [] },
   },
@@ -413,7 +413,7 @@ export const QUESTS = {
   },
   tora_cores: {
     id: 'tora_cores', name: 'Hot Iron', giver: 'tora', minLevel: 30, prereq: 'tora_draught',
-    text: "Geode Cores burn hotter than any coal and hold their heat like a grudge: nothing can slurp it out of them. 10 from the Crystal Golems. They'll say they need them. Everybody says that. Her first fire makes you a proper pair of gloves, made for your trade.",
+    text: "Geode Cores burn hotter than any coal and hold their heat like a grudge: nothing can slurp it out of them. 10 from the Geode Bears. They'll say they need them. Everybody says that. Her first fire makes you a proper pair of gloves, made for your trade.",
     objectives: [{ type: 'collect', item: 'rock_core', count: 10 }],
     rewards: { exp: 240000, gold: 6100, items: [] },
   },
@@ -453,8 +453,8 @@ export const QUESTS = {
     rewards: { exp: 21000, gold: 400, items: [{ id: 'white_potion', qty: 10 }, { id: 'gacha_ticket', qty: 1 }] },
   },
   daily_crag: {
-    id: 'daily_crag', name: 'Daily: Restless Bones', giver: 'brann', minLevel: 24, daily: true,
-    text: "The Dullahans never stay down for long. Put 20 of them back to rest today, and keep your guard up.",
+    id: 'daily_crag', name: 'Daily: Off Duty', giver: 'brann', minLevel: 24, daily: true,
+    text: "The Pangolin Sentries never stay off duty for long. Relieve 20 of them today, and keep your guard up. They headbutt.",
     objectives: [{ type: 'kill', mob: 'boneknight', count: 20 }],
     rewards: { exp: 23000, gold: 600, items: [{ id: 'white_potion', qty: 10 }, { id: 'gacha_ticket', qty: 1 }] },
   },
@@ -550,7 +550,7 @@ export const QUESTS = {
 
   // Chef Praline's story (Sugar Trail): a new tasting menu for the island now the volcano's calm.
   // Hot-spring eggs from Serpent Springs, snow syrup from Frozen Peak, a mist-fine sieve from a
-  // Wraith's shroud, and a tasting round for the people who helped.
+  // Mist Veil, and a tasting round for the people who helped.
   praline_eggs: {
     id: 'praline_eggs', name: 'Onsen Eggs', giver: 'praline', minLevel: 36, prereq: 'story_dessert',
     text: "New menu, chef! Course one: eggs poached in the hot springs, wobbly as a jelly. The Lamias at Serpent Springs guard the hot pools and hiss at my egg basket. Calm 15 of them so I can get in. They're grumpy without their bath. I'm grumpy without my eggs. We understand each other.",
@@ -565,7 +565,7 @@ export const QUESTS = {
   },
   praline_sieve: {
     id: 'praline_sieve', name: 'Fine as Mist', giver: 'praline', minLevel: 38, prereq: 'praline_snow',
-    text: "Course three: the softest cream on the island, but it wants a sieve finer than any sieve I own. A Wraith's shroud is woven of mist. You see where I'm going. Bring me 8 Wraith Shrouds from Serpent Springs. Clean ones, please. Well. As clean as a ghost's laundry gets.",
+    text: "Course three: the softest cream on the island, but it wants a sieve finer than any sieve I own. The Steam Capybaras on Serpent Springs float about on clouds of their own steam, and the clouds leave little veils of mist behind them. You see where I'm going. Bring me 8 Mist Veils. Clean ones, please. Well. As clean as anything that lives in a bath gets.",
     objectives: [{ type: 'collect', item: 'shade_cloth', count: 8 }],
     rewards: { exp: 320000, gold: 7200, items: [{ id: 'elixir', qty: 3 }] },
   },
@@ -584,19 +584,19 @@ export const QUESTS = {
   // the invitations to opening night.
   encore_gown: {
     id: 'encore_gown', name: 'A Gown of Cloud', giver: 'encore', minLevel: 41, prereq: 'story_encore',
-    text: "Darling, a comeback needs a gown, and a gown on a cloud should be MADE of cloud. The Pegasus Foals in the Sky Garden have manes like whipped cream. Bring me 12 Cloud Manes. I'll sew all night. I always sewed all night. That's why I was always late for rehearsal.",
+    text: "Darling, a comeback needs a gown, and a gown on a cloud should be MADE of cloud. The Whistledown Marmots in the Sky Garden grow ruffs of cloud like whipped cream. Bring me 12 Cloud Manes. I'll sew all night. I always sewed all night. That's why I was always late for rehearsal.",
     objectives: [{ type: 'collect', item: 'wool', count: 12 }],
     rewards: { exp: 130000, gold: 2400, items: [{ id: 'white_potion', qty: 20 }] },
   },
   encore_nerves: {
     id: 'encore_nerves', name: 'Stage Fright', giver: 'encore', minLevel: 42, prereq: 'encore_gown',
-    text: "Forty years, and my knees still knock, darling. The trick is to find the highest place in the house and say your first line to the back row. Climb the poster column out here and say it for me: 'Good evening!' Then the Sky Harpies, who heckle every show I've ever done. Twenty of them. Exit, pursued by you.",
+    text: "Forty years, and my knees still knock, darling. The trick is to find the highest place in the house and say your first line to the back row. Climb the poster column out here and say it for me: 'Good evening!' Then the Windsock Albatrosses, who heckle every show I've ever done. Twenty of them. Exit, pursued by you.",
     objectives: [{ type: 'visit', map: 'theatre_row', above: 260, place: 'the top of the poster column' }, { type: 'kill', mob: 'windbird', count: 20 }],
     rewards: { exp: 190000, gold: 3700, items: [] },
   },
   encore_bouquet: {
     id: 'encore_bouquet', name: 'Flowers for the Leading Lady', giver: 'encore', minLevel: 43, prereq: 'encore_nerves',
-    text: "A leading lady must be thrown flowers, darling. It's in the contract. Nothing flowers on a cloud, so we'll be clever: a bouquet of feathers. Bring me 10 Harpy Feathers from the Sky Garden. Pink, if they come in pink. They never do. I ask anyway. It keeps the harpies humble.",
+    text: "A leading lady must be thrown flowers, darling. It's in the contract. Nothing flowers on a cloud, so we'll be clever: a bouquet of feathers. Bring me 10 Albatross Feathers from the Sky Garden. Pink, if they come in pink. They never do. I ask anyway. It keeps the albatrosses humble.",
     objectives: [{ type: 'collect', item: 'feather', count: 10 }],
     rewards: { exp: 130000, gold: 2400, items: [{ id: 'elixir', qty: 4 }] },
   },
@@ -629,7 +629,7 @@ export const QUESTS = {
   },
   yuzu_tail: {
     id: 'yuzu_tail', name: 'A Tail of Her Own', giver: 'yuzu', minLevel: 36, prereq: 'yuzu_peak',
-    text: "Fine. FINE. If there's no star, I'll make my own tail and wave it under their noses. It has to be the softest thing on the island: 8 Cloud Manes from the Pegasus Foals, and 6 Snow Gems to make it sparkle, from the Yuki-onna. Don't look at me like that. It's a GOOD plan.",
+    text: "Fine. FINE. If there's no star, I'll make my own tail and wave it under their noses. It has to be the softest thing on the island: 8 Cloud Manes from the Whistledown Marmots, and 6 Snow Gems to make it sparkle, from the Yuki-onna. Don't look at me like that. It's a GOOD plan.",
     objectives: [{ type: 'collect', item: 'wool', count: 8 }, { type: 'collect', item: 'snow_gem', count: 6 }],
     rewards: { exp: 97000, gold: 2200, items: [{ id: 'elixir', qty: 3 }] },
   },
@@ -646,24 +646,24 @@ export const QUESTS = {
 
   // Rowan's story (Ember Crag, by the arena): every Crag knight stands one night's watch on the
   // Sky Garden's Starlit Terrace, and the biggest knight on the island never has, because he is
-  // terrified of heights. You scout it for him and find the harpies only attack to guard their
+  // terrified of heights. You scout it for him and find the albatrosses only attack to guard their
   // chicks, the way he guards everyone; with a little help from Brann and Tora he climbs, and stands
   // his watch over the nests instead.
   rowan_rope: {
     id: 'rowan_rope', name: 'A Very Long Rope', giver: 'rowan', minLevel: 37, prereq: 'yuzu_loved',
-    text: "Could you help me make a rope? A long one. A very long one. Cloud Mane from the Pegasus Foals is the strongest thread there is. 10 should be enough. 12. Let's say 10 and I'll be brave about it. It's for... tying things. To other things. Like me, to the ground.",
+    text: "Could you help me make a rope? A long one. A very long one. Cloud Mane from the Whistledown Marmots is the strongest thread there is. 10 should be enough. 12. Let's say 10 and I'll be brave about it. It's for... tying things. To other things. Like me, to the ground.",
     objectives: [{ type: 'collect', item: 'wool', count: 10 }],
     rewards: { exp: 85000, gold: 1900, items: [{ id: 'white_potion', qty: 10 }] },
   },
   rowan_scout: {
     id: 'rowan_scout', name: 'Scout the Roost', giver: 'rowan', minLevel: 38, prereq: 'rowan_rope',
-    text: "The way to the Starlit Terrace goes right through the Harpy Roost in the Sky Garden. Could you go up first? Climb to the high ledges where they nest and drive off 15 Sky Harpies, so it's safe. And tell me how high it is. Honestly. No. Don't tell me. Tell me a bit.",
-    objectives: [{ type: 'visit', map: 'sky', above: 500, place: 'the high ledges of the Harpy Roost' }, { type: 'kill', mob: 'windbird', count: 15 }],
+    text: "The way to the Starlit Terrace goes right through the Windsock Roost in the Sky Garden. Could you go up first? Climb to the high ledges where they nest and drive off 15 Windsock Albatrosses, so it's safe. And tell me how high it is. Honestly. No. Don't tell me. Tell me a bit.",
+    objectives: [{ type: 'visit', map: 'sky', above: 500, place: 'the high ledges of the Windsock Roost' }, { type: 'kill', mob: 'windbird', count: 15 }],
     rewards: { exp: 130000, gold: 3000, items: [] },
   },
   rowan_courage: {
     id: 'rowan_courage', name: 'A Plume for Courage', giver: 'rowan', minLevel: 40, prereq: 'rowan_scout',
-    text: "I can't do it alone. Would you ask Brann and Tora how they got brave? Then bring me 8 Harpy Feathers. A knight wears a plume when he's being brave, and I'd like to look brave. Even if I'm only pretending. Mum said pretending counts if you keep doing it.",
+    text: "I can't do it alone. Would you ask Brann and Tora how they got brave? Then bring me 8 Albatross Feathers. A knight wears a plume when he's being brave, and I'd like to look brave. Even if I'm only pretending. Mum said pretending counts if you keep doing it.",
     objectives: [
       { type: 'talk', npc: 'brann', say: "Brave? I've never been brave a day in my life, lad. You just pick the thing you love more than the thing you're scared of, and walk toward it. Tell him that. Then tell him I said nothing soppy." },
       { type: 'talk', npc: 'tora', say: "Tell Rowan to look at what's in front of him, not what's under him. That's how I climb the forge chimney. Also: don't look down. Also: if he looks down, don't scream. I screamed. Once." },
@@ -686,19 +686,19 @@ export const QUESTS = {
   // (It points toward the story's ending, chapter 10, without giving it away.)
   celeste_pillow: {
     id: 'celeste_pillow', name: 'A Pillow for Clear Dreams', giver: 'celeste', minLevel: 41, prereq: 'yuzu_loved',
-    text: "Mm... I dreamed the Sky Harpies were carrying bits of sky away. Then they did. That's the third dream this week that came true. A pillow of Harpy Feathers makes dreams clearer. Everybody knows that. I just made it up, but everybody knows it now. 10, please. And a snack, if you see one.",
+    text: "Mm... I dreamed the albatrosses were carrying bits of sky away. Then they did. That's the third dream this week that came true. A pillow of Albatross Feathers makes dreams clearer. Everybody knows that. I just made it up, but everybody knows it now. 10, please. And a snack, if you see one.",
     objectives: [{ type: 'collect', item: 'feather', count: 10 }],
     rewards: { exp: 130000, gold: 2400, items: [{ id: 'white_potion', qty: 10 }] },
   },
   celeste_kite: {
     id: 'celeste_kite', name: 'A Star in a Kite', giver: 'celeste', minLevel: 42, prereq: 'celeste_pillow',
-    text: "I dreamed a star got tangled in a kite on Starfall Heights, and the Kite Riders wouldn't let it go. If it's true... could you go and see? And free it? 12 of them should be enough to make the rest let go. I'd come, but I'd fall asleep on the way. Twice.",
+    text: "I dreamed a star got tangled in a kite on Starfall Heights, and the Kite Pikas wouldn't let it go. If it's true... could you go and see? And free it? 12 of them should be enough to make the rest let go. I'd come, but I'd fall asleep on the way. Twice.",
     objectives: [{ type: 'visit', map: 'starfall' }, { type: 'kill', mob: 'kiterider', count: 12 }],
     rewards: { exp: 170000, gold: 3400, items: [] },
   },
   celeste_silk: {
     id: 'celeste_silk', name: 'A Net for Dreams', giver: 'celeste', minLevel: 43, prereq: 'celeste_kite',
-    text: "If someone else is dreaming and I'm only catching the edges, I need a better net. Sky Silk, from the Cloud Shepherds on Starfall Heights. It's woven from the morning, so it holds onto dreams after you wake. 10, please. I'll weave it tonight. I'm good at nights.",
+    text: "If someone else is dreaming and I'm only catching the edges, I need a better net. Sky Silk, from the Cloudherd Samoyeds on Starfall Heights. They brush it out of their clouds every morning, so it holds onto dreams after you wake. 10, please. I'll weave it tonight. I'm good at nights.",
     objectives: [{ type: 'collect', item: 'sky_silk', count: 10 }],
     rewards: { exp: 130000, gold: 2100, items: [{ id: 'elixir', qty: 3 }] },
   },
@@ -716,19 +716,19 @@ export const QUESTS = {
   // and offers to fly the hero up to the Moon Terrace whenever they're ready (chapter 10).
   nimbus_sail: {
     id: 'nimbus_sail', name: 'A New Sail', giver: 'nimbus', minLevel: 46, prereq: 'story_whale',
-    text: "She's awake! Flying! Singing in her sleep, except she's not asleep! ...And her sail got torn to ribbons on the way up. Sky Silk off the Cloud Shepherds on Starfall Heights makes the best sail there is. 10 bolts of it, and she'll fly like she's twenty again. She's four hundred. Don't tell her I said.",
+    text: "She's awake! Flying! Singing in her sleep, except she's not asleep! ...And her sail got torn to ribbons on the way up. Sky Silk off the Cloudherd Samoyeds on Starfall Heights makes the best sail there is. 10 bolts of it, and she'll fly like she's twenty again. She's four hundred. Don't tell her I said.",
     objectives: [{ type: 'collect', item: 'sky_silk', count: 10 }],
     rewards: { exp: 150000, gold: 2100, items: [{ id: 'white_potion', qty: 10 }] },
   },
   nimbus_storm: {
     id: 'nimbus_storm', name: 'Clear Skies', giver: 'nimbus', minLevel: 47, prereq: 'nimbus_sail',
-    text: "New sail, and she still can't climb past the heights. The Storm Harpists up on Starfall Heights keep plucking thunder out of the clouds, and she won't fly through thunder. Never would. Quiet 15 of them for me, and the sky's ours again.",
+    text: "New sail, and she still can't climb past the heights. The Stormsong Frogs up on Starfall Heights keep singing thunder into the clouds, and she won't fly through thunder. Never would. Quiet 15 of them for me, and the sky's ours again.",
     objectives: [{ type: 'kill', mob: 'harpist', count: 15 }],
     rewards: { exp: 165000, gold: 2100, items: [] },
   },
   nimbus_lantern: {
     id: 'nimbus_lantern', name: 'A Lantern for the Dark', giver: 'nimbus', minLevel: 48, prereq: 'nimbus_storm',
-    text: "One more thing for her, and then I'll stop fussing. When it's dark she can't see her way home, so she always waited for me to whistle. A star lantern on her brow would light the way for her. 8 Stardust from the Star Seraphs should make it. She'll be able to go wherever she likes. Without me.",
+    text: "One more thing for her, and then I'll stop fussing. When it's dark she can't see her way home, so she always waited for me to whistle. A star lantern on her brow would light the way for her. 8 Stardust from the Comet Goldfish should make it. She'll be able to go wherever she likes. Without me.",
     objectives: [{ type: 'collect', item: 'stardust', count: 8 }],
     rewards: { exp: 180000, gold: 2500, items: [{ id: 'elixir', qty: 3 }] },
   },
@@ -744,25 +744,25 @@ export const QUESTS = {
   // and goes to be a light for the one who needs it most (Prismaris, scared of the dark).
   twinkle_glow: {
     id: 'twinkle_glow', name: 'A Star in the Crater', giver: 'twinkle', minLevel: 45,
-    text: "Oh! You can see me? Good. I'm a star. I fell. On festival night the wind went out, the whole sky wobbled, and I slipped. If I glow brighter, the sky will notice I'm gone and pull me back up. Bring me 12 Stardust from the Star Seraphs. Please. I'm very small up there.",
+    text: "Oh! You can see me? Good. I'm a star. I fell. On festival night the wind went out, the whole sky wobbled, and I slipped. If I glow brighter, the sky will notice I'm gone and pull me back up. Bring me 12 Stardust from the Comet Goldfish. They snack on falling stars, so please hurry. I'm very small up there.",
     objectives: [{ type: 'collect', item: 'stardust', count: 12 }],
     rewards: { exp: 88000, gold: 2000, items: [{ id: 'white_potion', qty: 10 }] },
   },
   twinkle_kite: {
     id: 'twinkle_kite', name: 'Kite Lessons', giver: 'twinkle', minLevel: 45, prereq: 'twinkle_glow',
-    text: "Plan B: I go UP. The Kite Riders fly all day off the West Rim. Beat 20 of them and they'll HAVE to lend us a kite. That's how kites work. I think.",
+    text: "Plan B: I go UP. The Kite Pikas fly all day off the West Rim. Beat 20 of them and they'll HAVE to lend us a kite. That's how kites work. I think.",
     objectives: [{ type: 'kill', mob: 'kiterider', count: 20 }],
     rewards: { exp: 110000, gold: 3400, items: [] },
   },
   twinkle_feather: {
     id: 'twinkle_feather', name: 'Light as a Feather', giver: 'twinkle', minLevel: 46, prereq: 'twinkle_kite',
-    text: "I was too heavy for the kite. Rude, but true. Harpy feathers are the lightest thing in the sky. Bring me 12 and I'll stick them on. All of them. Everywhere.",
+    text: "I was too heavy for the kite. Rude, but true. Albatross feathers are the lightest thing in the sky. Bring me 12 and I'll stick them on. All of them. Everywhere.",
     objectives: [{ type: 'collect', item: 'feather', count: 12 }],
     rewards: { exp: 88000, gold: 2000, items: [{ id: 'elixir', qty: 3 }] },
   },
   twinkle_count: {
     id: 'twinkle_count', name: 'Counting Stars', giver: 'twinkle', minLevel: 47, prereq: 'twinkle_feather',
-    text: "New plan! The Cloud Shepherds keep the sky's tally: every star, every night. If I'm missing from it, somebody up there must be worried sick. They won't just hand the tally book over, so... beat 15 of them. Very politely.",
+    text: "New plan! The Cloudherd Samoyeds keep the sky's tally: every cloud, every star, every night. They count very carefully. Mostly up to one. If I'm missing from it, somebody up there must be worried sick. They won't just hand the tally book over, so... beat 15 of them. Very politely.",
     objectives: [{ type: 'kill', mob: 'shepherdess', count: 15 }],
     rewards: { exp: 100000, gold: 3000, items: [] },
   },
@@ -803,7 +803,7 @@ export const QUESTS = {
 
   nim_stardust: {
     id: 'nim_stardust', name: 'Stardust Wishes', giver: 'nim', minLevel: 38, prereq: 'nim_cape',
-    text: "I want to make a real wish candle, out of Stardust. Go up to the very top of the Sky Garden where the Star Seraphs sing, then bring me 10 Stardust? This time the candles and I make the wish together. As a team. Like in the books.",
+    text: "I want to make a real wish candle, out of Stardust. Go up to the very top of the Sky Garden where the Comet Goldfish swim, then bring me 10 Stardust? This time the candles and I make the wish together. As a team. Like in the books.",
     objectives: [{ type: 'visit', map: 'sky', above: 570, place: 'the top of the Sky Garden' }, { type: 'collect', item: 'stardust', count: 10 }],
     rewards: { exp: 140000, gold: 3100, cash: 1000, items: [{ id: 'elixir', qty: 10 }] },
     scenes: { done: 'stardust_done' },
@@ -818,7 +818,7 @@ export const QUESTS = {
   // and been quietly kind. With a feather quill for each of them, she says good evening.
   fawnelle_charms: {
     id: 'fawnelle_charms', name: 'Hush, Little Charms', giver: 'fawnelle', minLevel: 39,
-    text: "You're a human. A real one! I'm Fawnelle, from Mistmere, beyond the mist. Back home, everyone says humans are only a story, so I came to study you. But every time I creep close to watch, the charms on my antlers jingle, everyone turns round, and I run. Pegasus Foals have the softest manes in the sky; we have them at home too. Bring me 15 Cloud Mane from the Sky Garden or the Frozen Peak, and I'll hush every charm.",
+    text: "You're a human. A real one! I'm Fawnelle, from Mistmere, beyond the mist. Back home, everyone says humans are only a story, so I came to study you. But every time I creep close to watch, the charms on my antlers jingle, everyone turns round, and I run. Whistledown Marmots grow the softest cloud ruffs in the sky; we have them at home too. Bring me 15 Cloud Mane from the Sky Garden or the Frozen Peak, and I'll hush every charm.",
     objectives: [{ type: 'collect', item: 'wool', count: 15 }],
     rewards: { exp: 90000, gold: 2200, items: [{ id: 'white_potion', qty: 10 }] },
   },
@@ -840,7 +840,7 @@ export const QUESTS = {
   },
   fawnelle_evening: {
     id: 'fawnelle_evening', name: 'Good Evening, Moonleaf Grove', giver: 'fawnelle', minLevel: 42, prereq: 'fawnelle_letters',
-    text: "They knew I was watching, and they were kind about it. Nobody in Mistmere would believe that. Then I'll do something very human: say good evening, properly. And humans bring gifts when they visit. Harpy feathers make the loveliest quills, one for each of them. Bring me 14 from the Sky Harpies, and stand next to me while I say it. Close. Closer than that.",
+    text: "They knew I was watching, and they were kind about it. Nobody in Mistmere would believe that. Then I'll do something very human: say good evening, properly. And humans bring gifts when they visit. Albatross feathers make the loveliest quills, one for each of them. Bring me 14 from the Windsock Albatrosses, and stand next to me while I say it. Close. Closer than that.",
     objectives: [{ type: 'collect', item: 'feather', count: 14 }],
     rewards: { exp: 114000, gold: 2650, items: [{ id: 'mochi_egg', qty: 1 }] },
   },
@@ -946,13 +946,13 @@ export const QUESTS = {
   },
   brann_ruins: {
     id: 'brann_ruins', name: 'Where the Line Broke', giver: 'brann', minLevel: 22, prereq: 'brann_stand', family: 'warrior',
-    text: "Twenty years ago I held the old gatehouse at the top of the Twilight Ruins, alone, all night. Picture it in black and white, with rain. By morning my shield was gone. Climb up there for me. The Dullahans still patrol that wall because nobody told them the war ended: put 15 of them to rest on the way.",
+    text: "Twenty years ago I held the old gatehouse at the top of the Twilight Ruins, alone, all night. Picture it in black and white, with rain. By morning my shield was gone. Climb up there for me. The old Moon Guard's pangolins still patrol those ruins because nobody told them the war ended: relieve 15 Pangolin Sentries of duty on the way.",
     objectives: [{ type: 'visit', map: 'ruins', above: 310, place: 'the old gatehouse at the top of the ruins' }, { type: 'kill', mob: 'boneknight', count: 15 }],
     rewards: { exp: 120000, gold: 3300, items: [{ id: 'white_potion', qty: 10 }] },
   },
   brann_forge: {
     id: 'brann_forge', name: "The Smith's Secret", giver: 'tora', minLevel: 24, prereq: 'brann_ruins', family: 'warrior',
-    text: "Shh! Don't tell him. That shield? I've got it. I was the scared recruit he held that gatehouse for. I went back for it years later, and it's been in pieces under my bench ever since, next to my feelings. Bring me 10 Bone Shards from the Dullahans for rivets, and I'll make it whole.",
+    text: "Shh! Don't tell him. That shield? I've got it. I was the scared recruit he held that gatehouse for. I went back for it years later, and it's been in pieces under my bench ever since, next to my feelings. Bring me 10 Bone Shards for rivets, and I'll make it whole. The Pangolin Sentries dig them up in the crypt and hoard them like treasure.",
     objectives: [{ type: 'collect', item: 'bone_shard', count: 10 }],
     rewards: { exp: 130000, gold: 3500, items: [] },
   },
@@ -976,13 +976,13 @@ export const QUESTS = {
   },
   lulu_winter: {
     id: 'lulu_winter', name: 'Winter Collection', giver: 'lulu', minLevel: 35, prereq: 'lulu_runway',
-    text: "Snow season! For my winter line I need 8 Snow Gems from the Yuki-onna on Frozen Peak and 6 Cloud Manes from the Pegasus Foals up there. You'll get the first parka, of course!",
+    text: "Snow season! For my winter line I need 8 Snow Gems from the Yuki-onna on Frozen Peak and 6 Cloud Manes from the Whistledown Marmots up there. You'll get the first parka, of course!",
     objectives: [{ type: 'collect', item: 'snow_gem', count: 8 }, { type: 'collect', item: 'wool', count: 6 }],
     rewards: { exp: 110000, gold: 2400, items: [{ id: 'cash_casual_parka', qty: 1 }, { id: 'cash_casual_mittens', qty: 1 }] },
   },
   rook_stars: {
     id: 'rook_stars', name: 'Wishing on Stars', giver: 'rook', minLevel: 45,
-    text: "My old crew swears that at Starfall Heights, over the Sky Garden, you can catch a falling star. Calm 15 Star Seraphs up there and bring back 6 Stardust. A sailor never stops wishing!",
+    text: "My old crew swears that at Starfall Heights, over the Sky Garden, you can catch a falling star. Calm 15 Comet Goldfish up there and bring back 6 Stardust. A sailor never stops wishing!",
     objectives: [{ type: 'kill', mob: 'starspirit', count: 15 }, { type: 'collect', item: 'stardust', count: 6 }],
     rewards: { exp: 140000, gold: 2400, items: [{ id: 'elixir', qty: 15 }] },
   },

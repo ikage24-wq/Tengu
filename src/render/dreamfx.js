@@ -14,13 +14,44 @@ import { puff, shock, starFlash, easeOut } from './fxkit.js';
 // (Chapter 10's storm looks live in render/stormfx.js and are handed out from here too.)
 import { STORM_FX, STORM_HOLD } from './stormfx.js';
 import { SHAMAN_FX, SHAMAN_HOLD, shamanShot } from './shaman/fx.js';
+import { sugarShot } from './teahatter/index.js';
+import { bubbleRingShot } from './beluga/index.js';
+import { paperBoatShot } from './axolotl/index.js';
+import { starGlintShot } from './loris/index.js';
+import { redTapeShot } from './raccoon/index.js';
+import { paperPlaneShot } from './quokka/index.js';
+import { cloudBallShot } from './blunderpuss/index.js';
+import { stormNoteShot } from './treefrog/index.js';
+import { nebulaYarnShot } from './alpaca/index.js';
+import { balloonShot } from './balloonseller/index.js';
+import { clangShot } from './tindrummer/index.js';
+import { flossShot } from './chinchilla/index.js';
+import { gumdropShot } from './chameleon/index.js';
+import { jellyBeanShot } from './meerkat/index.js';
 import { HAZEL_FX, HAZEL_HOLD } from './mothercapper/fx.js';
 import { TUSKAR_FX, TUSKAR_HOLD } from './tuskar/fx.js';
+import { WALTZ_FX, WALTZ_HOLD } from './waltzrondo/looks.js';
+import { MARIGOLD_FX, MARIGOLD_HOLD } from './marigold/looks.js';
+import { MORAY_FX, MORAY_HOLD } from './moray/looks.js';
+import { GK_FX, GK_HOLD } from './grandkettle/looks.js';
+import { PRISMARIS_FX, PRISMARIS_LOOK_HOLD } from './prismaris/looks.js';
+import { ABYSSIA_FX, ABYSSIA_HOLD } from './abyssia/looks.js';
+import { CORALIE_FX, CORALIE_HOLD } from './coralie/looks.js';
+import { FOLIO_FX, FOLIO_HOLD } from './folio/looks.js';
+import { ECLIPSE_FX, ECLIPSE_HOLD } from './eclipse/looks.js';
+import { ASTRAEA_FX, ASTRAEA_HOLD } from './astraea/looks.js';
+import { MANAGER_FX, MANAGER_HOLD } from './manager/looks.js';
+import { NOODLE_FX, NOODLE_HOLD } from './noodle/looks.js';
+import { MONDAY_FX, MONDAY_HOLD } from './monday/looks.js';
+import { REVEILLE_FX, REVEILLE_HOLD } from './reveille/looks.js';
+import { CARNIVAL_FX, CARNIVAL_HOLD } from './carnivallooks.js';
+import { CANDY_FX, CANDY_HOLD } from './candylooks.js';
+import { SKY_FX, SKY_HOLD } from './skylooks.js';
 
 const TAU = Math.PI * 2;
 const SW = 640;
 const clamp01 = (v) => Math.max(0, Math.min(1, v));
-export const DREAM_HOLD = { ...STORM_HOLD, ...SHAMAN_HOLD, ...HAZEL_HOLD, ...TUSKAR_HOLD, memo: 0.7, stamp: 0.8, coffee: 0.8, files: 0.9, steam: 0.9, noodle: 0.7, broth: 0.7, chopsticks: 0.6, boil: 1.1, email: 0.7, redpen: 0.8, alarm: 1, invite: 0.8, deadline: 1.1 };
+export const DREAM_HOLD = { ...STORM_HOLD, ...SHAMAN_HOLD, ...HAZEL_HOLD, ...TUSKAR_HOLD, ...WALTZ_HOLD, ...MARIGOLD_HOLD, ...MORAY_HOLD, ...ABYSSIA_HOLD, ...CORALIE_HOLD, ...GK_HOLD, ...CARNIVAL_HOLD, ...CANDY_HOLD, ...SKY_HOLD, ...FOLIO_HOLD, ...ECLIPSE_HOLD, ...ASTRAEA_HOLD, ...MANAGER_HOLD, ...NOODLE_HOLD, ...MONDAY_HOLD, ...PRISMARIS_LOOK_HOLD, ...REVEILLE_HOLD, memo: 0.7, stamp: 0.8, coffee: 0.8, files: 0.9, steam: 0.9, noodle: 0.7, broth: 0.7, chopsticks: 0.6, boil: 1.1, email: 0.7, redpen: 0.8, alarm: 1, invite: 0.8, deadline: 1.1 };
 
 // ---------- Little things ----------
 function shadow(ctx, x, y, rx, a, c = '#2a2240') {
@@ -832,39 +863,38 @@ export const DREAM_FX = {
 };
 
 // A monster's thrown shot with a look of its own (render/scene.js, the 'spit' vfx; `p` 0..1 along
-// its flight, `d` the way it flies): the Sticky Note Bird's note, spinning; the Stapler Croc's staple;
-// the Candle Bride's flame.
+// its flight, `d` the way it flies): the Candle Bride's flame; the Teacup Hermit's sugar cube; the Red-Tape
+// Raccoon's red tape and the Intern Quokka's paper plane (their own folders); and more below.
 export function dreamShot(ctx, shot, x, y, p, d) {
   // (the Myconid Shaman's acorn: render/shaman/fx.js)
   if (shamanShot(ctx, shot, x, y, p, d)) return true;
-  if (shot === 'note') {
-    ctx.save();
-    ctx.translate(x, y);
-    ctx.rotate(p * 9 * d);
-    note(ctx, 0, 0, 9, 0, '#ff9ac0');
-    ctx.restore();
-    return true;
-  }
-  if (shot === 'staple') {
-    ctx.save();
-    ctx.translate(x, y);
-    ctx.rotate(p * 14 * d);
-    ctx.strokeStyle = '#5a5e70';
-    ctx.lineWidth = 2.8;
-    ctx.lineJoin = 'round';
-    ctx.beginPath();
-    ctx.moveTo(-4, 3);
-    ctx.lineTo(-4, -2);
-    ctx.lineTo(4, -2);
-    ctx.lineTo(4, 3);
-    ctx.stroke();
-    ctx.strokeStyle = '#e8ecf6';
-    ctx.lineWidth = 1.4;
-    ctx.stroke();
-    ctx.restore();
-    starFlash(ctx, x - d * 6, y, 3 + Math.sin(p * 30) * 1, 4, p * 8, '#d0d4e0', '#ffffff');
-    return true;
-  }
+  // (the Teacup Hermit's sugar cube: render/teahatter/)
+  if (sugarShot(ctx, shot, x, y, p, d)) return true;
+  // (the Beluga Lifeguard's rescue ring: render/beluga/)
+  if (bubbleRingShot(ctx, shot, x, y, p, d)) return true;
+  // (the Axolotl Librarian's paper boat: render/axolotl/)
+  if (paperBoatShot(ctx, shot, x, y, p, d)) return true;
+  // (the Spyglass Loris's glint of starlight: render/loris/)
+  if (starGlintShot(ctx, shot, x, y, p, d)) return true;
+  // (the Red-Tape Raccoon's roll of red tape: render/raccoon/)
+  if (redTapeShot(ctx, shot, x, y, p, d)) return true;
+  // (the Intern Quokka's paper plane: render/quokka/)
+  if (paperPlaneShot(ctx, shot, x, y, p, d)) return true;
+  // (Blunderpuss's cloudball: render/blunderpuss/)
+  if (cloudBallShot(ctx, shot, x, y, p, d)) return true;
+  // (the Stormsong Frog's note of lightning: render/treefrog/)
+  if (stormNoteShot(ctx, shot, x, y, p, d)) return true;
+  // (the Nebula Knitter's ball of nebula yarn: render/alpaca/)
+  if (nebulaYarnShot(ctx, shot, x, y, p, d)) return true;
+  // (the Koala Balloonist's balloon: render/balloonseller/)
+  if (balloonShot(ctx, shot, x, y, p, d)) return true;
+  // (the Cymbal Monkey's ring of sound: render/tindrummer/)
+  if (clangShot(ctx, shot, x, y, p, d)) return true;
+  // (the Candy Volcano's: the Floss Chinchilla's puff of floss, the Swirl Chameleon's gumdrop, the Jelly
+  // Bean Meerkat's jelly bean: render/chinchilla/, render/chameleon/, render/meerkat/)
+  if (flossShot(ctx, shot, x, y, p, d)) return true;
+  if (gumdropShot(ctx, shot, x, y, p, d)) return true;
+  if (jellyBeanShot(ctx, shot, x, y, p, d)) return true;
   if (shot === 'flame') {
     // A teardrop of fire, its tail streaming back and flickering.
     const fl = Math.sin(p * 40) * 1.2;
@@ -886,7 +916,7 @@ export function dreamShot(ctx, shot, x, y, p, d) {
 }
 
 // (render/bossfx.js calls these.)
-const ALL_FX = () => (ALL ??= { ...DREAM_FX, ...STORM_FX, ...SHAMAN_FX, ...HAZEL_FX, ...TUSKAR_FX });
+const ALL_FX = () => (ALL ??= { ...DREAM_FX, ...STORM_FX, ...SHAMAN_FX, ...HAZEL_FX, ...TUSKAR_FX, ...WALTZ_FX, ...MARIGOLD_FX, ...MORAY_FX, ...ABYSSIA_FX, ...CORALIE_FX, ...GK_FX, ...CARNIVAL_FX, ...CANDY_FX, ...SKY_FX, ...FOLIO_FX, ...ECLIPSE_FX, ...ASTRAEA_FX, ...MANAGER_FX, ...NOODLE_FX, ...MONDAY_FX, ...PRISMARIS_FX, ...REVEILLE_FX });
 let ALL = null;
 export function dreamWarn(ctx, z, x, y, p, time) {
   const fx = ALL_FX()[z.look];

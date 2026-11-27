@@ -51,7 +51,7 @@
 //                                 lie there a beat, and pop back up (the figure only tilts, at its
 //                                 own size)
 //   { place: actor, x }           puts them at x at once, standing on the floor there (for moving
-//                                 people while the screen is faded out)
+//                                 people while the screen is faded out; a monster too)
 //   { wind: false | true }        holds back the wind's return for the scene (false), then lets it
 //                                 come back (true): the windmill, chimes and forge come alive
 //                                 (render/town.js) at that moment instead of when the scene began
@@ -250,8 +250,14 @@ function runner(world, step) {
       b.vy = 0;
       b.onGround = true;
     } else {
-      const n = npcOf(world, step.place);
+      const n = world.map.npcs.some((q) => q.id === step.place) ? npcOf(world, step.place) : null;
+      const m = n ? null : mobActor(world, step.place);
       if (n) n.x = x;
+      // (a monster, too: the Ballroom's penguin placed off across the floor for her entrance)
+      else if (m) {
+        m.x = x;
+        m.y = groundAt(world.map, x);
+      }
     }
     return () => true;
   }

@@ -32,34 +32,65 @@ at the surface and every room is deeper and darker, ending at the throne on the 
 
 ## Monsters (levels 20-24)
 
-Redrawn creature-first on 2026-11-03 (render/mobs/sea.js, helpers in render/mobs/critter.js): chibi
-sea creatures in the field monsters' style, each its own silhouette, about the hero's size. The
-first look (costumed girls on a tall mermaid rig) read as clunky and was retired.
+Remade from scratch on 2026-11-26 as Queen Coralie's palace household: each a different real sea
+creature with a palace job, each on its own copy of a blank base (its own folder in render/), each
+wearing one small piece of the queen's livery, coral pink with a pearl. Abyssia's lamplighters are
+hers instead and carry her violet. (The 2026-11-03 rigs in render/mobs/searigs.js were retired.)
 
-- **Jelly Belle**: a round jelly bell with a face, a scalloped rim and ribbon tentacles; drifts with
-  a pulse and lashes two stinging ribbons.
-- **Seahorse Squire**: a chubby seahorse in a plumed helmet, a lance under its fin; bounces on its
-  curled tail and springs into a thrust.
-- **Lantern Angler**: a round anglerfish with a toothy grin; the lure flashes, then it lunges and
-  chomps.
-- **Pearl Otter**: an otter in a glass bubble helmet hugging a pearl; winds up and throws it.
-- **Star Twirler**: a starfish standing on two arms with a bow; skips on tiptoe and cartwheels into
-  a spinning slap.
-- **Octo Scholar**: a round octopus in glasses and a mortarboard; walks on curling arms and flings
-  its book in a puff of ink.
+- **Sea Bunny Bellhop** (jellymaid, render/seabunny/): a fluffy sea bunny slug in a coral pillbox cap
+  who runs the bubble lifts at the Coral Gate; blows "Going up!" bubbles from its pom-pom tail, hopes
+  for tips. Ear Whap, Bellhop Bump, Cap Flip.
+- **Sea Angel** (stardancer, render/seaangel/): a soprano of the palace choir, a little sea angel
+  with wing-flaps, a glowing heart and a bubble halo. Wing Slap, Heart Swoop, High C.
+- **Beluga Lifeguard** (pearldiver, render/beluga/): the palace lifeguard, on duty at the bottom of
+  the sea, with a whistle, a visor and a rescue float; throws bubble rings from afar. Rescue Ring,
+  Buoy Bonk, Whistle Blast.
+- **Sailfish Fencer** (seahorseknight, render/sailfish/): the guard's fencing master, his rounded bill
+  his épée with a pearl button, his sail raised "en garde". Lunge, Flèche, Parry-Riposte.
+- **Dumbo Lamplighter** (anglerlamp, render/dumbo/): one of Lady Abyssia's darlings, a tiny dumbo
+  octopus with a violet sea-glass lantern, scared of the dark; she calls them into her fight. Glare,
+  Lantern Bonk, Ear Slap.
+- **Axolotl Librarian** (octoscholar, render/axolotl/): the palace librarian in a coral cardigan and
+  half-moon glasses, a soggy book always in hand; shushes, stamps OVERDUE, throws paper boats from
+  afar. Paper Boat, Book Slam, Shush.
 
 ## Bosses
 
-- **The Twin Moray Sisters** (Grotto): two great round-headed eels rearing out of a coil on the floor (render/mobs/seaboss.js), Murri green with a coral crown, Ena gold with fin frills. One fights while
-  the other hides in a burrow in the wall, out of reach, spitting bubbles; they swap now and then,
-  and the one coming out lunges across the floor.
-- **Lady Abyssia, the Sea Witch** (Ink Abyss): a big round octopus in a witch's hat curled into a
-  nautilus shell, with a pearl staff. Ink clouds on the floor, tentacles that sweep in from the walls, and the tide surging in the
-  shaft (get up on a ledge).
-- **Queen Coralie, the Drowned Queen** (Throne): a grand mermaid queen with a coral crown and a
-  trident. Phase 1 Tidal Strikes (trident lines), phase 2 the Whirlpool (it pulls everyone toward
-  her), phase 3 the Great Wave (a wave rolls across the room: jump it). Freed at the end: the wards
-  come back on and the palace lights up.
+- **The Twin Morays, Murri and Ena** (Grotto; remade 2026-11-26, render/moray/ and world/aquarium.js):
+  two chibi moray eel sisters, Murri jade with a little coral crown (bossy, smug), Ena honey gold with
+  frilly cheek fins and a pearl on a ribbon (giggly). Their entrance: a game of peekaboo from their
+  burrows, then out of both at once, a loop-the-loop round each other and a boop of noses. The fight,
+  by their health together: Peekaboo (one out, one hiding in a burrow and bursting out of it: Chomp
+  Chomp! on the tank, Sister Gossip to spread, Peekaboo! at a burrow's mouth, then they swap), Tangle
+  Time (both out: Sister's Pick marks one of you each, then they lunge from opposite walls; stand the
+  two marked together and they crash and tie themselves in a knot, stunned and taking half again from
+  every blow; Twin Twirl), Not Fair! (Double Peekaboo with a shared bubble in the middle, Grotto
+  Squabble on everyone). Alone, the last one sulks and everything comes quicker. 56k each.
+- **Lady Abyssia, the Sea Witch** (Ink Abyss; remade 2026-11-26, render/abyssia/ and world/aquarium.js):
+  a little octopus sea witch, half lady and half octopus, who has been draining the light out of the
+  wards into her lanterns so the deep can be dark, and hers. Ink-indigo hime hair, a violet witch's hat
+  whose point curls into a nautilus shell (the teal band and starfish buckle her darlings wear), a pearl
+  scallop collar, a violet gown with an orchid peplum over six orchid octopus arms, a lamplighter's
+  crook with a big violet sea-glass lantern. Her entrance: she rises out of a pool of ink, nautilus
+  first, arms unfurling, lanterns winking alight; at "Ink, my darlings!" she pinches her lantern dark.
+  The fight: Good Evening, Darlings (Kiss Goodnight on the tank, Ink Blots to spread, Lights Out! (the
+  dark falls over the room but for the beams under three hung lanterns), Eight-Arm Embrace (in close)
+  then Ink Flounce (out)); Light the Way! at 65% (two Dumbo Lamplighters called: now Lights Out!'s
+  beams are the darlings' own lanterns and hers; Ohohoho! on everyone); The Deep Is Mine below 30%
+  (Lights Out: Adrift, the lanterns drifting across the room as the dark falls; everything quicker).
+  The tide still surges in the shaft (get up on a ledge). 110k.
+- **Queen Coralie, the Drowned Queen** (Throne; remade 2026-11-26, render/coralie/ and
+  world/aquarium.js): a young mermaid queen in her own livery, worn in full: long seafoam hair, a crown
+  of branching coral with pearls, a coral bodice with a strand of pearls, a sea-silk mantle, a coral
+  tail fading to pearly peach with a big sheer fluke, and her scepter topped by a keepsake globe with
+  one little orange fish in it. Her entrance: she stands perfectly still in a glass display case of her
+  own ("Exhibit No. 1: Me!") till she winks, the case lifts away in bubbles and she presents her
+  collection. The fight: Welcome to My Collection (Royal Decree on the tank; Display Cases, numbered,
+  coming down in that order; Strand of Pearls in front of her; Royal Wave on everyone), Say Pearls! at
+  60% (the Royal Portrait: everyone into the gilded frame with her, or be left out of the picture),
+  Nobody Ever Leaves! below 25% (Glass Walls slide in from both sides; six cases; Royal Encore). 200k.
+  Freed at the end: she opens Elder Warabi's tank with a tap of her scepter, and last of all lets her
+  own little fish go and swims up after it to see the sun.
 
 ## Rewards
 

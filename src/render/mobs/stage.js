@@ -1,32 +1,36 @@
 // Monster art: the Dream Theatre's company (the levels 40-45 group dungeon, see
-// docs/design/dream-theatre.md), all live rigs since Chapter 9 (2026-11-19):
-//   The Grand Lobby: understudy (Understudy Ghost: the Masquerade Diva, diva/, a little ghost in the
-//   leading lady's borrowed gown, on the spirit base, 2026-11-25); stagefolkrigs.js: chorusgirl
-//   (Chorus Flamingo, a showgirl with a fan and a can-can kick), stagehand (Stagehand Mole,
-//   overalls, a crew headset, a big wrench).
-//   The train and the office, the Queen's old life (commuterigs.js): rushpenguin (mob paperdragon),
-//   sleepysheep, stickybird (mob prompter), staplercroc (mob primadonna).
+// docs/design/dream-theatre.md), each on its own copy of a blank base in its own folder (2026-11-27):
+//   The Grand Lobby: understudy (the Masquerade Diva, diva/: a little ghost in the leading lady's
+//   borrowed gown, on the spirit base); chorusgirl (the Usher Otter, usher/: the lobby's usherette with
+//   a brass torch); stagehand (the Backdrop Beaver, beaver/: the scene painter from backstage).
+//   The train and the office, the Queen's old life: paperdragon (the Toast-Dash Stoat, stoat/: late for
+//   work, toast in its mouth), sleepysheep (the Travel-Pillow Sloth, sloth/), primadonna (the Red-Tape
+//   Raccoon, raccoon/: a clerk who stamps DENIED), prompter (the Intern Quokka, quokka/: paper planes).
 
-import { flamingoRig, flamingoStill, moleRig, moleStill } from './stagefolkrigs.js';
 import { DIVA_ART, DIVA_SIZE } from '../diva/index.js';
-import { penguinRig, penguinStill, sleepySheepRig, sleepySheepStill, stickyBirdRig, stickyBirdStill, staplerCrocRig, staplerCrocStill } from './commuterigs.js';
+import { USHER_OTTER_ART, USHER_OTTER_SIZE } from '../usher/index.js';
+import { BACKDROP_BEAVER_ART, BACKDROP_BEAVER_SIZE } from '../beaver/index.js';
+import { RED_TAPE_RACCOON_ART, RED_TAPE_RACCOON_SIZE } from '../raccoon/index.js';
+import { TOAST_DASH_STOAT_ART, TOAST_DASH_STOAT_SIZE } from '../stoat/index.js';
+import { STRAP_SLOTH_ART, STRAP_SLOTH_SIZE } from '../sloth/index.js';
+import { INTERN_QUOKKA_ART, INTERN_QUOKKA_SIZE } from '../quokka/index.js';
 
 export const ART = {
   understudy: DIVA_ART,
-  chorusgirl: { pad: 8, walk: 8, idle: 6, attack: 4, stride: 7, atkMs: [70, 230, 180], draw: flamingoStill, rig: flamingoRig },
-  stagehand: { pad: 8, walk: 8, idle: 6, attack: 4, stride: 6, atkMs: [90, 260, 190], draw: moleStill, rig: moleRig },
-  rushpenguin: { pad: 8, walk: 8, idle: 6, attack: 4, stride: 6, atkMs: [80, 240, 180], draw: penguinStill, rig: penguinRig },
-  sleepysheep: { pad: 8, walk: 8, idle: 6, attack: 4, stride: 5, atkMs: [100, 280, 200], draw: sleepySheepStill, rig: sleepySheepRig },
-  stickybird: { pad: 8, walk: 8, idle: 6, attack: 4, stride: 5, atkMs: [70, 220, 170], draw: stickyBirdStill, rig: stickyBirdRig },
-  staplercroc: { pad: 8, walk: 8, idle: 6, attack: 4, stride: 6, atkMs: [90, 260, 190], draw: staplerCrocStill, rig: staplerCrocRig },
+  chorusgirl: USHER_OTTER_ART,
+  stagehand: BACKDROP_BEAVER_ART,
+  paperdragon: TOAST_DASH_STOAT_ART,
+  sleepysheep: STRAP_SLOTH_ART,
+  prompter: INTERN_QUOKKA_ART,
+  primadonna: RED_TAPE_RACCOON_ART,
 };
 
 export const INFO = {
-  understudy: { name: 'Understudy Ghost', ...DIVA_SIZE },
-  chorusgirl: { name: 'Chorus Flamingo', w: 24, h: 42 },
-  stagehand: { name: 'Stagehand Mole', w: 26, h: 34 },
-  rushpenguin: { name: 'Rush-Hour Penguin', w: 26, h: 36 },
-  sleepysheep: { name: 'Sleepy Commuter Sheep', w: 28, h: 36 },
-  stickybird: { name: 'Sticky Note Bird', w: 24, h: 28 },
-  staplercroc: { name: 'Stapler Croc', w: 30, h: 30 },
+  understudy: { name: 'Masquerade Diva', ...DIVA_SIZE },
+  chorusgirl: { name: 'Usher Otter', w: USHER_OTTER_SIZE.w, h: USHER_OTTER_SIZE.h },
+  stagehand: { name: 'Backdrop Beaver', w: BACKDROP_BEAVER_SIZE.w, h: BACKDROP_BEAVER_SIZE.h },
+  paperdragon: { name: 'Toast-Dash Stoat', w: TOAST_DASH_STOAT_SIZE.w, h: TOAST_DASH_STOAT_SIZE.h },
+  sleepysheep: { name: 'Travel-Pillow Sloth', w: STRAP_SLOTH_SIZE.w, h: STRAP_SLOTH_SIZE.h },
+  prompter: { name: 'Intern Quokka', w: INTERN_QUOKKA_SIZE.w, h: INTERN_QUOKKA_SIZE.h },
+  primadonna: { name: 'Red-Tape Raccoon', w: RED_TAPE_RACCOON_SIZE.w, h: RED_TAPE_RACCOON_SIZE.h },
 };

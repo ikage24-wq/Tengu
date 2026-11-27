@@ -9,22 +9,29 @@
 //                  jellyfish (render/ghostmaid/, 2026-11-26)
 //   candlebride    Candle Bride: the Candelabra Bride, a gothic bride in black lace with a brass
 //                  candelabra, on the maiden base; she thrusts it and throws a flame (render/bride/, 2026-11-24)
-//   topiarydryad   Topiary Swan: a hedge clipped into a swan, a rose on its head (manorrigs.js, 2026-11-18)
+//   topiarydryad   Topiary Hedgehog: Topsy, a round little hedgehog whose prickles are a clipped box
+//                  hedge, a rose tucked in the top; rolls about like a topiary ball, on his own copy of the
+//                  rodent base (render/topiarydryad/, 2026-11-26)
 //   lanternghost   Lantern Wisp: the Lamplighter Wisp, a little ghost lamplighter with her pole and
 //                  lantern, on the spirit base (render/wisp/, 2026-11-24)
 //   armourknight   Armour Knight: a small empty suit of armour, its helm too big, eyes glowing
 //                  inside; clanks along and slashes.
-//   teahatter      Tea Party Hatter: a round teapot in a top hat on a saucer (manorrigs.js, 2026-11-18)
-//   pumpkinbutler  Pumpkin Butler: Lady Marigold's staff, who cut in on her waltz (manorrigs.js, 2026-11-18)
+//   teahatter      Teacup Hermit: Pemberton, a rose-pink hermit crab living in a porcelain teacup, a
+//                  monocle and a curly moustache, on his own copy of the crab base (render/teahatter/, 2026-11-26)
+//   pumpkinbutler  Basset Butler: Humphrey, Lady Marigold's red-and-white basset hound butler, a silver
+//                  tray and cloche (a pumpkin tart under it), on his own copy of the creature base
+//                  (render/pumpkinbutler/, 2026-11-26)
 // Every design faces right, its lowest point on the bottom edge. Attacks are four frames:
 // wind-up (the tell), strike, impact, recover.
 
 import { E, T, F, R, ramp, smear, chain, wave, TAU, D2R, O, limb, spin, strand, star, blob } from './critter.js';
-import { swanRig, swanStill, teapotRig, teapotStill, butlerRig, butlerStill } from './manorrigs.js';
 import { WISP_ART, WISP_SIZE } from '../wisp/index.js';
 import { BRIDE_ART, BRIDE_SIZE } from '../bride/index.js';
 import { PORCELAIN_DOLL } from '../porcelaindoll/index.js';
 import { GHOST_MAID } from '../ghostmaid/index.js';
+import { TOPIARY_HEDGEHOG } from '../topiarydryad/index.js';
+import { TEACUP_HERMIT } from '../teahatter/index.js';
+import { BUTLER_ART, BUTLER_SIZE } from '../pumpkinbutler/index.js';
 
 const frames = (pose) => (pose === 'walk' ? 8 : pose === 'attack' ? 4 : 6);
 const phase = (pose, f) => f / frames(pose);
@@ -81,20 +88,20 @@ export const ART = {
   porcelaindoll: PORCELAIN_DOLL.art,
   ghostmaid: GHOST_MAID.art,
   candlebride: BRIDE_ART,
-  topiarydryad: { pad: 6, walk: 8, idle: 6, attack: 4, stride: 24, atkMs: [60, 200, 160], draw: swanStill, rig: swanRig },
+  topiarydryad: TOPIARY_HEDGEHOG.art,
   lanternghost: WISP_ART,
   armourknight: { pad: 6, walk: 8, idle: 6, attack: 4, stride: 18, atkMs: [80, 260, 200], draw: armour },
-  teahatter: { pad: 6, walk: 8, idle: 6, attack: 4, stride: 22, atkMs: [70, 240, 180], draw: teapotStill, rig: teapotRig },
-  pumpkinbutler: { pad: 6, walk: 8, idle: 6, attack: 4, stride: 12, atkMs: [70, 240, 180], draw: butlerStill, rig: butlerRig },
+  teahatter: TEACUP_HERMIT.art,
+  pumpkinbutler: BUTLER_ART,
 };
 
 export const INFO = {
   porcelaindoll: { name: 'Porcelain Doll', w: PORCELAIN_DOLL.w, h: PORCELAIN_DOLL.h },
   ghostmaid: { name: 'Ghost Maid', w: GHOST_MAID.w, h: GHOST_MAID.h },
   candlebride: { name: 'Candle Bride', ...BRIDE_SIZE },
-  topiarydryad: { name: 'Topiary Swan', w: 28, h: 34 },
+  topiarydryad: { name: 'Topiary Hedgehog', w: TOPIARY_HEDGEHOG.w, h: TOPIARY_HEDGEHOG.h },
   lanternghost: { name: 'Lantern Wisp', ...WISP_SIZE },
   armourknight: { name: 'Armour Knight', w: 28, h: 36 },
-  teahatter: { name: 'Tea Party Hatter', w: 28, h: 36 },
-  pumpkinbutler: { name: 'Pumpkin Butler', w: 28, h: 40 },
+  teahatter: { name: 'Teacup Hermit', w: TEACUP_HERMIT.w, h: TEACUP_HERMIT.h },
+  pumpkinbutler: { name: 'Basset Butler', w: BUTLER_SIZE.w, h: BUTLER_SIZE.h },
 };

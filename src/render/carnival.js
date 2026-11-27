@@ -1,8 +1,7 @@
 // The Clockwork Carnival's rooms (world/carnival.js runs them), in the scenery's outlined chibi style:
 // the Midway's music boxes to wind, the Funhouse's prize balloons, the coaster car and its rail
-// lights, the workshop's conveyor belts, the Big Top's trapezes, and Madame Marionette's
-// strings on the player she has marked. (x, y) is the bottom center on the floor; `time` (seconds)
-// animates.
+// lights, the workshop's conveyor belts and the Big Top's trapezes. (x, y) is the bottom center on the
+// floor; `time` (seconds) animates.
 
 import { drawSpectator, SPECTATOR_BEATS } from './mochi-anim.js';
 import { rollMochi } from '../data/mochi-genes.js';
@@ -132,32 +131,15 @@ function drawHole(ctx, x, y) {
 }
 
 export function drawCarnivalBack(ctx, world, cam, time) {
-  const room = world.dungeon.room;
   const map = world.map;
   if (map.dungeon !== 'carnival') return;
   const gy = map.groundY - cam.y;
   // The Ferris Wheel plaza: Elder Kuri cheering in the front row (till Queen Gearheart winds down);
-  // the whack-a-mole holes while that game is on; the rings of the ring toss coming down.
+  // the whack-a-mole holes all through her fight (the Brass Moles pop up out of them).
   if (map.id === 'carnival6') {
     if (!world.char.elders?.kuri && !(world.cine?.cast ?? []).some((c) => c.id === 'kuri' && c.alpha > 0)) drawKuri(ctx, 1250 - cam.x, gy, time);
     const gh = world.mobs.find((o) => o.def.mech === 'gearheart' && o.hp > 0);
-    if (gh?.engaged && (gh.mech?.phase ?? 1) === 1) for (const hx of map.holes ?? []) drawHole(ctx, hx - cam.x, gy);
-    for (const z of world.dungeon.zones) {
-      if (!z.ring || z.hit) continue;
-      const u = Math.min(1, z.t / z.warn);
-      const x = z.x - cam.x;
-      const y = gy - 4 - (1 - u * u) * 240;
-      ctx.save();
-      ctx.lineWidth = 4;
-      ctx.strokeStyle = ['#ff7aa8', '#7fd8ff', '#ffd36b'][Math.floor(z.x) % 3];
-      ctx.beginPath();
-      ctx.ellipse(x, y, 30, 7 + (1 - u) * 6, Math.sin(time * 6 + z.x) * 0.2 * (1 - u), 0, TAU);
-      ctx.stroke();
-      ctx.strokeStyle = 'rgba(255,255,255,0.7)';
-      ctx.lineWidth = 1;
-      ctx.stroke();
-      ctx.restore();
-    }
+    if (gh?.engaged) for (const hx of map.holes ?? []) drawHole(ctx, hx - cam.x, gy);
   }
   // The trapezes swinging high over the ring.
   for (const tx of map.trapezes ?? []) {
@@ -227,25 +209,6 @@ export function drawCarnivalFront(ctx, world, cam, time) {
       ctx.fillRect(x - c.dir * (60 + k * 14), gy - 30 + k * 8, -c.dir * 24, 2);
     }
     ctx.globalAlpha = 1;
-  }
-  // Madame Marionette's strings on the marked player, tightening as the yank comes.
-  const y = room.yank;
-  const m = world.mobs.find((o) => o.def.mech === 'marionetta' && o.hp > 0);
-  if (y && m) {
-    const g = (world.dungeon && [{ id: 'you', body: world.body }, ...(world.bots?.list ?? []).filter((b) => b.body).map((b) => ({ id: b.id, body: b.body }))]).find((o) => o.id === y.id);
-    if (g) {
-      const k = Math.max(0, Math.min(1, 1 - (y.at - world.now) / 2.6));
-      ctx.strokeStyle = '#f2ecff';
-      ctx.globalAlpha = 0.5 + 0.5 * k;
-      ctx.lineWidth = 0.8 + k;
-      for (let s = -1; s <= 1; s++) {
-        ctx.beginPath();
-        ctx.moveTo(m.x - cam.x, m.y - m.def.h * 0.7 - cam.y);
-        ctx.quadraticCurveTo((m.x + g.body.x) / 2 - cam.x, Math.min(m.y, g.body.y) - 80 * (1 - k) - cam.y, g.body.x - cam.x + s * 4, g.body.y - 30 - cam.y);
-        ctx.stroke();
-      }
-      ctx.globalAlpha = 1;
-    }
   }
 }
 

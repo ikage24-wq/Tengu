@@ -8,9 +8,8 @@
 //   Eclipse      sunrise (a sun bursting up), moonfall (a crescent crashing down), fang (fiery jaws),
 //                crescentsweep (a crescent wave), corona (sun sparks), tide (moonlit water),
 //                eclipse / total (the moon over the sun, the room going dark)
-//   Astraea      starfall (falling stars), hoof (a glowing hoof print), comet (a comet down the line),
-//                night (the sky coming down), twinstars (two stars), orbit (a ring of stars),
-//                lines (beams of starlight), nova (a star bursting)
+//   Astraea      (old, from her 2026-11-18 fight, no longer cast) starfall, hoof, comet, night,
+//                twinstars, orbit, lines, nova; her own since 2026-11-27 are in render/astraea/looks.js
 //   Bonbon       sprinkles (rainbow sprinkles gathering overhead, then pouring down), cherry (the
 //                cherry off her crown, lobbed high, coming down in a splash)
 //   The Queen's dream's bosses (the Night Manager, the Cup-Noodle Dragon, Monday) draw theirs
@@ -18,6 +17,22 @@
 
 import { puff, shock, starFlash, easeOut, bloom } from './fxkit.js';
 import { dreamWarn, dreamHit, DREAM_HOLD } from './dreamfx.js';
+import { MARIGOLD_OWN_WARN } from './marigold/looks.js';
+import { MORAY_OWN_WARN } from './moray/looks.js';
+import { ABYSSIA_OWN_WARN } from './abyssia/looks.js';
+import { CORALIE_OWN_WARN } from './coralie/looks.js';
+import { CARNIVAL_OWN_WARN } from './carnivallooks.js';
+import { CANDY_OWN_WARN } from './candylooks.js';
+import { SKY_OWN_WARN } from './skylooks.js';
+import { GK_OWN_WARN } from './grandkettle/looks.js';
+import { FOLIO_OWN_WARN } from './folio/looks.js';
+import { ECLIPSE_OWN_WARN } from './eclipse/looks.js';
+import { ASTRAEA_OWN_WARN } from './astraea/looks.js';
+import { MANAGER_OWN_WARN } from './manager/looks.js';
+import { NOODLE_OWN_WARN } from './noodle/looks.js';
+import { MONDAY_OWN_WARN } from './monday/looks.js';
+import { REVEILLE_OWN_WARN } from './reveille/looks.js';
+import { PRISMARIS_OWN_WARN } from './prismaris/looks.js';
 
 const TAU = Math.PI * 2;
 const SW = 640;
@@ -26,7 +41,9 @@ const clamp01 = (v) => Math.max(0, Math.min(1, v));
 // How long each landing effect plays (s); the rest play 0.6 s.
 export const HOLD = { bags: 0.7, sprinkles: 0.7, cherry: 0.9, overdue: 0.9, books: 0.8, study: 0.9, bookmark: 0.7, comet: 0.75, crescentsweep: 0.75, eclipse: 1.3, total: 1.3, night: 1.3, shush: 0.9, nova: 0.9, lines: 0.8, starfall: 0.7, ...DREAM_HOLD };
 // Looks that draw their own warning instead of the standard one.
-export const OWN_WARN = new Set(['lines']);
+// (Lady Marigold's draw their whole telegraph themselves: render/marigold/looks.js)
+// (and the Grand Kettle's, drawn over a field floor: render/grandkettle/looks.js, render/trial.js)
+export const OWN_WARN = new Set(['lines', ...MARIGOLD_OWN_WARN, ...MORAY_OWN_WARN, ...ABYSSIA_OWN_WARN, ...CORALIE_OWN_WARN, ...GK_OWN_WARN, ...CARNIVAL_OWN_WARN, ...CANDY_OWN_WARN, ...SKY_OWN_WARN, ...FOLIO_OWN_WARN, ...ECLIPSE_OWN_WARN, ...ASTRAEA_OWN_WARN, ...MANAGER_OWN_WARN, ...NOODLE_OWN_WARN, ...MONDAY_OWN_WARN, ...PRISMARIS_OWN_WARN, ...REVEILLE_OWN_WARN]);
 
 // ---------- Little drawing helpers ----------
 function star(ctx, x, y, r, c, rot = 0) {

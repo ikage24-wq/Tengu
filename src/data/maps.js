@@ -571,8 +571,8 @@ export const MAPS = {
   // Sky Garden (its makeover, 2026-11-20): a smaller sky built round its landmarks
   // (render/skyart.js), zones side by side over the cloud sea. The Cloud Meadows in the west: a big
   // floating garden island pouring a waterfall into the clouds, a small one above it, a blossom on
-  // the cloud sea bouncing you up, the Pegasus Foals grazing. A rainbow arches from the meadows over
-  // to the Harpy Roost, little clouds riding it for steps. The Harpy Roost in the middle: a round
+  // the cloud sea bouncing you up, the Whistledown Marmots keeping lookout. A rainbow arches from the meadows
+  // over to the Windsock Roost, little clouds riding it for steps. The Windsock Roost in the middle: a round
   // birdhouse on a tall pillar of cloud, its perches stepping up round the pillar to the balcony,
   // the skyward wind rising beside it (Up to ride it). The Starlit Terrace in the east: floating
   // terrace islands stepping up to the gazebo and the way to Starfall Heights, a cloud drifting to
@@ -585,7 +585,7 @@ export const MAPS = {
       terrain: [[0, 1040], [1700, 1040], [1728, 1078], [1820, 1078], [1848, 1040], [2200, 1040]],
       zones: [
         { name: 'Cloud Meadows', color: '#ff9ec7', from: 0, mobs: ['cloudsheep'] },
-        { name: 'Harpy Roost', color: '#4f95e0', from: 880, mobs: ['windbird'], look: { sky: ['#8fc8ff', '#c8e4ff', '#fff6ee'] } },
+        { name: 'Windsock Roost', color: '#4f95e0', from: 880, mobs: ['windbird'], look: { sky: ['#8fc8ff', '#c8e4ff', '#fff6ee'] } },
         { name: 'Starlit Terrace', color: '#e0b84a', from: 1560, mobs: ['starspirit'], look: { sky: ['#6a6ad0', '#a8a0e8', '#fff0d8'], stars: true } },
       ],
       ledges: [
@@ -623,7 +623,7 @@ export const MAPS = {
       // The Cloud Meadows: on the islands and the cloud sea.
       { mob: 'cloudsheep', x: 220, y: 860 }, { mob: 'cloudsheep', x: 420, y: 860 }, { mob: 'cloudsheep', x: 620, y: 860 }, { mob: 'cloudsheep', x: 240, y: 700 },
       { mob: 'cloudsheep', x: 640, y: 1040 }, { mob: 'cloudsheep', x: 880, y: 1040 }, { mob: 'cloudsheep', x: 1120, y: 1040 }, { mob: 'cloudsheep', x: 1360, y: 1040 }, { mob: 'cloudsheep', x: 1580, y: 1040 },
-      // The Harpy Roost: on the cloud bank, round its perches and on its balcony.
+      // The Windsock Roost (its albatrosses): on the cloud bank, round its perches and on its balcony.
       { mob: 'windbird', x: 560, y: 570 }, { mob: 'windbird', x: 780, y: 570 },
       { mob: 'windbird', x: 1480, y: 960 }, { mob: 'windbird', x: 1320, y: 880 }, { mob: 'windbird', x: 1480, y: 800 }, { mob: 'windbird', x: 1320, y: 720 }, { mob: 'windbird', x: 1480, y: 640 }, { mob: 'windbird', x: 1400, y: 456 },
       // The Starlit Terrace.
@@ -1540,7 +1540,7 @@ Object.assign(MAPS, {
   },
 
   // The Ballroom: a grand round floor under a chandelier, a balcony each side reached by little
-  // landings. The Waltzing Armours hold the floor.
+  // landings. Dame Rondo the penguin holds the floor and Dame Minuet the bat the air (world/manor.js).
   manor3: {
     id: 'manor3', name: 'The Ballroom', theme: 'manor', town: 'harbor', dungeon: 'manor',
     width: 1500, height: 420, groundY: G,
@@ -1815,7 +1815,7 @@ Object.assign(MAPS, {
     ],
     objects: [],
     npcs: [],
-    spawns: [{ mob: 'moraymurri', x: 760, y: G, pack: 'twins' }, { mob: 'morayena', x: 1380, y: G, pack: 'twins' }],
+    spawns: [{ mob: 'moraymurri', x: 120, y: G, pack: 'twins' }, { mob: 'morayena', x: 1380, y: G, pack: 'twins' }],
   },
 
   // The Ink Abyss: a deep shaft of ledges, the tide surging up it now and then. Lady Abyssia waits

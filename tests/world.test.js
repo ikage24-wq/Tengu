@@ -180,6 +180,9 @@ test('the boss slam hurts players standing on the floor', () => {
   const w = newWorld();
   gainExp(w.char, 3e7);
   loadMap(w, 'bossroom', 'west');
+  // (Prismaris, the Crystal Throne's own boss, fights by named casts since 2026-11-27, world/prismaris.js;
+  // Old MacGoblin still slams.)
+  w.mobs = [spawnMob(w.map, { mob: 'macgoblin', x: 560, y: w.map.groundY })];
   const boss = w.mobs.find((m) => m.def.boss);
   assert.ok(boss);
   w.body.x = boss.x - 150;
@@ -187,6 +190,8 @@ test('the boss slam hurts players standing on the floor', () => {
   const hp = w.char.hp;
   let wound = false;
   for (let i = 0; i < 60 * 9; i++) {
+    // (Old MacGoblin wanders; stay 150 px off him so his one slam in this window is always in range.)
+    if (w.body.onGround) w.body.x = boss.x - 150;
     updateWorld(w, DT, idle);
     wound ||= boss.special.warn > 0;
   }

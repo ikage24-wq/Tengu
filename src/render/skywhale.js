@@ -12,6 +12,8 @@ import { MOBS } from '../data/mobs.js';
 import { drawMochiAnim } from './mochi-anim.js';
 import { rollMochi } from '../data/mochi-genes.js';
 import { OHAGI } from '../data/scenes.js';
+import { drawGaleSails } from './gale/looks.js';
+import { drawMatriarchShells } from './matriarch/looks.js';
 
 // ---------- The brow's set (Chapter 10) ----------
 // The whale's own dream, asleep at her brow while The Sulk storms over it (until the storm clears and
@@ -120,6 +122,10 @@ export function drawWhaleBack(ctx, world, cam, time) {
   if (map.dungeon !== 'skywhale') return;
   const room = world.dungeon.room;
   breath = breathOf(world);
+  // (Captain Gale's sails, planted on the deck at her Squall: render/gale/looks.js)
+  drawGaleSails(ctx, world, cam, time);
+  // (the Barnacle Matriarch's clams for Find the Pearl: render/matriarch/looks.js)
+  drawMatriarchShells(ctx, world, cam, time);
   // The lungs' ribs: great arches of glowing bone that swell on the breath in and settle on the out.
   if (map.breath) {
     const v = breath?.v ?? 0;

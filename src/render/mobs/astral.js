@@ -1,16 +1,19 @@
 // Monster art: the Star Observatory's sky-folk (the levels 30-35 group dungeon, see
-// docs/design/star-observatory.md), all live rigs in astralrigs.js (remade 2026-11-18 for Chapter 7:
-// Astraea's thousand-year household, upright and chibi, no bugs):
-//   cometcourier   Comet Courier (a sparrow postman)   nebulawitch    Nebula Witch (a cloud puff)
-//   starcarto      Telescope Crab                      mothlibrarian  Owl Librarian (an owlet)
-//   meteormaiden   Meteor Maiden                       geminighosts   Gemini Ghosts
-// (The id mothlibrarian stays so old saves and quest counts keep working.) Also two little star
-// helpers the sky bosses draw with.
+// docs/design/star-observatory.md), Astraea's household, each remade from scratch on its own copy of
+// a blank base (2026-11-26):
+//   cometcourier   Star Glider (a sugar glider, render/glider/)      nebulawitch   Nebula Knitter (an alpaca, render/alpaca/)
+//   starcarto      Spyglass Loris (render/loris/)                     mothlibrarian Raven Scribe (render/raven/)
+//   meteormaiden   Meteor Maiden (render/meteormaiden/)               geminighosts  the Mirror Twins (render/gemini/)
+// (The old ids stay so old saves and quest counts keep working.) Also two little star helpers the sky
+// bosses draw with.
 
 import { T, TAU, D2R, star } from './critter.js';
-import { meteorMaidenRig, meteorMaidenStill } from './meteorrig.js';
-import { cometRig, cometStill, nebulaRig, nebulaStill, crabRig, crabStill, owlRig, owlStill } from './astralrigs.js';
+import { METEOR_MAIDEN_ART, METEOR_MAIDEN_SIZE } from '../meteormaiden/index.js';
 import { TWIN_ART, TWIN_SIZE } from '../gemini/index.js';
+import { STAR_GLIDER_ART, STAR_GLIDER_SIZE } from '../glider/index.js';
+import { SPYGLASS_LORIS_ART, SPYGLASS_LORIS_SIZE } from '../loris/index.js';
+import { NEBULA_KNITTER_ART, NEBULA_KNITTER_SIZE } from '../alpaca/index.js';
+import { RAVEN_SCRIBE_ART, RAVEN_SCRIBE_SIZE } from '../raven/index.js';
 
 // A five-point star.
 export function star5(x, y, r, c, deg = -90) {
@@ -34,20 +37,26 @@ export function twinkles(x, y, q, n = 3, rad = 14) {
 }
 
 export const ART = {
-  cometcourier: { pad: 8, walk: 8, idle: 6, attack: 4, stride: 30, atkMs: [70, 220, 170], draw: cometStill, rig: cometRig },
-  nebulawitch: { pad: 8, walk: 8, idle: 6, attack: 4, stride: 20, atkMs: [80, 240, 180], draw: nebulaStill, rig: nebulaRig },
-  starcarto: { pad: 6, walk: 8, idle: 6, attack: 4, stride: 20, atkMs: [70, 220, 170], draw: crabStill, rig: crabRig },
-  mothlibrarian: { pad: 8, walk: 8, idle: 6, attack: 4, stride: 22, atkMs: [80, 240, 180], draw: owlStill, rig: owlRig },
+  // (the Star Glider, 2026-11-26: a sugar glider who catches falling stars in its pouch, render/glider/)
+  cometcourier: STAR_GLIDER_ART,
+  // (the Nebula Knitter, 2026-11-26: an alpaca whose fleece is a star nursery, render/alpaca/)
+  nebulawitch: NEBULA_KNITTER_ART,
+  // (the Spyglass Loris, 2026-11-26: the tower's slow star surveyor, render/loris/)
+  starcarto: SPYGLASS_LORIS_ART,
+  // (the Raven Scribe, 2026-11-26: the Archive's copyist, a raven with a quill, render/raven/)
+  mothlibrarian: RAVEN_SCRIBE_ART,
   // (The Meteor Golem was wiped 2026-11-22; the Meteor Maiden took its place, meteorrig.js.)
-  meteormaiden: { pad: 6, walk: 8, idle: 6, attack: 4, stride: 15, atkMs: [80, 300, 260], draw: meteorMaidenStill, rig: meteorMaidenRig },
+  // (rebuilt 2026-11-26 to today's standard on her own copy of the kid base, her own hair and face:
+  // render/meteormaiden/)
+  meteormaiden: METEOR_MAIDEN_ART,
   // (the Mirror Twins, 2026-11-24: a ghost girl and her night twin back to back, render/gemini/)
   geminighosts: TWIN_ART,
 };
 export const INFO = {
-  cometcourier: { name: 'Comet Courier', w: 26, h: 30 },
-  nebulawitch: { name: 'Nebula Witch', w: 26, h: 36 },
-  starcarto: { name: 'Telescope Crab', w: 32, h: 30 },
-  mothlibrarian: { name: 'Owl Librarian', w: 28, h: 34 },
-  meteormaiden: { name: 'Meteor Maiden', w: 28, h: 38 },
+  cometcourier: { name: 'Star Glider', w: STAR_GLIDER_SIZE.w, h: STAR_GLIDER_SIZE.h },
+  nebulawitch: { name: 'Nebula Knitter', w: NEBULA_KNITTER_SIZE.w, h: NEBULA_KNITTER_SIZE.h },
+  starcarto: { name: 'Spyglass Loris', w: SPYGLASS_LORIS_SIZE.w, h: SPYGLASS_LORIS_SIZE.h },
+  mothlibrarian: { name: 'Raven Scribe', w: RAVEN_SCRIBE_SIZE.w, h: RAVEN_SCRIBE_SIZE.h },
+  meteormaiden: { name: 'Meteor Maiden', w: METEOR_MAIDEN_SIZE.w, h: METEOR_MAIDEN_SIZE.h },
   geminighosts: { name: 'Gemini Ghosts', ...TWIN_SIZE },
 };

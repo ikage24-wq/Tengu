@@ -68,3 +68,47 @@ witch, a hermit crab living in a brass telescope, a fluffy moth librarian with a
 rock golem with glowing cracks, and twin star ghosts holding hands. Folio is a grand bookworm in
 glasses on an enormous book, the Eclipse Twins a sun-fox in a blazing halo and a moon-rabbit before
 a crescent, and Astraea a starry stag with constellation antlers and a ring of orbiting stars.
+
+## The 2026-11-26 remake
+
+The regular monsters were remade from scratch on their own copies of the blank bases (the bosses come
+next), each a new creature from the tower's place and story, the old ids kept for saves and quests:
+
+- **Star Glider** (`cometcourier`, render/glider/): a sugar glider on the Starlit Stair who catches the
+  falling stars in its pouch, so its tummy glows; star-freckled gliding skin, a long bushy tail. Glide
+  Swoop, Star Toss, Tail Twirl.
+- **Spyglass Loris** (`starcarto`, render/loris/): the tower's slow little star surveyor, huge night
+  eyes, a brass spyglass and a tube of star charts; throws its arms over its head when startled. Lens
+  Flare (a glint of starlight, `shot: 'starglint'`), Spyglass Bonk, Chart Unroll.
+- **Nebula Knitter** (`nebulawitch`, render/alpaca/): an alpaca whose fleece is a star nursery; she knits
+  the night sky and hums. Yarn Comet (`shot: 'nebulayarn'`), Needle Jab, Fleece Puff.
+- **Raven Scribe** (`mothlibrarian`, render/raven/): the Archive's copyist, copying the star records out
+  in starlight ink; Folio calls them to her. Mimics the Archive clock, can't leave shiny things alone.
+  Quill Jab, Ink Flick, Page Flurry.
+- **Meteor Maiden** (`meteorgolem`, render/meteormaiden/): her idea kept, rebuilt to today's standard
+  with her own hair and face (no hero hair). Meteor Smash, Shooting Star, Comet Combo.
+
+## The 2026-11-27 boss remake (Folio and the Eclipse Twins)
+
+Remade from scratch on their own copies of the blank bases, each with a new fight (world/observatory.js),
+a cast bar, named rotations and their own telegraph looks (render/folio/looks.js, render/eclipse/looks.js):
+
+- **Folio, the Archivist** (`folio`, render/folio/, the winged base): a prim young snowy owl of a librarian,
+  snowy hair in a wound bun with a quill through it, brass reading glasses pushed up on her hair, a snowy
+  owl's wings folded down her back, a midnight indigo coat-dress, the Archive's keys at her hip, a white
+  quill, and the Great Catalogue floating at her side. Quiet, Please: Hardback (the Catalogue slammed shut
+  on the tank), Toppling Stacks (a row of bookcases topples down the hall: stand in the one Reading Nook, or
+  up on a ledge), Riffle (a gust of pages on everyone), Noted (ink lands where each of you stood). Top
+  Shelf, Bottom Shelf (to a third): books fly along the top shelves (stay on the floor) or skid along the
+  floor (jump), then both. Closing Time: the stacks fall from both ends toward the nook, Noted then Bottom
+  Shelf, Speed Reading. She calls two Raven Scribes at 70% and 40%. Entrance: up on a rolling ladder reading,
+  a glide down on her owl's wings, a library card, OVERDUE stamped in starlight ink.
+- **Sol and Luna, the Eclipse Twins** (`eclipsesol`, `eclipseluna`, render/eclipse/, the maiden base): Sol a
+  fox-eared sun girl (a sun ring round her head, a fox's tail, a coral jacket), Luna a rabbit-eared moon girl
+  (a night-blue capelet, a moon-white dress, her mochi mallet). The old sunlit and shadowed halves are gone:
+  they move as a pair. Sunrise, Moonrise: Solar Flare, Moon Mallet (three rings of mochi pound out round
+  Luna), Sunspots, Share the Mochi, Opposition (they dash to opposite ends: Sol's sunbeam burns the floor of
+  her half, Luna's moonbeam sweeps head-high through hers), Diamond Ring. Eclipse Season (either at 60%):
+  Conjunction (hand in hand in the middle: only the shadow under them is safe) and Crossing (they dash past
+  each other, trading places). Alone: the survivor fights on with her sister's keepsake, both sisters' moves
+  and Totality. Entrance: a big wave and a shy one, then back to back, an eclipse ring round them both.

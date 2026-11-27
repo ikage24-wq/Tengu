@@ -141,6 +141,10 @@ const rotR = ([x, y], r) => [x * Math.cos(r) - y * Math.sin(r), x * Math.sin(r) 
 // (in the base's move format, blankmoves.js: key poses on a clock from the release)
 //   duvetSlap  he hauls his duvet-wrapped arm up over his head, plush and all, and flops it down at
 //              you in a huff (`slap`).
+//   plushBop   (2026-11-27) his raindrop plush swung back behind him with a sulky side-eye, then swatted
+//              round at you in a backhand, his duvet turning into it (`bop`: the plush squeaks).
+//   flail      (2026-11-27) a tantrum: both duvet-wrapped arms flung up, then beaten down in turn, three
+//              times, quicker each time, rain flying off them (`flail`), and a huff at the end.
 const SULK_MOVES = {
   duvetSlap: {
     anticT: 0.5,
@@ -153,28 +157,106 @@ const SULK_MOVES = {
     slap: [0.06],
     face: [['angry', -9, 0.36], ['huff', 0.36, 0.75]],
   },
+  // (his own flinch, 2026-11-27: the base's flung both arms wide in a twentieth of a second, so his
+  // duvet-wrapped arms and plush popped; he flinches back clutching his plush tighter instead)
+  hurt: {
+    act: true,
+    anticT: 0,
+    keys: [[0, {}], [0.07, { waist: -6, tilt: -12, head: -12, x: -0.025, shN: 44, elN: 100, shF: -44, elF: -100, lift: -0.015, wisp: 10 }, 'out'], [0.2, { waist: -5, tilt: -10, head: -10, x: -0.025, shN: 42, elN: 98, shF: -42, elF: -98, lift: -0.015, wisp: 8 }], [0.5, {}]],
+  },
+  plushBop: {
+    anticT: 0.42,
+    keys: [
+      [0, { tilt: -9, x: -0.025, head: -5, neckR: 6, turnC: -0.3, shN: 62, elN: 46, shF: -24, elF: -96, wisp: 12 }],
+      [0.07, { tilt: 12, x: 0.06, head: 6, neckR: -4, turnC: 0.35, shN: -96, elN: -14, shF: -12, elF: -104, wisp: -10 }, 'out'],
+      [0.3, { tilt: 9, x: 0.05, head: 4, neckR: -2, shN: -84, elN: -24, shF: -14, elF: -100, wisp: -6 }],
+      [0.72, {}],
+    ],
+    bop: [0.06],
+    face: [['side', -9, 0], ['tantrum', 0, 0.3], ['huff', 0.3, 0.72]],
+  },
+  flail: {
+    anticT: 0.5,
+    keys: [
+      [0, { lift: 0.04, tilt: -8, head: -10, shN: -152, elN: -30, shF: -142, elF: -40, wisp: 14 }],
+      [0.07, { lift: 0.012, tilt: 8, head: 6, shN: -42, elN: -20, shF: -150, elF: -36, wisp: -6 }, 'out'],
+      [0.18, { lift: 0.028, tilt: 4, head: 1, shN: -150, elN: -34, shF: -40, elF: -26, wisp: 8 }, 'out'],
+      [0.28, { lift: 0, tilt: 10, head: 7, shN: -36, elN: -18, shF: -146, elF: -40, wisp: -8 }, 'out'],
+      [0.5, { lift: 0, tilt: 8, head: 5, shN: -52, elN: -24, shF: -60, elF: -30, wisp: -4 }],
+      [0.86, {}],
+    ],
+    flail: [0.06, 0.17, 0.27],
+    face: [['tantrum', -9, 0.5], ['huff', 0.5, 0.86]],
+  },
 };
 const MOVES = { ...BASE_MOVES, ...SULK_MOVES };
-// His casts (world/skywhale.js sets m.castPose and m.cast): the pose he holds for the whole cast, acted
-// out (t: seconds into it), and the face he makes. (Angles in degrees; x and lift in body heights.)
-//   drizzle     floating high, arms up calling the rain, sobbing up and down
-//   bolt        reared back, his near arm flung out at the tank, crackling
-//   downpour    tipped hard forward over you, arms pumping
-//   grumble     sunk low, hugging his plush, trembling and rumbling
-//   forked      risen high, arms high, rocking side to side
-//   cloudburst  risen higher still, arms flung up, building
-//   umbrella    sunk down small, hiding his face in the duvet, shivering
+// His casts (world/skywhale.js sets m.castPose and m.cast; his fight rebuilt 2026-11-27): the pose he
+// holds for the whole cast, acted out (t: seconds into it, d: its length), and the face he makes (a list
+// of [face, from, to] in seconds, else one face). (Angles in degrees; x and lift in body heights.)
+//   wallop    Duvet Wallop (the tank): both arms haul the duvet's corner up and back over his head,
+//             rising and leaning back, trembling as it builds; it flops forward as the cast ends
+//   clouds    Sulky Clouds (spread): hugging his plush, a sulky side-eye left, then right, a little
+//             cloud puffing off his hood with each look
+//   pile      Pillow Pile! (stack): a pillow dragged out from under the duvet and heaved up over his
+//             head in both hands, held there, wobbling
+//   tantrum   Thunder Tantrum (everyone): sunk low, fists drumming the air in turn, faster and faster
+//   sob       Mood Swing, sad (get in close): sunk small, his plush squeezed under his chin, sobbing
+//   huff      Mood Swing, cross (get away): puffed up tall, turned half away, chin up, arms folded
+//   pillow    Pillow Fight! (pillows bounced out both ways): a pillow flung from each hand in turn
+//   sun       Sunshower (everyone, his last phase): the plush hugged up to his cheek, swaying, a small
+//             wobbly smile breaking through the sniffles
+// (Mood Swing: while his mood is still swinging, m.sulkSwing.show flips between sob and huff, every flip
+// eased through a startled in-between face; once it settles he holds the mood it settled on.)
 const CASTS = {
-  drizzle: (t) => ({ lift: 0.12 + Math.abs(Math.sin(t * 3.4)) * 0.03, tilt: -10, head: -10, shN: -150 + Math.sin(t * 6) * 16, elN: -20, shF: -150 - Math.sin(t * 6 + 1.3) * 16, elF: -20, wisp: 10 }),
-  bolt: (t) => ({ x: Math.sin(t * 31) * 0.01, lift: 0.05, tilt: -16, head: -12, shN: -105 + Math.sin(t * 17) * 6, elN: -10, shF: 30, elF: -60, wisp: 12 }),
-  downpour: (t) => ({ x: 0.04, lift: 0.03, tilt: 20 + Math.sin(t * 6) * 3, head: 6, shN: -80 + Math.sin(t * 6) * 14, elN: -20, shF: -80 + Math.sin(t * 6 + 1) * 14, elF: -20, wisp: -10 }),
-  grumble: (t) => ({ x: Math.sin(t * 40) * 0.012, lift: -0.04, tilt: Math.sin(t * 27) * 1.4, head: 10, shN: 28, elN: 92, shF: -28, elF: -92, wisp: 6 }),
-  forked: (t) => ({ lift: 0.18, tilt: Math.sin(t * 2.4) * 10, head: -8, shN: -160 + Math.sin(t * 2.4) * 12, elN: -10, shF: -160 - Math.sin(t * 2.4) * 12, elF: -10, wisp: Math.sin(t * 2.4) * 10 }),
-  cloudburst: (t) => ({ lift: 0.22 + Math.sin(t * 1.6) * 0.02, tilt: -4, head: -12, shN: -170, elN: -30, shF: -170, elF: -30, wisp: 14 }),
-  umbrella: (t) => ({ x: -0.02 + Math.sin(t * 20) * 0.006, lift: -0.03, tilt: 8, head: 18, shN: 30, elN: 96, shF: -30, elF: -96, wisp: 4 }),
+  wallop: (t, d) => {
+    const k = Math.min(1, t / Math.max(0.5, d - 0.4));
+    return { x: -0.02 + Math.sin(t * 26) * 0.004 * k, lift: 0.04 + 0.08 * k, tilt: -8 - 8 * k, head: -6 - 6 * k, neckR: 3, shN: -165 - 8 * k, elN: -36, shF: -156 - 6 * k, elF: -28, wisp: 10 + 6 * k };
+  },
+  clouds: (t) => {
+    const look = Math.sin(t * 2.2);
+    return { lift: 0.02, tilt: look * 5, head: 4 + Math.abs(look) * 2, neckR: look * 8, turnC: look * 0.12, shN: 34, elN: 82, shF: -34, elF: -82, wisp: look * 8 };
+  },
+  pile: (t) => ({ lift: 0.06 + Math.sin(t * 3) * 0.01, tilt: -6 + Math.sin(t * 4.4) * 2.4, head: -10, shN: -168 + Math.sin(t * 4.4) * 4, elN: -48, shF: -160 - Math.sin(t * 4.4) * 4, elF: -44, wisp: 12 }),
+  tantrum: (t) => {
+    const beat = Math.sin(t * (9 + t * 3));
+    return { x: Math.sin(t * 33) * 0.006, lift: -0.03 + Math.abs(beat) * 0.015, tilt: 6, head: 6 + beat * 2, shN: -70 - beat * 50, elN: -36, shF: -70 + beat * 50, elF: -36, wisp: -6 + beat * 4 };
+  },
+  sob: (t) => {
+    const heave = Math.abs(Math.sin(t * 5.2));
+    // (his plush squeezed tight under his chin, never over his face: his face is the tell)
+    return { x: Math.sin(t * 18) * 0.003, lift: -0.05 + heave * 0.012, tilt: 6, head: 8 - heave * 3, shrugN: 6 * heave, shrugF: 6 * heave, shN: 40, elN: 96, shF: -40, elF: -96, wisp: 4 };
+  },
+  huff: (t) => ({ lift: 0.07 + Math.sin(t * 1.4) * 0.008, tilt: -14, head: -12, neckR: 9, turnC: -0.2, shN: 42, elN: 74, shF: -42, elF: -74, wisp: 14 }),
+  pillow: (t) => {
+    // (each arm in turn: raised back over his head, then flung down and out; a two-throw cycle)
+    const u = (t * 1.6) % 2;
+    const arm = (v) => (v < 0.35 ? -48 - 117 * smoothstep(v / 0.35) : v < 0.55 ? -165 + 120 * (1 - (1 - (v - 0.35) / 0.2) ** 3) : -45 - 3 * smoothstep((v - 0.55) / 1.45));
+    const lean = Math.sin(Math.PI * u);
+    return { lift: 0.03, tilt: 4 + lean * 4, head: 2 - lean * 3, turnC: Math.sin(Math.PI * u) * 0.25, shN: arm(u), elN: -34, shF: arm((u + 1) % 2), elF: -34, wisp: -lean * 8 };
+  },
+  sun: (t) => {
+    const sw = Math.sin(t * 2);
+    return { lift: 0.05 + Math.sin(t * 1.5) * 0.012, tilt: sw * 4, head: -2 + sw * 5, neckR: sw * 4, shN: -48, elN: 130, shF: -30, elF: -96, wisp: sw * 8 };
+  },
 };
-const CAST_FACE = { drizzle: 'hurt', bolt: 'angry', downpour: 'angry', grumble: 'shout', forked: 'angry', cloudburst: 'shout', umbrella: 'hurt' };
-export const SULK_POOL = ['duvetSlap'];
+const CAST_FACE = {
+  wallop: [['side', 0, 1.4], ['grumble', 1.4, 2.4], ['tantrum', 2.4, 9]],
+  clouds: [['side', 0, 1.6], ['grumble', 1.6, 9]],
+  pile: [['grumble', 0, 1.2], ['tantrum', 1.2, 9]],
+  tantrum: [['grumble', 0, 0.9], ['tantrum', 0.9, 2.6], ['shout', 2.6, 9]],
+  sob: 'sob',
+  huff: 'huff',
+  pillow: [['grumble', 0, 0.8], ['tantrum', 0.8, 9]],
+  sun: [['sniff', 0, 1], ['shy', 1, 2.2], ['giggle', 2.2, 2.8], ['shy', 2.8, 9]],
+};
+export const SULK_POOL = ['duvetSlap', 'plushBop', 'flail'];
+// His phase moments (m.phaseAt, m.mech.phase; world/skywhale.js): Five More Minutes (2: sinking, his plush
+// pulled up over his face, peeking over it, then a cross "five more MINUTES!") and Sunshower (3: a sniff, a
+// hiccup, then rising with a giggle he can't help as a little rainbow pops out over his hood).
+const PHASE = {
+  2: (t) => ({ pose: { x: -0.01, lift: -0.04 + Math.sin(t * 2) * 0.006, tilt: 6, head: 12, shN: -72, elN: 150, shF: -40, elF: -110, wisp: 6 }, face: t < 0.9 ? 'peek' : 'grumble' }),
+  3: (t) => ({ pose: { lift: 0.03 + 0.05 * Math.min(1, t / 0.9), tilt: -4 + Math.sin(t * 3) * 3, head: -8, shN: -120, elN: -50, shF: -34, elF: -100, wisp: 10 }, face: t < 0.5 ? 'sniff' : t < 1.4 ? 'giggle' : 'shy' }),
+};
 
 const DEAD = { drop: 0.35, tilt: 18, waist: 12, head: 22, shN: 8, elN: -5, shF: -8, elF: 5, fxN: 0.1, fxF: -0.05, wing: -10, wisp: 10 };
 const isBow = (w) => w === 'bow' || w === 'bowDrawn';
@@ -421,9 +503,11 @@ export function sulkRig(opts) {
 
   // The move playing now: [move, time from its release (< 0: winding up), how far into the wind-up].
   function moveNow(m, a, st, weaponHeld) {
-    if (m.act && MOVES[m.act.name]) {
-      const mv = MOVES[m.act.name];
-      const T = a.now - m.act.at;
+    // (a move a scene asks for, m.cine.act, plays like m.act)
+    const act = m.act && MOVES[m.act.name] ? m.act : m.cine?.act && MOVES[m.cine.act.move] ? { name: m.cine.act.move, at: m.cine.act.at } : null;
+    if (act) {
+      const mv = MOVES[act.name];
+      const T = a.now - act.at;
       if (T >= 0 && T < mv.anticT + lengthOf(mv)) {
         const t = T - mv.anticT;
         return [mv, t, t < 0 ? (mv.anticT > 0 ? Math.min(1, T / mv.anticT) : 1) : 1];
@@ -568,7 +652,7 @@ export function sulkRig(opts) {
       //   a named cast: the pose he holds for it (CASTS), whatever else is going on.
       //   cleared (m.cine.mood 'happy'): white and fluffy, swaying happily, his plush held up.
       {
-        const clear = m.cine?.mood === 'happy';
+        const clear = m.cine?.mood === 'happy' || m.cine?.mood === 'shy';
         a.sulkClear = clear;
         a.sulkFace = null;
         a.sulkHmph = 0;
@@ -577,7 +661,8 @@ export function sulkRig(opts) {
         const go = (pose, w) => {
           if (w > 0.001) for (const [k2, v] of Object.entries(pose)) out[k2] = (out[k2] ?? 0) + (v - (out[k2] ?? 0)) * w;
         };
-        const calmK = (a.calm ?? 1) * (mv ? 0 : 1) * (1 - (a.walkW ?? 0)) * (m.hp > 0 ? 1 : 0) * (clear ? 0 : 1) * (m.cast && m.castPose ? 0 : 1);
+        const busyAct = (m.cast && m.castPose) || (m.cine?.act && CASTS[m.cine.act.move] && a.now < m.cine.act.at + m.cine.act.dur) || a.now - (m.phaseAt ?? -9) < 1.8;
+        const calmK = (a.calm ?? 1) * (mv ? 0 : 1) * (1 - (a.walkW ?? 0)) * (m.hp > 0 ? 1 : 0) * (clear ? 0 : 1) * (busyAct ? 0 : 1);
         const lu = (t + (m.uid % 5) * 1.7) % 16;
         // sniffles: three hiccups
         const sniff = hold(lu, 0.4, 0.7, 3, 3.3) * calmK;
@@ -610,20 +695,46 @@ export function sulkRig(opts) {
         go({ lift: 0.07, head: -14, tilt: -6, shN: 0, elN: 60, shF: 0, elF: -60, wisp: -14 }, jolt);
         if (jolt > 0.3) a.sulkFace = 'o';
         a.sulkJolt = lu >= 14.6 && lu < 15.4 && calmK > 0.3 ? (lu - 14.6) / 0.8 : -1;
-        // a named cast, held for as long as it lasts
-        st.sulkKind = m.castPose && CASTS[m.castPose] && m.cast ? m.castPose : null;
+        // a named cast, held for as long as it lasts (a scene can ask for one too: m.cine.act)
+        const ca = m.cine?.act && CASTS[m.cine.act.move] ? m.cine.act : null;
+        let pose = m.castPose === 'swing' ? m.sulkSwing?.show ?? 'huff' : m.castPose;
+        st.sulkKind = pose && CASTS[pose] && m.cast ? pose : ca && a.now >= ca.at && a.now < ca.at + ca.dur ? ca.move : null;
         if (st.sulkKind && m.hp > 0) {
-          const ct = a.now - m.cast.t0;
-          go(CASTS[st.sulkKind](ct), clamp(ct / 0.45, 0, 1));
-          a.sulkFace = CAST_FACE[st.sulkKind];
+          const t0 = m.cast && st.sulkKind === pose ? m.cast.t0 : ca.at;
+          const ct = a.now - t0;
+          const d = m.cast && st.sulkKind === pose ? m.cast.dur : ca.dur;
+          // (a scene's pose eases out again as it ends)
+          const out = m.cast ? 1 : clamp((ca.at + ca.dur - a.now) / 0.35, 0, 1);
+          go(CASTS[st.sulkKind](ct, d), clamp(ct / 0.45, 0, 1) * out);
+          const cf = CAST_FACE[st.sulkKind];
+          a.sulkFace = typeof cf === 'string' ? cf : cf.find(([, f0, f1]) => ct >= f0 && ct < f1)?.[0] ?? a.sulkFace;
+          // (the mood still swinging: every flip passes through a startled in-between face)
+          const sw = m.castPose === 'swing' ? m.sulkSwing : null;
+          if (sw && sw.flipAt != null && a.now - sw.flipAt < 0.12) a.sulkFace = 'o';
+        }
+        // a phase moment, a beat of his own before the next cast
+        const pu = a.now - (m.phaseAt ?? -9);
+        const ph = PHASE[m.mech?.phase];
+        if (ph && pu >= 0 && pu < 1.8 && m.hp > 0 && !m.cast) {
+          const p = ph(pu);
+          go(p.pose, clamp(pu / 0.3, 0, 1) * clamp((1.8 - pu) / 0.35, 0, 1));
+          a.sulkFace = p.face;
         }
         if (clear) {
+          // cleared: swaying happily, his plush held up; now and then embarrassed all over again, hugging
+          // it to his chest, head ducked, a shy little smile (m.cine.mood 'shy': embarrassed the whole time).
+          // His face stays clear: he never hides it in a scene.
           const sw = Math.sin(t * 2.2);
+          const shyK = m.cine?.mood === 'shy' ? 1 : hold((t + 3) % 9, 5, 5.5, 7.4, 8);
           go({ lift: 0.06 + Math.sin(t * 1.6) * 0.02, tilt: sw * 4, head: -6 + sw * 4, shN: -130 + sw * 10, elN: -40, shF: -20, elF: -120, wisp: sw * 10 }, 1);
+          go({ lift: 0.03, head: 9 + sw * 2, neckR: 4, tilt: 3 + sw * 3, shN: 34, elN: 82, shF: -34, elF: -82, wisp: sw * 6 }, shyK);
+          a.sulkFace = shyK > 0.5 ? 'shy' : Math.sin(t * 0.7) > 0.6 ? 'giggle' : null;
         }
       }
       // (his attacks' faces: each move's list of [face, from, to])
       if (mv?.face && !a.sulkClear) for (const [fc, f0, f1] of mv.face) if (mt >= f0 && mt < f1) a.sulkFace = fc;
+      // (a face held for a sheet: m.faceShow, like m.pose)
+      if (m.faceShow) a.sulkFace = m.faceShow;
       // A block held (m.guard), eased in and out.
       st.blGuard = (st.blGuard ?? 0) + ((m.guard && !mv ? 1 : 0) - (st.blGuard ?? 0)) * Math.min(1, a.dt * 12);
       if (st.blGuard > 0.001) {
@@ -758,7 +869,7 @@ export function sulkRig(opts) {
       // His head: the face of the moment (his act's, his casts', his moves', else the kit's), in the
       // hood; the lightning curl peeking from the top on a spring.
       K.layer('headJ', { joint: true, parent: 'neckB', pivot: 'neck', from: 'stern', rot: (S) => S.head * D2R }),
-      { ...K.layer('head', { parent: 'headJ', pivot: 'neck', from: 'neck' }), s: (a, S, bare) => K.piece('head', a.sulkClear ? 'clear' : a.sulkFace ?? K.faceOf(a), bare) },
+      { ...K.layer('head', { parent: 'headJ', pivot: 'neck', from: 'neck' }), s: (a, S, bare) => K.piece('head', a.sulkClear ? (a.sulkFace ? `clear:${a.sulkFace}` : 'clear') : a.sulkFace ?? K.faceOf(a), bare) },
       D('bolt', { parent: 'headJ', pivot: 'boltJ', from: 'neck', soft: { ...SOFT.HAIR, k: 90, max: 18, gain: 0.9 } }),
       // The near arm (in front): the skin, the duvet over it; the plush upright in his hand, his hand
       // round it.

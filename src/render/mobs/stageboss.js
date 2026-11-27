@@ -11,28 +11,28 @@
 import { personaRig, personaStill } from './personarig.js';
 import { directriceRig, directriceStill } from './directricerig.js';
 import { playwrightRig, playwrightStill } from './playwrightrig.js';
-import { RYU_ART, RYU_SIZE } from '../ryu/index.js';
-import { mondayKidRig, mondayKidStill } from './mondaykidrig.js';
-import { nightManagerRig, nightManagerStill } from './nightmanagerrig.js';
+import { NOODLE_ART, NOODLE_SIZE } from '../noodle/index.js';
+import { MONDAY_ART, MONDAY_SIZE } from '../monday/index.js';
+import { MANAGER_ART, MANAGER_SIZE } from '../manager/index.js';
 
 export const ART = {
   persona: { pad: 12, walk: 8, idle: 8, attack: 5, stride: 32, atkMs: [100, 180, 320, 220], draw: personaStill, rig: personaRig },
   directrice: { pad: 12, walk: 8, idle: 8, attack: 5, stride: 30, atkMs: [100, 180, 320, 220], draw: directriceStill, rig: directriceRig },
   playwright: { pad: 12, walk: 8, idle: 8, attack: 5, stride: 30, atkMs: [110, 180, 340, 240], draw: playwrightStill, rig: playwrightRig },
   // The Queen's dream's (Chapter 9).
-  // (The Night Manager, 2026-11-22: the Coffee Mug Boss redrawn as a human, her manager.)
-  mugboss: { pad: 12, walk: 8, idle: 8, attack: 5, stride: 30, atkMs: [100, 180, 320, 220], draw: nightManagerStill, rig: nightManagerRig },
-  // (Ramen Ryu, 2026-11-25: the Cup-Noodle Dragon redrawn on the serpent base, render/ryu.)
-  noodledragon: RYU_ART,
-  // (Monday, 2026-11-22: the Calendar Beast redrawn as the Weekend-Eating Baku, a girl on the kid base.)
-  monday: { pad: 10, walk: 8, idle: 8, attack: 5, stride: 32, atkMs: [110, 180, 340, 240], draw: mondayKidStill, rig: mondayKidRig },
+  // (The Night Manager, remade 2026-11-27 from scratch on his own copy of the grown-up base, render/manager/.)
+  mugboss: MANAGER_ART,
+  // (The Cup-Noodle Dragon, remade 2026-11-27 from scratch on his own copy of the serpent base, render/noodle/.)
+  noodledragon: NOODLE_ART,
+  // (Monday, remade 2026-11-27 from scratch on her own copy of the kid base, render/monday/.)
+  monday: MONDAY_ART,
 };
 
 export const INFO = {
   persona: { name: 'Persona, the Two-Faced Muse', w: 60, h: 100 },
   directrice: { name: 'Madame Directrice', w: 64, h: 100 },
   playwright: { name: 'The Phantom Playwright', w: 70, h: 120 },
-  mugboss: { name: 'The Night Manager', w: 64, h: 100 },
-  noodledragon: { name: 'The Cup-Noodle Dragon', w: RYU_SIZE.w, h: RYU_SIZE.h },
-  monday: { name: 'Monday', w: 66, h: 140 },
+  mugboss: { name: 'The Night Manager', w: MANAGER_SIZE.w, h: MANAGER_SIZE.h },
+  noodledragon: { name: 'The Cup-Noodle Dragon', w: NOODLE_SIZE.w, h: NOODLE_SIZE.h },
+  monday: { name: 'Monday', w: MONDAY_SIZE.w, h: MONDAY_SIZE.h },
 };

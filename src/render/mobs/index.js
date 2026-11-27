@@ -34,8 +34,9 @@ import { LAMBKIN } from '../lambkin/index.js';
 import { HARV_MOUSE } from '../harvest/index.js';
 import { MOSSTORT } from '../mosstort/index.js';
 import { OWLET } from '../owlet/index.js';
-import { redpandaRig, redpandaStill } from './redpandarig.js';
-import { puddleKidRig, puddleKidStill, blossomFairyRig, blossomFairyStill } from './gladekidsrig.js';
+import { BLOSSOM_RED_PANDA } from '../redpanda/index.js';
+import { PUDDLE_KID_ART } from '../puddlekid/index.js';
+import { BLOSSOM_FAIRY_ART } from '../blossomfairy/index.js';
 
 // (The Chickling replaced the Kitchen Brownie, 2026-11-11; since 2026-11-25 the Cellar Scout, on its
 // own copy of the bird base, reshaped into a round chick: render/chick/.)
@@ -59,11 +60,13 @@ FARM.mosstort = MOSSTORT.art;
 // (The Moss Owlet, new for Mossy Woods 2026-11-12; since 2026-11-25 the Leaf Cloak Owlet, on its own
 // copy of the owl base: render/owlet/.)
 FARM.mossowlet = OWLET.art;
-// (The Red Panda, new for Mossy Woods 2026-11-12: its own live rig, its stills from the same shapes.)
-FARM.redpanda = { walk: 8, idle: 6, attack: 4, stride: 22, atkMs: [80, 300, 220], draw: redpandaStill, rig: redpandaRig, pad: 4 };
-// (Whispering Glade's tanukis in disguise, 2026-11-13: live rigs, their stills from the same drawings.)
-FARM.puddlekid = { walk: 8, idle: 6, attack: 4, stride: 18, atkMs: [80, 300, 220], draw: puddleKidStill, rig: puddleKidRig, pad: 4 };
-FARM.blossomfairy = { walk: 8, idle: 6, attack: 4, stride: 40, atkMs: [80, 300, 220], draw: blossomFairyStill, rig: blossomFairyRig, pad: 4 };
+// (The Red Panda, new for Mossy Woods 2026-11-12; since 2026-11-26 the Blossom Red Panda, a flower-
+// loving red panda with hay fever, on his own copy of the rodent base: render/redpanda/.)
+FARM.redpanda = BLOSSOM_RED_PANDA.art;
+// (Whispering Glade's tanukis in disguise, 2026-11-13: live rigs. Since 2026-11-26 both are remade
+// from scratch, each on her own copy of the kid base: render/puddlekid/, render/blossomfairy/.)
+FARM.puddlekid = PUDDLE_KID_ART;
+FARM.blossomfairy = BLOSSOM_FAIRY_ART;
 
 export const ARTS = { ...MEADOW, ...WILDS, ...RUINS, ...SKY, ...HOLLOW, ...BOSSES, ...MAIDENS, ...QUEENS, ...BEES, ...FARM, ...MANOR, ...MANORBOSS, ...SEA, ...SEABOSS, ...TOY, ...TOYBOSS, ...ASTRAL, ...ASTRALBOSS, ...CANDY, ...CANDYBOSS, ...STAGE, ...STAGEBOSS, ...SKYFOLK, ...SKYBOSS, ...FINALE, ...TEA };
 

@@ -1,24 +1,35 @@
-// Monster art: the Clockwork Carnival's toys (docs/design/clockwork-carnival.md), all live rigs in
-// toyrigs.js (remade 2026-11-18 for Chapter 6: upright, chibi, a wind-up key in most of their backs):
-//   musicballerina  Music Box Ballerina      balloonseller  Balloon Seller (a balloon poodle)
-//   tindrummer      Tin Drummer              jackbox        Jack-in-the-Box
-//   marionette      Marionette Dancer        teddystrong    Teddy Strongbear
+// Monster art: the Clockwork Carnival's toys (docs/design/clockwork-carnival.md), Queen Gearheart's
+// wind-up troupe, remade from scratch on 2026-11-26 as six new creatures and characters, each on its
+// own copy of a blank base (the older toy rigs retired):
+//   musicballerina  Giraffe Ballerina (Clara, the Midway's music-box prima; render/musicballerina/)
+//   balloonseller   Koala Balloonist (Mabel, the sleepy balloon seller; render/balloonseller/)
+//   tindrummer      Cymbal Monkey (Bingo, the band's cymbal man; render/tindrummer/)
+//   jackbox         Boxing Kangaroo (Jacky, and her joey who pops out like a jack-in-the-box;
+//                   render/jackbox/)
+//   marionette      Harlequin Puppet (Dot, one of Madame Marionette's wooden harlequins, on the kid
+//                   base; render/marionette/)
+//   teddystrong     Hippo Strongman (Hugo, the strongman with the barbell; render/teddystrong/)
 
-import { ballerinaRig, ballerinaStill, balloonRig, balloonStill, drummerRig, drummerStill, jackboxRig, jackboxStill, marionetteRig, marionetteStill, teddyRig, teddyStill } from './toyrigs.js';
+import { GIRAFFE_ART, GIRAFFE_SIZE } from '../musicballerina/index.js';
+import { KOALA_ART, KOALA_SIZE } from '../balloonseller/index.js';
+import { MONKEY_ART, MONKEY_SIZE } from '../tindrummer/index.js';
+import { KANGAROO_ART, KANGAROO_SIZE } from '../jackbox/index.js';
+import { PUPPET_ART, PUPPET_SIZE } from '../marionette/index.js';
+import { HIPPO_ART, HIPPO_SIZE } from '../teddystrong/index.js';
 
 export const ART = {
-  musicballerina: { pad: 6, walk: 8, idle: 6, attack: 4, stride: 18, atkMs: [70, 220, 180], draw: ballerinaStill, rig: ballerinaRig },
-  tindrummer: { pad: 6, walk: 8, idle: 6, attack: 4, stride: 20, atkMs: [70, 220, 180], draw: drummerStill, rig: drummerRig },
-  jackbox: { pad: 8, walk: 8, idle: 6, attack: 4, stride: 26, atkMs: [70, 240, 180], draw: jackboxStill, rig: jackboxRig },
-  marionette: { pad: 6, walk: 8, idle: 6, attack: 4, stride: 20, atkMs: [70, 220, 170], draw: marionetteStill, rig: marionetteRig },
-  teddystrong: { pad: 8, walk: 8, idle: 6, attack: 4, stride: 18, atkMs: [90, 300, 220], draw: teddyStill, rig: teddyRig },
-  balloonseller: { pad: 6, walk: 8, idle: 6, attack: 4, stride: 22, atkMs: [70, 220, 180], draw: balloonStill, rig: balloonRig },
+  musicballerina: GIRAFFE_ART,
+  tindrummer: MONKEY_ART,
+  jackbox: KANGAROO_ART,
+  marionette: PUPPET_ART,
+  teddystrong: HIPPO_ART,
+  balloonseller: KOALA_ART,
 };
 export const INFO = {
-  musicballerina: { name: 'Music Box Ballerina', w: 26, h: 38 },
-  tindrummer: { name: 'Tin Drummer', w: 26, h: 34 },
-  jackbox: { name: 'Jack-in-the-Box', w: 26, h: 44 },
-  marionette: { name: 'Marionette Dancer', w: 28, h: 34 },
-  teddystrong: { name: 'Teddy Strongbear', w: 36, h: 38 },
-  balloonseller: { name: 'Balloon Seller', w: 28, h: 36 },
+  musicballerina: { name: 'Giraffe Ballerina', w: GIRAFFE_SIZE.w, h: GIRAFFE_SIZE.h },
+  tindrummer: { name: 'Cymbal Monkey', w: MONKEY_SIZE.w, h: MONKEY_SIZE.h },
+  jackbox: { name: 'Boxing Kangaroo', w: KANGAROO_SIZE.w, h: KANGAROO_SIZE.h },
+  marionette: { name: 'Harlequin Puppet', w: PUPPET_SIZE.w, h: PUPPET_SIZE.h },
+  teddystrong: { name: 'Hippo Strongman', w: HIPPO_SIZE.w, h: HIPPO_SIZE.h },
+  balloonseller: { name: 'Koala Balloonist', w: KOALA_SIZE.w, h: KOALA_SIZE.h },
 };

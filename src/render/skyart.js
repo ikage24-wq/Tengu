@@ -2,7 +2,7 @@
 // Woods is built round its giant trees. Floating garden islands (grass and flowers on top, rock
 // tapering under, roots hanging, clouds wrapped round their bellies, the big one pouring a
 // waterfall off its edge into the cloud sea); a rainbow arching from the meadows over to the roost,
-// little clouds riding it for steps; and the Harpy Roost, a round birdhouse on a pillar of cloud
+// little clouds riding it for steps; and the Windsock Roost (the Harpy Roost before its albatrosses), a round birdhouse on a pillar of cloud
 // with perches stepping up round it.
 
 import { E, T, F, sprite, blit, snap, shade } from './pixel.js';
@@ -154,7 +154,7 @@ function drawRainbow(ctx, x, y) {
   ctx.restore();
 }
 
-// ---------- The Harpy Roost: a round birdhouse with a pointed pink roof, a round door and perch
+// ---------- The Windsock Roost: a round birdhouse with a pointed pink roof, a round door and perch
 // pegs, on top of a tall pillar of piled-up cloud. Its perches (ledges) step up round the pillar
 // in the map. Bottom middle on the cloud sea. ----------
 const RO_W = 220;

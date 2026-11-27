@@ -1,41 +1,48 @@
 // Monster art: Twilight Ruins and Crystal Cave. Every one is a live rig of its own now (all six remade
 // 2026-11-20, the player's picks from concept sheets); this file lists them.
 //   acolyte       Ruin Acolyte: a floating hooded temple girl with a censer and a wisp living in it
-//                 (2026-11-22, replaced the Will-o'-Wisp; acolyterig.js).
+//                 (2026-11-22, replaced the Will-o'-Wisp; since 2026-11-26 rebuilt to the new standard on
+//                 her own copy of the kid base: render/acolyte/).
 //   gargoyle      Gargoyle Kid: an impish little gargoyle with stone wings, horns and tail, who turns to
-//                 stone for fun (2026-11-22, replaced the Imp; gargoylerig.js).
-//   boneknight    Dullahan: the Kitten in the Armour, a ginger kitten driving an empty suit of armour.
+//                 stone for fun (2026-11-22, replaced the Imp; since 2026-11-26 rebuilt to the new
+//                 standard on her own copy of the kid base: render/gargoyle/).
+//   boneknight    Pangolin Sentry: the old Moon Guard's mascot pangolins in their dented helmets, still
+//                 on patrol in the Sunken Crypt (2026-11-26, replaced the Dullahan; on its own copy of the
+//                 creature base: render/pangolin/).
 //   crystalslime  Gem Mimic: the Chest Hermit, a fluffy ginger critter carrying a treasure chest on its
 //                 back like a hermit crab; it bites, and slams the lid (2026-11-24, on the creature
 //                 base; render/hermit/).
-//   rockgolem     Crystal Golem: an Amethyst Owl, a stone owl golem with crystal ear tufts and a
-//                 geode in its belly; it slams its stone wings down.
-//   shade         Wraith: a Shadow Bunny, a hand-shadow rabbit come to life, playing in the Shade
-//                 Spires; it lunges and bites with a glowing mouth.
+//   rockgolem     Geode Bear: a chubby cave-bear cub with a glowing geode for a belly and amethyst on
+//                 its shoulders (2026-11-26, replaced the Crystal Golem; on its own copy of the creature
+//                 base: render/geodebear/).
+//   shade         Steam Capybara: a round, unbothered capybara floating in its own bath-cloud of steam,
+//                 an onsen towel and a yuzu on its head, at home in the cave's warm lake and on Serpent
+//                 Springs (2026-11-26, replaced the Wraith; on its own copy of the creature base:
+//                 render/steamcapybara/).
 
-import { kittenArmourRig, kittenArmourStill } from './kittenarmourrig.js';
-import { acolyteRig, acolyteStill } from './acolyterig.js';
-import { gargoyleRig, gargoyleStill } from './gargoylerig.js';
+import { PANGOLIN_ART, PANGOLIN_SIZE } from '../pangolin/index.js';
+import { ACOLYTE_ART } from '../acolyte/index.js';
+import { GARGOYLE_ART } from '../gargoyle/index.js';
 import { HERMIT_ART, HERMIT_SIZE } from '../hermit/index.js';
-import { amethystOwlRig, amethystOwlStill } from './amethystowlrig.js';
-import { shadowBunnyRig, shadowBunnyStill } from './shadowbunnyrig.js';
+import { GEODE_BEAR_ART, GEODE_BEAR_SIZE } from '../geodebear/index.js';
+import { STEAM_CAPYBARA_ART, STEAM_CAPYBARA_SIZE } from '../steamcapybara/index.js';
 
 // Every design flies or walks with its own cadence: `stride` is how far it travels per cycle.
 export const ART = {
-  acolyte: { pad: 6, walk: 8, idle: 6, attack: 4, stride: 40, atkMs: [80, 300, 260], draw: acolyteStill, rig: acolyteRig },
-  gargoyle: { pad: 8, walk: 8, idle: 6, attack: 4, stride: 40, atkMs: [80, 300, 260], draw: gargoyleStill, rig: gargoyleRig },
-  boneknight: { pad: 17, walk: 8, idle: 6, attack: 4, stride: 24, atkMs: [60, 270, 200], draw: kittenArmourStill, rig: kittenArmourRig },
+  acolyte: ACOLYTE_ART,
+  gargoyle: GARGOYLE_ART,
+  boneknight: PANGOLIN_ART,
   crystalslime: HERMIT_ART,
-  rockgolem: { pad: 7, walk: 8, idle: 6, attack: 4, stride: 30, atkMs: [75, 330, 240], draw: amethystOwlStill, rig: amethystOwlRig },
-  shade: { pad: 8, walk: 8, idle: 6, attack: 4, stride: 58, atkMs: [60, 230, 180], draw: shadowBunnyStill, rig: shadowBunnyRig },
+  rockgolem: GEODE_BEAR_ART,
+  shade: STEAM_CAPYBARA_ART,
 };
 
 // New display names, and the hitbox each design wants: { key: { name, w, h } }.
 export const INFO = {
   acolyte: { name: 'Ruin Acolyte', w: 26, h: 40 },
   gargoyle: { name: 'Gargoyle Kid', w: 28, h: 38 },
-  boneknight: { name: 'Dullahan', w: 26, h: 46 },
+  boneknight: { name: 'Pangolin Sentry', w: PANGOLIN_SIZE.w, h: PANGOLIN_SIZE.h },
   crystalslime: { name: 'Gem Mimic', ...HERMIT_SIZE },
-  rockgolem: { name: 'Crystal Golem', w: 46, h: 60 },
-  shade: { name: 'Wraith', w: 26, h: 40 },
+  rockgolem: { name: 'Geode Bear', w: GEODE_BEAR_SIZE.w, h: GEODE_BEAR_SIZE.h },
+  shade: { name: 'Steam Capybara', w: STEAM_CAPYBARA_SIZE.w, h: STEAM_CAPYBARA_SIZE.h },
 };

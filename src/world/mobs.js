@@ -391,8 +391,8 @@ export function updateMob(m, player, dt, now) {
     m.stagger -= dt;
     m.x += m.knockVx * dt;
     m.knockVx *= 0.85;
-  } else if (m.special?.warn > 0) {
-    // Bosses stand still while winding up.
+  } else if (m.special?.warn > 0 || m.cast) {
+    // Bosses stand still while winding up (or casting: world/story.js rotationTurn).
   } else if (m.lureUntil > now && !m.def.boss && m.lureX != null) {
     // Drawn to a Moonlure (world/melee.js): over to its own place round the lantern, then it stands
     // gazing up at the light.
@@ -433,7 +433,12 @@ export function updateMob(m, player, dt, now) {
     if (m.timer <= 0) {
       m.state = m.state === 'walk' ? 'idle' : 'walk';
       const quick = m.def.gait === 'dart' ? 0.35 : 1;
-      m.timer = (m.state === 'walk' ? 1.5 + Math.random() * 2.5 : 0.8 + Math.random() * 1.5) * quick;
+      // (a monster's own standing spells, `rest: [min, max]` seconds, for one whose idle act needs the
+      // time: the Topiary Hedgehog dashes quickly but stands long enough between for a piece of his act;
+      // it is told when it moves on, `m.restUntil`, so it only starts a piece it can finish)
+      const rest = m.state === 'idle' && m.def.rest;
+      m.timer = rest ? rest[0] + Math.random() * (rest[1] - rest[0]) : (m.state === 'walk' ? 1.5 + Math.random() * 2.5 : 0.8 + Math.random() * 1.5) * quick;
+      m.restUntil = m.state === 'idle' ? now + m.timer : null;
       m.walked = 0;
       if (m.state === 'walk' && Math.random() < 0.5) m.dir *= -1;
     }
