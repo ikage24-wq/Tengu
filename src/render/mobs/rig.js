@@ -292,8 +292,11 @@ export function makeRig(spec) {
       const look = { flash: a.flash, alpha: a.alpha, soft: Boolean(spec.soft) };
       ctx.save();
       if (a.flip) ctx.scale(-1, 1);
+      // (The live extras under and over the parts fade with the body, as it dies or appears.)
+      const fade = clamp(look.alpha ?? 1, 0, 1);
       if (spec.under) {
         ctx.save();
+        ctx.globalAlpha *= fade;
         spec.under(ctx, m, a, S, matOf);
         ctx.restore();
       }
@@ -325,6 +328,7 @@ export function makeRig(spec) {
       }
       if (spec.fx) {
         ctx.save();
+        ctx.globalAlpha *= fade;
         spec.fx(ctx, m, a, S, matOf);
         ctx.restore();
       }

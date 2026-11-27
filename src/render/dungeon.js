@@ -6,7 +6,8 @@
 import { R, E, T, F, mix } from './pixel.js';
 import { ramp, bark, stones } from './propkit.js';
 import { art, place, face } from './scenery.js';
-import { puff, crown, shock, wisp, starFlash, easeOut } from './fxkit.js';
+import { deep, inked } from './fxkit.js';
+import { clamp01, sstep, easeOut, springy, pop, ready, DANGER, glowDisc, sparkle as softSparkle, cloud, ring as softRing, chevron, bang, floorMark, bandMark, hitBurst } from './mobfx.js';
 
 const TAU = Math.PI * 2;
 const INK = '#3a2d4f';
@@ -438,303 +439,180 @@ export function drawRootKey(ctx, x, y, time) {
 
 // ---------- Boss attack telegraphs ----------
 
-const WARN = '#ff7f9a';
-const WARN_SOFT = '#ff9fb8';
-const WARN_HOT = '#fff0f4';
+// (The marks and landings are drawn in the remade monsters' soft style, render/mobfx.js, 2026-11-27:
+// rounded marks on a deeper rim of their own colour, the fill growing to the edge by the moment of
+// the hit, breathing and eased, never blinking. Each covers exactly the floor its blow hits.)
+const MARKER_COL = { buster: '#ff6f86', stack: '#f6bd3c', spread: '#b48af6' };
+const HIT_COL = { buster: '#ff9aae', stack: '#ffd77a', spread: '#d4b4ff' };
+const DIRT = ['#fbf3ea', '#e2cbb8'];
 
-// The fill and edge strength for a warning `p` of the way to going off; the last 15% flashes.
-function warnStyle(p, time) {
-  const flash = p > 0.85 && Math.floor(time * 14) % 2 === 0;
-  return { fill: flash ? WARN_HOT : WARN_SOFT, fillA: 0.26 + p * 0.26 + (flash ? 0.25 : 0), edgeA: 0.55 + p * 0.45, edgeW: 1 + p * 0.8, flash };
-}
-
-// A dashed "stitched" outline that marches slowly, with a soft white under-stroke.
-function stitched(ctx, path, s, time) {
-  ctx.save();
-  ctx.globalAlpha = s.edgeA * 0.6;
-  ctx.strokeStyle = '#ffffff';
-  ctx.lineWidth = s.edgeW + 1.6;
+// A root tip `tall` high on (x, y), leaning `lean`: a soft rounded spike over a rim of its own colour.
+function rootTip(ctx, x, y, tall, lean, half) {
+  const path = () => {
+    ctx.beginPath();
+    ctx.moveTo(x - half, y);
+    ctx.bezierCurveTo(x - half * 0.9, y - tall * 0.55, x - half * 0.35 + lean, y - tall, x + lean, y - tall);
+    ctx.bezierCurveTo(x + half * 0.35 + lean, y - tall, x + half * 0.9, y - tall * 0.55, x + half, y);
+    ctx.closePath();
+  };
+  ctx.lineJoin = 'round';
   path();
-  ctx.stroke();
-  ctx.globalAlpha = s.edgeA;
-  ctx.strokeStyle = s.flash ? '#ff5f80' : WARN;
-  ctx.lineWidth = s.edgeW;
-  ctx.setLineDash([4, 2.6]);
-  ctx.lineDashOffset = -time * 8;
-  path();
-  ctx.stroke();
-  ctx.restore();
+  if (inked(ctx)) {
+    ctx.strokeStyle = deep(THORN_ROOT);
+    ctx.lineWidth = 1.8;
+    ctx.stroke();
+  }
+  ctx.fillStyle = THORN_ROOT;
+  ctx.fill();
+  if (tall > 5) {
+    ctx.beginPath();
+    ctx.moveTo(x - half * 0.45, y - tall * 0.2);
+    ctx.quadraticCurveTo(x - half * 0.4 + lean * 0.5, y - tall * 0.7, x + lean * 0.7 - 0.3, y - tall + 1.6);
+    ctx.strokeStyle = THORN;
+    ctx.lineWidth = 1;
+    ctx.lineCap = 'round';
+    ctx.stroke();
+  }
 }
 
 // A floor warning for a boss attack. `kind`: 'circle' (a spore patch w wide centered on x),
 // 'lane' (a charge path from x to x + w; a negative w charges left), 'floor' (the floor from x to
-// x + w is about to be slammed), or 'thorns' (spikes will erupt from x to x + w). `progress` 0..1
-// fills it in as the attack winds up.
+// x + w is about to be slammed), 'thorns' (spikes will erupt from x to x + w), 'band' (a cleave
+// or a line from x to x + w), 'donut' (a ring with a safe middle), 'raid' (everyone), or a marker
+// on a member ('buster', 'stack', 'spread'). `progress` 0..1 fills it in as the attack winds up.
 export function drawZone(ctx, kind, x, y, w, progress, time, z = null) {
-  const p = Math.max(0, Math.min(1, progress));
-  const s = warnStyle(p, time);
+  const p = clamp01(progress);
+  // (Phased by the zone's own place in the world, never by where it sits on screen.)
+  const seed = z ? z.x * 0.05 + (z.n ?? 0) : 0;
   ctx.save();
   if (kind === 'circle') {
-    const rx = w / 2;
-    const ry = 7;
-    const shape = () => {
-      ctx.beginPath();
-      ctx.ellipse(x, y, rx, ry, 0, 0, TAU);
-    };
-    ctx.globalAlpha = s.fillA;
-    ctx.fillStyle = s.fill;
-    shape();
-    ctx.fill();
-    // The inner patch grows toward the edge.
-    ctx.globalAlpha = 0.25 + p * 0.35;
-    ctx.fillStyle = WARN;
-    ctx.beginPath();
-    ctx.ellipse(x, y, rx * p, ry * p, 0, 0, TAU);
-    ctx.fill();
-    stitched(ctx, shape, s, time);
-    // Little spores bubbling up.
-    for (let k = 0; k < 4; k++) {
-      const u = (time * 0.8 + k / 4) % 1;
-      ctx.globalAlpha = Math.sin(u * Math.PI) * (0.4 + p * 0.6);
-      ctx.fillStyle = k % 2 ? '#f6b8ec' : '#d8a6f0';
-      ctx.beginPath();
-      ctx.arc(x + (k - 1.5) * rx * 0.45, y - u * (6 + p * 8), 1.2 + p, 0, TAU);
-      ctx.fill();
-    }
+    floorMark(ctx, x, y, w / 2, 7, p, time, seed);
   } else if (kind === 'lane') {
     const x0 = Math.min(x, x + w);
     const len = Math.abs(w);
     const dir = w < 0 ? -1 : 1;
-    const h = 12;
-    const shape = () => {
-      ctx.beginPath();
-      ctx.roundRect(x0, y - h / 2, len, h, h / 2);
-    };
-    ctx.globalAlpha = s.fillA;
-    ctx.fillStyle = s.fill;
-    shape();
-    ctx.fill();
-    // The fill runs from the start down the lane.
-    ctx.globalAlpha = 0.22 + p * 0.3;
-    ctx.fillStyle = WARN;
-    ctx.beginPath();
-    ctx.roundRect(dir > 0 ? x0 : x0 + len * (1 - p), y - h / 2, len * p, h, h / 2);
-    ctx.fill();
-    stitched(ctx, shape, s, time);
-    // Chevrons sliding the way the charge will go.
-    ctx.globalAlpha = 0.5 + p * 0.5;
-    ctx.fillStyle = '#ffffff';
-    const step = 18;
-    const shift = (time * 30) % step;
+    // The fill runs from the charger down the lane; soft chevrons slide the way it will go.
+    const born = bandMark(ctx, x0, y, len, 12, p, time, seed, dir > 0 ? -1 : 1);
+    const step = 22;
+    const shift = (time * 26) % step;
     for (let cx = step / 2 + shift; cx < len - 4; cx += step) {
       const px = dir > 0 ? x0 + cx : x0 + len - cx;
-      ctx.beginPath();
-      ctx.moveTo(px - dir * 3, y - 3.4);
-      ctx.lineTo(px + dir * 1.6, y);
-      ctx.lineTo(px - dir * 3, y + 3.4);
-      ctx.lineTo(px - dir * 1.4, y);
-      ctx.closePath();
-      ctx.fill();
+      chevron(ctx, px, y, 6, dir, born * (0.55 + 0.45 * p) * clamp01(Math.min(cx, len - cx) / 12));
     }
   } else if (kind === 'floor') {
     const h = 16;
-    const shape = () => {
-      ctx.beginPath();
-      ctx.roundRect(x, y - h / 2, w, h, 6);
-    };
-    ctx.globalAlpha = s.fillA;
-    ctx.fillStyle = s.fill;
-    shape();
-    ctx.fill();
-    ctx.globalAlpha = 0.2 + p * 0.3;
-    ctx.fillStyle = WARN;
-    ctx.beginPath();
-    ctx.roundRect(x + (w / 2) * (1 - p), y - h / 2, w * p, h, 6);
-    ctx.fill();
-    // Ripples pulsing out from the middle, faster as it nears.
-    const n = 3;
-    for (let k = 0; k < n; k++) {
-      const u = (time * (0.8 + p * 1.4) + k / n) % 1;
-      ctx.globalAlpha = (1 - u) * (0.4 + p * 0.5);
-      ctx.strokeStyle = '#ffffff';
-      ctx.lineWidth = 1.4;
-      ctx.beginPath();
-      ctx.ellipse(x + w / 2, y, Math.max(1, (w / 2) * u), Math.max(0.5, (h / 2 - 1) * u), 0, 0, TAU);
-      ctx.stroke();
+    const born = bandMark(ctx, x, y, w, h, p, time, seed, 0);
+    // Soft ripples rolling out from the middle at one steady pace.
+    for (let k = 0; k < 2; k++) {
+      const u = (time * 1.1 + k / 2 + seed * 0.01) % 1;
+      softRing(ctx, x + w / 2, y, Math.max(1, (w / 2) * u), Math.max(0.5, (h / 2 - 1.5) * u), 1.3, '#ffffff', born * Math.sin(u * Math.PI) * (0.35 + 0.45 * p));
     }
-    stitched(ctx, shape, s, time);
-    // Bold "!" marks along it.
-    ctx.globalAlpha = 0.45 + p * 0.55;
-    ctx.fillStyle = s.flash ? '#ff5f80' : '#ffffff';
-    for (let mx = x + 40; mx < x + w - 20; mx += 80) {
-      ctx.fillRect(Math.round(mx - 1), Math.round(y - 5), 2, 6);
-      ctx.fillRect(Math.round(mx - 1), Math.round(y + 2.4), 2, 2);
-    }
+    // Rounded "!" marks along it, bobbing each on its own beat.
+    for (let mx = x + 40, i = 0; mx < x + w - 20; mx += 80, i++) bang(ctx, mx, y + 5 - Math.sin(time * 4 + i * 1.3 + seed) * 0.6 * p, 4.2, born * (0.55 + 0.45 * p));
   } else if (kind === 'thorns') {
-    const h = 10;
-    const shape = () => {
-      ctx.beginPath();
-      ctx.roundRect(x, y - h / 2, w, h, 4);
-    };
-    ctx.globalAlpha = s.fillA;
-    ctx.fillStyle = s.fill;
-    shape();
-    ctx.fill();
-    stitched(ctx, shape, s, time);
-    // Thorn tips poking up through the dirt, rising and trembling as it nears.
-    const tip = 1 + p * 4;
-    for (let tx = x + 6; tx < x + w - 3; tx += 10) {
-      const shake = p > 0.6 ? Math.sin(time * 50 + tx) * 0.6 : 0;
-      ctx.globalAlpha = 0.6 + p * 0.4;
-      ctx.fillStyle = THORN_ROOT;
-      ctx.beginPath();
-      ctx.moveTo(tx - 2.4 + shake, y + 1);
-      ctx.lineTo(tx + shake, y + 1 - tip);
-      ctx.lineTo(tx + 2.4 + shake, y + 1);
-      ctx.closePath();
-      ctx.fill();
-      ctx.fillStyle = '#6a4a50';
-      ctx.beginPath();
-      ctx.ellipse(tx, y + 1.4, 3.4, 1.2, 0, 0, TAU);
-      ctx.fill();
+    bandMark(ctx, x, y, w, 10, p, time, seed, 0);
+    // Root tips peeking up through the dirt, rising and swaying a little as it nears.
+    // (each its own height, as the spikes that follow will be)
+    const tip = easeOut(p);
+    for (let tx = x + 6, i = 0; tx < x + w - 3; tx += 12, i++) {
+      ctx.globalAlpha = 0.65 + 0.35 * p;
+      rootTip(ctx, tx, y + 1.5, 1 + (2.6 + (i % 3) * 1.4) * tip, Math.sin(time * 2.6 + i * 0.9 + seed) * 0.5 * p, 2.2 + (i % 3) * 0.4);
     }
   } else if (kind === 'band') {
-    // (world/bossfight.js) A cleave or a line: a band of floor, filling from the boss's end.
-    const h = 14;
-    const shape = () => {
-      ctx.beginPath();
-      ctx.roundRect(x, y - h / 2, w, h, 6);
-    };
-    ctx.globalAlpha = s.fillA;
-    ctx.fillStyle = s.fill;
-    shape();
-    ctx.fill();
-    ctx.globalAlpha = 0.2 + p * 0.3;
-    ctx.fillStyle = WARN;
-    ctx.beginPath();
-    ctx.roundRect(x, y - h / 2, w * p, h, 6);
-    ctx.fill();
-    stitched(ctx, shape, s, time);
-    ctx.globalAlpha = 0.4 + p * 0.5;
-    ctx.fillStyle = '#ffffff';
-    const o = (time * 30) % 34;
-    for (let mx = x + 18; mx < x + w - 10; mx += 34) {
-      ctx.beginPath();
-      ctx.moveTo(mx + o - 4, y - 3);
-      ctx.lineTo(mx + o, y);
-      ctx.lineTo(mx + o - 4, y + 3);
-      ctx.lineTo(mx + o - 2.6, y);
-      ctx.closePath();
-      ctx.fill();
+    // A cleave or a line: filling from the boss's end, chevrons sliding the way it swings.
+    const dir = z?.dir < 0 ? -1 : 1;
+    const born = bandMark(ctx, x, y, w, 14, p, time, seed, dir > 0 ? -1 : 1);
+    const step = 34;
+    const shift = (time * 30) % step;
+    for (let cx = step / 2 + shift; cx < w - 4; cx += step) {
+      const px = dir > 0 ? x + cx : x + w - cx;
+      chevron(ctx, px, y, 5.4, dir, born * (0.45 + 0.5 * p) * clamp01(Math.min(cx, w - cx) / 12));
     }
   } else if (kind === 'donut') {
-    // A ring round the boss with a safe middle: the ring fills in, the middle stays clear.
+    // A ring round the boss with a safe middle: the ring fills in from outside, the middle stays
+    // clear, softly mint and edged in calm white.
     const rx = w / 2;
     const ri = z?.inner ?? rx * 0.35;
     const ry = 9;
     const iry = ry * (ri / rx);
-    ctx.globalAlpha = s.fillA;
-    ctx.fillStyle = s.fill;
-    ctx.beginPath();
-    ctx.ellipse(x, y, rx, ry, 0, 0, TAU);
-    ctx.ellipse(x, y, ri, iry, 0, 0, TAU, true);
+    const born = clamp01(springy(p / 0.12));
+    const { r: rd, throb } = ready(p, time, seed);
+    const annulus = (a, b) => {
+      ctx.beginPath();
+      ctx.ellipse(x, y, rx, ry, 0, 0, TAU);
+      ctx.ellipse(x, y, a, b, 0, 0, TAU, true);
+    };
+    ctx.globalAlpha = born * (0.16 + 0.1 * p + 0.12 * throb);
+    ctx.fillStyle = DANGER.fill;
+    annulus(ri, iry);
     ctx.fill('evenodd');
     const fr = ri + (rx - ri) * (1 - p);
-    ctx.globalAlpha = 0.22 + p * 0.3;
-    ctx.fillStyle = WARN;
-    ctx.beginPath();
-    ctx.ellipse(x, y, rx, ry, 0, 0, TAU);
-    ctx.ellipse(x, y, fr, (ry * fr) / rx, 0, 0, TAU, true);
+    ctx.globalAlpha = born * (0.3 + 0.24 * p + 0.1 * rd);
+    ctx.fillStyle = DANGER.mid;
+    annulus(fr, (ry * fr) / rx);
     ctx.fill('evenodd');
-    stitched(ctx, () => { ctx.beginPath(); ctx.ellipse(x, y, rx, ry, 0, 0, TAU); }, s, time);
-    // The safe middle, outlined in calm white.
-    ctx.globalAlpha = 0.7;
-    ctx.strokeStyle = '#ffffff';
-    ctx.lineWidth = 1.2;
-    ctx.setLineDash([3, 3]);
+    ctx.globalAlpha = born * 0.22;
+    ctx.fillStyle = '#dcfbe8';
     ctx.beginPath();
     ctx.ellipse(x, y, ri, iry, 0, 0, TAU);
-    ctx.stroke();
-    ctx.setLineDash([]);
+    ctx.fill();
+    const lw = (1.5 + 0.8 * p + 0.6 * throb) * (0.6 + 0.4 * born);
+    ctx.globalAlpha = 1;
+    softRing(ctx, x, y, rx, ry, lw, DANGER.edge, born * (0.8 + 0.2 * p));
+    softRing(ctx, x, y, ri, iry, 1.4, '#ffffff', born * 0.9);
   } else if (kind === 'raid') {
-    // A hit on everyone: rings sweeping out from the boss right across the room.
+    // A hit on everyone: soft rings sweeping out from the boss right across the room, each fading
+    // in and out on its way, and a warm glow gathering on the boss.
+    glowDisc(ctx, x, y - 20, 34 + 18 * p, '#ffd0dc', 0.2 + 0.3 * p);
     for (let k = 0; k < 3; k++) {
-      const u = (time * 0.9 + k / 3) % 1;
-      ctx.globalAlpha = (1 - u) * (0.25 + p * 0.45);
-      ctx.strokeStyle = s.flash ? '#ff5f80' : '#ffb3c6';
-      ctx.lineWidth = 2 + p * 2;
-      ctx.beginPath();
-      ctx.ellipse(x, y - 10, 30 + u * 420, 8 + u * 40, 0, 0, TAU);
-      ctx.stroke();
+      const u = (time * 0.7 + k / 3 + seed * 0.01) % 1;
+      softRing(ctx, x, y - 10, 30 + u * 420, 8 + u * 40, (2 + 2 * p) * (1 - u * 0.6), k % 2 ? '#ffd0dc' : '#ffb8ca', Math.sin(u * Math.PI) * (0.35 + 0.5 * p));
     }
   } else if (kind === 'buster' || kind === 'stack' || kind === 'spread') {
-    // A marker on a member: a ring round them and an icon over their head. Red with arrows coming
-    // down for a tankbuster, gold with arrows pointing in for a stack, violet with arrows pointing
-    // out for a spread.
-    const col = kind === 'buster' ? '#ff5a6e' : kind === 'stack' ? '#ffd36b' : '#c99aff';
+    // A marker on a member: a ring round them with arrows turning on it and an icon over their
+    // head. Rose with arrows in for a tankbuster, gold with arrows in for a stack, violet with
+    // arrows out for a spread.
+    const col = MARKER_COL[kind];
+    const rim = deep(col);
     const rx = w / 2;
     const ry = 7;
-    ctx.globalAlpha = 0.18 + p * 0.22;
+    const born = clamp01(springy(p / 0.12));
+    ctx.globalAlpha = born * (0.16 + 0.2 * p);
     ctx.fillStyle = col;
     ctx.beginPath();
     ctx.ellipse(x, y, rx, ry, 0, 0, TAU);
     ctx.fill();
-    ctx.globalAlpha = 0.6 + p * 0.4;
-    ctx.strokeStyle = col;
-    ctx.lineWidth = 1.6 + p;
-    ctx.beginPath();
-    ctx.ellipse(x, y, rx, ry, 0, 0, TAU);
-    ctx.stroke();
-    const d = kind === 'spread' ? 1 : -1;
+    ctx.globalAlpha = 1;
+    softRing(ctx, x, y, rx, ry, 1.6 + p, col, born * (0.65 + 0.35 * p));
+    const out = kind === 'spread';
     for (let k = 0; k < 4; k++) {
-      const a = (k / 4) * TAU + time * 0.6 * d;
-      const ax = x + Math.cos(a) * rx;
-      const ay = y + Math.sin(a) * ry;
-      ctx.fillStyle = col;
-      ctx.beginPath();
-      ctx.moveTo(ax + Math.cos(a) * 5 * d, ay + Math.sin(a) * 2 * d);
-      ctx.lineTo(ax - Math.sin(a) * 3, ay + Math.cos(a) * 1.2);
-      ctx.lineTo(ax + Math.sin(a) * 3, ay - Math.cos(a) * 1.2);
-      ctx.closePath();
-      ctx.fill();
+      const a = (k / 4) * TAU + time * 0.6 * (out ? 1 : -1) + seed;
+      const ang = Math.atan2(Math.sin(a) * ry, Math.cos(a) * rx);
+      chevron(ctx, x + Math.cos(a) * (rx + (out ? 3 : -3)), y + Math.sin(a) * (ry + (out ? 1 : -1)), 4.4, 1, born * (0.7 + 0.3 * p), col, rim, out ? ang : ang + Math.PI);
     }
-    // The icon over their head.
-    const iy = y - 54 + Math.sin(time * 5) * 1.5;
-    ctx.globalAlpha = 0.85 + p * 0.15;
-    ctx.fillStyle = '#2e2050';
+    // The icon over their head: a soft white disc on a ring of the marker's colour.
+    const iy = y - 54 + Math.sin(time * 5 + seed) * 1.5;
+    const ir = 10 * (0.8 + 0.2 * springy(p / 0.18));
+    ctx.globalAlpha = born;
     ctx.beginPath();
-    ctx.arc(x, iy, 8, 0, TAU);
+    ctx.arc(x, iy, ir, 0, TAU);
+    ctx.fillStyle = '#fffafc';
     ctx.fill();
+    if (inked(ctx)) {
+      ctx.strokeStyle = rim;
+      ctx.lineWidth = 3;
+      ctx.stroke();
+    }
     ctx.strokeStyle = col;
-    ctx.lineWidth = 1.6;
+    ctx.lineWidth = 1.8;
     ctx.stroke();
-    ctx.fillStyle = col;
     if (kind === 'buster') {
-      for (let k = 0; k < 3; k++) {
-        const yy = iy - 4 + k * 3.2;
-        ctx.beginPath();
-        ctx.moveTo(x - 4, yy);
-        ctx.lineTo(x, yy + 2.6);
-        ctx.lineTo(x + 4, yy);
-        ctx.lineTo(x + 4, yy + 1.2);
-        ctx.lineTo(x, yy + 3.8);
-        ctx.lineTo(x - 4, yy + 1.2);
-        ctx.closePath();
-        ctx.fill();
-      }
+      for (let k = 0; k < 2; k++) chevron(ctx, x, iy - 3.4 + k * 5.6, 4.2, 1, 1, col, rim, Math.PI / 2);
     } else {
       for (let k = 0; k < 4; k++) {
         const a = (k / 4) * TAU + Math.PI / 4;
-        const dd = kind === 'stack' ? 2 : 5.4;
-        const tip = kind === 'stack' ? -1 : 1;
-        const bx = x + Math.cos(a) * dd;
-        const by = iy + Math.sin(a) * dd;
-        ctx.beginPath();
-        ctx.moveTo(bx + Math.cos(a) * 3 * tip, by + Math.sin(a) * 3 * tip);
-        ctx.lineTo(bx - Math.sin(a) * 2, by + Math.cos(a) * 2);
-        ctx.lineTo(bx + Math.sin(a) * 2, by - Math.cos(a) * 2);
-        ctx.closePath();
-        ctx.fill();
+        const d = out ? 5.8 : 5.2;
+        chevron(ctx, x + Math.cos(a) * d, iy + Math.sin(a) * d, 3, 1, 1, col, rim, out ? a : a + Math.PI);
       }
     }
   }
@@ -743,111 +621,86 @@ export function drawZone(ctx, kind, x, y, w, progress, time, z = null) {
 
 // The moment a telegraphed attack goes off; `t` runs 0..1 over about half a second.
 export function drawZoneHit(ctx, kind, x, y, w, t, time) {
-  const u = Math.max(0, Math.min(1, t));
+  const u = clamp01(t);
   ctx.save();
-  // (world/bossfight.js's patterns: a flash and a shock ring where each one lands.)
+  // (world/bossfight.js's patterns: a soft burst and a ring rolling out where each one lands.)
   if (kind === 'raid' || kind === 'buster' || kind === 'stack' || kind === 'spread' || kind === 'donut' || kind === 'band') {
-    const e = easeOut(u);
-    const col = kind === 'buster' ? '#ff9aa8' : kind === 'stack' ? '#ffe7a0' : kind === 'spread' ? '#e2c8ff' : '#ffd0dc';
-    const cx = kind === 'band' ? x + w / 2 : x;
-    const r = kind === 'raid' ? 360 : w / 2;
-    if (u < 0.25) starFlash(ctx, cx, y - 8, 12 + u * 50, 8, 0.25, col, '#ffffff');
-    for (let k = 0; k < 2; k++) {
-      const v = Math.max(0, e - k * 0.2);
-      shock(ctx, cx, y, r * v, 5 + v * 5, (1 - u) * (5 - k * 2), k ? col : '#ffffff');
-    }
+    hitBurst(ctx, kind === 'band' ? x + w / 2 : x, y, kind === 'raid' ? 360 : w / 2, u, HIT_COL[kind] ?? '#ff9fb8');
     ctx.restore();
     return;
   }
+  const fade = 1 - sstep((u - 0.5) / 0.5);
   if (kind === 'circle') {
-    // A burst of pink-violet spore puffs billowing out and up.
+    // A burst of pink-violet spore clouds billowing out and up, a sparkle in the middle.
     const rx = w / 2;
-    if (u < 0.25) starFlash(ctx, x, y - 6, 10 + u * 40, 6, 0.3, '#f6b8ec', '#ffffff');
+    glowDisc(ctx, x, y - 8, rx * 0.6 + 10, '#f6c8ec', 0.45 * fade);
     const grow = easeOut(Math.min(1, u * 1.6));
-    const fade = u < 0.6 ? 1 : 1 - (u - 0.6) / 0.4;
-    for (let k = 0; k < 7; k++) {
-      const a = Math.PI + (k / 6) * Math.PI;
-      const px = x + Math.cos(a) * rx * 0.8 * grow;
-      const py = y - 4 + Math.sin(a) * 12 * grow - u * 8;
-      puff(ctx, px, py, (5 + (k % 3) * 2) * fade * (0.5 + grow * 0.6), k % 2 ? '#f7d0f0' : '#e4c4fa', '#c79ae0');
+    for (let k = 0; k < 4; k++) {
+      const a = Math.PI + ((k + 0.5) / 4) * Math.PI;
+      const s = pop(clamp01(u * 1.1 - k * 0.04), 0.3, 0.6);
+      cloud(ctx, x + Math.cos(a) * rx * 0.75 * grow, y - 4 + Math.sin(a) * 10 * grow - u * 8, (5 + (k % 2) * 2.5) * s, k % 2 ? '#fbe4f6' : '#efe0fc', k % 2 ? '#e8bce2' : '#d6c0f2');
     }
-    puff(ctx, x, y - 8 - u * 10, 9 * fade * (0.4 + grow * 0.7), '#fbe0f6', '#d6a6e6');
-    for (let k = 0; k < 6; k++) {
-      const a = -Math.PI * (0.1 + (k / 5) * 0.8);
-      const d = 6 + easeOut(u) * (rx + 10);
-      ctx.globalAlpha = 1 - u;
-      ctx.fillStyle = k % 2 ? '#ffb0d0' : '#c9a6ff';
-      ctx.beginPath();
-      ctx.arc(x + Math.cos(a) * d, y - 6 + Math.sin(a) * d * 0.6, 1.6, 0, TAU);
-      ctx.fill();
+    cloud(ctx, x, y - 8 - u * 10, 9 * pop(u, 0.3, 0.6), '#fdeefa', '#e6c0ea');
+    softSparkle(ctx, x, y - 12 - u * 6, 9 * pop(u, 0.22, 0.6), '#f6b8ec');
+    for (let k = 0; k < 3; k++) {
+      const a = -Math.PI * (0.25 + k * 0.25);
+      const d = 6 + easeOut(u) * (rx + 8);
+      softSparkle(ctx, x + Math.cos(a) * d, y - 6 + Math.sin(a) * d * 0.6, 2.8 * pop(u, 0.25, 0.55), k % 2 ? '#ffd0e6' : '#e4d0ff');
     }
   } else if (kind === 'lane') {
-    // A dust streak tearing down the lane behind the charge.
+    // A soft dust trail rolling down the lane behind the charge, with rounded speed lines.
     const x0 = Math.min(x, x + w);
     const len = Math.abs(w);
     const dir = w < 0 ? -1 : 1;
     const head = easeOut(Math.min(1, u * 1.5));
-    const fade = u < 0.5 ? 1 : 1 - (u - 0.5) / 0.5;
     const hx = dir > 0 ? x0 + len * head : x0 + len * (1 - head);
-    for (let k = 0; k < 6; k++) {
-      const back = k * (len / 7) * head;
-      const bx = hx - dir * back;
-      wisp(ctx, bx, y + 1, (30 - k * 2) * fade, (13 - k * 1.2) * fade, dir, '#fff4ea', '#d8b8aa');
-      puff(ctx, bx - dir * 8, y - 3, (5 - k * 0.5) * fade, '#fff4ea', '#d8b8aa');
-    }
-    ctx.globalAlpha = 0.8 * fade;
-    ctx.fillStyle = '#ffffff';
-    for (let k = 0; k < 4; k++) {
-      const ly = y - 4 - k * 4;
-      const l = (30 + k * 10) * head;
-      ctx.fillRect(Math.round(dir > 0 ? hx - l - 8 : hx + 8), Math.round(ly), Math.round(l), 1);
+    const s = springy(Math.min(1, u * 4)) * fade;
+    for (let k = 0; k < 4; k++) cloud(ctx, hx - dir * (k * (len / 5) * head + 6), y - 3 - k * 0.6, (7.5 - k * 1.3) * s, DIRT[0], DIRT[1]);
+    ctx.lineCap = 'round';
+    for (let k = 0; k < 3; k++) {
+      const ly = y - 6 - k * 4.5;
+      const l = (24 + k * 10) * head;
+      const sx = hx - dir * 10;
+      ctx.globalAlpha = 0.85 * fade;
+      ctx.beginPath();
+      ctx.moveTo(sx, ly);
+      ctx.lineTo(sx - dir * l, ly);
+      if (inked(ctx)) {
+        ctx.strokeStyle = '#cdbfe0';
+        ctx.lineWidth = 2.8;
+        ctx.stroke();
+      }
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 1.3;
+      ctx.stroke();
     }
   } else if (kind === 'floor') {
-    // A slam shockwave rippling out along the floor, kicking up a dust crown at its front and
-    // leaving puffs behind.
+    // A slam rolling out along the floor: a soft ring, dust clouds bouncing up behind its front,
+    // and a rounded hump of floor pushed up at each edge of it.
     const cx = x + w / 2;
     const e = easeOut(u);
     const front = (w / 2) * e;
-    if (u < 0.2) starFlash(ctx, cx, y - 4, 12 + u * 50, 8, 0.2, '#ffd0dc', '#ffffff');
-    for (let k = 0; k < 2; k++) {
-      const v = Math.max(0, e - k * 0.2);
-      shock(ctx, cx, y, (w / 2) * v, 5 + v * 4, (1 - u) * (5 - k * 2), k ? '#ffb3c6' : '#ffffff');
-    }
-    for (let mx = 12; mx < w / 2; mx += 26) {
+    glowDisc(ctx, cx, y - 6, 34, '#ffd6e2', 0.5 * fade * (1 - u));
+    softSparkle(ctx, cx, y - 10, 12 * pop(u, 0.2, 0.6), '#ffc2d2');
+    softRing(ctx, cx, y, front, 5 + e * 4, 4 * (1 - u) + 0.4, '#ffffff', fade);
+    softRing(ctx, cx, y, front * 0.82, 4 + e * 3, 2 * (1 - u) + 0.3, '#ffb3c6', fade);
+    for (let mx = 16; mx < w / 2; mx += 44) {
       const age = (front - mx) / (w / 2);
       if (age <= 0) continue;
-      const r = 5 * Math.max(0, 1 - age * 2.2) * (1 - u * 0.4);
-      for (const s of [-1, 1]) puff(ctx, cx + s * mx, y - 2 - age * 6, r, '#fff4ea', '#d8b8aa');
+      const k = pop(clamp01(age * 2.2), 0.3, 0.7) * (1 - u * 0.3);
+      for (const s of [-1, 1]) cloud(ctx, cx + s * mx, y - 3 - age * 6, 5.5 * k, DIRT[0], DIRT[1]);
     }
-    for (const s of [-1, 1]) crown(ctx, cx + s * front, y + 1, 14 * (1 - u), 6, 4, '#ffc2d2', '#ffffff');
+    // (a soft dust crest riding each front, growing in as the front leaves the middle)
+    const crest = 7 * (1 - u) * sstep(front / 24);
+    for (const s of [-1, 1]) cloud(ctx, cx + s * front, y - 3, crest, '#fff4f6', '#f2c8d6');
   } else if (kind === 'thorns') {
-    // Root spikes stabbing up out of the floor, holding, then sinking back down.
-    const rise = u < 0.2 ? easeOut(u / 0.2) : u < 0.6 ? 1 : 1 - easeOut((u - 0.6) / 0.4);
-    for (let tx = x + 6, i = 0; tx < x + w - 3; tx += 10, i++) {
+    // Root spikes springing up out of the floor, holding, then sinking back down; soft dirt puffs.
+    const rise = u < 0.22 ? springy(u / 0.22) : u < 0.6 ? 1 : 1 - sstep((u - 0.6) / 0.4);
+    for (let tx = x + 6, i = 0; tx < x + w - 3; tx += 12, i++) {
       const tall = (14 + (i % 3) * 5) * rise;
-      if (tall < 0.5) continue;
-      const lean = (i % 2 ? 1 : -1) * 1.4;
-      ctx.fillStyle = THORN_ROOT;
-      ctx.strokeStyle = '#5a3a48';
-      ctx.lineWidth = 0.8;
-      ctx.beginPath();
-      ctx.moveTo(tx - 3.4, y + 1);
-      ctx.quadraticCurveTo(tx - 1.6 + lean * 0.4, y - tall * 0.5, tx + lean, y - tall);
-      ctx.quadraticCurveTo(tx + 1.6 + lean * 0.4, y - tall * 0.5, tx + 3.4, y + 1);
-      ctx.closePath();
-      ctx.fill();
-      ctx.stroke();
-      ctx.fillStyle = THORN;
-      ctx.beginPath();
-      ctx.moveTo(tx - 1, y - tall * 0.25);
-      ctx.quadraticCurveTo(tx - 0.4 + lean * 0.3, y - tall * 0.6, tx + lean, y - tall + 1);
-      ctx.lineTo(tx + 0.2, y - tall * 0.25);
-      ctx.closePath();
-      ctx.fill();
+      if (tall > 0.5) rootTip(ctx, tx, y + 1, tall, (i % 2 ? 1 : -1) * 1.4, 3.6);
     }
-    if (u < 0.45) {
-      for (let tx = x + 6; tx < x + w - 3; tx += 20) crown(ctx, tx + 5, y + 1, 6 * (1 - u / 0.45), 5, 3, '#d9bfae', '#f6e6da');
-    }
+    if (u < 0.5) for (let tx = x + 14, i = 0; tx < x + w - 6; tx += 44, i++) cloud(ctx, tx + (i % 2) * 8, y - 1 - (i % 2), (3.6 + (i % 3) * 1.2) * pop(u / 0.5, 0.3, 0.6), '#f6e6da', '#d9bfae');
   }
   ctx.restore();
 }

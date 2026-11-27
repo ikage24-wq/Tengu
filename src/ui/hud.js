@@ -1,6 +1,7 @@
 // Always-on HUD: status bar, hotkeys, minimap, buffs, quest tracker, message log, map banner.
 
 import { awayNow } from '../world/nightmarket.js';
+import { drawAnnounce } from '../render/fightui.js';
 import { SKILLS, skillAt } from '../data/skills.js';
 import { JOBS } from '../data/jobs.js';
 import { expToNext } from '../core/exp.js';
@@ -1281,18 +1282,12 @@ function drawDerbyBoard(ui, world) {
   });
 }
 
-// Boss moves and milestones, called out big across the middle of the screen.
+// Boss moves and milestones: a boss's name card as its fight begins, a cast's hint under its
+// cast bar, anything else called out big across the middle of the screen (render/fightui.js).
 function drawCallout(ctx, world) {
   const c = world.dungeon.callout;
   if (!c) return;
-  const age = 2.6 - c.t;
-  const k = Math.min(1, age / 0.18);
-  ctx.save();
-  ctx.globalAlpha = Math.min(1, c.t * 2);
-  const size = 16 * (1 + (1 - k) * 0.4);
-  text(ctx, c.title, 320, 112, { size, bold: true, align: 'center', color: '#ffffff', outline: '#8f3f6f' });
-  if (c.sub) text(ctx, c.sub, 320, 126, { size: 8, bold: true, align: 'center', color: '#fff3c9', outline: '#5a3f7a' });
-  ctx.restore();
+  drawAnnounce(ctx, world, c, { age: 2.6 - c.t, life: 2.6, color: '#ff8fc1' });
 }
 
 // ---------- Tutorial ----------

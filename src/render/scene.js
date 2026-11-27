@@ -55,6 +55,7 @@ import { lifePose, lifeFind, holdFind, lifeBeats, botLifeBeats, onRodTip, clearR
 import { drawSpirit, drawSoured } from './spirit.js';
 import { nextStep } from '../world/routes.js';
 import { drawZonesBack, drawZonesFront, drawCallout, drawTrialSet } from './trial.js';
+import { drawMobBar, drawBossPlaque } from './fightui.js';
 import { drawHollowBack, drawHollowFront, drawDarkness } from './hollow.js';
 import { drawManorBack, drawManorFront, drawManorObject, MANOR_HINT } from './manor.js';
 import { drawAquaBack, drawAquaFront, drawAquaObject, AQUA_HINT } from './aquarium.js';
@@ -62,6 +63,7 @@ import { drawCarnivalBack, drawCarnivalFront, drawCarnivalObject, CARNIVAL_HINT 
 import { drawObsBack, drawObsFront, drawObsObject, OBS_HINT } from './observatory.js';
 import { castWarn, castHit, OWN_WARN } from './bossfx.js';
 import { dreamShot } from './dreamfx.js';
+import { healRing, shotOrb, crashBurst } from './mobfx.js';
 import { drawVolcanoBack, drawVolcanoFront, drawVolcanoObject, VOLCANO_HINT } from './volcano.js';
 import { drawTheatreBack, drawTheatreFront, drawTheatreObject, drawTheatreSet, THEATRE_HINT } from './theatre.js';
 import { drawWhaleBack, drawWhaleFront, drawWhaleObject, drawWhaleSet, WHALE_HINT } from './skywhale.js';
@@ -471,7 +473,6 @@ function drawNpcs(ctx, world, cam, time) {
 }
 
 function drawMobs(ctx, world, cam, time) {
-  let boss = null;
   for (const m of world.mobs) {
     const x = m.x - cam.x;
     // A monster hopping in a cutscene (world/director.js) is lifted off its feet.
@@ -522,27 +523,10 @@ function drawMobs(ctx, world, cam, time) {
     if (sink > 0) ctx.restore();
     ctx.globalAlpha = 1;
     if (m.big > world.now && m.hp > 0) text(ctx, '!!', x, y - m.def.h - 14 + Math.sin(time * 30) * 1.5, { size: 16, bold: true, align: 'center', color: '#ff4d6d', outline: '#ffffff' });
-    if (m.def.boss || (m.def.elite && m.hp > 0)) boss = m;
-    if (settings.monsterHp && m.hp > 0 && m.hp < m.def.hp && !m.def.boss && !m.def.elite) {
-      const w = Math.max(24, m.def.w);
-      box(ctx, x - w / 2, y - m.def.h - 7, w, 4, { fill: 'rgba(58,45,79,0.5)', edge: null, r: 2 });
-      box(ctx, x - w / 2, y - m.def.h - 7, Math.max(2, (w * m.hp) / m.def.hp), 4, { fill: COLORS.hp, edge: null, r: 2 });
-    }
-  }
-  if (boss && boss.hp > 0 && !world.scene) {
-    box(ctx, 170, 60, 300, 12, { fill: 'rgba(58,45,79,0.6)', edge: '#ffffff', r: 6 });
-    box(ctx, 171, 61, Math.max(4, (298 * boss.hp) / boss.def.hp), 10, { fill: '#c9a6ff', edge: null, r: 5 });
-    text(ctx, `${boss.def.elite ? '★ ' : ''}${boss.def.name}  Lv ${boss.def.level}`, 320, 69, { size: 8, bold: true, align: 'center', color: '#ffffff', outline: boss.def.elite ? (boss.enraged ? '#c83a4a' : '#a8702a') : '#5a3f7a' });
-    // Its cast bar (world/bossfight.js): what it's casting, filling as the cast goes (a twin's cast
-    // shows here too, with her name).
-    const caster = boss.cast ? boss : world.mobs.find((o) => o.cast && o.hp > 0 && o.def.boss);
-    if (caster?.cast) {
-      const c = caster.cast;
-      const u = Math.max(0, Math.min(1, (world.now - c.t0) / c.dur));
-      box(ctx, 220, 76, 200, 8, { fill: 'rgba(58,45,79,0.7)', edge: '#ffe7a0', r: 4 });
-      box(ctx, 221, 77, Math.max(3, 198 * u), 6, { fill: '#ffd36b', edge: null, r: 3 });
-      text(ctx, caster === boss ? c.name : `${caster.def.name.split(',')[0]}: ${c.name}`, 320, 93, { size: 8, bold: true, align: 'center', color: '#fff3c4', outline: '#5a3f7a' });
-    }
+    // (A hurt monster's small health bar, fading in on the first hit and out as it falls:
+    // render/fightui.js. Bosses and elites have the plaque at the top, drawn over the world with
+    // their cast bar: drawBossPlaque.)
+    if (settings.monsterHp && !m.def.boss && !m.def.elite) drawMobBar(ctx, m, x, y - m.def.h - 7, time);
   }
 }
 
@@ -960,7 +944,9 @@ function drawWorldLayers(ctx, world, cam, time, b, zoom = 1) {
   else drawFx(ctx);
   lap('fx');
   if (settings.damageNumbers) drawNumbers(ctx, world, cam);
-  // (A callout sits on the screen, not in the scene: it holds still through a shake.)
+  // (The boss plaque and a callout sit on the screen, not in the scene: they hold still through a
+  // shake. The plaque: render/fightui.js.)
+  steady(ctx, () => drawBossPlaque(ctx, world, cam, time));
   steady(ctx, () => drawCallout(ctx, world));
   if (settings.chatBubbles) drawBubbles(ctx, world, cam);
   // Every bubble queued this frame (yours, NPCs', the crowd's, your party's), laid out together.
@@ -1242,17 +1228,15 @@ function drawDungeonFront(ctx, world, cam, time) {
     const x = v.x - cam.x;
     const y = v.y - cam.y;
     ctx.save();
+    // (In the remade monsters' soft style: render/mobfx.js.)
     if (v.kind === 'groupheal') {
-      ctx.globalAlpha = 1 - p;
-      shock(ctx, x, y - 4, 30 + p * 120, 6 + p * 18, 3 * (1 - p) + 0.5, '#7ee081');
+      healRing(ctx, x, y, p);
     } else if (v.kind === 'spit') {
       const sx = x + (v.tx - v.x) * p;
       const sy = y + (v.ty - v.y) * p - Math.sin(p * Math.PI) * 18;
-      if (!dreamShot(ctx, v.shot, sx, sy, p, Math.sign(v.tx - v.x) || 1)) puff(ctx, sx, sy, 4, '#e0b8ff', '#a07ad6');
+      if (!dreamShot(ctx, v.shot, sx, sy, p, Math.sign(v.tx - v.x) || 1)) shotOrb(ctx, sx, sy, p, Math.sign(v.tx - v.x) || 1);
     } else if (v.kind === 'crash') {
-      ctx.globalAlpha = 1 - p;
-      starFlash(ctx, x, y - 30, 30 * (0.4 + p), 6, p, '#ffe36b');
-      puff(ctx, x, y - 8, 12 * (1 - p) + 3, '#f6e2c8', '#c9a27a');
+      crashBurst(ctx, x, y, p);
     }
     ctx.restore();
   }

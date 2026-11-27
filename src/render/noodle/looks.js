@@ -378,13 +378,29 @@ function pinchHit(ctx, z, x, y, u, e, fade, time) {
 function flipWarn(ctx, z, x, y, p, time) {
   const w = z.w;
   const d = z.dir ?? 1;
+  // (stronger, edged, and filling from his end: it read too faint, the player's note)
   ctx.save();
-  ctx.globalAlpha = 0.16 + 0.24 * p;
+  ctx.globalAlpha = 0.3 + 0.3 * p;
   const g = ctx.createLinearGradient(x, 0, x + w, 0);
   g.addColorStop(0, FOIL.lt);
   g.addColorStop(1, FOIL.sh);
   ctx.fillStyle = g;
-  ctx.fillRect(x, y - 10, w, 14);
+  ctx.beginPath();
+  ctx.roundRect(x, y - 10, w, 14, 6);
+  ctx.fill();
+  const fw = w * p;
+  ctx.globalAlpha = 0.25 + 0.3 * p;
+  ctx.fillStyle = FOIL.sh;
+  ctx.beginPath();
+  ctx.roundRect(d > 0 ? x : x + w - fw, y - 10, Math.max(0.5, fw), 14, Math.min(6, fw / 2));
+  ctx.fill();
+  ctx.globalAlpha = 0.75 + 0.25 * p;
+  ctx.beginPath();
+  ctx.roundRect(x, y - 10, w, 14, 6);
+  pen(ctx, FOIL.deep, 2.6);
+  ctx.stroke();
+  pen(ctx, FOIL.lt, 1);
+  ctx.stroke();
   ctx.restore();
   // (the arc the lid will flip along)
   ctx.save();

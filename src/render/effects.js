@@ -1,8 +1,6 @@
 // Skill effects, projectiles, hit sparks, damage numbers, and loot on the ground.
 // Everything is drawn in screen space from world positions minus the camera.
 
-import { usingSkin } from '../data/cosmetics.js';
-import { numberDeco } from './cosmetics.js';
 import { drawItemIcon } from './icons.js';
 import { ITEMS, RARITIES } from '../data/items.js';
 import { ELEMENTS } from './elements.js';
@@ -14,7 +12,9 @@ import { debris, groundRing, groundWave, hitMark, pathTint } from './warrior-fx.
 import { drawBuffCast } from './buffs.js';
 import { crescent, starFlash, needle, shock, bloom, stepped, haloStroke, inked, wash, easeOut, easeIn } from './fxkit.js';
 import { mix, snap, gfx } from './pixel.js';
+import { monsterWarn, monsterSlam } from './mobfx.js';
 import { font } from '../ui/kit.js';
+import { drawDamageNumbers } from './fightui.js';
 import { strikePose } from './hero.js';
 import { weaponTrail, weaponHit, thrustStreak } from './blade-fx.js';
 import { wornGear } from '../core/character.js';
@@ -892,10 +892,9 @@ function drawFx(ctx, f, cam, time) {
       break;
     }
     case 'slam': {
-      // The ground cracks open in a flat shockwave that thins as it spreads.
-      const k = easeOut(p);
-      shock(ctx, x, y, f.range * k, 14 * k, 7 * (1 - p), '#c9b6ff');
-      shock(ctx, x, y, f.range * k * 0.7, 10 * k, 3 * (1 - p), '#ffffff');
+      // A field monster's slam: a soft ring rolling out to its reach, dust clouds bouncing up
+      // along it (render/mobfx.js).
+      monsterSlam(ctx, x, y, f.range, p);
       break;
     }
     default:
@@ -1047,29 +1046,17 @@ export function drawWarnings(ctx, world, cam, time) {
     const y = (m.def.fly ? m.spawn.y : m.y) - cam.y;
     const r = m.def.special.range;
     const q = 1 - m.special.warn / (m.def.special.warn || 1);
-    ctx.save();
-    ctx.globalAlpha = (0.25 + 0.2 * Math.sin(time * 18)) * (0.6 + 0.4 * q);
-    ctx.fillStyle = '#ff6b8a';
-    ctx.beginPath();
-    ctx.ellipse(x, y, r, 12, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.globalAlpha = 0.9;
-    shock(ctx, x, y, r, 12, 2, '#ff8fa8');
-    const k = 1 - easeIn(q);
-    shock(ctx, x, y, Math.max(6, r * k), Math.max(2, 12 * k), 1.5 + 2.5 * q, '#ffffff');
-    ctx.restore();
+    // (In the remade monsters' soft style, render/mobfx.js, phased by the monster's own id.)
+    monsterWarn(ctx, x, y, r, q, time, m.uid ?? m.spawn?.x ?? 0);
   }
 }
 
-// Damage numbers. Each one waits two ticks so the eye reads the spark first, then the number;
-// it pops in big and settles (1.4x to 1x in 80 ms, crits bigger with a white flash and a burst
-// behind them), then drifts up on a little arc, every other number leaning the other way so a
-// string of hits fans out instead of piling up. When three or more hits land on one monster
-// together, their total rises above them.
+// Damage numbers (drawn by render/fightui.js drawDamageNumbers). Each one waits two ticks so the
+// eye reads the spark first, then the number; it pops in and settles, then drifts up on a little
+// arc, every other number leaning the other way so a string of hits fans out instead of piling up.
+// When three or more hits land on one monster together, their total rises above them.
 const NUMBER_DELAY = 2 / 60;
-let numberSide = 0;
 const backOut = (p) => 1 + 2.7 * (p - 1) ** 3 + 1.7 * (p - 1) ** 2;
-const isDamage = (n) => /^\d+$/.test(n.text) && !n.small && n.color !== '#ff6b8a';
 
 // Hits on one monster stack into a readable column (the way MapleStory's do): each number keeps a
 // line's height clear above the newer one under it, so a quick string of hits reads as a list,
@@ -1106,71 +1093,9 @@ function stackNumbers(numbers) {
 }
 
 export function drawNumbers(ctx, world, cam) {
-  const dmgSkin = usingSkin(world.char, 'dmg');
-  ctx.save();
-  ctx.textAlign = 'center';
-  ctx.lineJoin = 'round';
-  const totals = new Map();
   stackNumbers(world.numbers);
-  for (const n of world.numbers) {
-    if (n.t < NUMBER_DELAY) continue;
-    n.side ??= (numberSide = -numberSide || 1);
-    const age = n.t - NUMBER_DELAY;
-    // A hit's size follows how much of the monster's HP it took: chip damage is smaller and
-    // fainter, a big chunk is bigger and lingers (zh research: damage-number tiers).
-    const w = n.weight ?? 0.05;
-    // Party members' hits are smaller and fainter, so your own numbers lead (fx research).
-    const tier = (w >= 0.25 ? 1.25 : w >= 0.1 ? 1.1 : w < 0.02 ? 0.88 : 1) * (n.party ? 0.72 : 1);
-    const p = Math.min(1, n.t / (w >= 0.25 ? 1.4 : 1.1));
-    const popIn = Math.min(1, age / (n.crit ? 0.11 : 0.08));
-    const pop = n.crit ? 1.7 - 0.7 * backOut(popIn) : 1.4 - 0.4 * backOut(popIn);
-    const base = (n.crit ? 17 : n.small ? 10 : 14) * tier;
-    // HD numbers pop smoothly (no whole-pixel font steps).
-    const size = gfx.hd ? base * pop : Math.round(base * pop);
-    const rise = easeOut(Math.min(1, age / 0.6)) * 24 + Math.max(0, age - 0.6) * 6;
-    const x = n.x - cam.x + n.side * (n.small ? 4 : 9) * easeOut(Math.min(1, age / 0.5));
-    const y = n.y - cam.y - rise - (n.lift ?? 0);
-    ctx.globalAlpha = (p > 0.7 ? (1 - p) / 0.3 : 1) * (n.party ? 0.6 : tier < 1 ? 0.85 : 1);
-    if (n.crit && age < 0.14) starFlash(ctx, x, y - size * 0.35, (size + 6) * (1 - age / 0.14) + 4, 8, age * 4, '#ffb347', '#fff3c4', 4);
-    ctx.font = font(size, true);
-    ctx.lineWidth = 4;
-    // (Your own hits wear your capsule damage skin, if you've one on: data/cosmetics.js.)
-    const skin = dmgSkin && isDamage(n) && !n.party ? dmgSkin : null;
-    ctx.strokeStyle = skin ? skin.edge : n.crit ? '#8a3a1f' : '#3a2d4f';
-    ctx.strokeText(n.text, x, y);
-    // A crit's first two drawings are white-hot before they take their color.
-    ctx.fillStyle = n.crit && age < 2 / 60 ? '#ffffff' : skin ? (n.crit ? skin.crit : skin.fill) : n.color;
-    ctx.fillText(n.text, x, y);
-    if (n.crit) sparkle(ctx, x - ctx.measureText(n.text).width / 2 - 6, y - size / 2, 4, '#ffe36b');
-    if (skin?.deco) numberDeco(ctx, skin.deco, x, y, size, age);
-    if (isDamage(n)) {
-      const key = Math.round(n.x / 14);
-      const g = totals.get(key) ?? { sum: 0, count: 0, top: Infinity, x: n.x, oldest: 0, youngest: 9 };
-      g.sum += Number(n.text);
-      g.count++;
-      g.top = Math.min(g.top, n.y - (n.lift ?? 0));
-      g.oldest = Math.max(g.oldest, n.t);
-      g.youngest = Math.min(g.youngest, n.t);
-      totals.set(key, g);
-    }
-  }
-  for (const g of totals.values()) {
-    if (g.count < 3 || g.oldest - g.youngest > 0.65 || g.youngest < 0.12) continue;
-    const age = g.youngest - 0.12;
-    const pop = 1.35 - 0.35 * backOut(Math.min(1, age / 0.1));
-    const size = gfx.hd ? 13 * pop : Math.round(13 * pop);
-    const x = g.x - cam.x;
-    const y = g.top - cam.y - 34 - easeOut(Math.min(1, age / 0.5)) * 10;
-    ctx.globalAlpha = g.oldest > 0.8 ? Math.max(0, (1.1 - g.oldest) / 0.3) : 1;
-    ctx.font = font(size, true);
-    ctx.lineWidth = 4;
-    ctx.strokeStyle = '#5a3f7a';
-    const label = `${g.sum.toLocaleString('en-US')}`;
-    ctx.strokeText(label, x, y);
-    ctx.fillStyle = '#ffe36b';
-    ctx.fillText(label, x, y);
-  }
-  ctx.restore();
+  // (Drawn in the soft remake's look: render/fightui.js.)
+  drawDamageNumbers(ctx, world, cam);
 }
 
 // Loot plays out in beats: it pops out with a white flash and spins (edge-on and back) while it

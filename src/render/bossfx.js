@@ -15,7 +15,8 @@
 //   The Queen's dream's bosses (the Night Manager, the Cup-Noodle Dragon, Monday) draw theirs
 //   in render/dreamfx.js.
 
-import { puff, shock, starFlash, easeOut, bloom } from './fxkit.js';
+import { puff, shock, starFlash, easeOut, bloom, deep, inked } from './fxkit.js';
+import { sparkle, cloud, springy, pop, sstep } from './mobfx.js';
 import { dreamWarn, dreamHit, DREAM_HOLD } from './dreamfx.js';
 import { MARIGOLD_OWN_WARN } from './marigold/looks.js';
 import { MORAY_OWN_WARN } from './moray/looks.js';
@@ -126,41 +127,82 @@ const arcs = (ctx, x, y, r, side, a, c, w) => {
   ctx.stroke();
 };
 
-// A commuter's suitcase: a rounded box, a handle, a sticker.
+// A commuter's suitcase (2026-11-27, soft): a rounded case on a rim of its own deeper blue, a
+// rounded handle, a light lid band, a gold sticker and a gloss.
 function suitcase(ctx, x, y, rot) {
   ctx.save();
   ctx.translate(x, y);
   ctx.rotate(rot);
-  ctx.fillStyle = '#5a6aa8';
-  ctx.fillRect(-13, -9, 26, 18);
-  ctx.fillStyle = '#7a8ac8';
-  ctx.fillRect(-13, -9, 26, 4);
-  ctx.strokeStyle = '#3a4478';
-  ctx.lineWidth = 2;
-  ctx.strokeRect(-13, -9, 26, 18);
+  ctx.lineJoin = 'round';
+  ctx.lineCap = 'round';
   ctx.beginPath();
   ctx.moveTo(-5, -9);
-  ctx.lineTo(-5, -13);
-  ctx.lineTo(5, -13);
-  ctx.lineTo(5, -9);
+  ctx.quadraticCurveTo(-5, -14.5, 0, -14.5);
+  ctx.quadraticCurveTo(5, -14.5, 5, -9);
+  ctx.strokeStyle = '#4a5490';
+  ctx.lineWidth = 3.4;
   ctx.stroke();
-  ctx.fillStyle = '#ffd34a';
+  ctx.strokeStyle = '#8a9ad6';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
   ctx.beginPath();
-  ctx.arc(6, 2, 3, 0, TAU);
+  ctx.roundRect(-13, -9, 26, 18, 4.5);
+  ctx.fillStyle = '#6a7ac0';
+  ctx.fill();
+  ctx.strokeStyle = '#4a5490';
+  ctx.lineWidth = 1.6;
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.roundRect(-11.4, -7.6, 22.8, 4.4, 2.2);
+  ctx.fillStyle = '#96a6e2';
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(6, 2.6, 3.2, 0, TAU);
+  ctx.fillStyle = '#ffd34a';
+  ctx.fill();
+  ctx.strokeStyle = '#c8962c';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.ellipse(-8.4, 0.6, 1.3, 3, 0, 0, TAU);
+  ctx.fillStyle = 'rgba(255,255,255,0.45)';
   ctx.fill();
   ctx.restore();
 }
+// A little sock or a sandwich corner tumbling out of it: a soft rounded lump on its own rim.
+function trinket(ctx, x, y, c, rot, al) {
+  if (al <= 0.01) return;
+  ctx.save();
+  ctx.globalAlpha *= al;
+  ctx.translate(x, y);
+  ctx.rotate(rot);
+  ctx.beginPath();
+  ctx.roundRect(-3.2, -2.2, 6.4, 4.4, 2);
+  ctx.fillStyle = c;
+  ctx.fill();
+  ctx.strokeStyle = deep(c);
+  ctx.lineWidth = 1;
+  ctx.stroke();
+  ctx.restore();
+}
+const TRINKET_C = ['#ff9ab8', '#7fb0ff', '#ffd34a', '#8fe0c8', '#f4eefc'];
 // Bonbon's sprinkles: little rounded dashes in rainbow colours.
 const SPRINKLE_C = ['#ff6a8a', '#ffd34a', '#7fd8ff', '#9ae66a', '#c8a8ff', '#ffffff'];
 function sprinkle(ctx, x, y, a, c, al) {
   if (al <= 0.01) return;
   ctx.globalAlpha = al;
-  ctx.strokeStyle = c;
-  ctx.lineWidth = 2;
   ctx.lineCap = 'round';
   ctx.beginPath();
   ctx.moveTo(x - Math.cos(a) * 2.4, y - Math.sin(a) * 2.4);
   ctx.lineTo(x + Math.cos(a) * 2.4, y + Math.sin(a) * 2.4);
+  // (on a soft rim of its own deeper colour, like the remade monsters' outlines)
+  if (inked(ctx)) {
+    ctx.strokeStyle = deep(c);
+    ctx.lineWidth = 3.3;
+    ctx.stroke();
+  }
+  ctx.strokeStyle = c;
+  ctx.lineWidth = 2;
   ctx.stroke();
   ctx.lineCap = 'butt';
   ctx.globalAlpha = 1;
@@ -170,19 +212,26 @@ function cherry(ctx, x, y, r, rot) {
   ctx.save();
   ctx.translate(x, y);
   ctx.rotate(rot);
-  ctx.strokeStyle = '#5a8a3a';
-  ctx.lineWidth = Math.max(1.2, r * 0.18);
+  ctx.lineCap = 'round';
   ctx.beginPath();
   ctx.moveTo(0, -r * 0.8);
   ctx.quadraticCurveTo(r * 0.2, -r * 1.6, r * 0.9, -r * 2);
+  ctx.strokeStyle = '#3e6e3a';
+  ctx.lineWidth = Math.max(1.2, r * 0.18) + 1.2;
   ctx.stroke();
-  ctx.fillStyle = '#d8203a';
+  ctx.strokeStyle = '#7ab04a';
+  ctx.lineWidth = Math.max(1.2, r * 0.18);
+  ctx.stroke();
+  ctx.fillStyle = '#e8384e';
   ctx.beginPath();
   ctx.arc(0, 0, r, 0, TAU);
   ctx.fill();
-  ctx.fillStyle = '#ff5a6a';
+  ctx.strokeStyle = '#a8284a';
+  ctx.lineWidth = Math.max(1, r * 0.12);
+  ctx.stroke();
+  ctx.fillStyle = '#ff6a7a';
   ctx.beginPath();
-  ctx.arc(-r * 0.15, -r * 0.1, r * 0.75, 0, TAU);
+  ctx.arc(-r * 0.15, -r * 0.12, r * 0.72, 0, TAU);
   ctx.fill();
   ctx.fillStyle = '#ffffff';
   ctx.beginPath();
@@ -198,11 +247,13 @@ export function castWarn(ctx, z, x, y, p, time) {
   ctx.save();
   if (look === 'bags') {
     // A suitcase wobbling on the rack overhead, then tumbling down onto the mark.
+    // (It rocks on the rack, the rock easing out as it tips off; it turns one full roll on the
+    // way down and lands at the tilt its landing starts from.)
     const f = clamp01((p - 0.45) / 0.55);
     const by = y - 150 + f * f * 140;
-    const rot = f * 2.2 + (f < 0.01 ? Math.sin(time * 18) * 0.12 * p : 0);
-    ctx.globalAlpha = 0.25 + 0.4 * f;
-    ctx.fillStyle = '#2a2240';
+    const rot = f * f * (TAU + 0.2) + Math.sin(time * 9 + z.x * 0.05) * 0.12 * p * (1 - sstep(f / 0.2));
+    ctx.globalAlpha = 0.16 + 0.3 * f;
+    ctx.fillStyle = '#5a4a7a';
     ctx.beginPath();
     ctx.ellipse(x, y - 1, 10 + f * 16, 3 + f * 3, 0, 0, TAU);
     ctx.fill();
@@ -230,8 +281,8 @@ export function castWarn(ctx, z, x, y, p, time) {
     const f = clamp01((p - 0.2) / 0.8);
     const cx = sx + (x - sx) * f;
     const cy = sy + (y - 14 - sy) * f - Math.sin(f * Math.PI) * 150;
-    ctx.globalAlpha = 0.25 + 0.35 * f;
-    ctx.fillStyle = '#7a1a2e';
+    ctx.globalAlpha = 0.16 + 0.28 * f;
+    ctx.fillStyle = '#8a3a5a';
     ctx.beginPath();
     ctx.ellipse(x, y - 1, 8 + f * (z.w / 2 - 8), 3 + f * 6, 0, 0, TAU);
     ctx.fill();
@@ -483,23 +534,21 @@ export function castHit(ctx, z, x, y, u, time) {
   ctx.save();
   if (look === 'bags') {
     // It lands with a bump and pops open: socks and a sandwich fly out.
-    puff(ctx, x, y - 4, 12 * (1 - u) + 4, '#ffffff', '#d8d0e8');
+    cloud(ctx, x, y - 4, (12 * (1 - u) + 4) * springy(Math.min(1, u * 5)), '#ffffff', '#ddd4ec', fade);
     suitcase(ctx, x, y - 10 - Math.sin(u * Math.PI) * 10, 0.2 * (1 - u));
-    ctx.globalAlpha = fade;
     for (let k = 0; k < 5; k++) {
       const a = Math.PI + 0.3 + (k / 4) * (Math.PI - 0.6);
-      ctx.fillStyle = ['#ff9ab8', '#7fb0ff', '#ffd34a', '#8fe0c8', '#ffffff'][k];
-      ctx.fillRect(x + Math.cos(a) * e * 34 - 3, y - 18 + Math.sin(a) * e * 26 + u * u * 24, 6, 4);
+      trinket(ctx, x + Math.cos(a) * e * 34, y - 16 + Math.sin(a) * e * 26 + u * u * 24, TRINKET_C[k], k + u * 3 * (k % 2 ? 1 : -1), fade);
     }
     ctx.restore();
     return true;
   }
   if (look === 'sprinkles') {
     // The sprinkles land and bounce out of the mark, a puff of sugar under them.
-    puff(ctx, x, y - 4, 10 * (1 - u) + 4, '#fff4f8', '#ffd0e0');
-    for (let k = 0; k < 16; k++) {
-      const a = (k / 16) * Math.PI + Math.PI;
-      const d = e * (14 + (k % 4) * 6);
+    cloud(ctx, x, y - 4, (10 * (1 - u) + 4) * springy(Math.min(1, u * 5)), '#fff4f8', '#ffd0e0', fade);
+    for (let k = 0; k < 12; k++) {
+      const a = ((k + 0.5) / 12) * Math.PI + Math.PI;
+      const d = e * (14 + ((k * 7) % 4) * 6);
       sprinkle(ctx, x + Math.cos(a) * d, y - 4 + Math.sin(a) * d * 0.9 + u * u * 20, k + u * 6, SPRINKLE_C[k % SPRINKLE_C.length], fade);
     }
     ctx.restore();
@@ -507,21 +556,30 @@ export function castHit(ctx, z, x, y, u, time) {
   }
   if (look === 'cherry') {
     // The cherry bursts: a splash of red juice across the mark, drops flying, a flash of sparkles.
-    if (u < 0.3) starFlash(ctx, x, y - 10, 20 + u * 80, 12, time, '#ff5a6a', '#ffffff');
-    glow(ctx, x, y - 8, z.w / 2, '255,90,106', 0.45 * fade);
-    ctx.globalAlpha = 0.7 * fade;
-    ctx.fillStyle = '#d8203a';
+    // (soft, 2026-11-27: a sparkle springing open instead of a spiky flash, a splash with a soft
+    // rim, a few juice drops of different sizes)
+    sparkle(ctx, x, y - 12, 16 * pop(u, 0.2, 0.6), '#ff8a9a', 1, 0.3 * springy(u / 0.3));
+    glow(ctx, x, y - 8, z.w / 2, '255,120,136', 0.4 * fade);
+    ctx.globalAlpha = 0.62 * fade;
+    ctx.fillStyle = '#e8384e';
     ctx.beginPath();
     ctx.ellipse(x, y - 1, (z.w / 2) * e, 6 * e + 2, 0, 0, TAU);
     ctx.fill();
+    ctx.strokeStyle = '#a8284a';
+    ctx.lineWidth = 1.4;
+    ctx.stroke();
     ctx.globalAlpha = fade;
-    for (let k = 0; k < 12; k++) {
-      const a = Math.PI + (k / 11) * Math.PI;
-      const d = e * (30 + (k % 3) * 22);
-      ctx.fillStyle = k % 3 ? '#ff5a6a' : '#ffffff';
+    for (let k = 0; k < 7; k++) {
+      const a = Math.PI + ((k + 0.5) / 7) * Math.PI;
+      const d = e * (30 + ((k * 5) % 3) * 20);
+      const r = (2 + ((k * 3) % 4) * 0.55) * (1 - u * 0.5);
       ctx.beginPath();
-      ctx.arc(x + Math.cos(a) * d * 1.6, y - 6 + Math.sin(a) * d + u * u * 40, 2.6 - u * 1.6, 0, TAU);
+      ctx.arc(x + Math.cos(a) * d * 1.6, y - 6 + Math.sin(a) * d + u * u * 40, r, 0, TAU);
+      ctx.fillStyle = '#ff6a7a';
       ctx.fill();
+      ctx.strokeStyle = '#b8304e';
+      ctx.lineWidth = 0.9;
+      ctx.stroke();
     }
     ctx.restore();
     return true;

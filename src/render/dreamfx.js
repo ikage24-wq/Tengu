@@ -10,7 +10,8 @@
 //                      alarm (the alarm clock ringing over the room), invite (meeting invites sliding
 //                      in from the wall), deadline (a big clock running out)
 
-import { puff, shock, starFlash, easeOut } from './fxkit.js';
+import { puff, shock, starFlash, easeOut, inked } from './fxkit.js';
+import { glowDisc } from './mobfx.js';
 // (Chapter 10's storm looks live in render/stormfx.js and are handed out from here too.)
 import { STORM_FX, STORM_HOLD } from './stormfx.js';
 import { SHAMAN_FX, SHAMAN_HOLD, shamanShot } from './shaman/fx.js';
@@ -896,19 +897,31 @@ export function dreamShot(ctx, shot, x, y, p, d) {
   if (gumdropShot(ctx, shot, x, y, p, d)) return true;
   if (jellyBeanShot(ctx, shot, x, y, p, d)) return true;
   if (shot === 'flame') {
-    // A teardrop of fire, its tail streaming back and flickering.
-    const fl = Math.sin(p * 40) * 1.2;
+    // One of the Candle Bride's own flames (render/bride/) flung through the air: a soft teardrop
+    // in her flame's colours, its tail streaming back and swaying, on a rim of its own colour, a
+    // warm glow round it (the shared soft style, render/mobfx.js).
+    const sw = Math.sin(p * 14) * 0.8;
+    glowDisc(ctx, x, y, 13, '#ffd08a', 0.45);
     ctx.save();
     ctx.translate(x, y);
-    for (const [r, len, c] of [[5, 12, '#ffa03a'], [3.4, 8, '#ffd060'], [1.8, 4.4, '#fff4c0']]) {
-      ctx.fillStyle = c;
+    const tear = (r, len, g) => {
       ctx.beginPath();
-      ctx.moveTo(-d * (r + len), fl * (r / 5));
-      ctx.quadraticCurveTo(-d * r * 0.4, -r * 1.2, d * r * 0.2, -r);
-      ctx.arc(d * r * 0.2, 0, r, -Math.PI / 2, Math.PI / 2, d < 0);
-      ctx.quadraticCurveTo(-d * r * 0.4, r * 1.2, -d * (r + len), fl * (r / 5));
+      ctx.moveTo(-d * (r + len + g), sw * (r / 5));
+      ctx.bezierCurveTo(-d * r * 0.7, -r * 1.25 - g, d * (r * 0.9 + g), -r - g, d * (r + g), 0);
+      ctx.bezierCurveTo(d * (r * 0.9 + g), r + g, -d * r * 0.7, r * 1.25 + g, -d * (r + len + g), sw * (r / 5));
+      ctx.closePath();
+    };
+    if (inked(ctx)) {
+      tear(5, 12, 1);
+      ctx.fillStyle = '#c8683a';
       ctx.fill();
     }
+    tear(5, 12, 0);
+    ctx.fillStyle = '#ff9a3a';
+    ctx.fill();
+    tear(3, 7, 0);
+    ctx.fillStyle = '#ffe9a0';
+    ctx.fill();
     ctx.restore();
     return true;
   }

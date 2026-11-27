@@ -1,15 +1,17 @@
 // The queens' moves on screen (world/story.js): each warning drawn on the ground (or as a column
 // of light) in the queen's own colour, filling up as it counts down and pulsing faster near the
-// end, then her effect bursting where it lands; and the move's name called out under her health
-// bar. The bursts are Tengu's own effect art (fxSprite); the warnings are simple marks, like a
+// end, then her effect bursting where it lands; and the move's hint under her cast bar
+// (render/fightui.js). The bursts are Tengu's own effect art (fxSprite); the warnings are simple marks, like a
 // dungeon boss's.
 
 import { fxSprite } from './fx-sprites.js';
-import { text } from '../ui/kit.js';
+import { drawAnnounce } from './fightui.js';
 import { drawMochiAnim } from './mochi-anim.js';
 import { rollMochi } from '../data/mochi-genes.js';
 import { SHIRATAMA } from '../data/scenes.js';
 import { castWarn, castHit, OWN_WARN } from './bossfx.js';
+import { deep, inked } from './fxkit.js';
+import { clamp01, springy, ready, floorMark, bandMark, chevron } from './mobfx.js';
 
 const TAU = Math.PI * 2;
 
@@ -28,60 +30,71 @@ export function drawZonesBack(ctx, world, cam, time) {
       castWarn(ctx, z, z.kind === 'floor' ? 0 : z.x - cam.x, z.y - cam.y, p, time);
       continue;
     }
-    const pulse = 0.5 + 0.5 * Math.sin(time * (8 + p * 14));
+    // (In the remade monsters' soft style, render/mobfx.js, in the queen's own colours: a clear
+    // edge on a deeper rim of her colour, the fill growing to it, breathing at one steady beat
+    // phased by the mark's own place, never by the screen.)
+    const pal = paletteOf(z);
+    const seed = z.x * 0.05;
     const y = z.y - cam.y;
     ctx.save();
     if (z.kind === 'pillar') {
       const x = z.x - cam.x;
+      const born = clamp01(springy(p / 0.12));
+      const { throb } = ready(p, time, seed);
       const g = ctx.createLinearGradient(0, 0, 0, y);
       g.addColorStop(0, rgba(z.light, 0));
       g.addColorStop(1, rgba(z.color, 0.18 + 0.22 * p));
       ctx.fillStyle = g;
       ctx.fillRect(x - z.w / 2, 0, z.w, y);
-      ctx.fillStyle = rgba(z.light, 0.35 + 0.35 * p * pulse);
-      ctx.fillRect(x - (z.w / 2) * p, 0, z.w * p, y);
-      ctx.strokeStyle = rgba(z.color, 0.6 + 0.4 * pulse);
-      ctx.lineWidth = 1.5;
-      ctx.strokeRect(x - z.w / 2, -2, z.w, y + 2);
-      ground(ctx, x, y, z.w, p, pulse, z);
+      ctx.globalAlpha = born * (0.3 + 0.3 * p + 0.15 * throb);
+      ctx.fillStyle = z.light;
+      ctx.beginPath();
+      ctx.roundRect(x - (z.w / 2) * p, -6, Math.max(0.5, z.w * p), y + 6, Math.min(6, (z.w * p) / 2));
+      ctx.fill();
+      // Its two sides: soft lines on a deeper rim of her colour.
+      ctx.globalAlpha = born * (0.75 + 0.25 * p);
+      ctx.lineCap = 'round';
+      for (const s of [-1, 1]) {
+        ctx.beginPath();
+        ctx.moveTo(x + (s * z.w) / 2, 0);
+        ctx.lineTo(x + (s * z.w) / 2, y);
+        if (inked(ctx)) {
+          ctx.strokeStyle = pal.rim;
+          ctx.lineWidth = 3 + 0.6 * throb;
+          ctx.stroke();
+        }
+        ctx.strokeStyle = z.color;
+        ctx.lineWidth = 1.6 + 0.6 * throb;
+        ctx.stroke();
+      }
+      ctx.globalAlpha = 1;
+      floorMark(ctx, x, y, z.w / 2, 7, p, time, seed, pal, BARE);
     } else if (z.kind === 'circle') {
-      ground(ctx, z.x - cam.x, y, z.w, p, pulse, z);
+      floorMark(ctx, z.x - cam.x, y, z.w / 2, 7, p, time, seed, pal);
     } else {
       const x0 = z.kind === 'floor' ? 0 : z.x - cam.x;
       const w = z.kind === 'floor' ? 640 : z.w;
-      ctx.fillStyle = rgba(z.color, 0.14 + 0.2 * p);
-      ctx.fillRect(x0, y - (z.kind === 'floor' ? 10 : 30), w, z.kind === 'floor' ? 14 : 34);
-      ctx.fillStyle = rgba(z.light, 0.25 + 0.4 * p * pulse);
-      ctx.fillRect(x0, y - 3, w, 5);
-      // Little marks running along it, all pointing the same way, so it reads as one move.
-      ctx.fillStyle = rgba(z.color, 0.55 + 0.45 * pulse);
-      for (let sx = x0 + ((time * 40) % 24); sx < x0 + w; sx += 24) {
-        ctx.beginPath();
-        ctx.moveTo(sx, y - 8);
-        ctx.lineTo(sx + 6, y - 4);
-        ctx.lineTo(sx, y);
-        ctx.fill();
-      }
+      const h = z.kind === 'floor' ? 14 : 34;
+      const dir = z.dir < 0 ? -1 : 1;
+      const born = bandMark(ctx, x0, y + 4 - h / 2, w, h, p, time, seed, z.kind === 'floor' ? 0 : -dir, pal);
+      // Soft chevrons running along it, all pointing the same way, so it reads as one move.
+      const shift = (time * 40) % 24;
+      for (let cx = 12 + shift; cx < w - 4; cx += 24) chevron(ctx, dir > 0 ? x0 + cx : x0 + w - cx, y - 4, 5.4, dir, born * (0.55 + 0.45 * p) * clamp01(Math.min(cx, w - cx) / 12), '#ffffff', pal.rim);
     }
     ctx.restore();
   }
 }
 
-// A warning patch on the ground: an outline, and a fill growing to the edge as it counts down.
-function ground(ctx, x, y, w, p, pulse, z) {
-  ctx.fillStyle = rgba(z.color, 0.16);
-  ctx.beginPath();
-  ctx.ellipse(x, y, w / 2, 7, 0, 0, TAU);
-  ctx.fill();
-  ctx.fillStyle = rgba(z.light, 0.3 + 0.35 * pulse);
-  ctx.beginPath();
-  ctx.ellipse(x, y, (w / 2) * p, 7 * p, 0, 0, TAU);
-  ctx.fill();
-  ctx.strokeStyle = rgba(z.color, 0.7 + 0.3 * pulse);
-  ctx.lineWidth = 1.5;
-  ctx.beginPath();
-  ctx.ellipse(x, y, w / 2, 7, 0, 0, TAU);
-  ctx.stroke();
+// A queen's colours as a mark's palette (her light for the tint, her colour for the fill growing
+// in and for the edge), kept so nothing is built per frame.
+const PALS = new Map();
+const BARE = { bare: true };
+function paletteOf(z) {
+  let byLight = PALS.get(z.color);
+  if (!byLight) PALS.set(z.color, (byLight = new Map()));
+  let pal = byLight.get(z.light);
+  if (!pal) byLight.set(z.light, (pal = { lt: '#ffffff', fill: z.light, mid: z.color, edge: z.color, rim: deep(z.color) }));
+  return pal;
 }
 
 // On top: each move bursting where it lands, and the queens' own flourishes (a puff of smoke).
@@ -147,7 +160,8 @@ export function drawZonesFront(ctx, world, cam, time) {
   }
 }
 
-// The move's name under the boss bar, in the queen's colour, for a couple of seconds.
+// A callout for a couple of seconds, in its own colour: a queen's move shows only its hint under
+// her cast bar (which already names it); anything else is called out big (render/fightui.js).
 export function drawCallout(ctx, world) {
   const c = world.callout;
   if (!c) return;
@@ -156,13 +170,5 @@ export function drawCallout(ctx, world) {
     world.callout = null;
     return;
   }
-  const a = age < 0.15 ? age / 0.15 : age > 1.9 ? (2.4 - age) / 0.5 : 1;
-  const pop = age < 0.15 ? 1.3 - (age / 0.15) * 0.3 : 1;
-  ctx.save();
-  ctx.globalAlpha = a;
-  ctx.translate(320, 92);
-  ctx.scale(pop, pop);
-  text(ctx, c.title, 0, 0, { size: 14, bold: true, align: 'center', color: '#ffffff', outline: c.color });
-  if (c.sub) text(ctx, c.sub, 0, 13, { size: 8, bold: true, align: 'center', color: '#ffffff', outline: 'rgba(58,45,79,0.8)' });
-  ctx.restore();
+  drawAnnounce(ctx, world, c, { age, life: 2.4, color: c.color });
 }

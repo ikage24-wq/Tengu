@@ -133,6 +133,7 @@ function drawHole(ctx, x, y) {
 export function drawCarnivalBack(ctx, world, cam, time) {
   const map = world.map;
   if (map.dungeon !== 'carnival') return;
+  const room = world.dungeon.room;
   const gy = map.groundY - cam.y;
   // The Ferris Wheel plaza: Elder Kuri cheering in the front row (till Queen Gearheart winds down);
   // the whack-a-mole holes all through her fight (the Brass Moles pop up out of them).

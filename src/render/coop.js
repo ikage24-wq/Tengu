@@ -32,6 +32,9 @@ const GUARD_OF = {
 const ringOf = (id) => RING_OF[id] ?? 'celcohoney';
 const guardOf = (id) => GUARD_OF[id] ?? GUARD_OF.gnarlroot;
 const RING_W = 130; // the share ring's drawn width
+// (Near its moment the fill throbs at one steady beat, eased in, never switched on: phased by the
+// ring's own place.)
+const readyThrob = (p, time, x) => 1 - 0.25 * smooth((p - 0.8) / 0.2) * (0.5 - 0.5 * Math.cos(time * 12 + x * 0.05));
 
 // A soft glow for the calm stone (a defend quest's prop, not a boss telegraph).
 function softGlow(ctx, x, y, r, color, a) {
@@ -130,7 +133,7 @@ function drawRing(ctx, world, m, r, cam, time) {
   const live = LIVE_RING[m.def.id];
   if (live) {
     live.ring(ctx, x, y, r.w * (0.8 + 0.2 * born), p, born, time);
-    fxSprite(ctx, 'celcosharefill', x, y, { p: p * 0.999, scale, alpha: born * (p > 0.8 ? 0.75 + 0.25 * Math.sin(time * 18) : 1) });
+    fxSprite(ctx, 'celcosharefill', x, y, { p: p * 0.999, scale, alpha: born * readyThrob(p, time, r.x) });
     return;
   }
   // A deep rim under the ring (its own drawing, darkened and a touch wider) so the gold reads on any
@@ -140,7 +143,7 @@ function drawRing(ctx, world, m, r, cam, time) {
   fxSprite(ctx, ringOf(m.def.id), x, y + 1, { t: time, scale: scale * 1.05, alpha: born * 0.7 });
   ctx.restore();
   fxSprite(ctx, ringOf(m.def.id), x, y, { t: time, scale, alpha: born });
-  fxSprite(ctx, 'celcosharefill', x, y, { p: p * 0.999, scale, alpha: born * (p > 0.8 ? 0.75 + 0.25 * Math.sin(time * 18) : 1) });
+  fxSprite(ctx, 'celcosharefill', x, y, { p: p * 0.999, scale, alpha: born * readyThrob(p, time, r.x) });
 }
 
 // Over the ring, above everyone's heads (drawn in front): a pip for every player near the fight,

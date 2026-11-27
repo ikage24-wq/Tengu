@@ -421,8 +421,9 @@ function heatWarn(ctx, z, x, y, p, time) {
   ctx.restore();
 }
 function heatHit(ctx, z, x, y, u, e, fade, time) {
+  // (a gentle warm wash, eased in and out: the full-strength flash was too bright, the player's note)
   ctx.save();
-  ctx.globalAlpha = 0.3 * fade * Math.max(0, 1 - u * 1.5);
+  ctx.globalAlpha = 0.14 * sstep(u / 0.08) * (1 - sstep(u / 0.6));
   ctx.fillStyle = '#fff0dc';
   ctx.fillRect(0, 0, SW, 360);
   ctx.restore();

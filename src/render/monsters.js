@@ -10,6 +10,7 @@
 import { sprite, spriteLater, spriteAsync, blit, snap, footShadow } from './pixel.js';
 import { springStep } from './animator.js';
 import { fxSprite } from './fx-sprites.js';
+import { springy, cloud as softCloud } from './mobfx.js';
 import { ARTS, mobBuild } from './mobs/index.js';
 
 export { ARTS };
@@ -319,7 +320,8 @@ function deathPose(m, mo, D) {
     out.sx = 1 + 0.05 * k;
     if (D > DIE_POOF) {
       const u = (D - DIE_POOF) / (0.5 - DIE_POOF);
-      out.white = u < 0.3 ? 1 : 0.6;
+      // (the white eased in and held, never switched on in one frame)
+      out.white = smooth(clamp(u / 0.2, 0, 1)) * (1 - 0.4 * smooth(clamp((u - 0.3) / 0.3, 0, 1)));
       out.alpha = 1 - smooth(u);
     }
     return out;
@@ -343,7 +345,8 @@ function deathPose(m, mo, D) {
     out.sy = 1 - sq;
     if (D >= DIE_POOF) {
       const u = (D - DIE_POOF) / (0.5 - DIE_POOF);
-      out.white = u < 0.28 ? 1 : 0;
+      // (a white glow eased in and out, never one frame switched on and off)
+      out.white = smooth(clamp(u / 0.14, 0, 1)) * (1 - smooth(clamp((u - 0.14) / 0.3, 0, 1)));
       out.sx *= 1 + 0.5 * u;
       out.sy *= Math.max(0.05, 1 - 1.1 * u);
       out.alpha = u < 0.28 ? 1 : 1 - (u - 0.28) / 0.72;
@@ -353,22 +356,18 @@ function deathPose(m, mo, D) {
   return out;
 }
 
-// A small cartoon puff where the monster vanishes: soft round clouds swelling and thinning out.
+// A small cartoon puff where the monster vanishes (2026-11-27, the remade monsters' soft style,
+// render/mobfx.js): three soft clouds outlined in a deeper shade of their own colour, springing up
+// and swelling apart as they thin out.
 function poofCloud(ctx, x, y, w, u) {
-  ctx.save();
-  ctx.globalAlpha = 0.85 * (1 - u);
   const r0 = Math.max(4, w * 0.16);
-  for (let i = 0; i < 5; i++) {
-    const a = Math.PI * (0.1 + (i / 4) * 0.8);
-    const d = r0 * (0.6 + u * 1.4);
-    const cx = x - Math.cos(a) * d * 1.3;
-    const cy = y - r0 * 0.8 - Math.sin(a) * d * 0.7;
-    ctx.fillStyle = i % 2 ? '#ffffff' : '#f3ecff';
-    ctx.beginPath();
-    ctx.arc(cx, cy, r0 * (0.55 + u * 0.5), 0, Math.PI * 2);
-    ctx.fill();
+  const k = springy(Math.min(1, u / 0.35));
+  const al = 0.9 * (1 - smooth(clamp((u - 0.3) / 0.7, 0, 1)));
+  for (let i = 0; i < 3; i++) {
+    const side = i - 1;
+    const d = r0 * (0.4 + u * 1.2);
+    softCloud(ctx, x + side * d * 1.3, y - r0 * (0.9 + (i === 1 ? 0.5 : 0)) - u * r0 * 0.6, r0 * (i === 1 ? 0.95 : 0.7) * (0.6 + 0.4 * k), '#ffffff', i === 1 ? '#ece4f8' : '#f6e6f0', al);
   }
-  ctx.restore();
 }
 
 // (x, y) is the monster's feet center in screen space; `now` is world time (for aggro).
@@ -673,8 +672,10 @@ function iceBlock(ctx, x, y, s, left, time) {
 // Stunned: little stars and a swirl circling over the head.
 function dizzyStars(ctx, x, y, time) {
   ctx.save();
-  ctx.strokeStyle = 'rgba(255,255,255,0.85)';
-  ctx.lineWidth = 1.5;
+  // (soft, 2026-11-27: a fainter orbit, the stars' points rounded on a rim of their own gold)
+  ctx.lineJoin = 'round';
+  ctx.strokeStyle = 'rgba(255,255,255,0.55)';
+  ctx.lineWidth = 1.2;
   ctx.beginPath();
   ctx.ellipse(x, y, 13, 4, 0, 0, Math.PI * 2);
   ctx.stroke();
@@ -685,16 +686,16 @@ function dizzyStars(ctx, x, y, time) {
     const r = 4 + Math.sin(a) * 1;
     ctx.fillStyle = i === 1 ? '#ffffff' : '#ffe36b';
     ctx.strokeStyle = '#c98a2b';
-    ctx.lineWidth = 0.8;
+    ctx.lineWidth = 1.6;
     ctx.beginPath();
     for (let k = 0; k < 10; k++) {
       const ang = (k / 10) * Math.PI * 2 - Math.PI / 2;
-      const rr = k % 2 ? r * 0.45 : r;
+      const rr = k % 2 ? r * 0.5 : r;
       ctx.lineTo(sx + Math.cos(ang) * rr, sy + Math.sin(ang) * rr);
     }
     ctx.closePath();
-    ctx.fill();
     ctx.stroke();
+    ctx.fill();
   }
   ctx.restore();
 }

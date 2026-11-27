@@ -8,6 +8,7 @@ import { ITEMS } from '../data/items.js';
 import { ELEMENTS } from './elements.js';
 import { hasVolt, hasGale, hasBulwark } from '../world/melee.js';
 import { needle, starFlash, shardRing, puff, crown, shock, wisp, contrast, stepped, inked, easeOut, easeIn } from './fxkit.js';
+import { sparkle as softSparkle, cloud as softCloud, glowDisc, ring as softRing, springy, sstep } from './mobfx.js';
 
 const MAX = 600;
 
@@ -117,52 +118,43 @@ export function sparks(fx, x, y, crit, dir, palette = null, real = false) {
   if (crit) add(fx, { x, y, vx: 0, vy: 0, delay: lag, life: 0.3, size: 6, r1: 30, thick: 4, shape: 'shards', n: 9, seed: Math.random(), rot: Math.random() * 6, color: hot });
 }
 
-// One blast of a defeat, in Saint11's layers: a dark contrast disc, a white flash, quick warm
-// fire puffs that burn out fast, then pale smoke that billows, curls, and tears apart slowly.
-function blast(fx, x, y, r, n, delay, big) {
-  add(fx, { x, y, vx: 0, vy: 0, delay, life: big ? 0.06 : 0.04, size: r * 0.7, shape: 'contrast', color: '#ffb38a' });
-  add(fx, { x, y, vx: 0, vy: 0, delay: delay + 1 / 60, life: big ? 0.26 : 0.16, size: r * 1.3, shape: 'flash', rot: Math.random(), spikes: big ? 8 : 4 + Math.floor(Math.random() * 3), color: '#ffe9a8' });
-  for (let i = 0; i < Math.ceil(n / 2); i++) {
-    const a = (i / Math.ceil(n / 2)) * Math.PI * 2 + Math.random() * 0.6;
-    const sp = r * (3 + Math.random() * 2);
-    add(fx, {
-      x: x + Math.cos(a) * r * 0.2, y: y + Math.sin(a) * r * 0.2, delay: delay + 1 / 60,
-      vx: Math.cos(a) * sp, vy: Math.sin(a) * sp * 0.7 - 10, drag: 6,
-      life: 0.15 + Math.random() * 0.1, size: r * (0.45 + Math.random() * 0.2), shape: 'puff', color: '#fff6c9', shade: '#ffb38a',
-    });
-  }
-  const drift = (Math.random() - 0.5) * 16;
+// One soft burst of a defeat (2026-11-27, in the remade monsters' soft style, render/mobfx.js): a
+// warm glow springing open, one sparkle popping and closing in it, and a few soft clouds puffing out
+// and shrinking away (no dark frame, no spiky flash, no smoke torn into holes).
+function softBurst(fx, x, y, r, n, delay) {
+  add(fx, { x, y, vx: 0, vy: 0, delay, life: 0.3, size: r * 1.6, shape: 'softpop', color: '#fff2d0' });
+  add(fx, { x, y, vx: 0, vy: 0, delay, life: 0.32, size: r * 0.7, shape: 'twinkle', rot: (Math.random() - 0.5) * 0.6, color: '#fff3c0' });
+  const drift = (Math.random() - 0.5) * 12;
   for (let i = 0; i < n; i++) {
     const a = (i / n) * Math.PI * 2 + Math.random() * 0.5;
-    const sp = r * (3 + Math.random() * 2.5);
+    const sp = r * (2.4 + Math.random() * 1.4);
     add(fx, {
-      x: x + Math.cos(a) * r * 0.35, y: y + Math.sin(a) * r * 0.35, delay: delay + 2 / 60,
-      vx: Math.cos(a) * sp + drift, vy: Math.sin(a) * sp * 0.6 - 14, drag: 3.5, curl: 18, phase: Math.random() * 6,
-      life: 0.5 + Math.random() * 0.3, size: r * (0.5 + Math.random() * 0.3), shape: 'puff', holes: true, seed: Math.random(),
-      color: '#ffffff', shade: i % 3 ? '#e4dcf4' : '#f6dcea',
+      x: x + Math.cos(a) * r * 0.3, y: y + Math.sin(a) * r * 0.3, delay: delay + 1 / 60,
+      vx: Math.cos(a) * sp + drift, vy: Math.sin(a) * sp * 0.6 - 14, drag: 4.5,
+      life: 0.45 + Math.random() * 0.2, size: r * (0.42 + Math.random() * 0.16), shape: 'cloud',
+      color: '#ffffff', shade: i % 2 ? '#ece4f8' : '#f8e4ee',
     });
   }
 }
 
-// A defeated monster bursts into a cel smoke cloud, and a few stars tossed up after it. Bosses
-// go up in a chain of blasts across their body, then a huge shockwave and a ring of shards.
+// A defeated monster puffs away in a soft cloud, and a few pastel sparkles tossed up after it.
+// Bosses go in a few soft bursts across their body, then a big soft ring.
 export function poof(fx, x, y, w, h, boss) {
   const cy = y - h / 2;
   const r = Math.max(w, h) * 0.3;
   if (boss) {
-    for (let k = 0; k < 5; k++) {
+    for (let k = 0; k < 4; k++) {
       const a = k * 2.4;
-      blast(fx, x + Math.cos(a) * w * 0.3 * (k ? 1 : 0), cy + Math.sin(a) * h * 0.3 * (k ? 1 : 0), Math.max(14, r * (k === 4 ? 0.9 : 0.6)), k === 4 ? 14 : 6, k * 0.08, k === 4);
+      softBurst(fx, x + Math.cos(a) * w * 0.3 * (k ? 1 : 0), cy + Math.sin(a) * h * 0.3 * (k ? 1 : 0), Math.max(14, r * (k === 3 ? 0.9 : 0.6)), k === 3 ? 6 : 3, k * 0.09);
     }
-    add(fx, { x, y: cy, vx: 0, vy: 0, delay: 0.34, life: 0.5, size: 10, r1: 120, thick: 6, flat: 1, shape: 'shock', color: '#ffffff' });
-    add(fx, { x, y: cy, vx: 0, vy: 0, delay: 0.34, life: 0.55, size: 14, r1: 90, thick: 7, shape: 'shards', n: 12, seed: Math.random(), rot: 0, color: '#ffe36b' });
+    add(fx, { x, y: cy, vx: 0, vy: 0, delay: 0.34, life: 0.55, size: 10, r1: 120, thick: 5, flat: 0.45, shape: 'softring', color: '#fff3c0' });
   } else {
-    blast(fx, x, cy, Math.max(9, r), 7, 0, false);
+    softBurst(fx, x, cy, Math.max(9, r), 5, 0);
   }
-  for (let i = 0; i < (boss ? 14 : 4); i++) {
+  for (let i = 0; i < (boss ? 8 : 3); i++) {
     add(fx, {
-      x, y: cy, vx: (Math.random() - 0.5) * 170, vy: -90 - Math.random() * 130, g: 400, delay: boss ? 0.4 : 0.05,
-      life: 0.7 + Math.random() * 0.3, size: 2, shape: 'star', spin: 6, color: ['#ffe36b', '#ff9ec0', '#8fe3ff'][i % 3],
+      x, y: cy, vx: (Math.random() - 0.5) * 160, vy: -90 - Math.random() * 120, g: 320, drag: 0.8, delay: boss ? 0.4 : 0.05,
+      life: 0.7 + Math.random() * 0.3, size: 2.6, shape: 'twinkle', spin: (Math.random() - 0.5) * 4, color: ['#ffe36b', '#ff9ec0', '#8fe3ff', '#c9a6ff'][i % 4],
     });
   }
 }
@@ -302,11 +294,13 @@ export function absorbJuice(fx, world) {
       // Jolt the view away from whatever hit you.
       const near = world.mobs.reduce((a, m) => (m.hp > 0 && (!a || Math.abs(m.x - j.x) < Math.abs(a.x - j.x)) ? m : a), null);
       kick(fx, near ? -Math.sign(near.x - j.x) * 2.5 : 0, 1);
-      add(fx, { x: j.x, y: j.y, vx: 0, vy: 0, life: 0.04, size: 8, shape: 'contrast', color: '#ff6b8a' });
-      add(fx, { x: j.x, y: j.y, vx: 0, vy: 0, delay: 1 / 60, life: 0.15, size: 13, shape: 'flash', rot: Math.random(), spikes: 4, color: '#ff6b8a' });
-      for (let i = 0; i < 6; i++) {
-        const a = -Math.PI / 2 + (Math.random() - 0.5) * 2.4;
-        add(fx, { x: j.x, y: j.y, vx: Math.cos(a) * 150, vy: Math.sin(a) * 150, g: 380, drag: 3, delay: 1 / 60, life: 0.3, size: 2, shape: 'needle', color: i % 2 ? '#ff9ec0' : '#ffffff' });
+      // (A blow on you, in the remade monsters' soft style, render/mobfx.js: a soft rose glow
+      // springing open, one sparkle popping and closing, and three little ones tossed off it.)
+      add(fx, { x: j.x, y: j.y, vx: 0, vy: 0, life: 0.26, size: 19, shape: 'softpop', color: '#ffb0c8' });
+      add(fx, { x: j.x, y: j.y, vx: 0, vy: 0, life: 0.32, size: 10, shape: 'twinkle', rot: (Math.random() - 0.5) * 0.5, color: '#ff8fb0' });
+      for (let i = 0; i < 3; i++) {
+        const a = -Math.PI / 2 + (i - 1) * 0.8 + (Math.random() - 0.5) * 0.3;
+        add(fx, { x: j.x, y: j.y, vx: Math.cos(a) * 140, vy: Math.sin(a) * 140, g: 160, drag: 4, delay: 1 / 60, life: 0.42, size: 2.8, shape: 'twinkle', spin: 3 * (i - 1), color: i === 1 ? '#ffffff' : '#ffc4d8' });
       }
     } else if (j.type === 'dust') {
       // A companion's footwork (a lunge, a planted heel): dust kicked up from under a foot.
@@ -358,6 +352,12 @@ export function absorbJuice(fx, world) {
       if (j.big && j.school === 'rage') embers(fx, j.x, j.y, 6);
       else if (j.big && !soft) add(fx, { x: j.x, y: j.y, vx: 0, vy: 0, life: 0.3, size: 6, r1: 34, thick: 3, flat: 0.22, shape: 'shock', color: '#ffffff' });
     } else if (j.type === 'slam') {
+      // (A field monster's slam: its soft ring and dust clouds are drawn whole in render/mobfx.js;
+      // here only the view dips. The rest is the warriors' own stomp.)
+      if (j.mob) {
+        kick(fx, 0, 3);
+        continue;
+      }
       // A heavy stomp: rock spikes burst up, dust billows along the ground, and a shockwave rolls out
       // in lavender rock; the paths' are real light and fire (render/warrior-fx.js draws their
       // burst), so a Paladin's throws up specks of light and a Berserker's embers instead.
@@ -469,7 +469,7 @@ export function updateParticles(fx, dt, world, cam, viewW, viewH) {
 }
 
 // Shapes drawn as solid cel art (see fxkit.js).
-const CEL = new Set(['needle', 'flash', 'shock', 'shards', 'puff', 'crown', 'wisp', 'contrast']);
+const CEL = new Set(['needle', 'flash', 'shock', 'shards', 'puff', 'crown', 'wisp', 'contrast', 'twinkle', 'cloud', 'softpop', 'softring']);
 
 export function drawParticles(ctx, fx, cam, time) {
   ctx.save();
@@ -516,6 +516,26 @@ export function drawParticles(ctx, fx, cam, time) {
       case 'shards':
         shardRing(ctx, x, y, p.size + (p.r1 - p.size) * easeOut(t), p.thick * (1 - t) ** 1.2, p.n, p.seed, p.rot + t * 0.6, p.color);
         break;
+      // (The monsters' soft shapes, render/mobfx.js: each springs open with a little overshoot and
+      // eases away.)
+      case 'twinkle': {
+        const k = t < 0.3 ? springy(t / 0.3) : 1 - sstep((t - 0.3) / 0.7) * 0.85;
+        softSparkle(ctx, x, y, p.size * k, p.color, 1, (p.rot ?? 0) + p.age * p.spin);
+        break;
+      }
+      case 'cloud': {
+        const k = t < 0.3 ? springy(t / 0.3) : 1 - sstep((t - 0.3) / 0.7) * 0.8;
+        softCloud(ctx, x, y, p.size * k, p.color, p.shade ?? '#e4dcf4');
+        break;
+      }
+      case 'softpop':
+        glowDisc(ctx, x, y, p.size * springy(Math.min(1, t / 0.35)), p.color, 1 - sstep(t));
+        break;
+      case 'softring': {
+        const r = p.size + (p.r1 - p.size) * easeOut(t);
+        softRing(ctx, x, y, r, r * (p.flat ?? 1), p.thick * (1 - t) ** 1.2, p.color);
+        break;
+      }
       case 'haze': {
         // Soft dust, no outline (the realistic jobs' stomps): a blurred cloud that swells and thins.
         const k = t < 0.2 ? easeOut(t / 0.2) : 1;
