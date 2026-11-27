@@ -160,10 +160,6 @@ export const MOBS = {
     // chasing too, 2026-11-25; faster, it trots and gallops in a tangle of legs.)
     fight: { every: 1.6, reach: 30, windup: 0.4 },
   }),
-  mossgolem: mob({
-    id: 'mossgolem', name: 'Treant', level: 18, hp: 620, atk: 58, def: 20, acc: 40, eva: 4, exp: 420, gold: [6, 15],
-    speed: 22, w: 34, h: 58, art: 'mossgolem', drops: [{ id: 'moss_stone', chance: 0.45 }, { id: 'maple_log', chance: 0.08 }],
-  }),
   // Whispering Glade's tanukis in disguise (2026-11-13): little folk who are really tanukis, and go up
   // in a puff of smoke leaving a leaf when beaten (`leafPoof`). A puddle-mad rain kid in a raincoat
   // with a lily-pad umbrella on the floor (since 2026-11-26 remade on her own copy of the kid base,
@@ -251,13 +247,8 @@ export const MOBS = {
     speed: 26, rest: [9, 14], w: 32, h: 30, art: 'starspirit', fly: true, moves: ['swish', 'bubble', 'dash'], drops: [{ id: 'stardust', chance: 0.45 }, { id: 'starstone', chance: 0.08 }, { id: 'star_cape', chance: 0.01 }],
   }),
 
-  // Spirit maidens out of myth, living on the mid and late maps: Sylph in Whispering Glade, Nekomata
-  // and Kitsune Miko on the Fox Shrine Path, Lupina on Moonlit Ridge, Lamia at Serpent Springs,
-  // Yuki-onna on Frozen Peak.
-  sylph: mob({
-    id: 'sylph', name: 'Sylph', level: 21, hp: 700, atk: 64, def: 14, acc: 48, eva: 12, exp: 500, gold: [7, 17],
-    speed: 70, w: 24, h: 46, art: 'sylph', fly: true, drops: [{ id: 'sylph_feather', chance: 0.45 }, { id: 'silkmoss', chance: 0.08 }, { id: 'fairy_wings', chance: 0.01 }],
-  }),
+  // Spirit maidens out of myth, living on the mid and late maps: Nekomata and Kitsune Miko on the
+  // Fox Shrine Path, Lupina on Moonlit Ridge, Lamia at Serpent Springs, Yuki-onna on Frozen Peak.
   nekomata: mob({
     id: 'nekomata', name: 'Nekomata', level: 23, hp: 820, atk: 76, def: 16, acc: 54, eva: 14, exp: 600, gold: [8, 19],
     speed: 74, gait: 'dart', w: 24, h: 46, art: 'nekomata', drops: [{ id: 'nekomata_bell', chance: 0.45 }, { id: 'lotus_fiber', chance: 0.08 }, { gear: 'earring', chance: 0.01 }],
@@ -410,11 +401,6 @@ export const MOBS = {
     // (the Lamplighter Wisp, 2026-11-24: her pole and lantern, render/wisp/)
     speed: 40, w: 26, h: 44, art: 'lanternghost', drops: [{ id: 'wisp_flame', chance: 0.35 }, { id: 'moonlit_ribbon', chance: 0.06 }, { gear: 'earring', chance: 0.01 }],
     moves: ['lanternFling', 'emberVolley'], fight: { every: 2.1, reach: 30, windup: 0.5, range: 150 },
-  }),
-  armourknight: mob({
-    id: 'armourknight', name: 'Armour Knight', level: 18, hp: 1200, atk: 70, def: 26, acc: 52, eva: 3, exp: 420, gold: [8, 16],
-    speed: 34, w: 28, h: 36, art: 'armourknight', drops: [{ id: 'bone_shard', chance: 0.3 }, { id: 'moonlit_ribbon', chance: 0.1 }],
-    fight: { every: 2.1, reach: 44, windup: 0.55 },
   }),
   // The Teacup Hermit (2026-11-26, the Tea Party Hatter remade from scratch as Pemberton, the teacup
   // hermit crab: a little rose-pink hermit crab living in a fine porcelain teacup, monocle and

@@ -1,7 +1,6 @@
 // Monster art: maidens. Six graceful humanoid and anthro monster women, taller than the critters
 // (about a third of their height is head), each with her own face, eyes, and gait:
 //   kitsunemiko  Kitsune Miko: a fox-eared shrine maiden with three fox-fire tails and a gohei
-//   sylph        Sylph: a wind spirit on gossamer wings, hair and ribbons streaming (a flyer)
 //   yukionna     Yuki-onna: a snow maiden gliding in a white kimono, frost trailing her sleeves
 //   nekomata     Nekomata: a twin-tailed cat-girl rogue who prowls low with two daggers
 //   lamia        Lamia: a serpent-tailed dancer in gold and veils with a hypnotic gaze
@@ -725,229 +724,6 @@ function kitsune(pose, f, mood) {
       if (f >= 1) for (let k = 1; k <= 3; k++) out.push(dot(ox - k * 3, oy + Math.sin(k) * 0.6, r * (1 - k * 0.22), fl[k === 1 ? 0 : 1]));
       out.push(dot(ox, oy, r + 1, fl[0]), dot(ox - 0.2, oy - 0.1, r * 0.72, fl[1]), dot(ox - 0.4, oy - 0.3, r * 0.4, '#ffffff'));
       if (f === 1) out.push(sparkle(ox + 1, oy - 4.5, 1.8, '#ffffff'), sparkle(ox - 3, oy + 4, 1.4, fl[1]));
-    }
-  }
-  return { w: W, h: H, res: 3, shapes: out };
-}
-
-// ---------- Sylph ----------
-
-const SY = soften({
-  skin: '#f3fffa', skinDk: '#d2efe6', hair: '#8fe2c4', hairDk: '#5fc2a2', hairLt: '#dcfff0', dress: '#86dcb4', dressDk: '#5fbf98', dressLt: '#c8f6dc',
-  leaf: '#78d494', ribbon: '#ffc4e4', ribbonDk: '#f09ccb', wing: '#effdff', wingDk: '#c8eef0', vein: '#8fd6cc', wingTint: '#f2dcff', gust: '#d4fff1', gust2: '#ffffff', flower: '#ffb3d9', gold: '#ffe08a',
-});
-// Round, glowing lilac eyes (set against her mint hair) with a star glint, soft lashes; airy and
-// sweet, she gasps when struck.
-const SYLPH_FACE = {
-  skin: SY.skin, skinSh: '#d2efe6', skinSh2: '#a6d2cc', blush: '#ffb0d0', lip: '#ff7fb0', lipLine: '#c0457a',
-  eye: { nearX: 2.2, farX: 9.6, rx: 3.4, ry: 3, far: 0.86, tilt: 0.02, iris: '#b07cff', irisDk: '#4a2a9a', irisLt: '#efe2ff', hot: '#ff6fb8', hotDk: '#a01a6a', pupil: 'round', pupilC: '#22145a', sparkle: true, wing: 1.1, flicks: 1, lashLen: 1.2, ink: '#1f5a5a', crease: false, lower: '#a8d8cc', lashSh: '#c8e8e2' },
-  brow: { c: '#3f9a86', kind: 'soft', w: 0.7 },
-  moods: { idle: { mouth: 'soft', gaze: [0.06, -0.03] }, angry: { mouth: 'gasp' }, hurt: { mouth: 'gasp' }, happy: { lids: 'open', open: 1, iris: 1.1, mouth: 'grin', blush: 1.5 } },
-};
-// Wispy clumps that lift and curl at the tips.
-const SYLPH_FRINGE = [[-2.4, -4.6, -3.4, 0.4, 2.8, -0.8], [-0.4, -5.6, -0.4, -0.2, 3.2, -0.5], [2, -5.6, 3.1, 1.2, 3.2, 0.6], [4.4, -5, 5.4, -0.6, 3, 0.7], [6.4, -3.6, 7.6, 1.6, 2.4, 0.6]];
-
-// A dragonfly wing from (x, y) toward angle a: a long leaf of gossamer with veins and a tinted tip.
-function wing(x, y, a, len, w, P, far) {
-  const out = [];
-  const d = [Math.cos(a), Math.sin(a)];
-  const nrm = [-d[1], d[0]];
-  const pts = [];
-  for (let i = 0; i <= 10; i++) {
-    const t = i / 10;
-    const half = (w / 2) * Math.sin(Math.PI * t) ** 0.6;
-    pts.push([x + d[0] * len * t + nrm[0] * half * 1.15, y + d[1] * len * t + nrm[1] * half * 1.15]);
-  }
-  for (let i = 10; i >= 0; i--) {
-    const t = i / 10;
-    const half = (w / 2) * Math.sin(Math.PI * t) ** 0.8;
-    pts.push([x + d[0] * len * t - nrm[0] * half * 0.85, y + d[1] * len * t - nrm[1] * half * 0.85]);
-  }
-  out.push(...opoly(pts, far ? P.wingDk : P.wing, 0.45));
-  const tip = pts.slice(6, 15);
-  out.push(fpoly(tip, P.wingTint));
-  out.push(line([[x, y], [x + d[0] * len * 0.95, y + d[1] * len * 0.95]], 0.4, P.vein));
-  for (const t of [0.3, 0.55, 0.78]) {
-    const bx = x + d[0] * len * t;
-    const by = y + d[1] * len * t;
-    out.push(line([[bx, by], [bx + d[0] * 2.2 + nrm[0] * w * 0.42, by + d[1] * 2.2 + nrm[1] * w * 0.42]], 0.3, P.vein), line([[bx, by], [bx + d[0] * 2 - nrm[0] * w * 0.32, by + d[1] * 2 - nrm[1] * w * 0.32]], 0.3, P.vein));
-  }
-  out.push(dot(x + d[0] * len * 0.62 + nrm[0] * w * 0.15, y + d[1] * len * 0.62 + nrm[1] * w * 0.15, 0.5, '#ffffff'));
-  return out;
-}
-
-// A spiral of wind: a band winding out from the center, lit along its inner edge.
-function gust(cx, cy, R, turn, P, k = 1) {
-  const pts = [];
-  for (let i = 0; i <= 26; i++) {
-    const t = i / 26;
-    const a = turn + t * Math.PI * 3.2;
-    const r = R * (0.15 + 0.85 * t);
-    pts.push([cx + Math.cos(a) * r, cy + Math.sin(a) * r * 0.8]);
-  }
-  return [...oband(pts, (t) => 0.4 + 2.4 * k * Math.sin(Math.PI * t) ** 0.7, P.gust, 1, 0.4), fband(pts.slice(4, 22), (t) => 0.6 * Math.sin(Math.PI * t), P.gust2, 1)];
-}
-
-function sylph(pose, f, mood) {
-  const P = fade(SY, mood);
-  const walk = pose === 'walk';
-  const atk = pose === 'attack';
-  const dead = mood === 'dead';
-  const hurt = mood === 'hurt';
-  const angry = mood === 'angry' || atk;
-  const n = walk ? 8 : atk ? 4 : 6;
-  const ph = (f / n) * TAU;
-  // Hovering on the breeze: a slow rise and fall, drifting nose-down as she glides forward.
-  let hip = [32, 40.5 + Math.sin(ph) * 1.4];
-  // Idle fidget: a lazy twirl in the air, one arm sweeping up overhead and around.
-  const twirl = pose === 'idle' && !dead;
-  let lean = walk ? 0.17 : 0.04 + Math.sin(ph) * 0.05;
-  let tilt = walk ? 0.02 + Math.sin(ph + 1) * 0.03 : Math.sin(ph + 1) * 0.05;
-  const A = atk ? [[-2.2, -0.16], [2.2, 0.2], [1.6, 0.12], [0.4, 0.05]][f] : null;
-  if (A) {
-    hip[0] += A[0];
-    lean = A[1];
-    tilt = A[1] * 0.5;
-  }
-  if (hurt) {
-    lean = -0.22;
-    tilt = -0.22;
-    hip[0] -= 1.5;
-  }
-  if (dead) {
-    hip = [31, 51];
-    lean = 0.55;
-    tilt = 0.55;
-  }
-  const flap = dead ? -0.6 : Math.sin(ph * 2);
-  const wind = walk ? 1 : A ? (f === 0 ? -0.4 : 0.6) : 0.35;
-  const out = [];
-  const T0 = at(hip[0], hip[1], lean);
-  const pt = (x, y) => within(T0, () => X(x, y));
-  const neck = pt(1, -14.2);
-  const hc = [neck[0] + 0.6 + Math.sin(tilt) * 7, neck[1] - 7.6];
-
-  // Hair: long locks streaming back on the wind, lighter toward the tips.
-  const locks = [[-4.4, -5.4, -0.25, 20, 5], [-6, -2, 0, 24, 5.4], [-6.6, 1.6, 0.25, 21, 4.6], [-5.4, 4.4, 0.5, 16, 3.6]];
-  locks.forEach(([lx, ly, da, len, w], i) => {
-    const root = [hc[0] + lx, hc[1] + ly];
-    // Streaming back in flight, falling softer while she hovers.
-    const a0 = lerp(2.0, 2.75, wind) + da + (dead ? -0.5 : 0);
-    const bend = lerp(0.2, -0.85, wind) + da * 0.4;
-    const pts = flowPts(root, a0, bend, dead ? len * 0.7 : len, ph - i * 0.7, 0.32, 6, 0.9);
-    out.push(...oband(pts, lockW(w, 0.85, 0.3, 0.04), i % 2 ? P.hairDk : P.hair, 3));
-    out.push(fband(pts.slice(2), lockW(w * 0.3, 1, 0.2, 0.05), P.hairLt, 3));
-  });
-
-  // Two pairs of dragonfly wings from the shoulder blades, fluttering.
-  {
-    const wr = pt(-2.8, -11);
-    const wa = (dead ? 0.8 : 0) + lean;
-    out.push(...wing(wr[0] - 0.6, wr[1] - 0.4, -2.05 + flap * 0.22 + wa * 0.5, 16, 5.2, P, true), ...wing(wr[0] - 0.4, wr[1] + 0.6, -2.85 + flap * 0.18 + wa * 0.5, 12.5, 4.2, P, true));
-    out.push(...wing(wr[0], wr[1], -2.3 + flap * 0.28 + wa * 0.5, 17.5, 5.8, P, false), ...wing(wr[0] + 0.2, wr[1] + 1.2, -3.1 + flap * 0.22 + wa * 0.5, 13.5, 4.6, P, false));
-  }
-
-  // Back arm.
-  const shB = pt(-3, -12.2);
-  let handB;
-  if (dead) handB = [shB[0] + 1, shB[1] + 10];
-  else if (A) handB = [[shB[0] - 8, shB[1] + 1], [shB[0] + 11, shB[1] - 2], [shB[0] + 8.5, shB[1] - 5.5], [shB[0] + 4, shB[1] + 4]][f];
-  else if (walk) handB = [shB[0] - 6 + Math.sin(ph) * 0.6, shB[1] + 6.5];
-  else handB = [shB[0] - 4.6 + Math.sin(ph) * 0.4, shB[1] + 6.6 + Math.sin(ph - 0.6) * 0.5];
-  const elB = joint(shB, handB, 6, 6, A && f >= 1 && f <= 2 ? 1 : -1);
-  out.push(...limb(shB, elB.k, elB.f, 2.2, 1.9, 1.5, P.skinDk), ...ooval(elB.f[0], elB.f[1], 1.05, 0.95, P.skinDk));
-  out.push(...oband([[elB.f[0] - 1, elB.f[1] - 0.6], [elB.f[0] - 3, elB.f[1] + 1.4 + Math.sin(ph) * 0.5], [elB.f[0] - 6.5, elB.f[1] + 0.6 + Math.sin(ph - 1)]], taperW(1.2, 0.4), P.ribbonDk, 3));
-
-  // Legs: bare and pointed like a dancer's, trailing as she floats, ribbons laced at the ankles.
-  const legAt = (hx, foot, c, c2) => {
-    const h0 = pt(hx, 0);
-    const kn = joint(h0, foot, 10.2, 10.2, 1);
-    const a = kn.f;
-    const dir = Math.atan2(a[1] - kn.k[1], a[0] - kn.k[0]) - 0.35;
-    const toe = [a[0] + Math.cos(dir) * 3.2, a[1] + Math.sin(dir) * 3.2];
-    const out2 = [...limb(h0, kn.k, a, 3.4, 2.3, 1.5, c, c, false), ...oband([a, toe], taperW(1.7, 0.6), c, 1)];
-    out2.push(line([[a[0] - 1, a[1] - 2.2], [a[0] + 1, a[1] - 1.4]], 0.5, c2), line([[a[0] - 0.9, a[1] - 0.8], [a[0] + 1, a[1] - 0.1]], 0.5, c2));
-    return out2;
-  };
-  const swing = walk ? Math.sin(ph) * 1.6 : Math.sin(ph) * 0.6;
-  const feet = dead
-    ? [[hip[0] - 9, hip[1] + 10], [hip[0] - 6, hip[1] + 12]]
-    : A && f === 1
-      ? [[hip[0] - 8, hip[1] + 15], [hip[0] - 3, hip[1] + 17]]
-      : [[hip[0] - 7.4 - swing * 0.6 - (walk ? 1.6 : 0), hip[1] + 14.4 + swing * 0.4], [hip[0] - 0.2 + swing * 1.4 - (walk ? 2.2 : 0), hip[1] + 19.4 - (walk ? 0 : 0.4)]];
-  out.push(...legAt(-1.6, feet[0], P.skinDk, P.ribbonDk));
-
-  // The petal skirt: leaves layered back to front, fluttering on the breeze.
-  {
-    const petals = [[-4.4, -2.6, 2.2, 8, P.dressDk], [-1.6, -2.4, 2.25, 8.5, P.leaf], [1.2, -2.4, 1.85, 8.2, P.dressDk], [-3, -2.6, 2.05, 9.6, P.dress], [0.4, -2.6, 1.7, 9.2, P.dress], [2.8, -2.6, 1.3, 7.6, P.dressLt]];
-    petals.forEach(([x, y, a, len, c], i) => {
-      const r = pt(x, y);
-      const aa = a + lean + 0.3 * wind + Math.sin(ph * 2 - i * 0.9) * 0.12 + (dead ? -0.3 : 0);
-      const pts = [r, [r[0] + Math.cos(aa) * len * 0.5 + Math.sin(ph - i) * 0.4, r[1] + Math.sin(aa) * len * 0.5], [r[0] + Math.cos(aa) * len, r[1] + Math.sin(aa) * len]];
-      out.push(...oband(pts, lockW(4.6, 0.6, 0.45, 0.05), c, 3), line([pts[0], pts[1], pts[2]].slice(0, 2), 0.35, shade(c, -12)));
-    });
-  }
-  out.push(...legAt(1.4, feet[1], P.skin, P.ribbon));
-
-  // Bodice of overlapping leaves, a pink sash, and its two long ribbons.
-  within(T0, () => {
-    out.push(...opoly([[-4.4, -12.4], [-1.6, -13.4], [1.8, -13.2], [4.2, -12.2], [5.2, -10.2], [5.3, -8.8], [4.4, -7.2], [3, -6.4], [3.4, -2.6], [-4.4, -2.6], [-3.4, -8.6]], P.dress));
-    out.push(fpoly([[-4.4, -12.4], [-1.8, -13.2], [-1.4, -2.6], [-4.4, -2.6], [-3.4, -8.6]], P.dressDk));
-    for (const [x, y, a] of [[2.4, -10.8, 0.9], [0, -10.6, 1.2], [2.6, -8, 0.6]]) out.push(...oband([[x - Math.cos(a) * 2, y - Math.sin(a) * 2], [x + Math.cos(a) * 2, y + Math.sin(a) * 2]], lockW(2.4, 0.4, 0.5, 0.1), P.dressLt, 1, 0.35));
-    out.push(fband(arcPts(3.4, -8.6, 2, 1.5, 40, 150, 6), 0.4, P.dressDk, 1), dot(4.3, -10.4, 0.7, '#ffffff', 0.45));
-    out.push(...opoly([[-4.6, -5.4], [3.5, -5.6], [3.6, -3.8], [-4.6, -3.6]], P.ribbon), ...ooval(-4.4, -4.6, 1.5, 1.2, P.ribbon));
-  });
-  for (let i = 0; i < 2; i++) {
-    const r = pt(-4.6, -4.4);
-    const pts = lockPts(r, Math.PI - 0.5 * wind + (1 - wind) * 1.1 + i * 0.35, 14 - i * 3, ph * 2 - i - 0.5, 1.4, 0, 5, 1);
-    out.push(...oband(pts, taperW(1.7, 0.9), i ? P.ribbonDk : P.ribbon, 3));
-  }
-
-  // Neck and head: elfin ears, a fringe of soft locks, and a little flower crown.
-  out.push(...oband([[neck[0], neck[1] + 1.4], [hc[0] + 0.2, hc[1] + 6]], 2.6, P.skin, 1), fband([[hc[0] - 0.6, hc[1] + 6.8], [hc[0] + 1.2, hc[1] + 6.4]], 1.1, P.skinDk, 1));
-  within(at(hc[0], hc[1], tilt), () => {
-    const HR = { c: P.hair, sh: P.hairDk, sh2: mix(P.hairDk, '#3f6f9a', 0.35), lt: P.hairLt };
-    out.push(...backHair(HR));
-    const sl = lockPts([6.4, -1.4], Math.PI / 2 + 0.05, 10, ph - 0.4, 0.8, -0.05 * wind, 4);
-    out.push(...lockHair(sl, 2.2, HR));
-    out.push(...face(mood, { ...SYLPH_FACE, bangs: bangEdge(SYLPH_FRINGE) }));
-    out.push(...crownHair({ ...HR, fringe: SYLPH_FRINGE }));
-    // Pointed elfin ear through the hair (the far one is hidden).
-    out.push(...opoly([[-3.4, 0.8], [-9.4, -3.4 + (hurt ? 2 : 0) + Math.sin(ph * 2) * 0.3], [-3.8, 3.4]], P.skin), fpoly([[-4.2, 1.4], [-8, -2.4 + (hurt ? 1.6 : 0)], [-4.4, 2.6]], P.skinDk));
-    const sl2 = flowPts([-3.8, -2.6], Math.PI / 2 + 0.3, -0.5, 9, ph - 0.9, 0.12, 4, 0.9);
-    out.push(...lockHair(sl2, 2.2, HR, { shDx: -0.4 }));
-    out.push(...faceTop(mood, SYLPH_FACE));
-    // Flower crown: leaves and a pink bloom.
-    for (const [x, y, a] of [[-5.6, -5.4, -2.4], [-2.4, -7.6, -1.9], [5.2, -6, -0.9]]) out.push(...oband([[x, y], [x + Math.cos(a) * 3, y + Math.sin(a) * 3]], lockW(1.8, 0.4, 0.5, 0.1), P.leaf, 1, 0.4));
-    for (let k = 0; k < 5; k++) {
-      const a = (k / 5) * TAU + 0.3;
-      out.push(...ooval(1.4 + Math.cos(a) * 1.1, -7.4 + Math.sin(a) * 1.1, 0.95, 0.95, P.flower, 0, 0.4));
-    }
-    out.push(dot(1.4, -7.4, 0.6, P.gold));
-  });
-
-  // Front arm, with a ribbon around the wrist.
-  const shF = pt(3.2, -12);
-  let handF;
-  if (dead) handF = [shF[0] + 2, shF[1] + 10];
-  else if (A) handF = [[shF[0] - 7, shF[1] + 4], [shF[0] + 11.5, shF[1]], [shF[0] + 10.5, shF[1] + 3.5], [shF[0] + 6.5, shF[1] + 6]][f];
-  else if (hurt) handF = [shF[0] + 3, shF[1] + 1];
-  else if (walk) handF = [shF[0] - 1 + Math.sin(ph) * 0.8, shF[1] + 8];
-  else if (twirl) handF = keyAt([[shF[0] + 6.4, shF[1] + 5], [shF[0] + 6, shF[1] - 1], [shF[0] + 2.4, shF[1] - 7], [shF[0] - 2.6, shF[1] - 7.4], [shF[0] + 1.6, shF[1] - 2.6], [shF[0] + 5.4, shF[1] + 2.8]], f);
-  else handF = [shF[0] + 6.4 + Math.sin(ph) * 0.4, shF[1] + 5.4 - Math.sin(ph - 0.5) * 0.6];
-  const elF = joint(shF, handF, 6, 6, A && f === 0 ? 1 : -1);
-  out.push(...limb(shF, elF.k, elF.f, 2.3, 2, 1.6, P.skin), ...ooval(elF.f[0] + 0.3, elF.f[1], 1.15, 1, P.skin));
-  out.push(...oband([[elF.f[0] - 1, elF.f[1] - 0.4], [elF.f[0] - 3.4, elF.f[1] + 2 + Math.sin(ph) * 0.6], [elF.f[0] - 7, elF.f[1] + 1.4 + Math.sin(ph - 1)]], taperW(1.3, 0.4), P.ribbon, 3));
-
-  // Wind: little leaves and motes riding around her; the attack's spinning gust.
-  if (!dead) {
-    if (A) {
-      const g = [[hip[0] - 11, hip[1] - 13, 3.2, 0.5], [52, 30, 9, 1], [55, 30, 10.5, 0.8], [58, 31, 7, 0.4]][f];
-      out.push(...gust(g[0], g[1], g[2], -f * 1.6, P, g[3]));
-      if (f >= 1) {
-        for (let k = 0; k < 3; k++) out.push(line([[g[0] - 10 - k * 2, g[1] - 6 + k * 5], [g[0] - 2 - k, g[1] - 7 + k * 5]], 0.5, P.gust));
-        out.push(sparkle(g[0] + 3, g[1] - 7, 1.6, '#ffffff'), ...oband([[g[0] + 5, g[1] + 4], [g[0] + 7, g[1] + 3]], lockW(1.6, 0.3, 0.5, 0.1), P.leaf, 1, 0.4));
-      }
     }
   }
   return { w: W, h: H, res: 3, shapes: out };
@@ -1838,7 +1614,6 @@ function arrow(p, a, P, tail) {
 
 export const ART = {
   kitsunemiko: { sub: 8, walk: 8, idle: 6, attack: 4, stride: 14, atkMs: [60, 240, 180], draw: kitsune },
-  sylph: { sub: 8, walk: 8, idle: 6, attack: 4, stride: 40, atkMs: [50, 210, 160], draw: sylph },
   yukionna: { pad: 5, sub: 8, walk: 8, idle: 6, attack: 4, stride: 30, atkMs: [70, 260, 200], draw: yuki },
   nekomata: { sub: 8, walk: 8, idle: 6, attack: 4, stride: 18, atkMs: [40, 190, 130], draw: nekomata },
   lamia: { sub: 8, walk: 8, idle: 6, attack: 4, stride: 32, atkMs: [60, 250, 190], draw: lamia },
@@ -1847,7 +1622,6 @@ export const ART = {
 
 export const INFO = {
   kitsunemiko: { name: 'Kitsune Miko', w: 24, h: 48 },
-  sylph: { name: 'Sylph', w: 24, h: 46 },
   yukionna: { name: 'Yuki-onna', w: 24, h: 50 },
   nekomata: { name: 'Nekomata', w: 24, h: 46 },
   lamia: { name: 'Lamia', w: 28, h: 50 },
