@@ -172,16 +172,33 @@ function pumpkin_seed() {
   return out;
 }
 
-// (2026-11-11) The Lambkin's Curly Wool: a soft cream tuft of curls, a few swirls in it, a pink
-// bit of festival bunting tangled in.
+// (2026-11-27) The Hayloft Tortoise's Curly Hay (once the Lambkin's Curly Wool; the id stays): a
+// bundle of golden straw curling at the ends, tied round the middle with twine, a pink bit of festival
+// bunting tangled in.
 function curly_wool() {
-  const c = '#fff6ec';
+  const c = '#f2d070';
   const out = [];
-  for (const [x, y, r] of [[5, 9, 3.4], [8.4, 6.4, 3.8], [11.6, 8.6, 3.2], [8, 10.6, 3.6], [4.6, 6, 2.6]]) out.push(S(oval(x, y, r, r * 0.92), sh(c)));
-  for (const [x, y, r] of [[5, 8.6, 2.8], [8.4, 6, 3.2], [11.4, 8.2, 2.6], [8, 10.2, 3], [4.8, 5.8, 2.1]]) out.push(S(oval(x, y, r, r * 0.92), c));
-  for (const [x, y] of [[7.6, 5.4], [10.6, 8], [6.6, 9.8], [4.6, 6.2]]) out.push(S(tube(arcPts(x, y, 1.2, 1.1, 200, 470, 8), 0.35), sh(c)));
+  // the straws, fanned out from the tie, each curling over at its tip
+  const straws = [[-62, 6.4], [-40, 7.2], [-18, 7.6], [4, 7.4], [26, 7], [48, 6.2]];
+  for (const pass of [0, 1]) {
+    for (const [ang, len] of straws) {
+      const a0 = (ang - 90) * D2R;
+      const p0 = [8 + Math.cos(a0 + Math.PI) * 2.2, 10.6 + Math.sin(a0 + Math.PI) * 2.2];
+      const p1 = [8 + Math.cos(a0) * len * 0.55, 10.6 + Math.sin(a0) * len * 0.55];
+      const p2 = [8 + Math.cos(a0) * len, 10.6 + Math.sin(a0) * len];
+      const p3 = [p2[0] + Math.cos(a0 + 1.8) * 1.6, p2[1] + Math.sin(a0 + 1.8) * 1.6];
+      const pts = bez3(p0, p1, p2, p3, 9);
+      out.push(pass ? S(tube(pts, 0.55, 0.3), c) : S(tube(pts, 0.95, 0.55), sh(c)));
+    }
+  }
+  for (const [ang, len] of straws.filter((_, i) => i % 2)) {
+    const a0 = (ang - 90) * D2R;
+    out.push(S(tube([[8 + Math.cos(a0) * 1.2, 10.6 + Math.sin(a0) * 1.2], [8 + Math.cos(a0) * len * 0.7, 10.6 + Math.sin(a0) * len * 0.7]], 0.22, 0.15), lt(c)));
+  }
+  // the twine round the middle
+  out.push(S(oval(8, 10.8, 2.6, 1.2), '#b5683c'), S(oval(8, 10.5, 2.2, 0.6), '#d28a54'));
   out.push(S([[11.6, 11], [14.6, 12.4], [13, 14.4]], '#ff8fb0'), S([[12.6, 11.6], [14, 12.4], [13.2, 13.4]], '#ffc0d4'));
-  out.push(...glint(7, 4.6, 0.5));
+  out.push(...glint(6.4, 4.6, 0.5));
   return out;
 }
 

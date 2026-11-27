@@ -97,7 +97,7 @@ export const MOBS = {
     speed: 12, w: 26, h: 34, art: 'pumpgob', moves: ['honk', 'charge', 'wingSlap'], drops: [{ id: 'pumpkin_seed', chance: 0.5 }, { id: 'clover', chance: 0.08 }],
   }),
   lambkin: mob({
-    id: 'lambkin', name: 'Lambkin', level: 8, hp: 130, atk: 24, def: 7, acc: 21, eva: 4, exp: 56, gold: [2, 6],
+    id: 'lambkin', name: 'Hayloft Tortoise', level: 8, hp: 130, atk: 24, def: 7, acc: 21, eva: 4, exp: 56, gold: [2, 6],
     // (Loftle, the hayloft-barn tortoise, since 2026-11-25. Speed 9, the shell crawler tortoise's own
     // plod (render/lambkin/): each stubby foot planted from the distance walked, so any faster and the
     // feet slide and blur; slow is part of him, and he never darts. Moves: the barn bash, the hay-bale
@@ -149,7 +149,7 @@ export const MOBS = {
   // tardigrade with a moss cushion on its back, on its own copy of the veggie base: render/mosstort/).
   // Tough and slow: it curls into its hard "tun" to drop on you. (Speed 20: its own waddle.)
   mosstort: mob({
-    id: 'mosstort', name: 'Moss Tortoise', level: 14, hp: 380, atk: 40, def: 17, acc: 33, eva: 3, exp: 240, gold: [4, 10],
+    id: 'mosstort', name: 'Moss Piglet', level: 14, hp: 380, atk: 40, def: 17, acc: 33, eva: 3, exp: 240, gold: [4, 10],
     speed: 20, w: 30, h: 31, art: 'mosstort', moves: ['tundrop', 'flurry', 'snoutbump'], drops: [{ id: 'moss_scute', chance: 0.45 }, { id: 'silkmoss', chance: 0.08 }],
   }),
   boarlet: mob({
@@ -216,8 +216,8 @@ export const MOBS = {
   }),
   shade: mob({
     // (the Steam Capybara, 2026-11-26, replacing the Wraith: render/steamcapybara/, on its own copy of
-    // the creature base; it floats in its own bath-cloud of steam, in the Crystal Cave and on Serpent
-    // Springs; `rest` for a piece of its idle act; moves: Steam Jet, Towel Snap, Bubble Burst)
+    // the creature base; it floats in its own bath-cloud of steam, on Serpent Springs (since 2026-11-27
+    // no longer in the Crystal Cave); `rest` for a piece of its idle act; moves: Steam Jet, Towel Snap, Bubble Burst)
     id: 'shade', name: 'Steam Capybara', level: 35, hp: 2650, atk: 126, def: 35, acc: 72, eva: 12, exp: 1440, gold: [14, 33],
     speed: 56, rest: [8, 13], w: 28, h: 46, art: 'shade', fly: true, moves: ['jet', 'snap', 'bubble'], drops: [{ id: 'shade_cloth', chance: 0.45 }, { id: 'starstone', chance: 0.08 }],
   }),
@@ -822,12 +822,12 @@ export const MOBS = {
     speed: 30, rest: [8, 13], w: 28, h: 33, art: 'peppermint', moves: ['mintSpin', 'mintFlick', 'mintClap'], drops: [{ id: 'sugar_gem', chance: 0.08 }, { id: 'taffy_twist', chance: 0.3 }],
     fight: { every: 1.8, reach: 44, windup: 0.35 },
   }),
-  // The Bonbon Ladybug (2026-11-27, new in the Cocoa Badger's place, render/bonbonbug/): a ladybug whose
-  // shell is a chocolate bonbon, pink icing and a cherry on top (the cocoa beans it drops); it tiptoes at a
+  // The Truffle Ladybug (2026-11-27, new in the Cocoa Badger's place, render/trufflebug/): a ladybug whose
+  // shell is a chocolate truffle, pink icing and a cherry on top (the cocoa beans it drops); it tiptoes at a
   // ladybug's pace (20) and flies when it hurries. Moves: a shell bash, a tumble, a hop-and-slam. (The id
   // stays for saves.)
   chocoknight: mob({
-    id: 'chocoknight', name: 'Bonbon Ladybug', level: 38, hp: 5200, atk: 184, def: 56, acc: 116, eva: 4, exp: 2300, gold: [24, 45],
+    id: 'chocoknight', name: 'Truffle Ladybug', level: 38, hp: 5200, atk: 184, def: 56, acc: 116, eva: 4, exp: 2300, gold: [24, 45],
     speed: 20, rest: [8, 13], w: 30, h: 26, art: 'chocoknight', moves: ['bash', 'spin', 'slam'], drops: [{ id: 'cocoa_bean', chance: 0.45 }, { id: 'sugar_gem', chance: 0.12 }],
     fight: { every: 2.3, reach: 50, windup: 0.6 },
   }),
@@ -1012,7 +1012,8 @@ export const MOBS = {
   }),
   // The Airbloom Lamb (2026-11-27, new in the Cloudherd Samoyed's place, render/bloomlamb/): a lamb from the
   // whale's Lung Gardens whose fleece grew little air-blooms that open each time it breathes out, in time
-  // with the whale. It trots at a lamb's pace (22). Moves: a headbutt, a buck, a rear. (The id stays for saves.)
+  // with the whale; it grazes Starfall Heights' rim too, where the whale swims low. It trots at a lamb's
+  // pace (22). Moves: a headbutt, a buck, a rear. (The id stays for saves.)
   shepherdess: mob({
     id: 'shepherdess', name: 'Airbloom Lamb', level: 45, hp: 5400, atk: 216, def: 46, acc: 138, eva: 14, exp: 3300, gold: [28, 50],
     speed: 22, rest: [9, 14], w: 34, h: 36, art: 'shepherdess', moves: ['headbutt', 'buck', 'rear'], drops: [{ id: 'sky_silk', chance: 0.45 }, { id: 'sky_scale', chance: 0.06 }],
@@ -1042,8 +1043,8 @@ export const MOBS = {
   }),
   // The Bell-Cap Monk (2026-11-27, new in the Mantra Lemur's place, render/bellcap/): a little mushroom monk
   // of the whale's gardens whose cap grew in the shape of a temple bell; the monks ring them softly to wake
-  // the sleeping whale. It waddles at a mushroom's pace (14). Moves: a spore puff, a bonk, a burrow. (The id
-  // stays for saves.)
+  // the sleeping whale (some keep watch from Starfall Heights' rim). It waddles at a mushroom's pace (14).
+  // Moves: a spore puff, a bonk, a burrow. (The id stays for saves.)
   monk: mob({
     id: 'monk', name: 'Bell-Cap Monk', level: 47, hp: 6000, atk: 230, def: 52, acc: 148, eva: 18, exp: 3800, gold: [30, 54],
     speed: 14, rest: [9, 14], w: 22, h: 34, art: 'monk', moves: ['spore', 'bonk', 'burrow'], drops: [{ id: 'sky_silk', chance: 0.4 }, { id: 'sky_scale', chance: 0.1 }],

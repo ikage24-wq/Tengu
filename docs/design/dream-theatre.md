@@ -20,12 +20,14 @@ carriage rocks, bags fall off the racks), Act II: The Office (answer the desk ph
 Act III: Overtime (the Coffee Mug Boss), The Convenience Store, 2 a.m. (the Cup-Noodle Dragon), The
 Final Curtain: Her Flat (Monday). Since 2026-11-27 every regular is remade from scratch on its own
 copy of a blank base (render/mobs/stage.js wires them; the mob ids stay for saves): the train's
-monsters are the Toast-Dash Stoat (paperdragon, render/stoat/) and the Travel-Pillow Sloth
-(sleepysheep, render/sloth/), the office's the Intern Quokka (prompter, render/quokka/, paper planes)
-and the Red-Tape Raccoon (primadonna, render/raccoon/, red tape and a DENIED stamp). The lobby keeps
-its theatre folk: the Masquerade Diva (understudy, render/diva/, rebuilt with her idea kept), the
-Usher Otter (chorusgirl, render/usher/) and the Backdrop Beaver (stagehand, render/beaver/). (Before
-that they were the Rush-Hour Penguin, Sleepy Commuter Sheep, Sticky Note Bird, Stapler Croc, Chorus
+monsters are the Commuter Pigeon (paperdragon, render/pigeon/) and the Snooze Snail (sleepysheep,
+render/snoozesnail/), the office's the Sticky-Note Sprout (prompter, render/sprout/, paper planes) and
+the Paperclip Fiddler (primadonna, render/fiddler/, red tape). The lobby keeps its theatre folk: the
+Masquerade Diva (understudy, render/diva/, rebuilt with her idea kept), the Ticket Lop (chorusgirl,
+render/ticketlop/) and the Curtain Octopus (stagehand, render/curtain/). (Those six replaced, later
+the same day, a first remake that had given them all one upright body: the Toast-Dash Stoat,
+Travel-Pillow Sloth, Intern Quokka, Red-Tape Raccoon, Usher Otter and Backdrop Beaver; before that
+they were the Rush-Hour Penguin, Sleepy Commuter Sheep, Sticky Note Bird, Stapler Croc, Chorus
 Flamingo and Stagehand Mole.)
 
 The three bosses of her dream were remade from scratch on 2026-11-27, each on its own copy of a blank

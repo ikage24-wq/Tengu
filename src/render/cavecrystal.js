@@ -2,7 +2,7 @@
 // Mossy Woods is built round its giant trees. In the west the Glowcap Terraces: giant glowing
 // mushrooms whose caps are the high ledges. In the middle the Underground Lake, and sat in it a
 // giant geode cracked open, amethyst glowing inside, its rim, a crystal shelf inside it and its
-// lower lip (where you fish) all ledges. In the east the Shade Spires: two great crystal columns,
+// lower lip (where you fish) all ledges. In the east the Amethyst Spires: two great crystal columns,
 // shelves growing out of them, crystal dust rising between. Its ledges are rock shelves with
 // amethyst growing under them ('geode'); behind, the cavern's far walls with crystal clusters
 // glowing in the dark and glow-worms twinkling on the ceiling.

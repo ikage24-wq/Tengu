@@ -132,7 +132,8 @@ for (const id of Object.keys(ITEMS)) if (id.startsWith('gauntlet_')) RENAMED_ITE
 for (const t of [1, 2, 3, 4]) RENAMED_ITEMS[`claw_${t}`] = `gauntlet_${t * 10}`;
 // (The Scarecrow Imp's Straw Tufts, 2026-11-11: it's gone, and the Strawhog drops Hay Quills.)
 RENAMED_ITEMS.straw_tuft = 'hay_quill';
-// (The Jackalope's antlers, 2026-11-11: it's gone, and the Lambkin drops Curly Wool.)
+// (The Jackalope's antlers, 2026-11-11: it's gone, and the Lambkin drops Curly Wool; since 2026-11-27 the
+// Hayloft Tortoise, Loftle, and it's Curly Hay from his barn roof.)
 RENAMED_ITEMS.ribbon = 'curly_wool';
 // (The Wind Ferret's whiskers, 2026-11-11: it's gone, and the Harvest Mouse drops Woven Nests.)
 RENAMED_ITEMS.wind_whisker = 'woven_nest';
@@ -463,7 +464,7 @@ const ETC = [
   ['sprout_leaf', 'Turnip Greens', 2, '#9be08f'],
   ['mushcap', 'Toadstool Cap', 3, '#ff7a7a'],
   ['pumpkin_seed', 'Pumpkin Seed', 4, '#f6e2b0'],
-  ['curly_wool', 'Curly Wool', 4, '#fff6ec'],
+  ['curly_wool', 'Curly Hay', 4, '#f2d070'],
   ['pebble', 'Felt Scale', 5, '#cfc4b2'],
   ['stinger', 'Manticore Stinger', 6, '#ff6b9a'],
   ['leaf_fragment', 'Dryad Leaf', 5, '#7fd17a'],

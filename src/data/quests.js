@@ -62,7 +62,7 @@ export const QUESTS = {
   // just Muffin after falling in the honey; when the crowds go home, she throws him a parade.
   clover_count: {
     id: 'clover_count', name: 'Count the Buns', giver: 'clover', minLevel: 8,
-    text: "Can you help me count my buns? I've got either twelve or a hundred. Every time I start, the Lambkins in Clover Hills wander in and pretend to be buns, and I lose count. Calm 12 of them. They go BAA. Buns don't go baa. I keep forgetting.",
+    text: "Can you help me count my buns? I've got either twelve or a hundred. Every time I start, the Hayloft Tortoises in Clover Hills wander in and pretend to be buns, and I lose count. Calm 12 of them. They're round and brown and they sit very still. Buns don't have feet. I keep forgetting.",
     objectives: [{ type: 'kill', mob: 'lambkin', count: 12 }],
     rewards: { exp: 1350, gold: 100, items: [{ id: 'red_potion', qty: 10 }] },
   },
@@ -73,7 +73,7 @@ export const QUESTS = {
     rewards: { exp: 900, gold: 120, items: [], mount: 'bun' },
   },  clover_golden: {
     id: 'clover_golden', name: 'The Golden Bun', giver: 'clover', minLevel: 16, prereq: 'bun_buddy',
-    text: "The whole island's gone bun-crazy! Someone saw the legendary Golden Bun in Mossy Woods. One in ten thousand! Adventurers have been camping there for days, shouting 'GOLDEN BUN SPAWN?' in every chat. The Moss Tortoises keep waddling right in front of it. Calm 20 of them so I can get a look. I'm writing a song. It's mostly the word 'golden'.",
+    text: "The whole island's gone bun-crazy! Someone saw the legendary Golden Bun in Mossy Woods. One in ten thousand! Adventurers have been camping there for days, shouting 'GOLDEN BUN SPAWN?' in every chat. The Moss Piglets keep waddling right in front of it. Calm 20 of them so I can get a look. I'm writing a song. It's mostly the word 'golden'.",
     objectives: [{ type: 'kill', mob: 'mosstort', count: 20 }],
     rewards: { exp: 33000, gold: 840, items: [{ id: 'orange_potion', qty: 10 }] },
   },
@@ -130,7 +130,7 @@ export const QUESTS = {
   },
   bramble_charge: {
     id: 'bramble_charge', name: 'One Last Charge', giver: 'bramble', minLevel: 14, prereq: 'bramble_wipe',
-    text: "Fine. It was me. I've been thinking. Ten years of rules and I can't remember the last time a fight was fun. Go to Mossy Woods and charge into the Moss Tortoises, 20 of them. Loud. Then come back, and bring a healer. Out of habit.",
+    text: "Fine. It was me. I've been thinking. Ten years of rules and I can't remember the last time a fight was fun. Go to Mossy Woods and charge into the Moss Piglets, 20 of them. Loud. Then come back, and bring a healer. Out of habit.",
     objectives: [{ type: 'kill', mob: 'mosstort', count: 20 }],
     rewards: { exp: 11000, gold: 320, items: [{ id: 'hollow_acorn', qty: 5 }] },
   },
@@ -149,7 +149,7 @@ export const QUESTS = {
   },
   tusk_trader: {
     id: 'tusk_trader', name: 'Scute Trader', giver: 'marlo', minLevel: 15, prereq: 'marlo_scales',
-    text: "Mossy scutes sell like hotcakes. Hotcakes, meanwhile, sell like mossy scutes. The market is confusing. Bring me 15 from the Moss Tortoises in Mossy Woods and I'll share the profits. The jar's getting heavy, partner. Not that you've seen any jar.",
+    text: "Mossy scutes sell like hotcakes. Hotcakes, meanwhile, sell like mossy scutes. The market is confusing. Bring me 15 from the Moss Piglets in Mossy Woods and I'll share the profits. The jar's getting heavy, partner. Not that you've seen any jar.",
     objectives: [{ type: 'collect', item: 'moss_scute', count: 15 }],
     rewards: { exp: 22000, gold: 570, items: [] },
   },
@@ -163,7 +163,7 @@ export const QUESTS = {
   // it to warriors).
   warrior_trial: {
     id: 'warrior_trial', name: "The Warrior's Trial", giver: 'brann', minLevel: 30, family: 'warrior',
-    text: "You've grown strong, but the next path asks more than strength. Go to the Crystal Cave and face down 20 Geode Bears. Stand your ground the whole time. If you step back, I'll know. I'll feel it in my shield arm. Then come back and I'll show you the Stormwall's way and the Tempest's way.",
+    text: "You've grown strong, but the next path asks more than strength. Go to the Crystal Cave and face down 20 Geode Turtles. Stand your ground the whole time. If you step back, I'll know. I'll feel it in my shield arm. Then come back and I'll show you the Stormwall's way and the Tempest's way.",
     objectives: [{ type: 'kill', mob: 'rockgolem', count: 20 }],
     rewards: { exp: 220000, gold: 5400, items: [{ id: 'elixir', qty: 5 }] },
   },
@@ -214,7 +214,7 @@ export const QUESTS = {
   },
   pip_lunch: {
     id: 'pip_lunch', name: 'Closed for Lunch', giver: 'pip', minLevel: 8, prereq: 'pip_souvenirs',
-    text: "I'm going to do it. I'm going to leave the shop. For one whole lunch. First, ask Mira if shopkeepers are even allowed. Then clear 15 Lambkins out of Clover Hills, in case I go really far. I won't. But in case.",
+    text: "I'm going to do it. I'm going to leave the shop. For one whole lunch. First, ask Mira if shopkeepers are even allowed. Then clear 15 Hayloft Tortoises out of Clover Hills, in case I go really far. I won't. But in case.",
     objectives: [
       { type: 'talk', npc: 'mira', say: "Allowed? Oh, sweetheart. Nobody ever said Pip couldn't leave. She just never asked. Tell her the gate's been open her whole life." },
       { type: 'kill', mob: 'lambkin', count: 15 },
@@ -250,7 +250,7 @@ export const QUESTS = {
   },
   malv_diary: {
     id: 'malv_diary', name: 'The Villain Diary', giver: 'malvina', minLevel: 9, prereq: 'malv_mob',
-    text: "A... party. For me. They CHEERED. Do you know how hard it is to look menacing with a party hat on? I must restore my terrible reputation at once. Bring me 10 Curly Wool from the Lambkins in Clover Hills: I shall knit a cloak so dreadful that children weep. ...Not too much. Just a little sniffle.",
+    text: "A... party. For me. They CHEERED. Do you know how hard it is to look menacing with a party hat on? I must restore my terrible reputation at once. Bring me 10 Curly Hay from the Hayloft Tortoises in Clover Hills: I shall weave a straw cloak so dreadful that children weep. ...Not too much. Just a little sniffle.",
     objectives: [{ type: 'collect', item: 'curly_wool', count: 10 }],
     rewards: { exp: 2500, gold: 180, title: 'Minion of Malvina', items: [{ id: 'vial_of_despair', qty: 5 }, { id: 'bottled_scream', qty: 5 }] },
   },
@@ -267,7 +267,7 @@ export const QUESTS = {
   },
   lulu_runway: {
     id: 'lulu_runway', name: 'Runway Ready', giver: 'lulu', minLevel: 8, prereq: 'lulu_gossip',
-    text: "Inspiration struck! A spring line with fluffy trim and woolly buttons. I need 9 Fox Fluff from the Blossom Kits and 7 Curly Wool from the Lambkins in Clover Hills. The first piece is yours!",
+    text: "Inspiration struck! A spring line with fluffy trim and straw buttons. I need 9 Fox Fluff from the Blossom Kits and 7 Curly Hay from the Hayloft Tortoises in Clover Hills. The first piece is yours!",
     objectives: [{ type: 'collect', item: 'fluff', count: 9 }, { type: 'collect', item: 'curly_wool', count: 7 }],
     rewards: { exp: 2000, gold: 170, items: [{ id: 'cash_casual_cardigan', qty: 1 }] },
   },
@@ -276,7 +276,7 @@ export const QUESTS = {
   // carried it to the Whispering Glade, where the Blossom Fairies have kept it as treasure ever since.
   kestrel_targets: {
     id: 'kestrel_targets', name: 'Moving Targets', giver: 'kestrel', minLevel: 7,
-    text: "Standing targets teach you nothing. They just stand there. Smug. The Lambkins in Clover Hills never stop frolicking: catch 15 of them, whatever you fight with, and you'll have quick eyes for life.",
+    text: "Standing targets teach you nothing. They just stand there. Smug. The Hayloft Tortoises in Clover Hills look slow, but every one of them tosses a hay bale the moment you look away: catch 15 of them, whatever you fight with, and you'll have quick eyes for life.",
     objectives: [{ type: 'kill', mob: 'lambkin', count: 15 }],
     rewards: { exp: 1700, gold: 120, items: [{ id: 'orange_potion', qty: 15 }] },
   },
@@ -383,7 +383,7 @@ export const QUESTS = {
   },
   daily_harbor: {
     id: 'daily_harbor', name: 'Daily: Tortoise Traffic', giver: 'rook', minLevel: 14, daily: true,
-    text: "Moss Tortoises keep parking in the middle of the woods road where our carts go. Shift them: 20 Tortoises today.",
+    text: "Moss Piglets keep parking in the middle of the woods road where our carts go. Shift them: 20 Piglets today.",
     objectives: [{ type: 'kill', mob: 'mosstort', count: 20 }],
     rewards: { exp: 9600, gold: 280, items: [{ id: 'orange_potion', qty: 10 }, { id: 'gacha_ticket', qty: 1 }] },
   },
@@ -413,7 +413,7 @@ export const QUESTS = {
   },
   tora_cores: {
     id: 'tora_cores', name: 'Hot Iron', giver: 'tora', minLevel: 30, prereq: 'tora_draught',
-    text: "Geode Cores burn hotter than any coal and hold their heat like a grudge: nothing can slurp it out of them. 10 from the Geode Bears. They'll say they need them. Everybody says that. Her first fire makes you a proper pair of gloves, made for your trade.",
+    text: "Geode Cores burn hotter than any coal and hold their heat like a grudge: nothing can slurp it out of them. 10 from the Geode Turtles: they grow them in their shells. They'll say they need them. Everybody says that. Her first fire makes you a proper pair of gloves, made for your trade.",
     objectives: [{ type: 'collect', item: 'rock_core', count: 10 }],
     rewards: { exp: 240000, gold: 6100, items: [] },
   },
@@ -584,7 +584,7 @@ export const QUESTS = {
   // the invitations to opening night.
   encore_gown: {
     id: 'encore_gown', name: 'A Gown of Cloud', giver: 'encore', minLevel: 41, prereq: 'story_encore',
-    text: "Darling, a comeback needs a gown, and a gown on a cloud should be MADE of cloud. The Whistledown Marmots in the Sky Garden grow ruffs of cloud like whipped cream. Bring me 12 Cloud Manes. I'll sew all night. I always sewed all night. That's why I was always late for rehearsal.",
+    text: "Darling, a comeback needs a gown, and a gown on a cloud should be MADE of cloud. The Snowpuff Hares in the Sky Garden grow collars of cloud like whipped cream. Bring me 12 Cloud Manes. I'll sew all night. I always sewed all night. That's why I was always late for rehearsal.",
     objectives: [{ type: 'collect', item: 'wool', count: 12 }],
     rewards: { exp: 130000, gold: 2400, items: [{ id: 'white_potion', qty: 20 }] },
   },
@@ -629,7 +629,7 @@ export const QUESTS = {
   },
   yuzu_tail: {
     id: 'yuzu_tail', name: 'A Tail of Her Own', giver: 'yuzu', minLevel: 36, prereq: 'yuzu_peak',
-    text: "Fine. FINE. If there's no star, I'll make my own tail and wave it under their noses. It has to be the softest thing on the island: 8 Cloud Manes from the Whistledown Marmots, and 6 Snow Gems to make it sparkle, from the Yuki-onna. Don't look at me like that. It's a GOOD plan.",
+    text: "Fine. FINE. If there's no star, I'll make my own tail and wave it under their noses. It has to be the softest thing on the island: 8 Cloud Manes from the Snowpuff Hares, and 6 Snow Gems to make it sparkle, from the Yuki-onna. Don't look at me like that. It's a GOOD plan.",
     objectives: [{ type: 'collect', item: 'wool', count: 8 }, { type: 'collect', item: 'snow_gem', count: 6 }],
     rewards: { exp: 97000, gold: 2200, items: [{ id: 'elixir', qty: 3 }] },
   },
@@ -651,7 +651,7 @@ export const QUESTS = {
   // his watch over the nests instead.
   rowan_rope: {
     id: 'rowan_rope', name: 'A Very Long Rope', giver: 'rowan', minLevel: 37, prereq: 'yuzu_loved',
-    text: "Could you help me make a rope? A long one. A very long one. Cloud Mane from the Whistledown Marmots is the strongest thread there is. 10 should be enough. 12. Let's say 10 and I'll be brave about it. It's for... tying things. To other things. Like me, to the ground.",
+    text: "Could you help me make a rope? A long one. A very long one. Cloud Mane from the Snowpuff Hares is the strongest thread there is. 10 should be enough. 12. Let's say 10 and I'll be brave about it. It's for... tying things. To other things. Like me, to the ground.",
     objectives: [{ type: 'collect', item: 'wool', count: 10 }],
     rewards: { exp: 85000, gold: 1900, items: [{ id: 'white_potion', qty: 10 }] },
   },
@@ -692,13 +692,13 @@ export const QUESTS = {
   },
   celeste_kite: {
     id: 'celeste_kite', name: 'A Star in a Kite', giver: 'celeste', minLevel: 42, prereq: 'celeste_pillow',
-    text: "I dreamed a star got tangled in a kite on Starfall Heights, and the Kite Pikas wouldn't let it go. If it's true... could you go and see? And free it? 12 of them should be enough to make the rest let go. I'd come, but I'd fall asleep on the way. Twice.",
+    text: "I dreamed a star got caught in a Sky Seahorse's curly tail on Starfall Heights, and the Sky Seahorses wouldn't let it go. If it's true... could you go and see? And free it? 12 of them should be enough to make the rest let go. I'd come, but I'd fall asleep on the way. Twice.",
     objectives: [{ type: 'visit', map: 'starfall' }, { type: 'kill', mob: 'kiterider', count: 12 }],
     rewards: { exp: 170000, gold: 3400, items: [] },
   },
   celeste_silk: {
     id: 'celeste_silk', name: 'A Net for Dreams', giver: 'celeste', minLevel: 43, prereq: 'celeste_kite',
-    text: "If someone else is dreaming and I'm only catching the edges, I need a better net. Sky Silk, from the Cloudherd Samoyeds on Starfall Heights. They brush it out of their clouds every morning, so it holds onto dreams after you wake. 10, please. I'll weave it tonight. I'm good at nights.",
+    text: "If someone else is dreaming and I'm only catching the edges, I need a better net. Sky Silk, from the Airbloom Lambs on Starfall Heights. It grows in their fleece round the blooms, so it holds onto dreams after you wake. 10, please. I'll weave it tonight. I'm good at nights.",
     objectives: [{ type: 'collect', item: 'sky_silk', count: 10 }],
     rewards: { exp: 130000, gold: 2100, items: [{ id: 'elixir', qty: 3 }] },
   },
@@ -716,7 +716,7 @@ export const QUESTS = {
   // and offers to fly the hero up to the Moon Terrace whenever they're ready (chapter 10).
   nimbus_sail: {
     id: 'nimbus_sail', name: 'A New Sail', giver: 'nimbus', minLevel: 46, prereq: 'story_whale',
-    text: "She's awake! Flying! Singing in her sleep, except she's not asleep! ...And her sail got torn to ribbons on the way up. Sky Silk off the Cloudherd Samoyeds on Starfall Heights makes the best sail there is. 10 bolts of it, and she'll fly like she's twenty again. She's four hundred. Don't tell her I said.",
+    text: "She's awake! Flying! Singing in her sleep, except she's not asleep! ...And her sail got torn to ribbons on the way up. Sky Silk off the Airbloom Lambs on Starfall Heights makes the best sail there is. 10 bolts of it, and she'll fly like she's twenty again. She's four hundred. Don't tell her I said.",
     objectives: [{ type: 'collect', item: 'sky_silk', count: 10 }],
     rewards: { exp: 150000, gold: 2100, items: [{ id: 'white_potion', qty: 10 }] },
   },
@@ -750,19 +750,19 @@ export const QUESTS = {
   },
   twinkle_kite: {
     id: 'twinkle_kite', name: 'Kite Lessons', giver: 'twinkle', minLevel: 45, prereq: 'twinkle_glow',
-    text: "Plan B: I go UP. The Kite Pikas fly all day off the West Rim. Beat 20 of them and they'll HAVE to lend us a kite. That's how kites work. I think.",
+    text: "Plan B: I go UP. The Sky Seahorses ride the winds all day off the West Rim. Beat 20 of them and they'll HAVE to give us a ride. That's how seahorses work. I think.",
     objectives: [{ type: 'kill', mob: 'kiterider', count: 20 }],
     rewards: { exp: 110000, gold: 3400, items: [] },
   },
   twinkle_feather: {
     id: 'twinkle_feather', name: 'Light as a Feather', giver: 'twinkle', minLevel: 46, prereq: 'twinkle_kite',
-    text: "I was too heavy for the kite. Rude, but true. Albatross feathers are the lightest thing in the sky. Bring me 12 and I'll stick them on. All of them. Everywhere.",
+    text: "I was too heavy for the seahorse. Rude, but true. Albatross feathers are the lightest thing in the sky. Bring me 12 and I'll stick them on. All of them. Everywhere.",
     objectives: [{ type: 'collect', item: 'feather', count: 12 }],
     rewards: { exp: 88000, gold: 2000, items: [{ id: 'elixir', qty: 3 }] },
   },
   twinkle_count: {
     id: 'twinkle_count', name: 'Counting Stars', giver: 'twinkle', minLevel: 47, prereq: 'twinkle_feather',
-    text: "New plan! The Cloudherd Samoyeds keep the sky's tally: every cloud, every star, every night. They count very carefully. Mostly up to one. If I'm missing from it, somebody up there must be worried sick. They won't just hand the tally book over, so... beat 15 of them. Very politely.",
+    text: "New plan! The Airbloom Lambs keep the sky's tally. Everyone counts sheep to fall asleep, so the sheep count everything else: every cloud, every star, every night. They count very carefully. Mostly up to one. If I'm missing from it, somebody up there must be worried sick. They won't just hand the tally book over, so... beat 15 of them. Very politely.",
     objectives: [{ type: 'kill', mob: 'shepherdess', count: 15 }],
     rewards: { exp: 100000, gold: 3000, items: [] },
   },
@@ -818,7 +818,7 @@ export const QUESTS = {
   // and been quietly kind. With a feather quill for each of them, she says good evening.
   fawnelle_charms: {
     id: 'fawnelle_charms', name: 'Hush, Little Charms', giver: 'fawnelle', minLevel: 39,
-    text: "You're a human. A real one! I'm Fawnelle, from Mistmere, beyond the mist. Back home, everyone says humans are only a story, so I came to study you. But every time I creep close to watch, the charms on my antlers jingle, everyone turns round, and I run. Whistledown Marmots grow the softest cloud ruffs in the sky; we have them at home too. Bring me 15 Cloud Mane from the Sky Garden or the Frozen Peak, and I'll hush every charm.",
+    text: "You're a human. A real one! I'm Fawnelle, from Mistmere, beyond the mist. Back home, everyone says humans are only a story, so I came to study you. But every time I creep close to watch, the charms on my antlers jingle, everyone turns round, and I run. Snowpuff Hares grow the softest cloud collars in the sky; we have them at home too. Bring me 15 Cloud Mane from the Sky Garden or the Frozen Peak, and I'll hush every charm.",
     objectives: [{ type: 'collect', item: 'wool', count: 15 }],
     rewards: { exp: 90000, gold: 2200, items: [{ id: 'white_potion', qty: 10 }] },
   },
@@ -851,7 +851,7 @@ export const QUESTS = {
   // held it for (Tora, his blacksmith now), and the night it comes back to him.
   brann_stand: {
     id: 'brann_stand', name: 'Stand Your Ground', giver: 'brann', minLevel: 15, family: 'warrior',
-    text: "A warrior holds the line. That's it. That's the whole class. The Moss Tortoises in Mossy Woods hit like falling logs: face 25 of them and don't take a step back. Sideways is fine. I checked the rules.",
+    text: "A warrior holds the line. That's it. That's the whole class. The Moss Piglets in Mossy Woods hit like falling logs: face 25 of them and don't take a step back. Sideways is fine. I checked the rules.",
     objectives: [{ type: 'kill', mob: 'mosstort', count: 25 }],
     rewards: { exp: 22000, gold: 570, items: [] },
   },
@@ -976,7 +976,7 @@ export const QUESTS = {
   },
   lulu_winter: {
     id: 'lulu_winter', name: 'Winter Collection', giver: 'lulu', minLevel: 35, prereq: 'lulu_runway',
-    text: "Snow season! For my winter line I need 8 Snow Gems from the Yuki-onna on Frozen Peak and 6 Cloud Manes from the Whistledown Marmots up there. You'll get the first parka, of course!",
+    text: "Snow season! For my winter line I need 8 Snow Gems from the Yuki-onna on Frozen Peak and 6 Cloud Manes from the Snowpuff Hares up there. You'll get the first parka, of course!",
     objectives: [{ type: 'collect', item: 'snow_gem', count: 8 }, { type: 'collect', item: 'wool', count: 6 }],
     rewards: { exp: 110000, gold: 2400, items: [{ id: 'cash_casual_parka', qty: 1 }, { id: 'cash_casual_mittens', qty: 1 }] },
   },

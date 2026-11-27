@@ -1,9 +1,11 @@
 // The Airbloom Lamb (2026-11-27, new for the Sky Whale's Back, in the Cloudherd Samoyed's place: the player
 // wanted the late regulars to be new creatures that fit their place, each on its own base; the id stays
 // `shepherdess`). A lamb from the whale's Lung Gardens, the greenhouse that breathes: little air-blooms took
-// root in its fleece and now open whenever it breathes out, in time with the whale. A soft mint-white fleece
-// with a fluffy scalloped edge, three pastel blooms in it (pink, lilac, peach) and one on its brow, soft
-// green eyes with two little lashes, a blush. It moves on its own copy of the hoofed base (lambbase.js,
+// root in its fleece and now open whenever it breathes out, in time with the whale. It grazes the whale's
+// gardens and, when the whale swims low over Starfall Heights, the rim there too: the sky's Sky Silk grows
+// in its fleece round the blooms, and the lambs keep the sky's tally (everyone counts sheep to sleep).
+// A soft mint-white fleece with a fluffy scalloped edge, three pastel blooms in it (pink, lilac, peach) and
+// one on its brow, soft green eyes with two little lashes, a blush. It moves on its own copy of the hoofed base (lambbase.js,
 // its lamb: the trot, the pronk, the springs and moves), dressed here.
 import { dressedHoof } from './lambbase.js';
 

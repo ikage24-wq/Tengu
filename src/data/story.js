@@ -72,7 +72,7 @@ export const STORY_QUESTS = {
   }),
   story_festival: s('story_festival', 2, {
     name: 'The Last Festival', giver: 'mira', minLevel: 8, prereq: 'story_2_cake',
-    text: "The Lambkins in Clover Hills have been wearing the bunting from the Falling Star Festival tangled in their wool for weeks. Nobody's taken it down. It doesn't feel... finished. Calm 15 of them and bring me back 6 tufts of Curly Wool with the bunting still in. Gently. They think they look lovely.",
+    text: "The Hayloft Tortoises in Clover Hills have been wearing the bunting from the Falling Star Festival tangled round their barn roofs for weeks. Nobody's taken it down. It doesn't feel... finished. Calm 15 of them and bring me back 6 tufts of Curly Hay with the bunting still in. Gently. They think they look lovely.",
     objectives: [{ type: 'kill', mob: 'lambkin', count: 15 }, { type: 'collect', item: 'curly_wool', count: 6 }],
     rewards: { exp: 1800, gold: 130, items: [{ id: 'orange_potion', qty: 10 }] },
     scenes: { done: 'ch2_festival' },
@@ -122,7 +122,7 @@ export const STORY_QUESTS = {
   // ---------- Chapter 4: The Party That Never Ends (15-20) ----------
   story_invite: s('story_invite', 4, {
     name: 'An Invitation', giver: 'elowen', minLevel: 15, prereq: 'story_root',
-    text: "Festival night's wind blew a party invitation into my cauldron. Lady Marigold's, on Manor Hill. A hundred years old, addressed to 'the Most Dramatic Witch in the Grove'. Accurate. I don't do parties, I do entrances. Take my reply to Mr. Pumpkins at the manor gate. And clear 15 Moss Tortoises out of Mossy Woods first: they nap across the path.",
+    text: "Festival night's wind blew a party invitation into my cauldron. Lady Marigold's, on Manor Hill. A hundred years old, addressed to 'the Most Dramatic Witch in the Grove'. Accurate. I don't do parties, I do entrances. Take my reply to Mr. Pumpkins at the manor gate. And clear 15 Moss Piglets out of Mossy Woods first: they nap across the path.",
     gives: [{ id: 'letter' }],
     objectives: [
       { type: 'kill', mob: 'mosstort', count: 15 },
@@ -248,7 +248,7 @@ export const STORY_QUESTS = {
   }),
   story_dessert: s('story_dessert', 8, {
     name: 'Dessert Emergency', giver: 'praline', minLevel: 35, prereq: 'story_5_2',
-    text: "Welcome to the kitchen! Today's challenge: stop a queen burying the island in cake. Queen Bonbon bakes a bigger cake every day, and the volcano is boiling over. I need a cold meringue the size of a house. Calm 15 Whistledown Marmots on Frozen Peak and bring me 6 Cloud Manes. Yes, chef!",
+    text: "Welcome to the kitchen! Today's challenge: stop a queen burying the island in cake. Queen Bonbon bakes a bigger cake every day, and the volcano is boiling over. I need a cold meringue the size of a house. Calm 15 Snowpuff Hares on Frozen Peak and bring me 6 Cloud Manes. Yes, chef!",
     objectives: [{ type: 'kill', mob: 'cloudsheep', count: 15 }, { type: 'collect', item: 'wool', count: 6 }],
     rewards: { exp: 33000, gold: 700, items: [{ id: 'white_potion', qty: 20 }] },
     scenes: { accept: 'dessert_open', done: 'dessert_done' },

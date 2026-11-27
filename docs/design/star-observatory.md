@@ -77,9 +77,10 @@ next), each a new creature from the tower's place and story, the old ids kept fo
 - **Star Glider** (`cometcourier`, render/glider/): a sugar glider on the Starlit Stair who catches the
   falling stars in its pouch, so its tummy glows; star-freckled gliding skin, a long bushy tail. Glide
   Swoop, Star Toss, Tail Twirl.
-- **Spyglass Loris** (`starcarto`, render/loris/): the tower's slow little star surveyor, huge night
-  eyes, a brass spyglass and a tube of star charts; throws its arms over its head when startled. Lens
-  Flare (a glint of starlight, `shot: 'starglint'`), Spyglass Bonk, Chart Unroll.
+- **Constellation Starfish** (`starcarto`, render/constellation/, since 2026-11-27 on its own copy of the
+  tentacle base's starfish, in the Spyglass Loris's place): a little star that fell into the observatory
+  and stayed to chart the sky; arm tips that glow gold, a small constellation across its top arms. It
+  traces constellations in the air and cartwheels. Gold Star (`shot: 'starglint'`), Slap, Grab, Spin.
 - **Nebula Knitter** (`nebulawitch`, render/alpaca/): an alpaca whose fleece is a star nursery; she knits
   the night sky and hums. Yarn Comet (`shot: 'nebulayarn'`), Needle Jab, Fleece Puff.
 - **Raven Scribe** (`mothlibrarian`, render/raven/): the Archive's copyist, copying the star records out

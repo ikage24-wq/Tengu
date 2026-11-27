@@ -1,6 +1,6 @@
-// The Bonbon Ladybug (2026-11-27, new for the Candy Volcano's Licorice Mine, in the Cocoa Badger's place:
+// The Truffle Ladybug (2026-11-27, new for the Candy Volcano's Licorice Mine, in the Cocoa Badger's place:
 // the player wanted the late regulars to be new creatures that fit their place, each on its own base; the
-// id stays `chocoknight`). A little ladybug whose shell is a chocolate bonbon: milk chocolate, a drizzle
+// id stays `chocoknight`). A little ladybug whose shell is a chocolate truffle: milk chocolate, a drizzle
 // of pink icing across it and a candied cherry on top. A vanilla-cream body and head, eyes shaped like
 // chocolate chips, a blush, pale strawberry wafer wings. The volcano's heat worries it (it fans itself so
 // it won't melt) and its cherry is always a little loose. It moves on its own copy of the round bug base
@@ -100,7 +100,7 @@ function face(ctx, a, sk, K, r) {
   }
 }
 
-// ---------- Its bonbon shell: chocolate, a pink drizzle, a cherry on top ----------
+// ---------- Its truffle shell: chocolate, a pink drizzle, a cherry on top ----------
 const pathOf = (ctx, pts) => {
   ctx.beginPath();
   ctx.moveTo(...pts[0]);
@@ -217,7 +217,7 @@ const LOOK = {
   ink: INK,
   face,
   over: { shellN: shell, shellF: shellFar },
-  // Its act, about 30 s, the mine's little bonbon (on the base's channels: x, hop, lift, pitch, crouch,
+  // Its act, about 30 s, the mine's little truffle (on the base's channels: x, hop, lift, pitch, crouch,
   // tuck, head, ant, shell, wings, buzz, groom):
   //   - fanning itself with its wings in the volcano's heat ("phew!"), so its chocolate won't melt;
   //   - a little hop that sets its cherry wobbling: a start, frozen still till it settles, a relieved smile;
@@ -332,5 +332,5 @@ const LOOK = {
 };
 
 const D = dressedLadybug(LOOK);
-export const BONBON_LADYBUG_ART = { ...D.art, noHop: true };
-export const BONBON_LADYBUG_SIZE = { w: Math.round(D.w), h: Math.round(D.h), speed: D.speed };
+export const TRUFFLE_LADYBUG_ART = { ...D.art, noHop: true };
+export const TRUFFLE_LADYBUG_SIZE = { w: Math.round(D.w), h: Math.round(D.h), speed: D.speed };

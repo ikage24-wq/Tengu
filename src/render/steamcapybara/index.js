@@ -1,8 +1,8 @@
 // The Steam Capybara (2026-11-26, the Wraith remade from scratch as a new creature; the id stays `shade`). A
-// round, unbothered capybara who lives wherever warm water meets dark rock: in the Crystal Cave it floats
-// over the warm underground lake and round the Shade Spires; on Serpent Springs it drifts up the steaming
-// terraces and the Steam Heights. It never touches the ground: it sits in its own little bath-cloud of
-// steam, an onsen towel folded on its head with a yuzu on top, as capybaras do in a hot spring. On its own
+// round, unbothered capybara of Serpent Springs: it drifts up the steaming terraces and the Steam Heights
+// (since 2026-11-27 only there; it used to float over the Crystal Cave's underground lake too). It
+// never touches the ground: it sits in its own little bath-cloud of steam, an onsen towel folded on its
+// head with a yuzu on top, as capybaras do in a hot spring. On its own
 // copy of the creature base (rig.js; body.js `capybara`: a round barrel of a body, short legs tucked under
 // it on its cloud, short arms), dressed here; its head, towel and cloud drawn here from scratch over the
 // mannequin (never the shared face).

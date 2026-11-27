@@ -16,8 +16,8 @@
 //                 geode, soft amethyst crystals growing out of it that glow when it hums (2026-11-27,
 //                 replaced the Geode Bear; on its own copy of the shell crawler base: render/geodeturtle/).
 //   shade         Steam Capybara: a round, unbothered capybara floating in its own bath-cloud of steam,
-//                 an onsen towel and a yuzu on its head, at home in the cave's warm lake and on Serpent
-//                 Springs (2026-11-26, replaced the Wraith; on its own copy of the creature base:
+//                 an onsen towel and a yuzu on its head, at home on Serpent Springs (since 2026-11-27
+//                 no longer in the cave) (2026-11-26, replaced the Wraith; on its own copy of the creature base:
 //                 render/steamcapybara/).
 
 import { PANGOLIN_ART, PANGOLIN_SIZE } from '../pangolin/index.js';

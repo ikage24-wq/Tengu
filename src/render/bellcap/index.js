@@ -1,7 +1,8 @@
 // The Bell-Cap Monk (2026-11-27, new for the Sky Whale's Back, in the Mantra Lemur's place: the player
 // wanted the late regulars to be new creatures that fit their place, each on its own base; the id stays
 // `monk`). A little mushroom monk of the whale's gardens whose cap grew in the shape of a temple bell: the
-// monks ring them, softly, to wake the sleeping whale without frightening it. A cream stalk, a saffron sash,
+// monks ring them, softly, to wake the sleeping whale without frightening it; some keep watch from the rim
+// of Starfall Heights, where the whale passes over, ringing as it goes by. A cream stalk, a saffron sash,
 // a soft bronze bell-cap with a band round it and a little loop on top; calm eyes under small round brows.
 // It moves on its own copy of the veggie critter base (mushbase.js, its mushroom: the waddle, the cap's
 // sway, the spores, the moves), dressed here.

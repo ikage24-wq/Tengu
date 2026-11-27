@@ -178,7 +178,7 @@ export const MAPS = {
   // Strawhogs scurry about and the Pumpkin Goblins keep the big barn (Old MacGoblin's nest), with
   // two holes down into the Root Cellar, where the Turnip Tots hop about, the Chicklings
   // peck about and a quiet spring is good for fishing; and the Hayloft Ridge above, where
-  // the Lambkins frolic and the Harvest Mice scurry round the old tree. A hay bale bounces you up
+  // the Hayloft Tortoises plod and the Harvest Mice scurry round the old tree. A hay bale bounces you up
   // from the fields and chaff rises from the cellar through the west hole.
   meadow2: {
     id: 'meadow2', name: 'Clover Hills', theme: 'meadow', town: 'harbor', world: { x: 162, y: 196 }, perSpawn: 2,
@@ -217,7 +217,7 @@ export const MAPS = {
       // field is the way in from the harbour road, so it's kept clear.)
       ...[480, 1010].map((x) => ({ mob: 'strawhog', x, y: 700 })),
       { mob: 'pumpgob', x: 690, y: 700 },
-      // Hayloft Ridge: Lambkins and Harvest Mice round the old tree.
+      // Hayloft Ridge: Hayloft Tortoises and Harvest Mice round the old tree.
       ...[[330, 620], [520, 540], [900, 460]].map(([x, y]) => ({ mob: 'lambkin', x, y })),
       ...[[1340, 620], [1120, 540]].map(([x, y]) => ({ mob: 'harvmouse', x, y })),
     ],
@@ -499,8 +499,10 @@ export const MAPS = {
       quiet: [[40, 640, 160], [560, 800, 140], [1380, 800, 140], [1960, 400, 120], [1860, 302, 120], [1640, 362, 100]],
       zones: [
         { name: 'Glowcap Terraces', color: '#4fb0d8', from: 0, mobs: ['crystalslime', 'rockgolem'] },
-        { name: 'Underground Lake', color: '#8a7ab0', from: 760, mobs: ['rockgolem', 'crystalslime', 'shade'] },
-        { name: 'Shade Spires', color: '#5d5285', from: 1480, mobs: ['shade', 'rockgolem'] },
+        { name: 'Underground Lake', color: '#8a7ab0', from: 760, mobs: ['rockgolem', 'crystalslime'] },
+        // (2026-11-27: the Steam Capybara keeps to Serpent Springs, its own warm water; the spires, once named
+        // for the Wraith it replaced, are the Amethyst Spires)
+        { name: 'Amethyst Spires', color: '#5d5285', from: 1480, mobs: ['rockgolem', 'crystalslime'] },
       ],
       ledges: [
         // The glowcaps' caps (drawn with them): the big teal one, the tall pink one, the small one.
@@ -538,9 +540,9 @@ export const MAPS = {
     // arrival rule): up on the glowcaps' caps, on the geode's rim, and up the crystal columns.
     spawns: [
       { mob: 'crystalslime', x: 150, y: 426 }, { mob: 'rockgolem', x: 340, y: 346 }, { mob: 'crystalslime', x: 634, y: 666 },
-      { mob: 'rockgolem', x: 560, y: 420 }, { mob: 'crystalslime', x: 760, y: 420 }, { mob: 'shade', x: 1200, y: 420 }, { mob: 'rockgolem', x: 1420, y: 420 },
-      { mob: 'shade', x: 1000, y: 640 }, { mob: 'rockgolem', x: 800, y: 570 }, { mob: 'crystalslime', x: 960, y: 490 }, { mob: 'shade', x: 1170, y: 570 },
-      { mob: 'shade', x: 1585, y: 480 }, { mob: 'crystalslime', x: 1810, y: 500 }, { mob: 'rockgolem', x: 1600, y: 640 }, { mob: 'crystalslime', x: 1880, y: 640 },
+      { mob: 'rockgolem', x: 560, y: 420 }, { mob: 'crystalslime', x: 760, y: 420 }, { mob: 'rockgolem', x: 1200, y: 420 }, { mob: 'rockgolem', x: 1420, y: 420 },
+      { mob: 'crystalslime', x: 1000, y: 640 }, { mob: 'rockgolem', x: 800, y: 570 }, { mob: 'crystalslime', x: 960, y: 490 }, { mob: 'rockgolem', x: 1170, y: 570 },
+      { mob: 'rockgolem', x: 1585, y: 480 }, { mob: 'crystalslime', x: 1810, y: 500 }, { mob: 'rockgolem', x: 1600, y: 640 }, { mob: 'crystalslime', x: 1880, y: 640 },
     ],
     // Its gathering spots, placed by hand, clear of the monsters, ropes and ways.
     nodes: [
@@ -571,7 +573,7 @@ export const MAPS = {
   // Sky Garden (its makeover, 2026-11-20): a smaller sky built round its landmarks
   // (render/skyart.js), zones side by side over the cloud sea. The Cloud Meadows in the west: a big
   // floating garden island pouring a waterfall into the clouds, a small one above it, a blossom on
-  // the cloud sea bouncing you up, the Whistledown Marmots keeping lookout. A rainbow arches from the meadows
+  // the cloud sea bouncing you up, the Snowpuff Hares turning their ears into the wind. A rainbow arches from the meadows
   // over to the Windsock Roost, little clouds riding it for steps. The Windsock Roost in the middle: a round
   // birdhouse on a tall pillar of cloud, its perches stepping up round the pillar to the balcony,
   // the skyward wind rising beside it (Up to ride it). The Starlit Terrace in the east: floating

@@ -290,7 +290,7 @@ export const SIDE_SCENES = {
     { who: 'lulu', text: "The very first piece is yours, darling. Wear it everywhere. That's free advertising!" },
   ],
   winter_done: [
-    { who: 'lulu', text: 'A parka made of marmot cloud fluff and snow gems! It sparkles when you shiver!', mood: 'happy' },
+    { who: 'lulu', text: 'A parka made of hare cloud fluff and snow gems! It sparkles when you shiver!', mood: 'happy' },
     { who: 'lulu', text: "The winter line is going to be the talk of the island. I've already sold forty. I haven't made them yet. That's called demand, darling.", mood: 'happy' },
     { who: 'lulu', text: 'Limited time only! One season, then gone forever. Then back next winter for twice the price. That is fashion.', mood: 'happy' },
     { together: [{ walk: 'player', to: 1040, speed: 90 }, { walk: 'pip', to: 'lulu', gap: 44, speed: 90 }, { emote: 'pip', kind: '?', dur: 1.4 }] },
@@ -466,7 +466,7 @@ export const SIDE_SCENES = {
     { together: [{ emote: 'celeste', kind: 'zzz', dur: 3 }, { expr: 'celeste', as: 'sleepy' }, { wait: 2.4 }] },
     { who: null, text: 'She is asleep before her head finishes landing on the pillow. Three seconds later she sits bolt upright.' },
     { together: [{ expr: 'celeste', as: null }, { emote: 'celeste', kind: '!', dur: 1.2 }, { jump: 'celeste', height: 8 }] },
-    { who: 'celeste', text: "A star! Tangled in a kite! Up on Starfall Heights, and the Kite Pikas won't let it go. It was so clear. The pillow works. I invented a thing.", mood: 'surprised' },
+    { who: 'celeste', text: "A star! Caught in a seahorse's tail! Up on Starfall Heights, and the Sky Seahorses won't let it go. It was so clear. The pillow works. I invented a thing.", mood: 'surprised' },
   ],
   celeste_kite_done: [
     { spawn: 'celeste', at: 'player', by: 90 },
@@ -542,7 +542,7 @@ export const SIDE_SCENES = {
     { together: [{ walk: 'player', to: 'twinkle', gap: 70, speed: 90 }, { face: 'twinkle', to: 'player' }] },
     { who: 'twinkle', text: 'Twelve! Okay. Here goes. Maximum twinkle.', mood: 'happy' },
     { together: [{ flash: '#fff6c8' }, { fx: 'sparkle', at: 'twinkle', top: true, n: 26 }, { jump: 'twinkle', height: 8 }] },
-    { who: null, text: 'Twinkle glows so bright the Kite Pikas shade their eyes. Far above, the sky goes on being the sky.' },
+    { who: null, text: 'Twinkle glows so bright the Sky Seahorses shade their eyes. Far above, the sky goes on being the sky.' },
     { together: [{ cam: 'twinkle', up: 150, dur: 1.6 }, { emote: 'twinkle', kind: '?', dur: 1.6 }] },
     { who: 'twinkle', text: '...Nothing. Not even a wave.', mood: 'sad' },
     { together: [{ cam: ['twinkle', 'player'], dur: 1 }, { emote: 'twinkle', kind: 'idea', dur: 1.4 }, { jump: 'twinkle', height: 10 }] },
@@ -569,7 +569,7 @@ export const SIDE_SCENES = {
   // (The twist: the sky never missed her.)
   twinkle_count_done: [
     { together: [{ walk: 'player', to: 'twinkle', gap: 70, speed: 90 }, { face: 'twinkle', to: 'player' }] },
-    { who: 'player', text: "I've got the Cloudherd Samoyeds' tally book." },
+    { who: 'player', text: "I've got the Airbloom Lambs' tally book." },
     { together: [{ emote: 'twinkle', kind: '!', dur: 1.2 }, { jump: 'twinkle', height: 8 }] },
     { who: null, text: 'Every star in the sky, counted every night, in tidy little lines. The count for festival night is complete. Not one missing.' },
     { together: [{ spot: 'twinkle', r: 54, dur: 0.8 }, { emote: 'twinkle', kind: 'sweat', dur: 1.6 }] },
@@ -935,7 +935,7 @@ export const SIDE_SCENES = {
     { who: 'player', text: 'Frost all over the crystals. And a warm draught sneaking east toward Serpent Springs, like it was late for something.' },
     { together: [{ emote: 'tora', kind: '?', dur: 1.4 }, { wait: 0.4 }] },
     { who: 'tora', text: "A draught? With no wind? That's not weather. That's somebody slurping.", mood: 'surprised' },
-    { who: 'player', text: 'The only warm things left down there are the Geode Bears. Their bellies glow like coals.' },
+    { who: 'player', text: 'The only warm things left down there are the Geode Turtles. Their crystals glow like coals.' },
     { together: [{ emote: 'tora', kind: 'idea', dur: 1.4 }, { jump: 'tora', height: 14 }, { fx: 'sparks', at: 'tora', n: 16 }] },
     { who: 'tora', text: "Of course they do! Geode Cores hold heat like a grudge. Nobody can slurp what's locked inside a rock.", mood: 'happy' },
     { who: 'tora', text: "So the plan is: we beat up some rocks, take their warm feelings, and put them in my oven. Very heroic. Don't tell Brann, he'll want to make a speech about it.", mood: 'happy' },
@@ -997,7 +997,7 @@ export const SIDE_SCENES = {
   ],
   // ----- Clover and the Golden Bun -----
   clover_count_done: [
-    { who: 'clover', text: 'Twelve Lambkins, trotting home with their tails between their legs! Okay. Counting. One, two, three...', mood: 'happy' },
+    { who: 'clover', text: 'Twelve Hayloft Tortoises, plodding home with their barn doors shut! Okay. Counting. One, two, three...', mood: 'happy' },
     { together: [{ emote: 'clover', kind: 'note', dur: 1.2 }, { wait: 1 }, { emote: 'clover', kind: '?', dur: 1.2 }, { jump: 'clover', height: 10 }] },
     { who: 'clover', text: "...forty-seven. Yesterday I had twelve. They multiply. That's the bun business model.", mood: 'surprised' },
     { who: 'player', text: 'Are some of those pillows?' },
@@ -1105,7 +1105,7 @@ export const SIDE_SCENES = {
     { who: 'bramble', text: "...I've also not had fun in about ten years. Come back when you're a bit bigger. I need to think.", mood: 'sad' },
   ],
   bramble_charge_done: [
-    { who: 'bramble', text: "Twenty Moss Tortoises, charged loud. And you're still in one piece. Huh. Maybe it's not the charging. Maybe it's charging with friends.", mood: 'surprised' },
+    { who: 'bramble', text: "Twenty Moss Piglets, charged loud. And you're still in one piece. Huh. Maybe it's not the charging. Maybe it's charging with friends.", mood: 'surprised' },
     { who: 'bramble', text: 'Right. Stand back. For old times\' sake.', mood: 'happy' },
     { together: [{ walk: 'player', to: 760, speed: 90 }, { face: 'bramble', to: 1 }, { cam: { x: 960, y: 300 }, dur: 1 }] },
     { together: [{ emote: 'bramble', kind: 'anger', dur: 1 }, { fx: 'shout', at: 'bramble' }, { shake: 2.4, dur: 0.6 }] },
@@ -1126,12 +1126,12 @@ export const SIDE_SCENES = {
   ],
   // ----- The instructors' trials -----
   trial_brann: [
-    { who: 'brann', text: "The Geode Bears are slow, heavy, and they never back down. Neither should you. Neither do I. It's my whole personality." },
+    { who: 'brann', text: "The Geode Turtles are slow, heavy, and they never back down. Neither should you. Neither do I. It's my whole personality." },
     { who: 'brann', text: "Twenty of them. Stand your ground the whole time. Then we talk about your future. I've prepared a speech. It's short." },
   ],
   // ----- Brann's shield -----
   brann_stand_done: [
-    { who: 'brann', text: "Twenty-five Moss Tortoises and your boots never moved. Good. That's the whole job. Stand there, get hit, feel proud. Warrior.", mood: 'happy' },
+    { who: 'brann', text: "Twenty-five Moss Piglets and your boots never moved. Good. That's the whole job. Stand there, get hit, feel proud. Warrior.", mood: 'happy' },
     { together: [{ face: 'brann', to: 'player' }, { emote: 'player', kind: '?', dur: 1.2 }] },
     { who: 'player', text: 'Why is there an empty hook over your door?' },
     { together: [{ emote: 'brann', kind: 'sweat', dur: 1.4 }, { wait: 0.6 }] },
@@ -1168,7 +1168,7 @@ export const SIDE_SCENES = {
   ],
   // ----- Kestrel's arrow -----
   kestrel_targets_done: [
-    { who: 'kestrel', text: "Fifteen Lambkins! Quick eyes. You might make an archer yet. Or at least a very good lamb photographer.", mood: 'happy' },
+    { who: 'kestrel', text: "Fifteen Hayloft Tortoises! Quick eyes. You might make an archer yet. Or at least a very good tortoise photographer.", mood: 'happy' },
     { together: [{ emote: 'clover', kind: 'note', dur: 1.4 }, { emote: 'kestrel', kind: 'anger', dur: 1.4 }] },
     { who: 'clover', text: "Careful, {name}. Ask her about the Spring Fair arrow sometime. There's a song. I wrote it. Hee hee.", mood: 'happy' },
     { who: 'kestrel', text: "Clover! That was ten years ago!", mood: 'angry' },

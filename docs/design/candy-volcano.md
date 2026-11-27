@@ -83,10 +83,14 @@ retired), each with its own face, a themed idle act and three moves:
   turret eyes. Gumdrop Fling (thrown), Tongue Snap, Tail Whip.
 - **Mint Wrapper** (peppermint): kept from 2026-11-25 (a kid still in their sweet wrapper); new even blunt
   bangs, clean lashes, an idle act in pieces, its own marks and a third move, the Crinkle Clap.
-- **Cocoa Badger** (chocoknight): the Licorice Mine's digger in a cocoa coverall, a cupcake-case helmet
-  with a birthday candle for a lamp, a rock-candy pick. Pick Chop, Shoulder Barge, Lamp Flare.
-- **Jelly Bean Meerkat** (jellyninja): the mine's lookout with a candy-cane slingshot and a bandolier of
-  jelly beans. Slingshot (thrown), Gravel Kick, Lookout Pounce.
+- **Truffle Ladybug** (chocoknight, render/trufflebug/, since 2026-11-27 on its own copy of the bug base's
+  ladybug, in the Cocoa Badger's place): a ladybug whose shell is a chocolate truffle, pink icing drizzled
+  across it and a candied cherry on top; the volcano's heat worries it, so it fans itself, and its cherry is
+  always a little loose. Shell Bash, Tumble, Hop-and-Slam.
+- **Gummy Caterpillar** (jellyninja, render/gummypillar/, since 2026-11-27 on its own copy of the bug base's
+  caterpillar, in the Jelly Bean Meerkat's place): a caterpillar of fruit gummies, a flavour to each
+  segment; it walks inchworm-style, slurps licorice laces from the mine and flicks jelly beans at you.
+  Jelly Bean (thrown), Bonk, Roll.
 
 The forge's and the ramparts' bosses were remade the same day, from scratch, with brand-new fights
 (world/volcano.js; their cast looks in render/toffee/looks.js and render/gretel/looks.js):

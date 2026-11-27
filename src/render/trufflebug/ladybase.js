@@ -1,4 +1,4 @@
-// The Bonbon Ladybug's body (2026-11-27): a copy of the round bug base (render/mobs/blankbug.js), its
+// The Truffle Ladybug's body (2026-11-27): a copy of the round bug base (render/mobs/blankbug.js), its
 // ladybug, kept here so the base itself stays clean (the player: "never edit the bases just copy the
 // base and edit that"). What this copy changes: a dress, `look` (dressedLadybug(look)):
 //   look.C      its own colours over the base's (lt, base, sh, deep, guide, wing, wingRim, wingFar ...)

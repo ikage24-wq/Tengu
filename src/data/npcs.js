@@ -173,7 +173,7 @@ export const NPCS = {
     id: 'twinkle', name: 'Twinkle', title: 'Fallen Star', role: 'guide', quests: ['twinkle_glow', 'twinkle_kite', 'twinkle_feather', 'twinkle_count', 'twinkle_notice', 'twinkle_light'],
     look: { hairStyle: 'comettail', hairColor: '#ffe7a3', hairTip: '#ffb3c6', skinTone: '#fff0e6', eyeColor: '#5ab4f0', outfitColor: '#ffe3a0', eyeStyle: 'twinkle', face: 'excited', browStyle: 'soft', cheek: 'star' },
     greeting: "Hello! I'm Twinkle. I'm a star. I fell. It's fine. It's mostly fine.",
-    chatter: ['The Kite Pikas keep offering me a lift. I keep falling off.', "Up there I was one of a billion. Down here I'm the only one!", 'Do I look shiny today? Be honest. Be nice.'],
+    chatter: ['The Sky Seahorses keep offering me a ride. I keep sliding off.', "Up there I was one of a billion. Down here I'm the only one!", 'Do I look shiny today? Be honest. Be nice.'],
   },
   // Fawnelle, the Moonlit Doe (2026-11-23, levels 39-42): Moonleaf Grove's shy deer, who has tried to
   // say good evening to the Grove for a hundred years. By day she hides behind the moon tree, peeking
