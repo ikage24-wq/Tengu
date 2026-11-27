@@ -104,11 +104,12 @@ function eye(ctx, a, x, y, side, f, look, shutK) {
   const t = a.t ?? 0;
   const blink = shutK < 0.6 ? win((t + (a.asUid ?? 0) * 1.7) % 5.9, 5.3, 5.42, 5.5, 5.66) : 0;
   const L = Math.max(shutK, blink);
-  const closedW = sstep((L - 0.7) / 0.3);
-  // (closing, a real lid comes down over the open eye, its lash with it, so an eye shutting never shows
-  // as a see-through eye under a closed one: only the lash fades into the closed shape at the very end)
-  const lidK = sstep(L / 0.85);
-  const dy = lidK * h * 1.6;
+  // (closing, a real lid comes down over the open eye, its lash with it, and hands over to the closed
+  // shape early, so a blink never lingers on a half-shut sliver of iris; a set mood's lowered lid stops
+  // high on the iris)
+  const closedW = sstep((L - 0.5) / 0.25);
+  const lidK = sstep(L / 0.65);
+  const dy = lidK * h * 1.05;
   const inner = eyeAt(x, y, side, 0.02);
   const outer = eyeAt(x, y, side, 0.98);
   if (closedW > 0.01) {
@@ -168,16 +169,28 @@ function eye(ctx, a, x, y, side, f, look, shutK) {
     }
     ctx.restore();
   }
-  const openW = 1 - sstep((L - 0.78) / 0.22);
+  const openW = 1 - sstep((L - 0.42) / 0.16);
   if (openW <= 0.01) return;
   ctx.save();
   ctx.globalAlpha *= openW;
   // a soft rose wash over the lid
   glow(ctx, x + side * 0.6, y - h * 0.9 + dy * 0.5, 4.4, '#f6b6c8', 0.32);
   if (dy > 0.01) {
+    // the lid's edge follows the lash's own curve down the eye (a straight cut let the white's corners
+    // peek out round the lash)
     ctx.save();
     ctx.beginPath();
-    ctx.rect(x - w * 2, y - h * 1.05 + dy, w * 4, h * 3);
+    const [sx0, sy0] = eyeAt(x, y, side, 0);
+    ctx.moveTo(sx0 - side * w, sy0 + dy);
+    for (let i = 0; i <= 16; i++) {
+      const [px, py] = eyeAt(x, y, side, i / 16);
+      ctx.lineTo(px, py + dy);
+    }
+    const [sx1, sy1] = eyeAt(x, y, side, 1);
+    ctx.lineTo(sx1 + side * w, sy1 + dy);
+    ctx.lineTo(sx1 + side * w, y + h * 3);
+    ctx.lineTo(sx0 - side * w, y + h * 3);
+    ctx.closePath();
     ctx.clip();
   }
   // the white: an oval turned down at its outer corner
@@ -331,17 +344,26 @@ function brow(ctx, a, x, y, side, f) {
 function mouth(ctx, a, x, y, f) {
   const w = 1.35 * f.mw;
   const cy = y - f.ms * 0.45;
-  if (f.ro > 0.3) {
-    const k = f.ro;
+  // (one mouth that blends between its shapes as they ease: the closed line, the open mouth and the
+  // round "o" fade into one another, never snapping from a line to an open mouth as she counts or talks)
+  const kRo = sstep((f.ro - 0.12) / 0.3);
+  const kOpen = (1 - kRo) * sstep((f.mo - 0.03) / 0.14);
+  const kLine = (1 - kRo) * (1 - kOpen);
+  if (kRo > 0.01) {
+    const k = Math.max(f.ro, 0.3);
+    ctx.save();
+    ctx.globalAlpha *= kRo;
     ell(ctx, x, y + 0.4, 0.65 * k + 0.25, 0.95 * k + 0.25);
     ctx.fillStyle = tone(a, LIP.in);
     ctx.fill();
     pen(ctx, tone(a, LIP.base), 0.4);
     ctx.stroke();
-    return;
+    ctx.restore();
   }
-  if (f.mo > 0.08) {
-    const o = f.mo;
+  if (kOpen > 0.01) {
+    const o = Math.max(f.mo, 0.12);
+    ctx.save();
+    ctx.globalAlpha *= kOpen;
     ctx.beginPath();
     ctx.moveTo(x - w, cy);
     ctx.quadraticCurveTo(x, y + f.ms * 0.45 - o * 0.4, x + w, cy);
@@ -355,11 +377,13 @@ function mouth(ctx, a, x, y, f) {
     ctx.fillStyle = tone(a, LIP.tongue);
     ctx.fill();
     ctx.restore();
-    return;
+    ctx.restore();
   }
+  if (kLine <= 0.01) return;
   // closed: one soft line, a touch fuller in the middle, both corners lifting only when she smiles (a
   // wobble when she's upset)
   ctx.save();
+  ctx.globalAlpha *= kLine;
   ctx.lineCap = 'round';
   pen(ctx, tone(a, LIP.sh), 0.5);
   ctx.beginPath();
@@ -372,7 +396,7 @@ function mouth(ctx, a, x, y, f) {
   }
   ctx.stroke();
   ctx.restore();
-  glow(ctx, x, y + 0.9, 1.2, LIP.base, 0.3);
+  glow(ctx, x, y + 0.9, 1.2, LIP.base, 0.3 * kLine);
 }
 
 // Her face: full round cheeks low on it, a short soft jaw, a small round chin.
@@ -606,6 +630,60 @@ function sideLock(ctx, a, mode, side, tx, sway, lw) {
   // the star bead that binds it: a round gold bead with a little star on it
   starBead(ctx, a, mode, P.bead[0], P.bead[1], 1.55, lw);
 }
+// Her hair pin (2026-11-27 polish: her head had nothing on it to say "star keeper"): a little gold crescent
+// moon pinned above her fringe, a tiny star hanging from its lower tip on a short gold thread that sways
+// with her hair, a soft glow round the star.
+function moonPin(ctx, a, mode, x, y, sw, lw) {
+  const t = a.t ?? 0;
+  const R1 = 3.1;
+  const moon = () => {
+    ctx.beginPath();
+    ctx.arc(x, y, R1, -2.2, 1.75);
+    ctx.arc(x + 1.35, y - 0.55, R1 * 0.8, 1.42, -1.95, true);
+    ctx.closePath();
+  };
+  moon();
+  if (mode === 'line') {
+    pen(ctx, tone(a, GOLD.ink), lw);
+    ctx.stroke();
+    return;
+  }
+  const g = ctx.createLinearGradient(x - R1, y - R1, x + R1, y + R1);
+  g.addColorStop(0, tone(a, GOLD.lt));
+  g.addColorStop(0.5, tone(a, GOLD.base));
+  g.addColorStop(1, tone(a, GOLD.sh));
+  ctx.fillStyle = g;
+  ctx.fill();
+  pen(ctx, tone(a, GOLD.ink), 0.35);
+  ctx.stroke();
+  ell(ctx, x - 1.9, y - 1.2, 0.45, 0.35);
+  ctx.fillStyle = 'rgba(255,255,255,0.85)';
+  ctx.fill();
+  // the hanging star
+  const tip = [x + 0.6, y + R1 - 0.2];
+  const an = Math.sin(t * 1.7) * 0.18 + sw * 0.5;
+  const sx = tip[0] + Math.sin(an) * 2.6;
+  const sy = tip[1] + Math.cos(an) * 2.6;
+  pen(ctx, tone(a, GOLD.sh), 0.25);
+  ctx.beginPath();
+  ctx.moveTo(...tip);
+  ctx.lineTo(sx, sy);
+  ctx.stroke();
+  glow(ctx, sx, sy + 0.5, 2.6, '#fff0b8', 0.45 + 0.15 * Math.sin(t * 2.3));
+  ctx.beginPath();
+  for (let i = 0; i < 10; i++) {
+    const a2 = -Math.PI / 2 + an + (i * Math.PI) / 5;
+    const rr = i % 2 ? 0.48 : 1.15;
+    const p = [sx + Math.cos(a2) * rr, sy + 0.9 + Math.sin(a2) * rr];
+    if (i) ctx.lineTo(...p);
+    else ctx.moveTo(...p);
+  }
+  ctx.closePath();
+  ctx.fillStyle = tone(a, GOLD.base);
+  ctx.fill();
+  pen(ctx, tone(a, GOLD.ink), 0.25);
+  ctx.stroke();
+}
 // One of her star beads (the same as on her abacus): a round soft-gold bead, a little star pressed in it.
 export function starBead(ctx, a, mode, x, y, r, lw, lit = 0) {
   ell(ctx, x, y, r * 1.08, r);
@@ -754,6 +832,7 @@ export function drawHead(ctx, a, mode, part, q, f, R, lw) {
   sideLock(ctx, a, mode, -1, tx, R.slN ?? 0, lw);
   sideLock(ctx, a, mode, 1, tx, R.slF ?? 0, lw);
   fringe(ctx, a, mode, tx, R.fr, lw);
+  moonPin(ctx, a, mode, tx + 8.6, -15.4, Number.isFinite(R.fr) ? R.fr : 0, lw);
   // her brows, drawn over the fringe's tips (as anime faces do), a little see-through and in a colour
   // close to her hair's shade, so her brows still act when the fringe falls over them
   if (mode === 'fill' && f) {

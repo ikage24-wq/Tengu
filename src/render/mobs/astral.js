@@ -2,7 +2,7 @@
 // docs/design/star-observatory.md), Astraea's household, each remade from scratch on its own copy of
 // a blank base (2026-11-26):
 //   cometcourier   Star Glider (a sugar glider, render/glider/)      nebulawitch   Nebula Knitter (an alpaca, render/alpaca/)
-//   starcarto      Spyglass Loris (render/loris/)                     mothlibrarian Raven Scribe (render/raven/)
+//   starcarto      Constellation Starfish (render/constellation/)     mothlibrarian Raven Scribe (render/raven/)
 //   meteormaiden   Meteor Maiden (render/meteormaiden/)               geminighosts  the Mirror Twins (render/gemini/)
 // (The old ids stay so old saves and quest counts keep working.) Also two little star helpers the sky
 // bosses draw with.
@@ -11,7 +11,7 @@ import { T, TAU, D2R, star } from './critter.js';
 import { METEOR_MAIDEN_ART, METEOR_MAIDEN_SIZE } from '../meteormaiden/index.js';
 import { TWIN_ART, TWIN_SIZE } from '../gemini/index.js';
 import { STAR_GLIDER_ART, STAR_GLIDER_SIZE } from '../glider/index.js';
-import { SPYGLASS_LORIS_ART, SPYGLASS_LORIS_SIZE } from '../loris/index.js';
+import { CONSTELLATION_STARFISH_ART, CONSTELLATION_STARFISH_SIZE } from '../constellation/index.js';
 import { NEBULA_KNITTER_ART, NEBULA_KNITTER_SIZE } from '../alpaca/index.js';
 import { RAVEN_SCRIBE_ART, RAVEN_SCRIBE_SIZE } from '../raven/index.js';
 
@@ -41,8 +41,8 @@ export const ART = {
   cometcourier: STAR_GLIDER_ART,
   // (the Nebula Knitter, 2026-11-26: an alpaca whose fleece is a star nursery, render/alpaca/)
   nebulawitch: NEBULA_KNITTER_ART,
-  // (the Spyglass Loris, 2026-11-26: the tower's slow star surveyor, render/loris/)
-  starcarto: SPYGLASS_LORIS_ART,
+  // (the Constellation Starfish, 2026-11-27: a little fallen star charting the sky, render/constellation/)
+  starcarto: CONSTELLATION_STARFISH_ART,
   // (the Raven Scribe, 2026-11-26: the Archive's copyist, a raven with a quill, render/raven/)
   mothlibrarian: RAVEN_SCRIBE_ART,
   // (The Meteor Golem was wiped 2026-11-22; the Meteor Maiden took its place, meteorrig.js.)
@@ -55,7 +55,7 @@ export const ART = {
 export const INFO = {
   cometcourier: { name: 'Star Glider', w: STAR_GLIDER_SIZE.w, h: STAR_GLIDER_SIZE.h },
   nebulawitch: { name: 'Nebula Knitter', w: NEBULA_KNITTER_SIZE.w, h: NEBULA_KNITTER_SIZE.h },
-  starcarto: { name: 'Spyglass Loris', w: SPYGLASS_LORIS_SIZE.w, h: SPYGLASS_LORIS_SIZE.h },
+  starcarto: { name: 'Constellation Starfish', w: CONSTELLATION_STARFISH_SIZE.w, h: CONSTELLATION_STARFISH_SIZE.h },
   mothlibrarian: { name: 'Raven Scribe', w: RAVEN_SCRIBE_SIZE.w, h: RAVEN_SCRIBE_SIZE.h },
   meteormaiden: { name: 'Meteor Maiden', w: METEOR_MAIDEN_SIZE.w, h: METEOR_MAIDEN_SIZE.h },
   geminighosts: { name: 'Gemini Ghosts', ...TWIN_SIZE },

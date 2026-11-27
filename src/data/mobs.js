@@ -205,13 +205,14 @@ export const MOBS = {
     // (the Chest Hermit, 2026-11-24: render/hermit/; it bites and slams its chest's lid)
     speed: 40, w: 28, h: 33, art: 'crystalslime', moves: ['hermitChomp', 'lidSlam'], drops: [{ id: 'crystal_gel', chance: 0.5 }, { id: 'sapphire', chance: 0.08 }, { gear: 'earring', chance: 0.01 }],
   }),
-  // The Geode Bear (2026-11-26, replacing the Crystal Golem; render/geodebear/, on its own copy of the
-  // creature base): a chubby cave-bear cub, slow and heavy, its belly a geode glowing like coals (the
-  // Geode Cores). `rest` long enough for a piece of its idle act; moves: Crystal Slam, Crystal Toss,
-  // Ember Huff.
+  // The Geode Turtle (2026-11-27, new in the Geode Bear's place; render/geodeturtle/, on its own copy of
+  // the shell crawler base's sea turtle): an old cave-lake turtle, its stone shell cracked open on top like
+  // a geode, amethyst crystals glowing out of it (the Geode Cores). It rows along on its flippers at a
+  // sea turtle's slow pace (8); `rest` long enough for a piece of its idle act; moves: a flipper slap, a
+  // snap, a shell spin.
   rockgolem: mob({
-    id: 'rockgolem', name: 'Geode Bear', level: 32, hp: 2450, atk: 112, def: 45, acc: 66, eva: 6, exp: 1280, gold: [13, 30],
-    speed: 20, rest: [9, 13], w: 40, h: 57, art: 'rockgolem', moves: ['slam', 'toss', 'huff'], drops: [{ id: 'rock_core', chance: 0.45 }, { id: 'silver_ore', chance: 0.08 }],
+    id: 'rockgolem', name: 'Geode Turtle', level: 32, hp: 2450, atk: 112, def: 45, acc: 66, eva: 6, exp: 1280, gold: [13, 30],
+    speed: 8, rest: [9, 13], w: 41, h: 26, art: 'rockgolem', moves: ['slap', 'snap', 'spin'], drops: [{ id: 'rock_core', chance: 0.45 }, { id: 'silver_ore', chance: 0.08 }],
   }),
   shade: mob({
     // (the Steam Capybara, 2026-11-26, replacing the Wraith: render/steamcapybara/, on its own copy of
@@ -220,14 +221,14 @@ export const MOBS = {
     id: 'shade', name: 'Steam Capybara', level: 35, hp: 2650, atk: 126, def: 35, acc: 72, eva: 12, exp: 1440, gold: [14, 33],
     speed: 56, rest: [8, 13], w: 28, h: 46, art: 'shade', fly: true, moves: ['jet', 'snap', 'bubble'], drops: [{ id: 'shade_cloth', chance: 0.45 }, { id: 'starstone', chance: 0.08 }],
   }),
-  // The Whistledown Marmot (2026-11-27, the Pegasus Foal remade from scratch, render/marmot/): an alpine
-  // marmot of the Cloud Meadows (and Frozen Peak's lake shore) whose winter coat grows in as cloud, a cloud
-  // ruff and a cloud tail; the meadow's lookout, it whistles at everything. (Speed 22, the creature base's
-  // own walk at an easy waddle; `rest` for a piece of its idle act. Moves: Alarm Whistle, Belly Bump,
-  // Marmot Boxing.)
+  // The Snowpuff Hare (2026-11-27, new in the Whistledown Marmot's place, render/snowhare/): a snow-white
+  // hare of the Cloud Meadows (and Frozen Peak's lake shore) whose winter coat comes in as cloud, a cloud
+  // ruff and a big cloud-puff tail; it turns its ears into the wind and nibbles cloud like clover. (Speed
+  // 30, an easy lope on the hare's own long legs; `rest` for a piece of its idle act. Moves: a bonk, a
+  // hind-foot thump, a nibble.)
   cloudsheep: mob({
-    id: 'cloudsheep', name: 'Whistledown Marmot', level: 38, hp: 3250, atk: 136, def: 40, acc: 76, eva: 11, exp: 1720, gold: [15, 38],
-    speed: 22, rest: [9, 14], w: 30, h: 44, art: 'cloudsheep', moves: ['whistle', 'bump', 'box'], drops: [{ id: 'wool', chance: 0.5 }, { id: 'cloud_cotton', chance: 0.08 }, { id: 'angel_wings', chance: 0.01 }],
+    id: 'cloudsheep', name: 'Snowpuff Hare', level: 38, hp: 3250, atk: 136, def: 40, acc: 76, eva: 11, exp: 1720, gold: [15, 38],
+    speed: 30, rest: [9, 14], w: 34, h: 40, art: 'cloudsheep', moves: ['bonk', 'thump', 'nibble'], drops: [{ id: 'wool', chance: 0.5 }, { id: 'cloud_cotton', chance: 0.08 }, { id: 'angel_wings', chance: 0.01 }],
   }),
   // The Windsock Albatross (2026-11-27, the Sky Harpy remade from scratch, render/albatross/): a chibi
   // albatross in a knitted windsock cap, gliding the winds round the Windsock Roost and Starfall Heights' rims.
@@ -702,12 +703,12 @@ export const MOBS = {
     speed: 34, rest: [8, 13], w: 32, h: 60, art: 'nebulawitch', moves: ['yarn', 'needle', 'fluff'], drops: [{ id: 'stardust', chance: 0.4 }, { id: 'astral_shard', chance: 0.08 }, { id: 'star_beret', chance: 0.01 }],
     fight: { every: 2.3, reach: 30, windup: 0.55, range: 170, shot: 'nebulayarn' },
   }),
-  // The Spyglass Loris (2026-11-26, the Telescope Crab remade from scratch, render/loris/): the tower's
-  // slow little star surveyor, a brass spyglass in its paws; it shoots a glint of starlight from its
-  // lens (`shot`). It walks a loris's slow pace (30). (The id stays for saves.)
+  // The Constellation Starfish (2026-11-27, new in the Spyglass Loris's place, render/constellation/): a
+  // little star that fell into the observatory and stayed to chart the sky, its tips glowing gold; it
+  // tiptoes and cartwheels, and flicks a little gold star at you ('starglint'). (The id stays for saves.)
   starcarto: mob({
-    id: 'starcarto', name: 'Spyglass Loris', level: 31, hp: 2400, atk: 128, def: 30, acc: 92, eva: 10, exp: 1220, gold: [16, 31],
-    speed: 30, rest: [8, 13], w: 32, h: 50, art: 'starcarto', moves: ['flare', 'bonk', 'unroll'], drops: [{ id: 'astral_shard', chance: 0.08 }, { id: 'white_potion', chance: 0.3 }, { id: 'encore_rose', chance: 0.06 }],
+    id: 'starcarto', name: 'Constellation Starfish', level: 31, hp: 2400, atk: 128, def: 30, acc: 92, eva: 10, exp: 1220, gold: [16, 31],
+    speed: 20, rest: [8, 13], w: 34, h: 38, art: 'starcarto', moves: ['slap', 'grab', 'spin'], drops: [{ id: 'astral_shard', chance: 0.08 }, { id: 'white_potion', chance: 0.3 }, { id: 'encore_rose', chance: 0.06 }],
     fight: { every: 2.1, reach: 30, windup: 0.5, range: 150, shot: 'starglint' },
   }),
   // The Raven Scribe (2026-11-26, the Owl Librarian remade from scratch, render/raven/): the Archive's
@@ -821,21 +822,21 @@ export const MOBS = {
     speed: 30, rest: [8, 13], w: 28, h: 33, art: 'peppermint', moves: ['mintSpin', 'mintFlick', 'mintClap'], drops: [{ id: 'sugar_gem', chance: 0.08 }, { id: 'taffy_twist', chance: 0.3 }],
     fight: { every: 1.8, reach: 44, windup: 0.35 },
   }),
-  // The Cocoa Badger (2026-11-27, the Chocolate Knight remade from scratch, render/badger/): the Licorice
-  // Mine's digger in a cocoa coverall and a cupcake-case helmet with a birthday candle for a lamp, a
-  // rock-candy pick on its shoulder; it digs the cocoa beans it drops. A sturdy plod (24) and a long
-  // wind-up on its Pick Chop. (The id stays for saves.)
+  // The Bonbon Ladybug (2026-11-27, new in the Cocoa Badger's place, render/bonbonbug/): a ladybug whose
+  // shell is a chocolate bonbon, pink icing and a cherry on top (the cocoa beans it drops); it tiptoes at a
+  // ladybug's pace (20) and flies when it hurries. Moves: a shell bash, a tumble, a hop-and-slam. (The id
+  // stays for saves.)
   chocoknight: mob({
-    id: 'chocoknight', name: 'Cocoa Badger', level: 38, hp: 5200, atk: 184, def: 56, acc: 116, eva: 4, exp: 2300, gold: [24, 45],
-    speed: 24, rest: [8, 13], w: 32, h: 50, art: 'chocoknight', moves: ['chop', 'barge', 'flare'], drops: [{ id: 'cocoa_bean', chance: 0.45 }, { id: 'sugar_gem', chance: 0.12 }],
+    id: 'chocoknight', name: 'Bonbon Ladybug', level: 38, hp: 5200, atk: 184, def: 56, acc: 116, eva: 4, exp: 2300, gold: [24, 45],
+    speed: 20, rest: [8, 13], w: 30, h: 26, art: 'chocoknight', moves: ['bash', 'spin', 'slam'], drops: [{ id: 'cocoa_bean', chance: 0.45 }, { id: 'sugar_gem', chance: 0.12 }],
     fight: { every: 2.3, reach: 50, windup: 0.6 },
   }),
-  // The Jelly Bean Meerkat (2026-11-27, the Jelly Bean Ninja remade from scratch, render/meerkat/): the
-  // mine's lookout, standing tall on its toes and tail, a candy-cane slingshot and a bandolier of jelly
-  // beans; it slings them at you (`shot`). A brisk upright scurry (32). (The id stays for saves.)
+  // The Gummy Caterpillar (2026-11-27, new in the Jelly Bean Meerkat's place, render/gummypillar/): a
+  // caterpillar of fruit gummies, a flavour to each segment; it slurps licorice laces and flicks jelly
+  // beans at you ('jellybean'). It crawls at a caterpillar's pace (15). (The id stays for saves.)
   jellyninja: mob({
-    id: 'jellyninja', name: 'Jelly Bean Meerkat', level: 37, hp: 3100, atk: 172, def: 30, acc: 120, eva: 20, exp: 1800, gold: [21, 39],
-    speed: 32, rest: [8, 13], w: 28, h: 47, art: 'jellyninja', moves: ['sling', 'kick', 'pounce'], drops: [{ id: 'sugar_gem', chance: 0.08 }, { id: 'white_potion', chance: 0.3 }],
+    id: 'jellyninja', name: 'Gummy Caterpillar', level: 37, hp: 3100, atk: 172, def: 30, acc: 120, eva: 20, exp: 1800, gold: [21, 39],
+    speed: 15, rest: [8, 13], w: 43, h: 24, art: 'jellyninja', moves: ['bonk', 'roll', 'slam'], drops: [{ id: 'sugar_gem', chance: 0.08 }, { id: 'white_potion', chance: 0.3 }],
     fight: { every: 2, reach: 30, windup: 0.4, range: 150, shot: 'jellybean' },
   }),
   // (The Candy Volcano's bosses: health raised on 2026-11-19 so a group fights each for about a
@@ -880,55 +881,56 @@ export const MOBS = {
     speed: 30, rest: [9, 14], w: 30, h: 48, art: 'understudy', moves: ['divaAria', 'maskSwat', 'swoon'], drops: [{ id: 'script_page', chance: 0.4 }, { id: 'encore_rose', chance: 0.06 }],
     fight: { every: 1.9, reach: 42, windup: 0.4 },
   }),
-  // The Usher Otter (2026-11-27, the Chorus Flamingo remade from scratch, render/usher/): the Grand
-  // Lobby's usherette, a river otter in the theatre's wine-red uniform with a brass torch and a "shh"
-  // always ready. It walks an usher's brisk pace (38), never a dancer's dash. (The id stays for saves.)
+  // The Ticket Lop (2026-11-27, new for the Grand Lobby in the Usher Otter's place; render/ticketlop/,
+  // its own copy of the bunny base's lop): the lobby's usher, a caramel lop in a red usher's cap with a
+  // ticket stub in its band and a bow tie. (The id stays for saves.)
   chorusgirl: mob({
-    id: 'chorusgirl', name: 'Usher Otter', level: 41, hp: 4400, atk: 196, def: 40, acc: 128, eva: 18, exp: 2500, gold: [25, 45],
-    speed: 38, rest: [9, 14], w: 26, h: 45, art: 'chorusgirl', moves: ['shush', 'flash', 'bonk'], drops: [{ id: 'sequin', chance: 0.4 }, { id: 'encore_rose', chance: 0.06 }],
+    id: 'chorusgirl', name: 'Ticket Lop', level: 41, hp: 4400, atk: 196, def: 40, acc: 128, eva: 18, exp: 2500, gold: [25, 45],
+    speed: 30, rest: [9, 14], w: 30, h: 32, art: 'chorusgirl', moves: ['bonk', 'thump'], drops: [{ id: 'sequin', chance: 0.4 }, { id: 'encore_rose', chance: 0.06 }],
     fight: { every: 1.7, reach: 44, windup: 0.35 },
   }),
-  // The Backdrop Beaver (2026-11-27, the Stagehand Mole remade from scratch, render/beaver/): the
-  // theatre's scene painter from backstage, in paint-spattered dungarees with a wide brush; it thumps its
-  // tail for "places!". A stagehand's steady trudge (28). (The id stays for saves.)
+  // The Curtain Octopus (2026-11-27, new for the Grand Lobby in the Backdrop Beaver's place;
+  // render/curtain/, its own copy of the tentacle base): the theatre's stagehand, a rose octopus in a red
+  // velvet curtain hood with a gold fringe and a headset. (The id stays for saves.)
   stagehand: mob({
-    id: 'stagehand', name: 'Backdrop Beaver', level: 40, hp: 4000, atk: 192, def: 46, acc: 124, eva: 14, exp: 2350, gold: [24, 43],
-    speed: 28, rest: [9, 14], w: 28, h: 44, art: 'stagehand', moves: ['brush', 'thump', 'splat'], drops: [{ id: 'script_page', chance: 0.3 }, { id: 'white_potion', chance: 0.3 }, { id: 'encore_rose', chance: 0.06 }],
+    id: 'stagehand', name: 'Curtain Octopus', level: 40, hp: 4000, atk: 192, def: 46, acc: 124, eva: 14, exp: 2350, gold: [24, 43],
+    speed: 16, rest: [9, 14], w: 32, h: 34, art: 'stagehand', moves: ['slap', 'grab', 'ink'], drops: [{ id: 'script_page', chance: 0.3 }, { id: 'white_potion', chance: 0.3 }, { id: 'encore_rose', chance: 0.06 }],
     fight: { every: 1.8, reach: 38, windup: 0.35 },
   }),
   // (Chapter 9, 2026-11-19: the train and the office are the Queen's old life. The ids stay, for
   // saves and Monster Book cards; the monsters were remade from scratch on 2026-11-27, each in its own
-  // folder: render/stoat/, sloth/, raccoon/, quokka/.)
-  // The Red-Tape Raccoon (2026-11-27, the Stapler Croc remade from scratch, render/raccoon/): a prim office
-  // clerk in shirtsleeves and an eyeshade who stamps DENIED and flings red tape (`shot`). A clerk's
-  // officious walk (30). (The id stays for saves.)
+  // folder: render/pigeon/, snoozesnail/, fiddler/, sprout/.)
+  // The Paperclip Fiddler (2026-11-27, new for Act II: The Office in the Red-Tape Raccoon's place;
+  // render/fiddler/, its own copy of the crab base): a coral office fiddler crab with a red stapler for a
+  // big claw, a paperclip and a sticky note on its shell; it still shoots red tape. (The id stays.)
   primadonna: mob({
-    id: 'primadonna', name: 'Red-Tape Raccoon', level: 42, hp: 5200, atk: 204, def: 44, acc: 130, eva: 8, exp: 2800, gold: [26, 48],
-    speed: 30, rest: [9, 14], w: 28, h: 44, art: 'primadonna', moves: ['tape', 'denied', 'forms'], drops: [{ id: 'sequin', chance: 0.45 }, { id: 'encore_rose', chance: 0.1 }, { id: 'crystal_crown', chance: 0.01 }],
+    id: 'primadonna', name: 'Paperclip Fiddler', level: 42, hp: 5200, atk: 204, def: 44, acc: 130, eva: 8, exp: 2800, gold: [26, 48],
+    speed: 24, rest: [9, 14], w: 34, h: 30, art: 'primadonna', moves: ['snap', 'pinch'], drops: [{ id: 'sequin', chance: 0.45 }, { id: 'encore_rose', chance: 0.1 }, { id: 'crystal_crown', chance: 0.01 }],
     fight: { every: 2.4, reach: 30, windup: 0.6, range: 180, shot: 'redtape' },
   }),
-  // The Toast-Dash Stoat (2026-11-27, the Rush-Hour Penguin remade from scratch, render/stoat/): a
-  // commuter in a trench coat who is always late, toast in its mouth, briefcase swinging. A hurrying
-  // commuter's walk (40), its dash a sprint. (The id stays for saves.)
+  // The Commuter Pigeon (2026-11-27, new for Act I: The Morning Train in the Toast-Dash Stoat's place:
+  // the player wanted the late regulars to be new creatures that fit their place, each on its own base;
+  // render/pigeon/, its own copy of the songbird base): a round chibi city pigeon in a coral scarf, its
+  // ticket in its beak, the morning paper under its wing. (The id stays for saves.)
   paperdragon: mob({
-    id: 'paperdragon', name: 'Toast-Dash Stoat', level: 43, hp: 6400, atk: 212, def: 52, acc: 130, eva: 10, exp: 3100, gold: [28, 50],
-    speed: 40, rest: [9, 14], w: 26, h: 44, art: 'paperdragon', moves: ['dash', 'case', 'whip'], drops: [{ id: 'script_page', chance: 0.4 }, { id: 'encore_rose', chance: 0.12 }],
+    id: 'paperdragon', name: 'Commuter Pigeon', level: 43, hp: 6400, atk: 212, def: 52, acc: 130, eva: 10, exp: 3100, gold: [28, 50],
+    speed: 40, rest: [9, 14], w: 26, h: 30, art: 'paperdragon', moves: ['peck', 'wingSlap', 'call'], drops: [{ id: 'script_page', chance: 0.4 }, { id: 'encore_rose', chance: 0.12 }],
     fight: { every: 2.1, reach: 44, windup: 0.5 },
   }),
-  // The Travel-Pillow Sloth (2026-11-27, the Sleepy Commuter Sheep remade from scratch, render/sloth/): a
-  // fluffy sloth in a knit cardigan and a travel pillow who sleeps through its stop every day. A sloth's
-  // slow sway (20). (The id stays for saves; its drop is still wool: its cardigan's.)
+  // The Snooze Snail (2026-11-27, new for Act I: The Morning Train in the Travel-Pillow Sloth's place;
+  // render/snoozesnail/, its own copy of the shell crawler base): a sleepy lavender snail whose shell is its
+  // ringing alarm clock; every morning it hits snooze. (The id stays for saves.)
   sleepysheep: mob({
-    id: 'sleepysheep', name: 'Travel-Pillow Sloth', level: 41, hp: 4800, atk: 198, def: 46, acc: 126, eva: 10, exp: 2600, gold: [25, 46],
-    speed: 20, rest: [10, 15], w: 28, h: 45, art: 'sleepysheep', moves: ['slap', 'nod', 'yawn'], drops: [{ id: 'wool', chance: 0.4 }, { id: 'script_page', chance: 0.3 }, { id: 'encore_rose', chance: 0.06 }],
+    id: 'sleepysheep', name: 'Snooze Snail', level: 41, hp: 4800, atk: 198, def: 46, acc: 126, eva: 10, exp: 2600, gold: [25, 46],
+    speed: 12, rest: [10, 15], w: 34, h: 30, art: 'sleepysheep', moves: ['glide', 'bonk', 'spin'], drops: [{ id: 'wool', chance: 0.4 }, { id: 'script_page', chance: 0.3 }, { id: 'encore_rose', chance: 0.06 }],
     fight: { every: 2, reach: 40, windup: 0.55 },
   }),
-  // The Intern Quokka (2026-11-27, the Sticky Note Bird remade from scratch, render/quokka/): the office's
-  // ever-smiling intern in a shirt three sizes too big, who folds every memo into a paper plane and
-  // "circulates" it at you (`shot`). An eager little hustle (34). (The id stays for saves.)
+  // The Sticky-Note Sprout (2026-11-27, new for Act II: The Office in the Intern Quokka's place;
+  // render/sprout/, its own copy of the veggie critter base): the office desk plant come alive, a coffee
+  // mug of a body, sticky notes for seed-leaves; it still throws paper planes. (The id stays.)
   prompter: mob({
-    id: 'prompter', name: 'Intern Quokka', level: 42, hp: 4300, atk: 200, def: 38, acc: 132, eva: 16, exp: 2700, gold: [25, 47],
-    speed: 34, rest: [9, 14], w: 26, h: 43, art: 'prompter', moves: ['plane', 'memo', 'bow'], drops: [{ id: 'script_page', chance: 0.45 }, { id: 'mana_elixir', chance: 0.2 }, { gear: 'earring', chance: 0.01 }],
+    id: 'prompter', name: 'Sticky-Note Sprout', level: 42, hp: 4300, atk: 200, def: 38, acc: 132, eva: 16, exp: 2700, gold: [25, 47],
+    speed: 22, rest: [9, 14], w: 24, h: 34, art: 'prompter', moves: ['seedspit', 'leafslap'], drops: [{ id: 'script_page', chance: 0.45 }, { id: 'mana_elixir', chance: 0.2 }, { gear: 'earring', chance: 0.01 }],
     fight: { every: 2.2, reach: 30, windup: 0.5, range: 170, shot: 'paperplane' },
   }),
   // (Health sized from a live run, 2026-11-19: a level-43 group does about 6.5k a second to her,
@@ -999,18 +1001,21 @@ export const MOBS = {
     fight: { every: 2, reach: 92, windup: 0.6 }, mech: 'monday',
   }),
   // ---------- Sky Whale's Back (levels 45-50, docs/design/sky-whale.md) ----------
-  // The Kite Pika (2026-11-27, the Kite Rider remade from scratch, render/pika/): a pika in a flight jacket
-  // with a paper diamond kite strapped to its back; the first good gust lifts it off its toes.
+  // The Sky Seahorse (2026-11-27, new in the Kite Pika's place, render/skyhorse/): a seahorse that swims
+  // the sky over the great whale's back, a cloud mane and a sunrise belly; it whistles through its snout and
+  // blows rings of cloud. It hovers a hand's height up at a seahorse's unhurried pace (18). Moves: a bubble,
+  // a tail whip, a ram. (The id stays for saves.)
   kiterider: mob({
-    id: 'kiterider', name: 'Kite Pika', level: 45, hp: 5200, atk: 220, def: 46, acc: 140, eva: 20, exp: 3300, gold: [28, 50],
-    speed: 26, rest: [9, 14], w: 26, h: 40, art: 'kiterider', moves: ['gust', 'twirl', 'eep'], drops: [{ id: 'sky_silk', chance: 0.4 }, { id: 'sky_scale', chance: 0.06 }],
+    id: 'kiterider', name: 'Sky Seahorse', level: 45, hp: 5200, atk: 220, def: 46, acc: 140, eva: 20, exp: 3300, gold: [28, 50],
+    speed: 18, rest: [9, 14], w: 18, h: 44, art: 'kiterider', moves: ['bubble', 'tailWhip', 'ram'], drops: [{ id: 'sky_silk', chance: 0.4 }, { id: 'sky_scale', chance: 0.06 }],
     fight: { every: 1.8, reach: 44, windup: 0.35 },
   }),
-  // The Cloudherd Samoyed (2026-11-27, the Cloud Shepherd remade from scratch, render/samoyed/): a sheepdog
-  // pup in a shepherd's smock who herds clouds instead of sheep; its whole flock is one small cloud.
+  // The Airbloom Lamb (2026-11-27, new in the Cloudherd Samoyed's place, render/bloomlamb/): a lamb from the
+  // whale's Lung Gardens whose fleece grew little air-blooms that open each time it breathes out, in time
+  // with the whale. It trots at a lamb's pace (22). Moves: a headbutt, a buck, a rear. (The id stays for saves.)
   shepherdess: mob({
-    id: 'shepherdess', name: 'Cloudherd Samoyed', level: 45, hp: 5400, atk: 216, def: 46, acc: 138, eva: 14, exp: 3300, gold: [28, 50],
-    speed: 24, rest: [9, 14], w: 28, h: 44, art: 'shepherdess', moves: ['woof', 'cloud', 'shake'], drops: [{ id: 'sky_silk', chance: 0.45 }, { id: 'sky_scale', chance: 0.06 }],
+    id: 'shepherdess', name: 'Airbloom Lamb', level: 45, hp: 5400, atk: 216, def: 46, acc: 138, eva: 14, exp: 3300, gold: [28, 50],
+    speed: 22, rest: [9, 14], w: 34, h: 36, art: 'shepherdess', moves: ['headbutt', 'buck', 'rear'], drops: [{ id: 'sky_silk', chance: 0.45 }, { id: 'sky_scale', chance: 0.06 }],
     fight: { every: 1.9, reach: 46, windup: 0.4 },
   }),
   // Blunderpuss (2026-11-27, the Sky Pirate Gunner remade from scratch, render/blunderpuss/): Captain Gale's
@@ -1035,11 +1040,13 @@ export const MOBS = {
     speed: 24, rest: [9, 14], w: 28, h: 43, art: 'harpist', moves: ['strum', 'croak', 'leap'], drops: [{ id: 'sky_silk', chance: 0.4 }, { id: 'mana_elixir', chance: 0.2 }, { gear: 'earring', chance: 0.01 }],
     fight: { every: 2.4, reach: 30, windup: 0.55, range: 180, shot: 'stormnote' },
   }),
-  // The Mantra Lemur (2026-11-27, the Feather Monk remade from scratch, render/lemur/): a ring-tailed lemur
-  // monk in a saffron robe with a singing bowl; lemurs sit arms open to the sun, so these became monks.
+  // The Bell-Cap Monk (2026-11-27, new in the Mantra Lemur's place, render/bellcap/): a little mushroom monk
+  // of the whale's gardens whose cap grew in the shape of a temple bell; the monks ring them softly to wake
+  // the sleeping whale. It waddles at a mushroom's pace (14). Moves: a spore puff, a bonk, a burrow. (The id
+  // stays for saves.)
   monk: mob({
-    id: 'monk', name: 'Mantra Lemur', level: 47, hp: 6000, atk: 230, def: 52, acc: 148, eva: 18, exp: 3800, gold: [30, 54],
-    speed: 24, rest: [9, 14], w: 26, h: 44, art: 'monk', moves: ['chime', 'sweep', 'breath'], drops: [{ id: 'sky_silk', chance: 0.4 }, { id: 'sky_scale', chance: 0.1 }],
+    id: 'monk', name: 'Bell-Cap Monk', level: 47, hp: 6000, atk: 230, def: 52, acc: 148, eva: 18, exp: 3800, gold: [30, 54],
+    speed: 14, rest: [9, 14], w: 22, h: 34, art: 'monk', moves: ['spore', 'bonk', 'burrow'], drops: [{ id: 'sky_silk', chance: 0.4 }, { id: 'sky_scale', chance: 0.1 }],
     fight: { every: 1.7, reach: 46, windup: 0.35 },
   }),
   // Captain Gale (remade 2026-11-27): a young sky-pirate captain who makes her own wind with a ship's

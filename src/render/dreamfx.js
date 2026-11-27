@@ -18,9 +18,9 @@ import { SHAMAN_FX, SHAMAN_HOLD, shamanShot } from './shaman/fx.js';
 import { sugarShot } from './teahatter/index.js';
 import { bubbleRingShot } from './beluga/index.js';
 import { paperBoatShot } from './axolotl/index.js';
-import { starGlintShot } from './loris/index.js';
-import { redTapeShot } from './raccoon/index.js';
-import { paperPlaneShot } from './quokka/index.js';
+import { starGlintShot } from './constellation/shot.js';
+import { redTapeShot } from './fiddler/shot.js';
+import { paperPlaneShot } from './sprout/shot.js';
 import { cloudBallShot } from './blunderpuss/index.js';
 import { stormNoteShot } from './treefrog/index.js';
 import { nebulaYarnShot } from './alpaca/index.js';
@@ -28,7 +28,7 @@ import { balloonShot } from './balloonseller/index.js';
 import { clangShot } from './tindrummer/index.js';
 import { flossShot } from './chinchilla/index.js';
 import { gumdropShot } from './chameleon/index.js';
-import { jellyBeanShot } from './meerkat/index.js';
+import { jellyBeanShot } from './gummypillar/shot.js';
 import { HAZEL_FX, HAZEL_HOLD } from './mothercapper/fx.js';
 import { TUSKAR_FX, TUSKAR_HOLD } from './tuskar/fx.js';
 import { WALTZ_FX, WALTZ_HOLD } from './waltzrondo/looks.js';
@@ -875,7 +875,7 @@ export function dreamShot(ctx, shot, x, y, p, d) {
   if (bubbleRingShot(ctx, shot, x, y, p, d)) return true;
   // (the Axolotl Librarian's paper boat: render/axolotl/)
   if (paperBoatShot(ctx, shot, x, y, p, d)) return true;
-  // (the Spyglass Loris's glint of starlight: render/loris/)
+  // (the Constellation Starfish's little gold star: render/constellation/)
   if (starGlintShot(ctx, shot, x, y, p, d)) return true;
   // (the Red-Tape Raccoon's roll of red tape: render/raccoon/)
   if (redTapeShot(ctx, shot, x, y, p, d)) return true;
@@ -891,8 +891,8 @@ export function dreamShot(ctx, shot, x, y, p, d) {
   if (balloonShot(ctx, shot, x, y, p, d)) return true;
   // (the Cymbal Monkey's ring of sound: render/tindrummer/)
   if (clangShot(ctx, shot, x, y, p, d)) return true;
-  // (the Candy Volcano's: the Floss Chinchilla's puff of floss, the Swirl Chameleon's gumdrop, the Jelly
-  // Bean Meerkat's jelly bean: render/chinchilla/, render/chameleon/, render/meerkat/)
+  // (the Candy Volcano's: the Floss Chinchilla's puff of floss, the Swirl Chameleon's gumdrop, the
+  // Gummy Caterpillar's jelly bean: render/chinchilla/, render/chameleon/, render/gummypillar/)
   if (flossShot(ctx, shot, x, y, p, d)) return true;
   if (gumdropShot(ctx, shot, x, y, p, d)) return true;
   if (jellyBeanShot(ctx, shot, x, y, p, d)) return true;

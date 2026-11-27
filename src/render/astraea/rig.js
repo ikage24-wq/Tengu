@@ -616,16 +616,19 @@ export function dressRig(kind = 'kid', opts = {}) {
           const u = clamp((Math.abs(v) - 55) / 125, 0, 1);
           return u * u * (3 - 2 * u);
         };
-        res.shrugN += 16 * raise(res.shN);
-        res.shrugF += 16 * raise(res.shF);
+        // (Astraea, 2026-11-27: her neck is short under a big head, so a full lift and reach pushed the
+        // shoulder up under her chin and the raised arm looked to grow out of her neck; a little of each
+        // keeps the shoulder at her side.)
+        res.shrugN += 5 * raise(res.shN);
+        res.shrugF += 5 * raise(res.shF);
         const ext = (el) => 1 - Math.min(1, Math.abs(el) / 130);
         const fwdN = Math.max(0, -Math.sin(res.shN * D2R)) * (0.4 + 0.6 * ext(res.elN));
         const backN = Math.max(0, Math.sin(res.shN * D2R));
         const fwdF = Math.max(0, -Math.sin(res.shF * D2R)) * (0.4 + 0.6 * ext(res.elF));
         const set = m.pose === 'tpose' || m.pose === 'wave';
         if (!set) {
-          res.reachN += H * (0.034 * fwdN - 0.022 * backN);
-          res.reachF += H * 0.026 * fwdF;
+          res.reachN += H * (0.01 * fwdN - 0.012 * backN);
+          res.reachF += H * 0.008 * fwdF;
         }
         // (Not in a set pose: a T-pose's arm out to the side isn't reaching anywhere.)
         const turn = set ? 0 : 0.42 * fwdN - 0.34 * backN - 0.2 * fwdF;

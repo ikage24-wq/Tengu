@@ -12,9 +12,9 @@
 //   crystalslime  Gem Mimic: the Chest Hermit, a fluffy ginger critter carrying a treasure chest on its
 //                 back like a hermit crab; it bites, and slams the lid (2026-11-24, on the creature
 //                 base; render/hermit/).
-//   rockgolem     Geode Bear: a chubby cave-bear cub with a glowing geode for a belly and amethyst on
-//                 its shoulders (2026-11-26, replaced the Crystal Golem; on its own copy of the creature
-//                 base: render/geodebear/).
+//   rockgolem     Geode Turtle: an old cave-lake sea turtle whose stone shell cracked open on top like a
+//                 geode, soft amethyst crystals growing out of it that glow when it hums (2026-11-27,
+//                 replaced the Geode Bear; on its own copy of the shell crawler base: render/geodeturtle/).
 //   shade         Steam Capybara: a round, unbothered capybara floating in its own bath-cloud of steam,
 //                 an onsen towel and a yuzu on its head, at home in the cave's warm lake and on Serpent
 //                 Springs (2026-11-26, replaced the Wraith; on its own copy of the creature base:
@@ -24,7 +24,7 @@ import { PANGOLIN_ART, PANGOLIN_SIZE } from '../pangolin/index.js';
 import { ACOLYTE_ART } from '../acolyte/index.js';
 import { GARGOYLE_ART } from '../gargoyle/index.js';
 import { HERMIT_ART, HERMIT_SIZE } from '../hermit/index.js';
-import { GEODE_BEAR_ART, GEODE_BEAR_SIZE } from '../geodebear/index.js';
+import { GEODE_TURTLE_ART, GEODE_TURTLE_SIZE } from '../geodeturtle/index.js';
 import { STEAM_CAPYBARA_ART, STEAM_CAPYBARA_SIZE } from '../steamcapybara/index.js';
 
 // Every design flies or walks with its own cadence: `stride` is how far it travels per cycle.
@@ -33,7 +33,7 @@ export const ART = {
   gargoyle: GARGOYLE_ART,
   boneknight: PANGOLIN_ART,
   crystalslime: HERMIT_ART,
-  rockgolem: GEODE_BEAR_ART,
+  rockgolem: GEODE_TURTLE_ART,
   shade: STEAM_CAPYBARA_ART,
 };
 
@@ -43,6 +43,6 @@ export const INFO = {
   gargoyle: { name: 'Gargoyle Kid', w: 28, h: 38 },
   boneknight: { name: 'Pangolin Sentry', w: PANGOLIN_SIZE.w, h: PANGOLIN_SIZE.h },
   crystalslime: { name: 'Gem Mimic', ...HERMIT_SIZE },
-  rockgolem: { name: 'Geode Bear', w: GEODE_BEAR_SIZE.w, h: GEODE_BEAR_SIZE.h },
+  rockgolem: { name: 'Geode Turtle', w: GEODE_TURTLE_SIZE.w, h: GEODE_TURTLE_SIZE.h },
   shade: { name: 'Steam Capybara', w: STEAM_CAPYBARA_SIZE.w, h: STEAM_CAPYBARA_SIZE.h },
 };

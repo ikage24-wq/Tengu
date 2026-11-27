@@ -249,7 +249,10 @@ export function hood(ctx, a, mode, D, lw) {
 // over her body and under her head and near arm.
 export function mantle(ctx, a, mode, D, lw, k) {
   ctx.save();
-  enter(ctx, a, D, 'chest');
+  // (each side rides its own collarbone, pivoting at her breastbone under the clasp: as the shoulder lifts
+  // and comes forward with the arm, its band goes with it, so the sleeve never slides out from under a
+  // band left standing still, 2026-11-27)
+  enter(ctx, a, D, k === 'N' ? 'claN' : 'claF');
   const st = D.J.stern;
   const cx = st[0] + 1;
   const cy = st[1] + 0.6;
@@ -328,12 +331,28 @@ export function bodice(ctx, a, D) {
   glow(ctx, cx - 12, rb[1] + 4, 11, GOWN.sh, 0.7);
   // (soft gathers down from the collar)
   pen(ctx, tone(a, GOWN.sh, 0.8), 0.5);
-  for (const dx of [-3.4, 3.8]) {
+  for (const dx of [-5.4, 5.8]) {
     ctx.beginPath();
     ctx.moveTo(cx + dx, st[1] + 4);
-    ctx.quadraticCurveTo(cx + dx * 1.15, (st[1] + rb[1]) / 2 + 2, cx + dx * 0.9, rb[1] + 4);
+    ctx.quadraticCurveTo(cx + dx * 1.12, (st[1] + rb[1]) / 2 + 2, cx + dx * 0.92, rb[1] + 4);
     ctx.stroke();
   }
+  // (a cream front panel down from the collar to the sash, buttoned with three little gold stars,
+  // 2026-11-27 polish: the bodice was one plain lilac)
+  const py0 = st[1] + 2;
+  const py1 = rb[1] + 7;
+  ctx.beginPath();
+  ctx.moveTo(cx - 2.2, py0);
+  ctx.quadraticCurveTo(cx - 2.6, (py0 + py1) / 2, cx - 1.9, py1);
+  ctx.lineTo(cx + 2.1, py1);
+  ctx.quadraticCurveTo(cx + 2.8, (py0 + py1) / 2, cx + 2.4, py0);
+  ctx.closePath();
+  ctx.fillStyle = tone(a, CREAM.base);
+  ctx.fill();
+  pen(ctx, tone(a, CREAM.deep), 0.4);
+  ctx.stroke();
+  glow(ctx, cx - 1, (py0 + py1) / 2, 2.4, CREAM.sh, 0.5);
+  for (let i = 0; i < 3; i++) star5(ctx, cx + 0.1, mix(py0 + 3.6, py1 - 2.2, i / 2), 0.85, tone(a, GOLD.base), tone(a, GOLD.ink), 0.2);
   // the round cream collar: two soft lobes meeting under the clasp
   for (const s of [-1, 1]) {
     ctx.beginPath();
@@ -445,10 +464,13 @@ export function skirt(ctx, a, mode, D, lw) {
     xmin = Math.min(xmin, x);
     xmax = Math.max(xmax, x);
   }
+  // (dusk to night down the skirt, 2026-11-27 polish: lilac at her waist deepening to a twilight blue at
+  // the hem, so the starry skirt reads as the evening sky she keeps, not one flat lilac block)
   const g = ctx.createLinearGradient(0, ymin, 0, ymax);
   g.addColorStop(0, tone(a, GOWN.sh));
-  g.addColorStop(0.3, tone(a, GOWN.base));
-  g.addColorStop(1, tone(a, GOWN.sh));
+  g.addColorStop(0.22, tone(a, GOWN.base));
+  g.addColorStop(0.62, tone(a, GOWN.dusk));
+  g.addColorStop(1, tone(a, GOWN.night));
   ctx.fillStyle = g;
   ctx.fill();
   ctx.save();
@@ -464,9 +486,17 @@ export function skirt(ctx, a, mode, D, lw) {
     ctx.quadraticCurveTo(xmin + (xmax - xmin) * (0.25 + u * 0.5), ymin + (ymax - ymin) * 0.6, xmin + (xmax - xmin) * u, ymax);
     ctx.stroke();
   }
-  // (a few faint stars sown on it, pale, placed from the skirt's own box so they ride with it)
-  for (const [u, v, s] of [[0.3, 0.34, 0.7], [0.62, 0.22, 0.55], [0.78, 0.52, 0.65], [0.46, 0.6, 0.5], [0.2, 0.7, 0.45]]) {
-    twinkle(ctx, xmin + (xmax - xmin) * u, ymin + (ymax - ymin) * v, s, tone(a, GOWN.lt, 0.75));
+  // (stars sown on it, placed from the skirt's own box so they ride with it: pale twinkles up in the dusk,
+  // a few little gold stars coming out low in the night, each with its own slow shimmer)
+  const tt = a.t ?? 0;
+  for (const [u, v, s] of [[0.3, 0.3, 0.6], [0.66, 0.2, 0.5], [0.5, 0.42, 0.45]]) {
+    twinkle(ctx, xmin + (xmax - xmin) * u, ymin + (ymax - ymin) * v, s, tone(a, GOWN.lt, 0.7));
+  }
+  for (const [u, v, r, ph] of [[0.24, 0.66, 1.05, 0], [0.58, 0.74, 0.85, 1.7], [0.8, 0.58, 0.95, 3.1], [0.4, 0.82, 0.7, 4.4]]) {
+    const x = xmin + (xmax - xmin) * u;
+    const y = ymin + (ymax - ymin) * v;
+    glow(ctx, x, y, r * 2.6, STAR.glow, 0.22 + 0.1 * Math.sin(tt * 1.3 + ph));
+    star5(ctx, x, y, r, tone(a, GOLD.base), tone(a, GOLD.ink), 0.22);
   }
   // (the plum band at the hem, a little gold constellation along it)
   ctx.beginPath();
@@ -496,19 +526,34 @@ export function sleeve(ctx, a, mode, D, k, lw) {
   const pts = [sh, lerp2(sh, el, 0.5), el, lerp2(el, wr, 0.45), lerp2(el, wr, 0.8)];
   const W = [A.aw0 * 1.5, A.aw0 * 1.4, A.ew * 1.62, A.ew * 1.85, A.aw1 * 1.95].map((v) => v * D.SC);
   tubePath(ctx, pts, W);
-  paint(ctx, a, mode, near ? GOWN.sl : GOWN.sh, GOWN.ink, lw);
+  // (the far sleeve a shade deeper than her dress, so the far arm reads from shoulder to cuff instead of
+  // melting into the bodice and leaving its hand floating at her hip, 2026-11-27)
+  // (2026-11-27: the sleeve grows out of her bodice: at the shoulder it is the bodice's own lilac and has
+  // no edge, warming into the sleeve's colour and its soft edge only on the way down to the elbow, so the
+  // arm's top never reads as a round piece set on her collar)
+  if (mode === 'line') paint(ctx, a, mode, null, GOWN.ink, lw);
+  else {
+    const fg = ctx.createLinearGradient(sh[0], sh[1], el[0], el[1]);
+    fg.addColorStop(0, tone(a, GOWN.base));
+    fg.addColorStop(0.55, tone(a, near ? GOWN.sl : GOWN.far));
+    fg.addColorStop(1, tone(a, near ? GOWN.sl : GOWN.far));
+    ctx.fillStyle = fg;
+    ctx.fill();
+  }
   if (mode === 'fill') {
     ctx.save();
     tubePath(ctx, pts, W);
     ctx.clip();
-    glow(ctx, ...lerp2(sh, el, 0.3), W[0] * 0.9, near ? GOWN.lt : GOWN.base, 0.6);
-    // (a soft edge of its own deeper lilac all round inside it, so the near arm reads even across her
-    // bodice, where the rig draws no line)
-    if (near) {
-      tubePath(ctx, pts, W);
-      pen(ctx, tone(a, GOWN.sh, 0.85), 0.55);
-      ctx.stroke();
-    }
+    glow(ctx, ...lerp2(sh, el, 0.55), W[0] * 0.8, near ? GOWN.lt : GOWN.base, near ? 0.5 : 0.3);
+    // (a soft edge of its own deeper lilac inside each sleeve, so an arm reads even across her bodice,
+    // where the rig draws no line; faded out toward the shoulder, where the sleeve joins the bodice)
+    const eg = ctx.createLinearGradient(sh[0], sh[1], ...lerp2(sh, el, 0.75));
+    const ec = near ? GOWN.sh : GOWN.deep;
+    eg.addColorStop(0, tone(a, ec, 0));
+    eg.addColorStop(1, tone(a, ec, 0.85));
+    tubePath(ctx, pts, W);
+    pen(ctx, eg, near ? 0.55 : 0.6);
+    ctx.stroke();
     glow(ctx, ...lerp2(el, wr, 0.6), W[3] * 0.8, GOWN.deep, 0.35);
     // (the fullness gathering toward the cuff)
     const an = Math.atan2(wr[1] - el[1], wr[0] - el[0]);

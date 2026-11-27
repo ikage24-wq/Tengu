@@ -139,13 +139,14 @@ function pose(m, a, out, c) {
   if (live) st.asStickyAt = act.at;
   const busy = m.hp <= 0 || cast || relPose || swinging || (phaseU >= 0 && phaseU < 2.2) || sceneAct;
 
-  // At rest: small and still, the abacus held in her near hand before her hip, her far hand easy at her
-  // side, her head bowed a touch, her eyes on the sky; breathing, a slow sway.
-  go({ tilt: -0.5 + Math.sin(t * 0.7) * 0.5, chest: breath * 0.6, head: 3 + Math.sin(t * 0.55) * 1.2, shN: -16, elN: -52, hwN: 6, shF: 6, elF: 16, hwF: -4 }, 1);
+  // At rest: small, upright and poised, the abacus held in her near hand low before her hip, her far
+  // hand easy at her side, her head up with her chin level, her eyes on the sky; breathing, a slow sway.
+  // (2026-11-27: the head bowed forward with the hand propped up by the chin read as hunched over.)
+  go({ tilt: -1.5 + Math.sin(t * 0.7) * 0.5, chest: -1.5 + breath * 0.6, head: -3 + Math.sin(t * 0.55) * 1.0, shN: -8, elN: -30, hwN: 4, shF: 22, elF: 6, hwF: -4 }, 1);
   q.look = [0.25 + Math.sin(t * 0.3) * 0.12, -0.25];
   if (walkW > 0.01) {
     // walking: small careful steps, the abacus held close, her head up
-    go({ tilt: 2, head: -1, shN: -26, elN: -70, shF: 10 }, walkW);
+    go({ tilt: 0.5, head: -3, chest: -1, shN: 0, elN: -28, shF: 10 }, walkW);
     q.look = [0.5, 0];
   }
   // (in a fight her face sets, eased in and out with every other mood: focused as she closes in on you,
@@ -248,9 +249,15 @@ function pose(m, a, out, c) {
   const F = FACES[q.mood] ?? FACES.keep;
   const f = (st.asF ??= { ...FACES.keep, shut: { happy: 0, calm: 0, squeeze: 0, dizzy: 0 } });
   let tgt = F;
-  if (q.mood === 'talk' || q.mood === 'count' || q.mood === 'tally') {
-    const v = VOWELS[Math.floor(t * (q.mood === 'talk' ? 7 : 5)) % VOWELS.length];
-    tgt = { ...F, mw: v[0], ms: v[1], mo: v[2] * (q.mood === 'talk' ? 1 : 0.6) };
+  if (q.mood === 'talk') {
+    const v = VOWELS[Math.floor(t * 7) % VOWELS.length];
+    tgt = { ...F, mw: v[0], ms: v[1], mo: v[2] };
+  } else if (q.mood === 'count' || q.mood === 'tally') {
+    // counting under her breath: two soft syllables, then a quiet rest with her mouth closed (2026-11-27:
+    // cycling vowel shapes the whole time she counted read as a mouth that never stopped moving)
+    const c = (t + (a.asUid ?? 0) * 0.9) % 2.6;
+    const say = c < 0.7 ? Math.max(0, Math.sin((c / 0.35) * Math.PI)) : 0;
+    tgt = { ...F, mw: F.mw * (1 - 0.15 * say), mo: 0.32 * say };
   }
   const kf = 1 - Math.exp(-dt * 14);
   // (her lids come down over her eyes now, so they ease like a lid: quick to shut, never in a frame;

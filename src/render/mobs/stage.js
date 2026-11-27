@@ -1,36 +1,36 @@
 // Monster art: the Dream Theatre's company (the levels 40-45 group dungeon, see
 // docs/design/dream-theatre.md), each on its own copy of a blank base in its own folder (2026-11-27):
 //   The Grand Lobby: understudy (the Masquerade Diva, diva/: a little ghost in the leading lady's
-//   borrowed gown, on the spirit base); chorusgirl (the Usher Otter, usher/: the lobby's usherette with
-//   a brass torch); stagehand (the Backdrop Beaver, beaver/: the scene painter from backstage).
-//   The train and the office, the Queen's old life: paperdragon (the Toast-Dash Stoat, stoat/: late for
-//   work, toast in its mouth), sleepysheep (the Travel-Pillow Sloth, sloth/), primadonna (the Red-Tape
-//   Raccoon, raccoon/: a clerk who stamps DENIED), prompter (the Intern Quokka, quokka/: paper planes).
+//   borrowed gown, on the spirit base); chorusgirl (the Ticket Lop, ticketlop/: the lobby's usher bunny with
+//   a ticket in its cap); stagehand (the Curtain Octopus, curtain/: the stagehand in a curtain hood).
+//   The train and the office, the Queen's old life: paperdragon (the Commuter Pigeon, pigeon/: off to
+//   work, its ticket in its beak), sleepysheep (the Snooze Snail, snoozesnail/), primadonna (the Paperclip
+//   Fiddler, fiddler/: a crab with a stapler), prompter (the Sticky-Note Sprout, sprout/: paper planes).
 
 import { DIVA_ART, DIVA_SIZE } from '../diva/index.js';
-import { USHER_OTTER_ART, USHER_OTTER_SIZE } from '../usher/index.js';
-import { BACKDROP_BEAVER_ART, BACKDROP_BEAVER_SIZE } from '../beaver/index.js';
-import { RED_TAPE_RACCOON_ART, RED_TAPE_RACCOON_SIZE } from '../raccoon/index.js';
-import { TOAST_DASH_STOAT_ART, TOAST_DASH_STOAT_SIZE } from '../stoat/index.js';
-import { STRAP_SLOTH_ART, STRAP_SLOTH_SIZE } from '../sloth/index.js';
-import { INTERN_QUOKKA_ART, INTERN_QUOKKA_SIZE } from '../quokka/index.js';
+import { TICKET_LOP_ART, TICKET_LOP_SIZE } from '../ticketlop/index.js';
+import { CURTAIN_OCTOPUS_ART, CURTAIN_OCTOPUS_SIZE } from '../curtain/index.js';
+import { PAPERCLIP_FIDDLER_ART, PAPERCLIP_FIDDLER_SIZE } from '../fiddler/index.js';
+import { COMMUTER_PIGEON_ART, COMMUTER_PIGEON_SIZE } from '../pigeon/index.js';
+import { SNOOZE_SNAIL_ART, SNOOZE_SNAIL_SIZE } from '../snoozesnail/index.js';
+import { STICKY_SPROUT_ART, STICKY_SPROUT_SIZE } from '../sprout/index.js';
 
 export const ART = {
   understudy: DIVA_ART,
-  chorusgirl: USHER_OTTER_ART,
-  stagehand: BACKDROP_BEAVER_ART,
-  paperdragon: TOAST_DASH_STOAT_ART,
-  sleepysheep: STRAP_SLOTH_ART,
-  prompter: INTERN_QUOKKA_ART,
-  primadonna: RED_TAPE_RACCOON_ART,
+  chorusgirl: TICKET_LOP_ART,
+  stagehand: CURTAIN_OCTOPUS_ART,
+  paperdragon: COMMUTER_PIGEON_ART,
+  sleepysheep: SNOOZE_SNAIL_ART,
+  prompter: STICKY_SPROUT_ART,
+  primadonna: PAPERCLIP_FIDDLER_ART,
 };
 
 export const INFO = {
   understudy: { name: 'Masquerade Diva', ...DIVA_SIZE },
-  chorusgirl: { name: 'Usher Otter', w: USHER_OTTER_SIZE.w, h: USHER_OTTER_SIZE.h },
-  stagehand: { name: 'Backdrop Beaver', w: BACKDROP_BEAVER_SIZE.w, h: BACKDROP_BEAVER_SIZE.h },
-  paperdragon: { name: 'Toast-Dash Stoat', w: TOAST_DASH_STOAT_SIZE.w, h: TOAST_DASH_STOAT_SIZE.h },
-  sleepysheep: { name: 'Travel-Pillow Sloth', w: STRAP_SLOTH_SIZE.w, h: STRAP_SLOTH_SIZE.h },
-  prompter: { name: 'Intern Quokka', w: INTERN_QUOKKA_SIZE.w, h: INTERN_QUOKKA_SIZE.h },
-  primadonna: { name: 'Red-Tape Raccoon', w: RED_TAPE_RACCOON_SIZE.w, h: RED_TAPE_RACCOON_SIZE.h },
+  chorusgirl: { name: 'Ticket Lop', w: TICKET_LOP_SIZE.w, h: TICKET_LOP_SIZE.h },
+  stagehand: { name: 'Curtain Octopus', w: CURTAIN_OCTOPUS_SIZE.w, h: CURTAIN_OCTOPUS_SIZE.h },
+  paperdragon: { name: 'Commuter Pigeon', w: COMMUTER_PIGEON_SIZE.w, h: COMMUTER_PIGEON_SIZE.h },
+  sleepysheep: { name: 'Snooze Snail', w: SNOOZE_SNAIL_SIZE.w, h: SNOOZE_SNAIL_SIZE.h },
+  prompter: { name: 'Sticky-Note Sprout', w: STICKY_SPROUT_SIZE.w, h: STICKY_SPROUT_SIZE.h },
+  primadonna: { name: 'Paperclip Fiddler', w: PAPERCLIP_FIDDLER_SIZE.w, h: PAPERCLIP_FIDDLER_SIZE.h },
 };

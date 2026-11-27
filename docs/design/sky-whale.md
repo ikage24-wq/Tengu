@@ -34,12 +34,13 @@ Since 2026-11-27 the whale's folk are new creatures, each on its own copy of the
 folder (registered in render/mobs/skyfolk.js), each with its own face, idle act of four pieces and three
 moves of its own. They also live on Starfall Heights, next door.
 
-- **Kite Pika** (`kiterider`, render/pika/): a pika in a honey flight jacket with a paper diamond kite
-  strapped to its back; the first good gust lifts it off its toes, and it is still not very good at
-  landing. Gust Rush, Kite Twirl, Eep! (a pika's alarm call).
-- **Cloudherd Samoyed** (`shepherdess`, render/samoyed/): a sheepdog pup in a shepherd's smock who gave up
-  on sheep and herds clouds instead. Its whole flock is one small cloud, which keeps wandering off.
-  Woof!, Cloud Bonk (the cloud sent swooping), Shake-Off.
+- **Sky Seahorse** (`kiterider`, render/skyhorse/, since 2026-11-27 on its own copy of the fish base's
+  seahorse): a little seahorse that swims the sky instead of the sea, riding the warm air over the whale;
+  sky blue, a sunrise-peach belly, a cloud mane. It whistles through its snout and blows rings of cloud.
+  Bubble, Tail Whip, Ram.
+- **Airbloom Lamb** (`shepherdess`, render/bloomlamb/, since 2026-11-27 on its own copy of the hoofed base's
+  lamb): a lamb from the Lung Gardens whose fleece grew little air-blooms that open each time it breathes
+  out, in time with the whale; it grazes, pronks for joy and sneezes at its own pollen. Headbutt, Buck, Rear.
 - **Blunderpuss** (`gunner`, render/blunderpuss/): Captain Gale's youngest crew, a ginger kitten in a
   striped sailor's shirt and a red bandana with a brass blunderbuss it loads with cloud (cannonballs are
   heavy). Blunderblast (a ranged cloudball), Stock Bonk, Paw Bat.
@@ -49,9 +50,9 @@ moves of its own. They also live on Starfall Heights, next door.
 - **Stormsong Frog** (`harpist`, render/treefrog/): a tree frog busker in a rain slicker with a golden
   harp; frogs sing before a storm, and these sing the storms in. Thunder Strum (a ranged note of
   lightning), Thunder Croak, Puddle Leap.
-- **Mantra Lemur** (`monk`, render/lemur/): a ring-tailed lemur monk in a saffron robe with a singing
-  bowl; ring-tailed lemurs sit with their arms open to the sun, so these became monks, and they breathe
-  with the whale. Bowl Chime, Tail Sweep, Big Breath.
+- **Bell-Cap Monk** (`monk`, render/bellcap/, since 2026-11-27 on its own copy of the veggie base's
+  mushroom): a little mushroom monk of the whale's gardens whose cap grew in the shape of a temple bell; the
+  monks ring them softly to wake the sleeping whale without frightening it. Spore Puff, Bonk, Burrow.
 
 ## Bosses
 
@@ -102,4 +103,4 @@ Whale's Dream a sleepy translucent baby sky whale full of stars.
 ## The 2026-11-27 rework
 
 The six regulars were remade as new creatures (see Monsters above): the Kite Pika, the Cloudherd
-Samoyed, Blunderpuss, the Turtle Squire, the Stormsong Frog and the Mantra Lemur. The bosses followed the same day: Captain Gale and the Barnacle Matriarch (above), with new fights.
+Samoyed, Blunderpuss, the Turtle Squire, the Stormsong Frog and the Mantra Lemur (the Pika, the Samoyed and the Lemur since replaced, 2026-11-27, by the Sky Seahorse, the Airbloom Lamb and the Bell-Cap Monk). The bosses followed the same day: Captain Gale and the Barnacle Matriarch (above), with new fights.

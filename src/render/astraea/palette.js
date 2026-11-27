@@ -18,7 +18,7 @@ export const DUSK = { top: '#e88aa8', mid: '#f6a69c', low: '#ffcf9e', ink: '#c46
 // her dress: a soft starry periwinkle-lilac, the sky just before the stars come out (cool against her
 // warm skin, so her arms and face read clearly against it); `sl` the lighter lilac of her sleeves, so
 // an arm across her bodice still reads as an arm
-export const GOWN = { lt: '#eee8ff', sl: '#ddd4fb', base: '#c9bdf2', sh: '#ab9ce0', deep: '#8f80c8', ink: '#7c6cb8' };
+export const GOWN = { lt: '#eee8ff', sl: '#ddd4fb', base: '#c9bdf2', sh: '#ab9ce0', far: '#a092d8', deep: '#8f80c8', ink: '#7c6cb8', dusk: '#a99ee8', night: '#7f78cf' };
 // her collar, cuffs, petticoat and tights: soft cream
 export const CREAM = { lt: '#ffffff', base: '#fff8ee', sh: '#f2e2d2', deep: '#dcc6b0', ink: '#c8ac94' };
 // the soft gold of her clasp, trims, buckles and star beads
