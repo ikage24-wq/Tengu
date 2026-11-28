@@ -10,7 +10,7 @@ import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
 const PROBE = fileURLToPath(new URL('../tools/jitter-probe.mjs', import.meta.url));
-const REMADE = ['velvet', 'marigold'];
+const REMADE = ['velvet', 'marigold', 'waltzrondo', 'waltzminuet'];
 
 test('the remade bosses play through their script without a pop', { timeout: 240000 }, () => {
   const out = execFileSync(process.execPath, [PROBE, ...REMADE, '--sched=60', '--fast', '--json'], { encoding: 'utf8', maxBuffer: 64 << 20, stdio: ['ignore', 'pipe', 'ignore'] });

@@ -835,7 +835,7 @@ function spring(st, key, goal, k, c, dt) {
 // volume, her curls, her skirt), each keeping its volume: wider as it squashes, narrower as it stretches.
 // (2026-11-28, the player: "look for over jiggle random jiggle": the footfall kick ran on its own clock,
 // out of step with her feet, and the spring was loose enough to wobble on between steps. Now each kick
-// lands on a real footfall (her walk cycle passing 0 or a half, `cyc` the rig's own a.bl<kind>U), it is
+// lands on a real footfall (her walk cycle passing 0 or a half, `cyc` the rig's own a.tk<id>U), it is
 // gentler, and the spring settles in a bounce or two.)
 function jolt(m, a, st, key, dt, cyc) {
   const walk = clamp(a.walkW ?? 0, 0, 1);
@@ -878,7 +878,7 @@ function springs(m, a, out, st, dt) {
   a.vvPlume = spring(st, 'vvPl', kick * 1.4, 55, 5, dt);
   st.vvKey = spring(st, 'vvKy', kick * 0.9, 60, 6, dt);
   // (her soft-body jolt: her bun and cap, her skirt)
-  a.vvJig = jolt(m, a, st, 'vvJg', dt, 'blgrownupU');
+  a.vvJig = jolt(m, a, st, 'vvJg', dt, 'tkvelvetU');
 }
 
 // ---------- Her act (about 30 s, only while she stands about) ----------

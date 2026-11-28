@@ -243,6 +243,23 @@ test are checked by eye on the strips, the hold sheet and a real map before show
 
 **Dressed monsters and bosses on the blank bases** (the player's fixes, 2026-11-28; Lady Marigold
 and Madame Velvet are the model)
+- **Every polish the model boss got, every new boss gets:** before showing a new boss's final art, go
+  down everything Lady Marigold was polished with (these rules: shoulders sloped, rolling with the arm
+  and merged into one smooth shape; necks one outline, shaded with a jaw shadow; one shared skin; clothes
+  locked to the body; skirt from the true waist; bust and chest shaped with light; trims on chokers and
+  bands; hair, faces and heads by "Painted heads and hair"; footfall jiggle; glow under the outlines;
+  outer outline only) and do each one for the new boss, not only what the player happens to point at.
+- **Every finger rigged** (the player, 2026-11-28, the Mirror Twins): any character with hands that
+  have fingers (bosses, people-shaped monsters, NPCs, summons on the player rig) gets real fingers, each
+  rigged on its own: every finger and the thumb its own curl (two joints, foreshortened as it folds),
+  the spread its own too. Poses set named hand shapes (relaxed, open, fist, point, clasp, and any the
+  character needs), eased with a light bounce, the fingers following one after another, never snapping.
+  Never a round mitten under a glove, and never a bare base hand left drawn under a dressed one.
+- **A concept is only a placeholder:** it settles the design (silhouette, colours, hair, face, outfit,
+  gimmick) for the player's OK. The final art is then redrawn from scratch at full detail: new head,
+  hair, face, outfit and props, never the concept's shapes with detail added on top. The agreed design,
+  the untouched base copies (rig, body, skin) and everything learned (techniques, the painting kit,
+  these rules) carry over; the concept's own drawings don't.
 - **What's behind the head hangs behind the whole body:** back hair, curls and far ears are hung under
   'armF', the first part drawn, never under the neck, or they lie over the shoulders and the shoulder
   looks broken on the walk. Something behind the head that really sits in front of the body says
@@ -262,6 +279,12 @@ and Madame Velvet are the model)
   a nearest point or a scan that can jump), the hollow fades out before its neighbours can change,
   and it is drawn from a fixed number of even steps. The shoulder corner is skinned partly to the
   upper arm so it rolls with the arm.
+- **Fit the head and neck to the character:** a base's head and neck are only a mannequin's. Each new
+  character gets its own face shape (defined: cheeks, jaw and chin, never a round ball) and its own
+  neck fitted to its painted head: when the head is drawn bigger or smaller than the base's, the neck's
+  width and the head's height on it are changed in the character's body copy to carry it (a short,
+  wide enough neck under a big doll head; never the base's thin stalk left under a resized head, and
+  never the chin sunk onto the collar). Check it next to the other bosses.
 - **Shoulders slope:** a woman's shoulders run down from the neck in one soft line to rounded tips
   (the round of the arm sits clearly below the foot of the neck), never level and square like the
   mannequin's.
@@ -292,7 +315,14 @@ Lady Marigold, 2026-11-28)
   any outline, never in the fill pass, where it would lie over the outlines like a haze.
 - **Bangs and side locks keep their outline over the face:** the face's fill covers the outline pass,
   so locks that hang down over the face draw their outline again in the fill pass, clipped to the face
-  shape. Only hanging locks: never the hairline of hair swept back off the face (Madame Velvet: an
+  shape. Still outer edge only: draw the front hair as one piece, or put every front piece's outline
+  down first and all their fills after, never piece by piece (each piece's redrawn outline then lies
+  over the hair already painted and shows as a dark seam inside the hair; the Mirror Twins, "the inner
+  outline is still bad").
+- **Polished hair is a few big clumps:** sleek hair is drawn as a few large smooth clumps tapering to
+  clean points, cel-shaded along their undersides, separated by light (a slim streak down each clump's
+  lit side), with one band of shine whose lower edge breaks into points; never a bundle of thin locks
+  with dark lines between them. Only hanging locks: never the hairline of hair swept back off the face (Madame Velvet: an
   outline round her hairline framed her face like a hood and she "looks worse"; reverted).
 - **No loops at the parting:** the fine line between locks runs down each lock's sides only, starting
   below its root, never all the way round its rounded start.
