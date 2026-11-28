@@ -522,7 +522,7 @@ function drawMonsterNow(ctx, m, x, y, time, now = time) {
     puff = d.puff;
   }
   if (sx <= 0 || sy <= 0) return;
-  if (!flying) {
+  if (!flying && !m.ceiling) {
     // Ground shadow, along the slope it stands on (shrinking as a falling body flies up).
     footShadow(ctx, x, y, Math.max(8, s.w * 0.42) * (1 - Math.min(0.5, lift / 60)), m.yAt ? (m.yAt(m.x + 6) - m.yAt(m.x - 6)) / 12 : 0, alpha);
   }

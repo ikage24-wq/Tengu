@@ -26,8 +26,9 @@ test("what's behind a dressed rig's head (back hair, far ears) hangs behind its 
   let seen = 0;
   for (const file of filesUnder(ROOT)) {
     const src = readFileSync(file, 'utf8');
-    // (a dressed rig's hooks: `part: (ctx, a, mode, S, D) => head(ctx, a, mode, D, 'back')`)
-    const re = /(\w+):\s*\(ctx, a, mode, S, D\)\s*=>\s*head\(ctx, a, mode, D, 'back'\)/g;
+    // (a dressed rig's hooks: `part: (ctx, a, mode, S, D) => head(ctx, a, mode, D, 'back')`, or a hook
+    // doing a few things, one of them that: `part: (ctx, a, mode, S, D) => { ...; head(ctx, a, mode, D, 'back'); }`)
+    const re = /(\w+):\s*\(ctx, a, mode, S, D\)\s*=>\s*(?:\{[^{}]*?)?head\(ctx, a, mode, D, 'back'\)/g;
     for (const m of src.matchAll(re)) {
       seen++;
       const before = src.slice(0, m.index);

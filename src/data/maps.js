@@ -1395,7 +1395,7 @@ for (const r of MAPS.hollow2.ropes) if (r.x === 700) r.style = 'vine';
 // Each room has an idea of its own (world/manor.js runs them), and no two share a shape:
 //   fountains   garden fountains spout on a beat and throw whoever stands in the basin up high
 //   puzzle      the gallery's portraits turn; set all four to the family crest (`crest` shows it)
-//   chandelier  the ballroom's chandelier comes down mid-fight
+//   chandelier  the ballroom's middle, where its chandelier hangs (the Mirror Twins' fight mirrors across it)
 //   storms      page storms blow through one floor of the library at a time
 //   chase       the hallway's tea trolley rolls after the group; `doors` bar the way until their
 //               levers are pulled
@@ -1541,19 +1541,21 @@ Object.assign(MAPS, {
     ],
   },
 
-  // The Ballroom: a grand round floor under a chandelier, a balcony each side reached by little
-  // landings. Dame Rondo the penguin holds the floor and Dame Minuet the bat the air (world/manor.js).
+  // The Mirrored Ballroom (2026-11-28, remade with the Mirror Twins: render/twins/room.js): Rondo's
+  // black-and-white marble floor below, Minuet's lilac marble floor overhead (she hangs from it), mirrors
+  // and moonlit windows down the back wall, the great ruby clock stopped at twelve; a gilt balcony each
+  // side reached by marble pedestals; the chandelier's crown is the little ledge up in the dome.
   manor3: {
     id: 'manor3', name: 'The Ballroom', theme: 'manor', town: 'harbor', dungeon: 'manor',
     width: 1500, height: 420, groundY: G,
     platforms: [
-      { x: 80, y: 260, w: 220 }, { x: 1200, y: 260, w: 220 },
-      { x: 340, y: 310, w: 100 }, { x: 1060, y: 310, w: 100 },
-      { x: 700, y: 170, w: 100 },
+      { x: 80, y: 260, w: 220, style: 'twBalcony', noProps: true }, { x: 1200, y: 260, w: 220, style: 'twBalcony', noProps: true },
+      { x: 340, y: 310, w: 100, style: 'twPlinth', noProps: true }, { x: 1060, y: 310, w: 100, style: 'twPlinth', noProps: true },
+      { x: 700, y: 170, w: 100, style: 'twCrown', noProps: true },
     ],
     // The chandelier's chain: climb it to the ledge in the dome (the room's secret).
     ropes: [{ x: 750, top: 170, bottom: G }],
-    look: { sky: ['#2a1e4e', '#5a3a86', '#c48ad0'], far: '#40306a', mid: '#6a4a96', midTrim: '#ffd36b', ...MANOR_IN, skyline: 'manorball' },
+    look: { sky: ['#2a1e4e', '#5a3a86', '#c48ad0'], far: '#40306a', mid: '#6a4a96', midTrim: '#ffd36b', ...MANOR_IN, skyline: 'mirrorball', ceiling: null },
     chandelier: { x: 750 },
     portals: [
       { id: 'west', x: 40, y: G, to: 'manor2', toPortal: 'east' },

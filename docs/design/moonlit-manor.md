@@ -25,7 +25,7 @@ Entry from level 15; the finder brings players of 15-19.
 |---|---|---|---|---|
 | 1 | The Moonlit Garden | Hedges and topiaries climbing to the front steps, fountains, lanterns | Light the garden lanterns (3) | |
 | 2 | The Portrait Gallery | A tall hall on three floors, portraits on every wall | **Puzzle:** turn the four portraits to match the family crest, shown by candles; the group splits across the floors | Puzzle room |
-| 3 | The Ballroom | A grand round floor under a chandelier, balconies | **Mid-boss: Dame Rondo and Dame Minuet** (a tailcoat penguin and an upside-down bat dancing as a pair) | |
+| 3 | The Ballroom | The Mirrored Ballroom: a marble floor below, the same floor upside down overhead, mirrors and moonlit windows, a great clock stopped at twelve, a crystal chandelier, balconies | **Mid-boss: Dame Rondo and Dame Minuet, the Mirror Twins** (twin ghost ladies, one on the floor, one hanging from the ceiling) | |
 | 4 | The Library | Shelves to the ceiling, rolling ladders, floating books | Return the lost books (3) to their shelves | |
 | 5 | The Endless Hallway | A long corridor | **Chase:** Madame Velvet's tea trolley rumbles after the group; run, jump the flying plates, pull the door levers; at the end, **mid-boss: Madame Velvet** | Chase room |
 | 6 | The Moonlit Rooftop | The roof under a huge moon, chimneys and weathervanes | **Final boss: Lady Marigold, the Eternal Hostess** | |
@@ -53,11 +53,11 @@ own), and the bosses at the quality of the queens or better (render/mobs/queens.
 
 ## Bosses
 
-- **Dame Rondo, the Tailcoat Penguin, and Dame Minuet, the Upside-down Bat** (ballroom; remade
-  2026-11-26 from the Waltzing Armours, the player's pick "A, Black Tie & Bat Wings"): the penguin
-  can't fly and the bat can't really stand, so the penguin has the floor and the bat the air.
-  Whatever the lead dances, her partner echoes a beat later, mirrored across the chandelier's chain.
-  See the boss fights below.
+- **Dame Rondo and Dame Minuet, the Mirror Twins** (ballroom; remade from scratch 2026-11-28 as twin
+  ghost ladies, after the Waltzing Armours and then a penguin and a bat): opposite colours (jet black /
+  snow white), faces (stern / grinning) and gimmicks; each keeps one hidden red eye under her bangs that
+  stops time. One dances on the floor, the other hangs upside down from the ceiling. See the boss fights
+  below.
 - **Madame Velvet, the head housekeeper** (hallway; was the Grand Butler): a tall, elegant ghost with a ring of keys and a tea trolley. She serves tea that scalds (circles to step out of), throws a stack
   of plates across the hall (jump them), and rings the bell to call Teacup Mimics.
 - **Lady Marigold, the Eternal Hostess** (rooftop; remade 2026-11-26, render/marigold/): a lonely
@@ -89,8 +89,8 @@ more. Its own gear set, **Moonlit Masquerade** (a masquerade outfit), like the H
   ring), Armour Knight (marching, floating helmet beside her, heavy slash), Teacup Hermit (a prim
   tiptoe scuttle, a lobbed sugar cube).
 - **Bosses** drawn on the same rig scaled up (render/mobs/manorboss.js, `grand` scales the figure,
-  its strokes and its face together): Dame Rondo and Dame Minuet (now on their own base copies:
-  render/waltzrondo/, render/waltzminuet/), Madame
+  its strokes and its face together): Dame Rondo and Dame Minuet (now the Mirror Twins, on their own
+  copies of the blank bases' maiden: render/twins/), Madame
   Velvet with her trolley, Lady Marigold in her gown of marigold petals.
 - (2026-11-03/04: the monsters and bosses were redrawn as chibi creatures in render/mobs/manorfolk.js
   and manorfolkboss.js on the boss rig; the first art and its rig were removed, and
@@ -98,24 +98,23 @@ more. Its own gear set, **Moonlit Masquerade** (a masquerade outfit), like the H
 - **Rooms** (data/maps.js, world/manor.js, render/manor.js): the gate is Manor Hill, off the top
   bough of Mossy Woods, with Mr. Pumpkins. Garden fountains spout on a beat and throw you up the
   terraces; the gallery's portraits turn and lock on the crest's picture (a new crest each run);
-  the ballroom's chandelier is the middle the pair's echoes mirror across (its chain is the climb to
-  the room's secret); the
+  the Mirrored Ballroom (render/twins/room.js) is the twins' own room, its chandelier's crown the ledge
+  up in the dome (its chain is the climb to the room's secret); the
   library's lost books flutter along the shelves and page storms push one floor at a time; the
   hallway trolley chases the group, doors open by their levers, plates fly ahead; the rooftop has
   chimneys to stand on and the weathervane's secret.
 - **Boss fights**, changed from the plan where it played better:
-  - Rondo and Minuet (world/manor.js), three phases by their health together, every move on the
-    cast bar ("Belly Slide", then "Echo: Belly Slide"):
-    - Lead and Echo (to 60%): Belly Slide (a polished lane, she slides it: jump her or get up high),
-      echoed by the bat's swoop at balcony height on the other side (get down); Count of Three (stack
-      in the gold marker), echoed by Three Kisses (hearts on three: spread); Tailcoat Twirl (tank).
-    - Change Partners (to 25%): the bat leads, so the order flips (her swoop, then Rondo's slide; her
-      kisses, then Rondo's count); Echo Rings (out, in, out); Crossing Slides (from both walls, one gap).
-    - The Lift (below 25%): the bat lifts the penguin, who flies at last: the Grand Lift sweeps the room
-      low then high, its path drawn ahead; then the count and kisses, the twirl, and the Final Bow.
-    - Hand in hand: while they dance close, a blow on one is shared with the other (a rose ribbon
-      links them), so they wear down together. One down, the other dances alone (the bat both parts
-      herself; the penguin sliding twice as often).
+  - The Mirror Twins (world/twins.js, 2026-11-28), three phases by their health together, every move
+    on the cast bar. Only the twin on the floor can be reached (the one on the ceiling, from the
+    balconies). Frozen Moment: the red eye stops time, the whole group is frozen while the twins trade
+    places through their mirrors and set new steps in the stopped air, which land a moment after time
+    starts again. Rondo: Metronome (rings on her beat, faster each time), Conductor's Cue (a stave along
+    the floor). Minuet: Boo! (she pops out behind you), Rewind (pulled back to where you stood),
+    Eyes on Me (look away or be frozen). Both: Mirror Step (the floor here and its reflection up high),
+    Twin Bond (the healthier mends the other: keep them even).
+    - First Dance (to 60%); Change Partners (to 25%: faster, two steps set in every stopped moment);
+      Pas de Deux (the finale: both red eyes, a great wave, then faster still).
+    - One down, the other comes down to the floor and dances everything herself.
   - Madame Velvet rings for her Ghost Maids (not Teacup Mimics: the maids are already in the house
     and read better), serves scalding tea circles, and sends plates skimming the floor (jump).
   - Lady Marigold: Tea for Two, then the Guests Arrive (Candle Brides and Armour Knights; she can't be
@@ -140,7 +139,7 @@ The residents and bosses were redrawn creature-first (render/mobs/manorfolk.js a
 manorfolkboss.js), retiring the costumed girls on the manor rig (the rig stays for the dungeons
 that still use it): a china bunny doll with a parasol, a ghost-cat maid with a feather duster, a
 living candle bride, a topiary swan (remade 2026-11-26 as the Topiary Hedgehog), a flame wisp in an iron lantern, a little empty suit of armour
-with a too-big helm, and a teapot in a top hat who pours hot tea. The ballroom's pair are a stiff
-little penguin in her own tailcoat and a dreamy fruit bat in a fur ruff (2026-11-26), Madame
+with a too-big helm, and a teapot in a top hat who pours hot tea. The ballroom's pair are the Mirror
+Twins, twin ghost ladies (2026-11-28; before them a penguin and a bat, 2026-11-26), Madame
 Velvet a plump plum ghost in a mob cap who hurls plates, and Lady Marigold a giant marigold
 blossom spirit who sweeps a storm of petals with her fan.

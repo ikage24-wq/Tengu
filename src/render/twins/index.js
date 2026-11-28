@@ -16,6 +16,7 @@
 //           open overskirt parting at the front, scalloped again. Lilac slippers with bat-wing bows.
 // m.ceiling: drawn upside down about the ceiling she stands on (Minuet in the fight).
 import { dressRig } from './rig.js';
+import { TWIN_ARTS } from './arts.js';
 import { drawHeadBack, drawHeadFront, G as HG } from './head.js';
 
 const TAU = Math.PI * 2;
@@ -970,23 +971,20 @@ function makeTwin(who) {
     clasp: { c: [0.4, 0.42, 0.48, 0.54, 0.6], s: -0.35 },
     limp: { c: [0.15, 0.3, 0.35, 0.4, 0.45], s: 0.25 },
   };
-  function handTargets(m, a, walk, dead) {
+  // (`posed`: the hands the pose asks for: a fight idle's moment, an attack, a mechanic)
+  function handTargets(m, a, walk, dead, posed) {
     const test = m.handTest;
     if (test) return typeof test === 'string' ? { F: test, N: test } : test;
     if (m.hands) return m.hands;
     if (dead) return { F: 'limp', N: 'limp' };
     if ((a.hurtAgo ?? 9) < 0.5) return { F: 'open', N: 'open' };
-    const ph = a.ph ?? { antic: 0, since: -1 };
-    // (an attack: Rondo opens her hand to conduct, then points the beat home; Minuet clasps her hands,
-    // then flings them open: "boo!")
-    if (ph.since >= 0 && ph.since < 0.6) return R1 ? { F: 'relaxed', N: 'point' } : { F: 'open', N: 'open' };
-    if (ph.antic > 0) return R1 ? { F: 'relaxed', N: 'open' } : { F: 'clasp', N: 'clasp' };
+    if (posed) return posed;
     if (walk > 0.5) return { F: 'relaxed', N: 'relaxed' };
     // (idle: Rondo counts the beat with one raised finger; Minuet's hands are clasped by her cheek)
     return R1 ? { F: 'relaxed', N: 'point' } : { F: 'clasp', N: 'clasp' };
   }
-  function handRig(m, a, st, dt, walk, dead, beat) {
-    const tg = handTargets(m, a, walk, dead);
+  function handRig(m, a, st, dt, walk, dead, beat, posed) {
+    const tg = handTargets(m, a, walk, dead, posed);
     const out = {};
     for (const side of ['F', 'N']) {
       const sh = HAND_SHAPES[tg[side]] ?? HAND_SHAPES.relaxed;
@@ -1329,28 +1327,262 @@ function makeTwin(who) {
     st.twJV = (st.twJV ?? 0) + kick;
     return clamp(spring(st, 'twJ', 0, 170, 9.5, dt), -1, 1);
   }
+  // ---------- Their acts (2026-11-28, the player: "do their animations before setting up the fight").
+  // Out of a fight: Rondo counts the beat, Minuet sways with her hands clasped. In a fight each has her own
+  // fight idle that never stands still (Rondo conducting, a hat tip, a foot tapping the tempo; Minuet
+  // bouncing, peek-a-boo, a twirl); a basic attack each; and a pose for every mechanic of their fight,
+  // eased in, held and eased out (m.cast + m.castPose, as Lady Marigold's). The hidden red eye (q.eye)
+  // opens in Frozen Moment, Eyes on Me and Pas de Deux. ----------
+  const e2 = (u) => {
+    const v = clamp(u, 0, 1);
+    return v * v * (3 - 2 * v);
+  };
+  const hold = (x, a0, a1, b0, b1) => (x <= a0 || x >= b1 ? 0 : x < a1 ? e2((x - a0) / (a1 - a0)) : x <= b0 ? 1 : e2((b1 - x) / (b1 - b0)));
+  // Each mechanic's pose at u (0..1 through its cast) and time t: { p: channels, face, hands, eye }
+  // (the arm on her hidden eye's side, which lifts the hair from it: Rondo's near arm, Minuet's far one;
+  // and the other)
+  const HA = R1 ? 'N' : 'F';
+  const OA = R1 ? 'F' : 'N';
+  const arm = (side, sh, el) => ({ [`sh${side}`]: sh, [`el${side}`]: el });
+  function castPose(name, u, t) {
+    const beat = t * (TAU / 1.8);
+    const k1 = e2(u / 0.3);
+    switch (name) {
+      // 1 Frozen Moment: her near hand sweeps up and lifts the hair from her hidden eye; the red eye opens;
+      // her other hand thrusts out, palm forward: stop.
+      case 'frozen': {
+        const up = e2(u / 0.32);
+        const thrust = e2((u - 0.55) / 0.2);
+        return {
+          // (the hair sweeps aside by itself, never a hand over the face: Rondo snaps her fingers out at her
+          // side; Minuet's far hand stays at her cheek as she giggles)
+          p: { ...(R1 ? arm('N', -30 - up * 70, -30 - up * 56) : arm('F', -40 - up * 20, -70 - up * 50)), ...arm(OA, 10 - thrust * 104, -60 + thrust * 52), head: -4 - up * 4 + thrust * 2, tilt: -2 * up + thrust * 5, x: thrust * 0.015 },
+          face: u > 0.3 ? (R1 ? 'glare' : 'wicked') : R1 ? 'stern' : 'sly',
+          hands: { [HA]: R1 ? (up > 0.5 && u < 0.4 ? 'point' : 'relaxed') : 'clasp', [OA]: thrust > 0.3 ? 'open' : 'relaxed' },
+          eye: e2((u - 0.26) / 0.26),
+        };
+      }
+      // 2 Change Partners!: a twirl, both arms reaching out to take a partner's hand, gliding round
+      case 'swap': {
+        const sp = Math.sin(u * TAU);
+        return {
+          p: { shN: -108 + sp * 10, elN: -20, shF: -74 - sp * 10, elF: -30, turnC: sp * 0.75, tilt: sp * 6, head: -6 + sp * 4, x: Math.sin(u * Math.PI) * 0.03, fxN: 0.12 * Math.sin(u * Math.PI), toeN: 30 * Math.sin(u * Math.PI) },
+          face: R1 ? 'satisfied' : 'delight',
+          hands: { N: 'open', F: 'relaxed' },
+          eye: 0,
+        };
+      }
+      // 3 Eyes on Me: both hands frame her face, she leans in, the red eye wide
+      case 'gaze':
+        return {
+          // (Rondo: hands clasped behind her back, leaning in to stare; Minuet: hands clasped under her chin)
+          p: R1 ? { shN: 34 * k1, elN: -64 * k1, shF: 30 * k1, elF: -60 * k1, tilt: k1 * 9, head: k1 * 6, x: k1 * 0.014 } : { shN: -40 - k1 * 8, elN: -60 - k1 * 60, shF: -36 - k1 * 6, elF: -70 - k1 * 46, tilt: k1 * 7, head: k1 * 5, x: k1 * 0.012 },
+          face: R1 ? 'glare' : 'wicked',
+          hands: { N: 'clasp', F: 'clasp' },
+          eye: e2((u - 0.12) / 0.28),
+        };
+      // 4 Metronome (Rondo): her arm straight up, swinging side to side like a metronome's on the beat
+      case 'metronome': {
+        const sw = Math.sin(t * (TAU / 0.9));
+        return {
+          p: { shN: -168 + sw * 20 * k1, elN: -4, shF: 24, elF: -70, head: -6 + sw * 3, tilt: sw * 1.8 },
+          face: 'counting',
+          hands: { N: 'point', F: 'relaxed' },
+          eye: 0,
+        };
+      }
+      // 5 Conductor's Cue (Rondo): an open hand sweeps round, then she points the cue home
+      case 'cue': {
+        const sweep = e2(u / 0.6);
+        const pt = e2((u - 0.6) / 0.14);
+        return {
+          p: { shN: 30 - sweep * 90 - pt * 32, elN: -40 + pt * 36, shF: 24, elF: -70, tilt: -4 + sweep * 4 + pt * 6, head: 2 - pt * 4, x: pt * 0.022 },
+          face: 'stern',
+          hands: { N: u < 0.6 ? 'open' : 'point', F: 'relaxed' },
+          eye: 0,
+        };
+      }
+      // 6 Boo! (Minuet): a giggle behind her hands, a duck down (she vanishes), then up she pops, arms flung
+      // wide
+      case 'boo': {
+        const hide = hold(u, 0, 0.12, 0.38, 0.5);
+        const duck = hold(u, 0.38, 0.5, 0.58, 0.66);
+        const pop = e2((u - 0.6) / 0.1);
+        return {
+          p: { shN: -70 * hide - 150 * pop, elN: -140 * hide - 26 * pop, shF: -66 * hide - 140 * pop, elF: -136 * hide - 30 * pop, head: 8 * hide - 8 * pop, tilt: 3 * hide + 10 * duck - 4 * pop, drop: 0.12 * duck, hop: 0.03 * pop * Math.max(0, Math.sin(Math.min(1, (u - 0.6) / 0.25) * Math.PI)) },
+          face: pop > 0.3 ? 'boo' : 'giggle',
+          hands: pop > 0.3 ? { N: 'open', F: 'open' } : { N: 'clasp', F: 'clasp' },
+          eye: 0,
+        };
+      }
+      // 7 Rewind (Minuet): one finger raised, winding a circle backwards in the air, her other hand on her hip
+      case 'rewind': {
+        const an = -u * TAU * 1.5;
+        return {
+          p: { shN: -150 + Math.cos(an) * 18 * k1, elN: -20 + Math.sin(an) * 20 * k1, shF: 22, elF: -72, head: 4 + Math.sin(an) * 3, tilt: -2 + Math.cos(an) * 2 },
+          face: 'sly',
+          hands: { N: 'point', F: 'relaxed' },
+          eye: 0,
+        };
+      }
+      // 8 Mirror Step: a dance step, one arm curved over her head, the other out, her toe pointed
+      case 'mirror': {
+        const b = Math.sin(beat * 2);
+        return {
+          p: { shN: -168, elN: -26, shF: -82, elF: -10, fxN: 0.14 * k1, toeN: 30 * k1, tilt: -6 + b * 2, head: -8, drop: 0.02 * (1 + b) },
+          face: R1 ? 'poised' : 'giggle',
+          hands: { N: 'relaxed', F: 'relaxed' },
+          eye: 0,
+        };
+      }
+      // 9 Twin Bond: hands to her heart, then one reaching out to her sister
+      case 'bond': {
+        const reach = e2((u - 0.5) / 0.2);
+        return {
+          p: { shN: -50 - reach * 112, elN: -124 + reach * 110, shF: -50, elF: -120, head: 10 - reach * 18, tilt: 2 - reach * 4 },
+          face: R1 ? 'satisfied' : 'delight',
+          hands: { N: reach > 0.4 ? 'open' : 'clasp', F: 'clasp' },
+          eye: 0,
+        };
+      }
+      // their curtsy (the entrance): a deep, slow curtsy, skirts held out, head bowed
+      case 'curtsy': {
+        const k = e2(u / 0.5);
+        return {
+          p: { drop: 0.12 * k, tilt: 8 * k, head: 12 * k, shN: -26 * k, elN: -12 * k, shF: -26 * k, elF: -12 * k, fxF: -0.1 * k },
+          face: R1 ? 'satisfied' : 'giggle',
+          hands: { N: 'relaxed', F: 'relaxed' },
+          eye: 0,
+        };
+      }
+      // 10 Pas de Deux: both arms raised round in a grand pose, leaning back, a slow turn; the red eye open
+      case 'pasdedeux': {
+        const tn = Math.sin(u * TAU);
+        return {
+          // (arms opened wide and high, well clear of her face)
+          p: { shN: -128 * k1, elN: -8 * k1, shF: -118 * k1, elF: -12 * k1, tilt: -8 * k1, head: -10 * k1, turnC: tn * 0.55, fxN: 0.1 * k1, toeN: 30 * k1, x: tn * 0.02 },
+          face: R1 ? 'glare' : 'wicked',
+          hands: { N: 'relaxed', F: 'relaxed' },
+          eye: e2((u - 0.08) / 0.22),
+        };
+      }
+      default:
+        return null;
+    }
+  }
   function pose(m, a, out) {
     const st = (a.mo.rig ??= {});
     const dt = clamp(a.dt ?? 0, 0, 0.05);
     const t = a.t ?? 0;
+    const now = a.now ?? t;
     const dead = m.hp <= 0;
-    const q = { face: m.faceTest ?? (R1 ? 'poised' : 'giggle'), jig: 0, lock: 0 };
+    const hurt = (a.hurtAgo ?? 9) < 0.45;
+    const q = { face: R1 ? 'poised' : 'giggle', jig: 0, lock: 0, eye: 0, eyeSpin: 0 };
     a.tw = q;
-    if (dead) q.face = 'dizzy';
     const walk = clamp(a.walkW ?? 0, 0, 1);
-    const calm = (1 - walk) * (dead ? 0 : 1);
+    const fighting = !dead && (m.fightTest || (m.aggroUntil ?? 0) > now || now - (m.attackAt ?? -99) < 4 || (a.hurtAgo ?? 9) < 3 || Boolean(m.cast) || Boolean(m.castTest));
+    // (into and out of the fight along a steady ramp, so it never snaps)
+    const fwant = fighting ? 1 - walk * 0.7 : 0;
+    st.twFW = Number.isFinite(st.twFW) ? st.twFW + clamp(fwant - st.twFW, -dt * 2.2, dt * 1.6) : fwant;
+    const fw = e2(st.twFW);
+    const calm = (1 - walk) * (dead ? 0 : 1) * (1 - fw);
     const go = (p, k) => {
       if (k > 0.001) for (const [ch, v] of Object.entries(p)) out[ch] = (out[ch] ?? 0) + (v - (out[ch] ?? 0)) * k;
     };
     const beat = t * (TAU / 1.8);
-    // Rondo: tall and straight, one hand on her hip, the other raised, counting the beat with a finger;
-    // Minuet: her gloved hands clasped by her cheek, swaying the other way to her sister
+    let face = null;
+    let hands = null;
+    // Out of a fight: Rondo tall and straight, one hand on her hip, the other raised, counting the beat
+    // with a finger; Minuet's gloved hands clasped by her cheek, swaying the other way to her sister
     if (R1) go({ shN: -128, elN: -70 + Math.sin(beat) * 7, shF: 20, elF: -66, head: -5 + Math.sin(beat) * 2, tilt: -2 + Math.sin(beat) * 1.4, x: Math.sin(beat) * 0.008 }, calm);
     else go({ shN: -46, elN: -128, shF: -46, elF: -124, head: 9 + Math.sin(beat + 1) * 3, tilt: 3 - Math.sin(beat) * 3, x: -Math.sin(beat) * 0.012 }, calm);
-    handRig(m, a, st, dt, walk, dead, beat);
+    // Fight idles, each with its own little moments on a 9 s loop
+    if (fw > 0.01) {
+      const fu = (((t + (m.uid % 3) * 2.3) % 9) + 9) % 9;
+      if (R1) {
+        // conducting the room with her raised hand on the beat, the other on her hip; a hat tip; her foot
+        // tapping the tempo
+        const fb = t * (TAU / 1.5);
+        go({ shN: -112 + Math.sin(fb) * 12, elN: -56 + Math.cos(fb) * 10, shF: 24, elF: -70, tilt: Math.sin(fb) * 1.6, head: -4 + Math.sin(fb) * 1.5, x: Math.sin(fb) * 0.006, drop: 0.008 * (1 + Math.cos(fb * 2)) }, fw);
+        const tip = hold(fu, 2, 2.4, 3.2, 3.7) * fw;
+        go({ shF: -164, elF: -112, head: 8, tilt: 3 }, tip);
+        const tap = hold(fu, 5.4, 5.6, 7, 7.3) * fw;
+        go({ fyN: -0.07 * Math.max(0, Math.sin((fu - 5.6) * 14)), shN: -96, elN: -40 }, tap);
+        face = tip > 0.4 ? 'satisfied' : tap > 0.4 ? 'counting' : 'stern';
+        hands = { N: tip > 0.4 ? 'relaxed' : 'point', F: tip > 0.4 ? 'clasp' : 'relaxed' };
+      } else {
+        // bouncing on her toes, swaying, hands clasped by her cheek; peek-a-boo behind her hands; a twirl
+        const fb = t * (TAU / 1.2);
+        go({ shN: -50 + Math.sin(fb) * 6, elN: -126, shF: -44 - Math.sin(fb) * 6, elF: -122, tilt: -Math.sin(fb) * 4, head: 8 + Math.sin(fb + 1) * 4, x: -Math.sin(fb) * 0.01, hop: 0.012 * Math.abs(Math.sin(fb)) }, fw);
+        const peek = hold(fu, 1.6, 1.9, 3, 3.4) * fw;
+        go({ shN: -66, elN: -144, shF: -62, elF: -142, head: 10, tilt: 2 }, peek);
+        const twirl = hold(fu, 5, 5.4, 6.6, 7.1) * fw;
+        go({ shN: -94, elN: -8, shF: -92, elF: -8, turnC: Math.sin((fu - 5) * 5) * 0.7, tilt: Math.sin((fu - 5) * 5) * 5, head: -6 }, twirl);
+        face = peek > 0.4 ? (fu > 2.6 ? 'boo' : 'giggle') : twirl > 0.4 ? 'delight' : 'sly';
+        hands = peek > 0.4 ? { N: 'clasp', F: 'clasp' } : twirl > 0.4 ? { N: 'open', F: 'open' } : { N: 'clasp', F: 'clasp' };
+      }
+    }
+    // The basic attack, from the rig's attack phase (a.ph): Rondo flicks her hand back, then points the
+    // beat at you; Minuet winds both hands back, then shoves them open at you
+    const ap = a.ph ?? { antic: 0, strike: 0 };
+    if (!dead && ap.antic > 0.01) {
+      go(R1 ? { shN: 34, elN: -82, tilt: -6, head: -6, x: -0.012 } : { shN: 30, elN: -100, shF: 22, elF: -100, tilt: -8, head: -6, x: -0.015 }, ap.antic);
+      face = R1 ? 'stern' : 'sly';
+      hands = R1 ? { N: 'open', F: 'relaxed' } : { N: 'clasp', F: 'clasp' };
+    }
+    if (!dead && ap.strike > 0.01) {
+      go(R1 ? { shN: -96, elN: -6, tilt: 8, head: 2, x: 0.025, fxN: 0.08 } : { shN: -86, elN: -10, shF: -80, elF: -14, tilt: 10, head: 4, x: 0.03, fxN: 0.1 }, ap.strike);
+      face = R1 ? 'stern' : 'boo';
+      hands = R1 ? { N: 'point', F: 'relaxed' } : { N: 'open', F: 'open' };
+    }
+    // The mechanics' poses (m.cast with m.castPose from the fight; m.castTest { name, u } for sheets)
+    let want = null;
+    let cu = 0;
+    // (their entrance's moves: data/scenes.js manor_twins)
+    const cine = m.mech?.placed ? null : m.cine?.act;
+    const CINE = { stepout: 'swap', curtsy: 'curtsy', reveal: 'frozen', stopped: 'frozen' };
+    if (!dead && m.castTest) {
+      want = m.castTest.name;
+      cu = m.castTest.u;
+    } else if (!dead && cine && CINE[cine.move]) {
+      want = CINE[cine.move];
+      cu = cine.move === 'stopped' ? 1 : clamp((now - cine.at) / Math.max(0.2, cine.dur), 0, 1);
+    } else if (!dead && m.cast && m.castPose) {
+      want = m.castPose;
+      cu = clamp((now - m.cast.t0) / Math.max(0.2, m.cast.dur), 0, 1);
+    }
+    if (want) {
+      st.twCast = want;
+      st.twCastU = cu;
+    }
+    st.twCastW = clamp((st.twCastW ?? 0) + (want ? dt * 4.5 : -dt * 3), 0, 1);
+    const cw = e2(st.twCastW);
+    let eyeGoal = 0;
+    if (cw > 0.001 && st.twCast) {
+      const P = castPose(st.twCast, want ? cu : 1, t);
+      if (P) {
+        go(P.p, cw);
+        if (cw > 0.4) {
+          face = P.face;
+          hands = P.hands;
+        }
+        // (the eye closes again as the pose eases out)
+        eyeGoal = want ? P.eye : 0;
+      }
+    }
+    if (m.eyeTest != null) eyeGoal = m.eyeTest;
+    q.eye = clamp(spring(st, 'twEye', eyeGoal, 70, 2 * Math.sqrt(70) * 0.85, dt), 0, 1);
+    // (the clock hands in the red eye spin while it is open; faster while time is stopped)
+    st.twSpin = (st.twSpin ?? 0) + dt * (q.eye > 0.05 ? (m.timeStopped ? 9 : 3) : 0);
+    q.eyeSpin = st.twSpin;
+    if (dead) face = 'dizzy';
+    else if (hurt) face = 'hurt';
+    if (face) q.face = face;
+    if (m.faceTest) q.face = m.faceTest;
+    handRig(m, a, st, dt, walk, dead, beat, hands);
     q.jig = jolt(m, a, st, dt);
     // the gown's gores, each lagging a little more than the last, swinging after her sway and steps
-    const lean = Math.sin(beat) * (R1 ? 0.4 : -0.5) + walk * Math.sin(t * 7) * 1.2 + (out.x ?? 0) * 20;
+    const lean = Math.sin(beat) * (R1 ? 0.4 : -0.5) + walk * Math.sin(t * 7) * 1.2 + (out.x ?? 0) * 20 + (out.turnC ?? 0) * 3;
     for (let i = 0; i <= GORES; i++) spring(st, `twG${i}`, lean * (0.6 + 0.5 * Math.sin((i / GORES) * Math.PI)), 44 - i * 1.6, 6.4, dt);
     a.twBell = q.jig;
     a.twTails = spring(st, 'twTl', lean * 0.9, 26, 4.4, dt);
@@ -1397,11 +1629,40 @@ function makeTwin(who) {
   const rig = R.rig;
   const draw0 = rig.draw;
   rig.draw = (ctx, m, a) => {
+    // Their entrance (data/scenes.js manor_twins): not in the room yet ('away'), the clock striking
+    // ('chime') and their reflections dancing in the mirrors ('mirror', render/twins/room.js), all with
+    // nobody on the floor; then each steps out of her mirror ('stepout'): Rondo onto the floor, Minuet
+    // turning over in one smooth half turn up to the ceiling (about her middle, so she ends just where
+    // the fight hangs her: world/twins.js TWIN_HANG).
+    // (once their fight has begun, world/twins.js, any scene move left on them is over)
+    const act = m?.mech?.placed ? null : m?.cine?.act;
+    const mv = act?.move;
+    if (mv === 'away' || mv === 'chime' || mv === 'mirror' || (m?.offstage && !act)) return;
+    const su = mv === 'stepout' ? clamp(((a.now ?? 0) - act.at) / Math.max(0.2, act.dur), 0, 1) : 1;
+    const se = su * su * (3 - 2 * su);
+    const turning = Boolean(act) && who === 'minuet' && ['stepout', 'curtsy', 'reveal', 'stopped'].includes(mv);
     ctx.save();
-    if (m?.ceiling) ctx.scale(1, -1);
+    if (turning) {
+      const H = m.def?.h ?? 96;
+      const rise = (m.y ?? 380) - 146 - H / 2;
+      ctx.translate(0, -H / 2 - (rise - H / 2) * se);
+      ctx.rotate(Math.PI * se);
+      ctx.translate(0, H / 2);
+    }
+    // (hanging from the ceiling, world/twins.js: her feet up at the ceiling, her head her full height below
+    // them, at m.y; see-through as she passes through a mirror, m.twAlpha, or steps out of one)
+    if (m?.ceiling && !turning) {
+      ctx.translate(0, -(m.def?.h ?? 96));
+      ctx.scale(1, -1);
+    }
+    const a0 = a.alpha;
+    let al = m?.twAlpha != null && m.twAlpha < 1 ? m.twAlpha : 1;
+    if (mv === 'stepout') al *= Math.min(1, su * 1.6);
+    if (al < 1) a.alpha = (a0 ?? 1) * al;
     ctx.scale(BIG, BIG);
     a.gaitScale = BIG;
     draw0(ctx, m, a);
+    a.alpha = a0;
     ctx.restore();
   };
   rig.w = Math.round(rig.w * BIG * 1.3);
@@ -1413,6 +1674,9 @@ function makeTwin(who) {
 }
 const RONDO = makeTwin('rondo');
 const MINUET = makeTwin('minuet');
+// (for the room's mirrors: render/twins/arts.js)
+TWIN_ARTS.rondo = RONDO.art;
+TWIN_ARTS.minuet = MINUET.art;
 export const RONDO_ART = RONDO.art;
 export const RONDO_SIZE = RONDO.size;
 export const MINUET_ART = MINUET.art;

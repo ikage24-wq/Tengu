@@ -31,10 +31,10 @@ import { gumdropShot } from './chameleon/index.js';
 import { jellyBeanShot } from './gummypillar/shot.js';
 import { HAZEL_FX, HAZEL_HOLD } from './mothercapper/fx.js';
 import { TUSKAR_FX, TUSKAR_HOLD } from './tuskar/fx.js';
-import { WALTZ_FX, WALTZ_HOLD } from './waltzrondo/looks.js';
 import { MARIGOLD_FX, MARIGOLD_HOLD } from './marigold/looks.js';
 import { VELVET_FX, VELVET_HOLD } from './velvet/looks.js';
 import { HOSTESS_FX, HOSTESS_HOLD } from './hostess/looks.js';
+import { TWINS_FX, TWINS_HOLD } from './twins/looks.js';
 import { MORAY_FX, MORAY_HOLD } from './moray/looks.js';
 import { GK_FX, GK_HOLD } from './grandkettle/looks.js';
 import { PRISMARIS_FX, PRISMARIS_LOOK_HOLD } from './prismaris/looks.js';
@@ -54,7 +54,7 @@ import { SKY_FX, SKY_HOLD } from './skylooks.js';
 const TAU = Math.PI * 2;
 const SW = 640;
 const clamp01 = (v) => Math.max(0, Math.min(1, v));
-export const DREAM_HOLD = { ...STORM_HOLD, ...SHAMAN_HOLD, ...HAZEL_HOLD, ...TUSKAR_HOLD, ...WALTZ_HOLD, ...MARIGOLD_HOLD, ...VELVET_HOLD, ...HOSTESS_HOLD, ...MORAY_HOLD, ...ABYSSIA_HOLD, ...CORALIE_HOLD, ...GK_HOLD, ...CARNIVAL_HOLD, ...CANDY_HOLD, ...SKY_HOLD, ...FOLIO_HOLD, ...ECLIPSE_HOLD, ...ASTRAEA_HOLD, ...MANAGER_HOLD, ...NOODLE_HOLD, ...MONDAY_HOLD, ...PRISMARIS_LOOK_HOLD, ...REVEILLE_HOLD, memo: 0.7, stamp: 0.8, coffee: 0.8, files: 0.9, steam: 0.9, noodle: 0.7, broth: 0.7, chopsticks: 0.6, boil: 1.1, email: 0.7, redpen: 0.8, alarm: 1, invite: 0.8, deadline: 1.1 };
+export const DREAM_HOLD = { ...STORM_HOLD, ...SHAMAN_HOLD, ...HAZEL_HOLD, ...TUSKAR_HOLD, ...MARIGOLD_HOLD, ...VELVET_HOLD, ...HOSTESS_HOLD, ...TWINS_HOLD, ...MORAY_HOLD, ...ABYSSIA_HOLD, ...CORALIE_HOLD, ...GK_HOLD, ...CARNIVAL_HOLD, ...CANDY_HOLD, ...SKY_HOLD, ...FOLIO_HOLD, ...ECLIPSE_HOLD, ...ASTRAEA_HOLD, ...MANAGER_HOLD, ...NOODLE_HOLD, ...MONDAY_HOLD, ...PRISMARIS_LOOK_HOLD, ...REVEILLE_HOLD, memo: 0.7, stamp: 0.8, coffee: 0.8, files: 0.9, steam: 0.9, noodle: 0.7, broth: 0.7, chopsticks: 0.6, boil: 1.1, email: 0.7, redpen: 0.8, alarm: 1, invite: 0.8, deadline: 1.1 };
 
 // ---------- Little things ----------
 function shadow(ctx, x, y, rx, a, c = '#2a2240') {
@@ -931,7 +931,7 @@ export function dreamShot(ctx, shot, x, y, p, d) {
 }
 
 // (render/bossfx.js calls these.)
-const ALL_FX = () => (ALL ??= { ...DREAM_FX, ...STORM_FX, ...SHAMAN_FX, ...HAZEL_FX, ...TUSKAR_FX, ...WALTZ_FX, ...MARIGOLD_FX, ...VELVET_FX, ...HOSTESS_FX, ...MORAY_FX, ...ABYSSIA_FX, ...CORALIE_FX, ...GK_FX, ...CARNIVAL_FX, ...CANDY_FX, ...SKY_FX, ...FOLIO_FX, ...ECLIPSE_FX, ...ASTRAEA_FX, ...MANAGER_FX, ...NOODLE_FX, ...MONDAY_FX, ...PRISMARIS_FX, ...REVEILLE_FX });
+const ALL_FX = () => (ALL ??= { ...DREAM_FX, ...STORM_FX, ...SHAMAN_FX, ...HAZEL_FX, ...TUSKAR_FX, ...MARIGOLD_FX, ...VELVET_FX, ...HOSTESS_FX, ...TWINS_FX, ...MORAY_FX, ...ABYSSIA_FX, ...CORALIE_FX, ...GK_FX, ...CARNIVAL_FX, ...CANDY_FX, ...SKY_FX, ...FOLIO_FX, ...ECLIPSE_FX, ...ASTRAEA_FX, ...MANAGER_FX, ...NOODLE_FX, ...MONDAY_FX, ...PRISMARIS_FX, ...REVEILLE_FX });
 let ALL = null;
 export function dreamWarn(ctx, z, x, y, p, time) {
   const fx = ALL_FX()[z.look];

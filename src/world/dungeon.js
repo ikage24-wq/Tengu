@@ -31,7 +31,7 @@ import { botChat, sayOneOf } from './chatlog.js';
 import { placeInGroup, focusOf, behindSide, shared, callout as callOut } from './botfight.js';
 import { loadMap, killMob } from './world.js';
 import { radio, roomSetup, tickRoom, cheerOf, capperPhases, sporeSprout, pillarHit, boarPhases, gnarlPhases, GNARL_WORDS, hollowCalmed, floodComing, onFloor } from './hollow.js';
-import { MANOR_MECHS, MANOR_CHANNEL, manorSetup, tickManor, manorBoss, manorHitMul, manorShare, manorKilled, turnPortrait, crestWords, CREST } from './manor.js';
+import { MANOR_MECHS, MANOR_CHANNEL, manorSetup, tickManor, manorBoss, manorHitMul, manorKilled, turnPortrait, crestWords, CREST } from './manor.js';
 import { AQUA_MECHS, AQUA_CHANNEL, aquaSetup, tickAqua, aquaBoss, aquaHitMul, aquaKilled, openClam, bellWords } from './aquarium.js';
 import { CARNIVAL_MECHS, CARNIVAL_CHANNEL, carnivalSetup, tickCarnival, carnivalBoss, carnivalHitMul, carnivalKilled } from './carnival.js';
 import { OBS_MECHS, OBS_CHANNEL, obsSetup, tickObs, obsBoss, obsHitMul, obsKilled, pressLamp, lampsLit } from './observatory.js';
@@ -601,7 +601,7 @@ const BOSS_LINES = {
   capper: '"Who is trampling my garden?! Those seeds are COUNTED!"',
   boar: '"HALT! Who goes there?! ...You smell like acorns."',
   gnarl: '"Hrrmm... too noisy... far too noisy..."',
-  waltz: '"One, two, THREE! Do keep up, darlings."',
+  twins: '"Guests, Minuet." "Ooh, LOVELY! One, two... BOO!"',
   moray: '"Sister, guests! Shall we share them?"',
   abyssia: '"Down here, darlings, the light is MINE."',
   coralie: '"Who disturbs the drowned court?"',
@@ -639,8 +639,6 @@ export function noteHit(world, m, h) {
   // (Gnarlroot can't be beaten, only calmed: blows bring him down to a third, no further, until the
   // tendrils holding Yomogi are cut.)
   if (m.def.mech === 'gnarl' && !m.mech?.freed) damage = Math.max(0, Math.min(damage, Math.ceil(m.hp - m.def.hp * 0.3)));
-  // (The Ballroom's pair share a blow while they dance hand in hand: world/manor.js.)
-  damage = manorShare(world, m, damage);
   engage(world, m, who);
   m.threat[who] = (m.threat[who] ?? 0) + Math.max(1, damage) * (run.roles[who] === 'tank' ? TANK_THREAT : 1);
   return damage;
@@ -1128,6 +1126,9 @@ function swing(world, m, up) {
     if (g.id === 'you') veilMissed(world, m);
     return;
   }
+  // (a swing with a look of its own, def.fight.look: drawn where it lands, render/dreamfx.js; the Mirror
+  // Twins' silver note and ghost puffs)
+  if (f.look) world.dungeon.zones.push({ kind: 'circle', look: f.look, x: g.body.x, y: g.body.y, w: 50, warn: 0, t: 0, hit: true, after: 0, hold: LOOK_HOLD[f.look] ?? 0.5 });
   land(world, g, m.def.atk * mul, m.def.acc, m.x, mul > 1);
 }
 
@@ -1435,6 +1436,10 @@ function tickZones(world, up, dt) {
     if (z.t < z.warn) continue;
     z.hit = true;
     if (z.from?.hp <= 0 || z.tele) continue;
+    // (a zone that does something as it lands: the Mirror Twins' stopped time, gaze, rewind, bond:
+    // world/twins.js; one of no damage hurts nobody)
+    if (z.onLand) z.onLand(world, z, up);
+    if (!z.damage && z.kind !== 'lane') continue;
     // A stack: the hit shared by everyone in it (too few in it, and it lands harder).
     if (shared(z)) {
       const inside = up.filter((g) => inZone(world, z, g.body));

@@ -912,8 +912,10 @@ export function updateWorld(world, dt, input) {
   if (world.date) tickDate(world, dt, input.locked ? new Set() : input.pressed);
   const moment = Boolean(world.date && DATES[world.date.kind].moment);
   const only = (set) => (moment ? new Set() : world.decorating ? new Set([...set].filter((k) => MOVE.includes(k))) : set);
-  const held = input.locked || world.dead || fishing ? new Set() : only(input.held);
-  const pressed = input.locked || world.dead || fishing ? new Set() : only(input.pressed);
+  // (Frozen in time, world/twins.js: no keys, no moving, held right where you are, even mid-jump.)
+  const iced = world.body.frozenUntil > world.now;
+  const held = input.locked || world.dead || fishing || iced ? new Set() : only(input.held);
+  const pressed = input.locked || world.dead || fishing || iced ? new Set() : only(input.pressed);
   const intent = {
     left: held.has('ArrowLeft'),
     right: held.has('ArrowRight'),
@@ -959,7 +961,10 @@ export function updateWorld(world, dt, input) {
   const aloft = !world.body.onGround && !world.body.rope;
   // Riding: the mount's own trick.
   const ride = rideStep(world, bodyIntent, pressed, dt);
-  if (!(pressed.has('ArrowUp') && interact(world))) {
+  if (iced) {
+    world.body.vx = 0;
+    world.body.vy = 0;
+  } else if (!(pressed.has('ArrowUp') && interact(world))) {
     // (A thief is light on her feet: she runs THIEF_FEET faster. Yours only: the crowd's thieves walk
     // with their groups.)
     const feet = JOBS[char.job]?.family === 'thief' ? THIEF_FEET : 1;

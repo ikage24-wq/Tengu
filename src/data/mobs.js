@@ -423,24 +423,26 @@ export const MOBS = {
     speed: 24, rest: [9, 14], w: 34, h: 44, art: 'pumpkinbutler', drops: [{ id: 'moonlit_ribbon', chance: 0.12 }],
     fight: { every: 2, reach: 36, windup: 0.5 }, mech: 'butler',
   }),
-  // The Ballroom's pair (remade 2026-11-26 from the Waltzing Armours, the player's pick "A"): Dame
-  // Rondo the Tailcoat Penguin (render/waltzrondo/) has the floor and Dame Minuet the Upside-down Bat
-  // (render/waltzminuet/) the air; whatever the lead dances, her partner echoes (world/manor.js).
+  // The Ballroom's pair: Dame Rondo and Dame Minuet, the Mirror Twins (2026-11-28, remade from scratch
+  // as twin ghost ladies: render/twins/; their fight: world/twins.js). One on the floor, one hanging
+  // from the ceiling; only the one on the floor is in reach, and they trade places when time stops.
+  // (Health sized from a logged run, 2026-11-28, a level-18 group on the tests' autopilot: with only the
+  // floor twin in reach, 46k and 42k took three minutes; 32k and 29k about a minute and a half.)
   // (Health sized from a run, 2026-11-26, the fight's own patterns and a level-17/18 group on the
   // same autopilot as tests/dungeon.test.js: 50k between them went down in 53-66 s, the pair close
   // together for most of it (hand in hand, and in each other's splash); 46k and 42k make it a dance of
   // about a minute and a half to two: 83 and 91 s for two level-18 groups, 117 s for a level-17 one.)
   waltzrondo: mob({
-    id: 'waltzrondo', name: 'Dame Rondo, the Tailcoat Penguin', level: 17, hp: 46000, atk: 112, def: 24, acc: 54, eva: 3, exp: 5200, gold: [170, 250],
-    speed: 40, w: 49, h: 80, art: 'waltzrondo', boss: true,
+    id: 'waltzrondo', name: 'Dame Rondo, the Mirror Twin', level: 17, hp: 32000, atk: 112, def: 24, acc: 54, eva: 3, exp: 5200, gold: [170, 250],
+    speed: 40, w: 46, h: 96, art: 'waltzrondo', boss: true,
     drops: [{ id: 'moonlit_ribbon', chance: 1, qty: 2 }, { id: 'white_potion', chance: 1, qty: 8 }],
-    fight: { every: 1.9, reach: 46, windup: 0.5 }, mech: 'waltz',
+    fight: { every: 1.9, reach: 46, windup: 0.5, look: 'twNote' }, mech: 'twins',
   }),
   waltzminuet: mob({
-    id: 'waltzminuet', name: 'Dame Minuet, the Upside-down Bat', level: 17, hp: 42000, atk: 104, def: 22, acc: 54, eva: 4, exp: 5200, gold: [170, 250],
-    speed: 40, w: 40, h: 64, art: 'waltzminuet', boss: true,
+    id: 'waltzminuet', name: 'Dame Minuet, the Upside-down Twin', level: 17, hp: 29000, atk: 104, def: 22, acc: 54, eva: 4, exp: 5200, gold: [170, 250],
+    speed: 40, w: 46, h: 96, art: 'waltzminuet', boss: true,
     drops: [{ id: 'moonlit_ribbon', chance: 1, qty: 2 }, { id: 'orange_potion', chance: 1, qty: 8 }],
-    fight: { every: 1.7, reach: 44, windup: 0.45 }, mech: 'waltz',
+    fight: { every: 1.7, reach: 44, windup: 0.45, look: 'twPuff' }, mech: 'twins',
   }),
   // (Health sized from a live run, 2026-11-19: about 435 a second from a level-18 group, tea and
   // bells included; 40k is a fight of about a minute and a half.)

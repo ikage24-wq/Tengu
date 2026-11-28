@@ -43,12 +43,12 @@ export const LOOK_HOLD = { overdue: 0.9, books: 0.8, study: 0.9, bookmark: 0.7, 
   feathers: 1.4,
   // (the Myconid Queen's Seed Spit, Hoarder's Whirl and Pouch Burst: render/mothercapper/fx.js HAZEL_HOLD)
   seedspit: 0.7, seedsprout: 1, whirl: 0.8, pouchburst: 1.3,
-  // (the Ballroom's penguin and bat: render/waltzrondo/looks.js WALTZ_HOLD)
-  polish: 0.5, echoswoop: 0.8, count: 0.9, kiss: 0.8, twirl: 0.8, rings: 0.9, lift: 0.9, bow: 1.2,
   // (Madame Velvet's: render/velvet/looks.js VELVET_HOLD)
   vvRunner: 0.8, vvTea: 0.8, vvInspect: 0.8, vvPour: 0.8, vvDust: 0.8, vvDustLow: 0.8, vvKeys: 0.8, vvPolish: 1, vvRules: 1.1,
   // (Lady Marigold's new fight: render/hostess/looks.js HOSTESS_HOLD)
   mgCards: 0.8, mgPartners: 0.8, mgSteps: 0.7, mgToes: 0.8, mgLanterns: 0.8, mgBloom: 1.3, mgTwelve: 1.2,
+  // (the Mirror Twins': render/twins/looks.js TWINS_HOLD)
+  twFrozen: 1, twGaze: 0.7, twTick: 0.7, twCue: 0.8, twBoo: 0.9, twRewind: 0.7, twMirror: 0.9, twPas: 1.3, twNote: 0.5, twPuff: 0.5, twNone: 0.1,
   // (Lady Marigold's: render/marigold/looks.js MARIGOLD_HOLD)
   mgInvite: 0.8, mgStay: 0.9, mgRoom: 0.8, mgToast: 0.8, mgDance: 0.8, mgChime: 0.7, mgWaltz: 1.1,
   // (the Twin Morays': render/moray/looks.js MORAY_HOLD)

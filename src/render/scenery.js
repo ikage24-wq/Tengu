@@ -1530,8 +1530,8 @@ function drawFar(ctx, t, cam, width, y0, time) {
     case 'manorhall':
       drawFarManorHall(ctx, t, cam, width, y0, time);
       break;
-    case 'manorball':
-      drawFarManorBall(ctx, t, cam, width, y0, time);
+    // (the Mirrored Ballroom paints its own wall over the whole view: render/twins/room.js)
+    case 'mirrorball':
       break;
     case 'library':
       drawFarLibrary(ctx, t, cam, width, y0, time);
@@ -2123,155 +2123,6 @@ function candleFlame(ctx, x, y, time, i, r = 1.6) {
   ctx.beginPath();
   ctx.ellipse(x, y + r * 0.4, r * 0.5, r * 0.9, 0, 0, Math.PI * 2);
   ctx.fill();
-}
-
-// The Ballroom, far back: a wall of tall gilt mirrors, each catching the chandelier's light in a
-// sheen that slides across it, pilasters between, rose swags hung over the tops.
-function drawFarManorBall(ctx, t, cam, width, y0, time) {
-  ctx.fillStyle = t.far;
-  ctx.fillRect(0, 0, width, 600);
-  const gilt = mix(GILT, t.far, 0.35);
-  const giltD = mix(GILT_D, t.far, 0.35);
-  repeat(cam.x, 0.2, 150, width, (i, x) => {
-    const mx = x + 40;
-    const top = y0 - 200;
-    const mw = 70;
-    // Pilaster between mirrors, fluted, with a gilt capital.
-    ctx.fillStyle = shade(t.far, 10);
-    ctx.fillRect(snap(x + 128), snap(top - 20), 16, y0 - top + 10);
-    ctx.fillStyle = shade(t.far, -6);
-    for (let f = 0; f < 3; f++) ctx.fillRect(snap(x + 131 + f * 4), snap(top), 1.5, y0 - top - 30);
-    ctx.fillStyle = gilt;
-    ctx.fillRect(snap(x + 124), snap(top - 26), 24, 8);
-    // The mirror: a gilt frame round an arched pane of soft moonlit glass.
-    const pane = (inset) => {
-      ctx.beginPath();
-      ctx.moveTo(mx + inset, y0 - 20);
-      ctx.lineTo(mx + inset, top + 35);
-      ctx.arc(mx + mw / 2, top + 35, mw / 2 - inset, Math.PI, 0);
-      ctx.lineTo(mx + mw - inset, y0 - 20);
-      ctx.closePath();
-    };
-    pane(-5);
-    ctx.fillStyle = giltD;
-    ctx.fill();
-    pane(-3);
-    ctx.fillStyle = gilt;
-    ctx.fill();
-    pane(2);
-    const g = ctx.createLinearGradient(mx, top, mx + mw, y0);
-    g.addColorStop(0, mix(t.sky[2], '#ffffff', 0.35));
-    g.addColorStop(1, mix(t.far, t.sky[1], 0.5));
-    ctx.fillStyle = g;
-    ctx.fill();
-    // The sheen sliding across the glass, and the chandelier's lights twinkling in it.
-    ctx.save();
-    pane(2);
-    ctx.clip();
-    const u = ((time * 0.12 + hash(i)) % 1.4) - 0.2;
-    ctx.globalAlpha = 0.35;
-    ctx.fillStyle = '#ffffff';
-    ctx.beginPath();
-    ctx.moveTo(mx + u * 140 - 40, top);
-    ctx.lineTo(mx + u * 140 - 22, top);
-    ctx.lineTo(mx + u * 140 - 62, y0);
-    ctx.lineTo(mx + u * 140 - 80, y0);
-    ctx.fill();
-    ctx.globalAlpha = 1;
-    for (let k = 0; k < 4; k++) {
-      const tw = 0.5 + 0.5 * Math.sin(time * 2.4 + k * 1.7 + i);
-      ctx.fillStyle = '#fff6d0';
-      ctx.globalAlpha = tw;
-      ctx.fillRect(snap(mx + 14 + hash(i + k) * (mw - 28)), snap(top + 30 + hash(i + k + 5) * 80), 2, 2);
-    }
-    ctx.restore();
-    // A rose swag draped from this mirror's crown to the next.
-    ctx.strokeStyle = mix('#e07aa8', t.far, 0.25);
-    ctx.lineWidth = 5;
-    ctx.beginPath();
-    ctx.moveTo(mx + mw / 2, top - 6);
-    ctx.quadraticCurveTo(mx + mw / 2 + 75, top + 30 + Math.sin(time * 0.6 + i) * 2, mx + mw / 2 + 150, top - 6);
-    ctx.stroke();
-    ctx.fillStyle = gilt;
-    ctx.beginPath();
-    ctx.arc(mx + mw / 2, top - 8, 4, 0, Math.PI * 2);
-    ctx.fill();
-  });
-  ctx.fillStyle = shade(t.far, -8);
-  ctx.fillRect(0, snap(y0 - 24), width, 600);
-  ctx.fillStyle = gilt;
-  ctx.fillRect(0, snap(y0 - 24), width, 2);
-}
-// The Ballroom's middle plane: gilt candelabra, gilt chairs with rose cushions along the wall
-// waiting for the dancers, and now and then a harp.
-function drawMidManorBall(ctx, t, cam, width, y0, time) {
-  repeat(cam.x, 0.45, 160, width, (i, x) => {
-    const s = hash(i + 4);
-    const cx = x + 80;
-    if (s < 0.5) {
-      // A candelabrum: a tall gilt stem on a foot, five arms of candles.
-      ctx.fillStyle = GILT_D;
-      ctx.fillRect(snap(cx - 1.5), snap(y0 - 70), 3, 74);
-      ctx.beginPath();
-      ctx.ellipse(cx, y0 + 2, 9, 3, 0, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.strokeStyle = GILT;
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.moveTo(cx - 16, y0 - 82);
-      ctx.quadraticCurveTo(cx - 16, y0 - 68, cx, y0 - 68);
-      ctx.quadraticCurveTo(cx + 16, y0 - 68, cx + 16, y0 - 82);
-      ctx.moveTo(cx - 8, y0 - 86);
-      ctx.quadraticCurveTo(cx - 8, y0 - 74, cx, y0 - 74);
-      ctx.quadraticCurveTo(cx + 8, y0 - 74, cx + 8, y0 - 86);
-      ctx.stroke();
-      for (const [dx, dy] of [[-16, -82], [-8, -86], [0, -90], [8, -86], [16, -82]]) {
-        ctx.fillStyle = '#fff6e6';
-        ctx.fillRect(snap(cx + dx - 1.5), snap(y0 + dy - 7), 3, 7);
-        candleFlame(ctx, cx + dx, y0 + dy - 10, time, i * 5 + dx);
-      }
-      glow(ctx, cx, y0 - 92, 34, '#ffd27a', 0.3 + 0.08 * Math.sin(time * 5 + i));
-    } else if (s < 0.85) {
-      // Two gilt chairs side by side, rose seats.
-      for (const dx of [-14, 14]) {
-        const ch = cx + dx;
-        ctx.fillStyle = GILT_D;
-        ctx.fillRect(snap(ch - 7), snap(y0 - 14), 2, 18);
-        ctx.fillRect(snap(ch + 5), snap(y0 - 14), 2, 18);
-        ctx.fillStyle = GILT;
-        ctx.beginPath();
-        ctx.roundRect(ch - 7, y0 - 38, 14, 22, [7, 7, 2, 2]);
-        ctx.fill();
-        ctx.fillStyle = '#e07aa8';
-        ctx.beginPath();
-        ctx.roundRect(ch - 5, y0 - 35, 10, 17, [5, 5, 1, 1]);
-        ctx.fill();
-        ctx.beginPath();
-        ctx.roundRect(ch - 8, y0 - 17, 16, 5, 2);
-        ctx.fill();
-      }
-    } else {
-      // A golden harp, its strings shimmering.
-      ctx.strokeStyle = GILT;
-      ctx.lineWidth = 3;
-      ctx.beginPath();
-      ctx.moveTo(cx - 10, y0 + 2);
-      ctx.lineTo(cx - 10, y0 - 70);
-      ctx.quadraticCurveTo(cx + 8, y0 - 80, cx + 16, y0 - 54);
-      ctx.lineTo(cx + 4, y0 + 2);
-      ctx.stroke();
-      ctx.strokeStyle = '#fff6dc';
-      ctx.lineWidth = 0.8;
-      for (let k = 1; k < 6; k++) {
-        ctx.globalAlpha = 0.6 + 0.4 * Math.sin(time * 6 + k);
-        ctx.beginPath();
-        ctx.moveTo(cx - 10 + k * 2.4, y0 - 70 + k * 1.5);
-        ctx.lineTo(cx - 10 + k * 2.4, y0 - k * 1.2);
-        ctx.stroke();
-      }
-      ctx.globalAlpha = 1;
-    }
-  });
 }
 
 // The Library, far back: bookcases floor to ceiling, every shelf packed with spines of every
@@ -4956,8 +4807,7 @@ function drawMid(ctx, t, theme, cam, width, y0, time) {
     case 'ferris':
       drawMidFerris(ctx, t, cam, width, y0, time);
       break;
-    case 'manorball':
-      drawMidManorBall(ctx, t, cam, width, y0, time);
+    case 'mirrorball':
       break;
     case 'library':
       drawMidLibrary(ctx, t, cam, width, y0, time);
@@ -6035,7 +5885,7 @@ export function drawSceneBack(ctx, map, cam, width, height, time, nearPortalId, 
   const backdrop = (g) => {
     drawSky(g, t, theme, width, height, time);
     // (Under a painted forest's canopy, under the sea and indoors there are no clouds to see.)
-    if (t.clouds !== false && t.painted !== 'forest' && !t.underground && !t.ceiling && !['reef', 'manorhall', 'bigtop', 'workshop', 'funhouse', 'kitchen', 'starhall', 'archive', 'orrery', 'candycave', 'forge', 'crater', 'stagehall', 'pirate', 'fairy', 'ballroom', 'backstage', 'greatstage', 'lungs', 'manorball', 'library', 'hallway'].includes(t.skyline)) drawClouds(g, theme, cam, width, time, air, Boolean(t.stars) && t.face === 'moon' && theme !== 'harbor' && theme !== 'grove');
+    if (t.clouds !== false && t.painted !== 'forest' && !t.underground && !t.ceiling && !['reef', 'manorhall', 'bigtop', 'workshop', 'funhouse', 'kitchen', 'starhall', 'archive', 'orrery', 'candycave', 'forge', 'crater', 'stagehall', 'pirate', 'fairy', 'ballroom', 'backstage', 'greatstage', 'lungs', 'mirrorball', 'library', 'hallway'].includes(t.skyline)) drawClouds(g, theme, cam, width, time, air, Boolean(t.stars) && t.face === 'moon' && theme !== 'harbor' && theme !== 'grove');
     // A painted backdrop (painted.js) in place of the flat silhouettes, where the theme has one.
     if (t.painted === 'forest') drawPaintedForest(g, t, cam, width, height, time, layerY, air);
     else if (t.painted === 'meadow') drawPaintedMeadow(g, t, cam, width, height, time, layerY, air);

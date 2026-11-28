@@ -1072,6 +1072,12 @@ export function updateParty(bots, world, dt) {
       br.think = 0.2 + i * 0.15;
     }
     const body = bot.body;
+    // (Frozen in time, world/twins.js: held right where they are.)
+    if (body.frozenUntil > world.now) {
+      body.vx = 0;
+      body.vy = 0;
+      return;
+    }
     bot.stats ??= computeStats(bot.char);
     if (!world.dungeon && !map.isTown) takeHits(bot, world, dt, rng);
     // Fallen in the field, a few seconds under the tombstone, then off to town.

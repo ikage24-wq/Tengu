@@ -11,7 +11,7 @@
 //           same lock over her right eye; a satin bow whose two loops are cut like bat wings. Always
 //           grinning: one big round eye, rose pink with a heart glint, curled lashes; high arched brows;
 //           a wide smile with one little fang.
-import { TAU, lerp, clamp, cr, poly, smooth, ell, ribbon, sideOf, taper, swell, rgba, mixHex, lin, rad, hlock, piece, drawPiece } from '../bossart/kit.js';
+import { TAU, lerp, clamp, cr, poly, smooth, ell, ribbon, sideOf, swell, rgba, mixHex, lin, rad, hlock, piece, drawPiece } from '../bossart/kit.js';
 
 export const G = 0.56;
 // (fine lines: the twins are drawn 1.7 times their base's size, so the head's lines are thinned to match)
@@ -116,13 +116,30 @@ function backPiece(T) {
     }
   }, { out: T.hairOut, lw: LWD });
 }
-// Everything in front of the face, as one piece (so only the hair's outer edge is outlined).
-function frontPiece(T) {
+// Everything in front of the face, as one piece (so only the hair's outer edge is outlined). `part`:
+// 'all' at rest; while the hidden eye opens, 'rest' (all but the long bangs over the eye) and 'panel'
+// (those bangs alone, whole, moved aside), drawn so the pair looks just like 'all' until it moves.
+// `bend` (0..1, the bangs alone): how far they are pushed aside. Every lock stays whole, its full length,
+// rooted where it grows; it bends from the root, its middle arcing out over the brow and its end falling
+// beside the eye down the temple, the inner locks bending furthest, so they fold aside the way real
+// bangs do (the player, 2026-11-28: "it should fold and look realistic and natural").
+const panelIdx = BANGS.map((b, i) => (b[3] ? i : -1)).filter((i) => i >= 0);
+function bentLine(i, k) {
+  const line = BANGS[i][0];
+  const j = panelIdx.indexOf(i);
+  const root = line[0];
+  const tip = [18.2 + j * 1.6, 11 + j * 0.4];
+  const mid = [lerp(root[0], tip[0], 0.55) + 2.6 - j * 0.3, -9 + j * 0.6];
+  const e = k * k * (3 - 2 * k);
+  return [root, [lerp(line[1][0], mid[0], e), lerp(line[1][1], mid[1], e)], [lerp(line[2][0], tip[0], e), lerp(line[2][1], tip[1], e)]];
+}
+function frontPiece(T, part = 'all', bend = 0) {
   const { HR, s, who } = T;
-  return piece(`tw:front:${who}`, [-30, -40, 30, E.eye + 6], (P) => {
+  return piece(`tw:front:${who}:${part}:${bend}`, [-30, -40, 34, E.eye + 6], (P) => {
     const fill = hairFillOf(HR);
+    const panelOnly = part === 'panel';
     // the side panels first, the bangs over their roots
-    for (const sd of [-1, 1]) {
+    if (!panelOnly) for (const sd of [-1, 1]) {
       SIDES.forEach((ln, k) => {
         const line = ln.map(([x, y]) => [sd * x, y]);
         const w = (u) => (k ? 5.4 : 6.4) - u * 0.4;
@@ -132,32 +149,41 @@ function frontPiece(T) {
     }
     // the crown down to the hairline, lit from above, deeper at its sides
     const cap = poly(cr([...EDGE, ...CROWN], true, 5));
-    P.add(cap, fill);
-    const sides = new Path2D();
-    sides.rect(-30, -34, 60, 40);
-    P.detail(sides, lin(-25, 0, 25, 0, [[0, rgba(HR.sh1, 0.3)], [0.24, rgba(HR.sh1, 0)], [0.76, rgba(HR.sh1, 0)], [1, rgba(HR.sh1, 0.3)]]), { clip: cap });
+    if (!panelOnly) {
+      P.add(cap, fill);
+      const sides = new Path2D();
+      sides.rect(-30, -34, 60, 40);
+      P.detail(sides, lin(-25, 0, 25, 0, [[0, rgba(HR.sh1, 0.3)], [0.24, rgba(HR.sh1, 0)], [0.76, rgba(HR.sh1, 0)], [1, rgba(HR.sh1, 0.3)]]), { clip: cap });
+    }
     // the bangs: the brow-length run first, then the longer panel, the locks at the step on top
     const B = bangsOf(s);
-    const order = B.map((_, i) => i).sort((i, j) => (B[i][3] === B[j][3] ? 0 : B[i][3] ? 1 : -1));
+    const order = B.map((_, i) => i).sort((i, j) => (B[i][3] === B[j][3] ? 0 : B[i][3] ? 1 : -1)).filter((i) => (part === 'all' ? true : part === 'panel' ? B[i][3] : !B[i][3]));
     const shapes = [];
     for (const i of order) {
-      const [line, w, sh] = B[i];
+      const [line0, w, sh] = B[i];
+      const line = panelOnly && bend > 0 ? bentLine(i, bend).map(([x, y]) => [x * s, y]) : line0;
       const shp = hlock(P, HR, line, w, { end: 'blunt', shade: sh, fill, gloss: 0, strands: 2 });
       sheen(P, shp, line, w, sh, HR);
       shapes.push(shp);
     }
     // the panel's inner edge, where it steps down: a soft shade along it, so the step reads as depth
     const stepX = s * (E.step + 2.4);
-    P.band(shapes[shapes.length - 1], [[stepX, E.open - 1], [stepX + s * 0.4, 6], [stepX + s * 0.6, E.eye - 2]], swell(1.8, 0.2), rgba(HR.sh1, 0.45), { blur: 0.7 });
+    if (part === 'all' || (panelOnly && bend === 0)) P.band(shapes[shapes.length - 1], [[stepX, E.open - 1], [stepX + s * 0.4, 6], [stepX + s * 0.6, E.eye - 2]], swell(1.8, 0.2), rgba(HR.sh1, 0.45), { blur: 0.7 });
+    // (the bangs alone: their shine kept on their own locks)
+    let onPanel;
+    if (panelOnly) {
+      onPanel = new Path2D();
+      for (const p of shapes) onPanel.addPath(p);
+    }
     // one band of shine round the head, across the crown and every lock, fading at its ends
     const band = [];
     for (let k = 0; k <= 40; k++) band.push([-20 + k, -21.4 + 6.4 * ((-20 + k) / 20) ** 2]);
     const fade = (al, col) => lin(-20, 0, 20, 0, [[0, rgba(col, 0)], [0.18, rgba(col, al)], [0.82, rgba(col, al)], [1, rgba(col, 0)]]);
-    P.detail(poly(cr(ribbon(band, () => 4.2, { n: 1 }), true, 2)), fade(0.38, HR.hi), { blur: 0.8 });
-    P.detail(poly(cr(ribbon(band, () => 1.5, { n: 1 }), true, 2)), fade(0.5, '#ffffff'), { blur: 0.3 });
+    P.detail(poly(cr(ribbon(band, () => 4.2, { n: 1 }), true, 2)), fade(0.38, HR.hi), { blur: 0.8, clip: onPanel });
+    P.detail(poly(cr(ribbon(band, () => 1.5, { n: 1 }), true, 2)), fade(0.5, '#ffffff'), { blur: 0.3, clip: onPanel });
     // moonlight along the crown's top
     const rim = CROWN.slice(1, 5).map(([x, y]) => [x - 1.6, y + 1.2]).reverse();
-    P.detail(poly(ribbon(rim, (u) => 1.4 * Math.sin(Math.PI * u), { n: 8 })), rgba('#ffffff', 0.5), { clip: cap, blur: 0.4 });
+    if (!panelOnly) P.detail(poly(ribbon(rim, (u) => 1.4 * Math.sin(Math.PI * u), { n: 8 })), rgba('#ffffff', 0.5), { clip: cap, blur: 0.4 });
   }, { out: T.hairOut, lw: LWD });
 }
 
@@ -252,6 +278,8 @@ const EXPR = {
     shock: { eye: { lid: 0.02, lift: 0.02, ik: 0.8, wide: 1.12 }, mouth: 'o', brow: 1, blush: 0.4 },
     hurt: { closed: 'hurt', mouth: 'grit', brow: 1, blush: 0.3 },
     dizzy: { closed: 'dizzy', mouth: 'wave', brow: 0.6, blush: 0.3 },
+    // (her red eye open: her own eye narrowed, cold and certain)
+    glare: { eye: { lid: 0.3, lift: 0.2, ik: 0.86 }, mouth: 'flat', brow: -1.5, blush: 0.2 },
   },
   minuet: {
     giggle: { eye: { lid: 0.04, lift: 0.02, bot: 0.12 }, mouth: 'grin', brow: 0.4, blush: 0.75 },
@@ -261,6 +289,8 @@ const EXPR = {
     pout: { eye: { lid: 0.2, lift: -0.06, look: [0.1, 0.06] }, mouth: 'pout', brow: 0.8, blush: 0.75 },
     hurt: { closed: 'hurt', mouth: 'grit', brow: 1, blush: 0.5 },
     dizzy: { closed: 'dizzy', mouth: 'wave', brow: 0.6, blush: 0.5 },
+    // (her red eye open: a wicked little grin, her own eye narrowed with glee)
+    wicked: { eye: { lid: 0.22, lift: 0.16, ik: 0.9, bot: 0.1 }, mouth: 'grin', brow: -0.5, blush: 0.7 },
   },
 };
 export const TWIN_FACES = { rondo: Object.keys(EXPR.rondo), minuet: Object.keys(EXPR.minuet) };
@@ -328,35 +358,67 @@ function openEye(P, T, who, clip, x, y, o, sp) {
     P.detail(poly([[ix - o * ir * 0.54, iy - ry * 0.48], [ix - o * ir * 0.12, iy - ry * 0.6], [ix - o * ir * 0.04, iy - ry * 0.2], [ix - o * ir * 0.46, iy - ry * 0.08]]), '#ffffff', { clip: [white] });
     P.detail(ell(ix + o * ir * 0.36, iy + ry * 0.3, ir * 0.12, ir * 0.12), rgba('#ffffff', 0.8), { clip: [white] });
   }
-  // the upper lash: a band thickening outward; Rondo's ends in one straight, sharp wing, Minuet's in
-  // two soft curls
-  const thick = (u) => (who === 'minuet' ? 0.7 + 1.9 * u : 0.55 + 1.5 * u ** 1.3);
-  const outerPts = top.map((p, i) => {
+  // ---- the upper lashes (redrawn 2026-11-28, the player: "top and side eyelashes polish redraw"): one
+  // smooth shape, never loose strands: a lash line hugging the lid, fine at the inner corner and swelling
+  // toward the outer corner, flowing on past it into a single tapered flick (Rondo's long, sleek, straight
+  // wing; Minuet's flick curling up, with one short scallop merged into the line before it); a fine sheen
+  // along it ----
+  const N = top.length;
+  const th = (u) => (who === 'minuet' ? 0.7 + 1.25 * u + 0.5 * Math.sin(Math.PI * u) : 0.45 + 1.85 * u ** 1.3);
+  const lashMid = [];
+  const lashW = [];
+  for (let i = 0; i < N; i++) {
     const n = normalAt(top, i, o);
-    const t = thick(i / (top.length - 1));
-    return [p[0] + n[0] * t, p[1] + n[1] * t];
-  });
-  P.detail(poly([...top, ...outerPts.slice().reverse()]), T.LASH);
-  P.detail(poly(ribbon(outerPts.slice(Math.round(outerPts.length * 0.4), -2), swell(0.35, 0.02), { n: 1 })), rgba(who === 'minuet' ? '#a080d0' : '#5a68a8', 0.5));
-  if (who === 'minuet') {
-    for (const [k, len] of [[0.78, 3.2], [0.94, 3.9]]) {
-      const p = outerPts[Math.round(k * (outerPts.length - 1))];
-      P.stroke(cr([p, [p[0] + o * len * 0.5, p[1] - len * 0.8], [p[0] + o * len * 1.1, p[1] - len * 0.62]], false, 4), T.LASH, 1.1);
-    }
-  } else {
-    const p = outerPts[outerPts.length - 1];
-    P.detail(poly([[p[0] - o * 1.8, p[1] + 0.3], [p[0] + o * 4, p[1] - 2.4], [p[0] - o * 0.2, p[1] + 1.4]]), T.LASH);
+    const t = th(i / (N - 1));
+    lashMid.push([top[i][0] + n[0] * t * 0.5, top[i][1] + n[1] * t * 0.5]);
+    lashW.push(t);
   }
+  const e0 = lashMid[N - 1];
+  const tE = lashW[N - 1];
+  const tail = who === 'minuet'
+    ? [[[1.3, -0.9], 0.82], [[2.4, -2.1], 0.55], [[3, -3.3], 0.3], [[3.1, -4.1], 0.05]]
+    : [[[1.5, -0.8], 0.86], [[3, -1.8], 0.56], [[4.4, -2.8], 0.26], [[5.4, -3.5], 0.04]];
+  for (const [[dx, dy], k] of tail) {
+    lashMid.push([e0[0] + o * dx, e0[1] + dy]);
+    lashW.push(tE * k);
+  }
+  const outline = (mid, wid) => {
+    const Lp = [];
+    const Rp = [];
+    for (let i = 0; i < mid.length; i++) {
+      const a0 = mid[Math.max(0, i - 1)];
+      const b0 = mid[Math.min(mid.length - 1, i + 1)];
+      const l = Math.hypot(b0[0] - a0[0], b0[1] - a0[1]) || 1;
+      const nx = -(b0[1] - a0[1]) / l;
+      const ny = (b0[0] - a0[0]) / l;
+      Lp.push([mid[i][0] + nx * wid[i] * 0.5, mid[i][1] + ny * wid[i] * 0.5]);
+      Rp.push([mid[i][0] - nx * wid[i] * 0.5, mid[i][1] - ny * wid[i] * 0.5]);
+    }
+    return poly(cr([...Lp, ...Rp.reverse()], true, 3));
+  };
+  const lashCol = lin(E.inner[0], 0, E.outer[0], 0, [[0, mixHex(T.LASH, SK.deep, 0.45)], [0.3, T.LASH], [1, T.LASH]]);
+  P.detail(outline(lashMid, lashW), lashCol);
+  if (who === 'minuet') {
+    // (the scallop: a short, broad flick rising out of the line's top edge before the corner)
+    const i = Math.round(0.8 * (N - 1));
+    const n = normalAt(top, i, o);
+    const r0 = [top[i][0] + n[0] * lashW[i] * 0.6, top[i][1] + n[1] * lashW[i] * 0.6];
+    P.detail(outline([r0, [r0[0] + o * 0.8, r0[1] - 1.1], [r0[0] + o * 1.5, r0[1] - 2], [r0[0] + o * 1.8, r0[1] - 2.6]], [lashW[i] * 0.95, lashW[i] * 0.7, lashW[i] * 0.35, 0.05]), T.LASH);
+  }
+  // the sheen along the line's outer half
+  const sh0 = Math.round(N * 0.35);
+  P.detail(poly(ribbon(lashMid.slice(sh0, N - 1).map(([px, py], i) => {
+    const n = normalAt(top, sh0 + i, o);
+    return [px + n[0] * lashW[sh0 + i] * 0.28, py + n[1] * lashW[sh0 + i] * 0.28];
+  }), swell(0.2, 0.01), { n: 1 })), rgba(who === 'minuet' ? '#a080d0' : '#6a78b8', 0.3), { blur: 0.15 });
   // the lid crease: Rondo's low and level (her half-lidded look), Minuet's high and round
   P.stroke(cr(E.top.slice(1, 5).map(([px, py]) => [px, py - (who === 'minuet' ? 3.4 : 2.4)]), false, 4), rgba(SK.deep, 0.75), 0.42);
   // the lower lid: a soft line, the waterline's shine, the inner corner's pink, lower lashes outside
   P.stroke(cr(E.bot.slice(1, 4), false, 4), rgba(SK.deep, 0.7), 0.45);
   P.detail(poly(ribbon(cr(E.bot.slice(1, 4), false, 4).map(([px, py]) => [px, py - 0.6]), swell(0.35, 0.02), { n: 1 })), rgba('#ffffff', 0.6));
   P.detail(ell(E.inner[0] + o * 0.6, E.inner[1] - 0.2, 0.9, 0.6), rgba('#f2a6b8', 0.7));
-  for (const [k, len] of who === 'minuet' ? [[0.12, 1.6], [0.26, 1.3]] : [[0.1, 1.4]]) {
-    const p = bot[Math.round(k * (bot.length - 1))];
-    P.stroke([p, [p[0] + o * len * 0.6, p[1] + len]], rgba(T.LASH, 0.8), 0.45);
-  }
+  // the lower lash line: a soft tapered line along the outer part of the lower lid, never loose spikes
+  P.detail(poly(ribbon(bot.slice(0, Math.round(bot.length * 0.32)), (u) => (who === 'minuet' ? 0.6 : 0.45) * (1 - u) ** 0.8 + 0.04, { n: 1 })), rgba(T.LASH, 0.75));
 }
 function closedEye(P, T, x, y, o, kind) {
   const w = 11;
@@ -443,7 +505,7 @@ export function facePiece(who, name, blink = false) {
     // a ghost's faint cool rim down the lit cheek
     P.band(head, [[19.6, -2], [19.4, 7], [17.2, 14], [13, 19.4]], swell(1.2, 0.1), rgba('#f2f8ff', 0.85), { blur: 0.5 });
     // blush: wide and soft, Minuet's with three little hatch strokes
-    for (const [bx, o] of EYES) {
+    for (const [bx] of EYES) {
       P.detail(ell(bx * 1.24, 13.6, 5.2, 2.5), rgba(SK.blush, ex.blush * 0.8), { clip: head, blur: 1.1 });
       if (who === 'minuet') for (let k = -1; k <= 1; k++) P.stroke([[bx * 1.24 + k * 1.6 - 0.6, 14.4], [bx * 1.24 + k * 1.6 + 0.6, 12.8]], rgba('#e86aa0', 0.5 * ex.blush), 0.35, { clip: head });
     }
@@ -459,6 +521,59 @@ export function facePiece(who, name, blink = false) {
     P.detail(ell(0.3, 13.6, 0.7, 0.5), rgba('#ffffff', 0.85), { clip: head });
     mouth(P, T, head, ex.mouth);
   }, { out: T.out, lw: LWD });
+}
+
+// ---------- The hidden eye (2026-11-28, the player: "1 red hidden eye that stops time"): under the long
+// panel each twin keeps one red eye, her own eye's shape but ruby, a clock's twelve marks round its iris
+// and two clock hands for a pupil that spin while time is stopped. It opens from a slit as the panel lifts
+// aside, a red glow on the cheek round it. ----------
+const RED_EY = { dk: '#4a0614', mid: '#9c1226', base: '#e2343e', lt: '#ff9e8e', pupil: '#2a0208', ring: '#3a040e' };
+const RED_SPEC = { rondo: { lid: 0.1, lift: 0.12, ik: 1.04 }, minuet: { lid: 0, lift: 0.04, ik: 1.04, wide: 1.04 } };
+// (opening: its own upper lid lifts from a slit to wide open, the lashes riding on the lid, so they always
+// sit exactly on the eye; drawn in 16 steps, each a cached picture)
+function redEyePiece(who, open) {
+  const T = { ...TWINS[who], EY: RED_EY, SHADOW: '#e07890' };
+  const x = 8.6 * T.s;
+  const sp = RED_SPEC[who];
+  const spec = { ...sp, lid: lerp(0.74, sp.lid ?? 0, open), lift: lerp(0.02, sp.lift ?? 0, open) };
+  return piece(`tw:redeye:${who}:${open}`, [x - 14, EYE_Y - 14, x + 14, EYE_Y + 14], (P) => {
+    openEye(P, T, who, HEAD(), x, EYE_Y, T.s, spec);
+  }, { out: T.out, lw: LWD });
+}
+function drawRedEye(ctx, who, a, open, spin) {
+  const T = TWINS[who];
+  const x = 8.6 * T.s;
+  const u = clamp(open, 0, 1);
+  // (a red glow on the skin round it, under the hair)
+  ctx.save();
+  ctx.clip(HEAD());
+  const g = ctx.createRadialGradient(x, EYE_Y, 0, x, EYE_Y, 13);
+  g.addColorStop(0, `rgba(255,70,80,${0.45 * u})`);
+  g.addColorStop(1, 'rgba(255,70,80,0)');
+  ctx.fillStyle = g;
+  ctx.fillRect(x - 14, EYE_Y - 14, 28, 28);
+  ctx.restore();
+  // (still shut under the hair, it isn't drawn; then its lid lifts)
+  const e = u * u * (3 - 2 * u);
+  if (e < 0.05) return;
+  drawPiece(ctx, redEyePiece(who, Math.round(e * 16) / 16), 'fill', 0);
+  // the clock hands: an hour hand and a longer minute hand, light on the dark pupil, shown once the lid
+  // is up past them
+  const hk = clamp((e - 0.62) / 0.25, 0, 1);
+  if (hk <= 0.01) return;
+  const ix = x + T.s * 0.3;
+  const iy = EYE_Y + (who === 'minuet' ? 12.6 * 1.04 : 9.4) * 0.04 + 0.3;
+  ctx.save();
+  ctx.lineCap = 'round';
+  ctx.strokeStyle = `rgba(255,214,206,${0.95 * hk})`;
+  for (const [len, w, sp] of [[1.5, 0.5, spin / 12], [2.4, 0.36, spin]]) {
+    ctx.lineWidth = w;
+    ctx.beginPath();
+    ctx.moveTo(ix, iy);
+    ctx.lineTo(ix + Math.sin(sp) * len, iy - Math.cos(sp) * len);
+    ctx.stroke();
+  }
+  ctx.restore();
 }
 
 // ---------- Drawing a head each frame (in its own frame, its middle at the origin) ----------
@@ -480,21 +595,39 @@ export function drawHeadFront(ctx, who, a, mode, q, flash) {
   const f = faces.includes(q.face) ? q.face : faces[0];
   const blink = !EXPR[who][f].closed && ((t + (who === 'minuet' ? 1.7 : 0)) % 4.9) < 0.13;
   drawPiece(ctx, facePiece(who, f, blink), mode, flash);
+  // (the hidden red eye, under the hair, as it opens)
+  const eye = clamp(q.eye ?? 0, 0, 1);
+  if (eye > 0.002 && mode === 'fill') drawRedEye(ctx, who, a, eye, q.eyeSpin ?? 0);
   // (the front hair is one piece, so only its outer edge is outlined; over the face its outline is drawn
   // again in the fill pass, the face's fill having covered it, and its own fill over that)
   const sw = clamp(q.lock ?? 0, -0.08, 0.08);
-  ctx.save();
-  ctx.translate(-T.s * 8, -29);
-  ctx.rotate(sw * 0.4);
-  ctx.translate(T.s * 8, 29);
+  const hairAt = () => {
+    ctx.translate(-T.s * 8, -29);
+    ctx.rotate(sw * 0.4);
+    ctx.translate(T.s * 8, 29);
+  };
+  // As the hidden eye opens, only the long bangs over it move, each lock bending aside from its root
+  // (the player, 2026-11-28: "just move the front bangs that around the eye")
+  // (bent in 24 steps, each a cached picture, so the fold is smooth)
+  const lifted = eye > 0.002;
+  const bend = Math.round(clamp(eye * 1.1, 0, 1) * 24) / 24;
+  const parts = lifted ? [['rest', hairAt, 0], ['panel', hairAt, bend]] : [['all', hairAt, 0]];
+  // (clipped to the face where it stands, the hair moved inside that clip)
   if (mode === 'fill') {
+    for (const [p, at, b] of parts) {
+      ctx.save();
+      ctx.clip(HEAD());
+      at();
+      drawPiece(ctx, frontPiece(T, p, b), 'line', 0);
+      ctx.restore();
+    }
+  }
+  for (const [p, at, b] of parts) {
     ctx.save();
-    ctx.clip(HEAD());
-    drawPiece(ctx, frontPiece(T), 'line', 0);
+    at();
+    drawPiece(ctx, frontPiece(T, p, b), mode, flash);
     ctx.restore();
   }
-  drawPiece(ctx, frontPiece(T), mode, flash);
-  ctx.restore();
   if (who === 'rondo') drawPiece(ctx, hatPiece(T), mode, flash);
   else drawPiece(ctx, bowPiece(T), mode, flash);
 }

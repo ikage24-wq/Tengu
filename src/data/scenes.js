@@ -1442,35 +1442,30 @@ export const MANOR_SCENES = {
     { card: 'Moonlit Manor', sub: 'Rank {grade}  ·  {time}' },
     { who: null, text: '{notes}. Rank bonus on your rewards: +{bonus}.' },
   ],
-  // Dame Rondo and Dame Minuet, staged (2026-11-26, the penguin and the bat): the ballroom dark and
-  // still; from far across the polished floor the penguin belly-slides in and spins to a perfect
-  // stop in the middle, then straightens her bow tie; the bat drops from the chandelier on her rose
-  // ribbon and hangs upside-down, nose to beak with her; they bow to each other, one up and one down,
-  // and the chandelier blazes into light. (Their rigs act out 'slidein', 'spinstop', 'bowtie', 'bow',
-  // 'perch', 'ribbondrop' and 'flipdown': render/waltzrondo/, render/waltzminuet/.)
-  manor_waltz: [
-    { together: [{ place: 'waltzrondo', x: 1330 }, { place: 'waltzminuet', x: 754 }, { act: 'waltzminuet', move: 'perch', dur: 0.1 }, { face: 'waltzrondo', to: -1 }, { face: 'waltzminuet', to: -1 }, { cam: { x: 760, y: 300 }, dur: 1.2 }, { walk: 'player', to: 560, speed: 110 }] },
-    { who: null, text: 'The ballroom, dark and still. Then, from far across the polished floor: a squeak... and a swish...' },
-    { together: [{ walk: 'waltzrondo', to: 724, speed: 300 }, { act: 'waltzrondo', move: 'slidein', dur: 2 }, { fx: 'sparkle', at: 'waltzrondo' }] },
-    { act: 'waltzrondo', move: 'spinstop', dur: 0.9 },
-    { together: [{ act: 'waltzrondo', move: 'bowtie', dur: 1 }, { emote: 'waltzrondo', kind: 'sparkle', dur: 1 }] },
-    { who: 'waltzrondo', text: 'And... STOP. Perfect. As always.', mood: 'happy' },
-    { together: [{ act: 'waltzminuet', move: 'ribbondrop', dur: 1.8 }, { face: 'waltzrondo', to: 1 }] },
-    { together: [{ emote: 'waltzrondo', kind: '!' }, { jump: 'waltzrondo' }] },
-    { who: 'waltzminuet', text: 'Boo! Hello, my dear. You counted without me again.', mood: 'happy' },
-    { who: 'waltzrondo', text: 'One does not wait for the ceiling, Minuet. Now: guests. Positions!' },
-    { together: [{ act: 'waltzrondo', move: 'bow', dur: 1.4 }, { act: 'waltzminuet', move: 'bow', dur: 1.4 }, { fx: 'hearts', at: { x: 740, y: 322 } }] },
-    { together: [{ flash: '#fff2c8' }, { fx: 'sparkle', at: { x: 750, y: 170 }, n: 16 }] },
-    { who: null, text: 'One bows up, one bows down, and the chandelier blazes into light.' },
-    { together: [{ face: 'waltzrondo', to: 'player' }, { act: 'waltzminuet', move: 'flipdown', dur: 0.9 }, { mood: 'waltzrondo', as: 'angry' }] },
-    { face: 'waltzminuet', to: 'player' },
-    { who: 'waltzrondo', text: 'Muddy feet on MY dance floor? Then you shall dance. One, two...', mood: 'angry' },
-    { who: 'waltzminuet', text: '...THREE! Do try to keep up, darlings!', mood: 'happy' },
-    { act: 'waltzrondo', move: 'attack', dur: 0.9, async: true },
-    { wait: 0.3 },
-    { together: [{ shake: 3, dur: 0.3 }, { fx: 'notes', at: 'waltzrondo', top: true, n: 10 }, { walk: 'player', away: 'waltzrondo', by: 30, speed: 160 }, { emote: 'player', kind: '!' }] },
-    { wait: 0.4 },
-    { together: [{ mood: 'waltzrondo', as: null }, { mood: 'waltzminuet', as: null }, { cam: 'player', dur: 0.7 }] },
+  // The Mirror Twins' entrance (2026-11-28, the player's pick "A: Step Out of the Glass"): the Mirrored
+  // Ballroom dark and still, only the great clock awake, creeping to twelve; it strikes, the candles light
+  // themselves one by one and the ghost harp and violin begin a waltz; in the mirrors two ladies are
+  // dancing, but nobody is on the floor; the reflections part, each to her own mirror, and step out of the
+  // glass: Rondo onto the floor, Minuet turning over up to the ceiling; one curtsy up, one down, a sentence
+  // shared between them; both hidden red eyes open, and time stops. (The camera pulled back a little,
+  // zoom 0.8, so both their mirrors are in view.) (Their moves: render/twins/index.js
+  // 'away', 'chime', 'mirror', 'stepout', 'curtsy', 'reveal', 'stopped'; the room answers them,
+  // render/twins/room.js; the stopped time, render/twins/fight.js.)
+  manor_twins: [
+    { together: [{ act: 'waltzrondo', move: 'away', dur: 0.1 }, { act: 'waltzminuet', move: 'away', dur: 0.1 }, { place: 'waltzrondo', x: 600 }, { place: 'waltzminuet', x: 900 }, { face: 'waltzrondo', to: -1 }, { face: 'waltzminuet', to: 1 }, { cam: { x: 750, y: 236 }, dur: 2.2, zoom: 0.8 }, { walk: 'player', to: 430, speed: 90 }] },
+    { who: null, text: 'The ballroom lies dark and still. Only the great clock is awake, its hands creeping toward twelve...' },
+    { together: [{ act: 'waltzrondo', move: 'chime', dur: 4.2 }, { act: 'waltzminuet', move: 'chime', dur: 4.2 }, { shake: 2, dur: 0.6 }] },
+    { who: null, text: 'It strikes twelve. The candles light themselves, one by one, and somewhere a harp and a violin begin a waltz.' },
+    { together: [{ act: 'waltzrondo', move: 'mirror', dur: 6 }, { act: 'waltzminuet', move: 'mirror', dur: 6 }, { fx: 'notes', at: { x: 750, y: 250 } }] },
+    { who: null, text: 'In the mirrors, two ladies are dancing. But there is no one on the floor.' },
+    { together: [{ act: 'waltzrondo', move: 'stepout', dur: 1.8 }, { act: 'waltzminuet', move: 'stepout', dur: 1.8 }, { fx: 'sparkle', at: 'waltzrondo' }, { fx: 'sparkle', at: { x: 900, y: 200 } }] },
+    { together: [{ act: 'waltzrondo', move: 'curtsy', dur: 1.8 }, { act: 'waltzminuet', move: 'curtsy', dur: 1.8 }] },
+    { who: 'waltzrondo', text: 'Guests? At this hour? How dreadfully—', mood: 'angry' },
+    { who: 'waltzminuet', text: '—DELIGHTFUL! Sister, look! They came all this way to dance with us!', mood: 'happy' },
+    { who: 'waltzrondo', text: 'Then they shall keep time. Ours.' },
+    { together: [{ act: 'waltzrondo', move: 'reveal', dur: 2.2 }, { act: 'waltzminuet', move: 'reveal', dur: 2.2 }, { fx: 'sparkle', at: 'waltzrondo' }] },
+    { who: 'waltzminuet', text: 'One, two... and STOP!', mood: 'happy' },
+    { together: [{ act: 'waltzrondo', move: 'stopped', dur: 1.4 }, { act: 'waltzminuet', move: 'stopped', dur: 1.4 }, { flash: '#ffd0d4' }, { cam: { x: 750, y: 236 }, dur: 1.4, zoom: 1 }] },
   ],
   // Madame Velvet, staged (restaged 2026-11-28 for her remake, render/velvet/): she's on her knees
   // polishing her hall when you walk in; she peers over her spectacles at your boots, reads you the house
@@ -1563,7 +1558,7 @@ export const MANOR_SCENES = {
 export const MANOR_RADIO = {
   'enter:manor1': ['Lanterns! Three of them in the garden. Light them so I can see you!', 'Mind the fountains: they spout when they please. Use them to get up the terraces!'],
   'enter:manor2': ["The gallery. Her Ladyship's family, all four of them, and none of them ever smiled. Set them to the crest!", 'Each portrait turns. Match them to the crest on the wall and they click into place.'],
-  'enter:manor3': ["The ballroom! Dame Rondo and Dame Minuet have been dancing since before I was born. The penguin has the floor, the bat has the ceiling. Don't get between them."],
+  'enter:manor3': ["The ballroom! Dame Rondo and Dame Minuet, the twins, dancing since before I was born. One on the floor, one hanging from the ceiling, and you can only reach the one down here. And watch that clock: when it stops, so do you!"],
   'enter:manor4': ['Books flying about again. Catch the three lost ones. And hold on to something when the pages blow!'],
   'enter:manor5': ["The long hall. Madame Velvet's trolley... when it starts rolling, you RUN. Levers open the doors!"],
   'enter:manor6': ["The roof. She's up there, with poor Elder Sakura. Be gentle... she's only lonely."],
@@ -1574,9 +1569,9 @@ export const MANOR_RADIO = {
   'clear:manor5': ['You beat Madame Velvet? Nobody beats Madame Velvet. Stairs to the roof are open!'],
   wipe: ["Up you get! Even I trip on those rugs.", "That's alright. Dust yourselves off and try again."],
   chase: ['RUN! Levers, levers, LEVERS!', "That's the trolley! Don't let it catch you!"],
-  alone: ['Oh no, the other one is dancing alone now. Faster, and cross about it!'],
-  partners: ['Change partners! The bat leads now, so it all comes the other way round: up there first, then down here!'],
-  lift: ["She's lifted her! The penguin's FLYING! Low across the floor, then high past the balconies: low, then high!"],
+  alone: ['Oh no, the other one is dancing alone now. She came down to the floor, and she is CROSS about it!'],
+  partners: ['Faster now! And every time that clock stops, they set two steps instead of one. Look where they put them!'],
+  pasdedeux: ["Both red eyes open! That's their last dance. Healer, keep everyone up!"],
   bell: ["She's rung for the maids! They'll go for whoever's healing!"],
   butlers: ["Her butlers, with the pumpkin tarts! Stop them before they reach her, or she'll get her second wind!"],
   midnight: ["Midnight! Every clock in the house just started up again! Stand where a chime's already rung, or up on a chimney!"],

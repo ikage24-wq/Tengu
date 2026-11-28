@@ -58,6 +58,7 @@ import { drawZonesBack, drawZonesFront, drawCallout, drawTrialSet } from './tria
 import { drawMobBar, drawBossPlaque } from './fightui.js';
 import { drawHollowBack, drawHollowFront, drawDarkness } from './hollow.js';
 import { drawManorBack, drawManorFront, drawManorObject, MANOR_HINT } from './manor.js';
+import { twinsLate, drawTwinsUnder, drawTwinsOver } from './twins/fight.js';
 import { drawAquaBack, drawAquaFront, drawAquaObject, AQUA_HINT } from './aquarium.js';
 import { drawCarnivalBack, drawCarnivalFront, drawCarnivalObject, CARNIVAL_HINT } from './carnival.js';
 import { drawObsBack, drawObsFront, drawObsObject, OBS_HINT } from './observatory.js';
@@ -472,8 +473,11 @@ function drawNpcs(ctx, world, cam, time) {
   }
 }
 
-function drawMobs(ctx, world, cam, time) {
+// (`late`: only the monsters drawn over everything else just now, the Mirror Twins while time is stopped:
+// render/twins/fight.js; otherwise everyone but them.)
+function drawMobs(ctx, world, cam, time, late = false) {
   for (const m of world.mobs) {
+    if (twinsLate(world, m) !== late) continue;
     const x = m.x - cam.x;
     // A monster hopping in a cutscene (world/director.js) is lifted off its feet.
     const y = m.y - cam.y - (m.cine?.lift ?? 0);
@@ -919,6 +923,11 @@ function drawWorldLayers(ctx, world, cam, time, b, zoom = 1) {
   if (inRun) {
     drawHollowFront(ctx, world, cam, time);
     drawManorFront(ctx, world, cam, time);
+    // (the Mirror Twins: the stopped world, then the twins over it in full colour, then their mirrors'
+    // flash, the bond and the frozen marks)
+    drawTwinsUnder(ctx, world, cam, time, VIEW_W, VIEW_H);
+    drawMobs(ctx, world, cam, time, true);
+    drawTwinsOver(ctx, world, cam, time);
     drawAquaFront(ctx, world, cam, time);
     drawCarnivalFront(ctx, world, cam, time);
     drawObsFront(ctx, world, cam, time);

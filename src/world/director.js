@@ -253,7 +253,7 @@ function runner(world, step) {
       const n = world.map.npcs.some((q) => q.id === step.place) ? npcOf(world, step.place) : null;
       const m = n ? null : mobActor(world, step.place);
       if (n) n.x = x;
-      // (a monster, too: the Ballroom's penguin placed off across the floor for her entrance)
+      // (a monster, too: a boss placed off across the floor for her entrance)
       else if (m) {
         m.x = x;
         m.y = groundAt(world.map, x);

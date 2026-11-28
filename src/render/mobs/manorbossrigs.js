@@ -6,10 +6,9 @@
 //                peplum with an apron, her ghost body tapering into a wisp (redrawn 2026-11-19), mob
 //                cap, half-moon spectacles, keys at her belt, a teapot always in hand.
 //
-// (The Ballroom's pair, once the Waltzing Armours, were remade 2026-11-26 as Dame Rondo the Tailcoat
-// Penguin and Dame Minuet the Upside-down Bat, on their own base copies: render/waltzrondo/ and
-// render/waltzminuet/; Lady Marigold, the Eternal Hostess, was remade the same day on her own copy of
-// the spirit base: render/marigold/.) Madame Velvet pours tea high when "Tea is served!", spins and flings plates
+// (The Ballroom's pair, once the Waltzing Armours, are now the Mirror Twins (2026-11-28) on their own
+// copies of the blank bases' maiden: render/twins/; Lady Marigold, the Eternal Hostess, was remade on
+// her own copy of the spirit base: render/marigold/.) Madame Velvet pours tea high when "Tea is served!", spins and flings plates
 // along the floor, and rings a bell for the maids.
 
 import { E, T, F, R, stroke } from './kit.js';

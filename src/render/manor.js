@@ -1,16 +1,17 @@
 // Moonlit Manor's rooms (world/manor.js runs them), in the scenery's outlined chibi style: garden
 // lanterns to light, the gallery's turning portraits and the family crest, the lost books
 // fluttering along the shelves, door levers and the doors they open, the garden fountains, the
-// ballroom chandelier, the hallway's tea trolley, page storms, and the bosses' tells (the hostess
-// floating out of reach; the Ballroom pair's casts draw their own looks: render/waltzrondo/looks.js).
+// hallway's tea trolley, page storms, and the bosses' tells (the hostess floating out of reach). The
+// Mirrored Ballroom, the Mirror Twins' own room, is in render/twins/room.js.
 // (x, y) is the bottom center on the floor; `time` (seconds) animates.
 
 import { R, E, T, F, sprite, blit, mix, snap } from './pixel.js';
 import { art, place, BEHIND_GROUND } from './scenery.js';
 import { drawVelvetHall, drawVelvetDoors } from './velvet/room.js';
 import { drawMarigoldRoof, drawMarigoldFront } from './hostess/room.js';
+import { drawTwinsHall, drawTwinsFloor } from './twins/room.js';
 import { trolleyArt } from './mobs/manorboss.js';
-import { CREST, doorOpen, HAND_IN_HAND } from '../world/manor.js';
+import { CREST, doorOpen } from '../world/manor.js';
 import { drawMochiAnim } from './mochi-anim.js';
 import { rollMochi } from '../data/mochi-genes.js';
 import { SAKURA } from '../data/scenes.js';
@@ -316,21 +317,6 @@ function drawFountain(ctx, f, x, y, time) {
   }
 }
 
-// ---------- The chandelier ----------
-
-function chandelierArt(lit) {
-  return art(`mn-chand|${lit}`, 90, 54, () => {
-    const out = [R(44, 0, 2, 14, GOLD_DK), E(45, 18, 30, 7, GOLD), F(E(45, 16, 26, 4, '#fff2b0')), E(45, 30, 18, 5, GOLD), T([[30, 32], [60, 32], [45, 50]], GOLD)];
-    for (let i = 0; i < 7; i++) {
-      const cx = 18 + i * 9;
-      out.push(R(cx - 1.2, 8, 2.4, 8, '#fff6dc'));
-      if (lit) out.push(F(E(cx, 6, 1.6, 2.6, '#ffb35a')), F(E(cx, 6.6, 0.7, 1.2, '#ffffff')));
-    }
-    for (let i = 0; i < 9; i++) out.push(F(E(20 + i * 6.2, 24 + (i % 2) * 3, 1.2, 2, '#dff0ff')));
-    return out;
-  });
-}
-
 // ---------- Behind the group ----------
 
 export function drawManorBack(ctx, world, cam, time) {
@@ -338,6 +324,8 @@ export function drawManorBack(ctx, world, cam, time) {
   const room = run.room;
   const map = world.map;
   if (map.dungeon !== 'manor') return;
+  // (the Mirror Twins' Mirrored Ballroom: its polished marble floor, render/twins/room.js)
+  if (map.id === 'manor3') drawTwinsFloor(ctx, world, cam, time);
   for (const f of room.fountains ?? []) drawFountain(ctx, f, f.x - cam.x, f.y - cam.y, time);
   if (map.teaParty) drawTeaParty(ctx, world, cam, time);
   if (map.id === 'manor5') drawVelvetDoors(ctx, world, cam, time);
@@ -347,32 +335,6 @@ export function drawManorBack(ctx, world, cam, time) {
     const x = d.x - cam.x;
     if (x < -60 || x > 700) continue;
     place(ctx, doorArt(doorOpen(room, d)), x - 4, map.groundY - cam.y);
-  }
-  // The chandelier: hanging and lit over the floor, then plunging, then a heap of crystal.
-  const ch = room.chandelier;
-  if (ch) {
-    const x = ch.x - cam.x;
-    // It hangs just under the ceiling (which stays at the top of the view), on a long chain.
-    const hang = 96;
-    ctx.fillStyle = GOLD_DK;
-    if (ch.state === 'up') ctx.fillRect(snap(x) - 1, 0, 2, hang - 50);
-    if (ch.state === 'up') {
-      glow(ctx, x, hang - 14, 60, '#ffe2a0', 0.35 + 0.05 * Math.sin(time * 3));
-      ctx.save();
-      ctx.translate(x, hang);
-      ctx.rotate(Math.sin(time * 0.9) * 0.03);
-      place(ctx, chandelierArt(true), 0, 0);
-      ctx.restore();
-    } else {
-      const u = Math.min(1, (world.now - ch.at) / 2.4);
-      // It shakes on its chain, then drops the last fraction of a second.
-      const fall = u < 0.8 ? 0 : ((u - 0.8) / 0.2) ** 2;
-      const y = hang + fall * (map.groundY - cam.y - hang);
-      ctx.save();
-      ctx.translate(x + (u < 0.8 ? Math.sin(time * 40) * 2 * u : 0), y);
-      place(ctx, chandelierArt(u < 1), 0, 0);
-      ctx.restore();
-    }
   }
 }
 
@@ -424,44 +386,6 @@ export function drawManorFront(ctx, world, cam, time) {
     }
     ctx.restore();
   }
-  for (const m of world.mobs) {
-    if (m.hp <= 0) continue;
-    const x = m.x - cam.x;
-    const y = m.y - cam.y;
-    // The Ballroom's pair hand in hand (world/manor.js manorShare): a rose ribbon looped between
-    // them while they dance close, glowing as a blow is shared along it.
-    if (m.def.id === 'waltzrondo') {
-      const n = world.mobs.find((o) => o.def.id === 'waltzminuet' && o.hp > 0);
-      const d = n ? Math.abs(n.x - m.x) : 1e9;
-      if (n && d <= HAND_IN_HAND.reach && !m.lift && !n.lift && !(n.fly?.y > 20)) {
-        const nx = n.x - cam.x;
-        const ny = n.y - cam.y - 26;
-        const y0 = y - 30;
-        const shared = Math.max(0, 1 - (world.now - (m.sharedAt ?? -9)) / 0.4);
-        const fade = Math.min(1, (HAND_IN_HAND.reach - d) / 30);
-        const mx = (x + nx) / 2;
-        const my = Math.max(y0, ny) + 10 + d * 0.06;
-        ctx.save();
-        ctx.lineCap = 'round';
-        ctx.globalAlpha = fade * (0.45 + 0.4 * shared);
-        ctx.strokeStyle = '#c8527e';
-        ctx.lineWidth = 3;
-        ctx.beginPath();
-        ctx.moveTo(x, y0);
-        ctx.quadraticCurveTo(mx, my, nx, ny);
-        ctx.stroke();
-        ctx.strokeStyle = shared > 0 ? '#ffe0ec' : '#ff9ec2';
-        ctx.lineWidth = 1.6;
-        ctx.stroke();
-        // a glint running along it
-        const u = (time * 0.6) % 1;
-        const gx = (1 - u) * (1 - u) * x + 2 * u * (1 - u) * mx + u * u * nx;
-        const gy = (1 - u) * (1 - u) * y0 + 2 * u * (1 - u) * my + u * u * ny;
-        ctx.restore();
-        sparkle(ctx, gx, gy, 1.6 + shared * 2, '#fff2f6');
-      }
-    }
-  }
 }
 
 // ---------- The room's things, drawn with the other dungeon objects ----------
@@ -482,3 +406,5 @@ export const MANOR_HINT = { lantern: '▲ Light', portrait: '▲ Turn', book: '�
 BEHIND_GROUND.push(drawVelvetHall);
 // Lady Marigold's rooftop party, behind the floor and chimneys (render/hostess/room.js).
 BEHIND_GROUND.push(drawMarigoldRoof);
+// The Mirror Twins' Mirrored Ballroom, behind the floor and ledges (render/twins/room.js).
+BEHIND_GROUND.push(drawTwinsHall);
