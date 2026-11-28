@@ -113,7 +113,8 @@ function draw() {
     ctx.fillRect(wx, FLOOR + 14 + (k & 1) * 10, ZOOM * 2, ZOOM);
   }
   ctx.save();
-  ctx.translate(VW / 2 - m.x * ZOOM, FLOOR);
+  // (&lift=px: the monster drawn lower, to film its upper body up close)
+  ctx.translate(VW / 2 - m.x * ZOOM, FLOOR + Number(q.get('lift') ?? 0));
   ctx.scale(ZOOM, ZOOM);
   ctx.imageSmoothingEnabled = false;
   drawMonster(ctx, m, m.x, def.fly ? -6 : 0, t, now);

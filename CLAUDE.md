@@ -241,6 +241,76 @@ test are checked by eye on the strips, the hold sheet and a real map before show
 - **Layer order never flickers:** the back arm stays behind the body and the front arm in front; a
   part changes layer only at a planned moment of a move.
 
+**Dressed monsters and bosses on the blank bases** (the player's fixes, 2026-11-28; Lady Marigold
+and Madame Velvet are the model)
+- **What's behind the head hangs behind the whole body:** back hair, curls and far ears are hung under
+  'armF', the first part drawn, never under the neck, or they lie over the shoulders and the shoulder
+  looks broken on the walk. Something behind the head that really sits in front of the body says
+  "in front of the body" in its comment. (test: `tests/boss-layers.test.js`)
+- **Clothes are locked to the body:** anything lying on the body (necklines, frills, bands, bibs,
+  straps) is clipped to the body's outline this frame (`a.blTorsoPts`) before it is drawn in a bone's
+  frame, so it never hangs past the sides on the walk. Only things that hang free (tails, bows,
+  watches, keys) draw outside the clip.
+- **One skin, painted once:** every bare skin area (chest, shoulders, upper arms, neck) is painted with
+  the same skin function in the same frame, clipped to each part's own outline, so no seam shows where
+  the base's flat skin meets painted skin. No glows patched over a join.
+- **Necks are one outline:** a neck is a single outline shape (never a chain of discs, which bulge
+  into a dome), repainted only where it rises above the body, with no blend band onto the chest.
+- **The shoulder and arm are one shape:** one convex shape over the shoulder corner, the round of the
+  arm and the upper arm down into the armpit, with a soft armpit hollow so the arm grows out of the
+  body. Every point of it moves smoothly (fixed points of the outline, fixed shares of the arm; never
+  a nearest point or a scan that can jump), the hollow fades out before its neighbours can change,
+  and it is drawn from a fixed number of even steps. The shoulder corner is skinned partly to the
+  upper arm so it rolls with the arm.
+- **Shoulders slope:** a woman's shoulders run down from the neck in one soft line to rounded tips
+  (the round of the arm sits clearly below the foot of the neck), never level and square like the
+  mannequin's.
+- **Nothing pops:** every dressed rig passes `node tools/jitter-probe.mjs <id> --sched=60` with no
+  jumps of its own. (test: `tests/boss-jitter.test.js` for the remade bosses)
+
+**Boss fights look alive** (the player, 2026-11-28, after watching Lady Marigold's full fight)
+- **Super armor:** a party's blows only flash a boss. It staggers (flinch and hurt face) at most once
+  in 10 s, never mid-cast or mid-strike (render/monsters.js `mo.stagT`), so its own idles, faces and
+  attacks show through the fight. Never a boss stuck in hurt poses.
+- **A fight idle of its own:** between casts a boss keeps acting in character (Marigold's waltz sway,
+  giggle, flourish and watch glance; Velvet's tapping toe, spectacles push, finger wag), with faces
+  that change as the fight goes on and darken with each phase. Never standing still with one face.
+- **Its own basic attack:** a wind-up and a strike posed in character from the rig's attack phase
+  (`a.ph.antic`, `a.ph.strike`), eased, with its face; never a rig with no attack motion. Keep the
+  elbow softly bent in a fast strike (about 25° or more): a limb swung in fast and straightened
+  overshoots into its joint's stop and snaps (the jitter probe caught it on Madame Velvet's swat).
+- **Effects are never simple:** every cast's telegraph and landing is drawn in full detail in the
+  boss's own look and smoothly animated (In Full Bloom: a real ruffled marigold opening ring by ring,
+  its petals flung outward on a scalloped shockwave, petals raining down). Flat ovals, plain rings or
+  specks are not finished art; flying bits are big enough to read as what they are.
+
+**Painted heads and hair** (bosses' heads painted with `render/bossart/kit.js`; the player's fixes on
+Lady Marigold, 2026-11-28)
+- **Hair has its own outline colour:** a deeper tone of the hair itself, soft and never near-black.
+  The costume's lighter ink round dark hair reads as a pale halo, not a line.
+- **Glows go under the outlines:** a glow or aura behind a figure is drawn in the outline pass, before
+  any outline, never in the fill pass, where it would lie over the outlines like a haze.
+- **Bangs and side locks keep their outline over the face:** the face's fill covers the outline pass,
+  so locks that hang down over the face draw their outline again in the fill pass, clipped to the face
+  shape. Only hanging locks: never the hairline of hair swept back off the face (Madame Velvet: an
+  outline round her hairline framed her face like a hood and she "looks worse"; reverted).
+- **No loops at the parting:** the fine line between locks runs down each lock's sides only, starting
+  below its root, never all the way round its rounded start.
+- **Lock tips taper to a soft point:** a lock ends narrowing smoothly; never a stub that turns back up,
+  which reads as a claw beside the face.
+- **No stray lines across the face:** loose wisps sit at the temples and hairline edge, never across
+  the forehead or brows, where they read as cracks.
+- **Define a cute head with shading, not length:** a soft heart jaw, light on the cheekbone and chin,
+  a soft shade under the cheekbone; never a longer face or a sharp V jaw.
+- **Hair shine is crisp:** one short, thin glint on each lock where it turns, lining up across the
+  locks into a broken ring; never a wide blurred band laid across the hair, which reads as a smear.
+- **Hanging curls get a finer outline** than the head's hair (about three quarters), so long ringlets
+  don't look heavy beside a pale face and dress; see-through ghost tips may fade outline and all.
+- **Buns and updos show their coils:** a bun is drawn with locks sweeping round it (their fine edges
+  and a glint where they turn over), never a plain ball.
+- **Small accessories get trims that match the outfit:** a choker or band gets fine gold edges and a
+  lace frill like the bodice's; a scalloped edge is one soft wavy line, never a row of separate dots.
+
 **Animation**
 - **Arcs:** limbs and weapons travel on curves, never straight lines between poses.
 - **Uneven timing:** every move has one fast moment and one held moment, never even spacing.

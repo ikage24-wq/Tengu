@@ -1230,6 +1230,8 @@ const DRESS = {
   liveHead: true,
   noMoves: true,
   under: {
+    // (in front of the body: his far tusk curls down in front of his chest, so his far ear and tusk are
+    // drawn after his body, under his neck; tests/boss-layers.test.js)
     neckSkin: (ctx, a, mode, S, D) => head(ctx, a, mode, D, 'back'),
   },
   under2: (ctx, m, a, S, matOf, D) => {

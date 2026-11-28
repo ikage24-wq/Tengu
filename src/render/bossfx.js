@@ -19,6 +19,8 @@ import { puff, shock, starFlash, easeOut, bloom, deep, inked } from './fxkit.js'
 import { sparkle, cloud, springy, pop, sstep } from './mobfx.js';
 import { dreamWarn, dreamHit, DREAM_HOLD } from './dreamfx.js';
 import { MARIGOLD_OWN_WARN } from './marigold/looks.js';
+import { VELVET_OWN_WARN } from './velvet/looks.js';
+import { HOSTESS_OWN_WARN } from './hostess/looks.js';
 import { MORAY_OWN_WARN } from './moray/looks.js';
 import { ABYSSIA_OWN_WARN } from './abyssia/looks.js';
 import { CORALIE_OWN_WARN } from './coralie/looks.js';
@@ -44,7 +46,7 @@ export const HOLD = { bags: 0.7, sprinkles: 0.7, cherry: 0.9, overdue: 0.9, book
 // Looks that draw their own warning instead of the standard one.
 // (Lady Marigold's draw their whole telegraph themselves: render/marigold/looks.js)
 // (and the Grand Kettle's, drawn over a field floor: render/grandkettle/looks.js, render/trial.js)
-export const OWN_WARN = new Set(['lines', ...MARIGOLD_OWN_WARN, ...MORAY_OWN_WARN, ...ABYSSIA_OWN_WARN, ...CORALIE_OWN_WARN, ...GK_OWN_WARN, ...CARNIVAL_OWN_WARN, ...CANDY_OWN_WARN, ...SKY_OWN_WARN, ...FOLIO_OWN_WARN, ...ECLIPSE_OWN_WARN, ...ASTRAEA_OWN_WARN, ...MANAGER_OWN_WARN, ...NOODLE_OWN_WARN, ...MONDAY_OWN_WARN, ...PRISMARIS_OWN_WARN, ...REVEILLE_OWN_WARN]);
+export const OWN_WARN = new Set(['lines', ...MARIGOLD_OWN_WARN, ...VELVET_OWN_WARN, ...HOSTESS_OWN_WARN, ...MORAY_OWN_WARN, ...ABYSSIA_OWN_WARN, ...CORALIE_OWN_WARN, ...GK_OWN_WARN, ...CARNIVAL_OWN_WARN, ...CANDY_OWN_WARN, ...SKY_OWN_WARN, ...FOLIO_OWN_WARN, ...ECLIPSE_OWN_WARN, ...ASTRAEA_OWN_WARN, ...MANAGER_OWN_WARN, ...NOODLE_OWN_WARN, ...MONDAY_OWN_WARN, ...PRISMARIS_OWN_WARN, ...REVEILLE_OWN_WARN]);
 
 // ---------- Little drawing helpers ----------
 function star(ctx, x, y, r, c, rot = 0) {

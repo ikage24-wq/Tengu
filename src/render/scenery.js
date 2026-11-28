@@ -5633,6 +5633,8 @@ function drawProps(ctx, t, map, cam, width, time) {
       if (seed < (s.ground ? keep : map.look?.ledgeKeep ?? 0.62)) continue;
       // Keep doorways clear around portals and NPCs, and ropes clear on ledges.
       if (s.ground && map.portals.some((p) => Math.abs(p.x - wx) < 44)) continue;
+      // (`propClear`: stretches of floor kept bare, like a boss's own room drawn as a set)
+      if (s.ground && map.propClear?.some(([a, b]) => wx > a && wx < b)) continue;
       if (s.ground && map.npcs.some((n) => Math.abs(n.x - wx) < (map.isTown ? 58 : 30))) continue;
       if (s.ground && map.isTown && map.plaza && Math.abs((map.fountain ?? map.plaza) - wx) < 46) continue;
       const sy = s.yAt(wx);

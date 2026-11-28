@@ -444,8 +444,10 @@ export const MOBS = {
   }),
   // (Health sized from a live run, 2026-11-19: about 435 a second from a level-18 group, tea and
   // bells included; 40k is a fight of about a minute and a half.)
+  // (2026-11-28, her new fight in her own hall: at 40k a level-19 autopilot group beat her in 71 s, no
+  // wipes; sized up for about a minute and a half to two)
   velvet: mob({
-    id: 'velvet', name: 'Madame Velvet, the Head Housekeeper', level: 18, hp: 40000, atk: 118, def: 24, acc: 56, eva: 3, exp: 8000, gold: [220, 330],
+    id: 'velvet', name: 'Madame Velvet, the Head Housekeeper', level: 18, hp: 56000, atk: 118, def: 24, acc: 56, eva: 3, exp: 8000, gold: [220, 330],
     speed: 30, w: 70, h: 100, art: 'velvet', boss: true,
     drops: [{ id: 'moonlit_ribbon', chance: 1, qty: 3 }, { id: 'white_potion', chance: 1, qty: 10 }],
     fight: { every: 2, reach: 70, windup: 0.5 }, mech: 'velvet',

@@ -1459,7 +1459,9 @@ const DRESS = {
   liveHead: true,
   noMoves: true,
   under: {
-    neckSkin: (ctx, a, mode, S, D) => head(ctx, a, mode, D, 'back'),
+    // (her far ear sits behind her whole body: drawn first, under the far arm, so it never lies over a shoulder;
+    // tests/boss-layers.test.js)
+    armF: (ctx, a, mode, S, D) => head(ctx, a, mode, D, 'back'),
   },
   over: {
     torsoSkin: (ctx, a, mode, S, D) => {

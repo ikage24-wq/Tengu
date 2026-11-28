@@ -13,15 +13,16 @@
 //   The Library           the lost books flutter along the shelves: catch them; page storms blow
 //                         through the stacks and push everyone on that floor.
 //   The Endless Hallway   the chase: Madame Velvet's tea trolley rumbles after the group; doors bar
-//                         the way until their levers are pulled; at the end, Madame Velvet herself
-//                         (scalding tea, flung plates to jump, the bell that calls the maids).
-//   The Moonlit Rooftop   Lady Marigold, the Eternal Hostess (2026-11-26): Welcome, Guests!
-//                         (invitations, a toast, don't leave, her dance card), Second Helpings
-//                         (her Basset Butlers bring her tarts: stop them), Midnight (the chimes
-//                         strike the roof in turn, the Hundred-Year Waltz).
+//                         the way until their levers are pulled; at the end, in her own hall,
+//                         Madame Velvet herself (2026-11-28: Inspection Hour, Spring Cleaning,
+//                         Polished Floors).
+//   The Moonlit Rooftop   Lady Marigold, the Eternal Hostess (fight remade 2026-11-28): Welcome,
+//                         Guests! (calling cards, partners, the waltz in three, her toes), Lantern
+//                         Light (her Basset Butlers' tarts, lanterns falling, in full bloom),
+//                         Midnight (twelve chimes, the last waltz).
 
 import { addZone, adds, callout, hurtMember } from './dungeon.js';
-import { runRotation, raidwide, buster, stack, spread, out, donut, tankOf, healerOf, dpsOf } from './bossfight.js';
+import { runRotation, raidwide, buster, stack, spread, out, donut, band, cleave, tankOf, healerOf, dpsOf } from './bossfight.js';
 import { navOf, surfaceBelow } from './nav.js';
 import { playScene } from './story.js';
 import { radio } from './hollow.js';
@@ -656,75 +657,145 @@ function waltz(world, m, up, dt) {
   return runRotation(world, m, list, up, dt, { rondo, minuet, caster: m }) || busy || lifting;
 }
 
+// Madame Velvet, the Head Housekeeper (remade 2026-11-28 with her new look, render/velvet/, and her own
+// end of the hallway, render/velvet/room.js). She runs the manor by its house rules and she is
+// inspecting her guests: every cast is a bit of housekeeping, named on her cast bar, drawn in her own
+// plum, linen and silver look (render/velvet/looks.js). Her furniture is part of the fight: the
+// sideboard, the plate shelf and the linen press are high ground, safe from anything on the floor.
+// Phases go by her health:
+//   Inspection Hour (to 60%)   No Muddy Boots! (she flicks her plum runner out from her feet to one wall:
+//                              off the carpet, onto the other side or up on the furniture); Tea Is
+//                              Served (a teacup over each of you: spread out); Spotless Inspection (she
+//                              peers over her spectacles at the floor in front of her: get behind her);
+//                              Scalding Pour (the teapot tips over the tank).
+//   Spring Cleaning (to 25%)   she rings for the maids once (Ghost Maids run for the healer: catch
+//                              them); Dusting, High and Low (her duster whirls round her at shoulder
+//                              height: get out; then low along the skirting: get in close); The Keys,
+//                              Please! (a key ring over one of you: everyone in to share it); the runner,
+//                              the tea, the pour.
+//   Polished Floors (the end)  Polish! (the whole floor is waxed to a shine: be off it, up on the
+//                              furniture or in the air, as it gleams); House Rules (she reads them out:
+//                              everyone feels it); Rule Two: Spotless! (the inspection and the tea at
+//                              once: behind her and apart); the keys; the pour; the runner.
+// Her state for her rig: m.cast / m.castPose ('runner', 'tea', 'inspect', 'pour', 'dust', 'dustlow',
+// 'keys', 'polish', 'rules', 'bell'), m.mech.phase, m.phaseAt (a phase change: her own moment), m.callAt
+// (the bell).
+// Her hall, wall to wall (render/velvet/room.js VV_HALL).
+const VV_ROOM = { x0: 2935, x1: 3595 };
+const VV = { band: 170, spread: 140, cleave: 190, buster: 320, stack: 460, out: 170, donut: 170, floor: 190, raid: 130 };
+const RUNNER = {
+  gap: 2.4, look: 'vvRunner', cast: 'No Muddy Boots!', dur: 3, pose: 'runner', sub: 'Her runner unrolls from her feet to the wall: get off the carpet, or up on the furniture!',
+  run: (w, m) => {
+    const dir = m.x - VV_ROOM.x0 > VV_ROOM.x1 - m.x ? -1 : 1;
+    band(w, m, m.x, dir > 0 ? VV_ROOM.x1 : VV_ROOM.x0, VV.band, 3);
+  },
+};
+const TEA = { gap: 2.4, look: 'vvTea', cast: 'Tea Is Served', dur: 3, pose: 'tea', sub: 'A cup of scalding tea over each of you: spread out!', run: (w, m, up) => spread(w, m, up, VV.spread, 3, 72) };
+const INSPECT = { gap: 2.4, look: 'vvInspect', cast: 'Spotless Inspection', dur: 2.8, pose: 'inspect', sub: 'She peers over her spectacles at the floor in front of her: get behind her!', run: (w, m) => cleave(w, m, 300, VV.cleave, 2.8) };
+const POUR = { gap: 2.2, look: 'vvPour', cast: 'Scalding Pour', dur: 2.6, pose: 'pour', sub: 'Her teapot tips over the tank: everyone else, step clear', run: (w, m, up) => buster(w, m, tankOf(up), VV.buster, 2.6, 80) };
+const DUST_HIGH = { gap: 2.4, look: 'vvDust', cast: 'Dusting, High...', dur: 2.6, pose: 'dust', sub: 'Her duster whirls round her: get out!', run: (w, m) => out(w, m, 140, VV.out, 2.6) };
+const DUST_LOW = { gap: 0.2, look: 'vvDustLow', cast: '...and Low!', dur: 2, pose: 'dustlow', sub: 'Now along the skirting: in close to her!', run: (w, m) => donut(w, m, 84, Math.max(m.x - VV_ROOM.x0, VV_ROOM.x1 - m.x) + 30, VV.donut, 2) };
+const KEYS = { gap: 2.4, look: 'vvKeys', cast: 'The Keys, Please!', dur: 3.2, pose: 'keys', sub: 'Her key ring over one of you: everyone in to share it!', run: (w, m, up) => stack(w, m, healerOf(up) ?? dpsOf(up), VV.stack, 3.2, Math.min(3, up.length), 100) };
+const POLISH = { gap: 2.6, look: 'vvPolish', cast: 'Polish!', dur: 2.8, pose: 'polish', sub: 'The whole floor is waxed to a shine: get off it, up on the furniture or in the air!', run: (w, m) => addZone(w, { kind: 'floor', x: VV_ROOM.x0, w: VV_ROOM.x1 - VV_ROOM.x0, warn: 2.8, damage: VV.floor, from: m }) };
+const RULES = { gap: 2.4, look: 'vvRules', cast: 'House Rules', dur: 3.2, pose: 'rules', sub: 'She reads the house rules aloud, and everyone feels them: healer, ready!', run: (w, m) => raidwide(w, m, VV.raid, 3.2) };
+const SPOTLESS = {
+  gap: 2.6, look: ['vvInspect', 'vvTea'], cast: 'Rule Two: Spotless!', dur: 3.2, pose: 'inspect', sub: 'An inspection and the tea at once: get behind her, and apart!',
+  run: (w, m, up) => {
+    cleave(w, m, 300, VV.cleave, 3.2);
+    spread(w, m, up, VV.spread, 3.2, 72);
+  },
+};
+const INSPECTION = [RUNNER, TEA, INSPECT, POUR];
+const CLEANING = [DUST_HIGH, DUST_LOW, KEYS, RUNNER, TEA, POUR];
+const POLISHED = [POLISH, RULES, SPOTLESS, KEYS, POUR, RUNNER];
+
 function velvet(world, m, up, dt) {
-  const s = (m.mech ??= { tea: 5, plates: 11, bells: [0.7, 0.4] });
+  const now = world.now;
+  const s = (m.mech ??= { phase: 1 });
+  // Her doors: once she's in the fight, the double doors of her hall swing shut behind the group and
+  // the fight stays in her hall (they open again if she's out of it: a wipe, or her beaten).
+  const room = world.dungeon.room;
+  if (m.engaged && m.hp > 0) room.vvShut ??= now;
+  else room.vvShut = null;
+  if (room.vvShut != null) {
+    for (const g of up) g.body.x = Math.max(VV_ROOM.x0 + 52, Math.min(VV_ROOM.x1 - 16, g.body.x));
+    m.x = Math.max(VV_ROOM.x0 + 90, Math.min(VV_ROOM.x1 - 60, m.x));
+  }
   const frac = m.hp / m.def.hp;
-  const nonTanks = up.filter((g) => g.role !== 'tank');
-  const pending = world.dungeon.zones.some((z) => !z.hit);
-  s.tea -= dt;
-  s.plates -= dt;
-  if (s.tea <= 0 && up.length) {
-    s.tea = 9;
-    for (const g of [...(nonTanks.length ? nonTanks : up)].sort(() => Math.random() - 0.5).slice(0, 3)) {
-      addZone(world, { kind: 'circle', x: g.body.x, y: floorY(world, g.body), w: 64, warn: 1.6, damage: 140, from: m, tea: true });
-    }
-    callout(world, 'Tea is served!', 'Scalding: step out of the steam');
-    m.teaAt = world.now;
+  const phase = frac > 0.6 ? 1 : frac > 0.25 ? 2 : 3;
+  if (phase > s.phase && !m.cast) {
+    s.phase = phase;
+    m.phaseAt = now;
+    if (phase === 2) {
+      callout(world, 'Spring Cleaning!', 'She rings for the maids: they run for the healer. Catch them!');
+      const healer = up.find((g) => g.role === 'healer') ?? pick(up);
+      adds(world, m, 'ghostmaid', [VV_ROOM.x0 + 60, VV_ROOM.x1 - 60], healer?.id);
+      m.callAt = now;
+      radio(world, 'bell');
+    } else callout(world, 'Polished Floors!', 'She takes out the wax. Find high ground!');
   }
-  if (s.plates <= 0) {
-    if (pending) s.plates = 1;
-    else {
-      s.plates = 13;
-      addZone(world, { kind: 'floor', x: 0, w: world.map.width, warn: 1.6, damage: 180, from: m, plates: true });
-      callout(world, 'Plates!', 'A stack of plates skims the floor: jump!');
-      m.slamming = world.now + 1.6;
-    }
-  }
-  if (s.bells.length && frac <= s.bells[0]) {
-    s.bells.shift();
-    const healer = up.find((g) => g.role === 'healer') ?? pick(up);
-    adds(world, m, 'ghostmaid', [m.x - 160, m.x + 160], healer?.id);
-    m.callAt = world.now;
-    callout(world, 'Madame Velvet rings the bell!', 'The maids come running for the healer: catch them!');
-    radio(world, 'bell');
-  }
-  return m.slamming > world.now;
+  // (a phase change: her own moment, the bell rung or the wax tin opened, before the next cast)
+  if (m.phaseAt != null && now - m.phaseAt < 1.6) return true;
+  return runRotation(world, m, s.phase === 1 ? INSPECTION : s.phase === 2 ? CLEANING : POLISHED, up, dt);
 }
 
-// Lady Marigold, the Eternal Hostess (remade 2026-11-26, with a brand-new fight; her look:
-// render/marigold/). The party that never ends, fought the way a hostess throws one: every cast is a
-// party moment, named on her cast bar, its telegraph drawn in her own marigold-and-moonlight look
-// (render/marigold/looks.js). Phases go by her health:
-//   Welcome, Guests! (to 65%)  Invitations (an envelope over each of you: spread out); Don't Leave!
-//                              (petals drift over the whole roof but her arms' reach: come in close);
-//                              A Toast! (a gold ring round one of you: everyone in to clink glasses);
-//                              May I Have This Dance? (her dance card writes the tank's name: a heavy
-//                              twirl on them, everyone else clear).
-//   Second Helpings (to 30%)   she claps for her butlers: two Basset Butlers come in from the ends of
-//                              the roof, each with a pumpkin tart under his cloche, walking to her;
-//                              any who reaches her serves it, and she eats it and feels much better
-//                              (3% of her health). Stop them on the way. (Three rounds at most: then
-//                              the kitchen is out of tarts, and A Toast! takes their place.) Between the claps: Give Me
-//                              Room! (her ghostly train swirls round her: get out), then at once Don't
-//                              Leave! (back in close); Invitations; the dance.
-//   Midnight (below 30%)       the stopped clocks start again: Midnight Chimes (the roof in four
-//                              stretches, struck one after another: wait where it already rang, or up
-//                              on a chimney); Not Yet! (her train swirls round her and an invitation
-//                              finds each of you: out, and apart); A Toast!; the Hundred-Year Waltz
-//                              (she waltzes alone and it hurts everyone: a check on the healer); the
-//                              dance.
-// Her state for her rig: m.cast / m.castPose (the rotation; poses 'invite', 'stay', 'room', 'toast',
-// 'dance', 'clap', 'chime', 'waltz'), m.mech.phase, m.phaseAt (a phase change: her own little moment
-// before the next cast), m.feastAt (a tart eaten).
-const MG = { spread: 150, stay: 190, stack: 520, buster: 360, room: 190, chime: 200, raid: 150, heal: 0.03, rounds: 3 };
-// (Don't Leave!: a ring from just outside her arms' reach to past both ends of the roof)
-const stayRing = (w, m, dur) => donut(w, m, 92, Math.max(m.x, w.map.width - m.x) + 40, MG.stay, dur);
-const INVITES = { gap: 2.6, look: 'mgInvite', cast: 'Invitations', dur: 3, pose: 'invite', sub: 'An invitation for each of you: spread out!', run: (w, m, up) => spread(w, m, up, MG.spread, 3, 76) };
-const STAY = { gap: 2.4, look: 'mgStay', cast: "Don't Leave!", dur: 3.2, pose: 'stay', sub: 'Petals everywhere but her arms: come in close!', run: (w, m) => stayRing(w, m, 3.2) };
-const TOAST = { gap: 2.4, look: 'mgToast', cast: 'A Toast!', dur: 3.2, pose: 'toast', sub: 'Raise your glasses together: everyone in the gold ring!', run: (w, m, up) => stack(w, m, healerOf(up) ?? dpsOf(up), MG.stack, 3.2, Math.min(3, up.length), 104) };
-const DANCE = { gap: 2.4, look: 'mgDance', cast: 'May I Have This Dance?', dur: 2.8, pose: 'dance', sub: "She writes the tank's name on her dance card: everyone else, step clear", run: (w, m, up) => buster(w, m, tankOf(up), MG.buster, 2.8, 84) };
-const ROOM = { gap: 2.4, look: 'mgRoom', cast: 'Give Me Room!', dur: 2.6, pose: 'room', sub: 'Her train swirls round her: get out!', run: (w, m) => out(w, m, 150, MG.room, 2.6) };
-const STAY_NOW = { ...STAY, gap: 0.2, dur: 2.2, cast: "...Don't Leave!", sub: 'No, come back! In close, now!', run: (w, m) => stayRing(w, m, 2.2) };
+// Lady Marigold, the Eternal Hostess (her fight remade 2026-11-28 with her new look, render/hostess/,
+// and her rooftop party, render/hostess/room.js). The party that never ends, fought as a dance: every
+// cast is a moment of her midnight party, named on her cast bar, drawn in her own marigold, cream, gold
+// and moonlight look (render/hostess/looks.js). Phases go by her health:
+//   Welcome, Guests! (to 65%)  Calling Cards (a card for each of you: spread out); Find a Partner! (two
+//                              hearts, each wanting two: pair up); Waltz in Three (three spots along her
+//                              path struck in turn, one, two, three: step out of each as its count
+//                              comes); Mind My Toes! (her heel stamps on the tank).
+//   Lantern Light (to 30%)     she claps for her Basset Butlers (they bring her tarts: stop them before
+//                              they reach her; three rounds and the kitchen is out); Lanterns Falling
+//                              (a paper lantern drops on the spot where each of you stands: move off it);
+//                              In Full Bloom (a great marigold opens round her: get out); the waltz, the
+//                              partners, her toes.
+//   Midnight (the end)         Twelve Chimes (the stopped clock on the chimney strikes twelve at last:
+//                              everyone feels it); The Last Waltz (the waltz and the lanterns at once);
+//                              the partners, the bloom, her toes, the cards.
+// Her state for her rig: m.cast / m.castPose ('cards', 'partners', 'steps', 'toes', 'lanterns', 'bloom',
+// 'twelve', 'clap'), m.mech.phase, m.phaseAt (a phase change: her own little moment before the next
+// cast), m.feastAt (a tart eaten).
+const MG = { spread: 150, pair: 380, step: 200, buster: 360, lantern: 170, bloom: 190, raid: 160, heal: 0.03, rounds: 3 };
+// (the roof, wall to wall)
+const MG_ROOF = { x0: 40, x1: 1560 };
+const CARDS = { gap: 2.6, look: 'mgCards', cast: 'Calling Cards', dur: 3, pose: 'cards', sub: 'A calling card for each of you: spread out!', run: (w, m, up) => spread(w, m, up, MG.spread, 3, 76) };
+const PARTNERS = {
+  gap: 2.4, look: 'mgPartners', cast: 'Find a Partner!', dur: 3.2, pose: 'partners', sub: 'Two hearts, each wanting a pair: get into twos!',
+  run: (w, m, up) => {
+    const pool = [...up].sort((g, h) => (g.role === 'tank') - (h.role === 'tank'));
+    const firsts = pool.length >= 4 ? [pool[0], pool[2]] : pool.slice(0, 1);
+    for (const g of firsts) stack(w, m, g, MG.pair, 3.2, 2, 88);
+  },
+};
+// (three spots along the roof the way she faces, each landing on its count)
+const waltzSteps = (w, m, dur) => {
+  const dir = m.dir >= 0 ? 1 : -1;
+  for (let k = 0; k < 3; k++) {
+    const x = Math.max(MG_ROOF.x0 + 70, Math.min(MG_ROOF.x1 - 70, m.x + dir * (90 + k * 130)));
+    addZone(w, { kind: 'circle', x, y: w.map.groundY, w: 140, warn: dur + k * 0.7, damage: MG.step, from: m, noSprout: true, step: k + 1 });
+  }
+};
+const STEPS = { gap: 2.4, look: 'mgSteps', cast: 'Waltz in Three', dur: 2.6, pose: 'steps', sub: 'One, two, three: each spot strikes on its count. Step out as it comes!', run: (w, m) => waltzSteps(w, m, 2.6) };
+const TOES = { gap: 2.4, look: 'mgToes', cast: 'Mind My Toes!', dur: 2.6, pose: 'toes', sub: 'Her heel comes down on the tank: everyone else, step clear', run: (w, m, up) => buster(w, m, tankOf(up), MG.buster, 2.6, 84) };
+// (a lantern on the spot where each of you stands, and two more among you)
+const lanternsFall = (w, m, up, dur) => {
+  const spots = up.map((g) => g.body.x);
+  for (let k = 0; k < 2 && up.length; k++) spots.push(up[k % up.length].body.x + (k ? 150 : -150));
+  for (const x of spots) addZone(w, { kind: 'circle', x: Math.max(MG_ROOF.x0 + 40, Math.min(MG_ROOF.x1 - 40, x)), y: w.map.groundY, w: 92, warn: dur, damage: MG.lantern, from: m, noSprout: true });
+};
+const LANTERNS = { gap: 2.4, look: 'mgLanterns', cast: 'Lanterns Falling', dur: 2.8, pose: 'lanterns', sub: 'A lantern drops where each of you stands: move off the spot!', run: (w, m, up) => lanternsFall(w, m, up, 2.8) };
+const BLOOM = { gap: 2.4, look: 'mgBloom', cast: 'In Full Bloom', dur: 2.6, pose: 'bloom', sub: 'A great marigold opens round her: get out!', run: (w, m) => out(w, m, 150, MG.bloom, 2.6) };
+const TWELVE = { gap: 2.6, look: 'mgTwelve', cast: 'Twelve Chimes', dur: 3.4, pose: 'twelve', sub: 'The stopped clock strikes twelve at last, and everyone feels it: healer, ready!', run: (w, m) => raidwide(w, m, MG.raid, 3.4) };
+const LAST_WALTZ = {
+  gap: 2.6, look: ['mgSteps', 'mgSteps', 'mgSteps', 'mgLanterns'], cast: 'The Last Waltz', dur: 3, pose: 'steps', sub: 'The waltz and the lanterns at once: mind the counts and move off your spot!',
+  run: (w, m, up) => {
+    waltzSteps(w, m, 3);
+    lanternsFall(w, m, up, 3);
+  },
+};
 const HELPINGS = {
   gap: 1.4, cast: 'Second Helpings!', dur: 1.6, pose: 'clap', sub: 'Her butlers bring tarts: stop them before they reach her!',
   run: (w, m) => {
@@ -735,31 +806,11 @@ const HELPINGS = {
     radio(w, 'butlers');
   },
 };
-const CHIMES = {
-  gap: 2.2, look: 'mgChime', cast: 'Midnight Chimes', dur: 2.6, pose: 'chime', sub: 'The clocks strike one stretch after another: wait where it already rang, or get up high!',
-  run: (w, m) => {
-    const x0 = 30;
-    const W = (w.map.width - 60) / 4;
-    const dir = Math.random() < 0.5 ? 1 : -1;
-    for (let k = 0; k < 4; k++) {
-      const i = dir > 0 ? k : 3 - k;
-      addZone(w, { kind: 'band', x: x0 + i * W, w: W, dir, warn: 2.6 + k * 0.9, damage: MG.chime, from: m, chime: k + 1 });
-    }
-  },
-};
-const NOT_YET = {
-  gap: 3.4, look: ['mgRoom', 'mgInvite'], cast: 'Not Yet!', dur: 3, pose: 'room', sub: 'Her train swirls round her and an invitation finds each of you: out, and apart!',
-  run: (w, m, up) => {
-    out(w, m, 150, MG.room, 3);
-    spread(w, m, up, MG.spread, 3, 76);
-  },
-};
-const WALTZ_ALONE = { gap: 2.4, look: 'mgWaltz', cast: 'Hundred-Year Waltz', dur: 3.4, pose: 'waltz', sub: 'She waltzes alone, and it hurts everyone: healer, ready!', run: (w, m) => raidwide(w, m, MG.raid, 3.4) };
-const WELCOME = [INVITES, STAY, TOAST, DANCE];
-const HELPS = [HELPINGS, ROOM, STAY_NOW, INVITES, DANCE];
+const WELCOME = [CARDS, PARTNERS, STEPS, TOES];
+const LANTERN_LIGHT = [HELPINGS, LANTERNS, STEPS, BLOOM, PARTNERS, TOES];
 // (three rounds of tarts and the kitchen is out: the rest of the phase without them)
-const HELPS_DONE = [ROOM, STAY_NOW, INVITES, TOAST, DANCE];
-const MIDNIGHT = [CHIMES, NOT_YET, TOAST, WALTZ_ALONE, DANCE];
+const LANTERN_DONE = [LANTERNS, STEPS, BLOOM, PARTNERS, TOES];
+const MIDNIGHT = [TWELVE, LAST_WALTZ, PARTNERS, BLOOM, TOES, CARDS];
 
 function marigold(world, m, up, dt) {
   const now = world.now;
@@ -770,9 +821,9 @@ function marigold(world, m, up, dt) {
   if (phase > s.phase && !m.cast) {
     s.phase = phase;
     m.phaseAt = now;
-    if (phase === 2) callout(world, 'Second Helpings!', 'She claps for her butlers: stop them before they reach her with their tarts!');
+    if (phase === 2) callout(world, 'Lantern Light!', 'The lanterns come down and the butlers bring tarts: stop them before they reach her!');
     else {
-      callout(world, 'Midnight!', 'The stopped clocks start again. She is running out of party!');
+      callout(world, 'Midnight!', 'The stopped clock starts again. She is running out of party!');
       radio(world, 'midnight');
     }
   }
@@ -786,7 +837,7 @@ function marigold(world, m, up, dt) {
   // (a phase change: a held breath, her own little moment, before the next cast)
   if (m.phaseAt != null && now - m.phaseAt < 1.6) return true;
   if (s.phase === 2 && (s.rounds ?? 0) >= MG.rounds && !m.cast) s.tartsGone = true;
-  return runRotation(world, m, s.phase === 1 ? WELCOME : s.phase === 2 ? (s.tartsGone ? HELPS_DONE : HELPS) : MIDNIGHT, up, dt);
+  return runRotation(world, m, s.phase === 1 ? WELCOME : s.phase === 2 ? (s.tartsGone ? LANTERN_DONE : LANTERN_LIGHT) : MIDNIGHT, up, dt);
 }
 
 // Her butler on his way with a tart: he walks to her side, minding no one (stop him!), and serves it;
@@ -820,6 +871,7 @@ function butler(world, m, up, dt) {
 
 // A manor boss down.
 export function manorKilled(world, m) {
+  if (m.def.mech === 'velvet' && world.dungeon?.room) world.dungeon.room.vvShut = null;
   if (m.def.mech !== 'marigold') return;
   // (her butlers bow out of the fight: the party's over)
   const room = world.dungeon?.room;

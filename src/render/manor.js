@@ -6,7 +6,9 @@
 // (x, y) is the bottom center on the floor; `time` (seconds) animates.
 
 import { R, E, T, F, sprite, blit, mix, snap } from './pixel.js';
-import { art, place } from './scenery.js';
+import { art, place, BEHIND_GROUND } from './scenery.js';
+import { drawVelvetHall, drawVelvetDoors } from './velvet/room.js';
+import { drawMarigoldRoof, drawMarigoldFront } from './hostess/room.js';
 import { trolleyArt } from './mobs/manorboss.js';
 import { CREST, doorOpen, HAND_IN_HAND } from '../world/manor.js';
 import { drawMochiAnim } from './mochi-anim.js';
@@ -338,6 +340,8 @@ export function drawManorBack(ctx, world, cam, time) {
   if (map.dungeon !== 'manor') return;
   for (const f of room.fountains ?? []) drawFountain(ctx, f, f.x - cam.x, f.y - cam.y, time);
   if (map.teaParty) drawTeaParty(ctx, world, cam, time);
+  if (map.id === 'manor5') drawVelvetDoors(ctx, world, cam, time);
+  if (map.id === 'manor6') drawMarigoldFront(ctx, world, cam, time);
   if (map.crest && room.crest) drawCrest(ctx, map.crest.x - cam.x, map.crest.y - cam.y, room.crest, time);
   for (const d of map.doors ?? []) {
     const x = d.x - cam.x;
@@ -473,3 +477,8 @@ export function drawManorObject(ctx, o, x, y, time) {
 }
 // The hint over a manor object you can use.
 export const MANOR_HINT = { lantern: '▲ Light', portrait: '▲ Turn', book: '▲ Catch', lever: '▲ Pull' };
+
+// Madame Velvet's end of the Endless Hallway, behind the floor and ledges (render/velvet/room.js).
+BEHIND_GROUND.push(drawVelvetHall);
+// Lady Marigold's rooftop party, behind the floor and chimneys (render/hostess/room.js).
+BEHIND_GROUND.push(drawMarigoldRoof);

@@ -12,6 +12,7 @@ import { drawTempleLedge } from './ruinsart.js';
 import { drawGeodeLedgeRooted } from './cavecrystal.js';
 import { drawLimb, drawRootShelf } from './hollowrooms.js';
 import { drawTerrace, drawChimney, drawBalcony } from './manorhill.js';
+import { drawVelvetLedge } from './velvet/room.js';
 import { drawCoralShelf, drawKelpRock, drawAbyssLedge, drawTank } from './aquapalace.js';
 import { drawBooth, drawTrestle, drawGondola, drawPony, drawCarousel, drawFunFloor } from './fairground.js';
 import { drawStarBalcony, drawGantry, drawPlanet } from './starlight.js';
@@ -2617,6 +2618,8 @@ export function drawIsland(ctx, theme, p, cam, time, pi, look = null, map = null
     else if (style === 'terrace') drawTerrace(ctx, x, y, w, time, pi, map, cam);
     else if (style === 'chimney') drawChimney(ctx, x, y, w, time, pi, map, cam);
     else if (style === 'balcony') drawBalcony(ctx, x, y, w, time, pi, map, cam);
+    // (Madame Velvet's hall: her furniture, render/velvet/room.js)
+    else if (style === 'vvSideboard' || style === 'vvShelf' || style === 'vvPress') drawVelvetLedge(ctx, x, y, w, time, style, map, cam);
     else if (style === 'coral') drawCoralShelf(ctx, x, y, w, time, pi, map, cam);
     else if (style === 'kelprock') drawKelpRock(ctx, x, y, w, time, pi, map, cam);
     else if (style === 'abyss') drawAbyssLedge(ctx, x, y, w, time, pi, map, cam);

@@ -1472,48 +1472,51 @@ export const MANOR_SCENES = {
     { wait: 0.4 },
     { together: [{ mood: 'waltzrondo', as: null }, { mood: 'waltzminuet', as: null }, { cam: 'player', dur: 0.7 }] },
   ],
-  // Madame Velvet, staged: she glares down at the mud on her runner, wags a finger of a sleeve at
-  // you, jingles her ring of keys, and hurls a teacup that bursts into china at your feet.
+  // Madame Velvet, staged (restaged 2026-11-28 for her remake, render/velvet/): she's on her knees
+  // polishing her hall when you walk in; she peers over her spectacles at your boots, reads you the house
+  // rules, jingles her ring of keys as she locks you in, and serves the tea: scalding, at your feet.
   manor_velvet: [
-    { together: [{ cam: 'velvet', dur: 1.1 }, { walk: 'player', to: 'velvet', gap: 160, speed: 110 }, { mood: 'velvet', as: 'angry' }] },
-    { together: [{ face: 'velvet', to: 'player' }, { emote: 'velvet', kind: '!' }, { jump: 'velvet', height: 10 }] },
+    { together: [{ cam: 'velvet', dur: 1.1 }, { walk: 'player', to: 'velvet', gap: 160, speed: 110 }, { act: 'velvet', move: 'polish', dur: 2.4 }] },
+    { together: [{ act: 'velvet', move: 'inspect', dur: 2.2 }, { face: 'velvet', to: 'player' }, { emote: 'velvet', kind: '!' }, { mood: 'velvet', as: 'angry' }] },
     { who: 'velvet', text: 'Mud. On MY runner. Do you know how long it takes to beat a hundred-year-old rug?', mood: 'angry' },
-    { together: [{ act: 'velvet', move: 'sway', dur: 1.2, amp: 0.08, speed: 12 }, { emote: 'velvet', kind: 'anger', dur: 1.6 }] },
+    { together: [{ act: 'velvet', move: 'rules', dur: 1.8 }, { emote: 'velvet', kind: 'anger', dur: 1.6 }] },
     { together: [{ emote: 'player', kind: 'sweat', dur: 1.2 }, { face: 'player', to: -1 }] },
     { face: 'player', to: 'velvet' },
     { who: 'player', text: "We're here for the guests. They need to go home." },
-    { together: [{ fx: 'sparkle', at: 'velvet', n: 8 }, { act: 'velvet', move: 'windup', dur: 0.8 }] },
+    { together: [{ act: 'velvet', move: 'keys', dur: 2 }, { shake: 2, dur: 0.25 }] },
     { who: 'velvet', text: "Nobody leaves the party before the hostess says so. House rules. Tea, anyone? It's scalding.", mood: 'angry' },
+    { act: 'velvet', move: 'tea', dur: 1 },
     { act: 'velvet', move: 'attack', dur: 0.9, async: true },
     { wait: 0.32 },
     { together: [{ fx: 'china', at: 'player', n: 16 }, { shake: 3, dur: 0.3 }, { jump: 'player', height: 20 }, { emote: 'player', kind: '!' }] },
     { wait: 0.6 },
     { cam: 'player', dur: 0.7 },
   ],
-  // Lady Marigold, staged (rewritten 2026-11-18, Chapter 4; her entrance remade 2026-11-26 with her new
-  // look, render/marigold/): the roof under a moon far too big, and at a little tea table her one
-  // guest since festival night, Elder Sakura, dozing on her feet. Nobody is waiting... then a marigold
-  // petal drifts down out of the moonlight, and another, and the hostess comes down the moon's beam,
-  // turning slowly as she comes, her ghostly train unfurling, and lands in a deep curtsey. (Her rig
-  // acts out 'away', 'arrive' and 'curtsey'.)
+  // Lady Marigold, staged (rewritten 2026-11-18, Chapter 4; restaged 2026-11-28 for her remake,
+  // render/hostess/): the roof under a moon far too big, and at a little tea table her one guest since
+  // festival night, Elder Sakura, dozing on her feet. Nobody is waiting... then a marigold petal drifts
+  // down out of the moonlight, and another, and the hostess takes shape out of it, drifting down to the
+  // roof; she raises her arms and her party lights up for her guests; a deep curtsey, a clap of delight.
+  // (Her rig acts out 'away', 'arrive', 'curtsey' and her casts by name.)
   manor_marigold: [
     { cast: 'sakura', x: 1460, facing: -1, ...SAKURA_CAST },
     { together: [{ act: 'marigold', move: 'away', dur: 0.1 }, { cam: { x: 800, y: 230 }, dur: 2.2 }, { walk: 'player', to: 'marigold', gap: 170, speed: 100 }] },
     { who: null, text: 'The roof, under a moon far too big. A table laid for two. One tiny guest, asleep on her feet.' },
     { who: null, text: 'A marigold petal drifts down out of the moonlight. Then another. Then a hundred.' },
-    { together: [{ act: 'marigold', move: 'arrive', dur: 3.4 }, { cam: 'marigold', up: 50, dur: 3 }, { mood: 'marigold', as: 'happy' }] },
-    { together: [{ act: 'marigold', move: 'curtsey', dur: 1.4 }, { face: 'marigold', to: 'player' }, { fx: 'petals', at: 'marigold', top: true }] },
-    { together: [{ jump: 'marigold', height: 12 }, { emote: 'marigold', kind: 'heart', dur: 1.6 }, { cam: 'marigold', up: 30, dur: 0.8 }] },
+    { together: [{ act: 'marigold', move: 'arrive', dur: 3.2 }, { fx: 'petals', at: 'marigold', top: true, n: 30 }, { cam: 'marigold', up: 50, dur: 3 }, { mood: 'marigold', as: 'happy' }] },
+    { together: [{ act: 'marigold', move: 'lanterns', dur: 1.8 }, { fx: 'sparkle', at: 'marigold', top: true, n: 14 }, { fx: 'notes', at: 'marigold', top: true, n: 6 }] },
+    { together: [{ act: 'marigold', move: 'curtsey', dur: 1.6 }, { face: 'marigold', to: 'player' }, { fx: 'petals', at: 'marigold', top: true }] },
+    { together: [{ act: 'marigold', move: 'clap', dur: 1.2 }, { emote: 'marigold', kind: 'heart', dur: 1.6 }, { cam: 'marigold', up: 30, dur: 0.8 }] },
     { who: 'marigold', text: 'GUESTS! Sakura, look! More guests!' },
     { together: [{ cam: 'sakura', up: 16, dur: 1 }, { emote: 'sakura', kind: 'zzz', dur: 1.4 }] },
     { who: 'sakura', text: "...that's nice, dear. May I go home now?" },
     { who: 'marigold', text: "Home? The party's only just started!" },
     { who: 'sakura', text: 'It started on festival night.' },
-    { together: [{ cam: ['player', 'marigold'], up: 20, dur: 0.9 }, { mood: 'marigold', as: 'sad' }, { act: 'marigold', move: 'sway', dur: 2.4, amp: 0.06, speed: 2.4 }, { fx: 'petals', at: 'marigold', top: true, n: 8 }] },
+    { together: [{ cam: ['player', 'marigold'], up: 20, dur: 0.9 }, { mood: 'marigold', as: 'sad' }, { act: 'marigold', move: 'twelve', dur: 3.2 }, { fx: 'petals', at: 'marigold', top: true, n: 8 }] },
     { who: 'marigold', text: 'A hundred years of parties. Nobody ever came. Then she did.', mood: 'sad' },
     { who: 'player', text: 'She wants to go home, Lady Marigold.' },
     { who: 'marigold', text: "...Then dance with me. Keep up with my waltz, and I'll think about it.", mood: 'sad' },
-    { together: [{ mood: 'marigold', as: 'happy' }, { walk: 'marigold', to: 'player', gap: 90, speed: 50 }, { fx: 'notes', at: 'marigold', top: true }, { emote: 'player', kind: 'sweat', dur: 1.2 }] },
+    { together: [{ mood: 'marigold', as: 'happy' }, { act: 'marigold', move: 'partners', dur: 2.2 }, { walk: 'marigold', to: 'player', gap: 90, speed: 50 }, { fx: 'notes', at: 'marigold', top: true }, { emote: 'player', kind: 'sweat', dur: 1.2 }] },
     { who: 'marigold', text: 'One, two, THREE!', mood: 'happy' },
     { act: 'marigold', move: 'attack', dur: 1, async: true },
     { wait: 0.35 },

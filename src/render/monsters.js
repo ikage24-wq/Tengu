@@ -112,11 +112,12 @@ const gloating = (m, now, secs) => {
 // How a monster feels right now.
 // Right after landing a hit on the hero it gloats (a happy face); nearly beaten, it blinks fast
 // and nervously.
-function moodOf(m, t, now, held) {
+function moodOf(m, t, now, held, armored = false) {
   if (m.hp <= 0) return 'dead';
   // A face a cutscene holds on it (world/director.js): asleep, cross, sad...
   if (m.cine?.mood) return m.cine.mood;
-  if (m.flash > 0 || m.stagger > 0) return 'hurt';
+  // (a boss's super armor: a blow's flash doesn't pull a hurt face, only its rare stagger does)
+  if ((m.flash > 0 || m.stagger > 0) && !armored) return 'hurt';
   if (m.special?.warn > 0) return 'angry';
   if (held) return 'hurt';
   if (gloating(m, now, 0.9)) return 'happy';
@@ -401,8 +402,18 @@ function drawMonsterNow(ctx, m, x, y, time, now = time) {
   const dt = frozen ? 0 : mo.dt;
   const boss = Boolean(m.def.boss);
   // A new hit: the flash timer jumps back up.
-  if (m.flash > mo.flash + 0.02) {
+  // (Bosses have super armor (2026-11-28, the player: "bosses should have super armor most of that fight
+  // she was in hurt animations never did another expression"): a party's blows only flash them. They
+  // stagger, with the flinch and the hurt face, at most once in 10 s, and never mid-cast or mid-strike,
+  // so their own idles, faces and attacks play through the fight. mo.stagT is that stagger's time.)
+  const armored = boss && m.hp > 0 && (time - (mo.stagT ?? -99) < 10 || Boolean(m.cast) || now - (m.attackAt ?? -99) < 1.2);
+  if (m.flash > mo.flash + 0.02 && armored) mo.hitT = time;
+  else if (m.flash > mo.flash + 0.02) {
     mo.hitT = time;
+    if (boss) {
+      mo.stagT = time;
+      mo.stagHurt = true;
+    }
     mo.push = Math.sign(m.knockVx ?? 0) || -((m.heading ?? m.dir) < 0 ? -1 : 1);
     mo.hurtUntil = time + (boss ? 0.22 : 0.4);
     if (m.hp > 0 && !frozen) {
@@ -414,9 +425,11 @@ function drawMonsterNow(ctx, m, x, y, time, now = time) {
     } else mo.air0 = m.air > 0 ? m.air : 0;
   }
   mo.flash = m.flash;
+  // (a stagger's hurt face lasts as long as its hit's flash, as any hit's did before super armor)
+  if (!(m.flash > 0)) mo.stagHurt = false;
   // Frozen monsters stop animating: their clock stands still with the ice.
   const t = (frozen ? m.phase : time) + m.uid * 0.37;
-  const mood = moodOf(m, t, now, time < mo.hurtUntil);
+  const mood = moodOf(m, t, now, time < mo.hurtUntil, boss && m.hp > 0 && !mo.stagHurt);
   mo.fast = mood === 'angry' ? 1.5 : 1;
   const fr = framesOf(m.def.art);
   // The distance it has walked, as drawn (a teleport or a new spawn doesn't count).
@@ -566,7 +579,9 @@ function drawMonsterNow(ctx, m, x, y, time, now = time) {
   // over 0.16 s, at most a sixth of the way to white (a ninth for a big one): it reads as a hit landing,
   // never as the figure fading. (The death and spawn glows, `white`, are unchanged.)
   const rigFlash = white || (since >= 0 && since < 0.16 ? (0.21 - 0.07 * huge) * (since < 0.02 ? 1 : 1 - smooth((since - 0.02) / 0.14)) : 0);
-  if (rig) rig.draw(ctx, m, { t, now, dt: mo.dt, mood, moving, mo, hurtAgo: since, flip: (m.heading ?? m.dir) < 0, flash: rigFlash / 8, alpha });
+  // (a boss's rig reacts to its staggers only: super armor)
+  const hurtAgo = boss && m.hp > 0 ? time - (mo.stagT ?? -99) : since;
+  if (rig) rig.draw(ctx, m, { t, now, dt: mo.dt, mood, moving, mo, hurtAgo, flip: (m.heading ?? m.dir) < 0, flash: rigFlash / 8, alpha });
   else blit(ctx, s, -s.w / 2, -s.h, { flip: (m.heading ?? m.dir) < 0, flash: flash / 8, alpha, soft: Boolean(live) });
   ctx.restore();
   if (puff >= 0) poofCloud(ctx, x, y, s.w, puff);

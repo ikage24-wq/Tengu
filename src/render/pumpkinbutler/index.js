@@ -1307,7 +1307,9 @@ const DRESS = {
   noMoves: true,
   hide: ['tail'],
   under: {
-    neckSkin: (ctx, a, mode, S, D) => head(ctx, a, mode, D, 'back'),
+    // (his far ear hangs behind his whole body: drawn first, under the far arm, so it never lies over a shoulder;
+    // tests/boss-layers.test.js)
+    armF: (ctx, a, mode, S, D) => head(ctx, a, mode, D, 'back'),
   },
   under2: (ctx, m, a, S, matOf, D) => {
     for (const mode of ['line', 'fill']) {

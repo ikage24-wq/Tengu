@@ -1608,10 +1608,14 @@ Object.assign(MAPS, {
   manor5: {
     id: 'manor5', name: 'The Endless Hallway', theme: 'manor', town: 'harbor', dungeon: 'manor',
     width: 3600, height: 420, groundY: G,
-    platforms: [{ x: 640, y: 320, w: 80 }, { x: 1460, y: 320, w: 80 }, { x: 2360, y: 320, w: 80 }, { x: 3200, y: 300, w: 90 }, { x: 3330, y: 230, w: 90 }],
+    // (her end of the hall, render/velvet/room.js: the sideboard, the plate shelf over the clock, the
+    // linen press, whose tops you stand on)
+    platforms: [{ x: 640, y: 320, w: 80 }, { x: 1460, y: 320, w: 80 }, { x: 2360, y: 320, w: 80 }, { x: 3010, y: 318, w: 110, style: 'vvSideboard', noProps: true }, { x: 3146, y: 252, w: 104, style: 'vvShelf', noProps: true }, { x: 3450, y: 300, w: 90, style: 'vvPress', noProps: true }],
     ropes: [],
     look: { sky: ['#1e1838', '#3e2e60', '#7a5aa0'], far: '#36284e', mid: '#5a3e6a', midTrim: '#ffb3cf', ...MANOR_IN, skyline: 'hallway' },
     task: { kind: 'light', object: 'lever', label: 'Pull the door levers' },
+    // (her end of the hall is drawn as a set, render/velvet/room.js: its floor kept bare)
+    propClear: [[2900, 3620]],
     chase: { start: 300, from: -40, to: 3000, speed: 80, speedUp: 4, top: 128, damage: 120, plates: 3.6 },
     doors: [{ x: 1120, lever: 0 }, { x: 2040, lever: 1 }, { x: 2860, lever: 2 }],
     portals: [
